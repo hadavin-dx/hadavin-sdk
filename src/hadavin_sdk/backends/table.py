@@ -605,12 +605,20 @@ DEMO_ONLY: frozenset[tuple[str, str]] = frozenset(
 # kinds (allowed in every stage), but a server that holds only these (and stand-ins) holds nothing a stranger could
 # act on, so `bindguard` does not count them. Any kind in none of DEMO_ONLY, NOT_PROD and this set reaches a real
 # service. `llm_judge` is listed because it only asks a route; the route's own `llm` kind is counted.
+# Why a bind does not widen what each one holds (the only route the receiver serves is `POST /slack/actions`, which
+# reaches the signer only through a signature check; `tests/test_bindguard.py` pins the route list):
 IN_PROCESS: frozenset[tuple[str, str]] = frozenset(
     {
+        # holds only patterns; reads text and returns a verdict, reaches nothing
         ("detector", "regex"),
+        # holds a route name; asks the configured `llm` kind, which is counted on its own (config refuses a config
+        # with no `llm` entry, and refuses a judge with no other detector beside it)
         ("detector", "llm_judge"),
+        # holds the contents of files under the config folder (a secret per file); no listener route reads a secret
         ("secrets", "mounted_file"),
+        # holds a signing key file on this computer; only the audit writer calls it, and no listener route does
         ("signer", "ed25519_local"),
+        # links events by hash and writes them through the store, signer and anchor kinds, each counted on its own
         ("audit", "chain"),
     }
 )

@@ -281,7 +281,7 @@ def test_receiver_records_and_never_executes(app, fake_system):
 
 def test_the_approvals_server_answers_over_http(app):
     _, req = _waiting(app)
-    server = serve(app.approvals, port=0)
+    server = serve(app.approvals, config=app.config, port=0)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
         url = f"http://127.0.0.1:{server.server_address[1]}"

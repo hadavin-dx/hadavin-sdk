@@ -178,3 +178,36 @@ def test_the_literal_list_stays_exact() -> None:
     )
     for host in [LOOP_2, "LOCALHOST", "[::1]", "::ffff:" + LOOP_1, "", None, ALL_ZEROS]:
         assert is_loopback_literal(host) is False, f"literal list widened to {host!r}"
+
+
+def test_a_leading_zero_is_refused_by_our_own_check_not_by_the_python_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Python before 3.9.5 read ``0177.0.0.1`` as an address. Simulate that reader: if the standard library
+    accepted a zero in front of a number, the answer must still be "not loopback"."""
+    import ipaddress
+
+    real = ipaddress.ip_address
+
+    def lenient(text: object) -> object:
+        if isinstance(text, str) and text.count(".") == 3 and ":" not in text:
+            text = ".".join(str(int(p)) for p in text.split("."))
+        elif isinstance(text, str) and text.startswith("::ffff:") and "." in text:
+            head, _, tail = text.rpartition(":")
+            text = head + ":" + ".".join(str(int(p)) for p in tail.split("."))
+        return real(text)
+
+    monkeypatch.setattr(ipaddress, "ip_address", lenient)
+    for host in ("0177.0.0.1", "127.000.000.001", "127.0.0.01", "::ffff:0127.0.0.1", "0.0.0.00"):
+        assert is_loopback_host(host) is False, f"should not be loopback: {host!r}"
+    assert netguard.parse_ip_literal("0177.0.0.1") is None
+    assert is_loopback_host(LOOP_1) is True and is_loopback_host("::ffff:" + LOOP_1) is True
+
+
+def test_parse_ip_literal_and_localhost_name() -> None:
+    assert str(netguard.parse_ip_literal("[::1]")) == "::1"
+    assert str(netguard.parse_ip_literal(LOOP_1)) == LOOP_1
+    for bad in ("[" + LOOP_1 + "]", "[::1", "::1]", "::1%eth0", "localhost", "", None, 7, b"::1"):
+        assert netguard.parse_ip_literal(bad) is None, repr(bad)
+    assert netguard.is_localhost_name("LocalHost") and not netguard.is_localhost_name("localhost.")
+    assert not netguard.is_localhost_name(None) and not netguard.is_localhost_name("localhoſt")

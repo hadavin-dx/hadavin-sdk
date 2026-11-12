@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
+from hadavin_sdk.config import Config
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.runmap import RedactionError
 from hadavin_sdk.models import (
@@ -64,9 +65,13 @@ class Approvals:
         on_decided: OnDecided,
         clock: Callable[[], datetime] = now,
         detector: Detector | None = None,
+        config: Config | None = None,
     ) -> None:
         self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
         self.on_decided, self.clock, self.detector = on_decided, clock, detector
+        # the deployment config these approvals were built from: ``receiver.serve`` checks it is the config it was
+        # given, so the bind check reads the services these approvals really hold (None: built by hand, not served)
+        self.config = config
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False

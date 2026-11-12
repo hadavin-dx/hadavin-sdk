@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from socketserver import BaseServer
 
 from hadavin_sdk.approvals.requests import Approvals
-from hadavin_sdk.bindguard import require_safe_bind
+from hadavin_sdk.bindguard import BindRefused, listen
 from hadavin_sdk.config import Config
+from hadavin_sdk.netguard import LOOPBACK_V4
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # Slack interactive payloads are a few KB
@@ -41,19 +43,24 @@ def handle_slack_action(
 
 def serve(
     approvals: Approvals,
-    host: str = "127.0.0.1",
-    port: int = 8080,
     *,
-    config: Config | None = None,
-) -> ThreadingHTTPServer:
+    config: Config,
+    host: str = LOOPBACK_V4,
+    port: int = 8080,
+    allow_public_bind_reason: str | None = None,
+) -> BaseServer:
     """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result.
 
-    Pass the deployment's ``config`` and a ``host`` that other computers can reach is refused while any real
-    service is configured (``bindguard``). Without ``config`` nothing is checked: every request here must carry
-    a valid channel signature, so a public host is the caller's decision (the usual setup is an HTTPS
-    reverse proxy in front)."""
-    if config is not None:
-        require_safe_bind(host, config)
+    ``config`` is required and must be the deployment's own (the one ``approvals`` was built from: the check is
+    ``approvals.config is config``, so a stand-in config cannot be put beside real approvals). The server is made by
+    ``bindguard.listen``, the only place that creates a server socket: a ``host`` that other computers can reach is
+    refused while any real service is configured, unless ``allow_public_bind_reason`` says why it must be (the usual
+    setup is an HTTPS reverse proxy in front; the reason is logged)."""
+    if approvals.config is not config:
+        raise BindRefused(
+            "serve needs the config the approvals were built with (Approvals(..., config=config)); "
+            "the config given is not that one"
+        )
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
@@ -77,4 +84,4 @@ def serve(
         def log_message(self, format: str, *args: object) -> None:
             _LOG.debug(format, *args)
 
-    return ThreadingHTTPServer((host, port), Handler)
+    return listen(config, host, port, Handler, allow_public_bind_reason=allow_public_bind_reason)

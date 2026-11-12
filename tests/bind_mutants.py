@@ -1,4 +1,4 @@
-"""The mutants of the public-bind refusal and the shared loopback check (named B1 to B18), run by the mutation runner
+"""The mutants of the public-bind refusal and the shared loopback check (named B1 to B39), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
 of the assertion MESSAGE). Not collected by pytest. Run from the repo root:
@@ -27,6 +27,20 @@ T_BG = "tests/test_bindguard.py"
 T_SITES = "tests/test_loopback_sites.py"
 
 
+def _between(path, start, end):
+    """The exact text of ``path`` from ``start`` up to and including ``end`` (read at import, so the mutant follows
+    the file)."""
+    text = (ROOT / path).read_text(encoding="utf-8")
+    i = text.index(start)
+    j = text.index(end, i) + len(end)
+    return text[i:j]
+
+
+_ASK = "    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason)\n"
+_LISTEN_ASK_FIRST = _between(BG, _ASK, "    server = _Server((address, port), handler)\n")
+_LISTEN_BUILD_FIRST = _LISTEN_ASK_FIRST.replace(_ASK, "") + _ASK
+
+
 def mutant(name, file, old, new, test_file, killer, expect, **kw):
     pin = test_file.removesuffix(".py") + "::" + killer
     return Mutant(
@@ -38,7 +52,7 @@ M = [
     mutant(
         "B1 localhost is no longer loopback",
         NG,
-        'if name.lower() == "localhost":',
+        "if is_localhost_name(name):",
         "if False:",
         T_NG,
         "test_loopback_spellings",
@@ -47,8 +61,8 @@ M = [
     mutant(
         "B2 casefold reads the long-s letter as s",
         NG,
-        'name.lower() == "localhost"',
-        'name.casefold() == "localhost"',
+        'text.lower() == "localhost"',
+        'text.casefold() == "localhost"',
         T_NG,
         "test_everything_else_is_not_loopback",
         "should not be loopback",
@@ -56,7 +70,7 @@ M = [
     mutant(
         "B3 brackets round an IPv4 address are accepted",
         NG,
-        "    if bracketed and ip.version != 6:\n        return False  # brackets belong to IPv6 only\n",
+        "    if bracketed and ip.version != 6:\n        return None  # brackets belong to IPv6 only\n",
         "",
         T_NG,
         "test_everything_else_is_not_loopback",
@@ -65,7 +79,7 @@ M = [
     mutant(
         "B4 a scope id is accepted",
         NG,
-        ' or "%" in bare',
+        '    if "%" in bare:\n        return None\n',
         "",
         T_NG,
         "test_everything_else_is_not_loopback",
@@ -83,8 +97,8 @@ M = [
     mutant(
         "B6 a non-text value is not refused (it crashes)",
         NG,
-        "    if not isinstance(name, str):\n        return False\n",
-        "",
+        "not isinstance(text, str) or _has_leading_zero_octet(text)",
+        "_has_leading_zero_octet(text)",
         T_NG,
         "test_a_non_string_is_not_loopback",
         "AttributeError",
@@ -94,8 +108,8 @@ M = [
     mutant(
         "B7 the exact literal list gains the next loopback address",
         NG,
-        'frozenset({"127.0.0.1", "localhost", "::1"})',
-        'frozenset({"127.0.0.1", "localhost", "::1", "127.0.0.2"})',
+        'frozenset({LOOPBACK_V4, "localhost", "::1"})',
+        'frozenset({LOOPBACK_V4, "localhost", "::1", "127.0.0.2"})',
         T_NG,
         "test_the_literal_list_stays_exact",
         "the literal list changed",
@@ -164,13 +178,13 @@ M = [
         "DID NOT RAISE",
     ),
     mutant(
-        "B15 the receiver does not ask before it listens",
-        RC,
-        "        require_safe_bind(host, config)",
-        "        pass",
+        "B15 listen does not ask when the host is text",
+        BG,
+        "    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason)\n",
+        "    if not isinstance(host, str):\n        require_safe_bind(host, config)\n",
         T_BG,
-        "test_the_receiver_refuses_a_public_bind_with_a_real_service_before_it_listens",
-        "a listening socket was opened",
+        "test_listen_refuses_before_any_server_exists",
+        "a server was built before the refusal",
     ),
     mutant(
         "B16 a kind that reaches a service is listed as in-process",
@@ -198,6 +212,199 @@ M = [
         T_SITES,
         "test_the_http_guard_and_the_model_client_share_the_one_list",
         "assert frozenset",
+    ),
+    mutant(
+        "B19 listen builds the server before it asks",
+        BG,
+        _LISTEN_ASK_FIRST,
+        _LISTEN_BUILD_FIRST,
+        T_BG,
+        "test_listen_refuses_before_any_server_exists",
+        "a server was built before the refusal",
+    ),
+    mutant(
+        "B20 the receiver passes its own default of every address",
+        RC,
+        "    host: str = LOOPBACK_V4,",
+        '    host: str = "0.0.0.0",',
+        T_BG,
+        "test_the_receiver_default_host_is_this_computer",
+        "assert",
+    ),
+    mutant(
+        "B21 the receiver does not check that the config is the approvals' own",
+        RC,
+        "    if approvals.config is not config:",
+        "    if False:",
+        T_BG,
+        "test_the_receiver_refuses_a_config_that_is_not_the_one_the_approvals_were_built_with",
+        "a server was built before the refusal",
+    ),
+    mutant(
+        "B22 a reason is ignored (a public bind is refused even with it)",
+        BG,
+        "    if allow_public_bind_reason is None:\n        raise BindRefused(problem)\n",
+        "    raise BindRefused(problem)\n",
+        T_BG,
+        "test_a_public_bind_needs_the_named_reason_and_the_reason_is_logged",
+        "BindRefused",
+        allow_crash=True,
+        crash_type="BindRefused",
+    ),
+    mutant(
+        "B23 an empty reason is accepted",
+        BG,
+        "    if not text:\n",
+        "    if False:\n",
+        T_BG,
+        "test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B24 the reason is not written to the log",
+        BG,
+        "    _LOG.warning(",
+        "    _LOG.debug(",
+        T_BG,
+        "test_a_public_bind_needs_the_named_reason_and_the_reason_is_logged",
+        "0 == 1",
+    ),
+    mutant(
+        "B25 tool modules are not counted",
+        BG,
+        '    found += [f"tools:{module}" for module in config.tool_modules]\n',
+        "",
+        T_BG,
+        "test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a_public_bind_refused",
+        "tool_modules",
+    ),
+    mutant(
+        "B26 check modules are not counted",
+        BG,
+        '    found += [f"checks:{module}" for module in config.check_modules]\n',
+        "",
+        T_BG,
+        "test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a_public_bind_refused",
+        "check_modules",
+    ),
+    mutant(
+        "B27 a live egress host is not counted",
+        BG,
+        "        for host in sorted(config.egress_hosts)\n        if not is_loopback_host(host)\n",
+        "        for host in ()\n",
+        T_BG,
+        "test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a_public_bind_refused",
+        "egress_hosts",
+    ),
+    mutant(
+        "B28 a loopback egress host is counted as live",
+        BG,
+        "        for host in sorted(config.egress_hosts)\n        if not is_loopback_host(host)\n",
+        "        for host in sorted(config.egress_hosts)\n",
+        T_BG,
+        "test_loopback_egress_hosts_and_empty_lists_pass",
+        "== ()",
+    ),
+    mutant(
+        "B29 a long bind text is not cut",
+        BG,
+        '    return bind if len(bind) <= limit else bind[:limit] + "..."',
+        "    return bind",
+        T_BG,
+        "test_a_long_bind_text_is_cut_in_the_refusal",
+        "the long bind text was not cut",
+    ),
+    mutant(
+        "B30 a non-text bind crashes the readable-text step",
+        BG,
+        "    if not (isinstance(bind, str) and bind.isprintable()):",
+        "    if not bind.isprintable():",
+        T_BG,
+        "test_a_real_service_refuses_every_public_spelling",
+        "AttributeError",
+        allow_crash=True,
+        crash_type="AttributeError",
+    ),
+    mutant(
+        "B31 a control character in a bind text is shown as it is",
+        BG,
+        "    if not (isinstance(bind, str) and bind.isprintable()):",
+        "    if not isinstance(bind, str):",
+        T_BG,
+        "test_the_refusal_is_one_plain_sentence_with_no_value_of_the_bind_leaking_control_text",
+        "evil",
+    ),
+    mutant(
+        "B32 localhost is bound by name, not as the literal",
+        BG,
+        "        return LOOPBACK_V4, socket.AF_INET\n",
+        '        return "localhost", socket.AF_INET\n',
+        T_BG,
+        "test_listen_picks_the_ipv6_family_for_an_ipv6_address_even_without_ipv6_on_this_machine",
+        "wrong family or address",
+    ),
+    mutant(
+        "B33 an IPv6 address gets an IPv4 socket",
+        BG,
+        "        return str(ip), socket.AF_INET6 if ip.version == 6 else socket.AF_INET\n",
+        "        return str(ip), socket.AF_INET\n",
+        T_BG,
+        "test_listen_picks_the_ipv6_family_for_an_ipv6_address_even_without_ipv6_on_this_machine",
+        "wrong family or address",
+    ),
+    mutant(
+        "B34 a name that is not localhost is bound",
+        BG,
+        '    raise BindRefused(\n        f"bind {_shown(host)!r} is not an IP address',
+        '    return host, socket.AF_INET\n    raise BindRefused(\n        f"bind {_shown(host)!r} is not an IP address',
+        T_BG,
+        "test_listen_refuses_a_name_that_is_not_localhost_even_with_stand_ins",
+        "a server was built before the refusal",
+    ),
+    mutant(
+        "B35 the address the socket got is not checked",
+        BG,
+        "        and not is_loopback_host(server.server_address[0])\n",
+        "        and False\n",
+        T_BG,
+        "test_listen_checks_the_address_the_socket_really_got",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B36 the server asks the resolver for the name of the bound address",
+        BG,
+        "            socketserver.TCPServer.server_bind(self)\n            host, port = self.server_address[:2]\n            self.server_name, self.server_port = str(host), port\n",
+        "            ThreadingHTTPServer.server_bind(self)\n",
+        T_BG,
+        "test_listen_binds_the_literal_for_localhost_and_never_looks_a_name_up",
+        "a name was looked up",
+    ),
+    mutant(
+        "B37 a leading zero is left to the Python version",
+        NG,
+        "not isinstance(text, str) or _has_leading_zero_octet(text)",
+        "not isinstance(text, str)",
+        T_NG,
+        "test_a_leading_zero_is_refused_by_our_own_check_not_by_the_python_version",
+        "should not be loopback",
+    ),
+    mutant(
+        "B38 the hash-chain audit kind is not pinned (moved to real)",
+        TBL,
+        '        ("audit", "chain"),\n    }\n)\n# Kinds refused only',
+        "    }\n)\n# Kinds refused only",
+        T_BG,
+        "test_the_pinned_table_is_exactly_the_kinds_of_the_table_and_the_three_lists",
+        "pinned class",
+    ),
+    mutant(
+        "B39 the receiver builds its own server instead of calling listen",
+        RC,
+        "    return listen(config, host, port, Handler, allow_public_bind_reason=allow_public_bind_reason)",
+        "    import http.server\n\n    return http.server.ThreadingHTTPServer((host, port), Handler)",
+        T_BG,
+        "test_only_listen_creates_a_server_socket",
+        "another server socket outside listen",
     ),
 ]
 

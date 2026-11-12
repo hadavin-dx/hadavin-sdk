@@ -129,3 +129,11 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- bindguard (the only place a server socket is made) ----------------------------------------------------------
+BIND_REASON_MAX_CHARS = (
+    200  # longest reason a person may give for a bind that other computers can reach
+)
+BIND_SHOWN_MAX_CHARS = (
+    80  # longest part of a refused bind text that is shown back (the rest is cut with "...")
+)

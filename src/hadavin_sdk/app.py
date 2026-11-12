@@ -181,6 +181,7 @@ def build(
         lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
         clock,
         summary_detector,
+        config=cfg,
     )
 
     def post_card(card: Card) -> Delivery:
