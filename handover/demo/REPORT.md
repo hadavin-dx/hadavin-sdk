@@ -1,6 +1,39 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:18Z / 01:48 IST - URGENT FOR THE LEAD: the gitleaks allowlist at pr-3-tests 558d37f DOES NOT WORK (lane 10a, real gitleaks 8.30.1); fix patch ready; 5 agents live
+FAILED first (lane 10a, EVIDENCE RUNNER; files in handover/demo/gitleaks/, SUMMARY.md first; pushed 35c15266):
+- On a fresh full clone of pr-3-tests 558d37fe5372f8c378e7ea07c6193a738f4497ed with the REAL gitleaks 8.30.1 and the exact lint.yml commands: `gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow` exit 1, 1 leak; `gitleaks git . ...` exit 1, 2 leaks (commits 7ec367b and a0b97a4 plus the tree); the leak is generic-api-key on the real `sonar.projectKey` line (sonar-project.properties:4). tests/test_hygiene.py: 1 failed, 9 passed (the gitleaks part ran, not skipped). So lint.yml's gitleaks step stays RED on the PR as it is now.
+- CAUSE (tested with the real binary): with `regexTarget = "line"` gitleaks passes the regex the line WITH its leading line break, so `^...$` only matches the FIRST line of a file (in the negative test the same real line on line 1 of sub/sonar-project.properties was allowed, on line 4 of the real file it was reported). Adding (?m), or `regexTarget = "match"` (the matched text only), both make it work. The line regex was also too broad: `hadavin-dx_[a-z0-9-]+` accepts any value after the prefix.
+- FIX (handover/demo/gitleaks/gitleaks-toml-fix.patch, `git apply --check` OK on a fresh clone of 558d37f): .gitleaks.toml: `regexTarget = "match"` and the exact key `^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$` (path regex unchanged); exceptions.txt: the git-grep exception now also covers `.gitleaks.toml` (the exact key written in the TOML tripped tests/test_hygiene.py on the first attempt). With the patch: dir exit 0, git exit 0 (14 commits), hygiene 10 passed.
+- NARROWNESS after the fix: every planted DIFFERENT value is still reported (sonar.token also in a subfolder; projectKey with a made-up value; `hadavin-dx_` plus a made-up value; in the real file and in docs/y.properties); the real line in docs/x.properties and in old-sonar-project.properties is also still reported. NOT reported: the real line in sub/sonar-project.properties (the path regex matches any folder; the builder left it). Before the fix 'narrow' was not testable (it allowed nothing).
+- NOT checked by 10a: the gitleaks docs (behaviour found by experiment only); the tarball sha256 (the binary came from an earlier lane, its own sha256 is in 01-version.txt); full pytest and CI.
+- A fresh security-path egm review of the fix patch is running (can a secret ride along after the exact key on the same line with `match`? what else does the widened exceptions.txt entry hide? overlap with the lane 7 and 8 patches that edit the same two files). Told lane 7b and lane 8b: 7b proves 0 findings on 558d37f + this fix + its coverage patch and must apply on both bases; both must test their own `^`/`$` allowlist regexes with the real binary.
+- Lane 9: nothing yet. Lane 7b, 8b, 10b building.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:18Z / 01:48 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 31 min | 20:50 | running | hang/RESULTS.md | per-run files |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b | 20:01 | 20 min | 20:50 | running | docs-and-deps.patch v2, PLAN.md | pytest running |
+| ad3dab9715b1335af (agent, sonnet builder) | lane 7b | 20:12 | 9 min | 21:02 | running | coverage patch v2, gitleaks proof, PLAN.md | started |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 6 min | 21:15 | running | CODEANT-COVERAGE.md, codeant-*.patch | started |
+| (new) egm reviewer, security path | review of the gitleaks fix patch | 20:18 | 0 min | +8 min | running | report (saved as gitleaks/REVIEW-1.md) | started |
+Totals: agents live 5; shells 0; pytest runs 2 to 3; `yes` x2 (lane 9); containers 0; load average 3.62, 3.36, 2.41.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| gitleaks allowlist (lead's 558d37f + 10a fix) | review 1 starting | n/a | n/a | security path (scanner config): no cap; the lead's own fix failed the first real-binary check | no cap | fresh review without Major or Blocker, and your decision to apply |
+| lane 7 Sonar | fix round 7b | r1 0B/1M/8N | see earlier | security path | no cap | fresh review without Major or Blocker |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | see earlier | design reversals | none | fresh review without Major or Blocker |
+Lesson for the loop: the lead's allowlist was not run with the real binary before it was pushed; lane 7's builder found the first failure and lane 10a the second: the check that ends this loop is the real gitleaks run in CI mode, which lane 10a already did.
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a4d247151b6e20e65 (lane 10a, sonnet evidence runner) | 4 min (20:15 to 20:19) | allowlist at 558d37f does not work; fix patch with 0 findings and narrowness matrix | yes |
+
 ## 2026-11-12 20:15Z / 01:45 IST - ORDER D12 applied: lane 10a (gitleaks verify) and lane 10b (CodeAnt triage) started; bases moved to pr-3-tests 558d37f; 5 agents live
 Status lines:
 - D12(1) ACKNOWLEDGED: my gitleaks finding was right and the lead fixed it in pr-3-tests 558d37f (new top-level `[[allowlists]]`). Told lane 7b to drop its separate gitleaks-projectkey.patch (not duplicated), rebase onto 558d37f, and confirm with the real gitleaks that 558d37f + the coverage patch still gives 0 findings. Told lane 8b the same base change (must apply on 558d37f; its lock allowance lines follow the lead's allowlist style).
