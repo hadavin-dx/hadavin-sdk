@@ -133,7 +133,7 @@ M = [
         "    if real:\n",
         "    if real and mode != _DEMO_STAGE:\n",
         "test_a_real_service_is_named_and_made_up_data_is_never_claimed",
-        "assert",
+        "does not name every real service",  # now stopped by the claim post-condition, before the old assertion
     ),
     mb(
         "B6 the loud stand-ins line is replaced by the quiet one",
@@ -147,7 +147,7 @@ M = [
         'ModeBanner(mode, "quiet", tag, words.none_real,',
         'ModeBanner(mode, "quiet", tag, words.made_up,',
         "test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up",
-        "assert",
+        "claims made-up data",  # now stopped by the claim post-condition, before the old assertion
     ),
     mb(
         "B7b a pilot or live screen hides its stand-ins",
@@ -349,7 +349,7 @@ M = [
     ),
     js(
         "J8f tone real is accepted when the text does not name the service",
-        "if (text.indexOf(real[i]) < 0) return NOT_CONFIRMED;",
+        "if (!hasName(text, real[i])) return NOT_CONFIRMED;",
         "if (false) return NOT_CONFIRMED;",
         "test_a_banner_that_contradicts_itself_is_not_painted_as_given",
         "assert",
@@ -377,8 +377,8 @@ M = [
     ),
     js(
         "J13 the page mode list differs from the stages",
-        "var MODES = ['demo', 'pilot', 'prod'];",
-        "var MODES = ['demo', 'pilot', 'prod', 'canary'];",
+        "var MODES = Object.freeze(['demo', 'pilot', 'prod']);",
+        "var MODES = Object.freeze(['demo', 'pilot', 'prod', 'canary']);",
         "test_the_page_lists_are_the_python_lists",
         "assert",
     ),
@@ -532,7 +532,7 @@ M = [
     ),
     gd(
         "G14 only an allowlist of file endings is read",
-        "if full.suffix.lower() in cfg.skip_suffixes:",
+        "if full.suffix.lower() in cfg.skip_suffixes and _looks_binary(full):",
         'if full.suffix.lower() not in (".py", ".md", ".json"):',
         "test_every_file_type_is_read_not_only_a_list_of_endings",
         "a.cfg",
@@ -595,7 +595,7 @@ M = [
     ),
     gd(
         "G21 a listed phrase is also accepted as part of a path or a longer word",
-        r'+ re.escape(p) + r"(?![\w/\\])"',
+        r'+ re.escape(p) + r"(?![\w/\\-])"',
         "+ re.escape(p)",
         "test_the_table_name_and_listed_phrases_are_not_hits_but_a_path_or_a_longer_word_is",
         "DEMO_ONLY/x",
@@ -700,7 +700,7 @@ M = [
         "assert",
     ),
     js(
-        "J13 a real name is matched inside another word",
+        "J14 a real name is matched inside another word",
         "if (!hasName(text, real[i])) return NOT_CONFIRMED;",
         "if (text.indexOf(real[i]) < 0) return NOT_CONFIRMED;",
         "test_a_real_name_is_matched_as_a_whole_word_only",
@@ -732,21 +732,21 @@ M = [
         "(?<![\\w/\\\\-])",
         "(?<![\\w/\\\\])",
         "test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash",
-        "assert",
+        "x-DEMO_ONLY",
     ),
     gd(
         "G28 a listed phrase may be followed by a dash",
         '(?![\\w/\\\\-])")',
         '(?![\\w/\\\\])")',
         "test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash",
-        "assert",
+        "DEMO_ONLY-x",
     ),
     gd(
         "G29 a listed phrase is matched in any case",
         '+ re.escape(p) + r"(?![\\w/\\\\-])")',
         '+ re.escape(p) + r"(?![\\w/\\\\-])", re.IGNORECASE)',
         "test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash",
-        "assert",
+        "demo_only",
     ),
 ]
 

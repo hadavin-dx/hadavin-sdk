@@ -565,16 +565,15 @@ THIS_MACHINE = [
 ]
 
 
-@pytest.mark.parametrize(("field", "value", "key"), LEAVES)
-def test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up(
-    field, value, key
-) -> None:
-    cfg = _with_endpoints(**{field: value})
-    real, _ = mb._services_in(cfg)
-    assert real == (key,)
-    b = mb.banner_from_config(cfg)
-    assert b.tone == "real" and b.real == (f"component {key}",)
-    assert "made-up" not in (b.text + b.standins).lower() and "Nothing here is sent" not in b.text
+def test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up() -> None:
+    for field, value, key in LEAVES:
+        cfg = _with_endpoints(**{field: value})
+        real, _ = mb._services_in(cfg)
+        assert real == (key,), (field, value)
+        b = mb.banner_from_config(cfg)
+        assert b.tone == "real" and b.real == (f"component {key}",), (field, value)
+        shown = (b.text + b.standins).lower()
+        assert "made-up" not in shown and "nothing here is sent" not in shown, (field, value)
 
 
 @pytest.mark.parametrize(("field", "value"), THIS_MACHINE)
