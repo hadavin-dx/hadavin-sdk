@@ -192,34 +192,35 @@ NOTE = "handover/reviews/round1.md"
 
 
 @pytest.mark.parametrize(
-    ("path", "rule", "accepted"),
+    ("path", "rule"),
     [
-        (NOTE, "generic-api-key", True),
-        ("handover/tickets/t1.md", "generic-api-key", True),
-        ("handover/evidence/e1.md", "generic-api-key", True),
         (
-            "src/app.py",
+            NOTE,
             "generic-api-key",
-            False,
-        ),  # a real file: a lane ref could hide a secret there
-        ("src/app.py", "private-key", False),
-        (NOTE, "private-key", False),
-        (NOTE, "curl-auth-user", False),
-        ("handover/reviews/x/round1.md", "generic-api-key", False),  # not directly under the folder
-        ("handover/reviews/round1.py", "generic-api-key", False),
-        ("handover/other/round1.md", "generic-api-key", False),
-        ("xhandover/reviews/round1.md", "generic-api-key", False),
+        ),  # even a handover note with the generic rule: a lane-only entry has no legitimate use
+        ("handover/tickets/t1.md", "generic-api-key"),
+        ("src/app.py", "generic-api-key"),
+        ("src/app.py", "private-key"),
+        (NOTE, "private-key"),
     ],
 )
-def test_an_ignore_entry_on_a_lane_only_commit_needs_a_handover_note_and_the_generic_rule(
-    repo, path, rule, accepted
-):
+def test_an_ignore_entry_on_a_lane_only_commit_is_stale(repo, path, rule):
     lane = _lane_branch(repo, "wip/cloud-x")
     _commit(repo, ".gitleaksignore", f"{_expires()}{lane}:{path}:{rule}:3\n", "ignore entry")
     rc, out = _run_guard(repo)
-    assert rc == (0 if accepted else 1), out
-    if not accepted:
-        assert "must be a handover note" in out
+    assert rc == 1, out
+    assert "stale ignore entry (not on a named handover branch)" in out
+
+
+def test_an_ignore_entry_for_a_sha_that_is_not_in_the_clone_is_stale_and_later_checks_run(repo):
+    """git branch --contains exits 129 for an unknown sha: that must neither abort the step nor skip the checks after it."""
+    entry = f"{'0' * 40}:{NOTE}:generic-api-key:3\n"
+    _commit(repo, ".gitleaksignore", entry, "entry without an EXPIRES line")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "stale ignore entry" in out
+    assert "no '# EXPIRES YYYY-MM-DD' line" in out  # a later check still ran
+    assert "fatal" not in out and "error:" not in out
 
 
 def test_an_ignore_entry_on_a_fixed_named_branch_keeps_any_path_and_rule(repo):
@@ -253,6 +254,100 @@ def test_an_ignore_entry_on_a_non_matching_lane_name_is_stale(repo, branch):
     rc, out = _run_guard(repo)
     assert rc == 1, out
     assert "stale ignore entry" in out
+
+
+TOML_NO_TARGET = (
+    "[extend]\nuseDefault = true\n[[allowlists]]\ncondition = 'AND'\npaths = ['^docs/.*']\n"
+)
+
+
+@pytest.mark.parametrize("toml", ["", "[extend]\nuseDefault = true\n", TOML_NO_TARGET])
+def test_the_path_checks_do_not_depend_on_what_the_pull_request_writes_into_gitleaks_toml(
+    repo, toml
+):
+    """A pull request carries its own .gitleaks.toml: rewriting it must not switch the handover path checks off."""
+    _commit(repo, ".gitleaks.toml", toml, "the pull request rewrites the config")
+    rc, out = _run_guard(repo)
+    assert rc == 0, out  # control: no handover note, same config
+    _commit(repo, HANDOVER_FILE, "note\n", "a handover note")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "checkout's tree" in out
+    _remove(repo, HANDOVER_FILE, "deleted again")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out  # the history still carries it
+    assert "history of HEAD itself" in out
+
+
+def test_a_tag_named_origin_main_does_not_weaken_the_main_history_check(repo):
+    main = _git(repo, "rev-parse", "refs/remotes/origin/main")
+    _commit(repo, ".gitignore", "x\n", "later commit")
+    _commit(repo, ".gitleaksignore", f"{_expires()}{main}:src/a.py:generic-api-key:3\n", "entry")
+    root = _git(repo, "rev-list", "--max-parents=0", "HEAD")
+    _git(repo, "tag", "origin/main", root)  # the short name origin/main now resolves to this tag
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "ignore entry is in main history" in out
+
+
+def test_a_tag_named_origin_core_cloud_handover_does_not_replace_the_deleted_branch(repo):
+    tip = _git(repo, "rev-parse", "refs/remotes/origin/core/cloud-handover")
+    _git(repo, "tag", "origin/core/cloud-handover", tip)
+    _git(repo, "update-ref", "-d", "refs/remotes/origin/core/cloud-handover")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "outlived branch core/cloud-handover" in out
+
+
+def test_a_tag_named_origin_core_cloud_handover_does_not_replace_the_branch_in_the_range(repo):
+    """The branch still exists (it carries a handover note); a tag of the short name at another commit must not be subtracted
+    in its place, or the note would be listed and every pull request would fail."""
+    main = _git(repo, "rev-parse", "refs/remotes/origin/main")
+    _git(repo, "tag", "origin/core/cloud-handover", main)
+    rc, out = _run_guard(repo)
+    assert rc == 0, out
+
+
+def test_a_merge_commit_that_adds_and_a_later_merge_that_removes_a_note_are_still_listed(repo):
+    """Neither merge touches the note relative to both parents, so a log without -m shows nothing for them and the tree is clean."""
+    base = _git(repo, "rev-parse", "HEAD")
+    s1 = _commit(repo, "src/s1.py", "x = 1\n", "side one")
+    _git(repo, "reset", "-q", "--hard", base)
+    x = _commit(repo, "src/x.py", "x = 2\n", "side x")
+    _git(repo, "reset", "-q", "--hard", base)
+    _commit(repo, "src/s2.py", "x = 3\n", "side two")
+    _git(repo, "merge", "-q", "--no-commit", "--no-ff", s1)
+    (repo / HANDOVER_FILE).parent.mkdir(parents=True, exist_ok=True)
+    (repo / HANDOVER_FILE).write_text("note\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "merge that adds a note")
+    _git(repo, "merge", "-q", "--no-commit", "--no-ff", x)
+    _git(repo, "rm", "-q", "-f", HANDOVER_FILE)
+    _git(repo, "commit", "-q", "-m", "merge that removes the note")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "history of HEAD itself" in out
+
+
+def test_a_merge_of_a_side_branch_with_a_handover_note_fails_even_if_the_merge_removes_it(repo):
+    base = _git(repo, "rev-parse", "HEAD")
+    side = _commit(repo, HANDOVER_FILE, "note\n", "side branch adds a note")
+    _git(repo, "reset", "-q", "--hard", base)
+    _commit(repo, "src/a.py", "x = 1\n", "work on the main line")
+    _git(repo, "merge", "-q", "--no-commit", "--no-ff", side)
+    _git(
+        repo, "rm", "-q", "-f", HANDOVER_FILE
+    )  # the merge itself drops the note: the tree is clean
+    _git(repo, "commit", "-q", "-m", "merge without the note")
+    rc, out = _run_guard(repo)
+    assert rc == 1, out
+    assert "history of HEAD itself" in out
+
+
+def test_the_step_name_is_a_plain_string_without_a_colon_and_space():
+    name = _step(_load(), STEP)["name"]
+    assert isinstance(name, str)
+    assert ": " not in name
 
 
 if __name__ == "__main__":
