@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:00Z / 01:30 IST - ORDER D9 format: 4 agents live; lanes 1 to 6 done, lane 8 builder done (review running), lane 7, lane 9 and DeepSource builder running
+Status lines: nothing pushed beyond the files named in earlier blocks; no new failure since the lane 8 block. Open question for the lead still unanswered: PR 89 singular branch name (only core/mutation-runner-keywords exists on origin). Lane 9 has run its first batches (no-load: nl-together-2 = 880 passed in 230 s flagged SLOW only because it is 20 files plus the target file; no hang seen yet; details in hang/ when it hands back). Lane 7's pytest is at ~65 percent of its first coverage run (8.7 minutes in).
+
+### (1) LIVE ITEMS (now 2026-11-12 20:00Z / 01:30 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| abc77f40d2e06cb94 (agent, sonnet builder) | DeepSource clusters PR 3 (demo_only) and PR 4 (tests): find every instance, classify, patches | 19:17 | 42 min | 20:07 (50 min box) | running; I sent a wrap-up message asking for hand-back by 20:10 | triage/DEEPSOURCE-COVERAGE.md, extra-demo-only.patch, extra-tests.patch, evidence | DEEPSOURCE-COVERAGE.md last written 19:23 (36 min ago); extra-demo-only.patch 19:22; many evidence-extra-* files; its pytest (pid 1849, in /tmp/work/triage-copy) running 11 min = no file progress for 36 min but a live test run: FLAG, action: wrap-up message sent, I will cut it at 20:15 if no hand-back |
+| a28f5af6a766a1b53 (agent, sonnet builder) | lane 7: Sonar coverage patch and plan (prepare only) | 19:45 | 14 min | about 20:35 (75 min box ends 21:00) | running (its pytest --cov is its long step) | coverage/sonar-coverage.patch, PLAN.md, evidence | coverage/evidence-pytest-coverage.txt written 19:59 (progress dots at about 64 percent) |
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9: reproduce the test hang under CPU load | 19:50 | 9 min | about 20:50 (60 min box ends 20:50) | running (batch 'nl-alone' just started) | hang/RESULTS.md and raw run files | hang/batch-log.txt 19:59 |
+| a3e7ca5b01fc09496 (agent, sonnet egm-codebase-details reviewer, read-only) | review of lane 8 patch (decoder vs Pillow, docs numbers) | 19:58 | 1 min | about 20:05 | running | review report in its hand-back (I save it as fixes/REVIEW-1.md) | started 19:58 |
+| pid 5362 (+ timeout 2400, pid 5361) | lane 7's pytest --cov full serial run (limit 2400 s) | 19:50 | 9 min | about 20:05 to 20:10 | running | coverage.xml | output at about 64 percent 19:59 |
+| pid 1849 | DeepSource builder's pytest in /tmp/work/triage-copy | 19:48 | 11 min | unknown (full run is about 15 min) | running | evidence-extra-after-full.txt | none: see its agent row |
+| pid 30880 (+ timeout 300, pid 30879) | lane 9's pytest of tests/test_hung_adapter_calls.py (run 1 of the alone batch) | 19:59 | under 1 min | about 20:00 | running | run-nl-alone-*.txt | batch-log.txt 19:59 |
+Totals: agents live 4; shells I hold 0 (all my commands are one-shot); long background processes 3 pytest runs (heavy slots 3 of 4 cores) plus 2 timeout wrappers; containers 0 (no docker daemon); load average 0.72 0.68 0.72 (1/5/15 min). No item has run past its time box. Lane 9's two busy loops are not running right now (its first batch is without load).
+
+### (2) ROUNDS (packages with more than one review or fix round)
+| package | round now | findings per round | class of problem each round found | WHY another round | stop rule says stop? | what ends the loop |
+|---|---|---|---|---|---|---|
+| lane 5 reuse report (CORE-TO-DEMO.md) | 4 reviews done, 3 resolves | r1 0B/2M/3N; r2 0B/5M/3N; r3 0B/3M/8N; r4 (confirming, Majors only) 0B/0M | r1: wrong counts and wording the reviewer could check (53 files, 'rejects look-alikes'); r2: claims about the core branches that r1 could not read, plus wrong reasons (mutation 'no source edits', meter cost); r3: old wording that survived the edits and contradictions between sections, a wrong cost reason (yaml); r4: none | r2 exists ONLY because the first reviewer had no shell and could not read the core branches (a gate that could not run: WASTE; cause fixed by exporting the branches as plain files); r3: the document was edited by instance in resolve 1-2 and old wording survived (builder/resolver error; resolve 3 fixed by class and read the document twice); r4: your D5 rule (one confirming pass for Majors) | YES: D5 says round 3 was the last; r4 was the allowed Majors-only confirm and found no Major | done: closed 20:00 |
+| lane 3 JS patch | 2 reviews, 1 resolve | r1 0B/3M/2N; r2 (confirming) 0B/0M/4N | proof gaps (log.js hunk untested, equivalence script tested a copy, let/const type unresolved) | r2 is the D5 single confirming review after resolve | YES | done; 504 var = later laptop PR (D6) |
+| lane 3 Python patch | 2 reviews, 1 resolve | r1 0B/2M/3N; r2 (confirming) 0B/0M/3N | proof gaps (test pinned language facts only, evidence not reproducible) | r2 is the D5 single confirming review | YES | done |
+| lane 2 drift report | 1 review | r1 0B/0M/3N | wrong line cite, inference stated as fact | none (no round 2) | n/a | done |
+| lane 8 fixes | review 1 running | not yet | n/a | n/a (first review; the decoder choice is a rule-20 question) | n/a | one review, then fixes in one push (D5) |
+| lane 7 Sonar | none yet | n/a | n/a | security path (secret in a workflow, new dependency): review rounds with NO cap by your D7 | not applicable to security paths | a fresh review finds no Major or Blocker |
+Waste found: the lane 5 r2 round (reviewer without a shell) and about 20 percent of lane 5 r3 effort (old wording surviving edits). Cause fixed: reviewers get plain exported files; resolvers fix by class. No other round exists because a gate could not run or a builder returned early, EXCEPT that lane 2's builder had no Agent tool (so its internal egm reviewers did not run: I ran the review myself as a separate agent).
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a14d24d23eb7fe1d1 (lane 8 builder, sonnet) | 8 min (19:50 to 19:58) | docs-and-deps.patch applies on b29bb1f; stdlib PNG decoder instead of Pillow; docs/tests.md Browser tests section; 20-test difference partly explained (Node on PATH: 21 tests; 1 test and 1 skip not explained); full suite not run by it | yes |
+(no shells finished: I hold none)
+
 ## 2026-11-12 19:58Z - LANE 8 builder done (fixes/docs-and-deps.patch applies on b29bb1f); fresh egm review running; 4 agents (DeepSource builder, lane 7, lane 9, lane 8 review)
 OPEN ITEMS first (builder's words, unreviewed):
 1. The full suite was NOT run by lane 8: the 2349/116 and 2462/3 counts in the new docs are lane 1 and lane 4 numbers. It ran only the browser and Node test files, the hygiene test and the two sidebar tests.
