@@ -10,3 +10,4 @@ cloud-demo PULSE 2026-11-12T18:23:36Z round 2 reviewers started
 cloud-demo PULSE 2026-11-12T18:24:07Z r2 reviews done, not clean, resolve r2 running (opus)
 cloud-demo PULSE 2026-11-12T18:25:38Z r2 resolve done, waiting user gate; nothing running
 cloud-demo PULSE 2026-11-12T18:26:44Z r2 applied, test doc deleted, idle, ready for real work
+cloud-demo PULSE 2026-11-12T18:29:47Z ORDER 251 read, routing set, idle, ready
