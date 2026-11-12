@@ -1,0 +1,5 @@
+semgrep-on-head.patch sha256 7c8633cad5216c78a1c8b5bec8bca424ec3689656e4f37e1bb962a7833b9e0c1
+base 40d5668; git apply --check: OK; lock sha256 a791abb7... identical to the lock in semgrep-on-v4.patch (cmp same, 1130 lines)
+pytest hygiene+nosemgrep_form+gitleaks_semgrep_lock (GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1): 80 passed
+gitleaks dir . and git . : no leaks; ruff check/format clean; mypy linux+win32 clean; bandit -ll src scripts: 0 issues
+mutant: semgrep path anchor widened to (^|[/\]): test_semgrep_lock_allowances_are_narrow and test_widening_... FAIL (2 failed)

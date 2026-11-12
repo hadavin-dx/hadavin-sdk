@@ -1,0 +1,665 @@
+diff --git a/docs/settings.md b/docs/settings.md
+index 6f66125..a1ad906 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -118,8 +118,8 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+ * Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+ * Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
+-* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read, a missing key file. A key file that is empty, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break. n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
+-* `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters.
++* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
++* `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index 8980829..97a9e07 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -11,10 +11,17 @@ at start, before the key file is opened. To reach an n8n on another computer use
+ A redirect answer is never followed (the header with the key would go to the new address); it is reported as an error.
+ For http to this computer the proxy settings of the environment (HTTP_PROXY, no_proxy) are ignored: the key header goes
+ straight to this computer, never to a proxy. For https they are used as usual.
+-The key file must hold one printable ASCII word (no space, no second line, no control character); anything else is
+-refused at start with a fixed message that does not show the file text.
+-Every failure ends with a short message and exit code 1 or 2, never a Python traceback, and never prints the key, the
+-address, a header or an answer body: a network or protocol fault prints only the name of its error type.
++The key file must hold one printable ASCII word of at most 4096 characters (no space, no second line, no control
++character); anything else is refused at start with a fixed message that does not show the file text.
++Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a
++short message and exit code 1 or 2, never a Python traceback, and never prints the key, the address, a header or an
++answer body: a network or protocol fault prints only the name of its error type. That list is: an address that cannot
++be read or is not allowed (also a port outside 1..65535), a key file that is missing, unreadable, a directory or not
++one printable ASCII word, a workflow file that is missing, not JSON, nested too deeply (RecursionError) or without a
++name, a workflow that cannot be encoded, every network, TLS and protocol fault, an answer that is not JSON or is nested
++too deeply, a list with an odd entry. A workflow name that the terminal cannot show is printed with "?" in place of
++the characters it cannot encode. NOT covered (a traceback is possible): Ctrl-C (KeyboardInterrupt), running out of
++memory (MemoryError), and a closed output pipe (BrokenPipeError).
+ """
+ 
+ from __future__ import annotations
+@@ -22,6 +29,7 @@ from __future__ import annotations
+ import http.client
+ import json
+ import os
++import re
+ import sys
+ import urllib.error
+ import urllib.request
+@@ -44,6 +52,13 @@ REFUSED = (
+ )
+ 
+ 
++# What urllib dials is the whole text between "//" and the next "/": a host (letters, digits, dots, hyphens) or a
++# bracketed IPv6 literal, then at most one ":port" of digits. Any other shape (a backslash, a second colon, text after
++# a bracket, an empty port) is read one way by urlsplit and another by urllib, so it is refused.
++NETLOC = re.compile(r"(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9.-]+)(:[0-9]{1,5})?")
++MAX_PORT = 65535
++
++
+ def checked_base(url: str) -> str:
+     """The n8n address, only when the API key may travel to it: https, or http to this computer. Uses the repository's
+     own readers (split_url, is_loopback_host). Anything else is a SystemExit that says what to do."""
+@@ -55,6 +70,9 @@ def checked_base(url: str) -> str:
+     # "//" and the next "/". So a user name part or a blank/control character is refused here, by a check.
+     if "@" in parts.netloc or any(c.isspace() or not c.isprintable() for c in url):
+         raise SystemExit(REFUSED)
++    shape = NETLOC.fullmatch(parts.netloc)
++    if shape is None or (shape.group(2) is not None and not 1 <= int(shape.group(2)[1:]) <= MAX_PORT):
++        raise SystemExit(REFUSED)
+     scheme, host = parts.scheme.lower(), parts.hostname or ""
+     if host and (scheme == "https" or (scheme == "http" and is_loopback_host(host))):
+         return url.rstrip("/")
+@@ -65,19 +83,25 @@ BASE = checked_base(os.environ.get("N8N_URL", "http://127.0.0.1:5679"))
+ PROXY_ALLOWED = urlsplit(BASE).scheme.lower() == "https"  # http is only ever to this computer: no proxy for the key
+ 
+ 
++MAX_KEY = 4096  # an n8n API key is a token of a few hundred characters; anything longer is not one
++
++
+ def _read_key() -> str:
+     name = os.environ.get("N8N_API_KEY_FILE")
+     if not name:
+         raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
+     try:
+-        key = Path(name).read_text(encoding="utf-8").strip()
+-    except (OSError, ValueError) as e:  # a missing or unreadable file, or bytes that are not text
++        with Path(name).open("rb") as f:  # a directory, a missing or an unreadable file: OSError
++            raw = f.read(MAX_KEY + 1)  # never the whole of a huge file: a key is short
++        key = raw.decode("utf-8").strip()  # bytes that are not text: UnicodeDecodeError (a ValueError)
++    except (OSError, ValueError) as e:
+         raise SystemExit(f"cannot read the n8n API key file ({type(e).__name__})") from None
+     # Printable ASCII without a blank: a second line, a tab or NUL inside, or a non-latin-1 letter would make the header
+     # call fail with a message that holds the key. The text of the file is never part of the message.
+-    if not key or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key):
++    if not key or len(key) > MAX_KEY or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key):
+         raise SystemExit(
+-            "the n8n API key file must hold one word of printable ASCII (no space, second line or control character)"
++            "the n8n API key file must hold one word of printable ASCII (no space, second line or control character) "
++            f"of at most {MAX_KEY} characters"
+         )
+     return key
+ 
+@@ -86,8 +110,19 @@ KEY = _read_key()
+ KEEP = ("name", "nodes", "connections", "settings")  # the create call refuses other top-level keys
+ 
+ 
++def say(*parts: object) -> None:
++    """print() for names that come from n8n or from a file: a character the terminal cannot encode (a lone surrogate,
++    an emoji on a cp1252 pipe) becomes "?" instead of ending the run with a UnicodeEncodeError."""
++    encoding = sys.stdout.encoding or "utf-8"
++    text = " ".join(str(p) for p in parts)
++    sys.stdout.write(text.encode(encoding, errors="replace").decode(encoding, errors="replace") + "\n")
++
++
+ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
+-    data = None if body is None else json.dumps(body).encode()
++    try:
++        data = None if body is None else json.dumps(body).encode()
++    except (ValueError, TypeError, RuntimeError) as e:  # nested too deeply (RecursionError), a lone surrogate, ...
++        raise SystemExit(f"cannot encode the workflow ({type(e).__name__})") from None
+     try:
+         req = urllib.request.Request(  # noqa: S310 - local n8n, http by design
+             BASE + "/api/v1" + path,
+@@ -103,6 +138,8 @@ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
+                 return r.status, (json.loads(raw) if raw else {})
+             except ValueError:  # JSONDecodeError and UnicodeDecodeError: n8n (or something in front of it) sent no JSON
+                 raise SystemExit("n8n answered 200 with a body that is not JSON (not shown)") from None
++            except RuntimeError:  # RecursionError: JSON nested thousands of levels deep (not a ValueError)
++                raise SystemExit("n8n answered 200 with a body nested too deeply to read (not shown)") from None
+     except urllib.error.HTTPError as e:
+         try:
+             e.read()  # the body is not kept: an error page could echo a header
+@@ -149,20 +186,21 @@ def main(a: list[str]) -> int:
+         return 2
+     if cmd == "list":
+         for w in workflows():
+-            print(w["name"], "active" if w["active"] else "inactive")
++            say(w["name"], "active" if w["active"] else "inactive")
+     elif cmd == "import":
+         try:
+             wf = json.loads(Path(a[2]).read_text(encoding="utf-8"))
+             wf.setdefault("settings", {})
+             str(wf["name"])  # a workflow file without a name is refused here, not after the call
+-        except (OSError, ValueError, KeyError, AttributeError) as e:  # no file, not JSON, not an object, no name
++        except (OSError, ValueError, KeyError, AttributeError, RuntimeError) as e:  # no file, not JSON (or nested too
++            # deeply: RecursionError), not an object, no name
+             raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
+         code, res = call("POST", "/workflows", {k: wf[k] for k in KEEP if k in wf})
+-        print(wf["name"], code, "" if code == HTTPStatus.OK else res)
++        say(wf["name"], code, "" if code == HTTPStatus.OK else res)
+         return 0 if code == HTTPStatus.OK else 1
+     else:  # activate or deactivate
+         code, res = call("POST", f"/workflows/{find(a[2])}/{cmd}")
+-        print(a[2], cmd, code, "" if code == HTTPStatus.OK else res)
++        say(a[2], cmd, code, "" if code == HTTPStatus.OK else res)
+         return 0 if code == HTTPStatus.OK else 1
+     return 0
+ 
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index 1aa08bc..57752d7 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -6,7 +6,9 @@ from __future__ import annotations
+ 
+ import importlib
+ import json
++import os
+ import socket
++import subprocess
+ import sys
+ import threading
+ from http import HTTPStatus
+@@ -38,20 +40,26 @@ def _load(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None, key_
+     return importlib.import_module("n8n_api")
+ 
+ 
+-@pytest.mark.parametrize(
+-    "url",
+-    [
+-        None,
+-        _u("http", "127.0.0.1:5679/"),
+-        _u("http", "localhost:5678"),
+-        _u("http", "[::1]:5678"),
+-        _u(
+-            "http", "[::ffff:" + "127.0.0.1]:5678"
+-        ),  # an IPv4-mapped loopback address is loopback (same answer as the desk)
+-        _u("https", RESERVED),
+-        _u("HTTPS", RESERVED.upper() + "/x/"),
+-    ],
+-)
++ACCEPTED = [
++    _u("http", "127.0.0.1:5679/"),
++    _u("http", "127.0.0.1"),  # no port
++    _u("http", "127.0.0.1:1"),
++    _u("http", "127.0.0.1:65535"),  # the highest port
++    _u("http", "localhost:5678"),
++    _u("http", "localhost"),
++    _u("http", "localhost/x/"),
++    _u("http", "[::1]:5678"),
++    _u("http", "[::1]"),
++    _u("http", "[::ffff:" + "127.0.0.1]:5678"),  # an IPv4-mapped loopback address is loopback (same answer as the desk)
++    _u("https", RESERVED),
++    _u("https", RESERVED + ":443"),
++    _u("https", RESERVED + ":65535/x"),
++    _u("HTTPS", RESERVED.upper() + "/x/"),
++    _u("https", "a-b.c1." + RESERVED + ":8443/api/"),
++]
++
++
++@pytest.mark.parametrize("url", [None, *ACCEPTED])
+ def test_these_addresses_are_accepted(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None) -> None:
+     mod = _load(monkeypatch, tmp_path, url)
+     assert not mod.BASE.endswith("/")
+@@ -81,6 +89,31 @@ REFUSED = [
+     _u("http", "127.0.0.1:5678/x\ny"),
+     _u("http", "127.0.0.1:5678\n"),
+     _u("http", " 127.0.0.1:5678"),
++    # a shape that urlsplit and urllib read differently (a check, not a failed name lookup, keeps the key at home)
++    _u("http", "127.0.0.1:80" + "\\" + RESERVED),  # the backslash: urlsplit stops at it, urllib dials the whole text
++    _u("http", "127.0.0.1:80:80"),  # two ports: urllib dials the name "127.0.0.1:80"
++    _u("http", RESERVED + "[::1]"),  # text in front of a bracketed literal
++    _u("http", "[::1]" + RESERVED),  # text behind it
++    _u("http", "[::1]:80:80"),
++    _u("http", "127.0.0.1:99999999999"),  # a port that does not exist (and may overflow in the name lookup)
++    _u("http", "127.0.0.1:65536"),  # one above the highest port
++    _u("http", "127.0.0.1:0"),  # port 0 cannot be connected to
++    _u("http", "127.0.0.1:00000"),
++    _u("http", "127.0.0.1:"),  # an empty port
++    _u("https", RESERVED + ":99999999999/x"),
++    _u("https", RESERVED + ":65536"),
++    _u("http", "127.0.0.1:\u0665"),  # a non-ASCII digit
++    _u("http", "127.0.0.1:+80"),
++    _u("http", "127.0.0.1:8_0"),
++    _u("http", "[::1]:99999"),
++    _u("https", "[x::1]" + RESERVED),
++    _u("https", "[" + RESERVED + "]"),  # not a literal address
++    _u("https", "[]"),
++    _u("https", "a_b." + RESERVED),  # an underscore is not a host name character
++    _u("https", "b\u00fccher." + RESERVED),  # a non-ASCII name: the ASCII form (punycode) must be given
++    _u("https", RESERVED + "%2f"),
++    _u("https", RESERVED + ";x"),
++    _u("https", RESERVED + "!"),
+     _u("https", "user@" + RESERVED),
+     _u("ftp", "127.0.0.1"),
+     "file:" + "///x",
+@@ -421,12 +454,7 @@ def test_what_is_accepted_is_exactly_what_urllib_would_dial() -> None:
+     import urllib.request
+     from urllib.parse import urlsplit
+ 
+-    for url in (
+-        _u("http", "127.0.0.1:5679/"),
+-        _u("http", "localhost:5678"),
+-        _u("http", "[::1]:5678"),
+-        _u("https", RESERVED + "/x/"),
+-    ):
++    for url in ACCEPTED:
+         assert urllib.request.Request(url).host == urlsplit(url).netloc  # noqa: S310 - never opened
+ 
+ 
+@@ -441,6 +469,8 @@ BAD_KEYS = {
+     "only-blanks": "  \n\t \n",
+     "delete-char": "made-up-key-\x7f-del",
+     "latin-1-letter": "made-up-key-\u00e9-latin1",  # latin-1 can send it, but it is not printable ASCII: refused too
++    "one-megabyte-of-printable-letters": "made-up-key-" + "k" * 1_000_000,  # one word, but not a key
++    "just-over-the-length-limit": "made-up-key-" + "k" * 4096,
+ }
+ 
+ 
+@@ -456,12 +486,50 @@ def test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show
+     sys.modules.pop("n8n_api", None)
+     with pytest.raises(SystemExit) as e:
+         importlib.import_module("n8n_api")
+-    shown = _message(e) + capsys.readouterr().out + capsys.readouterr().err
++    captured = capsys.readouterr()  # ONE call: a second call would return an empty result and drop this one's stderr
++    shown = _message(e) + captured.out + captured.err
+     assert "key file" in shown
+-    for piece in ("made-up-key", "LINE-", "SPACE", "TAB", "NUL", "latin1"):
++    assert "Traceback" not in shown
++    for piece in ("made-up-key", "LINE-", "SPACE", "TAB", "NUL", "latin1", "kkkk", "127.0.0.1", "5679"):
+         assert piece not in shown, f"the key text {piece!r} is in the message"
+ 
+ 
++def _key_file_refusal(monkeypatch: pytest.MonkeyPatch, key_path: Path) -> str:
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(key_path))
++    monkeypatch.delenv("N8N_URL", raising=False)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    with pytest.raises(SystemExit) as e:
++        importlib.import_module("n8n_api")
++    return _message(e)
++
++
++def test_a_key_file_that_is_a_directory_is_a_clean_message_with_the_error_type_only(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    (tmp_path / "keydir").mkdir()
++    msg = _key_file_refusal(monkeypatch, tmp_path / "keydir")
++    assert "key file" in msg and ("IsADirectoryError" in msg or "PermissionError" in msg)  # Windows: PermissionError
++    assert "keydir" not in msg
++
++
++@pytest.mark.skipif(
++    not hasattr(os, "geteuid") or os.geteuid() == 0, reason="root (and Windows) can read a file with no permissions"
++)
++def test_a_key_file_without_read_permission_is_a_clean_message_with_the_error_type_only(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    secret = tmp_path / "locked-key.txt"
++    secret.write_text(KEY_TEXT, encoding="utf-8")
++    secret.chmod(0)
++    try:
++        msg = _key_file_refusal(monkeypatch, secret)
++    finally:
++        secret.chmod(0o600)
++    assert "key file" in msg and "PermissionError" in msg
++    assert KEY_TEXT not in msg and "locked-key" not in msg
++
++
+ def _call_with_base(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, base: str) -> str:
+     mod = _load(monkeypatch, tmp_path, None)
+     monkeypatch.setattr(mod, "BASE", base)  # a base that checked_base would refuse: what call() does with it is tested
+@@ -567,3 +635,93 @@ def test_the_shared_opener_still_uses_the_proxy_of_the_environment_for_https_too
+         proxy.shutdown()
+         proxy.server_close()
+     assert seen == [f"{RESERVED}:8443"] * 2, "open_http did not send the https request through the environment proxy"
++
++
++# --- nested too deeply, and names that the terminal cannot show: a clean end, not a traceback -------------------------
++def test_a_200_answer_nested_a_hundred_thousand_levels_deep_is_a_clean_message(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    deep = b"[" * 100_000 + b"]" * 100_000  # json.loads raises RecursionError (a RuntimeError, not a ValueError)
++    with pytest.raises(SystemExit) as e:
++        _run_against(_fixed(200, deep), monkeypatch, tmp_path, ["list"])
++    msg = _message(e)
++    assert "nested too deeply" in msg and KEY_TEXT not in msg and "[[[" not in msg
++
++
++def test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    f = tmp_path / "deep.json"
++    f.write_bytes(b"[" * 100_000 + b"]" * 100_000)
++    mod = _load(monkeypatch, tmp_path, None)
++    with pytest.raises(SystemExit) as e:
++        mod.main(["n8n_api.py", "import", str(f)])
++    assert "cannot read a workflow" in _message(e) and "RecursionError" in _message(e)
++
++
++def test_a_body_that_cannot_be_encoded_is_a_clean_message(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    """json.dumps raises RecursionError for a structure nested far deeper than json.loads would ever have read from a
++    file (here built in Python): call() ends with a message, not a traceback."""
++    deep: list[object] = []
++    for _ in range(100_000):
++        deep = [deep]
++    mod = _load(monkeypatch, tmp_path, None)
++    with pytest.raises(SystemExit) as e:
++        mod.call("POST", "/workflows", deep)
++    assert _message(e) == "cannot encode the workflow (RecursionError)"
++
++
++# names that a strict cp1252 pipe cannot encode: a lone surrogate (JSON may carry one as \ud800) and an emoji
++UNSHOWABLE = {"lone surrogate": "w-\\ud800-end", "emoji": "w-\\ud83d\\ude00-end"}
++
++
++def _run_script(tmp_path: Path, server_port: int, *argv: str) -> subprocess.CompletedProcess[str]:
++    key = tmp_path / "key.txt"
++    key.write_text(KEY_TEXT, encoding="utf-8")
++    env = {k: v for k, v in os.environ.items() if k.upper() not in {"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY"}}
++    env.update(
++        N8N_URL=_u("http", f"127.0.0.1:{server_port}"),
++        N8N_API_KEY_FILE=str(key),
++        PYTHONIOENCODING="cp1252:strict",  # strict, so an unencodable name raises, as on a cp1252 pipe
++    )
++    return subprocess.run(  # noqa: S603 - our own interpreter and script
++        [sys.executable, str(REPO / "scripts" / "n8n_api.py"), *argv],
++        cwd=REPO,
++        env=env,
++        capture_output=True,
++        text=True,
++        timeout=60,
++        check=False,
++    )
++
++
++@pytest.mark.parametrize("which", list(UNSHOWABLE))
++def test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_question_marks(
++    tmp_path: Path, which: str
++) -> None:
++    body = ('{"data": [{"id": "1", "active": true, "name": "' + UNSHOWABLE[which] + '"}]}').encode("ascii")
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), _fixed(200, body))
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    try:
++        done = _run_script(tmp_path, srv.server_address[1], "list")
++    finally:
++        srv.shutdown()
++        srv.server_close()
++    assert done.returncode == 0, done.stderr
++    assert "Traceback" not in done.stderr and done.stdout.startswith("w-") and "-end active" in done.stdout
++    assert "?" in done.stdout and KEY_TEXT not in done.stdout + done.stderr
++
++
++def test_importing_a_workflow_with_such_a_name_also_ends_cleanly(tmp_path: Path) -> None:
++    (tmp_path / "w.json").write_text(
++        '{"name": "w-\\ud83d\\ude00-end", "nodes": [], "connections": {}}', encoding="ascii"
++    )
++    srv = ThreadingHTTPServer(("127.0.0.1", 0), _fixed(200, b"{}"))
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    try:
++        done = _run_script(tmp_path, srv.server_address[1], "import", str(tmp_path / "w.json"))
++    finally:
++        srv.shutdown()
++        srv.server_close()
++    assert done.returncode == 0, done.stderr
++    assert "Traceback" not in done.stderr and "w-?-end 200" in done.stdout.replace("??", "?")
+diff --git a/tests/test_scrub_n8n_export.py b/tests/test_scrub_n8n_export.py
+index d222688..73ebc00 100644
+--- a/tests/test_scrub_n8n_export.py
++++ b/tests/test_scrub_n8n_export.py
+@@ -94,6 +94,26 @@ GONE = [
+     (_u("http", "localhost:80\t@" + RESERVED), ["80", "@", RESERVED]),
+     (_u("HTTPS", "LOCALHOST\t@" + RESERVED.upper()), [RESERVED.upper(), "@"]),
+     ("a " + _u("ws", "localhost\t\t@" + RESERVED) + " b", [RESERVED, "@"]),
++    # any other blank right after a local host, then an at-sign: a browser keeps the blank in the user name and reads
++    # the text after the at-sign as the host (space, VT, FF, NBSP, other Unicode spaces, a run of mixed blanks)
++    (_u("http", "localhost @" + RESERVED), ["@", RESERVED]),
++    (_u("http", "localhost\u00a0@" + RESERVED), ["@", RESERVED, "\u00a0"]),
++    (_u("http", "127.0.0.1 @" + RESERVED), ["@", RESERVED]),
++    (_u("http", "localhost\x0b@" + RESERVED), ["@", RESERVED, "\x0b"]),
++    (_u("http", "localhost\x0c@" + RESERVED), ["@", RESERVED, "\x0c"]),
++    (_u("http", "localhost\u2003@" + RESERVED), ["@", RESERVED, "\u2003"]),
++    (_u("http", "localhost\u3000@" + RESERVED), ["@", RESERVED, "\u3000"]),
++    (_u("http", "localhost\u2028@" + RESERVED), ["@", RESERVED]),
++    (_u("http", "localhost \u00a0\x0b\x0c  @" + RESERVED + "/x"), ["@", RESERVED]),
++    (_u("http", "localhost:5678 @" + RESERVED), ["@", RESERVED, "5678"]),
++    (_u("http", "localhost :80@" + RESERVED), ["80@", RESERVED]),  # a port-like word in the user name
++    (_u("http", "localhost \u200b@" + RESERVED), ["@", RESERVED, "\u200b"]),  # a zero-width space in the user name
++    (_u("http", "localhost\u200b@" + RESERVED), ["@", RESERVED, "\u200b"]),  # a zero-width space is not a blank
++    (_u("http", "localhost @\uff20" + RESERVED), [RESERVED]),  # the full-width at-sign
++    (_u("http", "localhost \uff20" + RESERVED), [RESERVED]),
++    (_u("wss", "LOCALHOST\u00a0@" + RESERVED.upper()), [RESERVED.upper(), "@"]),
++    (_u("http", "localhost\t @" + RESERVED), ["@", RESERVED]),  # a tab and then a space
++    ("go " + _u("http", "localhost @" + RESERVED) + " now", [RESERVED, "@"]),
+     # links that carry code or content
+     ("open javascript:alert(document.cookie) now", ["alert", "cookie"]),
+     ("data:text/plain;base64,QUJDREVGRw== end", ["QUJDREVGRw"]),
+@@ -150,11 +170,53 @@ def test_limit_an_address_without_a_scheme_is_not_cleaned(text: str) -> None:
+     assert _clean(text) == text
+ 
+ 
++# A blank after a complete local address followed by words: not an at-sign look-alike, so nothing is eaten.
++KEEP_AFTER_BLANK = [
++    "see " + _u("http", "localhost:5678/x y"),
++    "see " + _u("http", "localhost:5678/x\u00a0y"),
++    _u("http", "localhost y"),  # a bare local address, a space, a plain word
++    _u("http", "localhost\u00a0words and more"),
++    _u("http", "127.0.0.1\x0bwords"),
++    _u("http", "localhost\u3000words"),
++    _u("http", "localhost:5678 and /x@" + RESERVED),
++    _u("http", "localhost x/y@" + RESERVED),  # a / ends the user name part
++]
++
++
++@pytest.mark.parametrize("text", KEEP_AFTER_BLANK)
++def test_a_blank_after_a_local_address_without_an_at_sign_next_is_not_eaten(text: str) -> None:
++    assert _clean(text) == text
++
++
++def test_the_path_of_a_local_address_ends_the_address_before_a_blank_and_an_at_sign() -> None:
++    assert _clean(_u("http", "localhost:5678/p?q=1 @" + RESERVED)) == "http://localhost:5678/p @" + RESERVED
++
++
++def test_every_character_that_python_reads_as_a_blank_is_covered_right_after_a_local_host() -> None:
++    """Every code point of Unicode that str.isspace() (and so the pattern's \\s) reads as a blank, in front of an
++    at-sign: the host behind it is gone. Checked over the whole code space, not a hand-picked list."""
++    blanks = [chr(c) for c in range(0x110000) if chr(c).isspace()]
++    assert len(blanks) >= 25  # tab, LF, VT, FF, CR, FS..US, space, NEL, NBSP, U+2000.. and so on
++    leaks = [
++        hex(ord(c))
++        for c in blanks
++        for host in ("localhost", "127.0.0.1")
++        if RESERVED in _clean(_u("http", host + c + "@" + RESERVED))
++    ]
++    assert not leaks, leaks
++
++
+ def test_a_line_break_right_after_a_localhost_host_costs_only_the_next_word() -> None:
+     """The smaller safe change: the break and the next run of non-blank characters go, the text after that stays."""
+     assert _clean(_u("http", "localhost") + "\nnext line") == "http://localhost/REPLACE-ME line"
+ 
+ 
++def test_limit_a_bare_local_address_then_a_space_then_an_allowed_e_mail_address_is_replaced_too() -> None:
++    """Stated over-cleaning (docstring and docs/settings.md): the e-mail address next to a bare local address, after a
++    blank, is read as the user name part of that address."""
++    assert _clean(_u("http", "localhost jane@" + RESERVED)) == "http://localhost/REPLACE-ME"
++
++
+ def test_limit_a_secret_inside_the_path_of_a_kept_address_stays() -> None:
+     """Stated limit (docstring and docs/settings.md): only a real ? or # ends the path, so a token written inside the
+     path, or a %3F-encoded query inside it, is kept."""
+@@ -168,38 +230,81 @@ def test_limit_an_address_that_an_expression_completes_loses_its_question_mark()
+     assert _clean('"http://localhost:5678/x?" + $json.q') == '"http://localhost:5678/x" + $json.q'
+ 
+ 
+-# Short phrases that the module text and docs/settings.md must BOTH carry: the two lists of what is not cleaned
+-# (and of the over-cleaning) are one list.
++# Short phrases for the limits and the over-cleaning. The test below requires (1) every phrase in BOTH the module text
++# and docs/settings.md, (2) every item of the module's "NOT cleaned" bullets, and every item of the docs' "Not
++# cleaned" list, to carry at least one of these phrases (so a limit written on one side only, with no phrase here, is
++# caught), and (3) the two over-cleaning sentences to carry theirs.
+ LIMIT_PHRASES = (
+     "an address without a scheme",
+     "a bare host name",
+-    "a path that is not a URL",
++    "a path that is not a url",
+     "percent signs",
+     "a secret inside the path",
+-    "%3F",
++    "%3f",
+     "a data: link without a media type",
+-    "U+FE6B",
++    "u+fe6b",
+     "ideographic full stop",
+     "the keys of a dictionary",
+     "refers to another node by an old name",
+-    "an address that an expression completes",
++)
++OVER_CLEANING_PHRASES = ("an address that an expression completes", "a bare local address, a space and then an e-mail")
++BLANK_PHRASES = (
+     "a tab, a carriage return or a line feed",
++    "a form feed, a no-break space or another unicode space",
++    "an at-sign before any",
+ )
+ 
+ 
+-def test_the_docs_list_of_limits_equals_the_module_list() -> None:
++def _flat(text: str) -> str:
+     import re
+ 
++    return re.sub(r"\s+", " ", text.replace("`", "")).lower()
++
++
++def _items(section: str) -> list[str]:
++    """The list items of a limits section: split at the bullets of the module text and at each ';' that is not inside
++    a pair of brackets."""
++    items, depth, current = [], 0, ""
++    for part in section.replace(" - ", " ; ").split(" "):
++        depth += part.count("(") - part.count(")")
++        if part == ";" and depth == 0:
++            items.append(current.strip())
++            current = ""
++            continue
++        current += " " + part
++        if part.endswith(";") and depth == 0:
++            items.append(current.strip())
++            current = ""
++    items.append(current.strip())
++    return [i for i in items if i]
++
++
++def _limit_sections() -> tuple[str, str, str, str]:
+     import tools.scrub_n8n_export as module
+ 
+-    doc = re.sub(r"\s+", " ", module.__doc__ or "").lower()
+-    settings = re.sub(r"\s+", " ", (REPO / "docs" / "settings.md").read_text(encoding="utf-8")).lower()
++    doc = _flat(module.__doc__ or "")
++    settings = _flat((REPO / "docs" / "settings.md").read_text(encoding="utf-8"))
++    mod_list = doc[doc.index("what is not cleaned") : doc.index("over-cleaning, also by design")]
++    docs_start = settings.index("**not cleaned**")
++    docs_list = settings[docs_start : settings.index("over-cleaning by design", docs_start)]
++    return doc, settings, mod_list, docs_list
++
++
++def test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one() -> None:
++    doc, settings, mod_list, docs_list = _limit_sections()
+     missing = [
+-        (p, "module" if p.lower() not in doc else "docs")
+-        for p in LIMIT_PHRASES
+-        if p.lower() not in doc or p.lower() not in settings
++        (p, "module" if p not in doc else "docs")
++        for p in (*LIMIT_PHRASES, *OVER_CLEANING_PHRASES, *BLANK_PHRASES)
++        if p not in doc or p not in settings
+     ]
+     assert not missing, f"stated in only one of the module text and docs/settings.md: {missing}"
++    for where, section in (("module text", mod_list), ("docs/settings.md", docs_list)):
++        items = _items(section)[1 if where == "module text" else 0 :]  # the module's first piece is only a heading
++        assert len(items) >= 5, (where, items)
++        unlisted = [i for i in items if not any(p in i for p in LIMIT_PHRASES)]
++        assert not unlisted, (
++            f"{where} lists a limit that the shared phrase list does not know (add it to both): {unlisted}"
++        )
+ 
+ 
+ def test_limit_an_ideographic_full_stop_ends_the_domain_of_an_address() -> None:
+@@ -316,6 +421,19 @@ def _worst_shapes(n: int) -> dict[str, str]:
+         "many localhost addresses with a tab": ("http" + "://localhost\t@a ") * (n // 18),
+         "many localhost addresses with a line break": ("http" + "://127.0.0.1:1\n") * (n // 16),
+         "long scheme-like word run before localhost": "a" * (n - 20) + "://localhost\t",
++        # blanks other than tab/CR/LF after the local host (space, VT, FF, NBSP, other Unicode spaces)
++        "localhost, then only spaces": "http" + "://localhost" + " " * (n - 16),
++        "localhost, then only no-break spaces": "http" + "://localhost" + "\u00a0" * (n - 16),
++        "localhost, a long mixed blank run": "http" + "://localhost" + " \x0b\x0c\u00a0\u3000" * ((n - 16) // 5),
++        "localhost, a long blank run, then a tab at the very end": "http" + "://localhost" + " " * (n - 17) + "\t",
++        "localhost, spaces, then a long run without an at-sign": "http" + "://localhost  " + "a" * (n - 18),
++        "localhost, spaces, then a long run, a slash, an at-sign": "http" + "://localhost  " + "a" * (n - 20) + "/@",
++        "localhost, a space, then a long run ending in an at-sign": "http" + "://localhost " + "a" * (n - 17) + "@a",
++        "many localhost addresses, a space, an at-sign": ("http" + "://localhost @a ") * (n // 17),
++        "many localhost addresses, a no-break space, a word": ("http" + "://localhost\u00a0word ") * (n // 22),
++        "many localhost addresses, two spaces, a long word": ("http" + "://127.0.0.1  " + "w" * 40 + " ") * (n // 58),
++        "many localhost addresses with a full-width at-sign": ("http" + "://localhost \uff20a ") * (n // 18),
++        "long scheme-like run, localhost, spaces": "a" * (n - 30) + "://localhost" + " " * 14,
+     }
+ 
+ 
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 3c21ce5..c32c883 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -12,7 +12,12 @@ user:password in front of the host is never allowed) is kept, but only up to the
+ host (file://localhost/..., postgres://localhost/..., ftp://localhost/...) is replaced whole.
+ A tab, a carriage return or a line feed right after a localhost host (a browser ignores
+ it, so `http://localhost<TAB>@host` reads as user localhost at host) makes the address a look-alike: that address, the
+-break and the next run of non-blank characters are replaced whole.
++break and the next run of non-blank characters are replaced whole. Any other blank right after a localhost host (a
++space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it as part of the user
++name) does the same, but only when the next run of non-blank characters holds an at-sign before any / ? or #
++(`http://localhost @host`, `http://localhost :80@host`); a plain `http://localhost:5678/x y` or `http://localhost y`
++(words after a space) is not touched. A zero-width space is not a blank: `http://localhost<ZWSP>@host` is read as one
++word and replaced as a look-alike by the ordinary rule.
+ Never kept: webhook ids (the id field). The webhook PATH is kept as it is, so a secret written inside a path stays.
+ What is NOT cleaned (the free text of a name or a parameter is not parsed), stated plainly:
+  - an address without a scheme, such as //host/path or host:5432; a bare host name or IP address; a path that is not a
+@@ -26,7 +31,8 @@ What is NOT cleaned (the free text of a name or a parameter is not parsed), stat
+  - an expression inside a node name that refers to another node by an old name when two names became the same (the
+    second gets " (2)").
+ Over-cleaning, also by design: an address that an expression completes, such as "http://localhost:5678/x?" + $json.q,
+-is read as a plain address and loses its "?" and what follows on the same run of characters.
++is read as a plain address and loses its "?" and what follows on the same run of characters. Likewise a bare local
++address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ Check the output by eye before it goes into a public repo.
+ 
+ Usage: python -m tools.scrub_n8n_export in.json out.json
+@@ -74,11 +80,17 @@ URL = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.-]{0,31}:(?:\\?/){2}|(?:https?|ftps?|w
+ _LOCAL_WEB = re.compile(
+     r"((?:https?|wss?)://(?:localhost|127\.0\.0\.1)(?::[0-9]+)?)(?=[/?#]|\Z)([^?#]*)[?#]?.*\Z", re.DOTALL
+ )
+-# A tab, CR or LF right after a local host: browsers drop it, so what follows reads as part of the same address.
+-# The whole thing (scheme, host, the break and the next run of non-blank characters) is replaced; linear: no
+-# nested repetition, fixed prefix.
++# A blank right after a local host. Tab, CR and LF: browsers drop them, so what follows reads as part of the same
++# address. Any other blank (space, VT, FF, NBSP, other Unicode spaces; \s): a browser keeps it as part of the user
++# name, so it only matters when the next run of non-blank characters holds an at-sign before any / ? or # (then the
++# text after it is the real host); a plain "http://localhost:5678/x y" or "http://localhost y" stays out. The whole
++# thing (scheme, host, the blanks and the next non-blank run) is replaced. Linear: no nested repetition, a fixed
++# prefix, one blank run and one non-blank run per start; the look-ahead reads at most the next non-blank run.
++_AT = "@\uff20"
+ _LOCAL_BROKEN = re.compile(
+-    r"[A-Za-z][A-Za-z0-9+.-]{0,31}:(?:\\?/){2}(?:localhost|127\.0\.0\.1)(?::[0-9]*)?[\t\r\n]+[^\s\"'<>]*", re.IGNORECASE
++    r"[A-Za-z][A-Za-z0-9+.-]{0,31}:(?:\\?/){2}(?:localhost|127\.0\.0\.1)(?::[0-9]*)?"
++    r"(?:\s*[\t\r\n]\s*|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))[^\s\"'<>]*",
++    re.IGNORECASE,
+ )
+ # links that carry content or code instead of a host
+ ACTIVE_LINK = re.compile(

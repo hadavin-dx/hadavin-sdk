@@ -1,0 +1,17 @@
+$ scratch /tmp/work/c3-mut2 = head 40d5668 + speed + five patches + new tests/test_standins_body_before_answer.py; each stand-in gets the body read removed (one at a time); pytest -q tests/test_standins_body_before_answer.py
+--- baseline
+7 passed in 6.81s
+--- MUTANT support.StubSender does not read the body
+FAILED tests/test_standins_body_before_answer.py::test_support_stub_sender_reads_the_body_first[status]
+FAILED tests/test_standins_body_before_answer.py::test_support_stub_sender_reads_the_body_first[garbage]
+2 failed, 5 passed in 7.48s
+--- MUTANT test_hubspot_probe.Stub does not read the body
+FAILED tests/test_standins_body_before_answer.py::test_hubspot_probe_stub_reads_the_body_first[POST /crm/v3/objects/contacts HTTP/1.1-201]
+FAILED tests/test_standins_body_before_answer.py::test_hubspot_probe_stub_reads_the_body_first[PATCH /crm/v3/objects/contacts/1 HTTP/1.1-200]
+2 failed, 5 passed in 7.19s
+--- MUTANT test_load_tools._Desk does not read the body
+FAILED tests/test_standins_body_before_answer.py::test_load_tools_desk_stand_in_reads_the_body_first
+1 failed, 6 passed in 6.95s
+--- MUTANT test_portal_demo.Stub does not read the body
+FAILED tests/test_standins_body_before_answer.py::test_portal_demo_scripted_stub_reads_the_body_first
+1 failed, 6 passed in 6.97s

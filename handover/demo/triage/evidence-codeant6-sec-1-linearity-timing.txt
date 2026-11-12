@@ -1,0 +1,21 @@
+COMMAND: python3 /tmp/work/c12-time.py (1,000,000-character strings, all shapes of the test's _worst_shapes incl. 12 new blank shapes, each regex and the whole _clean; one run each)
+TREE: /tmp/work/c12 = fresh 0841f36 + four codeant3 patches + codeant3-sec-nits
+2026-11-12T22:26:17Z
+shapes: 40
+URL WORST 0.124 on localhost, spaces, then a long run, a slash, an at-sign
+MAIL WORST 0.055 on one @ then dotted labels
+ACTIVE WORST 0.044 on data: prefixes
+LOCAL_BROKEN WORST 0.374 on long word run, then a character that does not match
+_clean WORST 0.442 on localhost, spaces, then a long run without an at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.03, 0.061, 0.121] localhost, then only spaces
+LOCAL_BROKEN sizes 250k/500k/1M: [0.033, 0.066, 0.132] localhost, then only no-break spaces
+LOCAL_BROKEN sizes 250k/500k/1M: [0.041, 0.083, 0.163] localhost, a long mixed blank run
+LOCAL_BROKEN sizes 250k/500k/1M: [0.0, 0.001, 0.001] localhost, a long blank run, then a tab at the very end
+LOCAL_BROKEN sizes 250k/500k/1M: [0.08, 0.16, 0.358] localhost, spaces, then a long run without an at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.095, 0.199, 0.322] localhost, spaces, then a long run, a slash, an at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.002, 0.005, 0.01] localhost, a space, then a long run ending in an at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.004, 0.008, 0.015] many localhost addresses, a space, an at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.018, 0.037, 0.074] many localhost addresses, a no-break space, a word
+LOCAL_BROKEN sizes 250k/500k/1M: [0.045, 0.09, 0.18] many localhost addresses, two spaces, a long word
+LOCAL_BROKEN sizes 250k/500k/1M: [0.004, 0.008, 0.016] many localhost addresses with a full-width at-sign
+LOCAL_BROKEN sizes 250k/500k/1M: [0.067, 0.135, 0.268] long scheme-like run, localhost, spaces

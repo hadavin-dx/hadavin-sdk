@@ -1,0 +1,12 @@
+$ fresh clone of origin pr-3-tests 40d5668 (speed patch is NOT in it: _body_read count 0 in demo_only/fake_hubspot.py)
+speed patch: applies
+codeant2-demo-only alone (no speed): error: patch failed: demo_only/fake_hubspot.py:127
+desk: applies in order
+portal-log: applies in order
+demo-only: applies in order
+tests-hardening: applies in order
+fakes-body: applies in order
+standins-body: applies in order
+All checks passed!
+143 files already formatted
+Success: no issues found in 26 source files

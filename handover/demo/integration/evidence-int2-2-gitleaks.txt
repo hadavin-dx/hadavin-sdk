@@ -1,0 +1,12 @@
+tree 40d566822fba61468c74a7cd57c351079a5b746e
+gitleaks dir on git archive HEAD (/tmp/work/int2-arch), git on fresh clone (/tmp/work/int2-clean, clone HEAD 40d566822fba61468c74a7cd57c351079a5b746e)
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+[90m10:27PM[0m [32mINF[0m [1mscanned ~2849301 bytes (2.85 MB) in 399ms[0m
+[90m10:27PM[0m [32mINF[0m [1mno leaks found[0m
+exit 0
+$ gitleaks git . (same flags)
+[90m10:27PM[0m [32mINF[0m [1mUnknown SCM platform. Use --platform to include links in findings.[0m [36mhost=[0m
+[90m10:27PM[0m [32mINF[0m [1m13 commits scanned.[0m
+[90m10:27PM[0m [32mINF[0m [1mscanned ~2869790 bytes (2.87 MB) in 428ms[0m
+[90m10:27PM[0m [32mINF[0m [1mno leaks found[0m
+exit 0

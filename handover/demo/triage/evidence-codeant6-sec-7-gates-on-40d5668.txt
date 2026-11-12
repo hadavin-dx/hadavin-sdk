@@ -1,0 +1,27 @@
+fresh clone of 40d5668 + triage/codeant3-sec-nits.patch  2026-11-12T22:28:41Z
+84c3f1526cc638c6fa4e96b2822f05db98cb9465b05bb64308028fdf2752dfbb  /tmp/demo-wt/handover/demo/triage/codeant3-sec-nits.patch
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+135 files already formatted
+$ mypy linux
+Success: no issues found in 26 source files
+$ mypy win32
+Success: no issues found in 26 source files
+$ bandit -ll
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+$ gitleaks dir .
+[90m10:28PM[0m [32mINF[0m [1mscanned ~2877442 bytes (2.88 MB) in 349ms[0m
+[90m10:28PM[0m [33mWRN[0m [1mleaks found: 4[0m
+exit 0
+$ pytest focused (hygiene, n8n_api_url, scrub, reset_ps1_links, n8n proof)
+........................................................................ [ 85%]
+..............................................................           [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_n8n_api_url.py:516: root (and Windows) can read a file with no permissions
+421 passed, 1 skipped in 53.92s

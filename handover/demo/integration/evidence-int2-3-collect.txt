@@ -1,0 +1,5 @@
+tree 40d566822fba61468c74a7cd57c351079a5b746e
+$ pytest tests --collect-only -q | tail -3
+tests/test_vendor_hosts.py::test_no_vendor_host_name_outside_constants_py
+
+2922 tests collected in 2.48s

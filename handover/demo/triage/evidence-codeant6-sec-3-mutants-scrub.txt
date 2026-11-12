@@ -1,0 +1,56 @@
+MUTANTS on the fixed tree (/tmp/work/c12 copy); each must FAIL the named tests; date 2026-11-12T22:23:18Z
+=== MUTANT M1-blank-rule-unconditional: tools/scrub_n8n_export.py: [|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))] -> [|\s+)]
+.                                                                        [100%]
+1 passed, 252 deselected in 0.05s
+=== MUTANT M2-only-tab-cr-lf: tools/scrub_n8n_export.py: [|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))] -> [)]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost @example.test-must_not_remain27]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 27 passed, 195 deselected in 0.06s
+=== MUTANT M3-lookahead-ignores-slash: tools/scrub_n8n_export.py: [[^\s" + _AT + r"/?#\"] -> [[^\s" + _AT + r"\"]
+
+253 deselected in 0.04s
+=== MUTANT M4-quadratic-lookahead: tools/scrub_n8n_export.py: [(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"])] -> [(?=.*[" + _AT + r"])]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_LOCAL_BROKEN]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 110.31s (0:01:50)
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+AssertionError: ('_AT = "@＠"', 0)
+MUTANT M5-fullwidth-at-ignored: edit failed
+=== MUTANT M1-blank-rule-unconditional: tools/scrub_n8n_export.py: [|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))] -> [|\s+)]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_a_blank_after_a_local_address_without_an_at_sign_next_is_not_eaten[http://localhost y-http://localhost y]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed, 243 deselected in 0.08s
+=== MUTANT M3-lookahead-ignores-slash: tools/scrub_n8n_export.py: [[^\s" + _AT + r"/?#\"] -> [[^\s" + _AT + r"\"]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_a_blank_after_a_local_address_without_an_at_sign_next_is_not_eaten[http://localhost x/y@example.test-http://localhost x/y@example.test]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed, 244 deselected in 0.05s
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+AssertionError: ('_AT = "@＠"', 0)
+MUTANT M5-fullwidth-at-ignored: edit failed
+=== MUTANT M5-fullwidth-at-ignored: tools/scrub_n8n_export.py: [_AT = "@] -> [_AT = "@" #]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost \uff20example.test-must_not_remain41]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 41 passed, 195 deselected in 0.06s
+RE-RUN on the 40d5668 tree (/tmp/work/c13) after the keep-rows were rewritten: date 2026-11-12T22:28:33Z
+=== MUTANT M1-blank-rule-unconditional: tools/scrub_n8n_export.py: [|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))] -> [|\s+)]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_a_blank_after_a_local_address_without_an_at_sign_next_is_not_eaten[http://localhost y]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed, 245 deselected in 0.05s
+=== MUTANT M3-lookahead-ignores-slash: tools/scrub_n8n_export.py: [[^\s" + _AT + r"/?#\"] -> [[^\s" + _AT + r"\"]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_a_blank_after_a_local_address_without_an_at_sign_next_is_not_eaten[http://localhost x/y@example.test]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed, 246 deselected in 0.04s
+=== MUTANT M2-only-tab-cr-lf: tools/scrub_n8n_export.py: [|\s+(?=[^\s" + _AT + r"/?#\"'<>]*[" + _AT + r"]))] -> [)]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_every_character_that_python_reads_as_a_blank_is_covered_right_after_a_local_host
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 253 deselected in 0.10s

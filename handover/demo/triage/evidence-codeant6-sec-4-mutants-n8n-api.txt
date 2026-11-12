@@ -1,0 +1,31 @@
+MUTANTS n8n_api.py on the fixed tree; each must FAIL the named tests; date 2026-11-12T22:25:34Z
+=== MUTANT N1-no-port-range: scripts/n8n_api.py: [not 1 <= int(shape.group(2)[1:]) <= MAX_PORT] -> [False]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:65536]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 25 passed, 89 deselected in 0.09s
+=== MUTANT N2-no-netloc-shape: scripts/n8n_api.py: [if shape is None or (] -> [if shape is not None and (]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:80\\example.test]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 19 passed, 89 deselected in 0.11s
+=== MUTANT N3-no-RuntimeError-on-answer: scripts/n8n_api.py: [except RuntimeError:  # RecursionError: JSON] -> [except ZeroDivisionError:  # RecursionError: JSON]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_a_200_answer_nested_a_hundred_thousand_levels_deep_is_a_clean_message
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 136 deselected in 1.49s
+=== MUTANT N4-say-strict: scripts/n8n_api.py: [errors="replace").decode(encoding, errors="replace")] -> [errors="strict").decode(encoding, errors="strict")]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_question_marks[lone surrogate]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 135 deselected in 0.62s
+=== MUTANT N5-no-key-length-limit: scripts/n8n_api.py: [or len(key) > MAX_KEY or] -> [or]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[one-megabyte-of-printable-letters]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 9 passed, 127 deselected in 0.06s
+=== MUTANT N6-key-read-whole-file-no-dumps-guard: scripts/n8n_api.py: [except (ValueError, TypeError, RuntimeError) as e:  # nested] -> [except ZeroDivisionError as e:  # nested]
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_a_body_that_cannot_be_encoded_is_a_clean_message
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 137 deselected in 0.07s

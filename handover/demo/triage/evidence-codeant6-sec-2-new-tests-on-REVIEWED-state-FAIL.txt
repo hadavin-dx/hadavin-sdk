@@ -1,0 +1,152 @@
+COMMAND: (cd /tmp/work/c12-old && pytest tests/test_n8n_api_url.py tests/test_scrub_n8n_export.py)  reviewed state (0841f36 + 4 patches) code + docs, NEW test files
+2026-11-12T22:22:19Z
+text = 'http://localhost\x0c@example.test'
+must_not_remain = ['@', 'example.test', '\x0c']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost\u2003@example.test-must_not_remain32] _
+text = 'http://localhost\u2003@example.test'
+must_not_remain = ['@', 'example.test', '\u2003']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost\u3000@example.test-must_not_remain33] _
+text = 'http://localhost\u3000@example.test'
+must_not_remain = ['@', 'example.test', '\u3000']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost\u2028@example.test-must_not_remain34] _
+text = 'http://localhost\u2028@example.test'
+must_not_remain = ['@', 'example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost \xa0\x0b\x0c  @example.test/x-must_not_remain35] _
+text = 'http://localhost \xa0\x0b\x0c  @example.test/x'
+must_not_remain = ['@', 'example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost:5678 @example.test-must_not_remain36] _
+text = 'http://localhost:5678 @example.test'
+must_not_remain = ['@', 'example.test', '5678']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost :80@example.test-must_not_remain37] _
+text = 'http://localhost :80@example.test'
+must_not_remain = ['80@', 'example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost \u200b@example.test-must_not_remain38] _
+text = 'http://localhost \u200b@example.test'
+must_not_remain = ['@', 'example.test', '\u200b']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost @\uff20example.test-must_not_remain40] _
+text = 'http://localhost @＠example.test', must_not_remain = ['example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost \uff20example.test-must_not_remain41] _
+text = 'http://localhost ＠example.test', must_not_remain = ['example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[wss://LOCALHOST\xa0@EXAMPLE.TEST-must_not_remain42] _
+text = 'wss://LOCALHOST\xa0@EXAMPLE.TEST'
+must_not_remain = ['EXAMPLE.TEST', '@']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[http://localhost\t @example.test-must_not_remain43] _
+text = 'http://localhost\t @example.test'
+must_not_remain = ['@', 'example.test']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_addresses_of_any_kind_are_replaced[go http://localhost @example.test now-must_not_remain44] _
+text = 'go http://localhost @example.test now'
+must_not_remain = ['example.test', '@']
+    @pytest.mark.parametrize(("text", "must_not_remain"), GONE)
+    def test_addresses_of_any_kind_are_replaced(text: str, must_not_remain: list[str]) -> None:
+        out = _clean(text)
+tests/test_scrub_n8n_export.py:159: AssertionError
+_ test_limit_a_bare_local_address_then_a_space_then_an_allowed_e_mail_address_is_replaced_too _
+    def test_limit_a_bare_local_address_then_a_space_then_an_allowed_e_mail_address_is_replaced_too() -> None:
+        """Stated over-cleaning (docstring and docs/settings.md): the e-mail address next to a bare local address, after a
+        blank, is read as the user name part of that address."""
+tests/test_scrub_n8n_export.py:200: AssertionError
+_ test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one _
+    def test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one() -> None:
+        doc, settings, mod_list, docs_list = _limit_sections()
+        missing = [
+            (p, "module" if p not in doc else "docs")
+            for p in (*LIMIT_PHRASES, *OVER_CLEANING_PHRASES, *BLANK_PHRASES)
+            if p not in doc or p not in settings
+        ]
+tests/test_scrub_n8n_export.py:279: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:80\\example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:80:80]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://[::1]:80:80]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:99999999999]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:65536]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:0]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:00000]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://example.test:99999999999/x]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://example.test:65536]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:\u0665]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:+80]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://127.0.0.1:8_0]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[http://[::1]:99999]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://a_b.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://b\xfccher.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://example.test%2f]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://example.test;x]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_file_is_opened[https://example.test!]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[one-megabyte-of-printable-letters]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[just-over-the-length-limit]
+FAILED tests/test_n8n_api_url.py::test_a_200_answer_nested_a_hundred_thousand_levels_deep_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_a_body_that_cannot_be_encoded_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_question_marks[lone surrogate]
+FAILED tests/test_n8n_api_url.py::test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_question_marks[emoji]
+FAILED tests/test_n8n_api_url.py::test_importing_a_workflow_with_such_a_name_also_ends_cleanly
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost @example.test-must_not_remain27]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\xa0@example.test-must_not_remain28]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://127.0.0.1 @example.test-must_not_remain29]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\x0b@example.test-must_not_remain30]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\x0c@example.test-must_not_remain31]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\u2003@example.test-must_not_remain32]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\u3000@example.test-must_not_remain33]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\u2028@example.test-must_not_remain34]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost \xa0\x0b\x0c  @example.test/x-must_not_remain35]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost:5678 @example.test-must_not_remain36]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost :80@example.test-must_not_remain37]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost \u200b@example.test-must_not_remain38]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost @\uff20example.test-must_not_remain40]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost \uff20example.test-must_not_remain41]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[wss://LOCALHOST\xa0@EXAMPLE.TEST-must_not_remain42]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[http://localhost\t @example.test-must_not_remain43]
+FAILED tests/test_scrub_n8n_export.py::test_addresses_of_any_kind_are_replaced[go http://localhost @example.test now-must_not_remain44]
+FAILED tests/test_scrub_n8n_export.py::test_limit_a_bare_local_address_then_a_space_then_an_allowed_e_mail_address_is_replaced_too
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+46 failed, 344 passed, 1 skipped in 43.08s

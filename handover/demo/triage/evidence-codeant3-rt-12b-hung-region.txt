@@ -1,0 +1,5 @@
+$ cd /tmp/work/c3-final: pytest -v -p no:cacheprovider tests/test_hung_adapter_calls.py tests/test_hung_model_call.py (timeout 110; the region where the full run showed 1 F and then stalled)
+tests/test_hung_model_call.py::test_hung_tries_end_in_failed PASSED      [ 69%]
+tests/test_hung_model_call.py::test_crm_down_runs_to_failed PASSED       [ 94%]
+============================= 68 passed in 15.96s ==============================
+exit=0

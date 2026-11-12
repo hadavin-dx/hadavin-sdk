@@ -1,0 +1,39 @@
+tree 40d566822fba61468c74a7cd57c351079a5b746e
+$ /usr/bin/python3.12 -m venv /tmp/work/int2-venv; pip install --require-hashes --only-binary=:all: -r requirements-dev.txt; -r requirements-browser.txt; pip check; pip freeze
+  Using cached stevedore-5.9.1-py3-none-any.whl (54 kB)
+Collecting typing-extensions==4.16.0 (from -r requirements-dev.txt (line 404))
+  Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Installing collected packages: typing-extensions, stevedore, ruff, pyyaml, pygments, pluggy, pathspec, packaging, mypy-extensions, mdurl, librt, iniconfig, ast-serialize, pytest, mypy, markdown-it-py, rich, bandit
+Successfully installed ast-serialize-0.13.1 bandit-1.9.4 iniconfig-2.3.1 librt-0.16.0 markdown-it-py-4.2.0 mdurl-0.1.2 mypy-2.4.1 mypy-extensions-1.2.0 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-9.2.0 pyyaml-6.0.3 rich-15.0.0 ruff-0.17.4 stevedore-5.9.1 typing-extensions-4.16.0
+exit 0
+Collecting pyee==13.0.1 (from -r requirements-browser.txt (line 94))
+  Using cached pyee-13.0.1-py3-none-any.whl (15 kB)
+Requirement already satisfied: typing-extensions==4.16.0 in /tmp/work/int2-venv/lib/python3.12/site-packages (from -r requirements-browser.txt (line 98)) (4.16.0)
+Installing collected packages: pyee, greenlet, playwright
+Successfully installed greenlet-3.5.6 playwright-1.63.0 pyee-13.0.1
+exit 0
+$ pip check
+No broken requirements found.
+exit 0
+Python 3.12.3
+ast_serialize==0.13.1
+bandit==1.9.4
+greenlet==3.5.6
+iniconfig==2.3.1
+librt==0.16.0
+markdown-it-py==4.2.0
+mdurl==0.1.2
+mypy==2.4.1
+mypy_extensions==1.2.0
+packaging==26.3
+pathspec==1.1.1
+playwright==1.63.0
+pluggy==1.7.0
+pyee==13.0.1
+Pygments==2.21.0
+pytest==9.2.0
+PyYAML==6.0.3
+rich==15.0.0
+ruff==0.17.4
+stevedore==5.9.1
+typing_extensions==4.16.0

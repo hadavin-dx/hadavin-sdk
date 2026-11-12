@@ -1,0 +1,8 @@
+tree 40d566822fba61468c74a7cd57c351079a5b746e
+$ timeout 2700 python -m pytest -q -p no:cacheprovider -rs tests   (PATH has /opt/node22/bin, PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, venv, no GITLEAKS_BIN)
+uptime before:  22:28:01 up  3:37,  0 user,  load average: 2.08, 0.97, 1.06
+Thu Nov 12 22:28:01 UTC 2026
+........................................................................ [  2%]
+........................................................................ [  4%]
+........................................................................ [  7%]
+..............................

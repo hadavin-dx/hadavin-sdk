@@ -1,0 +1,14 @@
+NIT 2 vacuity proof. Mutant: _read_key prints a stack trace, the word Traceback and the key text to stderr before refusing (the first 6 BAD_KEYS rows contain 'made-up-key'). 2026-11-12T22:25:48Z
+--- OLD form of the test (two capsys.readouterr() calls, as in the reviewed patch :701), run on the MUTANT:
+...........                                                              [100%]
+11 passed, 127 deselected in 0.08s
+--- FIXED test (one readouterr() call, asserts no Traceback / key / URL), run on the same MUTANT:
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[space-inside]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[delete-char]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[latin-1-letter]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[one-megabyte-of-printable-letters]
+FAILED tests/test_n8n_api_url.py::test_a_malformed_key_file_is_refused_with_a_fixed_message_that_does_not_show_the_key[just-over-the-length-limit]
+9 failed, 2 passed, 127 deselected in 0.13s
+--- FIXED test on the unmutated fixed tree:
+...........                                                              [100%]
+11 passed, 127 deselected in 0.04s

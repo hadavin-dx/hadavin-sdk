@@ -1,0 +1,33 @@
+MUTANTS for the docs-vs-module limit list; date 2026-11-12T22:25:55Z
+=== MUTANT D1-docs-drops-the-percent-signs-limit: docs/settings.md: [, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`)] -> []
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 0.05s
+=== MUTANT D2-docs-drops-the-dictionary-keys-bullet: docs/settings.md: [; the keys of a dictionary inside node parameters (only the values are cleaned)] -> []
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 0.05s
+=== MUTANT D3-docs-drops-the-blank-rule: docs/settings.md: [Any other blank right after a `localhost` host] -> [Another thing after a `localhost` host]
+.                                                                        [100%]
+1 passed, 252 deselected in 0.04s
+=== MUTANT D4-module-gains-a-new-limit-bullet-without-the-docs: tools/scrub_n8n_export.py: [ - an expression inside a node name] -> [ - a second made-up limit that only the module lists.
+ - an expression inside a node name]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 0.05s
+=== MUTANT D5-docs-gains-a-new-limit-item-only-there: docs/settings.md: [; and, in a node name,] -> [; a third made-up limit that only the docs list; and, in a node name,]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 0.05s
+=== MUTANT D3b-docs-drops-the-no-break-space-mention: docs/settings.md: [a form feed, a no-break space or another] -> [a form feed or another]
+.                                                                        [100%]
+1 passed, 252 deselected in 0.05s
+=== MUTANT D3b-docs-drops-the-no-break-space-mention: docs/settings.md: [a form feed, a no-break space or another] -> [a form feed or another]
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_the_docs_and_the_module_text_carry_the_same_limit_phrases_and_every_listed_limit_has_one
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 252 deselected in 0.06s
