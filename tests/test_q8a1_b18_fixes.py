@@ -68,7 +68,9 @@ def test_the_runner_copies_every_repo_root_file_a_test_reads():
         f"a test reads a repo-root file that is not in ROOT_FILES, so a mutation copy cannot hold it: {missing}"
     )
     # the pinned names are really named, so a stale row is found (batch 19, Issue 9c)
-    assert sorted(n for n in NOT_COPIED if n not in named) == [], (
+    # only a name that exists at the root is looked for: in a mutation copy the root has no `.github`, `uv.lock` or `handover`, so
+    # `named` cannot hold them there (the baseline of the runner runs this test in a copy)
+    assert sorted(n for n in NOT_COPIED if (ROOT / n).exists() and n not in named) == [], (
         "NOT_COPIED names a name no test file holds"
     )
 
