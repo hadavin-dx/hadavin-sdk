@@ -99,14 +99,14 @@ ERRORS = {
 }
 
 
-@pytest.mark.parametrize("stage", ["client-is-built", "token-is-asked-for"])
+@pytest.mark.parametrize("step", ["client-is-built", "token-is-asked-for"])
 @pytest.mark.parametrize("which", sorted(ERRORS))
-def test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error(monkeypatch, which, stage):
+def test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error(monkeypatch, which, step):
     """Round 18 groups 1 and 2: any error of either step of the sign-in (not two library types) becomes `SignInError`, a
     `ConfigError`, naming only the class, with no other error on `__context__` or `__cause__`, and no connection is tried.
     On aac26d60 the library types were converted but kept on `__context__`, and the other types came out raw (exit 3)."""
     error = ERRORS[which]()
-    if stage == "token-is-asked-for":
+    if step == "token-is-asked-for":
         _a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
     else:
         import boto3
@@ -123,12 +123,12 @@ def test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error(monkeypat
     assert_no_channel(err, WORDS)
 
 
-@pytest.mark.parametrize("stage", ["client-is-built", "token-is-asked-for"])
+@pytest.mark.parametrize("step", ["client-is-built", "token-is-asked-for"])
 @pytest.mark.parametrize("signal", [KeyboardInterrupt, SystemExit])
-def test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal(monkeypatch, signal, stage):
+def test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal(monkeypatch, signal, step):
     """Round 18 group 2: the conversion takes `Exception`, never `BaseException` (a Ctrl-C or an exit must still stop the
     process as itself). Control for the catch: passes on aac26d60 too (it caught two library types only)."""
-    if stage == "token-is-asked-for":
+    if step == "token-is-asked-for":
         _a_cloud_sdk_whose_token_request_fails(monkeypatch, signal())
     else:
         import boto3
