@@ -176,5 +176,7 @@ def test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant():
         check=False,
         timeout=120,
     )
-    assert done.returncode == 2, (done.returncode, done.stdout[-200:], done.stderr[-200:])
+    assert done.returncode == 2, (
+        f"the mutants script exits {done.returncode} (not 2) when the filter selects no mutant: {done.stdout[-200:]!r} {done.stderr[-200:]!r}"
+    )
     assert "nothing was run" in done.stderr

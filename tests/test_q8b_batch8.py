@@ -164,12 +164,16 @@ def test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value():
 # ---- Issue 3: a key of two words (a bare word and one more) with an ordinary word in it ---------------------------------
 
 ORDINARY_TWO_WORD_KEYS = (
-    "possession_id", "obsession_id", "bypass_key", "compass_code", "bypass_value", "bypass-code", "obsession_key",
-    "possession_value", "bypasskey", "compasscode", "bypassphrase",
+    "possession_id", "obsession_id", "compass_code", "obsession_key", "possession_value", "compasscode",
+    "compass_key", "overpass_value", "encompass_phrase",
 )  # fmt: skip
 TWO_WORD_CREDENTIALS = (
     "xbypass_key", "bypasspass_key", "xbypasskey", "xcompass_code", "session_id", "sessionid", "pass_code",
     "passkey", "auth_value", "passphrase",
+    # Round 9 (Issue 6): `bypass` with a second word of the `pass` pairs, and the protection-bypass header name, are credential names
+    # (they were pinned readable here in round 8: a deployment bypass secret was shown). A bare `bypass` stays readable (see below).
+    "bypass_key", "bypass_value", "bypass-code", "bypasskey", "bypassphrase", "bypass_phrase", "bypasscode",
+    "x-vercel-protection-bypass", "protection-bypass", "protectionBypass",
 )  # fmt: skip
 
 
@@ -261,10 +265,18 @@ def test_b8_4_the_generic_flag_takes_a_scheme_word_with_its_token():
 def test_b8_4_the_generic_flags_keep_the_one_word_rule_and_so_does_a_value_that_is_no_scheme_word_and_a_word():
     """Issue 11: `--password a b` shows `b` (a stated design choice); `--authorization` with a first word that holds a digit is a
     token on its own (one word), `--authorization abc file.txt` is a scheme word and a word (both masked: the cost)."""
-    assert clean(f"run --password {V} {W} now") == f"run --password <SECRET_1> {W} now"
-    assert clean(f"run --authorization {V} {W} now") == f"run --authorization <SECRET_1> {W} now"
-    assert "file.txt" not in clean("run --authorization abc file.txt now")
-    assert clean(f"run --bearer {V}=1 now") != f"run --bearer {V}=1 now"
+    assert clean(f"run --password {V} {W} now") == f"run --password <SECRET_1> {W} now", (
+        "a flag other than the authorization flags takes a scheme word and its token: the one word rule is gone"
+    )
+    assert clean(f"run --authorization {V} {W} now") == f"run --authorization <SECRET_1> {W} now", (
+        "the authorization flag does not keep the one word rule for a first word that holds a digit"
+    )
+    assert "file.txt" not in clean("run --authorization abc file.txt now"), (
+        "a scheme word and a word are not both masked"
+    )
+    assert clean(f"run --bearer {V}=1 now") != f"run --bearer {V}=1 now", (
+        "the bearer flag leaves its value readable"
+    )
 
 
 # ---- Issue 5: six words in front of a credential flag, and the time it costs on hostile text -----------------------------
@@ -380,11 +392,12 @@ def test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked
         for n in (9, 10, 40):
             key = word + "1234567890" * (n // 10) + "1" * (n % 10)
             assert R.sensitive(key), key
-            forms = ["ran --{k} {v} --verbose", "ran --{k}={v} --verbose"]
-            if (
-                n <= 20
-            ):  # the text key rule reads at most 20 more key characters after the key word (stated in LIMITS)
-                forms += ["cfg {k}={v} end", "cfg {k}: {v} end"]
+            forms = [
+                "ran --{k} {v} --verbose",
+                "ran --{k}={v} --verbose",
+                "cfg {k}={v} end",
+                "cfg {k}: {v} end",
+            ]  # batch 9: the digits are no longer cut at 20, so the key rule reads every length
             for tmpl in forms:
                 left += [f"{key} {tmpl}: {x}" for x in readable_on(tmpl.format(k=key, v=V), V)]
     assert not left, (
@@ -408,6 +421,8 @@ COOKIE_WORD_KEYS = (
     "cookieName",
     "Cookie_Name",
     "set-cookie-extra",
+    "cookie2",
+    "cookie_name2",
 )
 
 

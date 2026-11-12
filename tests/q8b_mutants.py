@@ -38,6 +38,7 @@ BATCH6 = "test_q8b_batch6.py"
 BATCH7 = "test_q8b_batch7.py"
 BATCH8 = "test_q8b_batch8.py"
 LINES8 = "test_q8b_batch8_lines.py"
+BATCH9 = "test_q8b_batch9.py"
 K5R11 = "test_k5_round11.py"
 K5PROD = "test_k5_producers.py"
 META = "test_mutation_runner_meta.py"
@@ -131,7 +132,7 @@ M = [
         "        return [_walk(v, f, key, sens, budget) for v in obj]",
         "        return [_walk(v, f, key, secret_data, budget) for v in obj]",
         CASE_TESTS, "test_n1_a_list_under_a_setting_key", "a value under a setting key was shown"),
-    mutant("M17 hook brackets again", CHANNEL, "sanitise_text(text, defang=False)", "sanitise_text(text, defang=True)",
+    mutant("M17 hook brackets again", CHANNEL, 'sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=False)', 'sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=True)',
         CARD_TESTS, "test_n4_an_address_outside_code", "an identifier is readable on the card"),
     mutant("M18 last step removed", CHANNEL,
         "    return defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))",
@@ -163,7 +164,7 @@ M = [
     mutant("M26 address read without any key guard", REDACT,
         '    + _NOT_GLUED_KEY\n    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + _NOT_GLUED_KEY\n    + r"[A-Za-z]){2,}(?:\\b|(?="\n    + GLUED_KEY\n    + "))"', '    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + r"[A-Za-z]){2,}\\b"',
         BATCH, "test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked", "glued to a key is readable"),
-    mutant('M27 Authorization boundary back', REDACT, r'''r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+[ \t]+)?("''', r'''r"(?i)\bauthorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+[ \t]+)?("''',
+    mutant('M27 Authorization boundary back', REDACT, r'''r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"''', r'''r"(?i)\bauthorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"''',
         GLUED_TESTS, 'test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote', 'glued to a credential key is readable'),
     mutant("M28 ARN guard case-sensitive", REDACT, '    r"(?:(?i:(?![\\w.\\-*+@]{0,"', '    r"(?:(?:(?![\\w.\\-*+@]{0,"',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
@@ -430,17 +431,18 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
     mutant('M129 a line break does not end a Digest header value', REDACT, r'''|[\"']?digest[ \t]+([^\r\n]{8,}))''', r'''|[\"']?digest\s+([^\r\n]{8,}))''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Digest does not end the header value'),
-    mutant('M130 a line break does not end a Basic header value', REDACT, r'''\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})''', r'''\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})''',
+    mutant('M130 a line break does not end a Basic header value', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Basic does not end the header value'),
     mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
     mutant('M132 the ordinary look-behind of a guarded pair need not start a word (a real key turns readable)', REDACT, r'''        r"(?<!(?<![a-z0-9])" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)''', r'''        r"(?<!" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)''',
         BATCH8, 'test_b8_3_a_real_two_word_credential_key_is_never_hidden_by_the_ordinary_look_behind', 'a credential key became readable'),
-    mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''(?:(?i:--(?:(?:set|session)[_\-])?cookie)|-b)''', r'''(?:(?i:--(?:(?:set)[_\-])?cookie)|-b)''',
+    mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie",)''',
         BATCH8, 'test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value', 'an exact cookie flag leaves its value readable'),
+    # M145, M150 and M151 were never assigned in batch 8 (no mutant has those numbers; the controls file reads the table, not the numbers).
     # ---- batch 8, Issue 13: one planted fault for each K5 round 11 / producers / runner control that passed on old code ----
     mutant('M133 a card text is redacted with no neutralising hook', CHANNEL, r'''runmap.redact_text(text, mapping, neutralise=_neutralise)''', r'''runmap.redact_text(text, mapping)''',
-        K5R11, 'test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook', 'channel.py:'),
+        K5R11, 'test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook', 'a card text is redacted with no neutralise hook'),
     mutant('M134 a card sanitiser is called outside the card files', "guard/judge.py", r'''        text = runmap.redact_text(text, {})
         reply = self.llm.chat(''', r'''        text = sanitise_text(runmap.redact_text(text, {}))
         reply = self.llm.chat(''',
@@ -453,7 +455,7 @@ def _neutralise(text: str) -> str:
     return withhold_commands''',
         K5R11, 'test_the_bare_redactor_ban_also_catches_an_aliased_import', 'approvals/channel.py:'),
     test_file_mutant('M136 the hook check no longer sees a hook that is None', 'tests/test_k5_round11.py', r'''        return isinstance(n.args[2], ast.Constant) and n.args[2].value is None''', r'''        return False''',
-        K5R11, 'test_the_hook_check_itself_catches_a_missing_none_and_an_alias', 'assert False'),
+        K5R11, 'test_the_hook_check_itself_catches_a_missing_none_and_an_alias', 'the hook check does not see a hook that is None (positional)'),
     mutant('M137 a module that calls a model is not registered', CHANNEL, r'''def _neutralise(text: str) -> str:
     return withhold_commands''', r'''def _neutralise(text: str) -> str:
     _planted_llm.chat(text)
@@ -463,7 +465,7 @@ def _neutralise(text: str) -> str:
     return withhold_commands''', r'''def _neutralise(text: str) -> str:
     _cut = str(text)[:5]
     return withhold_commands''',
-        K5PROD, 'test_no_message_is_cut_with_a_slice_before_it_is_redacted', 'approvals/channel.py:'),
+        K5PROD, 'test_no_message_is_cut_with_a_slice_before_it_is_redacted', 'a message is cut with a slice before it is redacted'),
     mutant('M139 a producer cuts a head slice before it redacts', CHANNEL, r'''    text = text.replace("\x00", "")
     mapping = _seeded(text)''', r'''    text = text.replace("\x00", "")
     _head = text[:5]
@@ -474,13 +476,13 @@ def _neutralise(text: str) -> str:
     mutant('M141 the stored call record keeps the raw argument', "runtime/agent_loop.py", r'''inputs=runmap.redact_value(call.input, rmap),''', r'''inputs=call.input,''',
         K5R11, 'test_a_secret_in_a_tool_call_argument_is_masked_in_the_stored_call_record[assignment]', 'hunter2'),
     test_file_mutant('M142 the runner script exits 1 when no mutant is selected', 'tests/mutation_runner_mutants.py', r'''        sys.exit(2)''', r'''        sys.exit(1)''',
-        META, 'test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant', '(1, '),
+        META, 'test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant', 'the mutants script exits 1 (not 2)'),
     mutant('M143 planted fault for a control: clean: line 44 returns the tag-stripped text unmasked (approvals/channel.py)', CHANNEL, r'''            return alt''', r'''            return joined''',
         K5R11, 'test_a_plain_secret_and_a_markup_split_one_are_both_masked', "AssertionError: api_key=AAAA"),
-    mutant('M144 planted fault for a control: clean: line 44 returns the tag-stripped text unmasked (approvals/channel.py)', CHANNEL, r'''            return alt''', r'''            return joined''',
+    mutant('M144 planted fault for a control: clean: returns the original text with its tags, unmasked (approvals/channel.py)', CHANNEL, r'''            return alt''', r'''            return text''',
         K5R11, 'test_a_second_markup_split_secret_of_the_same_kind_is_masked', "AssertionError: api_key=AAAA"),
 
-    mutant('M146 planted fault for a control: _keep_earlier_masks: line 463 deleted (guard/runmap.py)', RUNMAP, r'''            view = view.replace(decoded, ph)''', r'''            pass''',
+    mutant('M146 planted fault for a control: _keep_earlier_masks: the swap puts the decoded value back (guard/runmap.py)', RUNMAP, r'''            view = view.replace(decoded, ph)''', r'''            view = view.replace(decoded, decoded)''',
         K5R11, 'test_a_value_with_a_plain_comma_and_an_encoded_one_is_masked_whole', "AssertionError: assert 'x=1' not in 'password"),
     mutant('M147 planted fault for a control: if at line 43 negated (approvals/channel.py)', CHANNEL, r'''        if _secret_originals(joined_map) - _secret_originals(mapping):''', r'''        if not (_secret_originals(joined_map) - _secret_originals(mapping)):''',
         K5R11, 'test_an_ordinary_card_keeps_its_spaces_even_when_it_looks_like_a_header', "AssertionError: assert ' for user x and more'"),
@@ -502,6 +504,69 @@ def _neutralise(text: str) -> str:
         K5R11, 'test_redact_text_applies_the_neutralise_hook_to_every_view_it_can_return', 'AssertionError: assert 1 >= 2'),
     mutant('M157 planted fault for a control: redact_text: line 528 deleted (guard/runmap.py)', RUNMAP, r'''    mapping.update(current)''', r'''    pass''',
         K5R11, 'test_the_tag_deleted_view_keeps_real_placeholders_and_line_breaks', 'AssertionError: head'),
+    # ---- batch 9: one planted fault for each new branch (rounds 9, Issues 1, 4, 5, 6) ----
+    mutant('M159 a same-line gap is a space or a tab only', REDACT, r'''_LINE_SPACE = r"[^\S\r\n]"''', r'''_LINE_SPACE = r"[ \t]"''',
+        BATCH9, 'test_b9_1_a_scheme_word_and_its_token_are_masked_across_every_gap_that_main_read[Basic]', 'leaves its token readable'),
+    mutant('M160 a line fold does not continue a wrapped header', REDACT, r'''r"(?:[ \t]++|\s*+(?=["''', r'''r"(?:(?!)|\s*+(?=["''',
+        BATCH9, 'test_b9_1_a_line_fold_continues_the_header_whatever_the_token_looks_like[Basic]', 'a short token after a fold leaves it readable'),
+    mutant('M161 a wrapped token needs 64 characters, not 16', REDACT, r'''WRAPPED_TOKEN_MIN = 16''', r'''WRAPPED_TOKEN_MIN = 64''',
+        BATCH9, 'test_b9_1_a_scheme_word_and_its_token_are_masked_across_every_gap_that_main_read[Basic]', 'leaves its token readable'),
+    mutant('M162 a wrapped token may be a plain lower-case word', REDACT, r'''r",})(?=(?-i:[a-z\-]*+[A-Z0-9+/_=<>]))))"''', r'''r",})))"''',
+        BATCH9, 'test_b9_1_a_prose_line_after_a_scheme_word_stays_readable_and_so_does_a_short_word', 'a line after the scheme word was masked'),
+    mutant('M163 a Digest header does not go on after a line fold', REDACT, r'''            + "*+"
+            + _LINE_BREAK
+            + r"[ \t]++)([^\r\n]{8,}))"''', r'''            + "*+"
+            + _LINE_BREAK
+            + r"(?!)[ \t]++)([^\r\n]{8,}))"''',
+        BATCH9, 'test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but_not_after_a_plain_line_break', 'a Digest value after'),
+    mutant('M164 a plain line break does not end a Digest header', REDACT, r'''            + "*+"
+            + _LINE_BREAK
+            + r"[ \t]++)([^\r\n]{8,}))"''', r'''            + "*+"
+            + _LINE_BREAK
+            + r"[ \t]*+)([^\r\n]{8,}))"''',
+        BATCH9, 'test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but_not_after_a_plain_line_break', 'a plain line break after Digest does not end the header'),
+    mutant('M165 the Basic rule has no wrapped gap (the batch 8 text)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})"''',
+        BATCH9, 'test_b9_1_the_basic_rule_alone_masks_a_bare_wrapped_value_as_main_did', 'curl -H Basic'),
+    mutant('M166 the generic Authorization rule has the batch 8 gap', REDACT, r'''[\"']?(?:[a-z]+"
+            + _SCHEME_GAP''', r'''[\"']?(?:[a-z]+"
+            + r"[ \t]+"''',
+        BATCH9, 'test_b9_1_every_shape_that_main_masked_is_masked_now_a_differential_against_the_main_rules', 'main masked'),
+    mutant('M167 the record walk does not read a bypass name as a credential', RED, r'''            or (before == BYPASS_WORD and w in BYPASS_SECOND_WORDS)''', r'''            or False''',
+        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
+    mutant('M168 a flag with an ordinary word and a second word of pass is no flag', REDACT, r'''    + r")(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+    + "|".join(BYPASS_SECOND_WORDS)
+    + r")(?![a-z0-9])))"''', r'''    + r")(?![a-z]|[0-9]+[a-z]))"''',
+        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
+    mutant('M169 a protection-bypass key is no text rule', REDACT, r'''    r"protection[_\-]?bypass",
+''', r'''''',
+        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[x-vercel-protection-bypass]', 'protection-bypass'),
+    mutant('M170 the record walk does not read protection and bypass as one name', RED, r'''        ("protection", "bypass"),
+    }''', r'''    }''',
+        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[x-vercel-protection-bypass]', 'protection-bypass'),
+    mutant('M171 the glued ending of a bypass name is skipped as an ordinary word', REDACT, r'''if w.endswith(ending) and w != BYPASS_WORD''', r'''if w.endswith(ending)''',
+        BATCH9, 'test_b9_6_a_bypass_name_that_holds_a_secret_is_masked_in_every_form_on_every_path[bypass_key]', 'bypass_key'),
+    mutant('M172 a key tail reads at most 20 digits', REDACT, r'''KEY_TAIL = r"[0-9]*+[\w.\-]{0,20}"''', r'''KEY_TAIL = r"[0-9]{0,20}+[\w.\-]{0,20}"''',
+        BATCH9, 'test_b9_4_any_run_of_digits_after_a_key_word_still_masks_the_value_as_text_and_as_a_record_key[200-pass]', 'a value is readable'),
+    mutant('M173 a cookie word takes no digits', REDACT, r'''cookies?[0-9]*+(?:(?:[_.\-]''', r'''cookies?(?:(?:[_.\-]''',
+        BATCH9, 'test_b9_4_a_cookie_word_with_digits_is_a_key_as_text_and_as_a_record_key[cookie2]', 'cookie2'),
+    mutant('M174 the authorization flag has its own bound of three words', REDACT, r'''    r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,"
+    + str(FLAG_PREFIX_WORDS)
+    + r"}(?:authorization|bearer)''', r'''    r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,"
+    + "3"
+    + r"}(?:authorization|bearer)''',
+        BATCH9, 'test_b9_5_the_authorization_flag_reads_the_same_bound_as_the_other_flags', 'the authorization flag has its own bound of prefix words'),
+    mutant('M175 the curl cookie rule keeps its own flag names', REDACT, r'''            + "|".join(FLAG_EXACT_WORDS)
+            + r"))|-b)''', r'''            + "cookie"
+            + r"))|-b)''',
+        BATCH9, 'test_b9_5_the_cookie_flag_names_of_curl_and_of_the_generic_flag_rule_are_one_table', 'a cookie flag name of the table leaves its value readable'),
+    mutant('M176 a white-space control on a card is not turned into a space', CHANNEL, r'''sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=False)''', r'''sanitise_text(text, defang=False)''',
+        BATCH9, 'test_b9_1_a_white_space_control_inside_an_encoded_header_does_not_join_the_scheme_word_to_its_token[%0b]', 'a control inside an encoded header leaves the token readable'),
+    mutant('M177 every credential flag takes a scheme word and its token', REDACT, r'''            _AUTH_FLAG
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''', r'''            _CRED_FLAG
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''',
+        BATCH9, 'test_b9_5_a_flag_other_than_the_authorization_flags_keeps_the_one_word_rule[password]', 'a flag other than the authorization flags takes a scheme word'),
+    mutant('M178 a cookie key needs no boundary in front of the word', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''', r'''r"(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''',
+        BATCH8, 'test_b8_12_a_word_that_only_holds_cookie_inside_is_no_key_in_text_and_none_for_the_record_walk', 'mycookie was masked as text'),
 ]  # fmt: skip
 
 
@@ -535,6 +600,7 @@ if __name__ == "__main__":
             "tests/" + BATCH6,
             "tests/" + BATCH7,
             "tests/" + BATCH8,
+            "tests/" + BATCH9,
             "tests/" + LINES8,
             "tests/" + K5R11,
             "tests/" + K5PROD,

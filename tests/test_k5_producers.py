@@ -141,7 +141,8 @@ def test_no_message_is_cut_with_a_slice_before_it_is_redacted():
                     if _is_str_call(v) or (isinstance(v, ast.Name) and v.id in strs):
                         bad.append(f"{path.relative_to(ROOT).as_posix()}:{n.lineno}")
     # `tools.error_reason` slices a message that was ALREADY redacted into `message` (assigned from redact_bounded)
-    assert not [b for b in bad if not b.startswith("tools.py:")], bad
+    cut = [b for b in bad if not b.startswith("tools.py:")]
+    assert not cut, f"a message is cut with a slice before it is redacted: {cut}"
 
 
 REDACTORS = {

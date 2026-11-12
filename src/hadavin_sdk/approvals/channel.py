@@ -49,8 +49,15 @@ def clean(text: str) -> str:
 _TAGS = re.compile(r"(?:<(?![A-Z][A-Z0-9]*_\d+>)[^<>]{0,200}>[ \t]*)+")
 
 
+# The control characters that `\s` reads as white space (`\x0b`, `\x0c`, `\x1c`-`\x1f`, `\x85`, U+2028, U+2029): the sanitiser removes a
+# control character, which JOINED the words on both sides (`Basic<VT><token>` became `Basic<token>`, one word no rule read as a
+# scheme word and a token; main did the same). They are written as a plain space first, so the redactor sees the gap the
+# text had (round 9, Issue 1, a sibling found while fixing). Other controls are still removed.
+_WHITE_SPACE_CONTROLS = re.compile("[\x0b\x0c\x1c-\x1f\x85\u2028\u2029]")
+
+
 def _neutralise(text: str) -> str:
-    return withhold_commands(sanitise_text(text, defang=False))
+    return withhold_commands(sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=False))
 
 
 def redact_for_people(text: str, mapping: dict[str, str]) -> str:

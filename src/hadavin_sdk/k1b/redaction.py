@@ -35,6 +35,8 @@ from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.redact import (
     BARE_ENDINGS,
+    BYPASS_SECOND_WORDS,
+    BYPASS_WORD,
     COUNT_WORDS_BEFORE_TOKENS,
     GUARDED_GLUED,
     ORDINARY_WORDS,
@@ -68,10 +70,10 @@ LIMITS = (
     "when its value is a yes or no word, a number or a time.\n"
     "- A record key with a word that ends in `pass`, `auth` or `session` (`newpass`, `postgresauth`) is masked unless that "
     "whole word is an ordinary English word from a short list (`bypass`, `compass`, `obsession`, "
-    "`possession`). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
+    "`possession`); `bypass` with a second word `key`, `code`, `value` or `phrase`, and `protection-bypass`, are masked (a bypass secret). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
     "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
-    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flags `--authorization` and `--bearer` the scheme word and the token after it are both masked (any scheme word, quoted or not; a Digest value to the next flag or the end of the line); in `Authorization: Token <t>` the scheme word stays readable and the token is masked. A second word after any other credential flag is shown (`--pass2 a b`, `authorization=a b`: pinned in `tests/test_q8b_batch8.py`). The flags `--cookie`, `--set-cookie` and `--session-cookie` take a value; `--no-cookies`, `--load-cookies`, `--save-cookies`, `--keep-session-cookies` and `--cookies` are switches or file names, so the word after them is shown. Written `--newpass=a b`, both words are masked. A flag with seven or more words joined by `-` or `_` in front of the credential word (`--a-b-c-d-e-f-g-password v`) keeps its value readable: the flag rule reads at most six words in front. In a `key=value` the key rule reads at most 20 more key characters after the key word, so `pass` followed by more than 20 digits keeps its value readable there.\n"
+    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flags `--authorization` and `--bearer` the scheme word and the token after it are both masked (any scheme word, quoted or not; a Digest value to the next flag or the end of the line); in `Authorization: Token <t>` the scheme word stays readable and the token is masked. A second word after any other credential flag is shown (`--pass2 a b`, `authorization=a b`: pinned for nine flags in `tests/test_q8b_batch9.py`). The flags `--cookie`, `--set-cookie` and `--session-cookie` take a value; `--no-cookies`, `--load-cookies`, `--save-cookies`, `--keep-session-cookies`, `--junk-session-cookies` and `--cookies` are not known to take a credential (switches or file names), so the word after them is shown. Written `--newpass=a b`, both words are masked. A flag with seven or more words joined by `-` or `_` in front of the credential word (`--a-b-c-d-e-f-g-password v`) keeps its value readable: the flag rule reads at most six words in front. In a `key=value` the key rule reads any run of digits after a key word (`pass` and 40 digits are masked) and then at most 20 more key characters, so a key word followed by digits and more than 20 other key characters (letters, `_`, `-`, `.`) keeps its value readable there. A header wrapped over lines: after `Basic`, `Token` or `ApiKey` a line break is a gap only in front of a space or a tab (a line fold) or in front of a token of 16 or more characters that holds a capital, a digit or one of `+/_=<>`; a lower-case word of 16 or more letters alone on the next line is shown (it cannot be told from prose), and `Authorization: Digest` followed by a line break and a line that does not start with a space or a tab is shown. After `--authorization` and a scheme word a quoted text is read to 512 characters; a longer one is left to the other rules (a long text of ordinary words is shown). A bare `bypass`, `compass_code`, `possession_id` and `obsession_id` are shown as record keys and as `key=value` (an ordinary word, not a credential name).\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -152,6 +154,7 @@ GLUED_ENDINGS = (
     "privatekey", "sessionid", "sessid", "accountkey", "keydata", "certdata", "certificatedata",
     "credential", "credentials", "signingkey", "encryptionkey",
     "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
+    "protectionbypass",
 )  # fmt: skip
 # `pass`, `auth` and `session` end many credential keys written as one word (`newpass`, `dbpass`, `postgresauth`,
 # `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `obsession`). `BARE_ENDINGS`,
@@ -167,7 +170,13 @@ GLUED_ENDINGS = (
 # them), and the exact pairs (word before, word) `client-key-data`, `connect.sid`.
 KEY_QUALIFIERS = ("api", "private", "access", "secret", "signing", "encryption", "account")
 WORD_PAIRS = frozenset(
-    {("key", "data"), ("cert", "data"), ("certificate", "data"), ("connect", "sid")}
+    {
+        ("key", "data"),
+        ("cert", "data"),
+        ("certificate", "data"),
+        ("connect", "sid"),
+        ("protection", "bypass"),
+    }
 )
 COUNT_WORDS_AFTER_TOKENS = frozenset(
     [
@@ -216,7 +225,11 @@ def _glued_ending(w: str) -> bool:
     for ending in GLUED_ENDINGS:
         if w.endswith(ending):
             bare = GUARDED_GLUED.get(ending)
-            if bare is not None and (w[: -len(ending)] + bare) in ORDINARY_WORDS:
+            if (
+                bare is not None
+                and (w[: -len(ending)] + bare) in ORDINARY_WORDS
+                and (w[: -len(ending)] + bare) != BYPASS_WORD
+            ):
                 continue
             return True
     return False
@@ -249,6 +262,7 @@ def sensitive(key: object) -> bool:
             or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)
             or (w in ("key", "keys") and before.endswith(KEY_QUALIFIERS))
             or (before, w) in WORD_PAIRS
+            or (before == BYPASS_WORD and w in BYPASS_SECOND_WORDS)
         ):
             return True
         if (

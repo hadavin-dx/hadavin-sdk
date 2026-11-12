@@ -39,6 +39,30 @@ from typing import Any
 # a single `-` only password/passwd, since `-token` or `-secret` is as often a word in a message as a flag.
 # Space between a flag and its value: a no-break space (and the other Unicode spaces) as well.
 _SP = "[ \t\u00a0\u2000-\u200a\u202f\u205f\u3000]"
+# Between a scheme word (`Basic`, `Token`, `ApiKey`) and its token: a space of ANY kind that does not end the line (the `\s` of main
+# less the line breaks: tab, no-break space, `\x0b`, `\x0c`, `\x1c`-`\x1f`, `\x85`, U+2028 and U+2029 stay separators), or ONE line
+# break followed by a space or a tab (the obsolete line fold of RFC 9112 section 5.2: the header goes on), or ONE line break followed
+# by a token of at least `WRAPPED_TOKEN_MIN` base64 or base64url characters that is no plain lower-case word (it holds a capital, a digit
+# or one of `+/_=<>`): a wrapped header, as main read it with `\s+`, while a prose line after the header stays readable. Possessive, so
+# a long run of spaces is read once (round 9, Issue 1).
+_LINE_SPACE = r"[^\S\r\n]"
+_LINE_BREAK = r"(?:\r\n|\r|\n)"
+WRAPPED_TOKEN_MIN = 16
+_B64URL = r"A-Za-z0-9+/_=<>\-"
+_SCHEME_GAP = (
+    "(?:"
+    + _LINE_SPACE
+    + "++|"
+    + _LINE_SPACE
+    + "*+"
+    + _LINE_BREAK
+    + r"(?:[ \t]++|\s*+(?=["
+    + _B64URL
+    + "]{"
+    + str(WRAPPED_TOKEN_MIN)
+    + r",})(?=(?-i:[a-z\-]*+[A-Z0-9+/_=<>]))))"
+)
+
 
 # Bank details (owner, 2026-10-28): a number is masked by its SHAPE next to a bank word, never by its checksum -
 # a synthetic or mistyped number is masked like a real one.
@@ -113,7 +137,7 @@ def _bank_context(m: re.Match[str]) -> bool:
 # with the word `cookie` in it is a credential key there, so its text form is masked too, round 8 Issue 12); the extra words are
 # joined by `_`, `-` or `.`, or start with a capital letter (the capital is read as a capital in any case mode of the rule).
 _COOKIE_KEY_BODY = (
-    r"(?<![A-Za-z])(?:set-)?cookies?(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"
+    r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"
     r"[\"'\]]*\s*"
 )
 _COOKIE_KEY = r"(?i)" + _COOKIE_KEY_BODY
@@ -203,9 +227,17 @@ def _bare_word(word: str) -> str:
     """A bare credential word (`pass`, `auth`, `session`, `bearer`) as a key: it is followed by digits (`pass2`, `auth0`,
     `oauth2`, `pass1234567890`: the record walk drops the digits at the end of a word, however many), an optional quote and `:`
     or `=` (the look-ahead needs the sign right after the digits, so it reads each run once); and it is no ending of an
-    ordinary word (`bypass=` stays readable)."""
+    ordinary word (`bypass=` stays readable). The look-ahead reads any run of digits; the key rules read it with `KEY_TAIL`, which
+    takes any run of digits too: one bound for both (round 9, Issue 4; the consumer was `{0,20}` and left 21 digits readable)."""
     guard = _not_after_ordinary_word(word) if word in BARE_ENDINGS else ""
     return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"
+
+
+# `bypass` is an ordinary word alone (`bypass=true`, `--bypass`: a switch) but the name of a credential when a second word of the `pass`
+# pairs follows (`bypass_key`, `bypass-code`, `bypass_value`, `bypass_phrase`: a deployment bypass secret), and so is `protection-bypass`
+# (a protection-bypass header). The second words are those of `_GUARDED_PAIRS` for `pass`, read there, so the lists cannot drift
+# (round 9, Issue 6). Both stay readable alone; `compass`, `possession` and the rest of `ORDINARY_WORDS` stay ordinary with any second word.
+BYPASS_WORD = "bypass"
 
 
 def _not_ordinary_ending(ending: str) -> str:
@@ -213,7 +245,9 @@ def _not_ordinary_ending(ending: str) -> str:
     costs nothing): the text before the ending must not be an ordinary word that starts a word and ends with `ending`
     (`bypass` before `_code`). The look-behind of `_not_after_ordinary_word`, for a key that is more than the bare word."""
     return "".join(
-        r"(?<!(?<![a-z0-9])" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)
+        r"(?<!(?<![a-z0-9])" + w + ")"
+        for w in sorted(ORDINARY_WORDS)
+        if w.endswith(ending) and w != BYPASS_WORD
     )
 
 
@@ -223,6 +257,7 @@ _GUARDED_PAIRS = (
     ("pass", "phrase"), ("pass", "code"), ("pass", "key"), ("pass", "value"), ("session", "id"),
     ("session", "key"), ("session", "cookie"), ("session", "value"), ("auth", "value"),
 )  # fmt: skip
+BYPASS_SECOND_WORDS = tuple(second for bare, second in _GUARDED_PAIRS if bare == "pass")
 # glued ending -> its bare word (`passcode` -> `pass`): the record walk reads a word `bypasscode` as `bypass` + `code`.
 GUARDED_GLUED = {bare + second: bare for bare, second in _GUARDED_PAIRS}
 
@@ -247,6 +282,8 @@ KEY_ALTERNATIVES = (
     _guarded_key("pass", "code"), _guarded_key("pass", "key"), _guarded_key("pass", "value"),
     _guarded_key("session", "key"), _guarded_key("session", "cookie"), _guarded_key("session", "value"),
     _guarded_key("auth", "value"), r"bearer[_\-]?value",
+    # Round 9 (Issue 6): the name of a protection-bypass header (`x-vercel-protection-bypass: <secret>`); a bare `bypass` stays readable.
+    r"protection[_\-]?bypass",
 )  # fmt: skip
 # The same list as ONE regex fragment: the generic key rule and both quoted-value rules are built from it (a hand-kept copy
 # in the quoted rules left `access_key="abc;def ghi"` half readable).
@@ -309,7 +346,15 @@ _PLURAL_TOKENS = (
     + _COUNT_RUN
     + "tokens)[a-z0-9]{1,40}tokens)"
 )
-_FLAG_NOT_ORDINARY = r"(?!(?:" + "|".join(sorted(ORDINARY_WORDS)) + r")(?![a-z]|[0-9]+[a-z]))"
+# An ordinary word is no flag name by itself (`--bypass`); `--bypass-key`, `--bypass_code` (`BYPASS_WORD` and a second word) are
+# read on by the flag words below, which decide (`--compass-key` stays readable there, `--bypass-key` is masked).
+_FLAG_NOT_ORDINARY = (
+    r"(?!(?:"
+    + "|".join(sorted(ORDINARY_WORDS))
+    + r")(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+    + "|".join(BYPASS_SECOND_WORDS)
+    + r")(?![a-z0-9])))"
+)
 # How many words may stand in front of the credential word of a flag, joined by `-` or `_` (`--db-root-user-password`): six. The
 # bound keeps the read linear on a hostile line of `a-a-a-...`; `tests/test_q8b_batch8.py` times it.
 FLAG_PREFIX_WORDS = 6
@@ -329,6 +374,9 @@ FLAG_NAME = (
     + "))[0-9]*"
 )
 _CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME + r"|-(?:password|passwd))(?![\w-])"
+# What a key rule reads after the key word before the sign: any run of digits (`pass` + 40 digits + `=`; the look-ahead of `_bare_word`
+# reads the same run), then at most 20 more key characters. One name for the six rules that read it (round 9, Issue 4).
+KEY_TAIL = r"[0-9]*+[\w.\-]{0,20}"
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
 # the key word), so any distance works for the guard; one named number keeps the look-ahead short.
 KEY_PREFIX_MAX = 40
@@ -342,7 +390,8 @@ ARN_CHAR = (
     + str(KEY_PREFIX_MAX)
     + "}?"
     + _KV_WORD
-    + r"[\w.\-]{0,20}(?:=|[\"']\s*[:=])))"
+    + KEY_TAIL
+    + r"(?:=|[\"']\s*[:=])))"
     + ARN_TAIL
     + ")"
 )
@@ -357,7 +406,7 @@ ARN_CHAR = (
 # without the guard) still mask an address the guarded one declined.
 _GLUED_KEY_WORD = r"(?:authorization|" + KEY_WORDS + ")"
 # A credential key word with what the generic key rule needs after it: at most 20 key characters, a quote, `=` or `:`.
-GLUED_KEY = r"(?i:" + _GLUED_KEY_WORD + r"[\w.\-]{0,20}[\"']?\s*[:=])"
+GLUED_KEY = r"(?i:" + _GLUED_KEY_WORD + KEY_TAIL + r"[\"']?\s*[:=])"
 _NOT_GLUED_KEY = r"(?!" + GLUED_KEY + ")"
 _EMAIL_DOMAIN = r"[A-Za-z0-9.\-]{1,255}\.[A-Za-z]{2,}\b"
 _GUARDED_DOMAIN = (
@@ -463,7 +512,8 @@ _SESSION_COOKIE_VALUE = (
 _KEYED_VALUE = (
     r"(?=[\w.\-]*"
     + _GLUED_KEY_WORD
-    + r"[\w.\-]{0,20}[\"']?\s*[:=])[\w.\-]+[\"']?\s*[:=]\s*[\"']?"
+    + KEY_TAIL
+    + r"[\"']?\s*[:=])[\w.\-]+[\"']?\s*[:=]\s*[\"']?"
     + _VALUE_WITH_TAIL
 )
 # An authorization scheme word and the token after it (`Bearer <token>`, `Basic <base64>`, `Token <t>`, `Digest <params>`,
@@ -471,8 +521,12 @@ _KEYED_VALUE = (
 # left readable (`--authorization Token abc123`). The generic second word after a credential flag stays shown (see LIMITS).
 AUTH_SCHEMES = ("Bearer", "Basic", "Token", "Digest", "ApiKey")
 _AUTH_SCHEME_WORD = r"(?:(?:" + "|".join(AUTH_SCHEMES) + r")" + _SP + r"+(?=[^\s\"'-]))"
-# `--authorization` and `--bearer` flags (not the others): up to six words in front, exact end, digits allowed behind.
-_AUTH_FLAG = r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,6}(?:authorization|bearer)[0-9]*(?![\w-])"
+# `--authorization` and `--bearer` flags (not the others): up to `FLAG_PREFIX_WORDS` words in front (the same bound as the other flags), exact end, digits allowed behind.
+_AUTH_FLAG = (
+    r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,"
+    + str(FLAG_PREFIX_WORDS)
+    + r"}(?:authorization|bearer)[0-9]*(?![\w-])"
+)
 _QUOTED_TEXT = r"(?:\"[^\"\r\n]{1,512}\"|'[^'\r\n]{1,512}')"
 _DIGEST_WORD = r"(?:[^\s\"']|\"[^\"\r\n]*\"|'[^'\r\n]*')+"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
@@ -728,7 +782,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"(?i)\bbearer\s+(" + _KEYED_VALUE + r"|[a-z0-9._~+/\-<>]{12,}=*)"),
     ),
     # HTTP Basic auth: `Authorization: Basic <base64 of user:pass>` - the base64 IS the credential.
-    ("BASIC", re.compile(r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})")),
+    # The gap is `_SCHEME_GAP`: a line break is a gap only as a line fold or in front of a long token (main read `\s+`, so a wrapped header leaked here in round 8).
+    ("BASIC", re.compile(r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})")),
     # National ids (owner, 2026-10-21), before CREDITCARD and PHONE, which would take their digits in part: a US Social
     # Security number (never 000, 666 or 9xx first, never 00 or 0000 in the other groups) and an Indian Aadhaar number
     # written in its 4-4-4 groups (it never starts 0 or 1; a contiguous one is ACCOUNTID's 12 digits already).
@@ -817,8 +872,18 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         # other is masked to the end of the line, JSON structure behind it included (`{"Authorization": Digest ...}` is no JSON).
         # `[ \t]+`, not `\s+`: a line break ends the header value, so the next line stays readable.
         re.compile(
-            r"(?i)authorization[\"']?\s*[:=]\s*(?:\"digest[ \t]+((?:\\.|[^\"\\\r\n]){8,})\""
-            r"|'digest[ \t]+((?:\\.|[^'\\\r\n]){8,})'|[\"']?digest[ \t]+([^\r\n]{8,}))"
+            r"(?i)authorization[\"']?\s*[:=]\s*(?:\"digest"
+            + _LINE_SPACE
+            + r"++((?:\\.|[^\"\\\r\n]){8,})\""
+            + r"|'digest"
+            + _LINE_SPACE
+            + r"++((?:\\.|[^'\\\r\n]){8,})'|[\"']?digest(?:"
+            + _LINE_SPACE
+            + r"++|"
+            + _LINE_SPACE
+            + "*+"
+            + _LINE_BREAK
+            + r"[ \t]++)([^\r\n]{8,}))"
         ),
     ),
     (
@@ -826,7 +891,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
             # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+[ \t]+)?("
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
+            + _SCHEME_GAP
+            + ")?("
             + _KEYED_VALUE
             + r"|[^\s\"']{8,})"
         ),
@@ -874,7 +941,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?<![\w-])(?:(?i:--(?:(?:set|session)[_\-])?cookie)|-b)(?:\s+|=)(?:\"([^\"\r\n]{4,})\"|'([^'\r\n]{4,})'|([^\s\"'-][^\s\"']{3,}))"
+            r"(?<![\w-])(?:(?i:--(?:"
+            + "|".join(FLAG_EXACT_WORDS)
+            + r"))|-b)(?:\s+|=)(?:\"([^\"\r\n]{4,})\"|'([^'\r\n]{4,})'|([^\s\"'-][^\s\"']{3,}))"
         ),
     ),
     ("SECRET", re.compile(r"<Cookie\s+([^\s=<>]+=[^\s<>]{4,})")),
@@ -952,15 +1021,17 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
+            r"(?i)(?:"
+            + QUOTED_KEY_WORDS
+            + r")"
+            + KEY_TAIL
+            + r"[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""
         ),
     ),
     (
         "SECRET",
         re.compile(
-            r"(?i)(?:" + QUOTED_KEY_WORDS + r")"
-            r"[\w.\-]{0,20}[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
+            r"(?i)(?:" + QUOTED_KEY_WORDS + r")" + KEY_TAIL + r"[\"']?\s*[:=]\s*'([^'][^']{0,255})'"
         ),
     ),
     (
@@ -971,7 +1042,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # The rule starts AT the key word, whatever stands in front of it: a prefix bound (it was 40 characters, behind
             # a "previous character is not a key character" test) left the value readable behind a longer identifier
             # (`<41 letters>password=V`). The prefix is not part of the match, so the output is the same.
-            r"(?i)(?:" + KEY_WORDS + r")[\w.\-]{0,20}"
+            r"(?i)(?:" + KEY_WORDS + r")" + KEY_TAIL +
             # optional closing quote after the key so a JSON credential ("password": "x") is matched too
             r"[\"']?\s*[:=]\s*[\"']?"
             # The value: any non-separator char, OR a comma that does NOT begin a new key=value pair

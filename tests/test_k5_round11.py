@@ -119,18 +119,28 @@ def test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook():
                 continue
             if (isinstance(n, ast.Call) and _hook_is_missing(n)) or _aliases_redact_text(n):
                 bad.append(f"{rel}:{n.lineno}")
-    assert not bad, bad
+    assert not bad, f"a card text is redacted with no neutralise hook: {bad}"
 
 
 def test_the_hook_check_itself_catches_a_missing_none_and_an_alias():
     def parse(src):
         return ast.parse(src).body[0]
 
-    assert _hook_is_missing(parse("redact_text(t, m)").value)
-    assert _hook_is_missing(parse("runmap.redact_text(t, m, None)").value)
-    assert _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=None)").value)
-    assert not _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=_neutralise)").value)
-    assert _aliases_redact_text(parse("rt = runmap.redact_text"))
+    assert _hook_is_missing(parse("redact_text(t, m)").value), (
+        "the hook check does not see a call with no hook"
+    )
+    assert _hook_is_missing(parse("runmap.redact_text(t, m, None)").value), (
+        "the hook check does not see a hook that is None (positional)"
+    )
+    assert _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=None)").value), (
+        "the hook check does not see a hook that is None (keyword)"
+    )
+    assert not _hook_is_missing(parse("runmap.redact_text(t, m, neutralise=_neutralise)").value), (
+        "the hook check flags a call that has its hook"
+    )
+    assert _aliases_redact_text(parse("rt = runmap.redact_text")), (
+        "the hook check does not see an alias of redact_text"
+    )
 
 
 def test_only_clean_and_the_slack_block_call_the_card_sanitisers():
