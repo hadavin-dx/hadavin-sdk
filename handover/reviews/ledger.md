@@ -1,0 +1,5 @@
+| PRHb6-F1 | reviews/PRH/prhb6-design-r6.md F1 | Blocker | PR H | encoded ESC plus encoded first letter hides a handed-out secret from the scrub; main masks it (regression, readable secret) | OPEN | batch 7 | | 2026-11-12
+| PRHb6-F2 | prhb6-design-r6.md F2 + codebase C3c | Major | PR H | piece check withholds ordinary coloured output when a word-like secret shares a 6-char word; marker text can match secrets with SECRET/REDACT | OPEN | batch 7 | | 2026-11-12
+| PRHb6-C1C2 | prhb6-codebase-r6.md C1, C2 + design F3 | Major | PR H | direct redact(): U+009B cut not covered; consuming reading chosen by placeholder count with no lost-letter refusal; tie keeps grammar output | OPEN | batch 7 | | 2026-11-12
+| PRHb6-C3 | prhb6-codebase-r6.md C3 + design F4/F5 | Major | PR H | CHANGELOG claim wider than code (raw returned when nothing found; sampled window above 132 chars; hex case; availability cost unsaid) | OPEN | batch 7 | | 2026-11-12
+| PRHb6-nits | prhb6-codebase-r6.md C4-C6 | Nit | PR H | stale "13 and 7" docstring; mutant 79 thin killer; piece_min not in CHANGELOG settings list | OPEN | batch 7 | | 2026-11-12
