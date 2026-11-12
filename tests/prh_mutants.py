@@ -247,8 +247,8 @@ M = [
         R,
         "        else hidden.strip\n    )\n",
         "        else (lambda t: (t, t))\n    )\n",
-        STEPS,
-        "test_decodes_holds_the_consuming_reading",
+        CONTRACT,
+        "test_mf_masked_singles",
         pinned=True,
     ),
     mutant(
