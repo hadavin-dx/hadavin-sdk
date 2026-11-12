@@ -1,0 +1,17 @@
+cell	input_len	input_sha8
+word|compass|eq	32	d0b01e23
+word|compass|colon	33	74afa091
+word|compass|json	39	f59ee74a
+word|compass|q	34	987d03d1
+word|overpass|eq	33	555c2f3a
+word|overpass|colon	34	001207f1
+word|overpass|json	40	d827d043
+word|overpass|q	35	30abaaec
+word|encompass|eq	34	58c6a491
+word|encompass|colon	35	c43713f9
+word|encompass|json	41	ba1e6854
+word|encompass|q	36	26066b23
+word|bypass|eq	31	d1d73d0f
+word|bypass|colon	32	239596d7
+word|bypass|json	38	7db7ad0b
+word|bypass|q	33	585da209
