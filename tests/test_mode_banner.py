@@ -26,6 +26,7 @@ from hadavin_sdk import mode_banner as mb
 from hadavin_sdk.backends.table import DEMO_ONLY, TABLE
 from hadavin_sdk.config import load_config
 from hadavin_sdk.stages import STAGES
+from hadavin_sdk.tools import ToolSpec
 from tests.conftest import make_cfg
 
 # The old first stage name, built from parts so the stage-name class test (test_stage_names) finds no stage position
@@ -54,11 +55,11 @@ def test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly() 
     assert (
         "made-up demo data" in b.text
         and "Nothing here is set up to send data to real customers" in b.text
-    )
+    ), "the demo text lost its made-up sentences"
     assert (
         b.standins.startswith("MADE-UP STAND-INS IN USE: CRM, mail.")
         and "pretend versions" in b.standins
-    )
+    ), "the loud stand-ins line is not the loud one"
     assert b.real == () and b.stand_ins == ("CRM", "mail")
 
 
@@ -332,7 +333,10 @@ def test_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry(
     for old in ("banner_for", "services_in", "stand_ins_in"):
         assert not hasattr(mb, old), old
         assert old not in mb.__all__
-    assert [n for n in mb.__all__ if n.startswith("banner")] == ["banner_from_config"]
+    assert [n for n in mb.__all__ if n.startswith("banner")] == [
+        "banner_from_config",
+        "banner_or_unconfirmed",
+    ]
     assert all(hasattr(mb, n) for n in mb.__all__)
     star: dict = {}
     exec("from hadavin_sdk.mode_banner import *", star)  # noqa: S102 - the public surface, a fixed string
@@ -378,12 +382,12 @@ def _paint(banner: object, scenario: str = "") -> dict:
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
-def _unconfirmed(seen: dict) -> None:
-    assert seen["threw"] == "" and seen["htmlWrites"] == []
-    assert seen["hidden"] is False and seen["tone"] == "unconfirmed" and seen["mode"] == ""
-    assert seen["shownTone"] == "unconfirmed"
-    assert seen["lines"][0]["text"] == mb.not_confirmed()["tag"]
-    assert seen["lines"][1]["text"] == " " + mb.not_confirmed()["text"]
+def _unconfirmed(seen: dict, why: str = "") -> None:
+    assert seen["threw"] == "" and seen["htmlWrites"] == [], why
+    assert seen["hidden"] is False and seen["tone"] == "unconfirmed" and seen["mode"] == "", why
+    assert seen["shownTone"] == "unconfirmed", why
+    assert seen["lines"][0]["text"] == mb.not_confirmed()["tag"], why
+    assert seen["lines"][1]["text"] == " " + mb.not_confirmed()["text"], why
 
 
 @needs_node
@@ -398,12 +402,13 @@ def test_the_page_paints_exactly_what_python_wrote() -> None:
     for banner in banners:
         seen = _paint(banner.as_dict())
         assert seen["threw"] == "" and seen["htmlWrites"] == []
-        assert (
-            seen["hidden"] is False and seen["tone"] == banner.tone and seen["mode"] == banner.mode
+        assert seen["hidden"] is False, f"the {banner.tone} banner was left hidden"
+        assert seen["tone"] == banner.tone and seen["mode"] == banner.mode, (
+            "tone or mode not painted"
         )
         assert seen["lines"][0] == {"cls": "mode-banner__tag", "text": banner.tag}
         assert seen["lines"][1] == {"cls": "mode-banner__text", "text": " " + banner.text}
-        assert len(seen["lines"]) == (3 if banner.standins else 2)
+        assert len(seen["lines"]) == (3 if banner.standins else 2), "wrong number of lines painted"
         if banner.standins:
             assert seen["lines"][2] == {"cls": "mode-banner__standins", "text": banner.standins}
 
@@ -436,8 +441,8 @@ def test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed() -> None
         {k: v for k, v in GOOD_DEMO.items() if k != "real"},
         {k: v for k, v in GOOD_DEMO.items() if k != "stand_ins"},
     ]
-    for bad in bad_banners:
-        _unconfirmed(_paint(bad))
+    for i, bad in enumerate(bad_banners):
+        _unconfirmed(_paint(bad), f"odd banner #{i}")
     _unconfirmed(_paint(GOOD_DEMO, "throwing-list"))
     _unconfirmed(_paint(GOOD_DEMO | {"tone": "real", "real": ["x"], "text": "x"}, "throwing-list"))
 
@@ -468,8 +473,8 @@ def test_a_banner_that_contradicts_itself_is_not_painted_as_given() -> None:
         {**real, "mode": 3},
         {**real, "mode": "<b>"},
     ]
-    for banner in wrong:
-        _unconfirmed(_paint(banner))
+    for i, banner in enumerate(wrong):
+        _unconfirmed(_paint(banner), f"contradiction #{i}")
 
 
 @needs_node
@@ -482,7 +487,9 @@ def test_the_painter_never_throws_and_never_leaves_the_page_blank() -> None:
     assert seen["threw"] == "" and seen["tone"] == "unconfirmed" and seen["hidden"] is False
     assert seen["text"] == f"{mb.not_confirmed()['tag']} {mb.not_confirmed()['text']}"
     seen = _paint(GOOD_DEMO, "null-el")  # no element to paint into: no throw, nothing to show
-    assert seen["threw"] == "" and seen["lines"] == [] and seen["shownTone"] == "demo"
+    assert seen["threw"] == "" and seen["lines"] == [] and seen["shownTone"] == "demo", (
+        "no element: the painter must report the banner and write nothing"
+    )
     seen = _paint(
         GOOD_DEMO, "failing-append"
     )  # painting fails half way: the plain "not confirmed" text is put in
@@ -550,6 +557,21 @@ def _source(url: str) -> SimpleNamespace:
     return SimpleNamespace(kind="kubernetes", settings={"api_url": url, "namespaces": ["x"]})
 
 
+# Spellings that the connection guard's normaliser would fold into "localhost" (padding, full-width and modifier letters)
+# or that hold a control character: as a bare host they are NOT this machine (the stricter reading wins everywhere).
+PADDED_OR_ODD_HOSTS = [
+    "localhost\n",
+    " localhost",
+    "localhost ",
+    "\tlocalhost",
+    "localhost\x00",
+    "\x00localhost",
+    "\uff4c\uff4f\uff43\uff41\uff4c\uff48\uff4f\uff53\uff54",  # full-width "localhost"
+    "\u02e1ocalhost",  # modifier letter small l, which NFKC folds to "l"
+    "127.0.0.1\n",
+    "::1\n",
+]
+
 LEAVES = [
     ("systems", {"crm": _system("https://crm.example.test")}, mb.EXTERNAL_SYSTEMS),
     (
@@ -585,6 +607,12 @@ LEAVES = [
         mb.EXTERNAL_SYSTEMS,
     ),  # only the three shared names count
     ("egress_hosts", frozenset({"127.0.0.2"}), mb.EGRESS_HOSTS),
+    (
+        "egress_hosts",
+        frozenset({"[::1]"}),
+        mb.EGRESS_HOSTS,
+    ),  # a bare bracketed address is not a host name
+    *[("egress_hosts", frozenset({h}), mb.EGRESS_HOSTS) for h in PADDED_OR_ODD_HOSTS],
 ]
 THIS_MACHINE = [
     ("systems", {"crm": _system("http://127.0.0.1:8080")}),
@@ -687,7 +715,8 @@ def test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page() -> None
 @needs_node
 def test_a_failed_last_resort_write_never_leaves_the_banner_hidden() -> None:
     seen = _paint(GOOD_DEMO, "failing-all-writes")  # appending and then the text write both throw
-    assert seen["threw"] == "" and seen["hidden"] is False
+    assert seen["threw"] == "", "the painter threw"
+    assert seen["hidden"] is False, "the last-resort write left the element hidden"
     assert (
         seen["text"] == "previous banner text"
     )  # nothing was cleared before the failing write: the old words stay
@@ -697,7 +726,7 @@ def test_a_failed_last_resort_write_never_leaves_the_banner_hidden() -> None:
 def test_a_failed_append_leaves_words_on_the_screen_never_an_empty_banner() -> None:
     seen = _paint(GOOD_DEMO, "failing-append")
     assert seen["threw"] == "" and seen["hidden"] is False
-    assert seen["text"].strip() != ""  # the fallback text is written, not just the attributes
+    assert seen["text"].strip() != "", "the fallback wrote empty text"
     assert seen["text"] == mb.not_confirmed()["tag"] + " " + mb.not_confirmed()["text"]
     assert seen["tone"] == "unconfirmed"
 
@@ -713,15 +742,14 @@ def test_a_real_name_is_matched_as_a_whole_word_only() -> None:
         "real": ["CRM"],
         "stand_ins": [],
     }
-    _unconfirmed(_paint(real))  # "CRM" is only part of the word "CRMS": not named
+    _unconfirmed(
+        _paint(real), "a part of a word counted as the name"
+    )  # "CRM" is only part of "CRMS": not named
     fine = {**real, "text": real["text"].replace("CRMS", "CRM")}
     assert _paint(fine)["tone"] == "real"
 
 
 # --- round 4 ----------------------------------------------------------------------------------------------------------
-from hadavin_sdk.tools import ToolSpec
-
-
 def _spec(*hosts: str) -> ToolSpec:
     return ToolSpec(
         name="read_x",
@@ -731,6 +759,15 @@ def _spec(*hosts: str) -> ToolSpec:
         side_effect="none",
         hosts=hosts,
     )
+
+
+def test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    for odd in ([], "agent", 5, [("a", {})]):
+        with pytest.raises(
+            TypeError, match="tool_specs must be the registry's tools mapping or None"
+        ):
+            mb.banner_from_config(cfg, tool_specs=odd)  # type: ignore[arg-type]
 
 
 def test_tool_specs_has_no_default_so_forgetting_it_is_an_error() -> None:
@@ -769,31 +806,33 @@ def test_tool_hosts_on_this_machine_or_none_keep_the_demo_banner() -> None:
 def test_tool_modules_without_the_manifests_count_as_one_real_service() -> None:
     cfg = _fake_config("demo", [("llm", "fake")])
     cfg.tool_modules = ["some_mod"]
-    assert _services(cfg, None)[0] == ()  # the helper's {} default: manifests read and empty
+    assert _services(cfg, None)[0] == (mb.TOOL_MODULES,), "no spec at all with a tool module"
     real, _ = mb._services_in(cfg, None)  # None: the caller could not read the manifests
     assert real == (mb.TOOL_MODULES,)
     assert mb.banner_from_config(cfg, tool_specs=None).tone == "real"
     cfg.tool_modules = []
     assert mb._services_in(cfg, None)[0] == ()  # no module configured: nothing hidden by None
     with pytest.raises(TypeError, match="tool_specs"):
-        mb._services_in(cfg, ["not", "a", "mapping"])
+        mb._services_in(cfg, ["not", "a", "mapping"])  # type: ignore[arg-type]
 
 
-def test_a_real_registry_tools_mapping_is_what_the_banner_reads(tmp_path: Path) -> None:
-    from hadavin_sdk.registry import Registry
+def test_the_tools_of_a_real_registry_are_what_the_banner_reads(tmp_path: Path) -> None:
+    import dataclasses
 
-    assert "tools" in {f.name for f in __import__("dataclasses").fields(Registry)}
-    cfg = load_config(make_cfg(tmp_path))
-    assert mb.banner_from_config(cfg, tool_specs={}).tone == "demo"
-    assert (
-        mb.banner_from_config(cfg, tool_specs={"a": {"t": _spec("api.example.test")}}).tone
-        == "real"
-    )
+    from hadavin_sdk.registry import Registry, load_registry
+
+    config = load_config(make_cfg(tmp_path))
+    registry = load_registry(config)
+    assert isinstance(registry, Registry) and isinstance(registry.tools, dict)
+    assert mb.banner_from_config(config, tool_specs=registry.tools).tone == "demo"
+    outside = dataclasses.replace(registry, tools={"a": {"t": _spec("api.example.test")}})
+    b = mb.banner_from_config(outside.config, tool_specs=outside.tools)
+    assert b.tone == "real" and b.real == (f"component {mb.TOOL_HOSTS}",), "registry tools dropped"
 
 
 def test_the_words_state_what_is_checked_and_not_a_false_premise() -> None:
     sentence = mb.DEFAULT_WORDS.nothing_sent
-    assert "set up to send" in sentence and "reaches only" not in (mb.__doc__ or "")
+    assert sentence == "Nothing here is set up to send data to real customers or real systems."
     assert "not sandboxed" in (mb.__doc__ or "")  # the in-process limit is stated
 
 
@@ -817,6 +856,12 @@ LEAVING_URLS = [
     "http://[2001:db8::1]/",
     "http://127.0.0.2/",  # only the three shared loopback names are this machine
     "http://[::2]/",
+    "http://[::1]evil.example/",  # text after the closing bracket
+    "http://[::1]:80x/",  # a port that is not digits
+    "http://127.0.0.1:80x/",
+    "http://localhost\n/",
+    "http://\uff4c\uff4f\uff43\uff41\uff4c\uff48\uff4f\uff53\uff54/",  # full-width host in a url
+    "http://\u02e1ocalhost/",
     "http://\u2460\u2461\u2467.0.0.1/",
     "",
     "localhost",  # no scheme: no host
@@ -891,6 +936,15 @@ def test_a_config_that_lost_an_endpoint_field_raises_and_is_never_read_as_nothin
             _banner(SimpleNamespace(**kept))
         with pytest.raises(ValueError, match=missing):
             _banner(SimpleNamespace(**{**kept, missing: None}))
+    wrong_type = {"systems": "x", "egress_hosts": 5, "sources": [], "tool_modules": "m"}
+    for field, value in wrong_type.items():
+        kept = {f: getattr(real, f) for f in fields}
+        try:
+            _banner(SimpleNamespace(**{**kept, field: value}))
+        except TypeError as exc:
+            assert "not a usable value" in str(exc) and field in str(exc), f"field {field}: {exc}"
+        else:
+            pytest.fail(f"a {field} of the wrong type was used")
 
 
 def test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check() -> None:
@@ -937,3 +991,350 @@ def test_the_page_and_python_agree_on_every_row_of_the_name_table() -> None:
         }  # fmt: skip
         page_says_named = _paint(banner)["tone"] == "real"
         assert page_says_named is expected is mb.names_in(text, name), (text, name)
+
+
+# --- round 5 ----------------------------------------------------------------------------------------------------------
+def test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine() -> None:
+    for host in PADDED_OR_ODD_HOSTS:
+        assert mb._is_this_machine(host) is False, f"bare host {host!r} read as this machine"
+        cfg = _with_endpoints(egress_hosts=frozenset({host}))
+        assert _services(cfg)[0] == (mb.EGRESS_HOSTS,), f"egress host {host!r} read as this machine"
+        specs = {"agent": {"read_x": _spec(host)}}
+        assert _services(_fake_config("demo", [("llm", "fake")]), specs)[0] == (mb.TOOL_HOSTS,), (
+            f"tool host {host!r} read as this machine"
+        )
+    for host in ("localhost", "LOCALHOST", "localhost.", "127.0.0.1", "::1"):
+        assert mb._is_this_machine(host) is True, f"plain host {host!r} not read as this machine"
+    for odd in (None, 5, b"localhost", "", ["localhost"]):
+        assert mb._is_this_machine(odd) is False, f"value {odd!r} read as this machine"
+
+
+def test_a_url_and_a_bare_host_give_the_same_answer_for_every_spelling() -> None:
+    for host in [
+        *PADDED_OR_ODD_HOSTS,
+        "localhost",
+        "LOCALHOST",
+        "localhost.",
+        "10.0.0.5",
+        "x.example",
+    ]:
+        in_url = mb._url_leaves_this_machine(f"http://{host}/")
+        assert in_url is (not mb._is_this_machine(host)) or in_url, (
+            f"url and host differ for {host!r}"
+        )
+        if not mb._is_this_machine(host):
+            assert in_url is True, f"a url with the host {host!r} stayed on this machine"
+
+
+def _type_error_of(call, why: str) -> str:
+    """The text of the TypeError `call` raises; a different outcome fails with `why` in the message."""
+    try:
+        call()
+    except TypeError as exc:
+        return str(exc)
+    except Exception as exc:  # noqa: BLE001 - reported with its type, so the failing line names the case
+        pytest.fail(f"{why}: raised {type(exc).__name__} instead of TypeError")
+    pytest.fail(f"{why}: no error")
+
+
+def test_a_tool_spec_without_hosts_or_with_odd_hosts_raises_naming_the_tool() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    odd = [
+        SimpleNamespace(name="read_x"),  # no hosts at all
+        SimpleNamespace(hosts=None),
+        SimpleNamespace(hosts="api.example.test"),  # a bare string would be read letter by letter
+        SimpleNamespace(hosts={"api.example.test"}),
+        SimpleNamespace(hosts=["ok.example.test", 5]),
+    ]
+    for i, bad in enumerate(odd):
+        why = f"hosts case #{i}"
+        text = _type_error_of(
+            lambda bad=bad: mb.banner_from_config(cfg, tool_specs={"agent": {"read_x": bad}}), why
+        )
+        assert "tool 'read_x' of agent 'agent' has no `hosts` list" in text, f"{why}: {text}"
+    for i, inner in enumerate([[_spec("api.example.test")], None]):
+        why = f"agent entry case #{i}"
+        text = _type_error_of(
+            lambda inner=inner: mb.banner_from_config(cfg, tool_specs={"agent": inner}), why
+        )
+        assert "tool_specs['agent'] must be a mapping" in text, f"{why}: {text}"
+    # a list of hosts is accepted like a tuple; a bad spec after an outside host still raises (every spec is read)
+    ok = SimpleNamespace(hosts=["api.example.test"])
+    assert _services(cfg, {"a": {"t": ok}})[0] == (mb.TOOL_HOSTS,)
+    text = _type_error_of(
+        lambda: _services(cfg, {"a": {"t": ok, "u": SimpleNamespace()}}),
+        "a bad spec after an outside host",
+    )
+    assert "tool 'u'" in text, text
+
+
+def test_tool_modules_with_no_spec_at_all_count_as_one_real_service_like_none() -> None:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    cfg.tool_modules = ["some_mod"]
+    for empty in ({}, {"a": {}}, {"a": {}, "b": {}}):
+        assert _services(cfg, empty)[0] == (mb.TOOL_MODULES,), f"modules with no spec {empty!r}"
+    local = {"a": {"t": _spec("localhost")}}
+    assert _services(cfg, local)[0] == (), "a manifest that names this machine is not hidden"
+    both = {"a": {"t": _spec("api.example.test")}}
+    assert _services(cfg, both)[0] == (mb.TOOL_HOSTS,)
+    cfg.tool_modules = []
+    assert _services(cfg, {})[0] == (), "no module and no spec is nothing"
+
+
+def test_the_loopback_names_are_pinned_by_content() -> None:
+    from hadavin_sdk.guard.http import LOOPBACK as SHARED
+
+    assert frozenset(SHARED) == frozenset({"localhost", "127.0.0.1", "::1"}), (
+        "shared loopback names changed"
+    )
+    assert frozenset(mb.LOOPBACK) == frozenset({"localhost", "127.0.0.1", "::1"}), (
+        "banner loopback names widened"
+    )
+
+
+def _client_refuses_the_url(url: str) -> bool:
+    """True when the tool client's own url checks (the real `ToolContext.fetch`, read from tools.py) refuse `url` as a
+    url: a backslash, white space, a control or non-ASCII character, `%`, credentials, or a host that its manifest
+    check calls not a plain name. The host and scheme rules that exist to keep a tool on its manifest hosts are not
+    part of the question (the banner reads a loopback host as this machine, the client refuses loopback in a manifest)."""
+    from hadavin_sdk import tools as tools_mod
+
+    spec = tools_mod.ToolSpec(
+        name="read_x", function="mod:read_x", description="reads x", input_schema={"type": "object"},
+        side_effect="none", hosts=("api.example.test",), operations=["op.read"],
+    )  # fmt: skip
+    ctx = tools_mod.ToolContext(spec, 1.0, bindings={"op.read": ("GET", r"/.*")})
+    secure = url.replace("http://", "https://", 1)
+    for candidate in (url, secure):
+        try:
+            ctx.fetch("GET", candidate, operation="op.read")
+        except tools_mod.ToolRefused as why:
+            text = str(why)
+            if any(w in text for w in ("backslash", "percent-encoding", "credentials in the URL")):
+                return True
+        except Exception:  # noqa: BLE001 - a malformed url that raises elsewhere is refused all the same
+            return True
+    return False
+
+
+def test_the_banner_is_at_least_as_strict_as_the_tool_client_on_urls_and_hosts() -> None:
+    from hadavin_sdk import tools as tools_mod
+
+    for url in [*LEAVING_URLS, *[f"http://{h}/" for h in PADDED_OR_ODD_HOSTS]]:
+        assert mb._url_leaves_this_machine(url) is True, f"banner reads {url!r} as this machine"
+    for _field_name, value in THIS_MACHINE:
+        for entry in value.values() if isinstance(value, dict) else ():
+            url = getattr(entry, "base_url", None) or ""
+            if url:
+                assert _client_refuses_the_url(url) is False, f"the client refuses {url!r}"
+    # whenever the tool client refuses a url as a url, the banner says it leaves this machine
+    corpus = [*LEAVING_URLS, "http://localhost:8080/", "http://[::1]:8080/", "http://LOCALHOST:80/"]
+    refused = [u for u in corpus if _client_refuses_the_url(u)]
+    assert len(refused) >= 8, "the parity test must really reach the client's refusals"
+    for url in refused:
+        assert mb._url_leaves_this_machine(url) is True, f"client refuses {url!r}, banner does not"
+    # and for a bare host the client's manifest check calls "not a plain lowercase ASCII hostname"
+    for host in PADDED_OR_ODD_HOSTS:
+        why = tools_mod.forbidden_host(host)
+        if why is not None and "plain lowercase ASCII" in why:
+            assert mb._is_this_machine(host) is False, (
+                f"client refuses host {host!r}, banner does not"
+            )
+    assert (
+        tools_mod.forbidden_host("localhost") is not None
+    )  # the client refuses loopback in a manifest
+    assert (
+        mb._is_this_machine("localhost") is True
+    )  # and the banner reads it as this machine (fail-safe reading)
+
+
+def test_a_port_that_is_not_digits_or_text_after_a_bracket_is_not_this_machine() -> None:
+    for netloc, ok in (
+        ("[::1]", True),
+        ("[::1]:8080", True),
+        ("[::1]:", True),
+        ("[::1]evil.example", False),
+        ("[::1]:80x", False),
+        ("[::1]x:80", False),
+        ("localhost", True),
+        ("localhost:80", True),
+        ("localhost:80x", False),
+        ("localhost:", True),
+    ):
+        assert mb._port_tail_ok(netloc) is ok, f"port tail of {netloc!r}"
+
+
+def test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    good = _fake_config("demo", [("llm", "fake")])
+    assert mb.banner_or_unconfirmed(good, tool_specs={}) == _banner(good).as_dict()
+    secret_looking = "internal-host-" + "x" * 5
+    bad_name = {"llm": f"{secret_looking}\n<script>"}
+    real = _fake_config("pilot", [("llm", "bedrock")])
+    for call in (
+        lambda: mb.banner_or_unconfirmed(
+            real, bad_name, tool_specs={}
+        ),  # a name that is not plain words
+        lambda: mb.banner_or_unconfirmed(
+            SimpleNamespace(environment="demo"), tool_specs={}
+        ),  # lost fields
+        lambda: mb.banner_or_unconfirmed(
+            good, tool_specs={"a": {"t": SimpleNamespace()}}
+        ),  # a spec without hosts
+    ):
+        caplog.clear()
+        with caplog.at_level("WARNING", logger=mb.__name__):
+            assert call() == mb.not_confirmed(), (
+                "a banner that could not be built was shown as built"
+            )
+        assert len(caplog.records) == 1, "exactly one log line"
+        line = caplog.records[0].getMessage()
+        assert (
+            "internal-host" not in line and "<script>" not in line and "SimpleNamespace" not in line
+        )
+        assert "not-confirmed banner" in line
+    with pytest.raises(TypeError):
+        mb.banner_or_unconfirmed(good)  # type: ignore[call-arg]
+    # the claim: banner_from_config itself raises, banner_or_unconfirmed does not
+    with pytest.raises(ValueError, match="plain words"):
+        mb.banner_from_config(real, bad_name, tool_specs={})
+
+
+def test_an_empty_name_is_never_in_a_text() -> None:
+    assert mb.names_in("any text at all", "") is False, "an empty name was found in a text"
+    assert mb.names_in("", "") is False, "an empty name was found in an empty text"
+
+
+def test_the_limits_are_stated_in_words() -> None:
+    doc = " ".join((mb.__doc__ or "").split())
+    for phrase in (
+        "app.build",
+        "`tools=` callables",
+        "sources=",
+        "channel=",
+        "llm=",
+        "detector=",
+        "secrets=",
+        "localhost` is trusted to resolve to the loopback",
+        "a page cache",
+        "reloaded",
+        "settings of a stand-in kind are never inspected",
+        "callable handed to `app.build(tools=...)`",
+        "RAISES when it cannot say",
+        "banner_or_unconfirmed",
+        "plain ASCII",
+        "trusts",
+    ):
+        if phrase == "trusts":
+            phrase = "paints the `tone` it is given"
+        assert phrase in doc or phrase in (JS.read_text(encoding="utf-8")), (
+            f"limit not stated: {phrase}"
+        )
+    assert "a banner is always shown" not in doc  # the old, wider claim is gone
+
+
+def test_a_service_name_may_not_hold_the_made_up_claim_of_the_words_in_use() -> None:
+    tags = {"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"}
+    words = mb.BannerWords(tag_by_mode=tags, made_up="Fiktiv", nothing_sent="Nichts wird gesendet")
+    for name in ("Fiktiv", "Mail fiktiv", "Nichts wird gesendet"):
+        refusal = None
+        try:
+            _b("pilot", ["k"], names={"k": name}, words=words)
+        except ValueError as exc:
+            refusal = exc
+        assert refusal is not None and "plain words" in str(refusal), f"name {name!r}: {refusal}"
+    assert _b("pilot", ["k"], names={"k": "Mail"}, words=words).real == ("Mail",)
+    _b("pilot", ["k"], names={"k": "Fiktiv"})  # the default words do not reserve it
+    for name in ("CRMé", "ｃｒｍ", "café mail"):  # service names are ASCII only
+        with pytest.raises(ValueError, match="plain words"):
+            _b("pilot", ["k"], names={"k": name})
+
+
+def test_the_names_are_checked_in_the_formatted_names_part_of_the_text_only() -> None:
+    words = mb.DEFAULT_WORDS
+    right = _b("pilot", ["crm"], names=NAMES)
+    mb._check_what_is_claimed(right, words)  # the real banner passes
+    # "CRM" occurs in the text but not in the formatted list of names: not counted as shown
+    sneaky = mb.ModeBanner(
+        "pilot", "real", "PILOT",
+        "Real services are connected: Mail. Data this system handles may be sent to them. CRM", "",
+        ("CRM",), (),
+    )  # fmt: skip
+    with pytest.raises(ValueError, match="does not name every real service"):
+        mb._check_what_is_claimed(sneaky, words)
+    text = words.real_connected.format(names="CRMS") + " " + words.real_data_note + " CRM."
+    tricky = mb.ModeBanner("pilot", "real", "PILOT", text, "", ("CRM",), ())
+    try:  # the later "CRM." is not the list
+        mb._check_what_is_claimed(tricky, words)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("a name that occurs only after the list was counted as shown")
+    other = mb.ModeBanner(
+        "pilot", "real", "PILOT", "Some other sentence about CRM.", "", ("CRM",), ()
+    )
+    with pytest.raises(ValueError, match="does not name every real service"):
+        mb._check_what_is_claimed(other, words)
+
+
+@needs_node
+def test_a_failing_attribute_write_never_shows_new_words_under_an_old_tone() -> None:
+    seen = _paint(
+        GOOD_DEMO, "failing-tone-attr"
+    )  # every setAttribute throws; the element held an earlier banner
+    assert seen["threw"] == "" and seen["hidden"] is False, (
+        "element left hidden or the painter threw"
+    )
+    assert seen["text"] == "previous banner text", (
+        f"new words were written although the tone could not be: {seen['text'][:20]!r}"
+    )
+    assert seen.get("tone") is None, "a tone was recorded although the attribute write throws"
+
+
+@needs_node
+def test_a_failing_mode_attribute_leaves_the_not_confirmed_tone_with_its_text() -> None:
+    seen = _paint(
+        GOOD_DEMO, "failing-mode-attr"
+    )  # only data-mode throws, after the tone and the words are written
+    assert seen["threw"] == "" and seen["hidden"] is False
+    assert seen["tone"] == "unconfirmed", "a mode failure left the tone of the given banner"
+    assert seen["text"] == mb.not_confirmed()["tag"] + " " + mb.not_confirmed()["text"], (
+        "wrong words for the tone"
+    )
+
+
+@needs_node
+def test_the_page_trusts_the_tone_it_is_given_and_python_checks_the_sentences() -> None:
+    # the page cannot read a sentence: a demo-tone banner of a made-up text with another text is painted as given,
+    # which is why Python refuses to send one (the check above); this pins the division of work.
+    odd = {**GOOD_DEMO, "text": "Some other words."}
+    assert _paint(odd)["tone"] == "demo"
+    with pytest.raises(ValueError, match="claims made-up data"):
+        mb._check_what_is_claimed(
+            mb.ModeBanner("pilot", "quiet", "PILOT", mb.DEFAULT_WORDS.made_up, "", (), ()),
+            mb.DEFAULT_WORDS,
+        )
+
+
+NAME_TABLE_5 = [
+    ("connected: AI step.", "AI step", True),  # a name with a space
+    ("connected: AI steps.", "AI step", False),
+    ("connected: xAI step.", "AI step", False),
+    ("connected: e-mail.", "e-mail", True),  # a name with a hyphen
+    ("connected: x-e-mail.", "e-mail", False),
+    ("connected: CRM.v2.", "CRM.v2", True),  # a name with a dot
+    ("connected: CRM.v2x.", "CRM.v2", False),
+    ("CRM is connected.", "CRM", True),  # at the start of the text
+    ("connected is CRM", "CRM", True),  # at the very end
+    ("CRMS is connected.", "CRM", False),
+    ("connected: 2CRM.", "CRM", False),  # a digit before
+    ("connected: 2.CRM.", "CRM", False),  # a digit and a dot before
+    (
+        "connected: a..CRM.",
+        "CRM",
+        True,
+    ),  # a double dot: the second dot is not joined to a letter or digit
+    ("connected: CRM..", "CRM", True),
+]
+NAME_TABLE.extend(NAME_TABLE_5)

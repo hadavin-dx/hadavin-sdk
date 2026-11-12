@@ -32,3 +32,16 @@ def test_ci_runs_the_copy_run_the_banner_mutants_and_checks_node_is_there() -> N
     # the node check comes before the tests that need node, and HADAVIN_REQUIRE_NODE is set for them
     assert runs.index("node --version") < runs.index('pytest -q -m "not live and not perf" -rs')
     assert 'HADAVIN_REQUIRE_NODE: "1"' in check_job
+
+
+def test_ci_requires_node_in_the_python_312_test_job_too() -> None:
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    job = ci.split("\n  tests-py312:\n", 1)[1].split("\n  security:\n", 1)[0]
+    assert "node --version" in _steps(job)
+    assert 'HADAVIN_REQUIRE_NODE: "1"' in job
+
+
+def test_the_changelog_does_not_claim_the_banner_reads_urls_exactly_like_the_tool_client() -> None:
+    log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "modelled on the tool client and at least as strict" in log
+    assert "read the way the tool client reads it" not in log

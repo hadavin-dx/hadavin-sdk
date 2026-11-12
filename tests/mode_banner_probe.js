@@ -6,7 +6,7 @@ const htmlWrites = []; // every write that would make a page parse HTML; the tes
 function el(tag, opts) {
   const o = { tag, cls: '', attrs: {}, children: [], hidden: true, text: (opts && opts.text) || '' };
   o.appendChild = (k) => { if (opts && opts.failAppend) throw new Error('append failed'); o.children.push(k); return k; };
-  o.setAttribute = (k, v) => { o.attrs[k] = String(v); };
+  o.setAttribute = (k, v) => { if (opts && (opts.failAttr === true || opts.failAttr === k)) throw new Error('attribute write failed'); o.attrs[k] = String(v); };
   Object.defineProperty(o, 'textContent', { get() { return o.text; }, set(v) { if (opts && opts.failText && v !== '') throw new Error('text write failed'); o.text = v; o.children = []; } });
   Object.defineProperty(o, 'className', { get() { return o.cls; }, set(v) { o.cls = v; } });
   for (const k of ['innerHTML', 'outerHTML']) {
@@ -26,7 +26,7 @@ if (scenario === 'throwing-getter') input = { get tone() { return boom(); }, tag
 if (scenario === 'proxy') input = new Proxy({}, { get: boom, has: boom, ownKeys: boom, getPrototypeOf: boom });
 if (scenario === 'throwing-list') input = { ...input, real: new Proxy([], { get: boom }) };
 if (scenario === 'throwing-doc') doc = { createElement: () => { throw new Error('doc broken'); } };
-let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
+let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-tone-attr' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
 if (scenario === 'null-el') target = null;
 let threw = '';
 let usableThrew = '';

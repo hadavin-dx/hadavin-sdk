@@ -3,6 +3,8 @@
    banner the system sends: { mode, tone, tag, text, standins, real, stand_ins }.
    A missing, odd or self-contradicting banner is never hidden and never half painted: it paints the "not confirmed"
    line, because silence would read as "all real". Nothing in here can throw out of paint().
+   The page trusts the `tone` it is given as far as it can check it (against the mode, the real list and the names); the
+   made-up sentences themselves are checked in Python before a banner is sent (hadavin_sdk.mode_banner), not here.
    Use:  HadavinModeBanner.paint(document.getElementById('mode-banner'), bannerObjectFromTheSystem);
    Copy this file into a page; do not edit the words here (a test pins the fallback to the Python text). */
 (function (root) {
@@ -83,19 +85,20 @@
     return nodes;
   }
   function fill(el, b, nodes) {
-    // The words go in first as plain text, so a failure in the steps below never leaves the element blank; if even
-    // this write fails nothing has been cleared and the previous text stays.
+    // The tone goes in first, then the words as plain text, then the element is cleared and filled. Any failure is
+    // caught by paint, which writes the "not confirmed" tone and then its text; if even those writes fail, the previous
+    // text stays, under the "not confirmed" tone when that attribute could be written (the safe direction).
+    el.setAttribute('data-tone', b.tone);
     el.textContent = b.tag + ' ' + b.text;
     el.textContent = '';
     for (var i = 0; i < nodes.length; i++) el.appendChild(nodes[i]);
-    el.setAttribute('data-tone', b.tone);
     el.setAttribute('data-mode', b.mode);
     el.hidden = false;
   }
-  // Paints the banner into `el` and returns the banner that was painted. The nodes are built BEFORE `el` is touched, and
-  // the plain words are written before anything is cleared (see fill), so a failure never leaves it empty; if painting
-  // fails the "not confirmed" text is put in as plain text, and if that write fails too the previous text stays and the
-  // element is unhidden.
+  // Paints the banner into `el` and returns the banner that was painted. The nodes are built BEFORE `el` is touched.
+  // If painting fails, the "not confirmed" tone and then its text are written as plain text, and the element is unhidden
+  // first. If those writes fail too, whatever the element held before stays (it may be out of date, or empty if it was
+  // empty before); nothing more can be done from inside a broken page.
   function paint(el, banner, doc) {
     var b = NOT_CONFIRMED;
     var nodes = null;
@@ -115,8 +118,8 @@
       b = NOT_CONFIRMED;
       try {
         el.hidden = false; // first: whatever else fails below, the element is never left hidden
+        el.setAttribute('data-tone', b.tone); // before the text, so the words are never shown with another tone
         el.textContent = b.tag + ' ' + b.text;
-        el.setAttribute('data-tone', b.tone);
         el.setAttribute('data-mode', '');
       } catch (e2) { /* nothing more can be done: the page itself is broken */ }
     }

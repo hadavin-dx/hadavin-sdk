@@ -35,3 +35,12 @@ copy_run_marker = "tools/demo_only_guard.copy_run"
 # endings of files that are known not to be text; every other file is read, and a file that is neither text nor on
 # this list is refused
 skip_suffixes = [".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".gz", ".whl", ".woff", ".woff2", ".pyc", ".so"]
+
+# a file bigger than this many bytes is not read; it is a hit (a very large file cannot be searched in memory)
+max_file_bytes = 8388608
+
+# the copy run (--without-folder) does not copy a file with one of these names unless git tracks it (case-insensitive)
+copy_exclude = [".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", ".netrc", ".npmrc", ".pypirc", "id_rsa*", "id_ed25519*", "id_ecdsa*", "*.kdbx", "credentials*"]
+
+# the only environment variables the copy run's pytest child receives; a demo repository adds the plain, non-secret names its tests need
+child_env_allowed = ["PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "TERM", "VIRTUAL_ENV", "HADAVIN_REQUIRE_NODE"]
