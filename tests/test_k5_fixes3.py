@@ -41,8 +41,8 @@ def test_percent_encoded_expanding_text_is_refused_after_the_decode(monkeypatch)
 
 def test_the_decoded_view_is_computed_once_not_once_per_secret_form(monkeypatch):
     calls = []
-    real = tools_mod._decoded
-    monkeypatch.setattr(tools_mod, "_decoded", lambda text: calls.append(1) or real(text))
+    real = tools_mod._decoded_readings
+    monkeypatch.setattr(tools_mod, "_decoded_readings", lambda text: calls.append(1) or real(text))
     out = tools_mod.prepare_output("a plain log line " * 50, {}, 16384, [SECRET, SECRET + "-two"])
     assert out.startswith("a plain log line")
     assert len(calls) == 1
