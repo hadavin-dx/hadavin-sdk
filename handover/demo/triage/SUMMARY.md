@@ -12,7 +12,7 @@ Repo: public demo, branch initial-code, base 43110e7 (read-only clone /tmp/work/
 - **Browser tests did not run** (no Playwright; it is not in the hashed lock file and I did not install from elsewhere). The three portal edits are covered by the node-based portal tests and by an equivalence script, not by a real browser. Correction by the resolver: the builder's `log.js` change (`_open` handler made a named function) was NOT exercised by any test (no test loaded `log.js`). The resolver added a node test that mounts the real `log.js`, presses "Show all 4" and checks the group opens and stays open; it passes on the original and the patched `log.js` and fails on two broken copies (`evidence-js-resolve-log-probe.txt`, `evidence-js-resolve-log-test-mutants.txt`).
 - Full suite before and after: no failure either time (numbers below). Both runs were serial (1 worker each, two at the same time) on a machine shared with other agents' test runs.
 - Not patched on purpose: the 504 `var` uses (J4), the 29 unused-variable warnings, test-file probes. Reasons in the table.
-- Tools not run: gitleaks, bandit (not part of my findings; bandit 1.9.4 is in the lock file but I did not need it). EGM review was not done by me (lead runs it).
+- [HISTORICAL, the builder's first pass; superseded by the resolver's runs below] Tools not run: gitleaks, bandit (bandit was later run by the resolver on the Python tree: clean, `evidence-py-resolve-05-lint.txt`). EGM review was not done by me (lead runs it).
 
 ## Tools, versions, sources
 
@@ -77,8 +77,8 @@ Command (both): `python -m pytest -q -x -rs -p no:cacheprovider`, Python 3.13.18
 
 | run | tree | result | raw output |
 |---|---|---|---|
-| before | /tmp/work/triage-copy = base 43110e7, unpatched | 2349 passed, 116 skipped, 757 s | `evidence-baseline-full.txt` |
-| after | /tmp/work/apply-check = base + js-portal.patch + py-retry.patch | 2352 passed, 116 skipped, 753 s (the 3 extra are the new pin test) | `evidence-after-full.txt` |
+| before (HISTORICAL, builder's first pass, Python 3.13.18; superseded by the resolver's 3.12.3 rows) | /tmp/work/triage-copy = base 43110e7, unpatched | 2349 passed, 116 skipped, 757 s | `evidence-baseline-full.txt` |
+| after (HISTORICAL, builder's first pass, Python 3.13.18; the old 3-case pin test it counts no longer exists: replaced by the 49-case ast test, see the resolver rows) | /tmp/work/apply-check = base + js-portal.patch + py-retry.patch | 2352 passed, 116 skipped, 753 s | `evidence-after-full.txt` |
 
 - The skips are the same in both runs: Playwright browser tests (not installed, see above), the Windows-only test, the gitleaks scan (no program), one load-measurement test.
 - The node-based portal tests were NOT skipped (node is installed), so they ran against the edited portal.js, overview.js and log.js in the "after" run. They passed. (Resolver: true, but before the resolver's test no node test loaded log.js, so that hunk was not covered by this run.) The full-suite "after" run above used the builder's js-portal.patch, not the regenerated one; the resolver re-ran only the node portal tests (`tests/test_portal_*.py`, `tests/test_mode_safety.py`): 477 passed, 99 skipped before and after, every skip "No module named 'playwright'" (`evidence-js-resolve-portal-tests-before.txt`, `evidence-js-resolve-portal-tests-after.txt`).
@@ -92,3 +92,7 @@ Resolver runs, Python only, on Python 3.12.3. One serial pytest process per run;
 |---|---|---|---|
 | (a) base | /tmp/work/py-base = base 43110e7, unpatched | 2349 passed, 116 skipped, exit 0, 953 s | `evidence-py-resolve-03-full-base.txt` |
 | (b) base + py-retry.patch only | /tmp/work/py-after = fresh copy of 43110e7 + regenerated py-retry.patch (no JS patch) | 2399 passed, 116 skipped, exit 0, 978 s (+50 new cases; same skips) | `evidence-py-resolve-04-full-patched.txt` |
+
+
+## Confirming review (REVIEW-py-2.md, ORDER D5: the one and last review of this patch): no Blocker, no Major
+Nits left as they are (no further round): (2) two PASSES_THROUGH cases (LiveTransport in `LiveQualifier._post_once`, CrmNothingStored in `HubspotCrm._request`) check errors raised inside handlers, not in the try body, so they are weakly meaningful (the CrmError and LiveCapReached cases are meaningful); the test docstring at lines 232-233 overstates it. (3) the diff sha256 in evidence 04 (7123d6ba...) differs from the patch sha (c1a038a5...) because plain `git diff` omits the untracked new test file; tree identity rests on `diff -r` in evidence 07 (identical). Runs (a) and (b) overlapped on a 4-core machine with other agents (wall times are not comparable). The new test is structural: it never provokes a real MemoryError. All evidence is Python 3.12.3 only; 3.13 equivalence of the new code is by reading.
