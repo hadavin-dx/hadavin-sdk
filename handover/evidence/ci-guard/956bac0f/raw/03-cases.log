@@ -1,0 +1,24 @@
+case a expected=pass rc=0 verdict=OK head=956bac0f
+case a2-real-style-name expected=pass rc=0 verdict=OK head=956bac0f
+case b expected=fail rc=1 verdict=OK head=d52ad20d
+    handover/evidence/mine.md
+    files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover and the wip/cloud-* lane branches: the temporary allowlist would hide generic keys in them
+    handover/evidence/mine.md
+    files under handover/ exist in the history of HEAD itself (a lane branch does not excuse them)
+case b2-added-then-deleted expected=fail rc=1 verdict=OK head=63418667
+    files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover and the wip/cloud-* lane branches: the temporary allowlist would hide generic keys in them
+    handover/evidence/mine.md
+    handover/evidence/mine.md
+    files under handover/ exist in the history of HEAD itself (a lane branch does not excuse them)
+case c expected=fail rc=1 verdict=OK head=956bac0f
+    handover/evidence/x-x.md
+    files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover and the wip/cloud-* lane branches: the temporary allowlist would hide generic keys in them
+case d expected=fail rc=1 verdict=OK head=956bac0f
+    handover/evidence/x-x.md
+    files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover and the wip/cloud-* lane branches: the temporary allowlist would hide generic keys in them
+case e expected=fail rc=1 verdict=OK head=eaf11f61
+    handover/evidence/x-x.md
+    handover/evidence/x-x.md
+    handover/evidence/x-x.md
+    files under handover/ exist in the history of HEAD itself (a lane branch does not excuse them)
+case g-nested-slash-extra expected=info rc=0 verdict=FAIL-AS-EXPECTED head=956bac0f
