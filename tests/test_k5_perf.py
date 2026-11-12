@@ -1,10 +1,12 @@
 """Redaction cost (R370-style numbers, K5-core). The sweep over every pattern is marked `perf`: CI runs it in its own
 blocking step, and the harness itself is tested with a deliberately quadratic pattern so a pass means something.
 
-What is measured: CPU seconds of one call, timed in blocks of at least 10 ms (50 ms on a coarse clock), the fastest of
-two runs per size (three for the end-to-end cases), on 64 KiB and 256 KiB of one pattern's own keyword repeated (`tests/fixtures/timing.py` says why a block and why the fastest). A
-linear pattern takes about 4x as long on 4x the text; a quadratic one 16x; the limit is 3x per size ratio (12x for 4x the
-text) of the small run (never less than 1 ms), with no fixed seconds floor on the big run. The BANKCODE transit pattern
+What is measured: seconds of one call (process CPU time where the platform has a fine CPU clock, else wall-clock
+seconds), timed in blocks of at least 10 ms (50 ms on a coarse clock), the fastest of two runs per size (three for the
+end-to-end cases; `tests/fixtures/timing.py` says why a block, why the fastest, and what fewer repeats cost), on 64 KiB
+and 256 KiB of one pattern's own keyword repeated. A linear pattern takes about 4x as long on 4x the text; a quadratic
+one 16x; the limit is 3x per size ratio (12x for 4x the text) of the small run (never less than 1 ms), with no fixed
+seconds floor on the big run. The BANKCODE transit pattern
 measured alone: 16 KiB 3 ms, 64 KiB 19 ms, 256 KiB 75 ms, 1 MiB 333 ms: linear (4x per 4x), about 0.3 us per char."""
 
 from __future__ import annotations
@@ -52,7 +54,7 @@ def _units(pattern: re.Pattern[str]) -> list[str]:
     return ["a.", "a=", *[word + " " for word in _keywords(pattern.pattern)]]
 
 
-@pytest.mark.perf  # timing-based (8x vs a 24x limit): it belongs with the other timing tests, not in the unit suite
+@pytest.mark.perf  # timing-based: text 8x, limit 24x, a quadratic about 64x; belongs with the other timing tests
 def test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one():
     quadratic = re.compile(r"\bcurl\b[^\r\n]*?[ \t]-u")  # the shape the command patterns had
     bounded = re.compile(r"\bcurl\b[^\r\n]{0,1024}?[ \t]-u")
@@ -72,10 +74,11 @@ def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
     assert not slow, slow
 
 
-# --- end to end: redact_untrusted with its views, not one pattern -------------------------------------------------------------------
-# A pattern sweep cannot see the cost of the second pass (NFKC views, neutralising, unescaping): this runs the real entry
-# point on text that forces a view. The time is CPU time in blocks, the fastest of three runs per size, so a busy runner
-# does not move it much; a red run is a real regression until shown otherwise.
+# --- end to end: redact_untrusted with its views, not one pattern ---------------------------------------------------
+# A pattern sweep cannot see the cost of the second pass (NFKC views, neutralising, unescaping): this runs the real
+# entry point on text that forces a view. The time is CPU time in blocks (wall-clock where there is no fine CPU
+# clock), the fastest of three runs per size, so on a fine CPU clock a busy runner barely moves it. A red run is a real
+# regression until shown otherwise; on the wall-clock path one re-run by hand is fair.
 
 BS = chr(92)
 E2E_UNITS = [

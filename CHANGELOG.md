@@ -264,6 +264,7 @@
   (`guardrail_id`, `guardrail_version`, `region`; the PROMPT_ATTACK filter, extra `aws`).
 
 ### Changed
+- **Test harness only (no change to the package): the linear-time tests measure blocks, not single calls.** `tests/fixtures/timing.py` now times a block of calls on fresh texts (process CPU time where the platform has a fine CPU clock, else wall-clock time), keeps the fastest of 2 to 5 runs per size, and floors the small run at 1 ms; the `perf` tests also run with one busy worker per CPU (confirmed running) to show the flag holds under load. Nothing to do on upgrade.
 - P5/P6 follow-ups:
   - limits are checked again before a tool output is screened, so a reply that spent the budget never pays
     for a judge call;

@@ -824,8 +824,8 @@ def test_the_timing_harness_flags_a_quadratic_stand_in():
     assert timing.is_superlinear(
         lambda t: timing.block_seconds(timing.quadratic_stand_in, t),
         "a",
-        8 * 1024,
-        128 * 1024,
+        4 * 1024,
+        64 * 1024,
         repeats=2,
     ), "a quadratic function must be flagged"
 

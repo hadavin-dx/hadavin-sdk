@@ -7,12 +7,24 @@ grows by about `g`, a quadratic one by about `g * g`, and with `g` of 4 or more 
 How a time is measured (`block_seconds`): not one call, but a block of calls, repeated until the block lasts at least
 `MIN_BLOCK_S`, divided by the number of calls. The clock is chosen once: process CPU time when its resolution is 0.1 ms or
 finer (a busy neighbour takes turns on the CPU but adds nothing to it), with 10 ms blocks; else the monotonic wall clock
-(`perf_counter`) with 50 ms blocks, where the best-of-N rule below absorbs the noise. A clock that ticks coarsely (15.6 ms
-on Windows) is thus off by at most about a third of one block, and a fast CPU cannot leave the small run too short to read.
-Every call gets its own text (same length, different last characters), so a cache inside the code under test cannot make
-the later calls free.
+(`perf_counter`) with 50 ms blocks, where the best-of-N rule below absorbs the noise. By arithmetic, a clock that ticks
+coarsely (15.6 ms on Windows) is off by at most about a third of one block (15.6 / 50); that is shown only with a fake
+clock in `tests/test_timing_fixture.py`, no test here has run on a real Windows clock. On a platform without a fine CPU
+clock the numbers are wall-clock seconds, so a busy neighbour CAN slow a run there; best-of-N is then the only defence.
+A fast CPU cannot leave the small run too short to read, because the block grows until it lasts `MIN_BLOCK_S`.
+Every call gets its own text (same length, different last characters), so a cache that keys on the WHOLE text cannot make
+the later calls free. A cache that keys on a prefix or a chunk of the text (the first characters are the same in every
+variant) still hits: this harness does not defend against that, and a function with such a cache measures its warm cost.
 
-The small run is floored (`MIN_SMALL_S`, 1 ms): a ratio to a time of almost zero says nothing."""
+The small run is floored (`MIN_SMALL_S`, 1 ms): a ratio to a time of almost zero says nothing. Floor trade-off: the floor must
+stay below the smallest small run a fast CPU can make, or the limit grows and a real quadratic passes
+(`test_fast_cpu_simulation_*` pins this: a 2.5 ms small run is flagged at 1 ms and not at 4 ms).
+
+Repeats trade-off: the sweep tests use 2 or 3 repeats per size (`REPEATS` is 5) to keep the `perf` group short (the
+figure is in the notes of the change). With fewer repeats, noise has fewer chances to be dropped: a neighbour that slows
+EVERY small run raises the limit and can hide a quadratic (the test `repeats=1` case in `test_timing_fixture.py` shows
+it), and one that slows every big run can raise a false red. On a fine CPU clock a neighbour adds almost nothing, so 2 or 3
+suffice; on the wall-clock path (Windows) the margin is thinner and a red there is worth one re-run by hand."""
 
 from __future__ import annotations
 
@@ -22,7 +34,7 @@ import time
 from collections.abc import Callable
 
 PER_SIZE, MIN_SMALL_S = 3.0, 0.001
-REPEATS = 5  # runs per size; only the fastest of them counts (see `best_of`)
+REPEATS = 5  # runs per size; only the fastest of them counts (see `best_of`); the sweeps pass 2 or 3 (see the header)
 COARSE_BLOCK_S, FINE_BLOCK_S = (
     0.05,
     0.01,
@@ -123,6 +135,6 @@ def is_superlinear(
 def quadratic_stand_in(text: str) -> int:
     """A made-up cost that grows with the SQUARE of the text length (a count over every 2nd prefix), for the tests that
     show the harness flags a real quadratic. With 8 KiB and 128 KiB (16x) the big run is about 256x slower against a
-    limit of 48x; `tests/test_timing_fixture.py` pins that the small run is at least 4x `MIN_SMALL_S` and the measured
-    ratio at least twice the limit."""
+    limit of 48x; `tests/test_timing_fixture.py` pins that the small run is at least `MIN_SMALL_S` and the measured
+    ratio at least twice the limit. (`tests/test_migration_numbers.py` uses 4 KiB and 64 KiB, the same 16x, to cost less.)"""
     return sum(text.count("a", 0, i) for i in range(0, len(text), 2))

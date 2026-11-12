@@ -330,9 +330,9 @@ M = [
     mutant(
         "o100: the timing limit is too tight (everything is flagged)",
         "PER_SIZE, MIN_SMALL_S = 3.0, 0.001",
-        "PER_SIZE, MIN_SMALL_S = 0.001, 0.001",
+        "PER_SIZE, MIN_SMALL_S = 0.01, 0.001",  # not 0.001: at 1e-09 the big run would TIE the limit (4e-6), a float coin flip
         T3,
-        "test_a_linear_cost_passes_at_any_speed[1e-09]",
+        "test_a_linear_cost_passes_at_any_speed[1e-07]",
         "assert not",
         src=TIMING,
     ),
@@ -343,6 +343,15 @@ M = [
         T3,
         "test_the_limit_is_a_ratio_of_the_two_sizes",
         "0.012",
+        src=TIMING,
+    ),
+    mutant(
+        "o267: the floor of the small run is 4 ms (a fast CPU's 2.5 ms quadratic is not flagged)",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.001",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
+        T3,
+        "test_fast_cpu_simulation_a_small_run_of_2_5_ms_still_flags_a_quadratic",
+        "assert",
         src=TIMING,
     ),
 ]

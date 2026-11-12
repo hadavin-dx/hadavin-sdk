@@ -1,5 +1,6 @@
-"""The shared linear-time rule (`tests/fixtures/timing.py`) itself, with made-up timings: no clock, so a loaded machine
-cannot change the result. The tests that use it with a real clock are marked `perf`."""
+"""The shared linear-time rule (`tests/fixtures/timing.py`) itself. Most tests use made-up timings or a fake clock, so a
+loaded machine cannot change the result. Two tests measure a real call with the real clock while every CPU is busy, and
+the two tests of the busy workers start real processes (about 1 s); the two real-clock ones are marked `perf`."""
 
 from __future__ import annotations
 
@@ -81,7 +82,7 @@ def test_the_best_of_is_the_minimum():
     assert timing.best_of([0.5, 0.2, 9.0]) == 0.2
 
 
-# --- the block estimator, with a fake clock and fake calls: no real time, so these run in the ordinary suite ---------------
+# --- the block estimator, with a fake clock and fake calls: no real time passes, so these run in the ordinary suite ---------
 
 
 class FakeClock:
@@ -177,19 +178,48 @@ def test_a_text_is_new_every_time_and_keeps_its_length():
     assert {len(timing._variant(s)) for s in ("", "a", "ab", "abc")} == {0, 1, 2, 3}
 
 
-FAST, LINEAR_14MS = 1.5e-3, 14e-3
+def test_measure_sizes_gives_every_repeat_a_new_text_of_the_same_length():
+    """A repeat that reused the text of an earlier one could be served by a cache inside the code under test."""
+    seen: dict[int, list[str]] = {}
+
+    def measure(text: str) -> float:
+        seen.setdefault(len(text), []).append(text)
+        return 1e-3
+
+    timing.measure_sizes(measure, "ab", 1000, 4000, repeats=6)
+    assert set(seen) == {1000, 4000}
+    for length, texts in seen.items():
+        assert len(texts) == 6, length
+        assert len(set(texts)) == 6, f"a text of {length} characters was measured twice"
 
 
-def test_fast_cpu_simulation_a_small_run_of_1_5_ms_still_flags_a_quadratic():
-    """Design Major 1: on a fast CPU the small run costs 1.5 ms. With a floor of 4 ms the limit would be 24 x 4 ms = 96 ms
-    and the 8x run (64 x 1.5 ms = 96 ms) would pass; block timing reads the 1.5 ms and the floor is below it."""
+def test_a_variant_changes_only_the_tail_so_a_cache_keyed_on_a_prefix_is_not_defeated():
+    """The stated limit of the harness (see the header of `tests/fixtures/timing.py`): the texts of one run share all but
+    their last characters."""
+    a, b = timing._variant("x" * 64), timing._variant("x" * 64)
+    assert a != b
+    assert a[:-4] == b[:-4] == "x" * 60
+
+
+FAST, LINEAR_14MS = 2.5e-3, 14e-3
+
+
+def test_fast_cpu_simulation_a_small_run_of_2_5_ms_still_flags_a_quadratic():
+    """On a fast CPU the small run costs 2.5 ms. The text is 4x bigger, so a quadratic costs 16 x 2.5 ms = 40 ms against a
+    limit of 3 x 4 x 2.5 ms = 30 ms (flagged). With a floor of 4 ms the limit would be 3 x 4 x 4 ms = 48 ms and the quadratic
+    would pass (the hand mutant `o267` in `migration_numbers_mutants.py` makes exactly that change). The two sides are 33 %
+    apart, so the result does not rest on a float tie."""
     clock = FakeClock()
-    small, big = 1000, 8000
-    quadratic = lambda n: FAST * (n / small) ** 2
+    small, big = 1000, 4000
+
+    def quadratic(n: int) -> float:
+        return FAST * (n / small) ** 2
+
+    def linear(n: int) -> float:
+        return FAST * (n / small)
+
     assert timing.is_superlinear(_fake_measure(clock, quadratic), "a", small, big)
-    assert not timing.is_superlinear(
-        _fake_measure(clock, lambda n: FAST * (n / small)), "a", small, big
-    )
+    assert not timing.is_superlinear(_fake_measure(clock, linear), "a", small, big)
     assert FAST > timing.MIN_SMALL_S, "the floor must stay below the simulated small run"
 
 
@@ -197,8 +227,13 @@ def test_tick_simulation_a_15_6_ms_clock_does_not_flag_a_linear_cost_and_flags_a
     """Codebase Major / design Major 2: Windows process time ticks at 15.6 ms. A 14 ms small run reads 0 on a single
     call, floors, and a linear big run (16 x 14 ms) is flagged; timed in 50 ms blocks the same cost passes."""
     small, big = 1000, 16000
-    linear = lambda n: LINEAR_14MS * (n / small)
-    quadratic = lambda n: LINEAR_14MS * (n / small) ** 2
+
+    def linear(n: int) -> float:
+        return LINEAR_14MS * (n / small)
+
+    def quadratic(n: int) -> float:
+        return LINEAR_14MS * (n / small) ** 2
+
     tick = 0.0156
     assert not timing.is_superlinear(_fake_measure(FakeClock(tick), linear), "a", small, big)
     assert timing.is_superlinear(_fake_measure(FakeClock(tick), quadratic), "a", small, big)
@@ -243,6 +278,7 @@ def _never_ready(ready) -> None:
 
 
 def _cpus_to_load() -> int:
+    """One busy worker per CPU THIS process may use (a container or `taskset` can allow fewer than `os.cpu_count()`), 1 to 4."""
     try:
         return max(1, min(4, len(os.sched_getaffinity(0))))
     except AttributeError:  # a platform without sched_getaffinity
@@ -303,6 +339,21 @@ def test_the_number_of_busy_workers_is_between_one_and_four():
     assert 1 <= _cpus_to_load() <= 4
 
 
+def test_the_number_of_busy_workers_follows_the_cpus_this_process_may_use(monkeypatch):
+    """`os.cpu_count()` says 8 in every case below, so an implementation that ignores `sched_getaffinity` gets 4, not 2 or 1."""
+    monkeypatch.setattr(os, "cpu_count", lambda: 8)
+    for allowed, expected in (({0}, 1), ({0, 1}, 2), (set(range(3)), 3), (set(range(16)), 4)):
+        monkeypatch.setattr(os, "sched_getaffinity", lambda pid, a=allowed: a, raising=False)
+        assert _cpus_to_load() == expected, allowed
+
+
+def test_without_sched_getaffinity_the_cpu_count_is_used_and_never_less_than_one(monkeypatch):
+    monkeypatch.delattr(os, "sched_getaffinity", raising=False)
+    for count, expected in ((2, 2), (64, 4), (None, 1)):
+        monkeypatch.setattr(os, "cpu_count", lambda c=count: c)
+        assert _cpus_to_load() == expected, count
+
+
 def _linear_stand_in(text: str) -> int:
     return sum(ord(c) for c in text)
 
@@ -318,7 +369,10 @@ def test_the_harness_flags_a_real_quadratic_while_every_cpu_is_busy(busy_cpus):
         lambda t: timing.block_seconds(timing.quadratic_stand_in, t), "a", small, big
     )
     # the gap is pinned, not claimed: the small run is well above the floor and the big run well above the limit
-    assert t_small >= 4 * timing.MIN_SMALL_S, t_small
+    # the floor itself, not a multiple of it: a CPU that makes the small run shorter than the floor would make the limit use
+    # the floor, and the ratio check below is the real pin. (4x the floor needed a small run of 4 ms; this run is about 6 ms,
+    # so a CPU 1.6x faster would have failed on a margin the harness does not need.)
+    assert t_small >= timing.MIN_SMALL_S, t_small
     assert t_big / t_small >= 2 * timing.PER_SIZE * big / small, (t_small, t_big)
     assert timing.grows_faster_than_size(t_small, t_big, small, big)
 
@@ -327,5 +381,5 @@ def test_the_harness_flags_a_real_quadratic_while_every_cpu_is_busy(busy_cpus):
 def test_the_harness_passes_a_linear_cost_while_every_cpu_is_busy(busy_cpus):
     small, big = 256 * 1024, 2048 * 1024
     t_small, t_big = _measured(lambda t: timing.block_seconds(_linear_stand_in, t), "a", small, big)
-    assert t_small >= 4 * timing.MIN_SMALL_S, t_small
+    assert t_small >= timing.MIN_SMALL_S, t_small  # the floor itself (see the quadratic test above)
     assert not timing.grows_faster_than_size(t_small, t_big, small, big), (t_small, t_big)
