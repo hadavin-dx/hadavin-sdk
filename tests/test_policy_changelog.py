@@ -412,7 +412,8 @@ def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutan
             mutants = run(day, "tests/policy_mutants.py", "--day", str(day), *picked)
             assert mutants.returncode == 0, (
                 f"after the {mode} renewal the mutants are not all killed on {day}: "
-                f"{mutants.stdout[-1500:]}"
+                f"{[x[:700] for x in mutants.stdout.splitlines() if x.startswith(('BAD', 'WEAK'))]} "
+                f"{mutants.stdout[-600:]}"
             )
 
 
