@@ -1016,6 +1016,45 @@ def test_batch_2_names_only_real_mutants():
     assert sorted(migrate_mutants.BATCH_2_IDS - known) == []
 
 
+def test_the_list_check_finds_a_mutant_id_that_a_docstring_or_a_parametrize_id_names_but_no_mutant_has(
+    tmp_path, monkeypatch
+):
+    """The cheap check of the mutant list (`problems_with_the_list`) also reads the docstrings and the parametrize ids
+    of the killers: a planted stale id is found, a real one and a pytest-made id are not. Killed by: no mutant (this
+    test checks the checker; the planted fault is in the sample below)."""
+    from tests import migrate_mutants as mm
+
+    sample = tmp_path / "tests" / "test_sample.py"
+    sample.parent.mkdir()
+    sample.write_text(
+        "import pytest\n"
+        "@pytest.mark.parametrize('x', [1, 2], ids=['ZZ9', 'ok'])\n"
+        "def test_a(x):\n"
+        '    """Killed by: mutant ZZ8 (gone) and mutant V10."""\n'
+        "def test_b():\n"
+        '    """Guards something. Killed by: V10 only."""\n',
+        encoding="utf-8",
+    )
+    fake = mm.Mutant(
+        "V10", "d", "tests/test_sample.py", "x", "y", "tests/test_sample.py::test_a[ZZ9]"
+    )
+    fake_b = mm.Mutant(
+        "V99x", "d", "tests/test_sample.py", "x", "y", "tests/test_sample.py::test_b"
+    )
+    monkeypatch.setattr(mm, "M", [fake, fake_b])
+    got = mm._stale_ids(tmp_path, {"V10", "V99x"})
+    assert len(got) == 1 and "ZZ8" in got[0] and "test_a" in got[0], got
+    # the id of the parametrize is in the file, so it is not reported; a part that is nowhere in the file is
+    fake_c = mm.Mutant(
+        "V10", "d", "tests/test_sample.py", "x", "y", "tests/test_sample.py::test_a[NOWHERE]"
+    )
+    monkeypatch.setattr(mm, "M", [fake_c])
+    assert any("NOWHERE" in g for g in mm._stale_ids(tmp_path, {"V10"}))
+    # the real list is clean
+    monkeypatch.undo()
+    assert mm.problems_with_the_list() == []
+
+
 # --- 7.8 no real-server test returns before it runs `migrate` ---------------------------------------------------------
 
 _RUNNERS = {"migrate", "_run_plant", "run_case", "main"}

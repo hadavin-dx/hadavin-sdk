@@ -24,6 +24,7 @@ text is no longer in its file exactly once, so the list cannot rot between two r
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import os
 import re
@@ -203,8 +204,7 @@ def cmp_mutant(name: str, item: str, desc: str, killer_item: str) -> Mutant:
 
 FILTER2 = '                        if not p.repaired_by_run and p.kind != "missing_schema_usage"\n'
 STEP6_CALL = (
-    "                        schema_owner=schema_owner,\n"
-    "                    ):\n"
+    "                    if problems:\n"
     "                        raise ConfigError(\n"
     '                            "after the migration files and the grants'
 )
@@ -289,7 +289,7 @@ STEP_MUTANTS: list[Mutant] = [
         "step 6 never refuses for what the state check finds",
         MIG,
         STEP6_CALL,
-        STEP6_CALL.replace("                    ):\n", "                    ) and False:\n", 1),
+        STEP6_CALL.replace("if problems:", "if problems and False:", 1),
         S6_REFUSES,
     ),
     Mutant(
@@ -2950,7 +2950,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V10",
-        "O1: a function of the family that everyone may call is not refused",
+        "O2: a function of the family that everyone may call is not refused",
         VERIFY,
         '                if in_run and fam_owned:\n                    out.append(make("everyone", EVERYONE, right, rep=managed_here))\n',
         '                if False:\n                    out.append(make("everyone", EVERYONE, right, rep=managed_here))\n',
@@ -2977,7 +2977,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V13",
-        "O3: a schema right beyond USAGE for everyone is not refused",
+        "O7: a schema right beyond USAGE for everyone is not refused",
         VERIFY,
         '                    out.append(make("schema_right" if in_run else "everyone", EVERYONE, right))\n',
         "                    pass\n",
@@ -2988,7 +2988,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V14",
-        "O3: CREATE on the database for everyone is not refused",
+        "O2: CREATE on the database for everyone is not refused",
         VERIFY,
         '                if right not in ("CONNECT", "TEMPORARY"):\n',
         "                if False:\n",
@@ -2996,7 +2996,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V15",
-        "O3: a relation of an unread kind is not refused",
+        "Q2 change (d): a relation of an unread kind is not refused",
         VERIFY,
         '                out.append(make("unread_relation_kind", EVERYONE, right, detail=it.relkind, fix=""))\n',
         "                pass\n",
@@ -3004,7 +3004,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V16",
-        "O3: a right for everyone where everyone holds nothing by default is not refused",
+        "O2: a right for everyone where everyone holds nothing by default is not refused",
         VERIFY,
         '            if kind in _NOTHING_BY_DEFAULT:\n                out.append(make("everyone", EVERYONE, right))\n',
         '            if False:\n                out.append(make("everyone", EVERYONE, right))\n',
@@ -3015,7 +3015,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V17",
-        "O4: a schema right for a third role is not refused",
+        "O7: a schema right for a third role is not refused",
         VERIFY,
         '        elif it.kind == "schema":\n            out.append(\n                make(\n                    "schema_right" if it.privilege_type != "USAGE" else "other_grantee",',
         '        elif it.kind == "schema" and False:\n            out.append(\n                make(\n                    "schema_right" if it.privilege_type != "USAGE" else "other_grantee",',
@@ -3023,7 +3023,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V18",
-        "O5: a right for a third role on an object of the family is not refused",
+        "O1: a right for a third role on an object of the family is not refused",
         VERIFY,
         '        elif fam_owned:\n            out.append(make("other_grantee", it.grantee, it.privilege_type))\n',
         '        elif False:\n            out.append(make("other_grantee", it.grantee, it.privilege_type))\n',
@@ -3034,7 +3034,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V19",
-        "O5: a grant option held by a third role is not refused",
+        "O3: a grant option held by a third role is not refused",
         VERIFY,
         '            out.append(make("other_grantee", it.grantee, it.privilege_type))\n            if it.is_grantable:\n',
         '            out.append(make("other_grantee", it.grantee, it.privilege_type))\n            if False:\n',
@@ -3045,7 +3045,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V20",
-        "O6: a SECURITY DEFINER function nobody reviewed is not refused",
+        "O4: a SECURITY DEFINER function nobody reviewed is not refused",
         VERIFY,
         "            and fam_owned\n            and it.definer\n            and (it.schema, it.name, it.sub) not in reviewed_definers\n",
         "            and fam_owned\n            and False\n            and (it.schema, it.name, it.sub) not in reviewed_definers\n",
@@ -3056,7 +3056,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V21",
-        "O7: a package object whose owner is outside the family is not refused",
+        "O8: a package object whose owner is outside the family is not refused",
         VERIFY,
         "        if managed and not fam_owned:\n",
         "        if False:\n",
@@ -3064,7 +3064,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V22",
-        "O4: a SECURITY DEFINER function that everyone may call is not refused",
+        "S7: a SECURITY DEFINER function that everyone may call is not refused",
         VERIFY,
         '            if in_fn and it.definer and right == "EXECUTE" and not ext:\n',
         "            if False:\n",
@@ -3072,7 +3072,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V23",
-        "O8: an object of an extension is given a statement",
+        "E1: an object of an extension is given a statement",
         VERIFY,
         '        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        outside = (not in_run) or not fam_owned\n',
         '        ext = ""\n        outside = (not in_run) or not fam_owned\n',
@@ -3088,7 +3088,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V25",
-        "D1: a default right of an unknown kind is not refused",
+        "D4: a default right of an unknown kind is not refused",
         VERIFY,
         '            out.append(_default("default_unknown_kind", d, "", ""))\n',
         "            pass\n",
@@ -3096,7 +3096,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V26",
-        "D2: a default right for a named role is not refused",
+        "D1: a default right for a named role is not refused",
         VERIFY,
         '            out.append(_default("default_for_named", d, right, d.grantee))\n',
         "            pass\n",
@@ -3104,7 +3104,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V27",
-        "D3: a default right for everyone is not refused",
+        "D2: a default right for everyone is not refused",
         VERIFY,
         '            if not built_in:\n                out.append(_default("default_for_everyone", d, right, EVERYONE))\n',
         '            if False:\n                out.append(_default("default_for_everyone", d, right, EVERYONE))\n',
@@ -3112,7 +3112,7 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V28",
-        "D4: a default right for another role on what the family makes is not refused",
+        "D3: a default right for another role on what the family makes is not refused",
         VERIFY,
         "        elif d.set_for_family and d.grantee != d.set_for and d.grantee != migration_role:\n",
         "        elif False:\n",
@@ -3294,7 +3294,10 @@ M: list[Mutant] = [
         VERIFY,
         "        for line in limits:\n            db.execute(line)\n",
         "        for line in ():\n            db.execute(line)\n",
-        "tests/test_migration_verify.py::test_pinned_read_sets_the_two_limits_and_the_path_before_any_read_and_always_rolls_back",
+        (
+            "tests/test_migration_verify.py::test_pinned_read_sets_the_two_limits_and_the_path_before_any_read_and_always_rolls_back",
+            "tests/test_migration_verify_pg.py::test_verify_gets_through_a_one_millisecond_statement_timeout_that_cancels_its_own_query",
+        ),
     ),
     Mutant(
         "V49",
@@ -3316,8 +3319,8 @@ M: list[Mutant] = [
         "V51",
         "the check before the commit is removed",
         MIG,
-        "                    if problems := _state_problems(\n                        db,",
-        "                    if problems := [] and _state_problems(\n                        db,",
+        STEP6_CALL,
+        STEP6_CALL.replace("if problems:", "if False:", 1),
         "tests/test_migration_matrix.py::test_every_matrix_cell_ends_in_one_of_the_three_outcomes[O01-select-other/C1-plain-file/no-roles]",
     ),
     Mutant(
@@ -3403,6 +3406,99 @@ M: list[Mutant] = [
             "tests/test_migration_verify_pg.py::test_step_4_revokes_an_aggregate_with_no_arguments_that_has_the_name_of_a_files_function",
             "tests/test_migration_steps.py::test_step_4_takes_everyones_execute_off_the_functions_the_files_name",
         ),
+    ),
+    Mutant(
+        "V61",
+        "a right word is accepted when it is the start of one of the map's rights (a prefix test)",
+        VERIFY,
+        "    return it.privilege_type in _rights_for(role_kind, g) and not it.is_grantable\n",
+        '    return any(r.startswith(it.privilege_type or "?") for r in _rights_for(role_kind, g)) and not it.is_grantable\n',
+        (
+            "tests/test_migration_verify.py::test_an_unknown_right_word_is_refused_whole_never_by_prefix",
+        ),
+    ),
+    Mutant(
+        "V62",
+        "an object with an empty access list (a row with no right) is judged as if it had a right",
+        VERIFY,
+        "        if it.privilege_type is None:\n            continue\n",
+        "        if False:\n            continue\n",
+        (
+            "tests/test_migration_verify.py::test_an_item_with_no_right_is_never_read_as_a_right_for_everyone",
+        ),
+    ),
+    Mutant(
+        "V63",
+        "the promise table of the docstring says its first row is built (the CHANGELOG still says not built)",
+        MIG,
+        "is NOT BUILT YET (planned for commit 5 of this package)",
+        "is built (planned for commit 5 of this package)",
+        "tests/test_migration_verify.py::test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog",
+    ),
+    Mutant(
+        "V64",
+        "the promise table of the CHANGELOG says its first row is built (the docstring still says not built)",
+        CL,
+        "is NOT BUILT YET (planned for commit 5 of this package)",
+        "is built (planned for commit 5 of this package)",
+        "tests/test_migration_verify.py::test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog",
+    ),
+    Mutant(
+        "V65",
+        "SQLSTATE 40003 (statement completion unknown) at the commit is classed with the refused class 40",
+        MIG,
+        '    if state in _COMMIT_UNKNOWN_STATES:\n        return "unknown"\n',
+        '    if False:\n        return "unknown"\n',
+        "tests/test_migration_verify.py::test_commit_outcome_classes_unknown_by_code",
+    ),
+    Mutant(
+        "V66",
+        "step 4 skips a function whose name has a character outside ASCII (it keeps EXECUTE for everyone)",
+        MIG,
+        '        db.execute(\n            pg.sql_template(\n                "REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC",',
+        '        if not name.isascii():\n            continue\n        db.execute(\n            pg.sql_template(\n                "REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC",',
+        (
+            "tests/test_migration_steps.py::test_step_4_writes_every_function_name_through_identifier_quoting",
+            "tests/test_migration_verify_pg.py::test_step_4_takes_everyones_execute_off_functions_with_awkward_names",
+        ),
+    ),
+    Mutant(
+        "V67",
+        "a driver error raised by the check at step 2 is not mapped to a refusal (it escapes as exit 3)",
+        MIG,
+        "                    with _check_could_not_run(step[0]):\n                        found = _state_problems(",
+        "                    if True:\n                        found = _state_problems(",
+        (
+            "tests/test_migration_steps.py::test_a_driver_error_raised_by_the_check_before_the_commit_is_a_refusal_that_keeps_nothing",
+            "tests/test_migration_verify_pg.py::test_a_connection_lost_while_the_check_runs_before_the_commit_gives_exit_2",
+        ),
+    ),
+    Mutant(
+        "V68",
+        "a driver error raised by the check at step 6 is not mapped to a refusal (it escapes as exit 3)",
+        MIG,
+        "                    with _check_could_not_run(step[0]):\n                        problems = _state_problems(",
+        "                    if True:\n                        problems = _state_problems(",
+        (
+            "tests/test_migration_steps.py::test_a_driver_error_raised_by_the_check_before_the_commit_is_a_refusal_that_keeps_nothing",
+            "tests/test_migration_verify_pg.py::test_a_connection_lost_while_the_check_runs_before_the_commit_gives_exit_2",
+        ),
+    ),
+    Mutant(
+        "V69",
+        "an error at the commit is always taken as refused, without asking which kind it is",
+        MIG,
+        '                if _commit_outcome(e, db) == "refused":',
+        "                if True:",
+        "tests/test_migration_verify_pg.py::test_a_lost_connection_at_commit_gives_exit_5",
+    ),
+    Mutant(
+        "V70",
+        "Q2 drops an object whose access list is empty (a CROSS JOIN instead of a LEFT JOIN)",
+        VERIFY,
+        "FROM obj o LEFT JOIN LATERAL pg_catalog.aclexplode(o.acl) a ON true)",
+        "FROM obj o CROSS JOIN LATERAL pg_catalog.aclexplode(o.acl) a)",
+        "tests/test_migration_verify_pg.py::test_an_object_whose_access_list_is_empty_is_still_judged_for_owner_and_definer",
     ),
 ]
 M.extend(STEP_MUTANTS)
@@ -3522,6 +3618,49 @@ def problems_with_the_list(root: Path = ROOT) -> list[str]:
                 encoding="utf-8"
             ):
                 problems.append(f"{m.name}: killer {killer} does not exist")
+    problems += _stale_ids(root, {m.name for m in M})
+    return problems
+
+
+# A mutant id in a test docstring ("Killed by: mutant X", "mutants X and Y") or a part of the parametrize id of a killer
+# that no mutant has any more is a stale claim: the cheap check finds it (ticket P3a-2, round 2 of commit 3c, Issue 17).
+_DOC_CLAIM = re.compile(r"(?:Killed by|killed by|mutants?)\b(.{0,300}?)(?:\.\s|\.$|$)", re.DOTALL)
+_ID_WORD = re.compile(r"\b([A-Z]{1,4}\d{1,3}[a-z]?)\b")
+
+
+def _stale_ids(root: Path, known: set[str]) -> list[str]:
+    problems = []
+    files = {k.partition("::")[0] for m in M for k in killers_of(m)}
+    for path in sorted(files):
+        full = root / path
+        if not full.is_file():
+            continue
+        text = full.read_text(encoding="utf-8")
+        for fn in ast.walk(ast.parse(text)):
+            if not isinstance(fn, ast.FunctionDef) or not fn.name.startswith("test_"):
+                continue
+            doc = ast.get_docstring(fn) or ""
+            for claim in _DOC_CLAIM.finditer(doc):
+                for word in _ID_WORD.findall(claim.group(1)):
+                    if word not in known:
+                        problems.append(
+                            f"{path}::{fn.name}: the docstring names the mutant {word}, which is not in the list"
+                        )
+        for m in M:
+            for killer in killers_of(m):
+                kpath, _, test = killer.partition("::")
+                if kpath != path or "[" not in test:
+                    continue
+                inside = test.split("[", 1)[1].rstrip("]")
+                if "matrix" in kpath:
+                    continue  # the ids of the matrix are made from its cells (checked by the matrix test itself)
+                for part in inside.split("-"):
+                    if re.fullmatch(r"-?\d+|[a-z]+\d+", part):
+                        continue  # a number or an id that pytest made itself (`other2`)
+                    if part not in text:
+                        problems.append(
+                            f"{m.name}: the parametrize id part '{part}' of {killer} is not in {kpath}"
+                        )
     return problems
 
 

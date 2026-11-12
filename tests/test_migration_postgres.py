@@ -1738,7 +1738,7 @@ def test_a_role_made_with_the_printed_sql_only_can_pass_usage_on_to_the_runtime_
 @pytest.mark.real_connect
 def test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing(scratch):
     """Without the grant option `GRANT USAGE ON SCHEMA ... TO runtime_role` only warns; `migrate` checks that the role
-    really can use the schema afterwards and refuses. Killed by: mutant GO2 (the check is gone)."""
+    really can use the schema afterwards and refuses. Killed by: no list mutant today (the check of grant options is covered by the shipped-file runs); it is a control test."""
     super_dsn, schema = scratch
     role, rt, pt = _role_from_the_printed_sql(schema, grant_option=False)
     try:
@@ -2582,8 +2582,7 @@ def test_a_superuser_among_the_named_roles_does_not_widen_the_read_back(sql_text
 def test_the_portal_role_is_refused_what_the_other_roles_are_refused(scratch, how, expected):
     """The portal role gets the same scan as the runtime and purge roles (`verify`): a right on one column
     that comes through a group role, SELECT on the migration ledger (not in the portal map), and CREATE on the schema.
-    The old check read table rights only. Killed by: mutants PC1 (no check) and PT1 (checked against the runtime map for
-    the tables; the three cases here are outside both maps)."""
+    The old check read table rights only. Killed by: no list mutant today; it guards the refusal of the portal role (the three cases here are outside both maps)."""
     dsn, schema = scratch
     pt, group = (f"hadavin_test_{t}_" + uuid.uuid4().hex[:8] for t in ("pt", "gr"))
     _create_roles(pt, group)
@@ -2710,7 +2709,7 @@ def test_an_aggregate_with_no_arguments_is_revoked_with_empty_brackets(
 ):
     """The server names the arguments of an aggregate with none `*`; GRANT, REVOKE and ALTER ROUTINE write `()` for it
     (`(*)` is a syntax error there). The aggregate keeps the default right for everyone; the printed REVOKE must run.
-    Old name: `test_an_aggregate_with_no_arguments_is_printed_with_a_star`. Killed by: mutant FO5.
+    Old name: `test_an_aggregate_with_no_arguments_is_printed_with_a_star`. Killed by: V10.
     Re-pointed in commit 3b: the new check (ticket P3a-2, 3.4 line 3) does not judge the default right for everyone on a
     function that ANOTHER role owns, so the old test (a superuser made the aggregate) no longer reached a refusal; the
     migration role makes the aggregate now, which is the case the rule still refuses."""
@@ -3045,7 +3044,7 @@ def test_a_security_definer_function_made_by_dynamic_sql_is_found_by_what_is_new
 ):
     """The text rules read only a `CREATE FUNCTION` at the start of a statement; here a function body makes the
     function by `EXECUTE`, in a second schema (so no list of the run's own schema finds it). What is new in the database
-    after the files is looked at too. Killed by: mutant SD3 (only the names in the file text are looked at)."""
+    after the files is looked at too. Guards: new functions are found by what is new in the catalog, not by the file text (no list mutant today)."""
     dsn, _schema = scratch
     body = (
         "CREATE OR REPLACE FUNCTION hadavin_test_maker() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
@@ -3114,7 +3113,7 @@ def test_a_security_definer_function_written_with_another_schema_is_made_owner_o
     to call a function that a file names, also in another schema, so only the owner can call it and rule S7 ("a function
     that a subject or everyone may execute") has nothing to refuse. The hidden form, where the file does not name the
     function (dynamic SQL), is the one that is still refused, by the test just above. Asserted on the server: the
-    run returns, and nobody but the owner holds EXECUTE. Class: a read limited to one schema. Killed by: mutant SD4."""
+    run returns, and nobody but the owner holds EXECUTE. Class: a read limited to one schema. Guards: a function in another schema (no list mutant today)."""
     dsn, _schema = scratch
     body = (
         f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_f() RETURNS int LANGUAGE sql SECURITY DEFINER '
@@ -3137,7 +3136,7 @@ def test_a_plain_function_in_another_schema_loses_the_default_right_for_everyone
     scratch, monkeypatch, tmp_path, second_schema
 ):
     """A function that a file makes in another schema is not SECURITY DEFINER here, but it still has the default
-    'everyone may call it': that default is removed, as for the functions of the run's schema. Killed by: mutant SD4."""
+    'everyone may call it': that default is removed, as for the functions of the run's schema. Guards: a function in another schema (no list mutant today)."""
     dsn, _schema = scratch
     body = f'CREATE OR REPLACE FUNCTION "{second_schema}".hadavin_test_g() RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
     _with_files(monkeypatch, tmp_path, {"0006_other_schema.sql": body})
@@ -3156,7 +3155,7 @@ def test_a_function_replaced_with_the_same_id_and_made_security_definer_is_found
     scratch, monkeypatch, tmp_path, second_schema
 ):
     """A function made by an earlier run (named in no file) keeps its id when a later file replaces it by dynamic SQL;
-    what is compared is its state, not whether its id is new. Killed by: mutant SD5 (only new ids are looked at)."""
+    what is compared is its state, not whether its id is new. Guards: a replaced function is found by its id (no list mutant today)."""
     dsn, _schema = scratch
     maker = (
         "CREATE OR REPLACE FUNCTION hadavin_test_maker2() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
@@ -3181,7 +3180,7 @@ def test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused(
     scratch, monkeypatch, tmp_path
 ):
     """The text rules and the names in `GRANTS` do not see a table that a function body makes. What is new in the
-    database after the files is read. Killed by: mutant RN6 (new relations are not read)."""
+    database after the files is read. Guards: new relations are read (no list mutant today)."""
     dsn, schema = scratch
     body = (
         "CREATE OR REPLACE FUNCTION hadavin_test_mk() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
@@ -3335,7 +3334,7 @@ def test_an_owner_a_file_handed_an_object_to_is_refused_even_when_the_migration_
 @needs_pg
 def test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal(scratch):
     """A later run that names no role finds the rights an earlier run gave to the runtime role; the refusal once said
-    'remove the statement from the migration file' although no file was at fault. Killed by: mutant WD1.
+    'remove the statement from the migration file' although no file was at fault. Guards the wording of the refusal (no list mutant today).
     Re-pointed in commit 3b (the wording changed, the intent did not): the rights are now found at step 2, before any
     file runs, so the refusal says that no file ran and nothing was changed, names the role and prints the REVOKE
     statements. It never tells the reader to remove a statement from a file. (The old sentence 'an earlier run or a
@@ -3611,8 +3610,7 @@ def test_a_right_given_on_a_table_that_existed_before_the_run_is_refused(
 ):
     """The table `x` existed before the run (owned by the migration role, in no list). The file holds a plain
     `GRANT ... ON x TO PUBLIC`, a statement the text rules allow. `x` is neither in the grant map nor new, so nothing read
-    its rights. Class: a right or an owner changes on an object that existed before the run. Killed by: mutant RA1 (the
-    rights of a relation are not part of its state). The message names the table with its schema, and the column when
+    its rights. Class: a right or an owner changes on an object that existed before the run. Guards: the rights of a relation are read (no list mutant today). The message names the table with its schema, and the column when
     the right is on one column."""
     dsn, schema = scratch
     _pre_existing(schema, "table", X)
@@ -3637,8 +3635,7 @@ def test_a_second_right_on_a_column_that_already_had_one_is_refused(
 ):
     """The column `a` already holds a right (an administrator gave it to a named role) before the run. The file adds a
     right for PUBLIC on the same column. The set of columns that hold a right does not change, only what the right says,
-    so the table counts as changed only when the text of the rights is part of its state. Killed by: mutant RA1b (the
-    rights of a column are not part of its state; a first right on a column still changes the set, so only this case
+    so the table counts as changed only when the text of the rights is part of its state. Guards: the rights of a column are read (no list mutant today; a first right on a column still changes the set, so only this case
     shows it).
     Re-pointed in commit 3b: there is no before/after comparison any more; the state is judged whoever made it. The
     earlier right is given to a THIRD role (one the run does not name: the check does not judge a third role's right on
@@ -3667,8 +3664,7 @@ def test_a_second_right_on_a_column_that_already_had_one_is_refused(
 def test_a_right_given_on_a_table_of_another_schema_is_refused(
     scratch, monkeypatch, tmp_path, second_schema
 ):
-    """Same class, a table of another schema that the migration role owns. Killed by: mutants RA1 and RA2 (only the schema
-    of the run is read)."""
+    """Same class, a table of another schema that the migration role owns. Guards: tables of another schema are read (no list mutant today)."""
     dsn, schema = scratch
     _pre_existing(schema, "table", X, in_schema=second_schema)
     _with_files(
@@ -3689,7 +3685,7 @@ def test_an_owner_handed_over_in_the_run_schema_is_refused(scratch, monkeypatch,
     allowed since rev 2 of P3a-2: the refusal is the CREATE right, not the owner). Same class as the old
     `was handed to` check (retired with the comparison); the owner side of the check is read on a real server by
     `test_a_foreign_owner_of_a_table_the_package_manages_is_refused_at_the_end_of_the_run` in
-    tests/test_migration_verify_pg.py. Killed by: mutant SD5."""
+    tests/test_migration_verify_pg.py. Guards: an owner handed over in the run schema is refused (no list mutant today)."""
     dsn, schema = scratch
     other = "hadavin_test_ow_" + uuid.uuid4().hex[:8]
     _create_roles(other)
@@ -3716,8 +3712,7 @@ def test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is(
     scratch, monkeypatch, tmp_path, second_schema, change
 ):
     """`GRANT CREATE ON SCHEMA other TO PUBLIC` inside a function body changed a schema that the run does not live in; only
-    the schema of the run was read. Killed by: mutants SC10 (changed schemas are not read) and SC11 (a schema owner is not
-    read).
+    the schema of the run was read. Guards: changed schemas are read (no list mutant today).
     Re-pointed in commit 3b (ticket P3a-2, 3.3 rule O5 struck, and 10.3 items 3 and 11). The `acl` case keeps its intent:
     a right for everyone is judged in EVERY schema. The `owner` case pinned a REFUSAL that the new design drops on
     purpose: the schema is handed to a role the migration role belongs to (the only kind of role a plain migration role
@@ -4452,6 +4447,9 @@ def test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one(sc
                 holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
             holder.execute("ROLLBACK")
             assert mig.migrate(dsn) == REAL  # the lock is free again: the run goes through
+            # This return is after a `migrate` call on purpose and is not an early return: on a server that cannot
+            # prepare transactions the situation of this test cannot arise, so what is asserted is the refusal of the
+            # server plus a run that goes through; the message wording itself is proven server-free (see the docstring).
             return
         holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
     try:

@@ -131,7 +131,10 @@ def test_verify_restores_the_search_path_and_leaves_nothing_behind(env):
 
 
 def test_the_public_schema_with_the_server_default_passes_verify(env):
-    assert run_verify(env, schema="public", migration_role="postgres") == []
+    me = env.db.execute("SELECT current_user").fetchone()[
+        0
+    ]  # the cluster's own superuser, whatever it is called
+    assert run_verify(env, schema="public", migration_role=me) == []
 
 
 def test_a_temporary_table_that_shadows_a_catalog_table_changes_nothing(env):
@@ -247,8 +250,9 @@ def test_a_named_role_in_pg_monitor_prints_exactly_one_statement(env):
     x(env, "GRANT pg_monitor TO {}", n.rt)
     problems = run_verify(env)
     assert {p.kind for p in problems} == {"built_in_role"} and len(problems) == 4
+    grantor = env.db.execute("SELECT current_user").fetchone()[0]
     assert v.statements_for(problems) == [
-        f'REVOKE "pg_monitor" FROM "{n.rt}" GRANTED BY "postgres";'
+        f'REVOKE "pg_monitor" FROM "{n.rt}" GRANTED BY "{grantor}";'
     ]
     _statements_clean(env)
 
@@ -285,6 +289,27 @@ def test_a_left_over_object_owned_by_a_named_role_is_found(env):
     assert (
         any(p.kind == "foreign_owner" for p in got) is False
     )  # `mine` is not a name of the grant map
+
+
+def test_an_object_whose_access_list_is_empty_is_still_judged_for_owner_and_definer(env):
+    """Issue 11 (round 2 of 3c, N5). A hostile file revokes everything from the object's owner and from everyone: the
+    access list is then EMPTY (not null), `aclexplode` gives no row, and an object read only through its access list
+    would be invisible. The probe on the old code showed it WAS invisible to the unreviewed-definer and the foreign-owner
+    rules; Q2 now keeps such an object as one row with no right (`privilege_type` is null)."""
+    n = env.n
+    x(env, "CREATE FUNCTION app.sneaky() RETURNS int LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'")
+    x(env, "ALTER FUNCTION app.sneaky() OWNER TO {}", n.mig)
+    x(env, "REVOKE ALL ON FUNCTION app.sneaky() FROM PUBLIC, {}", n.mig)
+    table = next(iter(GRANTS))
+    x(env, "CREATE TABLE app.{} (id int)", table)
+    x(env, "ALTER TABLE app.{} OWNER TO {}", table, n.other)
+    x(env, "REVOKE ALL ON TABLE app.{} FROM PUBLIC, {}", table, n.other)
+    acl = env.db.execute("SELECT proacl::text FROM pg_proc WHERE proname = 'sneaky'").fetchone()[0]
+    assert acl == "{}", "the made-up function has an empty access list"
+    got = run_verify(env)
+    assert any(p.kind == "definer_unreviewed" and p.obj == "sneaky" for p in got), got
+    assert any(p.kind == "foreign_owner" and p.obj == table for p in got), got
+    assert not any(p.kind == "everyone" for p in got), "an empty list is not a right for everyone"
 
 
 # --- `migrate()` on a real server: the check after the commit and the commit itself (ticket P3a-2, 7.6) ------------------
@@ -398,6 +423,81 @@ def test_after_commit_a_grant_gives_exit_5_and_the_statements_repair_it(
     assert mig.migrate(mrun.dsn) == []
 
 
+@pytest.mark.parametrize("call", [1, 2], ids=["step_2", "step_6"])
+def test_a_connection_lost_while_the_check_runs_before_the_commit_gives_exit_2(
+    call, mrun, cfg_dir, monkeypatch, capsys
+):
+    """Round 2 of 3c, M4 and C1. A second session ends the run's backend (`pg_terminate_backend`: 57P01) just before the
+    first (step 2) or the second (step 6) `verify` of the run reads anything: the check raises a driver error before the
+    commit. That is exit 2 "kept nothing, could not run", never exit 3; the ledger is empty; the same run on a healthy
+    connection then applies every file. Killed by: V67 and V68."""
+    real = mig.verify
+    seen = {"n": 0}
+
+    def ends_the_session_first(db, **kw):
+        seen["n"] += 1
+        if seen["n"] == call:
+            with psycopg.connect(DSN, autocommit=True) as adm:
+                adm.execute("SELECT pg_terminate_backend(%s)", (db.info.backend_pid,))
+            time.sleep(0.2)  # the backend has left when the first read goes out
+        return real(db, **kw)
+
+    monkeypatch.setattr(mig, "verify", ends_the_session_first)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    out, err = capsys.readouterr()
+    assert err.startswith("refused: migrate stopped and kept nothing"), err
+    assert "the check of the rights could not run" in err and "Run migrate again" in err
+    assert "failed:" not in err and out == ""
+    assert _ledger_of(mrun.dsn) == []
+    monkeypatch.setattr(mig, "verify", real)
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
+def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_exit_2(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Round 2 of 3c, M4. PostgreSQL 17 and later have `transaction_timeout`, and `verify` does not neutralise it (it
+    cannot: it ends the session). On a server below 17 the setting does not exist, so this test pins that fact and says
+    on which server it cannot run (the independent evidence run and CI run it on 17). On 17 the setting is applied inside
+    the run just before the first `verify` (a role-saved value could end the run anywhere, including inside a file,
+    which is not the path under test) and a later statement runs into it. Killed by: V67."""
+    version = mrun_server_version()
+    if version < 170000:
+        with psycopg.connect(DSN, autocommit=True) as adm:
+            helper.ensure_plain_role(adm)
+            with pytest.raises(pge.UndefinedObject, match="transaction_timeout"):
+                adm.execute(
+                    sql.SQL("ALTER ROLE {} SET transaction_timeout = '1s'").format(
+                        sql.Identifier(helper.PLAIN_ROLE)
+                    )
+                )
+        # nothing could be saved, so the run is not stopped by it: it goes through (this keeps the branch from being a
+        # test that returns without running `migrate`)
+        assert mig.migrate(mrun.dsn) == REAL_FILES
+        return
+    real = mig.verify
+    seen = {"n": 0}
+
+    def times_out_first(db, **kw):
+        seen["n"] += 1
+        if seen["n"] == 1:
+            db.execute("SET LOCAL transaction_timeout = '1ms'")
+            time.sleep(0.05)
+        return real(db, **kw)
+
+    monkeypatch.setattr(mig, "verify", times_out_first)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    _out, err = capsys.readouterr()
+    assert err.startswith("refused: migrate stopped and kept nothing"), err
+    assert "the check of the rights could not run" in err
+    assert _ledger_of(mrun.dsn) == []
+
+
+def mrun_server_version() -> int:
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        return adm.info.server_version
+
+
 def test_step_8_that_cannot_connect_gives_exit_5(mrun, cfg_dir, monkeypatch, capsys):
     def refuse():
         raise psycopg.OperationalError("made-up: the server is not reachable")
@@ -459,6 +559,23 @@ def test_step_8_with_a_saved_statement_timeout_still_checks(mrun):
     finally:
         _super("ALTER ROLE {} RESET statement_timeout", role)
     assert mig.migrate(mrun.dsn) == []
+
+
+def test_verify_gets_through_a_one_millisecond_statement_timeout_that_cancels_its_own_query(env):
+    """Round 2 of 3c, N7 (Issue 13). The 50 ms test above can pass on a fast machine because nothing is cancelled. This one
+    cannot: the SESSION setting is 1 ms, the sensitivity check runs the rights query itself (the biggest query of `verify`) and must be
+    cancelled, and then `verify` on the same session still returns, because it sets its own two limits first.
+    Killed by: V48 (the limits are not set before the reads); the sensitivity line fails on a server where 1 ms is not
+    enough to cancel that query (never silently)."""
+    n = env.n
+    env.db.execute("SET statement_timeout = '1ms'")
+    try:
+        params = {"named": [n.rt, n.po, n.pu], "family": [n.mig], "schema": "app"}
+        with pytest.raises(pge.QueryCanceled):
+            env.db.execute(v.Q2, params).fetchall()
+        assert run_verify(env) == []
+    finally:
+        env.db.execute("RESET statement_timeout")
 
 
 def test_step_8_keeps_a_role_switch_in_the_dsn(mrun):
@@ -568,12 +685,20 @@ def test_a_commit_refused_by_the_server_gives_exit_2_and_keeps_nothing(
     assert _ledger_of(mrun.dsn) == []
 
 
-def test_a_lost_connection_at_commit_gives_exit_5(mrun, cfg_dir, monkeypatch, capsys):
-    """D-M3: the second firing sleeps; a second session ends that backend while it sleeps. The wording is asserted, not
-    the outcome (here the commit did not happen; a cut after the server finished gives the same error)."""
-    _late(mrun, monkeypatch, "PERFORM pg_sleep(5);")
+def _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, how: str):
+    """Run `migrate` through the CLI while a second session ends the backend that sleeps at the COMMIT (`how` is the
+    server function: `pg_terminate_backend` closes the connection, `pg_cancel_backend` cancels the statement). Returns
+    the exit code, the pids that were ended and what `_commit_outcome` was asked and answered."""
     stop = threading.Event()
-    killed = []
+    killed, asked = [], []
+    real = mig._commit_outcome
+
+    def recording(exc, db):
+        answer = real(exc, db)
+        asked.append((getattr(exc, "sqlstate", None), answer))
+        return answer
+
+    monkeypatch.setattr(mig, "_commit_outcome", recording)
 
     def killer():
         with psycopg.connect(DSN, autocommit=True) as adm:
@@ -583,7 +708,9 @@ def test_a_lost_connection_at_commit_gives_exit_5(mrun, cfg_dir, monkeypatch, ca
                     "SELECT pid FROM pg_stat_activity WHERE wait_event = 'PgSleep' AND pid <> pg_backend_pid()"
                 ).fetchone()
                 if sleeping:
-                    adm.execute("SELECT pg_terminate_backend(%s)", (sleeping[0],))
+                    adm.execute(
+                        sql.SQL("SELECT {}(%s)").format(sql.Identifier(how)), (sleeping[0],)
+                    )
                     killed.append(sleeping[0])
                     return
                 time.sleep(0.05)
@@ -595,10 +722,38 @@ def test_a_lost_connection_at_commit_gives_exit_5(mrun, cfg_dir, monkeypatch, ca
     finally:
         stop.set()
         t.join(15)
+    return rc, killed, asked
+
+
+def test_a_lost_connection_at_commit_gives_exit_5(mrun, cfg_dir, monkeypatch, capsys):
+    """D-M3: the second firing sleeps; a second session ends that backend while it sleeps. The wording is asserted, not
+    the outcome (here the commit did not happen; a cut after the server finished gives the same error). Round 2 of 3c
+    (N8): the classifier saw exactly 57P01 and answered "unknown". Killed by: V58 and V59 (classes), and the `asked` line
+    by V69 (the error is classed without asking)."""
+    _late(mrun, monkeypatch, "PERFORM pg_sleep(5);")
+    rc, killed, asked = _end_the_sleeping_session(
+        mrun, cfg_dir, monkeypatch, "pg_terminate_backend"
+    )
     _out, err = capsys.readouterr()
     assert killed, "the second session saw the sleep and ended it"
     assert rc == 5
     assert "the commit may or may not have happened" in err
+    assert asked == [("57P01", "unknown")], asked
+
+
+def test_a_cancel_at_commit_gives_exit_2(mrun, cfg_dir, monkeypatch, capsys):
+    """Ticket 7.6 (round 2 of 3c, N8). The same sleep, ended by `pg_cancel_backend`: the server cancels the statement at
+    the COMMIT (57014) and keeps the session, so the commit was refused: exit 2, nothing kept, and the classifier saw
+    exactly 57014 and answered "refused"."""
+    _late(mrun, monkeypatch, "PERFORM pg_sleep(5);")
+    rc, killed, asked = _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, "pg_cancel_backend")
+    _out, err = capsys.readouterr()
+    assert killed, "the second session saw the sleep and cancelled it"
+    assert rc == 2, err
+    assert "the database server refused the commit (57014" in err and "Nothing was kept" in err
+    assert "may or may not" not in err
+    assert asked == [("57014", "refused")], asked
+    assert _ledger_of(mrun.dsn) == []
 
 
 # --- `migrate()` on a real server: what step 2 refuses, what the run repairs, what the end of the run refuses ---------------
@@ -959,7 +1114,7 @@ def test_step_4_revokes_an_aggregate_with_no_arguments_that_has_the_name_of_a_fi
 ):
     """REVOKE writes `()` for an aggregate with no arguments (`(*)` is a syntax error there). A file function and an
     aggregate share a name; the migration role owns the aggregate; step 4 takes EXECUTE for everyone off both.
-    Old mutant E5 (a `*` branch) is retired: the server writes no `*` for the identity arguments on 16.15, so that
+    Old the old `*` branch is retired: the server writes no `*` for the identity arguments on 16.15, so that
     branch could never run and was removed."""
     with psycopg.connect(DSN, autocommit=True) as adm:
         helper.ensure_plain_role(adm)
@@ -992,3 +1147,33 @@ def test_step_4_revokes_an_aggregate_with_no_arguments_that_has_the_name_of_a_fi
         ).fetchall()
     assert [(r[0], r[1]) for r in rows] == [("", "a"), ("x integer", "f")], rows
     assert [r[2] for r in rows] == [0, 0], rows
+
+
+_AWKWARD = ["MixedCase", "na\u00efve_\u0192", "back\\slash", "line\nbreak", 'quo""te']
+
+
+def test_step_4_takes_everyones_execute_off_functions_with_awkward_names(mrun, monkeypatch):
+    """Round 2 of 3c, C2 (Issue 6). The REVOKE of step 4 is built with the driver's identifier quoting, so a function
+    whose name has a capital letter, a non-ASCII letter, a backslash, a line break or a double quote is revoked like any
+    other. On the code before this change the names that `ascii()` would escape (all but the first) were skipped, EVERYONE
+    kept EXECUTE, and step 6 refused the whole run for a file that did nothing wrong; this test fails there (run
+    against the old code, see the PR notes). Killed by: V66 (the skip is put back)."""
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+    body = " ".join(
+        f'CREATE OR REPLACE FUNCTION "{name}"(x int) RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;'
+        for name in _AWKWARD
+    )
+    _plant(monkeypatch, mrun.tmp, "0006_awkward.sql", body + "\n")
+    assert mig.migrate(mrun.dsn) == REAL_FILES + ["0006_awkward"]
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        rows = adm.execute(
+            "SELECT p.proname, (SELECT count(*) FROM aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+            " WHERE a.grantee = 0 AND a.privilege_type = 'EXECUTE') "
+            "FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = %s AND p.proname = ANY(%s) ORDER BY 1",
+            (mrun.schema, [n.replace('""', '"') for n in _AWKWARD]),
+        ).fetchall()
+    names = [r[0] for r in rows]
+    assert sorted(names) == sorted(n.replace('""', '"') for n in _AWKWARD), names
+    assert [r[1] for r in rows] == [0] * len(_AWKWARD), rows
+    assert mig.migrate(mrun.dsn) == []

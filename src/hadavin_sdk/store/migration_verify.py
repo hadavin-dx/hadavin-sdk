@@ -12,6 +12,19 @@ Words used here. The *named roles* are the runtime, portal and purge roles given
 named role or any role it is a member of, directly or through others. *Everyone* is PostgreSQL's PUBLIC, the rights
 every role has. The *family* is the migration role, the login when it differs, and every role either belongs to.
 
+An object whose access list is EMPTY (a file revoked every right, from its owner too) has no row in `aclexplode`. Q2 keeps
+such an object as one row with no right (`privilege_type` is null) so that its owner (rule O8) and its SECURITY DEFINER
+flag (rule O4) are still judged; `_judge` never reads that row as a right, and never as a right for everyone. (The probe on
+the code before this change showed that such an object was invisible to O4 and O8.)
+
+What `_judge` checks for a SECURITY DEFINER function: that its schema, name and argument types are on the reviewed list
+(O4), who owns it (O8: a role of the family), and who may EXECUTE it (a named role: always a right; everyone: refused
+unless reviewed). It does not read the function's body or its `search_path` setting.
+
+A login that differs from the migration role: `_judge` skips only a grantee that is the migration role itself. When the
+login holds its own entry on an object of the package, `_judge` reports it as `other_grantee`: a refusal that a person can
+recognise and resolve (a false refusal, never a missed excess right).
+
 This module does not decide who is the migration role: the caller passes the names in. It never reads the current role
 or the current schema of the session (with the search path pinned they would answer the wrong thing).
 """
@@ -136,7 +149,7 @@ obj(kind, relkind, cls, oid, schema, name, sub, owner, definer, row_type, acl) A
          coalesce(s.spcacl, pg_catalog.acldefault('t', s.spcowner)) FROM pg_catalog.pg_tablespace s),
 items AS (
   SELECT o.*, (o.schema IN ('pg_catalog', 'information_schema')) AS system, a.grantee, a.grantor, a.privilege_type, a.is_grantable
-    FROM obj o CROSS JOIN LATERAL pg_catalog.aclexplode(o.acl) a)
+    FROM obj o LEFT JOIN LATERAL pg_catalog.aclexplode(o.acl) a ON true)
 SELECT i.kind, i.relkind, i.schema, i.system, i.name, i.sub, pg_catalog.pg_get_userbyid(i.owner) AS owner,
        (i.owner IN (SELECT role FROM fam)) AS family_owned, i.definer, i.row_type,
        xe.extname AS extension, pg_catalog.pg_get_userbyid(xe.extowner) AS extension_owner,
@@ -283,7 +296,6 @@ _FLAGS = (
     ("rolbypassrls", "BYPASSRLS"),
     ("rolreplication", "REPLICATION"),
 )
-_SYSTEM_SCHEMAS = ("pg_catalog", "information_schema")
 # Catalogs whose access lists Q2 or Q4 read (rule S8): a row of `pg_shdepend` of type `a` in any other catalog is a place
 # this version does not read.
 _READ_CATALOGS = frozenset(
@@ -974,6 +986,12 @@ def _judge(
                 via,
                 it.kind,
             )
+
+        # an object whose access list is empty (a file revoked everything, from the owner too) comes as one row with no
+        # right (`privilege_type` is null, from the LEFT JOIN of Q2): it has no right to judge and must never be read as
+        # "for everyone"; its owner and its SECURITY DEFINER flag are judged below, once per object
+        if it.privilege_type is None:
+            continue
 
         # --- items that name a subject role (S5, S6) -----------------------------------------------------------
         if it.grantee is not None and it.grantee_is_subject:

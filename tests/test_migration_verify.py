@@ -686,6 +686,7 @@ def test_commit_outcome_classes_refused(state):
         "25P02",
         "2D000",
         "0A000",
+        "40003",
     ],
 )
 def test_commit_outcome_classes_unknown_by_code(state):
@@ -862,7 +863,7 @@ def _between_markers(text: str) -> list[str]:
 def test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog():
     """Promise table, rows 1 to 3: the module text of `migrate.py` and the CHANGELOG item hold the same words between the
     two marker lines (leading space and blank lines apart), and each row names its word. Killed by: mutants that edit
-    one copy only (PT3, PT4)."""
+    one copy only (the V mutants of the promise table, `V63` and `V64`)."""
     from hadavin_sdk.store import migrate as mig
 
     root = Path(__file__).resolve().parents[1]
@@ -875,9 +876,12 @@ def test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog():
     assert 'never in "applied"' in in_code[4]
     assert (root / "CHANGELOG.md").read_text(encoding="utf-8").count("[promise table]") == 1
     assert "What migrate promises" in (root / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert "What migrate promises" in mig._after_commit.__code__.co_consts.__repr__() or any(
-        "What migrate promises" in str(c) for c in mig._after_commit.__code__.co_consts
-    )
+    assert any("What migrate promises" in str(c) for c in mig._after_commit.__code__.co_consts)
+    # Row 1 says what is NOT built yet while the test of the shipped files (ticket 7.7) does not exist, and stops saying it
+    # when the test exists: the text and the file cannot drift apart (Issue 2)
+    matrix = (root / "tests/test_migration_matrix.py").read_text(encoding="utf-8")
+    built = "def test_the_shipped_files_give_each_role_exactly_the_map(" in matrix
+    assert ("NOT BUILT YET" in in_code[2]) == (not built)
 
 
 def test_usage_on_a_language_is_refused_for_everyone_only_when_the_migration_family_owns_it():
@@ -1215,3 +1219,85 @@ def test_a_default_right_for_everyone_is_skipped_only_when_it_is_the_servers_own
     assert "default_for_everyone" not in kinds(own_pair), [p.line() for p in own_pair]
     other_pair = judge(rows(defaults=[dflt(kind="f", grantee=None, privilege_type="USAGE")]))
     assert kinds(other_pair) == ["default_for_everyone"], [p.line() for p in other_pair]
+
+
+# --- rights by word, and objects with an empty access list (round 2 of 3c: Issues 5 and 11) -------------------------------
+
+
+def _named_right(word, role="rt", name="runs"):
+    return item(
+        name=name,
+        grantee=role,
+        grantee_is_subject=True,
+        grantee_is_named=True,
+        privilege_type=word,
+    )
+
+
+def test_maintain_is_one_more_right_that_the_grant_map_does_not_give():
+    """MAINTAIN (PostgreSQL 17 and later) is read like any other right word: for a named role on a map table it is a
+    `right` (the runtime role's list is SELECT, INSERT, UPDATE); for everyone it is `everyone`; the rights the map does
+    give pass. Killed by: the mutant V61 (a prefix test in `_allowed_for`) and by any edit that lets MAINTAIN through.
+    Replaces two older tests of the same kind that lived in the real-server file and were retired."""
+    assert kinds(judge(rows(items=[_named_right("MAINTAIN")]))) == ["right"]
+    assert kinds(judge(rows(items=[item(name="runs", privilege_type="MAINTAIN")]))) == ["everyone"]
+    assert judge(rows(items=[_named_right("SELECT")])) == []  # control: a right of the map
+
+
+@pytest.mark.parametrize(
+    "word", ["SELECTX", "SEL", "select", "SELECT ", "UPDATE,INSERT", "", "MAINTAINS"]
+)
+def test_an_unknown_right_word_is_refused_whole_never_by_prefix(word):
+    """A word that is not exactly one of the map's rights is a `right`, whatever it starts with. Killed by: V61."""
+    assert kinds(judge(rows(items=[_named_right(word)]))) == ["right"], word
+
+
+def test_an_item_with_no_right_is_never_read_as_a_right_for_everyone():
+    """Q2 returns an object with an empty access list as one row with `privilege_type` None and no grantee (Issue 11).
+    The row must not become an `everyone` or `right` problem, and must still be judged for its owner and its SECURITY
+    DEFINER flag. Killed by: V62 (the guard on a null right is removed)."""
+    table = item(name="runs", grantee=None, privilege_type=None)
+    assert judge(rows(items=[table])) == []
+    fn = item(kind="function", relkind="", name="door", sub="q text", definer=True, grantee=None,
+              privilege_type=None)  # fmt: skip
+    assert kinds(judge(rows(items=[fn]))) == ["definer_unreviewed"]
+    other = item(name="runs", owner="boss", family_owned=False, grantee=None, privilege_type=None)
+    assert kinds(judge(rows(items=[other]))) == ["foreign_owner"]
+
+
+# --- the words of the message lines in the CHANGELOG are the words of the code (Issue 4) -----------------------------------
+
+
+def _block(text: str, name: str) -> list[str]:
+    start, stop = text.index(f"[{name}]"), text.index(f"[end of {name}]")
+    return [ln.strip() for ln in text[start + len(name) + 2 : stop].splitlines() if ln.strip()]
+
+
+def test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says():
+    root = Path(__file__).resolve().parents[1]
+    forms = _block((root / "CHANGELOG.md").read_text(encoding="utf-8"), "message words")
+    assert forms, "the block of message words is empty"
+    source = (root / "src/hadavin_sdk/store/migration_verify.py").read_text(encoding="utf-8")
+    for form in forms:
+        for piece in re.split(r"\{[a-z_ ]+\}", form):
+            piece = piece.strip()
+            assert len(piece) < 3 or piece in source, (
+                f"{piece!r} is in the CHANGELOG, not in the code"
+            )
+    plain = v.Problem("right", "app", "plans", "", "portal_role", "DELETE", "mig", word="table",
+                      fix="REVOKE DELETE ON TABLE app.plans FROM portal_role;")  # fmt: skip
+    via = v.Problem("right", "app", "plans", "", "portal_role", "SELECT", "mig", word="table", via="grp",
+                    fix="REVOKE grp FROM portal_role;")  # fmt: skip
+    assert "portal_role has DELETE." in plain.line() and "To remove:" in plain.line()
+    assert "can use it through the role grp, SELECT." in via.line()
+    assert forms[0] == "has {right}" and forms[1] == "can use it through the role {via}, {right}"
+    assert forms[2] == "To remove: {statement}"
+
+
+def test_a_sentence_the_changelog_quotes_but_the_code_does_not_write_is_found():
+    """The checker above is not blind: a planted block with a made-up form is not found in the code."""
+    source = (
+        Path(__file__).resolve().parents[1] / "src/hadavin_sdk/store/migration_verify.py"
+    ).read_text(encoding="utf-8")
+    planted = "the portal role has privileges outside the portal grant map"
+    assert planted not in source

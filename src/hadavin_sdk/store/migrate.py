@@ -16,7 +16,7 @@ is still there when the check looks. The same table is in CHANGELOG.md (a test c
 [promise table]
 | Who wrote the file | What `migrate` does | Word |
 |---|---|---|
-| 1. We did, and made an honest mistake | When the file leaves a named role, or everyone, with a right outside the grant map, the run is refused and undone. The same mistake is caught before release, because the build server runs the shipped files on an empty database and tests what each role can really do. | STOPPED |
+| 1. We did, and made an honest mistake | When the file leaves a named role, or everyone, with a right outside the grant map, the run is refused and undone. Catching the same mistake before release, by running the shipped files on an empty database and testing what each role can really do, is NOT BUILT YET (planned for commit 5 of this package); until then the build server runs a smaller test of the same kind. | STOPPED |
 | 2. Someone careless, or a file copied from elsewhere | The same, for lasting rights only. Nothing is promised about lost data, and nothing about code the file leaves behind to run later. | STOPPED, for lasting rights only |
 | 3. Someone who wants to do harm | NOT stopped. Lasting excess rights that exist when the check after the commit runs are reported, with the statements that remove them. Such a file can also cheat the check after the commit, or make it fail to run; a check that cannot run ends in the same loud "applied, not verified" result, never in "applied". | DETECTED, not stopped |
 [end of promise table]
@@ -25,28 +25,37 @@ Why row 3 cannot be better: the file runs as the owner of every table. The real 
 elsewhere: a person reviews every file, each released file's fingerprint is recorded and checked, and a separate
 read-only login that only checks is a later ticket.
 
-What `migrate` does, in order (eight steps; each refusal before the commit keeps nothing):
+Not proven yet: until the full test matrix is built (commit 5 of this package), rows 1 and 2 are backed only by unit tests of
+the rules and a few real-server tests, not by a real-server test of every kind of change, for these kinds: role
+memberships, handing an object to another owner, default rights, large objects, SECURITY DEFINER functions and a few
+rarer cases of the ticket. The package must not be called done without that matrix.
 
-1. Before it connects: the file names, the ledger order, the fingerprints of released files, `check_grants`.
-2. It connects, takes the lock (waiting at most `lock_wait_seconds`) and sets the two time limits of `RECIPE_TIMEOUTS`
+What `migrate` does, in order (step 0 before it connects, then steps 1 to 8; the numbers are the ones of the ticket and of
+the comments in `migrate()`; each refusal before the commit keeps nothing):
+
+0. Before it connects: the file names, the ledger order, the fingerprints of released files, `check_grants`.
+1. It connects, takes the lock (waiting at most `lock_wait_seconds`) and sets the two time limits of `RECIPE_TIMEOUTS`
    (`migration_numbers`: a lock limit and a statement limit; the hand recipe sets the same two lines). It refuses a
    server below PostgreSQL 16, a migration role that is a superuser or holds `CREATEROLE`, `CREATEDB`, `BYPASSRLS` or
    `REPLICATION` (a role with `REPLICATION` can read every change made on the whole server), and a schema in which a
    table, view, sequence or function THIS PACKAGE manages is owned by a role the migration role cannot act as (it
    prints the `ALTER ... OWNER TO` lines, runbook case (h)). It reads the schema of the run once.
-3. `verify`, before the first file: the state of the database is judged against the rules below. A right that the run
+2. `verify`, before the first file: the state of the database is judged against the rules below. A right that the run
    itself repairs at step 4 is not refused here. Anything else stops the run with "No file ran".
-4. Each pending file, then the read-back after it (the values, memberships, saved settings and triggers it saved before
+3. Each pending file, then the read-back after it (the values, memberships, saved settings and triggers it saved before
    the file; the memberships are read from `pg_auth_members`), then the role questions again, so a mistake in a file
    that changes the migration role's own rights is refused, then the ledger row. The read-back names the file; it cannot see a change
    that a file makes and undoes before it ends, and cannot undo what a hidden `COMMIT` or a second connection
    (`dblink_exec` runs outside this transaction) already kept.
-5. The runner's own writes: the grants of the grant map for each named role, and the removal of everyone's `EXECUTE` on
+4. The runner's own writes: the grants of the grant map for each named role, and the removal of everyone's `EXECUTE` on
    the functions the files name.
-6. The deferred checks and triggers run early (`SET CONSTRAINTS ALL IMMEDIATE`), the read-back once more, then `verify`
-   in full. A problem here refuses the whole run (rows 1 and 2 of the table).
+5. The deferred checks and triggers run early (`SET CONSTRAINTS ALL IMMEDIATE`).
+6. The read-back once more, then `verify` in full. A problem here refuses the whole run (rows 1 and 2 of the table).
+   A driver error that `verify` raises at step 2 or 6 (a lost connection, a saved `transaction_timeout` of PostgreSQL 17 and
+   later) means the check could not run: the run is refused with exit 2 and keeps nothing (`_check_could_not_run`).
 7. The COMMIT. A commit the server refused keeps nothing (exit 2). A commit whose outcome is unknown (lost connection)
-   is reported as "may or may not have happened" (exit 5).
+   is reported as "may or may not have happened" (exit 5); so is an error code that says the statement's completion is
+   unknown (`40003`).
 8. After the commit, on a new connection, as the migration role, in one read-only snapshot: `verify` again. Excess
    rights found here are reported with the statements that remove them, and `migrate` exits with 5 ("applied, not
    verified"); a check that cannot run says so in the same way. `migrate` never says "applied" unless this check ran to
@@ -58,7 +67,9 @@ no right that the grant map does not give (columns included), no grant option, n
 everyone or the role may call. For the objects of the migration role family in the schema of the run, and for the
 schema itself: rights only for the owner, the migration role and the named roles as far as the grant map gives them;
 nothing for everyone except USAGE on the schema and on a row type; no SECURITY DEFINER function that is not on
-`REVIEWED_DEFINER_FUNCTIONS`; an owner that is a role of the family. Default rights (`ALTER DEFAULT PRIVILEGES`): none
+`REVIEWED_DEFINER_FUNCTIONS`; an owner that is a role of the family (one exception: the owner of the schema itself is
+excused while it is the same role as at the start of the run, because a schema that a database administrator owns and in
+which the migration role may create is a normal setup; only a change of that owner during the run is refused). Default rights (`ALTER DEFAULT PRIVILEGES`): none
 for a named role, none for everyone beyond the server's own entry, none for another role on what the family makes.
 What everyone holds on the system schemas is the server as shipped and is not judged. A clean run means "no excess right
 was there when we looked", not "the database is safe from now on".
@@ -91,6 +102,7 @@ from __future__ import annotations
 
 import json
 import re
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
@@ -101,6 +113,7 @@ from psycopg import sql
 from psycopg.pq import TransactionStatus
 
 from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError
+from hadavin_sdk.store import postgres as pg
 from hadavin_sdk.store.migration_numbers import (
     MIGRATE_LOCK,
     MIGRATE_LOCK_WAIT_SECONDS,
@@ -310,17 +323,26 @@ def _apply_grants(db, schema: str, role_name: str, privileges, columns=None) -> 
 # (a cancel), 57P01 (`pg_terminate_backend`: closed connection, so "unknown").
 _COMMIT_REFUSED_CLASSES = ("22", "23", "40", "42", "44", "P0")
 _COMMIT_REFUSED_STATES = frozenset({"55P03", "55000", "55006", "57014"})
+# One code INSIDE a refused class that means the opposite. The standard (SQL:2016 and the PostgreSQL error-code table,
+# appendix A, class 40) names 40003 `statement_completion_unknown`: the statement may or may not have completed. The
+# server itself does not raise it, but a connection pooler or proxy between the run and the database can, and a COMMIT
+# that ends in it may have happened. It is therefore "unknown" (exit 5), never "nothing was kept". This narrows the
+# ticket's allowlist (every code of class 40) on purpose; the other three class-40 codes (40001 serialization failure,
+# 40002, 40P01 deadlock) are errors of a transaction the server rolled back.
+_COMMIT_UNKNOWN_STATES = frozenset({"40003"})
 
 
 def _commit_outcome(exc: BaseException, db) -> Literal["refused", "unknown"]:
     """Decide what an error at the COMMIT means. "refused" only when all four hold: the error carries an SQLSTATE; the
     connection is not closed; the connection's transaction state is IDLE (the server rolled back and the session lives);
-    and the SQLSTATE is of a class in `_COMMIT_REFUSED_CLASSES` or one of `_COMMIT_REFUSED_STATES`. Everything else is
-    "unknown"."""
+    the SQLSTATE is not one of `_COMMIT_UNKNOWN_STATES` (40003, "statement completion unknown"); and the SQLSTATE is of a
+    class in `_COMMIT_REFUSED_CLASSES` or one of `_COMMIT_REFUSED_STATES`. Everything else is "unknown"."""
     state = getattr(exc, "sqlstate", None)
     if not state or getattr(db, "closed", True):
         return "unknown"
     if db.info.transaction_status != TransactionStatus.IDLE:
+        return "unknown"
+    if state in _COMMIT_UNKNOWN_STATES:
         return "unknown"
     if state in _COMMIT_REFUSED_STATES or state.startswith(_COMMIT_REFUSED_CLASSES):
         return "refused"
@@ -1095,13 +1117,16 @@ def _revoke_default_execute(db, schema: str, me: str, login: str, texts) -> None
         ).fetchall()
     for _shown_name, where, name, args, _kind in rows:
         signature = args  # an aggregate with no arguments has `` here (checked on 16.15), so the text is `()`
-        if any(escape_name(part) != part for part in (where, name, signature)):
-            # a name with a control character is never written into a statement (the same rule as the printed
-            # statements of `verify`); the check at step 6 judges the function and refuses it with a line to act on
-            continue
+        # Every name is quoted by the driver's identifier quoting (`quote_identifier`), the one place that knows the
+        # server's rules, so a mixed-case, non-ASCII, backslash or newline name is written as itself and cannot end the
+        # statement early or name another function. (The old text skipped any name that `ascii()` would escape, which left
+        # EXECUTE with everyone for a function with a non-ASCII letter; the skip is a rule for lines a PERSON runs, not for a
+        # statement the run executes.) The identity arguments are the server's own text, quoted by the server.
         db.execute(
-            sql.SQL("REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC").format(
-                sql.Identifier(where, name), sql.SQL(signature)
+            pg.sql_template(
+                "REVOKE ALL ON ROUTINE {}({}) FROM PUBLIC",
+                pg.quote_identifier(where, name),
+                pg.sql_words(signature),
             )
         )
 
@@ -1122,6 +1147,27 @@ def _reviewed_definers(schema: str) -> frozenset[tuple[str, str, str]]:
         (schema if where == RUN_SCHEMA else where, name, args)
         for where, name, args in REVIEWED_DEFINER_FUNCTIONS
     )
+
+
+@contextmanager
+def _check_could_not_run(step: str):
+    """Around a `verify` call BEFORE the commit (steps 2 and 6): a driver error the check raises (a saved
+    `transaction_timeout` of PostgreSQL 17 and later that ends the session, a lost connection, any other `psycopg.Error`)
+    means the check could not run, so the run is refused and nothing is kept: a `ConfigError` (exit 2), never the raw
+    driver error that `cli.main` would turn into exit 3 ("failed", which an operator script treats as a crash). A lock
+    wait or a statement limit keeps its own plain message (`_limit_error`). A driver error AFTER the commit is a
+    different path (step 8, exit 5)."""
+    try:
+        yield
+    except psycopg.Error as e:
+        if (plain := _limit_error(e, step)) is not None:
+            raise plain from e
+        code = getattr(e, "sqlstate", None) or type(e).__name__
+        raise ConfigError(
+            f"migrate stopped and kept nothing: while {step}, the check of the rights could not run "
+            f"({_label(str(code))}). The whole run is rolled back (a migration file that ended the transaction "
+            "itself is the one exception, and is reported separately). Run migrate again."
+        ) from e
 
 
 def _state_problems(
@@ -1255,7 +1301,11 @@ def migrate(
     sslrootcert: str | None = None,
     lock_wait_seconds: int = MIGRATE_LOCK_WAIT_SECONDS,
 ) -> list[str]:
-    """Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the
+    """Apply pending migrations; return the versions applied by this call. A return means the files are committed AND the
+    check after the commit ran to the end and found nothing; every other outcome is an exception: `ConfigError` or
+    `MigrationNumberError` (refused, nothing kept; exit 2 of the command) or `AppliedNotVerifiedError` (the files are
+    committed, or may be, and the check after the commit found excess rights, could not run, or the commit's outcome is
+    unknown; exit 5 of the command). With `runtime_role`, give it the
     privileges `GRANTS` lists (never TRUNCATE; DELETE only on the outbox and the purged evidence tables). With `portal_role`, SELECT on the
     relations marked `portal` and nothing else. The ledger and the grant map are checked first: a bad file name,
     a gap, or a relation with no `GRANTS` entry stops the run before it touches the database. Right after the advisory
@@ -1359,9 +1409,8 @@ def migrate(
                     # and so are not refused here; the named roles' USAGE on the schema is given by step 4 too, so a
                     # missing USAGE is judged at step 6 only.
                     step[0] = "checking the rights the database already holds"
-                    before = [
-                        p
-                        for p in _state_problems(
+                    with _check_could_not_run(step[0]):
+                        found = _state_problems(
                             db,
                             me=me,
                             login=login,
@@ -1370,6 +1419,9 @@ def migrate(
                             texts=texts.values(),
                             schema_owner=schema_owner,
                         )
+                    before = [
+                        p
+                        for p in found
                         if not p.repaired_by_run and p.kind != "missing_schema_usage"
                     ]
                     if before:
@@ -1426,15 +1478,17 @@ def migrate(
                         _check_read_back(db, saved, END_OF_RUN, frozenset(), named, schema=schema)
                         with pinned_read(db, RECIPE_TIMEOUTS):
                             _recheck_roles(db, named, END_OF_RUN)
-                    if problems := _state_problems(
-                        db,
-                        me=me,
-                        login=login,
-                        named_roles=named_roles,
-                        schema=schema,
-                        texts=texts.values(),
-                        schema_owner=schema_owner,
-                    ):
+                    with _check_could_not_run(step[0]):
+                        problems = _state_problems(
+                            db,
+                            me=me,
+                            login=login,
+                            named_roles=named_roles,
+                            schema=schema,
+                            texts=texts.values(),
+                            schema_owner=schema_owner,
+                        )
+                    if problems:
                         raise ConfigError(
                             "after the migration files and the grants, rights that the grant map does not give are "
                             f"in place:\n{_problem_lines(problems)}\nThe whole run is rolled back; the database is as "

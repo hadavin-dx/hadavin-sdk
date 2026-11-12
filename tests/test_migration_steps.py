@@ -528,19 +528,22 @@ def test_a_read_after_a_file_ended_the_transaction_is_not_pinned_and_keeps_the_s
     assert now.triggers == saved.triggers and now.members == saved.members
 
 
-def test_step_4_never_writes_a_function_with_a_control_character_in_its_name_into_a_statement(
-    monkeypatch,
-):
-    """`_revoke_default_execute` writes a statement only for names that print as they are; the one that does not is left
-    for the check at step 6 to refuse with a line a person can act on. The good function next to it is still revoked."""
+@pytest.mark.parametrize(
+    "name",
+    ["MixedCase", "na\u00efve_\u0192", "back\\slash", 'quo"te', "bad\nname", "tab\tname", "a b"],
+)
+def test_step_4_writes_every_function_name_through_identifier_quoting(monkeypatch, name):
+    """Issue 6 (round 2 of 3c, C2). The REVOKE of step 4 is executed by the run, not printed for a person, so every name is
+    written by the driver's identifier quoting (`quote_identifier`): mixed case, a non-ASCII letter, a backslash, a double
+    quote, a newline or a tab stays one name in one statement. The old text skipped a name that `ascii()` would escape, so
+    everyone kept EXECUTE on such a function. The good function next to it is revoked too. Killed by: V66 (the skip is
+    put back) and, on a real server, by
+    `test_step_4_takes_everyones_execute_off_functions_with_awkward_names`."""
     import contextlib
 
     class _Result:
         def fetchall(self):
-            return [
-                ("x", "app", "bad\nname", "(integer)", "f"),
-                ("x", "app", "good", "(integer)", "f"),
-            ]
+            return [("x", "app", name, "integer", "f"), ("x", "app", "good", "integer", "f")]
 
     class _Recorder:
         def __init__(self):
@@ -554,7 +557,59 @@ def test_step_4_never_writes_a_function_with_a_control_character_in_its_name_int
     monkeypatch.setattr(mig, "pinned_read", lambda db, limits: contextlib.nullcontext())
     db = _Recorder()
     mig._revoke_default_execute(db, "app", "me", "me", [])
-    assert len(db.statements) == 1, db.statements
-    text = db.statements[0].as_string(None) if hasattr(db.statements[0], "as_string") else ""
-    assert "good" in repr(db.statements[0]) or "good" in text
-    assert "bad" not in repr(db.statements[0])
+    quoted = '"' + name.replace('"', '""') + '"'
+    assert [s.as_string(None) for s in db.statements] == [
+        f'REVOKE ALL ON ROUTINE "app".{quoted}(integer) FROM PUBLIC',
+        'REVOKE ALL ON ROUTINE "app"."good"(integer) FROM PUBLIC',
+    ]
+
+
+# --- a driver error raised by the check before the commit (Issue 1) ---------------------------------------------------
+
+
+_DRIVER_ERRORS = [
+    psycopg.OperationalError("made-up: the connection was lost"),
+    pge.AdminShutdown("made-up: terminated by the administrator"),
+    psycopg.errors.InternalError_("made-up: an internal error"),
+    psycopg.Error("made-up: a plain driver error with no SQLSTATE"),
+    psycopg.DatabaseError("made-up: a database error"),
+]
+
+
+@pytest.mark.parametrize("place", ["step 2", "step 6"])
+@pytest.mark.parametrize("error", _DRIVER_ERRORS, ids=lambda e: type(e).__name__)
+def test_a_driver_error_raised_by_the_check_before_the_commit_is_a_refusal_that_keeps_nothing(
+    harness, place, error
+):
+    """Round 2 of 3c, M4 and C1. Any `psycopg.Error` that `verify` raises at step 2 or step 6 is a `ConfigError` (exit 2 of
+    the command, "kept nothing", "could not run"), never the raw driver error (exit 3 "failed"), never `AppliedNotVerifiedError`;
+    nothing is committed and no connection is opened for step 8. The driver's own words are not repeated (a message can
+    carry a host or a user). A real transaction_timeout and a real lost connection are in `test_migration_verify_pg.py`.
+    Killed by: V67 (the mapping is removed at step 2) and V68 (at step 6)."""
+    script = [error] if place == "step 2" else [[], error]
+    err, opened, _rec, applied = harness(script)
+    assert isinstance(err, ConfigError) and not isinstance(err, AppliedNotVerifiedError), repr(err)
+    assert applied is None and opened[0].committed is False and len(opened) == 1
+    text = str(err)
+    assert "kept nothing" in text and "could not run" in text and "Run migrate again" in text
+    assert "made-up" not in text
+    named_step = {
+        "step 2": "checking the rights the database already holds",
+        "step 6": "checking the database once more before the commit",
+    }[place]
+    assert f"while {named_step}," in text
+
+
+def test_a_driver_error_inside_the_check_that_is_a_lock_or_statement_limit_keeps_its_own_words(
+    harness,
+):
+    err, _o, _r, _a = harness([[], pge.LockNotAvailable("made-up")])
+    assert isinstance(err, ConfigError) and "lock_timeout" in str(err)
+    err, _o, _r, _a = harness([pge.QueryCanceled("made-up")])
+    assert isinstance(err, ConfigError) and "statement_timeout" in str(err)
+
+
+def test_an_error_of_the_check_that_is_not_a_driver_error_is_not_mapped(harness):
+    """The mapping is for `psycopg.Error` only: a bug in our own code must stay loud (a RuntimeError here)."""
+    err, _o, _r, _a = harness([RuntimeError("made-up: a bug")])
+    assert isinstance(err, RuntimeError) and not isinstance(err, ConfigError)
