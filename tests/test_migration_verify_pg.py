@@ -650,7 +650,8 @@ def test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_no
 ):
     """Round 17 group 3 (b): a sign-in that fails before any connection exists (an SDK error, here a stand-in client that has no credentials) gives
     exit 2 with the connection-specific sentence, nothing kept and none of the SDK's words; on 140a1268 it was exit 3.
-    Killed by V122 (the SDK error is not turned into the refusal) and V123 (the refusal is not worded for the connection)."""
+    Killed by V122 (the refusal prints the SDK's own words) and V123 (the refusal is not worded for the connection); the
+    two channels of the refusal are checked here too (round 18 group 1; V130 raises it from inside the `except` block)."""
     from botocore.exceptions import NoCredentialsError
 
     from hadavin_sdk.store import postgres as pg
@@ -673,6 +674,65 @@ def test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_no
         and "NoCredentialsError" in err
     ), err
     assert "nothing was started" in err.lower() and "rolled back" not in err, err
+    assert seen.value.__cause__ is None and seen.value.__context__ is None
+    assert seen.value.__suppress_context__ is False
+    assert _ledger_of(mrun.dsn) == []
+
+
+@pytest.mark.parametrize(
+    ("parts", "named"),
+    [
+        ({"host": "made-up", "user": "made-up", "port": "abc"}, "a port that is not one number"),
+        ({"host": "made-up", "port": "5432"}, "no user"),
+    ],
+)
+def test_an_address_the_sign_in_cannot_use_is_refused_with_exit_2_before_any_connection(
+    mrun, monkeypatch, parts, named
+):
+    """Round 18 group 5: the whole path (`migrate`, the DSN guard, `_connected_before_commit`) for an address the sign-in
+    cannot be asked for: exit 2 (`ConfigError`), the part named, nothing kept, no connection tried (the driver's connect
+    is replaced for the call only), and no other error on either channel. Control for the stub: the ledger is read after."""
+    from hadavin_sdk.store import postgres as pg
+
+    monkeypatch.setattr(pg, "conninfo_to_dict", lambda dsn: dict(parts))
+    monkeypatch.setattr(pg, "password_source", lambda iam, region: lambda h, p, u: "made-up")
+    with monkeypatch.context() as inner:
+
+        def no_connection(*args, **kwargs):
+            raise AssertionError("a connection was tried after the sign-in was refused")
+
+        inner.setattr(pg.psycopg, "connect", no_connection)
+        with pytest.raises(ConfigError) as seen:
+            mig.migrate(
+                mrun.dsn,
+                iam_auth=True,
+                region="made-up-region-1",
+                sslmode="verify-full",
+                sslrootcert="/made/up/ca.pem",
+            )
+    err = str(seen.value)
+    assert "kept nothing" in err and named in err and "Nothing was started." in err, err
+    assert "Error" not in err.replace("OperationalError", ""), err
+    assert seen.value.__cause__ is None and seen.value.__context__ is None
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_refused_connection_keeps_no_driver_error_on_either_channel(mrun, monkeypatch):
+    """Round 18 group 1 (the sibling of the sign-in error in the same function): the driver's error for a connection that
+    cannot be made holds the host and the user in its words; the refusal must not keep it on `__cause__` or `__context__`.
+    Killed by V131 (the refusal is built inside the `except` block again). On aac26d60 `__cause__` held it."""
+    words = "made-up-host-words"
+
+    def refuse(*args, **kwargs):
+        raise psycopg.OperationalError(words)
+
+    with monkeypatch.context() as inner:
+        inner.setattr(psycopg, "connect", refuse)
+        with pytest.raises(ConfigError) as seen:
+            mig.migrate(mrun.dsn)
+    assert words not in str(seen.value) and "OperationalError" in str(seen.value)
+    assert seen.value.__cause__ is None and seen.value.__context__ is None
+    assert seen.value.__suppress_context__ is False
     assert _ledger_of(mrun.dsn) == []
 
 

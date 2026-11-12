@@ -12,6 +12,7 @@ from __future__ import annotations
 import ipaddress
 import logging
 import os
+import re
 import tempfile
 import threading
 from collections.abc import Callable
@@ -123,6 +124,12 @@ def password_source(iam_auth: bool, region: str | None) -> PasswordSource | None
     return auth_aws.rds_iam(region)
 
 
+def _plain_port(text: str) -> bool:
+    """True for one number from 1 to 65535 written with the digits 0 to 9 only (`int()` would also take a sign, spaces, an
+    underscore and the digits of other scripts)."""
+    return re.fullmatch(r"[0-9]{1,5}", text) is not None and 1 <= int(text) <= 65535
+
+
 def connect(
     dsn: str,
     *,
@@ -140,15 +147,31 @@ def connect(
         parts = conninfo_to_dict(dsn)
         # The migration role may log in with a password; the runtime never (refused in build()).
         if not parts.get("password"):
-            try:
-                host, port, user = parts["host"], int(parts.get("port") or 5432), parts["user"]
-            except (KeyError, ValueError) as exc:
-                # r17 group 3 (b): a DSN the sign-in cannot be asked for (no host or user, a port that is not a number) is
-                # the same plain refusal, before any connection exists
+            host, port, user = (
+                parts.get("host", ""),
+                parts.get("port") or "5432",
+                parts.get("user", ""),
+            )
+            # r17 group 3 (b), r18 groups 3 and 4: a DSN the sign-in cannot be asked for is the same plain refusal, before any
+            # connection exists. A check of the parts (an allow list), not a `try` around their conversion: nothing is caught,
+            # so the refusal holds no other error, and each missing part is named in plain words.
+            lacking = [
+                text
+                for text, ok in (
+                    ("no host", bool(host)),
+                    ("more than one host", "," not in host),
+                    ("no user", bool(user)),
+                    ("a port that is not one number from 1 to 65535", _plain_port(port)),
+                )
+                if not ok
+            ]
+            if lacking:
                 raise SignInError(
-                    f"the sign-in for the database connection needs a host, a user and a numeric port in the address "
-                    f"({type(exc).__name__})"
-                ) from None
+                    "the sign-in for the database connection cannot start: the address has "
+                    + ", ".join(lacking)
+                    + "."
+                )
+            port = int(port)
             extra["password"] = password_source(True, region)(host, port, user)
     conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
     # This is the ONLY statement `connect` runs (pinned by `test_connect_runs_exactly_one_statement_...`). A driver error here
@@ -161,7 +184,7 @@ def connect(
     except BaseException:
         # a connection that failed its one setup statement is not handed out and not left open; a `close` that fails as well
         # (a broken socket) must not hide the first error, which is the one the caller has to see (r17 group 6)
-        with suppress(psycopg.Error):
+        with suppress(Exception):  # any error of `close` (r18 group 4), not only the driver's own
             conn.close()
         raise
     return conn
@@ -214,6 +237,7 @@ def build(settings, deps) -> PostgresStore:
         raise ConfigError(
             "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
         )
+    unavailable = ""
     try:
         conn = connect(
             dsn,
@@ -223,10 +247,11 @@ def build(settings, deps) -> PostgresStore:
             sslrootcert=ca_file(settings, deps.resolve),
         )
     except psycopg.OperationalError as exc:
-        # The class only: driver messages can carry the host and user.
-        raise StoreUnavailable(
-            f"store postgres: cannot connect ({exc.__class__.__name__})"
-        ) from None
+        unavailable = exc.__class__.__name__
+    if unavailable:
+        # The class only: driver messages can carry the host and user. Raised outside the `except` block (r18 group 1), so
+        # the driver error is not kept on `__context__` either.
+        raise StoreUnavailable(f"store postgres: cannot connect ({unavailable})")
     return PostgresStore(conn)
 
 

@@ -1527,7 +1527,8 @@ def test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_
 ):
     """Round 17 group 3 (b): the sign-in that gives the short-lived password runs before any connection exists; its SDK error
     must be `SignInError`, a `ConfigError` (exit 2), without the SDK's own words (which can hold an account name), and no
-    connection is tried. On 140a1268 the raw SDK error came out (exit 3). Killed by V122 (the SDK error is not converted)."""
+    connection is tried. On 140a1268 the raw SDK error came out (exit 3). Killed by V122 (the refusal prints the SDK's own
+    words); the channels of the refusal (`__context__`, `__cause__`) are pinned by `tests/test_sign_in_channels.py`."""
     from botocore.exceptions import ClientError, NoCredentialsError
 
     from hadavin_sdk import errors
@@ -1559,19 +1560,28 @@ def test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_
     text = str(seen.value)
     assert type(error).__name__ in text and words not in text, text
     assert seen.value.__cause__ is None, "the SDK's error must not travel with the refusal"
+    assert seen.value.__context__ is None, (
+        "the SDK's error is still on `__context__` (round 18 group 1)"
+    )
+    assert seen.value.__suppress_context__ is False
 
 
 @pytest.mark.parametrize(
-    "dsn", ["host=made-up.example dbname=made-up", "dbname=made-up user=made-up"]
+    ("dsn", "named"),
+    [
+        ("host=made-up.example dbname=made-up", "no user"),
+        ("dbname=made-up user=made-up", "no host"),
+    ],
 )
-def test_an_iam_dsn_without_a_host_or_a_user_is_the_same_plain_refusal(monkeypatch, dsn):
-    """The sibling of the sign-in failure: the DSN parts the sign-in needs are read inside the same guard (a missing host or
-    user was a raw KeyError, exit 3)."""
+def test_an_iam_dsn_without_a_host_or_a_user_is_the_same_plain_refusal(monkeypatch, dsn, named):
+    """The sibling of the sign-in failure: a DSN without the parts the sign-in needs is refused by name (a missing host or
+    user was a raw KeyError, exit 3; since round 18 the text names the part, not the Python error). The other bad
+    addresses (ports, several hosts) are in `tests/test_sign_in_channels.py`."""
     from hadavin_sdk import errors
     from hadavin_sdk.store import postgres as pg
 
     monkeypatch.setattr(pg, "password_source", lambda iam, region: lambda h, p, u: "made-up")
-    with pytest.raises(errors.SignInError, match="KeyError"):
+    with pytest.raises(errors.SignInError, match=named):
         pg.connect(
             dsn, iam_auth=True, region="r", sslmode="verify-full", sslrootcert="/made/up/ca.pem"
         )

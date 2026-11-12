@@ -57,6 +57,9 @@ T_VERIFY = "tests/test_migration_verify.py"
 T_STEPS = "tests/test_migration_steps.py"
 T_VERIFY_PG = "tests/test_migration_verify_pg.py"
 VERIFY = "src/hadavin_sdk/store/migration_verify.py"
+AUTH = "src/hadavin_sdk/store/auth_aws.py"
+PGS = "src/hadavin_sdk/store/postgres.py"
+T_SIGN = "tests/test_sign_in_channels.py"
 
 
 @dataclass(frozen=True)
@@ -4063,8 +4066,8 @@ M: list[Mutant] = [
         "V116",
         "Issue 3 of batch 6: an error while the connection of the run is made is not turned into the refusal (exit 3 again)",
         MIG,
-        "        raise _driver_error_before_commit(e, _CONNECTING) from e",
-        "        raise",
+        "        refusal = _driver_error_before_commit(e, _CONNECTING)\n",
+        "        raise\n",
         k(
             T_VERIFY_PG,
             "test_a_setup_statement_that_fails_on_the_first_connection_is_refused_with_exit_2_and_closed",
@@ -4074,7 +4077,7 @@ M: list[Mutant] = [
         "V117",
         "Issue 3 of batch 6: a connection whose setup statement failed is left open",
         "src/hadavin_sdk/store/postgres.py",
-        "        with suppress(psycopg.Error):\n            conn.close()\n",
+        "        with suppress(Exception):  # any error of `close` (r18 group 4), not only the driver's own\n            conn.close()\n",
         "        pass\n",
         k(
             T_VERIFY_PG,
@@ -4116,10 +4119,10 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V122",
-        "Round 17 group 3: the refusal for a failed cloud sign-in prints the SDK's own words",
+        "Round 17 group 3: the refusal for a failed cloud sign-in (token step) prints the SDK's own words",
         "src/hadavin_sdk/store/auth_aws.py",
-        '        f"the sign-in for the database connection failed ({type(exc).__name__}); "',
-        '        f"the sign-in for the database connection failed ({exc}); "',
+        "            failed = type(exc).__name__\n        raise _refused(failed)\n",
+        "            failed = str(exc)\n        raise _refused(failed)\n",
         (
             k(
                 T_VERIFY,
@@ -4161,7 +4164,7 @@ M: list[Mutant] = [
         "V125",
         "Round 17 group 6: a failing close of the half-made connection hides the first error",
         "src/hadavin_sdk/store/postgres.py",
-        "        with suppress(psycopg.Error):\n            conn.close()\n",
+        "        with suppress(Exception):  # any error of `close` (r18 group 4), not only the driver's own\n            conn.close()\n",
         "        conn.close()\n",
         k(
             T_VERIFY,
@@ -4213,6 +4216,288 @@ M: list[Mutant] = [
         k(
             T_RULES,
             "test_the_o8_wording_check_finds_each_sentence_that_keeps_only_part_of_the_condition[The schema must be owned by a family role at the start and must not change owner during the run.]",
+        ),
+    ),
+    Mutant(
+        "V130",
+        "Round 18 group 1: the token step raises the refusal inside its except block again (the SDK error stays on __context__)",
+        AUTH,
+        "        except Exception as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n            failed = type(exc).__name__\n",
+        "        except Exception as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n            raise _refused(type(exc).__name__) from None\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[runtime-error-token-is-asked-for]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[client-error-token-is-asked-for]",
+            ),
+            k(
+                T_SIGN,
+                "test_the_choke_points_raise_no_new_error_inside_an_except_block[src/hadavin_sdk/store/auth_aws.py]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V131",
+        "Round 18 group 1: the client step raises the refusal inside its except block again",
+        AUTH,
+        "    except Exception as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n        failed = type(exc).__name__\n",
+        "    except Exception as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n        raise _refused(type(exc).__name__) from None\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[runtime-error-client-is-built]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[client-error-client-is-built]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V132",
+        "Round 18 group 1: the refusal for a failed sign-in is raised inside the except block of the runner (the sign-in error stays on __context__)",
+        MIG,
+        '        refusal = ConfigError(\n            f"migrate stopped and kept nothing: while {_CONNECTING}, {e} Nothing was started."',
+        '        raise ConfigError(\n            f"migrate stopped and kept nothing: while {_CONNECTING}, {e} Nothing was started."',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_nothing",
+            ),
+        ),
+    ),
+    Mutant(
+        "V133",
+        "Round 18 group 1: the refusal for a refused connection keeps the driver error as its cause again",
+        MIG,
+        "        refusal = _driver_error_before_commit(e, _CONNECTING)\n",
+        "        raise _driver_error_before_commit(e, _CONNECTING) from e\n",
+        (k(T_VERIFY_PG, "test_a_refused_connection_keeps_no_driver_error_on_either_channel"),),
+    ),
+    Mutant(
+        "V134",
+        "Round 18 group 1: the store raises its unavailable error inside the except block (the driver error stays on __context__)",
+        PGS,
+        "        unavailable = exc.__class__.__name__\n",
+        '        raise StoreUnavailable(f"store postgres: cannot connect ({exc.__class__.__name__})") from None\n',
+        (
+            k(
+                T_SIGN,
+                "test_a_store_that_cannot_connect_names_only_the_class_and_keeps_no_driver_error",
+            ),
+            k(
+                T_SIGN,
+                "test_the_choke_points_raise_no_new_error_inside_an_except_block[src/hadavin_sdk/store/postgres.py]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V135",
+        "Round 18 group 4: the close of a half-made connection ignores the driver's errors only",
+        PGS,
+        "        with suppress(Exception):  # any error of `close` (r18 group 4), not only the driver's own\n",
+        "        with suppress(psycopg.Error):  # any error of `close` (r18 group 4), not only the driver's own\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_close_that_fails_with_any_error_does_not_hide_the_first_error[OSError]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_close_that_fails_with_any_error_does_not_hide_the_first_error[BrokenPipeError]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V136",
+        "Round 18 group 2: the token step converts only OSError (any other error of the sign-in comes out raw)",
+        AUTH,
+        "        except Exception as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n",
+        "        except OSError as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[runtime-error-token-is-asked-for]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[client-error-token-is-asked-for]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V137",
+        "Round 18 group 2: the client step converts only OSError",
+        AUTH,
+        "    except Exception as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n",
+        "    except OSError as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[runtime-error-client-is-built]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[boto3-error-client-is-built]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V138",
+        "Round 18 group 2: the token step converts an interrupt too (Exception widened to BaseException)",
+        AUTH,
+        "        except Exception as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n",
+        "        except BaseException as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass\n",
+        (
+            k(
+                T_SIGN,
+                "test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal[KeyboardInterrupt-token-is-asked-for]",
+            ),
+            k(
+                T_SIGN,
+                "test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal[SystemExit-token-is-asked-for]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V139",
+        "Round 18 group 2: the client step converts an interrupt too",
+        AUTH,
+        "    except Exception as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n",
+        "    except BaseException as exc:  # noqa: BLE001 - any failure of the sign-in step, not two library types (round 18 group 2); only the class name is kept\n",
+        (
+            k(
+                T_SIGN,
+                "test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal[KeyboardInterrupt-client-is-built]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V140",
+        "Round 18 group 3: the port range is not checked (only the digits)",
+        PGS,
+        '    return re.fullmatch(r"[0-9]{1,5}", text) is not None and 1 <= int(text) <= 65535\n',
+        '    return re.fullmatch(r"[0-9]{1,5}", text) is not None\n',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[port-0]",
+            ),
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[port-65536]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V141",
+        "Round 18 group 3: the port may be written with the digits of another script",
+        PGS,
+        'r"[0-9]{1,5}"',
+        'r"\\d{1,5}"',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[port-other-script]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V142",
+        "Round 18 group 3: a list of hosts is not refused",
+        PGS,
+        '("more than one host", "," not in host),',
+        '("more than one host", True),',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[two-hosts]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V143",
+        "Round 18 group 3: a missing user is not refused",
+        PGS,
+        '("no user", bool(user)),',
+        '("no user", True),',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[no-user]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V144",
+        "Round 18 group 3: a missing host is not refused",
+        PGS,
+        '("no host", bool(host)),',
+        '("no host", True),',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[no-host]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V145",
+        "Round 18 group 3: the refusal of a bad address is never raised (the guard branch is dead)",
+        PGS,
+        "            if lacking:\n",
+        "            if False:\n",
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[port-abc]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V146",
+        "Round 18 group 3: the runner does not turn a failed sign-in into its refusal (the clause for SignInError is dropped)",
+        MIG,
+        "    except SignInError as e:  # r17 group 3 (b)",
+        "    except KeyError as e:  # r17 group 3 (b)",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_nothing",
+            ),
+        ),
+    ),
+    Mutant(
+        "V147",
+        "Round 18 group 4: the refusal for a bad address names the Python error class again",
+        PGS,
+        '                    "the sign-in for the database connection cannot start: the address has "\n',
+        '                    "the sign-in for the database connection cannot start (KeyError): the address has "\n',
+        (
+            k(
+                T_SIGN,
+                "test_an_iam_address_the_sign_in_cannot_be_asked_for_is_refused_by_name_before_any_connection[no-user]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V148",
+        "Round 17 group 3: the refusal for a failed cloud sign-in (client step) prints the SDK's own words",
+        AUTH,
+        "        failed = type(exc).__name__\n    if failed:\n",
+        "        failed = str(exc)\n    if failed:\n",
+        (
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[runtime-error-client-is-built]",
+            ),
+            k(
+                T_SIGN,
+                "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[client-error-client-is-built]",
+            ),
         ),
     ),
 ]

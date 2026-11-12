@@ -1263,14 +1263,19 @@ def _connected_before_commit(dsn: str, **options):
     `ConfigError` (exit 2), nothing kept (`_driver_error_before_commit`, the one place for all of them). The body of the
     `with` is outside the `try`, so an error of the run itself is not taken for an error of the connect. The connection
     of step 8 does not use this: after the commit a failure is "applied, not verified" (exit 5), never "kept nothing"."""
+    refusal: ConfigError | None = None
     try:
         db = connect(dsn, **options)
     except SignInError as e:  # r17 group 3 (b): the cloud sign-in failed before any connection existed: the same exit 2
-        raise ConfigError(
+        refusal = ConfigError(
             f"migrate stopped and kept nothing: while {_CONNECTING}, {e} Nothing was started."
-        ) from e
+        )
     except psycopg.Error as e:
-        raise _driver_error_before_commit(e, _CONNECTING) from e
+        refusal = _driver_error_before_commit(e, _CONNECTING)
+    if refusal is not None:
+        # r18 group 1: raised outside the `except` blocks, so the sign-in error and the driver error (whose words can hold
+        # the host and the user) are on neither `__context__` nor `__cause__` of the refusal
+        raise refusal
     with db:
         yield db
 
