@@ -3005,3 +3005,14 @@
 | Q8bb13-r14-6 | Major | Q8b | r14 evidence gate: no independent full evidence on 120f3f78 (heavy queue full); builder stage and runner mutants ran before last redact.py change | OPEN | handover/reviews/Q8b/goldfish_review_report-r14.md | | 2026-11-12 |
 | Q8bb13-r14-7 | Major | Q8b | r14 owner item q-q8b-bare-bypass: 15 bare ordinary words stay shown (75 cells); not built; do not report closed | OWNER-ONLY | handover/reviews/Q8b/goldfish_review_report-r14.md | | 2026-11-12 |
 | Q8bb13-r14-evidence | Minor | Q8b | r14 evidence on 120f3f78 PARTIAL: lint scan_repo bandit gitleaks exit 0; probes; full pytest mutants fail-before NOT run | OPEN | handover/evidence/Q8b/120f3f78/RESULTS.md | | 2026-11-12 |
+| Q8a1b18-r19-1 | Blocker | Q8a-1 | r19 B1 (lead-confirmed): non-dict input and invalid JSON bypass HiddenInputModel init; canary in errors() and json(); Z192-Z194 removal wrong | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-2 | Major | Q8a-1 | r19 M1: docstring and CHANGELOG cite tests that do not exist; Diagnosis.model_validate uses strict= | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-3 | Major | Q8a-1 | r19 D2/M3: receiver check for count/index/find handles bare names only | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-4 | Major | Q8a-1 | r19 M2: Z163 not equivalent, number-directive log argument branch untested | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-5 | Major | Q8a-1 | r19 D1: store_write_methods covers every method by construction; CHANGELOG test claim has no test | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-6 | Major | Q8a-1 | r19 D3/m1: configured names into stored records not tainted nor disclosed | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-7 | Minor | Q8a-1 | r19 D5/m2: not-shown cost, bundle.py loaded list, cleaned=True guard, microsecond claim | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-8 | Minor | Q8a-1 | r19 D4: R17t and R17u are controls not plants for match and lambda shadowing | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-9 | Minor | Q8a-1 | r19 D6-D9 and m1 rest: guard checks read surface only, 77 unpinned, scan blind spots, Dict mutant, one-line handlers, weak expects | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-10 | Major | Q8a-1 | r19 owner items q-q8a1-hide-ids E1/E2 and error_reason question: not built; do not report closed | OWNER-ONLY | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| Q8a1b18-r19-11 | Major | Q8a-1 | r19 evidence: final file not fail-before measured, 29 tests not 30, runner missed non-dict shapes, pytest counts differ | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
