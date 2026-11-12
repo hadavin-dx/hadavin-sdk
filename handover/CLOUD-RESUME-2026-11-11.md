@@ -317,3 +317,10 @@ Running: Q8b b9 builder a412f92b76866e9ba (core/q8b-b9 -> wip/cloud-q8b-b9, from
 Resolved this window: Q8c-1 r10 (goldfish_review_report-r10.md), Q8b r9 (goldfish_review_report-r9.md; ledger Q8bb8-r9-*). Reviews saved, resolve pending evidence: P3a-2 3e (design r14 D1-D5 Major; codebase r14 D1-D7 Major), PR H b7 (codebase r7 F1-F4 Major; design r7 D1-D3 Major).
 Next: resolve P3a-2 3e and PR H b7 when evidence lands, then batch-4 and batch-8 builders; Q8c-1 b11 and Q8a-1 b13 snapshots, evidence, reviewers.
 New owner/lead items: P3a-2 schema-owner choice (D2: must the schema be family-owned at the start?), P3a-2 Issue 7 K8/O5 ticket edit, PR H spaced-out unknown secrets (measure first), any Q8b `bypass` name left readable by choice.
+
+## Update 07:38Z (2026-11-12)
+Orders: 247 (GO, core lane) newest, no STOP (fetched 07:37Z).
+Resolved this window: Q8a-1 r13 (goldfish_review_report-r13.md; ledger Q8a1b13-r13-*), Q8c-1 r11 (goldfish_review_report-r11.md; ledger Q8c1b11-r11-*). Reviews and evidence for Q8a-1 b13 and Q8c-1 b11 saved and pushed.
+Running: Q8b b9 evidence a2745ef0c13c01418, design a3ab450259e81f1ef, codebase a1aad86f6ca5ec303 (head c36ce0dc, wip/cloud-q8b-b9); Q8a-1 b14 builder abfd640f9174da5a6 (core/q8a1-b14 from 918c0345 -> wip/cloud-q8a1-b14, started 07:37Z, ends ~09:10Z); P3a-2 b4 a55871b163d65c85a (ends ~08:15Z); PR H b8 aa4fb7889a3f81ebf (ends ~08:16Z).
+Next: Q8c-1 b12 builder (from e4f1b2a4 -> wip/cloud-q8c1-b12; report r11 is the task list); Q8b b9 reviews and resolve; P3a-2 b4 and PR H b8 hand-backs then snapshot, evidence, reviewers, resolve.
+New owner/lead items: Q8c-1 first CI run of the notes step needs a real pull request run (impossible now; lead opens the PR); `q-q8a1-hide-ids` and ConfigName type (E1/E2 in Q8a-1 r13).
