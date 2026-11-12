@@ -181,8 +181,9 @@ def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
     wrong = [
         c
         for c in range(0x110000)
-        if (word.fullmatch(chr(c)) is not None) != (unicodedata.category(chr(c))[0] in "LNM")
-    ]
+        if (word.fullmatch(chr(c)) is not None)
+        != (unicodedata.category(chr(c))[0] in "LNM" and not redact_mod._IGNORABLE_CHAR.fullmatch(chr(c)))
+    ]  # batch 12, issue 6: a gap character is no part of a word even when it is a mark or a letter
     assert wrong == [], (
         f"mutant 170: {len(wrong)} code points are in the wrong class, first U+{wrong[0]:04X}"
     )
@@ -203,19 +204,20 @@ def test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode():
         (BSL + "e", False),
         ("C:" + BSL + "env", False),
         ("C:" + BSL + "Users" + BSL + "err" + BSL + "x", False),
-        ("ab" + BSL + "eb", False),
+        ("ab" + BSL + "eb", True),  # batch 12, issue 2: glued inside a word is read (it was a length rule)
         ("abcdef" + BSL + "eghijkl", True),
-        ("abcde" + BSL + "eghijkl", False),
+        ("abcde" + BSL + "eghijkl", True),  # batch 12, issue 2: 5 characters in front are read too
         (BSL + "eabcdefghijkl", True),
         (BSL + "eabcdefghijk", False),
         ("q" + BSL + "eZ" + BSL + "e7", True),
-        ("q" + BSL + "eZ", False),
+        ("q" + BSL + "eZ", True),  # batch 12, issue 2: one character on each side is glue
     ],
 )
 def test_b11_g1_the_shapes_of_backslash_e_that_are_read_as_esc_are_exactly_these(text, read):
-    """Group 1, item C5 and group 8 (mutants 171, 142, 182 to 185). Passes on the batch 10 head too; the one reason it exists: it lists the backslash-e shapes that are
-    read as ESC (only before a bracket or a parenthesis) and the ones that are not (the other string openers, letters, the end of
-    the text, a Windows path); SECURITY.md names the same list."""
+    """Group 1, item C5 and group 8 (mutants 171, 142, 183, 184). Passes on the batch 10 head too; the one reason it exists: it lists the backslash-e shapes that are
+    read as ESC (before a bracket or a parenthesis; glued between two characters of one word; 12 or more token characters after it)
+    and the ones that are not (the string openers `P`, `X`, `^` and `_` standing alone, a letter standing alone, the end of the
+    text, a Windows path); SECURITY.md names the same list."""
     assert (runmap.hex_unescape(text) != text) is read, (
         f"mutant 171: {text!r} is {'not ' if read else ''}read as ESC"
     )
@@ -414,24 +416,30 @@ def test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown(
 
 
 def test_b11_g8_a_windows_path_takes_no_heavier_path_and_is_left_as_written():
-    """Group 8 (mutant 185; passes on 5c430b6a: the one reason is that it pins the part of batch 10 that must not be undone): paths with
+    """Group 8 (no mutant since batch 12; passes on 5c430b6a: the one reason is that it pins the part of batch 10 that must not be undone): paths with
     `\\env`, `\\err` or a short word after a backslash-e are no spelling of ESC, so they add no reading and are shown as written."""
     for path in (
         "C:" + BSL + "env",
         "C:" + BSL + "Users" + BSL + "err" + BSL + "x",
         "D:" + BSL + "tmp" + BSL + "ex" + BSL + "data",
     ):
-        assert runmap.hex_unescape(path) == path, f"mutant 185: {path!r} was read as ESC"
+        assert runmap.hex_unescape(path) == path, f"the path rule: {path!r} was read as ESC"
         assert tools._HIDDENISH.search(path) is None
         assert tools.prepare_output(path, {}, 4000, [HANDED]) == path
 
 
 def test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_and_no_fewer():
     """Group 8 (mutant 183; the cell grid cannot reach it because every cell has 12 or more characters after the spelling or a
-    bracket or a chain). Exactly 6 token characters on each side is read as ESC; 5 on either side is not (a short path word)."""
+    bracket or a chain). Exactly 6 token characters on each side is read as ESC. Batch 12 (issue 2) changed the second half of this
+    test: 5 on either side is read too (the glued rule; the name keeps "no fewer" because mutant 183 names this test); it was left as
+    written under batch 11's length rule. The 6-and-6 alternative still reads a spelling that a backslash follows within 12 characters
+    (the glued rule leaves that shape as a path name)."""
     left, right = "abcdef", "ghijkl"
     assert runmap.hex_unescape(left + BSL + "e" + right) == left + "\x1b" + right, (
         "mutant 183: the inside rule of backslash-e is gone"
     )
-    assert runmap.hex_unescape(left[:5] + BSL + "e" + right) == left[:5] + BSL + "e" + right
-    assert runmap.hex_unescape(left + BSL + "e" + right[:5]) == left + BSL + "e" + right[:5]
+    assert runmap.hex_unescape(left + BSL + "e" + right + BSL + "x") == left + "\x1b" + right + BSL + "x", (
+        "mutant 183: the inside rule of backslash-e is gone (6 token characters on each side, a backslash after)"
+    )
+    assert runmap.hex_unescape(left[:5] + BSL + "e" + right) == left[:5] + "\x1b" + right
+    assert runmap.hex_unescape(left + BSL + "e" + right[:5]) == left + "\x1b" + right[:5]

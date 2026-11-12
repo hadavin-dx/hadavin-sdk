@@ -26,7 +26,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.guard.runmap import safe_head
+from hadavin_sdk.guard.runmap import RedactorCrash, safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
 from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
@@ -284,12 +284,20 @@ _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the st
 _DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
 
 
+CRASH_NOTE = "(the redactor crashed; message withheld)"
+
+
 def _message(exc: Exception) -> str:
-    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
+    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough. If the redactor
+    itself crashes, the message is never shown: the fixed note stands in (the step is still recorded as failed, so a
+    crash is not lost and the other steps still run; batch 12, issue 1)."""
     if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
         return "(driver error; details withheld)"
     # redact first, then keep the first 500 characters (a cut first splits a secret); `safe_head` bounds the work
-    return safe_head(str(exc), 500).replace("\n", " ")
+    try:
+        return safe_head(str(exc), 500).replace("\n", " ")
+    except RedactorCrash:
+        return CRASH_NOTE
 
 
 def _run_step(ctx: TickContext, step: TickStep) -> str:
@@ -313,8 +321,9 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
             return SKIPPED
         step.fn(ctx)
     except Exception as exc:  # noqa: BLE001 - one step never stops the others
-        error = f"{type(exc).__name__}: {_message(exc)}"
-        _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+        shown = _message(exc)  # once: the same text is recorded and logged
+        error = f"{type(exc).__name__}: {shown}"
+        _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, shown)
     try:
         store.save_tick_state(
             TickState(

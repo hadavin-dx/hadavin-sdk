@@ -978,8 +978,21 @@ def _ordinary_word(body: str, start: int, end: int, cut_end: bool) -> bool:
 
 
 # a text that holds a hidden item, or a spelled-out one (`%1b`, `\\u001b`, `&#27;`, `%C2%9B`, `\\x1b`)
-_HIDDENISH = re.compile(
-    r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\" + runmap.ESC_E + r"|&#", re.IGNORECASE
+class _HiddenIsh:
+    """`re.search` over a text with the folder names of its Windows path words taken out (`runmap.without_path_names`): a path
+    such as `C:\\env\\etc` holds no spelled-out hidden item and takes no heavier path."""
+
+    def __init__(self, rx: re.Pattern[str]) -> None:
+        self._rx = rx
+
+    def search(self, text: str) -> re.Match[str] | None:
+        return self._rx.search(runmap.without_path_names(text))
+
+
+_HIDDENISH = _HiddenIsh(
+    re.compile(
+        r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|\\" + runmap.ESC_E + r"|&#", re.IGNORECASE
+    )
 )
 
 

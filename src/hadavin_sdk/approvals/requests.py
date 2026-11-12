@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.guard.injection import Detector, injection_check
-from hadavin_sdk.guard.runmap import RedactionError
+from hadavin_sdk.guard.runmap import RedactionError, RedactorCrash
 from hadavin_sdk.models import (
     ApprovalDecision,
     ApprovalRequest,
@@ -41,6 +41,8 @@ def summary(plan: Plan, detector: Detector | None = None) -> str:
             f"v{plan.action_version} ({plan.risk_class}) on {plan.target.system}. Inputs: {inputs}. "
             f"Expected: {plan.expected_outcome}. Plan {plan.hash()[:12]}."
         )
+    except RedactorCrash:
+        raise  # a crash of the redactor is a bug, never "too large": no approval card is made from it (batch 12, issue 1)
     except (
         RedactionError
     ):  # inputs too large to redact (or nested too deep): the approver still sees what and where

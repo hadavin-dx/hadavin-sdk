@@ -326,7 +326,9 @@ def test_b8_i6_the_withheld_share_is_bounded():
     on the same seeded texts the old bound of 200 passed with 143 too). The bounds ARE the measured values: one more withheld
     text fails them, so a change that withholds more must say so here. Batch 11 (group 1: any character that is no letter, digit or
     mark glued to a spaced run is a wrapper) widened what is read as a spaced run: the tool path withholds 156 of the same 3000 texts
-    (one more than 155; owner item q-prh-piece-masking), direct `redact()` is unchanged."""
+    (one more than 155; owner item q-prh-piece-masking), direct `redact()` is unchanged. Batch 12 (issue 3: a key that is only a piece of a held identifier is new to both readings) makes it 161
+        of the same 3000 (5 more, 0.17 percent; the 5 texts hold a key cut by a spelled-out escape and also a plain copy; measured with
+        `handover/evidence/PRH/b12/`), direct `redact()` is unchanged."""
     from tests import test_prh_b7 as b7
 
     tool = direct = n = 0
@@ -336,5 +338,5 @@ def test_b8_i6_the_withheld_share_is_bounded():
         tool += "withheld" in o or o.startswith(tools.MARKER + tools.TRUNCATED)
         direct += R.redact(t).text == R.WITHHELD_NOTE
     assert n == 3000
-    assert tool <= 156, tool
+    assert tool <= 161, tool
     assert direct <= 14, direct

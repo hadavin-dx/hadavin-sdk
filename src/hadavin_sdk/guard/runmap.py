@@ -14,6 +14,7 @@ import collections
 import functools
 import hashlib
 import html
+import bisect
 import re
 import time
 import unicodedata
@@ -139,17 +140,20 @@ def nfkc(text: str) -> str:
 
 
 # `\e` is ESC in shell and logging dialects, read like `\x1b` (batch 9, class: a spelled-out ESC the decoder did not know). It is read
-# as ESC in two kinds of place only (batch 10 narrowed it to the first, batch 11 group 8 added the second): (1) directly before `[`,
-# `]`, `(` or `)` (the characters that start the sequences this reader knows); (2) INSIDE a value: with 6 or more token characters
-# (letters, digits, `_`, `-`) on each side, or 12 or more token characters after it, or next to another `\e` that is one token
-# character away (`q\eZ\e7`). A Windows path such as `C:\env` or `C:\Users\err` has none of these, so it is left as written and takes no
-# heavier path. A `\e` that is read adds one reading, never removes one. Batch 10's rule (1) alone left a secret with a literal `\e`
-# spelled into it readable.
+# as ESC in these places only (batch 10 narrowed it to the first, batch 11 added the second as a length rule, batch 12 replaced the
+# length rule by the shape of the word): (1) directly before `[`, `]`, `(` or `)` (the characters that start the sequences this
+# reader knows), anywhere; (2) GLUED inside a word: a character that is no space and no backslash on each side (`qZ7k\eM3vR`,
+# `Ab3+\edE6/`), except inside a Windows path word (a drive letter, a colon and a backslash, then every character up to the next
+# space: `C:\Users\err\x`, `C:\env\etc`; see `path_words`), where the spelling is a folder name and is left as written; (3) 12 or more
+# token characters (letters, digits, `_`, `-`) after it, with anything or nothing in front; 6 or more on each side; next to another
+# `\e` that is one token character away (`q\eZ\e7`). A `\e` that is read adds one reading, never removes one.
 _T = "[A-Za-z0-9_-]"
 ESC_E = (
     rf"e(?:(?=[\[\]()])|(?=(?:{_T}){{12}})|(?<=(?:{_T}){{6}}\\e)(?=(?:{_T}){{6}})"
+    rf"|(?<=[^\s\\]\\e)(?=[^\s\\])(?![^\s\\]{{0,12}}\\)"
     rf"|(?<=\\e{_T}\\e)|(?={_T}\\e))"
 )
+_DRIVE_PATH = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]:\\\S*")
 _HEX_ESCAPE = re.compile(
     rf"\\(?:x([0-9a-fA-F]{{2}})|U([0-9a-fA-F]{{8}})|([0-3][0-7]{{2}})|({ESC_E}))"
 )
@@ -168,10 +172,32 @@ def _one_escape(m: re.Match[str]) -> str:
     return chr(int(m.group(3), 8))
 
 
+def path_words(text: str) -> list[tuple[int, int]]:
+    """The (start, end) of each Windows path word in `text`: a drive letter, a colon, a backslash and every character up to the next
+    white space. A spelling of backslash-e that is neither before a bracket nor 12 or more token characters before the end of such
+    a word is a folder name there (`C:\\Users\\err\\x`), not ESC (batch 12, issue 2)."""
+    return [m.span() for m in _DRIVE_PATH.finditer(text)] if ":" + chr(92) in text else []
+
+
+def without_path_names(text: str) -> str:
+    """`text` with the spellings of backslash-e that are folder names (see `path_words`) taken out, for the check "does this text
+    hold a spelled-out hidden item" (`tools._HIDDENISH`): a path word is not skipped as a whole (a `\\x1b` or a `%1b` in it still counts)."""
+    spans = path_words(text)
+    if not spans:
+        return text
+    out, last = [], 0
+    for s, e in spans:
+        out.append(text[last:s])
+        out.append(re.sub(r"\\e(?![\[\]()])", "", text[s:e]))
+        last = e
+    out.append(text[last:])
+    return "".join(out)
+
+
 def hex_unescape(text: str) -> str:
     """Backslash escapes a log pipeline or a language writes for one character: backslash-x and two hex digits,
     backslash-U and eight hex digits, a three-digit octal escape (backslash and 000 to 377), and backslash-e. NOT decoded: a one- or
-    two-digit octal escape and named escapes (`\1` and Windows paths would decode wrongly)."""
+    two-digit octal escape and named escapes (`\\1` and Windows paths would decode wrongly)."""
     if "%u" in text:
         text = _PCT_U.sub(lambda m: chr(int(m.group(1), 16)), text)
     if chr(92) in text:
@@ -179,7 +205,17 @@ def hex_unescape(text: str) -> str:
             lambda m: chr(int(m.group(1), 16)) if int(m.group(1), 16) <= 0x10FFFF else m.group(0),
             text,
         )
-        text = _HEX_ESCAPE.sub(_one_escape, text)
+        spans = path_words(text)
+        starts = [s for s, _ in spans]
+
+        def one(m: re.Match[str]) -> str:
+            if m.group(4) and starts and text[m.end() : m.end() + 1] not in ("[", "]", "(", ")"):
+                i = bisect.bisect_right(starts, m.start()) - 1
+                if i >= 0 and m.start() < spans[i][1]:
+                    return m.group(0)  # a folder name in a Windows path word
+            return _one_escape(m)
+
+        text = _HEX_ESCAPE.sub(one, text)
     return text
 
 
@@ -605,6 +641,17 @@ def _swallowed_pieces(chars: str, joined: str) -> set[str] | None:
     return {r[k : k + _PIECE] for r in runs for k in range(len(r) - _PIECE + 1)}
 
 
+def _has_novel_value(new_map: dict[str, str], known: dict[str, str]) -> bool:
+    """Does a reading hold a value that is not a piece of a value of a SECRET kind the run already holds? A value that is only a
+    piece of a held identifier (an ARN, a host) is not "already found": the cut copy of it stays readable if the reading is
+    dropped (batch 12, issue 3: the same containment shape as `_only_inside_held`, which batch 11 fixed at one site only; class: a
+    piece of a held identifier called already found, at every site that asks "is this value new")."""
+    holders = [
+        v for ph, v in known.items() if not v.startswith("\0seed") and kind_of(ph) in SECRET_KINDS
+    ]
+    return any(not any(v in k for k in holders) for ph, v in new_map.items() if ph not in known)
+
+
 def _char_reading_wins(
     shown: str,
     new_map: dict[str, str],
@@ -631,7 +678,7 @@ def _char_reading_wins(
         shown[i : i + _PIECE] in pieces for i in range(len(shown) - _PIECE + 1)
     ):
         return False
-    novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)
+    novel = _has_novel_value(new_map, known)
     new_secret = any(
         ph not in before and (kind_of(ph) not in STORED_KINDS or kind_of(ph) == "SECRET")
         for ph in known
@@ -654,7 +701,7 @@ def _consuming_wins(shown: str, new_map: dict[str, str], known: dict[str, str]) 
     Every value an earlier reading found is carried into this reading (`work` of the caller), so a second masked value,
     text before or after the key and a tail of any length do not reject it."""
     values = [v for v in known.values() if not v.startswith("\0seed")]
-    novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)
+    novel = _has_novel_value(new_map, known)
     if not novel:
         return False
     # No `compare_readings` call here (batch 8, issue 2): `new_map` is built from the map the earlier readings made and nothing

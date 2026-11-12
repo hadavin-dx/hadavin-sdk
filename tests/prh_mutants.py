@@ -39,12 +39,17 @@ B8 = "tests/test_prh_b8.py"
 B9 = "tests/test_prh_b9.py"
 B10 = "tests/test_prh_b10.py"
 B11 = "tests/test_prh_b11.py"
+B12 = "tests/test_prh_b12.py"
 D = "src/hadavin_sdk/defaults.py"
 H = "src/hadavin_sdk/guard/hidden.py"
 R = "src/hadavin_sdk/guard/runmap.py"
 X = "src/hadavin_sdk/guard/redact.py"
 T = "src/hadavin_sdk/tools.py"
-TEST_FILES = [UNIT, CONTRACT, REG, SPANS, TOOLS_T, STEPS, B7, B8, B9, B10, B11]
+APPR = "src/hadavin_sdk/approvals/requests.py"
+EV = "src/hadavin_sdk/evals.py"
+AL = "src/hadavin_sdk/runtime/agent_loop.py"
+TICK = "src/hadavin_sdk/runtime/tick.py"
+TEST_FILES = [UNIT, CONTRACT, REG, SPANS, TOOLS_T, STEPS, B7, B8, B9, B10, B11, B12]
 
 
 def mutant(name, src, old, new, test_file, killer, expect="AssertionError", pinned=False, crash=""):
@@ -1581,8 +1586,8 @@ M = [
     mutant(
         "170 the word class is letters and digits only (marks are wrappers)",
         X,
-        'if unicodedata.category(chr(c))[0] not in "LNM":',
-        'if unicodedata.category(chr(c))[0] not in "LN":',
+        'if unicodedata.category(chr(c))[0] not in "LNM" or _IGNORABLE_CHAR',
+        'if unicodedata.category(chr(c))[0] not in "LN" or _IGNORABLE_CHAR',
         B11,
         "test_b11_g1_the_word_class_is_every_letter_digit_and_mark_of_unicode",
         "mutant 170",
@@ -1673,9 +1678,9 @@ M = [
         R,
         'rf"|(?<=\\\\e{_T}\\\\e)|(?={_T}\\\\e))"',
         'rf")"',
-        B11,
-        "test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown",
-        "mutants 182 to 184",
+        B12,
+        "test_b12_i2_the_chain_rule_reads_a_backslash_e_one_character_from_the_next_one",
+        "AssertionError",
     ),
     mutant(
         "183 the inside rule of backslash-e is gone (6 token characters on each side)",
@@ -1695,14 +1700,119 @@ M = [
         "test_b11_g8_a_value_with_a_literal_backslash_e_spelled_into_it_is_not_shown",
         "mutants 182 to 184",
     ),
+   mutant(
+        '186 the approval summary no longer lets a crash of the redactor pass',
+        APPR,
+        '    except RedactorCrash:\n        raise',
+        '    except KeyError:\n        raise',
+        B12,
+        'test_b12_i1_the_approval_summary_lets_a_crash_pass_and_notes_a_refusal',
+        'RedactorCrash',
+        crash='RedactorCrash',
+    ),
     mutant(
-        "185 a backslash-e with one token character on each side is read as ESC (a Windows path is changed)",
+        '187 the eval gate calls a crash of the redactor a config error',
+        EV,
+        '        except runmap.RedactorCrash:\n            raise',
+        '        except KeyError:\n            raise',
+        B12,
+        'test_b12_i1_a_golden_input_with_a_crashed_redactor_is_not_a_config_error',
+        'ConfigError',
+        crash='ConfigError',
+    ),
+    mutant(
+        '188 the injection screen of the document does not catch a crash of the redactor',
+        AL,
+        '        except runmap.RedactorCrash:  # the redactor crashed while the check logged',
+        '        except KeyError:  # the redactor crashed while the check logged',
+        B12,
+        'test_b12_i1_a_crash_in_the_injection_screen_stops_the_run_as_redaction_error',
+        'ValueError',
+        crash='ValueError',
+    ),
+    mutant(
+        '189 the injection screen of a tool result does not catch a crash of the redactor',
+        AL,
+        '                except runmap.RedactorCrash:  # same rule as for the document',
+        '                except KeyError:  # same rule as for the document',
+        B12,
+        'test_b12_i1_a_crash_in_the_tool_result_screen_stops_the_run_as_redaction_error',
+        'ValueError',
+        crash='ValueError',
+    ),
+    mutant(
+        '190 the approval request hook does not catch a crash of the redactor',
+        AL,
+        '            except runmap.RedactorCrash:  # no approval card',
+        '            except KeyError:  # no approval card',
+        B12,
+        'test_b12_i1_a_crash_while_the_card_is_made_stops_the_run_with_no_card',
+        'RedactorCrash',
+        crash='RedactorCrash',
+    ),
+    mutant(
+        '191 the tick step message does not catch a crash of the redactor',
+        TICK,
+        '    except RedactorCrash:\n        return CRASH_NOTE',
+        '    except KeyError:\n        return CRASH_NOTE',
+        B12,
+        'test_b12_i1_a_crash_of_the_redactor_does_not_stop_the_other_steps_of_the_tick',
+        'ValueError',
+        crash='ValueError',
+    ),
+    mutant(
+        '192 the glued rule of backslash-e is gone (a character on each side)',
         R,
-        "|(?<=(?:{_T}){{6}}\\\\e)(?=(?:{_T}){{6}})",
-        "|(?<={_T}\\\\e)(?={_T})",
-        B11,
-        "test_b11_g8_a_windows_path_takes_no_heavier_path_and_is_left_as_written",
-        "mutant 185",
+        '    rf"|(?<=[^\\s\\\\]\\\\e)(?=[^\\s\\\\])(?![^\\s\\\\]{{0,12}}\\\\)"\n',
+        '',
+        B12,
+        'test_b12_i2_a_backslash_e_glued_between_two_characters_of_a_word_is_read_as_esc',
+        'AssertionError',
+    ),
+    mutant(
+        '193 the glued rule reads a folder name after a relative path as ESC',
+        R,
+        '(?=[^\\s\\\\])(?![^\\s\\\\]{{0,12}}\\\\)"',
+        '(?=[^\\s\\\\])"',
+        B12,
+        'test_b12_i2_a_path_name_after_a_backslash_is_left_as_written',
+        'AssertionError',
+    ),
+    mutant(
+        '194 a Windows path word with a drive letter is not left as written',
+        R,
+        '                if i >= 0 and m.start() < spans[i][1]:',
+        '                if False:',
+        B12,
+        'test_b12_i2_a_path_name_after_a_backslash_is_left_as_written',
+        'AssertionError',
+    ),
+    mutant(
+        '195 a piece of a held identifier is called already found (consuming reading)',
+        R,
+        '    novel = _has_novel_value(new_map, known)\n    if not novel:',
+        '    novel = any(not any(v in k for k in values) for ph, v in new_map.items() if ph not in known)\n    if not novel:',
+        B12,
+        'test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_consuming_reading',
+        'AssertionError',
+    ),
+    mutant(
+        '196 a piece of a held identifier is called already found (character reading)',
+        R,
+        '    novel = _has_novel_value(new_map, known)\n    new_secret',
+        '    novel = any(not any(v in k for k in known.values()) for ph, v in new_map.items() if ph not in known)\n    new_secret',
+        B12,
+        'test_b12_i3_a_key_that_is_only_a_piece_of_a_held_identifier_is_new_to_the_character_reading',
+        'AssertionError',
+    ),
+    mutant(
+        '197 a gap character is part of the word class again',
+        X,
+        '            if unicodedata.category(chr(c))[0] not in "LNM" or _IGNORABLE_CHAR.fullmatch(chr(c)):',
+        '            if unicodedata.category(chr(c))[0] not in "LNM":',
+        B12,
+        'test_b12_i6_a_gap_character_glued_in_front_of_a_spaced_run_does_not_start_the_run_late',
+        'AssertionError',
     ),
 ]
 

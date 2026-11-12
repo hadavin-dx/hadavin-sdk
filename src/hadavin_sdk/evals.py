@@ -61,6 +61,8 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
         # The model sees what the runtime sends it: the document redacted with a fresh per-run map (K5).
         try:
             doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+        except runmap.RedactorCrash:
+            raise  # a crash of the redactor is a bug, not "cannot be redacted": it stops the run as it is (batch 12, issue 1)
         except (
             runmap.RedactionError
         ) as exc:  # too large for the redactor (or it failed): say which case, exit 2

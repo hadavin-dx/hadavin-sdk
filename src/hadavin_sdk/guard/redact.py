@@ -967,14 +967,15 @@ _SEP = rf"[\s{_IGN}]+"
 # every character it did not hold, and a spaced value stayed readable). Letters exist only in planes 0 to 3 and 14: only those
 # are scanned (a test derives the set over all code points and compares).
 _WORD_PLANES = (range(0x32400), range(0xE0000, 0xE1000))
+_IGNORABLE_CHAR = re.compile(hidden.IGNORABLE_RE.pattern)
 
 
 def _word_class_body() -> str:
     spans: list[list[int]] = []
     for plane in _WORD_PLANES:
         for c in plane:
-            if unicodedata.category(chr(c))[0] not in "LNM":
-                continue
+            if unicodedata.category(chr(c))[0] not in "LNM" or _IGNORABLE_CHAR.fullmatch(chr(c)):
+                continue  # a gap character (variation selector, U+034F, the filler letters) is no part of a word (batch 12, issue 6)
             if spans and spans[-1][1] == c - 1:
                 spans[-1][1] = c
             else:

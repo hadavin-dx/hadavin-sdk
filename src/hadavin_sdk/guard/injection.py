@@ -83,7 +83,9 @@ def combine(detectors: list[Detector]) -> Detector:
 
 
 def injection_check(detector: Detector, text: str, source: str) -> Verdict:
-    """Any detector error is a flag (guard_unavailable), never a pass."""
+    """Any detector error is a flag (guard_unavailable), never a pass. One exception, by the one crash rule: if the
+    redactor itself crashes while the cause is being written to the log, `RedactorCrash` is raised to the caller (a bug of
+    the redactor stops the run; nothing passes)."""
     try:
         return detector.check(text, source)
     except Exception as exc:  # noqa: BLE001 - fail closed on anything

@@ -429,7 +429,10 @@ class Runtime:
                 run, "guard", "document", result="stopped", error_code="document_too_complex"
             )
             return self._abstain(run, S.NEEDS_PERSON, "document_too_complex", cited)
-        verdict = self._screen(run, safe_text, "document")
+        try:
+            verdict = self._screen(run, safe_text, "document")
+        except runmap.RedactorCrash:  # the redactor crashed while the check logged its cause: nothing goes on (batch 12, issue 1)
+            return self._redaction_failed(run, cited)
         if verdict.flagged:
             self._note(run, "guard", "injection", result="flagged", error_code=verdict.reason_code)
             return self._abstain(run, S.NEEDS_PERSON, verdict.reason_code, cited)
@@ -562,7 +565,10 @@ class Runtime:
                     result="error" if out.error else "ok",
                     error_code="tool_error" if out.error else None,
                 )
-                verdict = self._screen(run, out.text, f"tool:{call.name}")
+                try:
+                    verdict = self._screen(run, out.text, f"tool:{call.name}")
+                except runmap.RedactorCrash:  # same rule as for the document (batch 12, issue 1)
+                    return self._redaction_failed(run, cited)
                 if verdict.flagged:  # tool output is untrusted text too
                     self._note(
                         run, "guard", "injection", result="flagged", error_code=verdict.reason_code
@@ -760,7 +766,11 @@ class Runtime:
             if self.hooks.request_approval is None:
                 return self._to(run, S.NEEDS_PERSON, "approvals_not_configured")
             run = self._to(run, S.WAITING_FOR_APPROVAL)
-            sent = self.hooks.request_approval(plan, decision, run.principal_id)
+            try:
+                sent = self.hooks.request_approval(plan, decision, run.principal_id)
+            except runmap.RedactorCrash:  # no approval card is made from a crashed redactor (batch 12, issue 1)
+                self._note(run, "guard", "redaction", result="failed", error_code="redaction_error")
+                return self._to(run, S.NEEDS_PERSON, "redaction_error")
             if isinstance(sent, Delivery) and not sent.ok:
                 reason = "card_too_long" if sent.reason == "card_too_long" else "card_not_delivered"
                 return self._to(run, S.NEEDS_PERSON, reason)
