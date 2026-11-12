@@ -131,7 +131,10 @@ def _spellings(fragment: str) -> list[str]:
     """Every way a fragment of `redact.KEY_ALTERNATIVES` can be written: `[_\\-]?` as nothing, `_` and `-`, `(?:ificate)?` with
     and without its letters, `\\.` as a dot, and a look-ahead (`pass(?=["']?\\s*[:=])`) as the word before it."""
     out = [strip_look_arounds(fragment).replace("\\.", ".")]
-    for pat, subs in (("[_\\-]?", ["", "_", "-"]),):
+    for pat, subs in (
+        ("[_\\-]?", ["", "_", "-"]),
+        ("(?:[0-9]*[_.\\-])?", ["", "_", "-", "."]),  # a pair: glued or with a separator (round 11)
+    ):
         out = [o.replace(pat, s) for o in out for s in subs]
     more = []
     for o in out:

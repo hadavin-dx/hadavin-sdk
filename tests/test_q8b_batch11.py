@@ -20,6 +20,7 @@ import time
 import pytest
 
 from hadavin_sdk.approvals.channel import clean
+from hadavin_sdk.k1b import redaction as R
 from tests.test_q8b_batch7 import readable_on
 
 redact = importlib.import_module("hadavin_sdk.guard.redact")
@@ -224,3 +225,113 @@ def test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_char
     assert "authentication" not in clean(f"token={scheme}\nauthentication failed\n"), (
         "the first word of 8 or more characters after the scheme word is readable"
     )
+
+
+# ---- Issue 3: the flag, the text and the record path read an ordinary word and its second word the same way ---------------
+VAL = "Zq7" + "madeUpValue"
+# name -> (flag, text, record): True = the value or the key is masked. Every name is decided here, on purpose.
+PAIR_DECISIONS = {
+    # digits behind the second word, digits between the words, a dot between: a pair on all three paths (record walk drops the digits
+    # at the end of a word and cuts at `_`, `-` and `.`)
+    "compass_key2": (True, True, True),
+    "possession-id2": (True, True, True),
+    "bypass_key2": (True, True, True),
+    "compass2-key": (True, True, True),
+    "compass2_key": (True, True, True),
+    "compass.key": (True, True, True),
+    "compass.key2": (True, True, True),
+    "bypass.key": (True, True, True),
+    "possession.id": (True, True, True),
+    "compass-key": (True, True, True),
+    "obsession_id": (True, True, True),
+    "possession_cookie": (True, True, True),  # CHANGELOG lists `--possession_cookie` as masked in a flag
+    # a second word that only starts with a pair word: the key rule reads up to 20 more key characters, so the text is masked and the
+    # record key is too; a flag name is exact (`--password-file` is no credential either), so the flag shows its value (stated)
+    "compass_keyboard": (False, True, True),
+    "possession_identity": (False, True, True),
+    "bypass_keyboard": (False, True, True),
+    # digits with no separator are one word on every path; an ordinary word with another second word is an ordinary name
+    "compass2key": (False, False, False),
+    "compass_direction": (False, False, False),
+    "compass_id": (False, False, False),
+    "cookiejar": (False, False, False),
+}
+
+
+def _flag_masked(name: str) -> bool:
+    return VAL not in redact.redact(f"cmd --{name} {VAL} --x").text
+
+
+def _text_masked(name: str) -> bool:
+    return VAL not in redact.redact(f"{name}={VAL} end").text
+
+
+@pytest.mark.parametrize("name", sorted(PAIR_DECISIONS))
+def test_b11_3_the_flag_path_reads_the_pair_as_decided(name):
+    assert _flag_masked(name) is PAIR_DECISIONS[name][0], (
+        f"the flag path reads `--{name}` differently from the decision: masked is {_flag_masked(name)}"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(PAIR_DECISIONS))
+def test_b11_3_the_text_path_reads_the_pair_as_decided(name):
+    assert _text_masked(name) is PAIR_DECISIONS[name][1], (
+        f"the text path reads `{name}=` differently from the decision: masked is {_text_masked(name)}"
+    )
+
+
+@pytest.mark.parametrize("name", sorted(PAIR_DECISIONS))
+def test_b11_3_the_record_path_reads_the_pair_as_decided(name):
+    assert R.sensitive(name) is PAIR_DECISIONS[name][2], (
+        f"the record walk reads the key `{name}` differently from the decision: sensitive is {R.sensitive(name)}"
+    )
+
+
+def test_b11_3_a_cookie_key_in_full_width_capitals_is_read_after_nfkc_in_the_record_walk():
+    assert R.sensitive("\uff23\uff2f\uff2f\uff2b\uff29\uff25\uff2a\uff21\uff32"), "a full-width COOKIEJAR key is shown by the record walk"
+    assert not R.sensitive("cookiejar")
+
+
+@pytest.mark.parametrize("scheme", ("Basic", "Bearer", "Token", "ApiKey"))
+def test_b11_3_a_flag_authorization_with_the_token_on_the_next_line_is_masked(scheme):
+    tok = piece(81, 20)
+    for nl, ind in itertools.product(BREAKS, ("", "  ", "\t")):
+        text = f"run --authorization {scheme}{nl}{ind}{tok} --verbose"
+        assert tok not in clean(text) and tok not in redact.redact(text).text, (
+            f"a wrapped --authorization token is readable: {text!r}"
+        )
+    # the other side: a first word of fewer than 8 characters after the break is shown (as for `Basic`)
+    assert "short" in redact.redact(f"run --authorization {scheme}\nshort x").text, (
+        "a first word of fewer than 8 characters after the break was masked"
+    )
+
+
+# ---- Issue 4: the bare forms (no header name in front of the scheme word), as on main -----------------------------------------
+
+
+def test_b11_4_the_bare_scheme_rules_differ_by_scheme_as_on_main_the_stated_limit():
+    """LIMITS: the wrapped-header sentence holds inside a header; with no header name in front, `Basic` reads base64 letters
+    (8 or more), `Bearer` needs 12 characters, and `Token`, `ApiKey` and `Digest` have no rule (the owner question
+    `q-q8b-bare-bypass`, built: shown). Pinned on both sides so that a change of any is seen."""
+    t12 = "abcdefghij" + "kl"
+    assert t12 not in clean(f"x Basic\n{t12} y"), "a bare Basic and a base64 token of 12 characters is readable"
+    assert "ab.cdefghijkl" in redact.redact("x Basic\nab.cdefghijkl y").text, "a bare Basic read a dot (it reads base64 letters only)"
+    assert "abcdefghijk" in clean("x Bearer abcdefghijk y"), "a bare Bearer read a token of 11 characters"
+    assert "abcdefghijkl" not in clean("x Bearer abcdefghijkl y"), "a bare Bearer and 12 characters is readable"
+    for scheme in ("Token", "ApiKey", "Digest"):
+        assert t12 in clean(f"x {scheme}\n{t12} y"), f"a bare {scheme} has a rule: update the owner question and LIMITS"
+        assert t12 not in clean(f"Authorization: {scheme}\n{t12} y"), f"{scheme} with a header name in front is readable"
+
+
+def test_b11_4_the_limits_name_both_sides_of_the_fold_and_the_bare_forms():
+    limits = R.LIMITS
+    for phrase in (
+        "A header folded over several lines",
+        "also when its first line has fewer than 8 characters",
+        "a line that does not start with a space or a tab ends the header",
+        "the folded lines have no upper bound",
+        "a second word on the same line is shown",
+        "A bare `Basic<LF>`",
+        "a bare `Bearer` needs 12",
+    ):
+        assert phrase in limits, f"LIMITS does not say: {phrase!r}"

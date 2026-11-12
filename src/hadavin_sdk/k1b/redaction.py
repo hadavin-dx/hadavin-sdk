@@ -34,6 +34,7 @@ from typing import Any
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.redact import (
+    GUARDED_ENDINGS,
     BARE_ENDINGS,
     COUNT_WORDS_BEFORE_TOKENS,
     ORDINARY_WORDS,
@@ -154,12 +155,11 @@ CREDENTIAL_WORDS = frozenset(
     ]
 )
 GLUED_ENDINGS = (
-    "password", "passwd", "pwd", "passphrase", "secret", "token", "apikey", "secretkey", "accesskey",
-    "privatekey", "sessionid", "sessid", "accountkey", "keydata", "certdata", "certificatedata",
+    "password", "passwd", "pwd", "secret", "token", "apikey", "secretkey", "accesskey",
+    "privatekey", "sessid", "accountkey", "keydata", "certdata", "certificatedata",
     "credential", "credentials", "signingkey", "encryptionkey",
-    "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
     "protectionbypass",
-)  # fmt: skip
+) + GUARDED_ENDINGS  # fmt: skip
 # `pass`, `auth` and `session` end many credential keys written as one word (`newpass`, `dbpass`, `postgresauth`,
 # `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `obsession`). `BARE_ENDINGS`,
 # `ORDINARY_WORDS` and `COUNT_WORDS_BEFORE_TOKENS` are NOT defined in this file: they are imported from `guard/redact.py`,
@@ -253,7 +253,8 @@ def sensitive(key: object) -> bool:
     i written as plain letters, as the older `re.IGNORECASE` rule read it."""
     if not isinstance(key, str):
         return False
-    if _CAPITALS_COOKIE.search(key):
+    # on the key as the older rule read it: NFKC and the fold of the long s and the dotted and dotless i (`COOKIEſTORE`, full-width capitals)
+    if _CAPITALS_COOKIE.search(unicodedata.normalize("NFKC", key).translate(_FOLD)):
         return True
     words = _key_words(key)
     for i, w in enumerate(words):

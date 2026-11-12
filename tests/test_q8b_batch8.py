@@ -215,11 +215,30 @@ def test_b8_3_a_real_two_word_credential_key_is_never_hidden_by_the_ordinary_loo
 
 
 def test_b8_3_the_guarded_endings_of_the_record_walk_are_the_pairs_of_the_card_list():
-    assert redact.GUARDED_GLUED == {b + s: b for b, s in redact._GUARDED_PAIRS}
-    for ending in redact.GUARDED_GLUED:
+    """Both lists are generated from `_GUARDED_PAIRS` (round 11, Issue 5): the glued endings of the record walk and the key
+    alternatives of the card rules are compared with a fresh build from the table."""
+    assert redact.GUARDED_ENDINGS == tuple(b + s for b, s in redact._GUARDED_PAIRS), (
+        "GUARDED_ENDINGS is not generated from the pairs"
+    )
+    for ending in redact.GUARDED_ENDINGS:
         assert ending in R.GLUED_ENDINGS, (
             f"{ending} is guarded on the card but is no glued ending of the record walk"
         )
+    assert set(R.GLUED_ENDINGS) - set(redact.GUARDED_ENDINGS) == _HAND_GLUED_ENDINGS
+    for bare, second in redact._GUARDED_PAIRS:
+        assert redact._guarded_key(bare, second) in redact.KEY_ALTERNATIVES, (
+            f"the pair {bare} + {second} is no key alternative of the card rules"
+        )
+    generated = [a for a in redact.KEY_ALTERNATIVES if a.startswith(tuple(b for b, _ in redact._GUARDED_PAIRS)) and "(?:[0-9]*[_.\\-])?" in a]
+    assert len(generated) == len(redact._GUARDED_PAIRS)
+
+
+# the glued endings that are no pair of the table: one credential word (`password`) or a fixed compound (`accesskey`)
+_HAND_GLUED_ENDINGS = {
+    "password", "passwd", "pwd", "secret", "token", "apikey", "secretkey", "accesskey", "privatekey", "sessid",
+    "accountkey", "keydata", "certdata", "certificatedata", "credential", "credentials", "signingkey", "encryptionkey",
+    "protectionbypass",
+}  # fmt: skip
 
 
 # ---- Issue 4: a scheme word and its token after --authorization and --bearer ---------------------------------------------

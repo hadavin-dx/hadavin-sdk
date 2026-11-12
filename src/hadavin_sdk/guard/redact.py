@@ -136,7 +136,7 @@ _COOKIE_KEY = r"(?i)" + _COOKIE_KEY_BODY
 # `session_cookie=` names a session credential whose WHOLE value is secret (it is in the key list below): the cookie
 # assignment rule takes one word, or `;`-joined `name=value` pairs, and ran first, so `session_cookie=a b c` left `b c`
 # readable and the key rule then saw a placeholder in front of them (round 4). The key rule masks that one.
-_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_\-])" + _COOKIE_KEY_BODY
+_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_.\-])" + _COOKIE_KEY_BODY
 # API key prefixes, one per vendor shape, tried in this order (regex fragments). A new shape is one more entry.
 _KEY_PREFIXES = (
     r"sk-ant-",
@@ -232,13 +232,14 @@ def _bare_word(word: str) -> str:
 # below: the key rules, the flag guard and the record walk read it, so the three cannot disagree. `_secret`, `_token`, `_password`
 # and the other credential words need no entry: they are credential words after any word. `protection-bypass` is a key of its own.
 # The keys that are a bare word (`pass`, `session`, `auth`) and one more word: written once as (bare word, second word). The
-# regex alternatives below and the record walk's glued endings (`GUARDED_GLUED`) are both built from this list.
+# regex alternatives of `KEY_ALTERNATIVES` below, the flag guard and the record walk's glued endings (`GUARDED_ENDINGS`, read by
+# `GLUED_ENDINGS` of `k1b/redaction.py`) are all generated from this one list.
 _GUARDED_PAIRS = (
     ("pass", "phrase"), ("pass", "code"), ("pass", "key"), ("pass", "value"), ("session", "id"),
-    ("session", "key"), ("session", "cookie"), ("session", "value"), ("auth", "value"),
+    ("session", "key"), ("session", "cookie"), ("session", "value"), ("auth", "value"), ("bearer", "value"),
 )  # fmt: skip
-# glued ending -> its bare word (`passcode` -> `pass`): the record walk reads a word `bypasscode` as `bypass` + `code`.
-GUARDED_GLUED = {bare + second: bare for bare, second in _GUARDED_PAIRS}
+# The glued spelling of each pair (`passcode`, `sessionid`): the record walk reads a word `bypasscode` as `bypass` + `code`.
+GUARDED_ENDINGS = tuple(bare + second for bare, second in _GUARDED_PAIRS)
 
 
 def ordinary_second_words(word: str) -> tuple[str, ...]:
@@ -251,12 +252,17 @@ def ordinary_second_words(word: str) -> tuple[str, ...]:
 
 
 def is_ordinary_pair(first: str, second: str) -> bool:
-    """Is `first` + `second` (`compass`, `key`) an ordinary word and a second word that makes it a credential name?"""
-    return second in ordinary_second_words(first)
+    """Is `first` + `second` (`compass`, `key`) an ordinary word and a second word that makes it a credential name? A second word that
+    only STARTS with one of them (`compass_keyboard`, `possession_identity`) counts: the key rule reads the pair with up to 20 more key
+    characters behind it (`KEY_TAIL`), so the text is masked and the record key must be (round 11, Issue 3; cost: a harmless name)."""
+    return any(second.startswith(w) for w in ordinary_second_words(first))
 
 
 def _guarded_key(bare: str, second: str) -> str:
-    return bare + r"[_\-]?" + second
+    """`pass` + `key`: glued (`passkey`), or with `_`, `-` or `.` between, and digits before that separator (`pass2-key`): the record
+    walk cuts a key at `_`, `-` and `.` and drops the digits at the end of each word, so `compass2.key` is the pair `compass`, `key`
+    there (round 11, Issue 3). Digits with no separator (`pass2key`) are one word on both sides, and no pair."""
+    return bare + r"(?:[0-9]*[_.\-])?" + second
 
 
 # The words of the generic `key=value` rule further down, one regex fragment each (kubeconfig secrets: client-key-data,
@@ -264,17 +270,15 @@ def _guarded_key(bare: str, second: str) -> str:
 # and address patterns must not swallow a key of this list either. Public so that a test can feed every one of them to
 # `k1b.redaction.sensitive` (the two key lists must not drift apart).
 KEY_ALTERNATIVES = (
-    r"password", r"passwd", _guarded_key("pass", "phrase"), r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
+    r"password", r"passwd", r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
     r"shared[_\-]?access[_\-]?key", r"private[_\-]?key", r"api[_\-]?key", r"apikey", r"auth[_\-]?token",
     r"access[_\-]?token", r"sas[_\-]?token", r"key[_\-]?data", r"cert(?:ificate)?[_\-]?data",
-    _guarded_key("session", "id"), r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
+    r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
     r"credential", r"token", r"signing[_\-]?key", r"encryption[_\-]?key", _bare_word("pass"),
     _bare_word("auth"), _bare_word("session"), _bare_word("bearer"),
     # Round 4 (D1): the keys the older rule masked by its bare `pass` and `session` prefixes, written out so that the
     # unquoted rule and every other reader of this list masks them too, and the `_value` forms of the four bare words.
-    _guarded_key("pass", "code"), _guarded_key("pass", "key"), _guarded_key("pass", "value"),
-    _guarded_key("session", "key"), _guarded_key("session", "cookie"), _guarded_key("session", "value"),
-    _guarded_key("auth", "value"), r"bearer[_\-]?value",
+    *(_guarded_key(bare, second) for bare, second in _GUARDED_PAIRS),
     # Round 9 (Issue 6): the name of a protection-bypass header (`x-vercel-protection-bypass: <secret>`); a bare `bypass` stays readable.
     r"protection[_\-]?bypass",
 )  # fmt: skip
@@ -310,7 +314,12 @@ FLAG_ONLY_WORDS = (
 # front, no letters glued on: `wget --no-cookies`, `--keep-session-cookies`, `--load-cookies <file>` take a switch or a file
 # name, no cookie (round 8 Issue 2). The generic `session[_\-]?cookie` of the key list is left out of the flag words below and
 # listed here, so that the flag rule reads it as the exact name only.
-FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")
+FLAG_EXACT_WORDS = (
+    r"(?:set[_\-])?cookie",
+    _guarded_key("session", "cookie"),
+    # `--possession_cookie`, `--obsession-cookie`: an ordinary word of the session family and its second word `cookie`, from the one table
+    *(w + _guarded_key("", "cookie") for w in sorted(ORDINARY_WORDS) if "cookie" in ordinary_second_words(w)),
+)
 _EXACT_FLAG_KEYS = frozenset({_guarded_key("session", "cookie")})
 FLAG_WORDS = "|".join(
     [a for a in KEY_ALTERNATIVES if "(?=" not in a and a not in _EXACT_FLAG_KEYS]
@@ -345,9 +354,9 @@ _FLAG_NOT_ORDINARY = (
     r"(?!(?:"
     + "|".join(
         w
-        + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+        + r"(?![a-z]|[0-9]+[a-z])(?![0-9]*[_.\-](?:"
         + "|".join(ordinary_second_words(w))
-        + r")(?![a-z0-9]))"
+        + r")[0-9]*(?![a-z]))"
         for w in sorted(ORDINARY_WORDS)
     )
     + r"))"
@@ -979,7 +988,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?i)session[_\-]?cookies?[\"'\]]*\s*(?:=>|=(?!>))\s*+(" + _SESSION_COOKIE_VALUE + ")"
+            r"(?i)session[_.\-]?cookies?[\"'\]]*\s*(?:=>|=(?!>))\s*+(" + _SESSION_COOKIE_VALUE + ")"
         ),
     ),
     # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
@@ -1021,7 +1030,9 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         "SECRET",
         re.compile(
             _AUTH_FLAG
-            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}|[^\s\"'\-][^\s\"']{{2,}}))"
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+(?:{_SP}+(?:{_QUOTED_TEXT}|[^\s\"'\-][^\s\"']{{2,}})"
+            # a wrapped command: the token on the next line, 8 or more characters as for `Basic` (round 11, Issue 3)
+            + rf"|{_SP}*{_LINE_BREAK}\s*+[^\s\"'\-][^\s\"']{{7,}}))"
         ),
     ),
     # `=` or whitespace before the opening quote: in JSON argv `"--password","x"` the quote right
