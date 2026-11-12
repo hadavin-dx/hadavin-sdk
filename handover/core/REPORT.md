@@ -1,6 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:08Z: status (ORDER 255/256)
+- READY-TO-MERGE.md exists (handover/core/READY-TO-MERGE.md): READY 2 (#71, #72), NEEDS-ROUND 8, NEEDS-REBASE 6, PARKED 14. Not yet verified by me beyond the helper's report.
+- ORDER 256 D: 3 stack rebase builders started 19:08Z (S1 money store, S2 text folding, S3 diagnostics); new refs wip/cloud-rebase-*, no force-push.
+- Q8a-1 b19 builder done: head a24d98ae (wip/cloud-q8a1-b19). Builder's gates: stage_mutants 445/445, ruff/format/bandit rc 0; ONE full-suite failure (dblink socket test, environment; 253 pass in a private mount namespace). Independent evidence still running; then resolve.
+- Q8b b14c builder done: head 82c43ab9. NOT GREEN: q8b_mutants not completed (253 of 277 rows ok, last 24 slow rows not reached), no full suite or stage_mutants at the final head, M257 kill depends on machine load. Needs a gate run (heavy slot) before review. Honest: not closed.
+- Part 5 (reset) builder done: local 019edbed, not yet pushed; two nosec comments, bandit exit, stage_mutants, full pytest and EGM review still owed.
+
 ## Status - 19:05Z
 - AK-G2-a batch 1 returned PARTIAL (head 40c565e6, pushed to wip/cloud-ak-g2-a): migration 0006, ledger store (memory and Postgres), keys, Inbox.receive, 30 ledger tests plus contract tests, 89 passed with real Postgres. NOT done: mutants, gates, full suite, several Postgres rows. BLOCKER found: AK1-a (tenant and key work) is not on main; Dispatch, classify and StartRun wait for it (stand-ins in place). Batch 2 builder started for every dependency-free item. Lead decision needed: AK1-a order (recorded in OPEN-QUESTIONS and a questions line).
 - Part 5 (safe reset) built and committed locally (019edbed): 56 tests, 19 of 19 mutants, lint clean; full suite result and push still pending from that builder.
