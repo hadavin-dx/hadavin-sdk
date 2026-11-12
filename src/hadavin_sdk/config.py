@@ -24,7 +24,15 @@ from pydantic import (
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from hadavin_sdk import defaults, deferred
-from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD, TABLE, KindSettings
+from hadavin_sdk.backends.table import (
+    DEFAULTS,
+    DEMO_ONLY,
+    NOT_PROD,
+    TABLE,
+    KindSettings,
+    assert_registry_sound,
+    names_a_machine,
+)
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.netguard import is_loopback_host, is_loopback_literal
 from hadavin_sdk.scrub_settings import ScrubSettings
@@ -85,6 +93,17 @@ class Backends(_Strict):
         out = [(cap, getattr(self, cap)) for cap in TABLE if cap != "detector"]
         return out + [("detector", d) for d in self.detector]
 
+    @model_validator(mode="after")
+    def _registry_and_stand_ins(self) -> Backends:
+        """The choke point for every way to build a Backends (the loader, `Config(...)`, a direct call): the kind
+        registry is sound (a RuntimeError, a defect of the table and not of the config), and every stand-in
+        reaches this computer only."""
+        assert_registry_sound()
+        for cap, settings in self.entries():
+            if problem := stand_in_host_problem(cap, settings.kind, settings):
+                raise ValueError(problem)
+        return self
+
 
 _OLD_STAGE = "dev"
 
@@ -135,23 +154,44 @@ def _one(cap: str, raw: Any, root: Path) -> KindSettings:
         settings = model(**data)
     except ValidationError as exc:
         raise ConfigError(f"backends.{cap} ({kind}): {exc}") from exc
-    if problem := stand_in_host_problem(cap, kind, settings):
-        raise ConfigError(problem)
     return settings
 
 
 def stand_in_host_problem(cap: str, kind: str, settings: KindSettings) -> str | None:
     """The one rule about stand-ins (local imitations of a service): they may only be reached on this computer.
-    Every host the kind says it connects to must be localhost or a loopback address (`is_loopback_host`, which never
-    looks a name up). None = fine (a real kind, or a stand-in with no host). The text names the capability and the
-    kind and never the host or any other setting value: a mistyped setting can hold a secret."""
-    entry = TABLE[cap][kind]
-    if entry.role != "stand_in" or entry.hosts is None:
+    Every host the kind says it connects to must be localhost or a loopback address (`is_loopback_host`: the whole
+    127.x.x.x range and `::1`, the name read as written, never looked up). This is the "is this host this computer?"
+    question, not the narrower "may plain http go here?" of `is_loopback_literal` that the clients ask: a stand-in
+    on 127.8.9.10 is still on this computer, while a request path must stay on three exact spellings.
+    Limits: the port is ignored, and a forwarder or proxy that listens on 127.0.0.1 can still carry traffic to
+    another computer; the rule says where the stand-in listens, not where its traffic ends.
+    None = fine (a real kind, or a stand-in that reaches no machine). A stand-in that declares no hosts, whose host
+    list cannot be read, or that lists none although it has a setting that names a machine, is refused (an empty
+    list would pass `all(...)`). The text names the capability and the kind and never the host, the error of the
+    hosts function or any other setting value: a mistyped setting can hold a secret."""
+    entry = TABLE.get(cap, {}).get(kind)
+    where = f"backends.{cap} ({kind})"
+    if entry is None:
+        return f"backends.{cap}: unknown kind; the kind table does not list it"
+    if entry.role != "stand_in":
         return None
-    if all(is_loopback_host(host) for host in entry.hosts(settings)):
+    if entry.hosts is None:
+        return f"{where}: a stand-in must declare its hosts; this kind declares none"
+    try:
+        hosts = list(entry.hosts(settings))
+    except (
+        ValueError,
+        TypeError,
+        AttributeError,
+        LookupError,
+    ):  # a broken hosts function refuses; its message is not shown
+        return f"{where}: the hosts of this stand-in could not be read, so it is refused"
+    if not hosts and names_a_machine(type(settings)):
+        return f"{where}: a stand-in with a setting that names a machine must list the hosts it reaches"
+    if all(is_loopback_host(host) for host in hosts):
         return None
     return (
-        f"backends.{cap} ({kind}): a stand-in kind may only be reached on this computer "
+        f"{where}: a stand-in kind may only be reached on this computer "
         "(localhost or a loopback address); set a loopback host, or use a real kind"
     )
 
@@ -180,7 +220,15 @@ def parse_backends(raw: Any, root: Path) -> Backends:
                 raise ConfigError("backends.detector: llm_judge needs another detector beside it")
         else:
             built[cap] = _one(cap, value, root)
-    return Backends(**built)
+    try:
+        return Backends(**built)
+    except (
+        ValidationError
+    ) as exc:  # the sentences are fixed text: no input value is shown (a setting can hold a secret)
+        found = exc.errors(include_input=False, include_url=False, include_context=False)
+        raise ConfigError(
+            "; ".join(e["msg"].removeprefix("Value error, ") for e in found)
+        ) from None
 
 
 def url_allowed(url: str, allow_insecure_loopback: bool) -> bool:
@@ -405,9 +453,9 @@ class Config(_Strict):
                 raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")
         for name, system in self.systems.items():
             if not url_allowed(system.base_url, self.allow_insecure_loopback):
-                raise ValueError(
+                raise ValueError(  # the address is not shown: it can carry a user name and password
                     f"system {name}: base_url must be https "
-                    f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
+                    "(http only for loopback with allow_insecure_loopback)"
                 )
         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
         if is_live(self.environment):

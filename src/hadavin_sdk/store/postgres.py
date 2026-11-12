@@ -9,7 +9,6 @@ Neutral protocol: the PostgreSQL wire protocol and SQL (any Postgres: RDS, Cloud
 
 from __future__ import annotations
 
-import ipaddress
 import logging
 import os
 import tempfile
@@ -43,6 +42,7 @@ from hadavin_sdk.models import (
     ToolCallRecord,
     now,
 )
+from hadavin_sdk.netguard import is_loopback_host
 from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
 
 _LOG = logging.getLogger("hadavin_sdk.store")
@@ -56,15 +56,9 @@ def _is_local(parts: dict) -> bool:
     hosts = str(parts.get("host") or parts.get("hostaddr") or os.environ.get("PGHOST") or "")
     if not hosts or hosts.startswith("/"):
         return True
-    for h in hosts.split(","):
-        if h == "localhost":
-            continue
-        try:
-            if not ipaddress.ip_address(h).is_loopback:
-                return False
-        except ValueError:
-            return False
-    return True
+    return all(
+        is_loopback_host(h) for h in hosts.split(",")
+    )  # the one loopback rule (netguard); a socket path was handled above
 
 
 def tls_mode(

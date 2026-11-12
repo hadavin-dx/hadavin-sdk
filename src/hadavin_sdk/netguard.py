@@ -1,12 +1,16 @@
-"""The one answer to "is this host name this computer?". A leaf module: it imports only the standard library, so
-the settings, the HTTP guard, the model clients and the stores can all ask here instead of each keeping its own list.
+"""The one answer to "is this host name this computer?". A leaf module: it imports only the standard library. The
+settings and clients that decide "plain http, only to this computer" (`config.url_allowed`, the model client, the object-lock
+and vault settings, the HTTP guard, the vault client), the bind refusal (`bindguard`), the stand-in rule
+(`config.stand_in_host_problem`) and the database address check (`store.postgres`) all ask here; no other module in
+`src` writes its own loopback list (`tests/test_loopback_sites.py` scans for one).
 
 Two questions, kept apart on purpose:
 
 * ``is_loopback_host``: the strict reading of a bind address or a host. True only for ``localhost`` (any letter
   case) and a loopback address written as a plain IP address (the whole 127.x.x.x range, ``::1``, and an IPv4-mapped
   IPv6 address that holds a loopback IPv4 address). It never looks a name up, so the answer cannot change with a DNS
-  reply. Anything it cannot read is not loopback.
+  reply. Anything it cannot read is not loopback. Limits: it judges the name only. It ignores the port, and a
+  forwarder or proxy that listens on a loopback address can still carry traffic to another computer.
 * ``LOOPBACK_LITERALS`` / ``is_loopback_literal``: the three exact spellings a plain-http endpoint may use
   (``127.0.0.1``, ``localhost``, ``::1``). The callers that send a request (the model clients, the HTTP guard, the
   settings checks) need an exact, small list, because a wider list would widen what they allow.

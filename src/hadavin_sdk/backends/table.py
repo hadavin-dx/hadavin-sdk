@@ -7,14 +7,23 @@ imports no other Hadavin module except the leaf ``netguard`` (``config`` imports
 
 from __future__ import annotations
 
+import ipaddress
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, get_args
 from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    IPvAnyAddress,
+    field_validator,
+    model_validator,
+)
 
 from hadavin_sdk.netguard import is_loopback_literal
 
@@ -349,6 +358,13 @@ class Entry:
     role: Literal["stand_in", "real"] | None = None
 
 
+def _no_hosts(_settings: Any) -> list[str]:
+    """The deliberate "this stand-in reaches no machine" (it runs inside the process or on local files). A stand-in
+    must name its hosts; naming none is a choice the registry check accepts only while the kind has no setting that
+    names a machine (see `names_a_machine`)."""
+    return []
+
+
 def _aws_host(service: str, region: str) -> str:
     """China regions (`cn-*`) are served under amazonaws.com.cn."""
     return f"{service}.{region}.amazonaws.com" + (".cn" if region.startswith("cn-") else "")
@@ -390,7 +406,7 @@ _ACTIONS = "hadavin_sdk.actions"
 # Build order (design §4.2): each capability may use only what is built before it, as ALLOWED says.
 TABLE: dict[str, dict[str, Entry]] = {
     "secrets": {
-        "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets", role="stand_in"),
+        "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets", role="stand_in", hosts=_no_hosts),
         "env": Entry(
             EnvSecretsSettings,
             "hadavin_sdk.actions.secrets_env:build",
@@ -438,7 +454,7 @@ TABLE: dict[str, dict[str, Entry]] = {
         ),
     },
     "signer": {
-        "none": Entry(KindSettings, f"{_BUILTIN}:no_signer", role="stand_in"),
+        "none": Entry(KindSettings, f"{_BUILTIN}:no_signer", role="stand_in", hosts=_no_hosts),
         "ed25519_local": Entry(
             Ed25519LocalSettings,
             f"{_SIGNER}:build_local",
@@ -483,7 +499,7 @@ TABLE: dict[str, dict[str, Entry]] = {
     },
     # Where each signed checkpoint is also written, out of the runtime's reach (WORM).
     "anchor": {
-        "none": Entry(KindSettings, f"{_BUILTIN}:no_anchor", role="stand_in"),
+        "none": Entry(KindSettings, f"{_BUILTIN}:no_anchor", role="stand_in", hosts=_no_hosts),
         "s3_object_lock": Entry(
             S3ObjectLockSettings,
             f"{_AUDIT}.anchor_s3:build",
@@ -511,7 +527,7 @@ TABLE: dict[str, dict[str, Entry]] = {
         ),
     },
     "store": {
-        "memory": Entry(KindSettings, f"{_BUILTIN}:memory_store", role="stand_in"),
+        "memory": Entry(KindSettings, f"{_BUILTIN}:memory_store", role="stand_in", hosts=_no_hosts),
         "postgres": Entry(
             PostgresSettings,
             "hadavin_sdk.store.postgres:build",
@@ -522,7 +538,9 @@ TABLE: dict[str, dict[str, Entry]] = {
         ),
     },
     "audit": {
-        "local_dir": Entry(LocalDirSettings, f"{_BUILTIN}:local_dir_audit", role="stand_in"),
+        "local_dir": Entry(
+            LocalDirSettings, f"{_BUILTIN}:local_dir_audit", role="stand_in", hosts=_no_hosts
+        ),
         "chain": Entry(
             ChainSettings,
             "hadavin_sdk.audit.chain:build",
@@ -533,7 +551,7 @@ TABLE: dict[str, dict[str, Entry]] = {
         ),
     },
     "llm": {
-        "fake": Entry(FakeLLMSettings, f"{_BUILTIN}:fake_llm", role="stand_in"),
+        "fake": Entry(FakeLLMSettings, f"{_BUILTIN}:fake_llm", role="stand_in", hosts=_no_hosts),
         # Every kind below is slice2-unverified until its P9 live run (design 12.1).
         "anthropic": Entry(
             AnthropicSettings,
@@ -588,7 +606,9 @@ TABLE: dict[str, dict[str, Entry]] = {
         ),
     },
     "channel": {
-        "fake": Entry(FakeChannelSettings, f"{_BUILTIN}:fake_channel", role="stand_in"),
+        "fake": Entry(
+            FakeChannelSettings, f"{_BUILTIN}:fake_channel", role="stand_in", hosts=_no_hosts
+        ),
         "slack": Entry(
             SlackSettings,
             "hadavin_sdk.approvals.slack_channel:build",
@@ -650,9 +670,56 @@ IN_PROCESS: frozenset[tuple[str, str]] = frozenset(
 NOT_PROD: frozenset[tuple[str, str]] = frozenset({("signer", "none"), ("anchor", "none")})
 
 
-# A settings field whose name says it points at a machine. A stand-in with one must say which hosts it reaches
-# (`hosts`), so the loopback-only rule in config.py can test them.
-_HOST_LIKE = re.compile(r"(host|url|address|endpoint)", re.IGNORECASE)
+# Stand-ins that are also allowed in a pilot, because they run inside the process and hold nothing: the missing
+# signer and the missing anchor (refused only in prod, by NOT_PROD). Every other stand-in must be in DEMO_ONLY, which
+# every live stage (pilot and prod) refuses. A stand-in listed only in NOT_PROD and not here fails the registry check.
+PILOT_STAND_INS: frozenset[tuple[str, str]] = frozenset({("signer", "none"), ("anchor", "none")})
+
+# Words in a settings field name that say it points at a machine. A long word is matched anywhere in the name; a short
+# or common one (`base`, `ip`, `site`, `remote`) only as a whole word between underscores or capital letters, so
+# `database_name` is not read as an address.
+_MACHINE_SUBSTRINGS = ("host", "url", "uri", "address", "endpoint", "dsn", "netloc")
+_MACHINE_WORDS = frozenset(
+    {
+        "addr", "base", "bind", "broker", "domain", "ip", "origin", "proxy", "remote", "server", "site",
+        "socket", "target",
+    }
+)  # fmt: skip
+_WORD_SPLIT = re.compile(r"_|(?<=[a-z0-9])(?=[A-Z])")
+_URL_TYPES: tuple[type, ...] = (
+    AnyUrl,
+    IPvAnyAddress,
+    ipaddress.IPv4Address,
+    ipaddress.IPv6Address,
+)
+
+
+def _annotation_types(annotation: Any) -> list[Any]:
+    """The annotation and every type inside it (`str | AnyUrl | None`, `Annotated[AnyUrl, ...]`, `list[AnyUrl]`)."""
+    out = [annotation]
+    for inner in get_args(annotation):
+        out += _annotation_types(inner)
+    return out
+
+
+def names_a_machine(model: type[KindSettings]) -> list[str]:
+    """The settings fields of a kind that can point at a machine: by the words in the field name, or by a field type
+    that holds a URL or an IP address. A stand-in with one must declare its hosts for real (not an empty list)."""
+    found = []
+    for name, field in model.model_fields.items():
+        if name == "kind":
+            continue
+        low = name.lower()
+        by_name = any(w in low for w in _MACHINE_SUBSTRINGS) or any(
+            w.lower() in _MACHINE_WORDS for w in _WORD_SPLIT.split(name)
+        )
+        by_type = any(
+            isinstance(t, type) and issubclass(t, _URL_TYPES)
+            for t in _annotation_types(field.annotation)
+        )
+        if by_name or by_type:
+            found.append(name)
+    return found
 
 
 def _unclassified(table: dict[str, dict[str, Entry]]) -> list[str]:
@@ -666,35 +733,50 @@ def _unclassified(table: dict[str, dict[str, Entry]]) -> list[str]:
 
 def registry_problems(
     table: dict[str, dict[str, Entry]],
-    demo_only: frozenset[tuple[str, str]] = DEMO_ONLY,
-    not_prod: frozenset[tuple[str, str]] = NOT_PROD,
+    demo_only: frozenset[tuple[str, str]] | None = None,
+    not_prod: frozenset[tuple[str, str]] | None = None,
+    pilot_stand_ins: frozenset[tuple[str, str]] | None = None,
 ) -> list[str]:
     """Plain sentences, one per broken rule; empty when the registry is sound. The rules: (1) every kind is exactly
-    one of "stand_in" or "real"; (2) a stand-in is also marked demo-only or not-for-prod, so a client profile
-    refuses it; (3) a stand-in whose settings can name a machine declares the hosts it reaches. Rule 1 also runs
-    when this module is imported (`assert_registry_sound`); all three run in the tests, on the real table and on
-    planted copies."""
+    one of "stand_in" or "real"; (2) a stand-in is listed in DEMO_ONLY (every live stage refuses it), or in NOT_PROD
+    and also in PILOT_STAND_INS (the named in-process exceptions, refused only in prod); (3) a stand-in states its
+    hosts (`hosts=`; `_no_hosts` is the deliberate "none"). The sets are read when the function runs, not when it is
+    defined, so a test that replaces one sees its own value. Classification (rule 1) is also checked when this
+    module is imported; all three rules are checked by `assert_registry_sound`, which `Backends` runs the first
+    time a config is built, so a kind added by a downstream user is checked at once."""
+    demo_only = DEMO_ONLY if demo_only is None else demo_only
+    not_prod = NOT_PROD if not_prod is None else not_prod
+    pilot_stand_ins = PILOT_STAND_INS if pilot_stand_ins is None else pilot_stand_ins
     out = _unclassified(table)
     for cap, kinds in table.items():
         for kind, entry in kinds.items():
             where = f"backend {cap} kind {kind}"
             if entry.role != "stand_in":
                 continue
-            if (cap, kind) not in demo_only and (cap, kind) not in not_prod:
-                out.append(f"{where}: a stand-in must be listed in DEMO_ONLY or NOT_PROD")
-            named = [n for n in entry.settings.model_fields if n != "kind" and _HOST_LIKE.search(n)]
-            if named and entry.hosts is None:
+            pair = (cap, kind)
+            if pair not in demo_only and not (pair in not_prod and pair in pilot_stand_ins):
                 out.append(
-                    f"{where}: a stand-in with a host setting ({', '.join(named)}) must declare hosts"
+                    f"{where}: a stand-in must be listed in DEMO_ONLY (or, as a named in-process exception, "
+                    "in NOT_PROD and PILOT_STAND_INS)"
+                )
+            if entry.hosts is None:
+                out.append(
+                    f"{where}: a stand-in must declare its hosts (hosts=; an empty list means none)"
                 )
     return out
 
 
-def assert_registry_sound(table: dict[str, dict[str, Entry]]) -> None:
-    """Raise RuntimeError naming every kind with no role (rule 1 of `registry_problems`). Rules 2 and 3 are checked by
-    the tests, so a mistake in DEMO_ONLY is reported by the test that pins that list and not by every import."""
+def assert_registry_sound(table: dict[str, dict[str, Entry]] | None = None) -> None:
+    """Raise RuntimeError naming every broken rule of `registry_problems` (default: the real TABLE)."""
+    if problems := registry_problems(TABLE if table is None else table):
+        raise RuntimeError("backend table: " + "; ".join(problems))
+
+
+def _assert_classified(table: dict[str, dict[str, Entry]]) -> None:
+    """Rule 1 only, at import: a kind with no role stops every import. The other rules wait for the first config
+    (`assert_registry_sound`): enforcing them here would make a half-edited table fail before any test could say why."""
     if problems := _unclassified(table):
         raise RuntimeError("backend table: " + "; ".join(problems))
 
 
-assert_registry_sound(TABLE)  # a new kind cannot be added without saying what it is
+_assert_classified(TABLE)  # a new kind cannot be added without saying what it is
