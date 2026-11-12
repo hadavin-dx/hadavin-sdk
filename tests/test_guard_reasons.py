@@ -56,6 +56,13 @@ def _const_returns(fn: ast.AST) -> list[ast.AST]:
 # --- one check per reason: each returns the list of problems (empty: the claim holds) ---------------------------------
 
 
+_GENERIC_NAMES: dict[tuple[str, str], set[str]] = {
+    ("app.py", "f'source {shown_name(name, cfg.sources)}"): {"cfg", "name"},
+    ("approvals/receiver.py", "_LOG.info('channel action"): {"reason"},
+    ("registry.py", "problems += [f'{where}: tool {shown_name(spec.name)}"): {"config", "i"},
+}
+
+
 def check_words() -> list[str]:
     bad = []
     # the limit reasons are three constants
@@ -113,9 +120,9 @@ def check_words() -> list[str]:
             bad.append("forbidden_host returns something other than a constant sentence")
     # every row only names variables of that family
     allowed = {
-        "blocked", "reply", "result", "now_d", "failed", "reason", "why", "disabled", "cfg", "name",
-        "sources", "tools_mod", "shown_name", "sorted", "a", "p", "ToolRefused",
-        "repeated", "step", "missing", "config", "enumerate", "i", "op", "problems", "read_ops", "spec", "where",
+        "blocked", "reply", "result", "now_d", "failed", "why", "disabled",
+        "sources", "tools_mod", "shown_name", "sorted", "ToolRefused",
+        "repeated", "step", "missing", "enumerate", "op", "problems", "read_ops", "spec", "where",
     }  # fmt: skip
     # a step name is a constant written in code (the first argument of each built-in `TickStep`)
     steps = next(
@@ -135,7 +142,12 @@ def check_words() -> list[str]:
     if "if method not in _METHODS:" not in ro:
         bad.append("read_operations no longer refuses a method outside _METHODS")
     for m, k in _rows("WORDS"):
-        extra = _names(k) - allowed - {"_LOG"}
+        # a generic name (`name`, `cfg`, `config`, `reason`, `i`) is allowed only in the one row that needs it
+        own = next(
+            (v for (mod, start), v in _GENERIC_NAMES.items() if m == mod and k.startswith(start)),
+            set(),
+        )
+        extra = _names(k) - allowed - own - {"_LOG"}
         if extra:
             bad.append(f"{m}: {k[:60]} uses names outside the family: {sorted(extra)}")
     return bad
@@ -1405,13 +1417,41 @@ def check_pkgerr() -> list[str]:
                 bad.append(
                     f"{m}: {k[:50]}: caught {sorted(names - own) or 'anything'}, not only classes of the package"
                 )
-    # a package error class never builds its text from the arguments: no `__str__` that reads a typed value
-    for p in SRC.rglob("*.py"):
-        for c in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
-            if isinstance(c, ast.ClassDef) and c.name.endswith(("Error", "Unavailable")):
-                for n in c.body:
-                    if isinstance(n, ast.FunctionDef) and n.name == "__str__":
-                        bad.append(f"{p.name}: {c.name} has its own __str__")
+    # a package error class never builds its text from the arguments: no `__str__` that reads a typed value. Every class
+    # that is an exception by inheritance is checked (ToolRefused, StaleState, NotFound, ProviderExhausted and
+    # EgressRefused are not called "...Error"); a `__str__` that returns only a written text is allowed.
+    classes = [
+        (p.name, c)
+        for p in SRC.rglob("*.py")
+        for c in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
+        if isinstance(c, ast.ClassDef)
+    ]
+    exceptions = {n for n in ("Exception", "BaseException")}
+    grew = True
+    while grew:
+        grew = False
+        for _, c in classes:
+            bases = {ast.unparse(b).split(".")[-1] for b in c.bases}
+            is_exc = bool(bases & exceptions) or any(
+                b.endswith(("Error", "Exception")) for b in bases
+            )
+            if is_exc and c.name not in exceptions:
+                exceptions.add(c.name)
+                grew = True
+    if (
+        not {"ToolRefused", "StaleState", "NotFound", "ProviderExhausted", "EgressRefused"}
+        <= exceptions
+    ):
+        bad.append("the scan of `__str__` no longer sees the error classes it must see")
+    for name, c in classes:
+        if c.name in exceptions:
+            for n in c.body:
+                if isinstance(n, ast.FunctionDef) and n.name == "__str__":
+                    rets = [r for r in ast.walk(n) if isinstance(r, ast.Return)]
+                    if not rets or not all(isinstance(r.value, ast.Constant) for r in rets):
+                        bad.append(
+                            f"{name}: {c.name} has its own __str__ that is not a written text"
+                        )
     return bad
 
 

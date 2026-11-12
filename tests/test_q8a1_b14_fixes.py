@@ -125,7 +125,9 @@ def test_a_sentence_in_a_provider_error_detail_is_dropped_by_describe():
     sentence = (
         "your key " + _marker("detail") + " ran out of quota"
     )  # 80 characters or fewer, with spaces
-    assert describe(Boom("q"), lambda e: sentence) == "Boom 429", "a sentence in the provider detail is shown"
+    assert describe(Boom("q"), lambda e: sentence) == "Boom 429", (
+        "a sentence in the provider detail is shown"
+    )
     # Round 15: at most 32 characters, and never a run of 32 letters or digits (the shape of a key)
     assert describe(Boom("q"), lambda e: "x" * 33) == "Boom 429"
     assert describe(Boom("q"), lambda e: "x" * 32) == "Boom 429"
@@ -446,7 +448,9 @@ def test_tick_message_withholds_the_text_of_an_error_of_a_library_whatever_the_l
         assert marker not in tick._message(sub(marker)), (
             "a hadavin class with a library base shows the text"
         )
-    os_own = type("OwnFileError", (OSError,), {"__module__": "hadavin_sdk.fake_os"})  # an OSError can quote a path
+    os_own = type(
+        "OwnFileError", (OSError,), {"__module__": "hadavin_sdk.fake_os"}
+    )  # an OSError can quote a path
     assert marker not in tick._message(os_own(marker)), "an OSError of the package shows its text"
     own = tick.ConfigError(marker)
     assert tick._message(own) == marker  # the package's own sentence is shown (cut and redacted)
@@ -465,5 +469,7 @@ def test_each_logs_the_class_of_a_lost_race_at_debug_and_never_its_text(caplog):
     with caplog.at_level(logging.DEBUG, logger=tick._LOG.name):
         tick._each([1], fn, "step label")
     seen = [r for r in caplog.records if "skipped" in r.getMessage()]
-    assert len(seen) == 1 and "StaleState" in seen[0].getMessage(), "the lost race is logged without its class"
+    assert len(seen) == 1 and "StaleState" in seen[0].getMessage(), (
+        "the lost race is logged without its class"
+    )
     assert marker not in caplog.text, "the lost race is logged with its text"

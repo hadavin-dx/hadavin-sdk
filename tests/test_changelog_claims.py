@@ -16,6 +16,8 @@ def test_every_test_name_in_the_changelog_is_defined_in_tests():
 
 
 def test_every_path_under_tests_src_or_tools_in_the_changelog_exists():
-    paths = set(re.findall(r"`((?:tests|src|tools)/[A-Za-z0-9_./-]+\.(?:py|md|yaml|sql|toml))`", TEXT))
+    paths = set(
+        re.findall(r"`((?:tests|src|tools)/[A-Za-z0-9_./-]+\.(?:py|md|yaml|sql|toml))`", TEXT)
+    )
     missing = sorted(p for p in paths if not (ROOT / p).exists())
     assert paths and missing == [], f"the CHANGELOG names files that do not exist: {missing}"

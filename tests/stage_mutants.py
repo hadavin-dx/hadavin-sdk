@@ -1010,6 +1010,8 @@ M = [
         '        and not isinstance(exc, OSError)\n', '', 'tests/test_q8a1_b14_fixes.py', 'test_tick_message_withholds_the_text_of_an_error_of_a_library_whatever_the_library', 'an OSError of the package shows its text', '[azure.core.exceptions]'),
     other_mutant('Z142 round 15: a class with a library base shows its text (tick.py _own_error)', 'src/hadavin_sdk/runtime/tick.py',
         'and all(\n            cls.__module__ == "builtins" or cls.__module__.split(".")[0] == "hadavin_sdk"\n            for cls in type(exc).__mro__\n        )', 'and True', 'tests/test_q8a1_b14_fixes.py', 'test_tick_message_withholds_the_text_of_an_error_of_a_library_whatever_the_library', 'a hadavin class with a library base shows the text', '[azure.core.exceptions]'),
+    other_mutant('Z143 round 15: ToolRefused gets a __str__ that reads its argument (tools.py), seen by the __str__ scan', 'src/hadavin_sdk/tools.py',
+        '    too_large = False  # the reply was over an explicit cap: asking for less may work\n', '    too_large = False  # the reply was over an explicit cap: asking for less may work\n\n    def __str__(self) -> str:\n        return str(self.args[0])\n', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'that is not a written text', '[PKGERR]'),
 ]  # fmt: skip
 
 

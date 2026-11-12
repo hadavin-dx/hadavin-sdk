@@ -47,7 +47,10 @@ def test_the_tick_message_and_the_detector_log_are_redacted_before_the_cut(caplo
 
     with caplog.at_level(logging.WARNING):
         v = injection.injection_check(Boom(), "x", "t")
-    assert v.flagged and "eyJhbGci" not in caplog.text
+    # The detector's text is never logged now (batch 14): the class of the detector and of the error are, so the test
+    # proves both that the verdict is a flag and that the line names the classes and not the text
+    assert v.flagged and "Boom" in caplog.text and "ValueError" in caplog.text, caplog.text
+    assert "eyJhbGci" not in caplog.text
 
 
 def test_the_judge_sends_redacted_text_even_when_the_caller_did_not():
