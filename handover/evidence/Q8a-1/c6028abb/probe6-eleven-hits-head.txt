@@ -1,0 +1,33 @@
+module: /home/user/build/EV-Q8a1b11-c6028abb/wt/src/hadavin_sdk/__init__.py
+1 gcp:39               project_id=marker, client error quotes path                          raised ConfigError   msg/exc/tb=False log=False returned=False
+1 gcp:39               project_id=marker, NotFound quotes path                              raised ConfigError   msg/exc/tb=False log=False returned=False
+2 anthropic:32         vertex region=marker (global/us/eu/other)                            raised ConfigError   msg/exc/tb=False log=False returned=False
+2 anthropic:32         vertex region=global, project=marker                                 raised ConfigError   msg/exc/tb=False log=False returned=False
+2 anthropic:32         vertex region=us, project=marker                                     raised ConfigError   msg/exc/tb=False log=False returned=False
+2 anthropic:32         vertex region=eu, project=marker                                     raised ConfigError   msg/exc/tb=False log=False returned=False
+3 anthropic:33         foundry resource=marker                                              raised ConfigError   msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=raise                                 raised SourceError   msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs ns=marker fetch=raise                                     raised SourceError   msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=json                                  raised SourceError   msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs ns=marker fetch=json                                      returned             msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=items_str                             raised SourceError   msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs ns=marker fetch=items_str                                 returned             msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=items_none_meta                       returned             msg/exc/tb=False log=False returned=True
+5 kubernetes:251       query_logs ns=marker fetch=items_none_meta                           returned             msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=error_status                          returned             msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs ns=marker fetch=error_status                              returned             msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=ok_empty                              returned             msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs ns=marker fetch=ok_empty                                  returned             msg/exc/tb=False log=False returned=False
+4 kubernetes:237       recent_changes ns=marker fetch=ok_one                                returned             msg/exc/tb=False log=False returned=True
+5 kubernetes:251       query_logs ns=marker fetch=ok_one                                    returned             msg/exc/tb=False log=False returned=False
+5 kubernetes:251       query_logs pod log lines                                             returned             msg/exc/tb=False log=False returned=False
+6 migration_numbers:251 hand_recipe schema=plain marker (underscores)                        returned             msg/exc/tb=False log=False returned=True
+6 migration_numbers:251 hand_recipe schema=marker with dash                                  raised ValueError    msg/exc/tb=False log=False returned=False
+6 migration_numbers:251 order_problems schema=plain marker                                   returned             msg/exc/tb=False log=False returned=True
+6 migration_numbers:251 order_problems schema=marker with dash                               returned             msg/exc/tb=False log=False returned=False
+7+8 migrate.py:212     effective_problems role=schema=marker (CREATE granted, owns table)   returned             msg/exc/tb=False log=False returned=True
+7+8 migrate.py:212     effective_problems role missing                                      returned             msg/exc/tb=False log=False returned=True
+9+10 table:367,379     hosts() vertex region=marker                                         returned             msg/exc/tb=False log=False returned=True
+11a table:380          hosts() foundry resource=marker                                      returned             msg/exc/tb=False log=False returned=True
+11b table:394          hosts() s3 bucket=marker                                             returned             msg/exc/tb=False log=False returned=True
+11b table:394          hosts() s3 region=marker                                             returned             msg/exc/tb=False log=False returned=True
