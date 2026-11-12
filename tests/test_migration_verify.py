@@ -1284,17 +1284,26 @@ def _block(text: str, name: str) -> list[str]:
     return [ln.strip() for ln in text[start + len(name) + 2 : stop].splitlines() if ln.strip()]
 
 
+def _forms_missing_from(forms: list[str], source: str) -> list[str]:
+    """The forms (a sentence with `{placeholders}`) that the code does not write. A form is written when one f-string of
+    the source holds every piece of it, in order, with a `{...}` where the form has a placeholder, and the pieces are
+    taken with their spaces ("has " is not "hash"). Round 3 of 3d, Issue 1: no piece is skipped for being short."""
+    missing = []
+    for form in forms:
+        pieces = re.split(r"\{[a-z_ ]+\}", form)
+        pattern = r"\{[^{}]*\}".join(re.escape(piece) for piece in pieces)
+        # a form that ends in a placeholder ends the pattern with `\{...}`; one that starts with a piece starts with it
+        if not re.search(pattern, source):
+            missing.append(form)
+    return missing
+
+
 def test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says():
     root = Path(__file__).resolve().parents[1]
     forms = _block((root / "CHANGELOG.md").read_text(encoding="utf-8"), "message words")
     assert forms, "the block of message words is empty"
     source = (root / "src/hadavin_sdk/store/migration_verify.py").read_text(encoding="utf-8")
-    for form in forms:
-        for piece in re.split(r"\{[a-z_ ]+\}", form):
-            piece = piece.strip()
-            assert len(piece) < 3 or piece in source, (
-                f"{piece!r} is in the CHANGELOG, not in the code"
-            )
+    assert _forms_missing_from(forms, source) == [], "a form is in the CHANGELOG, not in the code"
     plain = v.Problem("right", "app", "plans", "", "portal_role", "DELETE", "mig", word="table",
                       fix="REVOKE DELETE ON TABLE app.plans FROM portal_role;")  # fmt: skip
     via = v.Problem("right", "app", "plans", "", "portal_role", "SELECT", "mig", word="table", via="grp",
@@ -1306,9 +1315,22 @@ def test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_l
 
 
 def test_a_sentence_the_changelog_quotes_but_the_code_does_not_write_is_found():
-    """The checker above is not blind: a planted block with a made-up form is not found in the code."""
+    """The checker is not blind: it is run on planted blocks and returns the stale form. Killed by: V84 (the code writes
+    "holds" where the CHANGELOG says "has")."""
     source = (
         Path(__file__).resolve().parents[1] / "src/hadavin_sdk/store/migration_verify.py"
     ).read_text(encoding="utf-8")
-    planted = "the portal role has privileges outside the portal grant map"
-    assert planted not in source
+    assert _forms_missing_from(["can see it through the role {via}, {right}"], source) == [
+        "can see it through the role {via}, {right}"
+    ]
+    assert _forms_missing_from(["the portal role has privileges outside the map"], source) != []
+    # the short form `has {right}` is checked as a whole: the piece "has " followed by a placeholder
+    assert _forms_missing_from(["has {right}"], source) == []
+    assert _forms_missing_from(["holds {right}"], source) == ["holds {right}"]
+    # a code that says "holds" where the block says "has" is found (the same source text with the word changed)
+    stale = (
+        source.replace('f"has {self.right}"', 'f"holds {self.right}"')
+        .replace('f"has {self.right};', 'f"holds {self.right};')
+        .replace('f"has {self.right} on', 'f"holds {self.right} on')
+    )
+    assert _forms_missing_from(["has {right}"], stale) != []

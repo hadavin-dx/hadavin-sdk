@@ -245,12 +245,24 @@ def test_a_grant_option_from_two_grantors_is_removed_by_the_printed_statements(e
     assert len([p for p in problems if p.kind == "other_grantee" and p.role == n.boss]) >= 1
 
 
+def _recorded_grantor(db, group: str, member: str) -> str:
+    """The grantor the server recorded for a membership (Issue 3 of round 3 on 3d): read from `pg_auth_members`, not
+    assumed to be the login that ran the GRANT (that is the bootstrap superuser only on a cluster set up that way)."""
+    row = db.execute(
+        "SELECT pg_catalog.pg_get_userbyid(m.grantor) FROM pg_catalog.pg_auth_members m "
+        "WHERE m.roleid = %s::pg_catalog.regrole AND m.member = %s::pg_catalog.regrole",
+        (group, member),
+    ).fetchone()
+    assert row is not None, f"no membership of {member} in {group} is recorded"
+    return row[0]
+
+
 def test_a_named_role_in_pg_monitor_prints_exactly_one_statement(env):
     n = env.n
     x(env, "GRANT pg_monitor TO {}", n.rt)
     problems = run_verify(env)
     assert {p.kind for p in problems} == {"built_in_role"} and len(problems) == 4
-    grantor = env.db.execute("SELECT current_user").fetchone()[0]
+    grantor = _recorded_grantor(env.db, "pg_monitor", n.rt)
     assert v.statements_for(problems) == [
         f'REVOKE "pg_monitor" FROM "{n.rt}" GRANTED BY "{grantor}";'
     ]
@@ -373,7 +385,7 @@ def _ledger_of(dsn) -> list[str]:
         return [r[0] for r in db.execute("SELECT version FROM schema_migrations ORDER BY 1")]
 
 
-def _cli_migrate(cfg_dir, monkeypatch, dsn):
+def _cli_migrate(cfg_dir, monkeypatch, dsn, *extra):
     """Config with the postgres store, the migration DSN in the environment, then `cli.main(["migrate"])`."""
     import yaml
 
@@ -382,7 +394,7 @@ def _cli_migrate(cfg_dir, monkeypatch, dsn):
     data["backends"]["store"] = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}
     path.write_text(yaml.safe_dump(data), encoding="utf-8")
     monkeypatch.setenv("HADAVIN_MIGRATE_DSN", dsn)
-    return cli.main(["--config", str(cfg_dir), "migrate"])
+    return cli.main(["--config", str(cfg_dir), "migrate", *extra])
 
 
 def _plant(monkeypatch, tmp_path, name: str, text: str) -> None:
@@ -453,6 +465,125 @@ def test_a_connection_lost_while_the_check_runs_before_the_commit_gives_exit_2(
     assert mig.migrate(mrun.dsn) == REAL_FILES
 
 
+# Round 3 of 3d, Issue 2. Every step before the commit, not only the two `verify` calls, ends in exit 2 when the driver fails.
+_STEPS_BEFORE_THE_COMMIT = [
+    "_take_the_lock",
+    "_refuse_privileged_role",
+    "_refuse_foreign_owned",
+    "_read_back",
+    "_check_read_back",
+    "_recheck_roles",
+    "_apply_grants",
+    "_revoke_default_execute",
+]
+
+
+@pytest.mark.parametrize("target", _STEPS_BEFORE_THE_COMMIT)
+def test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_nothing(
+    target, mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 2 of round 3 on 3d. A second session ends the run's backend just before one named step of `migrate` reads or
+    writes (the lock, the privileged-role check, the owner check, the read-back, the read-back after a file, the role
+    re-check, the grants, the default-EXECUTE revoke). Each gives exit 2 "kept nothing", never exit 3; the ledger is
+    empty; the same run on a healthy connection then applies every file. Killed by: V80 and V81."""
+    real = getattr(mig, target)
+    seen = {"n": 0}
+
+    def ends_the_session_first(db, *a, **kw):
+        seen["n"] += 1
+        if seen["n"] == 1:
+            with psycopg.connect(DSN, autocommit=True) as adm:
+                adm.execute("SELECT pg_terminate_backend(%s)", (db.info.backend_pid,))
+            time.sleep(0.2)
+        return real(db, *a, **kw)
+
+    runtime = "hadavin_test_rt_" + uuid.uuid4().hex[:8]
+    from tests import test_migration_postgres as tp
+
+    tp._create_roles(runtime)
+    try:
+        monkeypatch.setattr(mig, target, ends_the_session_first)
+        assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn, "--runtime-role", runtime) == 2
+        _out, err = capsys.readouterr()
+        assert seen["n"] >= 1, f"{target} was never called: the cell tests nothing"
+        assert err.startswith("refused: migrate stopped and kept nothing"), err
+        assert "Run migrate again" in err and "failed:" not in err
+        assert _ledger_of(mrun.dsn) == []
+        monkeypatch.setattr(mig, target, real)
+        assert mig.migrate(mrun.dsn, runtime_role=runtime) == REAL_FILES
+    finally:
+        tp._drop_roles(runtime)
+
+
+def test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 2: a connection that ends while a file runs (the file's function ends its own backend) is not the file's own
+    error: it is refused with exit 2, nothing kept. Killed by: V81 (every error while a file runs is left raw)."""
+    with psycopg.connect(
+        DSN, autocommit=True
+    ) as adm:  # the bodies hold `;`, which the text rules read as a statement end
+        helper.ensure_plain_role(adm)
+        for name, body in (
+            (
+                "hadavin_test_bye",
+                "PERFORM pg_terminate_backend(pg_backend_pid()); PERFORM pg_sleep(1); RETURN 1;",
+            ),
+        ):
+            adm.execute(
+                sql.SQL("CREATE FUNCTION {}.{}() RETURNS int LANGUAGE plpgsql AS {}").format(
+                    sql.Identifier(mrun.schema),
+                    sql.Identifier(name),
+                    sql.Literal(f"BEGIN {body} END"),
+                )
+            )
+    _plant(monkeypatch, mrun.tmp, "0006_bye.sql", "SELECT hadavin_test_bye();\n")
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    _out, err = capsys.readouterr()
+    assert err.startswith("refused: migrate stopped and kept nothing"), err
+    assert "applying 0006_bye.sql" in err and "57P01" in err, err
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_files_own_error_is_raised_as_it_is(mrun, monkeypatch):
+    """The error of the text of a file keeps its own words (here a division by zero) and is not turned into the "database
+    returned an error" refusal; nothing is kept. Killed by: V81 and V82."""
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+        adm.execute(
+            sql.SQL(
+                "CREATE FUNCTION {}.hadavin_test_zero() RETURNS int LANGUAGE plpgsql AS 'BEGIN RETURN 1/0; END'"
+            ).format(sql.Identifier(mrun.schema))
+        )
+    _plant(monkeypatch, mrun.tmp, "0006_zero.sql", "SELECT hadavin_test_zero();\n")
+    try:
+        mig.migrate(mrun.dsn)
+        raised = None
+    except (ConfigError, psycopg.Error) as e:  # a wrong type is a failed assert below
+        raised = e
+    assert isinstance(raised, pge.DivisionByZero), (
+        f"raised {type(raised).__name__}, not the file's own error"
+    )
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_bug_before_the_commit_stays_loud_and_a_files_own_error_stays_its_own(mrun, monkeypatch):
+    """A `RuntimeError` is not a driver error: it is raised as it is. A syntax error of a file is the file's own error and
+    is not turned into the "database returned an error" refusal (its text is what the person needs). Killed by: V81."""
+
+    def a_bug(db, *a, **kw):
+        raise RuntimeError("a bug in the runner")
+
+    monkeypatch.setattr(mig, "_refuse_foreign_owned", a_bug)
+    with pytest.raises(RuntimeError, match="a bug in the runner"):
+        mig.migrate(mrun.dsn)
+    monkeypatch.undo()
+    assert mig._is_a_files_own_error(pge.SyntaxError("x")) is True
+    assert mig._is_a_files_own_error(pge.AdminShutdown("x")) is False
+    assert mig._is_a_files_own_error(pge.QueryCanceled("x")) is False
+    assert mig._is_a_files_own_error(psycopg.OperationalError("lost")) is False
+
+
 def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_exit_2(
     mrun, cfg_dir, monkeypatch, capsys
 ):
@@ -491,6 +622,49 @@ def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_ex
     assert err.startswith("refused: migrate stopped and kept nothing"), err
     assert "the check of the rights could not run" in err
     assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_role_saved_transaction_timeout_gives_exit_2_wherever_it_strikes(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 2 of round 3 on 3d, the case that `SET LOCAL` before the first `verify` does not cover: the value is saved
+    for the migration role (`ALTER ROLE ... SET transaction_timeout`), so it counts from BEGIN and can end the session at
+    the lock, the version read, a refusal check, a file's read-back or the grants. On PostgreSQL 17 and later the run ends
+    with exit 2 and keeps nothing, whichever step it was. THIS BRANCH IS UNRUN ON ANY SERVER HERE (only PostgreSQL 16 is
+    installed): on 16 the setting does not exist, the test pins that and runs the plain `migrate`; CI runs it on 17.
+    Killed by: V80."""
+    if mrun_server_version() < 170000:
+        with psycopg.connect(DSN, autocommit=True) as adm:
+            helper.ensure_plain_role(adm)
+            with pytest.raises(pge.UndefinedObject, match="transaction_timeout"):
+                adm.execute(
+                    sql.SQL("ALTER ROLE {} SET transaction_timeout = '1ms'").format(
+                        sql.Identifier(helper.PLAIN_ROLE)
+                    )
+                )
+        assert mig.migrate(mrun.dsn) == REAL_FILES
+        return
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+        adm.execute(
+            sql.SQL("ALTER ROLE {} SET transaction_timeout = '1ms'").format(
+                sql.Identifier(helper.PLAIN_ROLE)
+            )
+        )
+    try:
+        assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+        _out, err = capsys.readouterr()
+        assert err.startswith("refused: migrate stopped and kept nothing"), err
+        assert "failed:" not in err
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as adm:
+            adm.execute(
+                sql.SQL("ALTER ROLE {} RESET transaction_timeout").format(
+                    sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
+    assert _ledger_of(mrun.dsn) == []
+    assert mig.migrate(mrun.dsn) == REAL_FILES
 
 
 def mrun_server_version() -> int:
@@ -568,6 +742,9 @@ def test_verify_gets_through_a_one_millisecond_statement_timeout_that_cancels_it
     Killed by: V48 (the limits are not set before the reads); the sensitivity line fails on a server where 1 ms is not
     enough to cancel that query (never silently)."""
     n = env.n
+    assert env.db.autocommit, (
+        "the 1 ms setting is a SESSION setting and the fixture's session must be autocommit"
+    )
     env.db.execute("SET statement_timeout = '1ms'")
     try:
         params = {"named": [n.rt, n.po, n.pu], "family": [n.mig], "schema": "app"}
@@ -692,6 +869,10 @@ def _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, how: str):
     stop = threading.Event()
     killed, asked = [], []
     real = mig._commit_outcome
+    # Issue 6 of round 3 on 3d: only the session of THIS run is ended, found by its own application name, so another
+    # session that sleeps on a shared server is never touched.
+    app = "hadavin_test_sleep_" + uuid.uuid4().hex[:12]
+    run_dsn = make_conninfo(mrun.dsn, application_name=app)
 
     def recording(exc, db):
         answer = real(exc, db)
@@ -705,7 +886,9 @@ def _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, how: str):
             deadline = time.monotonic() + 10
             while time.monotonic() < deadline and not stop.is_set():
                 sleeping = adm.execute(
-                    "SELECT pid FROM pg_stat_activity WHERE wait_event = 'PgSleep' AND pid <> pg_backend_pid()"
+                    "SELECT pid FROM pg_stat_activity WHERE wait_event = 'PgSleep' AND pid <> pg_backend_pid() "
+                    "AND application_name = %s",
+                    (app,),
                 ).fetchone()
                 if sleeping:
                     adm.execute(
@@ -718,7 +901,7 @@ def _end_the_sleeping_session(mrun, cfg_dir, monkeypatch, how: str):
     t = threading.Thread(target=killer)
     t.start()
     try:
-        rc = _cli_migrate(cfg_dir, monkeypatch, mrun.dsn)
+        rc = _cli_migrate(cfg_dir, monkeypatch, run_dsn)
     finally:
         stop.set()
         t.join(15)
@@ -872,8 +1055,8 @@ def test_a_named_role_in_pg_monitor_is_refused_at_step_2_with_one_statement(mrun
     """D-M4: one membership line and one statement, `REVOKE "pg_monitor" FROM "<role>" GRANTED BY "<grantor>";`; no file ran."""
     n = three_roles
     with psycopg.connect(DSN, autocommit=True) as adm:
-        grantor = adm.execute("SELECT current_user").fetchone()[0]
         adm.execute(sql.SQL("GRANT pg_monitor TO {}").format(sql.Identifier(n.rt)))
+        grantor = _recorded_grantor(adm, "pg_monitor", n.rt)
     with pytest.raises(ConfigError) as e:
         mig.migrate(mrun.dsn, runtime_role=n.rt)
     text = str(e.value)
@@ -1176,6 +1359,33 @@ def test_step_4_takes_everyones_execute_off_functions_with_awkward_names(mrun, m
     names = [r[0] for r in rows]
     assert sorted(names) == sorted(n.replace('""', '"') for n in _AWKWARD), names
     assert [r[1] for r in rows] == [0] * len(_AWKWARD), rows
+    assert mig.migrate(mrun.dsn) == []
+
+
+def test_step_4_takes_everyones_execute_off_a_function_whose_argument_has_an_odd_name_and_type(
+    mrun, monkeypatch
+):
+    """Issue 5 of round 3 on 3d: the identity-argument text that step 4 passes on is the server's own, quoted by the
+    server, and is not checked by `_plain`; a function `"f"("Odd Arg" "char")` (an argument name with a capital and a
+    space, and a type whose name the server writes in double quotes: `"char"`) is revoked like any other. Killed by: V83 (the arguments are left out of the statement,
+    so the REVOKE names no function and the run fails)."""
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+    body = 'CREATE OR REPLACE FUNCTION "f"("Odd Arg" "char") RETURNS int LANGUAGE sql AS $$ SELECT 1 $$;\n'
+    _plant(monkeypatch, mrun.tmp, "0006_odd_argument.sql", body)
+    try:
+        applied = mig.migrate(mrun.dsn)
+    except (ConfigError, psycopg.Error) as e:  # a wrong type is a failed assert below
+        applied = f"{type(e).__name__}: {e}"
+    assert applied == REAL_FILES + ["0006_odd_argument"]
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        everyone = adm.execute(
+            "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace, "
+            "aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+            "WHERE n.nspname = %s AND p.proname = 'f' AND a.grantee = 0 AND a.privilege_type = 'EXECUTE'",
+            (mrun.schema,),
+        ).fetchone()[0]
+    assert everyone == 0
     assert mig.migrate(mrun.dsn) == []
 
 

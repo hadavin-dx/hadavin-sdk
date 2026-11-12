@@ -13,12 +13,13 @@ named role or any role it is a member of, directly or through others. *Everyone*
 every role has. The *family* is the migration role, the login when it differs, and every role either belongs to.
 
 An object whose access list is EMPTY (a file revoked every right, from its owner too) has no row in `aclexplode`. Q2 keeps
-such an object as one row with no right (`privilege_type` is null) so that its owner (rule O8) and its SECURITY DEFINER
-flag (rule O4) are still judged; `_judge` never reads that row as a right, and never as a right for everyone. (The probe on
+such an object as one row with no right (`privilege_type` is null) so that its owner (rule O8, in the schema of the run) and
+its SECURITY DEFINER flag (rule O4) are still judged; `_judge` never reads that row as a right, and never as a right for everyone. (The probe on
 the code before this change showed that such an object was invisible to O4 and O8.)
 
 What `_judge` checks for a SECURITY DEFINER function: that its schema, name and argument types are on the reviewed list
-(O4), who owns it (O8: a role of the family), and who may EXECUTE it (a named role: always a right; everyone: refused
+(O4), who owns it (O8: a managed object, and the schema of the run, must be owned by a role of the family; judged in the
+schema of the run only), and who may EXECUTE it (a named role: always a right; everyone: refused
 unless reviewed). It does not read the function's body or its `search_path` setting.
 
 A login that differs from the migration role: `_judge` skips only a grantee that is the migration role itself. When the

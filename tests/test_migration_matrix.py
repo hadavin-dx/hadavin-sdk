@@ -723,14 +723,66 @@ O_EFFECTS += [
     ),  # E35
     ("O18-select-third-tool-calls", "GRANT SELECT ON tool_calls TO {other}", False),  # E37
 ]
+# Batch 3e: effects of objects OUTSIDE the map (a table, a sequence, a view, a function, a procedure, a type that the package
+# does not make), made and given away inside one statement text, so that every carrier can bring them. The carriers that
+# hide the text from the text rules (C2, C3 as a function, C4, C6, C7) make the object during the run.
+O_EFFECTS += [
+    (
+        "O19-select-on-a-table-outside-the-map-named",
+        "CREATE TABLE zz_t (a int); GRANT SELECT ON zz_t TO {rt}",
+        False,
+    ),  # E01
+    (
+        "O20-select-on-a-table-outside-the-map-everyone",
+        "CREATE TABLE zz_t (a int); GRANT SELECT ON zz_t TO PUBLIC",
+        False,
+    ),  # E01
+    (
+        "O21-usage-on-a-sequence-outside-the-map-named",
+        "CREATE SEQUENCE zz_q; GRANT USAGE ON SEQUENCE zz_q TO {rt}",
+        False,
+    ),  # E06
+    (
+        "O22-select-on-a-view-outside-the-map-everyone",
+        "CREATE VIEW zz_v AS SELECT 1 AS a; GRANT SELECT ON zz_v TO PUBLIC",
+        False,
+    ),  # E08
+    (
+        "O23-execute-on-a-function-named",
+        "CREATE FUNCTION zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'; GRANT EXECUTE ON FUNCTION zz_f() TO {rt}",
+        False,
+    ),  # E10
+    (
+        "O24-function-of-the-family-left-callable-by-everyone",
+        "CREATE FUNCTION hadavin_zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+        False,
+    ),  # E11
+    (
+        "O25-security-definer-function-in-the-schema-of-the-run",
+        "CREATE FUNCTION hadavin_zz_d() RETURNS int LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'",
+        False,
+    ),  # E12
+    (
+        "O26-execute-on-a-procedure-named",
+        "CREATE PROCEDURE zz_p() LANGUAGE sql AS 'SELECT 1'; GRANT EXECUTE ON PROCEDURE zz_p() TO {rt}",
+        False,
+    ),  # E14
+    (
+        "O27-usage-on-a-type-named",
+        "CREATE TYPE zz_ty AS (a int); GRANT USAGE ON TYPE zz_ty TO {rt}",
+        False,
+    ),  # E20
+]
 # Carriers whose file text is built from the effect (C1, C2) or whose effect runs inside the run as a trigger, a deferred
 # trigger or a rule on the ledger (C4, C6, C7), or is done by hand before the run (C12).
 O_CARRIERS = [
     "C1-plain-file",
     "C2-dynamic-sql",
+    "C3-sql-function",
     "C4-ledger-trigger",
     "C6-deferred-ledger-trigger",
     "C7-ledger-rule",
+    "C11-temporary-table-named-like-a-catalog-table",
     "C12-by-hand-then-migrate",
 ]
 O_VARIANTS = ["no-roles", "with-roles"]
@@ -741,48 +793,79 @@ def _cells() -> list[tuple[str, str, str]]:
     return [(e[0], c, v) for e in O_EFFECTS for c in O_CARRIERS for v in O_VARIANTS]
 
 
-# What the ticket plans (7.3, 7.4) and this matrix does not build yet, written as tables so that the count test prints them
-# and nobody reads the matrix as the full one. Each line says why.
-O_NOT_BUILT_EFFECTS = {
-    "E01 E06 E08 E09 E12 E14": "need a relation, sequence or function outside the map; `check_grants` refuses a file that makes one",
-    "E10 E11 E13 E20 E21": "functions, types and languages outside the map or in another schema (carrier C10 and a family function)",
-    "E23 E24 E25": "foreign servers, tablespaces and parameters: server-wide, built by the superuser under C12 with the exclusive lock",
-    "E27": "a control, not a promise",
-    "E29 E30 E39": "memberships through a group with rights and by a CREATEROLE role: C12 only, not built",
-    "E38": "a right granted by a grant-option holder: C12 only, not built",
+# What the ticket plans (7.3, 7.4) and this matrix does not build, written as tables so that the count test prints them and
+# nobody reads the matrix as the full one. Each line says why. (Batch 3e built every effect but E27 and the carriers C3 and
+# C11; the carriers below are the ones still missing, with the reason a cell cannot or has not been built.)
+# Table 1: effects that a plain migration role cannot make (the server refuses it, ticket fact 20), so they exist under the
+# carrier C12 only, in the table of pre-existing states `X_EFFECTS` (36 rows x 2 variants).
+O_SERVER_REFUSED_EFFECTS = {
+    "E09 E13 E22 E23 E24 E25": "a foreign table or server, a function of another owner, a large object, a tablespace, a parameter: the plain role cannot grant on them",
+    "E17 E18 E19 E21 E28-schema": "CREATE on another schema or the database, TEMPORARY on the database, USAGE on a language, a schema owned by another role: the plain role holds no right to give them",
+    "E29 E30 E31 E32 E33 E36 E38 E39": "memberships, role flags, a default right set by another role, a right granted by another role: CREATEROLE or another login is needed",
 }
+# Table 2: pairs that are empty by logic. A carrier that runs inside the run (C1 to C4, C6, C7, C11) acts as the plain
+# migration role, so every effect of table 1 is empty under it.
+O_EMPTY_BY_LOGIC = "every effect of table 1 x every carrier but C12 (a plain migration role cannot do it, so no file, trigger, rule or function can)"
+# Table 3: not promised, or a control rather than an effect.
+O_NOT_PROMISED = {
+    "E27": "a table owned by a group with a second member: a control, not a promise (control K7)",
+    "X01t X11 X12": "a right of a third role on a table outside the map; a function of another application left callable by everyone; a SECURITY DEFINER function of another application: pinned as returning normally in both variants",
+}
+# The carriers still missing and the controls still missing, each with the reason; the lead decides the next round.
 O_NOT_BUILT_CARRIERS = {
-    "C3": "a string-bodied SQL function cannot run a GRANT",
-    "C5 C6b": "a trigger on a grant-map table fired by a later file; a trigger that defers itself again",
-    "C8 C9 C10 C11 C13": "extension member, role switch, another schema, temporary table named like a catalog table, move and recreate",
+    "C5": "a trigger on a grant-map table, fired by a later file: not built in batch 3e (time box)",
+    "C6b": "a deferred trigger that defers itself again (ticket outcome (ii)): not built in batch 3e (time box)",
+    "C8": "an object made a member of an extension the migration role owns: needs a trusted extension and CREATE on the database for a plain role (ticket fact 14)",
+    "C9": "a login that differs from the role (`options=-c role=M`): needs a second login; not built in batch 3e (time box)",
+    "C10": "the object lives in another schema the migration role owns: needs the fixture's second schema with grants; not built in batch 3e (time box)",
+    "C13": "move a map table to another schema and recreate it: not built in batch 3e (time box)",
 }
-O_NOT_BUILT_CONTROLS = "K2 to K12 (public schema, another application's schema, live temporary table, database owned by the migration role, ...)"
+O_NOT_BUILT_CONTROLS = {
+    "K2": "the schema of the run is `public` with the server's own access list: needs a database of its own (a `case`)",
+    "K5 K6 K7": "a database owned by the migration role, by a group, by a group with a second member: need a database of their own (a `case`)",
+    "K8": "a file that hands a map table to a group the migration role belongs to: needs the real plain migration login (a `case`)",
+    "K10": "every relation kind with its row type (fact 33): not built in batch 3e (time box)",
+}
 
 
 def test_the_matrix_has_exactly_the_planned_cells():
     cells = _cells()
-    total = len(cells) + len(O_CONTROLS)
+    controls = (
+        len(O_CONTROLS) + len(O_CONTROLS_BUILT) * len(O_VARIANTS) + 2
+    )  # K1, K3/K11/K12 x 2, K4, K9
+    total = len(cells) + controls
     print(
         f"matrix cells: {len(O_EFFECTS)} effects x {len(O_CARRIERS)} carriers x {len(O_VARIANTS)} variants = "
-        f"{len(cells)}; controls {len(O_CONTROLS)}; total {total}; compositions {COMPOSITION_COUNT} (seed {COMPOSITION_SEED})"
+        f"{len(cells)}; pre-existing (C12, superuser) {len(X_EFFECTS)} x 2 = {2 * len(X_EFFECTS)}; controls {controls}; "
+        f"total {total + 2 * len(X_EFFECTS)}; compositions {COMPOSITION_COUNT} (seed {COMPOSITION_SEED})"
     )
-    for ids, why in O_NOT_BUILT_EFFECTS.items():
-        print(f"not built, effects {ids}: {why}")
+    for ids, why in O_SERVER_REFUSED_EFFECTS.items():
+        print(f"table 1, server refuses it to a plain role, C12 only, effects {ids}: {why}")
+    print(f"table 2, empty by logic: {O_EMPTY_BY_LOGIC}")
+    for ids, why in O_NOT_PROMISED.items():
+        print(f"table 3, not promised, {ids}: {why}")
     for ids, why in O_NOT_BUILT_CARRIERS.items():
-        print(f"not built, carriers {ids}: {why}")
-    print(f"not built, controls: {O_NOT_BUILT_CONTROLS}")
-    assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS)) == (18, 6, 2)
-    assert len(cells) == 216 and len(set(cells)) == 216
-    assert len(O_CONTROLS) == 2 and total == 218
+        print(f"NOT BUILT, carrier {ids}: {why}")
+    for ids, why in O_NOT_BUILT_CONTROLS.items():
+        print(f"NOT BUILT, control {ids}: {why}")
+    assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS)) == (27, 8, 2)
+    assert len(cells) == 432 and len(set(cells)) == 432
+    assert controls == 10 and len(O_CONTROLS_BUILT) == 3 and total == 442
+    assert len(X_EFFECTS) == 36
     assert [e[0] for e in O_EFFECTS] == sorted(e[0] for e in O_EFFECTS)
-    # no row of the ticket is left out unlisted: the ids built plus the ids listed as not built cover E01 to E39
+    # no row of the ticket is left out unlisted: the ids built (generated, or pre-existing under C12) plus the ids of the
+    # tables cover E01 to E39
     planned = {f"E{n:02d}" for n in range(1, 40)}
-    listed = {w for key in O_NOT_BUILT_EFFECTS for w in key.split()}
-    built = {"E02", "E03", "E04", "E05", "E07", "E15", "E16", "E26", "E34", "E35", "E37"} | {
-        e[1] for e in X_EFFECTS
-    }
-    assert planned - built - listed == set(), sorted(planned - built - listed)
-    assert built & listed == set()
+    generated = {
+        "E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E10", "E11", "E12", "E14", "E15", "E16", "E20",
+        "E26", "E34", "E35", "E37",
+    }  # fmt: skip
+    pre_existing = {e[1] for e in X_EFFECTS}
+    listed = {w.split("-")[0] for key in O_SERVER_REFUSED_EFFECTS for w in key.split()} | {"E27"}
+    assert planned - generated - pre_existing - listed == set(), sorted(
+        planned - generated - pre_existing - listed
+    )
+    assert generated <= planned and pre_existing <= planned
 
 
 def _kept_nothing(text) -> bool:
@@ -904,6 +987,29 @@ def _split_function(statement: str) -> str:
     )
 
 
+# C3: a function whose body is a string of SQL (language sql) runs the effect; the file is the function and the call. The
+# body is written in the open (an SQL body cannot join pieces), so, like C1, the text rules may stop it at step 0.
+# C11: a temporary table named like a catalog table is made first (the run must read the catalogs by their full names).
+_WRITTEN_IN_THE_OPEN = (
+    "C1-plain-file",
+    "C3-sql-function",
+    "C11-temporary-table-named-like-a-catalog-table",
+)
+# The text rules refuse a temporary table written in the open, so it is made by dynamic SQL with the words split.
+_TEMP_LIKE_CATALOG = (
+    "CREATE OR REPLACE FUNCTION hadavin_test_mktemp() RETURNS void LANGUAGE plpgsql AS $$ BEGIN "
+    "EXECUTE 'CRE' || 'ATE TEM' || 'PORARY TAB' || 'LE pg_class (oid int, relname text, relacl text)'; END $$;\n"
+    "SELECT hadavin_test_mktemp();\n"
+)
+
+
+def _sql_function(statement: str) -> str:
+    return (
+        f"CREATE OR REPLACE FUNCTION hadavin_test_sqlfn() RETURNS void LANGUAGE sql AS $$ {statement} $$;\n"
+        "SELECT hadavin_test_sqlfn();\n"
+    )
+
+
 def _ledger_file(carrier: str, statement: str, tag: str = "") -> str:
     """A file whose effect runs when the runner writes its own row in the ledger `schema_migrations`: an AFTER INSERT
     trigger (C4), a constraint trigger that is deferred to the end (C6), a rule (C7). The function runs the effect as the
@@ -967,6 +1073,14 @@ def test_every_matrix_cell_ends_in_one_of_the_three_outcomes(cell, ocell, monkey
             tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": statement + ";\n"})
         elif carrier == "C2-dynamic-sql":
             tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": _split_function(statement)})
+        elif carrier == "C3-sql-function":
+            tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": _sql_function(statement)})
+        elif carrier == "C11-temporary-table-named-like-a-catalog-table":
+            tp._with_files(
+                monkeypatch,
+                tmp_path,
+                {"0006_temp.sql": _TEMP_LIKE_CATALOG, "0007_effect.sql": statement + ";\n"},
+            )
         elif carrier in _LEDGER_CARRIERS:
             tp._with_files(
                 monkeypatch, tmp_path, {"0006_effect.sql": _ledger_file(carrier, statement)}
@@ -989,7 +1103,9 @@ def test_every_matrix_cell_ends_in_one_of_the_three_outcomes(cell, ocell, monkey
             assert _kept_nothing(e), str(e)
             # Only the plain file may be stopped by the text rules at step 0; every other carrier hides its statement from
             # them, so its refusal must come from the checks of the data (else the cell proves nothing about them).
-            assert carrier == "C1-plain-file" or "migrations are inconsistent" not in str(e), str(e)
+            assert carrier in _WRITTEN_IN_THE_OPEN or "migrations are inconsistent" not in str(e), (
+                str(e)
+            )
             if carrier.startswith("C12"):
                 assert "No file ran" in str(e), str(e)
         # step 4 repairs only what exists when it runs; a deferred trigger acts after it
@@ -1040,6 +1156,149 @@ def test_the_clean_control_returns_with_no_excess_right(variant, ocell, monkeypa
         assert mig.migrate(dsn, **roles) == []
     finally:
         tp._drop_roles(other, rt)
+
+
+# Controls K2 to K12 of ticket 7.4 (K1 is the control above), as far as the shared test database lets them be built. Each
+# one must end in outcome (iii): the run returns and "applied with excess: 0" holds, with and without role arguments, so a
+# refusal in a cell is a refusal of its effect and not of its set-up. `setup` runs as the superuser before the run and
+# `undo` after it; `{x}` is the name of a second schema of another application.
+O_CONTROLS_BUILT = {
+    "K3-another-applications-schema": (
+        [
+            "CREATE SCHEMA {x}",
+            "CREATE TABLE {x}.t (a int)",
+            "REVOKE ALL ON {x}.t FROM PUBLIC",
+            "CREATE FUNCTION {x}.f() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+            "REVOKE ALL ON FUNCTION {x}.f() FROM PUBLIC",
+            "CREATE TYPE {x}.ty AS (a int)",
+            "REVOKE ALL ON TYPE {x}.ty FROM PUBLIC",
+        ],
+        "DROP SCHEMA {x} CASCADE",
+    ),
+    "K11-family-security-definer-function-only-its-owner-may-call": (
+        [
+            "CREATE SCHEMA {x}",
+            "CREATE FUNCTION {x}.hadavin_audit_append_only() RETURNS int LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'",
+            "REVOKE ALL ON FUNCTION {x}.hadavin_audit_append_only() FROM PUBLIC",
+        ],
+        "DROP SCHEMA {x} CASCADE",
+    ),
+    "K12-family-function-in-another-schema-callable-by-everyone": (
+        [
+            "CREATE SCHEMA {x}",
+            "CREATE FUNCTION {x}.hadavin_audit_append_only() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+        ],
+        "DROP SCHEMA {x} CASCADE",
+    ),
+}
+
+
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+@pytest.mark.parametrize("control", sorted(O_CONTROLS_BUILT))
+def test_the_other_clean_controls_return_with_no_excess_right(
+    control, variant, ocell, monkeypatch, tmp_path
+):
+    import uuid
+
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    x = "hadavin_test_x_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    setup, undo = O_CONTROLS_BUILT[control]
+    try:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            for text in setup:
+                admin.execute(text.format(x=x))
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        assert mig.migrate(dsn, **roles) == tp.REAL
+        assert _no_excess_rights(schema, other, rt if roles else None) == []
+        assert mig.migrate(dsn, **roles) == []
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as admin:
+            admin.execute(undo.format(x=x))
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+def test_control_k4_a_named_role_with_a_live_temporary_table(ocell):
+    """K4: a session of the named role holds a temporary table while the run goes through."""
+    import uuid
+
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    try:
+        with psycopg.connect(DSN, autocommit=True) as live:
+            live.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(other)))
+            live.execute("CREATE TEMPORARY TABLE hadavin_test_live_temp (a int)")
+            assert mig.migrate(dsn, runtime_role=rt) == tp.REAL
+            assert _no_excess_rights(schema, other, rt) == []
+    finally:
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+def test_control_k9_a_run_with_no_pending_file_and_other_role_arguments_changes_nothing(ocell):
+    """K9: after a clean run with no role arguments, a run with no pending file is given the runtime role: it returns, and
+    nothing is left with excess."""
+    import uuid
+
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    try:
+        assert mig.migrate(dsn) == tp.REAL
+        assert mig.migrate(dsn, runtime_role=rt) == []
+        assert _no_excess_rights(schema, other, rt) == []
+    finally:
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+@pytest.mark.real_connect
+@pytest.mark.parametrize("variant", O_VARIANTS)
+def test_e28_a_named_role_owns_the_schema_of_the_run_is_refused_and_no_file_runs(variant, case):
+    """E28, schema form (outcome i), carrier C12. It needs the real plain migration login: the shared-database cells run
+    `migrate` through a helper that hands the schema to the plain role at every connect, which would undo the state. The
+    runtime role owns the schema of the run after one clean run; the next run with the role arguments is refused before
+    any file runs and keeps nothing; with none, nobody named the role, so the run returns (pinned, like the seven cells)."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import migrate as mig
+
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case)
+    rt = case.role["n"]
+    roles = {"runtime_role": rt} if variant == "with-roles" else {}
+    assert mig.migrate(dsn, **roles) == [p.stem for p in mig._migration_files()]
+    case.db.execute(
+        sql.SQL("ALTER SCHEMA {} OWNER TO {}").format(sql.Identifier(APP), sql.Identifier(rt))
+    )
+    if (
+        variant == "no-roles"
+    ):  # a role nobody named is not judged (the decision of B5 above, X_NAMED_ROLE_EFFECTS)
+        assert mig.migrate(dsn) == []
+        return
+    with pytest.raises(errors.ConfigError) as seen:
+        mig.migrate(dsn, **roles)
+    text = str(seen.value)
+    assert (
+        "before any migration file ran" in text
+        and "No file ran" in text
+        or "Nothing was changed" in text
+    ), text
 
 
 # --- 7. the shipped files give each role exactly the map (ticket 7.7) --------------------------------------------------
@@ -1109,7 +1368,15 @@ def test_the_shipped_files_give_each_role_exactly_the_map(case):
     case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
     dsn = _migration_login(case)
     roles = {"runtime": case.role["n"], "portal": case.role["t"], "purge": case.role["o"]}
-    before = {k: case.oracle.can(case.role[k], APP).facts for k in "nftom"}
+    # B4 of batch 3e: direction 2 covers every schema and object of the database (`s` and `s2` hold one object of every kind,
+    # `public` is the server's own, the foreign server and wrapper and the large object are the database's), and the
+    # database-level rights of every role; the schemas `s` and `s2` are reachable by everyone so that their objects can be tried
+    for other_schema in ("s", "s2"):
+        case.db.execute(
+            sql.SQL("GRANT USAGE ON SCHEMA {} TO PUBLIC").format(sql.Identifier(other_schema))
+        )
+    assert {"public", "s", "s2", APP} <= set(case.oracle.schemas()) | {APP}, case.oracle.schemas()
+    before = {k: case.oracle.can_everywhere(case.role[k]).facts for k in "nftom"}
     applied = mig.migrate(
         dsn,
         runtime_role=roles["runtime"],
@@ -1120,7 +1387,7 @@ def test_the_shipped_files_give_each_role_exactly_the_map(case):
 
     def judge(when: str) -> None:
         for kind, who in (("runtime", "n"), ("portal", "t"), ("purge", "o")):
-            res = case.oracle.can(case.role[who], APP)
+            res = case.oracle.can_everywhere(case.role[who])
             # The one thing the oracle cannot see by behaviour here: REFERENCES on a table with no unique key (the
             # server refuses the test statement for that reason, whatever the right). Anything else it cannot see fails.
             unseen = [x for x in res.inconclusive if not _REFERENCES_NO_KEY.match(str(x))]
@@ -1130,9 +1397,12 @@ def test_the_shipped_files_give_each_role_exactly_the_map(case):
             assert not missing, f"{when}: {kind} cannot do {sorted(missing)}"
             extra = res.facts - want - before[who]
             assert not extra, f"{when}: {kind} can also do {sorted(extra)}"
-        res = case.oracle.can(case.role["f"], APP)
+        res = case.oracle.can_everywhere(case.role["f"])
         extra = res.facts - before["f"]
         assert not extra, f"{when}: everyone can also do {sorted(extra)}"
+        assert not any(f[0] == "database" for f in res.facts), (
+            f"{when}: everyone holds a database-level right: {sorted(f for f in res.facts if f[0] == 'database')}"
+        )
 
     judge("after the first run")
     assert (
@@ -1145,6 +1415,28 @@ def test_the_shipped_files_give_each_role_exactly_the_map(case):
         == []
     )
     judge("after the second run")
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_direction_2_sees_an_extra_right_on_an_object_outside_the_schema_of_the_run(case):
+    """B4 sensitivity: a right for the fresh role on a table of ANOTHER schema, and a database-level right, are seen by the
+    all-schema oracle, and the one-schema oracle of the first version of the test does not see the first of them."""
+    case.db.execute("GRANT USAGE ON SCHEMA s TO PUBLIC")
+    f = case.role["f"]
+    base = case.oracle.can_everywhere(f).facts
+    case.db.execute(sql.SQL("GRANT SELECT ON s.t TO {}").format(sql.Identifier(f)))
+    case.db.execute(
+        sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+            sql.Identifier(case.db_name), sql.Identifier(f)
+        )
+    )
+    seen = case.oracle.can_everywhere(f).facts - base
+    assert ("table", "s.t", "SELECT") in seen and ("database", "", "CREATE") in seen, sorted(seen)
+    one_schema = case.oracle.can(
+        f, "s2"
+    ).facts  # a stand-in for the one schema the old test looked at
+    assert ("table", "s.t", "SELECT") not in one_schema
 
 
 # --- 8. seeded compositions: two or three effects in one run, each brought by its own carrier -------------------------------
@@ -1168,16 +1460,42 @@ class _Seeded:
         return [left.pop(self.below(len(left))) for _ in range(k)]
 
 
+# B8 of batch 3e. Written in the open (carrier C1), these five effects are refused at step 0 by the text rules ("migrations
+# are inconsistent": a GRANT on a place outside the map, an ALTER DEFAULT PRIVILEGES), so a composition that holds one
+# would prove nothing about the checks of the data. Measured on the first 200 compositions (log
+# B-P3a2-3e-b8-probe.log): 35 of 200 were stopped at step 0, 165 reached the data checks (the first try left out O14, which a second run found: 14 more). `_compositions` never gives
+# these effects to C1, so every composition reaches the data checks (the test below asserts it, through the refusal text).
+_TEXT_REFUSED_IN_THE_OPEN = frozenset(
+    {
+        "O14-usage-with-grant-option",
+        "O13-create-on-schema-other",
+        "O15-create-on-schema-everyone",
+        "O16-default-right-named",
+        "O17-default-right-everyone",
+    }
+)
+
+
 def _compositions() -> list[list[tuple[str, str]]]:
     """200 lists of 2 or 3 (effect id, carrier) pairs with different carriers, from a fixed seed. The repaired effect (O06)
     is left out: a composition is expected to be refused by the rule, never repaired."""
     rng = _Seeded(COMPOSITION_SEED)
-    pool = [e[0] for e in O_EFFECTS if not e[2]]
+    pool = [
+        e[0] for e in O_EFFECTS if not e[2] and int(e[0][1:3]) <= 18
+    ]  # the first 18 effects; see B8
     out = []
     for _ in range(COMPOSITION_COUNT):
         size = 2 + rng.below(2)
         carriers = rng.sample(_COMPOSITION_CARRIERS, size)
-        out.append([(pool[rng.below(len(pool))], c) for c in carriers])
+        pairs = []
+        for c in carriers:
+            eid = pool[rng.below(len(pool))]
+            while c == "C1-plain-file" and eid in _TEXT_REFUSED_IN_THE_OPEN:
+                eid = pool[
+                    rng.below(len(pool))
+                ]  # take another effect: this one never reaches the checks of the data
+            pairs.append((eid, c))
+        out.append(pairs)
     return out
 
 
@@ -1187,6 +1505,10 @@ def test_the_compositions_are_the_planned_200_with_different_carriers():
     assert len(comps) == COMPOSITION_COUNT == 200
     assert all(2 <= len(c) <= 3 and len({x[1] for x in c}) == len(c) for c in comps)
     assert len({tuple(c) for c in comps}) > 150, "the seed must give a wide spread"
+    # B8: a plain file never carries an effect that the text rules refuse at step 0
+    assert not [
+        c for c in comps for e, k in c if k == "C1-plain-file" and e in _TEXT_REFUSED_IN_THE_OPEN
+    ]
 
 
 @needs_pg
@@ -1230,6 +1552,8 @@ def test_every_composition_of_effects_is_refused_and_keeps_nothing(n, ocell, mon
         assert isinstance(outcome, ConfigError), f"{_compositions()[n]}: {outcome!r}"
         assert _kept_nothing(outcome), str(outcome)
         assert "The check after the commit" not in str(outcome)
+        # B8: the refusal comes from the checks of the data, never from the text rules of step 0
+        assert "migrations are inconsistent" not in str(outcome), f"{_compositions()[n]}: {outcome}"
     finally:
         _forget_default_rights(dsn)
         tp._drop_roles(other, rt)
@@ -1270,6 +1594,21 @@ X_EFFECTS = [
         [],
     ),
     (
+        "X22n-large-object-for-a-named-role",
+        "E22",
+        ["SELECT lo_create(70778)", "GRANT SELECT ON LARGE OBJECT 70778 TO {rt}"],
+        ["SELECT lo_unlink(70778)"],
+    ),
+    (
+        "X28f-named-role-owns-a-function",
+        "E28",
+        [
+            "CREATE FUNCTION {schema}.zz_of() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+            "ALTER FUNCTION {schema}.zz_of() OWNER TO {rt}",
+        ],
+        [],
+    ),
+    (
         "X31-built-in-role-member",
         "E31",
         ["GRANT pg_read_all_data TO {rt}"],
@@ -1282,6 +1621,215 @@ X_EFFECTS = [
         [],
     ),
     ("X33-flag-on-the-named-role", "E33", ["ALTER ROLE {rt} CREATEDB"], []),
+    # The "everyone" halves of E17, E18 and E36: no role argument is needed to judge them (the promise names a named role
+    # AND everyone, ticket 1.3), so these two variants of the same state are both refused.
+    (
+        "X17e-create-on-another-schema-for-everyone",
+        "E17",
+        ["GRANT CREATE ON SCHEMA public TO PUBLIC"],
+        ["REVOKE CREATE ON SCHEMA public FROM PUBLIC"],
+    ),
+    (
+        "X18e-create-on-database-for-everyone",
+        "E18",
+        ["GRANT CREATE ON DATABASE {db} TO PUBLIC"],
+        ["REVOKE CREATE ON DATABASE {db} FROM PUBLIC"],
+    ),
+    (
+        "X36e-default-right-for-everyone-set-by-another-role",
+        "E36",
+        [
+            "ALTER DEFAULT PRIVILEGES FOR ROLE {other} IN SCHEMA {schema} GRANT SELECT ON TABLES TO PUBLIC"
+        ],
+        [],
+    ),
+    # Batch 3e, effects of the ticket list that an administrator makes in the schema of the run (objects outside the map)
+    # or in the cluster, brought by carrier C12. `{flag}` is also used as the unique part of the names of cluster objects.
+    (
+        "X01n-select-on-a-table-outside-the-map-named",
+        "E01",
+        ["CREATE TABLE {schema}.zz_t (a int)", "GRANT SELECT ON {schema}.zz_t TO {rt}"],
+        [],
+    ),
+    (
+        "X01e-select-on-a-table-outside-the-map-everyone",
+        "E01",
+        ["CREATE TABLE {schema}.zz_t (a int)", "GRANT SELECT ON {schema}.zz_t TO PUBLIC"],
+        [],
+    ),
+    (
+        "X01t-select-on-a-table-outside-the-map-third-role",
+        "E01",
+        ["CREATE TABLE {schema}.zz_t (a int)", "GRANT SELECT ON {schema}.zz_t TO {other}"],
+        [],
+    ),
+    (
+        "X06-usage-on-a-sequence-outside-the-map",
+        "E06",
+        ["CREATE SEQUENCE {schema}.zz_q", "GRANT USAGE ON SEQUENCE {schema}.zz_q TO {rt}"],
+        [],
+    ),
+    (
+        "X08-select-on-a-view-outside-the-map-everyone",
+        "E08",
+        ["CREATE VIEW {schema}.zz_v AS SELECT 1 AS a", "GRANT SELECT ON {schema}.zz_v TO PUBLIC"],
+        [],
+    ),
+    (
+        "X08m-select-on-a-materialized-view-outside-the-map-everyone",
+        "E08",
+        [
+            "CREATE MATERIALIZED VIEW {schema}.zz_m AS SELECT 1 AS a",
+            "GRANT SELECT ON {schema}.zz_m TO PUBLIC",
+        ],
+        [],
+    ),
+    (
+        "X09-select-on-a-foreign-table-everyone",
+        "E09",
+        [
+            "CREATE FOREIGN DATA WRAPPER {flag}_w",
+            "CREATE SERVER {flag}_s FOREIGN DATA WRAPPER {flag}_w",
+            "CREATE FOREIGN TABLE {schema}.zz_ft (a int) SERVER {flag}_s",
+            "GRANT SELECT ON {schema}.zz_ft TO PUBLIC",
+        ],
+        [
+            "DROP FOREIGN TABLE IF EXISTS {schema}.zz_ft",
+            "DROP SERVER IF EXISTS {flag}_s",
+            "DROP FOREIGN DATA WRAPPER IF EXISTS {flag}_w",
+        ],
+    ),
+    (
+        "X13-security-definer-function-of-another-owner-in-another-schema-for-everyone",
+        "E13",
+        [
+            "CREATE SCHEMA {oschema}",
+            "GRANT USAGE ON SCHEMA {oschema} TO PUBLIC",
+            "CREATE FUNCTION {oschema}.zz_d() RETURNS int LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'",
+            "ALTER FUNCTION {oschema}.zz_d() OWNER TO {other}",
+        ],
+        ["DROP SCHEMA IF EXISTS {oschema} CASCADE"],
+    ),
+    (
+        "X38-a-map-right-granted-by-a-grant-option-holder",
+        "E38",
+        [
+            "GRANT DELETE ON {schema}.runs TO {other} WITH GRANT OPTION",
+            "GRANT USAGE ON SCHEMA {schema} TO {other}",
+            "SET ROLE {other}",
+            "GRANT DELETE ON {schema}.runs TO {rt}",
+            "RESET ROLE",
+        ],
+        [
+            "REVOKE ALL ON {schema}.runs FROM {other} CASCADE",
+            "REVOKE ALL ON SCHEMA {schema} FROM {other}",
+        ],
+    ),
+    (
+        "X39-a-built-in-membership-granted-by-a-createrole-role",
+        "E39",
+        [
+            "ALTER ROLE {other} CREATEROLE",
+            "GRANT pg_read_all_data TO {other} WITH ADMIN OPTION",
+            "SET ROLE {other}",
+            "GRANT pg_read_all_data TO {rt}",
+            "RESET ROLE",
+        ],
+        ["REVOKE pg_read_all_data FROM {other} CASCADE", "ALTER ROLE {other} NOCREATEROLE"],
+    ),
+    (
+        "X10-execute-on-a-function-named",
+        "E10",
+        [
+            "CREATE FUNCTION {schema}.zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'",
+            "GRANT EXECUTE ON FUNCTION {schema}.zz_f() TO {rt}",
+        ],
+        [],
+    ),
+    (
+        "X11-function-left-callable-by-everyone",
+        "E11",
+        ["CREATE FUNCTION {schema}.hadavin_zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'"],
+        [],
+    ),
+    (
+        "X12-security-definer-function-in-the-schema-of-the-run",
+        "E12",
+        [
+            "CREATE FUNCTION {schema}.zz_d() RETURNS int LANGUAGE sql SECURITY DEFINER AS 'SELECT 1'",
+            "REVOKE ALL ON FUNCTION {schema}.zz_d() FROM PUBLIC",
+        ],
+        [],
+    ),
+    (
+        "X12f-the-package-trigger-function-made-security-definer",
+        "E12",
+        ["ALTER FUNCTION {schema}.hadavin_audit_append_only() SECURITY DEFINER"],
+        [],
+    ),
+    (
+        "X14-execute-on-a-procedure-named",
+        "E14",
+        [
+            "CREATE PROCEDURE {schema}.zz_p() LANGUAGE sql AS 'SELECT 1'",
+            "GRANT EXECUTE ON PROCEDURE {schema}.zz_p() TO {rt}",
+        ],
+        [],
+    ),
+    (
+        "X20-usage-on-a-type-named",
+        "E20",
+        ["CREATE TYPE {schema}.zz_ty AS (a int)", "GRANT USAGE ON TYPE {schema}.zz_ty TO {rt}"],
+        [],
+    ),
+    (
+        "X21-usage-on-a-language-named",
+        "E21",
+        ["GRANT USAGE ON LANGUAGE plpgsql TO {rt}"],
+        ["REVOKE USAGE ON LANGUAGE plpgsql FROM {rt}"],
+    ),
+    (
+        "X23-usage-on-a-foreign-server-named",
+        "E23",
+        [
+            "CREATE FOREIGN DATA WRAPPER {flag}_w",
+            "CREATE SERVER {flag}_s FOREIGN DATA WRAPPER {flag}_w",
+            "GRANT USAGE ON FOREIGN SERVER {flag}_s TO {rt}",
+        ],
+        ["DROP SERVER IF EXISTS {flag}_s", "DROP FOREIGN DATA WRAPPER IF EXISTS {flag}_w"],
+    ),
+    (
+        "X24-create-on-a-tablespace-everyone",
+        "E24",
+        ["GRANT CREATE ON TABLESPACE pg_default TO PUBLIC"],
+        ["REVOKE CREATE ON TABLESPACE pg_default FROM PUBLIC"],
+    ),
+    (
+        "X25-set-on-a-parameter-named",
+        "E25",
+        ["GRANT SET ON PARAMETER work_mem TO {rt}"],
+        ["REVOKE SET ON PARAMETER work_mem FROM {rt}"],
+    ),
+    (
+        "X29-member-of-a-group-with-rights-inheriting",
+        "E29",
+        [
+            "CREATE ROLE {flag} NOLOGIN",
+            "GRANT DELETE ON {schema}.runs TO {flag}",
+            "GRANT {flag} TO {rt}",
+        ],
+        ["REVOKE ALL ON {schema}.runs FROM {flag}"],
+    ),
+    (
+        "X30-member-of-a-group-with-rights-not-inheriting-but-may-switch",
+        "E30",
+        [
+            "CREATE ROLE {flag} NOLOGIN",
+            "GRANT DELETE ON {schema}.runs TO {flag}",
+            "GRANT {flag} TO {rt} WITH INHERIT FALSE, SET TRUE",
+        ],
+        ["REVOKE ALL ON {schema}.runs FROM {flag}"],
+    ),
     (
         "X36-default-right-set-by-another-role",
         "E36",
@@ -1293,37 +1841,70 @@ X_EFFECTS = [
 ]
 
 
-# The effects that are about the NAMED role (the runtime role of the run). With no role argument no role is named, so the
-# state is a state of an unrelated role and `migrate` does not judge it: these 8 cells are "empty by logic" (counted and
-# printed by the count test, not skipped silently: see `test_the_pre_existing_cells_are_counted`).
-X_NAMED_ROLE_EFFECTS = {e[0] for e in X_EFFECTS if e[0] != "X22-large-object-for-everyone"}
-# The refusal of a table owned by another role is written at pre-flight without the words "No file ran" (it says "Nothing
-# was changed."): the ticket wants those words for carrier C12 (7.4), so this is a gap of wording, reported.
-X_WORDING_GAP = {"X28-named-role-owns-a-table"}
+# The effects that are about the NAMED role only (the runtime role of the run). With no role argument no role is named, so
+# the role of the cell is a third role that nobody asked `migrate` to judge. DECISION (B5 of batch 3e, written up in the PR
+# notes for the lead): `migrate` does NOT refuse these seven states without role arguments, and the cells pin that. Reasons:
+# (1) the promise table (ticket 1.3) and the ticket line "with no role arguments [the named roles] are empty, and the
+# subject side still judges everyone" promise named roles and everyone, nothing about a third role's flags, memberships or
+# database rights; (2) a refusal would judge every role of the cluster, so any database that has a superuser or a role with
+# CREATEDB (every real one) would be refused for ever, with no role argument that could end it. The matching "everyone"
+# forms (X17e, X18e, X36e) run in both variants and are refused. X28 is not in this set: a package table owned by a third
+# role is refused by the owner rule (O8) in both variants.
+X_NAMED_ROLE_EFFECTS = {
+    "X17-create-on-another-schema",
+    "X18-create-on-database",
+    "X19-temporary-on-database",
+    "X31-built-in-role-member",
+    "X32-member-of-a-role-with-a-flag",
+    "X33-flag-on-the-named-role",
+    "X36-default-right-set-by-another-role",
+    # batch 3e: the other named-role effects of the ticket list, made by an administrator
+    "X01n-select-on-a-table-outside-the-map-named",
+    "X06-usage-on-a-sequence-outside-the-map",
+    "X10-execute-on-a-function-named",
+    "X14-execute-on-a-procedure-named",
+    "X20-usage-on-a-type-named",
+    "X21-usage-on-a-language-named",
+    "X23-usage-on-a-foreign-server-named",
+    "X25-set-on-a-parameter-named",
+    "X39-a-built-in-membership-granted-by-a-createrole-role",
+    "X22n-large-object-for-a-named-role",
+    "X28f-named-role-owns-a-function",
+}
+# Measured on PostgreSQL 16.15 (log B-P3a2-3e-xnew.log) and pinned here as NOT PROMISED, in both variants; each needs the
+# lead or the owner to say whether the promise should grow (the ticket's table of promises, 1.3, is the reference):
+# - a right of a THIRD role (one that no argument names) on a table outside the map (E01 third role): rights of a role
+#   nobody named are not promised;
+# - a function left callable by everyone that is not a function of the package (X11), and a SECURITY DEFINER function that is
+#   not a function of the package (X12): PostgreSQL gives every function EXECUTE to everyone by default, so a refusal would
+#   refuse every schema that holds any function; the package's own trigger function made SECURITY DEFINER IS refused (X12f).
+X_NOT_PROMISED_BOTH_VARIANTS = {
+    "X01t-select-on-a-table-outside-the-map-third-role",
+    "X11-function-left-callable-by-everyone",
+    "X12-security-definer-function-in-the-schema-of-the-run",
+}
+X_WORDING_GAP: set[str] = (
+    set()
+)  # B6: the owner refusal now says "No file ran." too, so no cell is a gap of wording
 
 
 def test_the_pre_existing_cells_are_counted():
-    cells = [
-        (e[0], v)
-        for e in X_EFFECTS
-        for v in O_VARIANTS
-        if not (v == "no-roles" and e[0] in X_NAMED_ROLE_EFFECTS)
-    ]
+    cells = [(e[0], v) for e in X_EFFECTS for v in O_VARIANTS]
+    unnamed = [(e, v) for e, v in cells if v == "no-roles" and e in X_NAMED_ROLE_EFFECTS]
     print(
-        f"pre-existing (C12) cells: {len(X_EFFECTS)} effects x 2 variants = {2 * len(X_EFFECTS)}; "
-        f"empty by logic (named role, no role argument): {2 * len(X_EFFECTS) - len(cells)}; run: {len(cells)}; "
-        f"wording gap (no 'No file ran'): {sorted(X_WORDING_GAP)}"
+        f"pre-existing (C12) cells: {len(X_EFFECTS)} effects x 2 variants = {len(cells)}; of them {len(unnamed)} are a state of "
+        f"a role nobody named (no role argument): pinned as 'returns normally', see the decision above; the other "
+        f"{len(cells) - len(unnamed)} are refused with 'No file ran'; wording gaps: {sorted(X_WORDING_GAP)}"
     )
-    assert (len(X_EFFECTS), len(cells)) == (9, 10)
-    assert X_WORDING_GAP <= {e[0] for e in X_EFFECTS}
+    assert (len(X_EFFECTS), len(cells), len(unnamed)) == (36, 72, 18)
+    assert len({e[0] for e in X_EFFECTS}) == 36
+    assert len(X_NAMED_ROLE_EFFECTS) == 18 and X_NAMED_ROLE_EFFECTS <= {e[0] for e in X_EFFECTS}
+    assert X_NOT_PROMISED_BOTH_VARIANTS <= {e[0] for e in X_EFFECTS}
+    assert not X_NOT_PROMISED_BOTH_VARIANTS & X_NAMED_ROLE_EFFECTS
+    assert X_WORDING_GAP == set()
 
 
-X_CELLS = [
-    (e, v)
-    for e in X_EFFECTS
-    for v in O_VARIANTS
-    if not (v == "no-roles" and e[0] in X_NAMED_ROLE_EFFECTS)
-]
+X_CELLS = [(e, v) for e in X_EFFECTS for v in O_VARIANTS]
 
 
 @needs_pg
@@ -1351,7 +1932,7 @@ def test_a_state_made_before_the_run_is_refused_and_no_file_runs(effect, variant
         "schema": sql.Identifier(schema).as_string(),
         "db": sql.Identifier(db_name).as_string(),
     }
-    names.update(other=other, rt=rt, flag=flag)
+    names.update(other=other, rt=rt, flag=flag, oschema=sql.Identifier(schema + "_o").as_string())
     outcome = None
     try:
         assert mig.migrate(dsn, **roles) == tp.REAL
@@ -1363,9 +1944,18 @@ def test_a_state_made_before_the_run_is_refused_and_no_file_runs(effect, variant
             mig.migrate(dsn, **roles)
         except (errors.ConfigError, errors.AppliedNotVerifiedError) as e:
             outcome = e
-        assert isinstance(outcome, errors.ConfigError), f"{eid}/{variant}: {outcome!r}"
-        assert eid in X_WORDING_GAP or "No file ran" in str(outcome), str(outcome)
-        assert _kept_nothing(outcome), str(outcome)
+        if eid in X_NOT_PROMISED_BOTH_VARIANTS:
+            assert outcome == "returned", (
+                f"{eid}/{variant}: not promised, so not refused: {outcome!r}"
+            )
+        elif variant == "no-roles" and eid in X_NAMED_ROLE_EFFECTS:
+            assert outcome == "returned", (
+                f"{eid}/{variant}: a role nobody named is not judged: {outcome!r}"
+            )
+        else:
+            assert isinstance(outcome, errors.ConfigError), f"{eid}/{variant}: {outcome!r}"
+            assert "No file ran" in str(outcome), str(outcome)
+            assert _kept_nothing(outcome), str(outcome)
     finally:
         with psycopg.connect(DSN, autocommit=True) as admin:
             for statement in undo:

@@ -89,7 +89,9 @@ SAVE_READ = (
     "                        _refuse_unusual_strings(saved)\n"
     "                    for path in pending:  # step 3\n"
     '                        step[0] = f"applying {path.name}"\n'
+    "                        running_a_file = True\n"
     "                        db.execute(texts[path])  # the text that was scanned, never a second read\n"
+    "                        running_a_file = False\n"
 )
 RECIPE_CLEAN = (
     "cleaned = checked_statement_text(text)  # cannot raise: _refuse_entry read this text above"
@@ -543,7 +545,9 @@ M: list[Mutant] = [
         "                    saved = None\n"
         "                    for path in pending:  # step 3\n"
         '                        step[0] = f"applying {path.name}"\n'
+        "                        running_a_file = True\n"
         "                        db.execute(texts[path])  # the text that was scanned, never a second read\n"
+        "                        running_a_file = False\n"
         "                        if saved is None:\n"
         "                            saved = _read_back(db, schema, named)\n"
         "                            _refuse_unusual_strings(saved)\n",
@@ -1993,7 +1997,7 @@ M: list[Mutant] = [
         "ML1",
         "the refusal for objects of another role does not say that nothing was changed",
         MIG,
-        'unchanged = "Nothing was changed."',
+        'unchanged = "Nothing was changed. No file ran."',
         'unchanged = ""',
         k(
             T_PG,
@@ -3593,6 +3597,74 @@ M: list[Mutant] = [
         STEP6_CALL,
         STEP6_CALL.replace("if problems:", "if False:", 1),
         k(T_MX, "test_every_composition_of_effects_is_refused_and_keeps_nothing[comp000]"),
+    ),
+    Mutant(
+        "V80",
+        "Issue 2 of 3d: a driver error before the commit that is not a file's own is raised as the raw error (exit 3)",
+        MIG,
+        "                    raise _driver_error_before_commit(e, step[0]) from e\n",
+        "                    raise\n",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_nothing[_take_the_lock]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_nothing[_apply_grants]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V81",
+        "Issue 2 of 3d: every driver error while a file runs is taken as the file's own (a lost connection stays raw)",
+        MIG,
+        "                    if running_a_file and _is_a_files_own_error(e):\n",
+        "                    if running_a_file:\n",
+        k(T_VERIFY_PG, "test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2"),
+    ),
+    Mutant(
+        "V82",
+        "Issue 2 of 3d: a file's own error is turned into the refusal of a driver error (the file text is lost)",
+        MIG,
+        "                    if running_a_file and _is_a_files_own_error(e):\n",
+        "                    if False:\n",
+        k(T_VERIFY_PG, "test_a_files_own_error_is_raised_as_it_is"),
+    ),
+    Mutant(
+        "V83",
+        "Issue 5 of 3d: the identity arguments are left out of the REVOKE of step 4 (a function with an odd argument is not found)",
+        MIG,
+        "                pg.sql_words(signature),\n",
+        '                pg.sql_words(""),\n',
+        k(
+            T_VERIFY_PG,
+            "test_step_4_takes_everyones_execute_off_a_function_whose_argument_has_an_odd_name_and_type",
+        ),
+    ),
+    Mutant(
+        "V84",
+        'Issue 1 of 3d: the code writes "holds" where the CHANGELOG quotes "has" (the message words are stale)',
+        VERIFY,
+        '                    else f"has {self.right}"\n',
+        '                    else f"holds {self.right}"\n',
+        (
+            k(
+                T_VERIFY,
+                "test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says",
+            ),
+        ),
+    ),
+    Mutant(
+        "V85",
+        "B6 of 3e: the refusal of a package object that another role owns does not say that no file ran",
+        MIG,
+        '    unchanged = "Nothing was changed. No file ran."\n',
+        '    unchanged = "Nothing was changed."\n',
+        k(
+            T_MX,
+            "test_a_state_made_before_the_run_is_refused_and_no_file_runs[X28-named-role-owns-a-table/with-roles]",
+        ),
     ),
 ]
 M.extend(STEP_MUTANTS)

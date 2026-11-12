@@ -170,7 +170,9 @@ def quote_identifier(*parts: str) -> SqlPart:
 
 def sql_words(text: str) -> SqlPart:
     """Fixed SQL words written in our own code. Text read from a database is passed only after a check that it is a plain
-    name (`migration_verify._plain`); never text from a file."""
+    name (`migration_verify._plain`); never text from a file. The one exception is the identity-argument text of a
+    function that step 4 of `migrate` passes on: it is the server's own `pg_get_function_identity_arguments` text, already
+    quoted by the server (an odd argument name or type comes back in double quotes), and no check of it is needed."""
     return sql.SQL(text)
 
 

@@ -57,8 +57,9 @@ the comments in `migrate()`; each refusal before the commit keeps nothing):
    the functions the files name.
 5. The deferred checks and triggers run early (`SET CONSTRAINTS ALL IMMEDIATE`).
 6. The read-back once more, then `verify` in full. A problem here refuses the whole run (rows 1 and 2 of the table).
-   A driver error that `verify` raises at step 2 or 6 (a lost connection, a saved `transaction_timeout` of PostgreSQL 17 and
-   later) means the check could not run: the run is refused with exit 2 and keeps nothing (`_check_could_not_run`).
+   A driver error at ANY step from 1 to 6 (a lost connection, a saved `transaction_timeout` of PostgreSQL 17 and later that
+   ends the session) is refused with exit 2 and keeps nothing (`_driver_error_before_commit`, one place for all of them);
+   the one exception is the error of a migration file's own text, which is raised as it is, with its own words.
 7. The COMMIT. A commit the server refused keeps nothing (exit 2). A commit whose outcome is unknown (lost connection)
    is reported as "may or may not have happened" (exit 5); so is an error code that says the statement's completion is
    unknown (`40003`).
@@ -811,7 +812,7 @@ def _refuse_foreign_owned(db, schema: str, texts) -> None:
         "A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would "
         "do nothing without an error."
     )
-    unchanged = "Nothing was changed."
+    unchanged = "Nothing was changed. No file ran."
     to_do = (
         "What to do, in three steps. (1) Check the tables. Objects of other applications in the schema are not listed "
         "and need no change, but a table of ANOTHER application with the same name as one of this package's tables "
@@ -1201,6 +1202,35 @@ def _reviewed_definers(schema: str) -> frozenset[tuple[str, str, str]]:
     )
 
 
+# SQLSTATE classes that are about the connection or the server, never about the text of a file: 08 connection, 53 lack of
+# resources, 57 operator intervention (shutdown, cancel), 58 system error, XX internal error.
+_NOT_A_FILES_OWN_ERROR = ("08", "53", "57", "58", "XX")
+
+
+def _is_a_files_own_error(e: psycopg.Error) -> bool:
+    """True for an error the text of a migration file caused (a syntax error, a missing right, a failed constraint): it
+    carries a SQLSTATE of a class that is not about the connection or the server. A lost connection has none, or one
+    of `_NOT_A_FILES_OWN_ERROR`."""
+    code = getattr(e, "sqlstate", None)
+    return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR)
+
+
+def _driver_error_before_commit(e: psycopg.Error, step: str) -> ConfigError:
+    """The choke point for every driver error that comes before the commit and is not the text of a migration file (a lost
+    connection, a saved `transaction_timeout` of PostgreSQL 17 and later that ends the session, any other
+    `psycopg.Error`, in any step 1 to 6): the run is refused and nothing is kept, a `ConfigError` (exit 2), never the
+    raw driver error that `cli.main` turns into exit 3 ("failed"). A lock wait or a statement limit keeps its own plain
+    message (`_limit_error`)."""
+    if (plain := _limit_error(e, step)) is not None:
+        return plain
+    code = getattr(e, "sqlstate", None) or type(e).__name__
+    return ConfigError(
+        f"migrate stopped and kept nothing: while {step}, the database returned an error ({_label(str(code))}). "
+        "The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is "
+        "reported separately). Run migrate again."
+    )
+
+
 @contextmanager
 def _check_could_not_run(step: str):
     """Around a `verify` call BEFORE the commit (steps 2 and 6): a driver error the check raises (a saved
@@ -1428,6 +1458,9 @@ def migrate(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
         ) as db:
             reached_commit = False
+            running_a_file = (
+                False  # True only while a migration file's own text runs (its error is its own)
+            )
             try:
                 with db.transaction():
                     _take_the_lock(db, lock_wait_seconds)
@@ -1488,7 +1521,9 @@ def migrate(
                         _refuse_unusual_strings(saved)
                     for path in pending:  # step 3
                         step[0] = f"applying {path.name}"
+                        running_a_file = True
                         db.execute(texts[path])  # the text that was scanned, never a second read
+                        running_a_file = False
                         saved = _check_read_back(
                             db,
                             saved,
@@ -1553,7 +1588,9 @@ def migrate(
                 # leaving `db.transaction()` is the COMMIT (step 7)
             except psycopg.Error as e:
                 if not reached_commit:
-                    raise
+                    if running_a_file and _is_a_files_own_error(e):
+                        raise  # the file's own error, with its own text; nothing was kept (the transaction ended)
+                    raise _driver_error_before_commit(e, step[0]) from e
                 if _commit_outcome(e, db) == "refused":
                     raise ConfigError(
                         f"the database server refused the commit ({getattr(e, 'sqlstate', None)}: "

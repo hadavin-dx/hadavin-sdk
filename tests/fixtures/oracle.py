@@ -417,6 +417,37 @@ class Oracle:
                 out.append(other)
         return out
 
+    def schemas(self) -> list[str]:
+        """Every schema of the database that holds the objects of an application: the system schemas and the oracle's own
+        scratch schema are left out (names only)."""
+        rows = self.db.execute(
+            "SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname !~ '^pg_' "
+            "AND nspname <> 'information_schema' AND nspname <> %s ORDER BY 1",
+            (SCRATCH,),
+        ).fetchall()
+        return [r[0] for r in rows]
+
+    def cluster_objects(self) -> dict[str, list[str]]:
+        """The names of the foreign servers and foreign data wrappers of the database (the objects `can` tries only when
+        they are given as extras)."""
+        names = lambda text: [r[0] for r in self.db.execute(text).fetchall()]
+        return {
+            "servers": names("SELECT srvname FROM pg_catalog.pg_foreign_server ORDER BY 1"),
+            "wrappers": names("SELECT fdwname FROM pg_catalog.pg_foreign_data_wrapper ORDER BY 1"),
+        }
+
+    def can_everywhere(self, role: str, **extras) -> Result:
+        """`can` for every schema of the database (B4 of batch 3e, direction 2 of ticket 7.7: nothing extra on ANY object of
+        the database, not only the schema of the run), with the database's foreign servers and wrappers added. The
+        database-level rights, the language, the large objects and the flags come with every call, so they are in it."""
+        res = Result()
+        merged = {**self.cluster_objects(), **extras}
+        for schema in self.schemas():
+            one = self.can(role, schema, **merged)
+            res.facts |= one.facts
+            res.inconclusive += one.inconclusive
+        return res
+
     def can(self, role: str, schema: str, **extras) -> Result:
         """Everything `role` can do on the objects of `schema` (and the database-level rights), tried as the role
         itself and after `SET ROLE` to each role it can switch to. Flags of the role and of each of those roles are
