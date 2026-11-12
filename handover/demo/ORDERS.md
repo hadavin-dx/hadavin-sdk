@@ -83,3 +83,8 @@ The core repo's scanner bugs are parked; the DEMO scanner and quality work goes 
 
 ## LEAD NOTE 20:55Z / 02:25 IST: BATCH 1 APPLIED
 Batch 1 (items 1-5) applied on pr-3-tests and pushed: new head 2ce1f98. Lint, format and 216 targeted tests green (hygiene, portal, crm, smtp). Your INT-1 full serial run is the remaining proof: re-base all further patches on THIS head (not 558d37f). Batch 2 = reviewed CodeAnt patches after the three reviewers finish; then 7c coverage, 8c browser, Semgrep (own PR). Keep going.
+
+## LEAD NOTE 21:00Z / 02:30 IST: BATCH 2a APPLIED + NEW PATCH TO REVIEW
+1. Coverage (lane 7 v3) applied on top of batch 1 and pushed: pr-3-tests head 0841f36. Rebase lanes 8c/10b/13 on THIS head.
+2. NEW REAL FIX from the laptop speed builder (flaky test root cause, proven): handover/demo/speed/fake-hubspot-read-body-before-answer.patch: demo_only/fake_hubspot.py answered 401/404 and closed with the request body unread, so a late body made the client lose the answer (WinError 10053; old fake loses it 30 of 30 in a deterministic probe, fixed 0 of 30; adds one regression test that fails on the old fake). It overlaps the CodeAnt 'fake server gaps' hunks (codeant-tests-hardening / demo-only): put it in the APPLY-LIST, check overlap, and have reviewer B (runtime code) judge it; it is the same bug class as other fakes (smtp/imap/model fakes may also answer before reading the body): sweep them for the class and add per-fake tests (class-level fix rule).
+3. The xdist CI patch (speed/ci-xdist-demo-b29bb1f.patch, no retries, no test edits) is for AFTER #2-#4 merge (batch 4); do not apply now.

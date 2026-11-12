@@ -1,0 +1,3 @@
+head_sha	tree_hash	os	venv_lock_hash	command	flags	exit_code	counts	seconds	date
+2a8c2aac	6c6b2d9f8fb81d477b3433ffbbb76bf085875e3a	windows11	4211a8ae97564ca0	pytest tests (heavy_slot --private-temp --count 2)	-q -m "not live and not perf" -rA -p no:cacheprovider	0	10033 passed 492 skipped	804.5	2026-11-12
+2a8c2aac	6c6b2d9f8fb81d477b3433ffbbb76bf085875e3a	windows11	4211a8ae97564ca0	pytest tests (heavy_slot --private-temp --count 2)	-q -m "not live and not perf" -rA -p no:cacheprovider -n 3 --dist loadgroup PYTHONHASHSEED=0	0	10033 passed 492 skipped	423.7	2026-11-12

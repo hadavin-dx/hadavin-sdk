@@ -1,0 +1,66 @@
+diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
+index aec4794..799bacc 100644
+--- a/demo_only/fake_hubspot.py
++++ b/demo_only/fake_hubspot.py
+@@ -120,6 +120,14 @@ class _Handler(BaseHTTPRequestHandler):
+     def _send(
+         self, status: int, body: Any = None, raw: bytes | None = None, headers: dict[str, str] | None = None
+     ) -> None:
++        if not getattr(self, "_body_read", False):
++            # The answer is followed by a close. A server that closes with the request body still unread makes the
++            # operating system reset the connection (Windows: ConnectionAbortedError, WinError 10053), so the client
++            # sometimes never sees the answer, most often when the machine is busy. Read the body first.
++            self._body_read = True
++            n = int(self.headers.get("Content-Length") or 0)
++            if n:
++                self.rfile.read(n)
+         data = raw if raw is not None else (b"" if body is None else json.dumps(body).encode())
+         self.send_response(status)
+         self.send_header("Content-Type", "application/json")
+@@ -134,6 +142,7 @@ class _Handler(BaseHTTPRequestHandler):
+ 
+     def _json(self) -> Any:
+         n = int(self.headers.get("Content-Length") or 0)
++        self._body_read = True
+         return json.loads(self.rfile.read(n) or b"null")
+ 
+     def _public(self, cid: str) -> dict[str, Any]:
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index 5701fa8..2612c7a 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import json
+ import os
++import socket
+ import threading
+ import time
+ from collections.abc import Iterator
+@@ -226,6 +227,26 @@ def test_not_reached_is_stored_nothing(tmp_path: Path) -> None:
+         r.crm(timeout_seconds=6.0).put("L-1", REC)  # a closed port can be refused slowly on some systems
+ 
+ 
++def test_a_rejected_call_still_gets_its_answer_when_the_body_arrives_after_the_close(rig: Rig) -> None:
++    """http.client sends the headers first and the body after. The fake answers a rejected call (401) at once and closes;
++    if the body is then still unread, the system resets the connection and the client loses the answer (Windows:
++    ConnectionAbortedError). The fake reads the body before it answers. Here the body is sent late on purpose."""
++    body = b'{"properties":{"email":"a@example.test"}}' * 30
++    head = (
++        "POST /crm/v3/objects/contacts HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer wrong\r\n"
++        f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n"
++    ).encode()
++    with socket.create_connection(rig.srv.server_address[:2], timeout=5) as c:
++        c.sendall(head)
++        time.sleep(0.3)  # the fake has answered and closed by now
++        try:
++            c.sendall(body)
++        except OSError:
++            pass  # the reset can already show here; the answer must still be readable below
++        time.sleep(0.3)
++        assert c.recv(200).startswith(b"HTTP/1.1 401")
++
++
+ def test_call_cap_stops_before_the_network(rig: Rig) -> None:
+     c = rig.crm(max_calls=1)
+     c.put("L-1", REC)
