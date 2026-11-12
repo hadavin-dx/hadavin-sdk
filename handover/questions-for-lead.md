@@ -1825,3 +1825,7 @@ Q8b batch 2 (2026-11-11): (1) PR77 and Q8b both change `guard/redact.py`; Q8b sh
 
 ## q-q8a1-hide-ids (00:30Z, 2026-11-12) Q8a-1 error text: hide all ids or accept?
 Two parts. (1) Plain-shaped defining ids of agent, action, chain, principal print in error text (disclosed in CHANGELOG). (2) Secret-name and other reference fields (e.g. private_key_secret_name) printed only after a word-like test, so a plain lower-case password typed into such a field would print. Safe default (applied by builder b9 now): part 2 hidden by field/position; part 1 unchanged until you answer. Evidence: reviews/Q8a-1/goldfish_review_report-r8.md Issue 2.
+
+## P3a-2 result review round 1 (head ee831364, 2026-11-12 01:35Z)
+- q-p3a2-e1-extension-lockout: an extension that leaves objects readable by everyone in the run schema (e.g. pg_stat_statements views) makes step 2 refuse on every run when the run schema is public, with no statement printed. Ticket stricter default (10.3 item 13) is built. Safe default: keep strict; fix CHANGELOG text; refusal text names the move-the-extension remedy. Your call: keep strict, or exempt extension members read-only.
+- q-p3a2-o8-schema-owner: a run schema owned by the same non-family owner seen at step 1 is accepted (ticket rule O8 says refuse); a changed owner is still refused. Safe default: keep the exemption, record as errata and CHANGELOG deviation. Your call: keep, or enforce O8.
