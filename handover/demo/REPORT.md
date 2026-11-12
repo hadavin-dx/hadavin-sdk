@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:28Z / 01:58 IST - LANE 9 DONE (hang hunt): NOT REPRODUCED in 51 runs; memory NOT the cause; 4 agents live
+ANSWER first (EVIDENCE RUNNER, hang/RESULTS.md, 49 raw files, pushed f32001ae): **NOT REPRODUCED. 0 failures, 0 hangs, 0 faulthandler dumps, 0 early ends in 51 pytest runs on pr-3-tests b29bb1f (SHA verified; Playwright NOT installed).** No root cause, no stack.
+Deviations from your order (plain): only 17 test files sort before test_hung_adapter_calls.py (not 20): ran those 17 + the hung file = 18 files, 880 tests (the hung file is tests 839-880 in that order: the 'near test 840' of lane 1 is its start); 'together' runs: 2 without load + 5 under load, NOT 10 (one run takes 3.4 to 4.8 min); `pytest-randomly` is not installed so `-p no:randomly` changed nothing. Load: 2 `yes` loops on the 4-vCPU VM, which also had lane 7's pytest --cov running; my own full run overlapped the first 3 loaded runs; loops stopped (`pgrep -x yes` empty: confirmed by me).
+Results (all exit 0, all passed): hung file alone 3 runs without load 13.1 to 13.3 s, 30 runs under load 13.3 to 14.8 s; 18 files together 2 runs without load 230 to 260 s, 5 under load 203 to 290 s (all 880 passed: the 'over 60 s' flag is just the normal length); one full serial suite 857 s, 2349 passed, 116 skipped, summary line printed (not cut short).
+MEMORY (your D10): NOT supported: oom_kill 0, failcnt 0, no OOM lines in dmesg at start, after the full run and at the end; peak memory of the one full run is 190 MiB (child rusage; /usr/bin/time is absent), by memory alone about 80 suites fit in 16 GiB; CPU is the tighter limit; a Playwright browser was not measured (estimate only); lane 1's and lane 4's own containers' counters are not visible to me. The stall of lane 1 and the early end of lane 4 therefore have NO supporting memory evidence here.
+SYN FLOODING: no new line appeared after kernel time 3755 s; that one fell inside lane 9's first unloaded together run (259.7 s, passed); no run stalled, so no stall can be linked to it; the hung file opens no sockets (in-process fakes only). PIPE LEAD (start_proc): not supported (the hung file has no Popen or start_proc and no run stalled).
+WAIT TABLE (reading only, not proof): bounded waits 8 s / 5 s / 10 s / 15 s plus a 0.5 s deadline and a 1.2 s wall-clock assert (load-sensitive). TWO UNBOUNDED LOOPS in the reaper, src/lead_desk/desk.py:652-655: `while older.is_alive()` and `while not self._started.wait(0.05)`: each exits only when the other thread ends or `stop` is set. Neither fired in the runs. If a stall ever recurs, those two are the first place to look (a stalled thread there would hang the test forever with no traceback, matching lane 1's symptom), but THERE IS NO EVIDENCE for it.
+NOT CHECKED: Playwright runs (lane 1's stall was in a run WITH Playwright and chromium: the load pattern differs), random order, `--cov`, other containers' memory.
+MY ASSESSMENT (labelled as such): lane 1 and lane 4 each saw ONE anomaly in many runs, both while 3 to 5 agents ran tests on the same VM; lane 9 saw none in 51 runs under similar CPU load. This fits a one-off scheduling or process-kill artifact of the shared machine but does NOT rule out a rare race in the reaper (two unbounded loops). To close it properly: run the full suite WITH Playwright and chromium under CPU load 3 times with `faulthandler_timeout=120` (about 17 min each; one process; heavy), or add a bound to the two reaper loops as a precaution (a code change in the public demo: your decision). I did not start that run (it would load the machine while lanes 7c, 10a2 and 10b are working): tell me if you want it.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:28Z / 01:58 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 20 min | 21:15 | running | CODEANT-COVERAGE.md | no file yet in triage/ (CODEANT-COVERAGE.md or codeant-*): 20 minutes without a visible file: WATCH; I ask it for an early file at 20:40 |
+| ab3f938c2486dd690 (agent, sonnet builder) | lane 10a2 gitleaks fix v2 | 20:23 | 11 min | 20:53 | running | gitleaks-toml-fix-v2.patch, SUMMARY2.md | working |
+| a2963d9e2981958a0 (agent, sonnet egm reviewer) | lane 8b v2 review | 20:27 | 8 min | 20:40 | running | fixes/REVIEW-2.md | working |
+| a6163bda862313baa (agent, sonnet builder) | lane 7c fixes after review 2 | 20:31 | 4 min | 21:11 | running | coverage patch v3, PLAN.md | working |
+Totals: agents live 4; shells 0; pytest runs about 1; `yes` loops 0 (stopped); containers 0; load average 1.66, 3.05, 2.79; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 9 hang hunt | 1 (done) | n/a | n/a | one round; the D10 memory hypothesis tested and not supported | yes | done unless you want the with-Playwright load run |
+| lane 7 Sonar | fix round 7c; review 3 follows | r1 0B/1M/8N; r2 0B/1M/7N | see earlier | security path | no cap | review without Major/Blocker |
+| gitleaks allowlist | fix round 2 (10a2) | v1 0B/1M/2m/2N | see earlier | security path | no cap | review without Major/Blocker |
+| lane 8 browser tests | review 2 running | v1 0B/3M/8N | design reversals | D10, D11 | none | review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a1efeaddf3232ebcb (lane 9, sonnet evidence runner) | 37 min (19:50 to 20:28) | NOT REPRODUCED in 51 runs; memory not supported; two unbounded reaper loops noted | yes |
+
 ## 2026-11-12 20:27Z / 01:57 IST - LANE 7 review 2 done (security path): 0 Blocker, 1 Major (a missing rule-20 rung), 7 Nits; lane 7c started; 5 agents live
 FAILED / OPEN first:
 - MAJOR (rule 20, R448): the lock-drift hygiene test (12 lines in tests/test_hygiene.py) skips an obvious higher rung: PIP ITSELF. The job installs the two lock files in two separate commands; ONE call `pip install --require-hashes -r requirements-dev.txt -r requirements-coverage.txt` might fail on drifting pins with no test code. Nobody has tested it (the reviewer could not run pip). Lane 7c tests it in a throwaway venv (conflicting pin across two -r files; identical pins in both; `-c` under --require-hashes), records raw output, and then either deletes the test (pip works) or keeps it with a rung-table row 'tried, pip does not detect it: evidence'.
