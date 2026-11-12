@@ -1,0 +1,45 @@
+# EVIDENCE RUNNER results: Q8a-1 batch 18 (round 19), head 51f206bc03000d99d567a812c8b9d168163ea233
+
+I ran and recorded; I judged nothing and changed nothing in the head. Date 2026-11-12, run 16:39 to about 17:25 UTC (22:09 to 22:55 IST). Raw logs: `/home/user/build/evidence-raw/Q8a1b18-51f206bc/`. Small excerpts in this folder.
+
+## Failed or not run (first)
+1. **Nothing failed at the head.** Every gate below exited 0.
+2. **The fail-before proof is not a clean run of the whole new test file.** On the old head (b5b6c9fd, old `src`) `tests/test_q8a1_b18_fixes.py` does not collect: `ImportError: cannot import name 'code_words' from 'hadavin_sdk.hidden_input'` (0 passed, 1 error, exit 2; log `failbefore-b18file.log`). To get a per-test result I added an evidence shim outside the repo (`sitecustomize.py` in a folder put first on PYTHONPATH, which adds a stub `code_words` that raises when called). With the shim: **24 failed, 5 passed** (`failbefore-b18-per-test.txt`). The five that pass on old code: `test_a_refused_value_is_in_no_channel_of_the_error_for_each_shape[library_error_text]`, `[plain_value_error_hex]`, `test_every_purge_method_of_the_store_is_declared_to_give_a_number`, `test_the_httpcode_check_accepts_only_the_library_class_with_its_import`, `test_the_mutant_check_names_each_kind_of_mutant_that_cannot_apply`.
+3. **Count differs from the brief:** the brief says the new test file has 30 tests; `pytest --collect-only` at the head collects **29** (22 `def test_` plus 2 parametrized ones). It passes 29 of 29 (`b18tests.log`). The builder's "23 failed 4 passed" was on a first 27-test version; mine is 24 failed 5 passed on the 29 now in the file.
+4. **Not run, as the brief says (IMPOSSIBLE-NOW):** Python 3.12 suite, semgrep, zizmor, trivy, pip-audit. Also not run: the perf step (`pytest -m perf`; the brief names no perf item) and the known timing test `test_the_timing_harness_flags_a_quadratic_stand_in` (brief: do not touch). The vault contract tests have no Vault server here (see skip line below; only 1 skip showed).
+5. `uv sync --locked --no-build` was not used (fails here, per the brief); I used `uv sync --all-extras --group test`. `git status` of the worktree was clean at the end (0 lines) and `uv.lock` was not changed.
+6. The builder's counts of passed and skipped (11118 passed, 457 skipped) do not match mine (11574 passed, 1 skipped): my run had a live Postgres 16 and ran as user nobody; I did not look into the builder's environment.
+
+## Table
+| # | Item | Command (as user nobody via heavy.sh unless noted) | Exit | Last line / result |
+|---|---|---|---|---|
+| 1 | files changed vs origin/main | `git diff --name-only origin/main...HEAD` | 0 | 116 files (the 28 delta files of DELTA-FILES.txt are among them) |
+| 2 | full pytest, once | `pytest -m "not live and not perf" -p no:cacheprovider -q -rs`, own Postgres 16.15 | 0 | `11574 passed, 1 skipped, 28 deselected in 327.25s (0:05:27)` |
+| 2a | the one skip | | | `tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it` |
+| 3 | `python tests/stage_mutants.py` | | 0 | `422 of 422 good; problems: []` (no non-good row; Z256 and Z257 both `ok KILLED`) |
+| 4 | `python tests/mutation_runner_mutants.py` | | 0 | `62 of 62 good; problems: []` |
+| 5 | `python tests/migration_numbers_mutants.py` | | 0 | `36 of 36 good; problems: []` |
+| 6 | isolation Z256, Z257, Z152, Z190, Z251 (`stage_mutants.py <id>`, one each) | | 0 each | `1 of 1 good; problems: []` each; each KILLED by its own pinned test (Z152, Z190, Z251 by the `test_the_guard_finds_each_planted_fault_alone[...]` case; Z256, Z257 by `test_the_httpcode_check_accepts_only_the_library_class_with_its_import`) |
+| 7 | `ruff check src tests demos tools` | root | 0 | `All checks passed!` |
+| 8 | `ruff format --check src tests demos tools` | root | 0 | `336 files already formatted` |
+| 9 | `uv run --with bandit bandit -q -r src demos tools -ll` | root | 0 | no finding; two warnings only (`nosec` at `tools.py:418` with no failed test; "bytes is not a test name") |
+| 10 | `python tools/scan_repo.py` | root | 0 | no output |
+| 11 | gitleaks `origin/main..HEAD` (`gitleaks git --log-opts=origin/main..HEAD`, repo config) | root | 0 | `50 commits scanned ... no leaks found` |
+| 12 | `tests/test_changelog_claims.py` alone | | 0 | `6 passed in 1.89s` (this test is what checks the 55 / 54 / 474 / 594 / 422 / 54 counts in CHANGELOG; I did not recount them myself) |
+| 13 | fail-before, new file `test_q8a1_b18_fixes.py` | old worktree b5b6c9fd, old `src` (checked: import path was the old `src`), changed test files copied in | 2 | collection error, see item 2 above; with shim: 24 failed, 5 passed |
+| 14 | fail-before, the 8 other changed test files | same | 1 | `20 failed, 890 passed in 62.95s`; the 20 failed tests are listed in `failbefore-otherfiles-failed.txt` (3 in test_changelog_claims, 2 in test_guard_reasons, 1 in test_mutation_runner, 1 in test_q8a1_b14_fixes, 1 in test_q8a1_b17_fixes, 1 in test_q8a1_f_string_trace, 7 in test_review_fixes, 4 in test_stage_names). Old `CHANGELOG.md` was kept (not copied), so the three changelog tests fail on that account too |
+| 15 | hostile probes (own script, `probe.py`, 203 probes) | see below | 0 | 4 of 203 show the value; the other 199 do not |
+
+## Hostile probes (item 6 of the brief)
+Values used, all built from parts: a word-like lower-case canary; a canary with a capital; a made-up library error text that itself quotes the canary; a path-like text; 48 hex characters; 5120 characters; text with a newline; a `str` subclass whose `__str__` and `__repr__` return the canary (`S1`); a `str` subclass whose `__eq__` always returns True (`S2`).
+* **Where the value showed (4 probes):** (a) `errors.shown_name(canary, [canary])`, and (b) `shown_name(canary)` inside `with loaded_ids([canary])`: the name is shown when the caller says it is a loaded name. (c, d) `LocalDirSink.write_intent` and `write_outcome` return `<canary>.json` for an event whose id is the plain word-like canary (this value is a valid event id, so the event is accepted; the return value is the file name).
+* **Where it did not show:** `errors.shown_id` for all 9 values (returns `?`); `shown_name` with no loaded set for all 9 (`<not shown>`); `shown_name` with the value loaded for the 8 others, including both `str` subclasses; `AuditEvent` event_id through the constructor, `model_validate`, `model_validate_json` and `model_validate_strings`: for every refused value, `str(e)`, `repr(e)`, the traceback, `e.errors()` (also with `include_input=True` and `include_context=True`), `e.json()`, `e.args`, `__cause__`, `__context__` and `__dict__` held none of the needles; the two `str` subclasses are refused with the fixed sentence and do not show; `LocalDirSink.write_intent/write_outcome/reconcile` for the other 8 values (traceback, return value, root logger output); sink root under a file whose name holds the value; `Route(model_id=..)`, `Route(max_tokens=..)`, `Route` with the value as an unknown key, `System(base_url=..)`: `str`, `repr`, `errors()`, `json()` and traceback held none of the needles.
+* **check-config:** 68 runs of the CLI (`hadavin-sdk --config <copy> check-config`, with and without `HADAVIN_DEBUG=1`): agent id, model_route name, unknown top-level key, a name in `scope_allowed`, `prompt_file` path, a non-number `max_steps`, each with 5 of the values; malformed YAML; non-UTF-8 bytes; an action file whose name holds the canary; the unchanged fixture. Exit codes: 12 runs exit 0 (the unchanged fixture and the agent-id substitutions with the 5 values, which the command accepted), 56 exit 2. **No run printed any needle on stdout or stderr.** The fixture as shipped needs `{port}` replaced to be accepted; I replaced it with `1`.
+* Not tried: `shown_id` / `shown_name` / event ids of type `bytes` or `int` (not in this probe set). The two `str` subclasses were also given to `LocalDirSink` as the id of an event built without the model check (set with `object.__setattr__`); they did not show.
+
+## Setup
+Worktree `/home/user/build/EV-Q8a1b18-51f206bc/wt` at the exact sha (`git rev-parse HEAD` = 51f206bc03000d99d567a812c8b9d168163ea233, status clean); fetched `origin wip/cloud-q8a1-b18` first (FETCH_HEAD = same sha). Own venv; own Postgres 16.15 (unix socket only, port 56781, started as OS user postgres, data under my build folder). Test processes ran as OS user nobody with a cleaned environment (no cloud, model or token variables). Wait in the heavy.sh queue: not measured exactly; the full pytest and `stage_mutants.py` each waited several minutes for a slot (the stage run's own log started about 9 minutes after I queued the chain).
+
+## Cleanup
+Stopped my Postgres, removed my two worktrees, the venv and my temp folders (see the final line of this file for the result). Not touched: anything of other agents.
+Cleanup result: server stopped, both worktrees, venv, Postgres folder and temp folders removed; no process of mine left running (checked with ps). Gitleaks on this folder: exit 0.
