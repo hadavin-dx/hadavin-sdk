@@ -1,3 +1,6 @@
+## 23:58Z PR 71 (P0a) MERGED by the lead (squash, pinned to 47d74d26)
+Lead note 23:55Z: all CI green incl. check, security, tests-py312, CodeQL, SonarCloud. Independent evidence on that head: handover/evidence/P0a/47d74d26/RESULTS.md (full pytest 10805 passed, 1 skipped). Nothing more to merge for PR 71. Still READY-pending: timing fix (head 86b94db0 on wip/cloud-timing-flake, NOT READY: runner pending, E731 line and 58 s figure to fix).
+
 ## 22:58Z CI GUARD (ORDER 266): READY on 0cd2af4efe1ee5dab67e88c202ab1fc43f5c7d3d (ref `wip/cloud-ci-guard-wip`; 3 files: ci.yml, golden, tests/test_ci_guard_wip_lanes.py; no handover files, check script exit 0)
 
 ## 23:21Z CI GUARD PR 97: READY, GitHub CI green on head 0cd2af4e
