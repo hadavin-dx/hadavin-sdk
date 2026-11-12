@@ -85,6 +85,8 @@ OVER_MATCH = {
     "r078": "a Unicode space is dropped by the scan key",
     "r094": "a control is dropped by the scan key",
     "r140": "a trailing dot is dropped by the scan key",
+    "r085": "a code point this Python cannot name fails closed in the DENY check (P1a fix8, F6-5): it may be a letter in a newer table",
+    "r168": "a skin-tone modifier is a modifier symbol (Sk), and the DENY check reads the text without its Sk characters (P1a fix8)",
     "r174": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
     "r175": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
     "r176": "a spacing mark (Mc) is not a letter or digit, so the scan key drops it (the safe side of a DENY)",
@@ -246,36 +248,39 @@ def test_the_golden_hashes_equal_the_live_ones():
         )
 
 
-# The five hashes that did NOT move when the DENY check began to read the marks-dropped text (F6-1, ORDER 177): copied from the golden file
-# of the head before that change. A change of the alg id is for these; identity_keys alone may change without one (rule D4).
+# The hashes that did NOT move when the DENY check began to read the marks-dropped text (F6-1, ORDER 177): copied from the golden file of
+# the head before that change (here: the P1b head, alg fold5, which the merge of P1a fix8 and P1b rests on). A change of the alg id is for these;
+# identity_keys alone may change without one (rule D4).
 UNMOVED_BY_F6_1 = {
     "15.0.0": {
-        "identity_key": "a701e40f85a2d37b5da895001e934cbede2d3098fe11a287c5aac1294d97bc4f",
+        "identity_key": "8ee719c735708ffd4537d90d12f83409cb6790591a5968255b8ff5758577def2",
         "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
         "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
-        "fold_views": "2ce9debaabc84b8763cbfca937e13419cba535bf0245edbc13aa0ec1659a3bb1",
+        "fold_views": "dfece27faf6cfb5d296c6afd058532bc7e84baa1e7f0aa57d68464026181cd1b",
         "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+        "scan_keyset": "bb6dc88bec4f23c4c7a6bfa7efd6175e66ac52a338ac3f7411f3db618bbf596f",
     },
     "15.1.0": {
-        "identity_key": "e1e91426b47dee0ed37059a650fd691a5a87fea5bac9cf5ec3ca3625bdfeb6b2",
+        "identity_key": "d984e240782197c3dc2ed6308cee6edc52c4a20aa392f96be6d0d47d9540106f",
         "squeeze": "7368c4692417bc861672268b6392667d340b1a556863c3058822e1478aa861d9",
         "squeeze_loose": "03c32c9f58eb4defcf78629ef559c20c1677a0ca20183610ae8c53bce3d2462d",
-        "fold_views": "58382278973c699354830fb37c7cd83e9b8b9f48a07c0708c01c61a42176fd41",
+        "fold_views": "9abc0220940b62f17ae7abbdf4faaf1949f0bb56b85f7188bfdd7064dec3f430",
         "squeeze_views": "c4a2f83f2dca99c40dae2f7f5b2a34c99baff4d4bbfe08e8a439bc42a11eb511",
+        "scan_keyset": "f6ebb86718d66d42010f648d9cbbd33308f3344f0454b33eb8f338ef4538361d",
     },
 }
 
 
 def test_only_the_identity_keys_hash_moved_when_the_deny_check_began_to_drop_the_spacing_marks():
-    """F6-1 changes ``identity_keys`` and nothing else: the other five golden hashes of both sections are the ones of the head before the
-    change, so the alg id stays ``fold4`` (rule D4), and ``identity_keys`` is the one entry that is NOT among them."""
+    """F6-1 changes ``identity_keys`` and nothing else: the other golden hashes of both sections are the ones of the head before the change, so
+    the alg id stays ``fold5`` (rule D4), and ``identity_keys`` is the one entry that is NOT among them."""
     assert set(GOLDEN["sections"]) == set(UNMOVED_BY_F6_1)
     for version, section in GOLDEN["sections"].items():
         for name, digest in UNMOVED_BY_F6_1[version].items():
             assert section["hashes"][name] == digest, f"{version} {name}: this hash moved, bump alg"
         assert set(section["hashes"]) - set(UNMOVED_BY_F6_1[version]) == {"identity_keys"}
-    assert FOLD_VERSION.startswith("alg=fold4|"), (
-        "the alg id changed: that is for the five hashes above, not for identity_keys alone"
+    assert FOLD_VERSION.startswith("alg=fold5|"), (
+        "the alg id changed: that is for the hashes above, not for identity_keys alone"
     )
 
 

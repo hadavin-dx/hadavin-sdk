@@ -121,6 +121,29 @@ def test_fold_is_stable_under_combining_marks_format_unassigned_and_tag_characte
     )
 
 
+def test_a_white_space_control_or_separator_becomes_a_space_and_every_other_control_is_dropped():
+    """Derived from ``str.isspace`` over every control character and every line or paragraph separator, not from a list: step 5 turns a white-space
+    one into a space (``fold("admin\\n") == "admin "``), every other one is dropped (``fold(x + c) == fold(x) == fold(c + x)``). identity_key,
+    squeeze and could_be_same_person ignore them."""
+    import unicodedata
+
+    seen = 0
+    for cp in range(0x110000):
+        c = chr(cp)
+        if unicodedata.category(c) not in ("Cc", "Zl", "Zp"):
+            continue
+        seen += 1
+        if c.isspace():
+            assert fold("admin" + c) == "admin " != fold("admin"), f"U+{cp:04X}"
+            assert fold(c + "admin") == " admin", f"U+{cp:04X}"
+            assert identity_key("admin" + c) == identity_key("admin")
+            assert squeeze("admin" + c) == squeeze("admin")
+            assert could_be_same_person("admin" + c, "admin")
+        else:
+            assert fold("admin" + c) == fold("admin") == fold(c + "admin"), f"U+{cp:04X}"
+    assert seen == 65 + 2, seen  # 65 control characters (C0, DEL, C1) and U+2028, U+2029
+
+
 def test_fold_covers_the_listed_look_alikes_and_all_map_to_ascii():
     listed = {0x405: "S", 0x406: "I", 0x408: "J", 0x423: "Y", 0x41E: "O", 0x455: "s", 0x3B9: "i", 0x3BA: "k", 0x3C1: "p", 0x3C4: "t",
               0x3C5: "u", 0x3C7: "x", 0x501: "d", 0x131: "i", 0x130: "I", 0x585: "o", 0x57D: "u", 0x555: "O", 0x54D: "U", 0x3BF: "o",
@@ -1197,7 +1220,7 @@ def test_the_hidden_channel_signal_refuses_what_is_not_text():
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------------------------------
-def test_the_public_names_are_exactly_the_listed_thirty_three():
+def test_the_public_names_are_exactly_the_listed_thirty_six():
     assert sorted(textnorm.__all__) == sorted(
         [
             "FILLERS",
@@ -1208,6 +1231,7 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "EmptyView",
             "FoldNotConverged",
             "NotText",
+            "SPACING_CATEGORIES",
             "TextTooLong",
             "TextnormError",
             "UnidataMismatch",
@@ -1215,6 +1239,7 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "allow_equal",
             "could_be_same_person",
             "fold",
+            "fold_view",
             "fold_views",
             "has_hidden_channel",
             "has_mixed_script",
@@ -1233,9 +1258,10 @@ def test_the_public_names_are_exactly_the_listed_thirty_three():
             "squeeze",
             "squeeze_views",
             "value_scripts",
+            "without_spacing_marks",
         ]
     )
-    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 33
+    assert len(textnorm.__all__) == len(set(textnorm.__all__)) == 36
 
 
 def test_every_name_the_module_defines_is_public_and_listed_or_private():
@@ -3020,7 +3046,9 @@ def test_the_deny_check_false_matches_on_the_names_lists_are_exactly_the_listed_
     ):
         assert could_be_same_person(a, b), f"{_show([a, b])} do not match"
     # a text made only of spacing marks has the empty check name from its marks-dropped text: it matches any other text whose check name is empty
-    assert "" in textnorm.identity_keys("\u0903") and "" in textnorm.identity_keys("\u200b")
+    assert textnorm.key_tag() in textnorm.identity_keys(
+        "\u0903"
+    ) and textnorm.key_tag() in textnorm.identity_keys("\u200b")
     assert could_be_same_person("\u0903", "\u200b"), "the empty check names do not match"
     assert not could_be_same_person("\u0903", "a"), "the empty check name matches a letter"
 
@@ -3099,6 +3127,11 @@ def test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_wor
         "\u0440\u0430\u00b4ypal",  # the same with the acute accent (Sk, a space under NFKC)
     ):
         assert has_mixed_script(text), f"the mixed word {_show([text])} is not flagged"
+    # rule (a) of P1b reads the script data, so a Latin letter with a Devanagari LETTER is flagged whatever mark follows (the P1a fix8 row said
+    # "Ramesh" + a syllable with its own sign was not flagged: that was true while rule (a) named only look-alike scripts)
+    assert has_mixed_script("Ramesh\u091c\u0940"), (
+        "a Latin letter next to a Devanagari letter is not flagged"
+    )
     mcs = _code_points_of("Mc")
     assert len(mcs) > 400
     missed = [c for c in mcs if not has_mixed_script("ali" + c + "ce")]
@@ -3111,7 +3144,6 @@ def test_a_spacing_mark_or_symbol_cannot_hide_a_mixed_word_and_a_mark_of_the_wor
         "caf\u00e9",
         "na\u00efve",
         "ok\ufe0f",
-        "Ramesh\u091c\u0940",  # Latin, then a Devanagari syllable with its own sign
         "al\u02b0ice",  # a modifier letter: NFKC makes it a Latin h
         "ali^ce",
         "x^y",
@@ -3222,7 +3254,7 @@ def test_every_key_and_view_of_seeded_multi_character_texts_is_within_the_weight
         )
         views = (
             *keys,
-            *textnorm.fold_views(text, casefold=True, collapse_ws=True),
+            *textnorm.fold_views(text, scripts=frozenset(), casefold=True, collapse_ws=True),
             *textnorm.squeeze_views(text, loose=True),
         )
         assert all(len(bare(v)) <= weight for v in views), (
