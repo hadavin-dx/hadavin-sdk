@@ -445,8 +445,10 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_8_nine_ten_and_forty_digits_behind_a_bare_credential_word_are_masked_like_the_record_key', 'a bare word with many digits leaves a value readable'),
     mutant('M129 a line break does not end a Digest header value', REDACT, r'''+ r"[ \t]++)([^\r\n]{8,}+"''', r'''+ r"[ \t]*+)([^\r\n]{8,}+"''',
         BATCH8, 'test_b8_10_a_line_break_ends_a_digest_header_and_a_scheme_word', 'a line break after Digest does not end the header value'),
-        mutant('M130 a line break is no gap for the Basic rule', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})"''',
+    mutant('M130 the Basic rule wants 16 characters, not 8 (a short wrapped value stays readable)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{16,}={0,2})"''',
         B10, 'test_b10_1_the_basic_rule_alone_masks_a_bare_wrapped_value_of_8_to_15_characters', 'a short wrapped Basic value is readable'),
+    mutant('M159 a vertical tab is no line space (the Digest rule loses a header after it)', REDACT, r'''_LINE_SPACE = r"[^\S\r\n]"''', r'''_LINE_SPACE = r"[ \t]"''',
+        BATCH9, 'test_b9_1_a_digest_header_goes_on_after_a_line_fold_and_a_no_break_space_but_not_after_a_plain_line_break', 'a Digest value after'),
     mutant('M131 a cookie word key in text has no more words', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"''', r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+"''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
     mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
@@ -634,6 +636,63 @@ def _neutralise(text: str) -> str:
         BATCH8, 'test_b8_3_the_guarded_endings_of_the_record_walk_are_the_pairs_of_the_card_list', 'GUARDED_ENDINGS is not generated from the pairs'),
     mutant('M206 a pair of the table is no key alternative of the card rules [b11]', REDACT, r'''    *(_guarded_key(bare, second) for bare, second in _GUARDED_PAIRS),''', r'''    *(_guarded_key(bare, second) for bare, second in _GUARDED_PAIRS if bare != "auth"),''',
         BATCH8, 'test_b8_3_the_guarded_endings_of_the_record_walk_are_the_pairs_of_the_card_list', 'is no key alternative of the card rules'),
+    # ---- batch 11, group 1: a planted fault for the controls that had none ----
+    mutant('M207 a link in a card is not removed (kept as it is) [b11]', "approvals/gate.py", r'''        line = _URL.sub("[link removed]", line)''', r'''        line = _URL.sub(lambda m: m.group(0), line)''',
+        BATCH, 'test_a_link_alone_is_still_removed_whole', "assert 'path' not in"),
+    mutant('M208 a Bearer token swallows the text after it [b11]', REDACT, r'''[a-z0-9._~+/\-<>]{12,}=*)"),''', r'''[a-z0-9._~+/\-<>]{12,}=*[ a-z]*)"),''',
+        BATCH, 'test_a_plain_bearer_token_is_masked_and_text_after_it_is_kept', 'Authorization: Bearer <BEARER_1>'),
+    mutant('M209 a phrase that says there is no value (not set) is never read as one [b11]', REDACT, r'''    return all(w in _NOT_A_VALUE or w in _PROSE_WORDS for w in words)''', r'''    return False''',
+        BATCH3, 'test_i1_an_unrelated_not_set_line_stays_readable', "other 'not set' lines were swept"),
+    mutant('M210 a value goes on over the & of the next parameter [b11]', REDACT, r'''|[^\s\"';,&]"''', r'''|[^\s\"';,]"''',
+        BATCH3, 'test_i8_a_link_label_before_a_key_keeps_the_next_parameter', '[link removed]token=<SECRET_1>'),
+    mutant('M211 a semicolon in front of a key name no longer ends an unquoted value [b11]', REDACT, r'''|;(?=[^\s\"';,&])(?![A-Za-z_][\w.\-]*[\"']?\s*[:=]))"''', r'''|;(?=[^\s\"';,&]))"''',
+        BATCH4, 'test_j3_the_stop_is_the_same_on_every_path', 'Password=<SECRET_1>'),
+    mutant('M212 a decision number is written in a shipped source file [b11]', REDACT, r'''    """A captured credential value that is a tool's words, not a value: one word''', r'''    """A captured credential value that is a tool's words (decision D-032), not a value: one word''',
+        BATCH4, 'test_j6_no_shipped_text_names_an_internal_decision_number', 'names an internal decision number'),
+    mutant('M213 an address in a card summary is not replaced by a placeholder [b11]', REDACT, r'''    ("IPV4", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")),''', r'''    ("IPV4", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}(?=:)")),''',
+        CARD_TESTS, 'test_g8_an_ip_shaped_target_is_a_placeholder', '10.20.30.40'),
+    mutant('M214 a value masked under a credential key is written twice (not one placeholder) [b11]', RED, r'''        if _ONLY_PLACEHOLDERS.fullmatch(part):
+            return part''', r'''        if _ONLY_PLACEHOLDERS.fullmatch(part):
+            return part + part''',
+        CASE_TESTS, 'test_g1_a_one_word_value_is_one_placeholder', '<SECRET_1><SECRET_1>'),
+    mutant('M215 the key message is read as a credential key [b11]', RED, r'''    own = sensitive(key)
+    sens = secret_data or own''', r'''    own = sensitive(key) or key == "message"
+    sens = secret_data or own''',
+        CASE_TESTS, 'test_g2_a_message_is_not_a_credential', "'message': P"),
+    mutant('M216 every value under a credential key is read as a credential [b11]', RED, r'''    credential = sensitive(key)
+    in_secret''', r'''    credential = True
+    in_secret''',
+        CASE_TESTS, 'test_g4_a_value_nested_under_a_credential_key_registers_nothing', 'registers nothing'),
+    mutant('M217 a value of one or two letters is swept from every copy [b11]', REDACT, r'''    if len(original) < 3:
+        return None
+    if _kind''', r'''    if len(original) < 1:
+        return None
+    if _kind''',
+        CASE_TESTS, 'test_n3_no_fragment_of_a_one_letter_value', 'a fragment was registered'),
+    mutant('M218 bearer is no credential word in the record walk [b11]', RED, r'''            w in CREDENTIAL_WORDS
+            or _glued''', r'''            (w in CREDENTIAL_WORDS and w != "bearer")
+            or _glued''',
+        CASE_TESTS, 'test_t1_every_key_the_older_rule_accepted_is_still_accepted', 'the key rule changed'),
+    mutant('M219 only the first spelling of value holds a value in a named entry [b11]', RED, r'''    value_keys = [k for k in obj if isinstance(k, str) and k.lower() == "value"]''', r'''    value_keys = []''',
+        GLUED_TESTS, 'test_r3_every_spelling_of_value_is_masked', 'shows its value'),
+    mutant('M220 the bundle is masked in five passes (a refused value multiplies the work) [b11]', RED, r'''    _apply(b, mask)  # pass 1: find every value
+''', r'''    for _ in range(4):
+        _apply(b, mask)  # pass 1: find every value
+''',
+        GLUED_TESTS, 'test_r10_refused_credential_values_do_not_multiply_the_work', 'multiplies the work'),
+    mutant('M221 a pair of the table is not read after the ordinary word by [b11]', REDACT, r'''    return bare + r"(?:[0-9]*[_.\-])?" + second''', r'''    return r"(?<!(?<![a-z0-9])by)" + bare + r"(?:[0-9]*[_.\-])?" + second''',
+        BATCH8, 'test_b8_3_a_real_two_word_credential_key_is_never_hidden_by_the_ordinary_look_behind', 'a credential key became readable'),
+    mutant('M222 a flag other than the authorization flags takes a second word [b11]', REDACT, r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}))"''', r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}(?:{_SP}+[^\s\"'-][^\s\"']{{2,}})?))"''',
+        BATCH8, 'test_b8_4_the_generic_flags_keep_the_one_word_rule_and_so_does_a_value_that_is_no_scheme_word_and_a_word', 'the one word rule is gone'),
+    mutant('M223 a flag other than the authorization flags takes a second word (the nine flags of the stated cost) [b11]', REDACT, r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}))"''', r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}(?:{_SP}+[^\s\"'-][^\s\"']{{2,}})?))"''',
+        BATCH9, 'test_b9_2_the_second_word_after_a_credential_flag_is_shown_for_every_flag_named_in_limits', 'is not shown'),
+    mutant('M224 the decoded spelling of a value with white space is never paired [b11]', RUNMAP, r'''any(c.isspace() or c in _VALUE_END for c in decoded)''', r'''False''',
+        K5R11, 'test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked', 'zq9'),
+    mutant('M225 the inputs of a proposal are not redacted before the plan [b11]', "runtime/evidence.py", r'''        inputs = runmap.redact_value(inputs, mapping)
+        stripped''', r'''        stripped''',
+        K5R11, 'test_a_secret_in_a_declared_free_text_proposal_field_is_masked_in_the_stored_plan_and_the_card', 'hunter2'),
+    mutant('M226 every entry of the run map is paired with its decoded spelling (junk uses up the slots) [b11]', RUNMAP, r'''        if len(out) >= MAX_DECODED_MASKS:''', r'''        if len(out) >= 1:''',
+        K5R11, 'test_junk_ahead_cannot_use_up_the_pairing_slots_and_a_long_value_is_masked_or_refused', 'InputTooLarge'),
 ]  # fmt: skip
 
 
