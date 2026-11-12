@@ -1,0 +1,50 @@
+test_b11_8_a_line_that_does_not_start_with_a_space_or_a_tab_ends_the_header[Digest] | killed-by mutants: M197 | Stated limit: the token is masked to the last folded line; the next line without an indent is a new line and s
+test_b11_8_a_second_word_on_the_same_line_is_shown_as_after_a_credential_flag[Basic] | killed-by mutants: none | Stated limit (the owner's second-word choice, here for the header): the token ends at white space on its line
+test_b11_8_a_second_word_on_the_same_line_is_shown_as_after_a_credential_flag[Token] | killed-by mutants: none | Stated limit (the owner's second-word choice, here for the header): the token ends at white space on its line
+test_b11_8_a_second_word_on_the_same_line_is_shown_as_after_a_credential_flag[ApiKey] | killed-by mutants: none | Stated limit (the owner's second-word choice, here for the header): the token ends at white space on its line
+test_b11_8_a_second_word_on_the_same_line_is_shown_as_after_a_credential_flag[Bearer] | killed-by mutants: none | Stated limit (the owner's second-word choice, here for the header): the token ends at white space on its line
+test_b11_8_a_long_run_of_folded_lines_is_read_in_linear_time | killed-by mutants: none | 
+test_b11_8_a_line_of_repeated_headers_is_read_in_linear_time | killed-by mutants: M191 | The first line of a folded header is the scheme word and one word: a read to the end of the line would start a
+test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_characters_is_shown_the_stated_cost[Basic] | killed-by mutants: M193 | Both sides of the cost for a credential key (as for `Authorization` in batch 10): a line that starts with a wo
+test_b11_8_after_a_scheme_word_and_a_break_a_first_word_of_fewer_than_8_characters_is_shown_the_stated_cost[Bearer] | killed-by mutants: M193 | Both sides of the cost for a credential key (as for `Authorization` in batch 10): a line that starts with a wo
+test_b11_3_the_flag_path_reads_the_pair_as_decided[bypass_keyboard] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[compass-key] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[compass2key] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[compass_direction] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[compass_id] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[compass_keyboard] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[cookiejar] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[obsession_id] | killed-by mutants: M198,M202 | 
+test_b11_3_the_flag_path_reads_the_pair_as_decided[possession_identity] | killed-by mutants: M198,M202 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[bypass_key2] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[bypass_keyboard] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass-key] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass2key] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass_direction] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass_id] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass_key2] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[compass_keyboard] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[cookiejar] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[obsession_id] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[possession-id2] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[possession_cookie] | killed-by mutants: M199 | 
+test_b11_3_the_text_path_reads_the_pair_as_decided[possession_identity] | killed-by mutants: M199 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[bypass.key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[bypass_key2] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass-key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass.key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass.key2] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass2-key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass2_key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass2key] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass_direction] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass_id] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[compass_key2] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[cookiejar] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[obsession_id] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[possession-id2] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[possession.id] | killed-by mutants: M200 | 
+test_b11_3_the_record_path_reads_the_pair_as_decided[possession_cookie] | killed-by mutants: M200 | 
+test_b11_3_a_flag_authorization_with_the_token_on_the_next_line_is_masked[Basic] | killed-by mutants: M203,M204 | 
+test_b11_3_a_flag_authorization_with_the_token_on_the_next_line_is_masked[Bearer] | killed-by mutants: M203,M204 | 
+test_b11_4_the_bare_scheme_rules_differ_by_scheme_as_on_main_the_stated_limit | killed-by mutants: none | PINNED LEAK, an owner question (`q-q8b-bare-bypass`): this test is MEANT to fail the day the owner decides tha

@@ -1,0 +1,61 @@
+IMPORT PATH /home/user/build/b12-notes/old/src/hadavin_sdk/__init__.py
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3ab0469810>
+
+    def test_b12_3_the_prefilter_gives_the_same_text_as_a_full_scan_of_every_rule(monkeypatch):
+        corpus = _g3_corpus()
+        with_gate = [redact_module.redact(t).text for t in corpus]
+>       monkeypatch.setattr(redact_module, "_GATES", {})
+E       AttributeError: <module 'hadavin_sdk.guard.redact' from '/home/user/build/b12-notes/old/src/hadavin_sdk/guard/redact.py'> has no attribute '_GATES'
+
+tests/test_q8b_batch12.py:236: AttributeError
+_ test_b12_3_every_match_of_a_prefiltered_rule_starts_at_one_of_its_literal_words _
+
+    def test_b12_3_every_match_of_a_prefiltered_rule_starts_at_one_of_its_literal_words():
+        # The property the prefilter rests on, found by the rules themselves (not by the prefilter): a match start is a word start.
+>       gated = redact_module._GATES
+                ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_GATES'
+
+tests/test_q8b_batch12.py:244: AttributeError
+_ test_b12_3_a_text_with_no_key_word_tries_no_prefiltered_rule_and_one_word_tries_each_key_rule_once _
+
+    def test_b12_3_a_text_with_no_key_word_tries_no_prefiltered_rule_and_one_word_tries_each_key_rule_once():
+        # Work, not seconds: the number of places where a prefiltered rule was tried.
+        plain = ("the quick brown fox jumps over the lazy dog 12345 " * 6000)[:262_144]
+        r = redact_module._Redactor(None)
+        r.find(plain)
+>       assert r.gate_tries == 0, f"{r.gate_tries} tries of a key-word rule on {len(plain)} characters with no key word"
+               ^^^^^^^^^^^^
+E       AttributeError: '_Redactor' object has no attribute 'gate_tries'
+
+tests/test_q8b_batch12.py:261: AttributeError
+_ test_b12_3_the_characters_that_ignore_case_reads_as_an_ascii_letter_are_exactly_the_four_the_fold_knows _
+
+    def test_b12_3_the_characters_that_ignore_case_reads_as_an_ascii_letter_are_exactly_the_four_the_fold_knows():
+        found = {}
+        for cp in range(128, 0x110000):
+            c = chr(cp)
+            if re.fullmatch("[a-z]", c, re.IGNORECASE):
+                found[c] = [x for x in "abcdefghijklmnopqrstuvwxyz" if re.fullmatch(x, c, re.IGNORECASE)][0]
+>       folded = {chr(k): v for k, v in redact_module._GATE_FOLD.items()}
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_GATE_FOLD'
+
+tests/test_q8b_batch12.py:275: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch12.py::test_b12_1_an_ordinary_word_and_more_characters_is_masked_in_every_quoted_form_as_on_main
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[compass]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[overpass]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[encompass]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[bypass]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[possession]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[obsession]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[underpass]
+FAILED tests/test_q8b_batch12.py::test_b12_1_the_session_and_pass_families_both_read_a_tail_after_the_ordinary_word[repossession]
+FAILED tests/test_q8b_batch12.py::test_b12_4_a_folded_authorization_header_is_masked_for_any_scheme_word_and_every_break_character
+FAILED tests/test_q8b_batch12.py::test_b12_4_extra_words_on_the_first_line_before_the_fold_are_masked_up_to_the_stated_reach
+FAILED tests/test_q8b_batch12.py::test_b12_3_the_prefilter_gives_the_same_text_as_a_full_scan_of_every_rule
+FAILED tests/test_q8b_batch12.py::test_b12_3_every_match_of_a_prefiltered_rule_starts_at_one_of_its_literal_words
+FAILED tests/test_q8b_batch12.py::test_b12_3_a_text_with_no_key_word_tries_no_prefiltered_rule_and_one_word_tries_each_key_rule_once
+FAILED tests/test_q8b_batch12.py::test_b12_3_the_characters_that_ignore_case_reads_as_an_ascii_letter_are_exactly_the_four_the_fold_knows
+15 failed, 15 passed in 14.44s

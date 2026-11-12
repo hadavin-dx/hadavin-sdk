@@ -650,7 +650,7 @@ def test_g1_a_one_word_value_is_one_placeholder():
 
 def test_g2_a_message_is_not_a_credential():
     (out,), _ = shown({"message": P})
-    assert out == {"message": P}
+    assert out == {"message": P}, f"the key message is read as a credential key: {out!r}"
 
 
 def test_g3_a_timestamp_stays_and_near_misses_are_masked():
@@ -671,9 +671,13 @@ def test_g3_a_timestamp_stays_and_near_misses_are_masked():
 
 def test_g4_a_value_nested_under_a_credential_key_registers_nothing():
     (first, second), counts = shown({"credentials": {"user": "svc"}}, {"message": "svc restarted"})
-    assert first == {"credentials": {"user": R.MASKED}}
-    assert not counts, counts
-    assert second == {"message": "svc restarted"}
+    assert first == {"credentials": {"user": R.MASKED}}, (
+        f"a value under a credential key is not masked as one: {first!r}"
+    )
+    assert not counts, f"a value nested under a credential key registers something: {counts}"
+    assert second == {"message": "svc restarted"}, (
+        f"a value nested under a credential key registers its copy: {second!r}"
+    )
 
 
 GATE_ROWS = [

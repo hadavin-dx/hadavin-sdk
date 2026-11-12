@@ -188,11 +188,16 @@ def test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_o
     for key in ORDINARY_TWO_WORD_KEYS:
         assert not R.sensitive(key), f"the record walk masks {key}"
         for tmpl in (
-            "cfg {k}={v} end", "cfg {k}: {v} end", 'cfg {k}="{v} {v}" end', "ran tool --{k} {v} --verbose",
+            "cfg {k}={v} end", "cfg {k}: {v} end", "ran tool --{k} {v} --verbose",
             "ran tool --{k}={v} --verbose",
         ):  # fmt: skip
             text = tmpl.format(k=key, v=ORDINARY_VALUE)
             left += [f"{key} {tmpl}: {p}" for p in _masked(text, ORDINARY_VALUE)]
+        # Batch 12 (group 1): a QUOTED value behind such a name is masked, as `main` masked it (the older decision "readable in every
+        # form" made 340 quoted cells readable that main masked: tests/test_q8b_batch12.py). The unquoted and flag forms stay readable.
+        quoted = f'cfg {key}="{ORDINARY_VALUE} {ORDINARY_VALUE}" end'
+        shown = [p for p, out in five_paths(quoted).items() if ORDINARY_VALUE in out]
+        assert not shown, f"a quoted value behind `{key}` is readable on {shown}"
         if ORDINARY_VALUE not in record_key_output(key, ORDINARY_VALUE):
             left.append(f"{key} record key masked")
     assert not left, f"an ordinary word was masked: {left[:8]} ({len(left)})"

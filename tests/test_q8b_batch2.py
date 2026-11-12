@@ -88,7 +88,7 @@ def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
     """A second key list is a collection literal (one entry per line or not) or a `a|b|c` string that names three or more
     credential words, anywhere in the package (an AST scan: not tied to two words on one line). Allowed, each for its reason:
     the one list, the words a tool prints after a key, the record walk's words and endings (compared with the one list by
-    test_r7), and the HTTP header-name filter of the tool path (broader than the key list on purpose). Fails on the code before
+    test_r7), and the HTTP header-name filter of the tool path (broader than the key list on purpose), and the start pieces of the key rules for the batch 12 prefilter (`KEY_GATE_WORDS`: not a key list, it only says where a rule is tried; a differential test and a start-word test pin it against the rules). Fails on the code before
     batch 3, where the quoted-value rules carried a third list. Scope: `src/` only (`tools/` and `demos/` are not scanned). The
     detection is `tests.q8b_helpers.second_key_lists`, the same function the self-test in test_q8b_batch4 runs on a sample."""
     import ast
@@ -102,6 +102,7 @@ def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
         "CREDENTIAL_WORDS",
         "GLUED_ENDINGS",
         "_CREDENTIAL_HEADER",
+        "KEY_GATE_WORDS",
     }
     bad = []
     for path in sorted(root.rglob("*.py")):

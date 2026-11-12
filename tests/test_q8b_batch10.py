@@ -330,7 +330,10 @@ def test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_r
             if form.startswith("ran --") and key.endswith("cookie"):
                 continue
             text = form.format(k=key, v=ORDINARY_VALUE)
-            if clean(text) != text:
+            # Round 13 (group 1): a QUOTED value behind a name with a tail is masked as `main` masked it; the bare word stays shown
+            # in every form (owner question q-q8b-bare-bypass), and every unquoted and flag form of the other names stays shown.
+            quoted = '"' in form and key != word
+            if (clean(text) == text) is quoted:
                 left.append(f"{key} {form}: {clean(text)!r}")
         if ORDINARY_VALUE not in record_key_output(key, ORDINARY_VALUE):
             left.append(f"{key} record key masked")

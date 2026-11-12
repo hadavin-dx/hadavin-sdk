@@ -1,0 +1,18 @@
+== /home/user/build/b12-notes/src-main/src
+hostile 30000 clean 0.066
+hostile 60000 clean 0.147
+hostile 120000 clean 0.3
+hostile 262144 clean 0.66
+prose 30000 clean 0.069
+prose 60000 clean 0.151
+prose 120000 clean 0.268
+prose 262144 clean 0.655
+== /home/user/build/B-Q8b-b12/src
+hostile 30000 clean 0.099
+hostile 60000 clean 0.181
+hostile 120000 clean 0.472
+hostile 262144 clean 0.882
+prose 30000 clean 0.094
+prose 60000 clean 0.187
+prose 120000 clean 0.352
+prose 262144 clean 0.678

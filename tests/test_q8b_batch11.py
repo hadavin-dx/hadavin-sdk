@@ -339,7 +339,9 @@ def test_b11_3_a_flag_authorization_with_the_token_on_the_next_line_is_masked(sc
 
 
 def test_b11_4_the_bare_scheme_rules_differ_by_scheme_as_on_main_the_stated_limit():
-    """LIMITS: the wrapped-header sentence holds inside a header; with no header name in front, `Basic` reads base64 letters
+    """PINNED LEAK, an owner question (`q-q8b-bare-bypass`): this test is MEANT to fail the day the owner decides that a bare `Token`,
+    `ApiKey` or `Digest` word followed by a token is masked; the failure message then says to change this test, LIMITS and the
+    question together. LIMITS: the wrapped-header sentence holds inside a header; with no header name in front, `Basic` reads base64 letters
     (8 or more), `Bearer` needs 12 characters, and `Token`, `ApiKey` and `Digest` have no rule (the owner question
     `q-q8b-bare-bypass`, built: shown). Pinned on both sides so that a change of any is seen."""
     t12 = "abcdefghij" + "kl"
@@ -357,7 +359,7 @@ def test_b11_4_the_bare_scheme_rules_differ_by_scheme_as_on_main_the_stated_limi
     )
     for scheme in ("Token", "ApiKey", "Digest"):
         assert t12 in clean(f"x {scheme}\n{t12} y"), (
-            f"a bare {scheme} has a rule: update the owner question and LIMITS"
+            f"PINNED LEAK: a bare {scheme} has a rule now; change this test, LIMITS and the owner question q-q8b-bare-bypass together"
         )
         assert t12 not in clean(f"Authorization: {scheme}\n{t12} y"), (
             f"{scheme} with a header name in front is readable"

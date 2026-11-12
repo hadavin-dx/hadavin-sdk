@@ -52,8 +52,24 @@ _SCHEME_GAP = r"\s++"
 # The lines that go on after the first line of a folded header: each starts with a space or a tab (the line fold of RFC 9112
 # section 5.2; `Authorization: Digest username="u",<LF> realm="r",<LF> response="<hash>"` is ONE header). Possessive and
 # linear: a line is read once, and the group ends at the first line that does not start with a space or a tab (round 10, Issue 2).
-_FOLD_LINES = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)++"
-_DIGEST_FOLDS = r"(?:" + _LINE_BREAK + r"[ \t]++[^\r\n]*+)*+"
+# Round 13 (group 4): the other line breaks of Unicode (and of `str.splitlines`) end a line of a folded header too: a vertical tab, a form
+# feed, U+0085 (next line), U+2028 and U+2029. A tool that splits on them sees a fold, so the folds below start after any of them, and a
+# line's text stops at any of them. `_FOLD_SPACE` is the white space of the FIRST line of a folded header: all white space except
+# those breaks (`_LINE_SPACE` reads a vertical tab as a space between a scheme word and its parameters, which stays).
+_OTHER_BREAKS = "\x0b\x0c\x85\u2028\u2029"
+# A scheme word of an Authorization header: letters only, as before batch 12 (`Bearer`, `NTLM`), or a name that starts with a capital letter, with hyphens and
+# digits (`AWS4-HMAC-SHA256`, `SCRAM-SHA-256`: batch 12, group 4). A lower-case token with a hyphen (`ab-xy`) is no scheme word: it is read
+# as the token, so its first part is not left readable as a "scheme" (a bare token is longer, mixed in case and has more digits).
+_ANY_SCHEME_WORD = r"(?:[a-z]+|(?-i:[A-Z][A-Za-z]{1,15}[0-9]{0,2}(?:-[A-Za-z0-9]{1,16}){1,3}))"
+_FOLD_BREAK = r"(?:\r\n|[\r\n" + _OTHER_BREAKS + "])"
+_FOLD_SPACE = r"[^\S\r\n" + _OTHER_BREAKS + "]"
+_LINE_TEXT = r"[^\r\n" + _OTHER_BREAKS + "]*+"
+_FOLD_LINES = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")++"
+_DIGEST_FOLDS = r"(?:" + _FOLD_BREAK + r"[ \t]++" + _LINE_TEXT + ")*+"
+# More words on the first line of a folded header after the first word (`Authorization: Bearer <token> x` and then the folded lines): at
+# most this many, so a line of repeated headers is read in linear time (each header reads at most this many words, never to the line's end).
+FOLD_FIRST_LINE_WORDS = 8
+_FIRST_LINE_WORDS = r"(?:" + _FOLD_SPACE + r"++\S++){0," + str(FOLD_FIRST_LINE_WORDS) + "}+"
 
 
 # Bank details (owner, 2026-10-28): a number is masked by its SHAPE next to a bank word, never by its checksum -
@@ -289,13 +305,22 @@ KEY_WORDS = "|".join(KEY_ALTERNATIVES)
 # `KEY_WORDS`, and the bare words `pass` and `session` followed by up to 20 key characters (the older rule's two prefixes:
 # the list above is meant to be a superset of the keys the older rule masked; `tests/test_q8b_batch4.py` checks it against the older rules (copied into `tests/q8b_older_rule.py`: the two quoted rules, the unquoted rule and the cookie rule) on a fixed sample of generated keys).
 # Written once; both quoted-value rules read this one name. (`auth` and `bearer` are not bare prefixes: `author="Priya"`. `authorization` is: a quoted value with spaces after it was half readable.)
+# An ordinary word with ANYTHING after it (`"compass_direction": "v"`, `"compass2key": "v"`, `"bypass__key": "v"`) is masked in a quoted
+# value as `main` masked it (batch 12, group 1: an exemption wider than the reading it replaced left 340 such json cells readable that
+# `main` masked). Only the ordinary word ALONE (with digits, a quote or `:` right behind it: `"bypass": "v"`) stays readable, a stated
+# owner question (`q-q8b-bare-bypass`). The look-ahead is the one `_bare_word` reads, so the two cannot disagree on what "alone" means.
+_QUOTED_NOT_BARE = r"(?![0-9]*[\"']?\s*[:=])"
 QUOTED_KEY_WORDS = (
     KEY_WORDS
     + "|"
     + _not_after_ordinary_word("pass")
-    + "pass|"
+    + "pass|pass"
+    + _QUOTED_NOT_BARE
+    + "|"
     + _not_after_ordinary_word("session")
-    + "session|authorization"
+    + "session|session"
+    + _QUOTED_NOT_BARE
+    + "|authorization"
 )
 # The flag rules read the same list (round 4, `--client_secret hunter22` and `--api_key hunter22` were not matched by a hand
 # list of hyphen spellings): every spelling of it that stands alone, plus the flag names that are no key of the list
@@ -906,7 +931,8 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(
             # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
             # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+"
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:"
+            + _ANY_SCHEME_WORD
             + _SCHEME_GAP
             + ")?("
             + _KEYED_VALUE
@@ -929,16 +955,31 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             + r")[\"']?\s*[:=]\s*[\"']?(?:"
             + _AUTH_SCHEME_NAMES
             + r")(?:"
-            + _LINE_SPACE
+            + _FOLD_SPACE
             + r"++\S*+"
-            + _LINE_SPACE
+            + _FIRST_LINE_WORDS
+            + _FOLD_SPACE
             + "*+|"
-            + _LINE_SPACE
+            + _FOLD_SPACE
             + "*+"
-            + _LINE_BREAK
+            + _FOLD_BREAK
             + r"(?![ \t])\S++"
-            + _LINE_SPACE
+            + _FOLD_SPACE
             + "*+)?("
+            + _FOLD_LINES
+            + ")"
+        ),
+    ),
+    # The same for an `Authorization` header whose first word is ANY scheme word, or no scheme word (`NTLM`, `Negotiate`, `OAuth`, `Splunk`,
+    # `Hawk`, `AWS4-HMAC-SHA256`, a name of the client's own, a bare token): the folded lines are the rest of the credential (batch 12,
+    # group 4: the rule above knew five scheme words only). The first word and up to `FOLD_FIRST_LINE_WORDS` more words on the line.
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?\S++"
+            + _FIRST_LINE_WORDS
+            + _FOLD_SPACE
+            + "*+("
             + _FOLD_LINES
             + ")"
         ),
@@ -1347,6 +1388,72 @@ _PIECE = re.compile(r"[^\s;,&=.:\"'\[\]{}<>]{8,}")
 
 # A placeholder token, captured so `re.split` keeps it as its own segment: `<LABEL_123>`.
 _LABELS = tuple(dict.fromkeys(label for label, _ in PATTERNS))
+# A literal prefilter for the rules that start with a long alternation of key words (batch 12, group 3). Such a rule is tried at every
+# position of the text by the regex engine, which has no literal to jump to: that was most of the cost batch 11 added. Every match of
+# such a rule STARTS with one of a few literal pieces (`password`, `token`, `authorization`, ...). A cheap scan finds where those
+# pieces are in the text; the rule is then tried only there (`pattern.match(text, position)`, which still sees the text before the
+# position, so the look-behinds and `^` read as in a full scan) and a text with no such piece never runs the rule. The pieces are a
+# SUPERSET of what a match needs, so the output is the same as a full scan (a differential test pins it, and a count test pins the
+# work). Case: the rules are case-insensitive, so the scan reads a lower-cased copy; the four characters that `re.IGNORECASE` reads as
+# an ASCII letter (dotted and dotless i, long s, the Kelvin sign) are turned into that letter first (a test finds them again by brute
+# force over every code point), and the copy keeps the length of the text, or the prefilter is not used for that text.
+KEY_GATE_WORDS = (
+    "pass", "pwd", "secret", "access", "account", "shared", "private", "api", "auth", "sas", "key", "cert", "sessid", "phpsessid",
+    "jsessionid", "connect", "client", "credential", "token", "signing", "encryption", "session", "bearer", "protection",
+)  # fmt: skip
+_GATE_FOLD = str.maketrans({"\u0130": "i", "\u0131": "i", "\u017f": "s", "\u212a": "k"})
+_GATE_FINDERS: dict[tuple[str, ...], re.Pattern[str]] = {}
+_GATES: dict[re.Pattern[str], tuple[str, ...]] = {}
+for _label, _pattern in PATTERNS:
+    if _label != "SECRET":
+        continue
+    if _pattern.pattern.startswith("(?i)authorization"):
+        _GATES[_pattern] = ("authorization",)
+    elif _pattern.pattern.startswith("(?i)(?:" + KEY_WORDS[:30]):
+        _GATES[_pattern] = KEY_GATE_WORDS
+    elif _pattern.pattern.startswith("(?i)(?:authorization|(?:" + KEY_WORDS[:30]):
+        _GATES[_pattern] = KEY_GATE_WORDS + ("authorization",)
+for _words in set(_GATES.values()):
+    _GATE_FINDERS[_words] = re.compile(
+        "|".join(re.escape(w) for w in sorted(_words, key=len, reverse=True))
+    )
+del _label, _pattern, _words
+
+
+def _gate_text(text: str) -> str:
+    return text.translate(_GATE_FOLD).lower()
+
+
+def _sub_at_literals(
+    pattern: re.Pattern[str],
+    repl: Any,
+    text: str,
+    low: str,
+    words: tuple[str, ...],
+) -> tuple[str, int]:
+    """`pattern.sub(repl, text)` for a pattern whose every match starts at one of `words` (as `low` shows them): the number of tries
+    is the number of places a word is in the text, not the length of the text. Returns the new text and the number of tries."""
+    out: list[str] = []
+    cursor = 0  # text before this is done (copied or replaced)
+    end_of_last = 0
+    tries = 0
+    for hit in _GATE_FINDERS[words].finditer(low):
+        pos = hit.start()
+        if pos < end_of_last:
+            continue
+        tries += 1
+        m = pattern.match(text, pos)
+        if m is None:
+            continue
+        out.append(text[cursor:pos])
+        out.append(repl(m))
+        cursor = end_of_last = m.end()
+    if not out:
+        return text, tries
+    out.append(text[cursor:])
+    return "".join(out), tries
+
+
 _PLACEHOLDER = re.compile(r"(<[A-Z][A-Z0-9]*_\d+>)")
 _SHOWN_PLACEHOLDER = re.compile(
     r"<[A-Z][A-Z0-9]*_\d+>|\u2039[A-Za-z][A-Za-z0-9]*_\d+\u203a"
@@ -1448,14 +1555,32 @@ class _Redactor:
         self._slow: list[str] = []  # values checked one by one: nested too deep for the finder
         self._ordered: list[tuple[str, str]] = []
         self.bank_near = False  # redact_many: a bank word in some string of the batch
+        self.gate_tries = 0  # places where a prefiltered rule was tried (a test counts them)
         if cache and cache.get("map") == self.mapping:  # nothing new since the last build: skip it
             self._ordered, self._rules, self._finders, self._slow = cache["state"]
             self._built_for = len(self.mapping)
 
     def find(self, text: str) -> str:
         out = strip_ansi(text)
+        low: str | None = None
         for label, pattern in PATTERNS:
-            out = pattern.sub(lambda m, label=label: self._mask(m, label), out)
+            words = _GATES.get(pattern)
+            if words is not None:
+                if low is None:
+                    low = _gate_text(out)
+                if len(low) != len(out):
+                    words = (
+                        None  # a text the fold would change in length: no prefilter (none is known)
+                    )
+            if words is not None and low is not None:
+                new, tries = _sub_at_literals(
+                    pattern, lambda m, label=label: self._mask(m, label), out, low, words
+                )
+                self.gate_tries += tries
+            else:
+                new = pattern.sub(lambda m, label=label: self._mask(m, label), out)
+            if new != out:
+                out, low = new, None
         return out
 
     def _mask(self, m: re.Match[str], label: str) -> str:

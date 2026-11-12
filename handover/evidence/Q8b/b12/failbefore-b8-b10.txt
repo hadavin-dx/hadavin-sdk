@@ -1,0 +1,21 @@
+IMPORT PATH /home/user/build/b12-notes/old/src/hadavin_sdk/__init__.py
+
+tests/test_q8b_batch10.py:340: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch8.py::test_b8_3_an_ordinary_word_with_one_more_word_stays_readable_in_every_form_on_every_path
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[bandpass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[bypass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[compass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[encompass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[highpass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[impass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[lowpass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[obsession]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[overpass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[possession]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[repossession]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[supersession]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[surpass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[trespass]
+FAILED tests/test_q8b_batch10.py::test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[underpass]
+16 failed, 75 passed in 51.86s
