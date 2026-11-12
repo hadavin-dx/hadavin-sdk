@@ -10,7 +10,8 @@ bind that other computers can reach is refused whenever a real service is config
 second, so a server cannot be started without the question being asked (a repo test reads every ``.py`` file of
 ``src``, ``demos`` and ``tools`` and fails on every form of server it lists: the standard server classes, bind and
 listen calls, ``multiprocessing`` listeners, ``http.server.test``, datagram endpoints, aiohttp sites, a ``.run(host=...)``
-call and the import of a module that only serves; the list is of forms, not proof that no other form exists). Both the check and the bind never look a
+call and the import of a module that only serves, with import aliases resolved; the list is of forms, not proof that no
+other form exists; a run-time test also checks that only ``listen`` reaches a socket bind). Both the check and the bind never look a
 name up (the standard server's own reverse lookup of the bound address is replaced): ``localhost`` is turned into ``127.0.0.1`` before the socket exists, and any other host must be an IP
 address written out.
 
@@ -76,14 +77,11 @@ def is_stand_in_object(obj: object) -> bool:
     return False
 
 
-def real_services(config: Config, held: Mapping[str, object] | None = None) -> tuple[str, ...]:
-    """The things that reach a real service, or that could (custom code), each named in words
-    ("backends.llm: anthropic", "system billing", "source cluster", "tools:my_tools", "held channel: MyChannel");
-    empty when everything is a stand-in. Two things are read: the loaded ``Config`` and ``held``, the objects a
-    server really holds (``Approvals.held_services()``: the channel, the detector and the store it was built with,
-    and every override given to ``build()``). The config alone is not the truth: a stand-in config can sit beside a
-    real object put in by hand. Not read: the audit sink, the signer, the anchor and the registry of a hand-built
-    ``Approvals`` (for those the config is trusted).
+def config_services(config: Config) -> tuple[str, ...]:
+    """The things the loaded ``Config`` reaches that are real, or could be (custom code), each named in words
+    ("backends.llm: anthropic", "system billing", "source cluster", "tools:my_tools"); empty when everything is
+    a stand-in. The config is read once and the answer kept by whoever needs it (``Approvals`` freezes it at
+    construction, because the containers of a ``Config`` can be changed after it is built).
 
     * a backend kind is real unless the backend table lists it as a stand-in or as running inside the process;
     * a system is real unless its address is plain http to this computer and the config allows that
@@ -92,10 +90,7 @@ def real_services(config: Config, held: Mapping[str, object] | None = None) -> t
     * every module of ``tool_modules`` and of ``check_modules`` counts (``tools:<module>``, ``checks:<module>``):
       custom code in the process can open any connection, so a non-empty list is not "everything is a stand-in";
     * every ``egress_hosts`` entry that is not a loopback host counts (``egress <host>``): the process is set up to
-      reach the outside, and an entry that cannot be read as a host counts too (fail closed);
-    * every held object counts (``held <name>: <class>``) unless its exact class is one of the core's own stand-ins
-      (``is_stand_in_object``); a held ``tools`` or ``sources`` mapping counts (``held tools``) unless it is empty;
-      nothing held (``None``) counts for nothing."""
+      reach the outside, and an entry that cannot be read as a host counts too (fail closed)."""
     stand_ins = stand_in_kinds()
     found = [
         f"backends.{cap}: {s.kind}"
@@ -119,15 +114,56 @@ def real_services(config: Config, held: Mapping[str, object] | None = None) -> t
         for host in sorted(config.egress_hosts)
         if not is_loopback_host(host)
     ]
+    return tuple(found)
+
+
+def _is_empty_mapping(obj: object) -> bool:
+    """True only for a plain empty ``dict``. Any other object (a lazy mapping, a proxy, a subclass) is not read:
+    its own ``__bool__`` or ``__len__`` is foreign code that could say "empty" or raise."""
+    return type(obj) is dict and not dict.__len__(obj)
+
+
+def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
+    """The held objects that count (``held <name>: <class>``): every one unless its exact class is one of the
+    core's own stand-ins (``is_stand_in_object``); a held ``tools`` or ``sources`` mapping counts (``held tools``)
+    unless it is a plain empty dict; nothing held (``None``) counts for nothing. An object that raises while it is
+    looked at counts (fail closed): the error is not passed on."""
+    found: list[str] = []
     for name, obj in sorted((held or {}).items(), key=lambda item: str(item[0])):
         if obj is None:
             continue
-        if name in _COUNTED_WHEN_NOT_EMPTY:
-            if obj:
-                found.append(f"held {_shown(name)}")
-        elif not is_stand_in_object(obj):
-            found.append(f"held {_shown(name)}: {_shown(type(obj).__name__)}")
+        label = (
+            f"held {_shown(name)}"
+            if name in _COUNTED_WHEN_NOT_EMPTY
+            else f"held {_shown(name)}: {_shown(type(obj).__name__)}"
+        )
+        try:
+            counts = (
+                not _is_empty_mapping(obj)
+                if name in _COUNTED_WHEN_NOT_EMPTY
+                else not is_stand_in_object(obj)
+            )
+        except Exception:  # noqa: BLE001 - an object that cannot be read is not a stand-in
+            counts = True
+        if counts:
+            found.append(label)
     return tuple(found)
+
+
+def real_services(
+    config: Config,
+    held: Mapping[str, object] | None = None,
+    frozen: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    """``config_services(config)`` and ``held_services_found(held)`` together: what is real now, each named in
+    words; empty when everything is a stand-in. ``held`` is the objects a server really holds
+    (``Approvals.held_services()``: the channel, the detector and the store it was built with, and every override
+    given to ``build()``). The config alone is not the truth: a stand-in config can sit beside a real object put
+    in by hand.
+    ``frozen`` is what the caller already knows is real (``Approvals.config_facts``: the config as it was when
+    the approvals were made, because the lists of a ``Config`` can be changed afterwards); the three are joined
+    without repeats."""
+    return tuple(dict.fromkeys(frozen + config_services(config) + held_services_found(held)))
 
 
 def _shown(bind: object) -> str:
@@ -157,11 +193,14 @@ def reason_problem(reason: object) -> str | None:
 
 
 def public_bind_problem(
-    bind: object, config: Config, held: Mapping[str, object] | None = None
+    bind: object,
+    config: Config,
+    held: Mapping[str, object] | None,
+    frozen: tuple[str, ...] = (),
 ) -> str | None:
     """None when the bind is fine; otherwise the sentence that says why it is refused. Anything that is not a
     readable host (not text, empty) counts as a bind other computers can reach. ``held``: see ``real_services``."""
-    real = real_services(config, held)
+    real = real_services(config, held, frozen)
     if not real or is_loopback_host(bind):
         return None
     return (
@@ -177,21 +216,22 @@ def require_safe_bind(
     config: Config,
     *,
     allow_public_bind_reason: str | None = None,
-    held: Mapping[str, object] | None = None,
+    held: Mapping[str, object] | None,
+    frozen: tuple[str, ...] = (),
 ) -> None:
     """Raise BindRefused with the sentence from ``public_bind_problem``, unless a valid
     ``allow_public_bind_reason`` was given (then the reason is logged and the bind is let through). A reason that
     is not valid is refused even when it was not needed. Servers call this before they listen."""
     if allow_public_bind_reason is not None and (bad := reason_problem(allow_public_bind_reason)):
         raise BindRefused(bad)
-    if (problem := public_bind_problem(bind, config, held)) is None:
+    if (problem := public_bind_problem(bind, config, held, frozen)) is None:
         return
     if allow_public_bind_reason is None:
         raise BindRefused(problem)
     _LOG.warning(
         "public bind %s allowed with a real service configured (%s); reason: %s",
         _shown(bind),
-        ", ".join(real_services(config, held)),
+        ", ".join(real_services(config, held, frozen)),
         allow_public_bind_reason.strip(),
     )
 
@@ -218,15 +258,19 @@ def listen(
     handler: type[BaseHTTPRequestHandler],
     *,
     allow_public_bind_reason: str | None = None,
-    held: Mapping[str, object] | None = None,
+    held: Mapping[str, object] | None,
+    frozen: tuple[str, ...] = (),
 ) -> ThreadingHTTPServer:
     """The one place in the package that creates a server socket. Refuses a bind that other computers can reach
     while a real service is configured (see ``require_safe_bind``; ``allow_public_bind_reason`` is the named, logged
     way past that), refuses a host that is not an IP address written out or ``localhost``, binds an IPv6 address
     on an IPv6 socket, and checks the address the socket really got (when no reason was given and a real service is
-    present). ``held`` is what the server really holds (see ``real_services``). Nothing is looked up. The caller runs
+    present). ``held`` is required (pass ``{}`` for "holds nothing"): what the server really holds, see
+    ``real_services``. Nothing is looked up. The caller runs
     ``serve_forever()`` on the result."""
-    require_safe_bind(host, config, allow_public_bind_reason=allow_public_bind_reason, held=held)
+    require_safe_bind(
+        host, config, allow_public_bind_reason=allow_public_bind_reason, held=held, frozen=frozen
+    )
     address, family = _literal(host)
 
     class _Server(ThreadingHTTPServer):
@@ -242,7 +286,7 @@ def listen(
     server = _Server((address, port), handler)
     if (
         allow_public_bind_reason is None
-        and real_services(config, held)
+        and real_services(config, held, frozen)
         and not is_loopback_host(server.server_address[0])
     ):
         server.server_close()
@@ -254,6 +298,8 @@ def listen(
 
 __all__ = [
     "BindRefused",
+    "config_services",
+    "held_services_found",
     "is_stand_in_object",
     "listen",
     "public_bind_problem",

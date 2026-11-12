@@ -9,6 +9,7 @@ from types import MappingProxyType
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
+from hadavin_sdk.bindguard import config_services, held_services_found
 from hadavin_sdk.config import Config
 from hadavin_sdk.guard.injection import Detector, injection_check
 from hadavin_sdk.guard.runmap import RedactionError
@@ -55,7 +56,28 @@ def summary(plan: Plan, detector: Detector | None = None) -> str:
 
 class Approvals:
     """Decisions must come from a channel's verified parse (``receive``), never from caller-supplied fields:
-    ``decide`` is the internal step after verification and the one tests drive with a trusted fake."""
+    ``decide`` is the internal step after verification and the one tests drive with a trusted fake.
+
+    The objects the bind guard reads (``channel``, ``store``, ``detector``, ``config``, ``overrides``) are set once
+    when the object is made and have no setter. The attributes are slots, so ``vars(a)`` raises ``TypeError``; a
+    person who writes the private slots with ``object.__setattr__`` is outside the guard, but the receiver asks again
+    at every request (``real_now``) on a bind other computers can reach with no reason given. A copy of an
+    ``Approvals`` (``copy.copy``, ``copy.deepcopy``, pickle) is refused with a ``TypeError``: a copy would duplicate
+    the frozen facts and the sealed objects."""
+
+    __slots__ = (
+        "_audit_sink",
+        "_channel",
+        "_clock",
+        "_config",
+        "_config_facts",
+        "_detector",
+        "_hand_built",
+        "_on_decided",
+        "_overrides",
+        "_registry",
+        "_store",
+    )
 
     def __init__(
         self,
@@ -69,18 +91,67 @@ class Approvals:
         config: Config | None = None,
         overrides: Mapping[str, object] | None = None,
     ) -> None:
-        self.store, self.audit, self.registry, self.channel = store, audit, registry, channel
-        self.on_decided, self.clock, self.detector = on_decided, clock, detector
+        self._store, self._audit_sink, self._registry, self._channel = (
+            store,
+            audit,
+            registry,
+            channel,
+        )
+        self._on_decided, self._clock, self._detector = on_decided, clock, detector
         # The deployment config these approvals were built from, and the objects ``build()`` was handed in place of
         # configured ones (name -> object). Both are set once and read-only (no setter): ``receiver.serve`` checks
         # the config is the one it was given and counts what the approvals really hold, so neither can be swapped
-        # for a stand-in after construction (None: built by hand, never served).
+        # for a stand-in after construction (None: built by hand, never served). What the config reaches is read
+        # NOW and kept (``_config_facts``): the containers of a ``Config`` can be changed after it is built.
         self._config = config
         self._overrides = MappingProxyType(dict(overrides or {}))
+        self._config_facts = config_services(config) if config is not None else ()
+        self._hand_built = (
+            overrides is None
+        )  # ``build()`` always passes its overrides (possibly none)
+
+    @property
+    def store(self) -> Store:
+        return self._store
+
+    @property
+    def channel(self) -> Channel:
+        return self._channel
+
+    @property
+    def detector(self) -> Detector | None:
+        return self._detector
+
+    @property
+    def audit(self) -> AuditSink:
+        return self._audit_sink
+
+    @property
+    def registry(self) -> Registry:
+        return self._registry
+
+    @property
+    def on_decided(self) -> OnDecided:
+        return self._on_decided
+
+    @property
+    def clock(self) -> Callable[[], datetime]:
+        return self._clock
+
+    @clock.setter
+    def clock(
+        self, value: Callable[[], datetime]
+    ) -> None:  # tests move time; the bind guard does not read it
+        self._clock = value
 
     @property
     def config(self) -> Config | None:
         return self._config
+
+    @property
+    def config_facts(self) -> tuple[str, ...]:
+        """What the config reached that is real, read when the approvals were made (never read again)."""
+        return self._config_facts
 
     @property
     def overrides(self) -> Mapping[str, object]:
@@ -88,15 +159,34 @@ class Approvals:
         return self._overrides
 
     def held_services(self) -> dict[str, object]:
-        """What these approvals really hold that can reach a service, read when asked (so a replaced attribute is
-        seen): the build overrides, and the channel, the detector and the store as they are now. The bind guard
-        (``bindguard.real_services``) counts each one that is not one of the core's own stand-ins."""
-        return {
-            **self._overrides,
-            "channel": self.channel,
-            "detector": self.detector,
-            "store": self.store,
-        }
+        """What these approvals really hold that can reach a service, read when asked: the build overrides, and the
+        channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
+        counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
+        also name their audit sink and registry: nothing says those are stand-ins."""
+        held: dict[str, object] = dict(self._overrides)
+        live = {"channel": self._channel, "detector": self._detector, "store": self._store}
+        for name, obj in live.items():
+            # a given object and a different one now in its place are both counted (neither hides the other)
+            if name in held and held[name] is not obj:
+                held[f"{name} (given to build)"] = held[name]
+            held[name] = obj
+        if self._hand_built:
+            held["audit"], held["registry"] = self._audit_sink, self._registry
+        return held
+
+    def real_now(self) -> tuple[str, ...]:
+        """What these approvals reach that is real, now: the facts of the config frozen at construction, and the held
+        objects as they are at this moment. The receiver asks this at every request on a bind other computers can
+        reach with no reason given (called as ``Approvals.real_now(a)``, so a subclass cannot answer for itself)."""
+        return self._config_facts + held_services_found(Approvals.held_services(self))
+
+    def __deepcopy__(self, memo: object) -> object:
+        raise TypeError("an Approvals cannot be copied: it holds sealed objects and frozen facts")
+
+    def __reduce_ex__(self, protocol: object) -> object:
+        raise TypeError(
+            "an Approvals cannot be copied or pickled: it holds sealed objects and frozen facts"
+        )
 
     def receive(
         self, headers: Mapping[str, str], body: bytes, *, record_only: bool = False

@@ -66,7 +66,8 @@ class AnyOf:
     error is that entry's flag (guard_unavailable); the others still run."""
 
     def __init__(self, detectors: list[Detector]) -> None:
-        self.detectors = detectors
+        # a copy: a list changed later does not change this detector list
+        self.detectors = tuple(detectors)
 
     def check(self, text: str, source: str) -> Verdict:
         verdicts = [injection_check(d, text, source) for d in self.detectors]

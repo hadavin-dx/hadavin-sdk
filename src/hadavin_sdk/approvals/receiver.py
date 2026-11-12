@@ -15,7 +15,7 @@ from socketserver import BaseServer
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.bindguard import BindRefused, listen
 from hadavin_sdk.config import Config
-from hadavin_sdk.netguard import LOOPBACK_V4
+from hadavin_sdk.netguard import LOOPBACK_V4, is_loopback_host
 from hadavin_sdk.store.protocol import NotFound
 
 MAX_BODY = 64 * 1024  # Slack interactive payloads are a few KB
@@ -51,15 +51,25 @@ def serve(
 ) -> BaseServer:  # not the concrete class: the repo scan reads that name as a server made here
     """A development server for ``POST /slack/actions``; call ``serve_forever()`` on the result.
 
-    ``config`` is required and must be the deployment's own (the one ``approvals`` was built from: the check is
-    ``approvals.config is config``; ``Approvals.config`` and ``Approvals.overrides`` cannot be assigned after
-    construction). The services the approvals really hold are counted too (``approvals.held_services()``): a real
-    channel, store, model or source handed to ``build()`` or to ``Approvals(...)`` makes a public bind refused even
-    beside a stand-in config, and the refusal names it. Approvals built by hand have no config and are refused. The
-    server is made by
-    ``bindguard.listen``, the only place that creates a server socket: a ``host`` that other computers can reach is
-    refused while any real service is configured, unless ``allow_public_bind_reason`` says why it must be (the usual
-    setup is an HTTPS reverse proxy in front; the reason is logged)."""
+    ``approvals`` must be an exact ``Approvals`` (a subclass or look-alike is refused: the guard cannot trust an
+    object that answers for itself). ``config`` is required and must be the deployment's own (the one ``approvals``
+    was built from: the check is ``approvals.config is config``). The services the approvals really hold are
+    counted too: a real channel, store, model or source handed to ``build()`` (or a real channel, store or detector
+    given to ``Approvals(...)``) makes a public bind refused even beside a stand-in config, and the refusal names
+    it. What the config reached is the answer frozen when the approvals were made. Approvals built by hand have no
+    config and are refused.
+
+    The server is made by ``bindguard.listen``, the only place that creates a server socket: a ``host`` that other
+    computers can reach is refused while any real service is configured, unless ``allow_public_bind_reason`` says
+    why it must be (the usual setup is an HTTPS reverse proxy in front; the reason is logged). On such a bind with
+    no reason the question is asked again at every request (answer 503, empty body, one log line): the objects the
+    approvals hold can be replaced after the server started. A person who writes the private slots of the
+    ``Approvals`` with ``object.__setattr__`` is caught by that request check, not by a setter."""
+    if type(approvals) is not Approvals:
+        raise BindRefused(
+            "serve needs an Approvals made by the core (not a subclass or a look-alike): the guard cannot trust "
+            "an object that answers for itself"
+        )
     if approvals.config is None:
         raise BindRefused(
             "serve needs approvals built with a config (Approvals(..., config=config), or build()); "
@@ -71,8 +81,21 @@ def serve(
             "the config given is not that one"
         )
 
+    # on a bind other computers can reach with no reason given, every request asks again what the approvals
+    # hold, because a channel, store or detector can be replaced after the server started
+    recheck = allow_public_bind_reason is None and not is_loopback_host(host)
+
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
+            if recheck and (now_real := Approvals.real_now(approvals)):
+                _LOG.warning(
+                    "request refused: a real service is held on a public bind with no reason (%s)",
+                    ", ".join(now_real),
+                )
+                self.send_response(503)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
             raw = self.headers.get("Content-Length") or "0"
             length = int(raw) if raw.isascii() and raw.isdigit() else -1
             if self.path != PATH:
@@ -99,5 +122,6 @@ def serve(
         port,
         Handler,
         allow_public_bind_reason=allow_public_bind_reason,
-        held=approvals.held_services(),
+        held=Approvals.held_services(approvals),
+        frozen=approvals.config_facts,
     )

@@ -85,11 +85,11 @@ def build(
             ("channel", channel),
             ("detector", detector),
             ("llm", llm),
-            ("tools", tools),
-            ("sources", sources),
+            ("tools", dict(tools) if tools is not None else None),
+            ("sources", dict(sources) if sources is not None else None),
         )
         if obj is not None
-    }
+    }  # tools and sources are copied: the caller keeps its own mapping and may empty it later
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends

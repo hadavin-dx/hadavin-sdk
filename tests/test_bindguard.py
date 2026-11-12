@@ -16,8 +16,10 @@ import socketserver
 import tomllib
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
+from types import MappingProxyType
 
 import pytest
+from tools import server_scan
 
 from hadavin_sdk import bindguard, netguard
 from hadavin_sdk.actions.secrets import FakeSecretProvider
@@ -26,6 +28,7 @@ from hadavin_sdk.approvals.receiver import PATH, serve
 from hadavin_sdk.backends.table import DEMO_ONLY, IN_PROCESS, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.bindguard import (
     BindRefused,
+    held_services_found,
     is_stand_in_object,
     listen,
     public_bind_problem,
@@ -192,28 +195,28 @@ def test_a_real_service_refuses_every_public_spelling(stand_in_config: Config) -
     for cap, kind in (("llm", "anthropic"), ("store", "postgres"), ("channel", "slack")):
         cfg = _with_kind(stand_in_config, cap, kind)
         for bind in PUBLIC:
-            problem = public_bind_problem(bind, cfg)
+            problem = public_bind_problem(bind, cfg, {})
             assert problem is not None, f"public bind {bind!r} accepted with {cap}/{kind}"
             assert f"backends.{cap}: {kind}" in problem
             with pytest.raises(BindRefused):
-                require_safe_bind(bind, cfg)
+                require_safe_bind(bind, cfg, held={})
 
 
 def test_a_real_service_accepts_every_loopback_spelling(stand_in_config: Config) -> None:
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     for bind in LOOPBACK:
-        assert public_bind_problem(bind, cfg) is None, f"loopback bind {bind!r} refused"
-        require_safe_bind(bind, cfg)
+        assert public_bind_problem(bind, cfg, {}) is None, f"loopback bind {bind!r} refused"
+        require_safe_bind(bind, cfg, held={})
 
 
 def test_stand_ins_only_accept_any_bind(stand_in_config: Config) -> None:
     for bind in PUBLIC + LOOPBACK:
-        assert public_bind_problem(bind, stand_in_config) is None, f"stand-ins refused {bind!r}"
+        assert public_bind_problem(bind, stand_in_config, {}) is None, f"stand-ins refused {bind!r}"
 
 
 def test_a_detector_that_is_real_counts(stand_in_config: Config) -> None:
     cfg = _with_kind(stand_in_config, "detector", "bedrock_guardrail")
-    assert public_bind_problem(ALL_ZEROS, cfg) is not None
+    assert public_bind_problem(ALL_ZEROS, cfg, {}) is not None
 
 
 def test_a_system_counts_unless_it_is_plain_http_on_this_computer_and_allowed(
@@ -233,25 +236,25 @@ def test_a_system_counts_unless_it_is_plain_http_on_this_computer_and_allowed(
             update={"systems": systems, "allow_insecure_loopback": allow}
         )
         assert (real_services(cfg) == ("system records",)) is real, (systems, allow)
-        assert (public_bind_problem(ALL_ZEROS, cfg) is not None) is real
+        assert (public_bind_problem(ALL_ZEROS, cfg, {}) is not None) is real
 
 
 def test_a_configured_source_is_a_real_service(stand_in_config: Config) -> None:
     source = SourceConfig.model_construct(kind="kubernetes", settings={})
     cfg = stand_in_config.model_copy(update={"sources": {"cluster": source}})
     assert real_services(cfg) == ("source cluster",)
-    assert public_bind_problem(ALL_ZEROS, cfg) is not None
+    assert public_bind_problem(ALL_ZEROS, cfg, {}) is not None
 
 
 def test_the_refusal_is_one_plain_sentence_with_no_value_of_the_bind_leaking_control_text(
     stand_in_config: Config,
 ) -> None:
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
-    text = public_bind_problem("evil\nhost", cfg)
+    text = public_bind_problem("evil\nhost", cfg, {})
     assert text is not None and "\n" not in text and "(unreadable)" in text, (
         "control text was shown in the refusal"
     )
-    text = public_bind_problem(ALL_ZEROS, cfg)
+    text = public_bind_problem(ALL_ZEROS, cfg, {})
     assert text is not None and "loopback" in text and "backends.llm: anthropic" in text
 
 
@@ -269,16 +272,16 @@ def test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a
     for change, name in cases:
         cfg = stand_in_config.model_copy(update=change)
         assert real_services(cfg) == (name,), change
-        problem = public_bind_problem(ALL_ZEROS, cfg)
+        problem = public_bind_problem(ALL_ZEROS, cfg, {})
         assert problem is not None and name in problem
-        assert public_bind_problem(LOOP_1, cfg) is None
+        assert public_bind_problem(LOOP_1, cfg, {}) is None
 
 
 def test_loopback_egress_hosts_and_empty_lists_pass(stand_in_config: Config) -> None:
     cfg = stand_in_config.model_copy(
         update={"egress_hosts": frozenset({LOOP_1, "localhost", "::1"}), "tool_modules": []}
     )
-    assert real_services(cfg) == () and public_bind_problem(ALL_ZEROS, cfg) is None, (
+    assert real_services(cfg) == () and public_bind_problem(ALL_ZEROS, cfg, {}) is None, (
         "a loopback egress host was counted as a live one"
     )
 
@@ -288,7 +291,7 @@ def test_a_hostile_egress_entry_counts_and_never_shows_raw_text(stand_in_config:
         cfg = stand_in_config.model_copy(update={"egress_hosts": frozenset({host})})
         found = real_services(cfg)
         assert len(found) == 1 and found[0].startswith("egress "), repr(host)
-        problem = public_bind_problem(ALL_ZEROS, cfg)
+        problem = public_bind_problem(ALL_ZEROS, cfg, {})
         assert problem is not None and "\n" not in problem and "\x00" not in problem
         assert len(problem) < 1000
 
@@ -309,7 +312,7 @@ def test_systems_and_sources_built_by_the_real_loader_count(tmp_path: Path) -> N
     assert isinstance(with_source.sources["cluster"], SourceConfig)
     assert real_services(with_source) == ("source cluster",)
     for cfg in (remote, with_source):
-        assert public_bind_problem(ALL_ZEROS, cfg) is not None
+        assert public_bind_problem(ALL_ZEROS, cfg, {}) is not None
 
 
 def test_a_judge_detector_cannot_stand_without_an_llm_entry(tmp_path: Path) -> None:
@@ -331,16 +334,16 @@ def test_a_judge_detector_cannot_stand_without_an_llm_entry(tmp_path: Path) -> N
 
 
 def test_the_docstring_of_real_services_says_what_is_counted_and_what_is_not() -> None:
-    doc = real_services.__doc__ or ""
+    doc = (bindguard.config_services.__doc__ or "") + (real_services.__doc__ or "")
     for word in (
         "tool_modules",
         "check_modules",
         "egress_hosts",
         "the loaded ``Config``",
         "held_services",
-        "Not read: the audit sink",
     ):
         assert word in doc
+    assert "audit sink and registry" in (Approvals.held_services.__doc__ or "")
 
 
 # --- the named reason is the only way past a refusal ----------------------------------------------------------
@@ -351,9 +354,11 @@ def test_a_public_bind_needs_the_named_reason_and_the_reason_is_logged(
 ) -> None:
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     with pytest.raises(BindRefused, match="allow_public_bind_reason"):
-        require_safe_bind(ALL_ZEROS, cfg)
+        require_safe_bind(ALL_ZEROS, cfg, held={})
     with caplog.at_level(logging.WARNING, logger="hadavin_sdk.bindguard"):
-        require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason="  behind the studio proxy  ")
+        require_safe_bind(
+            ALL_ZEROS, cfg, allow_public_bind_reason="  behind the studio proxy  ", held={}
+        )
     records = [r for r in caplog.records if r.name == "hadavin_sdk.bindguard"]
     assert len(records) == 1 and records[0].levelno == logging.WARNING
     text = records[0].getMessage()
@@ -371,7 +376,7 @@ def test_an_unusable_reason_is_refused_even_when_it_was_not_needed(
         (stand_in_config, LOOP_1),
     ):
         with pytest.raises(BindRefused):
-            require_safe_bind(bind, cfg, allow_public_bind_reason=reason)  # type: ignore[arg-type]
+            require_safe_bind(bind, cfg, allow_public_bind_reason=reason, held={})  # type: ignore[arg-type]
 
 
 def test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one(
@@ -380,7 +385,7 @@ def test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one(
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     for reason in ("", "   "):
         with pytest.raises(BindRefused, match="must say why"):
-            require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=reason)
+            require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=reason, held={})
 
 
 def test_a_reason_shorter_than_ten_characters_is_refused_and_ten_are_accepted(
@@ -391,9 +396,9 @@ def test_a_reason_shorter_than_ten_characters_is_refused_and_ten_are_accepted(
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     for short in ("x", "123456789", "  123456789  ", "abc def g"):
         with pytest.raises(BindRefused, match="at least 10 characters"):
-            require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=short)
+            require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=short, held={})
     for fine in ("1234567890", "  1234567890  ", "proxy ok!!"):
-        require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=fine)
+        require_safe_bind(ALL_ZEROS, cfg, allow_public_bind_reason=fine, held={})
 
 
 def test_a_reason_of_exactly_the_longest_size_is_accepted(stand_in_config: Config) -> None:
@@ -401,11 +406,12 @@ def test_a_reason_of_exactly_the_longest_size_is_accepted(stand_in_config: Confi
         ALL_ZEROS,
         _with_kind(stand_in_config, "llm", "anthropic"),
         allow_public_bind_reason="x" * 200,
+        held={},
     )
 
 
 def test_a_long_bind_text_is_cut_in_the_refusal(stand_in_config: Config) -> None:
-    text = public_bind_problem("h" * 10_000, _with_kind(stand_in_config, "llm", "anthropic"))
+    text = public_bind_problem("h" * 10_000, _with_kind(stand_in_config, "llm", "anthropic"), {})
     assert text is not None and "..." in text, "the long bind text was not cut"
     assert len(text) < 600 and "h" * 81 not in text, "the long bind text was not cut"
 
@@ -434,7 +440,7 @@ def test_listen_refuses_before_any_server_exists(
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     for host in (ALL_ZEROS, "::", PRIVATE, "remote.example.test", ""):
         with pytest.raises(BindRefused):
-            listen(cfg, host, 0, _Quiet)
+            listen(cfg, host, 0, _Quiet, held={})
 
 
 def test_listen_starts_on_loopback_with_a_real_service_and_anywhere_with_stand_ins(
@@ -442,7 +448,7 @@ def test_listen_starts_on_loopback_with_a_real_service_and_anywhere_with_stand_i
 ) -> None:
     real = _with_kind(stand_in_config, "llm", "anthropic")
     for host, cfg in ((LOOP_1, real), ("localhost", real), (ALL_ZEROS, stand_in_config)):
-        server = listen(cfg, host, 0, _Quiet)
+        server = listen(cfg, host, 0, _Quiet, held={})
         server.server_close()
 
 
@@ -451,7 +457,9 @@ def test_listen_with_the_reason_starts_a_public_server_with_a_real_service(
 ) -> None:
     real = _with_kind(stand_in_config, "llm", "anthropic")
     with caplog.at_level(logging.WARNING, logger="hadavin_sdk.bindguard"):
-        server = listen(real, ALL_ZEROS, 0, _Quiet, allow_public_bind_reason="proxy in front")
+        server = listen(
+            real, ALL_ZEROS, 0, _Quiet, allow_public_bind_reason="proxy in front", held={}
+        )
     server.server_close()
     assert any("proxy in front" in r.getMessage() for r in caplog.records)
 
@@ -469,7 +477,7 @@ def _has_ipv6() -> bool:
 def test_listen_really_starts_on_an_ipv6_loopback_address(stand_in_config: Config) -> None:
     real = _with_kind(stand_in_config, "llm", "anthropic")
     for host in ("::1", "[::1]"):
-        server = listen(real, host, 0, _Quiet)
+        server = listen(real, host, 0, _Quiet, held={})
         try:
             assert server.address_family == socket.AF_INET6
             assert server.server_address[0] == "::1"
@@ -498,7 +506,7 @@ def test_listen_picks_the_ipv6_family_for_an_ipv6_address_even_without_ipv6_on_t
         (LOOP_1, socket.AF_INET),
         ("localhost", socket.AF_INET),
     ):
-        listen(real, host, 0, _Quiet)
+        listen(real, host, 0, _Quiet, held={})
         want = (family, (LOOP_1 if family == socket.AF_INET else "::1", 0))
         assert seen[-1] == want, f"wrong family or address for {host!r}: {seen[-1]}"
 
@@ -513,7 +521,7 @@ def test_listen_binds_the_literal_for_localhost_and_never_looks_a_name_up(
         monkeypatch.setattr(socket, fn, boom)
     real = _with_kind(stand_in_config, "llm", "anthropic")
     for host in ("localhost", "LocalHost"):
-        server = listen(real, host, 0, _Quiet)
+        server = listen(real, host, 0, _Quiet, held={})
         try:
             assert server.server_address[0] == LOOP_1
         finally:
@@ -537,7 +545,7 @@ def test_listen_refuses_a_name_that_is_not_localhost_even_with_stand_ins(
         None,
     ):
         with pytest.raises(BindRefused):
-            listen(stand_in_config, host, 0, _Quiet)  # type: ignore[arg-type]
+            listen(stand_in_config, host, 0, _Quiet, held={})  # type: ignore[arg-type]
 
 
 def test_listen_checks_the_address_the_socket_really_got(
@@ -555,22 +563,25 @@ def test_listen_checks_the_address_the_socket_really_got(
     monkeypatch.setattr(http.server.ThreadingHTTPServer, "server_close", close)
     monkeypatch.setattr(bindguard, "_literal", lambda host: (ALL_ZEROS, socket.AF_INET))
     with pytest.raises(BindRefused, match="not on this computer"):
-        listen(real, LOOP_1, 0, _Quiet)
+        listen(real, LOOP_1, 0, _Quiet, held={})
     assert closed == [True]
 
 
 # --- the receiver needs its config and its approvals must be the ones built with it -------------------------------
 
 
-class _Approvals:
-    """What serve reads of an Approvals: its config and what it holds (stand-ins unless a test says otherwise)."""
-
-    def __init__(self, config: Config | None, held: dict[str, object] | None = None) -> None:
-        self.config = config
-        self._held = held or {}
-
-    def held_services(self) -> dict[str, object]:
-        return dict(self._held)
+def _Approvals(config: Config | None, held: dict[str, object] | None = None) -> Approvals:
+    """A real ``Approvals`` made of the core's own stand-ins (what ``serve`` accepts: the exact class). ``held``
+    are the objects ``build()`` would have recorded (the audit sink and registry are not counted then)."""
+    return Approvals(
+        MemoryStore(),
+        _Opaque(),  # type: ignore[arg-type]
+        _Opaque(),  # type: ignore[arg-type]
+        FakeChannel("sig" + "-b4-test"),
+        lambda run_id, status, d: None,
+        config=config,
+        overrides=held if held is not None or config is None else {},
+    )
 
 
 def test_the_receiver_without_a_config_is_a_type_error() -> None:
@@ -793,7 +804,7 @@ def test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_r
             serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
     for held in ({"store": _Opaque()}, {"detector": _RealDetector()}):
         odd = _by_hand(app, app.approvals.channel, config=app.config)  # type: ignore[attr-defined]
-        setattr(odd, next(iter(held)), next(iter(held.values())))
+        object.__setattr__(odd, "_" + next(iter(held)), next(iter(held.values())))
         with monkeypatch.context() as m:
             _no_server(m)
             with pytest.raises(BindRefused, match="held"):
@@ -837,7 +848,7 @@ def test_a_channel_replaced_after_the_build_is_seen_when_the_server_starts(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path)
-    app.approvals.channel = _RealChannel("sig" + "-b3-late")  # type: ignore[attr-defined]
+    object.__setattr__(app.approvals, "_channel", _RealChannel("sig" + "-b3-late"))
     with monkeypatch.context() as m:
         _no_server(m)
         with pytest.raises(BindRefused, match="held channel: _RealChannel"):
@@ -924,25 +935,59 @@ def test_the_http_loopback_half_of_url_allowed_and_the_system_rule_agree(
             assert local == url_allowed(url, allow), f"{host!r} allow={allow}"
 
 
-def _called_attributes(tree: ast.AST, owner: str) -> set[str]:
-    """The names of the methods called on a variable called ``owner`` anywhere in ``tree``."""
-    return {
-        n.func.attr
-        for n in ast.walk(tree)
-        if isinstance(n, ast.Call)
-        and isinstance(n.func, ast.Attribute)
-        and isinstance(n.func.value, ast.Name)
-        and n.func.value.id == owner
-    }
+def _chains_rooted_at(tree: ast.AST, owner: str) -> set[str]:
+    """Every attribute chain that starts at the name ``owner`` or at a name bound to it (one step: ``a = owner``),
+    for example ``approvals.receive`` or ``a.audit.write_outcome``."""
+    names = {owner}
+    for n in ast.walk(tree):
+        if (
+            isinstance(n, ast.Assign)
+            and isinstance(n.value, ast.Name)
+            and n.value.id in names
+            and all(isinstance(t, ast.Name) for t in n.targets)
+        ):
+            names |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+    chains: set[str] = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Attribute):
+            parts = [n.attr]
+            node = n.value
+            while isinstance(node, ast.Attribute):
+                parts.append(node.attr)
+                node = node.value
+            if isinstance(node, ast.Name) and node.id in names:
+                chains.add(".".join([node.id, *reversed(parts)]))
+    # keep only the longest chain of each: ``approvals.audit`` inside ``approvals.audit.write_outcome`` is one use
+    return {c for c in chains if not any(o != c and o.startswith(c + ".") for o in chains)}
 
 
 def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -> None:
     """The reason that lets a receiver stand beside a signer (``IN_PROCESS`` in the backend table): the one route
-    calls ``approvals.receive`` and nothing else of the approvals, and ``receive`` hands a decision on only after the
-    channel's ``parse_decision`` (the signature check) returned one."""
+    calls ``approvals.receive`` (with ``record_only=True``) and nothing else of the approvals, and ``receive``
+    hands a decision on only after the channel's ``parse_decision`` (the signature check) returned one. Every
+    attribute chain that starts at ``approvals`` (or a name bound to it) is listed, not only the calls."""
     receiver = ast.parse((SRC / "approvals" / "receiver.py").read_text(encoding="utf-8"))
-    assert _called_attributes(receiver, "approvals") == {"receive", "held_services"}, (
-        "the listener calls more of the approvals than receive"
+    assert _chains_rooted_at(receiver, "approvals") == {
+        "approvals.receive",
+        "approvals.config",
+        "approvals.config_facts",
+    }, "the listener reaches more of the approvals than receive (and the config identity check)"
+    (handler,) = [
+        n
+        for n in ast.walk(receiver)
+        if isinstance(n, ast.FunctionDef) and n.name == "handle_slack_action"
+    ]
+    receive_calls = [
+        n
+        for n in ast.walk(handler)
+        if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute)
+        and n.func.attr == "receive"
+    ]
+    assert len(receive_calls) == 1
+    flags = {k.arg: ast.unparse(k.value) for k in receive_calls[0].keywords}
+    assert flags == {"record_only": "True"}, (
+        "the listener must only record a decision, never run it"
     )
     handler_calls = {
         n.func.id
@@ -963,7 +1008,9 @@ def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -
         for n in ast.walk(receiver)
         if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
     }
-    assert called.isdisjoint({"decide", "on_decided", "sweep", "request", "update_message"})
+    assert called.isdisjoint(
+        {"decide", "on_decided", "sweep", "request", "update_message", "write_outcome"}
+    )
 
 
 def test_the_receiver_default_host_is_this_computer() -> None:
@@ -1218,3 +1265,502 @@ def test_the_netguard_docstring_states_the_supported_python_range() -> None:
         "requires-python"
     ]
     assert requires in (netguard.__doc__ or ""), f"say {requires!r} in the netguard docstring"
+
+
+# --- round 3, class A: the answer is not given once; it is asked again and cannot be changed under the guard ---------
+
+
+def _post(server: http.server.HTTPServer) -> int:
+    """POST one request to ``serve``'s server (run in a thread for the one request) and return the status."""
+    import http.client
+    import threading
+
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        conn = http.client.HTTPConnection(LOOP_1, server.server_address[1], timeout=5)
+        conn.request("POST", PATH, body=b"{}", headers={"Content-Length": "2"})
+        status = conn.getresponse().status
+        conn.close()
+        return status
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_the_guarded_attributes_of_the_approvals_are_set_once(tmp_path: Path) -> None:
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    for name, value in (
+        ("channel", _RealChannel("sig" + "-b4-a")),
+        ("store", _Opaque()),
+        ("detector", _RealDetector()),
+        ("config", app.config),  # type: ignore[attr-defined]
+        ("overrides", {}),
+    ):
+        with pytest.raises(AttributeError):
+            setattr(a, name, value)
+    with pytest.raises(TypeError):
+        vars(a)  # slots: no instance dictionary to write into
+
+
+def test_a_real_channel_put_in_after_the_server_started_answers_503_and_one_log_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The bypass of the setter (writing the private slot) is outside what a setter can stop, so the receiver asks
+    again at every request on a public bind with no reason."""
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    _stand_in_bind_lands_on_loopback(monkeypatch)
+    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+    assert _post(server) != 503, "a stand-in server refused its first request"
+    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+    object.__setattr__(a, "_channel", _RealChannel("sig" + "-b4-late"))
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+        assert _post(server) == 503, "a real channel put in after the start was served"
+    assert [
+        r.getMessage() for r in caplog.records if "held channel: _RealChannel" in r.getMessage()
+    ], "the refused request was not logged with the held object"
+
+
+def test_loopback_and_reason_given_binds_do_not_pay_the_recheck(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-real"))
+    a = app.approvals  # type: ignore[attr-defined]
+    assert _post(serve(a, config=app.config, port=0)) != 503  # type: ignore[attr-defined]
+    _stand_in_bind_lands_on_loopback(monkeypatch)
+    server = serve(
+        a, config=app.config, host=ALL_ZEROS, port=0, allow_public_bind_reason="proxy in front"
+    )  # type: ignore[attr-defined]
+    assert _post(server) != 503, "a bind with a reason was refused at the request"
+
+
+def test_what_the_config_said_at_construction_is_kept_when_its_lists_are_emptied(
+    stand_in_config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for field in ("tool_modules", "check_modules"):
+        cfg = stand_in_config.model_copy(update={field: ["my_module"]})
+        approvals = _Approvals(cfg)
+        getattr(cfg, field).clear()
+        assert real_services(cfg) == () and approvals.real_now(), (
+            "the facts were read again, not kept"
+        )
+        with monkeypatch.context() as m:
+            _no_server(m)
+            with pytest.raises(BindRefused, match="my_module"):
+                serve(approvals, config=cfg, host=ALL_ZEROS, port=0)
+
+
+def test_serve_refuses_a_subclass_and_a_look_alike_of_the_approvals(
+    stand_in_config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Quiet(Approvals):
+        def held_services(self) -> dict[str, object]:
+            return {}
+
+    base = _Approvals(stand_in_config)
+    sub = Quiet(
+        base.store,
+        base.audit,
+        base.registry,
+        base.channel,
+        lambda *a: None,
+        config=stand_in_config,
+        overrides={},
+    )
+    _no_server(monkeypatch)
+    for odd in (sub, _Opaque()):
+        with pytest.raises(BindRefused, match="made by the core"):
+            serve(odd, config=stand_in_config, host=LOOP_1, port=0)  # type: ignore[arg-type]
+
+
+def test_emptiness_is_read_by_exact_type_and_an_object_that_raises_counts() -> None:
+    class Lazy:
+        def __bool__(self) -> bool:
+            return False
+
+        def __len__(self) -> int:
+            return 0
+
+    class Raises:
+        def __bool__(self) -> bool:
+            raise RuntimeError("no")
+
+        def __len__(self) -> int:
+            raise RuntimeError("no")
+
+    class Sub(dict):
+        pass
+
+    assert held_services_found({"tools": {}, "sources": {}}) == ()
+    for obj in (Lazy(), Raises(), Sub(), MappingProxyType({})):
+        assert held_services_found({"tools": obj}) == ("held tools",), type(obj).__name__
+    assert held_services_found({"sources": {"a": 1}}) == ("held sources",)
+    cyc = AnyOf([])
+    cyc.detectors = (cyc,)  # type: ignore[assignment]
+    assert held_services_found({"detector": cyc}) == ("held detector: AnyOf",), (
+        "an object that raises was passed on or read as a stand-in"
+    )
+
+
+def test_held_is_required_everywhere_it_decides(stand_in_config: Config) -> None:
+    with pytest.raises(TypeError):
+        listen(stand_in_config, LOOP_1, 0, _Quiet)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        require_safe_bind(LOOP_1, stand_in_config)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        public_bind_problem(LOOP_1, stand_in_config)  # type: ignore[call-arg]
+
+
+def test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_and_registry_are_stand_ins(
+    stand_in_config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    base = _Approvals(stand_in_config)
+    by_hand = Approvals(
+        base.store,
+        _Opaque(),
+        _Opaque(),
+        base.channel,
+        lambda *a: None,
+        config=stand_in_config,  # type: ignore[arg-type]
+    )
+    assert set(by_hand.held_services()) >= {"audit", "registry"}, (
+        "a hand-built Approvals did not name its audit sink and registry"
+    )
+    assert real_services(stand_in_config, by_hand.held_services()) == (
+        "held audit: _Opaque",
+        "held registry: _Opaque",
+    )
+    _no_server(monkeypatch)
+    with pytest.raises(BindRefused, match="held audit: _Opaque"):
+        serve(by_hand, config=stand_in_config, host=ALL_ZEROS, port=0)
+    assert "audit" not in base.held_services(), "a built Approvals counted its audit sink"
+
+
+def test_an_approvals_cannot_be_copied_or_pickled(stand_in_config: Config) -> None:
+    import copy
+    import pickle
+
+    a = _Approvals(stand_in_config)
+    for op in (copy.copy, copy.deepcopy, pickle.dumps):
+        with pytest.raises(TypeError, match="cannot be copied"):
+            op(a)
+
+
+def test_a_mapping_handed_to_build_is_copied_so_emptying_it_later_changes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mine = {"lookup": lambda inputs: "x"}
+    app = _built(tmp_path, tools=mine)
+    mine.clear()
+    _no_server(monkeypatch)
+    with pytest.raises(BindRefused, match="held tools"):
+        serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+
+
+def test_an_override_and_a_different_object_now_in_its_place_are_both_counted(
+    tmp_path: Path,
+) -> None:
+    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-given"))
+    a = app.approvals  # type: ignore[attr-defined]
+    object.__setattr__(a, "_channel", FakeChannel("sig" + "-b4-now"))
+    assert "held channel (given to build): _RealChannel" in real_services(
+        app.config, a.held_services()
+    ), (  # type: ignore[attr-defined]
+        "an overridden object was hidden by the object now in its place"
+    )
+    assert "store" in a.held_services() and "detector" in a.held_services(), (
+        "the store or the detector is not named among the held objects"
+    )
+
+
+def test_the_approvals_that_build_made_go_through_serve_with_a_real_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End to end, with no re-assembly: the object ``build()`` returned (its own check module counts, too)."""
+    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-e2e")).app  # type: ignore[attr-defined]
+    _no_server(monkeypatch)
+    with pytest.raises(BindRefused, match="held channel: _RealChannel"):
+        serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)
+
+
+# --- round 3, class B: the stand-in registry takes only the core's own listed classes -------------------------------
+
+
+def test_a_class_the_core_does_not_list_cannot_be_registered() -> None:
+    from hadavin_sdk import standins
+
+    before = standins.registered()
+
+    class MyRealChannel:
+        pass
+
+    with pytest.raises(TypeError, match="not a stand-in the core lists"):
+        standins.stand_in(MyRealChannel)
+    assert standins.registered() == before
+    assert not is_stand_in_object(MyRealChannel())
+
+
+def test_the_registry_is_frozen_and_cannot_be_added_to() -> None:
+    from hadavin_sdk import standins
+
+    with pytest.raises(AttributeError):
+        standins._CLASSES.add(_Opaque)  # type: ignore[attr-defined]
+
+
+def test_a_metaclass_that_fakes_equality_and_hash_is_not_a_stand_in() -> None:
+    class Meta(type):
+        def __hash__(cls) -> int:
+            return hash(FakeChannel)
+
+        def __eq__(cls, other: object) -> bool:
+            return True
+
+    class Spoof(metaclass=Meta):
+        pass
+
+    assert not is_stand_in_object(Spoof()), (
+        "a class that fakes equality and hash was read as a stand-in"
+    )
+
+
+def test_a_stand_in_that_was_changed_is_read_as_real(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert is_stand_in_object(FakeChannel("sig" + "-b4-ok")), (
+        "control: an untouched stand-in is one"
+    )
+    fc = FakeChannel("sig" + "-b4-inst")
+    fc.post_card = lambda *a: None  # type: ignore[attr-defined]  # a function put on the instance
+    assert not is_stand_in_object(fc), (
+        "a stand-in holding a function of its own was still read as a stand-in"
+    )
+    monkeypatch.setattr(FakeChannel, "send", lambda self, *a: None)  # a replaced method
+    assert not is_stand_in_object(FakeChannel("sig" + "-b4-cls")), (
+        "a replaced method of a stand-in class was not noticed"
+    )
+    monkeypatch.undo()
+    monkeypatch.setattr(
+        FakeChannel, "extra_method", lambda self: None, raising=False
+    )  # an added one
+    assert not is_stand_in_object(FakeChannel("sig" + "-b4-add")), (
+        "a method added to a stand-in class was not noticed"
+    )
+    monkeypatch.undo()
+    assert is_stand_in_object(FakeChannel("sig" + "-b4-back")), "the class was not restored"
+
+
+def test_every_registered_stand_in_is_still_one_when_made_in_the_usual_way(tmp_path: Path) -> None:
+    """Guards against the over-refusal of the instance rule: the core's own fakes hold no function of their own."""
+    for obj in (
+        FakeChannel("sig" + "-b4-x"),
+        FakeLLM(tmp_path, {}),
+        FakeSecretProvider({}),
+        MemoryStore(),
+        RegexDetector(0.5),
+    ):
+        assert is_stand_in_object(obj), type(obj).__name__
+
+
+def test_a_detector_list_is_a_copy_and_cannot_be_changed_in_place() -> None:
+    mine = [RegexDetector(0.5)]
+    both = AnyOf(mine)
+    mine.append(_RealDetector())  # type: ignore[arg-type]
+    assert is_stand_in_object(both), "a list changed later changed the detector list"
+    with pytest.raises(AttributeError):
+        both.detectors.append(_RealDetector())  # type: ignore[attr-defined]
+
+
+# --- round 3, class C: the scan has holes by nature, so the bind itself is checked at run time too -----------------
+
+
+NEW_FORMS = {
+    "alias import": "from http.server import ThreadingHTTPServer as S\nS(('', 80), None)\n",
+    "alias of a module": "import socketserver as ss\nss.TCPServer(('', 1), None)\n",
+    "positional run host": "app = object()\napp.run('0.0.0.0', 5000)\n",
+    "wsgiref make_server": "from wsgiref.simple_server import make_server\nmake_server('', 1, None)\n",
+    "wsgiref alias": "import wsgiref.simple_server as w\nw.WSGIServer(('', 1), None)\n",
+    "werkzeug run_simple": "from werkzeug.serving import run_simple\nrun_simple('', 1, None)\n",
+    "websockets serve": "import websockets\nwebsockets.serve(None, '', 1)\n",
+    "trio serve_tcp": "import trio\ntrio.serve_tcp(None, 1)\n",
+    "anyio listener": "import anyio\nanyio.create_tcp_listener(local_port=1)\n",
+    "grpc port": "def f(server):\n    server.add_insecure_port('[::]:1')\n",
+    "grpc secure port": "def f(server):\n    server.add_secure_port('[::]:1', None)\n",
+    "base subclass": "import socketserver\nclass S(socketserver.BaseServer):\n    pass\n",
+    "alias base subclass": "from socketserver import BaseServer as B\nclass S(B):\n    pass\n",
+    "import_module": "import importlib\nimportlib.import_module('uvicorn')\n",
+}
+
+
+def test_the_resolved_scan_flags_each_new_form_and_the_old_scan_did_not() -> None:
+    missed = [n for n, src in sorted(NEW_FORMS.items()) if not server_scan.resolved_forms(src)]
+    assert missed == [], f"the alias-resolving scan missed {missed}"
+    seen_before = [
+        n
+        for n, src in sorted(NEW_FORMS.items())
+        if server_sockets(src)
+        and n not in {"alias of a module", "wsgiref alias", "base subclass", "import_module"}
+    ]
+    assert seen_before == [], (
+        f"already seen by the name scan (the fixture proves nothing): {seen_before}"
+    )
+
+
+def test_the_resolved_scan_ignores_what_only_looks_like_a_server() -> None:
+    quiet = (
+        "import subprocess\nimport asyncio\nfrom socketserver import BaseServer\n"
+        "subprocess.run('ls', shell=True)\nasyncio.run(None)\n"
+        "def f(db):\n    db.run('SELECT 1')\n\ndef g(s: BaseServer) -> None:\n    pass\n"
+    )
+    assert server_scan.resolved_forms(quiet) == []
+
+
+LAUNCHER_FIXTURES = {
+    "shell http.server": "python -m http.server 8000\n",
+    "flask run": "flask run --host 0.0.0.0\n",
+    "Dockerfile uvicorn": 'CMD ["uvicorn", "app:app"]\n',
+    "compose gunicorn": "command: gunicorn app:app\n",
+    "bind everything": "ports: 0.0.0.0:80\n",
+}
+
+
+def test_the_launcher_scan_flags_each_seeded_launcher() -> None:
+    missed = [
+        n for n, text in sorted(LAUNCHER_FIXTURES.items()) if not server_scan.launcher_hits(text)
+    ]
+    assert missed == [], f"the launcher scan missed {missed}"
+
+
+# a launcher word that is not ours, written down with why (file, word) -> reason
+LAUNCHER_ALLOWED = {
+    (
+        ".github/workflows/ci.yml",
+        ".".join(["0"] * 4),
+    ): "the address a throwaway service container of the CI listens on; it is not code of this repo",
+}
+
+
+@pytest.mark.skipif(
+    not (ROOT / ".github" / "workflows").is_dir(),
+    reason="the mutation runner copies no .github folder; the normal run and CI read it",
+)
+def test_no_script_dockerfile_compose_or_workflow_starts_a_server() -> None:
+    hits: list[tuple[str, str]] = []
+    files = [
+        p
+        for pattern in server_scan.LAUNCHER_GLOBS
+        for p in ROOT.rglob(pattern)
+        if ".git" not in p.parts and ".venv" not in p.parts and "node_modules" not in p.parts
+    ]
+    files += sorted((ROOT / ".github" / "workflows").glob("*.y*ml"))
+    for path in sorted(set(files)):
+        rel = path.relative_to(ROOT).as_posix()
+        for hit in server_scan.launcher_hits(path.read_text(encoding="utf-8", errors="replace")):
+            hits.append((rel, hit.split("@")[0]))
+    unexplained = [h for h in hits if h not in LAUNCHER_ALLOWED]
+    assert unexplained == [], f"a launcher starts a server: {unexplained}"
+    assert set(hits) >= set(LAUNCHER_ALLOWED), (
+        "an allowed launcher word is gone, remove it from the list"
+    )
+
+
+def test_the_resolved_scan_finds_nothing_outside_listen_in_src_demos_tools() -> None:
+    offenders = []
+    for top in ("src", "demos", "tools"):
+        for path in sorted((ROOT / top).rglob("*.py")):
+            rel = path.relative_to(ROOT).as_posix()
+            lo, hi = _listen_lines() if rel == "src/hadavin_sdk/bindguard.py" else (0, 0)
+            for hit in server_scan.resolved_forms(path.read_text(encoding="utf-8")):
+                if not lo <= int(hit.rsplit("@", 1)[1]) <= hi:
+                    offenders.append(f"{rel}:{hit}")
+    assert offenders == [], f"another server form outside listen: {offenders}"
+    own = (SRC / "bindguard.py").read_text(encoding="utf-8")
+    assert server_scan.resolved_forms(own), "the resolved scan is blind to the server in listen"
+
+
+_RUNTIME_PROBE = r"""
+import importlib.util, json, pathlib, pkgutil, socket, sys, traceback
+root = pathlib.Path(sys.argv[1])
+sys.path[:0] = [str(root / "src"), str(root)]
+binds = []
+def boom(self, *a, **k):
+    binds.append(traceback.format_stack()[-3].strip().splitlines()[0])
+    raise OSError("bind during import")
+socket.socket.bind = boom
+failed = []
+import hadavin_sdk
+for m in pkgutil.walk_packages(hadavin_sdk.__path__, "hadavin_sdk."):
+    try:
+        importlib.import_module(m.name)
+    except Exception as exc:
+        failed.append(m.name + " " + type(exc).__name__)
+for path in sorted((root / "tools").glob("*.py")):
+    try:
+        spec = importlib.util.spec_from_file_location("probe_" + path.stem, path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+    except Exception as exc:
+        failed.append(path.name + " " + type(exc).__name__)
+print(json.dumps({"binds": binds, "failed": failed}))
+"""
+
+
+def test_importing_the_package_binds_no_socket() -> None:
+    import json
+    import subprocess
+    import sys
+
+    out = subprocess.run(  # noqa: S603 - our own interpreter and our own probe text
+        [sys.executable, "-I", "-c", _RUNTIME_PROBE, str(ROOT)],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    assert out.returncode == 0 or "bind during import" in out.stderr, out.stderr[-300:]
+    assert "bind during import" not in out.stderr, (
+        f"a module bound a socket when it was imported: {out.stderr[-300:]}"
+    )
+    result = json.loads(out.stdout.strip().splitlines()[-1])
+    assert result["binds"] == [], f"a module bound a socket when it was imported: {result['binds']}"
+    assert result["failed"] == [], (
+        f"a module could not be imported, so it was not checked: {result['failed']}"
+    )
+
+
+def test_the_only_code_that_reaches_a_socket_bind_is_listen(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The control at the one place every server must pass: the frames above each ``socket.bind`` made while the
+    receiver runs. The caller of the bind must be the standard ``TCPServer.server_bind``, called by the server
+    class made INSIDE ``listen`` and nothing else (a second bind written inside ``listen``, or anywhere else,
+    would show a different frame first). Paths that no test runs are not covered."""
+    import sys
+
+    seen: list[list[tuple[str, str]]] = []
+    real_bind = socket.socket.bind
+
+    def spy(self: socket.socket, address: object) -> None:
+        frames, f = [], sys._getframe(1)
+        while f is not None and len(frames) < 4:
+            frames.append((Path(f.f_code.co_filename).name, f.f_code.co_name))
+            f = f.f_back
+        seen.append(frames)
+        return real_bind(self, address)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(socket.socket, "bind", spy)
+    app = _built(tmp_path)
+    serve(app.approvals, config=app.config, port=0).server_close()  # type: ignore[attr-defined]
+    real = _built(tmp_path / "real", channel=_RealChannel("sig" + "-b4-rt"))
+    serve(real.approvals, config=real.config, port=0).server_close()  # type: ignore[attr-defined]
+    listen(real.config, LOOP_1, 0, _Quiet, held={}).server_close()  # type: ignore[attr-defined]
+    assert len(seen) == 3, "the receiver reached a bind a different number of times than expected"
+    expected = [
+        ("socketserver.py", "server_bind"),
+        ("bindguard.py", "server_bind"),
+        ("socketserver.py", "__init__"),
+        ("bindguard.py", "listen"),
+    ]
+    for frames in seen:
+        assert frames == expected, f"a bind came from somewhere other than listen: {frames}"
