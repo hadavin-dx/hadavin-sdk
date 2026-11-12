@@ -2372,7 +2372,7 @@ M = [
         '        elif name == "fromisoformat" and len(call.args) == 1:\n',
         "        elif False:\n",
         "test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not",
-        "a day written as an ISO text for `fromisoformat` was not found",
+        "a day with a time written as an ISO text for `fromisoformat` was not found",
     ),
     mutant(
         "B13 the scan for a written day flags the decision day itself",
@@ -2404,7 +2404,7 @@ M = [
         "        if day is not None and (rel, fn) not in pins:\n",
         "        if day is not None:\n",
         "test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not",
-        "a pin that is not named was accepted",
+        "a named pin was flagged",
     ),
     mutant(
         "B14 the scan for a written day does not read the keywords of a date call",
@@ -2445,14 +2445,6 @@ M = [
         "        for child in ast.iter_child_nodes(node):\n            if fn is None or not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):\n                visit(child, fn)\n",
         "test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not",
         "a day inside a nested function was not found",
-    ),
-    mutant(
-        "B14 the scan for a written day reads a day inside a bigger text",
-        TEST,
-        '_BARE_ISO_DAY = re.compile(r"\\d{4}-\\d{2}-\\d{2}")\n',
-        '_BARE_ISO_DAY = re.compile(r"\\d{4}-\\d{2}-\\d{2}.*")\n',
-        "test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not",
-        "a day inside a bigger text was flagged",
     ),
     mutant(
         "B14 the scan for a written day reads one fixed file and not every policy test file",

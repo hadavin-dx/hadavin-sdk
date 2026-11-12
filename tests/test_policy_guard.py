@@ -5716,6 +5716,9 @@ def test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_leve
     assert found(body(f"date.fromisoformat('{w.isoformat()}')")), (
         "a day written as an ISO text for `fromisoformat` was not found"
     )
+    assert found(body(f"datetime.fromisoformat('{w.isoformat()} 10:00')")), (
+        "a day with a time written as an ISO text for `fromisoformat` was not found"
+    )
     assert found(body(f"'{w.isoformat()}'")), "a bare ISO day text was not found"
     assert found(f"def outer():\n    def inner():\n        return '{w.isoformat()}'\n"), (
         "a day inside a nested function was not found"
@@ -5728,7 +5731,9 @@ def test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_leve
     pin = body(f"date({d.year}, {d.month}, {d.day})")
     assert found(pin), "a pin that is not named was accepted"
     assert not found(pin, {("f.py", "test_x"): "a pin"}), "a named pin was flagged"
-    assert not found(body("'on 2026-12-11 it'")), "a day inside a bigger text was flagged"
+    assert not found(body("'on 2026-12-11 it'")) and not found(body(f"'{w.isoformat()} it'")), (
+        "a day inside a bigger text was flagged"
+    )
 
 
 def test_the_message_scan_counts_the_messages_of_a_helper_the_killer_calls_and_only_that():
