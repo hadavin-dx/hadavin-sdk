@@ -1177,3 +1177,74 @@ def test_step_4_takes_everyones_execute_off_functions_with_awkward_names(mrun, m
     assert sorted(names) == sorted(n.replace('""', '"') for n in _AWKWARD), names
     assert [r[1] for r in rows] == [0] * len(_AWKWARD), rows
     assert mig.migrate(mrun.dsn) == []
+
+
+def test_an_unreadable_lock_view_is_a_plain_config_error(env):
+    """Ticket 6.2, real server: the lock is held by another session, the login that waits may not read
+    `pg_stat_activity` (a catalog view this database's administrator closed), and `migrate`'s wait ends. The answer is
+    a ConfigError that says the holder could not be read and that nothing was changed (exit 2), never a raw driver error.
+    Killed by: mutant V73 (the handler does not catch the driver error)."""
+    from hadavin_sdk.store import migrate as mig
+
+    n = env.n
+    login = f"{n.tag}_login"
+    helper.create_login_role(env.db, login)
+    try:
+        env.db.execute("REVOKE SELECT ON pg_catalog.pg_stat_activity FROM PUBLIC")
+        dsn = helper.login_dsn(make_conninfo(DSN, dbname=n.tag), login)
+        with psycopg.connect(make_conninfo(DSN, dbname=n.tag), autocommit=True) as holder:
+            holder.execute("BEGIN")
+            holder.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK,))
+            with psycopg.connect(dsn, autocommit=True) as waiter:
+                waiter.execute("BEGIN")
+                outcome = None
+                try:
+                    mig._take_the_lock(waiter, 1)
+                except Exception as exc:  # judged below, outside the handler
+                    outcome = exc
+                waiter.execute("ROLLBACK")
+            holder.execute("ROLLBACK")
+        assert isinstance(outcome, ConfigError), f"expected the refusal, got {outcome!r}"
+        text = str(outcome)
+        assert "could not read who holds it" in text
+        assert "Nothing was changed." in text and "permission denied" in text
+        assert "migrate waited 1 seconds for the migration lock and gave up" in text
+    finally:
+        env.db.execute("GRANT SELECT ON pg_catalog.pg_stat_activity TO PUBLIC")
+        env.db.execute(sql.SQL("DROP ROLE IF EXISTS {}").format(sql.Identifier(login)))
+
+
+def test_the_lock_queries_tell_a_live_session_from_a_prepared_transaction(env):
+    """Real server, the two queries of ticket 6.1 on their own. A live session that holds the migration lock is NOT a
+    prepared transaction: the count of lock rows without a session is 0 and no prepared transaction is named. After the
+    lock is held by a prepared transaction, the count is 1 and exactly that transaction is named, not a bystander that
+    holds another lock. Killed by: mutant V72 (`l.pid IS NULL` is left out of the count) and V71 (the old listing)."""
+    from hadavin_sdk.store import migrate as mig
+
+    n = env.n
+    gid, by = f"{n.tag}_holder", f"{n.tag}_bystander"
+    dsn = make_conninfo(DSN, dbname=n.tag)
+
+    def look():
+        count = env.db.execute(mig._LOCK_PREPARED_SQL, (mig.MIGRATE_LOCK,)).fetchone()[0]
+        names = [r[0] for r in env.db.execute(mig._PREPARED_SQL, (mig.MIGRATE_LOCK,)).fetchall()]
+        return count, names
+
+    with psycopg.connect(dsn, autocommit=True) as live:
+        live.execute("BEGIN")
+        live.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK,))
+        assert look() == (0, [])
+        live.execute("ROLLBACK")
+    assert look() == (0, [])
+    try:
+        with psycopg.connect(dsn, autocommit=True) as a:
+            a.execute("BEGIN")
+            a.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK + 1,))
+            a.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(by)))
+            a.execute("BEGIN")
+            a.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK,))
+            a.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(gid)))
+        assert look() == (1, [gid])
+    finally:
+        for g in (gid, by):
+            env.db.execute(sql.SQL("ROLLBACK PREPARED {}").format(sql.Literal(g)))

@@ -4428,29 +4428,31 @@ def test_a_named_role_that_can_read_a_foreign_table_in_the_run_schema_is_refused
 def test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one(scratch):
     """A prepared transaction (`PREPARE TRANSACTION`) keeps its locks and belongs to no session: the list of sessions
     shows nobody, and "a session this login cannot see" with the advice to end that session would send the reader the
-    wrong way. The message says a prepared transaction holds the lock, lists the prepared transactions of the database
-    and names the two statements that finish one. A server whose `max_prepared_transactions` is 0 (the default)
-    refuses `PREPARE TRANSACTION`: there the situation cannot arise, and the test asserts exactly that refusal (the
-    wording of the message is then proven by the server-free test in tests/test_migration_compare.py). Fails on
-    8382bdd where the server allows prepared transactions (the message said "a session this login cannot see").
-    Killed by: mutant LW8 (a lock without a session is not looked for)."""
+    wrong way. The message names the prepared transaction that holds the lock, and ONLY that one: a second prepared
+    transaction of the same database that holds no lock is not named (an administrator who finished it would lose another
+    system's work). A server whose `max_prepared_transactions` is 0 FAILS this test visibly (ticket 6.3: no early return,
+    no skip), on a developer machine and in CI alike: start the test server with `-c max_prepared_transactions=10`.
+    Killed by: mutants LW8 (a lock without a session is not looked for) and V71 (the old listing of the database's
+    prepared transactions replaces the join to the lock)."""
     dsn, _schema = scratch
     name = "hadavin_test_prep_" + uuid.uuid4().hex[:8]
+    bystander = "hadavin_test_bystander_" + uuid.uuid4().hex[:8]
     with psycopg.connect(DSN, autocommit=True) as holder:
         allowed = holder.execute(
             "SELECT current_setting('max_prepared_transactions')::int"
         ).fetchone()[0]
+        if allowed == 0:
+            pytest.fail(
+                "this server has max_prepared_transactions = 0; the prepared-transaction test cannot run. Start the "
+                "test server with -c max_prepared_transactions=10.",
+                pytrace=False,
+            )
+        holder.execute("BEGIN")
+        # the bystander is prepared first and holds another advisory lock, not the migration lock
+        holder.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK + 1,))
+        holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(bystander)))
         holder.execute("BEGIN")
         holder.execute("SELECT pg_advisory_xact_lock(%s)", (mig.MIGRATE_LOCK,))
-        if allowed == 0:
-            with pytest.raises(psycopg.errors.ObjectNotInPrerequisiteState):
-                holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
-            holder.execute("ROLLBACK")
-            assert mig.migrate(dsn) == REAL  # the lock is free again: the run goes through
-            # This return is after a `migrate` call on purpose and is not an early return: on a server that cannot
-            # prepare transactions the situation of this test cannot arise, so what is asserted is the refusal of the
-            # server plus a run that goes through; the message wording itself is proven server-free (see the docstring).
-            return
         holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
     try:
         with pytest.raises(ConfigError, match="a prepared transaction holds it") as e:
@@ -4458,9 +4460,12 @@ def test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one(sc
         text = str(e.value)
         assert name in text and "ROLLBACK PREPARED" in text and "Nothing was changed." in text
         assert "pg_terminate_backend" not in text
+        assert bystander not in text, "the prepared transaction that holds no lock is named"
+        assert f"ROLLBACK PREPARED '{name}'" in text
     finally:
         with psycopg.connect(DSN, autocommit=True) as db:
             db.execute(sql.SQL("ROLLBACK PREPARED {}").format(sql.Literal(name)))
+            db.execute(sql.SQL("ROLLBACK PREPARED {}").format(sql.Literal(bystander)))
     assert mig.migrate(dsn) == REAL
 
 

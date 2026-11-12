@@ -3500,6 +3500,56 @@ M: list[Mutant] = [
         "FROM obj o CROSS JOIN LATERAL pg_catalog.aclexplode(o.acl) a)",
         "tests/test_migration_verify_pg.py::test_an_object_whose_access_list_is_empty_is_still_judged_for_owner_and_definer",
     ),
+    # --- ticket P3a-2, commit 4: the lock message (6.1, 6.2) ---
+    Mutant(
+        "V71",
+        "6.1: the prepared transactions are listed the old way (every one of the database) and not joined to the lock",
+        MIG,
+        '    "JOIN pg_catalog.pg_locks t ON t.locktype = \'transactionid\' AND t.pid IS NULL AND t.granted "\n'
+        '    "AND t.virtualtransaction = l.virtualtransaction "\n'
+        '    "JOIN pg_catalog.pg_prepared_xacts x ON x.transaction = t.transactionid "\n',
+        '    "JOIN pg_catalog.pg_locks t ON l.locktype = \'advisory\' "\n'
+        '    "JOIN pg_catalog.pg_prepared_xacts x ON t.locktype = \'advisory\' "\n',
+        (
+            k(T_PG, "test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one"),
+            k(T_VERIFY_PG, "test_the_lock_queries_tell_a_live_session_from_a_prepared_transaction"),
+        ),
+    ),
+    Mutant(
+        "V72",
+        "6.1: the count of lock rows without a session also counts the lock of a live session (`l.pid IS NULL` left out)",
+        MIG,
+        "    \"SELECT count(*) FROM pg_locks l WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1 AND l.pid IS NULL \"",
+        "    \"SELECT count(*) FROM pg_locks l WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1 \"",
+        k(T_VERIFY_PG, "test_the_lock_queries_tell_a_live_session_from_a_prepared_transaction"),
+    ),
+    Mutant(
+        "V73",
+        "6.2: a driver error while the holder of the lock is read is not caught",
+        MIG,
+        "        except psycopg.Error as exc:\n            # Ticket 6.2",
+        "        except ZeroDivisionError as exc:\n            # Ticket 6.2",
+        (
+            k(T_CMP, "test_an_unreadable_lock_view_is_a_plain_config_error_whichever_query_fails"),
+            k(T_VERIFY_PG, "test_an_unreadable_lock_view_is_a_plain_config_error"),
+        ),
+    ),
+    Mutant(
+        "V74",
+        "6.2: the user name of the session that holds the lock is written without the escape of control characters",
+        MIG,
+        "            f\"the session of {_label(_seen(row[1]))} (process",
+        "            f\"the session of {_seen(row[1])} (process",
+        k(T_CMP, "test_the_name_of_the_session_that_holds_the_lock_is_written_without_control_characters"),
+    ),
+    Mutant(
+        "V75",
+        "6.1: a list of several prepared transactions is not named",
+        MIG,
+        "            elif named:\n                finish = (\n                    f\"One of these",
+        "            elif False:\n                finish = (\n                    f\"One of these",
+        k(T_CMP, "test_two_prepared_transactions_that_could_hold_the_lock_are_all_named_and_none_is_picked"),
+    ),
 ]
 M.extend(STEP_MUTANTS)
 

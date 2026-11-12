@@ -84,6 +84,17 @@ jobs:
         run: python tools/scan_repo.py
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
+      # The prepared-transaction test needs a server that accepts PREPARE TRANSACTION (max_prepared_transactions above 0,
+      # which the service container cannot be started with). The test FAILS on a server that says 0; it never skips.
+      - name: Let the postgres service accept prepared transactions (the test of the migration lock needs them)
+        run: |
+          docker exec "${{ job.services.postgres.id }}" psql -U postgres -c "ALTER SYSTEM SET max_prepared_transactions = 10"
+          docker restart "${{ job.services.postgres.id }}"
+          for i in $(seq 1 30); do
+            if pg_isready -h localhost -p 5432 -U postgres; then break; fi
+            sleep 2
+          done
+          psql -h localhost -p 5432 -U postgres -Atc "SHOW max_prepared_transactions" | grep -x 10
       - name: Tests (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
@@ -146,6 +157,17 @@ jobs:
         run: uv sync --locked --no-build --all-extras --group test
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
+      # The prepared-transaction test needs a server that accepts PREPARE TRANSACTION (max_prepared_transactions above 0,
+      # which the service container cannot be started with). The test FAILS on a server that says 0; it never skips.
+      - name: Let the postgres service accept prepared transactions (the test of the migration lock needs them)
+        run: |
+          docker exec "${{ job.services.postgres.id }}" psql -U postgres -c "ALTER SYSTEM SET max_prepared_transactions = 10"
+          docker restart "${{ job.services.postgres.id }}"
+          for i in $(seq 1 30); do
+            if pg_isready -h localhost -p 5432 -U postgres; then break; fi
+            sleep 2
+          done
+          psql -h localhost -p 5432 -U postgres -Atc "SHOW max_prepared_transactions" | grep -x 10
       - name: Tests on Python 3.12 (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres

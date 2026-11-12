@@ -852,8 +852,20 @@ _LOCK_PREPARED_SQL = (
     "AND l.database = (SELECT oid FROM pg_database WHERE datname = current_database()) "
     "AND ((l.classid::bigint << 32) | l.objid::bigint) = %s"
 )
-# The prepared transactions of this database (the view shows them to every login), oldest first.
-_PREPARED_SQL = "SELECT gid, owner, prepared FROM pg_prepared_xacts WHERE database = current_database() ORDER BY prepared LIMIT 5"
+# The prepared transaction that holds the migration lock, and no other: the lock row has no process number, its
+# transaction id's row names the virtual transaction, and `pg_prepared_xacts` names the transaction (ticket P3a-2, 6.1).
+# The view is shown to every login. Before this query the five oldest of the database were listed, and a database
+# administrator who finished the wrong one lost another system's work.
+_PREPARED_SQL = (
+    "SELECT x.gid, x.owner, x.prepared FROM pg_catalog.pg_locks l "
+    "JOIN pg_catalog.pg_locks t ON t.locktype = 'transactionid' AND t.pid IS NULL AND t.granted "
+    "AND t.virtualtransaction = l.virtualtransaction "
+    "JOIN pg_catalog.pg_prepared_xacts x ON x.transaction = t.transactionid "
+    "AND x.database = pg_catalog.current_database() "
+    "WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 1 AND l.pid IS NULL "
+    "AND l.database = (SELECT oid FROM pg_catalog.pg_database WHERE datname = pg_catalog.current_database()) "
+    "AND ((l.classid::bigint << 32) | l.objid::bigint) = %s ORDER BY x.prepared"
+)
 # `lock_timeout` is a whole number of milliseconds that PostgreSQL holds in 32 bits.
 MAX_LOCK_WAIT_SECONDS = 2_147_483
 
@@ -881,22 +893,53 @@ def _take_the_lock(db, wait_seconds: int) -> None:
                 "SELECT pg_advisory_xact_lock(%s)", (MIGRATE_LOCK,)
             )  # one key, in migration_numbers
     except pg_errors.LockNotAvailable:
-        row = db.execute(_LOCK_HOLDER_SQL, (MIGRATE_LOCK,)).fetchone()
         gave_up = f"migrate waited {wait_seconds} seconds for the migration lock and gave up"
-        if row is None and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]:
-            listed = [
-                f"'{_label(str(gid))}' (owner {_label(str(owner))}, prepared {since})"
-                for gid, owner, since in db.execute(_PREPARED_SQL).fetchall()
-            ]
+        try:
+            row = db.execute(_LOCK_HOLDER_SQL, (MIGRATE_LOCK,)).fetchone()
+            prepared = None
+            if row is None and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]:
+                prepared = db.execute(_PREPARED_SQL, (MIGRATE_LOCK,)).fetchall()
+        except psycopg.Error as exc:
+            # Ticket 6.2: a view this login cannot read is a plain configuration error, never a driver traceback.
             raise ConfigError(
-                f"{gave_up}: a prepared transaction holds it (a transaction that a session set aside with PREPARE "
-                "TRANSACTION; it keeps its locks until it is finished and has no session that could be ended). "
-                f"The oldest prepared transactions of this database: {_shown(listed) or 'none visible'}. "
-                "Nothing was changed. A database administrator finishes the one that holds the lock (ROLLBACK "
-                "PREPARED '<its name>' or COMMIT PREPARED '<its name>'); then run migrate again."
+                f"{gave_up}; it could not read who holds it ({_label(str(exc))}). Nothing was changed. Wait until "
+                "the other run ends and run migrate again, or ask a database administrator who holds the lock."
+            ) from None
+        if prepared is not None:
+            held = (
+                "a prepared transaction holds it (a transaction that a session set aside with PREPARE TRANSACTION; "
+                "it keeps its locks until it is finished and has no session that could be ended)"
+            )
+            named = [
+                f"'{_label(str(gid))}' (owner {_label(str(owner))}, prepared {since})"
+                for gid, owner, since in prepared
+            ]
+            if len(named) == 1:
+                # The name goes into the printed statements only when it is plain; any other name (a quote, a control
+                # character) is shown through `_label` above and the statements say "<its name>".
+                raw = str(prepared[0][0])
+                gid = raw if re.fullmatch(r"[A-Za-z0-9_.:-]+", raw) else "<its name>"
+                finish = (
+                    f"It is the prepared transaction {named[0]}. A database administrator finishes THAT one "
+                    f"(ROLLBACK PREPARED '{gid}' or COMMIT PREPARED '{gid}'); do not finish any other."
+                )
+            elif named:
+                finish = (
+                    f"One of these prepared transactions holds it: {_shown(named)}. The server does not tell them "
+                    "apart for this login; ask their owners before finishing any (ROLLBACK PREPARED '<its name>' "
+                    "or COMMIT PREPARED '<its name>')."
+                )
+            else:
+                finish = (
+                    "This login cannot see which prepared transaction it is. A database administrator looks at "
+                    "pg_prepared_xacts and finishes the right one (ROLLBACK PREPARED '<its name>' or COMMIT "
+                    "PREPARED '<its name>')."
+                )
+            raise ConfigError(
+                f"{gave_up}: {held}. {finish} Nothing was changed. Then run migrate again."
             ) from None
         who = (
-            f"the session of {_seen(row[1])} (process {row[0]}, application {_seen(row[2])}, "
+            f"the session of {_label(_seen(row[1]))} (process {row[0]}, application {_label(_seen(row[2]))}, "
             f"state {_seen(row[3])}, connected since {_seen(row[4])})"
             if row
             else "a session this login cannot see"
