@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 23:45Z (05:15 IST) / PR 71 head and timing head are on remote refs (answer to LEAD NOTE 23:36Z)
+FAILED / UNCERTAIN FIRST: (1) My 23:39Z block said "push THAT head" but the sha was only local; that was my slip, fixed now. (2) Timing batch 3 is still NOT clean: independent runner aafabf22 has not reported; E731 line tests/test_migration_numbers.py:849 and the 58 s perf figure are still to fix (I do that after the runner, one push).
+LEAD ACTIONS: fast-forward core/P0a to `wip/cloud-p0a-merge-main` = 47d74d264a39a932bd90519cc3e71ea2e3cfb78e (verified with git ls-remote; descends from 04cfa501; handover-files check exit 0). Timing batch 3 is on `wip/cloud-timing-flake` = 86b94db0e2a6572d2dfd40efcc29ce01d7a0456d; do not open the PR yet. Owner-only items unchanged.
+
+LIVE ITEMS (4): a0347669 Part 2 batch 6; a90e009f Part 6 batch 5; a35e15e9 Q8c-1 survivor fix; aafabf22 timing runner. Heavy slots: at most 3.
+ROUNDS: unchanged from 23:39Z.
+FINISHED SINCE LAST BLOCK: pushed 47d74d26 to wip/cloud-p0a-merge-main; confirmed timing head on wip/cloud-timing-flake.
+
 ## 23:39Z (04:09 IST) / PR 71 head 47d74d26 passed an independent full run: push THAT head
 FAILED / UNCERTAIN FIRST: (1) PR 71 `check` may still go red from the timing flake: the runner did not see it in 7 runs (5 alone, 1 and 4 busy loops) but that does not prove a fix; the fix is PR `core/timing-flake` (batch 3 head 86b94db0, Majors-only check 0 Blocker 0 Major, independent runner still running, one E731 line and the 58 s perf figure still to fix). (2) Real Vault tests not run here (impossible now). (3) The runner picked heavy-slot priority by a name match.
 LEAD ACTIONS: push PR 71 as head 47d74d264a39a932bd90519cc3e71ea2e3cfb78e (a normal merge of main e5aa9457 into core/P0a 04cfa501, not a rebase). Evidence: handover/evidence/P0a/47d74d26/RESULTS.md (full pytest 10805 passed 1 skipped; ruff, format, bandit, scan, gitleaks, the CI stale-ignore step as CI runs it, both guard tests 149 passed, handover-files check: all exit 0). Owner-only items unchanged.
