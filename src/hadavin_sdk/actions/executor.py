@@ -18,6 +18,7 @@ from urllib.parse import quote
 from hadavin_sdk.actions.contract import ActionContract, HttpExecutor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.config import url_allowed
+from hadavin_sdk.errors import status_text
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
 from hadavin_sdk.models import ApprovalDecision, GateDecision, Plan, RunResult
@@ -144,8 +145,8 @@ class Executor:
             # A mutating call may have been applied before the server failed: look it up, never retry.
             if contract.executor.lookup_operation:
                 return self._lookup(contract, plan, call, inputs)
-            return RunResult(outcome="unknown", error_code=f"http_{status}")
-        return RunResult(outcome="failed", error_code=f"http_{status}")
+            return RunResult(outcome="unknown", error_code=f"http_{status_text(status)}")
+        return RunResult(outcome="failed", error_code=f"http_{status_text(status)}")
 
     def _lookup(
         self, contract: ActionContract, plan: Plan, call: Call, inputs: dict | None = None

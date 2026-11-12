@@ -89,7 +89,9 @@ def gate(registry: Registry, llm: LLM, agent_id: str, *, k: int = 1) -> GateRun:
                 {
                     "action": reply.tool_calls[0].name,
                     "inputs": {
-                        k: v for k, v in reply.tool_calls[0].input.items() if k != "evidence"
+                        name: v
+                        for name, v in reply.tool_calls[0].input.items()
+                        if name != "evidence"
                     },
                 }
                 if reply.tool_calls

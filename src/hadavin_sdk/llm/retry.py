@@ -13,14 +13,20 @@ errors and TLS, nothing else. Each kind knows its own SDK's errors and passes ``
 from __future__ import annotations
 
 import random
+import re
 import ssl
 import time
 from collections.abc import Callable
 
+from hadavin_sdk.errors import Failed
 from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
+
+# What `describe` keeps of a kind's `detail`: a short code (letters, digits, dot, dash, underscore, space). A kind's
+# error code can come from the provider's own answer, so anything longer or with other characters is dropped.
+_DETAIL = re.compile(r"[A-Za-z0-9._ -]{0,80}")
 
 Retryable = Callable[[BaseException], "bool | None"]
 
@@ -76,7 +82,8 @@ def retry_after(exc: BaseException) -> float:
 
 def describe(exc: BaseException, detail: Callable[[BaseException], str] | None = None) -> str:
     """Class, status and the kind's error code only: an SDK message can quote the request."""
-    parts = [type(exc).__name__, str(status(exc) or ""), detail(exc) if detail else ""]
+    said = detail(exc) if detail else ""
+    parts = [type(exc).__name__, str(status(exc) or ""), said if _DETAIL.fullmatch(said) else ""]
     return " ".join(p for p in parts if p)
 
 
@@ -90,25 +97,24 @@ def with_retry[T](
     detail: Callable[[BaseException], str] | None = None,
 ) -> T:
     for attempt in range(1, max_attempts + 1):
-        failure: ProviderError | None = None
-        try:
+        # An SDK error quotes the request (its URL holds the region or resource). `Failed` takes the error out of
+        # any handler, so the new error raised below carries neither a cause nor a context; `describe` says the
+        # class and status. Every failure is classified here, never swallowed.
+        with Failed((ProviderError,)) as caught:
             return call()
-        except ProviderError:
-            raise
-        except Exception as exc:  # noqa: BLE001 - every failure is classified below, never swallowed
-            # An SDK error quotes the request (its URL holds the region or resource). The new error is raised after
-            # this block, so it carries neither a cause nor a context; `describe` says the class and status.
-            if not transient(exc, retryable):
-                failure = ProviderError(f"{label}: {describe(exc, detail)}")
-            elif attempt == max_attempts:
-                failure = ProviderExhausted(
-                    f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
-                )
-            else:
-                # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
-                # sooner than the server asked.
-                jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
-                sleep(max(jitter, retry_after(exc)))
-        if failure is not None:
-            raise failure
+        exc = caught.error
+        if exc is None:
+            raise AssertionError(
+                "unreachable"
+            )  # `call` returned (above) or the error passed through
+        if not transient(exc, retryable):
+            raise ProviderError(f"{label}: {describe(exc, detail)}")
+        if attempt == max_attempts:
+            raise ProviderExhausted(
+                f"{label}: {describe(exc, detail)} after {max_attempts} attempts"
+            )
+        # Full jitter spreads retries from many runs hitting one throttled account (not crypto); never
+        # sooner than the server asked.
+        jitter = random.uniform(0, min(MAX_DELAY_S, BASE_DELAY_S * 2 ** (attempt - 1)))  # noqa: S311
+        sleep(max(jitter, retry_after(exc)))
     raise AssertionError("unreachable")  # max_attempts >= 1 (settings)

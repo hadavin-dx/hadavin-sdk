@@ -156,7 +156,7 @@ def _main(argv: list[str] | None = None) -> int:
         pairs = run.n * run.k
         frac = f"{run.passed}/{run.n}" if run.k == 1 else f"{round(run.pass_rate * pairs)}/{pairs}"
         print(
-            f"{run.agent_id}: {frac} = {run.pass_rate:.2f} "
+            f"{shown_name(run.agent_id, reg.agents)}: {frac} = {run.pass_rate:.2f} "
             f"(threshold {run.threshold:.2f}) -> {'GREEN' if run.green else 'RED'}"
             f", pass^k={_num(run.pass_k)}, abstain={_num(run.abstain_rate)}"
             f", bound={_num(run.upper_error_bound, 3)}"

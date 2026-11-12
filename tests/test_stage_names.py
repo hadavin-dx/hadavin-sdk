@@ -3392,8 +3392,6 @@ GUARD_ALLOWED = {
     ('app.py', "f'tool:{n}'"): _NOT_TEXT,
     ('app.py', "f'{c}: {s.kind} auth token (the default; set auth: kubernetes (recommended) or auth: approle)'"): _KIND_CODE,
     ('approvals/cards.py', "f'- {c}'"): _CARD,
-    ('approvals/cards.py', "f'label_{k}'"): _CARD,
-    ('approvals/cards.py', "f'label_{x}'"): _CARD,
     ('approvals/cards.py', "f'label|{plan.run_id}|{x}'"): _CARD,
     ('approvals/cards.py', "f'label|{run_id}|{k}'"): _CARD,
     ('approvals/gate.py', "'\\u200b' + c"): _CHAR,
@@ -3429,7 +3427,6 @@ GUARD_ALLOWED = {
     ('llm/anthropic.py', "f'https://aiplatform.{region}.rep.googleapis.com/v1'"): _URL_BUILD,
     ('llm/anthropic.py', "f'https://{region}-aiplatform.googleapis.com/v1'"): _URL_BUILD,
     ('llm/anthropic.py', "f'https://{settings.resource}.services.ai.azure.com/anthropic/'"): _URL_BUILD,
-    ('registry.py', "f'llm_{k}'"): _NOT_TEXT,
     ('registry.py', "out += [f'action {shown_name(c.id)}: {p}' for p in schema_problems(c.input_schema)]"): _SENTENCES,
     ('registry.py', "problems += [f'{where}: tool {shown_name(spec.name)}: {p}' for p in schema_problems(spec.input_schema)]"): _SENTENCES,
     ('runtime/tick.py', "f'stuck {state.value}'"): _CODE_NAME,
@@ -3525,6 +3522,18 @@ def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allo
 # person or a log can read". Round 12: the 25 shapes of the evidence probe 7 (F1-F10, X1-X15) and the extras that the two
 # reviewers named. Each must give exactly the number of sites in the second place (a site inside a site is part of it).
 _PLANTED_FAULTS = {
+    "R13a print of a name with file=": (
+        "import sys\ndef f(self, name):\n    print(name, file=sys.stderr)",
+        1,
+    ),
+    "R13b print with a name as the separator": (
+        "def f(self, name):\n    print('a', 'b', sep=name)",
+        1,
+    ),
+    "R13c a comprehension variable that loops over a configured list": (
+        "def f(self):\n    return [f'bad {x}' for x in self.items]",
+        1,
+    ),
     "I5a an inner function reads a variable bound to a configured value in the outer function": (
         'def f(self):\n    other = self.namespaces[0]\n    def g():\n        raise A(f"{other}")\n    g()',
         1,
@@ -3671,6 +3680,10 @@ _PLANTED_FAULTS = {
     "I3 text plus a text": ("def f(self, name):\n    return name + 'x'", 1),
 }
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
+    "R13e a status through status_text": "def f(status):\n    raise A(f'answered {status_text(status)}')",
+    "R13a print of a constant sentence with file=": "import sys\nprint('a sentence', file=sys.stderr, flush=True)",
+    "R13c a comprehension variable over a tuple of words": "def f():\n    return [f'bad {x}' for x in ('a', 'b')]",
+    "R13d a comprehension counter by enumerate": "def f(items):\n    return [f'entry {i}' for i, _ in enumerate(items, start=1)]",
     "I5f the parameter of the class-name lambda of call_class_only": 'def f(c):\n    call_class_only(c, lambda cls: A(f"{cls}"))',
     "I5d an inner function reads a variable bound to a written word in the outer function": 'def f():\n    other = "x"\n    def g():\n        raise A(f"{other}")\n    g()',
     "I5e a name plus a number is a number": 'def f(name):\n    raise A(f"{name + 1}")',
@@ -3745,14 +3758,11 @@ def test_the_exempt_modules_read_no_configuration():
         ), module
 
 
-def test_the_unread_sites_are_counted_and_listed():
-    """The allowance reason `UNREAD` is a site the widened guard sees that nobody has read yet. The number may only go
-    down: a new unread site fails here, and the list is what the batch notes name."""
-    unread = sorted(f"{m}: {t}" for (m, t), r in NEW_ALLOWED.items() if r == "UNREAD")
-    assert len(unread) <= UNREAD_LIMIT, f"{len(unread)} unread sites; the limit is {UNREAD_LIMIT}"
-
-
-UNREAD_LIMIT = 164  # the real count at the end of batch 12; it may only go down (the sites are listed in tests/_guard_allowances.py)
+def test_no_allowance_row_is_left_unread():
+    """Round 13: every row has a reason that is a claim checked by `tests/test_guard_reasons.py`; the placeholder
+    `UNREAD` (a site nobody had read) is gone and cannot come back."""
+    assert "UNREAD" not in REASONS
+    assert not [k for k, r in NEW_ALLOWED.items() if r not in REASONS]
 
 
 def test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones():

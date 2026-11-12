@@ -26,7 +26,7 @@ from collections.abc import Callable
 from typing import Any, Literal
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
-from hadavin_sdk.errors import ConfigError, read_configured
+from hadavin_sdk.errors import ConfigError, read_configured, status_text
 from hadavin_sdk.guard.http import NoRedirect
 from hadavin_sdk.safe_url import safe_urlsplit
 
@@ -87,9 +87,11 @@ class VaultProvider(CachedSecrets):
         try:  # a proxy or load-balancer page can answer 200 with HTML
             parsed = json.loads(raw) if raw else {}
         except ValueError:
-            raise VaultError(f"Vault answered {status} with a body that is not JSON") from None
+            raise VaultError(
+                f"Vault answered {status_text(status)} with a body that is not JSON"
+            ) from None
         if not isinstance(parsed, dict):
-            raise VaultError(f"Vault answered {status} with an unexpected JSON shape")
+            raise VaultError(f"Vault answered {status_text(status)} with an unexpected JSON shape")
         return status, parsed
 
     def authed(self, method: str, path: str, body: dict | None = None):
@@ -113,7 +115,7 @@ class VaultProvider(CachedSecrets):
         if status == 404:
             raise ConfigError("the secret was not found in Vault")
         if status != 200:
-            raise VaultError(f"a secret: Vault answered {status}")
+            raise VaultError(f"a secret: Vault answered {status_text(status)}")
         fields = _mapping(_mapping(body.get("data")).get("data"))
         if self.field not in fields:
             raise ConfigError("the secret has no field named by `field` in Vault")
@@ -141,7 +143,7 @@ def _login_with(
     token = _mapping(body.get("auth")).get("client_token") if status == 200 else None
     if not isinstance(token, str) or not token:
         raise ConfigError(
-            f"secrets vault: the configured auth mount ({kind}): sign-in refused ({status})"
+            f"secrets vault: the configured auth mount ({kind}): sign-in refused ({status_text(status)})"
         )
     return token
 

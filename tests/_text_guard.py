@@ -29,7 +29,7 @@ SAFE_CALLS = frozenset(
     {
         "len", "int", "float", "bool", "round", "abs", "ord", "id", "hash", "isinstance", "any", "all",
         "callable", "hasattr", "range", "enumerate", "zip", "divmod", "chr", "type", "isfinite",
-        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest",
+        "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
     }
 )  # fmt: skip
 PASS_CALLS = frozenset(
@@ -62,6 +62,9 @@ PROBLEM_LIST = re.compile(
 UPPER = re.compile(r"^_*[A-Z][A-Z0-9_]*$")
 NUMBER_SPEC = re.compile(r"[0-9.,_<>^+ -]*[dfxXeEgGbo%]")
 FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+_PRINT_HOW = {"file", "flush"}
 
 
 def _is_number(e) -> bool:
@@ -400,7 +403,8 @@ class Analysis:
                     unsafe.add(n.target.id)
             elif isinstance(n, ast.AugAssign) and isinstance(n.target, ast.Name):
                 bindings.setdefault(n.target.id, []).append(("aug", n.value))
-            elif isinstance(n, (ast.For, ast.AsyncFor)):
+            elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+                # a comprehension's `for` binds like a loop's (`for i, op in enumerate(x, start=1)`)
                 for nm in _targets(n.target):
                     bindings.setdefault(nm.id, []).append(("for", n))
             elif isinstance(n, ast.NamedExpr) and isinstance(n.target, ast.Name):
@@ -593,6 +597,12 @@ class Analysis:
             elif isinstance(node, ast.Call):
                 f = node.func
                 args = [*node.args, *(k.value for k in node.keywords)]
+                if isinstance(f, ast.Name) and f.id == "print":
+                    # `file=`, `sep=`, `end=` and `flush=` of print say where and how, never what: not text
+                    args = [
+                        *node.args,
+                        *(k.value for k in node.keywords if k.arg not in _PRINT_HOW),
+                    ]
                 fa = f.attr if isinstance(f, ast.Attribute) else None
                 fn = f.id if isinstance(f, ast.Name) else None
                 if fa in {"format", "format_map", "join"}:

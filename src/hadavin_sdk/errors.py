@@ -9,7 +9,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 
 class ConfigError(ValueError):
@@ -84,6 +84,27 @@ def digest_prefix(value: object) -> str:
     return f"{value[:12]}..." if isinstance(value, str) and is_digest(value) else NOT_SHOWN
 
 
+class Failed:
+    """Round 13: a block that keeps the error it raised instead of letting it out, and with no `except` handler. Use
+    `with Failed() as caught: ...`; after the block, `caught.error` is the error (or None). The error leaves the
+    block here, so a new error raised after the block has no cause and no context (nothing the library said can be
+    reached from it). An error of a class in `passthrough` and anything that is not an `Exception` (a stop signal)
+    pass through as they are."""
+
+    def __init__(self, passthrough: tuple[type[BaseException], ...] = ()) -> None:
+        self.error: Exception | None = None
+        self._passthrough = passthrough
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, kind: object, value: BaseException | None, trace: object) -> bool:
+        if not isinstance(value, Exception) or isinstance(value, self._passthrough):
+            return False
+        self.error = value
+        return True
+
+
 def call_class_only[T](
     call: Callable[[], T],
     make_error: Callable[[str], BaseException],
@@ -95,14 +116,15 @@ def call_class_only[T](
     quote a key id, an ARN, a path or a host that the configuration named) can be reached from it, not by its text,
     its repr, its traceback or a debugger. (`raise ... from None` inside the block hides the old error from the
     printed traceback but leaves it in `__context__`.) An error of a class in `passthrough` is raised as it is."""
-    failure = None
-    try:
+    with Failed(passthrough) as caught:
         return call()
-    except passthrough:
-        raise
-    except Exception as exc:  # noqa: BLE001 - THE one place that turns any library failure into its class name only
-        failure = type(exc).__name__
-    raise make_error(failure)
+    raise make_error(type(caught.error).__name__)
+
+
+def status_text(status: object) -> str:
+    """An HTTP status for a message: the number if it is an `int`, else `?`. (`int(x)` would raise a `ValueError` that
+    quotes a text; a status that a custom provider returns as a text must not reach a message either.)"""
+    return str(status) if isinstance(status, int) and not isinstance(status, bool) else "?"
 
 
 def unreadable(what: str, exc: BaseException) -> ConfigError:
