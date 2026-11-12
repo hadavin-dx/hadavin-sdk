@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 23:18Z / 04:48 IST - INT-2b RUN A (pristine f5fe824, unbuffered): 63% DONE, 1907 PASSED, 0 FAILED, NO HANG; hang-guard review: 1 Major (honesty of comments) + 5 Nits -> v2 being built; RUNTIME SET AND SEMGREP PATCH STILL READY TO APPLY
+FAILED / UNCERTAIN first:
+- No failures anywhere yet. INT-2b run A (git clone of pr-3-tests f5fe824, `python -u -m pytest tests -v -o faulthandler_timeout=300 -rs`, 2994 tests collected (not 2516: Playwright + the new tests are in)): at 23:16:51Z it is in tests/test_portal_demo.py (63%), 1907 PASSED, 0 FAILED/ERROR, after 9:49 minutes of runtime (~15 min total expected). The earlier 'hang' therefore did not reproduce: unbuffered the suite just runs (this supports my 23:12Z correction; it is still evidence from ONE run, not a proof that no hang can ever happen).
+- A SELF-INFLICTED glitch I caused and the runner caught: my own `git pull --rebase --autostash` at 23:08 rewrote the evidence file the pytest was writing to (new inode); the runner noticed (progress note in evidence-int2b-A-progress.txt), kept capturing from /proc/<pid>/fd with `tail -f`, and called its two 23:13 'stall' dumps a FALSE ALARM (the dumps show MainThread in Env.close -> Desk.close: normal teardown). Lesson: I will not run git operations in the repo while a runner writes evidence there (I will route runner output to /tmp/work and copy at the end).
+- Run B (the stack) has applied its 7 patches cleanly (speed 87e06a4d..., desk 705535cd..., portal-log b90e21d2..., demo-only d19eece2..., tests-hardening 244acda4..., fakes-body 321c87d0..., standins-body 0d29f51a...) and collected; it still needs the hang patch applied: it uses the ORIGINAL hang-fix.patch (sha 2335ae73e618): I will re-run B's hang part against hang-fix-v2 when v2 is reviewed.
+- Hang-guard patch review (round 1, REVIEW-1.md): no Blocker, 1 Major, 5 Nits. Major: the in-patch comments/docstrings state a cause as fact ('a not-yet-started loop made the wait endless', '(the hang seen in the full run)'), but the cause is unproven (and the 'hang' probably wasn't one). Nits: (N1) the guard's 20 s stop bound is below the product's REQUEST_TIMEOUT_SECONDS = 30 s (src/lead_desk/constants.py:192): a stop that waits for a stalled client's handler thread could legitimately take up to 30 s and turn a green test red: H2 measures and sets the bound; (N2) `faulthandler.dump_traceback` can raise under `--capture=sys`; (N3) listening-socket leak if `start_serving` raises, only the first stuck server recorded, a two-server loop stops only the first on failure; (N4) a redundant join. Builder H2 is fixing all of it into hang-guard v2 (hang/hang-fix-v2.patch exists on disk, in progress; PLAN-v2.md started).
+- Not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+READY TO APPLY NOW (all reviewed clean): (1) runtime set, 7 patches, speed patch FIRST: speed/fake-hubspot-read-body-before-answer.patch, triage/codeant2-desk, -portal-log, -demo-only, -tests-hardening, -fakes-body, -standins-body (shas above; core touches approved on your conditions; PR text must name: server.py 413/501 drain, loader.py KnowsBoundAddress, contract.md :143/:277, main refusal + Desk.book_problem; docs drift nit: `main()` docstring/contract.md :143 say 'very start of main' but the check runs after the fd-budget, Config.from_env and bind steps). (2) Semgrep: semgrep/semgrep-on-head.patch sha256 7c8633cad5216c78... (own PR after #2-#4; needs your yes on the `concurrency:` group).
+NOT READY: the hang-guard patch (review Major open; v2 + re-review + INT-2b run B). It is optional: no hang has been reproduced, so its value is a safety net (bounded stops + stack dump) and the `faulthandler_timeout` setting.
+NEEDS FROM LEAD: the `concurrency:` group yes/no; whether you want the hang guard at all given no reproduction (I recommend yes but small: just `faulthandler_timeout = 300` + the bounded stop helper, once v2 is clean).
+
+TABLE 1 - LIVE ITEMS (load 0.4)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2b runner | full runs A (pristine head) and B (stack) + lints/hygiene/gitleaks/restart x5/node-off | 23:07 | 11 min | 00:25 | running; run A 63%, 0 failures; file mtime fresh (23:16:51) | integration/INT-2b.md | run A progressing |
+| H2 | hang-guard v2 (review fixes) | 23:15 | 3 min | 23:50 | running (hang-fix-v2.patch + PLAN-v2.md on disk, unfinished) | hang-fix-v2.patch + PLAN-v2.md + evidence-h2 | patch in progress |
+Totals: agents 2, shells 0, containers 0, heavy pytest 2 (run A + one H2 focused run; allowed), load 0.4 of 4.
+Flags: none; mtime of run A file < 1 min at 23:16:51.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| hang guard (D14) | 2 (build v2) | R1 0B/1M/5N | overclaim in comments; bound below product timeout | R1 Major real | no | fresh review clean + run B passes |
+| CodeAnt runtime | done | R1-R4 | - | - | YES: clean | apply |
+| Semgrep | done | - | - | - | YES: clean | own PR |
+Waste check: the hang-guard loop is the only one open and it protects against a hang nobody has reproduced: keep it small (a lead decision above).
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (23:12Z)
+| item | result |
+|---|---|
+| hang-guard review round 1 | 0B/1M/5N, saved hang/REVIEW-1.md (9c50c17c) |
+| INT-2b run A (in progress) | 63%, 1907 passed, 0 failed, unbuffered |
+| INT-2b run B apply step | 7 runtime patches applied cleanly on a fresh f5fe824 clone |
+
 ## 2026-11-12 23:12Z / 04:42 IST - **CORRECTION: my 'full suite hangs on 40d5668' claim is NOT PROVEN (probably wrong)**; D14 hang-fix is a guard patch (root cause unproven) under review; runtime set CLEAN; INT-2b (unbuffered, two full runs) started after a container restart
 FAILED / UNCERTAIN first:
 1. **MY ERROR (22:39Z block): I reported that the full serial suite HUNG at test 867 on 40d5668.** Builder H1's work shows I most probably misread it, and I am correcting it here: (a) pytest's output to a file is BLOCK-BUFFERED, so the progress file stayed stale for minutes while the suite was running (my '29.7%, stuck 5+ minutes at ~0% CPU' came from that stale file); (b) my two py-spy dumps, about a minute apart, showed DIFFERENT places: first `test_restart_same_port_portal_open` at test_portal_api.py:1475 inside `BaseServer.shutdown()`, then (the saved dump file) the `env` fixture teardown at conftest.py:124 -> `serve_in_thread.stop()` (src/lead_desk/server.py:1020): the process was moving, not frozen; (c) H1's prefix run of the first 868 collected tests passed in 210 s, exit 0 (evidence-h-9); (d) `test_restart_same_port_portal_open` is test 1802 of 2922, not 867. So: **no hang on the head has been reproduced by anyone.** 10c-2b's earlier '18-minute hang at 38%' (also read from a buffered file) is equally unproven. I killed the process at about 8 minutes of runtime, which may have been mid-run: the INT-2 run 1 'HUNG' label in integration/ is wrong and I will relabel it. I should have run with unbuffered output before reporting. Sorry for the noise (it cost one builder a wrong premise: H1 correctly says the order's cause guess is wrong).
