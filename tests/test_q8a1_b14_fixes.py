@@ -27,7 +27,11 @@ def test_a_failing_detector_is_logged_by_class_only(caplog, shape):
 
     text = _marker("detector")
     guardrail_id = "wk3j" + "9f0x" + "q2lm"
-    message = text if shape == "plain-error" else f"AccessDenied: role {text} cannot call guardrail {guardrail_id}"
+    message = (
+        text
+        if shape == "plain-error"
+        else f"AccessDenied: role {text} cannot call guardrail {guardrail_id}"
+    )
 
     class Broken:
         def check(self, text_checked, source):
@@ -37,9 +41,12 @@ def test_a_failing_detector_is_logged_by_class_only(caplog, shape):
         verdict = injection_check(Broken(), "hello", "tool")
     assert verdict.flagged and verdict.reason_code == "guard_unavailable"
     shown = " ".join(r.getMessage() for r in caplog.records)
-    assert "Broken" in shown and "ValueError" in shown and text not in shown and guardrail_id not in shown, (
-        "the failing detector is logged with its text or without its class"
-    )
+    assert (
+        "Broken" in shown
+        and "ValueError" in shown
+        and text not in shown
+        and guardrail_id not in shown
+    ), "the failing detector is logged with its text or without its class"
 
 
 def test_the_bedrock_detector_logs_the_class_of_a_cloud_error_never_its_text(caplog):

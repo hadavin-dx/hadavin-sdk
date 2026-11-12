@@ -88,7 +88,9 @@ def _mutant_count() -> int:
     )
     names = [m.name for m in stage_mutants.M]
     assert len(set(names)) == len(names), "a mutant name is used twice"
-    assert len(listed.elts) == len(names), "M holds elements that the tree does not show as written rows"
+    assert len(listed.elts) == len(names), (
+        "M holds elements that the tree does not show as written rows"
+    )
     return len(listed.elts)
 
 
@@ -115,7 +117,9 @@ _COUNTS = re.compile(
 
 
 def _claimed_counts(text: str) -> dict[str, int]:
-    assert text.count("Counts at this head") == 1, "the CHANGELOG has more than one sentence of counts at this head"
+    assert text.count("Counts at this head") == 1, (
+        "the CHANGELOG has more than one sentence of counts at this head"
+    )
     claim = _COUNTS.search(text)
     assert claim, "the CHANGELOG has no sentence of counts in the written form"
     keys = ("REASONS", "CHECKED", "OWN", "ALL", "MUTANTS", "HANDLERS")
@@ -132,7 +136,9 @@ def test_a_wrong_sentence_of_counts_is_found():
     got = _computed_counts()
     wrong = TEXT.replace(f"{got['MUTANTS']} mutants in", f"{got['MUTANTS'] + 1} mutants in", 1)
     assert wrong != TEXT, "the sentence has no mutant count to change"
-    assert _claimed_counts(wrong) != got, "a wrong count in the sentence is not found by the claims test"
+    assert _claimed_counts(wrong) != got, (
+        "a wrong count in the sentence is not found by the claims test"
+    )
 
 
 def test_the_numbers_of_older_entries_are_labelled_with_their_batch():

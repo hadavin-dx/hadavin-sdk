@@ -90,7 +90,9 @@ def test_the_fixed_word_replaces_the_input_and_the_title_is_kept():
 
     with pytest.raises(ValidationError) as raised:
         AuditEvent(event_id="../x", **_EVENT)
-    assert raised.value.errors()[0]["input"] == HIDDEN, "the input of a rebuilt line is not the fixed word"
+    assert raised.value.errors()[0]["input"] == HIDDEN, (
+        "the input of a rebuilt line is not the fixed word"
+    )
     assert raised.value.title == "AuditEvent"
     assert raised.value.__context__ is None and raised.value.__cause__ is None, (
         "the first error is kept as the context of the new one, and it still holds the id"
@@ -290,10 +292,16 @@ def test_the_read_paths_refuse_an_index_key_that_is_not_a_plain_name(tmp_path):
     outside = tmp_path / "outside.json"
     from hadavin_sdk.models import AuditEvent
 
-    outside.write_text(AuditEvent(event_id="evt-" + "a" * 32, **_EVENT).model_dump_json(), encoding="utf-8")
+    outside.write_text(
+        AuditEvent(event_id="evt-" + "a" * 32, **_EVENT).model_dump_json(), encoding="utf-8"
+    )
     sink.objects.mkdir(parents=True)
-    sink.index.write_text(json.dumps({"key": "../outside.json", "run_id": "r", "sha256": "0"}) + "\n")
-    assert sink.verify_object("../outside.json") is False, "a key outside the objects folder was read"
+    sink.index.write_text(
+        json.dumps({"key": "../outside.json", "run_id": "r", "sha256": "0"}) + "\n"
+    )
+    assert sink.verify_object("../outside.json") is False, (
+        "a key outside the objects folder was read"
+    )
     with pytest.raises(AuditUnavailable):
         sink.events()
 
@@ -328,7 +336,9 @@ def test_a_scoped_allowance_allows_one_function_and_a_count_and_nothing_else():
     found, stale = _text_guard.violations({"m.py": twice}, {("m.py", site, "one", 2): "r"}, {})
     assert found == [] and stale == [], (found, stale)
     found, stale = _text_guard.violations({"m.py": twice}, {("m.py", site, "one", 1): "r"}, {})
-    assert len(found) == 1, "a second site of the same text in the function was allowed by a row that counts one"
+    assert len(found) == 1, (
+        "a second site of the same text in the function was allowed by a row that counts one"
+    )
     # a row that counts more than there are is stale
     found, stale = _text_guard.violations({"m.py": same}, {("m.py", site, "one", 2): "r"}, {})
     assert len(stale) == 1 and "x2" in stale[0], (

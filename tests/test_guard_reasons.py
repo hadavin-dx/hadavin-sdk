@@ -1505,7 +1505,13 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     elif isinstance(node, ast.IfExp) and isinstance(node.body, ast.Dict):
         # `{"key": str(number)} if number < 1.0 else {}`: every value is `str(number)` of a number
         for v in node.body.values:
-            inner = v.args[0] if isinstance(v, ast.Call) and getattr(v.func, "id", "") == "str" and len(v.args) == 1 else v
+            inner = (
+                v.args[0]
+                if isinstance(v, ast.Call)
+                and getattr(v.func, "id", "") == "str"
+                and len(v.args) == 1
+                else v
+            )
             parts.append(inner)
         if isinstance(node.test, ast.Compare):
             parts.append(node.test.left)  # the number that is compared
@@ -1692,7 +1698,10 @@ def _names_outside_filters(node: ast.AST) -> set[str]:
     out: set[str] = set()
 
     def walk(n: ast.AST) -> None:
-        if isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", "")) in _FILTERS:
+        if (
+            isinstance(n, ast.Call)
+            and getattr(n.func, "id", getattr(n.func, "attr", "")) in _FILTERS
+        ):
             return
         if isinstance(n, ast.Name):
             out.add(n.id)

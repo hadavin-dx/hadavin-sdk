@@ -902,7 +902,10 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ): "NUMFIELD",
     ("actions/executor.py", "return (exc.code, None)"): "HTTPCODE",
     ("actions/secrets_vault.py", "return (exc.code, {})"): "HTTPCODE",
-    ("audit/chain.py", "_LOG.error('audit checkpoint %d not anchored (%s); retried next time', seq, type(exc).__name__)"): "ROWID",
+    (
+        "audit/chain.py",
+        "_LOG.error('audit checkpoint %d not anchored (%s); retried next time', seq, type(exc).__name__)",
+    ): "ROWID",
     ("llm/common.py", "out.append((m['role'], texts))"): "LLMREQ",
     (
         "registry.py",

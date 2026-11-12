@@ -36,8 +36,8 @@ _RESERVED_NAMES = frozenset(
         "prn",
         "aux",
         "nul",
-        *(f"com{n}" for n in range(0, 10)),
-        *(f"lpt{n}" for n in range(0, 10)),
+        *(f"com{n}" for n in range(10)),
+        *(f"lpt{n}" for n in range(10)),
     }
 )
 
