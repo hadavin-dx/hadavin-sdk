@@ -40,7 +40,7 @@ class _StepDb(_Db):
         self.commit_error, self.committed = commit_error, False
         self.step4_rows = list(step4_rows)
         self.rendered: list[str] = []
-        self.closed, self.info = False, _Info()
+        self.closed, self.broken, self.info = False, False, _Info()
         self.isolation_level, self.read_only = (
             None,
             False,

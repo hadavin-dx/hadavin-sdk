@@ -1204,15 +1204,31 @@ def _reviewed_definers(schema: str) -> frozenset[tuple[str, str, str]]:
 
 # SQLSTATE classes that are about the connection or the server, never about the text of a file: 08 connection, 53 lack of
 # resources, 57 operator intervention (shutdown, cancel), 58 system error, XX internal error.
-_NOT_A_FILES_OWN_ERROR = ("08", "53", "57", "58", "XX")
+_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")
+# Two codes of class 25 end the SESSION (a FATAL error), so they are not the file's own: 25P03 idle-in-transaction
+# session timeout (in PostgreSQL's `errcodes.txt` since 9.6; checked in the PostgreSQL 16 file) and 25P04 transaction
+# timeout (PostgreSQL 17 and later; the code is psycopg's `TransactionTimeout`; NOT checked against a server here, none
+# below 17 is installed). The rest of class 25 stays the file's own (25001 `VACUUM` inside the transaction, 25P02).
+_NOT_A_FILES_OWN_CODES = ("25P03", "25P04")
+_NOT_A_FILES_OWN_ERROR = _NOT_A_FILES_OWN_CLASSES + _NOT_A_FILES_OWN_CODES
 
 
-def _is_a_files_own_error(e: psycopg.Error) -> bool:
-    """True for an error the text of a migration file caused (a syntax error, a missing right, a failed constraint): it
-    carries a SQLSTATE of a class that is not about the connection or the server. A lost connection has none, or one
-    of `_NOT_A_FILES_OWN_ERROR`."""
+def _connection_is_usable(db) -> bool:
+    """False when the connection is closed or broken, or the driver cannot say what state the transaction is in (a
+    session the server ended gives `UNKNOWN`). An error that leaves the connection like that is not the text of a file."""
+    return (
+        not db.closed and not db.broken and db.info.transaction_status != TransactionStatus.UNKNOWN
+    )
+
+
+def _is_a_files_own_error(e: psycopg.Error, db) -> bool:
+    """True for an error the text of a migration file caused (a syntax error, a missing right, a failed constraint). Both
+    must hold: (1) the connection is still usable (`_connection_is_usable`: a session the server or the driver ended is
+    never the file's own, whatever the code says), and (2) the SQLSTATE is not one of `_NOT_A_FILES_OWN_ERROR` (a class
+    that is about the connection or the server, or one of the two session-ending codes of class 25). A lost connection has
+    no SQLSTATE at all."""
     code = getattr(e, "sqlstate", None)
-    return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR)
+    return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR) and _connection_is_usable(db)
 
 
 def _driver_error_before_commit(e: psycopg.Error, step: str) -> ConfigError:
@@ -1252,6 +1268,13 @@ def _check_could_not_run(step: str):
         ) from e
 
 
+# Rule O8 for the schema of the run (ticket 3.3): what is enforced today is that the OWNER OF THE SCHEMA DOES NOT CHANGE
+# DURING THE RUN. A schema that a role outside the family already owned when the run started is accepted. Setting this to
+# True refuses such a schema too (the stricter reading of O8). It is OFF on purpose: the choice is the lead's open question
+# q-p3a2-o8-schema-owner, and a plain switch of this value, with the tests that already cover it, is all that choice needs.
+ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START = False
+
+
 def _state_problems(
     db,
     *,
@@ -1280,7 +1303,8 @@ def _state_problems(
     return [
         p
         for p in found
-        if not (
+        if ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START
+        or not (
             p.kind == "foreign_owner"
             and p.word == "schema"
             and p.schema == schema
@@ -1556,6 +1580,9 @@ def migrate(
                     except psycopg.Error as e:
                         if (plain := _limit_error(e, step[0])) is not None:
                             raise plain from e
+                        if not _is_a_files_own_error(e, db):
+                            # the session ended or the server failed: no check or trigger said anything
+                            raise _driver_error_before_commit(e, step[0]) from e
                         raise ConfigError(
                             "a deferred check or trigger failed when migrate ran it before the commit: "
                             f"{_label(str(e.diag.message_primary or e))}. Nothing was kept."
@@ -1588,7 +1615,7 @@ def migrate(
                 # leaving `db.transaction()` is the COMMIT (step 7)
             except psycopg.Error as e:
                 if not reached_commit:
-                    if running_a_file and _is_a_files_own_error(e):
+                    if running_a_file and _is_a_files_own_error(e, db):
                         raise  # the file's own error, with its own text; nothing was kept (the transaction ended)
                     raise _driver_error_before_commit(e, step[0]) from e
                 if _commit_outcome(e, db) == "refused":

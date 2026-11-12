@@ -88,9 +88,34 @@ def _parents(tree: ast.AST) -> dict[ast.AST, ast.AST]:
     return {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
 
 
+PG17_SKIP_TEXT = "UNRUN: PostgreSQL 17 only"  # the reason of the one allowed visible skip below 17 (named in CHANGELOG)
+PG17_VERSION_NUMBER = 170000  # `server_version` of PostgreSQL 17.0
+
+
+def _is_the_named_pg17_skip(call: ast.AST, chain: list[ast.AST]) -> bool:
+    """The one skip that is allowed with the DSN set (batch 4, Issue 1): a case that needs PostgreSQL 17 on a server below
+    17. It must (a) sit under an `if` whose test compares with the number 170000 and (b) give a reason that starts with
+    `PG17_SKIP_TEXT`, so it shows in the skip summary as UNRUN and cannot pass as a green test."""
+    args = getattr(call, "args", [])
+    text_ok = (
+        bool(args)
+        and isinstance(args[0], ast.Constant)
+        and str(args[0].value).startswith(PG17_SKIP_TEXT)
+    )
+    version_ok = any(
+        isinstance(a, ast.If)
+        and any(
+            isinstance(c, ast.Constant) and c.value == PG17_VERSION_NUMBER for c in ast.walk(a.test)
+        )
+        for a in chain
+    )
+    return text_ok and version_ok
+
+
 def skip_violations(source: str) -> list[str]:
     """Every way a test file can skip that the DSN rule does not allow. Allowed: `skipif(not DSN, reason=<text naming
-    the variable>)`, and `pytest.skip(...)` under `if not DSN:`. Everything else (importorskip, a bare skip or xfail
+    the variable>)`, `pytest.skip(...)` under `if not DSN:`, and the one named PostgreSQL 17 skip
+    (`_is_the_named_pg17_skip`). Everything else (importorskip, a bare skip or xfail
     mark, a skip anywhere else) is returned."""
     tree = ast.parse(source)
     parent = _parents(tree)
@@ -111,7 +136,9 @@ def skip_violations(source: str) -> list[str]:
                 while up is not None:
                     chain.append(up)
                     up = parent.get(up)
-                if not any(isinstance(a, ast.If) and _is_not_dsn(a.test) for a in chain):
+                if not any(
+                    isinstance(a, ast.If) and _is_not_dsn(a.test) for a in chain
+                ) and not _is_the_named_pg17_skip(parent[node], chain):
                     out.append(f"line {node.lineno}: pytest.skip outside `if not DSN:`")
         elif isinstance(node, ast.Attribute) and node.attr == "skipif":
             call = parent.get(node)
@@ -140,6 +167,9 @@ def skip_violations(source: str) -> list[str]:
         "@pytest.mark.skipif(not DSN, reason='no database')\ndef t(): pass",
         "if DSN:\n    pytest.skip('r')",
         "@pytest.mark.xfail\ndef t(): pass",
+        "def t():\n    if v() < 170000:\n        pytest.skip('a reason without the UNRUN text')",
+        "def t():\n    if v() < 160000:\n        pytest.skip('UNRUN: PostgreSQL 17 only (x)')",
+        "def t():\n    pytest.skip('UNRUN: PostgreSQL 17 only (x)')",
     ],
 )
 def test_the_skip_rule_flags_each_unguarded_skip(source):
@@ -151,6 +181,7 @@ def test_the_skip_rule_flags_each_unguarded_skip(source):
     [
         "@pytest.mark.skipif(not DSN, reason='HADAVIN_TEST_PG_DSN not set')\ndef t(): pass",
         "def f():\n    if not DSN:\n        pytest.skip('HADAVIN_TEST_PG_DSN not set')",
+        "def t():\n    if v() < 170000:\n        pytest.skip('UNRUN: PostgreSQL 17 only (x)')",
         "x = 1",
     ],
 )

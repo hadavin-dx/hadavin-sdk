@@ -18,8 +18,10 @@ its SECURITY DEFINER flag (rule O4) are still judged; `_judge` never reads that 
 the code before this change showed that such an object was invisible to O4 and O8.)
 
 What `_judge` checks for a SECURITY DEFINER function: that its schema, name and argument types are on the reviewed list
-(O4), who owns it (O8: a managed object, and the schema of the run, must be owned by a role of the family; judged in the
-schema of the run only), and who may EXECUTE it (a named role: always a right; everyone: refused
+(O4), who owns it (O8: a managed object, and the schema of the run, should be owned by a role of the family; judged in the
+schema of the run only; `_judge` reports a schema owned outside the family, and `migrate` then drops that report when the
+owner is the one the schema had when the run started, so that what is enforced for the schema is that its owner does not
+change during the run; `migrate.ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START` turns the stricter reading on), and who may EXECUTE it (a named role: always a right; everyone: refused
 unless reviewed). It does not read the function's body or its `search_path` setting.
 
 A login that differs from the migration role: `_judge` skips only a grantee that is the migration role itself. When the

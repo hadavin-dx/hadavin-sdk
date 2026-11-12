@@ -1291,7 +1291,9 @@ def _forms_missing_from(forms: list[str], source: str) -> list[str]:
     missing = []
     for form in forms:
         pieces = re.split(r"\{[a-z_ ]+\}", form)
-        pattern = r"\{[^{}]*\}".join(re.escape(piece) for piece in pieces)
+        # the whole string literal: it opens with the quote, holds the form and nothing else, and closes. A longer
+        # sentence ("has {right}; only the owner ...") is another sentence and does not satisfy the short form.
+        pattern = '"' + r"\{[^{}]*\}".join(re.escape(piece) for piece in pieces) + '"'
         # a form that ends in a placeholder ends the pattern with `\{...}`; one that starts with a piece starts with it
         if not re.search(pattern, source):
             missing.append(form)
@@ -1334,3 +1336,73 @@ def test_a_sentence_the_changelog_quotes_but_the_code_does_not_write_is_found():
         .replace('f"has {self.right} on', 'f"holds {self.right} on')
     )
     assert _forms_missing_from(["has {right}"], stale) != []
+    # a real planted fault for the short form: only the two string literals that say exactly "has {right}" are changed;
+    # the longer sentences that begin with the same words stay, and must not satisfy the form
+    only_short = source.replace('f"has {self.right}"', 'f"holds {self.right}"')
+    assert only_short != source and 'f"has {self.right}; only' in only_short
+    assert _forms_missing_from(["has {right}"], only_short) == ["has {right}"]
+
+
+# --- rule O8 for the schema of the run: the owner must not change during the run (batch 4b, Issue 2) --------------------------
+def _schema_owner_problem(owner: str) -> v.Problem:
+    return v.Problem(
+        "foreign_owner",
+        SCHEMA,
+        "",
+        "",
+        owner,
+        "OWNER",
+        "",
+        owner,
+        False,
+        False,
+        "",
+        "",
+        "owner",
+        False,
+        "",
+        "schema",
+    )
+
+
+@pytest.mark.parametrize("enforce", [False, True])
+@pytest.mark.parametrize(
+    "owner_now, owner_at_start, kept",
+    [
+        (
+            "admin_x",
+            "admin_x",
+            None,
+        ),  # the owner is the one at the start: dropped unless the strict reading is on
+        ("admin_y", "admin_x", True),  # the owner changed during the run: refused in both readings
+    ],
+)
+def test_the_owner_of_the_schema_of_the_run_must_not_change_and_the_strict_reading_is_a_named_switch(
+    enforce, owner_now, owner_at_start, kept, monkeypatch
+):
+    from hadavin_sdk.store import migrate as mig
+
+    monkeypatch.setattr(mig, "verify", lambda *a, **k: [_schema_owner_problem(owner_now)])
+    monkeypatch.setattr(
+        mig, "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START", enforce
+    )
+    left = mig._state_problems(
+        None,
+        me="mig",
+        login="mig",
+        named_roles={},
+        schema=SCHEMA,
+        texts={},
+        schema_owner=owner_at_start,
+    )
+    expected_kept = (
+        True if kept else enforce
+    )  # an unchanged owner is kept only when the strict reading is on
+    assert bool(left) == expected_kept, (enforce, owner_now, owner_at_start, left)
+
+
+def test_the_strict_reading_of_rule_o8_is_off_by_default():
+    """The choice is the lead's open question q-p3a2-o8-schema-owner; the shipped value is the accepted one."""
+    from hadavin_sdk.store import migrate as mig
+
+    assert mig.ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START is False
