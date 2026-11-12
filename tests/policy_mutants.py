@@ -2255,8 +2255,8 @@ M = [
     mutant(
         "B13 the renewal steps do not send a person to the mutant file",
         TOOL,
-        "nothing is edited there: run `python tests/policy_mutants.py` and again with `--day` ",
-        "nothing is edited there: run the mutants and again with `--day` ",
+        'so nothing is edited there: run "\n    "`python tests/policy_mutants.py` and again with `--day` ',
+        'so nothing is edited there: run "\n    "the mutants and again with `--day` ',
         "test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist",
         "the renewal steps of the names and claims do not name the mutant file",
     ),
