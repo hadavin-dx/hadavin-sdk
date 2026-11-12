@@ -1,0 +1,9 @@
+COMMAND: apply codeant3 x4 + fixes/docs-and-deps-v4.patch + semgrep/semgrep-rebased.patch (plain, in that order) on 0841f36; git archive of the result; (cd there && /tmp/work/gl/gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow) then the same as report with rule/file
+DATE: 2026-11-12T21:33:23Z
+---
+[90m9:33PM[0m [32mINF[0m [1mscanned ~2788880 bytes (2.79 MB) in 282ms[0m
+[90m9:33PM[0m [32mINF[0m [1mno leaks found[0m
+Counter()
+--- second case: codeant3 x4 + semgrep/semgrep-rebased.patch only (docs-and-deps-v4 and semgrep-rebased conflict with EACH OTHER at .codeant/configuration.json:17: not my files)
+[90m9:33PM[0m [32mINF[0m [1mno leaks found[0m
+Counter()

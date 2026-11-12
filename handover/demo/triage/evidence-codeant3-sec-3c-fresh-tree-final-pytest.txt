@@ -1,0 +1,23 @@
+COMMAND: (cd /tmp/work/c10b-fresh && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 timeout 590 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q -rs tests/test_n8n_api_url.py tests/test_scrub_n8n_export.py tests/test_reset_ps1_links.py tests/test_n8n_proof_result.py tests/test_hygiene.py tests/test_http_guard.py tests/test_infra.py tests/test_reset_scripts.py tests/test_portal_api.py tests/test_vendor_hosts.py tests/test_env_numbers.py tests/test_portal_mode.py tests/test_portal_wording_and_masking.py)
+TREE: fresh clone of public pr-3-tests 0841f36 + codeant3-{gitleaks,scripts,n8n-proof,docs}.patch applied in that order with git apply (the four FINAL patch files), new test files git add -N, nothing committed; python 3.12; node v22.23.4; gitleaks 8.30.1; DPLD_REQUIRE_SCAN=1 (the gitleaks step RUNS, dir and git)
+DATE: 2026-11-12T21:28:56Z
+----
+........................................................................ [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 24%]
+........................................................................ [ 32%]
+........................................................................ [ 40%]
+........................................................................ [ 49%]
+........................................................................ [ 57%]
+........................................................................ [ 65%]
+........................................................................ [ 73%]
+........................................................................ [ 81%]
+........................................................................ [ 90%]
+........................................................................ [ 98%]
+........ss..s...                                                         [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+877 passed, 3 skipped in 168.23s (0:02:48)
+EXIT 0

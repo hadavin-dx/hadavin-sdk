@@ -1,0 +1,11 @@
+$ tree /tmp/work/c2-gl = 0841f36 + speed patch + codeant2-desk/portal-log/demo-only/tests-hardening/fakes-body (all files TRACKED in a local scratch commit); gitleaks 8.30.1. (A first run found hardcoded-hostname on `st.page(`: the method was renamed contacts_page; this is the re-run.)
+8.30.1
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+9:11PM INF scanned ~2772824 bytes (2.77 MB) in 491ms
+9:11PM INF no leaks found
+exit=0
+$ gitleaks git . (same flags)
+9:11PM INF 18 commits scanned.
+9:11PM INF scanned ~5451582 bytes (5.45 MB) in 529ms
+9:11PM INF no leaks found
+exit=0

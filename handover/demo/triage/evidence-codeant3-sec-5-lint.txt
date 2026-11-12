@@ -1,0 +1,21 @@
+COMMAND: (cd /tmp/work/c10b-fresh && /tmp/work/int1-venv/bin/python -m ruff check . ; ruff format --check . ; mypy --platform linux ; mypy --platform win32 ; bandit -ll -r src tools scripts -c pyproject.toml)
+TREE: 0841f36 + codeant3 patches
+DATE: 2026-11-12T21:31:54Z
+---
+ruff 0.17.4
+All checks passed!
+132 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):

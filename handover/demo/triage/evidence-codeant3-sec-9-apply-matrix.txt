@@ -1,0 +1,510 @@
+COMMAND: /tmp/work/c10b-matrix.sh <each other patch>   (adapted from /tmp/work/c10ev/matrix.sh: base = fresh clone of public pr-3-tests 0841f36; mine = codeant3-{gitleaks,scripts,n8n-proof,docs}; for each other patch: alone on base; mine then other (plain apply --check, then --3way); other then each of mine (plain, then --3way))
+DATE: 2026-11-12T21:33:06Z
+----
+base: 0841f36
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-desk.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-portal-log.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-demo-only.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-tests-hardening.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-fakes-body.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/fixes/docs-and-deps.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/fixes/docs-and-deps-v4.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/semgrep/semgrep-rebased.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/drawer-long-name.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/drawer-long-name2.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/mobile-cascade.patch
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+Note: switching to '0841f36d1edf381b67a0da4793afacf834a36707'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok

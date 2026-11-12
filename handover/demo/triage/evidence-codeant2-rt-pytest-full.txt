@@ -1,0 +1,2 @@
+$ cd /tmp/work/c2-gl (0841f36 + speed patch + codeant2-desk/portal-log/demo-only/tests-hardening/fakes-body, tracked scratch commit); GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 timeout 2700 python3.12 -m pytest -q -p no:cacheprovider -rs tests   (full serial suite, one process)
+start 2026-11-12T21:17:59Z  21:17:59 up  2:27,  0 user,  load average: 0.48, 1.25, 1.58

@@ -1,0 +1,19 @@
+COMMAND: (cd /tmp/work/c10b-mut && timeout 400 python -m pytest -p no:cacheprovider -q tests/test_scrub_n8n_export.py -k linear_time)   [3 tests: URL, MAIL, ACTIVE_LINK]
+TREE: MUTANT = the codeant3 tree with the URL scheme made unbounded ([A-Za-z0-9+.-]*) and the MAIL start look-behind removed (the quadratic shapes a missing look-behind and bound give); other regexes unchanged. This is the final linearity test file.
+DATE: 2026-11-12 ~21:15Z
+----
+>           pytest.fail(f"{name} did not finish 1 MB of its worst shapes in {hard_stop:.0f} s: it is not linear")
+E           Failed: MAIL did not finish 1 MB of its worst shapes in 64 s: it is not linear
+
+tests/test_scrub_n8n_export.py:241: Failed
+=========================== short test summary info ============================
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[URL]
+FAILED tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[MAIL]
+2 failed, 1 passed, 190 deselected in 128.87s (0:02:08)
+
+real	2m9.175s
+user	2m7.301s
+sys	0m0.465s
+
+[exited with code 0]
+(the test stops each pattern's probe process after 64 s and fails with 'it is not linear': URL and MAIL FAIL, ACTIVE_LINK passes; on the real codeant3 tree all 3 pass in 2.2 s for the whole file, regex time 0.05-0.11 s per MB)

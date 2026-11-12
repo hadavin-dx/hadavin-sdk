@@ -1,0 +1,7 @@
+COMMAND: (git archive HEAD of the scratch-committed tree into /tmp/work/c10b-tracked, then cd there && /tmp/work/gl/gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --exit-code 1)   [tracked files only: a plain 'dir .' in the work folder also reads .mypy_cache/.ruff_cache/__pycache__ made by my own lint and test runs and reported 43 leaks there, none in tracked files]
+TREE: 0841f36 + codeant3 patches (scratch commit, nothing pushed)
+DATE: 2026-11-12T21:32:08Z
+---
+[90m9:32PM[0m [32mINF[0m [1mscanned ~2758024 bytes (2.76 MB) in 360ms[0m
+[90m9:32PM[0m [32mINF[0m [1mno leaks found[0m
+EXIT 0

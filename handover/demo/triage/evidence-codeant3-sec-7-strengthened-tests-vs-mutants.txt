@@ -1,0 +1,20 @@
+COMMAND: see each block; one pytest at a time
+DATE: 2026-11-12T21:32:47Z
+----
+=== A. reset.ps1 mutant: a Stop-Process line placed BEFORE the refusal (tree /tmp/work/c10b-mutA = previous state + that one line)
+--- A1 PREVIOUS test (codeant2 tests/test_reset_ps1_links.py) on the mutant: (cd c10b-mutA && pytest -q tests/test_reset_ps1_links.py)
+..                                                                       [100%]
+2 passed in 0.25s
+--- A2 NEW test (codeant3 file copied in) on the same mutant
+        assert refusal, "no refusal on a failed check"
+>           assert after.index(action) > refusal.end(), f"{action} comes before the refusal on a failed check"
+E           AssertionError: Stop-Process comes before the refusal on a failed check
+        assert refusal, "no refusal on a failed check"
+
+=== B. gitleaks mutant: the long-hex rule renamed (tree /tmp/work/c10b-mutB = previous state + that rename); planting test only
+--- B1 PREVIOUS test_hygiene.py: pytest -q tests/test_hygiene.py -k lock_file
+.                                                                        [100%]
+1 passed, 10 deselected in 0.80s
+--- B2 NEW test_hygiene.py on the same mutant
+E               AssertionError: reported by: ['some-other-rule']
+1 failed, 11 deselected in 0.83s

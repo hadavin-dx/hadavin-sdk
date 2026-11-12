@@ -1,0 +1,67 @@
+COMMAND: python3 /tmp/work/c10b-time.py   (re.sub on 1,000,000-character strings of 19 worst shapes per regex; time.perf_counter, one run each)
+TREE: /tmp/work/c10b-tree = 0841f36 + codeant2 patches + codeant3 regex change (URL: no look-behind, scheme {0,31}; ACTIVE_LINK: no \b); python Python 3.13.18; machine shared
+DATE: 2026-11-12T21:22:54Z
+----
+URL letters 0.091
+URL dots 0.017
+URL hyphens 0.017
+URL a.a.a. 0.049
+URL a-a-a- 0.049
+URL http no host 0.092
+URL http:/ no host 0.036
+URL http://  0.039
+URL w-run then space 0.099
+URL w-run then @-less 0.05
+URL many @ 0.023
+URL a@a.a.a.a 0.056
+URL @ + long run 0.088
+URL mail example chain 0.079
+URL javascript no colon 0.105
+URL data:  0.033
+URL scheme-ish 0.05
+URL digits 0.017
+URL unicode 0.015
+URL schemes/ 0.003
+URL WORST 0.105
+MAIL letters 0.019
+MAIL dots 0.015
+MAIL hyphens 0.015
+MAIL a.a.a. 0.017
+MAIL a-a-a- 0.017
+MAIL http no host 0.023
+MAIL http:/ no host 0.024
+MAIL http://  0.021
+MAIL w-run then space 0.019
+MAIL w-run then @-less 0.018
+MAIL many @ 0.038
+MAIL a@a.a.a.a 0.046
+MAIL @ + long run 0.006
+MAIL mail example chain 0.018
+MAIL javascript no colon 0.019
+MAIL data:  0.021
+MAIL scheme-ish 0.018
+MAIL digits 0.02
+MAIL unicode 0.019
+MAIL schemes/ 0.02
+MAIL WORST 0.046
+ACTIVE letters 0.022
+ACTIVE dots 0.022
+ACTIVE hyphens 0.022
+ACTIVE a.a.a. 0.022
+ACTIVE a-a-a- 0.022
+ACTIVE http no host 0.022
+ACTIVE http:/ no host 0.022
+ACTIVE http://  0.022
+ACTIVE w-run then space 0.022
+ACTIVE w-run then @-less 0.026
+ACTIVE many @ 0.027
+ACTIVE a@a.a.a.a 0.025
+ACTIVE @ + long run 0.022
+ACTIVE mail example chain 0.022
+ACTIVE javascript no colon 0.053
+ACTIVE data:  0.05
+ACTIVE scheme-ish 0.022
+ACTIVE digits 0.025
+ACTIVE unicode 0.022
+ACTIVE schemes/ 0.022
+ACTIVE WORST 0.053

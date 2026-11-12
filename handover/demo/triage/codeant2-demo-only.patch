@@ -667,7 +667,7 @@ index 0000000..bb1dd33
 +        labels.append(next(c["text"] for c in answer["content"] if c["type"] == "text"))
 +    assert labels == ["hot", "warm", "cold", "hot"]
 diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
-index 799bacc..9da21fb 100644
+index 799bacc..42d4e54 100644
 --- a/demo_only/fake_hubspot.py
 +++ b/demo_only/fake_hubspot.py
 @@ -26,3 +26,5 @@ a GET of that id answers 404. That is how this demo stand-in behaves (an assumpt
@@ -717,7 +717,7 @@ index 799bacc..9da21fb 100644
 +            cid = self.by_email(ident) if by_email else ident
 +            return self._view(cid) if cid in self.contacts else None
 +
-+    def page(self, limit: int, after: int) -> tuple[list[dict[str, Any]], str | None]:
++    def contacts_page(self, limit: int, after: int) -> tuple[list[dict[str, Any]], str | None]:
 +        """(rows of one LIST page, the `after` cursor of the next page or None)."""
 +        with self.lock:
 +            ids = sorted(self.contacts, key=int)
@@ -760,7 +760,7 @@ index 799bacc..9da21fb 100644
 -            more = len(page) == limit and any(int(i) > int(page[-1]) for i in ids)
 -            paging = {"next": {"after": page[-1]}} if more else None
 -            self._send(200, {"results": [self._public(i) for i in page], "paging": paging})
-+            rows, next_after = st.page(limit, after)
++            rows, next_after = st.contacts_page(limit, after)
 +            self._send(200, {"results": rows, "paging": {"next": {"after": next_after}} if next_after else None})
              return
 @@ -182,5 +240,5 @@ class _Handler(BaseHTTPRequestHandler):

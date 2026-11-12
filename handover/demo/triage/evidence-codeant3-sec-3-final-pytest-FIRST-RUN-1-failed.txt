@@ -1,0 +1,58 @@
+COMMAND: (cd /tmp/work/c10b-tree && GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 timeout 1200 /tmp/work/int1-venv/bin/python -m pytest -p no:cacheprovider -q -rs tests/test_n8n_api_url.py tests/test_scrub_n8n_export.py tests/test_reset_ps1_links.py tests/test_n8n_proof_result.py tests/test_hygiene.py tests/test_http_guard.py tests/test_infra.py tests/test_reset_scripts.py tests/test_portal_api.py tests/test_vendor_hosts.py tests/test_env_numbers.py tests/test_portal_mode.py tests/test_portal_wording_and_masking.py)
+TREE: 0841f36 (pr-3-tests, still the public head) + codeant2-{gitleaks,scripts,n8n-proof,docs}.patch + the codeant3 changes, uncommitted (new test files git add -N); python 3.12; v22.23.4; gitleaks 8.30.1; DPLD_REQUIRE_SCAN=1
+DATE: 2026-11-12T21:22:48Z
+----
+........................................................................ [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 24%]
+............................F........................................... [ 32%]
+........................................................................ [ 40%]
+........................................................................ [ 49%]
+........................................................................ [ 57%]
+........................................................................ [ 65%]
+........................................................................ [ 73%]
+........................................................................ [ 81%]
+........................................................................ [ 90%]
+........................................................................ [ 98%]
+........ss..s...                                                         [100%]
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-284/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         docs/settings.md:121:127.0.0.0
+E         tools/scrub_n8n_export.py:46:http://host/x
+E       assert not ['docs/settings.md:121:127.0.0.0', 'tools/scrub_n8n_export.py:46:http://host/x']
+
+tests/test_hygiene.py:124: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+1 failed, 876 passed, 3 skipped in 164.00s (0:02:43)
+EXIT 1
+NOTE: this run FAILED (1 failed): test_hygiene's hardcoded-literal scan flagged docs/settings.md:121 (127.0.0.0) and tools/scrub_n8n_export.py:46 (a literal address in a comment); fixed; rerun is evidence-codeant3-sec-3b-final-pytest.txt
