@@ -60,8 +60,9 @@ reads only the syntax of Python files, the settings files named above and the te
 `tests/`: a test written another way (generated at run time, or collected by a plugin that is not in a conftest), a
 change in `src/` or `tools/` that a test uses (those have their own mutants), a change to a file outside the kinds
 above (a workflow, a lock file, an environment variable of the test run, a `-p` plugin named only on the command
-line) and a dependency version are not seen. A name built at run time (`getattr`, `importlib`, `exec`) is not
-followed. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
+line) and a dependency version are not seen. A name built at run time with `getattr` or `exec` is not followed; a file
+that imports with `importlib`, `pkgutil` or `__import__` is read as reaching the modules it names as text and every
+Python file below each package folder it imports from. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
 row is checked for form and for the existence of what it names, never for truth: a reason that names a real mutant
 that does not cover the test passes. The unit cell of a row must name a test, a mutant or a unit of the head
 commit, and each row of a notes file is checked against the units of its file, so a row that names a unit that
@@ -240,6 +241,11 @@ SWITCH_NAMES = (
 )
 
 
+# The calls that import a module by a name that may be worked out at run time. A file that makes one (a conftest that
+# imports every module of a folder at collection) depends on the text of every module it can reach that way.
+DYNAMIC_IMPORTS = (["import_module"], ["iter_modules"], ["walk_packages"], ["__import__"])
+
+
 class _Module:
     """One parsed Python file: the dump of every module-level binding (every name an assignment binds, tuple targets
     too), the value nodes behind those names, the nodes of its functions and classes, the imports of the whole file
@@ -277,6 +283,18 @@ class _Module:
         # so it is part of every unit of the file
         self.glue = [n for n in self.tree.body if not _is_declaration(n)]
         self.glue_dump = "".join(ast.dump(n) for n in self.glue)
+        # modules that the file imports by a name worked out at run time (`importlib.import_module(...)`,
+        # `pkgutil.iter_modules(...)`, `__import__(...)`): see `_Signatures.closure`
+        self.dynamic = False
+        self.dynamic_names: list[str] = []  # the dotted names written as text in such a call
+        for n in ast.walk(self.tree):
+            if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in DYNAMIC_IMPORTS:
+                self.dynamic = True
+                self.dynamic_names += [
+                    a.value
+                    for a in n.args
+                    if isinstance(a, ast.Constant) and isinstance(a.value, str)
+                ]
 
     def _value(self, names: list[str], value: ast.AST) -> None:
         for name in names:
@@ -331,6 +349,9 @@ class _Signatures:
     def __init__(self, loader: Loader | None) -> None:
         self.loader = loader
         self.modules: dict[str, _Module | None] = {}
+        # the paths of the files of the state being read (a loader may carry them as `.files`): needed to find the
+        # modules that a file imports by a name worked out at run time
+        self.files: list[str] = list(getattr(loader, "files", None) or [])
 
     def module(self, rel: str, source: str | None = None) -> _Module | None:
         if rel not in self.modules:
@@ -357,6 +378,23 @@ class _Signatures:
 
     def _file_of(self, stem: str) -> str | None:
         return next((c for c in (f"{stem}.py", f"{stem}/__init__.py") if self.module(c)), None)
+
+    def _dynamic_files(self, m: _Module) -> list[str]:
+        """The files a file that imports by a run-time name can reach: each module it names as text in such a call
+        (`import_module("tests.x.y")`), and every Python file below each package folder it imports a name from
+        (`from tests.contracts import kinds`, then `importlib.import_module(f"{kinds.__name__}.{name}")` or
+        `pkgutil.iter_modules(kinds.__path__)`)."""
+        found: set[str] = set()
+        for dotted in m.dynamic_names:
+            stem = _stem(m.rel, 0, dotted)
+            file = self._file_of(stem) if stem else None
+            if file:
+                found.add(file)
+        for stem, taken in m.imports.values():
+            folder = stem if taken is None else f"{stem}/{taken}"
+            found |= {f for f in self.files if f.startswith(folder + "/") and f.endswith(".py")}
+        found.discard(m.rel)
+        return sorted(found)
 
     def _imported(
         self, table: dict[str, tuple[str, str | None]], head: str, attr: str
@@ -406,6 +444,14 @@ class _Signatures:
                 parts.append(f"|glue {m.rel}={m.glue_dump}")
                 for g in m.glue:
                     todo.extend((m, u) for u in sorted(_used(g)))
+            if m.dynamic:
+                # the file imports modules by a name worked out at run time: every module it can reach that way is
+                # part of every unit that reaches the file, and so is everything those modules use
+                for rel in self._dynamic_files(m):
+                    other = self.module(rel)
+                    if other is not None:
+                        touch(other)
+                        todo.extend((other, n) for n in sorted(other.dumps))
 
         touch(mod)
         for conf in self.conftests(mod.rel):
@@ -1020,6 +1066,8 @@ def check(
         return cache["new", rel]
 
     tree = _tree(head or "HEAD")
+    old_load.files = _tree(base)  # type: ignore[attr-defined]
+    new_load.files = tree  # type: ignore[attr-defined]
     known = frozenset([*files, *tree])
     refs = _refs(tree, new_load) if cross else None
     bad: list[str] = []

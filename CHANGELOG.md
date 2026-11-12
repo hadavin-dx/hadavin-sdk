@@ -345,7 +345,7 @@
     the logs folder of the notes that name it, or by the end of its path (`b12/logs/x.log`). A new function or constant
     that nothing reaches (no test, fixture, conftest, import or mutant) needs no row, because it changes no run; the change
     that makes something use it lists the user. What it cannot see: a test written or collected another way (generated at
-    run time, or by a plugin that is not in a conftest), a name built at run time (`getattr`, `importlib`, `exec`), a change in
+    run time, or by a plugin that is not in a conftest), a name built at run time with `getattr` or `exec`, or by an `importlib`, `pkgutil` or `__import__` call that names nothing in the tree (a file that makes such an import call is read as reaching the modules it names as text and every Python file below each package folder it imports from, so a change of a module that `tests/contracts/conftest.py` loads by `pkgutil` lists the contract tests), a change in
     `src/` or `tools/` that a test reads (those have their own mutants), a change to a workflow, a lock file or a command
     line option, and a text a test reads from a file outside `tests/` at run time. A backticked text in a reason that starts
     with another word than a mutant code or the first word of a mutant is read as a quote and not checked. It cannot tell

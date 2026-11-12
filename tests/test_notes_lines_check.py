@@ -771,10 +771,23 @@ def test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_n
 _BODY = "\n\ndef test_a():\n    assert 1\n\n\ndef test_b():\n    assert 2\n"
 
 
+class _Tree(dict):
+    """A loader for `changed_tests` that also carries the paths of the files (`.files`), like the real one."""
+
+    def __init__(self, files):
+        super().__init__(files)
+        self.files = sorted(files)
+
+    def __call__(self, rel):
+        return self.get(rel, "")
+
+
 def _changed(old, new, rel="tests/test_x.py", before=None, after=None):
     """The changed units of a file; `before` and `after` are the files around it (path -> text) before and after."""
     if before is None and after is None:
         return nlc.changed_tests(old, new, rel)[0]
+    if isinstance(before, _Tree):  # a loader that carries the paths of its files
+        return nlc.changed_tests(old, new, rel, before, after)[0]
     return nlc.changed_tests(
         old, new, rel, lambda r: (before or {}).get(r, ""), lambda r: (after or {}).get(r, "")
     )[0]
@@ -944,6 +957,67 @@ def test_a_helper_two_imports_away_lists_the_test_that_reaches_it_in_each_direct
     after = {**files, "tests/contracts/kinds/deep.py": deep.format(2)}
     assert _changed(use, use, "tests/test_x.py", before, after) == ["test_uses"], (
         "a helper reached through an import as of another helper was not followed"
+    )
+
+
+def test_a_file_that_imports_modules_by_a_name_worked_out_at_run_time_lists_what_it_reaches():
+    # `tests/contracts/conftest.py` imports every module of `tests/contracts/kinds/` with pkgutil and importlib; a
+    # change of such a module (here the value `azure_secret_client` returns) changes what the contract tests do
+    conftest = (
+        "import importlib\nimport pkgutil\n\nfrom tests.contracts import kinds\n\n"
+        "for _m in pkgutil.iter_modules(kinds.__path__):\n"
+        "    importlib.import_module(f'{kinds.__name__}.{_m.name}')\n"
+    )
+    kind = "def make():\n    return {}\n"
+    test = "def test_a():\n    assert 1\n"
+    base = {
+        "tests/contracts/conftest.py": conftest,
+        "tests/contracts/kinds/__init__.py": "",
+        "tests/contracts/test_k.py": test,
+    }
+    before = _Tree({**base, "tests/contracts/kinds/k.py": kind.format(1)})
+    after = _Tree({**base, "tests/contracts/kinds/k.py": kind.format(2)})
+    got = _changed(test, test, "tests/contracts/test_k.py", before, after)
+    assert got == ["test_a"], (
+        f"a change of a module the conftest imports by a run-time name listed {got}, not test_a"
+    )
+    same = _changed(test, test, "tests/contracts/test_k.py", before, before)
+    assert same == [], f"an unchanged module reached by a run-time import listed {same}"
+    named = (
+        conftest.replace(
+            "for _m in pkgutil.iter_modules(kinds.__path__):\n"
+            "    importlib.import_module(f'{kinds.__name__}.{_m.name}')\n",
+            "importlib.import_module('tests.contracts.kinds.k')\n",
+        )
+        .replace("import pkgutil\n", "")
+        .replace("from tests.contracts import kinds\n\n", "")
+    )
+    base["tests/contracts/conftest.py"] = named
+    before = _Tree({**base, "tests/contracts/kinds/k.py": kind.format(1)})
+    after = _Tree({**base, "tests/contracts/kinds/k.py": kind.format(2)})
+    got = _changed(test, test, "tests/contracts/test_k.py", before, after)
+    assert got == ["test_a"], (
+        f"a module named as text in an import_module call listed {got}, not test_a"
+    )
+    elsewhere = _Tree({**base, "tests/other/k.py": kind.format(1)})
+    moved = _Tree({**base, "tests/other/k.py": kind.format(2)})
+    assert _changed(test, test, "tests/contracts/test_k.py", elsewhere, moved) == [], (
+        "a module outside every named or imported folder listed a test"
+    )
+    own = (
+        "import importlib\nfrom tests import contracts\n\nimportlib.import_module('x')\n\n\n"
+        "def test_a():\n    assert 1\n\n\ndef test_b():\n    assert {}\n"
+    )
+    folder = {"tests/contracts/__init__.py": ""}
+    got = _changed(
+        own.format(1),
+        own.format(2),
+        "tests/contracts/test_own.py",
+        _Tree({**folder, "tests/contracts/test_own.py": own.format(1)}),
+        _Tree({**folder, "tests/contracts/test_own.py": own.format(2)}),
+    )
+    assert got == ["test_b"], (
+        f"a file inside the folder it imports by a run-time name listed {got}, not only test_b"
     )
 
 
