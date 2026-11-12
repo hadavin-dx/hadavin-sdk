@@ -139,12 +139,13 @@ class _PricedLLM:
         if self.direct is not None:
             return self.direct
         from hadavin_sdk.llm.common import reply
+        from hadavin_sdk.llm.protocol import build_usage
 
         return reply(
             self.route,
             text="Nothing to do.",
             calls=[],
-            tokens=self.tokens,
+            usage=build_usage(*self.tokens),
             stop="end_turn",
             started=0.0,
             sent="s",
@@ -197,19 +198,21 @@ def test_v4_a_reply_with_a_nan_cost_fails_before_the_loop_starts():
         Reply(model_id="m", cost_usd=D("NaN"))
 
 
-def test_price_cost_translates_every_decimal_error_to_value_error():
+def test_pricing_refuses_every_decimal_error_as_a_closed_refusal():
     """A route that skipped validation (`model_copy(update=...)`) can carry a price that overflows or is not a
-    number: `price_cost` (the one choke point of `reply` and the fake model) answers `ValueError`, never
-    `decimal.Overflow`. The old code translated `InvalidOperation` only."""
-    from hadavin_sdk.llm.common import price_cost
+    number: `cost_usd` (P4a-1 replaced `price_cost` as the one choke point of `reply` and the fake model) refuses
+    with a closed `UsageMissing` or `ValueError` (the cost rounding), never `decimal.Overflow`."""
+    from hadavin_sdk.llm.pricing import cost_usd
+    from hadavin_sdk.llm.protocol import UsageMissing, build_usage
+    from hadavin_sdk.models import round_cost_up
 
     for bad in (D("1E+999999"), D("NaN"), D("sNaN"), D("Infinity")):
         route = _route("1").model_copy(update={"input_usd_per_mtok": bad})
-        with pytest.raises(ValueError):
-            price_cost(route, 10, 5)
+        with pytest.raises((UsageMissing, ValueError)):
+            round_cost_up(cost_usd(build_usage(10, 5), route))
 
 
-def test_the_fake_model_prices_through_price_cost_and_refuses_a_bad_price(tmp_path):
+def test_the_fake_model_prices_through_cost_usd_and_refuses_a_bad_price(tmp_path):
     import hashlib
     import json
 
@@ -220,6 +223,8 @@ def test_the_fake_model_prices_through_price_cost_and_refuses_a_bad_price(tmp_pa
     (tmp_path / f"{digest}-1.json").write_text(
         json.dumps({"text": "x", "input_tokens": 10, "output_tokens": 5}), encoding="utf-8"
     )
+    from hadavin_sdk.llm.protocol import UsageMissing
+
     route = _route("1").model_copy(update={"input_usd_per_mtok": D("1E+999999")})
-    with pytest.raises(ValueError):
+    with pytest.raises((UsageMissing, ValueError)):
         FakeLLM(tmp_path, {"r": route}).chat(messages, system="", route="r")
