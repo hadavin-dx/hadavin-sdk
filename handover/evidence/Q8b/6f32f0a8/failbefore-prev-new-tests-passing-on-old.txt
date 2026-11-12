@@ -1,0 +1,3 @@
+PASSED tests/test_q8b_batch4.py::test_j1_a_quoted_value_after_authorization_is_masked_whole
+PASSED tests/test_q8b_batch4.py::test_j1_the_older_rule_check_fails_when_only_the_first_word_of_a_value_is_masked
+PASSED tests/test_q8b_batch4.py::test_j4_the_scan_finds_every_shape_of_a_second_list
