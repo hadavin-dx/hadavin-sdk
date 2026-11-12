@@ -1499,3 +1499,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a4ca07c5379925d8a | P3a-2 EV on ee831364 | 00:39Z | 50 min | 00:39Z | running | list survivors; then egm reviewers |
 | afa3d00e7ff1aa851 | PR89 r26 EV | | | 00:42Z | CLOSED, evidence saved | |
 | af2ae3ac7ef2af913 | PR89 r27 fix builder (from 916c71ea, wip/cloud-PR89-r27) | 00:42Z | 75 min | 00:42Z | running | snapshot, EV (non-root mutant run), reviewers r27 (Blockers and Majors only) |
+| a84305a6190d1191f | Q8b b4 builder | | | 00:48Z | CLOSED, pushed 999ed05b on core/q8b-partial-mask-and-card-redaction (builder-reported: suite 10766 passed; q8b mutants 74/75 then M72 rerun; stage 37/37) | EV + reviewers r5 |
+| aa48b862abb52924c | Q8b r5 design reviewer (snap q8bb4-999ed05b) | 00:48Z | 25 min | 00:48Z | running | save report |
+| ad7d0e9c029af1898 | Q8b r5 codebase reviewer | 00:48Z | 25 min | 00:48Z | running | save report |
+| a7443cef105437a21 | Q8b b4 EV (999ed05b) | 00:48Z | 50 min | 00:48Z | running | then egm-resolve r5 |
