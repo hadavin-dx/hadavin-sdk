@@ -1,0 +1,4 @@
+src/hadavin_sdk/defaults.py
+tests/fixtures/prh_accidental_pairs.json
+tests/fixtures/prh_main_passes.json
+tests/test_k5_fixes3.py
