@@ -38,7 +38,6 @@ from hadavin_sdk import defaults
 from hadavin_sdk.backends.table import DEMO_ONLY, IN_PROCESS, NOT_PROD
 from hadavin_sdk.config import Config
 from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.guard.injection import AnyOf
 from hadavin_sdk.netguard import (
     LOOPBACK_V4,
     is_localhost_name,
@@ -46,7 +45,7 @@ from hadavin_sdk.netguard import (
     is_loopback_literal,
     parse_ip_literal,
 )
-from hadavin_sdk.standins import is_registered_stand_in
+from hadavin_sdk.standins import is_stand_in
 
 _LOG = logging.getLogger("hadavin_sdk.bindguard")
 
@@ -61,20 +60,17 @@ def stand_in_kinds() -> frozenset[tuple[str, str]]:
     return DEMO_ONLY | NOT_PROD | IN_PROCESS
 
 
-# The core's own stand-in classes are listed by ``hadavin_sdk.standins`` (each class marks itself; exact class only,
-# never a name, never a subclass).
+# The core's own stand-in classes are the literal list in ``hadavin_sdk.standins`` (looked up in the module that holds
+# them, exact class only, pinned; never a name, never a subclass).
 # held services whose emptiness decides: an empty ``tools`` or ``sources`` mapping holds nothing
 _COUNTED_WHEN_NOT_EMPTY = frozenset({"tools", "sources"})
 
 
 def is_stand_in_object(obj: object) -> bool:
-    """True only for an object whose exact class is one of the core's own stand-ins, or a detector list
-    (``AnyOf``) whose entries all are. Anything else, including a subclass or a class of the same name, is real."""
-    if is_registered_stand_in(obj):
-        return True
-    if type(obj) is AnyOf:
-        return all(is_stand_in_object(d) for d in obj.detectors)
-    return False
+    """True only for an object whose exact class is one of the core's own stand-ins (looked up by module and
+    name, pinned, instance scanned: see ``hadavin_sdk.standins``), or a detector list (``AnyOf``) whose entries all
+    are. Anything else, including a subclass or a class of the same name, is real. Never raises."""
+    return is_stand_in(obj)
 
 
 def config_services(config: Config) -> tuple[str, ...]:
@@ -126,25 +122,31 @@ def _is_empty_mapping(obj: object) -> bool:
 def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
     """The held objects that count (``held <name>: <class>``): every one unless its exact class is one of the
     core's own stand-ins (``is_stand_in_object``); a held ``tools`` or ``sources`` mapping counts (``held tools``)
-    unless it is a plain empty dict; nothing held (``None``) counts for nothing. An object that raises while it is
-    looked at counts (fail closed): the error is not passed on."""
+    unless it is a plain empty dict; nothing held (``None``) counts for nothing. A held mapping, a key or an object
+    that raises or cannot be read while it is looked at counts (fail closed): the error is not passed on, whatever
+    the object is."""
+    try:
+        items = sorted(
+            (held or {}).items(), key=lambda item: item[0] if type(item[0]) is str else "\uffff"
+        )
+    except Exception:  # noqa: BLE001 - a mapping that cannot be read is not nothing
+        return ("held (unreadable)",)
     found: list[str] = []
-    for name, obj in sorted((held or {}).items(), key=lambda item: str(item[0])):
+    for name, obj in items:
         if obj is None:
             continue
-        label = (
-            f"held {_shown(name)}"
-            if name in _COUNTED_WHEN_NOT_EMPTY
-            else f"held {_shown(name)}: {_shown(type(obj).__name__)}"
-        )
         try:
-            counts = (
-                not _is_empty_mapping(obj)
-                if name in _COUNTED_WHEN_NOT_EMPTY
-                else not is_stand_in_object(obj)
+            counted_if_not_empty = name in _COUNTED_WHEN_NOT_EMPTY
+            label = (
+                f"held {_shown(name)}"
+                if counted_if_not_empty
+                else f"held {_shown(name)}: {_shown(type(obj).__name__)}"
             )
-        except Exception:  # noqa: BLE001 - an object that cannot be read is not a stand-in
-            counts = True
+            counts = (
+                not _is_empty_mapping(obj) if counted_if_not_empty else not is_stand_in_object(obj)
+            )
+        except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in
+            label, counts = f"held {_shown(name)}", True
         if counts:
             found.append(label)
     return tuple(found)
@@ -152,7 +154,7 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
 
 def real_services(
     config: Config,
-    held: Mapping[str, object] | None = None,
+    held: Mapping[str, object] | None,
     frozen: tuple[str, ...] = (),
 ) -> tuple[str, ...]:
     """``config_services(config)`` and ``held_services_found(held)`` together: what is real now, each named in

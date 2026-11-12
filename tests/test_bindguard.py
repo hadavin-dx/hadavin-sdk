@@ -99,12 +99,14 @@ def _with_kind(cfg: Config, cap: str, kind: str) -> Config:
 
 def test_the_fixture_config_holds_only_stand_ins(stand_in_config: Config) -> None:
     assert stand_in_config.check_modules == [] and stand_in_config.egress_hosts == {LOOP_1}
-    assert real_services(stand_in_config) == (), "the stand-in fixture config counts a real service"
+    assert real_services(stand_in_config, {}) == (), (
+        "the stand-in fixture config counts a real service"
+    )
 
 
 def test_the_fixture_config_as_it_is_counts_its_check_module(tmp_path: Path) -> None:
     """Custom code runs in the process, so a config that lists a check module is not "all stand-ins"."""
-    assert real_services(load_config(make_cfg(tmp_path))) == ("checks:tests.fixtures.checks",)
+    assert real_services(load_config(make_cfg(tmp_path)), {}) == ("checks:tests.fixtures.checks",)
 
 
 ALL_KINDS = [(cap, kind) for cap, kinds in TABLE.items() for kind in kinds]
@@ -150,7 +152,7 @@ def test_every_kind_of_the_table_has_exactly_one_answer(
     stand_in_config: Config, cap: str, kind: str
 ) -> None:
     """The pinned class of the kind is the answer; every kind not pinned as a stand-in is real."""
-    found = real_services(_with_kind(stand_in_config, cap, kind))
+    found = real_services(_with_kind(stand_in_config, cap, kind), {})
     cls = PINNED[(cap, kind)]
     assert (found == ()) is (cls != "real"), f"{cap}/{kind}: {found}"
     if cls == "real":
@@ -235,14 +237,14 @@ def test_a_system_counts_unless_it_is_plain_http_on_this_computer_and_allowed(
         cfg = stand_in_config.model_copy(
             update={"systems": systems, "allow_insecure_loopback": allow}
         )
-        assert (real_services(cfg) == ("system records",)) is real, (systems, allow)
+        assert (real_services(cfg, {}) == ("system records",)) is real, (systems, allow)
         assert (public_bind_problem(ALL_ZEROS, cfg, {}) is not None) is real
 
 
 def test_a_configured_source_is_a_real_service(stand_in_config: Config) -> None:
     source = SourceConfig.model_construct(kind="kubernetes", settings={})
     cfg = stand_in_config.model_copy(update={"sources": {"cluster": source}})
-    assert real_services(cfg) == ("source cluster",)
+    assert real_services(cfg, {}) == ("source cluster",)
     assert public_bind_problem(ALL_ZEROS, cfg, {}) is not None
 
 
@@ -271,7 +273,7 @@ def test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a
     ]
     for change, name in cases:
         cfg = stand_in_config.model_copy(update=change)
-        assert real_services(cfg) == (name,), change
+        assert real_services(cfg, {}) == (name,), change
         problem = public_bind_problem(ALL_ZEROS, cfg, {})
         assert problem is not None and name in problem
         assert public_bind_problem(LOOP_1, cfg, {}) is None
@@ -281,7 +283,7 @@ def test_loopback_egress_hosts_and_empty_lists_pass(stand_in_config: Config) -> 
     cfg = stand_in_config.model_copy(
         update={"egress_hosts": frozenset({LOOP_1, "localhost", "::1"}), "tool_modules": []}
     )
-    assert real_services(cfg) == () and public_bind_problem(ALL_ZEROS, cfg, {}) is None, (
+    assert real_services(cfg, {}) == () and public_bind_problem(ALL_ZEROS, cfg, {}) is None, (
         "a loopback egress host was counted as a live one"
     )
 
@@ -289,7 +291,7 @@ def test_loopback_egress_hosts_and_empty_lists_pass(stand_in_config: Config) -> 
 def test_a_hostile_egress_entry_counts_and_never_shows_raw_text(stand_in_config: Config) -> None:
     for host in (LOOP_1 + "\x00", LOOP_1 + ".", "evil\nhost", "localhost.", "x" * 5000):
         cfg = stand_in_config.model_copy(update={"egress_hosts": frozenset({host})})
-        found = real_services(cfg)
+        found = real_services(cfg, {})
         assert len(found) == 1 and found[0].startswith("egress "), repr(host)
         problem = public_bind_problem(ALL_ZEROS, cfg, {})
         assert problem is not None and "\n" not in problem and "\x00" not in problem
@@ -299,9 +301,9 @@ def test_a_hostile_egress_entry_counts_and_never_shows_raw_text(stand_in_config:
 def test_systems_and_sources_built_by_the_real_loader_count(tmp_path: Path) -> None:
     """Built through ``load_config`` (validated), not ``model_construct``."""
     base = _loaded(tmp_path / "a")
-    assert real_services(base) == ()
+    assert real_services(base, {}) == ()
     remote = _loaded(tmp_path / "b", systems={"crm": {"base_url": "https://crm.example.test"}})
-    assert real_services(remote) == ("system crm",)
+    assert real_services(remote, {}) == ("system crm",)
     source = {
         "cluster": {
             "kind": "kubernetes",
@@ -310,7 +312,7 @@ def test_systems_and_sources_built_by_the_real_loader_count(tmp_path: Path) -> N
     }
     with_source = _loaded(tmp_path / "c", sources=source)
     assert isinstance(with_source.sources["cluster"], SourceConfig)
-    assert real_services(with_source) == ("source cluster",)
+    assert real_services(with_source, {}) == ("source cluster",)
     for cfg in (remote, with_source):
         assert public_bind_problem(ALL_ZEROS, cfg, {}) is not None
 
@@ -745,7 +747,7 @@ def test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind
     obj, shown = {n: (o, t) for n, o, t in _override_cases(tmp_path / "objects")}[name]
     kw = {"channel": FakeChannel("sig" + "-b3-test")} if name != "channel" else {}
     app = _built(tmp_path / "app", **{**kw, name: obj})
-    assert real_services(app.config) == ()  # type: ignore[attr-defined]  # the config alone says "stand-ins"
+    assert real_services(app.config, {}) == ()  # type: ignore[attr-defined]  # the config alone says "stand-ins"
     assert name in app.recorded, "the override was not recorded on the approvals"
     with monkeypatch.context() as m:
         _no_server(m)
@@ -895,7 +897,7 @@ def test_real_services_counts_held_objects_in_words_and_ignores_none(
         "a held object was not counted"
     )
     assert real_services(stand_in_config, {"detector": None, "tools": {}}) == ()
-    assert real_services(stand_in_config, None) == real_services(stand_in_config) == ()
+    assert real_services(stand_in_config, None) == real_services(stand_in_config, {}) == ()
     # control text in a name never reaches the sentence
     (text,) = real_services(stand_in_config, {"bad\nname": _Opaque()})
     assert "\n" not in text
@@ -936,7 +938,7 @@ def test_the_http_loopback_half_of_url_allowed_and_the_system_rule_agree(
                     "allow_insecure_loopback": allow,
                 }
             )
-            local = real_services(cfg) == ()
+            local = real_services(cfg, {}) == ()
             assert local == url_allowed(url, allow), f"{host!r} allow={allow}"
 
 
@@ -966,6 +968,28 @@ def _chains_rooted_at(tree: ast.AST, owner: str) -> set[str]:
     return {c for c in chains if not any(o != c and o.startswith(c + ".") for o in chains)}
 
 
+def _calls_given(tree: ast.AST, owner: str) -> set[str]:
+    """The callee of every call that is handed ``owner`` (or a name bound to it) as an argument, for example
+    ``Approvals.real_now(approvals)`` or ``handle_slack_action(approvals, ...)``: the argument position, which an
+    attribute chain does not show."""
+    names = {owner}
+    for n in ast.walk(tree):
+        if (
+            isinstance(n, ast.Assign)
+            and isinstance(n.value, ast.Name)
+            and n.value.id in names
+            and all(isinstance(t, ast.Name) for t in n.targets)
+        ):
+            names |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+    callees: set[str] = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call):
+            args = [*n.args, *(k.value for k in n.keywords)]
+            if any(isinstance(a, ast.Name) and a.id in names for a in args):
+                callees.add(ast.unparse(n.func))
+    return callees
+
+
 def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -> None:
     """The reason that lets a receiver stand beside a signer (``IN_PROCESS`` in the backend table): the one route
     calls ``approvals.receive`` (with ``record_only=True``) and nothing else of the approvals, and ``receive``
@@ -977,6 +1001,15 @@ def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -
         "approvals.config",
         "approvals.config_facts",
     }, "the listener reaches more of the approvals than receive (and the config identity check)"
+    assert _calls_given(receiver, "approvals") == {
+        "handle_slack_action",
+        "Approvals.held_services",
+        "Approvals.real_now",
+        "_recheck",
+        "type",
+    }, (
+        "the listener hands the approvals to more callees than the ones named here (argument position)"
+    )
     (handler,) = [
         n
         for n in ast.walk(receiver)
@@ -1275,8 +1308,9 @@ def test_the_netguard_docstring_states_the_supported_python_range() -> None:
 # --- round 3, class A: the answer is not given once; it is asked again and cannot be changed under the guard ---------
 
 
-def _post(server: http.server.HTTPServer) -> int:
-    """POST one request to ``serve``'s server (run in a thread for the one request) and return the status."""
+def _post(server: http.server.HTTPServer, *, close: bool = True) -> int:
+    """POST one request to ``serve``'s server (run in a thread for the one request) and return the status; the
+    server socket is closed afterwards unless ``close`` is False (the caller closes it)."""
     import http.client
     import threading
 
@@ -1290,7 +1324,8 @@ def _post(server: http.server.HTTPServer) -> int:
         return status
     finally:
         server.shutdown()
-        server.server_close()
+        if close:
+            server.server_close()
         thread.join(timeout=5)
 
 
@@ -1319,22 +1354,33 @@ def test_a_real_channel_put_in_after_the_server_started_answers_503_and_one_log_
     a = app.approvals  # type: ignore[attr-defined]
     _stand_in_bind_lands_on_loopback(monkeypatch)
     server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
-    assert _post(server) != 503, "a stand-in server refused its first request"
-    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
-    object.__setattr__(a, "_channel", _RealChannel("sig" + "-b4-late"))
-    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
-        assert _post(server) == 503, "a real channel put in after the start was served"
+    try:  # one server for both requests, closed at the end whatever happens
+        assert _post(server, close=False) != 503, "a stand-in server refused its first request"
+        object.__setattr__(a, "_channel", _RealChannel("sig" + "-b4-late"))
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+            assert _post(server, close=False) == 503, (
+                "a real channel put in after the start was served"
+            )
+    finally:
+        server.server_close()
     assert [
         r.getMessage() for r in caplog.records if "held channel: _RealChannel" in r.getMessage()
     ], "the refused request was not logged with the held object"
 
 
-def test_loopback_and_reason_given_binds_do_not_pay_the_recheck(
+def test_a_loopback_bind_does_not_pay_the_recheck(tmp_path: Path) -> None:
+    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-real"))
+    a = app.approvals  # type: ignore[attr-defined]
+    assert _post(serve(a, config=app.config, port=0)) != 503, (  # type: ignore[attr-defined]
+        "a loopback bind was refused at the request"
+    )
+
+
+def test_a_bind_with_a_reason_does_not_pay_the_recheck(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-real"))
     a = app.approvals  # type: ignore[attr-defined]
-    assert _post(serve(a, config=app.config, port=0)) != 503  # type: ignore[attr-defined]
     _stand_in_bind_lands_on_loopback(monkeypatch)
     server = serve(
         a, config=app.config, host=ALL_ZEROS, port=0, allow_public_bind_reason="proxy in front"
@@ -1349,7 +1395,7 @@ def test_what_the_config_said_at_construction_is_kept_when_its_lists_are_emptied
         cfg = stand_in_config.model_copy(update={field: ["my_module"]})
         approvals = _Approvals(cfg)
         getattr(cfg, field).clear()
-        assert real_services(cfg) == () and approvals.real_now(), (
+        assert real_services(cfg, {}) == () and approvals.real_now(), (
             "the facts were read again, not kept"
         )
         with monkeypatch.context() as m:
@@ -1417,6 +1463,8 @@ def test_held_is_required_everywhere_it_decides(stand_in_config: Config) -> None
         require_safe_bind(LOOP_1, stand_in_config)  # type: ignore[call-arg]
     with pytest.raises(TypeError):
         public_bind_problem(LOOP_1, stand_in_config)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        real_services(stand_in_config)  # type: ignore[call-arg]
 
 
 def test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_and_registry_are_stand_ins(
@@ -1494,25 +1542,181 @@ def test_the_approvals_that_build_made_go_through_serve_with_a_real_override(
 # --- round 3, class B: the stand-in registry takes only the core's own listed classes -------------------------------
 
 
-def test_a_class_the_core_does_not_list_cannot_be_registered() -> None:
+def test_no_registration_door_exists_and_the_five_are_a_literal_of_pairs() -> None:
     from hadavin_sdk import standins
 
-    before = standins.registered()
+    assert not hasattr(standins, "stand_in"), "a registration decorator still exists"
+    assert not hasattr(standins, "_CLASSES"), "a mutable registry still exists"
+    assert type(standins._ALLOWED) is tuple and all(
+        type(p) is tuple and len(p) == 2 for p in standins._ALLOWED
+    )
+    for module in {m for m, _ in standins._ALLOWED}:
+        src = (SRC / (module.removeprefix("hadavin_sdk.").replace(".", "/") + ".py")).read_text(
+            encoding="utf-8"
+        )
+        assert "stand_in" not in src, f"{module} still mentions the old decorator"
 
-    class MyRealChannel:
+
+def test_a_forged_class_with_the_same_module_and_name_is_not_a_stand_in() -> None:
+    """Class 1 (round 4): trust is not read from ``__module__`` or ``__qualname__``, which the class author writes."""
+    forged = type("FakeLLM", (), {"__module__": "hadavin_sdk.llm.fake", "__qualname__": "FakeLLM"})
+    assert forged.__module__ == "hadavin_sdk.llm.fake" and forged.__qualname__ == "FakeLLM"
+    assert not is_stand_in_object(forged()), (
+        "a class that wrote the core's module and name was trusted"
+    )
+
+    class FakeChannel:
+        __module__ = "hadavin_sdk.approvals.channel"
+
+    assert not is_stand_in_object(FakeChannel())
+
+
+class _Home:
+    """A stand-in home for a class made by a test: a plain module put in ``sys.modules`` and named in the list."""
+
+    def __init__(self, monkeypatch: pytest.MonkeyPatch, name: str = "tests_fake_home") -> None:
+        import sys
+        import types
+
+        from hadavin_sdk import standins
+
+        self.standins, self.name = standins, name
+        self.module = types.ModuleType(name)
+        monkeypatch.setitem(sys.modules, name, self.module)
+        monkeypatch.setattr(standins, "_ALLOWED", (*standins._ALLOWED, (name, "Child")))
+        monkeypatch.setattr(standins, "_PINNED", dict(standins._PINNED))
+        monkeypatch.setattr(standins, "_SEEN", standins._SEEN)
+
+    def put(self, cls: type) -> None:
+        self.module.Child = cls  # type: ignore[attr-defined]
+
+
+def test_a_method_replaced_on_a_base_class_or_changed_bases_read_as_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class 1, N3: the pin covers every class of the mro, and the mro itself."""
+
+    class Base:
+        def go(self) -> int:
+            return 1
+
+    class Other:
         pass
 
-    with pytest.raises(TypeError, match="not a stand-in the core lists"):
-        standins.stand_in(MyRealChannel)
-    assert standins.registered() == before
-    assert not is_stand_in_object(MyRealChannel())
+    class Child(Base):
+        pass
+
+    home = _Home(monkeypatch)
+    home.put(Child)
+    assert is_stand_in_object(Child()), "control: a listed class is a stand-in"
+    monkeypatch.setattr(Base, "go", lambda self: 2)  # a method replaced on the base
+    assert not is_stand_in_object(Child()), "a method replaced on a base class was not noticed"
+    monkeypatch.undo()
 
 
-def test_the_registry_is_frozen_and_cannot_be_added_to() -> None:
+def test_changed_bases_of_a_stand_in_read_as_real(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Base:
+        pass
+
+    class Other:
+        pass
+
+    class Child(Base):
+        pass
+
+    home = _Home(monkeypatch)
+    home.put(Child)
+    assert is_stand_in_object(Child())
+    Child.__bases__ = (Other,)
+    assert not is_stand_in_object(Child()), "a changed base class was not noticed"
+
+
+def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The mro itself is pinned, not only the attributes of its classes: a clone with the very same objects in it
+    leaves every attribute check equal."""
+    go = lambda self: 1
+    namespace = {"go": go, "__slots__": (), "__module__": "tests_clone", "__doc__": None}
+    base, clone = type("Base", (), dict(namespace)), type("Base", (), dict(namespace))
+
+    class Child(base):  # type: ignore[valid-type,misc]
+        pass
+
+    home = _Home(monkeypatch)
+    home.put(Child)
+    assert is_stand_in_object(Child())
+    Child.__bases__ = (clone,)
+    assert [vars(c) for c in Child.__mro__[1:2]] and not is_stand_in_object(Child()), (
+        "a base class swapped for a clone was not noticed (the mro is not pinned)"
+    )
+
+
+def test_a_module_that_is_not_imported_or_whose_name_was_rebound_gives_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import sys
+
+    assert is_stand_in_object(FakeSecretProvider({})), "control"
+    with monkeypatch.context() as m:
+        m.delitem(sys.modules, "hadavin_sdk.actions.secrets")
+        assert not is_stand_in_object(FakeSecretProvider({})), "an unimported module matched"
+    import hadavin_sdk.actions.secrets as secrets_module
+
+    class Forged:
+        pass
+
+    with monkeypatch.context() as m:
+        m.setattr(
+            secrets_module, "FakeSecretProvider", Forged
+        )  # the module name now means another class
+        assert not is_stand_in_object(FakeSecretProvider({})), "a rebound module name still matched"
+        assert not is_stand_in_object(Forged()), "the rebound class was trusted"
+    assert is_stand_in_object(FakeSecretProvider({}))
+
+
+def test_the_class_is_looked_up_in_the_module_dictionary_not_with_getattr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A module-level ``__getattr__`` must never be run to find a trusted class."""
+
+    class Planted:
+        pass
+
+    home = _Home(monkeypatch, "tests_fake_home_getattr")
+    home.module.__getattr__ = lambda name: Planted  # type: ignore[attr-defined]
+    assert home.module.Child is Planted  # type: ignore[attr-defined]  # only through __getattr__
+    assert not is_stand_in_object(Planted()), (
+        "a class found through a module __getattr__ was trusted"
+    )
+
+
+def test_a_cleared_pin_of_a_class_that_was_seen_fails_closed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from hadavin_sdk import standins
 
-    with pytest.raises(AttributeError):
-        standins._CLASSES.add(_Opaque)  # type: ignore[attr-defined]
+    assert is_stand_in_object(FakeChannel("sig" + "-b5-pin")), "control"
+    monkeypatch.setattr(standins, "_PINNED", {})
+    assert not is_stand_in_object(FakeChannel("sig" + "-b5-pin")), (
+        "a cleared pin re-pinned and trusted"
+    )
+
+
+def test_a_subclass_of_a_listed_class_is_not_that_class(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Child:
+        pass
+
+    home = _Home(monkeypatch)
+    home.put(Child)
+    assert is_stand_in_object(Child())
+
+    class Sub(Child):
+        pass
+
+    assert not is_stand_in_object(Sub()), (
+        "a subclass was read as the class (isinstance instead of identity)"
+    )
 
 
 def test_a_metaclass_that_fakes_equality_and_hash_is_not_a_stand_in() -> None:
@@ -1528,6 +1732,39 @@ def test_a_metaclass_that_fakes_equality_and_hash_is_not_a_stand_in() -> None:
 
     assert not is_stand_in_object(Spoof()), (
         "a class that fakes equality and hash was read as a stand-in"
+    )
+
+
+def test_a_module_that_is_not_a_plain_module_gives_real(monkeypatch: pytest.MonkeyPatch) -> None:
+    import sys
+    import types
+
+    import hadavin_sdk.actions.secrets as secrets_module
+
+    class Fancy(types.ModuleType):
+        pass
+
+    fancy = Fancy("hadavin_sdk.actions.secrets")
+    fancy.__dict__.update(vars(secrets_module))
+    with monkeypatch.context() as m:
+        m.setitem(sys.modules, "hadavin_sdk.actions.secrets", fancy)
+        assert not is_stand_in_object(FakeSecretProvider({})), (
+            "a module of another type was read as the home of a stand-in"
+        )
+
+
+def test_an_instance_with_more_values_than_the_budget_reads_as_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from hadavin_sdk import standins
+
+    fc = FakeChannel("sig" + "-b5-budget")
+    assert is_stand_in_object(fc), "control"
+    fc.many = list(range(50))  # type: ignore[attr-defined]
+    assert is_stand_in_object(fc), "control: plain values within the budget are fine"
+    monkeypatch.setattr(standins, "SCAN_NODES", 10)
+    assert not is_stand_in_object(fc), (
+        "an instance past the node budget was trusted (the node budget)"
     )
 
 
@@ -1620,37 +1857,84 @@ def test_the_resolved_scan_ignores_what_only_looks_like_a_server() -> None:
     assert server_scan.resolved_forms(quiet) == []
 
 
+# one fixture per launcher word, each holding that word ALONE (so taking that word away from the list is seen)
 LAUNCHER_FIXTURES = {
-    "shell http.server": "python -m http.server 8000\n",
-    "flask run": "flask run --host 0.0.0.0\n",
-    "Dockerfile uvicorn": 'CMD ["uvicorn", "app:app"]\n',
-    "compose gunicorn": "command: gunicorn app:app\n",
-    "bind everything": "ports: 0.0.0.0:80\n",
+    r"http\.server": "exec http.server 8000\n",
+    r"flask\s+run": "flask run\n",
+    r"uvicorn": 'CMD ["uvicorn", "app:app"]\n',
+    r"gunicorn": "command: gunicorn app:app\n",
+    r"hypercorn": "hypercorn app:app\n",
+    r"waitress": "waitress-serve app:app\n",
+    r"serve_forever": "srv.serve_forever()\n",
+    r"--host\b": "app --host x\n",
+    r"0\.0\.0\.0": "ports: 0.0.0.0:80\n",
+    r"\bnc\s+-l": "nc -l 9000\n",
+    r"\bsocat\b": "socat TCP-LISTEN:1 -\n",
+    r"python\s+-m\s+\w*server": "python -m myserver 80\n",
+    r"\brunserver\b": "manage runserver\n",
 }
 
 
-def test_the_launcher_scan_flags_each_seeded_launcher() -> None:
-    missed = [
-        n for n, text in sorted(LAUNCHER_FIXTURES.items()) if not server_scan.launcher_hits(text)
-    ]
-    assert missed == [], f"the launcher scan missed {missed}"
+def test_every_launcher_word_has_a_fixture_of_its_own_and_only_its_own() -> None:
+    assert set(LAUNCHER_FIXTURES) == set(server_scan.LAUNCHER_WORD_LIST), (
+        "a launcher word has no fixture of its own (or a fixture has no word)"
+    )
+    for word, text in sorted(LAUNCHER_FIXTURES.items()):
+        others = re.compile(
+            "|".join(w for w in server_scan.LAUNCHER_WORD_LIST if w != word), re.IGNORECASE
+        )
+        assert not others.search(text), f"the fixture for {word} also holds another word"
 
 
-# a launcher word that is not ours, written down with why (file, word) -> reason
+def test_the_launcher_scan_flags_each_seeded_launcher_by_its_own_word() -> None:
+    """Each fixture is read by the scan as it is (not by the list of words in this file), so a word taken out of
+    the scan is seen as that word's own miss."""
+    for word, text in sorted(LAUNCHER_FIXTURES.items()):
+        assert server_scan.launcher_hits(text), f"the launcher scan missed {word}"
+
+
+def test_the_launcher_globs_name_the_new_kinds_of_launcher_file() -> None:
+    globs = set(server_scan.LAUNCHER_GLOBS)
+    for needed in ("Makefile", "justfile", "*.bash", "*.ps1", "entrypoint*", "k8s/**/*.y*ml"):
+        assert needed in globs, f"{needed} is not scanned"
+    import fnmatch
+
+    for name in ("Makefile", "justfile", "run.bash", "start.ps1", "entrypoint.sh", "web.mk"):
+        assert any(fnmatch.fnmatch(name, g) for g in globs), f"{name} is not matched by a glob"
+
+
+def test_the_pyproject_scripts_are_read_and_the_dependency_lists_are_not() -> None:
+    quiet = '[project]\nname = "x"\ndependencies = ["uvicorn>=0.30", "waitress"]\n'
+    assert server_scan.pyproject_hits(quiet) == []
+    serving = (
+        '[project.scripts]\nserve = "http.server:test"\nrun = "uvicorn app:app --host 0.0.0.0"\n'
+        '[tool.poe.tasks]\nweb = "gunicorn app:app"\n[project.entry-points."x.y"]\nz = "waitress:serve"\n'
+    )
+    hits = server_scan.pyproject_hits(serving)
+    assert "entry point http.server" in hits and "entry point waitress" in hits, (
+        f"an entry point in a serving module was not read: {hits}"
+    )
+    assert {"uvicorn", ALL_ZEROS, "gunicorn"} <= set(hits), f"a script table was not read: {hits}"
+    if (
+        ROOT / "pyproject.toml"
+    ).exists():  # the mutation runner copies none; the normal run and CI read it
+        own = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        assert server_scan.pyproject_hits(own) == [], "pyproject.toml of this repo starts a server"
+
+
+# a launcher word that is not ours, written down with why: (file, word, how many times) -> reason. A second one
+# of the same word is a different key, so it fails until a person writes it down
 LAUNCHER_ALLOWED = {
     (
         ".github/workflows/ci.yml",
         ".".join(["0"] * 4),
-    ): "the address a throwaway service container of the CI listens on; it is not code of this repo",
+        2,
+    ): "the address each of the two throwaway secrets-service containers of the CI listens on (one per job); "
+    "it is not code of this repo",
 }
 
 
-@pytest.mark.skipif(
-    not (ROOT / ".github" / "workflows").is_dir(),
-    reason="the mutation runner copies no .github folder; the normal run and CI read it",
-)
-def test_no_script_dockerfile_compose_or_workflow_starts_a_server() -> None:
-    hits: list[tuple[str, str]] = []
+def _launcher_files() -> list[Path]:
     files = [
         p
         for pattern in server_scan.LAUNCHER_GLOBS
@@ -1658,15 +1942,46 @@ def test_no_script_dockerfile_compose_or_workflow_starts_a_server() -> None:
         if ".git" not in p.parts and ".venv" not in p.parts and "node_modules" not in p.parts
     ]
     files += sorted((ROOT / ".github" / "workflows").glob("*.y*ml"))
-    for path in sorted(set(files)):
-        rel = path.relative_to(ROOT).as_posix()
-        for hit in server_scan.launcher_hits(path.read_text(encoding="utf-8", errors="replace")):
-            hits.append((rel, hit.split("@")[0]))
-    unexplained = [h for h in hits if h not in LAUNCHER_ALLOWED]
-    assert unexplained == [], f"a launcher starts a server: {unexplained}"
-    assert set(hits) >= set(LAUNCHER_ALLOWED), (
-        "an allowed launcher word is gone, remove it from the list"
+    return sorted(set(files))
+
+
+def _launcher_keys(texts: dict[str, str]) -> set[tuple[str, str, int]]:
+    return {
+        (rel, word, n)
+        for rel, text in texts.items()
+        for word, n in server_scan.launcher_counts(text).items()
+    }
+
+
+def test_an_allowed_launcher_word_allows_only_its_own_count() -> None:
+    word = ".".join(["0"] * 4)
+    one = {"f.yml": f"a: {word}\n"}
+    two = {"f.yml": f"a: {word}\nb: {word}\n"}
+    assert _launcher_keys(one) == {("f.yml", word, 1)}
+    assert _launcher_keys(two) == {("f.yml", word, 2)}
+    assert _launcher_keys(two) - {("f.yml", word, 1)}, (
+        "the count of a word was lost: a second word passed on the first one's allowance"
     )
+
+
+@pytest.mark.skipif(
+    not (ROOT / ".github" / "workflows").is_dir(),
+    reason="the mutation runner copies no .github folder; the normal run and CI read it",
+)
+def test_no_script_dockerfile_compose_or_workflow_starts_a_server() -> None:
+    texts = {
+        p.relative_to(ROOT).as_posix(): p.read_text(encoding="utf-8", errors="replace")
+        for p in _launcher_files()
+    }
+    keys = _launcher_keys(texts)
+    unexplained = sorted(keys - set(LAUNCHER_ALLOWED))
+    assert unexplained == [], f"a launcher starts a server: {unexplained}"
+    assert keys >= set(LAUNCHER_ALLOWED), (
+        "an allowed launcher word is gone or its count changed, fix the list"
+    )
+    own = ROOT / "pyproject.toml"
+    if own.exists():
+        assert server_scan.pyproject_hits(own.read_text(encoding="utf-8")) == []
 
 
 def test_the_resolved_scan_finds_nothing_outside_listen_in_src_demos_tools() -> None:
@@ -1769,3 +2084,302 @@ def test_the_only_code_that_reaches_a_socket_bind_is_listen(
     ]
     for frames in seen:
         assert frames == expected, f"a bind came from somewhere other than listen: {frames}"
+
+
+# --- round 4, batch 5 ------------------------------------------------------------------------------------------------
+# class 2: everything trusted is pinned, the instance is scanned to a bounded depth
+
+
+def _any_of() -> AnyOf:
+    return AnyOf([RegexDetector(0.5), RegexDetector(0.7)])
+
+
+def test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container_reads_as_real(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    assert is_stand_in_object(_any_of()), "control"
+    patched = _any_of()
+    patched.check = lambda text, source: None  # type: ignore[method-assign,assignment]
+    assert not is_stand_in_object(patched), "a function put on the detector list was not noticed"
+    with monkeypatch.context() as m:
+        m.setattr(AnyOf, "check", lambda self, text, source: None)
+        assert not is_stand_in_object(_any_of()), "a patched AnyOf.check was not noticed"
+    as_list = _any_of()
+    as_list.detectors = [RegexDetector(0.5)]  # type: ignore[assignment]
+    assert not is_stand_in_object(as_list), "a list of detectors was read as a tuple"
+
+    class EmptyIter:
+        def __iter__(self):  # a foreign iteration that says "nothing in here"
+            return iter(())
+
+    empty = _any_of()
+    empty.detectors = EmptyIter()  # type: ignore[assignment]
+    assert not is_stand_in_object(empty), "a detector holder that iterates as empty was trusted"
+
+    class MyTuple(tuple):
+        def __iter__(self):
+            return iter(())
+
+    sub = _any_of()
+    sub.detectors = MyTuple((_RealDetector(),))  # type: ignore[assignment]
+    assert not is_stand_in_object(sub), "a tuple subclass with a foreign iteration was trusted"
+    mixed = AnyOf([RegexDetector(0.5), _RealDetector()])  # type: ignore[list-item]
+    assert not is_stand_in_object(mixed)
+
+
+def test_a_detector_list_nested_or_cyclic_is_read_without_recursion_errors() -> None:
+    nested = AnyOf([_any_of(), RegexDetector(0.5)])
+    assert is_stand_in_object(nested), "a list of lists of stand-ins is a stand-in"
+    deep: AnyOf = _any_of()
+    for _ in range(10):
+        deep = AnyOf([deep])  # type: ignore[list-item]
+    assert not is_stand_in_object(deep), "nesting past the depth limit was trusted"
+    loop = _any_of()
+    loop.detectors = (loop,)  # type: ignore[assignment]
+    assert not is_stand_in_object(loop), "a detector list holding itself was trusted"
+
+
+def test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit(
+    tmp_path: Path,
+) -> None:
+    from hadavin_sdk import standins
+
+    assert standins.SCAN_DEPTH == 4
+    plain = FakeLLM(tmp_path, {})
+    assert is_stand_in_object(plain), "control"
+    # levels: the values of the instance's own attributes are level 1; a container inside one adds a level.
+    # ``routes`` is level 1, so the value put in it is level 2
+    hidden = [
+        lambda: None,  # level 2
+        {"k": lambda: None},  # level 3
+        {"k": (lambda: None,)},  # level 4, the last one entered
+    ]
+    for value in hidden:
+        llm = FakeLLM(tmp_path, {})
+        llm.routes["x"] = value  # type: ignore[assignment]
+        assert not is_stand_in_object(llm), f"a function inside {value!r} was not noticed"
+    for kind in (set, frozenset):
+        llm = FakeLLM(tmp_path, {})
+        llm.calls.append(
+            {"f": kind([print])}
+        )  # a callable inside a set inside a dict inside a list
+        llm.calls.append(kind([print]))
+        assert not is_stand_in_object(llm)
+    store = MemoryStore()
+    store._runs["x"] = (lambda: None,)  # type: ignore[assignment]
+    assert not is_stand_in_object(store)
+    # the limit is real and stated: a function in the fifth level is not entered
+    far = FakeLLM(tmp_path, {})
+    far.routes["x"] = {"k": [(lambda: None,)]}  # type: ignore[assignment]
+    assert is_stand_in_object(far), "the stated depth limit changed without the text"
+    for obj in (FakeChannel("sig" + "-b5-d"), MemoryStore(), FakeSecretProvider({"a": "b"})):
+        assert is_stand_in_object(obj)
+
+
+def test_a_stand_in_with_no_instance_dictionary_or_a_hostile_one_never_raises() -> None:
+    class Slotted:
+        __slots__ = ()
+
+    assert not is_stand_in_object(Slotted())
+    assert not is_stand_in_object(object())
+    assert not is_stand_in_object(None)
+
+
+# class 3: the live object keeps its type and its set-once slots
+
+
+class SlotSub(Approvals):
+    __slots__ = ()
+
+
+def test_an_approvals_refuses_plain_writes_a_class_swap_and_weak_references(tmp_path: Path) -> None:
+    import weakref
+
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    with pytest.raises(AttributeError, match="set once"):
+        a.__class__ = SlotSub  # type: ignore[assignment]
+    assert type(a) is Approvals
+    with pytest.raises(AttributeError, match="set once"):
+        a._channel = _RealChannel("sig" + "-b5-w")  # type: ignore[assignment]
+    for name in Approvals.__slots__:
+        with pytest.raises(AttributeError, match="set once"):
+            setattr(a, name, None)
+    with pytest.raises(AttributeError, match="set once"):
+        a.brand_new = 1  # type: ignore[attr-defined]
+    with pytest.raises(AttributeError):
+        _ = a.__dict__
+    with pytest.raises(TypeError):
+        weakref.ref(a)
+    now = a.clock
+    a.clock = lambda: now()  # the one name that can be set again
+    assert a.clock is not now and a.clock() is not None
+
+
+def test_a_class_swapped_with_the_object_level_write_is_answered_503(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    _stand_in_bind_lands_on_loopback(monkeypatch)
+    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+    object.__setattr__(a, "__class__", SlotSub)
+    try:
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+            assert _post(server) == 503, "an Approvals whose class was swapped was served"
+    finally:
+        object.__setattr__(a, "__class__", Approvals)
+    assert any("no longer an exact Approvals" in r.getMessage() for r in caplog.records)
+
+
+# class 4: the guard never raises on a hostile input
+
+
+class _BoomKey:
+    def __str__(self) -> str:
+        raise RuntimeError("no text for this key")
+
+    def __hash__(self) -> int:
+        return 7
+
+
+class _EqBoomKey:
+    """Hashes like "tools", so the lookup in the counted-when-not-empty set compares it, and the comparison raises."""
+
+    def __hash__(self) -> int:
+        return hash("tools")
+
+    def __eq__(self, other: object) -> bool:
+        raise RuntimeError("no comparison")
+
+
+class _Hostile:
+    """A mapping whose keys cannot be sorted, hashed or shown."""
+
+    def __init__(self, items: list[tuple[object, object]]) -> None:
+        self._items = items
+
+    def items(self) -> list[tuple[object, object]]:
+        return self._items
+
+    def __bool__(self) -> bool:
+        return True
+
+
+def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> None:
+    found = held_services_found({_EqBoomKey(): {}})  # type: ignore[dict-item]
+    assert found == ("held (unreadable)",), (
+        f"a key whose comparison raises was not counted: {found}"
+    )
+
+    boom = {_BoomKey(): _Opaque(), "ok": FakeChannel("sig" + "-b5-k")}
+    found = held_services_found(boom)
+    assert found == ("held (unreadable): _Opaque",), found
+    unhashable = _Hostile([([1, 2], _Opaque()), (_BoomKey(), _Opaque())])
+    found = held_services_found(unhashable)  # type: ignore[arg-type]
+    assert len(found) == 2 and all(f.startswith("held (unreadable)") for f in found), found
+
+    found = held_services_found({_EqBoomKey(): {}})  # type: ignore[dict-item]
+    assert found == ("held (unreadable)",), (
+        f"a key whose comparison raises was not counted: {found}"
+    )
+
+    class Raises:
+        def items(self) -> list[object]:
+            raise RuntimeError("no items")
+
+        def __bool__(self) -> bool:
+            return True
+
+    assert held_services_found(Raises()) == ("held (unreadable)",)  # type: ignore[arg-type]
+
+
+# class 6: a refused request is logged at most once a minute per set of services
+
+
+def test_a_refused_request_is_logged_once_a_minute_per_set_of_services(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from hadavin_sdk.approvals import receiver
+
+    clock = [1000.0]
+    monkeypatch.setattr(receiver.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+    with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
+        for _ in range(50):
+            receiver._refused(("held channel: A",))
+        assert len(caplog.records) == 1, "a flood of requests filled the log"
+        receiver._refused(("held channel: B",))
+        assert len(caplog.records) == 2, "a second set of services was hidden by the first"
+        clock[0] += 59
+        receiver._refused(("held channel: A",))
+        assert len(caplog.records) == 2
+        clock[0] += 2
+        receiver._refused(("held channel: A",))
+        assert len(caplog.records) == 3, "the limit never lets the line through again"
+
+
+# class 5: the scan of Python files reads scopes, star imports, more entry points and real addresses
+
+
+def test_a_star_import_of_a_server_module_is_resolved() -> None:
+    for src in (
+        "from socketserver import *\nTCPServer(('', 1), None)\n",
+        "from http.server import *\nThreadingHTTPServer(('', 1), None)\n",
+        "from waitress import *\nserve(None)\n",
+    ):
+        assert server_scan.resolved_forms(src), f"a star import was not resolved: {src!r}"
+    assert server_scan.resolved_forms("from math import *\nsqrt(4)\n") == []
+
+
+def test_aliases_are_read_in_the_scope_they_are_written_in() -> None:
+    both = (
+        "def a():\n    import socketserver as s\n    return s.TCPServer(('', 1), None)\n\n"
+        "def b():\n    import os as s\n    return s.getcwd()\n"
+    )
+    # the same name means a server in one function and a harmless module in the other: only the first is flagged
+    flagged = server_scan.resolved_forms(both)
+    assert flagged and all(int(h.rsplit("@", 1)[1]) <= 3 for h in flagged), (
+        f"the harmless import was read as a server: {flagged}"
+    )
+    # last-wins on a flat table hid the first function's server
+    reverse = (
+        "def b():\n    import os as s\n    return s.getcwd()\n\n"
+        "def a():\n    import socketserver as s\n    return s.TCPServer(('', 1), None)\n"
+    )
+    assert server_scan.resolved_forms(reverse), "a later import of the same name hid a server"
+    # an import inside a function does not rename a name used in another function
+    leak = "def a():\n    import socketserver as s\n\ndef b(s):\n    return s.TCPServer\n"
+    assert server_scan.resolved_forms(leak) == [], (
+        "an import in one function renamed a name in another"
+    )
+    # a module-level import is seen inside a function, and inside a class
+    assert server_scan.resolved_forms(
+        "import socketserver as s\nclass C:\n    def f(self):\n        return s.TCPServer\n"
+    ), "a module-level import was not seen inside a function"
+
+
+def test_import_module_of_a_serving_module_is_flagged() -> None:
+    for name in ("socketserver", "http.server", "uvicorn", "waitress.server", "xmlrpc.server"):
+        src = f"import importlib\nimportlib.import_module({name!r})\n"
+        assert server_scan.resolved_forms(src), f"import_module({name!r}) was not flagged"
+    assert server_scan.resolved_forms("import importlib\nimportlib.import_module('json')\n") == []
+
+
+def test_the_entry_points_of_the_serving_libraries_are_flagged() -> None:
+    for src in (
+        "from waitress import serve\nserve(None, host='')\n",
+        "import waitress\nwaitress.serve(None)\n",
+        "from hypercorn.asyncio import serve\nserve(None, None)\n",
+        "import hypercorn.trio\nhypercorn.trio.serve(None, None)\n",
+        "from uvicorn import Server\nServer(None)\n",
+        "from twisted.internet import reactor\nreactor.listenTCP(1, None)\n",
+    ):
+        assert server_scan.resolved_forms(src), f"not flagged: {src!r}"
+
+
+def test_a_run_host_is_read_with_the_rule_of_the_guard_and_hex_words_are_not_hosts() -> None:
+    for host in ("", "localhost", "LocalHost", ALL_ZEROS, "::", "[::1]", LOOP_1):
+        assert server_scan.resolved_forms(f"app.run({host!r})\n"), f"{host!r} is a host"
+    for word in ("add", "bad", "cafe", "dead", "1", "a.b", "5"):
+        assert server_scan.resolved_forms(f"db.run({word!r})\n") == [], f"{word!r} is not a host"

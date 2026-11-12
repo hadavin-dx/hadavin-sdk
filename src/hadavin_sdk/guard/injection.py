@@ -12,7 +12,6 @@ from typing import Protocol
 
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import Verdict
-from hadavin_sdk.standins import stand_in
 
 _LOG = logging.getLogger("hadavin_sdk.guard")
 
@@ -36,7 +35,6 @@ _SQUASH = re.compile(r"[^a-z]")
 _SQUASHED = ("ignorepreviousinstructions", "ignoreallpreviousinstructions", "disregardtheabove")
 
 
-@stand_in
 class RegexDetector:
     backend = "regex"
 

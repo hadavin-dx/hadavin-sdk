@@ -8,10 +8,12 @@ Production hosting is decided at S11; ``serve`` is a stdlib server for developme
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler
 from socketserver import BaseServer
 
+from hadavin_sdk import defaults
 from hadavin_sdk.approvals.requests import Approvals
 from hadavin_sdk.bindguard import BindRefused, listen
 from hadavin_sdk.config import Config
@@ -41,6 +43,33 @@ def handle_slack_action(
     return 200, b""
 
 
+def _recheck(approvals: object) -> tuple[str, ...]:
+    """What makes this request refused on a bind other computers can reach with no reason given: the object is no
+    longer an exact ``Approvals`` (its class was swapped), or it holds a real service now. Empty: serve it."""
+    if type(approvals) is not Approvals:
+        return ("the approvals object is no longer an exact Approvals",)
+    return Approvals.real_now(approvals)
+
+
+_LAST_LOGGED: dict[str, float] = {}
+
+
+def _refused(now_real: tuple[str, ...]) -> None:
+    """One WARNING line for a refused request, at most one per ``BIND_REFUSAL_LOG_INTERVAL_S`` seconds for each
+    set of services named (a client that keeps calling cannot fill the log). The clock is ``time.monotonic``."""
+    key = ", ".join(now_real)
+    now = time.monotonic()
+    last = _LAST_LOGGED.get(key)
+    if last is not None and now - last < defaults.BIND_REFUSAL_LOG_INTERVAL_S:
+        return
+    if len(_LAST_LOGGED) >= defaults.BIND_REFUSAL_LOG_KEYS:  # bounded: forget the oldest entries
+        _LAST_LOGGED.pop(next(iter(_LAST_LOGGED)))
+    _LAST_LOGGED[key] = now
+    _LOG.warning(
+        "request refused: a real service is held on a public bind with no reason (%s)", key
+    )
+
+
 def serve(
     approvals: Approvals,
     *,
@@ -63,8 +92,9 @@ def serve(
     computers can reach is refused while any real service is configured, unless ``allow_public_bind_reason`` says
     why it must be (the usual setup is an HTTPS reverse proxy in front; the reason is logged). On such a bind with
     no reason the question is asked again at every request (answer 503, empty body, one log line): the objects the
-    approvals hold can be replaced after the server started. A person who writes the private slots of the
-    ``Approvals`` with ``object.__setattr__`` is caught by that request check, not by a setter."""
+    approvals hold can be replaced after the server started. The request check also refuses an object that
+    is no longer an exact ``Approvals`` (a swapped ``__class__``); the private slots are set once by ``__setattr__``,
+    and a person who writes them with ``object.__setattr__`` is caught by that request check."""
     if type(approvals) is not Approvals:
         raise BindRefused(
             "serve needs an Approvals made by the core (not a subclass or a look-alike): the guard cannot trust "
@@ -87,11 +117,8 @@ def serve(
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self) -> None:
-            if recheck and (now_real := Approvals.real_now(approvals)):
-                _LOG.warning(
-                    "request refused: a real service is held on a public bind with no reason (%s)",
-                    ", ".join(now_real),
-                )
+            if recheck and (now_real := _recheck(approvals)):
+                _refused(now_real)
                 self.send_response(503)
                 self.send_header("Content-Length", "0")
                 self.end_headers()

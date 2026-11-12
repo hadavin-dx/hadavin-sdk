@@ -58,12 +58,16 @@ class Approvals:
     """Decisions must come from a channel's verified parse (``receive``), never from caller-supplied fields:
     ``decide`` is the internal step after verification and the one tests drive with a trusted fake.
 
-    The objects the bind guard reads (``channel``, ``store``, ``detector``, ``config``, ``overrides``) are set once
-    when the object is made and have no setter. The attributes are slots, so ``vars(a)`` raises ``TypeError``; a
-    person who writes the private slots with ``object.__setattr__`` is outside the guard, but the receiver asks again
-    at every request (``real_now``) on a bind other computers can reach with no reason given. A copy of an
-    ``Approvals`` (``copy.copy``, ``copy.deepcopy``, pickle) is refused with a ``TypeError``: a copy would duplicate
-    the frozen facts and the sealed objects."""
+    Everything the object holds (``store``, ``audit``, ``registry``, ``channel``, ``on_decided``, ``detector``,
+    ``config``, ``overrides``, and the frozen facts) is set once, when the object is made; only ``clock`` can be set
+    again (tests move time). ``__setattr__`` refuses every other assignment (a plain ``a._channel = x``, a private
+    slot name that is already set, ``a.__class__ = Other``, any new name) with an ``AttributeError``. The attributes
+    are slots, so ``vars(a)`` raises ``TypeError`` and the object cannot be weakly referenced (``weakref.ref(a)``
+    raises ``TypeError``: there is no ``__weakref__`` slot). ``object.__setattr__(a, "_channel", x)`` is the one way
+    left; it is caught by the receiver, which asks again at every request on a bind other computers can reach with
+    no reason given: the exact class of ``a`` and what it holds now (``real_now``). A copy of an ``Approvals``
+    (``copy.copy``, ``copy.deepcopy``, pickle) is refused with a ``TypeError``: a copy would duplicate the frozen
+    facts and the set-once objects."""
 
     __slots__ = (
         "_audit_sink",
@@ -142,7 +146,23 @@ class Approvals:
     def clock(
         self, value: Callable[[], datetime]
     ) -> None:  # tests move time; the bind guard does not read it
-        self._clock = value
+        object.__setattr__(self, "_clock", value)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Set once: a private slot can be written only while it is still empty (the constructor), and ``clock`` is
+        the one name that can be set again. ``__class__`` and every other name are refused."""
+        if name == "clock":
+            object.__setattr__(self, name, value)  # the property setter
+            return
+        if name in Approvals.__slots__:
+            try:
+                object.__getattribute__(self, name)
+            except AttributeError:  # empty: this is the constructor writing it for the first time
+                object.__setattr__(self, name, value)
+                return
+        raise AttributeError(
+            f"an Approvals is set once: {name!r} cannot be set (only 'clock' can be set again)"
+        )
 
     @property
     def config(self) -> Config | None:
@@ -181,11 +201,11 @@ class Approvals:
         return self._config_facts + held_services_found(Approvals.held_services(self))
 
     def __deepcopy__(self, memo: object) -> object:
-        raise TypeError("an Approvals cannot be copied: it holds sealed objects and frozen facts")
+        raise TypeError("an Approvals cannot be copied: it holds set-once objects and frozen facts")
 
     def __reduce_ex__(self, protocol: object) -> object:
         raise TypeError(
-            "an Approvals cannot be copied or pickled: it holds sealed objects and frozen facts"
+            "an Approvals cannot be copied or pickled: it holds set-once objects and frozen facts"
         )
 
     def receive(

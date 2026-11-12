@@ -22,11 +22,9 @@ from hadavin_sdk.models import (
     ToolCallRecord,
     now,
 )
-from hadavin_sdk.standins import stand_in
 from hadavin_sdk.store.protocol import NotFound, StaleState
 
 
-@stand_in
 class MemoryStore:
     def __init__(self) -> None:
         # ponytail: one global lock; per-row locks only if a real backend ever needs throughput here.
