@@ -162,7 +162,7 @@ def _leaky_outputs(row: corpus.Row) -> list[str]:
         e = (
             corpus.build_validation_error(row.spec)
             if row.kind == "validation"
-            else corpus.build_exception(row.spec)
+            else (corpus.build_raw_exception(row.spec) or corpus.build_exception(row.spec))
         )
         return _leaky_subjects(e, row.kind)
 
@@ -204,7 +204,7 @@ def test_reverse_check_fails_90_percent() -> None:
             e = (
                 corpus.build_validation_error(row.spec)
                 if row.kind == "validation"
-                else corpus.build_exception(row.spec)
+                else (corpus.build_raw_exception(row.spec) or corpus.build_exception(row.spec))
             )
             out = _text(lambda e=e: _leaky_diagnose(e))
         if leaks(out, row.canaries):
@@ -281,6 +281,8 @@ def test_no_two_rows_share_the_same_input_unless_marked_as_a_variant() -> None:
             (r.spec["factory"], repr(r.spec["args"]))
             if r.kind == "exception"
             else (r.spec["model"], r.spec["document"])
+            if r.kind == "validation"
+            else (r.kind, repr(sorted(r.spec.items())))
         )
         if key in seen:
             assert f"variant_of={seen[key]}" in r.why, (

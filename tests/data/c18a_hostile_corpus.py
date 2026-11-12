@@ -256,7 +256,9 @@ def _f_config_wrapped(inner: str) -> BaseException:
 def _f_provider(attr: str, value: object) -> BaseException:
     from hadavin_sdk.llm.protocol import ProviderError
 
-    e = ProviderError(f"{value} {NAME}")  # the name is the canary: a writer that prints the message leaks it
+    e = ProviderError(
+        f"{value} {NAME}"
+    )  # the name is the canary: a writer that prints the message leaks it
     setattr(e, attr, value)
     return e
 
@@ -295,14 +297,30 @@ def _f_retried_meta() -> BaseException:
     return _retried(lambda: _MetaRaise("E", (Exception,), {})("boom"))
 
 
-def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
+def _raw_bedrock(code: str, status: int, text: str) -> BaseException:
+    """The Amazon error as the client library raises it, before the retry loop turns it into a checked provider error."""
     from botocore.exceptions import ClientError
 
     response = {
         "Error": {"Code": code, "Message": text},
         "ResponseMetadata": {"HTTPStatusCode": status},
     }
-    return _retried(lambda: ClientError(response, "Converse"), label="bedrock", kind="bedrock")  # type: ignore[arg-type]
+    return ClientError(response, "Converse")  # type: ignore[arg-type]
+
+
+def _f_retried_bedrock(code: str, status: int, text: str) -> BaseException:
+    return _retried(lambda: _raw_bedrock(code, status, text), label="bedrock", kind="bedrock")
+
+
+# Rows whose factory runs the real retry loop hand ``diagnose`` an already checked error (its message has no free text), so the leaky
+# subjects of the teeth test would never show the canary. For the rows listed here the teeth test reads the error BEFORE the loop.
+RAW_FACTORIES: Final = {"retried_bedrock": _raw_bedrock}
+
+
+def build_raw_exception(spec: Mapping[str, object]) -> BaseException | None:
+    """The unchecked error of a row that runs through the retry loop, or None when the row has no such form."""
+    raw = RAW_FACTORIES.get(spec["factory"])  # type: ignore[arg-type]
+    return None if raw is None else raw(*spec["args"])  # type: ignore[operator]
 
 
 def _f_retried_hook(variant: str) -> BaseException:

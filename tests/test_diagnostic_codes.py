@@ -210,7 +210,6 @@ PINNED = {
     "hadavin_sdk.guard.egress:EgressRefused": "egress_refused",
     "hadavin_sdk.runtime.agent_loop:Unqualified": "unqualified",
     "hadavin_sdk.runtime.agent_loop:InvalidRunId": "config_invalid",
-    "hadavin_sdk.store.migration_numbers:SqlReadError": "internal_bug",
     "hadavin_sdk.k1b.loop:CallTimeout": "timeout",
     "hadavin_sdk.tools:ToolRefused": "tool_refused",
     "hadavin_sdk.guard.runmap:RedactionError": "scan_failed",
@@ -318,13 +317,7 @@ def test_validation_types_are_the_frozen_list() -> None:
 
 
 def test_reserved_codes_name_their_package() -> None:
-    assert dict(RESERVED_FOR) == {
-        "session_closed": "P5c",
-        "provider_rate_limit": "P5b1",
-        "provider_auth": "P5b1",
-        "provider_invalid_request": "P5b1",
-        "provider_timeout": "P5b1",
-    }
+    assert dict(RESERVED_FOR) == {"session_closed": "P5c"}
     for name in RESERVED_FOR:
         assert Code(name).value == name
 
