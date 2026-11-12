@@ -10,11 +10,17 @@ under the product folders listed in the settings file (a symlink pointing into t
   * the folder inside a product folder, at any depth, or any file or folder name that holds the folder name;
   * a line that names the folder (upper or lower case; "-", "_" and a space count as the same separator);
   * a made-up record id (the patterns are listed in the settings file);
+  * a submodule (a git link, which is a folder, not a file) under a product folder: its files cannot be scanned;
   * a file that is not text and is not on the skip list of known binary endings (it cannot be read, so it is refused);
   * a loader file (the one place that may pick the folder by configuration) that names it more often than the cap;
   * the folder being present while the copy run is not wired (see the marker file in the settings).
-Every other file type is read, including files without an ending. Output per hit: path:line: rule (the matched text is
-never printed). Limit: a name built from pieces at run time (for example "demo" + "_only") cannot be found by any text scan;
+Every other file type is read, including files without an ending. A file with a known binary ending is skipped only
+when its first 8192 bytes hold a NUL byte or it is not valid text; a text file renamed to a picture ending is read like any other.
+Output per hit: path:line: rule (the matched text is
+never printed). Limits: only files git lists are read, so a file the repository ignores (.gitignore) is not checked, and
+only the product folders in the settings are scanned, so the packaging files at the repository root (for example
+pyproject.toml) are not; a folder the packaging config adds to the product from outside the listed folders is the
+copy run's job. A name built from pieces at run time (for example "demo" + "_only") cannot be found by any text scan;
 the copy run (`--without-folder`) is the check for that case, because the tests fail when the folder is really gone.
 
 Usage:
@@ -150,8 +156,9 @@ def _name_pattern(folder: str) -> re.Pattern[str]:
 
 
 def _phrase_patterns(phrases: tuple[str, ...]) -> dict[str, re.Pattern[str]]:
-    # an allowed phrase counts only as a whole word group: "DEMO_ONLY/x" or "xDEMO_ONLY" is still a path or a name
-    return {p: re.compile(r"(?<![\w/\\])" + re.escape(p) + r"(?![\w/\\])") for p in phrases}
+    # an allowed phrase counts only as a whole word group, in the exact case written: "DEMO_ONLY/x", "xDEMO_ONLY",
+    # "DEMO_ONLY-x" and "x-DEMO_ONLY" are still a path or a name; the same word in lower case is not the phrase
+    return {p: re.compile(r"(?<![\w/\\-])" + re.escape(p) + r"(?![\w/\\-])") for p in phrases}
 
 
 def tracked_paths(repo: Path) -> list[str]:
@@ -223,11 +230,16 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
         full = repo / rel
         try:
             is_link = full.is_symlink()
-            if not is_link and not full.is_file():
+            is_folder = not is_link and full.is_dir()  # git lists a submodule (git link) as a folder
+            if not is_link and not is_folder and not full.is_file():
                 continue  # listed by git but gone from the disk
         except OSError:
             continue
         root = _under(rel, roots)
+        if is_folder:
+            if root is not None and rel not in exempt:
+                hits.append(f"{rel}: submodule-in-product-root (its files cannot be scanned)")
+            continue
         if root is None:
             # outside the product folders: only a link that points into the demo-only folder matters
             if is_link and full.resolve().is_relative_to(folder_target):
@@ -252,7 +264,7 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
             hits.append(f"{d}: {same}")
         if rel not in loaders and name.search(parts[-1]):
             hits.append(f"{rel}: path-names-demo-only-folder")
-        if full.suffix.lower() in cfg.skip_suffixes:
+        if full.suffix.lower() in cfg.skip_suffixes and _looks_binary(full):
             continue
         hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders)
     hits += [
@@ -261,6 +273,22 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
         if p not in used
     ]
     return list(dict.fromkeys(hits))
+
+
+def _looks_binary(path: Path) -> bool:
+    """True when a file with a known binary ending really is not text: a NUL byte in its first 8192 bytes, or bytes that
+    are not valid UTF-8. A text file renamed to a binary ending is read by the scan instead of skipped."""
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return True  # unreadable: the scan cannot read it either, and the ending says binary
+    if b"\0" in data[:8192]:
+        return True
+    try:
+        data.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return False
 
 
 def _scan_file(

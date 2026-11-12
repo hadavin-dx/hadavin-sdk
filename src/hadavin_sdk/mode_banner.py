@@ -23,10 +23,12 @@ Rules the tests pin:
 
 from __future__ import annotations
 
+import ipaddress
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from typing import Any, Protocol
+from urllib.parse import urlsplit
 
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY, NOT_PROD
 from hadavin_sdk.stages import STAGES
@@ -184,11 +186,31 @@ def _banner_for(
     else:
         extra = words.standins_still.format(names=", ".join(pretend)) if pretend else ""
         banner = ModeBanner(mode, "quiet", tag, words.none_real, extra, real, pretend)
+    _check_what_is_claimed(banner, words)
     if len(banner.text) > MAX_TEXT_LENGTH or len(banner.standins) > MAX_TEXT_LENGTH:
         raise ValueError(
             f"the banner text is longer than the {MAX_TEXT_LENGTH} characters the page script shows: too many services"
         )
     return banner
+
+
+def _check_what_is_claimed(banner: ModeBanner, words: BannerWords) -> None:
+    """The last check before a banner leaves: what it says must agree with what it was built from. A banner that names
+    a real service lists every one of them in its text and never holds the made-up sentences; a quiet banner (pilot or
+    live, nothing real) never holds them either; the made-up claim appears only in a demo banner, which names no real service.
+    A reworded `BannerWords` that breaks one of these raises here, instead of reaching a screen."""
+    claim = (words.made_up, words.nothing_sent)
+    said = banner.text + " " + banner.standins
+    if banner.real:
+        missing = [n for n in banner.real if n not in banner.text]
+        if missing:
+            raise ValueError(f"the banner text does not name every real service: {missing}")
+    if banner.tone != "demo" and any(c and c in said for c in claim):
+        raise ValueError(
+            "a banner with a real service, or a pilot or live one, claims made-up data"
+        )
+    if banner.tone == "demo" and banner.real:
+        raise ValueError("a demo banner must name no real service")
 
 
 class _Setting(Protocol):
@@ -201,7 +223,8 @@ class _Backends(Protocol):
 
 
 class ConfigLike(Protocol):
-    """What the banner reads from a loaded `Config`: the stage and the chosen kind of every component."""
+    """What the banner reads from a loaded `Config`: the stage, the chosen kind of every component, and (when it has them)
+    `systems`, `egress_hosts` and `sources`, the other fields that can name an endpoint."""
 
     @property
     def environment(self) -> str: ...
@@ -210,11 +233,71 @@ class ConfigLike(Protocol):
     def backends(self) -> _Backends: ...
 
 
+# The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
+EXTERNAL_SYSTEMS = "external-systems"
+EGRESS_HOSTS = "egress-hosts"
+READ_SOURCES = "read-sources"
+
+
+def _is_this_machine(host: object) -> bool:
+    """True only for "localhost" or a loopback address. An empty, missing or odd host is NOT this machine."""
+    if not isinstance(host, str) or not host:
+        return False
+    if host.rstrip(".").casefold() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host.strip("[]")).is_loopback
+    except ValueError:
+        return False
+
+
+def _url_leaves_this_machine(url: object) -> bool:
+    """True when `url` names a host that is not this machine. A value that cannot be read as a url counts as leaving:
+    naming too much is the safe mistake."""
+    try:
+        return not _is_this_machine(urlsplit(url).hostname) if isinstance(url, str) else True
+    except ValueError:
+        return True
+
+
+def _source_leaves_this_machine(source: object) -> bool:
+    """True when a configured read source points at a host that is not this machine, or when its endpoint cannot be
+    worked out (a kind this file does not know, settings that do not build)."""
+    try:
+        from hadavin_sdk.sources.kinds import KINDS
+
+        kind = KINDS[getattr(source, "kind", None)]
+        return _url_leaves_this_machine(kind.endpoint(kind.settings(**source.settings)))
+    except Exception:  # noqa: BLE001 - any failure means "unknown", and unknown is shown as real
+        return True
+
+
+def _outside_endpoints(config: object) -> list[str]:
+    """The keys of the places a config can send data to besides its backends: a system whose base_url is not this
+    machine, any egress host that is not this machine, a read source whose endpoint is not this machine. A tool
+    module can reach only the systems, egress hosts and sources named here (the network guard refuses the rest), so it
+    adds no key of its own. Fields a config does not have are read as empty."""
+    found: list[str] = []
+    systems = getattr(config, "systems", None) or {}
+    if any(_url_leaves_this_machine(getattr(s, "base_url", None)) for s in systems.values()):
+        found.append(EXTERNAL_SYSTEMS)
+    egress = getattr(config, "egress_hosts", None) or ()
+    if any(not _is_this_machine(h) for h in egress):
+        found.append(EGRESS_HOSTS)
+    sources = getattr(config, "sources", None) or {}
+    if any(_source_leaves_this_machine(src) for src in sources.values()):
+        found.append(READ_SOURCES)
+    return found
+
+
 def _services_in(config: ConfigLike) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """(real, stand_ins): the component names of a loaded `Config`, sorted by kind. A stand-in is a component whose
     chosen kind is one of the demo-only kinds (`backends.table.DEMO_ONLY`, the same table that makes config refuse those
     kinds outside the demo stage); a component that connects to nothing outside the process is left out; every other
-    component is real. An entry without a kind raises ValueError: it is not guessed into a list."""
+    component is real. Beside the backends, a system, an egress host or a read source that is not this machine is real
+    too (`_outside_endpoints`): the made-up sentence says nothing is sent to real systems, so it is checked against
+    every field that can name an endpoint, not the backends alone. An entry without a kind raises ValueError: it is
+    not guessed into a list."""
     real: list[str] = []
     stand_ins: list[str] = []
     for component, setting in config.backends.entries():
@@ -227,6 +310,7 @@ def _services_in(config: ConfigLike) -> tuple[tuple[str, ...], tuple[str, ...]]:
             stand_ins.append(component)
         elif (component, kind) not in _NOTHING_CONNECTED:
             real.append(component)
+    real += _outside_endpoints(config)
     return tuple(real), tuple(stand_ins)
 
 
