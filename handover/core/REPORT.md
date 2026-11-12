@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 20:59Z / 02:29 IST
+FAILED / UNCERTAIN FIRST: part 2 (bind) round 2 found 1 Major (injected build() overrides not counted as real services, a stand-in config plus a real channel could bind publicly); fix batch 3 started. No full green pytest run at 6e6ae211 (dblink-connect environment slip; file alone green). Real IPv6 and Python 3.12 runs impossible here (lead or CI). Part 6 gate runner not yet landed. Q8c-1 b16 gate driver still running; its 43be04de head is local only.
+ORDER 265 (priority 1) received: PR #71 at 8b982dd3: snapshot made, independent evidence runner and the two security reviewers (design, codebase) started; READY or findings go into READY-TO-MERGE.md the moment both land.
+
+LIVE ITEMS: PR 71 evidence runner ae-71 (ae... a? see ListAgents) plus 2 reviewers; part 2 fix builder a1a94207; part 6 runner a92ba9e0; Q8a-1 b20 builder a797f9e1. Total 7 agents; heavy jobs at most 3.
+ROUNDS: PR 71 round 1 of the pair on the fixed head (WHY: 6 fix commits since the first review, lead orders a fresh pair). Part 2 round 2 done (0B/1M), round 3 required after fix batch (WHY: mode-safety, 1 Major). Part 6 round 1 fixed, confirming round after evidence.
+FINISHED SINCE LAST BLOCK: part 2 evidence runner a0a97309 (12 min); part 2 design and codebase reviews r2; part 2 resolve report r2 and ledger PDBIND-r2-1..8.
+
 ## 20:49Z / 02:19 IST
 FAILED / UNCERTAIN FIRST: ORDER 260 has no single green full run at ddf1d584 (dblink-connect environment failure) and its callers tests pass on old main; parked. AK-G2-a b2: full pytest 2 failed, one (runner allowlisted environment) not yet checked on its base. Tags pd-bind, pd-standins, pd-banner cannot be pushed (proxy): lead to push.
 Part 6 batch 2 fixes landed (2cf0f742, wip/cloud-pd-banner): evidence and gates now running through one runner (a92ba9e0). Q8a-1 b20 builder and part 2 runner still running; Q8c-1 b16 builder finished earlier (reviews next).
