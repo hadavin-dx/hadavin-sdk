@@ -1,0 +1,15 @@
+{
+  "request_match": {
+    "method": "POST",
+    "path_suffix": ":generateContent"
+  },
+  "status": 200,
+  "headers": {},
+  "body": {
+    "candidates": [],
+    "usageMetadata": {
+      "promptTokenCount": 10,
+      "candidatesTokenCount": 0
+    }
+  }
+}

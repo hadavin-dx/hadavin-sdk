@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
+from hadavin_sdk.llm.provider_facts import ProviderFacts
 from hadavin_sdk.llm.retry import with_retry
 from hadavin_sdk.models import Reply, ToolCall
 
@@ -237,12 +238,13 @@ class NetworkLLM:
             max_attempts=self.max_attempts,
             sleep=self._sleep,
             retryable=self.retryable,
-            detail=self.detail,
+            facts=self.facts,
         )
 
-    # The kind's own SDK errors (llm/retry.py stays vendor-neutral): None means no opinion / no code.
+    # The kind's own SDK errors (llm/retry.py stays vendor-neutral). ``retryable``: None means no opinion.
+    # ``facts``: None means the neutral adapter (llm/retry.py ``default_facts``); an adapter returns checked values only.
     retryable: Callable[[BaseException], bool | None] | None = None
-    detail: Callable[[BaseException], str] | None = None
+    facts: Callable[[BaseException], ProviderFacts] | None = None
 
 
 # No redirects: one would carry the API key to a host nobody configured. A loopback model is reached directly

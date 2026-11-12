@@ -1,0 +1,16 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 401,
+  "headers": {
+    "request-id": "req_AbCd1234Ef56Gh78"
+  },
+  "body": {
+    "type": "error",
+    "error": {
+      "type": "authentication_error",
+      "message": "invalid x-api-key"
+    }
+  }
+}

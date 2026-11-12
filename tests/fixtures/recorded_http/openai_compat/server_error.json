@@ -1,0 +1,15 @@
+{
+  "request_match": {
+    "method": "POST",
+    "path_suffix": "/chat/completions"
+  },
+  "status": 500,
+  "headers": {},
+  "body": {
+    "error": {
+      "message": "Server error",
+      "type": "server_error",
+      "code": "x"
+    }
+  }
+}

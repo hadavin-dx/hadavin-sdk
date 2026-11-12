@@ -31,7 +31,13 @@ TD, TC, TV = (
 TH = "tests/test_diagnostics_hostile.py"
 ORACLE = "tests/data/c18a_oracle.py"
 CORPUS = "tests/data/c18a_hostile_corpus.py"
-TESTS = [TD, TC, TV, TH]
+TESTS = [
+    TD,
+    TC,
+    TV,
+    TH,
+    "tests/provider_wire_helpers.py",
+]  # the helper: the hostile corpus imports it
 
 
 def mutant(name, file, old, new, test_file, killer, expect, **kw):
@@ -678,7 +684,7 @@ if __name__ == "__main__":
         ROOT,
         M,
         TESTS,
-        extra_dirs=("tests/data", "tests/fixtures"),
+        extra_dirs=("tests/data", "tests/fixtures", "tests/contracts"),
         only=only,
         on_result=show,
         first_lines=first_lines,

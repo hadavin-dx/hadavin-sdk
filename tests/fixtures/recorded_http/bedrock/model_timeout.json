@@ -1,0 +1,13 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 408,
+  "headers": {},
+  "body": {
+    "Error": {
+      "Code": "ModelTimeoutException",
+      "Message": "The model took too long."
+    }
+  }
+}

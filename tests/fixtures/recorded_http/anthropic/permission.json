@@ -1,0 +1,14 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 403,
+  "headers": {},
+  "body": {
+    "type": "error",
+    "error": {
+      "type": "permission_error",
+      "message": "Not allowed."
+    }
+  }
+}

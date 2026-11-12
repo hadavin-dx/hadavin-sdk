@@ -1,0 +1,13 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 503,
+  "headers": {},
+  "body": {
+    "Error": {
+      "Code": "ServiceUnavailableException",
+      "Message": "Service unavailable."
+    }
+  }
+}

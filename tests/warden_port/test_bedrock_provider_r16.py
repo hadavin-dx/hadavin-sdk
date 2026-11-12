@@ -13,7 +13,9 @@ import pytest
 
 from hadavin_sdk.backends.factory import make
 from hadavin_sdk.backends.table import BedrockSettings
+from hadavin_sdk.codes import ProviderErrorType
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.guard.diagnostic import class_name_of
 from hadavin_sdk.llm import ProviderError, ProviderExhausted
 from hadavin_sdk.llm.bedrock import family
 from hadavin_sdk.llm.common import ANSWER_TOOL
@@ -65,7 +67,12 @@ def test_throttling_waits_and_other_errors_are_failures(wire):
     with pytest.raises(ProviderError) as denied:
         wire.serve(wire.scenario("denied")).chat(**CALL)
     assert not isinstance(denied.value, ProviderExhausted)
-    assert "AccessDeniedException" in str(denied.value)
+    assert getattr(denied.value, "status", None) == 403
+    assert getattr(denied.value, "error_type", None) is ProviderErrorType.permission
+    assert "AccessDeniedException" not in str(denied.value)
+    class_text = class_name_of(denied.value.__context__)
+    assert class_text in {"foreign_class", "dynamic_class"}
+    assert str(denied.value) == f"bedrock: {class_text} 403 permission"
 
 
 def test_a_model_must_be_named_exactly():

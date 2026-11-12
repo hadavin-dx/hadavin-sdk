@@ -66,6 +66,8 @@ OLD_WRITER_LEAKS: tuple[str, ...] = (
     "HC-pii_obfuscated-09",
     "HC-pii_obfuscated-10",
     "HC-pii_plain-04",
+    "HC-provider_attrs-04",
+    "HC-provider_attrs-07",
     "HC-pydantic_input-01",
     "HC-pydantic_input-02",
     "HC-pydantic_input-04",

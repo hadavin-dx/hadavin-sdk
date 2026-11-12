@@ -474,17 +474,20 @@ def test_other_clouds_resource_ids_are_masked(text, label):
     assert f"<{label}_1>" in out.text and out.text.endswith(" here")
 
 
-def test_bedrock_logs_the_status_and_code():
+def test_bedrock_reports_status_and_closed_type():
     pytest.importorskip("boto3", reason="needs extra aws")
     import botocore.exceptions as be
 
+    from hadavin_sdk.codes import ProviderErrorType
     from hadavin_sdk.llm import bedrock
 
     exc = be.ClientError(
         {"Error": {"Code": "AccessDeniedException"}, "ResponseMetadata": {"HTTPStatusCode": 403}},
         "Converse",
     )
-    assert bedrock.detail(exc) == "403 AccessDeniedException"
+    got = bedrock.facts(exc)
+    assert (got.status, got.error_type) == (403, ProviderErrorType.permission)
+    assert not hasattr(bedrock, "detail")
 
 
 def test_a_cut_summary_is_screened_again():

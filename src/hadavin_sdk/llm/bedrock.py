@@ -16,6 +16,7 @@ import boto3  # the extra: a missing install fails at start-up with the hint (ba
 import botocore.exceptions
 from botocore.config import Config
 
+from hadavin_sdk.codes import ProviderErrorType
 from hadavin_sdk.llm.common import (
     ANSWER_TOOL,
     Answer,
@@ -25,7 +26,15 @@ from hadavin_sdk.llm.common import (
     reply,
     schema_hint,
 )
-from hadavin_sdk.llm.retry import retryable_status
+from hadavin_sdk.llm.provider_facts import (
+    TYPE_NAME_MAX,
+    ProviderFacts,
+    clean_request_id,
+    clean_status,
+    safe_attr,
+    status_error_type,
+)
+from hadavin_sdk.llm.retry import default_facts, retryable_status
 from hadavin_sdk.models import Reply, ToolCall
 
 FORCED_TOOL_FAMILIES = frozenset({"anthropic", "amazon"})
@@ -90,15 +99,59 @@ def _code(exc: BaseException) -> str:
     return str(response.get("Error", {}).get("Code", "")) if isinstance(response, dict) else ""
 
 
-def detail(exc: BaseException) -> str:
-    """The HTTP status and the error code (botocore keeps both in `response`), for the log line."""
-    response = getattr(exc, "response", None)
-    status = (
-        response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if isinstance(response, dict)
-        else None
-    )
-    return " ".join(str(p) for p in (status, _code(exc)) if p)
+# The fact (a closed word) for each Converse error code (design D6 plus the Converse codes); any other string is ``other``.
+_CODE_TYPE = {
+    "ThrottlingException": ProviderErrorType.throttled,
+    "ModelTimeoutException": ProviderErrorType.timeout,
+    "ServiceUnavailableException": ProviderErrorType.server_error,
+    "ValidationException": ProviderErrorType.invalid_request,
+    "AccessDeniedException": ProviderErrorType.permission,
+    "InternalServerException": ProviderErrorType.server_error,
+    "ModelErrorException": ProviderErrorType.server_error,
+    "ModelNotReadyException": ProviderErrorType.throttled,
+    "ResourceNotFoundException": ProviderErrorType.not_found,
+    "ServiceQuotaExceededException": ProviderErrorType.quota,
+}
+_TIMEOUT_CLASSES = (botocore.exceptions.ConnectTimeoutError, botocore.exceptions.ReadTimeoutError)
+_CONNECTION_CLASSES = (
+    botocore.exceptions.EndpointConnectionError,
+    botocore.exceptions.ConnectionClosedError,
+)
+_CREDENTIAL_CLASSES = (
+    botocore.exceptions.NoCredentialsError,
+    botocore.exceptions.PartialCredentialsError,
+)
+
+
+def _dict_get(value: object, key: str) -> object | None:
+    """``value[key]`` of an EXACT ``dict`` (a subclass could answer anything); None otherwise."""
+    return value.get(key) if type(value) is dict else None
+
+
+def facts(exc: BaseException) -> ProviderFacts:
+    """Checked facts from a botocore error: the HTTP status and request id from ``response["ResponseMetadata"]``, the type
+    from ``response["Error"]["Code"]`` through the closed table. It never reads the message, the args or ``str(exc)``."""
+    response = safe_attr(exc, "response")
+    meta = _dict_get(response, "ResponseMetadata")
+    status = clean_status(_dict_get(meta, "HTTPStatusCode"))
+    request_id = clean_request_id(_dict_get(meta, "RequestId"), "uuid")
+    code = _dict_get(_dict_get(response, "Error"), "Code")
+    error_type: ProviderErrorType | None
+    if type(code) is str and len(code) <= TYPE_NAME_MAX:
+        error_type = _CODE_TYPE.get(code, ProviderErrorType.other)
+    elif isinstance(exc, _TIMEOUT_CLASSES):
+        error_type = ProviderErrorType.timeout
+    elif isinstance(exc, _CONNECTION_CLASSES):
+        error_type = ProviderErrorType.connection
+    elif isinstance(exc, _CREDENTIAL_CLASSES):
+        error_type = ProviderErrorType.authentication
+    else:
+        error_type = status_error_type(status)
+        if error_type is None:
+            neutral = default_facts(exc)
+            error_type = neutral.error_type
+            status = status if status is not None else neutral.status
+    return ProviderFacts(status, error_type, request_id)
 
 
 def retryable(exc: BaseException) -> bool | None:
@@ -113,7 +166,7 @@ def retryable(exc: BaseException) -> bool | None:
 class BedrockLLM(NetworkLLM):
     label = "bedrock"
     retryable = staticmethod(retryable)
-    detail = staticmethod(detail)
+    facts = staticmethod(facts)
 
     def __init__(
         self,

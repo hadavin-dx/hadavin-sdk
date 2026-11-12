@@ -44,10 +44,6 @@ class Code(enum.StrEnum):
 RESERVED_FOR: Final[Mapping[str, str]] = MappingProxyType(
     {
         "session_closed": "P5c",
-        "provider_rate_limit": "P5b1",
-        "provider_auth": "P5b1",
-        "provider_invalid_request": "P5b1",
-        "provider_timeout": "P5b1",
     }
 )
 
@@ -231,6 +227,11 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
         _P + "errors:ConfigError": Code.config_invalid,
         _P + "config:_RenamedStage": Code.config_invalid,
         _P + "k1b.bundle:BundleError": Code.config_invalid,
+        # A shipped SQL file with an unclosed quote, comment or `$` body is a defect in this package's own data, not an operator
+        # mistake. Nothing at run time raises it today (a dev/CI tool does); the row is required so that an own class never falls
+        # back to its ValueError base. The closed list has no better fit: `config_invalid` (operator input), `validation_failed`
+        # (a pydantic model) and `foreign_exception` (not ours) are wrong.
+        _P + "store.migration_numbers:SqlReadError": Code.internal_bug,
         _P + "llm.fake:UnknownRecording": Code.config_invalid,
         _P + "store.protocol:StoreUnavailable": Code.store_unavailable,
         _P + "store.protocol:StaleState": Code.store_conflict,
@@ -258,5 +259,47 @@ OWN_CODES: Final[Mapping[str, Code]] = MappingProxyType(
         _P + "guard.runmap:InputTooLarge": Code.scan_failed,
         _P + "guard.runmap:TooDeep": Code.scan_failed,
         _P + "guard.textnorm:TextnormError": Code.scan_failed,
+    }
+)
+
+
+# --- provider failure facts: how a checked HTTP status and a checked error type choose a code ---------------------------
+# 408 is an extension of design D6 (a request timeout); 500 to 599 are all server errors.
+STATUS_ERROR_TYPE: Final[Mapping[int, ProviderErrorType]] = MappingProxyType(
+    {
+        429: ProviderErrorType.rate_limit,
+        401: ProviderErrorType.authentication,
+        403: ProviderErrorType.permission,
+        400: ProviderErrorType.invalid_request,
+        404: ProviderErrorType.invalid_request,
+        422: ProviderErrorType.invalid_request,
+        408: ProviderErrorType.timeout,
+        **{n: ProviderErrorType.server_error for n in range(500, 600)},
+    }
+)
+# The statuses that choose a code on a plain ``ProviderError``; any other valid status gives ``provider_http``.
+CODED_STATUSES: Final = frozenset({400, 401, 403, 404, 422, 429})
+# All 12 error types; a type that is not a problem with the caller's request or key is a plain ``provider_http``.
+ERROR_TYPE_CODE: Final[Mapping[ProviderErrorType, Code]] = MappingProxyType(
+    {
+        ProviderErrorType.rate_limit: Code.provider_rate_limit,
+        ProviderErrorType.throttled: Code.provider_rate_limit,
+        ProviderErrorType.quota: Code.provider_rate_limit,
+        ProviderErrorType.authentication: Code.provider_auth,
+        ProviderErrorType.permission: Code.provider_auth,
+        ProviderErrorType.invalid_request: Code.provider_invalid_request,
+        ProviderErrorType.not_found: Code.provider_invalid_request,
+        ProviderErrorType.timeout: Code.provider_timeout,
+        ProviderErrorType.overloaded: Code.provider_http,
+        ProviderErrorType.server_error: Code.provider_http,
+        ProviderErrorType.connection: Code.provider_http,
+        ProviderErrorType.other: Code.provider_http,
+    }
+)
+# The two request-id shapes a provider reply may carry. Always used through ``re.fullmatch``; the keys are neutral names.
+REQUEST_ID_SHAPES: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "prefixed": r"req_[A-Za-z0-9]{8,36}",
+        "uuid": r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
     }
 )

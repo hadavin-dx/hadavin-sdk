@@ -1,0 +1,14 @@
+{
+  "request_match": {
+    "method": "POST"
+  },
+  "status": 401,
+  "headers": {},
+  "body": {
+    "type": "error",
+    "error": {
+      "type": "rate_limit_error",
+      "message": "body type disagrees with the status"
+    }
+  }
+}

@@ -9,6 +9,7 @@ A wire harness: ``serve(*fixtures, routes=None) -> llm`` queues fixture response
 
 import copy
 import json
+import socket
 
 import pytest
 
@@ -17,6 +18,13 @@ from tests.contracts.kinds.builtin import ROUTES
 from tests.fixtures.http_fake import Replay, fixture
 
 KEY = "contract" + "-key"  # built from parts: never a real-looking key
+
+
+def closed_port_url() -> str:
+    """A loopback URL nothing listens on (the port was just free and is closed again): a refused connection."""
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return f"http://127.0.0.1:{sock.getsockname()[1]}"
 
 
 class _HttpWire:
@@ -34,6 +42,12 @@ class _HttpWire:
 
     def serve(self, *fixtures, routes=None):
         self.replay.queue.extend(copy.deepcopy(fixtures))
+        self.routes = routes or ROUTES
+        return self.build(self.routes)
+
+    def unreachable(self, routes=None):
+        """The kind pointed at a closed local port: every request is a refused connection (no fixture is used)."""
+        self.replay.url = closed_port_url()
         self.routes = routes or ROUTES
         return self.build(self.routes)
 
@@ -177,11 +191,14 @@ class BedrockWire:
             if fx["status"] == 200:
                 self.stub.add_response("converse", copy.deepcopy(fx["body"]))
             else:
+                # A fixture may carry ``response_meta`` (for example a ``RequestId``) and its own HTTP status.
+                extra = {"response_meta": fx["response_meta"]} if "response_meta" in fx else {}
                 self.stub.add_client_error(
                     "converse",
                     service_error_code=fx["body"]["Error"]["Code"],
                     service_message=fx["body"]["Error"]["Message"],
                     http_status_code=fx["status"],
+                    **extra,
                 )
         routes = routes or ROUTES
         if self.model_id:
@@ -209,6 +226,35 @@ class BedrockWire:
 
     def close(self):
         self.stub.deactivate()
+
+
+class RaisingBedrockClient:
+    """A client whose ``converse`` raises what a factory builds (Stubber cannot raise a connection or credential error)."""
+
+    def __init__(self, make_error) -> None:
+        self.make_error, self.calls = make_error, 0
+
+    def converse(self, **kwargs):
+        self.calls += 1
+        raise self.make_error()
+
+
+def raising_bedrock(make_error, routes=None):
+    """A ``BedrockLLM`` over a ``RaisingBedrockClient``; returns ``(llm, client)``."""
+    pytest.importorskip("boto3", reason="needs extra aws")
+    from hadavin_sdk.llm.bedrock import BedrockLLM
+
+    client = RaisingBedrockClient(make_error)
+    return BedrockLLM(
+        client,
+        routes
+        or {
+            k: r.model_copy(update={"model_id": "in.anthropic.contract-model"})
+            for k, r in ROUTES.items()
+        },
+        3,
+        sleep=lambda s: None,
+    ), client
 
 
 for _platform in ("api", "vertex", "foundry"):

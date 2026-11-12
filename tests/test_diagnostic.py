@@ -371,6 +371,143 @@ def test_golden_lines_json_position_kept_and_dropped() -> None:
     )
 
 
+# ---- R18: the provider read side. Instances are built with plain assignment so these rows run on the base too. ----------
+
+_GOOD_REQ = "req_AbCd1234Ef56Gh78"
+
+
+def _provider(cls=None, **attrs):
+    from hadavin_sdk.llm import ProviderError
+
+    err = (cls or ProviderError)("x")
+    for name, value in attrs.items():
+        setattr(err, name, value)
+    return err
+
+
+def _view(err) -> tuple[str, str]:
+    text = render(diagnose(err, step=Where.model_call))
+    code = re.search(r"code=([a-z_]+)", text)
+    return (code.group(1) if code else ""), text
+
+
+def test_provider_attributes_are_read_with_exact_types():
+    good = {
+        "status": 403,
+        "error_type": ProviderErrorType.permission,
+        "request_id": _GOOD_REQ,
+        "retryable": False,
+        "retry_count": 1,
+    }
+    code, text = _view(_provider(**good))
+    assert code == "provider_auth"
+    for line in (
+        "http_status=403",
+        "provider_error_type=permission",
+        f"request_id={_GOOD_REQ}",
+        "retryable=false",
+        "retry_count=1",
+    ):
+        assert line in text, text
+    bad = {
+        "status": [True, 99, 600, "429"],
+        "error_type": ["permission"],
+        "request_id": ["r" * 41, _GOOD_REQ + "\n", "A" * 40, "a-b_c" * 8],
+        "retryable": [1],
+        "retry_count": [-1, 1001, True, "3"],
+    }
+    fact_name = {
+        "status": "http_status",
+        "error_type": "provider_error_type",
+        "request_id": "request_id",
+        "retryable": "retryable",
+        "retry_count": "retry_count",
+    }
+    for field, values in bad.items():
+        for value in values:
+            _, text = _view(_provider(**{**good, field: value}))
+            assert f"{fact_name[field]}=" not in text, (
+                field,
+                value,
+                text,
+            )  # the bad one is dropped
+            for other, name in fact_name.items():
+                if other != field:
+                    assert f"{name}=" in text, (
+                        field,
+                        value,
+                        other,
+                        text,
+                    )  # the valid ones are kept
+
+
+def test_provider_codes_follow_status_then_type():
+    from hadavin_sdk.llm import ProviderExhausted
+
+    assert _view(_provider(status=429))[0] == "provider_rate_limit"  # (i) one attribute alone
+    assert _view(_provider(error_type=ProviderErrorType.timeout))[0] == "provider_timeout"
+    for status, want in (
+        (401, "provider_auth"),
+        (403, "provider_auth"),
+        (400, "provider_invalid_request"),
+        (404, "provider_invalid_request"),
+        (422, "provider_invalid_request"),
+        (500, "provider_http"),
+        (408, "provider_http"),
+    ):
+        assert _view(_provider(status=status))[0] == want, status
+    code, text = _view(
+        _provider(
+            ProviderExhausted,
+            status=429,
+            error_type=ProviderErrorType.rate_limit,
+            request_id=_GOOD_REQ,
+            retry_count=3,
+        )
+    )  # (iii)
+    assert code == "provider_exhausted"
+    assert all(
+        x in text
+        for x in (
+            "http_status=429",
+            "provider_error_type=rate_limit",
+            f"request_id={_GOOD_REQ}",
+            "retry_count=3",
+        )
+    ), text
+    for status in (302, 418):  # (iv)
+        assert (
+            _view(_provider(status=status, error_type=ProviderErrorType.authentication))[0]
+            == "provider_http"
+        )
+    want_by_type = {  # (v) no status, all 12 types, written out here
+        "rate_limit": "provider_rate_limit",
+        "throttled": "provider_rate_limit",
+        "quota": "provider_rate_limit",
+        "authentication": "provider_auth",
+        "permission": "provider_auth",
+        "invalid_request": "provider_invalid_request",
+        "not_found": "provider_invalid_request",
+        "timeout": "provider_timeout",
+        "overloaded": "provider_http",
+        "server_error": "provider_http",
+        "connection": "provider_http",
+        "other": "provider_http",
+    }
+    assert len(want_by_type) == len(ProviderErrorType) == 12
+    for word, want in want_by_type.items():
+        assert _view(_provider(error_type=ProviderErrorType(word)))[0] == want, word
+    # a coded status beats the type, and the type is the fallback
+    assert (
+        _view(_provider(status=429, error_type=ProviderErrorType.authentication))[0]
+        == "provider_rate_limit"
+    )
+    assert (
+        _view(_provider(status=500, error_type=ProviderErrorType.authentication))[0]
+        == "provider_http"
+    )
+
+
 def _row(cls: str, n: int) -> corpus.Row:
     return next(r for r in corpus.ROWS if r.id == f"HC-{cls}-{n:02d}")
 

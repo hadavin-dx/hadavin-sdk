@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from hadavin_sdk import codes
-from hadavin_sdk.codes import OWN_CODES, RESERVED_FOR, Code, FactKey
+from hadavin_sdk.codes import ERROR_TYPE_CODE, OWN_CODES, RESERVED_FOR, Code, FactKey
 from hadavin_sdk.guard.diagnostic import diagnose, render
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
@@ -124,7 +124,7 @@ def test_codes_module_imports_only_the_standard_library() -> None:
 
 
 def test_every_code_member_is_reachable_or_reserved() -> None:
-    reachable = set(OWN_CODES.values()) | {
+    reachable = set(OWN_CODES.values()) | set(ERROR_TYPE_CODE.values()) | {  # the provider codes are reached by a status or a type
         Code.validation_failed, Code.os_error, Code.db_error, Code.internal_bug, Code.foreign_exception, Code.timeout,
     }  # fmt: skip
     for code in Code:
@@ -193,6 +193,7 @@ PINNED = {
     "hadavin_sdk.errors:ConfigError": "config_invalid",
     "hadavin_sdk.config:_RenamedStage": "config_invalid",
     "hadavin_sdk.k1b.bundle:BundleError": "config_invalid",
+    "hadavin_sdk.store.migration_numbers:SqlReadError": "internal_bug",
     "hadavin_sdk.llm.fake:UnknownRecording": "config_invalid",
     "hadavin_sdk.store.protocol:StoreUnavailable": "store_unavailable",
     "hadavin_sdk.store.protocol:StaleState": "store_conflict",
@@ -246,6 +247,18 @@ def test_instance_and_class_attribute_named_code_is_ignored() -> None:
     e = E("x")
     e.code = "config_invalid"  # type: ignore[attr-defined]
     assert "code=foreign_exception " in render(diagnose(e, step=codes.Where.other))
+
+
+def test_a_sql_file_that_cannot_be_read_is_a_repository_defect_not_an_operator_config_error() -> (
+    None
+):
+    from hadavin_sdk.store.migration_numbers import SqlReadError, checked_statement_text
+
+    with pytest.raises(SqlReadError) as caught:
+        checked_statement_text("select 'unclosed")  # a real raise, with a real traceback
+    line = render(diagnose(caught.value, step=codes.Where.other))
+    assert "code=internal_bug " in line, line
+    assert "code=config_invalid" not in line, line
 
 
 def test_textnorm_error_family_maps_to_scan_failed() -> None:

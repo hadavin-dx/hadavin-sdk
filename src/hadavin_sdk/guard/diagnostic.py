@@ -8,9 +8,9 @@ from a JSON error only ``pos``; from an operating-system error only ``errno`` an
 
     <kind>: diag_v=1 code=<code> step=<step> at=<locator> fp=<8 hex>[ key=value ...]
 
-No file contents, network, environment, clock or database access at run time. The only state is a counter of guarded failures and a
-read of ``sys.modules`` to check that a frame belongs to an imported module. Nothing in this module is wired into
-the places that write errors today; that is the job of a later step (P5b3).
+No file contents, network, environment, clock or database access at run time. The only state is the count of guarded failures (kept by
+``hadavin_sdk.neverraise``) and a read of ``sys.modules`` to check that a frame belongs to an imported module. Nothing in this module is wired
+into the places that write errors today; that is the job of a later step (wiring the writers).
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ import os
 import re
 import socket
 import sys
-import threading
 from collections import deque
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -32,10 +31,14 @@ from pydantic import ValidationError as _ValidationError
 
 from hadavin_sdk import defaults
 from hadavin_sdk.codes import (
+    CODED_STATUSES,
+    ERROR_TYPE_CODE,
     FACT_BOUNDS,
     FACT_PRIORITY,
     FOREIGN_PACKAGES_OK,
     OWN_CODES,
+    REQUEST_ID_SHAPES,
+    STATUS_ERROR_TYPE,
     VALIDATION_OTHER,
     VALIDATION_TYPES,
     Code,
@@ -45,6 +48,7 @@ from hadavin_sdk.codes import (
     StepToken,
     Where,
 )
+from hadavin_sdk.neverraise import Site, counts, record
 
 _OWN_PACKAGE = "hadavin_sdk"
 _KIND_RE = re.compile(rf"[A-Za-z0-9_.]{{1,{defaults.DIAG_KIND_CHARS}}}")
@@ -54,8 +58,20 @@ _FP_RE = re.compile(r"[0-9a-f]{8}")
 _TOKEN_RE = re.compile(rf"[A-Za-z0-9_.-]{{1,{defaults.DIAG_KEY_CHARS}}}")
 _SQLSTATE_RE = re.compile(r"[0-9A-Z]{5}")
 _VALUE_RE = re.compile(rf"-?[A-Za-z0-9_.-]{{1,{defaults.DIAG_KEY_CHARS}}}")
+_REQUEST_ID_RES: Final = tuple(re.compile(p) for p in REQUEST_ID_SHAPES.values())
 _TOKEN_KEYS: Final = frozenset(
-    {FactKey.key, FactKey.cause_kind, FactKey.field, FactKey.type, FactKey.sqlstate}
+    {
+        FactKey.key,
+        FactKey.cause_kind,
+        FactKey.field,
+        FactKey.type,
+        FactKey.sqlstate,
+        FactKey.request_id,
+    }
+)
+_PROVIDER_ERROR_KEY: Final = "hadavin_sdk.llm.protocol:ProviderError"
+_PROVIDER_KEYS: Final = frozenset(
+    {_PROVIDER_ERROR_KEY, "hadavin_sdk.llm.protocol:ProviderExhausted"}
 )
 
 
@@ -112,6 +128,16 @@ class SafeToken:
             return None
         return SafeToken(value, SafeToken._MINT)
 
+    @staticmethod
+    def request_id(value: object) -> SafeToken | None:
+        """A provider request id: an exact ``str`` that ``re.fullmatch``es one of the closed ``REQUEST_ID_SHAPES``."""
+        if type(value) is not str:
+            return None
+        for pattern in _REQUEST_ID_RES:
+            if pattern.fullmatch(value) is not None:
+                return SafeToken(str.__str__(value), SafeToken._MINT)
+        return None
+
 
 Fact = int | bool | ProviderErrorType | Phase | SafeToken
 
@@ -129,23 +155,22 @@ class Diagnostic:
 # --- identity of classes -------------------------------------------------------------------------------------------------
 
 
-# How often each guard below fired, by site name. A count only: nothing about the exception (no text, no type) is kept.
-_GUARD_FAILURES: dict[str, int] = {}
-# one lock: a count read-then-written by two threads at once would lose one. Re-entrant (RLock), so a signal handler that runs on the same
-# thread while the lock is held cannot deadlock it.
-_GUARD_LOCK = threading.RLock()
+# How often each guard below fired is kept by ``hadavin_sdk.neverraise`` (standard library only, so this module still imports no
+# ``llm`` code): one counter for every never-raise guard, here under the ``diag_<site>`` names. A count only: nothing about the
+# exception (no text, no type) is kept.
+_SITES: Final = {s.value.removeprefix("diag_"): s for s in Site if s.value.startswith("diag_")}
 
 
 def _guard_failed(site: str) -> None:
     """Record that the guard at ``site`` caught an ``Exception``. A fixed site name and a count; never the exception."""
-    with _GUARD_LOCK:
-        _GUARD_FAILURES[site] = _GUARD_FAILURES.get(site, 0) + 1
+    record(_SITES[site])
 
 
 def guard_failures() -> dict[str, int]:
-    """A copy of the guard counters (site name -> times caught)."""
-    with _GUARD_LOCK:
-        return dict(_GUARD_FAILURES)
+    """The counts of this module's guards (site name -> times caught), a copy."""
+    return {
+        name.removeprefix("diag_"): n for name, n in counts().items() if name.startswith("diag_")
+    }
 
 
 def _is_the_named_class(tp: type, names: tuple[object, object] | None = None) -> bool:
@@ -201,19 +226,75 @@ def class_name_of(exc_or_type: object) -> str:
         return "dynamic_class"
 
 
-def _own_code(tp: type) -> Code | None:
+def _own_match(tp: type) -> tuple[Code, type, str] | None:
+    """The nearest class in the method resolution order that is an own class of the table: its code, the class and its key."""
     for cls in tp.__mro__:
         try:
             mod, qual = cls.__module__, cls.__qualname__
             if type(mod) is not str or type(qual) is not str:
                 continue
-            code = OWN_CODES.get(f"{mod}:{qual}")
+            key = f"{mod}:{qual}"
+            code = OWN_CODES.get(key)
             if code is not None and _is_the_named_class(cls, (mod, qual)):
-                return code
+                return code, cls, key
         except Exception:  # noqa: BLE001 - a hostile class attribute may raise any Exception: not an own class
             _guard_failed("own_code")
             continue
     return None
+
+
+def _own_code(tp: type) -> Code | None:
+    match = _own_match(tp)
+    return None if match is None else match[0]
+
+
+def _bounded_attr(attrs: dict[str, object], name: str, key: FactKey) -> int | None:
+    """``attrs`` is an exact ``dict`` (checked by the caller); ``get`` and the exact-type bound check cannot raise."""
+    return _bounded(key, attrs.get(name))
+
+
+def _provider_facts(exc: object) -> dict[FactKey, object]:
+    """The five attributes of a ``ProviderError`` (``status``, ``error_type``, ``request_id``, ``retryable``, ``retry_count``),
+    each read from ``vars(exc)`` and checked on its own, so a bad one is dropped without touching the others. The instance is
+    never trusted: unpickling and plain assignment both bypass the constructor."""
+    try:
+        attrs = vars(exc)
+        if type(attrs) is not dict:
+            return {}
+    except Exception:  # noqa: BLE001 - never-raise guard: an unreadable __dict__ gives no provider facts, never a raise into diagnose
+        _guard_failed("provider_attrs")
+        return {}
+    found: dict[FactKey, object] = {}
+    status = _bounded_attr(attrs, "status", FactKey.http_status)
+    if status is not None:
+        found[FactKey.http_status] = status
+    # ``attrs`` is an exact ``dict`` and every check below is an exact-type test on a stored value: nothing here can raise.
+    error_type = attrs.get("error_type")
+    if type(error_type) is ProviderErrorType:
+        found[FactKey.provider_error_type] = error_type
+    token = SafeToken.request_id(attrs.get("request_id"))
+    if token is not None:
+        found[FactKey.request_id] = token
+    retryable = attrs.get("retryable")
+    if type(retryable) is bool:
+        found[FactKey.retryable] = retryable
+    count = _bounded_attr(attrs, "retry_count", FactKey.retry_count)
+    if count is not None:
+        found[FactKey.retry_count] = count
+    return found
+
+
+def _provider_code(found: dict[FactKey, object]) -> Code:
+    """The code of a plain ``ProviderError``: a coded status first, then another valid status (``provider_http``), then the type."""
+    status = found.get(FactKey.http_status)
+    if type(status) is int:
+        if status in CODED_STATUSES:
+            return ERROR_TYPE_CODE[STATUS_ERROR_TYPE[status]]
+        return Code.provider_http
+    error_type = found.get(FactKey.provider_error_type)
+    if type(error_type) is ProviderErrorType:
+        return ERROR_TYPE_CODE[error_type]
+    return Code.provider_http
 
 
 # --- frames and locator --------------------------------------------------------------------------------------------------
@@ -356,7 +437,7 @@ def _check_fact(key: object, value: object) -> Fact | None:
         return value if type(value) is Phase else None
     if key in _TOKEN_KEYS:
         return value if type(value) is SafeToken else None
-    return None  # request_id: no accepted value in this package
+    return None
 
 
 def _phase_of(sqlstate: SafeToken | None) -> Phase:
@@ -375,8 +456,14 @@ def _classify(
 ) -> tuple[Code, dict[FactKey, object]]:
     if not issubclass(tp, Exception):
         return Code.foreign_exception, {}
-    own = _own_code(tp)
-    if own is not None:
+    match = _own_match(tp)
+    if match is not None:
+        own, own_cls, own_key = match
+        if own_key in _PROVIDER_KEYS or _is_provider_subclass(tp):
+            found = _provider_facts(exc) if read_facts else {}
+            if own_cls is tp and own_key == _PROVIDER_ERROR_KEY:
+                return _provider_code(found), found
+            return own, found
         return own, {}
     facts: dict[FactKey, object] = {}
     if issubclass(tp, TimeoutError):
@@ -425,6 +512,22 @@ def _classify(
     if _raised_in_own_code(exc, tp, links, too_long):
         return Code.internal_bug, {}
     return Code.foreign_exception, {}
+
+
+def _is_provider_subclass(tp: type) -> bool:
+    """True if any class in the method resolution order is the named ``ProviderError`` or ``ProviderExhausted`` (no import of ``llm``)."""
+    for cls in tp.__mro__:
+        try:
+            mod, qual = (
+                cls.__module__,
+                cls.__qualname__,
+            )  # read once; the check gets these same two values
+            if f"{mod}:{qual}" in _PROVIDER_KEYS and _is_the_named_class(cls, (mod, qual)):
+                return True
+        except Exception:  # noqa: BLE001 - never-raise guard: a class whose names raise is not the provider class, the walk goes on
+            _guard_failed("provider_class")
+            continue
+    return False
 
 
 def _step_text(step: object) -> str:
