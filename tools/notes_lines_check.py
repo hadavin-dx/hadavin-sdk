@@ -17,7 +17,12 @@ differs, or when the syntax tree of anything it uses differs, to any depth and t
   `setup_module`, `teardown_module`, `setup_function`, `pytest_generate_tests`, every other module-level statement
   that runs at collection (an `if`, a `try`, a `for`, a call); in a test class its decorators, bases, every helper
   method that is no test, `setup_method`, `setup_class`, and a class-level fixture;
-- the code of every `conftest.py` above the test file (its hooks and its module-level statements);
+- the code of every `conftest.py` above the test file (its hooks and its module-level statements), and the text of
+  every module a `pytest_plugins` list names or a `-p name` in `addopts` loads (they act on every test);
+- the ways a unittest class is set up and torn down (`setUp`, `setUpClass`, `tearDown`, `tearDownClass`, the async
+  forms, and `setUpModule`, `tearDownModule`), a fixture a test names as a text (`usefixtures("x")`,
+  `request.getfixturevalue("x")`), a name a walrus binds at module level (`W = (X := 1)` binds X too), and a star
+  import (`from tests.x import *` makes every name of the module part of the file);
 - what a name imported from another test module is, followed from helper to helper to any depth (`from tests.x
   import name`, `from tests import x` then `x.name`, `import tests.x as x`, a relative form, also inside a
   function), so a helper two imports away lists the test that reaches it.
@@ -27,7 +32,7 @@ it. A new module-level function or constant that nothing in the tree names (no t
 mutant reaches it) is a unit of no test, so it needs no row: it cannot change a run until something uses it, and
 the change that uses it lists the user.
 
-Seven kinds of file are in scope, because a change to any of them can make a test pass or fail without touching a
+Six kinds of file are in scope, because a change to any of them can make a test pass or fail without touching a
 test function. `tests/test_*.py` and `tests/*_test.py` (pytest's default file patterns, at any depth): the tests, as
 above. `tests/policy_mutants.py` and `tests/stage_mutants.py`: each `mutant(...)` (or `Mutant(...)`) call whose first
 argument is a text is one unit named by that text, and its signature also holds every helper of the file that the
@@ -60,9 +65,15 @@ reads only the syntax of Python files, the settings files named above and the te
 `tests/`: a test written another way (generated at run time, or collected by a plugin that is not in a conftest), a
 change in `src/` or `tools/` that a test uses (those have their own mutants), a change to a file outside the kinds
 above (a workflow, a lock file, an environment variable of the test run, a `-p` plugin named only on the command
-line) and a dependency version are not seen. A name built at run time with `getattr` or `exec` is not followed; a file
-that imports with `importlib`, `pkgutil` or `__import__` is read as reaching the modules it names as text and every
-Python file below each package folder it imports from. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
+line) and a dependency version are not seen. A name built at run time with `getattr` or `exec` is not followed. A
+file that imports with `importlib`, `pkgutil` or `__import__` is read as reaching the modules it names as text and
+every Python file below each package folder it imports from; a module name built at run time (`import_module(f"tests.x.
+dyn_{n}")`) reaches every Python file whose dotted name starts with the text the name starts with, and a name that starts
+with a value (`import_module(name)`) in a file that imports no package of `tests` reaches every Python file under
+`tests` (the one rule: a name that cannot be read lists every test of the file). The notes files of the change are read
+as ONE table (rows of all of them, the last row of a name wins), because the change is read against the merge base and
+not against the last batch: a row of an older batch's notes file serves a unit that a later batch changed again, and
+the tool cannot tell; the reviewer reading the diff of the batch does. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
 row is checked for form and for the existence of what it names, never for truth: a reason that names a real mutant
 that does not cover the test passes. The unit cell of a row must name a test, a mutant or a unit of the head
 commit, and each row of a notes file is checked against the units of its file, so a row that names a unit that
@@ -73,7 +84,7 @@ resolve (a mistyped base would make every test look new); 1 when git cannot give
 or `diff`: never read as "nothing changed"); 2 for a wrong command line. `--auto <base>` is for a pull request: it
 reads the change as `git diff --no-renames <merge-base of base and head> <head>` and every file's text as the blob of
 that head (`git show <head>:path`), never the working tree, so the answer is the same whatever is checked out, and
-each run covers the whole pull request, not the last push. `--head` defaults to HEAD. With no file of the four kinds
+each run covers the whole pull request, not the last push. `--head` defaults to HEAD. With no file of the six kinds
 in the change there is nothing to check (and it says so); with a changed unit and no notes file in the change,
 every changed unit is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads
 files; it never writes."""
@@ -194,6 +205,26 @@ def _is_autouse(fn: ast.AST) -> bool:
     return False
 
 
+def _star_stems(tree: ast.AST, rel: str) -> list[str]:
+    """The path stems of the modules under `tests` that the file imports with `from tests.x import *`: such an
+    import makes every name of the module a name of the file, so a change of any of them is part of every unit."""
+    return sorted(
+        {
+            stem
+            for n in ast.walk(tree)
+            if isinstance(n, ast.ImportFrom) and any(a.name == "*" for a in n.names)
+            for stem in [_stem(rel, n.level, n.module)]
+            if stem is not None
+        }
+    )
+
+
+def _walrus_names(node: ast.AST) -> list[str]:
+    """The names a walrus (`(NAME := value)`) binds anywhere inside `node`: at module level they are module
+    constants too, although the statement that holds them binds another name (`W = (NAME := 1)`)."""
+    return sorted({n.target.id for n in ast.walk(node) if isinstance(n, ast.NamedExpr)})
+
+
 def _stem(rel: str, level: int, module: str | None) -> str | None:
     """The path stem of the module an import names, or None when it is not under `tests`. `from tests.x import a`
     names tests/x; `from . import x` or `from .x import a` in tests/y.py names tests/x."""
@@ -212,7 +243,8 @@ def _imports(tree: ast.AST, rel: str) -> dict[str, tuple[str, str | None]]:
         if isinstance(n, ast.ImportFrom):
             stem = _stem(rel, n.level, n.module)
             if stem is not None:
-                out.update({a.asname or a.name: (stem, a.name) for a in n.names})
+                # a star import binds no name of its own: `_star_stems` reads it (every name of the module)
+                out.update({a.asname or a.name: (stem, a.name) for a in n.names if a.name != "*"})
         elif isinstance(n, ast.Import):
             for a in n.names:
                 stem = _stem(rel, 0, a.name)
@@ -229,6 +261,8 @@ SWITCH_NAMES = (
     "__test__",
     "setup_module",
     "teardown_module",
+    "setUpModule",
+    "tearDownModule",
     "setup_function",
     "teardown_function",
     "pytest_generate_tests",
@@ -244,6 +278,13 @@ SWITCH_NAMES = (
 # The calls that import a module by a name that may be worked out at run time. A file that makes one (a conftest that
 # imports every module of a folder at collection) depends on the text of every module it can reach that way.
 DYNAMIC_IMPORTS = (["import_module"], ["iter_modules"], ["walk_packages"], ["__import__"])
+# The calls that name a fixture as a text, not as a parameter.
+FIXTURE_BY_TEXT = (["usefixtures"], ["getfixturevalue"], ["getfuncargvalue"])
+
+
+def _dotted_path(rel: str) -> str:
+    """`tests/x/y.py` -> `tests.x.y` (a package's `__init__.py` is the package)."""
+    return rel.removesuffix(".py").removesuffix("/__init__").replace("/", ".")
 
 
 class _Module:
@@ -264,11 +305,13 @@ class _Module:
             elif isinstance(n, ast.Assign) and _is_declaration(n):
                 names = [name for t in n.targets for name in _target_names(t)]
                 self._value(names, n.value)
+                names += _walrus_names(n.value)
             elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and _is_declaration(n):
                 # `X += ...` changes what X is, so it is joined to the dump of X
                 names = _target_names(n.target)
                 if n.value is not None:
                     self._value(names, n.value)
+                    names += _walrus_names(n.value)
             elif isinstance(n, (ast.Import, ast.ImportFrom)):
                 names = [_bound(a) for a in n.names]
             else:
@@ -276,6 +319,18 @@ class _Module:
             for name in names:
                 self.dumps[name] = self.dumps.get(name, "") + ast.dump(n)
         self.imports = _imports(self.tree, rel)
+        self.stars = _star_stems(self.tree, rel)
+        # the modules a `pytest_plugins = [...]` list names (a text): pytest imports them, so each acts on every test
+        # under the folder of the conftest like the conftest itself
+        self.plugin_names: list[str] = [
+            c.value
+            for n in self.tree.body
+            if isinstance(n, (ast.Assign, ast.AnnAssign))
+            and "pytest_plugins" in _assigned_names(n)
+            and n.value is not None
+            for c in ast.walk(n.value)
+            if isinstance(c, ast.Constant) and isinstance(c.value, str)
+        ]
         self.autouse = [n.name for n in self.tree.body if isinstance(n, _FUNCS) and _is_autouse(n)]
         # module-level statements that bind nothing the table above knows (`if`, `try`, `for`, `with`, a call such
         # as `pytest.skip(allow_module_level=True)` or `collect_ignore.append(...)`, an assignment to a subscript
@@ -287,6 +342,9 @@ class _Module:
         # `pkgutil.iter_modules(...)`, `__import__(...)`): see `_Signatures.closure`
         self.dynamic = False
         self.dynamic_names: list[str] = []  # the dotted names written as text in such a call
+        # a name built at run time (`import_module(f"tests.x.dyn_{n}")`, `import_module("tests.x." + n)`): the text it
+        # starts with ("tests.x.dyn_"), or "" when it starts with a value (`import_module(name)`)
+        self.dynamic_prefixes: list[str] = []
         for n in ast.walk(self.tree):
             if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in DYNAMIC_IMPORTS:
                 self.dynamic = True
@@ -295,6 +353,10 @@ class _Module:
                     for a in n.args
                     if isinstance(a, ast.Constant) and isinstance(a.value, str)
                 ]
+                if _dotted(n.func)[-1:] in (["import_module"], ["__import__"]) and n.args:
+                    prefix = _literal_start(n.args[0])
+                    if prefix is not None:
+                        self.dynamic_prefixes.append(prefix)
 
     def _value(self, names: list[str], value: ast.AST) -> None:
         for name in names:
@@ -309,6 +371,27 @@ class _Module:
         for value in self.values.get(name, []):
             out |= _used(value)
         return sorted(out)
+
+
+def _literal_start(a: ast.AST) -> str | None:
+    """The text a module name starts with when the name is built at run time: `f"tests.x.dyn_{n}"` gives
+    "tests.x.dyn_", `"tests.x." + name` gives "tests.x.", a name that starts with a value (`name`, `f"{p}.x"`) gives
+    "". A plain text (a constant) gives None: it is followed as written (`dynamic_names`)."""
+    if isinstance(a, ast.Constant) and isinstance(a.value, str):
+        return None
+    if isinstance(a, ast.JoinedStr):
+        first = a.values[0] if a.values else None
+        if isinstance(first, ast.Constant) and isinstance(first.value, str):
+            return first.value
+        return ""
+    if isinstance(a, ast.BinOp) and isinstance(a.op, (ast.Add, ast.Mod)):
+        left = a.left
+        while isinstance(left, ast.BinOp) and isinstance(left.op, ast.Add):
+            left = left.left
+        if isinstance(left, ast.Constant) and isinstance(left.value, str):
+            return left.value.split("%", 1)[0]
+        return ""
+    return ""
 
 
 def _dotted(n: ast.AST) -> list[str]:
@@ -328,6 +411,11 @@ def _used(node: ast.AST) -> set[str]:
     parameter)."""
     used: set[str] = set()
     for n in ast.walk(node):
+        if isinstance(n, ast.Call) and _dotted(n.func)[-1:] in FIXTURE_BY_TEXT:
+            # `@pytest.mark.usefixtures("a", "b")` and `request.getfixturevalue("a")` name a fixture as a text
+            used |= {
+                a.value for a in n.args if isinstance(a, ast.Constant) and isinstance(a.value, str)
+            }
         if isinstance(n, ast.Name):
             used.add(n.id)
         elif isinstance(n, ast.Attribute):
@@ -352,6 +440,7 @@ class _Signatures:
         # the paths of the files of the state being read (a loader may carry them as `.files`): needed to find the
         # modules that a file imports by a name worked out at run time
         self.files: list[str] = list(getattr(loader, "files", None) or [])
+        self._plugins: list[str] | None = None
 
     def module(self, rel: str, source: str | None = None) -> _Module | None:
         if rel not in self.modules:
@@ -393,8 +482,44 @@ class _Signatures:
         for stem, taken in m.imports.values():
             folder = stem if taken is None else f"{stem}/{taken}"
             found |= {f for f in self.files if f.startswith(folder + "/") and f.endswith(".py")}
+        # a name built at run time: every module whose dotted name starts with the text the name starts with; a name
+        # that starts with a value reaches the package folders imported above, and, when the file imports none, every
+        # Python file under `tests` (the rule: a name that cannot be read lists every test of the file)
+        for prefix in m.dynamic_prefixes:
+            if prefix:
+                found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
+            elif not any(stem for stem, _ in m.imports.values()):
+                found |= {f for f in self.files if f.startswith("tests/") and f.endswith(".py")}
         found.discard(m.rel)
         return sorted(found)
+
+    def _named_files(self, names: list[str], rel: str) -> list[str]:
+        """The files of the modules a list of dotted names (a `pytest_plugins` list, a `-p` option) names."""
+        out: set[str] = set()
+        for dotted in names:
+            stem = _stem(rel, 0, dotted)
+            file = self._file_of(stem) if stem else None
+            if file:
+                out.add(file)
+        return sorted(out)
+
+    def _config_plugins(self) -> list[str]:
+        """The dotted names of the plugins the pytest settings of the repository load on every run (`-p name` in
+        `addopts`); a `-p no:name` switches a plugin off and names no module."""
+        if self._plugins is None:
+            self._plugins = []
+            for rel in ("pyproject.toml", "pytest.ini", "tox.ini", "setup.cfg"):
+                text = self.loader(rel) if self.loader else ""
+                for line in re.findall(
+                    r"addopts\s*[=:]\s*(.*?)(?:\n\s*\n|\n\S|\Z)", text, re.DOTALL
+                ):
+                    words = re.findall(r"[^\s\"',\[\]]+", line)
+                    for i, w in enumerate(words):
+                        name = words[i + 1] if w == "-p" and i + 1 < len(words) else None
+                        name = name or (w[2:] if w.startswith("-p") and len(w) > 2 else None)
+                        if name and not name.startswith("no:"):
+                            self._plugins.append(name)
+        return self._plugins
 
     def _imported(
         self, table: dict[str, tuple[str, str | None]], head: str, attr: str
@@ -444,6 +569,12 @@ class _Signatures:
                 parts.append(f"|glue {m.rel}={m.glue_dump}")
                 for g in m.glue:
                     todo.extend((m, u) for u in sorted(_used(g)))
+            # `from tests.x import *`: every name of the module is a name of the file
+            for stem in m.stars:
+                star = self.module(self._file_of(stem) or "")
+                if star is not None:
+                    touch(star)
+                    todo.extend((star, n) for n in sorted(star.dumps))
             if m.dynamic:
                 # the file imports modules by a name worked out at run time: every module it can reach that way is
                 # part of every unit that reaches the file, and so is everything those modules use
@@ -454,11 +585,23 @@ class _Signatures:
                         todo.extend((other, n) for n in sorted(other.dumps))
 
         touch(mod)
+        # the plugins the settings load on every run, and the modules a `pytest_plugins` list names, act on every
+        # test: their text is part of every unit
+        for rel in self._named_files(self._config_plugins(), mod.rel):
+            plugin = self.module(rel)
+            if plugin is not None:
+                touch(plugin)
+                todo.extend((plugin, n) for n in sorted(plugin.dumps))
         for conf in self.conftests(mod.rel):
             # a conftest acts on every test under its folder: its collect-time code, its hooks and switches and its
             # autouse fixtures are part of the unit; a fixture a unit names as a parameter is looked up below
             touch(conf)
             todo += [(conf, n) for n in (*SWITCH_NAMES, *conf.autouse) if n in conf.dumps]
+            for rel in self._named_files(conf.plugin_names, conf.rel):
+                plugin = self.module(rel)
+                if plugin is not None:
+                    touch(plugin)
+                    todo.extend((plugin, n) for n in sorted(plugin.dumps))
         if kind_of(mod.rel) != "conftest":  # (a conftest's own switches are its own units)
             todo += [(mod, n) for n in SWITCH_NAMES if n in mod.dumps]
         todo += [(mod, u) for u in sorted(_used(node))]
@@ -531,8 +674,13 @@ def _class_extras(cls: ast.ClassDef, method: ast.AST) -> tuple[ast.AST, ...]:
     helpers = {
         m.name: m for m in cls.body if isinstance(m, _FUNCS) and not m.name.startswith("test")
     }
+    # (`setUp`, `setUpClass`, `tearDown`, `tearDownClass` of a unittest.TestCase and pytest's `setup_method`: the
+    # words are compared in lower case)
     always = [
-        m for m in helpers.values() if m.name.startswith(("setup", "teardown")) or _is_fixture(m)
+        m
+        for m in helpers.values()
+        if m.name.lower().startswith(("setup", "teardown", "asyncsetup", "asynctear"))
+        or _is_fixture(m)
     ]
     reached: list[ast.AST] = []
     seen: set[str] = set()

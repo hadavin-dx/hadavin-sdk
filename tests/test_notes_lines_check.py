@@ -1126,3 +1126,142 @@ def test_a_log_is_found_in_the_folder_of_the_notes_that_names_it_or_by_the_end_o
     assert by_path == [], f"a log written with the end of its path was refused: {by_path}"
     gone = nlc.reference_problems(reason.format("x/logs/b.log"), refs, "handover/evidence/x")
     assert gone, "a log written with a path that holds no such file was accepted"
+
+
+# ---- batch 15 (round 14 group 3): links between a changed unit and the tests that use it that were not followed ----
+
+
+def test_a_constant_bound_by_a_walrus_inside_another_assignment_lists_the_test_that_reads_it():
+    src = "W = (WALRUS := {})\n\n\ndef test_a():\n    assert WALRUS\n\n\ndef test_b():\n    assert 1\n"
+    got = _changed(src.format(1), src.format(2))
+    assert got == ["test_a"], f"a changed walrus constant listed {got}, expected only test_a"
+    assert _changed(src.format(1), src.format(1)) == [], "an unchanged walrus listed a test"
+    annotated = src.replace("W = (", "W: int = (")
+    got = _changed(annotated.format(1), annotated.format(2))
+    assert got == ["test_a"], f"a changed walrus behind an annotated assignment listed {got}"
+
+
+def test_the_set_up_and_tear_down_methods_of_a_unittest_case_list_its_tests():
+    case = (
+        "import unittest\n\n\nclass Case(unittest.TestCase):\n    {}\n"
+        "    def test_one(self):\n        self.assertTrue(1)\n"
+    )
+    for name, body in (
+        ("setUp", "def setUp(self):\n        self.x = {}"),
+        ("setUpClass", "@classmethod\n    def setUpClass(cls):\n        cls.x = {}"),
+        ("tearDown", "def tearDown(self):\n        self.x = {}"),
+        ("tearDownClass", "@classmethod\n    def tearDownClass(cls):\n        cls.x = {}"),
+        ("asyncSetUp", "async def asyncSetUp(self):\n        self.x = {}"),
+    ):
+        got = _changed(case.format(body.format(1)), case.format(body.format(2)))
+        assert got == ["Case::test_one"], f"a changed {name} listed {got}, expected Case::test_one"
+    module = "import unittest\n\n\ndef {}():\n    pass\n" + _BODY
+    for name in ("setUpModule", "tearDownModule"):
+        got = _changed(module.format(name), module.format(name).replace("pass", "raise SystemExit"))
+        assert got == ["test_a", "test_b"], f"a changed {name} listed {got}, expected both tests"
+
+
+def test_a_fixture_named_as_a_text_by_usefixtures_or_getfixturevalue_lists_the_test():
+    base = (
+        "import pytest\n\n\n@pytest.fixture\ndef fx():\n    return {}\n\n\n"
+        "{}\n\n\ndef test_use(request):\n    {}\n\n\ndef test_free():\n    assert 1\n"
+    )
+    by_mark = base.format("{}", '@pytest.mark.usefixtures("fx")', "assert 1")
+    got = _changed(by_mark.format(1), by_mark.format(2))
+    assert got == ["test_use"], f"a fixture named by usefixtures listed {got}, expected test_use"
+    by_call = base.format("{}", "", "assert request.getfixturevalue('fx')")
+    got = _changed(by_call.format(1), by_call.format(2))
+    assert got == ["test_use"], (
+        f"a fixture named by getfixturevalue listed {got}, expected test_use"
+    )
+    mark_all = "pytestmark = pytest.mark.usefixtures('fx')\n"
+    whole = by_call.replace("assert request.getfixturevalue('fx')", "assert 1").replace(
+        "\n\n\ndef test_use", f"\n\n{mark_all}\n\ndef test_use", 1
+    )
+    got = _changed(whole.format(1), whole.format(2))
+    assert got == ["test_free", "test_use"], f"a module-wide usefixtures listed {got}"
+
+
+def test_a_module_named_in_pytest_plugins_or_in_addopts_acts_on_the_tests_below_the_conftest():
+    conftest = "pytest_plugins = ['tests.plugmod']\n"
+    test = "def test_pp():\n    assert 1\n"
+    plugin = (
+        "import pytest\n\n\n@pytest.fixture(autouse=True)\ndef pm_fx():\n    yield {}\n\n\n"
+        "def pytest_collection_modifyitems(config, items):\n    items[:] = items[:{}]\n"
+    )
+    files = {"tests/conftest.py": conftest, "tests/test_pp.py": test}
+    before = _Tree({**files, "tests/plugmod.py": plugin.format(1, 5)})
+    for label, new_plugin in (
+        ("autouse fixture", plugin.format(2, 5)),
+        ("hook", plugin.format(1, 6)),
+    ):
+        after = _Tree({**files, "tests/plugmod.py": new_plugin})
+        got = _changed(test, test, "tests/test_pp.py", before, after)
+        assert got == ["test_pp"], f"a changed {label} of a pytest_plugins module listed {got}"
+    same = _changed(test, test, "tests/test_pp.py", before, before)
+    assert same == [], f"an unchanged pytest_plugins module listed {same}"
+    other = _Tree({"tests/test_pp.py": test, "tests/plugmod.py": plugin.format(1, 5)})
+    moved = _Tree({"tests/test_pp.py": test, "tests/plugmod.py": plugin.format(2, 5)})
+    assert _changed(test, test, "tests/test_pp.py", other, moved) == [], (
+        "a module that no conftest and no setting names listed a test"
+    )
+    toml = '[tool.pytest.ini_options]\naddopts = "-q -p tests.plugmod -p no:cacheprovider"\n'
+    settings = {"pyproject.toml": toml, "tests/test_pp.py": test}
+    got = _changed(
+        test,
+        test,
+        "tests/test_pp.py",
+        _Tree({**settings, "tests/plugmod.py": plugin.format(1, 5)}),
+        _Tree({**settings, "tests/plugmod.py": plugin.format(2, 5)}),
+    )
+    assert got == ["test_pp"], f"a plugin named by -p in addopts listed {got}, expected test_pp"
+
+
+def test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it():
+    test = (
+        "import importlib\n{}\n\ndef test_dyn(n=1):\n"
+        "    assert importlib.import_module({}).run()\n\n\ndef test_other():\n    assert 1\n"
+    )
+    mod = "def run():\n    return {}\n"
+    # the file imports a package of tests, so the open name below does not reach every file
+    pkg = {"tests/yy/__init__.py": ""}
+    for name in ('f"tests.zz.dyn_{n}"', '"tests.zz.dyn_" + str(n)'):
+        src = test.format("from tests import yy", name)
+        files = {**pkg, "tests/zz/dyn_c.py": mod.format(1), "tests/test_d.py": src}
+        files2 = {**pkg, "tests/zz/dyn_c.py": mod.format(2), "tests/test_d.py": src}
+        got = _changed(src, src, "tests/test_d.py", _Tree(files), _Tree(files2))
+        assert got == ["test_dyn", "test_other"], f"{name}: a changed module listed {got}"
+        far = {**pkg, "tests/zz/other_c.py": mod.format(1), "tests/test_d.py": src}
+        far2 = {**pkg, "tests/zz/other_c.py": mod.format(2), "tests/test_d.py": src}
+        got = _changed(src, src, "tests/test_d.py", _Tree(far), _Tree(far2))
+        assert got == [], f"a module outside the text the name starts with listed {got}"
+    # a name that starts with a value, in a file that imports no package of tests: every Python file under tests
+    src = test.format("", "name_from_somewhere")
+    files = {"tests/zz/dyn_c.py": mod.format(1), "tests/test_d.py": src}
+    files2 = {"tests/zz/dyn_c.py": mod.format(2), "tests/test_d.py": src}
+    got = _changed(src, src, "tests/test_d.py", _Tree(files), _Tree(files2))
+    assert got == ["test_dyn", "test_other"], f"an unreadable name: a changed module listed {got}"
+
+
+def test_a_star_import_of_a_test_module_makes_every_name_of_it_part_of_the_file():
+    test = "from tests.helpers import *\n\n\ndef test_a():\n    assert LIMIT\n"
+    helper = "LIMIT = {}\n"
+    before = _Tree({"tests/helpers.py": helper.format(1), "tests/test_a.py": test})
+    after = _Tree({"tests/helpers.py": helper.format(2), "tests/test_a.py": test})
+    got = _changed(test, test, "tests/test_a.py", before, after)
+    assert got == ["test_a"], f"a changed helper behind a star import listed {got}, not test_a"
+    assert _changed(test, test, "tests/test_a.py", before, before) == [], (
+        "an unchanged star import listed a test"
+    )
+
+
+def test_a_row_of_any_notes_file_of_the_change_counts_for_a_unit_and_the_tool_says_so():
+    """The limit (round 14, C5): the notes files of the change are read as ONE table, so a row of an older batch's
+    notes file serves a unit that a later batch changed again. The tool cannot tell batches apart (the change is
+    read against the merge base, not against the last batch), so the limit is stated in its docstring."""
+    row_old = "| tests/test_x.py | `test_b` | changed | killing mutant: B1 `old batch` |\n"
+    marked = f"{nlc._FOLDER_MARK}handover/evidence/Q/b3\n{row_old}"
+    assert nlc.problems(["test_b"], [], marked, "tests/test_x.py") == [], (
+        "a row of an older notes file was refused"
+    )
+    assert "ONE table" in (nlc.__doc__ or ""), "the limit of the one table is not stated"
