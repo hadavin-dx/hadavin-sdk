@@ -1,0 +1,346 @@
+ DeepSource Code Review 
+ We reviewed changes in 1dfaa74...ca6edf0 on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments. 
+ See full review on DeepSource  ↗ 
+> [!IMPORTANT]
+> Some issues found as part of this review are outside of the diff in this pull request and aren't shown in the inline review comments due to GitHub's API limitations. You can see those issues on the DeepSource dashboard.
+ PR Report Card 
+ Overall Grade    
+ Focus Area: Reliability
+ Security   
+ Reliability   
+ Complexity   
+ Hygiene   
+ Feedback 
+ JavaScript scoping and error handling 
+ The JS issues cluster around loose scoping and lifecycle: Portal not defined, booted used before definition, lots of implicit var via missing let/const , and functions declared in loops. They’re all symptoms of relying on implicit, mutable globals. 
+ Being deliberate about scope and declaration in the portal code would likely clear most of these in one pass. 
+ Retry/exception structure in Python 
+ The overlapping exceptions, unused tries variables, cell var tries_now in a loop, and handlers that immediately re‑raise all show the same thing: retry and error paths are a bit tangled across modules. 
+ Stepping back once to align how retries and exception hierarchies work would simplify the logic and avoid subtle reliability bugs. 
+ Code Review Summary 
+ Analyzer 
+ Status 
+ Updated (UTC) 
+ Details 
+ Secrets 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Docker 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ansible 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C & C++ 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Go 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Java 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Lua 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PHP 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ruby 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Swift 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Terraform 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Shell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Rust 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PowerShell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Objective-C 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ JavaScript 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Groovy 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Elixir 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ CSS 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Apex 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C# 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Dart 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Erlang 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Helm 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Kotlin 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Perl 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Python 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Scala 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ SQL 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ VB.NET 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
+ DeepSource Code Review 
+ We reviewed changes in ca6edf0...1ca303a on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments. 
+ See full review on DeepSource  ↗ 
+ PR Report Card 
+ Overall Grade    
+ Focus Area: Reliability
+ Security   
+ Reliability   
+ Complexity   
+ Hygiene   
+ Feedback 
+ Demo-only code still affects runtime safety 
+ The issues span JS ( var usage, unused error e ) and Python (tuple unpacking bug, redefining format ), all inside demo_only . So even “just demo” paths contain things that can throw or behave oddly if someone runs them as-is. 
+ Worth treating this folder as runnable code: small hygiene fixes here prevent surprising failures during demos or quick experiments. 
+ Code Review Summary 
+ Analyzer 
+ Status 
+ Updated (UTC) 
+ Details 
+ Secrets 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Docker 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ansible 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C & C++ 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Go 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Java 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Lua 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PHP 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ruby 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Swift 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Terraform 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Shell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Rust 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PowerShell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Objective-C 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ JavaScript 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Groovy 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Elixir 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ CSS 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Apex 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C# 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Dart 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Erlang 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Helm 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Kotlin 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Perl 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Python 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Scala 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ SQL 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ VB.NET 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
+ DeepSource Code Review 
+ We reviewed changes in 1ca303a...bee6fff on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments. 
+ See full review on DeepSource  ↗ 
+> [!IMPORTANT]
+> Some issues found as part of this review are outside of the diff in this pull request and aren't shown in the inline review comments due to GitHub's API limitations. You can see those issues on the DeepSource dashboard.
+ PR Report Card 
+ Overall Grade    
+ Focus Area: Reliability
+ Security   
+ Reliability   
+ Complexity   
+ Hygiene   
+ Feedback 
+ Intentional rough edges in test scaffolding 
+ A bunch of issues cluster around “incomplete” or “loose” constructs in tests: empty shutdown /body, unused calls / session , next() without guarding, weird comparisons, redefining sql / format , exec , asserts, browser console , even the SQL-string helpers. 
+ Reads like a test harness that’s allowed to be sharp/low-ceremony. Worth deciding which of these are deliberate patterns vs accidental gotchas. 
+ Helper/test utilities accumulating quirks 
+ Several findings all land in shared helpers: tests/support.py has redefined names, potential SQL injection, asserts; class methods across many files don’t use self ; dict comprehensions over query results recur. 
+ Small choices in shared utils ripple widely; tightening or documenting those conventions once would clean up a lot of noise. 
+ Code Review Summary 
+ Analyzer 
+ Status 
+ Updated (UTC) 
+ Details 
+ Secrets 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Docker 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ansible 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C & C++ 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Go 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Java 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Lua 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PHP 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Ruby 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Swift 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Terraform 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Shell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Rust 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ PowerShell 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Objective-C 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ JavaScript 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Groovy 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Elixir 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ CSS 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Apex 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ C# 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Dart 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Erlang 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Helm 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Kotlin 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Perl 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Python 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ Scala 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ SQL 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+ VB.NET 
+ Nov 12, 2026 5:38p.m. 
+ Review  ↗ 
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
