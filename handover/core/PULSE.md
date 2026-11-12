@@ -4,3 +4,4 @@
 19:15Z ORDER 258: READY-TO-MERGE updated (#72 merged, #71 needs fix); builders for #71 fix and #72 nits started; stack builders told main=a8b4d8e8
 19:18Z part2 head e75f9f25 pushed, evidence runner started; part3 batch2 builder started; part5 gates queued
 19:23Z no builder pushes; stack 2 resumed; OQ-39; part5 gates still queued
+19:27Z ORDER 259 handled: OQ-39 answer relayed, priority heavy queue installed

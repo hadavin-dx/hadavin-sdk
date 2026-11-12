@@ -1,6 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:27Z (00:57 IST): status (ORDER 259 handled)
+- OQ-39 answered by the lead: do not rename around a ban. I read the ban text (pyproject.toml, banned-api) and the fold_view docstring (textnorm.py lines 837-841: names the redactor as the caller that asks for one view). Told the stack 2 builder: keep fold_view only if redact.py really walks every view one by one (cite the line in the P2d-1 notes); otherwise use the allowed forms; no exemption unless case (b), which the lead granted for redact.py only. PR 63 py312 test bug: derive the key from the pinned data, no weakening.
+- Heavy queue is now a PRIORITY queue: /home/user/build/heavy.sh reads priority from the folder name (1 #71/#72/Q8a-1/Q8c-1; 2 parts 2, 6, 3; 3 rebase stacks; 4 part 5; 5 AK1-a/AK-G2-a; 6 Q8b; 7 PRH/P3a-2) and waits while a higher-priority waiter lives; still at most 3 jobs. Old copy kept as heavy.sh.old-20261112. Limits: jobs already waiting under the old script keep their place; I tested only syntax (a smoke run waited because all 3 slots were busy), so a bug is possible: I will watch /tmp/heavy-wait.
+- No new builder will be started that needs a heavy slot while 3 higher-priority gates are queued; read-only work (reviews, triage docs) instead.
+
 ## 19:23Z (00:53 IST): status
 - Nothing new pushed by builders since the last block; load about 6.4 (heavy runs still queued). Running: part 3 batch 2, part 2 evidence runner, stack rebasers (stack 2 resumed after a partial hand-back: no rebased branch is pushed or tested yet), AK1-a, Q8b gate-fix, #71 fix, #72 nits, part 6 banner, AK-G2-a b2, Q8c-1 b16, P3a-2 b9, Q8a-1 b19 and Q8c-1 b15 evidence runners.
 - New lead question OQ-39 (fold vs fold_view ban, plus the cause of the PR 63 py312 CI failure: a test bug).
