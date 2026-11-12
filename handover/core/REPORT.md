@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 23:51Z (05:21 IST) / Part 6 round 5 done (3 Major + 2 Major, not clean); PR 71 and timing heads on remote refs
+FAILED / UNCERTAIN FIRST: (1) TIME STAMPS: my blocks headed 23:39Z and 23:45Z were written at about 23:37Z by the clock; they are dated ahead. The content is right, the stamps are wrong; this block uses the real clock. (2) Part 6 banner head 3d7967cb is NOT clean: round 5 found 0 Blocker and 5 Major (4 distinct: "connects to nothing" read from the prod table, allowed picture endings not content-checked, unreadable path skipped as gone, odd-banner tests pass for the wrong reason); resolve report written, fix batch 6 builder started; round 6 needed (mode-safety path). (3) Timing batch 3 86b94db0: Majors-only check 0 Blocker 0 Major, but its independent runner has not reported; E731 line and the 58 s figure still to fix. (4) Part 6 evidence runner (a686336c) still finishing; Part 2 batch 6 and Q8c-1 survivor fix still running.
+LEAD ACTIONS: none new. PR 71: fast-forward core/P0a to wip/cloud-p0a-merge-main = 47d74d26 (as in the 23:45Z block). Owner-only items unchanged.
+
+LIVE ITEMS (5): a0347669 Part 2 batch 6 builder (43 min); a35e15e9 Q8c-1 survivor fix (38 min); aafabf22 timing runner (19 min); a686336c Part 6 b5 runner; acd888f2 Part 6 batch 6 builder. Heavy slots: at most 3.
+ROUNDS: Part 6 round 5 done (WHY: mode-safety path, no cap, not clean, round 6 pending). Timing round 3 done (Majors only). Part 2 round 6 and Q8c-1 round 17 pending.
+FINISHED SINCE LAST BLOCK: pushed 47d74d26 to wip/cloud-p0a-merge-main; Part 6 round 5 design and codebase reviews saved; resolve report and ledger rows PDBANNER-r5-1..11 pushed.
+
 ## 23:45Z (05:15 IST) / PR 71 head and timing head are on remote refs (answer to LEAD NOTE 23:36Z)
 FAILED / UNCERTAIN FIRST: (1) My 23:39Z block said "push THAT head" but the sha was only local; that was my slip, fixed now. (2) Timing batch 3 is still NOT clean: independent runner aafabf22 has not reported; E731 line tests/test_migration_numbers.py:849 and the 58 s perf figure are still to fix (I do that after the runner, one push).
 LEAD ACTIONS: fast-forward core/P0a to `wip/cloud-p0a-merge-main` = 47d74d264a39a932bd90519cc3e71ea2e3cfb78e (verified with git ls-remote; descends from 04cfa501; handover-files check exit 0). Timing batch 3 is on `wip/cloud-timing-flake` = 86b94db0e2a6572d2dfd40efcc29ce01d7a0456d; do not open the PR yet. Owner-only items unchanged.
