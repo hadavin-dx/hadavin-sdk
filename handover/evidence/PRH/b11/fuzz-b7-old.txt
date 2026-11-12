@@ -1,0 +1,1 @@
+tree /home/user/build/b11-old | texts 3000 | strict withheld 155 | readable windows 0 | exceptions 0

@@ -1,0 +1,17 @@
+shape | chars | head median cpu | main median cpu | ratio
+S1 plain ASCII log | 262144 | 0.444 | 0.402 | 1.10
+S2 tab table | 262144 | 0.443 | 0.408 | 1.09
+S3 JSON lines | 262144 | 0.483 | 0.436 | 1.11
+S4 Hindi | 262144 | 0.849 | 0.809 | 1.05
+S5 Persian ZWNJ emoji | 262144 | 1.536 | 1.443 | 1.06
+H1 coloured output | 262144 | 0.747 | 0.243 | 3.07
+H2 colour inside a word | 262144 | 1.119 | 0.322 | 3.47
+H3 sgr0 inside a word | 262144 | 1.867 | 0.373 | 5.00
+H4 colourised log with sgr0 | 262144 | 1.163 | 0.331 | 3.52
+P1 one very long spaced run | 262144 | 0.590 | 0.523 | 1.13
+P2 32 medium spaced runs | 262144 | 0.426 | 0.245 | 1.74
+P3 32 spaced runs sharing a prefix | 262144 | 0.211 | 0.123 | 1.71
+P4 2000 values sharing 12 characters | 262144 | 0.596 | 0.503 | 1.19
+P5 encoded gaps in several views and a long run | 262144 | 1.856 | 0.446 | 4.16
+P6 40 held values of PEM size and a long text | 262144 | 0.712 | 0.578 | 1.23
+rc=0 head=784b573fc8310c554c74ef0e180a1951f811e6a3

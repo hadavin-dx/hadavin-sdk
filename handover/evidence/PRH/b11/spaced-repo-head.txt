@@ -1,0 +1,20 @@
+tree /home/user/build/B-PRH-b11/src/hadavin_sdk/guard/redact.py
+files=516 lines=92727 lines_with_a_spaced_run_at_all=50 lines_changed=23 changed_outside_handover=0
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:84: 'E         + key: `A K I A I O S F O D N N 7 E X A M P L E` end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:109: 'E         + key: *A K I A I O S F O D N N 7 E X A M P L E* end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:134: 'E         + key: **A K I A I O S F O D N N 7 E X A M P L E** end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:159: 'E         + key: _A K I A I O S F O D N N 7 E X A M P L E_ end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:184: 'E         + key: ~~A K I A I O S F O D N N 7 E X A M P L E~~ end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:209: 'E         + key: <A K I A I O S F O D N N 7 E X A M P L E> end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:234: 'E         + key: {A K I A I O S F O D N N 7 E X A M P L E} end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:259: 'E         + key: |A K I A I O S F O D N N 7 E X A M P L E| end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/failbefore-final-b10-b9-docs.txt:284: 'E         + key: `A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/spaced-repo-head.txt:5: "  changed: /home/user/build/B-PRH-b10/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:157: 'E   "
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/spaced-repo-head.txt:7: "  changed: /home/user/build/B-PRH-b10/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:222: 'E   "
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b10/spaced-repo-head.txt:8: "  changed: /home/user/build/B-PRH-b10/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:226: 'E   "
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:157: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:161: "E        +      where <built-in method replace of str object at 0x7fc0aa4c94d0> = 'key: A K I A I O "
+  changed: /home/user/build/b11-old/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:222: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+rc=0

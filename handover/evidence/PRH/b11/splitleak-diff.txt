@@ -1,0 +1,11 @@
+unique texts by (cell, hash): 5455 5455 5455 5455
+readable on head and NOT readable on main: 0 {}
+readable on main and NOT readable on head: 3194
+readable on head and NOT readable on ea6dbdaf: 0 {}
+readable on ea6dbdaf and NOT readable on head: 290
+readable on head and NOT readable on 5c430b6a (batch 10 head): 0 {}
+readable on 5c430b6a (batch 10 head) and NOT readable on head: 0
+readable on head: 321 {'split': 261, 'spaced_unknown': 40, 'opener_front': 15, 'spaced': 1, 'rand': 3, 'spaced_esc': 1}
+readable on main: 3515
+head readable split texts: 261 main readable split texts: 277
+withheld on head: 467 withheld on main: 0 withheld on old: 467

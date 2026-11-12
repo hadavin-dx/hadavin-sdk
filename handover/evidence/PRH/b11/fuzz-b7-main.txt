@@ -1,0 +1,1 @@
+tree /home/user/build/b11-wt-main | texts 3000 | strict withheld 0 | readable windows 1045 | exceptions 0

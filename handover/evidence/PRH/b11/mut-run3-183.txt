@@ -1,0 +1,3 @@
+ok  KILLED       183 the inside rule of backslash-e is gone (6 token characters on each side)  [test_b11_g8_the_inside_rule_reads_six_token_characters_on_each_side_an]
+1 of 1 good; problems: []
+rc=0

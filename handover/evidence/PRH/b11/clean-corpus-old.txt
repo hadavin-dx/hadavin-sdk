@@ -1,0 +1,5 @@
+A no copy: texts=21783 withheld_or_error=63 share=0.00289
+B one copy: texts=21783 withheld_or_error=63 share=0.00289
+C opener + copy: texts=21783 withheld_or_error=21783 share=1.00000
+D opener + copy, everyday secret: texts=21783 withheld_or_error=226 share=0.01038
+tree /home/user/build/b11-old
