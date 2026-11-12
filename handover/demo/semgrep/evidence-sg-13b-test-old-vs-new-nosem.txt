@@ -1,0 +1,42 @@
+$ python cmp.py  (OLD tests/test_nosemgrep_form.py _bad() = searched only the word nosemgrep, vs NEW _bad(), one scratch git repo per shape; only the new short-form shapes)
+shape | old test catches it | new test catches it
+extra-letters                  | MISSED | caught
+extra-letters-after-grep       | caught | caught
+half-word                      | MISSED | caught
+mixed-case-short               | MISSED | caught
+short-block-bare               | MISSED | caught
+short-block-colon-empty        | MISSED | caught
+short-crlf-bare                | MISSED | caught
+short-crlf-colon-empty         | MISSED | caught
+short-dash-text                | MISSED | caught
+short-equals-id                | MISSED | caught
+short-hash-bare                | MISSED | caught
+short-hash-colon-empty         | MISSED | caught
+short-hash-colon-space-empty   | MISSED | caught
+short-hash-no-space-bare       | MISSED | caught
+short-hash-reason-no-id        | MISSED | caught
+short-hash-text-after          | MISSED | caught
+short-hash-undotted-id         | MISSED | caught
+short-line-above-bare          | MISSED | caught
+short-line-bare                | MISSED | caught
+short-second-mention-bare      | MISSED | caught
+short-tab-bare                 | MISSED | caught
+upper-case-long                | MISSED | caught
+upper-case-short               | MISSED | caught
+words-before-bare              | MISSED | caught
+good shapes (must NOT be flagged): old / new
+block-comment                  | ok | ok
+crlf-with-id                   | ok | ok
+hash-comment                   | ok | ok
+hash-no-space                  | ok | ok
+id-at-end-of-line              | ok | ok
+line-comment                   | ok | ok
+short-block                    | ok | ok
+short-crlf                     | ok | ok
+short-hash                     | ok | ok
+short-hash-no-space            | ok | ok
+short-line                     | ok | ok
+
+$ pytest tests/test_nosemgrep_form.py (new)
+......................................................                   [100%]
+54 passed in 0.53s

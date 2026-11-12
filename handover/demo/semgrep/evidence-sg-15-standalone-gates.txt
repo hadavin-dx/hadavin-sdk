@@ -1,0 +1,16 @@
+== STANDALONE: fresh 0841f36 clone + semgrep-rebased.patch
+$ gitleaks dir . (tracked+new files, from the root, like lint.yml)
+[90m9:53PM[0m [32mINF[0m [1mno leaks found[0m
+$ gitleaks git .
+[90m9:53PM[0m [32mINF[0m [1mno leaks found[0m
+$ ruff check / ruff format --check
+All checks passed!
+130 files already formatted
+$ mypy --platform linux / win32
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+$ pytest tests/test_hygiene.py tests/test_nosemgrep_form.py tests/test_gitleaks_semgrep_lock.py
+..................................................................       [100%]
+66 passed in 38.21s
+$ pytest -k exceptions_narrow
+1 passed, 9 deselected in 0.34s

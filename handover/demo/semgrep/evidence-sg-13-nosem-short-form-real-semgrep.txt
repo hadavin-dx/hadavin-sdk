@@ -1,0 +1,47 @@
+$ semgrep --version  -> 1.185.0 (venv /tmp/work/sg2-venv-sg, the install of evidence-sg-1)
+$ semgrep scan --metrics=off --disable-version-check --quiet --json --config rules.yml t   (LOCAL made-up rule demo.no-boom matching boom(...), python+javascript; no registry). Which files still report the finding after a short-form comment:
+t/js_nosem_above.js                '// nosem\nboom(1);'                                    suppressed
+t/js_nosem_block.js                'boom(1);  /* nosem */'                                 suppressed
+t/js_nosem_block_colon.js          'boom(1);  /* nosem: */'                                FINDING REPORTED
+t/js_nosem_id.js                   'boom(1);  // nosem: demo.no-boom'                      suppressed
+t/js_nosem_line.js                 'boom(1);  // nosem'                                    suppressed
+t/js_nosem_nospace.js              'boom(1);  //nosem'                                     FINDING REPORTED
+t/py_nosem_above.py                '# nosem\nboom(1)'                                      suppressed
+t/py_nosem_bare.py                 'boom(1)  # nosem'                                      suppressed
+t/py_nosem_colon_empty.py          'boom(1)  # nosem:'                                     suppressed
+t/py_nosem_colon_id.py             'boom(1)  # nosem: demo.no-boom'                        suppressed
+t/py_nosem_colon_space_empty.py    'boom(1)  # nosem:'                                     suppressed
+t/py_nosem_colon_wrong.py          'boom(1)  # nosem: demo.other'                          FINDING REPORTED
+t/py_nosem_comma.py                'boom(1)  # nosem: demo.other,demo.no-boom'             suppressed
+t/py_nosem_crlf.py                 'boom(1)  # nosem'                                      suppressed
+t/py_nosem_equals.py               'boom(1)  # nosem=demo.no-boom'                         suppressed
+t/py_nosem_nospace.py              'boom(1)  #nosem'                                       FINDING REPORTED
+t/py_nosem_reason.py               'boom(1)  # nosem: because'                             FINDING REPORTED
+t/py_nosem_tab.py                  'boom(1)  #\tnosem'                                     FINDING REPORTED
+t/py_nosem_text.py                 'boom(1)  # nosem because'                              suppressed
+t/py_nosem_two.py                  'boom(1)  # nosem: demo.no-boom reason # nosem'         suppressed
+t/py_nosemg.py                     'boom(1)  # nosemg'                                     suppressed
+t/py_nosemgre.py                   'boom(1)  # nosemgre'                                   suppressed
+t/py_nosemgrepx.py                 'boom(1)  # nosemgrepx'                                 suppressed
+t/py_nosemx.py                     'boom(1)  # nosemx'                                     suppressed
+t/py_prefix_text.py                'boom(1)  # text nosem'                                 suppressed
+t/py_xnosem.py                     'boom(1)  # xnosem'                                     FINDING REPORTED
+errors: []
+t2/colon_nospace_id.py              'boom(1)  # nosem:demo.no-boom'                         suppressed
+t2/colon_undotted.py                'boom(1)  # nosem: demo'                                FINDING REPORTED
+t2/dash.py                          'boom(1)  # nosem-foo'                                  suppressed
+t2/dot.py                           'boom(1)  # nosem.'                                     suppressed
+t2/js_block_colon_id.js             'boom(1);  /* nosem: demo.no-boom */'                   suppressed
+t2/js_block_x.js                    'boom(1);  /* nosemgrep: */'                            FINDING REPORTED
+t2/js_tab.js                        'boom(1);  //\tnosem'                                   FINDING REPORTED
+t2/mixed.py                         'boom(1)  # NoSem'                                      suppressed
+t2/py_nosem_equals_wrong.py         'boom(1)  # nosem=demo.other'                           FINDING REPORTED
+t2/py_nosemgrep_equals.py           'boom(1)  # nosemgrep=demo.other'                       FINDING REPORTED
+t2/py_x_nosem_in_text.py            'boom(1)  # see nosem docs'                             suppressed
+t2/str_nosem.py                     "boom('nosem')"                                         FINDING REPORTED
+t2/under.py                         'boom(1)  # nosem_x'                                    suppressed
+t2/upper.py                         'boom(1)  # NOSEM'                                      suppressed
+t2/upper_grep.py                    'boom(1)  # NOSEMGREP'                                  suppressed
+errors: []
+
+ANSWER: yes, bare nosem suppresses (# nosem, // nosem, /* nosem */, line above, colon empty, colon+space empty, CRLF, any case, any letters after nosem, nosem=<id>). Not suppressed: #nosem / //nosem (no space), tab before the word, /* nosem: */ (colon then */ read as an id), reason without id, wrong id, undotted id.

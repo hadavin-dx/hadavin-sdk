@@ -1,0 +1,41 @@
+== STANDALONE tree (semgrep-rebased.patch): mutants of the real .gitleaks.toml, gitleaks 8.30.1
+### UNMUTATED (both tests)
+2 passed in 5.98s
+
+### MUTANT: left anchor removed (the old r2 regex) -> test_semgrep_lock_allowances_are_narrow must FAIL
+E           AssertionError: hex-before-the-hash
+1 failed, 1 deselected in 0.87s
+
+### MUTANT: line rule widened to any text after 32 hex -> test_semgrep_lock_allowances_are_narrow must FAIL
+E           AssertionError: 40-hex-after-the-prefix
+1 failed, 1 deselected in 2.02s
+
+### MUTANT: path rule widened to any file -> test_semgrep_lock_allowances_are_narrow must FAIL
+E       AssertionError: []
+1 failed, 1 deselected in 3.99s
+
+### MUTANT: hostname rule widened to any text -> test_semgrep_lock_allowances_are_narrow must FAIL
+E       AssertionError: set()
+1 failed, 1 deselected in 4.35s
+
+== ON-V4 tree (semgrep-on-v4.patch, after codeant3-gitleaks + docs-and-deps v4)
+### UNMUTATED (both tests)
+2 passed in 5.71s
+
+### MUTANT: left anchor removed (the old r2 regex) -> test_semgrep_lock_allowances_are_narrow must FAIL
+E           AssertionError: hex-before-the-hash
+1 failed, 1 deselected in 0.84s
+
+### MUTANT: line rule widened to any text after 32 hex -> test_semgrep_lock_allowances_are_narrow must FAIL
+E           AssertionError: 40-hex-after-the-prefix
+1 failed, 1 deselected in 1.90s
+
+### MUTANT: path rule widened to any file -> test_semgrep_lock_allowances_are_narrow must FAIL
+E       AssertionError: []
+1 failed, 1 deselected in 3.92s
+
+### MUTANT: hostname rule widened to any text -> test_semgrep_lock_allowances_are_narrow must FAIL
+E       AssertionError: set()
+1 failed, 1 deselected in 4.19s
+
+## the second test (test_widening_an_allowance_makes_the_negative_cases_pass) is the in-repo mutant check: it widens the allowances by itself and fails if a negative case is still reported.

@@ -1,0 +1,16 @@
+== MERGED (final files): fresh 0841f36 + triage/codeant3-gitleaks.patch (sha256 ceef4bcf...) + fixes/docs-and-deps.patch (v4, sha256 e4e227a4...) + semgrep/semgrep-on-v4.patch
+$ gitleaks dir . (tracked+new files, from the root, like lint.yml)
+[90m9:55PM[0m [32mINF[0m [1mno leaks found[0m
+$ gitleaks git .
+[90m9:55PM[0m [32mINF[0m [1mno leaks found[0m
+$ ruff check / ruff format --check
+All checks passed!
+130 files already formatted
+$ mypy --platform linux / win32
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+$ pytest tests/test_hygiene.py tests/test_nosemgrep_form.py tests/test_gitleaks_semgrep_lock.py
+......................................................................   [100%]
+70 passed in 37.50s
+$ pytest -k exceptions_narrow
+1 passed, 13 deselected in 0.04s
