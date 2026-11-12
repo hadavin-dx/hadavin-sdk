@@ -1,6 +1,41 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:47Z / 02:17 IST - LANE 12 DONE: **NO SCRIPT EXECUTED** in a real browser; one layout bug (long names); lane 13 (fix + test) started; 8 agents live
+ANSWER first (EVIDENCE RUNNER, xss/SUMMARY.md; Chromium 153 headless via Playwright 1.63.0 on pr-3-tests 558d37f; pushed): **no script executed.** 24 page visits (2 colour schemes x masking on/off x 6 pages: Overview, Leads, Needs a person, Request log, Data and AI, Demo controls) plus a side panel for each of the 24 leads per combination: 0 dialogs, 0 console errors, 0 page errors, `window.__xss` stayed undefined, and NO parsed `script`, `img[src=x]`, `iframe`, `svg[onload]`, `[onerror]`, `[onload]` element: the hostile strings show as visible TEXT. Headers (all pages and JSON): `X-Content-Type-Options: nosniff`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a strict CSP (`script-src 'self'`, `default-src 'none'`); JSON is `application/json` with no charset. JS sinks (reading, not proof): no innerHTML, outerHTML, insertAdjacentHTML, document.write, eval or new Function; data goes in through text nodes, an attribute allowlist and in-page-only `href`. Not checked: Firefox, WebKit, Windows, the email in a mail client, other fields as hostile (CRM id, request number, phone), search box and hash-route injection, running with the CSP removed.
+FAILED / SURPRISES first:
+1. **MIS-RENDER (real, layout):** in the lead side panel the title is ONE unbroken string: an accepted 100 or 200 character name without spaces (unmasked) makes `.drawer-head` scrollWidth 1623 and 3097 against 599 px: the name runs out of both sides (start cut off at the left edge) and the status chip and close button are pushed far right (screenshots drawer-*-unmasked-len200.png). A 120-character name WITH spaces is fine; masked is fine. The close button is still on screen at 1280 px. **Lane 13 (builder + fresh reviewer): the smallest CSS fix + a browser test that FAILS before and PASSES after (light and dark), a control for the 390 px overflow, overlap checks with js-portal/codeant-portal-log/lane 8 patches.**
+2. The desk REFUSED: the 2000-character name (`bad_field:name`; 100 and 200 accepted, 500 and 1000 refused; the exact cap not located), the name with U+202E and zero-width characters (`bad_field:name`: so right-to-left override rendering was NOT tested), the spaces-only name (`incomplete:name`).
+3. Company text is NEVER masked: hostile company text shows in the Leads table even with 'Hide names and email addresses' on (the docs say so).
+4. The Leads page overflows horizontally at 390 px in all four scheme/masking combinations; no control run with harmless names (lane 13 does it).
+5. The demo outbox records hold only key, to and subject (no body): subjects carry the hostile text raw; `{7*7}` was NOT evaluated.
+6. Hygiene: `pip install playwright==1.63.0` was not hash-locked (evidence-run install); reset.sh run; no live process of the lane left, port 8765 refuses; 3 `[chrome-headless] <defunct>` zombie entries (pids 15338, 15339, 15359) were seen at the time, older than its processes: I checked just now and none are listed any more.
+- For the video: the portal is safe against script injection in names; show a normal-length hostile name (it renders as visible text), not 100+ characters without spaces until lane 13's CSS fix is applied.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:47Z / 02:17 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c | 20:34 | 17 min | 21:34 | running | docs-and-deps patch v3 | working |
+| ad08257c8fb71e8e6 (agent, sonnet evidence runner) | INT-1 integration check (full suite) | 20:37 | 15 min | 21:20 | running | INT-1.md | its pytest |
+| a08f78b6fdbcafa02 / a591633581b6ca994 / a32807ac2dbab0268 (3 egm reviewers, read-only) | CodeAnt review A / B / C | 20:47 | 5 min | about 20:59 | running | REVIEW-codeant-A/B/C.md | working |
+| a9ea5d0e2f939999a (egm reviewer, read-only) | lane 7 security review round 3 | 20:51 | 1 min | 21:03 | running | coverage/REVIEW-3.md | working |
+| ae90d2402dcf380a0 (agent, sonnet builder) | lane 13 drawer long-name CSS fix + test | 20:47 | 0 min | +40 min | running | layout/drawer-long-name.patch, SUMMARY.md | started |
+Totals: agents live 7; shells 0; pytest 1 (INT-1) plus lane 13's later; one browser (lane 13 later); containers 0; load average 0.48, 0.90, 1.40; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 12 / 13 (hostile text, layout) | lane 13 fix round 1 | lane 12: 0 script, 1 layout bug | layout (long unbroken text) | a real bug found by an evidence run; fix + test + one fresh review | one round then fixes (D5) unless a Major | no Major/Blocker |
+| lane 7 Sonar | review 3 running | r1 0B/1M/8N; r2 0B/1M/7N | see earlier | security path | no cap | review without Major/Blocker |
+| lane 8 browser tests | fix round 8c | v1 0B/3M/8N; v2 0B/3M/8N | see earlier | changed test + new lock | no cap | review without Major/Blocker |
+| CodeAnt | review 1 (3 reviewers) | n/a | n/a | 10 patches | one round then fixes unless a Major | no Major/Blocker |
+| batch 1 | integration check 1: apply parts green; suite running | n/a | n/a | D13 | n/a | suite line, then you apply |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| ab29dfe609d71d092 (lane 12, sonnet evidence runner) | 8 min (20:42 to 20:50) | NO script executed; 1 layout bug; 6 surprises; xss/SUMMARY.md | yes |
+
 ## 2026-11-12 20:47Z / 02:17 IST - LANE 7c DONE (coverage patch v3): the round-2 Major is closed by pip itself; round-3 security review started; 8 agents live
 FAILED / UNVERIFIED first (builder's words; unreviewed):
 - UNVERIFIED: sonar-scanner accepting coverage.xml; the empty `<source/>` entry; that the action SHAs belong to the named actions; the real scan and run time on a hosted runner; the pip version that setup-python ships on the runner.
