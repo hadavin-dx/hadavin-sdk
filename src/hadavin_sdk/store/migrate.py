@@ -29,10 +29,12 @@ Not proven yet: rows 1 and 2 are backed by unit tests of the rules, by the real-
 and by a generated test matrix of 18 kinds of excess (rights on tables, columns, sequences, a function and the schema,
 and default rights) brought in 6 ways (a plain file, dynamic SQL, a trigger on the ledger, a deferred trigger, a rule,
 and the state made by hand before the run), with and without the role arguments, plus 200 seeded compositions of two
-or three of them. The matrix does not yet cover: role memberships, handing an object to another owner, large objects,
-SECURITY DEFINER functions, a role switch, move-and-recreate, an extension member, foreign servers, languages,
-tablespaces, parameters, and clean controls K2 to K12 of the ticket (7.4). The package must not be called done
-without them.
+or three of them. The matrix does not yet cover: memberships through a group that holds rights, SECURITY DEFINER functions, a role
+switch, move-and-recreate, an extension member, a temporary table named like a catalog table, foreign servers,
+languages, tablespaces, parameters, and the clean controls K2 to K12 of the ticket (7.4). States an administrator made
+before the run are covered for nine kinds (a right on the database or another schema, a large object, an owner handed
+over, a built-in role, a role with a flag, a flag on the named role, a default right set by another role); those aimed
+at a named role are tried only when the role argument names it. The package must not be called done without the rest.
 
 What `migrate` does, in order (step 0 before it connects, then steps 1 to 8; the numbers are the ones of the ticket and of
 the comments in `migrate()`; each refusal before the commit keeps nothing):
