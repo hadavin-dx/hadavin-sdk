@@ -1,0 +1,17 @@
+variant=fixed
+dir exit=1 findings=7
+  dir  ('generic-api-key', 'docs/x.properties', 1, '')
+  dir  ('generic-api-key', 'docs/y.properties', 1, '')
+  dir  ('generic-api-key', 'old-sonar-project.properties', 1, '')
+  dir  ('sonar-api-token', 'sonar-project.properties', 13, '')
+  dir  ('generic-api-key', 'sonar-project.properties', 14, '')
+  dir  ('generic-api-key', 'sonar-project.properties', 15, '')
+  dir  ('sonar-api-token', 'sub/sonar-project.properties', 2, '')
+git exit=1 findings=7
+  git  ('generic-api-key', 'docs/x.properties', 1, '1d97836')
+  git  ('generic-api-key', 'docs/y.properties', 1, '1d97836')
+  git  ('generic-api-key', 'old-sonar-project.properties', 1, '1d97836')
+  git  ('sonar-api-token', 'sonar-project.properties', 13, '1d97836')
+  git  ('generic-api-key', 'sonar-project.properties', 14, '1d97836')
+  git  ('generic-api-key', 'sonar-project.properties', 15, '1d97836')
+  git  ('sonar-api-token', 'sub/sonar-project.properties', 2, '1d97836')

@@ -1,0 +1,20 @@
+variant=orig
+dir exit=1 findings=8
+  dir  ('generic-api-key', 'docs/x.properties', 1, '')
+  dir  ('generic-api-key', 'docs/y.properties', 1, '')
+  dir  ('generic-api-key', 'old-sonar-project.properties', 1, '')
+  dir  ('generic-api-key', 'sonar-project.properties', 4, '')
+  dir  ('sonar-api-token', 'sonar-project.properties', 13, '')
+  dir  ('generic-api-key', 'sonar-project.properties', 14, '')
+  dir  ('generic-api-key', 'sonar-project.properties', 15, '')
+  dir  ('sonar-api-token', 'sub/sonar-project.properties', 2, '')
+git exit=1 findings=9
+  git  ('generic-api-key', 'docs/x.properties', 1, 'e3cbda9')
+  git  ('generic-api-key', 'docs/y.properties', 1, 'e3cbda9')
+  git  ('generic-api-key', 'old-sonar-project.properties', 1, 'e3cbda9')
+  git  ('generic-api-key', 'sonar-project.properties', 4, 'a0b97a4')
+  git  ('generic-api-key', 'sonar-project.properties', 4, '7ec367b')
+  git  ('sonar-api-token', 'sonar-project.properties', 13, 'e3cbda9')
+  git  ('generic-api-key', 'sonar-project.properties', 14, 'e3cbda9')
+  git  ('generic-api-key', 'sonar-project.properties', 15, 'e3cbda9')
+  git  ('sonar-api-token', 'sub/sonar-project.properties', 2, 'e3cbda9')

@@ -1,0 +1,19 @@
+LINE regex (original, flags none): ^sonar\.projectKey=hadavin-dx_[a-z0-9-]+$
+   True sonar.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n
+   True sonar.projectKey=hadavin-dx_<made-up>
+   False sonar.token=AAAAA
+   False sonar.projectKey=OtherPrefix_x1
+  with leading newline as gitleaks 'line' carries it: False ; with (?m): True
+MATCH regex (fix): ^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$
+   True sonar.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n
+   False sonar.projectKey=hadavin-dx_<made-up>
+   False sonar.token=AAAAA
+   False sonar.projectKey=OtherPrefix_x1
+PATH regex: (^|[/\\])sonar-project\.properties$
+   True sonar-project.properties
+   True sub/sonar-project.properties
+   False old-sonar-project.properties
+   False docs/x.properties
+   True a\sonar-project.properties
+   False sonar-project.properties.bak
+   False xsonar-project.properties

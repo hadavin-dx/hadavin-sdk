@@ -1,0 +1,3 @@
+88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509  /tmp/work/gl/gitleaks
+8.30.1
+git head: 558d37fe5372f8c378e7ea07c6193a738f4497ed; commits: 14; shallow: false

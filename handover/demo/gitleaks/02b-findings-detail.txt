@@ -1,0 +1,32 @@
+dir long-hex-token .pytest_cache/CACHEDIR.TAG 1  REDACTED 3.5428379
+dir hardcoded-url .pytest_cache/CACHEDIR.TAG 4  REDACTED 4.121219
+dir hardcoded-hostname .pytest_cache/CACHEDIR.TAG 4  bford.REDACTED/ 2
+dir hardcoded-url .pytest_cache/README.md 8  REDACTED 4.0514245
+dir hardcoded-hostname .pytest_cache/README.md 8  docsREDACTED.org/ 2.5216405
+dir hardcoded-absolute-path demo_only/__pycache__/__init__.cpython-312.pyc 2  REDACTED 3.121928
+dir generic-api-key sonar-project.properties 4  sonar.projectKey=REDACTED 4.1037016
+dir hardcoded-absolute-path src/lead_desk/__pycache__/hooks.cpython-312.pyc 5  REDACTED 3.121928
+dir hardcoded-absolute-path src/lead_desk/__pycache__/gate.cpython-312.pyc 13  REDACTED 3.121928
+dir hardcoded-url tests/__pycache__/test_hygiene.cpython-312-pytest-9.2.0.pyc 149  REDACTED 3.8488846
+dir hardcoded-email tests/__pycache__/test_hygiene.cpython-312-pytest-9.2.0.pyc 114  REDACTED 3.169925
+dir hardcoded-absolute-path tests/__pycache__/test_hygiene.cpython-312-pytest-9.2.0.pyc 7  REDACTED 3.121928
+dir long-hex-token tests/__pycache__/test_hygiene.cpython-312-pytest-9.2.0.pyc 149  REDACTED 3.321928
+dir long-hex-token tests/__pycache__/test_hygiene.cpython-312-pytest-9.2.0.pyc 149  REDACTED 3.75
+dir hardcoded-url src/lead_desk/__pycache__/server.cpython-312.pyc 340  REDACTED 2.8553886
+dir hardcoded-url src/lead_desk/__pycache__/constants.cpython-312.pyc 5  REDACTED 3.697846
+dir hardcoded-url src/lead_desk/__pycache__/constants.cpython-312.pyc 6  REDACTED 3.7034652
+dir hardcoded-hostname tools/__pycache__/hygiene.cpython-312.pyc 7  private-hostREDACTED.invalid/ 2.321928
+dir hardcoded-absolute-path tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 2.75
+dir hardcoded-absolute-path tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 2.842371
+dir hardcoded-absolute-path tools/__pycache__/hygiene.cpython-312.pyc 8  REDACTED 3.121928
+dir long-hex-token tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 4
+dir hardcoded-url tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 4.7861366
+dir hardcoded-email tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 3.4713545
+dir hardcoded-email tools/__pycache__/hygiene.cpython-312.pyc 7  REDACTED 3.4104173
+dir hardcoded-absolute-path src/lead_desk/__pycache__/desk.cpython-312.pyc 13  REDACTED 3.121928
+dir hardcoded-email tests/__pycache__/support.cpython-312.pyc 10  REDACTED 3.5337713
+dir hardcoded-email tests/__pycache__/support.cpython-312.pyc 10  REDACTED 3.7345216
+dir hardcoded-absolute-path tests/__pycache__/support.cpython-312.pyc 8  REDACTED 3.121928
+dir hardcoded-email tools/__pycache__/scrub_n8n_export.cpython-312.pyc 18  REDACTED 3.458525
+git generic-api-key sonar-project.properties 4 7ec367b sonar.projectKey=REDACTED 4.1037016
+git generic-api-key sonar-project.properties 4 a0b97a4 sonar.projectKey=REDACTED 4.1037016

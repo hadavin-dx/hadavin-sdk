@@ -1,0 +1,9 @@
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+8:17PM INF scanned ~2681136 bytes (2.68 MB) in 430ms
+8:17PM INF no leaks found
+EXIT=0
+$ gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+8:17PM INF 14 commits scanned.
+8:17PM INF scanned ~5349673 bytes (5.35 MB) in 787ms
+8:17PM INF no leaks found
+EXIT=0

@@ -1,0 +1,4 @@
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+[90m8:14PM[0m [32mINF[0m [1mscanned ~2681117 bytes (2.68 MB) in 386ms[0m
+[90m8:14PM[0m [33mWRN[0m [1mleaks found: 1[0m
+EXIT=1
