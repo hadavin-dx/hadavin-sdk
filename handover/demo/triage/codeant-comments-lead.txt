@@ -1,0 +1,662 @@
+##### PR 2 inline review comments
+--- .gitleaks.toml:91 
+**Suggestion:** Because these paths are not anchored, `docs/requirements-dev.txt` is also exempt; matching 40- or 64-character hex tokens there bypass the secret scan.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=362e06eedab544b78f00f4e8ab1779a3&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=362e06eedab544b78f00f4e8ab1779a3&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** .gitleaks.toml
+**Line:** 91:91
+**Comment:**
+	*Security: Because these paths are not anchored, `docs/requirements-dev.txt` is also exempt; matching 40- or 64-character hex tokens there bypass the secret scan.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=2766f0a36f8a2ec07ed0c59c0faa9a4ab8c5dd1ad77f5204fc808c3632b40399&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=2766f0a36f8a2ec07ed0c59c0faa9a4ab8c5dd1ad77f5204fc808c3632b40399&reaction=dislike'>👎</a>
+
+--- scripts/n8n_api.py:32 
+**Suggestion:** `N8N_URL` can name a remote HTTP server, so this sends the API key without encryption; anyone observing that network traffic can steal it.
+
+**Assessment:** 🔴 `Critical` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=77393c48856b4cb1a90f1da0baa66226&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=77393c48856b4cb1a90f1da0baa66226&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** scripts/n8n_api.py
+**Line:** 32:32
+**Comment:**
+	*Security: `N8N_URL` can name a remote HTTP server, so this sends the API key without encryption; anyone observing that network traffic can steal it.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=19630f51bde100be16f76d4f0fde394a6fe0dcbb5a3bb8a6de8a29b1f1197f81&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=19630f51bde100be16f76d4f0fde394a6fe0dcbb5a3bb8a6de8a29b1f1197f81&reaction=dislike'>👎</a>
+
+--- tools/scrub_n8n_export.py:40 
+**Suggestion:** `URL` ignores schemes other than HTTP and HTTPS, so an FTP or file URL in node parameters retains its host, path, or embedded credentials in the public export.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=a730522347064bbfbc6da8469870dafa&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=a730522347064bbfbc6da8469870dafa&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** tools/scrub_n8n_export.py
+**Line:** 40:40
+**Comment:**
+	*Security: `URL` ignores schemes other than HTTP and HTTPS, so an FTP or file URL in node parameters retains its host, path, or embedded credentials in the public export.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=784f73f6a4cd6e8e420be18819a067c242ecd733b13621fc55c533aae3bc2f04&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=784f73f6a4cd6e8e420be18819a067c242ecd733b13621fc55c533aae3bc2f04&reaction=dislike'>👎</a>
+
+--- tools/scrub_n8n_export.py:41 
+**Suggestion:** `MAIL` treats a word boundary after `example.com` as an allowed-domain end, so `user@example.com.evil` survives scrubbing and can be published.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=d670d2fcc6c747739846991f8a214f99&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=d670d2fcc6c747739846991f8a214f99&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** tools/scrub_n8n_export.py
+**Line:** 41:41
+**Comment:**
+	*Security: `MAIL` treats a word boundary after `example.com` as an allowed-domain end, so `user@example.com.evil` survives scrubbing and can be published.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=58371e4963299eeb6e39fda464ce423d17254b09975867b1e1fc4993f2fbe526&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=58371e4963299eeb6e39fda464ce423d17254b09975867b1e1fc4993f2fbe526&reaction=dislike'>👎</a>
+
+--- docs/settings.md:120 
+**Suggestion:** This says a successful run leaves no contacts behind, but without <code>--cleanup</code> the script keeps every contact and still returns 0.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Often` · 🏷️ `Comment mismatch`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=c0277d53d04a4147af48a10bf67d3c10&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=c0277d53d04a4147af48a10bf67d3c10&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** docs/settings.md
+**Line:** 120:120
+**Comment:**
+	*Comment Mismatch: This says a successful run leaves no contacts behind, but without <code>--cleanup</code> the script keeps every contact and still returns 0.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=44d13f04eb22b5226b9e602900678ba51e169177115043380f4193b4cd129d81&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=44d13f04eb22b5226b9e602900678ba51e169177115043380f4193b4cd129d81&reaction=dislike'>👎</a>
+
+--- src/lead_desk/desk.py:397 
+**Suggestion:** `:memory:` creates a separate SQLite database for each thread-local connection. Startup initializes only one, so request and reaper threads encounter missing tables and cannot process leads.
+
+**Assessment:** 🔴 `Critical` · 🔁 `Occurrence: Rarely` · 🏷️ `Api mismatch`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=80459dbd2e6d4a628c11af2255d6a102&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=80459dbd2e6d4a628c11af2255d6a102&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** src/lead_desk/desk.py
+**Line:** 392:397
+**Comment:**
+	*Api Mismatch: `:memory:` creates a separate SQLite database for each thread-local connection. Startup initializes only one, so request and reaper threads encounter missing tables and cannot process leads.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=153cf4b3779f1b2e172560369945d74007b21063e702f9a5eea6489c74b91143&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=153cf4b3779f1b2e172560369945d74007b21063e702f9a5eea6489c74b91143&reaction=dislike'>👎</a>
+
+--- src/lead_desk/desk.py:785 
+**Suggestion:** A timed-out PATCH can outlive this pass. Without per-lead exclusivity, a newer stage PATCH can finish first, then the old status lands last while the database records the newer stage as copied.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Race condition`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=ea5d926c6f704768b035a2db37922672&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=ea5d926c6f704768b035a2db37922672&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** src/lead_desk/desk.py
+**Line:** 779:785
+**Comment:**
+	*Race Condition: A timed-out PATCH can outlive this pass. Without per-lead exclusivity, a newer stage PATCH can finish first, then the old status lands last while the database records the newer stage as copied.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=d3dfb6724d5beecc4708a912022c64c6c3f572254a9817731a57cf466ef2e47e&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=d3dfb6724d5beecc4708a912022c64c6c3f572254a9817731a57cf466ef2e47e&reaction=dislike'>👎</a>
+
+--- scripts/reset.ps1:20 
+**Suggestion:** `GetFullPath` does not resolve junctions or symlinks, so a database directory redirected outside `data` passes this check and reset can delete files there.
+
+**Assessment:** 🔴 `Critical` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=3ea1bf10252a4f2cbcd853b3344b6c0f&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=3ea1bf10252a4f2cbcd853b3344b6c0f&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** scripts/reset.ps1
+**Line:** 17:20
+**Comment:**
+	*Security: `GetFullPath` does not resolve junctions or symlinks, so a database directory redirected outside `data` passes this check and reset can delete files there.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=eedcdc67702976a0a95d8b79eb6281958e70aa5ca3116ee710cdba0ce8ed8c52&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=eedcdc67702976a0a95d8b79eb6281958e70aa5ca3116ee710cdba0ce8ed8c52&reaction=dislike'>👎</a>
+
+--- src/lead_desk/portal/pages/log.js:119 
+**Suggestion:** After older rows load, polling refreshes the first page but keeps `extra` and its cursor; rows pushed out of page one then fall between the pages and are skipped.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Sometimes` · 🏷️ `Logic error`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=3de6b33f8c2b42a182a785cfbd03af7e&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=3de6b33f8c2b42a182a785cfbd03af7e&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** src/lead_desk/portal/pages/log.js
+**Line:** 119:119
+**Comment:**
+	*Logic Error: After older rows load, polling refreshes the first page but keeps `extra` and its cursor; rows pushed out of page one then fall between the pages and are skipped.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=83d30d3976b1a881a50922af4f8d309c54d3395e381320e4ed5c35d4c3f91cbb&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=83d30d3976b1a881a50922af4f8d309c54d3395e381320e4ed5c35d4c3f91cbb&reaction=dislike'>👎</a>
+
+--- src/lead_desk/portal/pages/overview.css:117 
+**Suggestion:** These rules force four or five KPI columns at every viewport width; on phones, each tile becomes too narrow for its label and value.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Sometimes` · 🏷️ `Css layout issue`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=523309af9fe24394a68303b88e2382e8&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=523309af9fe24394a68303b88e2382e8&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** src/lead_desk/portal/pages/overview.css
+**Line:** 116:117
+**Comment:**
+	*Css Layout Issue: These rules force four or five KPI columns at every viewport width; on phones, each tile becomes too narrow for its label and value.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=0a0ea55e5608638b0e72d7b6ebecb71ff626734a734cc078da5c145d6434ab5a&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=0a0ea55e5608638b0e72d7b6ebecb71ff626734a734cc078da5c145d6434ab5a&reaction=dislike'>👎</a>
+
+--- src/lead_desk/portal/pages/data.js:121 
+**Suggestion:** After a successful load, a non-200 poll sets `failure` but leaves `map`; `render` still displays that old map as current AI, storage, and access settings.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Logic error`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=c1b5a3231e504aab86af222a735c33c6&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=c1b5a3231e504aab86af222a735c33c6&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** src/lead_desk/portal/pages/data.js
+**Line:** 121:121
+**Comment:**
+	*Logic Error: After a successful load, a non-200 poll sets `failure` but leaves `map`; `render` still displays that old map as current AI, storage, and access settings.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=a3d0a485a19d0463f5912b4cbfa81b41d296b3f4191164184fe63e6b259cd98a&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=a3d0a485a19d0463f5912b4cbfa81b41d296b3f4191164184fe63e6b259cd98a&reaction=dislike'>👎</a>
+
+--- n8n/proof.json:272 
+**Suggestion:** This reports PASS when CRM and outbox each have one row, even if only one of the ten requests reached the desk and the other nine were lost.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Incorrect condition logic`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=ba1e370b19c249c1a9cf42b2dc68138f&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=ba1e370b19c249c1a9cf42b2dc68138f&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** n8n/proof.json
+**Line:** 272:272
+**Comment:**
+	*Incorrect Condition Logic: This reports PASS when CRM and outbox each have one row, even if only one of the ten requests reached the desk and the other nine were lost.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=6f8ec2995bdc41389558ac2b4f9802f51006217166afefed2d5a340cdbe2a8ef&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F2&comment_hash=6f8ec2995bdc41389558ac2b4f9802f51006217166afefed2d5a340cdbe2a8ef&reaction=dislike'>👎</a>
+
+##### PR 2 issue comments
+--- 2026-11-12T19:48:03Z
+## <a href="https://codeant.ai/" title="CodeAnt AI"><img src="https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/codeant-block-purple-v2.svg" width="28" height="28" align="absmiddle" style="vertical-align:middle" alt="CodeAnt" /></a>&nbsp; CodeAnt Review Status
+
+**✅&nbsp; Review completed**
+
+| Status | Commit | Started (UTC) | Finished (UTC) |
+| --- | --- | --- | --- |
+| ✅&nbsp; `#d4548` Reviewed your PR | `d71284f` | Nov 12, 2026 · 19:48 | 20:01 |
+
+<!-- codeant-review-status:[{"run_id":"d4548d1d56e4","label":"Reviewed your PR","commit":"d71284f9ca7ee1e1fa83e27dd524464f8abce262","started":"2026-11-12T19:48:02.921259","finished":"2026-11-12T20:01:21.460165","done":true}] -->
+
+--- 2026-11-12T19:48:05Z
+---
+
+### Thanks for using CodeAnt! 🎉
+
+We're free for open-source projects. if you're enjoying it, help us grow by sharing.
+
+[Share on X](https://twitter.com/intent/tweet?text=Just%20tried%20%40CodeAntAI%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A&url=https%3A//codeant.ai) ·
+[Reddit](https://www.reddit.com/submit?title=Check%20out%20CodeAnt%20for%20automated%20code%20review&text=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A%20https%3A//codeant.ai) ·
+[LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcodeant.ai&mini=true&title=Check%20out%20CodeAnt%20for%20automated%20code%20review&summary=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos)
+
+
+##### PR 3 inline review comments
+--- demo_only/portal_demo.py:274 
+**Suggestion:** When the configured server port is `0`, `_url_from_config()` returns `None` and no server code updates it, so every burst is rejected as `desk_url_unknown`.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Api mismatch`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=f59920370bb6400eb55fa5d9d451bb7a&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=f59920370bb6400eb55fa5d9d451bb7a&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** demo_only/portal_demo.py
+**Line:** 273:274
+**Comment:**
+	*Api Mismatch: When the configured server port is `0`, `_url_from_config()` returns `None` and no server code updates it, so every burst is rejected as `desk_url_unknown`.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F3&comment_hash=e1c164c739221cb47bd723abe7074dea049a12e09809d1ecf6e7aea469bacc6b&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F3&comment_hash=e1c164c739221cb47bd723abe7074dea049a12e09809d1ecf6e7aea469bacc6b&reaction=dislike'>👎</a>
+
+--- demo_only/portal_demo.py:414 
+**Suggestion:** If an arm request is writing while a later clear request unlinks, the arm can replace the file afterward, leaving the crash armed despite the completed disarm.
+
+**Assessment:** 🔴 `Critical` · 🔁 `Occurrence: Rarely` · 🏷️ `Race condition`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=8bddbb201d36448c9d6c00e656dcf5f3&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=8bddbb201d36448c9d6c00e656dcf5f3&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** demo_only/portal_demo.py
+**Line:** 411:414
+**Comment:**
+	*Race Condition: If an arm request is writing while a later clear request unlinks, the arm can replace the file afterward, leaving the crash armed despite the completed disarm.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F3&comment_hash=2697804efad6e4f16f409e382328262f600a36c4e97917476498fc0ec4003e99&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F3&comment_hash=2697804efad6e4f16f409e382328262f600a36c4e97917476498fc0ec4003e99&reaction=dislike'>👎</a>
+
+##### PR 3 issue comments
+--- 2026-11-12T19:48:06Z
+## <a href="https://codeant.ai/" title="CodeAnt AI"><img src="https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/codeant-block-purple-v2.svg" width="28" height="28" align="absmiddle" style="vertical-align:middle" alt="CodeAnt" /></a>&nbsp; CodeAnt Review Status
+
+**✅&nbsp; Review completed**
+
+| Status | Commit | Started (UTC) | Finished (UTC) |
+| --- | --- | --- | --- |
+| ✅&nbsp; `#0e2c9` Reviewed your PR | `51abd28` | Nov 12, 2026 · 19:48 | 19:59 |
+
+<!-- codeant-review-status:[{"run_id":"0e2c97b66125","label":"Reviewed your PR","commit":"51abd28582d7b345ff067853181306b55de3d69b","started":"2026-11-12T19:48:06.023265","finished":"2026-11-12T19:59:27.319033","done":true}] -->
+
+--- 2026-11-12T19:48:07Z
+---
+
+### Thanks for using CodeAnt! 🎉
+
+We're free for open-source projects. if you're enjoying it, help us grow by sharing.
+
+[Share on X](https://twitter.com/intent/tweet?text=Just%20tried%20%40CodeAntAI%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A&url=https%3A//codeant.ai) ·
+[Reddit](https://www.reddit.com/submit?title=Check%20out%20CodeAnt%20for%20automated%20code%20review&text=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A%20https%3A//codeant.ai) ·
+[LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcodeant.ai&mini=true&title=Check%20out%20CodeAnt%20for%20automated%20code%20review&summary=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos)
+
+
+--- 2026-11-12T19:59:25Z
+## <a href="https://codeant.ai/" title="CodeAnt AI"><img src="https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/codeant-block-purple-v2.svg" width="28" height="28" align="absmiddle" style="vertical-align:middle" alt="CodeAnt" /></a>&nbsp; CodeAnt Nitpicks
+
+<!-- codeant-nitpicks:pr_code_suggestions:start -->
+<details>
+<summary><strong>14 code suggestions</strong></summary>
+
+#### 1. When the remaining retry time is shorter than the back-off, this sleeps to the deadline and the loop still starts another POST after it.
+
+Logic error · [`demo_only/burst.py:91`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-ba4a7abf5945ed4200954ca64822a65596e5e69df308037156b10265d8ade09fR91-R91)
+
+---
+
+#### 2. `--n 0` is accepted as an integer, but `Barrier(0)` raises `ValueError` and prevents the command from returning a result.
+
+Logic error · [`demo_only/burst.py:114`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-ba4a7abf5945ed4200954ca64822a65596e5e69df308037156b10265d8ade09fR114-R114)
+
+---
+
+#### 3. `ThreadingHTTPServer` handles this search alongside creates and deletes, so a concurrent change can raise `RuntimeError` while the dictionary is being iterated.
+
+Race condition · [`demo_only/fake_hubspot.py:247`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-aa097fae8c52d1bbdfd59b0fa68e05d14e0ce42e367640f13f561c2d387dfee1R247-R247)
+
+---
+
+#### 4. Concurrent creates can both pass this check before either increments `failed`, causing more than the configured number of 429 or 503 responses.
+
+Race condition · [`demo_only/fake_hubspot.py:267-268`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-aa097fae8c52d1bbdfd59b0fa68e05d14e0ce42e367640f13f561c2d387dfee1R267-R268)
+
+---
+
+#### 5. Concurrent creates with different emails can both see `hung_once` as false, so more than the first create hangs.
+
+Race condition · [`demo_only/fake_hubspot.py:279-280`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-aa097fae8c52d1bbdfd59b0fa68e05d14e0ce42e367640f13f561c2d387dfee1R279-R280)
+
+---
+
+#### 6. `{&quot;mode&quot;:[]}` is valid JSON but makes `ALIASES.get` raise `TypeError`; the uncaught error aborts requests instead of falling back to `state.mode`.
+
+Type error · [`demo_only/fake_model_server.py:72-75`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-589a0a9706b758eb1e50f61f37f368a08d596040c60d7b5b2a4f135e7684e852R72-R75)
+
+---
+
+#### 7. `slow_seconds` and `hang_seconds` are stored without type checks; a string returns 200 from control, then `Event.wait` raises `TypeError` and drops requests.
+
+Type error · [`demo_only/fake_model_server.py:134-140`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-589a0a9706b758eb1e50f61f37f368a08d596040c60d7b5b2a4f135e7684e852R134-R140)
+
+---
+
+#### 8. The first call has `call_no == 1`, so this index returns `warm`; mixed mode therefore does not begin with the documented `hot` label.
+
+Off-by-one · [`demo_only/fake_model_server.py:192-194`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-589a0a9706b758eb1e50f61f37f368a08d596040c60d7b5b2a4f135e7684e852R192-R194)
+
+---
+
+#### 9. Because the delay runs before `_fail` is consumed, a send already sleeping can take a later `fail_next` setting instead of the next send.
+
+Race condition · [`demo_only/fakes.py:82-85`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-e9f53ffe9360512bca3ec05b94fe4ad739ef8842f15e90b3a2785f51bbf31871R82-R85)
+
+---
+
+#### 10. `_fire` can return string statuses such as `timeout` or `refused`; this numeric comparison treats them as false, so the summary omits failed burst slots.
+
+Api mismatch · [`demo_only/portal_demo.js:126`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-29b5dce4bf832b8c0ee0e5055e9688a8fe3724f212858704d9f1c9e150fa6f7bR126-R126)
+
+---
+
+#### 11. This value is captured only on mount; if a restart changes stop-test availability, subsequent demo updates leave the buttons enabled or disabled according to the old desk.
+
+Stale reference · [`demo_only/portal_demo.js:191`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-29b5dce4bf832b8c0ee0e5055e9688a8fe3724f212858704d9f1c9e150fa6f7bR191-R191)
+
+---
+
+#### 12. If either follow-up poll request rejects during an outage, this chain never clears `dblBusy`; reconnecting leaves the test button disabled until the panel is remounted.
+
+Possible bug · [`demo_only/portal_demo.js:278`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-29b5dce4bf832b8c0ee0e5055e9688a8fe3724f212858704d9f1c9e150fa6f7bR278-R278)
+
+---
+
+#### 13. With an older fakes server that omits `reminders` but already stores reminder emails, this fallback counts reminders as follow-ups and makes the proof report a false mismatch.
+
+Logic error · [`demo_only/portal_demo.py:333`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-c8e194d49aa63663f94fc100e84360962117c51a85de57638a06e75a17aee465R333-R333)
+
+---
+
+#### 14. `step` and `step_label` indicate an active lead flow, but empty `steps` contradicts the response contract and leaves the portal without later-stage choices.
+
+Api mismatch · [`tests/portal_fixtures/lead-detail-later.json:83`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/3/files#diff-18ea96eebf9982289cab0694f358ff07411f7aadfb619ea1a8cdb3a8b07a9cccR83-R83)
+
+</details>
+<!-- codeant-nitpicks:pr_code_suggestions:end -->
+
+##### PR 4 inline review comments
+--- tests/test_hygiene.py:312 
+**Suggestion:** The scan misses valid inline YAML such as `on: [pull_request_target]`, so a workflow using that secrets-exposing trigger passes this security check.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Security`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=106ea7e4c8f847f18d58aac951402f3b&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=106ea7e4c8f847f18d58aac951402f3b&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** tests/test_hygiene.py
+**Line:** 312:312
+**Comment:**
+	*Security: The scan misses valid inline YAML such as `on: [pull_request_target]`, so a workflow using that secrets-exposing trigger passes this security check.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=7d82f2bcfac7e06fa74196b2b07ad513bf324e4dd2d4958853e9164f6804aece&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=7d82f2bcfac7e06fa74196b2b07ad513bf324e4dd2d4958853e9164f6804aece&reaction=dislike'>👎</a>
+
+--- tests/portal_contrast_probe.js:27 
+**Suggestion:** When an element or ancestor has opacity, its background fades too, but this blends only the text; the reported contrast ratio can be wrong.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Often` · 🏷️ `Logic error`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=a2fc6bf754634fc8aa5d1fc22b27a0e9&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=a2fc6bf754634fc8aa5d1fc22b27a0e9&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** tests/portal_contrast_probe.js
+**Line:** 27:27
+**Comment:**
+	*Logic Error: When an element or ancestor has opacity, its background fades too, but this blends only the text; the reported contrast ratio can be wrong.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=f7c809e472969c2359fc67d3f9573b28927affdeff9e871702f88009581c7c19&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=f7c809e472969c2359fc67d3f9573b28927affdeff9e871702f88009581c7c19&reaction=dislike'>👎</a>
+
+--- tests/test_reset_scripts.py:71 
+**Suggestion:** The fixture's fixed `data/reset-guard-test` directory is removed recursively, so unrelated pre-existing files there are deleted during teardown.
+
+**Assessment:** 🟠 `Major` · 🔁 `Occurrence: Rarely` · 🏷️ `Possible bug`
+
+[![Use CodeAnt Skill](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/use-codeant-skill-flat-v2.svg)](https://docs.codeant.ai/cli/resolve-pr-comments-skill) [![Fix in Cursor](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-cursor-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=cursor&prompt_id=22e1348bc952494f8a8ce62cc256aad2&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n) [![Fix in VSCode Claude](https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/fix-in-vscode-claude-flat.svg)](https://app.codeant.ai/fix-in-ide?tool=vscode-claude&prompt_id=22e1348bc952494f8a8ce62cc256aad2&service=github&base_url=https%3A%2F%2Fgithub.com&org=hadavin-dx&repo=hadavin-dx%2Fduplicate-proof-lead-desk-n8n)
+<details>
+<summary><b>Prompt for AI Agent 🤖 </b></summary>
+
+```mdx
+This is a comment left during a code review.
+
+**Path:** tests/test_reset_scripts.py
+**Line:** 71:71
+**Comment:**
+	*Possible Bug: The fixture's fixed `data/reset-guard-test` directory is removed recursively, so unrelated pre-existing files there are deleted during teardown.
+
+Validate the correctness of the flagged issue. If correct, How can I resolve this? If you propose a fix, implement it and please make it concise.
+Once fix is implemented, also check other comments on the same PR, and ask user if the user wants to fix the rest of the comments as well. if said yes, then fetch all the comments validate the correctness and implement a minimal fix
+```
+</details>
+<a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=82c247684b00d670d8e170ba8e6613d0e35f0f88a3c5da5b0bbbeac461da4d63&reaction=like'>👍</a> | <a href='https://app.codeant.ai/feedback?pr_url=https%3A%2F%2Fgithub.com%2Fhadavin-dx%2Fduplicate-proof-lead-desk-n8n%2Fpull%2F4&comment_hash=82c247684b00d670d8e170ba8e6613d0e35f0f88a3c5da5b0bbbeac461da4d63&reaction=dislike'>👎</a>
+
+##### PR 4 issue comments
+--- 2026-11-12T19:48:09Z
+## <a href="https://codeant.ai/" title="CodeAnt AI"><img src="https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/codeant-block-purple-v2.svg" width="28" height="28" align="absmiddle" style="vertical-align:middle" alt="CodeAnt" /></a>&nbsp; CodeAnt Review Status
+
+**✅&nbsp; Review completed**
+
+| Status | Commit | Started (UTC) | Finished (UTC) |
+| --- | --- | --- | --- |
+| ✅&nbsp; `#4708f` Reviewed your PR | `b29bb1f` | Nov 12, 2026 · 19:48 | 19:57 |
+
+<!-- codeant-review-status:[{"run_id":"4708f26e2aa7","label":"Reviewed your PR","commit":"b29bb1f5b1c0b702e37198120d08b080861006fc","started":"2026-11-12T19:48:08.827043","finished":"2026-11-12T19:57:25.479929","done":true}] -->
+
+--- 2026-11-12T19:48:10Z
+---
+
+### Thanks for using CodeAnt! 🎉
+
+We're free for open-source projects. if you're enjoying it, help us grow by sharing.
+
+[Share on X](https://twitter.com/intent/tweet?text=Just%20tried%20%40CodeAntAI%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A&url=https%3A//codeant.ai) ·
+[Reddit](https://www.reddit.com/submit?title=Check%20out%20CodeAnt%20for%20automated%20code%20review&text=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos.%20Worth%20checking%20out%3A%20https%3A//codeant.ai) ·
+[LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcodeant.ai&mini=true&title=Check%20out%20CodeAnt%20for%20automated%20code%20review&summary=Just%20tried%20CodeAnt%20for%20automated%20code%20review%20and%20I%27m%20impressed%21%20Free%20for%20open%20source%20with%20a%20free%20trial%20for%20private%20repos)
+
+
+--- 2026-11-12T19:57:24Z
+## <a href="https://codeant.ai/" title="CodeAnt AI"><img src="https://new-codeant-butcket.s3.us-west-1.amazonaws.com/badges/codeant-block-purple-v2.svg" width="28" height="28" align="absmiddle" style="vertical-align:middle" alt="CodeAnt" /></a>&nbsp; CodeAnt Nitpicks
+
+<!-- codeant-nitpicks:pr_code_suggestions:start -->
+<details>
+<summary><strong>16 code suggestions</strong></summary>
+
+#### 1. An aliased import such as `import time as wall; wall.time()` is not matched, so calendar-clock reads can bypass this guard without a `# wall-clock:` annotation.
+
+Incomplete implementation · [`tests/test_clock_steps.py:39-42`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-89408aa6f4f4f8c35cd0f2719ae7fed829be64e0ac1bdccfd412de13cf0312f2R39-R42)
+
+---
+
+#### 2. `_cast_aliases` ignores annotated assignments, so `conv: Any = int` followed by `conv(os.environ[&quot;X&quot;])` escapes the settings-cast scan.
+
+Incomplete implementation · [`tests/test_env_numbers.py:524`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-33ff7d2ee4f27609f67386267da8676ceb3d85c5fbf296b873a0cf942cdac3cbR524-R524)
+
+---
+
+#### 3. `_unchecked_calls` ignores annotated aliases, so `parse: Any = env_number` followed by a call without `high=` escapes the ceiling check.
+
+Incomplete implementation · [`tests/test_env_numbers.py:749`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-33ff7d2ee4f27609f67386267da8676ceb3d85c5fbf296b873a0cf942cdac3cbR749-R749)
+
+---
+
+#### 4. This sleep does not ensure the waiter enqueued its ticket; scheduler delays can change the observed order and make the FIFO test flaky.
+
+Race condition · [`tests/test_followup_edge_cases.py:55-57`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-79f125adf2efd234a56236906e4fb63184f072eb1042c02937ad4fe54c0935ecR55-R57)
+
+---
+
+#### 5. The socket closes before `open_http` uses its port, leaving a race where another process can bind it and make the expected refusal flaky.
+
+Race condition · [`tests/test_http_guard.py:29-33`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-832e4011ab0d7bed297ff07a7ffc477e6e136db714efd3ba95719de9e0f7ac27R29-R33)
+
+---
+
+#### 6. This input is rejected by `_lower_keeps_ascii_apart` before the expanded-length check, so the test still passes if the lowercased-email length limit is removed.
+
+Possible bug · [`tests/test_input_edge_cases.py:60`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-aa4d0a1ff8cb1ff2743d3dc6a904f503433ed66a84d79349f36b25857f3f82b7R60-R60)
+
+---
+
+#### 7. When `HTTP_PROXY` is set without a loopback bypass, `urlopen` sends this request through the proxy, so the test may fail or leave the loopback-only path.
+
+Possible bug · [`tests/test_load_tools.py:678`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-6d0c283bed85e829b1e5066020a3b5518739f59a64799b237a74acc6ef18c744R678-R678)
+
+---
+
+#### 8. `make_book_at_schema_version_1` leaves the added `send_started` column intact, so this legacy case cannot catch a migration that fails to add it.
+
+Incomplete implementation · [`tests/test_migration_triggers.py:54`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-028a0d722a41d9df5fe075e489c5503575230972b238272a6013664ad4ade69bR54-R54)
+
+---
+
+#### 9. `server.main()` reads inherited `DESK_*` settings, so a live qualifier or public bind can exit before the mocked adapter and fail this test&#x27;s timeout assertion.
+
+Possible bug · [`tests/test_model_stamp_and_reaper.py:319-320`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-da485660a912649559850feda51467a1443741040091955f7a4e35a8719db492R319-R320)
+
+---
+
+#### 10. The replacement returns the literal `email`, not `mailSender`, so the supposed unmasked mutation never exposes the configured address and cannot verify this privacy guard.
+
+Incomplete implementation · [`tests/test_mutants_more.py:283-285`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-276291651c419c48a6de795ad8977186bd6b56d487422c9fcaa9df579abb05baR283-R285)
+
+---
+
+#### 11. If an existing demo module imports a missing `demo_only.*` dependency, this treats it as the deleted-folder case and skips the tests, hiding a broken import.
+
+Import error · [`tests/test_portal_demo.py:48-50`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-6266d2f00cdf2d6e1a2c7c28bb3443392276d8a67870844ec80c1804ef425007R48-R50)
+
+---
+
+#### 12. This test scans whole files, not just comments, so an ordinary use of `we`, `our`, or `us` in code or a string can fail the suite.
+
+Inconsistent naming · [`tests/test_portal_wording_and_masking.py:114-121`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-573b135d656d8bf2e2f55d687d0bae5ff5cdb8b9b2ec42e5351267d2b7ca6752R114-R121)
+
+---
+
+#### 13. Each dry-fake run leaves its temporary run directory behind, including the database, logs, and result file, so repeated test runs accumulate files.
+
+Resource leak · [`tests/test_real_check_dry.py:31`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-e72b5beccac784ba1783826647f83e6b768bf378f55ab58e8c35531e1b171dcfR31-R31)
+
+---
+
+#### 14. `refresh()` makes a real connection to localhost port 1; an unrelated listener can change this test&#x27;s result, so the failure path is not isolated.
+
+Possible bug · [`tests/test_review_item_edge_cases.py:156`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-0c31dbb7ace41e244fd905280f22aac3a0bb5b4307bc97d7199e5712b5a93475R156-R156)
+
+---
+
+#### 15. `page.clock` is unavailable in older Playwright releases; with no version pinned, this test raises `AttributeError` instead of skipping when that version is installed.
+
+Api mismatch · [`tests/test_stage_confirm_browser.py:79`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-0638431b93f720f0f9ce4f498c48c86eb0feabd6bde71c109389be00715361abR79-R79)
+
+---
+
+#### 16. When a vendor host is copied into an unlisted root text file such as `.coderabbit.yaml`, this scan misses it and the guard passes.
+
+Incomplete implementation · [`tests/test_vendor_hosts.py:56`](https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/4/files#diff-d0550e7d5ec6f82588284d5688dfcafe8ccebfd2f9d7c48ce714e98e8b3bcae3R56-R56)
+
+</details>
+<!-- codeant-nitpicks:pr_code_suggestions:end -->
+
