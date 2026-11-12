@@ -1,3 +1,6 @@
+## 00:12Z TIMING FIX (core/timing-flake): READY on 21893cbca50ea4a92aa0be43fa4505bb1f5970d7 (ref `wip/cloud-timing-flake`)
+Round 3 (Majors only, normal path): 0 Blocker, 0 Major on 86b94db0; the E731 line, the perf figure and two comments fixed in 21893cbc (tests only). Independent runner green on 86b94db0 (handover/evidence/timing-flake/86b94db0/RESULTS.md: full suite 10645 passed, 6 of 6 hand mutants killed, table 37 of 37, fail-before 13 failed). On 21893cbc I ran ruff, the two edited test files (163 passed), gitleaks, handover check; the full suite was NOT rerun on that last small commit. Honest limit: the old head did not flake under my load either, so the flake itself was not reproduced; CI green on this head is the final check. Perf group about 51 to 58 s. CI on GitHub: not yet run (lead opens the PR).
+
 ## 23:58Z PR 71 (P0a) MERGED by the lead (squash, pinned to 47d74d26)
 Lead note 23:55Z: all CI green incl. check, security, tests-py312, CodeQL, SonarCloud. Independent evidence on that head: handover/evidence/P0a/47d74d26/RESULTS.md (full pytest 10805 passed, 1 skipped). Nothing more to merge for PR 71. Still READY-pending: timing fix (head 86b94db0 on wip/cloud-timing-flake, NOT READY: runner pending, E731 line and 58 s figure to fix).
 
