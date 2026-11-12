@@ -150,3 +150,4 @@ PULSE 01:19Z: Q8a-1 r9 codebase reviewer done (1 Major: sources/kubernetes.py na
 - 03:54Z PULSE: 6 agents running, load 2.0, nothing due; CLOUD-RESUME updated.
 - 03:56Z PR89 r29 EV in (gates exit 0, pytest 10833 passed 3 skipped, mutants 329/329 root+nobody, fail-before 1, flake failed once alone, mypy 14 as CHANGELOG says): R27-1 closed, PR89 on READY list. Agents 5.
 - 03:59Z PULSE: 5 agents (PRH b6, Q8a-1 b11, Q8b b7, P3a-2 45, Q8c-1 b8), load 4.1 (no launches), LEAD-ORDERS pulled: 247 still newest, no STOP. CLOUD-RESUME updated 03:54Z.
+- 04:04Z Q8a-1 b11 reported af4808e7 (gates exit 0, pytest 11081 passed, stage_mutants 181/181, fail-before 19 failed). It left Y3-Y5 mutants and the allowance spot-check undone: resumed it for both (30 min box), THEN snapshot, evidence, two reviewers. Agents 5.
