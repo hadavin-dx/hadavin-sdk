@@ -43,7 +43,7 @@ _PIN_PREFIX = {
 }
 
 
-def mu(name, file, old, new, test_file, killer, expect, pin_suffix=""):
+def mu(name, file, old, new, test_file, killer, expect, pin_suffix="", crash=""):
     """One mutant: `killer` is the test function that must be the first failing one; `pin_suffix` is the parameter id when the killer is parametrized (``[postgres]``)."""
     return Mutant(
         name,
@@ -53,7 +53,9 @@ def mu(name, file, old, new, test_file, killer, expect, pin_suffix=""):
         expect,
         test_file=test_file,
         only_test=killer,
-        pinned=_PIN_PREFIX[test_file] + killer + pin_suffix,
+        pinned="" if pin_suffix is None else _PIN_PREFIX[test_file] + killer + pin_suffix,
+        allow_crash=bool(crash),
+        crash_type=crash,
     )
 
 
@@ -66,7 +68,7 @@ M = [
         'f"{p}"',
         LEDGER_T,
         "test_property_the_delivery_key_separates_every_tenant_source_id_triple",
-        "XXXX",
+        "'sa', '_'",
     ),
     mu(
         "L2 the key-derivation label changes",
@@ -75,7 +77,7 @@ M = [
         'b"hadavin-inbound-key-v2"',
         LEDGER_T,
         "test_l19_golden_literals",
-        "XXXX",
+        "AssertionError: assert ('",
     ),
     mu(
         "L3 a given key is ignored (plain hash)",
@@ -84,7 +86,7 @@ M = [
         "    if False:\n        return hmac.new",
         LEDGER_T,
         "test_l19_golden_literals",
-        "XXXX",
+        "AssertionError: assert ('",
     ),
     mu(
         "L4 the run id's generation part is 3 characters",
@@ -93,7 +95,7 @@ M = [
         'format(generation, "03x")',
         LEDGER_T,
         "test_l19_golden_literals",
-        "XXXX",
+        "AssertionError: assert ('",
     ),
     mu(
         "L5 the key check is 12 characters",
@@ -102,7 +104,7 @@ M = [
         "_h(key, _CHECK_LABEL)[:12]",
         LEDGER_T,
         "test_l19_golden_literals",
-        "XXXX",
+        "AssertionError: assert ('",
     ),
     mu(
         "L6 a subclass of str is accepted as a sender id",
@@ -111,7 +113,8 @@ M = [
         "not isinstance(x, str)",
         LEDGER_T,
         "test_l18_a_bad_sender_id_is_refused_before_any_store_call",
-        "XXXX",
+        "DID NOT RAISE ValueError",
+        "[x1]",
     ),
     mu(
         "L7 an empty sender id is accepted",
@@ -120,7 +123,8 @@ M = [
         "not 0 <= len(x) <=",
         LEDGER_T,
         "test_l18_a_bad_sender_id_is_refused_before_any_store_call",
-        "XXXX",
+        "DID NOT RAISE ValueError",
+        "[]",
     ),
     mu(
         "L8 invisible characters are accepted in a sender id",
@@ -129,7 +133,8 @@ M = [
         'startswith("Cc")',
         LEDGER_T,
         "test_l18_a_bad_sender_id_is_refused_before_any_store_call",
-        "XXXX",
+        "DID NOT RAISE ValueError",
+        "[a\\u200bb]",
     ),
     mu(
         "L9 the sender id is not checked before the store call",
@@ -138,16 +143,19 @@ M = [
         "",
         LEDGER_T,
         "test_l18_a_bad_sender_id_is_refused_before_any_store_call",
-        "XXXX",
+        "has no attribute 'encode'",
+        "[5]",
+        crash="AttributeError",
     ),
     mu(
         "L10 a changed key is not reported on the first call",
         LEDGER,
         'if result == "key_changed":',
         'if result == "never":',
-        LEDGER_T,
-        "test_a_changed_key_refuses_the_receive_and_the_message_names_no_key",
-        "XXXX",
+        CONTRACT_T,
+        "test_l20_a_changed_key_refuses_a_message_that_was_already_accepted_and_the_store_is_asked_once",
+        "assert counted.calls == 2",
+        "[memory]",
     ),
     mu(
         "L11 id reuse at the cap is reported as plain id reuse",
@@ -156,7 +164,8 @@ M = [
         '"id_reuse"',
         CONTRACT_T,
         "test_l3_id_reuse_keeps_the_first_and_caps_at_eight",
-        "XXXX",
+        "assert 'id_reuse' == 'id_reuse_capped'",
+        "[memory]",
     ),
     # --- memory store ----------------------------------------------------------------------------------------------
     mu(
@@ -164,9 +173,9 @@ M = [
         MEM,
         "            or rec.updated_at != rec.received_at\n",
         "",
-        CONTRACT_T,
-        "test_l22_every_written_time_is_the_injected_time",
-        "XXXX",
+        LEDGER_T,
+        "test_a_receipt_with_a_later_update_time_than_its_receive_time_is_not_a_legal_new_receipt",
+        "DID NOT RAISE ValueError",
     ),
     mu(
         "L13 memory: a changed key check is not refused",
@@ -175,7 +184,7 @@ M = [
         "if False:",
         CONTRACT_T,
         "test_l20_key_change_writes_nothing_and_only_dispatch_changes_the_check",
-        "XXXX",
+        "DID NOT RAISE InboundKeyChanged",
     ),
     mu(
         "L14 memory: same id with other text is a duplicate",
@@ -184,7 +193,8 @@ M = [
         'return "duplicate"',
         CONTRACT_T,
         "test_l3_id_reuse_keeps_the_first_and_caps_at_eight",
-        "XXXX",
+        "assert 'duplicate' == 'id_reuse'",
+        "[memory]",
     ),
     mu(
         "L15 memory: the reuse cap lets a ninth row in",
@@ -193,7 +203,8 @@ M = [
         "if reuse_rows > max_reuse:",
         CONTRACT_T,
         "test_l3_id_reuse_keeps_the_first_and_caps_at_eight",
-        "XXXX",
+        "assert 'id_reuse' == 'id_reuse_capped'",
+        "[memory]",
     ),
     mu(
         "L16 memory: the open cap lets one more in",
@@ -202,7 +213,8 @@ M = [
         "if open_rows > max_open:",
         CONTRACT_T,
         "test_l11_busy_counts_open_receipts_of_this_address_only",
-        "XXXX",
+        "assert 'new' == 'busy'",
+        "[memory]",
     ),
     mu(
         "L17 memory: a claimed receipt does not count as open",
@@ -211,7 +223,8 @@ M = [
         'and r.state == "received"\n',
         CONTRACT_T,
         "test_l11_busy_counts_open_receipts_of_this_address_only",
-        "XXXX",
+        "assert 'new' == 'busy'",
+        "[memory]",
     ),
     mu(
         "L18 memory: a claim whose lease ends right now is not reclaimed late",
@@ -220,7 +233,9 @@ M = [
         "and r.lease_until < now - timedelta(seconds=1)\n",
         CONTRACT_T,
         "test_l6_lease_expiry_reclaims_and_counts_one_try",
-        "XXXX",
+        "has no attribute 'attempts'",
+        "[memory]",
+        crash="AttributeError",
     ),
     mu(
         "L19 memory: a reclaim after lease expiry does not count a try",
@@ -229,7 +244,8 @@ M = [
         '"attempts": r.attempts,',
         CONTRACT_T,
         "test_l6_lease_expiry_reclaims_and_counts_one_try",
-        "XXXX",
+        "assert (0 == 1)",
+        "[memory]",
     ),
     mu(
         "L20 memory: claim takes the newest first",
@@ -237,8 +253,9 @@ M = [
         "key=lambda r: (r.received_at, r.delivery_key),",
         "key=lambda r: (-r.received_at.timestamp(), r.delivery_key),",
         CONTRACT_T,
-        "test_l6_lease_expiry_reclaims_and_counts_one_try",
-        "XXXX",
+        "test_l6_claim_takes_the_oldest_receipt_first",
+        "claim must take receipts in the order they were received",
+        "[memory]",
     ),
     mu(
         "L21 memory: finish ignores the claim token",
@@ -247,7 +264,8 @@ M = [
         'if r.state != "claimed":',
         CONTRACT_T,
         "test_l7_finish_is_a_compare_and_set",
-        "XXXX",
+        "DID NOT RAISE StaleState",
+        "[memory]",
     ),
     mu(
         "L22 memory: finish accepts any reason",
@@ -256,7 +274,8 @@ M = [
         "if state not in INBOUND_FINAL_STATES:",
         CONTRACT_T,
         "test_l9_finish_refuses_a_bad_state_or_reason_and_writes_nothing",
-        "XXXX",
+        "DID NOT RAISE ValueError",
+        "[memory-received-None]",
     ),
     mu(
         "L23 memory: audit_unavailable counts a try as well",
@@ -265,7 +284,8 @@ M = [
         '"attempts": r.attempts + 1,',
         CONTRACT_T,
         "test_l9_release_counts_step_error_but_not_audit_unavailable",
-        "XXXX",
+        "assert 1 == 0",
+        "[memory]",
     ),
     mu(
         "L24 memory: release accepts any reason",
@@ -273,8 +293,9 @@ M = [
         'if reason not in INBOUND_RETRY_REASONS:\n            raise ValueError("inbound release',
         'if False:\n            raise ValueError("inbound release',
         CONTRACT_T,
-        "test_l9_release_counts_step_error_but_not_audit_unavailable",
-        "XXXX",
+        "test_l9_release_refuses_a_reason_that_is_not_a_retry_reason_and_changes_nothing",
+        "DID NOT RAISE ValueError",
+        "[memory]",
     ),
     mu(
         "L25 memory: the owner's re-run ignores an open run",
@@ -282,8 +303,9 @@ M = [
         "if run is not None and run.state in OPEN_STATES:",
         "if False:",
         CONTRACT_T,
-        "test_l16_reopen_through_the_owner_raises_the_generation_and_gives_a_new_run_id",
-        "XXXX",
+        "test_l16_the_owner_cannot_reopen_while_the_run_is_open",
+        "DID NOT RAISE StaleState",
+        "[memory]",
     ),
     mu(
         "L26 memory: purge drops texts only when they are past the ceiling",
@@ -292,7 +314,8 @@ M = [
         "if aged:",
         CONTRACT_T,
         "test_l13_purge_rules",
-        "XXXX",
+        "assert 0 == 2",
+        "[memory]",
     ),
     mu(
         "L27 memory: purge forgets that a person-waiting run keeps the text",
@@ -301,7 +324,8 @@ M = [
         "held = OPEN_STATES",
         CONTRACT_T,
         "test_l13_purge_rules",
-        "XXXX",
+        "assert (4 == 3)",
+        "[memory]",
     ),
     mu(
         "L28 memory: purge may delete the text of an open receipt",
@@ -310,7 +334,8 @@ M = [
         "if r is None:\n                    continue",
         CONTRACT_T,
         "test_l13_purge_rules",
-        "XXXX",
+        "assert 3 == 2",
+        "[memory]",
     ),
     mu(
         "L29 memory: the key check moves without the old value",
@@ -319,7 +344,8 @@ M = [
         "if False:\n                raise StaleState",
         CONTRACT_T,
         "test_l20_key_change_writes_nothing_and_only_dispatch_changes_the_check",
-        "XXXX",
+        "DID NOT RAISE StaleState",
+        "[memory]",
     ),
     # --- PostgreSQL store (store/postgres.py) -----------------------------------------------------------------------
     mu(
@@ -329,7 +355,8 @@ M = [
         "\"AND state IN ('received')\",",
         CONTRACT_T,
         "test_l11_busy_counts_open_receipts_of_this_address_only",
-        "XXXX",
+        "assert 'new' == 'busy'",
+        "[postgres]",
     ),
     mu(
         "P2 pg: the reuse cap lets a ninth row in",
@@ -338,7 +365,8 @@ M = [
         "if n > max_reuse:",
         CONTRACT_T,
         "test_l3_id_reuse_keeps_the_first_and_caps_at_eight",
-        "XXXX",
+        "assert 'id_reuse' == 'id_reuse_capped'",
+        "[postgres]",
     ),
     mu(
         "P3 pg: claim does not lock the row it picks",
@@ -347,7 +375,7 @@ M = [
         "ORDER BY received_at, delivery_key LIMIT 1)",
         PG_T,
         "test_l5_every_receipt_is_claimed_exactly_once_by_8_processes",
-        "XXXX",
+        "== 500)",
     ),
     mu(
         "P4 pg: a reclaim after lease expiry does not count a try",
@@ -356,7 +384,8 @@ M = [
         "attempts = r.attempts",
         CONTRACT_T,
         "test_l6_lease_expiry_reclaims_and_counts_one_try",
-        "XXXX",
+        "assert (0 == 1)",
+        "[postgres]",
     ),
     mu(
         "P5 pg: finish ignores the claim token",
@@ -365,7 +394,8 @@ M = [
         '"claim_token = NULL, updated_at = %(now)s WHERE tenant = %(tenant)s AND source = %(source)s "\n                "AND delivery_key = %(delivery_key)s AND state = \'claimed\' "',
         CONTRACT_T,
         "test_l7_finish_is_a_compare_and_set",
-        "XXXX",
+        "DID NOT RAISE StaleState",
+        "[postgres]",
     ),
     mu(
         "P6 pg: audit_unavailable counts a try as well",
@@ -374,16 +404,18 @@ M = [
         'THEN 1 ELSE 1 END, "\n                "updated_at = %(now)s WHERE',
         CONTRACT_T,
         "test_l9_release_counts_step_error_but_not_audit_unavailable",
-        "XXXX",
+        "assert 1 == 0",
+        "[postgres]",
     ),
     mu(
         "P7 pg: purge may delete the text of an open receipt",
         PG,
         "AND r.state IN ('done', 'needs_person', 'refused') ",
-        "AND r.state IN ('done', 'needs_person', 'refused', 'received') ",
+        "AND r.state IN ('done', 'needs_person', 'refused', 'claimed') ",
         CONTRACT_T,
         "test_l13_purge_rules",
-        "XXXX",
+        "assert 3 == 2",
+        "[postgres]",
     ),
     mu(
         "P8 pg: purge forgets that a person-waiting run keeps the text",
@@ -391,8 +423,9 @@ M = [
         "'NEEDS_PERSON', 'STOPPED'))))))",
         "'NEEDS_PERSON'))))))",
         CONTRACT_T,
-        "test_l13_purge_rules",
-        "XXXX",
+        "test_l13_purge_keeps_the_text_of_a_done_receipt_while_its_run_is_open_stopped_or_waits_for_a_person",
+        "assert 7 == 6",
+        "[postgres]",
     ),
     mu(
         "P9 pg: a key change between the read and the insert is an error, not key_changed",
@@ -401,7 +434,9 @@ M = [
         'if exc.diag.message_primary == "never":',
         PG_T,
         "test_l25_iv_a_key_change_between_the_read_and_the_insert_is_key_changed_and_writes_nothing",
-        "XXXX",
+        "inbound_key_changed",
+        "",
+        crash="CheckViolation",
     ),
     mu(
         "P10 pg: the first receive may overwrite the key check",
@@ -410,16 +445,19 @@ M = [
         '"ON CONFLICT (tenant, source) DO UPDATE SET key_check = EXCLUDED.key_check",',
         CONTRACT_T,
         "test_l20_key_change_writes_nothing_and_only_dispatch_changes_the_check",
-        "XXXX",
+        "permission denied for table inbound_key_checks",
+        "",
+        crash="InsufficientPrivilege",
     ),
     mu(
         "P11 pg: a changed key check is not refused by the read",
         PG,
         'if stored is None or stored["key_check"] != rec.key_check:',
         "if stored is None:",
-        PG_T,
-        "test_l25_iv_a_key_change_between_the_read_and_the_insert_is_key_changed_and_writes_nothing",
-        "XXXX",
+        CONTRACT_T,
+        "test_l20_a_changed_key_refuses_a_message_that_was_already_accepted_and_the_store_is_asked_once",
+        "DID NOT RAISE InboundKeyChanged",
+        "[postgres]",
     ),
     mu(
         "P12 pg: a missing receipt is reported as a stale claim",
@@ -428,16 +466,19 @@ M = [
         "return StaleState(stale)",
         CONTRACT_T,
         "test_l7_finish_is_a_compare_and_set",
-        "XXXX",
+        "not claimed",
+        "[postgres]",
+        crash="StaleState",
     ),
     mu(
         "P13 pg: the re-run refusal is not mapped",
         PG,
         'raise RerunRefused("rerun_owner_only") from None',
         "raise",
-        PG_T,
-        "test_l15_a_the_reopen_move_is_refused_to_dispatch_door_and_runtime_and_the_row_is_unchanged",
-        "XXXX",
+        CONTRACT_T,
+        "test_l16_a_final_receipt_cannot_be_finished_or_released_and_reopen_is_refused",
+        "DID NOT RAISE RerunRefused",
+        "[postgres]",
     ),
     # --- migration 0006 (the database rules) -------------------------------------------------------------------------
     mu(
@@ -447,7 +488,8 @@ M = [
         "       OR NEW.readers IS DISTINCT FROM OLD.readers\n",
         PG_T,
         "test_l15_h_an_immutable_column_cannot_change_even_for_the_migrator",
-        "XXXX",
+        "inbound_state_move",
+        "[key_check-9999999999999999]",
     ),
     mu(
         "S2 sql: the text hash of a receipt may change",
@@ -456,7 +498,8 @@ M = [
         "",
         PG_T,
         "test_l15_h_an_immutable_column_cannot_change_even_for_the_migrator",
-        "XXXX",
+        "inbound_state_move",
+        "[body_sha256-9999999999999999999999999999999999999999999999999999999999999999]",
     ),
     mu(
         "S3 sql: any login may re-run a message",
@@ -464,8 +507,8 @@ M = [
         "IF owner_name IS NULL OR current_user <> owner_name THEN",
         "IF FALSE THEN",
         PG_T,
-        "test_l15_a_the_reopen_move_is_refused_to_dispatch_door_and_runtime_and_the_row_is_unchanged",
-        "XXXX",
+        "test_l15_i_the_table_owner_and_a_login_with_the_column_right_are_not_the_rerun_owner",
+        "DID NOT RAISE InsufficientPrivilege",
     ),
     mu(
         "S4 sql: a re-run is allowed while the run is open",
@@ -474,7 +517,7 @@ M = [
         "IF FALSE AND EXISTS (SELECT 1 FROM runs WHERE run_id = OLD.run_id AND state IN",
         PG_T,
         "test_l15_b_the_owner_is_refused_while_the_run_is_in_any_open_state",
-        "XXXX",
+        "EXECUTING",
     ),
     mu(
         "S5 sql: a re-run keeps the old try count",
@@ -482,8 +525,8 @@ M = [
         "OR NEW.attempts <> 0 OR NEW.reason IS NOT NULL OR NEW.last_reason IS NOT NULL\n",
         "OR NEW.reason IS NOT NULL OR NEW.last_reason IS NOT NULL\n",
         PG_T,
-        "test_l15_h_a_reopen_must_raise_the_generation_by_one_and_spell_the_new_run_id",
-        "XXXX",
+        "test_l15_j_a_reopen_must_reset_every_try_and_reason_field",
+        "('attempts', ('ok', 1))",
     ),
     mu(
         "S6 sql: the try count may go down",
@@ -492,7 +535,7 @@ M = [
         "IF FALSE THEN",
         PG_T,
         "test_l15_h_attempts_cannot_go_down",
-        "XXXX",
+        "inbound_state_move",
     ),
     mu(
         "S7 sql: a received receipt may jump to done",
@@ -501,7 +544,7 @@ M = [
         "(OLD.state = 'received' AND NEW.state IN ('claimed', 'done'))",
         LEDGER_T,
         "test_the_memory_state_map_equals_the_migration_trigger_move_list",
-        "XXXX",
+        "assert \"(OLD.state = 'received' AND NEW.state = 'claimed')\" in",
     ),
     mu(
         "S8 sql: an insert with another key check is accepted",
@@ -510,7 +553,7 @@ M = [
         "IF stored IS NULL THEN",
         PG_T,
         "test_l25_iv_a_key_change_between_the_read_and_the_insert_is_key_changed_and_writes_nothing",
-        "XXXX",
+        "DID NOT RAISE InboundKeyChanged",
     ),
     mu(
         "S9 sql: an insert may carry a later update time",
@@ -518,8 +561,9 @@ M = [
         " OR NEW.updated_at <> NEW.received_at THEN",
         " THEN",
         PG_T,
-        "test_l24_door_the_two_legal_shapes_succeed_and_a_first_non_hex_check_is_refused",
-        "XXXX",
+        "test_l24_door_inserts_outside_the_two_legal_shapes_are_refused_and_nothing_is_written",
+        "('later update time', 'ok', 1)",
+        "[later update time-over5-inbound_insert_refused]",
     ),
     mu(
         "S10 sql: a new receipt may carry any run id",
@@ -527,8 +571,9 @@ M = [
         "\n       AND NEW.run_id = 'run-' || substr(NEW.delivery_key, 1, 28) || '0000' THEN\n        RETURN NEW;",
         " THEN\n        RETURN NEW;",
         PG_T,
-        "test_l24_door_the_two_legal_shapes_succeed_and_a_first_non_hex_check_is_refused",
-        "XXXX",
+        "test_l24_door_inserts_outside_the_two_legal_shapes_are_refused_and_nothing_is_written",
+        "('wrong run id', 'ok', 1)",
+        "[wrong run id-over7-inbound_insert_refused]",
     ),
     mu(
         "S11 sql: a text may be added to a receipt that is not new",
@@ -536,8 +581,8 @@ M = [
         "AND r.state = 'received' AND r.reuse_of IS NULL AND r.readers = NEW.readers) THEN",
         "AND r.reuse_of IS NULL AND r.readers = NEW.readers) THEN",
         PG_T,
-        "test_l24_door_bodies_only_for_a_new_receipt",
-        "XXXX",
+        "test_l24_door_cannot_add_a_text_to_a_receipt_that_dispatch_already_claimed",
+        "assert ('ok', 1) == ('23514'",
     ),
     mu(
         "S12 sql: the receipt update rule is switched off for replicas-style sessions",
@@ -545,8 +590,8 @@ M = [
         "ALTER TABLE inbound_receipts ENABLE ALWAYS TRIGGER inbound_receipts_update;",
         "ALTER TABLE inbound_receipts ENABLE TRIGGER inbound_receipts_update;",
         PG_T,
-        "test_l24_the_receipts_key_check_check_alone_refuses_a_non_hex_value",
-        "XXXX",
+        "test_l24_the_three_inbound_triggers_fire_in_every_session_mode",
+        "update', 'O')]",
     ),
     mu(
         "S13 sql: a claim needs a lease but no token",
@@ -554,8 +599,8 @@ M = [
         "(lease_until IS NOT NULL AND claim_token IS NOT NULL)",
         "(lease_until IS NOT NULL)",
         PG_T,
-        "test_l24_door_inserts_outside_the_two_legal_shapes_are_refused_and_nothing_is_written",
-        "XXXX",
+        "test_l24_the_lease_and_reuse_run_checks_alone_refuse_their_shapes",
+        "DID NOT RAISE CheckViolation",
     ),
     mu(
         "S14 sql: a reuse row may carry a run id",
@@ -563,8 +608,8 @@ M = [
         "CHECK ((reuse_of IS NULL) = (run_id IS NOT NULL))",
         "CHECK (TRUE)",
         PG_T,
-        "test_l24_door_inserts_outside_the_two_legal_shapes_are_refused_and_nothing_is_written",
-        "XXXX",
+        "test_l24_the_lease_and_reuse_run_checks_alone_refuse_their_shapes",
+        "DID NOT RAISE CheckViolation",
     ),
     mu(
         "S15 sql: the reuse index leaves out the reuse column",
@@ -572,8 +617,8 @@ M = [
         "ON inbound_receipts (tenant, source, reuse_of) WHERE reuse_of IS NOT NULL",
         "ON inbound_receipts (tenant, source) WHERE reuse_of IS NOT NULL",
         PG_T,
-        "test_l21_no_statement_of_the_ledger_needs_a_sequential_scan_of_the_receipts",
-        "XXXX",
+        "test_l21_the_two_partial_indexes_are_the_ones_of_the_ticket",
+        "AssertionError: assert 'btree (tenan",
     ),
     mu(
         "S16 sql: the waiting index does not cover the claim order",
@@ -581,8 +626,8 @@ M = [
         "ON inbound_receipts (tenant, source, state, lease_until)",
         "ON inbound_receipts (tenant, state)",
         PG_T,
-        "test_l21_no_statement_of_the_ledger_needs_a_sequential_scan_of_the_receipts",
-        "XXXX",
+        "test_l21_the_two_partial_indexes_are_the_ones_of_the_ticket",
+        'assert "btree (tenan',
     ),
     # --- role grants and the migrate command (store/migrate.py) -------------------------------------------------------
     mu(
@@ -592,8 +637,9 @@ M = [
         '        dispatch_update_cols=(\n            "generation",\n            "state",\n            "attempts",',
         PG_T,
         "test_l24_each_login_holds_exactly_its_rights_on_the_four_inbound_tables",
-        "XXXX",
+        "another role can re-run an inbound message",
         "[dispatch]",
+        crash="ConfigError",
     ),
     mu(
         "G2 grants: the door may read the claim token",
@@ -602,7 +648,7 @@ M = [
         '            "body_sha256",\n            "reuse_of",\n            "state",\n            "readers",\n            "claim_token",\n        ),',
         PG_T,
         "test_l24_each_login_holds_exactly_its_rights_on_the_four_inbound_tables",
-        "XXXX",
+        "door: extra [('inbound_receipts', 'claim_token', 'SELECT')]",
         "[door]",
     ),
     mu(
@@ -612,7 +658,7 @@ M = [
         '        purge="DELETE",\n        purge_cols=("tenant", "source", "delivery_key", "body"),',
         PG_T,
         "test_l24_each_login_holds_exactly_its_rights_on_the_four_inbound_tables",
-        "XXXX",
+        "purge: extra [('inbound_bodies', 'body', 'SELECT')]",
         "[purge]",
     ),
     mu(
@@ -622,7 +668,7 @@ M = [
         '"inbound_rerun_owner": Grant("table", "", rerun="SELECT", dispatch="SELECT")',
         PG_T,
         "test_l24_each_login_holds_exactly_its_rights_on_the_four_inbound_tables",
-        "XXXX",
+        "dispatch: extra [('inbound_rerun_owner'",
         "[dispatch]",
     ),
     mu(
@@ -632,7 +678,7 @@ M = [
         "    if False:",
         PG_T,
         "test_l24_a_stray_holder_of_update_generation_makes_migrate_refuse_and_roll_back",
-        "XXXX",
+        "DID NOT RAISE ConfigError",
     ),
     mu(
         "G6 migrate: a re-run owner that can log in is accepted",
@@ -640,8 +686,8 @@ M = [
         "if can_login is None or can_login[0]:",
         "if can_login is None:",
         PG_T,
-        "test_l28_every_login_passes_the_effective_problems_check",
-        "XXXX",
+        "test_l24_a_rerun_owner_that_can_log_in_or_does_not_exist_is_refused",
+        "DID NOT RAISE ConfigError",
     ),
     mu(
         "G7 migrate: two roles with the same name are accepted",
@@ -650,7 +696,7 @@ M = [
         "    if False:",
         LEDGER_T,
         "test_l26_the_six_roles_must_differ",
-        "XXXX",
+        "AssertionError: connected",
     ),
     mu(
         "G8 migrate: a partial set of inbound roles is accepted",
@@ -659,7 +705,8 @@ M = [
         "if False:",
         LEDGER_T,
         "test_l26_a_partial_set_of_inbound_roles_is_refused_before_connecting",
-        "XXXX",
+        "AssertionError: connected",
+        "[given0]",
     ),
     mu(
         "G9 migrate: the trigger functions are not pinned to a schema",
@@ -668,7 +715,7 @@ M = [
         "    return applied",
         PG_T,
         "test_l15_h_each_function_is_pinned_to_the_schema_and_pg_temp",
-        "XXXX",
+        "assert False",
     ),
     mu(
         "G10 migrate: a renamed re-run owner keeps its rights",
@@ -677,16 +724,18 @@ M = [
         "        pass",
         PG_T,
         "test_l24_a_renamed_rerun_owner_leaves_the_old_one_with_no_right_on_any_granted_relation",
-        "XXXX",
+        "another role can re-run an inbound message",
+        "",
+        crash="ConfigError",
     ),
     mu(
         "G11 migrate: the re-run owner check is skipped",
         MIG,
-        "            _check_rerun_holders(db, rerun_owner_role)\n        if portal_role:",
-        "        if portal_role:",
+        "        if rerun_owner_role:\n            _check_rerun_holders(db, rerun_owner_role)\n",
+        "",
         PG_T,
         "test_l24_a_stray_holder_of_update_generation_makes_migrate_refuse_and_roll_back",
-        "XXXX",
+        "DID NOT RAISE ConfigError",
     ),
 ]
 
@@ -707,7 +756,7 @@ if __name__ == "__main__":
     def show(row):
         name, v, test_id, good = row
         print(
-            f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1][:70]}]",
+            f"{'ok ' if good else 'BAD'} {v:12} {name}  [{test_id.split('::')[-1]}]",
             flush=True,
         )
         if not good:

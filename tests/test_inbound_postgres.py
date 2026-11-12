@@ -311,6 +311,18 @@ def test_l25_iii_eight_processes_first_receives_on_a_new_address_make_one_key_ch
     assert env.admin("SELECT count(*) FROM inbound_key_checks")[0][0] == 1
 
 
+def test_l25_v_a_changed_key_is_refused_by_the_read_before_any_insert_is_tried(env):
+    assert env.receive(1) == "new"
+    seen = _spy(env.split.door)
+    other = Inbox(env.split, hkey=b"z" * 32, clock=env.clock)
+    with pytest.raises(InboundKeyChanged):
+        other.receive(SRC, "o-2", b"x")
+    inserts = [q for q, _ in seen if "INSERT INTO inbound_receipts" in str(q)]
+    assert inserts == [], (
+        "the key check read must stop the receive before the insert trigger is reached"
+    )
+
+
 def test_l25_iv_a_key_change_between_the_read_and_the_insert_is_key_changed_and_writes_nothing(env):
     ib = Inbox(env.split, hkey=KEY, clock=env.clock)
     assert ib.receive(SRC, "o-1", b"x") == "new"
@@ -595,6 +607,8 @@ _DK = "1" * 64
         ),
         ("attempts 3", {"attempts": 3}, "inbound_insert_refused"),
         ("generation 1", {"generation": 1}, "inbound_insert_refused"),
+        ("later update time", {"updated_at": T0 + timedelta(hours=1)}, "inbound_insert_refused"),
+        ("last_reason set", {"last_reason": "step_error"}, "inbound_insert_refused"),
         ("wrong run id", {"run_id": "run-" + "0" * 32}, "inbound_insert_refused"),
         ("received with reuse_of", {"reuse_of": "e" * 64}, None),
         ("new-shape key check differs", {"key_check": "f" * 16}, "inbound_key_changed"),
@@ -684,6 +698,103 @@ def test_l24_the_receipts_key_check_check_alone_refuses_a_non_hex_value(env):
     assert env.admin(
         "SELECT tgenabled FROM pg_trigger WHERE tgname = 'inbound_receipts_insert' AND tgrelid = to_regclass('inbound_receipts')"
     ) == [("A",)]
+
+
+def test_l24_door_cannot_add_a_text_to_a_receipt_that_dispatch_already_claimed(env):
+    body = (
+        "INSERT INTO inbound_bodies (tenant, source, delivery_key, schema_version, readers, body, received_at) "
+        "VALUES (%(tenant)s, %(source)s, %(delivery_key)s, 1, %(readers)s, 'x', %(received_at)s)"
+    )
+    p = {"tenant": TENANT, "source": SOURCE, "readers": ["role:reader"], "received_at": T0}
+    env.attempt("door", _KEY_CHECK_INSERT, _kc_row(KC))
+    assert env.attempt("door", _INSERT, _row("3" * 64))[0] == "ok"
+    claim = (
+        "UPDATE inbound_receipts SET state = 'claimed', lease_until = %(t)s, claim_token = 'clm-"
+        + "c" * 32
+        + "' "
+        "WHERE delivery_key = %(dk)s"
+    )
+    assert (
+        env.attempt("dispatch", claim, {"t": T0 + timedelta(minutes=5), "dk": "3" * 64})[0] == "ok"
+    )
+    assert env.attempt("door", body, {**p, "delivery_key": "3" * 64}) == (
+        "23514",
+        "inbound_insert_refused",
+    )
+    assert env.admin("SELECT count(*) FROM inbound_bodies")[0][0] == 0
+
+
+def test_l24_the_three_inbound_triggers_fire_in_every_session_mode(env):
+    # ENABLE ALWAYS (tgenabled 'A'): the rules still hold when a session switches to replica mode, which skips plain triggers.
+    assert env.admin(
+        "SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid IN (to_regclass('inbound_receipts'), "
+        "to_regclass('inbound_bodies')) AND NOT tgisinternal ORDER BY tgname"
+    ) == [
+        ("inbound_bodies_insert", "A"),
+        ("inbound_receipts_insert", "A"),
+        ("inbound_receipts_update", "A"),
+    ]
+    env.attempt("door", _KEY_CHECK_INSERT, _kc_row(KC))
+    assert env.attempt("door", _INSERT, _row(_DK))[0] == "ok"
+    with psycopg.connect(env.migrator, autocommit=True) as db:
+        db.execute("SET session_replication_role = replica")
+        with pytest.raises(psycopg.errors.CheckViolation) as ex:
+            db.execute("UPDATE inbound_receipts SET body_sha256 = %s", ("cd" * 32,))
+        assert ex.value.diag.message_primary == "inbound_immutable"
+        with pytest.raises(psycopg.errors.CheckViolation) as ex:
+            db.execute(_INSERT, _row("4" * 64, generation=2))
+        assert ex.value.diag.message_primary == "inbound_insert_refused"
+
+
+def test_l24_the_lease_and_reuse_run_checks_alone_refuse_their_shapes(env):
+    # The table CHECKs are a second wall behind the triggers: switch the triggers off (as the owner of the table) and the CHECKs still hold.
+    env.attempt("door", _KEY_CHECK_INSERT, _kc_row(KC))
+    assert env.attempt("door", _INSERT, _row(_DK))[0] == "ok"
+    env.admin("ALTER TABLE inbound_receipts DISABLE TRIGGER inbound_receipts_insert")
+    env.admin("ALTER TABLE inbound_receipts DISABLE TRIGGER inbound_receipts_update")
+    try:
+        with psycopg.connect(env.migrator, autocommit=True) as db:
+            with pytest.raises(psycopg.errors.CheckViolation) as ex:
+                db.execute(
+                    _INSERT, _row("5" * 64, run_id=None)
+                )  # a received receipt without a run id
+            assert ex.value.diag.constraint_name == "inbound_receipts_reuse_run"
+            with pytest.raises(psycopg.errors.CheckViolation) as ex:
+                db.execute(
+                    _INSERT, _row("6" * 64, **{**_REUSE, "run_id": "run-" + "6" * 32})
+                )  # a reuse row with a run id
+            assert ex.value.diag.constraint_name == "inbound_receipts_reuse_run"
+            with pytest.raises(psycopg.errors.CheckViolation) as ex:
+                db.execute(
+                    "UPDATE inbound_receipts SET state = 'claimed', lease_until = %s",
+                    (T0 + timedelta(minutes=5),),
+                )  # claimed with a lease but no claim token
+            assert ex.value.diag.constraint_name == "inbound_receipts_lease"
+    finally:
+        env.admin("ALTER TABLE inbound_receipts ENABLE ALWAYS TRIGGER inbound_receipts_insert")
+        env.admin("ALTER TABLE inbound_receipts ENABLE ALWAYS TRIGGER inbound_receipts_update")
+    assert (
+        env.admin(
+            "SELECT count(*) FROM pg_trigger WHERE tgrelid = to_regclass('inbound_receipts') AND tgenabled = 'A' AND NOT tgisinternal"
+        )[0][0]
+        == 2
+    )
+
+
+def test_l21_the_two_partial_indexes_are_the_ones_of_the_ticket(env):
+    defs = dict(
+        env.admin(
+            "SELECT indexname, regexp_replace(indexdef, '^.* USING ', '') FROM pg_indexes "
+            "WHERE schemaname = current_schema() AND tablename = 'inbound_receipts' AND indexname LIKE 'inbound_receipts_%'"
+        )
+    )
+    assert defs["inbound_receipts_waiting"] == (
+        "btree (tenant, source, state, lease_until) WHERE (state = ANY (ARRAY['received'::text, 'claimed'::text, 'needs_person'::text]))"
+    )
+    assert (
+        defs["inbound_receipts_reuse"]
+        == "btree (tenant, source, reuse_of) WHERE (reuse_of IS NOT NULL)"
+    )
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -785,6 +896,98 @@ def test_l15_h_each_function_is_pinned_to_the_schema_and_pg_temp(env):
     )
     assert [r[0] for r in rows] == sorted(mig.INBOUND_FUNCTIONS)
     assert all(r[1] == [f"search_path={env.schema}, pg_temp"] for r in rows)
+
+
+def test_l15_i_the_table_owner_and_a_login_with_the_column_right_are_not_the_rerun_owner(env):
+    rec = env.finished(1, "needs_person", "run_interrupted")
+    p = {"now": env.clock(), "tenant": TENANT, "source": SOURCE, "delivery_key": rec.delivery_key}
+    with (
+        psycopg.connect(env.migrator, autocommit=True) as db,
+        pytest.raises(psycopg.errors.InsufficientPrivilege) as ex,
+    ):
+        db.execute(
+            REOPEN_SQL, p
+        )  # the migrating login owns the table and holds every right, but its name is not the owner's
+    assert ex.value.diag.message_primary == "rerun_owner_only"
+    stray = "sx_" + uuid.uuid4().hex[:10]
+    env.admin(sql.SQL("CREATE ROLE {} NOLOGIN").format(sql.Identifier(stray)).as_string())
+    try:
+        env.admin(
+            sql.SQL("GRANT USAGE ON SCHEMA {} TO {}")
+            .format(sql.Identifier(env.schema), sql.Identifier(stray))
+            .as_string()
+        )
+        for grant in (
+            (
+                "GRANT SELECT, UPDATE (state, generation, run_id, attempts, reason, last_reason, lease_until, "
+                "claim_token, updated_at) ON inbound_receipts TO {}"
+            ),
+            "GRANT SELECT ON inbound_rerun_owner, runs TO {}",
+        ):
+            env.admin(sql.SQL(grant).format(sql.Identifier(stray)).as_string())
+        with psycopg.connect(env.migrator, autocommit=True) as db:
+            db.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(stray)))
+            with pytest.raises(psycopg.errors.InsufficientPrivilege) as ex:
+                db.execute(REOPEN_SQL, p)
+            assert ex.value.diag.message_primary == "rerun_owner_only"
+            db.execute("RESET ROLE")
+    finally:
+        env.admin(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(stray)).as_string())
+        env.admin(sql.SQL("DROP ROLE {}").format(sql.Identifier(stray)).as_string())
+    assert env.receipt(rec.delivery_key)[0] == "needs_person"
+
+
+def test_l15_j_a_reopen_must_reset_every_try_and_reason_field(env):
+    assert env.receive(1) == "new"
+    first = env.claim()
+    env.split.release_inbound(
+        TENANT, SOURCE, first.delivery_key, first.claim_token, "step_error", env.clock()
+    )
+    second = env.claim()
+    env.split.finish_inbound(
+        TENANT,
+        SOURCE,
+        second.delivery_key,
+        second.claim_token,
+        "needs_person",
+        "attempts_exhausted",
+        env.clock(),
+    )
+    dk = second.delivery_key
+    state, reason, last_reason, attempts = env.receipt(dk)[:4]
+    assert (state, reason, last_reason, attempts) == (
+        "needs_person",
+        "attempts_exhausted",
+        "step_error",
+        1,
+    )
+    base = {
+        "attempts": "0",
+        "reason": "NULL",
+        "last_reason": "NULL",
+        "lease_until": "NULL",
+        "claim_token": "NULL",
+    }
+    for field, keep in (
+        ("attempts", "attempts"),
+        ("reason", "reason"),
+        ("last_reason", "last_reason"),
+        ("lease_until", "now()"),
+        ("claim_token", "'clm-" + "d" * 32 + "'"),
+    ):
+        sets = {**base, field: keep}
+        query = sql.SQL(
+            "UPDATE inbound_receipts SET state = 'received', generation = generation + 1, "
+            "run_id = 'run-' || substr(delivery_key, 1, 28) || '0001', {sets}, "
+            "updated_at = %(now)s WHERE delivery_key = %(dk)s"
+        ).format(
+            sets=sql.SQL(", ").join(
+                sql.SQL("{} = {}").format(sql.Identifier(k), sql.SQL(v)) for k, v in sets.items()
+            )
+        )
+        got = env.as_owner(query, {"now": env.clock(), "dk": dk})
+        assert got == ("23514", "inbound_reopen_shape"), (field, got)
+    assert env.receipt(dk)[0] == "needs_person"
 
 
 def _expect_refused(env, query, params, message):
@@ -1094,3 +1297,23 @@ def test_l24_a_renamed_rerun_owner_leaves_the_old_one_with_no_right_on_any_grant
     finally:
         env.admin(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(new_owner)).as_string())
         env.admin(sql.SQL("DROP ROLE {}").format(sql.Identifier(new_owner)).as_string())
+
+
+def test_l24_a_rerun_owner_that_can_log_in_or_does_not_exist_is_refused(env):
+    login = "lg_" + uuid.uuid4().hex[:10]
+    env.admin(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(login)).as_string())
+    try:
+        for name in (login, "no_such_" + uuid.uuid4().hex[:10]):
+            with pytest.raises(ConfigError, match="must exist and must not be able to log in"):
+                mig.migrate(
+                    env.migrator,
+                    runtime_role=env.role_of["runtime"],
+                    purge_role=env.role_of["purge"],
+                    inbound_door_role=env.role_of["door"],
+                    inbound_dispatch_role=env.role_of["dispatch"],
+                    rerun_owner_role=name,
+                )
+        assert env.admin("SELECT role_name FROM inbound_rerun_owner") == [(env.owner,)]
+    finally:
+        env.admin(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(login)).as_string())
+        env.admin(sql.SQL("DROP ROLE {}").format(sql.Identifier(login)).as_string())

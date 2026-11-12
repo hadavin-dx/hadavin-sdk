@@ -494,6 +494,22 @@ def migrate(
             db.execute(path.read_text(encoding="utf-8"))  # a file shipped in this package
             db.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (path.stem,))
             applied.append(path.stem)
+        if rerun_owner_role:
+            can_login = db.execute(
+                "SELECT rolcanlogin FROM pg_roles WHERE rolname = %s", (rerun_owner_role,)
+            ).fetchone()
+            if can_login is None or can_login[0]:
+                raise ConfigError("the re-run owner role must exist and must not be able to log in")
+        known = {
+            r[0]
+            for r in db.execute(
+                "SELECT rolname FROM pg_roles WHERE rolname = ANY(%s)", (named,)
+            ).fetchall()
+        }
+        if missing := sorted(set(named) - known):
+            raise ConfigError(  # before pg_has_role, which raises a raw database error for a name that does not exist
+                "these database roles do not exist: " + ", ".join(missing) + "; create them first"
+            )
         q = "SELECT pg_has_role(%s, %s, 'MEMBER')"  # a member keeps the other's rights, whatever we REVOKE
         for a in named:
             for b in named:
@@ -502,11 +518,6 @@ def migrate(
                         "the runtime, portal, purge and inbound roles must not be members of each other"
                     )
         if rerun_owner_role:
-            can_login = db.execute(
-                "SELECT rolcanlogin FROM pg_roles WHERE rolname = %s", (rerun_owner_role,)
-            ).fetchone()
-            if can_login is None or can_login[0]:
-                raise ConfigError("the re-run owner role must exist and must not be able to log in")
             _bind_rerun_owner(db, rerun_owner_role)
         if runtime_role:
             _apply_grants(db, runtime_role, lambda g: g.runtime)

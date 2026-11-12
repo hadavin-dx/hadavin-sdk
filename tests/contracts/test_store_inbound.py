@@ -427,6 +427,44 @@ def test_l13_purge_rules(ibx):
     assert ibx.all_bodies() == [b"body-open"]
 
 
+def test_l13_purge_keeps_the_text_of_a_done_receipt_while_its_run_is_open_stopped_or_waits_for_a_person(
+    ibx,
+):
+    src, clock = _src(max_open=1000), _Clock()
+    ib = _inbox(ibx, clock)
+    kept_states = (
+        RunState.RECEIVED,
+        RunState.WORKING,
+        RunState.PLAN_READY,
+        RunState.WAITING_FOR_APPROVAL,
+        RunState.EXECUTING,
+        RunState.VERIFYING,
+        RunState.NEEDS_PERSON,
+        RunState.STOPPED,
+    )
+    dropped_states = (
+        RunState.SUCCEEDED,
+        RunState.NO_ACTION,
+        RunState.DENIED,
+        RunState.REJECTED,
+        RunState.EXPIRED,
+        RunState.ROLLED_BACK,
+    )
+    for i, st in enumerate(kept_states + dropped_states):
+        ib.receive(src, f"o-{i}", f"body-{i}".encode())
+        rec = _claim(ibx, src, clock)
+        ibx.finish_inbound(
+            src.tenant, src.name, rec.delivery_key, rec.claim_token, "done", None, clock()
+        )
+        ibx.make_run(
+            rec.run_id, agent_id="a", principal_id="p", trigger_kind="event", trigger_ref=f"inb-{i}"
+        )
+        ibx.set_run_state(rec.run_id, st)
+    gone = ibx.purge_inbound_bodies(T0 + timedelta(days=70), T0 - timedelta(days=400))
+    assert gone == len(dropped_states)
+    assert sorted(ibx.all_bodies()) == sorted(f"body-{i}".encode() for i in range(len(kept_states)))
+
+
 def test_l16_a_final_receipt_cannot_be_finished_or_released_and_reopen_is_refused(ibx):
     src, ib, clock = _src(), _inbox(ibx), _Clock()
     ib.receive(src, "o-1", b"x")
@@ -570,3 +608,86 @@ def test_l27_get_inbound_run_is_the_seven_columns_and_a_missing_run_is_not_found
     )
     with pytest.raises(NotFound):
         ibx.get_inbound_run("run-" + "0" * 32)
+
+
+def test_l6_claim_takes_the_oldest_receipt_first(ibx):
+    src, clock = _src(), _Clock()
+    ib = _inbox(ibx, clock)
+    keys = []
+    for name in (
+        "o-b",
+        "o-c",
+        "o-a",
+    ):  # received in this order, one second apart; the order of the ids is a, b, c
+        ib.receive(src, name, b"x")
+        keys.append(delivery_key(KEY, src.tenant, src.name, name))
+        clock.advance(seconds=1)
+    got = [_claim(ibx, src, clock).delivery_key for _ in range(3)]
+    assert got == keys, "claim must take receipts in the order they were received"
+
+
+def test_l9_release_refuses_a_reason_that_is_not_a_retry_reason_and_changes_nothing(ibx):
+    src, ib, clock = _src(), _inbox(ibx), _Clock()
+    ib.receive(src, "o-1", b"x")
+    rec = _claim(ibx, src, clock)
+    for bad in ("policy", "low_quality", "", "done"):
+        with pytest.raises(ValueError):
+            ibx.release_inbound(
+                src.tenant, src.name, rec.delivery_key, rec.claim_token, bad, clock()
+            )
+    ibx.finish_inbound(
+        src.tenant, src.name, rec.delivery_key, rec.claim_token, "done", None, clock()
+    )  # still claimed with the same token: nothing was changed by the refused releases
+
+
+def test_l16_the_owner_cannot_reopen_while_the_run_is_open(ibx):
+    src, ib, clock = _src(), _inbox(ibx), _Clock()
+    ib.receive(src, "o-1", b"x")
+    rec = _claim(ibx, src, clock)
+    ibx.finish_inbound(
+        src.tenant,
+        src.name,
+        rec.delivery_key,
+        rec.claim_token,
+        "needs_person",
+        "run_interrupted",
+        clock(),
+    )
+    ibx.make_run(
+        rec.run_id, agent_id="a", principal_id="p", trigger_kind="event", trigger_ref="inb-1"
+    )
+    ibx.set_run_state(rec.run_id, RunState.WORKING)
+    with pytest.raises(StaleState) as err:
+        ibx.rerun_owner_reopen(src.tenant, src.name, rec.delivery_key, clock())
+    assert "rerun_run_open" in str(err.value)
+    ibx.set_run_state(rec.run_id, RunState.NEEDS_PERSON)
+    assert ibx.rerun_owner_reopen(src.tenant, src.name, rec.delivery_key, clock()).generation == 1
+
+
+def test_l20_a_changed_key_refuses_a_message_that_was_already_accepted_and_the_store_is_asked_once(
+    ibx,
+):
+    src, clock = _src(), _Clock()
+    a, b = Inbox(ibx, hkey=b"a" * 32, clock=clock), Inbox(ibx, hkey=b"b" * 32, clock=clock)
+    assert a.receive(src, "o-1", b"x") == "new"
+
+    class Counting:
+        def __init__(self, inner):
+            self.inner, self.calls = inner, 0
+
+        def receive_inbound(self, *args, **kw):
+            self.calls += 1
+            return self.inner.receive_inbound(*args, **kw)
+
+        def __getattr__(self, name):
+            return getattr(self.inner, name)
+
+    counted = Counting(ibx)
+    for body in (
+        b"x",
+        b"other text",
+    ):  # the same text (would be a duplicate) and other text (would be id reuse)
+        with pytest.raises(InboundKeyChanged):
+            Inbox(counted, hkey=b"b" * 32, clock=clock).receive(src, "o-1", body)
+    assert counted.calls == 2, "a changed key must stop the receive at the first store call"
+    assert len(ibx.all_receipts()) == 1 and b.key_check != a.key_check

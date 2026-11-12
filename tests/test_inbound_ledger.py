@@ -372,3 +372,28 @@ def test_a_changed_key_refuses_the_receive_and_the_message_names_no_key():
     with pytest.raises(InboundKeyChanged) as err:
         Inbox(store, hkey=b"b" * 32, clock=lambda: T0).receive(SRC, "o2", b"x")
     assert "tenant-a/src-orders" in str(err.value) and ("b" * 32) not in str(err.value)
+
+
+def test_a_receipt_with_a_later_update_time_than_its_receive_time_is_not_a_legal_new_receipt():
+    from hadavin_sdk.models import InboundReceipt
+
+    t = datetime(2030, 1, 1, tzinfo=UTC)
+    dk = "1" * 64
+    rec = InboundReceipt(
+        tenant="tenant-a",
+        source="src-orders",
+        readers=frozenset({"role:reader"}),
+        delivery_key=dk,
+        body_sha256="ab" * 32,
+        key_check="0123456789abcdef",
+        run_id=run_id_for(dk, 0),
+        received_at=t,
+        updated_at=t + timedelta(seconds=1),
+    )
+    store = MemoryStore()
+    with pytest.raises(ValueError):
+        store.receive_inbound(rec, b"x", max_reuse=8, max_open=10)
+    assert (
+        store.list_inbound_sources() == []
+        and store.get_inbound_body("tenant-a", "src-orders", dk) is None
+    )
