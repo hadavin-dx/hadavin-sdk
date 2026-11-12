@@ -1,6 +1,14 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 18:54Z / 00:24 IST - ORDER D2 started: 3 agents running (all model sonnet)
+- Lane 1 outsider test (EVIDENCE RUNNER): clone of public repo branch initial-code, setup from README/docs only, 60 min box. Output handover/demo/outsider/.
+- Lane 2 drift report (egm:egm-drift-report via Skill tool, run by the lane agent; if it is refused it must stop and say so): output handover/demo/drift/.
+- Lane 3 static-analysis triage (builder; egm:egm-codebase-details review by me after): output handover/demo/triage/, patches only, repo untouched.
+- Pushed: nothing new yet. Stuck: nothing. Note: the machine has python3.13 as python3, the docs ask for 3.12; lane 1 will record what it did.
+- Session model: Sonnet 5.5 now (the earlier Opus switch came from the egm-resolve skill load); no /model needed.
+- Limit I must flag: I have no timer, so the 5-minute report is written each time an agent finishes or you message me; I cannot wake myself every 5 minutes.
+
 ## 2026-11-12 18:51Z / 00:21 IST - ORDER D1 proof: EGM installed, patched, Skill tool works (no failures)
 Claude Code version: 2.1.322. Session model before the skill calls: claude-sonnet-5-5.
 
