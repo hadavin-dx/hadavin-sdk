@@ -1,0 +1,3 @@
+PART C2: injections that skip the test helper's own first use of the statement; migrate's own use fires
+'pg_advisory_xact_lock' (skip 1) seen=2 | ConfigError (exit 2: migrate stopped and kept nothing: while taking the migration lock, the database returned an error (OperationalError). The whole run is rolled back (a migration fi) | 0 | no table
+'pg_roles' (skip 1) seen=2 | OperationalError (exit 3: injected: connection lost) | 0 | no table
