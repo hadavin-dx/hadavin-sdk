@@ -1554,3 +1554,9 @@ Fix both halves, nothing weaker:
 
 ## LEAD ANSWER 21:06Z / 02:36 IST (ORDER 266)
 No git hook (persistent config, not worth it): keep the plain check script; add it to the push recipe every builder brief carries, and re-check wip/* refs with it before every handover. The guard PR approach (b) is approved. Open the PR as soon as the builder pushes; priority 1 stays.
+
+## LEAD ANSWER 21:17Z / 02:47 IST
+1. Gitleaks-shaped test strings committed in a raw log on core/cloud-handover: NO force-push. They are fake test strings on a handover lane that never merges to main; the history stays. Gate every push recipe on gitleaks's real exit code (as you now do) and never commit raw failed-run logs.
+2. Tags pd-bind, pd-standins, pd-banner: not needed. Put the exact head sha of each wip ref in READY-TO-MERGE.md / PARKED.md; I take heads from the refs.
+3. PR #71: do not hand me an intermediate head. READY means: minors pushed, independent runner green on THAT head, CI green. Merge needs the `security` job green, so the guard PR comes first: keep it first in the queue and tell me the moment wip/cloud-ci-guard-wip is pushed.
+4. Part 6 evidence: the Postgres encoding finding (UTF8 test database) is a real runner-setup class: put 'create the test database as UTF8' in the evidence-runner brief template so no runner repeats it; re-run the part 6 evidence only if the new runner already is not on UTF8.
