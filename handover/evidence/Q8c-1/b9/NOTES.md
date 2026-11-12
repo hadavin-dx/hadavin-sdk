@@ -28,7 +28,7 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 
 | File | Test | New or changed | Fails on the old head, or killing mutant, or control (reason) |
 |---|---|---|---|
-| test_policy_guard.py | `test_plant_a_new_kind_on_no_list_is_caught` | changed | killing mutant: `Kinds: a kind on no list is no longer reported`; and fails on origin/main (`fail-before-origin-main.log`): `tools.policy_page` is not there |
+| test_policy_guard.py | `test_plant_a_new_kind_on_no_list_is_caught` | changed | killing mutant: `Kinds: a kind on no list is no longer reported`; and fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): `tools.policy_page` is not there |
 | test_policy_guard.py | `test_plant_a_new_request_with_no_grant_is_caught` | changed | killing mutant(s): A1 a request with no grant |
 | test_policy_guard.py | `test_plant_a_grant_whose_request_was_deleted_is_caught` | changed | killing mutant(s): A1 a grant whose request is |
 | test_policy_guard.py | `test_plant_a_raw_http_request_outside_the_one_sender_is_caught` | changed | killing mutant(s): M3 a raw HTTP call outside |
@@ -38,7 +38,7 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 | test_policy_guard.py | `test_plant_d2_a_field_that_is_no_setting_is_caught` | changed | killing mutant(s): D2 a field that is no |
 | test_policy_guard.py | `test_plant_d3_an_empty_reason_is_caught` | changed | killing mutant(s): D3 an empty reason is accepted;D3 a blank reason on a |
 | test_policy_guard.py | `test_plant_d5_a_never_action_that_another_kind_needs_is_caught` | changed | killing mutant(s): D5 a never action that a |
-| test_policy_guard.py | `test_plant_a_grant_id_used_by_two_kinds_is_caught` | changed | killing mutant: `Ids: a grant id used by two kinds is accepted`; and fails on origin/main (`fail-before-origin-main.log`): `tools.policy_page` is not there |
+| test_policy_guard.py | `test_plant_a_grant_id_used_by_two_kinds_is_caught` | changed | killing mutant: `Ids: a grant id used by two kinds is accepted`; and fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): `tools.policy_page` is not there |
 | test_policy_guard.py | `test_plant_d6_a_long_lived_credential_with_no_exception_is_caught` | changed | killing mutant(s): D6 a long-lived credential with no |
 | test_policy_guard.py | `test_plant_d7_unknown_keys_platform_and_never_type_are_refused` | changed | killing mutant(s): D7 an unknown key is accepted;D7 an unknown never type is;D7 an unknown key on a |
 | test_policy_guard.py | `test_plant_an_unchecked_claim_with_no_pending_entry_is_caught` | changed | killing mutant(s): B3 a grant with an unchecked |
@@ -49,9 +49,9 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 | test_policy_guard.py | `test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught` | changed | killing mutant(s): M3 a literal getattr of a |
 | test_policy_guard.py | `test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught` | changed | killing mutant(s): M3 a query parameter at the;M3 a query parameter written in |
 | test_policy_guard.py | `test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting` | changed | killing mutant(s): M3 a local name is folded |
-| test_policy_guard.py | `test_plant_d1_a_plus_wildcard_with_no_bound_is_caught` | changed | killing mutant: `m8 a plus wildcard with no bound is accepted`; and fails on origin/main (`fail-before-origin-main.log`): `tools.policy_page` is not there |
+| test_policy_guard.py | `test_plant_d1_a_plus_wildcard_with_no_bound_is_caught` | changed | killing mutant: `m8 a plus wildcard with no bound is accepted`; and fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): `tools.policy_page` is not there |
 | test_policy_guard.py | `test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks` | changed | control: day argument and a `what` text only; it is a data pin on the real files (no code rule to revert) |
-| test_policy_guard.py | `test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1` | changed | killing mutant: `m10 the command line skips the checks across kinds`; and fails on origin/main (`fail-before-origin-main.log`): `tools.policy_page` is not there |
+| test_policy_guard.py | `test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1` | changed | killing mutant: `m10 the command line skips the checks across kinds`; and fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): `tools.policy_page` is not there |
 | test_policy_guard.py | `test_m10_write_makes_a_missing_docs_folder_and_check_then_passes` | changed | control: day argument and a `what` text only |
 | test_policy_guard.py | `test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far` | changed | killing mutant: `Dated entries: an overdue entry is no longer reported`; `Dated entries: a date moved further than the cap is accepted` |
 | test_policy_guard.py | `test_a_never_path_over_a_grant_is_also_refused_by_the_check_command` | changed | control: only the day argument `today=DECIDED` changed |
@@ -62,13 +62,13 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 | test_policy_guard.py | `test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught` | changed | killing mutant(s): M2 a Vault grant wider than |
 | test_policy_guard.py | `test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught` | changed | killing mutant(s): M3 a Vault capability other than |
 | test_policy_guard.py | `test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught` | changed | killing mutant(s): M3 a Kubernetes path that is |
-| test_policy_guard.py | `test_plant_a_newline_in_a_reason_is_caught` | changed | killing mutant: `m7 a control character in a text is accepted`; and fails on origin/main (`fail-before-origin-main.log`): `tools.policy_page` is not there |
+| test_policy_guard.py | `test_plant_a_newline_in_a_reason_is_caught` | changed | killing mutant: `m7 a control character in a text is accepted`; and fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): `tools.policy_page` is not there |
 | test_policy_guard.py | `test_plant_a_grant_that_names_no_call_is_caught_with_its_message` | changed | killing mutant(s): D4 a grant that names no |
 | test_policy_guard.py | `test_plant_a_url_in_verified_is_caught_with_its_message` | changed | killing mutant(s): E3 a URL in verified is |
 | test_policy_guard.py | `test_plant_another_module_importing_the_vault_client_is_caught` | changed | killing mutant(s): M3 another module importing the Vault |
 | test_policy_guard.py | `test_a_reason_is_matched_by_its_exact_text_even_when_a_class_key_is_its_unique_prefix` | new | killing mutant(s): B5 a reason is matched by |
 | test_policy_guard.py | `test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_the_page_raises_policy_error` | changed | killing mutant(s): B5 the check command does not;B5 the page raises a KeyError |
-| test_policy_guard.py | `test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check` | changed | fails on origin/main (`fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
+| test_policy_guard.py | `test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check` | changed | fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
 | test_policy_guard.py | `test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file` | changed | killing mutant(s): B5 the check command does not |
 | test_policy_guard.py | `test_a_clause_appended_to_a_claim_is_no_longer_the_listed_claim` | changed | killing mutant(s): B6 a claim with a clause |
 | test_policy_guard.py | `test_the_marks_of_r17_and_r18_swapped_in_the_sources_file_are_reported_by_the_check` | changed | killing mutant(s): B6 a builder-read mark on a;B6 an entry that names a |
@@ -81,7 +81,7 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 | test_policy_guard.py | `test_a_new_unchecked_claim_with_no_pending_row_is_reported_by_the_check` | changed | killing mutant(s): B6 the check command does not |
 | test_policy_guard.py | `test_the_page_takes_its_marks_from_the_root_it_is_given` | changed | killing mutant(s): B7 the page takes its marks |
 | test_policy_guard.py | `test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_from_prose` | changed | killing mutant(s): B7 the page head lists the |
-| test_policy_guard.py | `test_the_fixture_head_names_the_builder_read_claims_as_they_are` | changed | fails on origin/main (`fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
+| test_policy_guard.py | `test_the_fixture_head_names_the_builder_read_claims_as_they_are` | changed | fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
 | test_policy_guard.py | `test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date` | new | killing mutant(s): B8 the pending kinds take another;B9 a pending kind is more |
 | test_policy_guard.py | `test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists` | new | killing mutant(s): B9 the tool docstring names a |
 | test_policy_guard.py | `test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given` | new | killing mutant(s): B8 the default clock of the |
@@ -91,7 +91,7 @@ Method: tests whose function (compared with `ast.dump`) is new or differs betwee
 | test_policy_guard.py | `test_the_docs_page_names_the_review_day_of_the_dated_lists_only` | new | fails on old head 208a47d5 (command in section A): AttributeError: module 'tools.policy_page' has no attribute 'review_date'; killing mutant: B9 the docs page names another review date than the dated lists |
 | test_policy_guard.py | `test_the_day_the_tool_sees_is_the_fixed_day_the_run_was_given` | new | killing mutant: PROBE (the hook that sets the clock is dropped), run first by `tests/policy_mutants.py` with a day that is not today; see the line `probe ok` in the mutant log |
 | test_policy_docs.py | `test_ci_runs_the_policy_page_check_right_after_the_policy_mutants` | new | control: reads the real ci.yml (the runner's temp tree has no `.github`); its rule is now `_check_step_problem` and the next line's plant test feeds it wrong lists. Fails on ad588599 (ci.yml has no step): b8 evidence, 3 failed |
-| test_policy_docs.py | `test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused` | new | fails on origin/main (`fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
+| test_policy_docs.py | `test_plant_a_ci_step_list_without_or_with_a_moved_check_step_is_refused` | new | fails on origin/main (a run of the same test files on origin/main, kept with batch 12: `b12/logs/fail-before-origin-main.log`): the file cannot be collected there, `tools.policy_page` is not on main |
 | test_policy_docs.py | `test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder` | new | control: reads the real CHANGELOG (outside the runner's temp tree); rule is now `_date_guard_sentence_problem`; failed on ad588599 (b8 evidence) |
 | test_policy_docs.py | `test_plant_a_changelog_entry_that_loses_the_reminder_sentence_or_fixes_a_day_is_refused` | new | plant: three wrong made-up texts are fed to `_date_guard_sentence_problem` of test_policy_docs.py; passes on e4f1b2a4 because the function sits in the test file (control: CHANGELOG.md is outside the mutant copy, so the real entry is read by `test_the_changelog_says_seven_rows_are_abbreviated_and_the_openbao_release_is_not_pinned` and its neighbours) |
 | test_policy_changelog.py | `test_the_changelog_entry_for_the_page_names_no_review_by_day_as_text` | new | fails on old head 208a47d5 (command in section A): AssertionError: the changelog entry writes a review day as text: ['review by 2026-12-11'] |

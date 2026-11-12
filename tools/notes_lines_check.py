@@ -5,24 +5,40 @@ that a builder's notes hold a row for each.
     python tools/notes_lines_check.py --auto <base-commit> [--head <commit>]
 
 What it reads. In each test file it reads every top-level `test_*` function (plain or `async`) and every `test_*`
-method of a top-level class whose name starts with `Test` (named `Class::test_x`). A test is "new or changed" when
-it is missing from the base commit's copy of the file, or when its own syntax tree differs, or when the syntax tree
-of anything it uses differs, to any depth: a module-level function, class, constant, import or `+=` it names, a
-fixture it names as a parameter, every fixture of the same file marked `autouse=True` (it applies to every test of
-the file, named or not), a module-level `pytestmark`, the module-level code that runs at collection (an `if`, a
-`try`, a call), the decorators and body of the class of a test method, and what a name imported from another test
-module is (`from tests.x import name`, `from tests import x` then `x.name`, `import tests.x as x`, `import tests.x`
-then `tests.x.name`, or a relative form, also inside a function). A helper, a fixture or a constant that changed
-therefore lists every test that uses it. With `--auto`, when any file under `tests/` changed, EVERY test file of the
-head commit is read (not only the changed ones), so a change to a helper alone lists the tests of the files that
-import it: the reverse direction of an import needs no separate pass.
+method of a top-level class whose name starts with `Test` or that is a `unittest.TestCase` (named `Class::test_x`).
+A test is "new or changed" when it is missing from the base commit's copy of the file, or when its own syntax tree
+differs, or when the syntax tree of anything it uses differs, to any depth and through every link:
+- a module-level function, class, import, `+=`, or constant it names; a constant is followed through the value that
+  is behind it (`B = A + 1`, `X = _build()`, a tuple target `A, B = 1, 2`, an annotated or augmented assignment), so
+  `SKIP = False` read by `pytestmark = pytest.mark.skipif(SKIP, ...)` lists every test when `SKIP` turns `True`;
+- a fixture it names as a parameter, looked up in its own file and then in the nearest `conftest.py` above it
+  (a changed conftest fixture lists the tests that take it), and every fixture marked `autouse=True`;
+- the ways a whole file or class is switched off or changed: a module-level `pytestmark`, `__test__`,
+  `setup_module`, `teardown_module`, `setup_function`, `pytest_generate_tests`, every other module-level statement
+  that runs at collection (an `if`, a `try`, a `for`, a call); in a test class its decorators, bases, every helper
+  method that is no test, `setup_method`, `setup_class`, and a class-level fixture;
+- the code of every `conftest.py` above the test file (its hooks and its module-level statements);
+- what a name imported from another test module is, followed from helper to helper to any depth (`from tests.x
+  import name`, `from tests import x` then `x.name`, `import tests.x as x`, a relative form, also inside a
+  function), so a helper two imports away lists the test that reaches it.
+A change to a helper therefore lists every test that uses it. With `--auto`, when any file under `tests/` changed,
+EVERY test file of the head commit is read, so a change to a helper alone lists the tests of the files that import
+it. A new module-level function or constant that nothing in the tree names (no test, fixture, conftest, import or
+mutant reaches it) is a unit of no test, so it needs no row: it cannot change a run until something uses it, and
+the change that uses it lists the user.
 
-Four kinds of file are in scope, because a change to any of them can make a test pass or fail without touching a
-test function. `tests/test_*.py`: the tests, as above. `tests/policy_mutants.py` and `tests/stage_mutants.py`: each
-`mutant(...)` (or `Mutant(...)`) call whose first argument is a text is one unit named by that text; a mutant that is
-new or altered needs a row, a mutant that is gone is a problem, and so is a count that fell. `conftest.py`: each
-top-level function or class is one unit. `tests/fixtures/policy_sources_*.txt`: the whole file is one unit named by
-its file name.
+Seven kinds of file are in scope, because a change to any of them can make a test pass or fail without touching a
+test function. `tests/test_*.py` and `tests/*_test.py` (pytest's default file patterns, at any depth): the tests, as
+above. `tests/policy_mutants.py` and `tests/stage_mutants.py`: each `mutant(...)` (or `Mutant(...)`) call whose first
+argument is a text is one unit named by that text, and its signature also holds every helper of the file that the
+call reaches; a mutant that is new or altered needs a row, a mutant that is gone is a problem, and so is a count
+that fell. `conftest.py` (also the one at the root of the repository): each top-level function or class is one unit,
+each name a module-level assignment binds (`pytest_plugins`, `collect_ignore`, a constant) is one unit with all
+assignments of that name, and every other top-level statement (a `for`, an `if`, `collect_ignore.append(...)`) is
+the unit `conftest module code`. `tests/fixtures/policy_sources_*.txt`: the whole file is one unit named by its
+file name. The pytest settings of the repository (`pytest.ini`, `tox.ini`, `setup.cfg`, and the `[tool.pytest]`
+tables of `pyproject.toml`; a change of a dependency is no change): one unit named by the file. Any other file
+under `tests/` that is not Python (data, a script): one unit named by the file name.
 
 What the notes must hold. A table row (a line that starts with `|`) whose FIRST cell is the file (its name, or the
 end of its path that starts at a path part, ending `.py` or `.txt`; a bare file name serves only a file that no
@@ -40,11 +56,16 @@ of it, never by a part. A unit that existed in the base and is gone now is a pro
 
 What it does NOT show. It does not show that a test was not weakened: it lists the changed units and checks that a
 reason with something to look up was written; whether the reason is true is for the reviewer reading the diff. It
-reads only the syntax of Python files: a test written another way (generated, or collected by a plugin), a change
-in `src/` or `tools/` that a test uses (those have their own mutants), and a change to a file outside the four kinds
-above are not seen. A text a function reads from a file at run time is seen only through the fixture file kind. A
+reads only the syntax of Python files, the settings files named above and the text of the other files under
+`tests/`: a test written another way (generated at run time, or collected by a plugin that is not in a conftest), a
+change in `src/` or `tools/` that a test uses (those have their own mutants), a change to a file outside the kinds
+above (a workflow, a lock file, an environment variable of the test run, a `-p` plugin named only on the command
+line) and a dependency version are not seen. A name built at run time (`getattr`, `importlib`, `exec`) is not
+followed. A text a function reads from a file at run time is seen only through the fixture and data file kinds. A
 row is checked for form and for the existence of what it names, never for truth: a reason that names a real mutant
-that does not cover the test passes.
+that does not cover the test passes. The unit cell of a row must name a test, a mutant or a unit of the head
+commit, and each row of a notes file is checked against the units of its file, so a row that names a unit that
+exists nowhere is a problem.
 
 Exit codes: 0 when every listed unit has its row; 1 with one plain line per problem; 1 when the base commit does not
 resolve (a mistyped base would make every test look new); 1 when git cannot give the change (a failed `merge-base`
@@ -697,24 +718,28 @@ def reason_problem(reason: str) -> str:
 
 
 _TEST_NAME = re.compile(r"\btest_\w+")
-_LOG_NAME = re.compile(r"[\w.-]+\.log\b")
-_MUTANT_CODE = re.compile(r"[A-Z]{1,3}\d+[a-z]?\s")
+_LOG_NAME = re.compile(
+    r"[\w./-]+\.log\b"
+)  # a bare name, or a path that ends at the file (`b12/logs/x.log`)
+_MUTANT_CODE = re.compile(r"(?:[A-Z]{1,3}|[a-z])\d+[a-z]?\s|PROBE\s")
 _COMMAND_WORDS = frozenset(
     {"python", "uv", "git", "pytest", "ruff", "bandit", "pip", "sh", "bash", "gitleaks"}
 )
 
 
-def _looks_like_a_mutant_name(token: str) -> bool:
-    """True for a backticked text that is the name of a mutant: it starts with a mutant code and a space (`B12 `,
-    `m6 `), or it is three words or more of plain words (`Kinds: a kind moved to another day`, `Dated entries:
-    ...`): no path, no command, no code, no brackets or signs. A name of a mutant has no fixed shape, so this is a
-    rule of shape: a plain-word text that names no mutant is read as a wrong name."""
-    if _MUTANT_CODE.match(token):
-        return True
+def _looks_like_a_mutant_name(token: str, leads: frozenset[str] = frozenset()) -> bool:
+    """True for a backticked text that claims to be the name of a mutant: it starts with a mutant code and a space
+    (`B12 `, `m6 `, `PROBE `), or it has two words or more and its first word is the first word of a mutant of the
+    tree (`Kinds:`, `Dated`, `Ids:`: the names of the mutants that carry no code). A text that starts with another
+    word is read as a quote (a message of a test, a path, a command), not as a name: a quote is never checked
+    against the mutants. The limit is on purpose: a wrong name whose first word is no first word of any mutant and
+    that carries no code is not found."""
     words = token.split()
-    if len(words) < 3 or words[0].lower() in _COMMAND_WORDS:
+    if len(words) < 2 or words[0].lower() in _COMMAND_WORDS:
         return False
-    return not re.search(r"[/\\=()\[\]{}<>*$#@|]|--|\.py\b|\.log\b|\.md\b", token)
+    if re.search(r"[/\\=()\[\]{}<>*$#@|]|--|\.py\b|\.log\b|\.md\b", token):
+        return False
+    return bool(_MUTANT_CODE.match(token)) or words[0] in leads
 
 
 class Refs:
@@ -738,14 +763,16 @@ class Refs:
 def reference_problems(reason: str, refs: Refs, folder: str | None = None) -> list[str]:
     """One line per name in the reason (after its marker) that does not exist: a `test_x` that is no test of the tree,
     a `x.log` that is in no `logs/` folder, a backticked mutant name (it starts with a mutant code such as `B12 `)
-    that is no mutant of the mutant files. A log is looked up in the `logs/` folder of the notes file that names it
-    (`folder`, the folder of that notes file); with no folder, in any `logs/` folder. A backticked text of three
-    words or more that looks like the name of a mutant (see `_looks_like_a_mutant_name`) must be one."""
+    that is no mutant of the mutant files (a text that `_looks_like_a_mutant_name` reads as a name: a mutant code, or
+    the first word of a mutant of the tree). A log is looked up in the `logs/` folder of the notes file that names it
+    (`folder`, the folder of that notes file); with no folder, in any `logs/` folder; a log written with a folder part
+    (`b12/logs/x.log`) is found by the end of its path, in any notes folder."""
     found = _MARKER.search(reason)
     tail = reason[found.start() :] if found else reason
     out = []
+    leads = frozenset(name.split()[0] for name in refs.mutants if name.split())
     for token in re.findall(r"`([^`]+)`", tail):
-        if _looks_like_a_mutant_name(token) and token not in refs.mutants:
+        if _looks_like_a_mutant_name(token, leads) and token not in refs.mutants:
             out.append(f"the mutant `{token}` is in no mutant file")
     bare = re.sub(r"`[^`]+`", " ", tail)
     ticked = " ".join(re.findall(r"`([^`]+)`", tail))
@@ -753,7 +780,9 @@ def reference_problems(reason: str, refs: Refs, folder: str | None = None) -> li
         if name not in refs.tests:
             out.append(f"the test {name} is in no test file")
     for name in sorted(set(_LOG_NAME.findall(f"{bare} {ticked}"))):
-        if folder is None:
+        if "/" in name:  # written as a path: it must end a path of a `logs/` folder of the tree
+            here = any(path == name or path.endswith("/" + name) for path in refs.logs)
+        elif folder is None:
             here = any(path.rsplit("/", 1)[-1] == name for path in refs.logs)
         else:
             here = f"{folder}/logs/{name}" in refs.logs
