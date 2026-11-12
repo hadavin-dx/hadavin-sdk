@@ -1,0 +1,6 @@
+batch b1: 121 of 121 killed
+batch b2: 88 of 88 killed
+batch b3: 98 of 98 killed
+batch b4: 97 of 97 killed
+numbers: 40 of 40 good; problems: []
+stage: 37 of 37 good; problems: []
