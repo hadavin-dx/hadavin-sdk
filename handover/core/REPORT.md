@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 20:49Z / 02:19 IST
+FAILED / UNCERTAIN FIRST: ORDER 260 has no single green full run at ddf1d584 (dblink-connect environment failure) and its callers tests pass on old main; parked. AK-G2-a b2: full pytest 2 failed, one (runner allowlisted environment) not yet checked on its base. Tags pd-bind, pd-standins, pd-banner cannot be pushed (proxy): lead to push.
+Part 6 batch 2 fixes landed (2cf0f742, wip/cloud-pd-banner): evidence and gates now running through one runner (a92ba9e0). Q8a-1 b20 builder and part 2 runner still running; Q8c-1 b16 builder finished earlier (reviews next).
+
+LIVE ITEMS: part 2 runner a0a97309; part 6 runner a92ba9e0; Q8a-1 b20 builder a797f9e1. Total 3.
+ROUNDS: part 6 round 1 fixed, confirming round after evidence (security path, WHY: 1 Blocker + Majors in round 1). ORDER 260 round 1 done, parked.
+FINISHED SINCE LAST BLOCK: ORDER 260 evidence runner (results efcba116); part 6 fix builder aa0cfcdf (about 19 min); AK-G2-a builder acf6ab74 (aba26c69). Freed slots ran part 2 and part 6 gates.
+
 ## Block 20:44Z / 02:14 IST (no new order; part 2 gate queued; nothing finished)
 **Failed or uncertain first.** Nothing new finished. Q8c-1 b16 builder (a70bb036) shows "completed" again (it waits on its own gate driver `b16-gates2.sh`); origin wip/cloud-q8c1-b16 now at 9e85e2a2 (the builder's CHANGELOG-hash fix; the later fix 43be04de is not on origin). The ORDER 260 evidence runner has not written RESULTS.md yet (13 minutes in). No READY item beyond #71 (lead decision).
 **Done now.** Nothing started; no new orders after ORDER 264 (checked 20:43Z). Part 2 gate (full pytest inside a runner shell) is queued in heavy.sh behind a running job; load 2.8.
