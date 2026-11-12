@@ -832,6 +832,18 @@ M = [
         'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', '_what changed', '[PYDANTICTYPE]'),
     other_mutant('Z58 reason LITERAL: the printed kind is the target system (contract.py)', 'src/hadavin_sdk/actions/contract.py',
         'kind = self.executor.kind', 'kind = self.target_system', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'is not read from', '[LITERAL]'),
+    other_mutant('Z59 tick _each: the first error is dropped (nothing is re-raised)', 'src/hadavin_sdk/runtime/tick.py',
+        'first = first or exc', 'first = first', 'tests/test_q8a1_b13_fixes.py', 'test_each_skips_a_lost_race_runs_every_item_and_raises_the_first_other_error', 'DID NOT RAISE'),
+    other_mutant('Z60 tick _run_step: a failed step is reported ok', 'src/hadavin_sdk/runtime/tick.py',
+        'return OK if error is None else FAILED', 'return OK', 'tests/test_q8a1_b13_fixes.py', 'test_run_step_reports_ok_failed_and_unrecorded', 'Assertion'),
+    other_mutant('Z61 transit signer: the Vault status is printed as it came', 'src/hadavin_sdk/audit/signer_vault.py',
+        '{status_text(status)} (key name', '{status} (key name', 'tests/test_q8a1_b13_fixes.py', 'test_the_transit_signer_shows_only_a_number_as_the_vault_status', 'Assertion'),
+    other_crash_mutant('Z62 tick _safe_log: only a KeyError is swallowed', 'src/hadavin_sdk/runtime/tick.py',
+        'with suppress(Exception):', 'with suppress(KeyError):', 'tests/test_q8a1_b13_fixes.py', 'test_safe_log_never_raises', 'RuntimeError'),
+    other_mutant('Z63 reason DIGEST: any string is cut like a digest', 'src/hadavin_sdk/errors.py',
+        'if isinstance(value, str) and is_digest(value) else NOT_SHOWN', 'if isinstance(value, str) else NOT_SHOWN', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'shows part of a value', '[DIGEST]'),
+    other_mutant('Z64 reason STATE: the from-state is a plain string', 'src/hadavin_sdk/runtime/runs.py',
+        'def check(frm: RunState, to: RunState)', 'def check(frm: str, to: RunState)', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'not both RunState', '[STATE]'),
 ]  # fmt: skip
 
 

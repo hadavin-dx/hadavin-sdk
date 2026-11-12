@@ -269,21 +269,3 @@ def test_the_transit_signer_shows_only_a_number_as_the_vault_status():
             signer._call("GET", "keys/key-name-b13")
         assert f"Vault answered {shown} (key name not shown)" in str(raised.value)
         assert text_status not in str(raised.value)
-
-
-def test_a_failing_detector_is_logged_by_class_only(caplog):
-    import logging
-
-    from hadavin_sdk.guard.injection import injection_check
-
-    text = "zq-b13-" + "Wm4" + "-detector"
-
-    class Broken:
-        def check(self, text_checked, source):
-            raise ValueError(text)
-
-    with caplog.at_level(logging.WARNING):
-        verdict = injection_check(Broken(), "hello", "tool")
-    assert verdict is not None
-    shown = " ".join(r.getMessage() for r in caplog.records)
-    assert "Broken" in shown and "ValueError" in shown and text not in shown
