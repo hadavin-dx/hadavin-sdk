@@ -37,7 +37,7 @@ class BannerWords:
     """Every sentence of the banner. Replace a field to reword it (for example for another language); the rules above
     still hold because the choice of which sentence is shown is made in `banner_for`, not here."""
 
-    tag_by_stage: Mapping[str, str]
+    tag_by_mode: Mapping[str, str]
     made_up: str = "Every record here is made-up demo data."
     nothing_sent: str = "Nothing here is sent to real customers or real systems."
     real_connected: str = "Real services are connected: {names}."
@@ -52,7 +52,7 @@ class BannerWords:
     )
 
 
-DEFAULT_WORDS = BannerWords(tag_by_stage={"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"})
+DEFAULT_WORDS = BannerWords(tag_by_mode={"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"})
 
 
 @dataclass(frozen=True)
@@ -60,7 +60,7 @@ class ModeBanner:
     """The finished banner. `tone` is "demo" (pretend services only), "real" (at least one real service), "quiet"
     (a pilot or live system with nothing real connected) or "unconfirmed" (only from `not_confirmed`). `standins` is a second, loud line, or "" when not needed."""
 
-    stage: str
+    mode: str
     tone: str
     tag: str
     text: str
@@ -95,7 +95,7 @@ def _clean_names(kind: str, keys: object, names: Mapping[str, str]) -> tuple[str
 
 
 def banner_for(
-    stage: str,
+    mode: str,
     real_services: Iterable[str] = (),
     stand_ins: Iterable[str] = (),
     names: Mapping[str, str] | None = None,
@@ -107,31 +107,31 @@ def banner_for(
     key to the name a person reads (a key without an entry is shown as it is). A stage that is not in
     `stages.STAGES`, a bare string where a list is wanted, or a name that is not plain words raises (the screen must
     not show a banner built from a value nobody checked)."""
-    if stage not in STAGES:
-        raise ValueError(f"stage {stage!r} is not one of {', '.join(STAGES)}")
+    if mode not in STAGES:
+        raise ValueError(f"mode {mode!r} is not one of {', '.join(STAGES)}")
     shown = names or {}
     real = _clean_names("real_services", real_services, shown)
     pretend = tuple(n for n in _clean_names("stand_ins", stand_ins, shown) if n not in real)
-    tag = words.tag_by_stage[stage]
+    tag = words.tag_by_mode[mode]
     if real:
         text = words.real_connected.format(names=", ".join(real)) + " " + words.real_data_note
         extra = words.standins_still.format(names=", ".join(pretend)) if pretend else ""
-        return ModeBanner(stage, "real", tag, text, extra, real, pretend)
-    if stage == STAGES[0]:
+        return ModeBanner(mode, "real", tag, text, extra, real, pretend)
+    if mode == STAGES[0]:
         loud = (
             words.standins_loud.format(names=", ".join(pretend)) if pretend else words.standins_none
         )
         return ModeBanner(
-            stage, "demo", tag, words.made_up + " " + words.nothing_sent, loud, real, pretend
+            mode, "demo", tag, words.made_up + " " + words.nothing_sent, loud, real, pretend
         )
-    return ModeBanner(stage, "quiet", tag, words.none_real, "", real, pretend)
+    return ModeBanner(mode, "quiet", tag, words.none_real, "", real, pretend)
 
 
 def not_confirmed(words: BannerWords = DEFAULT_WORDS) -> dict[str, Any]:
     """The banner a screen shows when it has no usable banner from the system. The same object the page script builds
     for itself; kept here so the words stay in one place."""
     return {
-        "stage": "",
+        "mode": "",
         "tone": "unconfirmed",
         "tag": words.not_confirmed_tag,
         "text": words.not_confirmed,

@@ -1,6 +1,6 @@
 /* Mode banner painter. Framework-free; text nodes only (no HTML is ever parsed).
    The words are written by hadavin_sdk.mode_banner (Python), the one place they live; this file only paints the ready
-   banner the system sends: { stage, tone, tag, text, standins, real, stand_ins }.
+   banner the system sends: { mode, tone, tag, text, standins, real, stand_ins }.
    A missing or odd banner is never hidden: it paints the "not confirmed" line, because silence would read as "all real".
    Use:  HadavinModeBanner.paint(document.getElementById('mode-banner'), bannerObjectFromTheSystem);
    Copy this file into a page; do not edit the words here (a test pins the fallback to the Python text). */
@@ -9,7 +9,7 @@
   var TONES = ['demo', 'real', 'quiet', 'unconfirmed'];
   // the fallback when the system gave no usable banner: same words as hadavin_sdk.mode_banner.not_confirmed()
   var NOT_CONFIRMED = {
-    stage: '', tone: 'unconfirmed', tag: 'UNCONFIRMED',
+    mode: '', tone: 'unconfirmed', tag: 'UNCONFIRMED',
     text: 'The mode of this system could not be confirmed. Treat everything here as real until it is.',
     standins: '', real: [], stand_ins: []
   };
@@ -35,7 +35,7 @@
     el.appendChild(node(doc, 'span', 'mode-banner__text', ' ' + b.text));
     if (isText(b.standins)) el.appendChild(node(doc, 'div', 'mode-banner__standins', b.standins));
     el.setAttribute('data-tone', b.tone);
-    el.setAttribute('data-stage', typeof b.stage === 'string' ? b.stage : '');
+    el.setAttribute('data-mode', typeof b.mode === 'string' ? b.mode : '');
     el.hidden = false;
     return b;
   }

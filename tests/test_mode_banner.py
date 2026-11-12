@@ -37,7 +37,7 @@ needs_node = pytest.mark.skipif(
 # -- the words and the choice between them ---------------------------------------------------------------------------
 def test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly() -> None:
     b = mb.banner_for("demo", [], ["crm", "mail"], NAMES)
-    assert (b.stage, b.tone, b.tag) == ("demo", "demo", "DEMO")
+    assert (b.mode, b.tone, b.tag) == ("demo", "demo", "DEMO")
     assert "made-up demo data" in b.text and "Nothing here is sent to real customers" in b.text
     assert (
         b.standins.startswith("STAND-INS IN USE: CRM, mail.") and "pretend versions" in b.standins
@@ -52,9 +52,9 @@ def test_demo_with_no_stand_ins_still_says_nothing_real_is_connected() -> None:
 
 
 def test_a_real_service_is_named_and_made_up_data_is_never_claimed() -> None:
-    for stage in STAGES:
-        b = mb.banner_for(stage, ["crm", "mail"], ["ai"], NAMES)
-        assert b.tone == "real" and b.tag == mb.DEFAULT_WORDS.tag_by_stage[stage]
+    for mode in STAGES:
+        b = mb.banner_for(mode, ["crm", "mail"], ["ai"], NAMES)
+        assert b.tone == "real" and b.tag == mb.DEFAULT_WORDS.tag_by_mode[mode]
         assert (
             "Real services are connected: CRM, mail." in b.text and "may be sent to them" in b.text
         )
@@ -63,8 +63,8 @@ def test_a_real_service_is_named_and_made_up_data_is_never_claimed() -> None:
 
 
 def test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up() -> None:
-    for stage, tag in [("pilot", "PILOT"), ("prod", "LIVE")]:
-        b = mb.banner_for(stage, [], ["ai"], NAMES)
+    for mode, tag in [("pilot", "PILOT"), ("prod", "LIVE")]:
+        b = mb.banner_for(mode, [], ["ai"], NAMES)
         assert (b.tone, b.tag, b.text, b.standins) == (
             "quiet",
             tag,
@@ -86,7 +86,7 @@ def test_names_come_from_the_caller_and_repeats_are_shown_once_in_order() -> Non
 
 
 def test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen() -> None:
-    words = mb.BannerWords(tag_by_stage={"demo": "D", "pilot": "P", "prod": "L"}, made_up="MADE.")
+    words = mb.BannerWords(tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"}, made_up="MADE.")
     b = mb.banner_for("demo", [], [], words=words)
     assert b.tag == "D" and b.text.startswith("MADE.")
     assert (
@@ -95,9 +95,9 @@ def test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen() -
 
 
 def test_an_unknown_stage_is_refused() -> None:
-    for stage in ["", "DEMO", "Demo", "staging", "live", "test", None, 3]:
+    for mode in ["", "DEMO", "Demo", "canary", "live", "test", None, 3]:
         with pytest.raises(ValueError, match="is not one of demo, pilot, prod"):
-            mb.banner_for(stage)  # type: ignore[arg-type]
+            mb.banner_for(mode)  # type: ignore[arg-type]
 
 
 def test_a_bare_string_or_non_list_is_refused_not_read_letter_by_letter() -> None:
@@ -137,23 +137,23 @@ def test_property_the_banner_never_misleads_for_any_stage_and_services() -> None
     rng = random.Random(20261112)  # noqa: S311 - a seeded test generator, not a secret
     pool = ["crm", "mail", "ai", "store", "Chat", "x.y", "a-b", "z_9"]
     for _ in range(600):
-        stage = rng.choice(STAGES)
+        mode = rng.choice(STAGES)
         real = rng.sample(pool, rng.randint(0, 4))
         pretend = rng.sample(pool, rng.randint(0, 4))
-        b = mb.banner_for(stage, real, pretend)
+        b = mb.banner_for(mode, real, pretend)
         shown = b.text + "\n" + b.standins
         assert b.tone in mb.TONES and b.tag and b.text
-        assert b.tone == ("real" if real else ("demo" if stage == "demo" else "quiet"))
-        assert ("made-up" in shown) == (stage == "demo" and not real)
+        assert b.tone == ("real" if real else ("demo" if mode == "demo" else "quiet"))
+        assert ("made-up" in shown) == (mode == "demo" and not real)
         assert all(n in b.text for n in real), (
-            stage,
+            mode,
             real,
             b,
         )  # every connected real service is named
         assert set(b.real).isdisjoint(b.stand_ins)
         assert not any(ord(c) < 32 for c in b.text + b.standins)
         assert json.loads(json.dumps(b.as_dict()))["tone"] == b.tone
-        if stage == "demo" and not real and pretend:
+        if mode == "demo" and not real and pretend:
             assert "STAND-INS IN USE" in b.standins and all(n in b.standins for n in pretend)
 
 
@@ -190,9 +190,7 @@ def test_the_page_paints_exactly_what_python_wrote() -> None:
     for banner in banners:
         seen = _paint(banner.as_dict())
         assert (
-            seen["hidden"] is False
-            and seen["tone"] == banner.tone
-            and seen["stage"] == banner.stage
+            seen["hidden"] is False and seen["tone"] == banner.tone and seen["mode"] == banner.mode
         )
         assert seen["lines"][0] == {"cls": "mode-banner__tag", "text": banner.tag}
         assert seen["lines"][1] == {"cls": "mode-banner__text", "text": " " + banner.text}

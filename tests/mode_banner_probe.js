@@ -15,4 +15,4 @@ const raw = process.argv[3];
 const input = raw === 'undefined' ? undefined : JSON.parse(raw);
 const shown = api.paint(target, input, doc);
 const lines = target.children.map((c) => ({ cls: c.cls, text: c.text }));
-console.log(JSON.stringify({ lines, tone: target.attrs['data-tone'], stage: target.attrs['data-stage'], hidden: target.hidden, notConfirmed: api.NOT_CONFIRMED, shownTone: shown.tone }));
+console.log(JSON.stringify({ lines, tone: target.attrs['data-tone'], mode: target.attrs['data-mode'], hidden: target.hidden, notConfirmed: api.NOT_CONFIRMED, shownTone: shown.tone }));

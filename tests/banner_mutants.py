@@ -55,7 +55,7 @@ def gd(name, old, new, killer, expect):
 M = [
     mb(
         "B1 an unknown stage is accepted",
-        "if stage not in STAGES:",
+        "if mode not in STAGES:",
         "if False:",
         "test_an_unknown_stage_is_refused",
         "KeyError",
@@ -85,7 +85,7 @@ M = [
     mb(
         "B5 made-up data is claimed in the demo stage next to a real service",
         "    if real:\n",
-        "    if real and stage != STAGES[0]:\n",
+        "    if real and mode != STAGES[0]:\n",
         "test_a_real_service_is_named_and_made_up_data_is_never_claimed",
         "assert",
     ),
@@ -98,8 +98,8 @@ M = [
     ),
     mb(
         "B7 a pilot or live screen says made-up",
-        'return ModeBanner(stage, "quiet", tag, words.none_real,',
-        'return ModeBanner(stage, "quiet", tag, words.made_up,',
+        'return ModeBanner(mode, "quiet", tag, words.none_real,',
+        'return ModeBanner(mode, "quiet", tag, words.made_up,',
         "test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up",
         "assert",
     ),
