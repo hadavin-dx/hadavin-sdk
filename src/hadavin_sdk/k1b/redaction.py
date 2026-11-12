@@ -33,7 +33,13 @@ from typing import Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.redact import BARE_ENDINGS, COUNT_WORDS_BEFORE_TOKENS, ORDINARY_WORDS
+from hadavin_sdk.guard.redact import (
+    BARE_ENDINGS,
+    COUNT_WORDS_BEFORE_TOKENS,
+    GUARDED_GLUED,
+    ORDINARY_WORDS,
+    is_count_run,
+)
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 
 SCHEME = (
@@ -65,7 +71,7 @@ LIMITS = (
     "`possession`). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
     "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
-    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flag `--authorization` and the scheme words `Bearer`, `Basic`, `Token`, `Digest` and `ApiKey` the token IS masked. Written `--newpass=a b`, both words are masked. A flag with four or more hyphen-joined words in front of the credential word (`--a-b-c-d-password v`) keeps its value readable: the flag rule reads at most three words in front.\n"
+    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flags `--authorization` and `--bearer` the scheme word and the token after it are both masked (any scheme word, quoted or not; a Digest value to the next flag or the end of the line); in `Authorization: Token <t>` the scheme word stays readable and the token is masked. A second word after any other credential flag is shown (`--pass2 a b`, `authorization=a b`: pinned in `tests/test_q8b_batch8.py`). The flags `--cookie`, `--set-cookie` and `--session-cookie` take a value; `--no-cookies`, `--load-cookies`, `--save-cookies`, `--keep-session-cookies` and `--cookies` are switches or file names, so the word after them is shown. Written `--newpass=a b`, both words are masked. A flag with seven or more words joined by `-` or `_` in front of the credential word (`--a-b-c-d-e-f-g-password v`) keeps its value readable: the flag rule reads at most six words in front. In a `key=value` the key rule reads at most 20 more key characters after the key word, so `pass` followed by more than 20 digits keeps its value readable there.\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -203,6 +209,19 @@ def _key_words(key: str) -> list[str]:
     return [_TRAILING_DIGITS.sub("", w) for w in _SPLIT.split(plain) if w]
 
 
+def _glued_ending(w: str) -> bool:
+    """Does the word end with one of `GLUED_ENDINGS`? An ending that is a bare word and one more word (`passcode`, `sessionid`,
+    `authvalue`: `GUARDED_GLUED`) does not count when the letters in front of its bare word make an ordinary word with it
+    (`bypasscode` is `bypass` + `code`; `xbypasscode` is a credential key). The card rules read the same list."""
+    for ending in GLUED_ENDINGS:
+        if w.endswith(ending):
+            bare = GUARDED_GLUED.get(ending)
+            if bare is not None and (w[: -len(ending)] + bare) in ORDINARY_WORDS:
+                continue
+            return True
+    return False
+
+
 def sensitive(key: object) -> bool:
     """Does a key (or the name of a named entry) say its value is a credential?
 
@@ -211,7 +230,8 @@ def sensitive(key: object) -> bool:
     `pass`, `auth` or `session` unless the whole word is in `ORDINARY_WORDS` (`newpass`, `dbpass`, `userauth` are keys;
     `bypass` and `compass` are not), is `key` or `keys` after a word that ends with one of `KEY_QUALIFIERS` (`dbaccess_key`),
     forms a pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `reasoning_tokens`,
-    `tokens_used`, `tokens_per_second`; the words are `COUNT_WORDS_BEFORE_TOKENS` and `COUNT_WORDS_AFTER_TOKENS`).
+    `tokens_used`, `tokens_per_second`; the words are `COUNT_WORDS_BEFORE_TOKENS` and `COUNT_WORDS_AFTER_TOKENS`) or a word that ends
+    in `tokens` (`apitokens`) unless the letters in front are count words alone (`maxtokens`, `is_count_run`).
     There is no exception by the last word: a key the older rule accepted is still accepted. Cost, accepted on purpose,
     so a key that holds no login secret is masked: `auth_method`, `session_duration`, `sessionAffinity` (the word
     `session` or `auth` alone), env entries named `PWD`, `OLDPWD` or ending in `pwd`, and any `tokens` key whose other
@@ -225,7 +245,7 @@ def sensitive(key: object) -> bool:
         after = words[i + 1] if i + 1 < len(words) else ""
         if (
             w in CREDENTIAL_WORDS
-            or w.endswith(GLUED_ENDINGS)
+            or _glued_ending(w)
             or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)
             or (w in ("key", "keys") and before.endswith(KEY_QUALIFIERS))
             or (before, w) in WORD_PAIRS
@@ -234,6 +254,15 @@ def sensitive(key: object) -> bool:
         if (
             w == "tokens"
             and before not in COUNT_WORDS_BEFORE_TOKENS
+            and after not in COUNT_WORDS_AFTER_TOKENS
+        ):
+            return True
+        # A plural `tokens` glued to the word in front (`apitokens`, `accessTokens` is cut at the capital and read above):
+        # a credential unless what stands in front of it is made of count words alone (`maxtokens`, `cachedinputtokens`).
+        if (
+            w.endswith("tokens")
+            and w != "tokens"
+            and not is_count_run(w[: -len("tokens")])
             and after not in COUNT_WORDS_AFTER_TOKENS
         ):
             return True

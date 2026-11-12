@@ -286,6 +286,8 @@ def test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case(
                 left += [
                     f"{key} {name} {x}" for x in readable_on(tmpl.format(k=key, v=value), *pieces)
                 ]
+            if key.lower() == "cookies":
+                continue  # batch 8: `--cookies` is a switch or a file name, not a credential flag (tests/test_q8b_batch8.py)
             # a flag takes the one word after a space (a second word is another argument of the command): one name=value pair
             left += [
                 f"{key} flag {x}"
@@ -296,7 +298,10 @@ def test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case(
                 for x in readable_on(f"ran --{key} sid={pieces[0]} --verbose", pieces[0])
             ]
         # a value of only three characters: the flag rule takes it, the curl rule needs four
-        left += [f"{key} short flag {x}" for x in readable_on(f"ran --{key} q7z --verbose", "q7z")]
+        if key.lower() != "cookies":
+            left += [
+                f"{key} short flag {x}" for x in readable_on(f"ran --{key} q7z --verbose", "q7z")
+            ]
     assert not left, f"a cookie key in text leaves a value readable: {left[:6]} ({len(left)})"
 
 
@@ -357,7 +362,7 @@ def test_b7_4_a_digest_header_is_masked_to_the_end_of_the_line():
             "5ccc069c403ebaf9f0171e9517f40e41",
             "dcd98b7102dd2f0e",
         ):
-            assert piece not in out, f"{path}: {out!r}"
+            assert piece not in out, f"a Digest header value is readable: {path}: {out!r}"
     assert clean("Authorization: Digest username=Mufasa\nnext line stays").endswith(
         "next line stays"
     )
@@ -464,7 +469,7 @@ def test_b7_6_a_flag_with_three_prefix_words_masks_its_value():
     assert (
         clean(f"run --db-root-user-password {V} now")
         == "run --db-root-user-password <SECRET_1> now"
-    )
+    ), "a flag with three prefix words is readable"
     assert clean(f"run --a_b_c_token={V}") == "run --a_b_c_token=<SECRET_1>"
 
 
@@ -474,9 +479,11 @@ def test_b7_6_the_third_prefix_group_costs_no_extra_time_on_a_long_flag():
     t0 = time.perf_counter()
     clean(text)
     assert time.perf_counter() - t0 < 20, "a long flag takes far too long"
-    assert "four or more hyphen-joined words" in R.LIMITS
-    # the stated limit is real (pinned): a fourth word in front keeps the value readable
-    assert clean(f"run --a-b-c-d-password {V} now") == f"run --a-b-c-d-password {V} now"
+    assert "seven or more words joined by `-` or `_`" in R.LIMITS
+    # the stated limit is real (pinned): a seventh word in front keeps the value readable (batch 8: the bound is six)
+    seven = "-".join("abcdefg") + "-password"
+    assert clean(f"run --{seven} {V} now") == f"run --{seven} {V} now"
+    assert clean(f"run --a-b-c-d-password {V} now") == "run --a-b-c-d-password <SECRET_1> now"
 
 
 def test_b7_6_the_changelog_says_how_many_letters_may_be_glued_in_front():

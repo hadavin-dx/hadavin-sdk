@@ -209,7 +209,9 @@ PROPERTY_LAST_WORDS = frozenset(
         "usage",
     ]
 )
-FLAG_ONLY_EXCEPTIONS = {"tokens"}
+# Round 8 Issue 2: `--cookies` is no credential flag (the plural of a switch family: `--no-cookies`, `--load-cookies`); the cookie
+# flag is the exact name (`--cookie`, `--set-cookie`, `--session_cookie`). The record key `cookies` stays masked.
+FLAG_ONLY_EXCEPTIONS = {"tokens", "cookies"}
 KEY_EQ_EXCEPTIONS: set[str] = set()
 # The least number of keys the drift test must COMPARE (after the skip above): 215 measured at batch 7 (236 walked, 21 skipped).
 COMPARED_KEYS_FLOOR = 210
@@ -263,7 +265,9 @@ def test_d6_the_skip_by_last_word_holds_back_no_credential_key_that_the_card_lea
     )
     for key in walked:
         for text in (f"run --{key} {P1}{P2} now", f"run {key}={P1}{P2} now"):
-            if readable_pieces(clean(text)) and not (key == "tokens" and text.startswith("run --")):
+            if readable_pieces(clean(text)) and not (
+                key in FLAG_ONLY_EXCEPTIONS and text.startswith("run --")
+            ):
                 assert _skipped_by_last_word(key), f"left readable, and no listed reason: {text!r}"
 
 

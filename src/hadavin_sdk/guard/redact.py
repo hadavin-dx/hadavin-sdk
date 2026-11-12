@@ -109,7 +109,13 @@ def _bank_context(m: re.Match[str]) -> bool:
 
 
 # A key that names a cookie: `Cookie`, `Set-Cookie`, `X-Auth-Cookie`, `HTTP_COOKIE`, `"http_cookie"`, `cookies`.
-_COOKIE_KEY_BODY = r"(?<![A-Za-z])(?:set-)?cookies?[\"'\]]*\s*"
+# The key may go on with more words, as the record walk reads it (`cookie_name`, `cookie-policy`, `cookie.domain`, `cookieName`: a key
+# with the word `cookie` in it is a credential key there, so its text form is masked too, round 8 Issue 12); the extra words are
+# joined by `_`, `-` or `.`, or start with a capital letter (the capital is read as a capital in any case mode of the rule).
+_COOKIE_KEY_BODY = (
+    r"(?<![A-Za-z])(?:set-)?cookies?(?:(?:[_.\-]|(?-i:(?=[A-Z])))[A-Za-z0-9]+(?:[_.\-][A-Za-z0-9]+){0,5})?"
+    r"[\"'\]]*\s*"
+)
 _COOKIE_KEY = r"(?i)" + _COOKIE_KEY_BODY
 # `session_cookie=` names a session credential whose WHOLE value is secret (it is in the key list below): the cookie
 # assignment rule takes one word, or `;`-joined `name=value` pairs, and ran first, so `session_cookie=a b c` left `b c`
@@ -166,6 +172,22 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(
 )  # fmt: skip
 
 
+def is_count_run(prefix: str) -> bool:
+    """Is `prefix` made only of count words written together (`max`, `cachedinput`)? ONE definition of "a plural `tokens` after
+    this is a count, no credential": the record walk (`k1b/redaction.py`, a glued word such as `maxtokens` or `apitokens`) calls
+    this function and the flag rule below builds its look-ahead from the same set (`_COUNT_RUN`). An empty prefix is no count."""
+    if not prefix:
+        return False
+    reach = [False] * (len(prefix) + 1)
+    reach[0] = True
+    for i in range(len(prefix)):
+        if reach[i]:
+            for w in COUNT_WORDS_BEFORE_TOKENS:
+                if prefix.startswith(w, i):
+                    reach[i + len(w)] = True
+    return reach[-1]
+
+
 def _not_after_ordinary_word(ending: str) -> str:
     """Look-behinds (one per ordinary word that ends in `ending`) that stop a bare ending from matching INSIDE an ordinary word:
     `by` + `pass` is `bypass`. The ordinary word must start a word (`xbypass` is a credential key, as for the record walk).
@@ -178,11 +200,35 @@ def _not_after_ordinary_word(ending: str) -> str:
 
 
 def _bare_word(word: str) -> str:
-    """A bare credential word (`pass`, `auth`, `session`, `bearer`) as a key: it is followed by up to nine digits (`pass2`,
-    `auth0`, `oauth2`: the record walk drops the digits at the end of a word), an optional quote and `:` or `=`; and it is no
-    ending of an ordinary word (`bypass=` stays readable)."""
+    """A bare credential word (`pass`, `auth`, `session`, `bearer`) as a key: it is followed by digits (`pass2`, `auth0`,
+    `oauth2`, `pass1234567890`: the record walk drops the digits at the end of a word, however many), an optional quote and `:`
+    or `=` (the look-ahead needs the sign right after the digits, so it reads each run once); and it is no ending of an
+    ordinary word (`bypass=` stays readable)."""
     guard = _not_after_ordinary_word(word) if word in BARE_ENDINGS else ""
-    return guard + word + r"(?=[0-9]{0,9}[\"']?\s*[:=])"
+    return guard + word + r"(?=[0-9]*[\"']?\s*[:=])"
+
+
+def _not_ordinary_ending(ending: str) -> str:
+    """Look-behinds to put RIGHT AFTER the ending's own letters (the letters match first, so a position that does not hold them
+    costs nothing): the text before the ending must not be an ordinary word that starts a word and ends with `ending`
+    (`bypass` before `_code`). The look-behind of `_not_after_ordinary_word`, for a key that is more than the bare word."""
+    return "".join(
+        r"(?<!(?<![a-z0-9])" + w + ")" for w in sorted(ORDINARY_WORDS) if w.endswith(ending)
+    )
+
+
+# The keys that are a bare word (`pass`, `session`, `auth`) and one more word: written once as (bare word, second word). The
+# regex alternatives below and the record walk's glued endings (`GUARDED_GLUED`) are both built from this list.
+_GUARDED_PAIRS = (
+    ("pass", "phrase"), ("pass", "code"), ("pass", "key"), ("pass", "value"), ("session", "id"),
+    ("session", "key"), ("session", "cookie"), ("session", "value"), ("auth", "value"),
+)  # fmt: skip
+# glued ending -> its bare word (`passcode` -> `pass`): the record walk reads a word `bypasscode` as `bypass` + `code`.
+GUARDED_GLUED = {bare + second: bare for bare, second in _GUARDED_PAIRS}
+
+
+def _guarded_key(bare: str, second: str) -> str:
+    return bare + _not_ordinary_ending(bare) + r"[_\-]?" + second
 
 
 # The words of the generic `key=value` rule further down, one regex fragment each (kubeconfig secrets: client-key-data,
@@ -190,16 +236,17 @@ def _bare_word(word: str) -> str:
 # and address patterns must not swallow a key of this list either. Public so that a test can feed every one of them to
 # `k1b.redaction.sensitive` (the two key lists must not drift apart).
 KEY_ALTERNATIVES = (
-    r"password", r"passwd", r"pass[_\-]?phrase", r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
+    r"password", r"passwd", _guarded_key("pass", "phrase"), r"pwd", r"secret", r"access[_\-]?key", r"account[_\-]?key",
     r"shared[_\-]?access[_\-]?key", r"private[_\-]?key", r"api[_\-]?key", r"apikey", r"auth[_\-]?token",
     r"access[_\-]?token", r"sas[_\-]?token", r"key[_\-]?data", r"cert(?:ificate)?[_\-]?data",
-    r"session[_\-]?id", r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
+    _guarded_key("session", "id"), r"jsessionid", r"phpsessid", r"sessid", r"connect\.sid", r"client[_\-]?secret",
     r"credential", r"token", r"signing[_\-]?key", r"encryption[_\-]?key", _bare_word("pass"),
     _bare_word("auth"), _bare_word("session"), _bare_word("bearer"),
     # Round 4 (D1): the keys the older rule masked by its bare `pass` and `session` prefixes, written out so that the
     # unquoted rule and every other reader of this list masks them too, and the `_value` forms of the four bare words.
-    r"pass[_\-]?code", r"pass[_\-]?key", r"pass[_\-]?value", r"session[_\-]?key", r"session[_\-]?cookie",
-    r"session[_\-]?value", r"auth[_\-]?value", r"bearer[_\-]?value",
+    _guarded_key("pass", "code"), _guarded_key("pass", "key"), _guarded_key("pass", "value"),
+    _guarded_key("session", "key"), _guarded_key("session", "cookie"), _guarded_key("session", "value"),
+    _guarded_key("auth", "value"), r"bearer[_\-]?value",
 )  # fmt: skip
 # The same list as ONE regex fragment: the generic key rule and both quoted-value rules are built from it (a hand-kept copy
 # in the quoted rules left `access_key="abc;def ghi"` half readable).
@@ -228,21 +275,50 @@ FLAG_ONLY_WORDS = (
     "authorization",
     "bearer",
     "credentials",
-    "cookie",
 )
-FLAG_WORDS = "|".join([a for a in KEY_ALTERNATIVES if "(?=" not in a] + list(FLAG_ONLY_WORDS))
+# A cookie flag is an EXACT name: `--cookie`, `--set-cookie`, `--session_cookie` (and with digits behind). No plural, no word in
+# front, no letters glued on: `wget --no-cookies`, `--keep-session-cookies`, `--load-cookies <file>` take a switch or a file
+# name, no cookie (round 8 Issue 2). The generic `session[_\-]?cookie` of the key list is left out of the flag words below and
+# listed here, so that the flag rule reads it as the exact name only.
+FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")
+_EXACT_FLAG_KEYS = frozenset({_guarded_key("session", "cookie")})
+FLAG_WORDS = "|".join(
+    [a for a in KEY_ALTERNATIVES if "(?=" not in a and a not in _EXACT_FLAG_KEYS]
+    + list(FLAG_ONLY_WORDS)
+)
 # Up to 40 letters or digits may be glued in front of a flag word or ending (`--dbpassword`, `--mytoken`, `--confirmpass`),
 # unless the whole glued word is ordinary (the look-ahead is read ONCE, at the start of the word). A flag word may be followed
 # by digits (`--pass2`, `--newpass2`, `--oauth2`, `--api_key2`: the record walk drops the digits at the end of a word) and, for
-# a word of the list, by a plural `s` (`--secrets`, `--passwords`, `--apikeys`): a plural `tokens` is a credential only after a
-# word that is no count (`--api_tokens`, `--access_tokens`; not `--tokens`, `--max_tokens`), as for the record walk.
+# a word of the list, by a plural `s` (`--secrets`, `--passwords`, `--apikeys`).
+# A plural `tokens` is ONE rule for the flag and the record walk: it is a credential unless the word in front of it is a count
+# word (`--api_tokens`, `--apiTokens`, `--apitokens`, `--x-refresh-tokens`; not `--max_tokens`, `--maxTokens`, `--maxtokens`,
+# `--cached_input_tokens`) and a bare `--tokens` stays a count (a stated exception). The word in front is read in two shapes:
+# after `_` or `-` it is the one word right before (`max_tokens`; a count word that is only the END of a longer word, `xmax_tokens`,
+# is no count word, as for the record walk), and glued (`apitokens`, `maxtokens`, a camelCase `apiTokens` is the same text
+# in any letter case) it is the whole run of letters and digits in front, a count only when made of count words alone.
 _COUNT_BEFORE_TOKENS = "".join(
-    r"(?<!" + w + sep + ")" for w in sorted(COUNT_WORDS_BEFORE_TOKENS) for sep in ("_", "-")
+    r"(?<!(?<![a-z0-9])" + w + sep + ")"
+    for w in sorted(COUNT_WORDS_BEFORE_TOKENS)
+    for sep in ("_", "-")
 )
-_PLURAL_TOKENS = r"(?<=[a-z0-9][_\-])" + _COUNT_BEFORE_TOKENS + "tokens"
+_COUNT_RUN = "(?:" + "|".join(sorted(COUNT_WORDS_BEFORE_TOKENS, key=lambda w: (-len(w), w))) + ")+"
+_PLURAL_TOKENS = (
+    "(?:(?<=[a-z0-9][_\\-])(?=tokens)"
+    + _COUNT_BEFORE_TOKENS
+    + "tokens|(?!"
+    + _COUNT_RUN
+    + "tokens)[a-z0-9]{1,40}tokens)"
+)
 _FLAG_NOT_ORDINARY = r"(?!(?:" + "|".join(sorted(ORDINARY_WORDS)) + r")(?![a-z]|[0-9]+[a-z]))"
+# How many words may stand in front of the credential word of a flag, joined by `-` or `_` (`--db-root-user-password`): six. The
+# bound keeps the read linear on a hostile line of `a-a-a-...`; `tests/test_q8b_batch8.py` times it.
+FLAG_PREFIX_WORDS = 6
 FLAG_NAME = (
-    r"(?:[a-z0-9]+[_\-]){0,3}"
+    "(?:"
+    + "|".join(FLAG_EXACT_WORDS)
+    + r"|(?:[a-z0-9]+[_\-]){0,"
+    + str(FLAG_PREFIX_WORDS)
+    + "}"
     + _FLAG_NOT_ORDINARY
     + "(?:[a-z0-9]{0,40}(?:"
     + FLAG_WORDS
@@ -250,7 +326,7 @@ FLAG_NAME = (
     + "|".join(BARE_ENDINGS)
     + ")|"
     + _PLURAL_TOKENS
-    + ")[0-9]*"
+    + "))[0-9]*"
 )
 _CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME + r"|-(?:password|passwd))(?![\w-])"
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
@@ -395,6 +471,10 @@ _KEYED_VALUE = (
 # left readable (`--authorization Token abc123`). The generic second word after a credential flag stays shown (see LIMITS).
 AUTH_SCHEMES = ("Bearer", "Basic", "Token", "Digest", "ApiKey")
 _AUTH_SCHEME_WORD = r"(?:(?:" + "|".join(AUTH_SCHEMES) + r")" + _SP + r"+(?=[^\s\"'-]))"
+# `--authorization` and `--bearer` flags (not the others): up to six words in front, exact end, digits allowed behind.
+_AUTH_FLAG = r"(?i)(?<![\w-])--(?:[a-z0-9]+[_\-]){0,6}(?:authorization|bearer)[0-9]*(?![\w-])"
+_QUOTED_TEXT = r"(?:\"[^\"\r\n]{1,512}\"|'[^'\r\n]{1,512}')"
+_DIGEST_WORD = r"(?:[^\s\"']|\"[^\"\r\n]*\"|'[^'\r\n]*')+"
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A whole PEM private key block — the highest-value secret that turns up in a misconfig dump.
     # PEM and PGP. A key cut off by a line-length limit has no END line: mask to the end.
@@ -648,7 +728,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         re.compile(r"(?i)\bbearer\s+(" + _KEYED_VALUE + r"|[a-z0-9._~+/\-<>]{12,}=*)"),
     ),
     # HTTP Basic auth: `Authorization: Basic <base64 of user:pass>` - the base64 IS the credential.
-    ("BASIC", re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")),
+    ("BASIC", re.compile(r"(?i)\bbasic[ \t]+([a-z0-9+/<>_]{8,}={0,2})")),
     # National ids (owner, 2026-10-21), before CREDITCARD and PHONE, which would take their digits in part: a US Social
     # Security number (never 000, 666 or 9xx first, never 00 or 0000 in the other groups) and an Indian Aadhaar number
     # written in its 4-4-4 groups (it never starts 0 or 1; a contiguous one is ACCOUNTID's 12 digits already).
@@ -733,14 +813,20 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # password), so everything after the scheme word to the end of the line is masked (a cost, named in LIMITS: prose after it too).
     (
         "SECRET",
-        re.compile(r"(?i)authorization[\"']?\s*[:=]\s*[\"']?digest\s+([^\r\n]{8,})"),
+        # A quoted header value (JSON: `"Authorization": "Digest u=\"x\", response=\"h\""`) is masked to its closing quote; any
+        # other is masked to the end of the line, JSON structure behind it included (`{"Authorization": Digest ...}` is no JSON).
+        # `[ \t]+`, not `\s+`: a line break ends the header value, so the next line stays readable.
+        re.compile(
+            r"(?i)authorization[\"']?\s*[:=]\s*(?:\"digest[ \t]+((?:\\.|[^\"\\\r\n]){8,})\""
+            r"|'digest[ \t]+((?:\\.|[^'\\\r\n]){8,})'|[\"']?digest[ \t]+([^\r\n]{8,}))"
+        ),
     ),
     (
         "SECRET",
         re.compile(
             # no boundary before the word: a key glued to a host or an address (`example.comAuthorization=V`,
             # `HTTP_AUTHORIZATION=V`) is a key too, as in the generic key rule below (cost: `reauthorization=...` too)
-            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?("
+            r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+[ \t]+)?("
             + _KEYED_VALUE
             + r"|[^\s\"']{8,})"
         ),
@@ -788,7 +874,7 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "SECRET",
         re.compile(
-            r"(?<![\w-])(?:(?i:--(?:[a-z0-9]+[_\-]){0,2}cookies?)|-b)(?:\s+|=)(?:\"([^\"\r\n]{4,})\"|'([^'\r\n]{4,})'|([^\s\"'-][^\s\"']{3,}))"
+            r"(?<![\w-])(?:(?i:--(?:(?:set|session)[_\-])?cookie)|-b)(?:\s+|=)(?:\"([^\"\r\n]{4,})\"|'([^'\r\n]{4,})'|([^\s\"'-][^\s\"']{3,}))"
         ),
     ),
     ("SECRET", re.compile(r"<Cookie\s+([^\s=<>]+=[^\s<>]{4,})")),
@@ -799,6 +885,25 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     # A credential passed as a command-line flag. EXACT flag names (independent review 2026-09-28:
     # `--secret-name`, `--token-file`, `--token-ttl` are not credentials, and masking them removed
     # resource names from the evidence). Same line only; a value never starts with `-` or a quote.
+    # `--authorization` and `--bearer` (with up to six words in front) carry a SCHEME WORD and the token: `--authorization NTLM <t>`,
+    # `--authorization Bearer '<t>'`. After a space, any word made of letters only and the one word (or the one quoted text) behind
+    # it are the value; a Digest value is masked word by word up to the next flag or the end of the line (`username="u",
+    # response="h"` holds spaces and quotes). Cost, named in LIMITS: `--authorization abc file.txt` masks `file.txt` too. A
+    # value that starts with a quote is the generic quoted rule below; `=` is the generic rule too (both words).
+    (
+        "SECRET",
+        re.compile(
+            _AUTH_FLAG
+            + rf"{_SP}+(?:(digest{_SP}+{_DIGEST_WORD}(?:{_SP}+(?!{_FLAG_STOP}){_DIGEST_WORD})*))"
+        ),
+    ),
+    (
+        "SECRET",
+        re.compile(
+            _AUTH_FLAG
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}|[^\s\"'\-][^\s\"']{{2,}}))"
+        ),
+    ),
     # `=` or whitespace before the opening quote: in JSON argv `"--password","x"` the quote right
     # after the flag is the flag's own closing quote, not the value's opening one.
     ("SECRET", re.compile(_CRED_FLAG + rf"(?:{_SP}*={_SP}*|{_SP}+)\"([^\"\n][^\"\n]{{0,255}})\"")),
