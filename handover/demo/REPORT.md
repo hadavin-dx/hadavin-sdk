@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:38Z / 02:08 IST - ORDER D13: APPLY-LIST.md written (batch 1 = 5 reviewed-clean patches); integration check INT-1 and lane 11 (stranger end-to-end) started; 6 agents live
+Status lines:
+- **APPLY-LIST.md is on origin demo/handover (handover/demo/APPLY-LIST.md).** BATCH 1, in this order: (1) drift/docs-fixes.patch (3 doc fixes; reviewed), (2) triage/js-portal.patch (reviewed, 0B/0M), (3) triage/py-retry.patch (reviewed, 0B/0M), (4) triage/extra-demo-only.patch (cosmetic, optional, reviewed 0B/0M), (5) gitleaks/gitleaks-toml-fix-v2.patch (reviewed: its round-2 Major is the stale merge evidence that INT-1 closes). BATCH 2 (not yet): lane 8's docs/browser patch (review 2 had 3 Majors; 8c rewriting; rebasing onto #1 and #5 so the doc hunks are not applied twice), lane 7's coverage patch (review 2: 1 Major; 7c rewriting), lane 10b CodeAnt hunks (not produced).
+- **I tell you the moment batch 1 is ready: it is READY for you to apply as soon as INT-1 reports that the whole list applies on the stack heads** (INT-1 is the check you asked for; it needs about 30 to 45 minutes because it includes one full serial suite on the merged tree; the placement and apply parts come first, in about 10 minutes, and I will post those immediately).
+- INT-1 (evidence runner, sonnet): placement table (which stack branch each patch applies on: pr-1-code d23cf8f / pr-2-demo-folder f31e261 / pr-3-tests 558d37f / initial-code 43110e7), ordered cumulative `git apply` on 558d37f with --3way fallback, gitleaks first or last, the REAL gitleaks (CI binary) `dir` + `git` with the lint.yml flags on the merged tree (0 findings expected), hygiene with the gitleaks test RUNNING, ruff/format/mypy, one full serial pytest (only if load is under 3). Output integration/INT-1.md.
+- Lane 11 (sonnet evidence runner, the VIDEO PATH, 50 min): a stranger follows ONLY README/docs on pr-3-tests 558d37f: quick start, duplicate-proof checks (same lead twice, case/space variants, a Cyrillic look-alike, a burst), then HOSTILE inputs through the public endpoint (oversized, invalid JSON, wrong content type, NUL, control chars, U+200B, header injection, SQL/HTML text, other HTTP methods, a slow half-request, up to 50 parallel connections), health afterwards, the reset script and proof that nothing is left running; made-up data only, no live model call. Output stranger/SUMMARY.md.
+- Question for you: (a) the Semgrep PR round-3 reviews (branch cfg-semgrep-sonar head 154144a): send me the diff (or tell me where on origin it lives: it is not among the public repo's branches; hadavin-sdk branches?) and I add a lane; (b) DeepSource clusters not yet covered: I know only the three PR summary comments (no per-finding list), the patterns of PRs 2 to 4 are all covered; tell me if a new DeepSource report shows other clusters.
+- Still open: PR 89 singular branch name (D5) unanswered. Lane 7c, 8c and 10b running.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:38Z / 02:08 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 22 min | 21:15 | running | CODEANT-COVERAGE.md, codeant-*.patch | evidence-codeant-* files; main file not yet |
+| a6163bda862313baa (agent, sonnet builder) | lane 7c | 20:31 | 6 min | 21:11 | running | coverage patch v3, PLAN.md | working |
+| a48557818ee7cad44 (agent, sonnet builder) | lane 8c | 20:34 | 3 min | 21:34 | running (coordination message queued: rebase on batch 1 items) | docs-and-deps.patch v3, PLAN.md | started |
+| ad08257c8fb71e8e6 (agent, sonnet evidence runner) | INT-1 integration check, batch 1 | 20:38 | 0 min | +45 min | running | integration/INT-1.md | started |
+| afcb39b8ea66fe867 (agent, sonnet evidence runner) | lane 11 stranger end-to-end + hostile inputs | 20:38 | 0 min | +50 min | running | stranger/SUMMARY.md | started |
+Totals: agents live 5; shells 0; pytest runs 0 now (INT-1 and 7c will run one each later); containers 0; load average 1.23, 1.11, 1.81; nothing past its time box; floor (3 agents) met.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| batch 1 | integration check 1 | n/a | n/a | your D13 rule: one integration check per batch | n/a | INT-1 passes and you apply |
+| lane 7 Sonar | fix round 7c; review 3 follows | r1 0B/1M/8N; r2 0B/1M/7N | see earlier | security path | no cap | review without Major/Blocker |
+| lane 8 browser tests | fix round 8c; review 3 follows | v1 0B/3M/8N; v2 0B/3M/8N | see earlier | changed test + new lock | no cap | review without Major/Blocker |
+| gitleaks allowlist | review 2 done; integration check pending | v1 0B/1M/2m/2N; v2 0B/1M/3m | see earlier | security path | no cap | INT-1 closes the stale-evidence Major |
+
+### (3) FINISHED SINCE LAST BLOCK
+None (the previous block listed the gitleaks review; lane 8b's duplicate hand-back was stopped by me to prevent it overwriting lane 8c's files).
+
 ## 2026-11-12 20:31Z / 02:01 IST - gitleaks v2 review 2: 0 Blocker, 1 Major (stale merge evidence), 3 Minor; binary provenance NOW PROVEN; 3 agents live
 FAILED / OPEN first:
 - MAJOR (evidence staleness): the coverage patch that the v2 evidence tested is NOT the file now called sonar-coverage.patch: coverage/ holds THREE versions; the tested one (exceptions hunks edit lines 9 and 24, plus a hygiene test: 11 passed) is now sonar-coverage-v2.patch; the current sonar-coverage.patch ADDS two exceptions lines near line 9 and edits no existing lines (no hygiene test hunk: would give 10 passed). By reading it has no line overlap with the gitleaks v2 patch, but nobody ran `git apply --check`, `--3way`, gitleaks or hygiene on THIS file together with v2. This is exactly the moving-target class I flagged: lane 7c is about to replace the coverage patch AGAIN (v3) and lane 8c a third patch on the same two files: so I run ONE final INTEGRATION CHECK myself (or by a short evidence runner) AFTER 7c and 8c finish: gitleaks v2 + coverage v3 + browser v3, every apply order, `--3way`, real gitleaks `dir` and `git` on the merged tree (0 findings), hygiene, look-alike negatives.
