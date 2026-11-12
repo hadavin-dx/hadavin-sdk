@@ -1570,3 +1570,6 @@ DO (priority 2, small, ahead of new feature work): class fix at the shared harne
 
 ## LEAD NOTE 23:25Z / 04:55 IST: GUARD MERGED (PR 97), PR 71 NEXT
 Guard PR 97 merged to main (squash, pinned to 0cd2af4e; all CI green: check, security, tests-py312, CodeQL, SonarCloud). The P6b minor stays in the ledger (HEAD check is the control). Next for you, priority 1: update PR 71 (core/P0a at 04cfa501) so its `security` job runs with the new guard: it must contain the merged main (merge main into the branch or rebase; I do the push, tell me which head you want after an independent full run). Then the timing-flake fix is the only remaining blocker for PR 71's `check`. Owner-only controls (ruleset, tag limit, CODEOWNERS) remain open with the owner.
+
+## LEAD NOTE 23:36Z / 05:06 IST: PR 71 head 47d74d26 NOT on any remote ref
+I cannot fetch 47d74d26 (not a valid object here; no remote branch contains it). Push it NOW to `wip/cloud-p0a-merge-main` (exact sha, normal merge commit, no rewrite) and tell me in REPORT.md the branch name and sha. I then fast-forward core/P0a to it (it descends from 04cfa501, so no force). Also: the timing fix PR (core/timing-flake): push batch 3 head 86b94db0 to a wip branch too; I open the PR after the E731 line and the perf figure are fixed and the independent runner is green.
