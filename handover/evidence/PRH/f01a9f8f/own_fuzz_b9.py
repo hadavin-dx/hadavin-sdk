@@ -65,8 +65,8 @@ def cases():
             yield f"opener_front/{on}", s, s[:6] + " = " + op + s[6:] + " tail"
     UNK2 = "Mq8" + "Vw2Xz9" + "Lk4Pd7Rt"
     for k in (31, 32, 33, 40, 100):
-        yield f"runcap/{k}", "", "log: " + " | ".join(" ".join(UNK2[:12]) for _ in range(k)) + " end"
-        yield f"runcap_secret/{k}", KEY, "log: " + " | ".join(" ".join(UNK2[:12]) for _ in range(k)) + " " + KEY + " end"
+        yield f"runcap/{k}", "", "log: " + " ok ".join(" ".join(UNK2[:12]) for _ in range(k)) + " end"
+        yield f"runcap_secret/{k}", KEY, "log: " + " ok ".join(" ".join(UNK2[:12]) for _ in range(k)) + " " + KEY + " end"
     yield "spaced_repeat/0", "", "log: " + " ".join("a" * 12) + " end"
 def main():
     leaks = withheld = errs = tot = 0; bysec = {}; wcat = {}
@@ -76,7 +76,7 @@ def main():
         try:
             o = tools.prepare_output(t, {}, 4000, [HAND, LONG])
         except runmap.RedactionError as e:
-            errs += 1
+            errs += 1; print('ERR', name, type(e).__name__)
             if name.startswith('runcap'): print('RUNCAP', name, 'RedactionError', type(e).__name__)
             continue
         if name.startswith('runcap'): print('RUNCAP', name, 'withheld' if 'withheld' in o else 'shown', 'secret_readable' if KEY in o else '', 'len', len(o))
