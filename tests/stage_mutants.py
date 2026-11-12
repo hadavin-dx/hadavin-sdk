@@ -713,7 +713,7 @@ M = [
         "or isinstance(position, bool) or position < 1:", "or isinstance(position, bool):",
         TEST, "test_the_rules_problems_function_takes_a_position_and_never_a_label", "DID NOT RAISE", ""),
     other_mutant("Z17 a Vault transit refusal names the configured key again (signer_vault.py)", "src/hadavin_sdk/audit/signer_vault.py",
-        ": Vault answered {status} (key name not shown)", "{self.key_name}: Vault answered {status}",
+        ": Vault answered {status_text(status)} (key name not shown)", "{self.key_name}: Vault answered {status}",
         TRACE, "test_a_vault_transit_refusal_does_not_name_the_configured_key", "Vault answered 500", ""),
     other_mutant("Z18 a key of a data object is in the float path again (models.py)", "src/hadavin_sdk/models.py",
         'f"{path}.{shown_name(k)}"', 'f"{path}.{k}"',
