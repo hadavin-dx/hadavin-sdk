@@ -34,23 +34,27 @@ def _test_files_the_runners_run() -> set[str]:
 
 
 def _root_files_named_by_tests() -> dict[str, list[str]]:
-    """{repo-root file name: test files (run by a mutation runner) that write `<something> / "<name>"`} found with `ast` (a path
-    built another way, such as `Path("CHANGELOG.md")` or a string join, is NOT seen by this scan)."""
-    names = {p.name for p in ROOT.iterdir() if p.is_file()}
+    """{repo-root name: files that write it as a string} found with `ast` in every test file a runner runs and in every helper
+    `tests/_*.py` (batch 19, Issue 9c: before, only `<something> / "<name>"` of a test file was seen; now any string that equals a
+    root name is, so `Path("x")`, `.joinpath("x")`, `open("x")` and a helper are covered). It is a string match: a name built
+    from pieces, or read from a list at run time, is NOT seen. A root folder is a name too (the runner copies only `src`,
+    `tests` and `ROOT_FILES`)."""
+    names = {p.name for p in ROOT.iterdir() if p.name not in {"src", "tests", ".git", ".venv"}}
     found: dict[str, list[str]] = {}
     run = _test_files_the_runners_run()
     assert run, "no runner names a test file: the scan is empty"
     for path in sorted((ROOT / "tests").rglob("*.py")):
-        if path.name == Path(__file__).name or f"tests/{path.name}" not in run:
+        if path.name == Path(__file__).name or not (
+            f"tests/{path.name}" in run or path.name.startswith("_")
+        ):
             continue
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
             if (
-                isinstance(node, ast.BinOp)
-                and isinstance(node.op, ast.Div)
-                and isinstance(node.right, ast.Constant)
-                and node.right.value in names
+                isinstance(node, ast.Constant)
+                and isinstance(node.value, str)
+                and node.value in names
             ):
-                found.setdefault(node.right.value, []).append(path.name)
+                found.setdefault(node.value, []).append(path.name)
     return found
 
 
@@ -59,10 +63,27 @@ def test_the_runner_copies_every_repo_root_file_a_test_reads():
 
     named = _root_files_named_by_tests()
     assert named, "no test names a repo-root file: the scan is empty"
-    missing = sorted(n for n in named if n not in ROOT_FILES)
+    missing = sorted(n for n in named if n not in ROOT_FILES and n not in NOT_COPIED)
     assert missing == [], (
         f"a test reads a repo-root file that is not in ROOT_FILES, so a mutation copy cannot hold it: {missing}"
     )
+    # the pinned names are really named, so a stale row is found (batch 19, Issue 9c)
+    assert sorted(n for n in NOT_COPIED if n not in named) == [], (
+        "NOT_COPIED names a name no test file holds"
+    )
+
+
+# Root names that a test file or helper holds as a string but that a mutation copy does not hold (it copies `src`, `tests` and
+# `ROOT_FILES` only). Each is a limit stated, not a fix: a test that reads these sees nothing in a mutation copy, so a mutant
+# that only such a test could kill is not killed there. The names are pinned so a new one has to be added with a reason.
+NOT_COPIED = {
+    "handover": "the studio notes folder, on its own branch: its paths are skipped by the changelog test",
+    "docs": "the text scan and the guard read it when it exists; absent in a mutation copy, the scan sees fewer files",
+    "demos": "the caller scan and the text scan read it when it exists; absent in a mutation copy they see nothing",
+    ".github": "the text scan reads it when it exists",
+    "tools": "the text scan reads it when it exists (the runner itself is imported from the real tree)",
+    "uv.lock": "a name in the text scan's skip list, not a file a test opens",
+}
 
 
 def test_every_root_file_the_runner_copies_exists_and_is_a_plain_name():
@@ -412,7 +433,7 @@ def _every_model_class():
 
 def test_every_model_class_of_the_package_refuses_without_the_refused_text():
     classes = _every_model_class()
-    assert len(classes) > 40, "the scan found too few model classes"
+    assert len(classes) == 77, f"the model classes found: {len(classes)}; the CHANGELOG says 77"
     not_hidden = sorted(
         f"{c.__module__}.{c.__name__}" for c in classes if not issubclass(c, HiddenInputModel)
     )
@@ -486,8 +507,11 @@ def test_write_intent_says_a_plain_name_problem_only_for_a_name_and_the_class_fo
     unplain = AuditEvent.model_construct(
         event_id="Evt-UPPER", run_id="r", domain="d", operation="o", principal="p", source="s"
     )
-    with pytest.raises(AuditUnavailable, match="not a plain file name"):
+    with pytest.raises(AuditUnavailable) as plain:
         audit.write_intent(unplain)
+    assert "not a plain file name" in str(plain.value), (
+        "write_intent did not say that the event id is not a plain file name"
+    )
 
     canary = _canary("serial")
     good = AuditEvent.model_construct(
@@ -526,8 +550,12 @@ def test_the_httpcode_check_accepts_only_the_library_class_with_its_import():
     imported = ast.parse("import urllib.error\n")
     from_imported = ast.parse("from urllib import error\n")
     none = ast.parse("import json\n")
-    assert library_http_handler("urllib.error.HTTPError", imported)
-    assert library_http_handler("urllib.error.HTTPError", from_imported)
+    assert library_http_handler("urllib.error.HTTPError", imported), (
+        "the library class with `import urllib.error` was not accepted"
+    )
+    assert library_http_handler("urllib.error.HTTPError", from_imported), (
+        "the library class with `from urllib import error` was not accepted"
+    )
     assert not library_http_handler("urllib.error.HTTPError", none), "no import"
     assert not library_http_handler("my.module.HTTPError", imported), (
         "another class that ends in HTTPError"
@@ -559,12 +587,12 @@ def _load_mutant_list(script: str):
     return module.M
 
 
-@pytest.mark.parametrize("script", ["stage_mutants.py"])
+@pytest.mark.parametrize("script", list(RUNNERS))
 def test_every_mutant_of_the_list_still_applies_to_its_file(script):
     from tests._mutant_check import mutant_problems
 
     mutants = _load_mutant_list(script)
-    assert len(mutants) > 100, "the list holds too few mutants: the scan is empty"
+    assert len(mutants) > 30, "the list holds too few mutants: the scan is empty"
     assert mutant_problems(ROOT, mutants) == [], "a mutant cannot apply (see the names)"
 
 

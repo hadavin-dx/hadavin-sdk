@@ -191,6 +191,13 @@ def check_literal() -> list[str]:
     for cls, field in ((AgentRecord, "data_class"), (AnthropicSettings, "platform")):
         if typing.get_origin(cls.model_fields[field].annotation) is not typing.Literal:
             bad.append(f"{cls.__name__}.{field} is not a Literal")
+    # the showing sites (batch 19, Issue 9a): the message prints the field itself, not a value from elsewhere
+    for rel, needle in (
+        ("deferred.py", "data_class {a.data_class} is not available"),
+        ("llm/anthropic.py", "({settings.platform}): the client refused"),
+    ):
+        if needle not in (SRC / rel).read_text(encoding="utf-8"):
+            bad.append(f"{rel} no longer shows the Literal field in `{needle}`")
     return bad
 
 
@@ -377,6 +384,35 @@ def check_rowid() -> list[str]:
     for needle in ("f'row {seq} was changed after it was written'", "not anchored (%s)"):
         if needle.replace("'", '"') not in text.replace("'", '"') and needle not in text:
             bad.append(f"the audit chain no longer holds the site {needle}")
+    # the number shown is the `seq` of a row read from the table: `_check_chain` unpacks it from the row of the loop and
+    # assigns it nowhere else (batch 19, Issue 9a)
+    fn = next(
+        (
+            n
+            for n in ast.walk(ast.parse(text))
+            if isinstance(n, ast.FunctionDef) and n.name == "_check_chain"
+        ),
+        None,
+    )
+    if fn is None:
+        return [*bad, "audit/chain.py has no `_check_chain`"]
+    stores = [
+        n
+        for n in ast.walk(fn)
+        if isinstance(n, ast.Name) and n.id == "seq" and isinstance(n.ctx, ast.Store)
+    ]
+    unpack = [
+        n
+        for n in ast.walk(fn)
+        if isinstance(n, ast.Assign)
+        and isinstance(n.targets[0], ast.Tuple)
+        and isinstance(n.targets[0].elts[0], ast.Name)
+        and n.targets[0].elts[0].id == "seq"
+        and isinstance(n.value, ast.Name)
+        and n.value.id == "row"
+    ]
+    if len(stores) != 1 or len(unpack) != 1:
+        bad.append("`seq` of `_check_chain` is not only unpacked from the row of the loop")
     return bad
 
 
@@ -980,7 +1016,7 @@ def check_classnames() -> list[str]:
         text = site
         if "str(exc)" in text or "safe_head" in text or "exc.args" in text:
             bad.append(f"{mod}: {site}: prints the text of an error")
-        if mod != "config.py" or "exc.title" not in text or "len(errors)" not in text:
+        if mod != "config.py" or "exc.title" not in text or "len(pairs)" not in text:
             bad.append(f"{mod}: {site}: not the pydantic count-and-title line")
     return bad
 
@@ -1144,6 +1180,18 @@ def check_fields() -> list[str]:
         alpha: int = 1
 
     marker = "Zq" + "9-typed-key"
+
+    class Keyed(StrictConfigModel):
+        table: dict[str, int]
+
+    # `_place` shows a name only when it is written in code: a key of a mapping that the caller typed is not (batch 19, 9a)
+    try:
+        Keyed.model_validate({"table": {marker: "x"}})
+    except Exception as exc:  # the test wants any error here  # noqa: BLE001
+        if marker in f"{exc!s}{exc!r}{exc.errors()}":  # type: ignore[attr-defined]
+            return ["FIELDS: a typed mapping key is shown in the place line"]
+    else:
+        return ["a bad mapping value was accepted"]
     try:
         M.model_validate({"alpha": 1, marker: 2})
     except Exception as exc:  # the test wants any error here  # noqa: BLE001
@@ -2469,8 +2517,10 @@ def check_filter() -> list[str]:
 
 def check_card() -> list[str]:
     """Round 16 (Issue 4): the card producers put only the fields of the plan that the approver must read in the card
-    and in the text sent to the chat channel. The test fills EVERY other field of `Plan` and `GateDecision` (the list is
-    taken from the models, so a field added later is covered at once) with a canary text, renders the real shadow and abstain cards,
+    and in the text sent to the chat channel. The test fills only the CANARIED fields (batch 19: it said every other field, which was too strong):
+    `agent_id`, the target's `ref`, `idempotency_key`, `plan_id`, the gate decision's `plan_hash`, the approval request's
+    `chain_id` and its `requested_by`; the other fields have no canary, so a field added later is NOT covered until it is
+    given one. It puts a canary text in each, renders the real shadow and abstain cards,
     posts them through the real channel code with a recording stand-in for the network, and looks for the canary in the
     card text, the blocks and the body that would go to the channel. The fields the card shows on purpose are the plan's
     action, its version, its inputs, its system, its expected outcome, the called ids it cites and the rule id. The half that

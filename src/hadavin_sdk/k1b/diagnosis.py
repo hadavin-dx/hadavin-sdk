@@ -92,7 +92,7 @@ def parse_diagnosis(value: Any) -> Diagnosis | None:
     if not isinstance(value, dict):
         return None
     try:
-        return Diagnosis.model_validate(value, strict=True)
+        return Diagnosis.model_validate(value)  # the model config is strict already
     except ValidationError:
         return None
 

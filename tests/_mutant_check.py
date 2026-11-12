@@ -39,4 +39,32 @@ def mutant_problems(root: Path, mutants) -> list[str]:
             test_path = root / m.test_file
             if not test_path.is_file() or m.only_test not in _functions(test_path):
                 problems.append(f"{m.name}: the killer {m.only_test} is not in {m.test_file}")
+        # `pinned` is the test id that must be the one failing: it names the killer, and the file of the killer (batch 19, 9g)
+        if m.pinned and m.only_test:
+            want_file = (m.test_file or "").removesuffix(".py")
+            if not m.pinned.startswith(want_file + "::" + m.only_test):
+                problems.append(f"{m.name}: pinned {m.pinned!r} is not the killer {m.only_test}")
+        # `expect` is a fragment of the intended failing message: it must exist in the tests or the source, or no failure can
+        # ever hold it (the runner would report WRONG_REASON after the slow run); a crash names an exception class instead
+        if not m.allow_crash and not _in_tree(root, m.expect):
+            problems.append(
+                f"{m.name}: the expected text {m.expect!r} is in no file of tests or src"
+            )
     return problems
+
+
+def _in_tree(root: Path, fragment: str) -> bool:
+    for sub in ("tests", "src"):
+        for p in (root / sub).rglob("*.py"):
+            if fragment in _read(p):
+                return True
+    return False
+
+
+_CACHE: dict[Path, str] = {}
+
+
+def _read(p: Path) -> str:
+    if p not in _CACHE:
+        _CACHE[p] = p.read_text(encoding="utf-8")
+    return _CACHE[p]

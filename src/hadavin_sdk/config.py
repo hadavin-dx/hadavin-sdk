@@ -35,7 +35,7 @@ from hadavin_sdk.errors import (
     read_configured,
     shown_name,
 )
-from hadavin_sdk.hidden_input import HiddenInputModel
+from hadavin_sdk.hidden_input import HIDDEN, HiddenInputModel, without_input
 from hadavin_sdk.safe_url import (
     InvalidUrl,
     safe_urlsplit,
@@ -657,10 +657,31 @@ def _what(e: Any) -> str:
     return f"a value was refused ({kind})"
 
 
-def _error_line(e: Any) -> str:
+def _rebuilt(exc: ValidationError) -> ValidationError:
+    """`exc` when every problem holds the fixed word as its input (`hidden_input.without_input` made it, so its place line holds
+    only names written in code or ids of loaded things), else the same problems rebuilt that way: `error_where(cleaned=True)`
+    shows any word-like name, which is safe only for a rebuilt error (batch 19, Issue 7). A plain pydantic model that reaches
+    `config_error_text` is rebuilt here, with no code words (a field name is then `<not shown>`)."""
+    if all(e.get("input") == HIDDEN for e in exc.errors(include_url=False, include_input=True)):
+        return exc
+    return without_input(exc)
+
+
+def _pairs(exc: ValidationError) -> list[tuple[Any, Any]]:
+    """Each problem twice: the rebuilt one (its place line is safe to show) and the original (its context says whether Hadavin
+    wrote the sentence: the rebuilt one holds a fixed sentence there, which would be taken for ours). The rebuilt error has the
+    same problems in the same order."""
+    rebuilt = _rebuilt(exc).errors(include_url=False, include_input=False)
+    original = exc.errors(include_url=False, include_input=False)
+    if len(rebuilt) != len(original):  # cannot happen: the rebuild keeps every problem
+        raise ConfigError("a refused value could not be described")
+    return list(zip(rebuilt, original, strict=True))
+
+
+def _error_line(where_error: Any, what_error: Any) -> str:
     """One problem as `where: what` (used beside the rename sentence)."""
-    where = error_where(e, cleaned=True)
-    return f"{where}: {_what(e)}" if where else _what(e)
+    where = error_where(where_error, cleaned=True)
+    return f"{where}: {_what(what_error)}" if where else _what(what_error)
 
 
 def _value_free_text(exc: ValidationError) -> str:
@@ -668,10 +689,13 @@ def _value_free_text(exc: ValidationError) -> str:
     refused value (`input_value=...`, which could be a secret written into the wrong field) and without the link.
     The place keeps field names and position numbers; an unknown key is `<unknown key>` and a mapping key is shown
     only if it is a plain identifier (`shown_name`). A `ValueError` that a library raised shows its type only."""
-    errors = exc.errors(include_url=False, include_input=False)
-    lines = [f"{len(errors)} validation error{'s' if len(errors) != 1 else ''} for {exc.title}"]
-    for e in errors:
-        lines += [error_where(e, cleaned=True), f"  {_what(e)} [type={e['type']}]"]
+    pairs = _pairs(exc)
+    lines = [f"{len(pairs)} validation error{'s' if len(pairs) != 1 else ''} for {exc.title}"]
+    for shown, original in pairs:
+        lines += [
+            error_where(shown, cleaned=True),
+            f"  {_what(original)} [type={original['type']}]",
+        ]
     return "\n".join(lines)
 
 
@@ -708,9 +732,9 @@ def _validation_text(exc: ValidationError) -> str:
     if not renamed:
         return _value_free_text(exc)
     others = [
-        _error_line(e)
-        for e in exc.errors()
-        if not isinstance(e.get("ctx", {}).get("error"), _RenamedStage)
+        _error_line(shown, original)
+        for shown, original in _pairs(exc)
+        if not isinstance(original.get("ctx", {}).get("error"), _RenamedStage)
     ]
     return "; ".join([*(str(r) for r in renamed), *others])
 

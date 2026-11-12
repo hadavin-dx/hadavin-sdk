@@ -3423,7 +3423,7 @@ GUARD_ALLOWED = {
     ('config.py', "'; '.join([*(str(r) for r in renamed), *others])"): _CODE_TABLE,
     ('config.py', "f'backends.detector {d.kind}: its route is not in routes'"): _KIND_CODE,
     ('config.py', "f'{c}: {s.kind}'"): _KIND_CODE,
-    ('config.py', 'lines += [error_where(e, cleaned=True), f"  {_what(e)} [type={e[\'type\']}]"]'): _FILTER_ITSELF,
+    ('config.py', 'lines += [error_where(shown, cleaned=True), f"  {_what(original)} [type={original[\'type\']}]"]'): _FILTER_ITSELF,
     ('config.py', "refused += [f'{c}: {s.kind}' for c, s in b.entries() if (c, s.kind) in NOT_PROD]"): _KIND_CODE,
     ('deferred.py', "f'{where}: key {k!r} is not available until {DEFERRED_KEYS[k]}'"): _KIND_CODE,
     ('guard/injection.py', "'+'.join((v.backend for v in flagged or verdicts))"): _PATTERN,
@@ -3882,6 +3882,22 @@ _PLANTED_FAULTS = {
         "def count(x) -> int:\n    return 1\ndef f(log, client, name):\n    log.warning('bad %d', client.count(name))",
         1,
     ),
+    "R19a a number directive of a method of an attribute receiver": (
+        "def f(self, log, name):\n    log.warning('bad %d', self.client.count(name))",
+        1,
+    ),
+    "R19b a number directive of a method of a call result": (
+        "def f(log, name):\n    log.warning('bad %d', get_client().count(name))",
+        1,
+    ),
+    "R19c a number directive of a method of a subscript": (
+        "def f(log, d, name):\n    log.warning('bad %d', d['x'].find(name))",
+        1,
+    ),
+    "R19f only the number directive of a log call is dropped, the text directive is read": (
+        "def f(log, x):\n    log.warning('n %d %s', len(x), x)",
+        1,
+    ),
     "R17c a number directive of a function that returns text": (
         "def count(x):\n    return x\ndef f(log, name):\n    n = count(name)\n    log.warning('bad %d', n)",
         1,
@@ -3950,11 +3966,31 @@ _PLANTED_FAULTS = {
         "import threading\ndef f(name):\n    threading.Thread(name=name)",
         1,
     ),
-    "R17t a name matched by a case pattern": (
+    "R17t control: a name from a case pattern of an unproven parameter (the proven-name shadow is R19h)": (
         "def f(name):\n    match name:\n        case str(text):\n            raise A(text)",
         1,
     ),
-    "R17u a lambda that holds the name does not prove the outer one": (
+    "R19h a case pattern that binds a name written elsewhere in the function": (
+        "def f(x):\n    name = 'fixed'\n    match x:\n        case str(name):\n            raise A(name)",
+        1,
+    ),
+    "R19i a case pattern that binds the rest of a mapping": (
+        "def f(x):\n    rest = 'fixed'\n    match x:\n        case {'a': 1, **rest}:\n            raise A(rest)",
+        1,
+    ),
+    "R19j a lambda parameter that shares the name of a written value": (
+        "def f():\n    name = 'fixed'\n    g = lambda name: str(name)\n    return g",
+        1,
+    ),
+    "R19k an error held as the key of a dict that is returned": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {exc: 1}",
+        1,
+    ),
+    "R19l an attribute of a name bound by `with` after it was bound to a class of the package": (
+        "class K:\n    def __init__(self):\n        self.name = 'fixed'\n\ndef f(g):\n    k = K()\n    with g() as k:\n        pass\n    raise A(k.name)\n",
+        1,
+    ),
+    "R17u control: a lambda that does not use the name of an unproven parameter (the lambda shadow is R19j)": (
         "def f(name):\n    g = lambda name: 'x'\n    raise A(name)",
         1,
     ),
@@ -4035,6 +4071,8 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     ),
     "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
+    "R19d a number directive of len() of a value the scan cannot prove": "def f(log, x):\n    log.warning('n %d', len(x))",
+    "R19e a number directive of find() on a text bound in the function": "def f(log, name):\n    s = 'a,b'\n    log.warning('n %d', s.find(name))",
     "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
     "R17c a log call with a number directive of a function declared as an int": "def count() -> int:\n    return 1\ndef f(log):\n    n = count()\n    log.warning('bad %d', n)",
     "R18b a store method given a class name": "def f(store):\n    try:\n        store.get_run('x')\n    except OSError as exc:\n        store.add_dead_letter(type(exc).__name__)",
@@ -4045,6 +4083,7 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "R17r a logger named in code": "import logging\ndef f():\n    logging.getLogger('fixed')",
     "R17s a thread named in code": "import threading\ndef f():\n    threading.Thread(name='worker')",
     "R17t a name matched in a case of a written value": "def f(x):\n    match x:\n        case 1:\n            name = 'fixed'\n    raise A(name)",
+    "R19l a name bound only to a class of the package": "class K:\n    def __init__(self):\n        self.name = 'fixed'\n\ndef f():\n    k = K()\n    raise A(k.name)\n",
     "R17u a lambda that shadows a written name": "def f():\n    name = 'fixed'\n    g = lambda name: name\n    raise A(name)",
 }
 

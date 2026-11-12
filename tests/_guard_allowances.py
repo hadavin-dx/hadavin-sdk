@@ -7,7 +7,7 @@ category against the code (round 13: no site is left unread, the reason `UNREAD`
 REASONS = {
     "PROC": "text or bytes the code is processing (cleaning, matching, encoding, hashing, or putting into a request or a digest): the value is the data being worked on, and the result is not a message that names a configured value",
     "SIGN": "a header name or the bytes of a request signature built from a prefix, a timestamp and the request body; sent to the channel, never printed",
-    "CARD": "a line of the approval card or a request to the approval channel's API, built from the plan fields the approver must read (action, version, inputs, system, expected outcome, cited call ids, rule id) and the code's own labels; every other field of the plan and of the gate decision is checked to be absent from the card and from the body sent to the channel (`check_card`, canary text)",
+    "CARD": "a line of the approval card or a request to the approval channel's API, built from the plan fields the approver must read (action, version, inputs, system, expected outcome, cited call ids, rule id) and the code's own labels; seven named fields (`agent_id`, the target `ref`, `idempotency_key`, `plan_id`, `plan_hash`, `chain_id`, `requested_by`) are checked to be absent from the card and from the body sent to the channel (`check_card`, canary text); the other fields have no canary",
     "TIME": "a sum of a time and a number of seconds, or an expiry date: not text",
     "LLMREQ": "a request to a model provider or its reply being put together (JSON body, system text, token cost sum, recording file name): sent to the provider, never printed as a message",
     "NUM": "a number sum or a number formatted by the code (a count, a size, a status code, a port)",
@@ -280,7 +280,7 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("config.py", "f\"environment {self.environment}: refused: {', '.join(refused)}\""): "LISTED",
     (
         "config.py",
-        "f\"{len(errors)} validation error{('s' if len(errors) != 1 else '')} for {exc.title}\"",
+        "f\"{len(pairs)} validation error{('s' if len(pairs) != 1 else '')} for {exc.title}\"",
     ): "CLASSNAMES",
     ("config.py", "f'; allowed: {allowed}'"): "TAGS",
     ("config.py", "f'a value was refused ({kind})'"): "PYDANTICTYPE",
@@ -288,7 +288,7 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ("config.py", "f'anchor {anchor.kind} without retention_ack'"): "KIND",
     ("config.py", "f'backends.{cap} ({kind}): {config_error_text(exc)}'"): "PLACE",
     ("config.py", "f'the kind is missing or not one of the known kinds{tail}'"): "TAGS",
-    ("config.py", "f'{where}: {_what(e)}'"): "PLACE",
+    ("config.py", "f'{where}: {_what(what_error)}'"): "PLACE",
     ("config.py", "refused += _anchor_refusals(self.environment, self.backends)"): "LISTED",
     ("errors.py", "'.'.join(parts)"): "PLACE",
     (

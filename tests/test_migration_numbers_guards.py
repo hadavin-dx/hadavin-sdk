@@ -167,7 +167,9 @@ def test_statement_text_called_the_ticket_way_returns_the_pair(mn):
 
 
 def test_lex_returns_the_text_and_the_problem(mn):
-    assert mn.lex("SELECT 'a") == ("SELECT '", "string not closed at line 1")
+    assert mn.lex("SELECT 'a") == ("SELECT '", "string not closed at line 1"), (
+        "an unclosed string is not reported by the lexer"
+    )
     assert mn.lex("SELECT 1;") == ("SELECT 1;", "")
 
 

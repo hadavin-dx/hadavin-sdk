@@ -110,7 +110,7 @@ M = [
         "pass",
         T2,
         "test_lex_returns_the_text_and_the_problem",
-        "(\"SELECT '\", '')",
+        "an unclosed string is not reported by the lexer",
     ),
     mutant(
         "lexer: statement-start anchor removed",

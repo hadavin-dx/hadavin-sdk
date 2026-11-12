@@ -15,27 +15,33 @@ What the rebuilt error keeps, and why it is code and not input:
   name is `NOT_SHOWN`.
 - `ctx`: a number or a flag is kept (a limit); the text of a key in `_CODE_CTX` is kept (written in code: `expected`, `pattern`,
   `discriminator`, `expected_tags`); the `error` of a `value_error` or `assertion_error` is kept only when it is a
-  `ConfigValueError` (the marker for "Hadavin wrote this sentence"), else it is a fixed `ConfigValueError`; every other text
+  `ConfigValueError` (the marker for "Hadavin wrote this sentence"; its `__cause__` and `__context__` are cleared, so the
+  exception it was raised from is not kept), else it is a fixed `ConfigValueError`; every other text
   (the typed tag of `union_tag_invalid`, the text a library puts in `error`, which may quote a character of the input) is `HIDDEN`.
 - `msg`: pydantic builds it again from `type` and `ctx`, so it holds nothing that the rebuilt `ctx` does not.
 
-Covered: `Model(...)`, and `model_validate`, `model_validate_json`, `model_validate_strings`, which pydantic routes through the
-`__init__` of a model that defines one (`__pydantic_custom_init__`; a test pins this). One consequence, stated plainly: the options
-`strict=`, `context=` and `from_attributes=` of those three methods are ignored on such a model (the model's own `model_config`
-still applies); no call in `src/` or `demos/` relies on them (`tests/test_q8a1_b18_fixes.py` fails when one does).
+Covered: `Model(...)` and a mapping given to `model_validate`, `model_validate_json`, `model_validate_strings` (pydantic-core calls
+`__init__` of a model that defines one, `__pydantic_custom_init__`), and every other shape given to those three methods (a string, a
+list, `None`, a number, bytes, JSON text, text that is not JSON): pydantic-core checks those itself and never calls `__init__`, so
+the base defines the three class methods too and rebuilds the error there (`tests/test_q8a1_b19_fixes.py` pins both entries, for
+every model of the package). A mapping passes both guards; a second pass over a rebuilt error changes nothing (tested). A mapping
+whose key is not text (`{1: x}`) is refused as a `ValidationError` with a fixed sentence: Python cannot spread it into `__init__`.
+One consequence, stated plainly: the options `strict=`, `context=` and `from_attributes=` are ignored for a mapping (the model's own
+`model_config` still applies); `tests/test_q8a1_b19_fixes.py` fails when a call in `src/` or `demos/` gives one, and pins the
+ignoring itself, so a pydantic change is noticed.
 NOT covered: a `TypeAdapter(Model)` made by the caller, which calls the validator directly and does not pass through the model
-class; `model_construct`, which validates nothing."""
+class; `model_construct`, which validates nothing; a model nested inside a parent that is not a `HiddenInputModel`."""
 
 from __future__ import annotations
 
 import enum
 import functools
 import typing
-from typing import Any
+from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from hadavin_sdk.errors import UNKNOWN_KEY, ConfigValueError, shown_name
+from hadavin_sdk.errors import NOT_SHOWN, UNKNOWN_KEY, ConfigValueError, shown_name
 
 HIDDEN = "<hidden>"
 REFUSED = (
@@ -43,6 +49,9 @@ REFUSED = (
 )
 # the text of these ctx keys is written in code (a type name, a pattern, the allowed words), never taken from the input
 _CODE_CTX = frozenset({"expected", "pattern", "discriminator", "expected_tags"})
+# the two fixed words this module itself puts in a place line: kept, so that a second pass over an error that was already
+# rebuilt (a dict goes through `__init__` and then through the class method) changes nothing
+_FIXED_PLACES = frozenset({UNKNOWN_KEY, NOT_SHOWN})
 _ERROR_KINDS = frozenset(
     {"value_error", "assertion_error"}
 )  # their ctx `error` is an exception object
@@ -91,11 +100,19 @@ def _place(error: dict[str, Any], words: frozenset[str]) -> tuple[int | str, ...
             out.append(part)
         elif error["type"] == "extra_forbidden" and i == len(loc) - 1:
             out.append(UNKNOWN_KEY)
-        elif type(part) is str and part in words:
+        elif type(part) is str and (part in words or part in _FIXED_PLACES):
             out.append(part)
         else:
             out.append(shown_name(part))  # NOT_SHOWN unless it is the id of a loaded thing
     return tuple(out)
+
+
+def _without_chain(error: ConfigValueError) -> ConfigValueError:
+    """The same sentence and class (a caller may test for a subclass) with no `__cause__` and no `__context__`: the exception a
+    validator raised `from` another one keeps that one, and the other may quote the value (batch 19, Issue 1)."""
+    error.__cause__ = None
+    error.__context__ = None
+    return error
 
 
 def _context(kind: str, ctx: dict[str, Any]) -> dict[str, Any]:
@@ -103,7 +120,11 @@ def _context(kind: str, ctx: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for key, value in ctx.items():
         if kind in _ERROR_KINDS and key == "error":
-            out[key] = value if isinstance(value, ConfigValueError) else ConfigValueError(REFUSED)
+            out[key] = (
+                _without_chain(value)
+                if isinstance(value, ConfigValueError)
+                else ConfigValueError(REFUSED)
+            )
         elif (
             isinstance(value, bool | int | float)
             or value is None
@@ -144,6 +165,26 @@ def without_input(exc: ValidationError, model: type[BaseModel] | None = None) ->
     return ValidationError.from_exception_data(exc.title, lines, hide_input=True)
 
 
+def _text_keys_only(cls: type[BaseModel], args: tuple[Any, ...]) -> ValidationError | None:
+    """pydantic-core hands a mapping to `__init__(**mapping)`, and Python refuses a key that is not text with a `TypeError`
+    ("keywords must be strings"): not a `ValidationError`, so a caller that catches `ValidationError` would not catch it. Refuse
+    that shape here as an ordinary validation problem with a fixed sentence (the key is never printed)."""
+    if args and isinstance(args[0], dict) and any(type(k) is not str for k in args[0]):
+        return ValidationError.from_exception_data(
+            cls.__name__,
+            [
+                {
+                    "type": "value_error",
+                    "loc": (),
+                    "input": HIDDEN,
+                    "ctx": {"error": ConfigValueError("a key of the mapping is not text")},
+                }
+            ],
+            hide_input=True,
+        )
+    return None
+
+
 class HiddenInputModel(BaseModel):
     """A model whose `ValidationError` holds no text of the refused input in `str`, `repr`, `args`, `errors()` or `json()`."""
 
@@ -157,3 +198,35 @@ class HiddenInputModel(BaseModel):
             hidden = without_input(exc, type(self))
         if hidden is not None:
             raise hidden  # outside the `except`, so the first error is not kept as `__context__`
+
+    # Only a dict reaches `__init__` (pydantic-core calls it for a mapping). A string, a list, `None`, a number, an object, and
+    # the text of `model_validate_json` are checked by pydantic-core itself, so the three class methods are the second entry
+    # (Q8a-1 batch 19 Issue 1: the lead probe showed the value in `errors()` and `json()` for those shapes).
+    @classmethod
+    def model_validate(cls, *args: Any, **kwargs: Any) -> Self:
+        hidden = _text_keys_only(cls, args)
+        try:
+            if hidden is None:
+                return super().model_validate(*args, **kwargs)
+        except ValidationError as exc:
+            hidden = without_input(exc, cls)
+        raise hidden  # outside the `except`, so the first error is not kept as `__context__`
+
+    @classmethod
+    def model_validate_json(cls, *args: Any, **kwargs: Any) -> Self:
+        hidden = None
+        try:
+            return super().model_validate_json(*args, **kwargs)
+        except ValidationError as exc:
+            hidden = without_input(exc, cls)
+        raise hidden  # outside the `except`, so the first error is not kept as `__context__`
+
+    @classmethod
+    def model_validate_strings(cls, *args: Any, **kwargs: Any) -> Self:
+        hidden = _text_keys_only(cls, args)
+        try:
+            if hidden is None:
+                return super().model_validate_strings(*args, **kwargs)
+        except ValidationError as exc:
+            hidden = without_input(exc, cls)
+        raise hidden  # outside the `except`, so the first error is not kept as `__context__`

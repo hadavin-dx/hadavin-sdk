@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.config import confined
-from hadavin_sdk.errors import ConfigError, shown_name
+from hadavin_sdk.errors import ConfigError, loaded_ids, shown_name
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.diagnosis import Diagnosis, strict_json_loads
 
@@ -185,8 +185,23 @@ def _chunks(text: str) -> tuple[str, ...]:
     return tuple(p for p in parts if p.strip())
 
 
+def _listed_names(path: Path) -> list[str]:
+    """The names of the entries next to `path` that exist on disk: the folder names the loader itself can list (batch 19, Issue 7).
+    A name that is not among them (a typing mistake, a pasted sentence) is not shown by `_fail`."""
+    try:
+        return [p.name for p in path.parent.iterdir()]
+    except OSError:
+        return []
+
+
 def load_bundle(path: Path) -> Bundle:
+    """One ``case-NNN`` folder. Its name is shown in a refusal only when it is word-like and is a folder that is really there."""
     path = Path(path)
+    with loaded_ids(_listed_names(path)):
+        return _load_bundle(path)
+
+
+def _load_bundle(path: Path) -> Bundle:
     case = path.name
     if not CASE_RE.fullmatch(case) or path.is_symlink() or not path.is_dir():
         raise _fail(case, "folder name must look like case-001")

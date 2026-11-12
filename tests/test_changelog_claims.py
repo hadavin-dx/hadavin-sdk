@@ -55,7 +55,9 @@ def _handler_lines(source: str) -> list[tuple[str, int]]:
     out = []
     for n in ast.walk(tree):
         if isinstance(n, ast.ExceptHandler):
-            header = "\n".join(lines[n.lineno - 1 : n.body[0].lineno - 1])
+            # the header runs from the `except` line up to the line before the first statement of the body; a one-line handler
+            # (`except X: pass  # noqa: BLE001`) has its body on the `except` line itself, so that line is the header
+            header = "\n".join(lines[n.lineno - 1 : max(n.body[0].lineno - 1, n.lineno)])
             if "noqa: BLE001" in header:
                 f = n
                 while f in parent and not isinstance(f, ast.FunctionDef | ast.AsyncFunctionDef):
@@ -144,7 +146,7 @@ def test_a_wrong_sentence_of_counts_is_found():
 def test_the_numbers_of_older_entries_are_labelled_with_their_batch():
     """A total (rows of the allowance table, reasons checked, mutants, handlers) in an entry other than the newest is history:
     `at batch N` stands within 300 characters before the number, so it cannot be read as the count of this head."""
-    newest = TEXT.index("Q8a-1 batch 18, what changes for you")
+    newest = TEXT.index("Q8a-1 batch 19, what changes for you")
     older = TEXT[:newest]
     stale = []
     totals = r"\b(?:\d+ rows (?:in all|of its own|\(each)|\d+ of (?:the )?\d+ reasons|\d+ mutants in|\d+ `except` handlers marked)"
@@ -163,4 +165,73 @@ def test_the_handler_list_of_the_changelog_is_the_handlers_of_the_code():
     assert listed == _handler_sites(), (
         "the handler list of the CHANGELOG differs from the handlers of src: "
         f"missing {sorted(set(_handler_sites()) - set(listed))}, extra {sorted(set(listed) - set(_handler_sites()))}"
+    )
+
+
+# The `noqa: BLE001` handlers whose body uses the caught error for more than its class name (batch 19, found with `ast`). The
+# CHANGELOG says what each one does with it; a handler added later that uses its error is a new row here, with a reason.
+_USES_THE_ERROR = {
+    ("audit/chain.py", "build"): "asks is_connectivity_error, then says the class name only",
+    ("cli.py", "main"): "class name; HADAVIN_DEBUG=1 adds the frames (_print_frames), never a text",
+    (
+        "cli.py",
+        "kill_switch",
+    ): "passes it to _kill_switch_store_down: a fixed sentence and the class name",
+    ("guard/http.py", "lookup"): "kept in a dict for the caller thread (HANDOFF)",
+    ("k1b/loop.py", "work"): "kept in a dict for the caller thread (HANDOFF)",
+    ("runtime/agent_loop.py", "_run_tool"): "error_reason(exc): the open owner question",
+    ("sources/kubernetes.py", "_call"): "keeps only too_large of it",
+    ("tools.py", "work"): "kept in a dict for the caller thread (HANDOFF)",
+    ("tools.py", "invoke"): "error_reason(exc, ...): the open owner question",
+}
+
+
+def _handlers_that_use_the_error() -> dict[tuple[str, str], int]:
+    found: dict[tuple[str, str], int] = {}
+    base = ROOT / "src" / "hadavin_sdk"
+    for path in sorted(base.rglob("*.py")):
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        lines = source.splitlines()
+        parent = {c: n for n in ast.walk(tree) for c in ast.iter_child_nodes(n)}
+        for h in ast.walk(tree):
+            if not (isinstance(h, ast.ExceptHandler) and h.name):
+                continue
+            header = "\n".join(lines[h.lineno - 1 : max(h.body[0].lineno - 1, h.lineno)])
+            if "noqa: BLE001" not in header:
+                continue
+            body = ast.Module(body=h.body, type_ignores=[])
+            owner = {c: n for n in ast.walk(body) for c in ast.iter_child_nodes(n)}
+            for n in ast.walk(body):
+                if not (isinstance(n, ast.Name) and n.id == h.name and isinstance(n.ctx, ast.Load)):
+                    continue
+                p = owner.get(n)
+                only_class = (
+                    isinstance(p, ast.Call)
+                    and isinstance(p.func, ast.Name)
+                    and p.func.id == "type"
+                    and isinstance(owner.get(p), ast.Attribute)
+                    and owner[p].attr == "__name__"
+                ) or (
+                    isinstance(p, ast.Attribute)
+                    and p.attr == "__class__"
+                    and isinstance(owner.get(p), ast.Attribute)
+                    and owner[p].attr == "__name__"
+                )
+                if not only_class:
+                    f = h
+                    while f in parent and not isinstance(f, ast.FunctionDef | ast.AsyncFunctionDef):
+                        f = parent[f]
+                    key = (path.relative_to(base).as_posix(), getattr(f, "name", "<module>"))
+                    found[key] = found.get(key, 0) + 1
+                    break
+    return found
+
+
+def test_the_handlers_that_use_their_error_are_the_pinned_ones():
+    """Batch 17 said two handlers show error text and the others print none; the claim needs the list of handlers that touch
+    the error at all, found by code. A new one fails here until it is listed with what it does."""
+    assert set(_handlers_that_use_the_error()) == set(_USES_THE_ERROR), (
+        f"new: {sorted(set(_handlers_that_use_the_error()) - set(_USES_THE_ERROR))}, "
+        f"gone: {sorted(set(_USES_THE_ERROR) - set(_handlers_that_use_the_error()))}"
     )

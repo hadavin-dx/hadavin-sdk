@@ -105,24 +105,46 @@ FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
 _PRINT_HOW = {"file", "flush"}
 # Round 17 (Issue 1b): a call whose name starts with one of these puts its positional arguments into a store, a queue, a file or a
 # query. An argument made from an error (`rec.update(exc)`, `q.put(exc)`, `cur.execute(sql, (exc,))`) is a site.
-_STORE_READS = ("get_", "list_", "spend_totals")
+# Batch 19 (Issue 5): the methods of the `Store` protocol are listed by exact name, once as reads and once as writes. A method in
+# neither list fails `unclassified_store_methods` (tests/test_q8a1_b19_fixes.py), so a new write whose name starts like a read
+# (`get_or_create_run`, `list_and_claim`) is never taken for a read by its first letters.
+STORE_READS = frozenset({
+    "get_run", "list_runs", "get_plan", "get_gate_decision", "get_approval_request", "list_due_approvals",
+    "get_approval_decision", "list_approvals", "list_dead_letters", "spend_totals", "get_kill_switch",
+    "get_tick_state", "list_tool_calls", "get_redaction_map",
+})  # fmt: skip
+STORE_WRITES = frozenset({
+    "create_run", "transition", "add_cost", "touch", "save_plan", "save_gate_decision", "save_approval_request",
+    "update_approval_request", "record_decision", "save_approval_decision", "add_dead_letter", "add_spend",
+    "set_kill_switch", "save_tick_state", "add_tool_call", "purge_tool_calls", "put_redaction_map",
+    "purge_redaction_maps",
+})  # fmt: skip
+
+
+def store_protocol_methods(source: str | None = None) -> tuple[str, ...]:
+    """The names of the methods of the `Store` protocol (`store/protocol.py`, or `source` when a test gives its own text), without
+    the dunder methods."""
+    if source is None:
+        path = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "store" / "protocol.py"
+        source = path.read_text(encoding="utf-8")
+    cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef) and n.name == "Store")
+    return tuple(
+        n.name for n in cls.body if isinstance(n, ast.FunctionDef) and not n.name.startswith("__")
+    )
+
+
+def unclassified_store_methods(names: tuple[str, ...]) -> list[str]:
+    """The methods that are in neither list, and the names of a list that are not a method (a stale row)."""
+    known = STORE_READS | STORE_WRITES
+    return sorted(
+        [n for n in names if n not in known] + [f"stale:{n}" for n in sorted(known - set(names))]
+    )
 
 
 def store_write_methods() -> tuple[str, ...]:
-    """The names of the store's methods that change a row, read from the `Store` protocol of `store/protocol.py` (the one list of
-    the store API; batch 18, Issue 6a): every method that is not a read (`get_*`, `list_*`, `spend_totals`) and not a dunder."""
-    path = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "store" / "protocol.py"
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Store")
-    return tuple(
-        sorted(
-            n.name
-            for n in cls.body
-            if isinstance(n, ast.FunctionDef)
-            and not n.name.startswith("__")
-            and not n.name.startswith(_STORE_READS)
-        )
-    )
+    """The names of the store's methods that change a row: the list `STORE_WRITES` (a test pins that it is the protocol's
+    methods that are not reads)."""
+    return tuple(sorted(STORE_WRITES))
 
 
 STORE_CALL_PREFIXES = (
@@ -462,6 +484,16 @@ class Analysis:
                 fn = self.scope_of.get(id(fn))
         if cls:
             self.cls_attrs.setdefault(cls, set()).add(attr)
+
+    def _is_class_only_lambda(self, lam) -> bool:
+        """The second argument of `call_class_only(call, make_error)`: its parameter is the class name of a library error."""
+        call = self.parent.get(id(lam))
+        return (
+            isinstance(call, ast.Call)
+            and _recv(call.func) == "call_class_only"
+            and len(call.args) >= 2
+            and call.args[1] is lam
+        )
 
     def _enclosing_def(self, node):
         fn = self.scope_of.get(id(node))
@@ -997,6 +1029,10 @@ class Analysis:
                 unsafe.add(n.name)
             elif isinstance(n, (ast.Global, ast.Nonlocal)):
                 unsafe.update(n.names)
+            elif isinstance(n, ast.MatchAs | ast.MatchStar) and n.name:
+                unsafe.add(n.name)  # batch 19 (Issue 8): `case str(name):` binds `name` to a part of the matched value
+            elif isinstance(n, ast.MatchMapping) and n.rest:
+                unsafe.add(n.rest)
         cand = {k for k in bindings if k not in unsafe}
         if isinstance(scope, ast.Module):
             cand -= (
@@ -1080,10 +1116,15 @@ class Analysis:
         return self.safe(e, env) and not self._is_texty(e)
 
     def _unknown_receiver(self, f, env) -> bool:
-        """A method receiver that is a plain name which is neither proven code-owned nor a parameter that every caller gives a
-        proven value: a library object or a client whose method of that name may return text (`client.count(name)`)."""
+        """A method receiver that is neither a literal, nor a plain name proven code-owned (or bound to a literal of the language), nor
+        any other expression the scan proves code-owned: a library object or a client whose method of that name may return text
+        (`client.count(name)`, `self.client.count(name)`, `get_client().count(name)`, `d["x"].count(name)`)."""
         v = f.value
-        return isinstance(v, ast.Name) and v.id not in env and v.id not in self._string_names(f)
+        if isinstance(v, ast.Name):
+            return v.id not in env and v.id not in self._string_names(f)
+        # batch 19 (Issue 3): an attribute (`self.client.count`), a call result (`get_client().count`), a subscript
+        # (`d["x"].count`) and any other expression is unknown unless the scan proves it code-owned
+        return not self.safe(v, env)
 
     def _string_names(self, f) -> frozenset[str]:
         """The names bound to a text or a collection literal in the function that holds the call (`parts = []`, `s = 'x'`)."""
@@ -1326,7 +1367,21 @@ class Analysis:
         safe = self.safe
 
         def env_for(node):
-            return self.env_of(self.scope_of.get(id(node), tree))
+            env = self.env_of(self.scope_of.get(id(node), tree))
+            # batch 19 (Issue 8): inside the body of a lambda its parameters are names of their own, whatever the function proves
+            # about a name of the same spelling (the lambda of `call_class_only` is code-owned text: it keeps its proof)
+            shadow: set[str] = set()
+            up = self.parent.get(id(node))
+            while up is not None:
+                if isinstance(up, ast.Lambda) and not self._is_class_only_lambda(up):
+                    a = up.args
+                    shadow.update(
+                        arg.arg
+                        for arg in [*a.posonlyargs, *a.args, *a.kwonlyargs, a.vararg, a.kwarg]
+                        if arg is not None
+                    )
+                up = self.parent.get(id(up))
+            return env - shadow if shadow else env
 
         def bare_unsafe(args, env):
             # `+` and `%` and f-strings are sites of their own; a `/` (a path join) is not, so it is read here

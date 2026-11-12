@@ -317,16 +317,18 @@ def test_a_bundle_folder_name_that_is_a_sentence_is_not_printed(tmp_path):
     )
 
 
-def test_a_bundle_folder_name_is_not_shown_when_no_loaded_set_names_it(tmp_path):
-    # batch 18 (Issue 7): `shown_name` shows a name only when it is an id of something that was loaded; the folder is not
-    # a loaded id, so its name is not printed (it replaces the batch 14 test that expected `bundle case-xyz`)
+def test_a_bundle_folder_name_is_not_shown_when_the_folder_is_not_there(tmp_path):
+    # batch 19 (Issue 7): the name is shown when it is a folder the loader can list (batch 18 hid it always, which left an
+    # operator with ten bundles without the name of the bad one); a name that is not a folder there is still not printed
     from hadavin_sdk.k1b.bundle import BundleError, load_bundle
 
     (tmp_path / "case-xyz").mkdir()
+    with pytest.raises(BundleError, match="bundle case-xyz: folder name must look like case-001"):
+        load_bundle(tmp_path / "case-xyz")
     with pytest.raises(
         BundleError, match="bundle <not shown>: folder name must look like case-001"
     ):
-        load_bundle(tmp_path / "case-xyz")
+        load_bundle(tmp_path / "case-missing")
 
 
 # ---- Issue 8 (h): the model id pattern, over many generated values ---------------------------------------------------------
