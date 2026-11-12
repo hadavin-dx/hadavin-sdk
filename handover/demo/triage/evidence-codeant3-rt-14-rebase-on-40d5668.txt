@@ -14,3 +14,6 @@ Success: no issues found in 26 source files
 ................                                                         [100%]
 232 passed in 103.01s (0:01:43)
 $ test_hygiene (with gitleaks) + test_load_tools + test_hubspot_probe on the same tree
+........................................................................ [ 52%]
+.................................................................        [100%]
+137 passed in 39.20s
