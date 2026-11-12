@@ -255,7 +255,7 @@ def test_the_place_line_of_a_dict_through_the_class_method_still_names_the_field
 
 
 def _random_value(rng: random.Random, c: str, depth: int = 0):
-    kind = rng.randrange(9 if depth < 3 else 5)
+    kind = rng.randrange(10 if depth < 3 else 5)
     if kind == 0:
         return c
     if kind == 1:
@@ -275,6 +275,11 @@ def _random_value(rng: random.Random, c: str, depth: int = 0):
         }
     if kind == 7:
         return {c: _random_value(rng, c, depth + 1)}
+    if (
+        kind == 9
+    ):  # batch 20 (A1): a key that is not text under a name that a model may hold as a nested model
+        key = rng.choice(["table", "backend", "inner", "rows", "items", "spec", "n"])
+        return {key: rng.choice([{1: c}, {"k": {1: c}}, [{1: c}]])}
     return {"x": {c: _random_value(rng, c, depth + 1)}}
 
 
@@ -298,18 +303,24 @@ def test_fuzz_a_random_shape_never_puts_the_refused_text_in_the_error():
                     else value,
                 ),
             ):
-                try:
-                    exc = _refused(cls, how, arg)
-                except (
-                    TypeError,
-                    ValueError,
-                ):  # not text for the JSON entry: the library's own refusal, not a validation
-                    continue
+                # batch 20 (A1): no swallowed `TypeError` or `ValueError`: a bare error of the library fails the fuzz
+                exc = _refused(cls, how, arg)
                 if exc is None:
                     continue
                 refused += 1
                 if c in _all_text(exc) or exc.__cause__ is not None or exc.__context__ is not None:
                     bad.append(f"{cls.__name__} {how} {type(value).__name__}")
+    # batch 20 (A1): under each field of each class, a key that is not text in a nested mapping or list (the shapes of a nested
+    # model field that the random values reach only by chance); a bare `TypeError` of the library fails the test here
+    for cls in classes:
+        for fname in cls.model_fields:
+            for nested in ({1: c}, [{1: c}], {"k": {1: c}}):
+                for how in ("validate", "strings"):
+                    exc = _refused(cls, how, {fname: nested})
+                    if exc is not None:
+                        refused += 1
+                        if c in _all_text(exc):
+                            bad.append(f"{cls.__name__} {how} {fname} nested")
     assert refused > 200, f"the fuzz refused too little ({refused}): the scan is empty"
     assert bad == [], f"a random shape put the text in the error: {bad[:10]} ({len(bad)} in all)"
 
@@ -528,11 +539,18 @@ def test_a_new_store_write_named_like_a_read_is_not_taken_for_a_read():
 
 
 def test_the_write_methods_the_guard_scans_are_the_listed_writes():
-    from tests._text_guard import STORE_WRITES, store_write_methods
+    """Batch 20 (B3): the scanned writes are the methods of the real `Store` protocol (read by `ast` from `store/protocol.py`) that
+    are not listed reads, not a list compared with itself."""
+    from tests._text_guard import STORE_READS, store_protocol_methods, store_write_methods
 
-    assert set(store_write_methods()) == set(STORE_WRITES) and len(store_write_methods()) == len(
-        STORE_WRITES
-    ), "the write methods the guard scans are not the listed writes"
+    protocol = store_protocol_methods(
+        (ROOT / "src" / "hadavin_sdk" / "store" / "protocol.py").read_text(encoding="utf-8")
+    )
+    expected = sorted(n for n in protocol if n not in STORE_READS)
+    assert len(protocol) > 20, "the protocol was not read: the check is empty"
+    assert list(store_write_methods()) == expected, (
+        "the write methods the guard scans are not the listed writes"
+    )
 
 
 # ---- Issue 6: what the text guard sees and does not see of a name that reaches a stored record ----------------------------------

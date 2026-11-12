@@ -146,7 +146,7 @@ def test_a_wrong_sentence_of_counts_is_found():
 def test_the_numbers_of_older_entries_are_labelled_with_their_batch():
     """A total (rows of the allowance table, reasons checked, mutants, handlers) in an entry other than the newest is history:
     `at batch N` stands within 300 characters before the number, so it cannot be read as the count of this head."""
-    newest = TEXT.index("Q8a-1 batch 19, what changes for you")
+    newest = TEXT.index("Q8a-1 batch 20, what changes for you")
     older = TEXT[:newest]
     stale = []
     totals = r"\b(?:\d+ rows (?:in all|of its own|\(each)|\d+ of (?:the )?\d+ reasons|\d+ mutants in|\d+ `except` handlers marked)"

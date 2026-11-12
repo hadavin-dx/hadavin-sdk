@@ -25,7 +25,8 @@ Covered: `Model(...)` and a mapping given to `model_validate`, `model_validate_j
 list, `None`, a number, bytes, JSON text, text that is not JSON): pydantic-core checks those itself and never calls `__init__`, so
 the base defines the three class methods too and rebuilds the error there (`tests/test_q8a1_b19_fixes.py` pins both entries, for
 every model of the package). A mapping passes both guards; a second pass over a rebuilt error changes nothing (tested). A mapping
-whose key is not text (`{1: x}`) is refused as a `ValidationError` with a fixed sentence: Python cannot spread it into `__init__`.
+whose key is not text (`{1: x}`, also given as the keyword `obj=`, also nested in a model field) is refused as a `ValidationError`
+with a fixed sentence: Python cannot spread it into `__init__`.
 One consequence, stated plainly: the options `strict=`, `context=` and `from_attributes=` are ignored for a mapping (the model's own
 `model_config` still applies); `tests/test_q8a1_b19_fixes.py` fails when a call in `src/` or `demos/` gives one, and pins the
 ignoring itself, so a pydantic change is noticed.
@@ -44,6 +45,11 @@ from pydantic import BaseModel, ConfigDict, ValidationError
 from hadavin_sdk.errors import UNKNOWN_KEY, ConfigValueError, shown_name
 
 HIDDEN = "<hidden>"
+_REBUILT_MARK = (
+    object()
+)  # private to this module: input text cannot hold it, so it cannot forge the mark (batch 20, A2)
+# Python's own refusal of a mapping with a key that is not text, raised when pydantic-core spreads the mapping into `__init__`
+_KEYWORDS_REFUSAL = "keywords must be strings"
 REFUSED = (
     "the value was refused"  # the fixed sentence of a refusal whose own text may quote the value
 )
@@ -105,11 +111,13 @@ def _place(error: dict[str, Any], words: frozenset[str]) -> tuple[int | str, ...
 
 
 def _without_chain(error: ConfigValueError) -> ConfigValueError:
-    """The same sentence and class (a caller may test for a subclass) with no `__cause__` and no `__context__`: the exception a
-    validator raised `from` another one keeps that one, and the other may quote the value (batch 19, Issue 1)."""
+    """The same sentence and class (a caller may test for a subclass) with no `__cause__`, no `__context__` and no `__traceback__`:
+    the exception a validator raised `from` another one keeps that one, and the other may quote the value (batch 19, Issue 1);
+    the traceback keeps the frames of the raise, and their local names hold the value (batch 20, A3)."""
     error.__cause__ = None
     error.__context__ = None
-    return error
+    # the frames of the raise hold the refused value in their local names (batch 20, A3)
+    return error.with_traceback(None)
 
 
 def _context(kind: str, ctx: dict[str, Any]) -> dict[str, Any]:
@@ -159,27 +167,57 @@ def without_input(exc: ValidationError, model: type[BaseModel] | None = None) ->
                 "ctx": {"error": ConfigValueError(REFUSED)},
             }
         lines.append(line)
-    return ValidationError.from_exception_data(exc.title, lines, hide_input=True)
+    return _marked(ValidationError.from_exception_data(exc.title, lines, hide_input=True))
 
 
-def _text_keys_only(cls: type[BaseModel], args: tuple[Any, ...]) -> ValidationError | None:
+def _marked(rebuilt: ValidationError) -> ValidationError:
+    """`rebuilt` with the private mark that `is_rebuilt` looks for (batch 20, A2)."""
+    vars(rebuilt)["_hadavin_rebuilt"] = _REBUILT_MARK
+    return rebuilt
+
+
+def is_rebuilt(exc: ValidationError) -> bool:
+    """True only for an error that `without_input` made (it carries the private mark). An error whose inputs merely read as the
+    fixed word is not one: the word can be pasted into a config value (batch 20, A2)."""
+    return getattr(exc, "_hadavin_rebuilt", None) is _REBUILT_MARK
+
+
+def _not_text(cls: type[BaseModel]) -> ValidationError:
+    """The refusal of a mapping whose key is not text, as an ordinary validation problem with a fixed sentence (the key is never
+    printed)."""
+    return ValidationError.from_exception_data(
+        cls.__name__,
+        [
+            {
+                "type": "value_error",
+                "loc": (),
+                "input": HIDDEN,
+                "ctx": {"error": ConfigValueError("a key of the mapping is not text")},
+            }
+        ],
+        hide_input=True,
+    )
+
+
+def _first_argument(args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
+    """The object given to `model_validate` and `model_validate_strings`: positional, or the keyword `obj` (batch 20, A1)."""
+    return args[0] if args else kwargs.get("obj")
+
+
+def _text_keys_only(cls: type[BaseModel], obj: Any) -> ValidationError | None:
     """pydantic-core hands a mapping to `__init__(**mapping)`, and Python refuses a key that is not text with a `TypeError`
     ("keywords must be strings"): not a `ValidationError`, so a caller that catches `ValidationError` would not catch it. Refuse
-    that shape here as an ordinary validation problem with a fixed sentence (the key is never printed)."""
-    if args and isinstance(args[0], dict) and any(type(k) is not str for k in args[0]):
-        return ValidationError.from_exception_data(
-            cls.__name__,
-            [
-                {
-                    "type": "value_error",
-                    "loc": (),
-                    "input": HIDDEN,
-                    "ctx": {"error": ConfigValueError("a key of the mapping is not text")},
-                }
-            ],
-            hide_input=True,
-        )
+    the top-level shape here (a `dict`: the probe in `handover/evidence/Q8a-1/b20-builder/` shows pydantic-core does not spread a
+    mapping of another class, and accepts it); a key of a mapping nested in a model field is caught by `_keywords_refusal`."""
+    if isinstance(obj, dict) and any(type(k) is not str for k in obj):
+        return _not_text(cls)
     return None
+
+
+def _keywords_refusal(exc: TypeError) -> bool:
+    """True for the `TypeError` Python raises when a mapping with a key that is not text is spread into `__init__`, anywhere
+    in the nesting. Any other `TypeError` is a bug of the caller and is not hidden."""
+    return any(_KEYWORDS_REFUSAL in part for part in exc.args if isinstance(part, str))
 
 
 class HiddenInputModel(BaseModel):
@@ -193,6 +231,10 @@ class HiddenInputModel(BaseModel):
             super().__init__(**data)
         except ValidationError as exc:
             hidden = without_input(exc, type(self))
+        except TypeError as exc:  # a nested mapping with a key that is not text
+            if not _keywords_refusal(exc):
+                raise
+            hidden = _not_text(type(self))
         if hidden is not None:
             raise hidden  # outside the `except`, so the first error is not kept as `__context__`
 
@@ -201,7 +243,7 @@ class HiddenInputModel(BaseModel):
     # (Q8a-1 batch 19 Issue 1: the lead probe showed the value in `errors()` and `json()` for those shapes).
     @classmethod
     def model_validate(cls, *args: Any, **kwargs: Any) -> Self:
-        hidden = _text_keys_only(cls, args)
+        hidden = _text_keys_only(cls, _first_argument(args, kwargs))
         try:
             if hidden is None:
                 return super().model_validate(*args, **kwargs)
@@ -220,7 +262,7 @@ class HiddenInputModel(BaseModel):
 
     @classmethod
     def model_validate_strings(cls, *args: Any, **kwargs: Any) -> Self:
-        hidden = _text_keys_only(cls, args)
+        hidden = _text_keys_only(cls, _first_argument(args, kwargs))
         try:
             if hidden is None:
                 return super().model_validate_strings(*args, **kwargs)

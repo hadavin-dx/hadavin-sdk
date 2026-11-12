@@ -3894,6 +3894,14 @@ _PLANTED_FAULTS = {
         "def f(log, d, name):\n    log.warning('bad %d', d['x'].find(name))",
         1,
     ),
+    "R20a a number directive of count() of a name bound to a literal and then to a call result": (
+        "def f(log, name):\n    x = []\n    x = get_client()\n    log.warning('%d', x.count(name))",
+        1,
+    ),
+    "R20b a number directive of count() of a name bound to a literal and then by a loop": (
+        "def f(log, name, items):\n    x = []\n    for x in items:\n        pass\n    log.warning('%d', x.count(name))",
+        1,
+    ),
     "R19f only the number directive of a log call is dropped, the text directive is read": (
         "def f(log, x):\n    log.warning('n %d %s', len(x), x)",
         1,

@@ -277,13 +277,13 @@ class MemoryStore:
         self, before: datetime, *, keep_run_ids: frozenset[str], keep_open: bool = True
     ) -> int:
         with self._lock:
-            gone = []
+            expired = []
             for k, (_, at) in self._maps.items():
                 run = self._runs.get(k)
                 if keep_open and run is not None and run.state in OPEN_STATES:
                     continue
                 if (run.updated_at if run is not None else at) < before and k not in keep_run_ids:
-                    gone.append(k)
-            for k in gone:
+                    expired.append(k)
+            for k in expired:
                 del self._maps[k]
-            return len(gone)
+            return len(expired)

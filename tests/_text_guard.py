@@ -1126,24 +1126,59 @@ class Analysis:
         # (`d["x"].count`) and any other expression is unknown unless the scan proves it code-owned
         return not self.safe(v, env)
 
+    _LITERAL_FORMS = (
+        ast.Constant, ast.JoinedStr, ast.List, ast.Tuple, ast.Dict, ast.Set, ast.ListComp,
+    )
+
     def _string_names(self, f) -> frozenset[str]:
-        """The names bound to a text or a collection literal in the function that holds the call (`parts = []`, `s = 'x'`)."""
+        """The names the function that holds the call binds ONLY to a text or a collection literal of the language (`parts = []`,
+        `s = 'x'`), or declares as such a parameter. Batch 20 (B1): EVERY binding of the name in the scope must be such a literal
+        (assign, annotated assign, augmented assign), as `_scope_env` requires for a written value; a loop target, a `with`
+        name, a walrus, an import, a handler name, a definition, a `global` or a case pattern is a binding that is not one, and
+        so is a call result (`x = []` then `x = get_client()`)."""
         scope = self.scope_of.get(id(f))
-        names: set[str] = set()
+        literal: set[str] = set()
+        other: set[str] = set()
         fn = self._enclosing_def(f)
         if fn is not None:  # a parameter declared as text or as a collection of the language
             args = fn.args
-            for a in [*args.posonlyargs, *args.args, *args.kwonlyargs]:
+            for a in [*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg]:
+                if a is None:
+                    continue
                 if a.annotation is not None and ast.unparse(a.annotation).split("[")[0] in {
                     "str", "bytes", "list", "tuple", "set", "frozenset", "dict", "Sequence",
                 }:
-                    names.add(a.arg)
+                    literal.add(a.arg)
+                else:
+                    other.add(a.arg)
         for n in _own(scope) if scope is not None else ():
-            if isinstance(n, ast.Assign) and isinstance(
-                n.value, (ast.Constant, ast.JoinedStr, ast.List, ast.Tuple, ast.Dict, ast.Set, ast.ListComp)
-            ):
-                names.update(t.id for t in n.targets if isinstance(t, ast.Name))
-        return frozenset(names)
+            if isinstance(n, ast.Assign):
+                bound = (nm.id for t in n.targets for nm in _targets(t))
+                (literal if isinstance(n.value, self._LITERAL_FORMS) else other).update(bound)
+            elif isinstance(n, (ast.AnnAssign, ast.AugAssign)) and isinstance(n.target, ast.Name):
+                ok = n.value is not None and isinstance(n.value, self._LITERAL_FORMS)
+                (literal if ok else other).add(n.target.id)
+            elif isinstance(n, (ast.For, ast.AsyncFor, ast.comprehension)):
+                other.update(nm.id for nm in _targets(n.target))
+            elif isinstance(n, ast.NamedExpr) and isinstance(n.target, ast.Name):
+                other.add(n.target.id)
+            elif isinstance(n, ast.ExceptHandler) and n.name:
+                other.add(n.name)
+            elif isinstance(n, (ast.With, ast.AsyncWith)):
+                for it in n.items:
+                    if it.optional_vars is not None:
+                        other.update(nm.id for nm in _targets(it.optional_vars))
+            elif isinstance(n, (ast.Import, ast.ImportFrom)):
+                other.update((al.asname or al.name).split(".")[0] for al in n.names)
+            elif isinstance(n, (*FUNCS, ast.ClassDef)):
+                other.add(n.name)
+            elif isinstance(n, (ast.Global, ast.Nonlocal)):
+                other.update(n.names)
+            elif isinstance(n, ast.MatchAs | ast.MatchStar) and n.name:
+                other.add(n.name)
+            elif isinstance(n, ast.MatchMapping) and n.rest:
+                other.add(n.rest)
+        return frozenset(literal - other)
 
     def _call_declared_number(self, call) -> bool:
         """Batch 18 (Issue 6b): like `fsafe`, the definition a call reaches decides, not the bare name. A call that `resolve`

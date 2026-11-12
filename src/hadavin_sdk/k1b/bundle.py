@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -23,6 +24,8 @@ from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.diagnosis import Diagnosis, strict_json_loads
 
 CASE_RE = re.compile(r"^case-[0-9]{3,}$")
+# a folder that is named like a case, also with a typing mistake (`case-xyz`): its name may be shown, any other name is not (batch 20, D1)
+_CASE_LIKE = re.compile(r"^case-[0-9a-z]+$")
 _TS_RE = re.compile(
     r"([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?:\.([0-9]{1,6}))?Z"
 )
@@ -186,18 +189,21 @@ def _chunks(text: str) -> tuple[str, ...]:
 
 
 def _listed_names(path: Path) -> list[str]:
-    """The names of the entries next to `path` that exist on disk: the folder names the loader itself can list (batch 19, Issue 7).
-    A name that is not among them (a typing mistake, a pasted sentence) is not shown by `_fail`."""
+    """The names of the entries next to `path` that exist on disk and are named like a case folder (`case-` and letters or digits): the folder names the loader itself
+    can list (batch 19, Issue 7; only names of that shape since batch 20, D1: any other sibling is not an incident,
+    so its name is not shown). A name that is not among them (a typing mistake, a pasted sentence) is not shown by `_fail`."""
     try:
-        return [p.name for p in path.parent.iterdir()]
+        return [p.name for p in path.parent.iterdir() if _CASE_LIKE.fullmatch(p.name)]
     except OSError:
         return []
 
 
-def load_bundle(path: Path) -> Bundle:
-    """One ``case-NNN`` folder. Its name is shown in a refusal only when it is word-like and is a folder that is really there."""
+def load_bundle(path: Path, listed: Collection[str] | None = None) -> Bundle:
+    """One ``case-NNN`` folder. Its name is shown in a refusal only when it is word-like and is a folder that is really there.
+    `listed` is the case folder names next to it when the caller already listed the parent folder once (`load_bundles`); without
+    it the parent folder is listed here."""
     path = Path(path)
-    with loaded_ids(_listed_names(path)):
+    with loaded_ids(_listed_names(path) if listed is None else listed):
         return _load_bundle(path)
 
 
@@ -363,7 +369,9 @@ def load_bundles(root: Path) -> list[Bundle]:
     cases = sorted(p for p in root.iterdir() if not p.name.startswith("."))
     if not cases:
         raise ConfigError("bundles folder holds no incidents")
-    return [load_bundle(p) for p in cases]
+    # the one listing of the folder (batch 20, D1)
+    listed = [p.name for p in cases if _CASE_LIKE.fullmatch(p.name)]
+    return [load_bundle(p, listed) for p in cases]
 
 
 def bundle_set_sha256(root: Path, bundles: list[Bundle]) -> str:

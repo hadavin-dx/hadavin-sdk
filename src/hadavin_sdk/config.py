@@ -35,7 +35,7 @@ from hadavin_sdk.errors import (
     read_configured,
     shown_name,
 )
-from hadavin_sdk.hidden_input import HIDDEN, HiddenInputModel, without_input
+from hadavin_sdk.hidden_input import HiddenInputModel, is_rebuilt, without_input
 from hadavin_sdk.safe_url import (
     InvalidUrl,
     safe_urlsplit,
@@ -658,11 +658,11 @@ def _what(e: Any) -> str:
 
 
 def _rebuilt(exc: ValidationError) -> ValidationError:
-    """`exc` when every problem holds the fixed word as its input (`hidden_input.without_input` made it, so its place line holds
-    only names written in code or ids of loaded things), else the same problems rebuilt that way: `error_where(cleaned=True)`
+    """`exc` when `hidden_input.without_input` made it (it carries a private mark, so its place line holds only names written in
+    code or ids of loaded things; an error whose inputs merely read `<hidden>` is not trusted, batch 20 A2), else the same problems rebuilt that way: `error_where(cleaned=True)`
     shows any word-like name, which is safe only for a rebuilt error (batch 19, Issue 7). A plain pydantic model that reaches
     `config_error_text` is rebuilt here, with no code words (a field name is then `<not shown>`)."""
-    if all(e.get("input") == HIDDEN for e in exc.errors(include_url=False, include_input=True)):
+    if is_rebuilt(exc):
         return exc
     return without_input(exc)
 
