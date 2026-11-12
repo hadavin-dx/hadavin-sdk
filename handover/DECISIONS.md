@@ -476,3 +476,6 @@ Options: widen with bare endings; widen with the listed prefixes; do not widen. 
 - What: a file-derived name appears in error text only if it is the id of a loaded object (member of the registry's id sets) and word-like (letter first, at most 40 characters, no run of 20 or more hex/digit characters); everything else is shown by position ("entry N"). One shared filter (shown_name / error_where). Tool call URL host and tool-author operation=/method= echoes use it too.
 - Options: (a) keep the shape filter only (readable lower-case plain ids, 7 probe hits); (b) ordinals everywhere (safe, less helpful); (c) loaded-id plus word-like rule (chosen); (d) load-time id grammar only.
 - Why: closes the realistic paste case at one check, keeps real ids readable (svc:test-agent). Confidence: medium; reversible: yes (one function plus tests).
+
+## D-033 (core lane, 01:16Z 2026-11-12): Q8b notes from batch 4 (recorded by the lead from the builder note)
+D-032 was removed from the shipped text. D1 and D2 are done. The 28-prefix list at DECISIONS.md:468-473 is obsolete (the key words now live in one list in guard/redact.py, with record keys checked through k1b/redaction.py). `authorization` was added to the quoted key words. Round 5 (head 999ed05b) found a Blocker (session_cookie= jar pairs); batch 5 fixes it. Report: handover/reviews/Q8b/goldfish_review_report-r5.md.

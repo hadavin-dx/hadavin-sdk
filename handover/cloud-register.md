@@ -1510,3 +1510,6 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a957f51db34c5eafc | Q8a-1 r9 design reviewer (snap q8a1b9-f0febfb6) | 01:14Z | ~15 min | running | check 01:29Z |
 | a29359676c670090b | Q8a-1 r9 codebase reviewer | 01:14Z | ~15 min | running | check 01:29Z |
 | ab996c6e17b81a4b4 | Q8a-1 r9 EV runner (Q8a1r9) | 01:14Z | 50 min | running | check 02:04Z |
+| a7443cef105437a21 | Q8b b4 EV runner | closed 01:16Z (evidence/Q8b/999ed05b) | - | done | - |
+| aea99c4308ed1d4fa | PR H b5 builder | started 00:54Z | 90 min | running | check 02:14Z |
+| aca1e8281ad3dc23e | Q8b fix batch 5 builder | 01:16Z | 90 min | running | check 02:36Z |
