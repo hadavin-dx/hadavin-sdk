@@ -2729,3 +2729,10 @@
 | Q8b-r2-n1 | same report | Minor | Q8b | record-walk key rule (k1b `sensitive`) misses glued names `dbpass`, `mycredential`, `usersession`, `userauth`, `dbaccess_key` (the card/text path masks them) | OWNER-ONLY | needs a lead decision: adding `pass`/`auth` endings also masks `bypass`, `compass`, `oauth`, pinned as non-keys by test_t1 | - | 2026-11-11 |
 | Q8b-r2-8 | same report | Note | Q8b | PR77 conflict on guard/redact.py: Q8b merges first, PR77 rebases; Q8b change kept to the key rule, glue guard, value tail, Bearer/Authorization | OWNER-ONLY | order decision | - | 2026-11-11 |
 | PRH-b-ticket | tickets/PRH-b-line-continuation-matching.md | Major | PRH | builder b4 Issue 6: line-continuation matching is a separate ticket; no ledger row existed | OPEN | ticket exists, code not built | - | 2026-11-12 |
+| P3a2-3c-M1 | reviews/P3a-2/goldfish_review_report-3c.md Issue 2 | Major | P3a-2 | promise row 1 says CI tests each role on the shipped files; ticket 7.7 test missing | OPEN | fix builder 3d | | 2026-11-12
+| P3a2-3c-M2 | same report Issue 3 | Major | P3a-2 | reduced matrix cannot show rows 1-2 for memberships, ownership, default rights, large objects, SECURITY DEFINER, C6/C8/C9/C13; full matrix is commit 5; not done at commit 6 without it | OPEN | commit 5 | | 2026-11-12
+| P3a2-3c-M3 | same report Issue 4 | Major | P3a-2 | CHANGELOG:15 quotes a message src no longer produces | OPEN | fix builder 3d | | 2026-11-12
+| P3a2-3c-M4 | same report Issue 1 | Major | P3a-2 | transaction_timeout before commit: text says exit 2, code exit 3 | OPEN | fix builder 3d | | 2026-11-12
+| P3a2-3c-M5 | same report Issue 5 | Major | P3a-2 | MT1/MT2 MAINTAIN retired, no killer | OPEN | fix builder 3d | | 2026-11-12
+| P3a2-3c-C2 | same report Issue 6 | Major | P3a-2 | step-4 REVOKE escape ascii-based for quoted/non-ASCII function names, untested | OPEN | fix builder 3d | | 2026-11-12
+| P3a2-3c-N5 | same report Issue 11 | Major(security) | P3a-2 | empty-ACL objects invisible to Q2 may hide O4/O8 from a hostile file | OPEN | probe + fix in 3d | | 2026-11-12
