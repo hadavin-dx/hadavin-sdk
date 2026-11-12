@@ -82,12 +82,15 @@ jobs:
         run: ruff format --check src tests demos tools
       - name: Secrets and banned names in the tracked files (the repo is public)
         run: python tools/scan_repo.py
+      - name: Demo-only folder guard (product code names neither the demo-only folder nor a fake record id)
+        run: python tools/demo_only_guard.py
       - name: The postgres client the database tests shell out to is present (else they would skip silently)
         run: psql --version
       - name: Tests (no live calls)
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_NODE: "1"  # the mode-banner page script is tested in node; a runner without node must fail, not skip
           HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
       - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)

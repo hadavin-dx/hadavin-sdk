@@ -1,0 +1,21 @@
+# Settings of tools/demo_only_guard.py. The folder that holds everything that exists only for demos (made-up data,
+# example prompts, recorded model replies, fixtures) is named here once; no other file hard-codes the name.
+# Rule (.claude/rules/demo-only-folder-and-secrets.md): product code never names this folder, except the loader files
+# listed below, which pick it by configuration.
+
+# the folder name, at the repository root
+folder = "demo_only"
+
+# folders whose files are product code (and so are packaged); the demo-only folder must not sit inside any of them
+product_roots = ["src"]
+
+# the only product files that may name the folder (the config-selected loader). Each entry must exist and must name
+# the folder, otherwise the guard reports it as stale.
+loaders = []
+
+# regular expressions of made-up record ids that product code must never contain (one pattern per kind of fake id).
+# Empty in core: core ships no fake records. A demo repository lists its own ids here.
+fake_id_patterns = []
+
+# file endings the scan reads (other files are skipped as not text)
+suffixes = [".py", ".js", ".ts", ".json", ".sql", ".md", ".txt", ".toml", ".yaml", ".yml", ".html", ".css"]

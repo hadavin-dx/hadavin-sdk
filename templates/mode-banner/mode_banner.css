@@ -1,0 +1,24 @@
+/* Optional starting look for the mode banner. Colours are tokens you can replace; light and dark are both covered.
+   The tone is in the data-tone attribute, so the meaning never depends on colour alone (the tag word says it too). */
+:root {
+  --mode-banner-demo-bg: #fff4d6; --mode-banner-demo-fg: #4d3b00;
+  --mode-banner-real-bg: #ffe3e0; --mode-banner-real-fg: #5c1410;
+  --mode-banner-quiet-bg: #eef1f4; --mode-banner-quiet-fg: #29323a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mode-banner-demo-bg: #3d3200; --mode-banner-demo-fg: #ffe9a8;
+    --mode-banner-real-bg: #4a1b17; --mode-banner-real-fg: #ffd2cd;
+    --mode-banner-quiet-bg: #252b31; --mode-banner-quiet-fg: #d7dde3;
+  }
+}
+:root[data-theme="dark"] {
+  --mode-banner-demo-bg: #3d3200; --mode-banner-demo-fg: #ffe9a8;
+  --mode-banner-real-bg: #4a1b17; --mode-banner-real-fg: #ffd2cd;
+  --mode-banner-quiet-bg: #252b31; --mode-banner-quiet-fg: #d7dde3;
+}
+.mode-banner { padding: 8px 16px; font: 14px/1.4 system-ui, sans-serif; background: var(--mode-banner-quiet-bg); color: var(--mode-banner-quiet-fg); }
+.mode-banner[data-tone="demo"] { background: var(--mode-banner-demo-bg); color: var(--mode-banner-demo-fg); }
+.mode-banner[data-tone="real"], .mode-banner[data-tone="unconfirmed"] { background: var(--mode-banner-real-bg); color: var(--mode-banner-real-fg); }
+.mode-banner__tag { font-weight: 700; letter-spacing: .04em; }
+.mode-banner__standins { margin-top: 4px; font-weight: 700; }
