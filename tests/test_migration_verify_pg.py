@@ -1200,7 +1200,7 @@ def test_an_unreadable_lock_view_is_a_plain_config_error(env):
                 outcome = None
                 try:
                     mig._take_the_lock(waiter, 1)
-                except Exception as exc:  # judged below, outside the handler
+                except (ConfigError, psycopg.Error) as exc:  # judged below, outside the handler
                     outcome = exc
                 waiter.execute("ROLLBACK")
             holder.execute("ROLLBACK")

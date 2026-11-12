@@ -164,8 +164,9 @@ def test_an_unreadable_lock_view_is_a_plain_config_error_whichever_query_fails(f
     try:
         mig._take_the_lock(db, 3)
     except (
-        Exception
-    ) as exc:  # judged below, outside the handler, so a failure is an assertion and not a chain
+        ConfigError,
+        pg_errors.Error,
+    ) as exc:  # judged below, outside the handler, so a failure is an assertion
         outcome = exc
     assert isinstance(outcome, ConfigError), f"expected the refusal, got {outcome!r}"
     text = str(outcome)
