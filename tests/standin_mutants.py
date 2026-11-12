@@ -115,7 +115,7 @@ M = [
     mutant("S27 a stand-in that declares no hosts is accepted by the rule", CFG, "if entry.hosts is None:", "if False:",
         HOST_TEST, "test_a_stand_in_with_no_hosts_function_is_refused_by_the_rule_itself", "was accepted",
         ),
-    mutant("S28 a hosts function that raises is not caught", CFG, "except (ValueError, TypeError, AttributeError, LookupError):", "except OSError:",
+    mutant("S28 a hosts function that raises is not caught", CFG, "ValueError,\n        TypeError,\n        AttributeError,\n        LookupError,\n    ):", "OSError,\n    ):",
         HOST_TEST, "test_a_hosts_function_that_raises_refuses_without_echoing_the_error", "did not match"),
     mutant("S29 a kind the table does not list is a key error", CFG, "entry = TABLE.get(cap, {}).get(kind)", "entry = TABLE[cap][kind]",
         HOST_TEST, "test_a_kind_the_table_does_not_list_is_refused_not_a_key_error", "KeyError", allow_crash=True, crash_type="KeyError"),
