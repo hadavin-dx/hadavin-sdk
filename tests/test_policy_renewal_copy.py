@@ -37,6 +37,7 @@ def _assert_the_copy_follows_the_steps(
     named = set(
         re.findall(r"(?<!python )(?:(?:tests|tools)/\w+\.py|CHANGELOG\.md)", _steps_of(mode))
     )
+    assert edited, "the renewal has no edit at all: a plant with nothing to apply passes vacuously"
     expected = (named - set(NOT_EDITED)) | ({"CHANGELOG.md"} if mode != "names" else set())
     if mode == "names":
         expected -= {"CHANGELOG.md"}

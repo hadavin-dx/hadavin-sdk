@@ -1643,7 +1643,7 @@ M = [
         '        old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")\n',
         '        old_decided, new_decided, mode in ("both", "names"), mode in ("both",)\n',
         "test_the_copy_of_the_kinds_alone_plant_changes_each_file_the_printed_steps_name",
-        "the renewal has no edit at all",
+        "renewal edited",
         test_file=RENEWAL_TEST,
     ),
     mutant(

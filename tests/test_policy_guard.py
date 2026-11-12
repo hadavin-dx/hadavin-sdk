@@ -2547,6 +2547,8 @@ def _refusal(call) -> str | None:
         call()
     except (ConfigError, ValueError) as exc:
         return str(exc)
+    except OSError:  # the request was tried: nothing refused it
+        return None
     return None
 
 

@@ -282,7 +282,7 @@ def _make_renewed_copy(
 ) -> tuple[list[str], str]:
     """Copy the repository into `copy` and apply the edits of the printed steps of `mode`: (the files edited, the
     commit of the copy before the first edit when `commit_base` is set, else ''). A renewal with no edit at all is
-    refused here: a plant with nothing to apply would pass whatever the steps say."""
+    refused by `_assert_the_copy_follows_the_steps`: a plant with nothing to apply would pass whatever the steps say."""
     root = Path(__file__).resolve().parents[1]
     copy.mkdir(parents=True, exist_ok=True)
     for name in RENEWED_TREES:
@@ -295,7 +295,6 @@ def _make_renewed_copy(
     edits = _renewal_edits(
         old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")
     )
-    assert edits, "the renewal has no edit at all: a plant with nothing to apply passes vacuously"
     edited: set[str] = set()
     for rel, old, new in edits:
         text = (copy / rel).read_text(encoding="utf-8")
