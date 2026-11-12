@@ -120,3 +120,4 @@ PULSE 01:19Z: Q8a-1 r9 codebase reviewer done (1 Major: sources/kubernetes.py na
 - 02:27Z Q8b r6 resolved (goldfish_review_report-r6.md): F1 Blocker (reproduced) + D6-1 Major PROPOSE FIX, 8 accepted, 0 contested. Batch-6 builder next.
 - 02:27Z Q8b batch-6 builder a238d798 started (box 75 min, check ~03:25Z), worktree B-Q8b-b6, push wip/cloud-q8b-b6. Running: P3a-2 3c (interim), PR89 r28, PRH b6, Q8b b6, Q8a-1 r10 EV.
 - 02:33Z PULSE: PR89 r28 evidence runner a7884162 started on 7e4faf14 (non-root mutants, mypy 3.12/3.13, full pytest, fail-before). Running: Q8a-1 r10 evidence, PRH b6 builder, Q8b b6 builder, P3a-2 3c (interim, waiting on its suite), PR89 r28 evidence. Load 2.9 (limit 4). Next: collect Q8a-1 evidence then egm-resolve r10.
+- 02:33Z PULSE: LEAD-ORDERS newest still 247 (GO). Load 2.9. Agents running: Q8a-1 r10 EV a01df54d, PRH b6 a86c8cbe, Q8b b6 a238d798, PR89 r28 EV a7884162; P3a-2 3c a62fbfe6 had stopped idle, resumed by message.
