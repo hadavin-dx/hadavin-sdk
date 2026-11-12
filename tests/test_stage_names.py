@@ -3748,8 +3748,13 @@ _PLANTED_FAULTS = {
         "import os\nHOME = os.environ.get('X')\ndef f():\n    raise A(HOME)",
         1,
     ),
+    "R15n int() of an unproven value in a message": (
+        "def f(status):\n    raise A(f'answered {int(status)}')",
+        1,
+    ),
 }
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
+    "R15 int() of a value that is a written number": "def f():\n    raise A(f'port {int(8080)}')",
     "R13e a status through status_text": "def f(status):\n    raise A(f'answered {status_text(status)}')",
     "R13a print of a constant sentence with file=": "import sys\nprint('a sentence', file=sys.stderr, flush=True)",
     "R13c a comprehension variable over a tuple of words": "def f():\n    return [f'bad {x}' for x in ('a', 'b')]",

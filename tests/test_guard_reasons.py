@@ -1492,6 +1492,37 @@ def check_migsql() -> list[str]:
     return bad
 
 
+def check_ownerror() -> list[str]:
+    """`_message` shows an error's text only for an error of this package: it gives `(details withheld)` for an error of a
+    library class (also one that a package class inherits from), for an `OSError` of the package, and for a class that
+    merely says it is from the package. Run, not read: the planted errors carry a canary."""
+    from hadavin_sdk.errors import ConfigError
+    from hadavin_sdk.runtime import tick
+
+    canary = "zq-own-" + "Kx7" + "-canary"
+    bad = []
+
+    class Lib(Exception):
+        pass
+
+    Lib.__module__ = "somelibrary.errors"
+
+    class Mixed(ConfigError, Lib):
+        pass
+
+    class PkgOs(OSError):
+        pass
+
+    PkgOs.__module__ = "hadavin_sdk.fake"
+    Mixed.__module__ = "hadavin_sdk.fake"
+    for exc in (Lib(canary), Mixed(canary), PkgOs(canary), ValueError(canary)):
+        if canary in tick._message(exc):
+            bad.append(f"_message shows the text of {type(exc).__name__}")
+    if canary not in tick._message(ConfigError(canary)):
+        bad.append("_message no longer shows the text of an error of this package")
+    return bad
+
+
 def check_passed() -> list[str]:
     """Every caller of `_missing_or_stale` hands it a text that is built in the caller (a constant or an f-string, each a
     site of its own that is read there), so `StaleState(stale)` shows nothing that the caller did not build."""
@@ -1553,6 +1584,7 @@ def check_frames() -> list[str]:
 
 CHECKS = {
     "FRAMES": check_frames,
+    "OWNERROR": check_ownerror,
     "PASSED": check_passed,
     "WORDS": check_words,
     "SCHEMA": check_schema,

@@ -122,8 +122,11 @@ def test_a_sentence_in_a_provider_error_detail_is_dropped_by_describe():
         "your key " + _marker("detail") + " ran out of quota"
     )  # 80 characters or fewer, with spaces
     assert describe(Boom("q"), lambda e: sentence) == "Boom 429"
-    assert describe(Boom("q"), lambda e: "x" * 49) == "Boom 429"
-    assert describe(Boom("q"), lambda e: "x" * 48) == "Boom 429 " + "x" * 48
+    # Round 15: at most 32 characters, and never a run of 32 letters or digits (the shape of a key)
+    assert describe(Boom("q"), lambda e: "x" * 33) == "Boom 429"
+    assert describe(Boom("q"), lambda e: "x" * 32) == "Boom 429"
+    assert describe(Boom("q"), lambda e: "x" * 31) == "Boom 429 " + "x" * 31
+    assert describe(Boom("q"), lambda e: "x-" * 16) == "Boom 429 " + "x-" * 16
     assert (
         describe(Boom("q"), lambda e: "403 AccessDeniedException")
         == "Boom 429 403 AccessDeniedException"

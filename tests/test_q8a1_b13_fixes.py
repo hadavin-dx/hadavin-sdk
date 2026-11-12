@@ -67,7 +67,7 @@ def test_a_provider_error_code_with_other_characters_is_dropped_by_describe():
         code = "".join(alphabet[next(nums) % len(alphabet)] for _ in range(1 + next(nums) % 99))
         out = describe(Boom("q"), lambda e, c=code: c)
         assert out == "Boom 429" or (
-            code and len(code) <= 48 and all(c in "ab-_." for c in code) and out.endswith(code)
+            code and len(code) <= 32 and all(c in "ab-_." for c in code) and out.endswith(code)
         ), (code, out)
     assert describe(Boom("q"), lambda e: "rate_limit") == "Boom 429 rate_limit"
 

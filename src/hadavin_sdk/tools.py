@@ -40,7 +40,14 @@ from urllib.parse import quote, quote_plus, urlunsplit
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from hadavin_sdk import defaults
-from hadavin_sdk.errors import ConfigError, digest_prefix, error_where, read_configured, shown_name
+from hadavin_sdk.errors import (
+    ConfigError,
+    digest_prefix,
+    error_where,
+    read_configured,
+    shown_name,
+    status_text,
+)
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
@@ -554,7 +561,7 @@ class ToolContext:
             self._cluster_ports if scheme == "http" else self._https_ports
         )
         if port not in allowed:
-            raise ToolRefused(f"port {int(port)} is not allowed for this tool")
+            raise ToolRefused(f"port {status_text(port)} is not allowed for this tool")
         return port
 
     def fetch(
@@ -650,7 +657,7 @@ class ToolContext:
         except urllib.error.HTTPError as exc:
             code = exc.code
             exc.close()
-            raise ToolRefused(f"HTTP {int(code)}") from None
+            raise ToolRefused(f"HTTP {status_text(code)}") from None
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, EgressRefused):
                 raise ToolRefused("the host resolves to an address that is refused") from None

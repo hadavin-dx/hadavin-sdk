@@ -73,7 +73,10 @@ def _no_key_shaped_run(value: str) -> str:
     """A run of 32 or more letters and digits is the shape of a pasted key (the regex engine of pydantic has no
     look-ahead, so this is a validator). The message does not hold the value."""
     if re.search(r"[A-Za-z0-9]{32}", value):
-        raise ConfigValueError("a model id has no run of 32 or more letters and digits")
+        raise ConfigValueError(
+            "a model id has no run of 32 or more letters and digits (the shape of a pasted key); "
+            "write the model's short name or version, not an immutable hash pin"
+        )
     return value
 
 
@@ -88,6 +91,8 @@ class Route(_Strict):
     # is written into the replay report. Refused at load: a sentence (a space), any other character, more than 128
     # characters, and a run of 32 or more letters and digits (a pasted key has one; a real id has runs of at most 12).
     # NOT refused: a key cut into short pieces by `-`, `.` or `_` (every piece under 32 characters).
+    # An immutable pin (`model@sha256:<64 hex>`, `org/model@<40 hex>`) is refused on purpose: a 40 or 64 digit hex run cannot be
+    # told from a pasted hex key. The refusal says so; write the short name or version instead (Round 15, Issue 5).
     model_id: Annotated[
         str,
         Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$"),

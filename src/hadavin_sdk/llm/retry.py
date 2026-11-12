@@ -18,17 +18,17 @@ import ssl
 import time
 from collections.abc import Callable
 
-from hadavin_sdk.errors import Failed
+from hadavin_sdk.errors import Failed, status_text
 from hadavin_sdk.llm.protocol import ProviderError, ProviderExhausted
 
 BASE_DELAY_S = 0.5
 MAX_DELAY_S = 8.0
 
-# What `describe` keeps of a kind's `detail`: ONE short code (letters, digits, dot, dash, underscore, at most 48),
-# optionally after a three-digit status and one space (`403 AccessDeniedException`, the form Bedrock gives). A kind's
+# What `describe` keeps of a kind's `detail`: ONE short code (letters, digits, dot, dash, underscore, at most 32),
+# optionally after a three-digit status and one space (`403 AccessDeniedException`, the form Bedrock gives). Round 15: at most 32 characters, and never a run of 32 letters or digits (the shape of a key, the rule `Route.model_id` uses). A kind's
 # error code can come from the provider's own answer, so anything longer or with other characters (a space inside the
 # code, which makes a sentence) is dropped. Round 14: the old pattern let a sentence of 80 characters through.
-_DETAIL = re.compile(r"(?:[0-9]{3} )?[A-Za-z0-9._-]{1,48}")
+_DETAIL = re.compile(r"(?:[0-9]{3} )?(?![A-Za-z0-9]{32})[A-Za-z0-9._-]{1,32}")
 
 Retryable = Callable[[BaseException], "bool | None"]
 
@@ -85,7 +85,12 @@ def retry_after(exc: BaseException) -> float:
 def describe(exc: BaseException, detail: Callable[[BaseException], str] | None = None) -> str:
     """Class, status and the kind's error code only: an SDK message can quote the request."""
     said = detail(exc) if detail else ""
-    parts = [type(exc).__name__, str(status(exc) or ""), said if _DETAIL.fullmatch(said) else ""]
+    code = status(exc)
+    parts = [
+        type(exc).__name__,
+        status_text(code) if code else "",
+        said if _DETAIL.fullmatch(said) else "",
+    ]
     return " ".join(p for p in parts if p)
 
 

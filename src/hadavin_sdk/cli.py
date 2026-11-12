@@ -115,6 +115,10 @@ def _main(argv: list[str] | None = None) -> int:
     lim.add_argument("action", choices=["stop", "reset"])
     lim.add_argument("--by", required=True)
     sub.add_parser("tick", help="one pass of the housekeeping steps (run every 30-60 s)")
+    sub.add_parser(
+        "check-config",
+        help="read the configuration the way tick does and say whether it is accepted (reads files only; never connects or writes)",
+    )
     mig = sub.add_parser("migrate", help="apply the postgres store schema (migration role)")
     mig.add_argument("--runtime-role", help="grant this database role what the runtime needs")
     mig.add_argument(
@@ -154,6 +158,8 @@ def _main(argv: list[str] | None = None) -> int:
         os.environ["HADAVIN_CONFIG_DIR"] = args.config
     if args.cmd == "tick":
         return _tick()
+    if args.cmd == "check-config":
+        return _check_config()
     cfg = load_config()
     if args.cmd == "migrate":
         return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
@@ -295,6 +301,20 @@ def score_cmd(audit, args) -> int:
     for run in res.runs:
         audit.emit("score_run", run_id, **ref, decision="-", result=audit_result(run))
     print(f"score report written: {report_dir / 'score-report.md'}")
+    return 0
+
+
+def _check_config() -> int:
+    """Round 15 (Issue 5): load the configuration and the registry exactly as `tick` does, and nothing else: it reads the
+    configuration folder, opens no connection and writes nothing. Exit 0 if accepted, 1 if refused; a refusal names the
+    field and the rule (`config_error_text`), never a value. Run it before an upgrade: a configuration this command
+    refuses will be refused by the running system after the upgrade."""
+    try:
+        load_registry(load_config())
+    except ConfigError as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 1
+    print("the configuration is accepted")
     return 0
 
 

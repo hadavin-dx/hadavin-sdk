@@ -28,7 +28,7 @@ import re
 
 SAFE_CALLS = frozenset(
     {
-        "len", "int", "float", "bool", "round", "abs", "ord", "id", "hash", "isinstance", "any", "all",
+        "len", "bool", "round", "abs", "ord", "id", "hash", "isinstance", "any", "all",
         "callable", "hasattr", "range", "divmod", "chr", "type", "isfinite",
         "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text",
     }
@@ -62,7 +62,7 @@ MUTATORS = frozenset(
 )  # fmt: skip
 PASS_CALLS = frozenset(
     {
-        "sorted", "list", "tuple", "set", "frozenset", "reversed", "min", "max", "str", "repr", "format",
+        "int", "float", "sorted", "list", "tuple", "set", "frozenset", "reversed", "min", "max", "str", "repr", "format",
         "ascii", "iter", "next", "dict", "sum", "filter", "map", "zip", "enumerate",
     }
 )  # fmt: skip
@@ -396,9 +396,12 @@ class Analysis:
         elif isinstance(n, (ast.Global, ast.Nonlocal)):
             self.changed_in_function.update(n.names)
             return
-        if isinstance(root, ast.Name) and isinstance(self.scope_of.get(id(n)), FUNCS):
-            if not self._shadowed(n, root.id):
-                self.changed_in_function.add(root.id)
+        if (
+            isinstance(root, ast.Name)
+            and isinstance(self.scope_of.get(id(n)), FUNCS)
+            and not self._shadowed(n, root.id)
+        ):
+            self.changed_in_function.add(root.id)
 
     def _upper_ok(self, name, node) -> bool:
         """An UPPER_CASE name that is bound only to written values in the tree (see `_scan_upper`)."""

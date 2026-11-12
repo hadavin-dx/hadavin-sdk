@@ -52,6 +52,7 @@ REASONS = {
     "CATALOG": "a role problem found by comparing the database catalog with the grant map written in code; names are tables and roles of this package's own schema",
     "REPORT": "a line of the replay report: numbers from int fields, class names of redaction, hashes, the case counts, and words written in code; the model id is refused at load unless it has token shape (`Route.model_id` pattern)",
     "TAGS": "the allowed kind words that pydantic lists for a union (its `expected_tags`, written in code), never the typed one",
+    "OWNERROR": "the class name of an error, and its text only if THIS package wrote the error (`_own_error`: the class is defined under `hadavin_sdk`, is no `OSError` and has only built-in or package base classes); every other error shows `(details withheld)`; the package's own sentences are each a site of their own, read where they are raised",
     "PASSED": "a sentence that every caller in this package builds and hands to the error (each caller's sentence is its own site and is read there)",
     "FRAMES": "the file name, the line number, the function name and the line of code of a stack frame, printed by the debug traceback (`cli._print_frames`); frames describe code, never an error's text (the error text and its cause and context are not printed, only their class names)",
     "PYDANTICTYPE": "the error type word of pydantic (`missing`, `int_parsing`, ...): a library constant, not text from the file",
@@ -625,7 +626,7 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "calls += store.purge_tool_calls(_now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held)",
     ): "NUM",
     ("runtime/tick.py", "f\"a tick step name is used twice: {', '.join(repeated)}\""): "WORDS",
-    ("runtime/tick.py", "f'{type(exc).__name__}: {_message(exc)}'"): "REDACTED",
+    ("runtime/tick.py", "f'{type(exc).__name__}: {_message(exc)}'"): "OWNERROR",
     ("runtime/tick.py", "found += problems"): "LISTED",
     (
         "runtime/tick.py",
