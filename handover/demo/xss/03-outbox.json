@@ -1,0 +1,127 @@
+{
+ "mode": "keyed",
+ "count": 24,
+ "reminders": 12,
+ "messages": [
+  {
+   "key": "Laa602aae7884",
+   "to": "xss-a@example.test",
+   "subject": "Thanks for getting in touch, <script>window.__xss=1</script>"
+  },
+  {
+   "key": "Le1f94c27c518",
+   "to": "xss-b@example.test",
+   "subject": "Thanks for getting in touch, <img src=x onerror=\"window.__xss=2\">"
+  },
+  {
+   "key": "Lac2d233325e8",
+   "to": "xss-c@example.test",
+   "subject": "Thanks for getting in touch, <svg onload=\"window.__xss=3\">"
+  },
+  {
+   "key": "L2e3ee8c62269",
+   "to": "xss-d@example.test",
+   "subject": "Thanks for getting in touch, \"><iframe srcdoc=\"<script>parent.__xss=4</script>\">"
+  },
+  {
+   "key": "L0030b915b7df",
+   "to": "xss-e@example.test",
+   "subject": "Thanks for getting in touch, javascript:window.__xss=5"
+  },
+  {
+   "key": "L806186189900",
+   "to": "xss-f@example.test",
+   "subject": "Thanks for getting in touch, '; DROP TABLE leads;--"
+  },
+  {
+   "key": "Le582161dafff",
+   "to": "xss-i@example.test",
+   "subject": "Thanks for getting in touch, {{7*7}} and ${7*7}"
+  },
+  {
+   "key": "Ldd9a545ba112",
+   "to": "xss-k@example.test",
+   "subject": "Thanks for getting in touch, Emoji \ud83d\ude00 Person"
+  },
+  {
+   "key": "Ld2146dba4130",
+   "to": "xss-h1-len100@example.test",
+   "subject": "Thanks for getting in touch, HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+  },
+  {
+   "key": "Lae63cd1d003a",
+   "to": "xss-h2-len200@example.test",
+   "subject": "Thanks for getting in touch, HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+  },
+  {
+   "key": "L3be6f9507591",
+   "to": "xss-h5-len120-spaced@example.test",
+   "subject": "Thanks for getting in touch, word word word word word word word word word word word word word word word word word word word word word word word word"
+  },
+  {
+   "key": "L90169f831186",
+   "to": "xss-l@example.test",
+   "subject": "Thanks for getting in touch, Normal Person"
+  },
+  {
+   "key": "nudge:L0030b915b7df",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder L0030b91"
+  },
+  {
+   "key": "nudge:L2e3ee8c62269",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder L2e3ee8c"
+  },
+  {
+   "key": "nudge:L806186189900",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder L8061861"
+  },
+  {
+   "key": "nudge:Laa602aae7884",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Laa602aa"
+  },
+  {
+   "key": "nudge:Lac2d233325e8",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Lac2d233"
+  },
+  {
+   "key": "nudge:Ldd9a545ba112",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Ldd9a545"
+  },
+  {
+   "key": "nudge:Le1f94c27c518",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Le1f94c2"
+  },
+  {
+   "key": "nudge:Le582161dafff",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Le582161"
+  },
+  {
+   "key": "nudge:L3be6f9507591",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder L3be6f95"
+  },
+  {
+   "key": "nudge:L90169f831186",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder L90169f8"
+  },
+  {
+   "key": "nudge:Lae63cd1d003a",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Lae63cd1"
+  },
+  {
+   "key": "nudge:Ld2146dba4130",
+   "to": "reminder@example.test",
+   "subject": "Lead reminder Ld2146db"
+  }
+ ]
+}

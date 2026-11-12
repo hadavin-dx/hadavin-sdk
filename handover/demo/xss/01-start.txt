@@ -1,0 +1,16 @@
+started: demo servers (keyed outbox) pid 30597, desk pid 30598
+ports: desk 8765, demo CRM and outbox 8766 (check with: curl http://127.0.0.1:8765/counts)
+logs: data/fakes.log and data/desk.log
+HTTP/1.0 200 OK
+Server: lead-desk Python/3.12.3
+Date: Thu, 12 Nov 2026 20:42:21 GMT
+Content-Type: application/json
+Content-Length: 405
+Connection: close
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Cross-Origin-Resource-Policy: same-origin
+Cache-Control: no-store
+
+{"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794516140, "expected_match": null, "ok": null}

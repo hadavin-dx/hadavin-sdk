@@ -1,0 +1,13 @@
+portal.js:23:        if (k === 'href') { if (String(v).charAt(0) === '#') el.setAttribute('href', String(v)); return; }
+portal.js:38:    use.setAttribute('href', '#i-' + name);
+portal.js:55:  var state = { summary: null, demo: null, online: null, startedAt: null, offlineSince: null, lastOk: null, needs: null };
+portal.js:514:      var link = h('a', { href: '#/' + id, 'data-testid': 'nav-' + id, 'data-route': id }, icon(p.nav.icon), h('span', null, p.nav.label));
+portal.js:671:    link.setAttribute('href', '/ui/demo/portal_demo.css');
+pages/leads.js:296:      var hideSwitch = h('label', { 'class': 'hide-switch', title: 'On by default. Hides lead names, email addresses, phone numbers, messages and request numbers on this screen. Swi
+pages/leads.js:347:        if (drawerRow && drawerRow.lead_id !== row.lead_id) { disarm(); stepChoice = ''; } // another lead's panel replaces this one: its question and choice do not carry over
+pages/leads.js:449:      P.api('/api/ui/data-map').then(function (r) { // once: the sender address is a setting, it does not change while the desk runs
+pages/needs.js:16:    { id: 'info', label: 'For information', lead: 'Information only: nobody has to do anything here. “Repeat changed” means the same request came again with other details; the fi
+pages/overview.js:30:    if (needs > 0) caption = h('span', null, 'Requests and follow-ups a person has to decide. ', h('a', { href: '#/needs', 'class': 'nowrap' }, 'Review these \u2192'), d.waiting >
+pages/overview.js:133:      : h('p', { 'class': 'chart-empty' }, 'Nothing was decided in the last ' + spanText + '. ', P.demo && !P.stale() ? h('a', { href: '#/demo' }, 'Send a request from Demo contr
+pages/overview.js:136:      if (P.demo && !P.stale()) none.appendChild(h('a', { href: '#/demo' }, 'Send a request from Demo controls \u2192'));
+../../../demo_only/portal_demo.js:46:    var m = typeof f.outbox.followups === 'number' ? f.outbox.followups : f.outbox.count; // follow-ups only: a reminder email is not one

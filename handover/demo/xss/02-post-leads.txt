@@ -1,0 +1,11 @@
+a 1 201 {"receipt_id": 1, "verdict": "new", "lead_id": "Laa602aae7884", "replayed": false}
+b 2 201 {"receipt_id": 2, "verdict": "new", "lead_id": "Le1f94c27c518", "replayed": false}
+c 3 201 {"receipt_id": 3, "verdict": "new", "lead_id": "Lac2d233325e8", "replayed": false}
+d 4 201 {"receipt_id": 4, "verdict": "new", "lead_id": "L2e3ee8c62269", "replayed": false}
+e 5 201 {"receipt_id": 5, "verdict": "new", "lead_id": "L0030b915b7df", "replayed": false}
+f 6 201 {"receipt_id": 6, "verdict": "new", "lead_id": "L806186189900", "replayed": false}
+g 7 202 {"receipt_id": 7, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+h 8 202 {"receipt_id": 8, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+i 9 201 {"receipt_id": 9, "verdict": "new", "lead_id": "Le582161dafff", "replayed": false}
+j 10 202 {"receipt_id": 10, "verdict": "review", "reason": "incomplete:name", "replayed": false}
+k 11 201 {"receipt_id": 11, "verdict": "new", "lead_id": "Ldd9a545ba112", "replayed": false}

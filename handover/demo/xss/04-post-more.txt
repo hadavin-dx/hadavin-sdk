@@ -1,0 +1,10 @@
+g1-rlo-only 21 202 {"receipt_id": 12, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+g2-zw-only 22 202 {"receipt_id": 13, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+h1-len100 23 201 {"receipt_id": 14, "verdict": "new", "lead_id": "Ld2146dba4130", "replayed": false}
+h2-len200 24 201 {"receipt_id": 15, "verdict": "new", "lead_id": "Lae63cd1d003a", "replayed": false}
+h3-len500 25 202 {"receipt_id": 16, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+h4-len1000 26 202 {"receipt_id": 17, "verdict": "review", "reason": "bad_field:name", "replayed": false}
+h5-len120-spaced 27 201 {"receipt_id": 18, "verdict": "new", "lead_id": "L3be6f9507591", "replayed": false}
+h6-longcompany-msg 28 202 {"receipt_id": 19, "verdict": "review", "reason": "bad_field:company", "replayed": false}
+h7-longunbroken-company 29 202 {"receipt_id": 20, "verdict": "review", "reason": "bad_field:company", "replayed": false}
+l-hostile-company-msg-normal-name 30 201 {"receipt_id": 21, "verdict": "new", "lead_id": "L90169f831186", "replayed": false}

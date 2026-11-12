@@ -1,0 +1,18 @@
+portal.js:42:  function clear(el) { el.textContent = ''; return el; }
+portal.js:527:    try { return state.online === false ? parseInt(window.localStorage.getItem('lead-desk-needs'), 10) || 0 : 0; } catch (e) { return 0; } // offline at page load: the last known count, so the badge does not vanish
+portal.js:541:    b.textContent = n ? String(n) : '';
+portal.js:543:    b.setAttribute('data-stale', state.online === false || !!bad.summary ? 'true' : 'false'); // the number is the last known one
+portal.js:547:    var id = (location.hash.replace(/^#\//, '') || 'overview').split('/')[0];
+portal.js:577:  function go(r) { location.hash = '#/' + r; }
+portal.js:584:  function stale() { return state.online === false || (state.online === true && STALE_KEYS.some(function (k) { return bad[k] && polls[k]; })); }
+portal.js:587:    var st = state.online === false ? 'offline' : stale() ? 'degraded' : 'live';
+portal.js:589:    byId('live-text').textContent = { live: 'Live', offline: 'Offline', degraded: 'Problem' }[st];
+portal.js:606:    if (state.online === v) return;
+portal.js:608:    state.online = v;
+portal.js:720:    if (labels.brand.sub) byId('brand-sub').textContent = labels.brand.sub;
+pages/leads.js:116:      btn.textContent = armed ? 'Yes, write to the CRM' : 'Move';
+pages/leads.js:117:      hint.textContent = armed ? ARM_HINT : FORWARD_ONLY;
+pages/leads.js:390:        count.textContent = filtered() ? d.total + (d.total === 1 ? ' lead matches' : ' leads match') : '';
+pages/log.js:93:        count.textContent = first.total + (first.total === 1 ? ' request' : ' requests') + (filter ? ', ' + shown.length + ' shown below' : '') + (grouped < shown.length ? ' (' + grouped + ' rows, repeats grouped)' : '');
+../../../demo_only/portal_demo.js:259:        dblNote.textContent = items.length ? 'Choose a follow-up above, then press the button.' : 'No failed or unknown follow-up right now. Create one with the stop test on the left, then start the desk again.';
+../../../demo_only/portal_demo.js:297:        Array.prototype.forEach.call(personSel.options, function (o, i) { o.textContent = personText(people[i]); });

@@ -1,0 +1,1522 @@
+[
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "overview",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 16,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "leads",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "i",
+   "k",
+   "l-company"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 2,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 25,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": true,
+  "screenshot": [
+   "/tmp/demo-wt/handover/demo/xss/leads-light-masked.png",
+   1280,
+   1489
+  ],
+  "lead_rows": 12,
+  "drawers": [
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h1-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h2-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "l-company"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<script>w"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h5-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "i"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t{{7*7}} a"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "b"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<img src="
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "k"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tEmoji 😀 P"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "c"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<svg onlo"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "a"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<script>w"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "f"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t'; DROP T"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "d"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t\"><iframe"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "e"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tjavascrip"
+   }
+  ],
+  "narrow390": [
+   632,
+   390
+  ],
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "needs",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 18,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "log",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 55,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "data",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 8,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    924,
+    924
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": true,
+  "route": "demo",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 3,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "overview",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 12,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "leads",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "h2",
+   "i",
+   "k",
+   "l-company"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 4,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 1,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": false,
+  "screenshot": [
+   "/tmp/demo-wt/handover/demo/xss/leads-light-unmasked.png",
+   1280,
+   1367
+  ],
+  "lead_rows": 12,
+  "drawers": [
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 1623,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 3097,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "h2"
+    ],
+    "row": "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "l-company",
+     "l-message"
+    ],
+    "row": "Normal Person | xss-l@example.test | \t<script>window.__xss=11</s"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "word word word word word word word word word word word word "
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "i"
+    ],
+    "row": "{{7*7}} and ${7*7} | xss-i@example.test | \t{{7*7}} and ${7*7}\t | S"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "b"
+    ],
+    "row": "<img src=x onerror=\"window.__xss=2\"> | xss-b@example.test | \t<im"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "k"
+    ],
+    "row": "Emoji 😀 Person | xss-k@example.test | \tEmoji 😀 Person\t | Sent\tWarm"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "c"
+    ],
+    "row": "<svg onload=\"window.__xss=3\"> | xss-c@example.test | \t<svg onloa"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "a"
+    ],
+    "row": "<script>window.__xss=1</script> | xss-a@example.test | \t<script>"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "f"
+    ],
+    "row": "'; DROP TABLE leads;-- | xss-f@example.test | \t'; DROP TABLE lea"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "d"
+    ],
+    "row": "\"><iframe srcdoc=\"<script>parent.__xss=4</script>\"> | xss-d@ex"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "e"
+    ],
+    "row": "javascript:window.__xss=5 | xss-e@example.test | \tjavascript:win"
+   }
+  ],
+  "narrow390": [
+   632,
+   390
+  ],
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "needs",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 18,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "log",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "h2",
+   "i",
+   "k"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 1,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 22,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "data",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 9,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    924,
+    924
+   ]
+  ],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "light",
+  "masked": false,
+  "route": "demo",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 3,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "light",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "overview",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 16,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "leads",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "i",
+   "k",
+   "l-company"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 2,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 25,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": true,
+  "screenshot": [
+   "/tmp/demo-wt/handover/demo/xss/leads-dark-masked.png",
+   1280,
+   1489
+  ],
+  "lead_rows": 12,
+  "drawers": [
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h1-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h2-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "l-company"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<script>w"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tCo h5-len"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "i"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t{{7*7}} a"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "b"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<img src="
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "k"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tEmoji 😀 P"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "c"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<svg onlo"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "a"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t<script>w"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "f"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t'; DROP T"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "d"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \t\"><iframe"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "e"
+    ],
+    "row": "•••••• | hidden name | •••@••••• | hidden email address | \tjavascrip"
+   }
+  ],
+  "narrow390": [
+   632,
+   390
+  ],
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "needs",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 18,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "log",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 55,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "data",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 8,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    924,
+    924
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": true,
+  "route": "demo",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 3,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "overview",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 12,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "leads",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "h2",
+   "i",
+   "k",
+   "l-company"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 4,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 1,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": false,
+  "screenshot": [
+   "/tmp/demo-wt/handover/demo/xss/leads-dark-unmasked.png",
+   1280,
+   1367
+  ],
+  "lead_rows": 12,
+  "drawers": [
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 1623,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 3097,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "h2"
+    ],
+    "row": "HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "l-company",
+     "l-message"
+    ],
+    "row": "Normal Person | xss-l@example.test | \t<script>window.__xss=11</s"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [],
+    "row": "word word word word word word word word word word word word "
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "i"
+    ],
+    "row": "{{7*7}} and ${7*7} | xss-i@example.test | \t{{7*7}} and ${7*7}\t | S"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "b"
+    ],
+    "row": "<img src=x onerror=\"window.__xss=2\"> | xss-b@example.test | \t<im"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "k"
+    ],
+    "row": "Emoji 😀 Person | xss-k@example.test | \tEmoji 😀 Person\t | Sent\tWarm"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "c"
+    ],
+    "row": "<svg onload=\"window.__xss=3\"> | xss-c@example.test | \t<svg onloa"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "a"
+    ],
+    "row": "<script>window.__xss=1</script> | xss-a@example.test | \t<script>"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "f"
+    ],
+    "row": "'; DROP TABLE leads;-- | xss-f@example.test | \t'; DROP TABLE lea"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "d"
+    ],
+    "row": "\"><iframe srcdoc=\"<script>parent.__xss=4</script>\"> | xss-d@ex"
+   },
+   {
+    "script": 0,
+    "img_src_x": 0,
+    "iframe": 0,
+    "onattr": 0,
+    "svg_onload": 0,
+    "sw": 599,
+    "cw": 599,
+    "xss": "undefined",
+    "case_text": [
+     "e"
+    ],
+    "row": "javascript:window.__xss=5 | xss-e@example.test | \tjavascript:win"
+   }
+  ],
+  "narrow390": [
+   632,
+   390
+  ],
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "needs",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 18,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "log",
+  "text_present": [
+   "a",
+   "b",
+   "c",
+   "d",
+   "e",
+   "f",
+   "h2",
+   "i",
+   "k"
+  ],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 1,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 22,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    974,
+    974
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "data",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 9,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [
+   [
+    924,
+    924
+   ]
+  ],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ },
+ {
+  "scheme": "dark",
+  "masked": false,
+  "route": "demo",
+  "text_present": [],
+  "raw_script_literal_in_content": false,
+  "escaped_in_content": 0,
+  "dialogs": [],
+  "console": [],
+  "pageerrors": [],
+  "xss": "undefined",
+  "script_in_main": 0,
+  "img_src_x": 0,
+  "img_any": 0,
+  "svg_with_onload": 0,
+  "svg_total_in_main": 3,
+  "iframe": 0,
+  "onerror_attr": 0,
+  "onload_attr": 0,
+  "doc_iframe": 0,
+  "doc_onattr": 0,
+  "sw": 1280,
+  "cw": 1280,
+  "wraps": [],
+  "theme": null,
+  "cs": "dark",
+  "hidebox": null,
+  "xss_final": "undefined"
+ }
+]
