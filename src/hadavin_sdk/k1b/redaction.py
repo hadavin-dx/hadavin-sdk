@@ -59,9 +59,9 @@ LIMITS = (
     "characters (a copy of such a value may be shown partly masked).\n"
     "- A setting about a credential (a key that ends in enabled, policy, count, expiry and the like) is shown only "
     "when its value is a yes or no word, a number or a time.\n"
-    "- A record key whose last word ends in `pass`, `auth` or `session` (`newpass`, `postgresauth`) is masked unless the "
-    "whole word is an ordinary English word from a short list (`bypass`, `compass`, `oauth`, `obsession`, "
-    "`possession`). A harmless word that ends that way and is not on the list is hidden too, although it holds no "
+    "- A record key with a word that ends in `pass`, `auth` or `session` (`newpass`, `postgresauth`) is masked unless that "
+    "whole word is an ordinary English word from a short list (`bypass`, `compass`, `obsession`, "
+    "`possession`). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
     "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
     "Masking is a first filter, not proof that no client data reached the model."
@@ -144,7 +144,7 @@ GLUED_ENDINGS = (
     "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
 )  # fmt: skip
 # `pass`, `auth` and `session` end many credential keys written as one word (`newpass`, `dbpass`, `postgresauth`,
-# `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `oauth`, `obsession`). A list of the words
+# `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `obsession`; `oauth` is NOT one: a record key `oauth` may hold a token, so it is masked, as the card rule masks `oauth=`). A list of the words
 # allowed in front of `pass` fails open (an unlisted `newpass` stayed readable, round 4); a list of the ordinary words
 # fails closed (a harmless value is hidden). So a word that ends with one of them is a credential unless the whole
 # word is in `ORDINARY_WORDS`. After `_`, `-` or a capital letter they are words of their own (`CREDENTIAL_WORDS`).
@@ -153,7 +153,7 @@ BARE_ENDINGS = ("pass", "auth", "session")
 ORDINARY_WORDS = frozenset(
     [
         "bypass", "compass", "encompass", "overpass", "underpass", "surpass", "trespass", "impass", "lowpass", "highpass",
-        "bandpass", "oauth", "obsession", "possession", "repossession", "supersession",
+        "bandpass", "obsession", "possession", "repossession", "supersession",
     ]
 )  # fmt: skip
 # The words in front of `key` or `keys` that make a credential: `api_key`, `dbaccess_key` (the word BEFORE ends with one of
@@ -214,7 +214,7 @@ def sensitive(key: object) -> bool:
     The key is cut into words (at camelCase, `_`, `.`, `-` and white space; lower case; digits at the end of a word
     dropped). It is a credential key when a word is in `CREDENTIAL_WORDS`, ends with one of `GLUED_ENDINGS`, ends with
     `pass`, `auth` or `session` unless the whole word is in `ORDINARY_WORDS` (`newpass`, `dbpass`, `userauth` are keys;
-    `bypass`, `compass` and `oauth` are not), is `key` or `keys` after a word that ends with one of `KEY_QUALIFIERS` (`dbaccess_key`),
+    `bypass` and `compass` are not), is `key` or `keys` after a word that ends with one of `KEY_QUALIFIERS` (`dbaccess_key`),
     forms a pair of `WORD_PAIRS` with the word before it, or is `tokens` (unless it is a count: `max_tokens`, `reasoning_tokens`,
     `tokens_used`, `tokens_per_second`; the words are `COUNT_WORDS_BEFORE_TOKENS` and `COUNT_WORDS_AFTER_TOKENS`).
     There is no exception by the last word: a key the older rule accepted is still accepted. Cost, accepted on purpose,

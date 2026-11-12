@@ -222,7 +222,6 @@ OTHER_KEYS = [
     "message",
     "compass",
     "bypass",
-    "oauth",
     "authority",
 ]
 

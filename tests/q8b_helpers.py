@@ -221,5 +221,95 @@ def path_outputs(key: str, style: str) -> dict[str, str]:
     }
 
 
-def readable_pieces(out: str) -> list[str]:
-    return [p for p in (P1, P2, P3) if p in out]
+def text_paths(text: str) -> dict[str, str]:
+    """What the text paths show for `text`: a card, a tool result, an untrusted text of a run and a log line of a case bundle."""
+    import json
+
+    from hadavin_sdk.approvals.channel import clean
+    from hadavin_sdk.k1b.redaction import redact_bundle
+    from hadavin_sdk.tools import redact_layered
+
+    logs = (("app.log", ({"ts": "2026-01-01T09:00:00Z", "msg": text},)),)
+    out = redact_bundle(_case_bundle(logs=logs))[0]
+    return {
+        "card": clean(text),
+        "tool": redact_layered(text, {}),
+        "run": runmap.redact_untrusted(text, runmap.RunMap()),
+        "log": json.dumps(out.logs, default=str, ensure_ascii=False),
+    }
+
+
+def readable_pieces(out: str, within: str | None = None) -> list[str]:
+    """The made-up pieces (`P1`, `P2`, `P3`) readable in `out`; with `within`, only those that are part of that text."""
+    return [p for p in (P1, P2, P3) if p in out and (within is None or p in within)]
+
+
+# ---- the scan for a second list of credential keys (used by `tests/test_q8b_batch2.py` and its self-test in batch 4) --------------
+
+KEY_LIST_WORDS = {
+    "password",
+    "passwd",
+    "pwd",
+    "secret",
+    "token",
+    "passphrase",
+    "credential",
+    "apikey",
+}
+
+
+def _letters(text: str) -> str:
+    return re.sub(r"[^a-z]", "", text.lower())
+
+
+def _string_of(node) -> str | None:
+    """The text of a string constant, or of a `+` chain of string constants (`"a|" + "b"`); None for anything else."""
+    import ast
+
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left, right = _string_of(node.left), _string_of(node.right)
+        if left is not None and right is not None:
+            return left + right
+    return None
+
+
+def key_list_words(node) -> set[str]:
+    """The credential words (`KEY_LIST_WORDS`, compared by their letters only: `api_key` is `apikey`) that this ONE node lists:
+    a tuple, list or set of strings; a `"a b c".split()`; or a text with `|` (a regex alternation, joined by `+` too)."""
+    import ast
+
+    if isinstance(node, ast.Tuple | ast.List | ast.Set):
+        pieces = [
+            e.value for e in node.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)
+        ]
+    elif (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "split"
+        and _string_of(node.func.value) is not None
+    ):
+        pieces = re.split(r"[|,\s]+", _string_of(node.func.value) or "")
+    elif (text := _string_of(node)) is not None and "|" in text:
+        pieces = text.split("|")
+    else:
+        return set()
+    return {_letters(p) for p in pieces} & KEY_LIST_WORDS
+
+
+def second_key_lists(tree, allowed: set[str]) -> list[tuple[int, list[str]]]:
+    """Every node of `tree` that lists three or more credential words, outside the assignments named in `allowed`."""
+    import ast
+
+    skip: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign | ast.AnnAssign):
+            target = node.targets[0] if isinstance(node, ast.Assign) else node.target
+            if isinstance(target, ast.Name) and target.id in allowed:
+                skip.update(id(c) for c in ast.walk(node))
+    found = []
+    for node in ast.walk(tree):
+        if id(node) not in skip and len(hits := key_list_words(node)) >= 3:
+            found.append((node.lineno, sorted(hits)))
+    return found

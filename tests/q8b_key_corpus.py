@@ -323,6 +323,10 @@ UNLISTED_PREFIX = [
 # Benign keys the record walk masks ON PURPOSE (the word `session`, `auth`, `pass`, `secrets` or a `tokens` key that is not a
 # count): the cost the docstring of `sensitive` names. Measured on this corpus; the test compares the set exactly.
 WALK_COST = [
+    "oauth",
+    "oauthProvider",
+    "oauth_scopes",
+    "oauth2",
     "password_policy_enabled",
     "sessionAffinity",
     "session_duration",

@@ -89,12 +89,13 @@ def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
     credential words, anywhere in the package (an AST scan: not tied to two words on one line). Allowed, each for its reason:
     the one list, the words a tool prints after a key, the record walk's words and endings (compared with the one list by
     test_r7), and the HTTP header-name filter of the tool path (broader than the key list on purpose). Fails on the code before
-    batch 3, where the quoted-value rules carried a third list."""
+    batch 3, where the quoted-value rules carried a third list. Scope: `src/` only (`tools/` and `demos/` are not scanned). The
+    detection is `tests.q8b_helpers.second_key_lists`, the same function the self-test in test_q8b_batch4 runs on a sample."""
     import ast
-    import re
+
+    from tests.q8b_helpers import second_key_lists
 
     root = Path(__file__).resolve().parents[1] / "src/hadavin_sdk"
-    words = {"password", "passwd", "pwd", "secret", "token", "passphrase", "credential", "apikey"}
     allowed = {
         "KEY_ALTERNATIVES",
         "_NOT_A_VALUE",
@@ -105,28 +106,8 @@ def test_no_file_of_the_redaction_code_keeps_its_own_list_of_credential_keys():
     bad = []
     for path in sorted(root.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        skip: set[int] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign | ast.AnnAssign):
-                target = node.targets[0] if isinstance(node, ast.Assign) else node.target
-                if isinstance(target, ast.Name) and target.id in allowed:
-                    skip.update(id(c) for c in ast.walk(node))
-        for node in ast.walk(tree):
-            if id(node) in skip:
-                continue
-            hits: set[str] = set()
-            if isinstance(node, ast.Tuple | ast.List | ast.Set):
-                hits = {
-                    e.value.lower()
-                    for e in node.elts
-                    if isinstance(e, ast.Constant) and isinstance(e.value, str)
-                } & words
-            elif (
-                isinstance(node, ast.Constant) and isinstance(node.value, str) and "|" in node.value
-            ):
-                hits = {re.sub(r"[^a-z]", "", p.lower()) for p in node.value.split("|")} & words
-            if len(hits) >= 3:
-                bad.append(f"{path.relative_to(root.parent.parent)}:{node.lineno}: {sorted(hits)}")
+        for lineno, hits in second_key_lists(tree, allowed):
+            bad.append(f"{path.relative_to(root.parent.parent)}:{lineno}: {hits}")
     assert not bad, f"a second list of credential keys: {bad}"
 
 

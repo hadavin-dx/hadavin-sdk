@@ -166,17 +166,23 @@ KEY_ALTERNATIVES = (
 KEY_WORDS = "|".join(KEY_ALTERNATIVES)
 # The words that start a key in front of a QUOTED value (`session_cookie="a b"`, `passcode="hunter 2"`): everything of
 # `KEY_WORDS`, and the bare words `pass` and `session` followed by up to 20 key characters (the older rule's two prefixes:
-# the list above is a superset of the keys the older rule masked, pinned by `tests/test_q8b_batch4.py` against that rule).
+# the list above is meant to be a superset of the keys the older rule masked; `tests/test_q8b_batch4.py` checks it against the older rules (copied into `tests/q8b_older_rule.py`: the two quoted rules, the unquoted rule and the cookie rule) on a fixed sample of generated keys).
 # Written once; both quoted-value rules read this one name. (`auth` and `bearer` are not bare prefixes: `author="Priya"`. `authorization` is: a quoted value with spaces after it was half readable.)
 QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"
 # The flag rules read the same list (round 4, `--client_secret hunter22` and `--api_key hunter22` were not matched by a hand
-# list of hyphen spellings): every spelling of it that stands alone, plus two flag names that are no key (`--pass`,
-# `--secret-key`); a word may be glued to its neighbours with `-` or `_` (`--db_password`, `--x-api-key`). The look-ahead
+# list of hyphen spellings): every spelling of it that stands alone, plus flag names that are no key of the list (`--pass`,
+# `--secret-key`, `--authorization`, and the glued `--newpass`, `--oldpass`, `--postgresauth`: round 5, they were readable); a word may be glued to its neighbours with `-` or `_` (`--db_password`, `--x-api-key`). The look-ahead
 # entries (`pass` only before `=` or `:`) are for text, not for a flag name. EXACT names: `--secret-name`, `--token-file`
 # and `--token-ttl` are not credentials, and the `(?![\w-])` that ends the flag keeps them out.
-FLAG_WORDS = "|".join(
-    [a for a in KEY_ALTERNATIVES if "(?=" not in a] + ["pass", r"secret[_\-]?key"]
+FLAG_ONLY_WORDS = (
+    "pass",
+    r"secret[_\-]?key",
+    "newpass",
+    "oldpass",
+    "postgresauth",
+    "authorization",
 )
+FLAG_WORDS = "|".join([a for a in KEY_ALTERNATIVES if "(?=" not in a] + list(FLAG_ONLY_WORDS))
 FLAG_NAME = r"(?:[a-z0-9]+[_\-]){0,2}(?:" + FLAG_WORDS + ")"
 _CRED_FLAG = r"(?i)(?<![\w-])(?:--" + FLAG_NAME + r"|-(?:password|passwd))(?![\w-])"
 # How far the ARN rule looks ahead for a key it must not swallow. The generic key rule has no prefix bound (it starts at
@@ -225,8 +231,9 @@ _GUARDED_DOMAIN = (
 # until the end of the line or one of these stops, and the stop itself stays readable:
 #   - a flag: `--` and a letter (`--force`, `--target`), or `-` and ONE letter (`-f`, `-y`);
 #   - the next key: a word that starts with a letter or `_` and ends in `:` or `=` (`user=bob`, `port:`, `http://`);
-#   - a quote or `&`; a `,` or `;` that is followed by a space, by the end of the text, by another `,` or `;`, or by a
-#     new `key=` (`Password=ab;Server=x` keeps `;Server=x`; `cookie=ab; path=/` keeps `; path=/`).
+#   - a quote or `&`; a `,` or `;` that is followed by a space, by the end of the text, by a quote, a `&`, another `,` or `;`,
+#     or by a new `key=` (`Password=ab;Server=x` keeps `;Server=x`; `cookie=ab; path=/` keeps `; path=/`; a link right
+#     after a `;` also starts like a key, so `password=ab;http://x` keeps `;http://x`).
 # So `--force --target prod` after a value is kept, and a word with a dash or a colon INSIDE a value is part of it:
 # `password=correct -horse battery staple` (a dash and several letters is no flag: it may be a word of a passphrase, and a
 # leaked passphrase word is worse than a lost option) and `password=correct 12:30 horse` (a word that starts with a digit
@@ -237,7 +244,7 @@ _GUARDED_DOMAIN = (
 # (`sessionid=abc;Secure`) are masked with it. Pinned by tests and written in `CHANGELOG.md`.
 _VALUE_CHAR = (
     r"(?:&(?:amp;)?#[0-9]{1,7};|&(?:amp;)?#[xX][0-9a-fA-F]{1,6};|[^\s\"';,&]"
-    r"|,(?!\s*[\w.\-]+\s*[:=])|;(?=[^\s\"';,&])(?![\w.\-]+[\"']?\s*[:=]))"
+    r"|,(?!\s*[A-Za-z_][\w.\-]*\s*[:=])|;(?=[^\s\"';,&])(?![A-Za-z_][\w.\-]*[\"']?\s*[:=]))"
 )
 _FLAG_STOP = (
     r"--[A-Za-z]|-[A-Za-z](?![A-Za-z0-9])"  # `--force`, or one letter such as `-f` (not `-horse`)
@@ -264,15 +271,41 @@ SECRET_KINDS = frozenset(
     }
 )
 # A value that is only placeholders of secret kinds is masked already (`password=<SECRET_1>`): no word after it is taken
-# in (a second cleaning of the same text must change nothing: the first one may have rewritten the text after it).
+# in (a second cleaning of the same text must change nothing: the first one may have rewritten the text after it). A
+# character that belongs to a value (`,Kp9wT` after the placeholder: the cookie rule masked the first word of
+# `token_cookie=a,b` and left the rest to this rule, round 5) goes on with the value: the whole is masked.
 _VALUE_WITH_TAIL = (
     r"(?:(?:<(?:"
     + "|".join(sorted(SECRET_KINDS))
-    + r")_\d+>)+(?![^\s\"';,&])|"
+    + r")_\d+>)+(?!"
+    + _VALUE_CHAR
+    + ")|"
     + _VALUE_CHAR
     + "+"
     + _VALUE_TAIL
     + ")"
+)
+# The value of a `session_cookie=` assignment (the cookie assignment rule leaves that key to this rule): the generic value
+# above (several words are one value), AND the `;`-joined `name=value` pairs of a cookie jar, which the cookie assignment
+# rule on main took whole (`session_cookie=a; csrf=b; user=c` is one secret, Q8b round 5). A value that is only
+# placeholders is masked already, as in `_VALUE_WITH_TAIL`.
+_JAR_PAIR = r";\s*[^\s;=]+=[^\s;]*"
+_SESSION_COOKIE_VALUE = (
+    r"(?:(?:<(?:"
+    + "|".join(sorted(SECRET_KINDS))
+    + r")_\d+>)+(?!"
+    + _VALUE_CHAR
+    + ")|"
+    + _VALUE_CHAR
+    + "+(?:"
+    + _JAR_PAIR
+    + "|[ \t]+(?!"
+    + _FLAG_STOP
+    + "|"
+    + _KEY_STOP
+    + ")"
+    + _VALUE_CHAR
+    + "+)*)"
 )
 # A key, the sign, and the value (the text after a scheme word such as `Bearer`): the Bearer and Authorization rules
 # take a word after the scheme as the token, so `Bearer db_password = V` masked `db_password` and left V. When the word
@@ -650,6 +683,13 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         "SECRET",
         re.compile(
             _COOKIE_ASSIGN_KEY + r"(?:=>|=(?!>))\s*+([^\s;,\"'\[{]+(?:;\s*[^\s;=]+=[^\s;]*)*)"
+        ),
+    ),
+    # `session_cookie=`: the rule above leaves it to this one (several words, and the jar pairs the rule above took).
+    (
+        "SECRET",
+        re.compile(
+            r"(?i)session[_\-]?cookies?[\"'\]]*\s*(?:=>|=(?!>))\s*+(" + _SESSION_COOKIE_VALUE + ")"
         ),
     ),
     # A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
