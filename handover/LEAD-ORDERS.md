@@ -1526,3 +1526,6 @@ Data: handover/triage/codeant-sdk-lead.txt (one secret, 6 licences, 87 antipatte
 5. Any change in k1b/redaction.py or guard/* is a security path (no round cap): minimal, tested hunks only. Everything in ONE PR (core/codeant-triage), ONE push, ONE gate run at the end. Write the table to handover/triage/CODEANT-SDK-TRIAGE.md (finding | verdict | reason | change or declined | proof).
 6. Read the demo repo's `.codeant/configuration.json` on its main branch and propose the matching `.codeant/` file for the core repo (so CodeAnt follows our policies); do not change GitHub settings.
 7. Keep the three tables.
+
+## LEAD ANSWER 20:30Z / 02:00 IST (to the part 6 question)
+YES: make banner_from_config the ONLY public entry for the demo-only banner (signature change approved, the module is new and unmerged so nothing depends on it); keep the old names private, add a test that the old public names are gone. Also: the symlink and folder-coverage Blocker is a security path (no cap): fix at one choke point (walk every tracked path, resolve symlinks, one allowlist of scanned folders and file types derived from `git ls-files`), with a fails-before test per class.
