@@ -1,6 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 19:45Z - ORDER D7: lane 7 (Sonar coverage) builder started; 3 agents running (lane 1, DeepSource builder, lane 7 builder)
+- Lane 7 (sonnet builder, prepare only, NO push to the public repo): builds the scratch FINAL TREE (public pr-3-tests bee6fff4 plus main's sonar.yml and sonar-project.properties), then: separate hashed requirements-coverage.in/.txt (Semgrep pattern, pinned uv, --exclude-newer, hashes, Linux only, installed on top of the dev lock with --require-hashes; the lint locks stay untouched), the CI-faithful test command plus --cov for the real source folders, `sonar.python.coverage.reportPaths=coverage.xml`, `relative_files = true`, one job with fetch-depth 0, timeout sized from its own measured serial run, actions pinned to the same SHAs as sonar.yml/lint.yml, secret only in the scan step; local proof on Linux (one serial pytest process, about 15 min, load permitting): coverage.xml exists, every filename repo-relative and on disk, line-rate, counts, scanner-path check against Sonar's documented format (marked UNVERIFIED if the documentation cannot be reached). Output handover/demo/coverage/: sonar-coverage.patch, PLAN.md, evidence-*.txt. A fresh egm reviewer reads it afterwards (security path: secret in a workflow, new dependency in a public repo; no round cap there).
+- Honest limit to expect in the plan: Playwright tests skip as in CI, so Python code reached only by browser tests counts as uncovered.
+- Running: lane 1 (outsider pass 1: its SUMMARY is still in progress), DeepSource cluster builder, lane 7. Lane 6 idle CPU sample waits for lane 1. Stuck: nothing.
+
 ## 2026-11-12 19:41Z - LANE 4 DONE (second outsider pass, branch pr-3-tests bee6fff4, uv + CPython 3.12.3); 2 agents running (lane 1, DeepSource builder)
 FAILED / PROBLEMS first (EVIDENCE RUNNER: recorded, not judged; outsider2/SUMMARY.md and 15 raw files):
 1. docker unusable: 'failed to connect to the docker API at unix:///var/run/docker.sock ... no such file or directory' (no daemon); used uv 0.11.32 with CPython 3.12.3 instead.
