@@ -1,0 +1,12 @@
+# ciguard-956bac0f-codebase-r1: ORDER 266 CI guard, head 956bac0f, round 1, persona codebase details
+
+Source: hand-back of the codebase reviewer (agent a7b9e66205f01c270), saved by the lead session (condensed). SECURITY path. Read only (no git or tests run). 0 Blocker, 1 Major, 5 minors. Same Major as the design reviewer.
+
+## Major
+1. The `git branch -r --contains` allowlist (ci.yml, DIFF.patch line 10; golden line 44) accepts any `origin/wip/cloud-[A-Za-z0-9._-]+`. Ignore-entry grammar `<sha>:[^:]+:<rule>:<line>` does not restrict the path to handover/. A PR author pushes `wip/cloud-foo` holding a commit X that is also in the PR history and adds `X:src/a.py:generic-api-key:1` to .gitleaksignore: both checks pass; gitleaks reads .gitleaksignore from the PR tree, so this guard is the only control. The range widening is covered by the HEAD-only check; the ignore-entry widening is covered by nothing. Fix: keep the wip alternation out of the ignore-entry regex, OR require that entries whose commit is only on a lane branch have path `^handover/(reviews|tickets|evidence)/`; otherwise record that creation of `wip/*` must be restricted to owners.
+## Checked correct
+`--remotes=` after `--not` negates (git revision.c, unexecuted); quoting of the bash array under `bash -e` and no `set -u` issue; fetch-depth 0 fetches all origin refs; HEAD-only check sound; trailing newline and anchoring (`wip/cloudx` fails, `wip/cloud-` fails); step name has no colon+space; golden hunk equals the ci.yml text; 14 new cases counted and they run the real step text.
+## Minor
+1 glob `*` crosses `/` (and matches an empty suffix): `wip/cloud-x/y`, `wip/cloud-`, `wip/cloud-a+b` are subtracted from the range though the regex rejects them; add tests or narrow the glob (loop over refs with the same regex). 2 `test_a_head_built_on_a_lane_commit...` is weaker than its docstring: the merge fast-forwards so the old range would also fail; only the message assertion discriminates; put the delete commit on the lane ref too. 3 `_lane_branch` unused `ignore_line` parameter. 4 ignore-entry test never covers the Major (a non-handover path on a lane commit). 5 docstring fine; `datetime.UTC` needs 3.11+.
+## Not checked
+Tests or git run; 681 to 0 counts; `regenerate_goldens()` byte for byte; zizmor/actionlint; GitHub rulesets on wip/*; .gitleaks.toml contents; helper `_load`/`_step`/`GOLDEN_COMMANDS` grounded in a sibling checkout (prh-author/main) not base a8b4d8e8.
