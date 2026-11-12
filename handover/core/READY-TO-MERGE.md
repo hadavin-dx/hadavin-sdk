@@ -2,6 +2,15 @@
 
 Written 2026-11-12 19:05 UTC / 2026-11-13 00:35 IST (lead ORDER 256 item C). Read-only snapshot: no pull request was changed, commented on or merged. Current main is `2a8c2aac` (committed 2026-11-09 08:56 UTC). 30 pull requests are open.
 
+## UPDATE 20:15Z (ORDER 262; closest to merge, with what is missing)
+- **#71 (P0a):** fix pushed on `wip/cloud-p0a-fix` 8b982dd3 (one test file, 419 lines added; builder: full pytest 10233 passed, lint, bandit, gitleaks clean, 22 of 62 tests fail on the old guard). Missing: independent evidence run (not done); the lead merges the fix ref onto core/P0a. Builder-stated risk: a pglast folder with an unusual suffix is missed. **I call it READY for the lead's decision.**
+- **#72 nits (`wip/cloud-p6a-nits` 7a6eb4e9):** missing independent evidence (only 6 of 93 mutants run) and one fresh review.
+- **Q8a-1 b19:** NOT close: r19 found a Blocker (non-dict input bypass), a fix batch is owed.
+- **Q8c-1 b16:** NOT close: r15 Major (run-time import name).
+- **Part 2 (public bind) e75f9f25:** independent evidence landed and is clean; two reviews running.
+- **Part 6 (banner):** evidence runner running.
+- Rebase results (main a8b4d8e8): stack 3 pushed (P5a d2e8c1f5, P5b1 423e0be6, P5b2-main 5aac4ea5), needs reviewer check; stacks 1 and 2 not yet reported to this file.
+
 ## UPDATE 19:15Z (ORDER 257/258; newest block; the older text below is kept and is partly superseded)
 - **Main is now a8b4d8e8.** #72 (P6a) is **MERGED** by the lead. #90 (gitleaks scans only history reachable from the checked-out head), #87 and #88 are also merged since the table was written.
 - **#71 (P0a) is NEEDS-FIX, not READY:** the lead's fresh reviewer found 2 Majors (a pglast name-normalisation gap in the guard; a symlink test that raises on Windows) plus nits. A fix builder is running (branch core/p0a-fix from core/P0a, push ref wip/cloud-p0a-fix). Then ONE confirming review; the lead merges.

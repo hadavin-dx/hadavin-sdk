@@ -13,3 +13,4 @@
 19:55Z ORDER 260 builder running, design v2 resolved
 19:59Z 14 agent rows, load 10.9, ORDER 261 tables started
 20:04Z P3a-2 b9 partial, #71 fix pushed, 13 agent rows
+20:15Z parked 5 builders, queue 13 to 4, heavy.sh fixed, part 2 reviews running; next: read stack 2 and Q8c-1 b16 reports

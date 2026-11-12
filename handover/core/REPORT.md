@@ -1,5 +1,46 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## Block 20:15Z / 01:45 IST (ORDER 262 done: parking; ORDER 261 tables)
+**Failed or uncertain first.** (1) Q8c-1 round 15 and Q8a-1 round 19 reports show new Blockers/Majors in the same class as earlier rounds (Q8c-1 N1: run-time import name; Q8a-1 B1: non-dict input bypasses the hidden-input guard, confirmed by my own probe). I have not yet run the resolve step for Q8a-1 b19 (evidence runner aa62f462 still waiting on a slot). (2) Stack 3 rebase: one regression found and fixed by the rebaser (CORPUS_STEP); full suite NOT re-run on the final head 5aac4ea5; P5b1 is a squash; a possible coverage loss (noqa_sites check removed) and one OPERATOR classification need a reviewer. (3) #71 fix 8b982dd3: builder evidence only (full pytest 10233 passed); I have not run an independent evidence pass; the guard now matches `pglast` names by a regex that misses an unusual suffix such as `pglast-extras` (builder's own stated risk).
+**Done now.** Parked AK1-a, AK-G2-a b2, Q8b b14 gate-fix (builder told to push and stop), PRH b12, P3a-2 b9: `handover/core/PARKED.md` (refs, heads, owed gates, where to run). Removed their waiting gate jobs; queue went from 13 to 4 waiters. Fixed heavy.sh: (a) the Q8a-1 evidence runner was queued at priority 5 because its folder was not recognised; now priority 1; (b) the old "after 90 minutes run anyway" fallback (a cause of load above 3 jobs) now exits 75 with "GATE OWED". Created `handover/core/run-ledger.tsv` (5 rows so far). Part 2 reviewers launched (design, codebase).
+**Which branches to gate on the laptop (Windows/6 cores):** PRH b12 (perf timing, alone). Everything else needs Linux/Postgres or the root/nobody variants: cloud only. Closest to merge: #71 (8b982dd3, waits only for the lead), part 2 (reviews now), part 6 (evidence runner running), Q8a-1 (needs fix for B1, so NOT close), Q8c-1 (round 15 Major N1, NOT close).
+
+### LIVE ITEMS
+| id | purpose | started UTC | running | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| aad30370 | design review, part 2 | 20:13 | 2 min | 20:25 | running | review text | launched |
+| a4074192 | codebase review, part 2 | 20:13 | 2 min | 20:25 | running | review text | launched |
+| a96da480 | ORDER 260 builder (path containment) | 19:56 | 19 min | 20:56 | running, no push yet (not a heavy waiter) | wip/cloud-sonar-path push | checkpoint due 20:26 |
+| aae188b2 | part 3 batch 2 builder | before 19:30 | over 60 min box | late | standin_mutants / slots | wip push | no new push seen: OVER BOX, I ask it to hand back at its next gate |
+| aabeb61f | part 6 evidence runner | about 19:40 | about 35 min | 20:30 | waiting on slots | evidence file | none seen |
+| aa62f462 | Q8a-1 b19 evidence runner | before 19:00 | over 75 min | 20:30 | gate now priority 1 | evidence file | waiting on full pytest |
+| ac7c9ed7 | stack 1 rebaser | before 19:20 | over box | 20:30 | waiting full pytest | wip/cloud-rebase refs | none seen: OVER BOX |
+| a1950c03 | Q8b gate-fix (parking) | before 19:30 | over box | 20:20 | told to park | note and push | parking |
+Totals: agents 8 running, heavy slots 3 of 3, waiters 4 (1 prio 1, 1 prio 2, 1 prio 3, 1 prio 4), load about 8 (was 9.2).
+
+### ROUNDS
+| package | round now | findings per round | class | why another round | stop rule says | what ends the loop |
+|---|---|---|---|---|---|---|
+| Q8c-1 | 16 (r15: 0B 1M 5m) | r13-15: 1-2 Majors each | notes-check run-time import name | r15 Major N1 is the same class as r14 | security path, no cap; continue | one fix covering EVERY unreadable-name form, then one clean round |
+| Q8a-1 | 20 (r19: 1B 3M) | b18 fix was wrong | non-dict input bypass | real Blocker, confirmed | continue | restore overrides, per-shape tests, then one clean round |
+| PD part 2 | 1 | none yet | public bind | first round | continue | 0 B/M |
+| PD part 3 | 2 | r1 8M | text-guard stand-ins | confirming | one confirming round | 0 B/M |
+| #71 | 2 done | r2 0B 0M, minors fixed | pglast guard | none | STOP (done) | lead merge |
+| P3a-2 b9 | partial | - | error chaining | a round exists because its gate sat at priority 7 (waste; now parked) | pause | resume per PARKED.md |
+| ORDER 260 | 1 (design) | 5B 14M | path rules | design rewritten | one fresh round after rewrite | 0 B/M |
+Waste found: P3a-2 b9 (gate starved), Q8a-1 b19 (evidence mis-prioritised at 5: now fixed). Cause fixed in heavy.sh.
+
+### FINISHED SINCE LAST BLOCK
+| id | ran | result | row |
+|---|---|---|---|
+| a9d4815d part 2 evidence | 47 min | 37/37 stage mutants, 18/18 bind mutants, lint clean, 1 own-Postgres failure then clean rerun | closed |
+| a7e8d078 #71 fix builder | 52 min | pushed 8b982dd3, full pytest 10233 passed | closed; ledger update pending |
+| a2c5746d stack 3 rebaser | 59 min | wip/cloud-rebase-P5a d2e8c1f5, P5b1 423e0be6, P5b2-main 5aac4ea5 | closed |
+| a9b23369 stack 2 rebaser | n/a | report not read yet | closed, report to read |
+| a70bb036 Q8c-1 b16 builder | n/a | report not read yet | closed, report to read |
+| acf6ab74 AK-G2-a b2 builder | - | parked at 3073bf75 | closed |
+| aeec4228 AK1-a builder | - | parked at b95e1853 | closed |
+
 ## 20:04Z UTC / 01:34 IST: status
 - FAILED / PARTIAL first: P3a-2 b9 builder (a785524) ended PARTIAL after ~85 min: groups 1, 2, 3, 8 built, tests pass (95 + fail-before 94 of 108 new ids fail on old code), lint, scan, gitleaks exit 0; NO mutant result (30 mutants), no full pytest, no group 6 / 9 / 5, because its heavy jobs sat at the lowest queue priority (7) behind higher ones for the whole time box. Pushed `wip/cloud-p3a2-b9` 15ef17e6. AK-G2-a b2: pass 3 gave 62 of 69, seven fixed (one real survivor, P11), final mutants + gates + full suite running via its own script (not finished); head 3073bf75 pushed to `wip/cloud-ak-g2-a`.
 - #71 fix: builder pushed `wip/cloud-p0a-fix` 8b982dd3 (hand-back pending; not yet verified by me). ORDER 260 builder a96da480 running (7 min, reading and writing code; no push yet).
