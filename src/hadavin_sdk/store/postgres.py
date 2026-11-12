@@ -69,6 +69,23 @@ def _is_local(parts: dict) -> bool:
     return True
 
 
+def dsn_parts(dsn: str) -> dict[str, Any]:
+    """The parts of a DSN (a connection string), the one place that reads it (r19 group 8). The driver's error for a DSN that
+    cannot be read QUOTES a piece of the string it was given (`missing "=" after "<a word of the DSN>"`), and that word can be
+    part of a password that holds a space; so only the class name is kept, and the refusal is raised outside the `except`
+    block, with no other error on `__context__` or `__cause__`. A `ConfigError` (exit 2): the address is wrong, a second
+    try does not help."""
+    failed = ""
+    try:
+        return conninfo_to_dict(dsn)
+    except Exception as exc:  # noqa: BLE001 - any failure of the parser, class name only (the text quotes the DSN)
+        failed = type(exc).__name__
+    raise ConfigError(
+        f"store postgres: the database address (the DSN) is not a valid connection string ({failed}); "
+        "the words of the driver's error are not shown because they can quote part of the address."
+    )
+
+
 def tls_mode(
     dsn: str, *, iam_auth: bool = False, sslmode: str | None = None, sslrootcert: str | None = None
 ) -> str | None:
@@ -76,7 +93,13 @@ def tls_mode(
     defaults to `verify-full` (the server's certificate and name are checked, so credentials cannot be
     captured by an impostor); an explicit weaker `sslmode` is an opt-down for demo. With iam_auth (a bearer
     token) only `verify-full` or `verify-ca` is accepted. A verified mode needs the CA bundle."""
-    parts = conninfo_to_dict(dsn)
+    return _tls_mode_of(dsn_parts(dsn), iam_auth=iam_auth, sslmode=sslmode, sslrootcert=sslrootcert)
+
+
+def _tls_mode_of(
+    parts: dict[str, Any], *, iam_auth: bool, sslmode: str | None, sslrootcert: str | None
+) -> str | None:
+    """`tls_mode` for a DSN that was already read (so `connect` reads it once)."""
     mode = sslmode or parts.get("sslmode")
     if not iam_auth and _is_local(parts):
         return mode
@@ -139,14 +162,17 @@ def connect(
     sslrootcert: str | None = None,
 ) -> psycopg.Connection:
     extra: dict[str, Any] = {}
-    if mode := tls_mode(dsn, iam_auth=iam_auth, sslmode=sslmode, sslrootcert=sslrootcert):
+    parts = dsn_parts(
+        dsn
+    )  # read once (r19 group 8): an address that cannot be read is refused before anything else
+    if mode := _tls_mode_of(parts, iam_auth=iam_auth, sslmode=sslmode, sslrootcert=sslrootcert):
         extra["sslmode"] = mode
     if sslrootcert:
         extra["sslrootcert"] = sslrootcert
     if iam_auth:
-        parts = conninfo_to_dict(dsn)
         # The migration role may log in with a password; the runtime never (refused in build()).
-        if not parts.get("password"):
+        dsn_password = parts.get("password")
+        if not dsn_password:
             host, port, user = (
                 parts.get("host", ""),
                 parts.get("port") or "5432",
@@ -233,7 +259,7 @@ def build(settings, deps) -> PostgresStore:
         settings.iam_auth, settings.region
     )  # a missing `aws` extra fails here, with the hint
     dsn = deps.resolve(settings.dsn_secret_name)
-    if settings.iam_auth and conninfo_to_dict(dsn).get("password"):
+    if settings.iam_auth and dsn_parts(dsn).get("password"):
         raise ConfigError(
             "store postgres: with iam_auth the DSN must not carry a password (the login is an IAM token)"
         )
@@ -248,6 +274,13 @@ def build(settings, deps) -> PostgresStore:
         )
     except psycopg.OperationalError as exc:
         unavailable = exc.__class__.__name__
+    except SignInError as exc:
+        # r19 group 3: a sign-in failure that a second try can cure (a timeout, a lost network, a throttled request) is "the
+        # store cannot be reached, run again" (exit 4 of the kill switch and of `tick`), not "the configuration is wrong"
+        # (exit 2). Any other sign-in failure passes on as it is. Only the class name of the SDK error is kept.
+        if not exc.transient:
+            raise
+        unavailable = exc.kind or "SignInError"
     if unavailable:
         # The class only: driver messages can carry the host and user. Raised outside the `except` block (r18 group 1), so
         # the driver error is not kept on `__context__` either.

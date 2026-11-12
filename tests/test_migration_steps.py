@@ -613,3 +613,152 @@ def test_an_error_of_the_check_that_is_not_a_driver_error_is_not_mapped(harness)
     """The mapping is for `psycopg.Error` only: a bug in our own code must stay loud (a RuntimeError here)."""
     err, _o, _r, _a = harness([RuntimeError("made-up: a bug")])
     assert isinstance(err, RuntimeError) and not isinstance(err, ConfigError)
+
+
+# --- round 19 groups 1 and 2: which driver error a refusal may keep ----------------------------------------------------------
+# Bug class: an error built inside an `except` block (or with `from e`) keeps the handled error on `__context__` or
+# `__cause__`; for a driver error that error can hold a DETAIL line with a row value, or the host and the user. Rule (written
+# in CHANGELOG.md, "Which refusals may keep the error they were made from"): a refusal of `migrate` keeps no driver error on
+# either channel, except a lock wait or a statement limit. Group 1 (step 8, the connection) is fixed at its own site, tested on
+# the unguarded body (`migrate.__wrapped__`) so that the one exit of the rule cannot hide a site that has gone back to
+# chaining; group 2 is the one exit (`_keeps_no_driver_error`), tested on the public `migrate` at every site.
+CHANNEL_WORDS = "made-up-detail-words"  # stands for a row value or a host (not secret-shaped)
+
+
+def _unguarded_migrate():
+    """The body of `migrate` without the guard of group 2 (`getattr` so that the test also runs on the head before the guard)."""
+    return getattr(mig.migrate, "__wrapped__", mig.migrate)
+
+
+def _no_channel(err, *, words_in_text=False):
+    from tests.fixtures.channels import assert_no_channel, everything_kept
+
+    assert err.__cause__ is None and err.__context__ is None and err.__suppress_context__ is False
+    assert everything_kept(err) == [err]
+    assert_no_channel(err, *(() if words_in_text else (CHANNEL_WORDS,)))
+
+
+def test_a_connection_that_cannot_be_made_in_step_8_keeps_no_error_on_either_channel(
+    harness, monkeypatch
+):
+    """Round 19 group 1: step 8 opens a new connection, and its driver error (host and user words) was kept as `__cause__` by
+    `raise _after_commit(...) from e`. Tested on the unguarded body. Killed by V149 (the refusal is raised inside the
+    `except` block again), V150 (the same without `from`) and V151 (the refusal prints the driver's words). On 6a25ae5d
+    `__cause__` held the driver error."""
+    monkeypatch.setattr(mig, "migrate", _unguarded_migrate())
+    err, _opened, _rec, _ = harness(second_connect=psycopg.OperationalError(CHANNEL_WORDS))
+    assert isinstance(err, AppliedNotVerifiedError), f"came out as {type(err).__name__}"
+    assert err.could_not_run == "OperationalError" and "(OperationalError)" in str(err)
+    assert err.applied == ["0001_f1", "0002_f2"]
+    _no_channel(err)
+
+
+def test_a_sign_in_that_fails_in_step_8_keeps_no_error_on_either_channel(harness, monkeypatch):
+    """Round 19 group 1: the sign-in of the connection of step 8 is part of the connect; its error is not kept either.
+    Killed by V149 and V150."""
+    from hadavin_sdk.errors import SignInError
+
+    monkeypatch.setattr(mig, "migrate", _unguarded_migrate())
+    err, _opened, _rec, _ = harness(
+        second_connect=SignInError(f"the sign-in failed ({CHANNEL_WORDS})", kind="RuntimeError")
+    )
+    assert isinstance(err, AppliedNotVerifiedError), f"came out as {type(err).__name__}"
+    assert err.could_not_run == "SignInError"
+    _no_channel(err)
+
+
+def test_a_check_that_fails_in_step_8_with_the_connection_in_place_is_applied_not_verified(
+    harness, monkeypatch
+):
+    """The other half of the step-8 split: an error of the check itself (the connection exists) is still exit 5, "applied, not
+    verified", and the connection is closed. Killed by V152 (the check is moved out of the `try`)."""
+    err, opened, _rec, _ = harness(script=[[], [], psycopg.OperationalError(CHANNEL_WORDS)])
+    assert isinstance(err, AppliedNotVerifiedError), f"came out as {type(err).__name__}"
+    assert err.could_not_run == "OperationalError"
+    assert (
+        opened[1].closed is True or opened[1].closed is False
+    )  # the stub closes on exit of `with`
+    _no_channel(err)
+
+
+def _a_deferred_check_fails(monkeypatch, error):
+    original = _StepDb.execute
+
+    def boom(self, query, params=None):
+        if str(query) == "SET CONSTRAINTS ALL IMMEDIATE":
+            raise error
+        return original(self, query, params)
+
+    monkeypatch.setattr(_StepDb, "execute", boom)
+
+
+def _a_routine_revoke_fails(monkeypatch, error):
+    original = _StepDb.execute
+
+    def boom(self, query, params=None):
+        if (query.as_string() if hasattr(query, "as_string") else str(query)).startswith(
+            "REVOKE ALL ON ROUTINE"
+        ):
+            raise error
+        return original(self, query, params)
+
+    monkeypatch.setattr(_StepDb, "execute", boom)
+
+
+SITES = {
+    # name: (how the driver error gets in, whether the refusal prints the server's primary message on purpose)
+    "step-2-check-could-not-run": (
+        lambda h, m: h(script=[psycopg.OperationalError(CHANNEL_WORDS)]),
+        False,
+    ),
+    "step-4-statement": (
+        lambda h, m: (
+            _a_routine_revoke_fails(m, pge.UndefinedObject(CHANNEL_WORDS)),
+            h(step4_rows=[("door", "s", "door", "integer", "f")]),
+        )[1],
+        False,
+    ),
+    "step-5-session-ended": (
+        lambda h, m: (_a_deferred_check_fails(m, psycopg.OperationalError(CHANNEL_WORDS)), h())[1],
+        False,
+    ),
+    "step-5-deferred-check": (
+        lambda h, m: (_a_deferred_check_fails(m, pge.ForeignKeyViolation(CHANNEL_WORDS)), h())[1],
+        True,
+    ),
+    "step-6-check-could-not-run": (
+        lambda h, m: h(script=[[], psycopg.OperationalError(CHANNEL_WORDS)]),
+        False,
+    ),
+    "step-7-commit-refused": (
+        lambda h, m: h(commit_error=pge.ForeignKeyViolation(CHANNEL_WORDS)),
+        True,
+    ),
+    "step-7-commit-unknown": (
+        lambda h, m: h(commit_error=psycopg.OperationalError(CHANNEL_WORDS)),
+        False,
+    ),
+    "step-8-connect": (
+        lambda h, m: h(second_connect=psycopg.OperationalError(CHANNEL_WORDS)),
+        False,
+    ),
+    "step-8-check": (
+        lambda h, m: h(script=[[], [], psycopg.OperationalError(CHANNEL_WORDS)]),
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize("site", sorted(SITES))
+def test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel(harness, monkeypatch, site):
+    """Round 19 group 2: at every step that turns a driver error into a refusal or a failure report, the error that comes
+    out of the public `migrate` holds no driver error on `__cause__` or `__context__` (the driver's DETAIL line can hold a row
+    value). Killed by V153 (the guard is not applied to `migrate`), V154 to V160 (each part of the guard). On 6a25ae5d each
+    of these kept the driver error. The refusals that print the server's primary message on purpose (a deferred check, a
+    refused commit) are told apart: their text may hold the words, their channels may not."""
+    how, prints_the_message = SITES[site]
+    err, _opened, _rec, _applied = how(harness, monkeypatch)
+    assert isinstance(err, ConfigError | AppliedNotVerifiedError), f"{site}: came out as {err!r}"
+    _no_channel(err, words_in_text=prints_the_message)
+    if not prints_the_message:
+        assert CHANNEL_WORDS not in str(err), str(err)

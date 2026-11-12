@@ -107,6 +107,7 @@ drop or edit the ledger.
 
 from __future__ import annotations
 
+import functools
 import json
 import re
 from contextlib import contextmanager
@@ -1432,6 +1433,51 @@ def _after_commit(
     )
 
 
+def _is_a_limit_error(e: BaseException) -> bool:
+    """A lock wait or a statement limit: the driver words of these hold no row value, so a refusal may keep them."""
+    return isinstance(e, pg_errors.LockNotAvailable | pg_errors.QueryCanceled)
+
+
+def _driver_error_in_chain(err: BaseException) -> bool:
+    """True when `err` keeps a driver error (other than a limit error) on `__cause__` or `__context__`, at any depth."""
+    seen: list[BaseException] = []
+    todo = [err.__cause__, err.__context__]
+    while todo:
+        e = todo.pop()
+        if e is None or any(e is s for s in seen):
+            continue
+        seen.append(e)
+        if isinstance(e, psycopg.Error) and not _is_a_limit_error(e):
+            return True
+        todo += [e.__cause__, e.__context__]
+    return False
+
+
+def _keeps_no_driver_error(run):
+    """r19 group 2, the one place for the rule "which refusal may keep the error it was made from" (written in
+    `CHANGELOG.md`). A refusal or a failure report that `migrate` raises (not the driver's own error, which a migration
+    file's own failure passes through with its own text on purpose) keeps NO driver error on `__cause__` or `__context__`,
+    except a lock wait or a statement limit (no row value in their words; one test pins it). The driver's text of a
+    statement can hold a DETAIL line with a row value (a key, a value that broke a constraint) and a connection error can
+    hold the host and the user; the refusal prints the SQLSTATE code and its own words instead. Done here, at the single
+    exit, because a refusal that is raised inside an `except` block keeps the handled error on `__context__` whatever
+    `from` says, and some of these refusals must be raised inside the open transaction so that it is rolled back."""
+
+    @functools.wraps(run)
+    def guarded(*args, **kwargs):
+        try:
+            return run(*args, **kwargs)
+        except Exception as err:
+            if not isinstance(err, psycopg.Error) and _driver_error_in_chain(err):
+                err.__cause__ = None
+                err.__context__ = None
+                err.__suppress_context__ = False
+            raise
+
+    return guarded
+
+
+@_keeps_no_driver_error
 def migrate(
     dsn: str,
     *,
@@ -1666,10 +1712,21 @@ def migrate(
             raise
         raise plain from e
     # step 8: a new connection, one snapshot, no lock. Any failure here is "applied but not verified", never "refused".
+    # r19 group 1: the connection (and its sign-in) is made first, and a failure of that step is turned into the class NAME
+    # outside the `except` block, so the refusal keeps neither the driver error nor the sign-in error (host and user words) on
+    # `__cause__` or `__context__`. An error of the check itself, with the connection in place, may keep `__cause__`
+    # (the written rule is in `CHANGELOG.md`, "Which refusals may keep the error they were made from").
+    could_not_connect: str | None = None
     try:
-        with connect(
+        after = connect(
             dsn, iam_auth=iam_auth, region=region, sslmode=sslmode, sslrootcert=sslrootcert
-        ) as after:
+        )
+    except Exception as e:  # noqa: BLE001 - any error at all (class name only): the commit happened and the check did not finish
+        could_not_connect = type(e).__name__
+    if could_not_connect is not None:
+        raise _after_commit(applied, [], could_not_run=could_not_connect)
+    try:
+        with after:
             after.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
             after.read_only = True
             problems = _state_problems(

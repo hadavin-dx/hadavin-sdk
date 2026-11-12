@@ -60,6 +60,7 @@ VERIFY = "src/hadavin_sdk/store/migration_verify.py"
 AUTH = "src/hadavin_sdk/store/auth_aws.py"
 PGS = "src/hadavin_sdk/store/postgres.py"
 T_SIGN = "tests/test_sign_in_channels.py"
+T_CHAN = "tests/test_driver_error_channels.py"
 
 
 @dataclass(frozen=True)
@@ -4497,6 +4498,473 @@ M: list[Mutant] = [
             k(
                 T_SIGN,
                 "test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error[client-error-client-is-built]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V149",
+        "Round 19 group 1: the refusal of a failed connection in step 8 is raised inside the except block with from e (the driver error stays on __cause__)",
+        MIG,
+        "        could_not_connect = type(e).__name__\n",
+        "        raise _after_commit(applied, [], could_not_run=type(e).__name__) from e\n",
+        (
+            k(
+                T_STEPS,
+                "test_a_connection_that_cannot_be_made_in_step_8_keeps_no_error_on_either_channel",
+            ),
+            k(T_STEPS, "test_a_sign_in_that_fails_in_step_8_keeps_no_error_on_either_channel"),
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_refused_in_step_8_on_a_real_server_keeps_no_driver_error_on_either_channel",
+            ),
+        ),
+    ),
+    Mutant(
+        "V150",
+        "Round 19 group 1: the refusal of a failed connection in step 8 is raised inside the except block with no from (the driver error stays on __context__)",
+        MIG,
+        "        could_not_connect = type(e).__name__\n",
+        "        raise _after_commit(applied, [], could_not_run=type(e).__name__)\n",
+        (
+            k(
+                T_STEPS,
+                "test_a_connection_that_cannot_be_made_in_step_8_keeps_no_error_on_either_channel",
+            ),
+            k(T_STEPS, "test_a_sign_in_that_fails_in_step_8_keeps_no_error_on_either_channel"),
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_refused_in_step_8_on_a_real_server_keeps_no_driver_error_on_either_channel",
+            ),
+        ),
+    ),
+    Mutant(
+        "V151",
+        "Round 19 group 1: the refusal of a failed connection in step 8 prints the driver's own words",
+        MIG,
+        "        could_not_connect = type(e).__name__\n",
+        "        could_not_connect = str(e)\n",
+        (
+            k(
+                T_STEPS,
+                "test_a_connection_that_cannot_be_made_in_step_8_keeps_no_error_on_either_channel",
+            ),
+            k(T_STEPS, "test_a_sign_in_that_fails_in_step_8_keeps_no_error_on_either_channel"),
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_refused_in_step_8_on_a_real_server_keeps_no_driver_error_on_either_channel",
+            ),
+        ),
+    ),
+    Mutant(
+        "V152",
+        "Round 19 group 1: an error of the check of step 8 (the connection is in place) is no longer turned into the failure report",
+        MIG,
+        "    except Exception as e:  # any error at all: the commit happened and the check did not finish\n        raise _after_commit(applied, [], could_not_run=type(e).__name__) from e\n",
+        "    except KeyError as e:  # any error at all: the commit happened and the check did not finish\n        raise _after_commit(applied, [], could_not_run=type(e).__name__) from e\n",
+        (
+            k(
+                T_STEPS,
+                "test_a_check_that_fails_in_step_8_with_the_connection_in_place_is_applied_not_verified",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-8-check]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V153",
+        "Round 19 group 2: `migrate` is not guarded (the one exit of the rule is not applied)",
+        MIG,
+        "@_keeps_no_driver_error\ndef migrate(\n",
+        "def migrate(\n",
+        (
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-4-statement]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-5-deferred-check]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-7-commit-refused]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-8-check]",
+            ),
+            k(T_CHAN, "test_migrate_is_wrapped_and_keeps_its_signature_and_its_text"),
+        ),
+    ),
+    Mutant(
+        "V154",
+        "Round 19 group 2: the guard leaves __context__ in place",
+        MIG,
+        "                err.__context__ = None\n",
+        "",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-implicit-config]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-nested-config]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-5-session-ended]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V155",
+        "Round 19 group 2: the guard leaves __cause__ in place",
+        MIG,
+        "                err.__cause__ = None\n",
+        "",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-from-e-config]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-from-e-applied-not-verified]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-4-statement]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V156",
+        "Round 19 group 2: the guard hides the chain from the printed traceback only (__suppress_context__ stays True)",
+        MIG,
+        "                err.__suppress_context__ = False\n",
+        "                err.__suppress_context__ = True\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-from-e-config]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-6-check-could-not-run]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V157",
+        "Round 19 group 2: the guard handles a ConfigError only (a failure report is not guarded)",
+        MIG,
+        "        except Exception as err:\n",
+        "        except ConfigError as err:\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-from-e-applied-not-verified]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-7-commit-unknown]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-8-check]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V158",
+        "Round 19 group 2: the search for a driver error looks at the first links only (not behind another refusal)",
+        MIG,
+        "        todo += [e.__cause__, e.__context__]\n    return False",
+        "        pass\n    return False",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[operational-nested-config]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[unique-violation-nested-applied-not-verified]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V159",
+        "Round 19 group 2: only one class of driver error is recognised (not every psycopg.Error)",
+        MIG,
+        "        if isinstance(e, psycopg.Error) and not _is_a_limit_error(e):",
+        "        if isinstance(e, pg_errors.OperationalError) and not _is_a_limit_error(e):",
+        (
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[unique-violation-from-e-config]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_refusal_made_from_a_driver_error_keeps_it_on_no_channel[check-violation-implicit-config]",
+            ),
+            k(
+                T_STEPS,
+                "test_no_refusal_of_migrate_keeps_a_driver_error_on_either_channel[step-5-deferred-check]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V160",
+        "Round 19 group 2: the guard drops the cause of any refusal (also one that is not a driver error)",
+        MIG,
+        "            if not isinstance(err, psycopg.Error) and _driver_error_in_chain(err):",
+        "            if not isinstance(err, psycopg.Error):",
+        (k(T_CHAN, "test_an_error_that_is_not_a_driver_error_keeps_its_cause"),),
+    ),
+    Mutant(
+        "V161",
+        "Round 19 group 2: the guard also clears the chain of the driver's own error (a migration file's failure)",
+        MIG,
+        "            if not isinstance(err, psycopg.Error) and _driver_error_in_chain(err):",
+        "            if _driver_error_in_chain(err):",
+        (k(T_CHAN, "test_a_raw_driver_error_of_a_migration_file_passes_through_unchanged"),),
+    ),
+    Mutant(
+        "V162",
+        "Round 19 group 2: a lock wait or a statement limit is not recognised (its cause is dropped too)",
+        MIG,
+        "    return isinstance(e, pg_errors.LockNotAvailable | pg_errors.QueryCanceled)\n",
+        "    return False\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_lock_wait_or_a_statement_limit_is_still_kept_as_the_cause[LockNotAvailable]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_lock_wait_or_a_statement_limit_is_still_kept_as_the_cause[QueryCanceled]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V163",
+        "Round 19 group 2: only a lock wait is recognised as a limit (a statement limit is dropped)",
+        MIG,
+        "    return isinstance(e, pg_errors.LockNotAvailable | pg_errors.QueryCanceled)\n",
+        "    return isinstance(e, pg_errors.LockNotAvailable)\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_lock_wait_or_a_statement_limit_is_still_kept_as_the_cause[QueryCanceled]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V164",
+        "Round 19 group 2: a limit error next to a row-value error is kept (the check stops at the first limit error)",
+        MIG,
+        "        if isinstance(e, psycopg.Error) and not _is_a_limit_error(e):\n            return True\n",
+        "        if isinstance(e, psycopg.Error):\n            return not _is_a_limit_error(e)\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_chain_that_holds_a_limit_error_and_another_driver_error_keeps_neither",
+            ),
+        ),
+    ),
+    Mutant(
+        "V165",
+        "Round 19 group 2: a new `raise ... from e` is added to a function that is not on the written list",
+        MIG,
+        "        if (plain := _limit_error(e, step)) is not None:\n            raise plain from e\n",
+        "        if (plain := _limit_error(e, step)) is not None:\n            raise plain from e\n        if False:\n            raise plain from e\n",
+        (
+            k(
+                T_CHAN,
+                "test_every_raise_from_of_migrate_is_on_the_written_list_or_is_one_of_the_guarded_driver_sites",
+            ),
+        ),
+    ),
+    Mutant(
+        "V166",
+        "Round 19 group 3: a timeout or a lost network is not transient",
+        AUTH,
+        "        OSError\n        | botocore_errors.ConnectionError\n",
+        "        botocore_errors.ConnectionError\n",
+        (
+            k(
+                T_CHAN,
+                "test_the_classifier_calls_a_timeout_a_lost_network_or_a_throttle_transient[os-error]",
+            ),
+            k(
+                T_CHAN,
+                "test_the_classifier_calls_a_timeout_a_lost_network_or_a_throttle_transient[timeout]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V167",
+        "Round 19 group 3: a throttling code is read the wrong way round",
+        AUTH,
+        "in THROTTLING_CODES",
+        "not in THROTTLING_CODES",
+        (
+            k(
+                T_CHAN,
+                "test_the_classifier_calls_a_timeout_a_lost_network_or_a_throttle_transient[throttled]",
+            ),
+            k(
+                T_CHAN,
+                "test_the_classifier_does_not_call_a_missing_login_or_a_refusal_transient[unknown-code]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V168",
+        "Round 19 group 3: the token step does not pass the transient flag on",
+        AUTH,
+        "        raise _refused(failed, transient)\n",
+        "        raise _refused(failed)\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_transient_sign_in_failure_while_the_store_is_built_is_store_unavailable_by_class_name[timeout]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_transient_sign_in_failure_while_the_store_is_built_is_store_unavailable_by_class_name[throttled]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V169",
+        "Round 19 group 3: every failure of the token step is called transient",
+        AUTH,
+        "            transient = is_transient(exc)\n",
+        "            transient = True\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_sign_in_failure_that_a_second_try_cannot_cure_stays_the_refusal_of_exit_2[runtime-error]",
+            ),
+            k(
+                T_CHAN,
+                "test_a_sign_in_failure_that_a_second_try_cannot_cure_stays_the_refusal_of_exit_2[access-denied]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V170",
+        "Round 19 group 3: the store build does not turn a transient sign-in failure into StoreUnavailable (the clause is dropped)",
+        PGS,
+        "    except SignInError as exc:\n        # r19 group 3",
+        "    except KeyError as exc:\n        # r19 group 3",
+        (
+            k(
+                T_CHAN,
+                "test_a_transient_sign_in_failure_while_the_store_is_built_is_store_unavailable_by_class_name[os-error]",
+            ),
+            k(
+                T_CHAN,
+                "test_the_kill_switch_says_not_set_run_again_exit_4_for_a_transient_sign_in_failure[stop-os-error]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V171",
+        "Round 19 group 3: the store build turns every sign-in failure into StoreUnavailable",
+        PGS,
+        "        if not exc.transient:\n            raise\n",
+        "        if False:\n            raise\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_sign_in_failure_that_a_second_try_cannot_cure_stays_the_refusal_of_exit_2[runtime-error]",
+            ),
+            k(
+                T_CHAN,
+                "test_the_kill_switch_keeps_exit_2_for_a_sign_in_failure_that_is_not_transient[stop]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V172",
+        "Round 19 group 3: the store unavailable message holds the sign-in error's own text",
+        PGS,
+        '        unavailable = exc.kind or "SignInError"\n',
+        "        unavailable = str(exc)\n",
+        (
+            k(
+                T_CHAN,
+                "test_a_transient_sign_in_failure_while_the_store_is_built_is_store_unavailable_by_class_name[timeout]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V173",
+        "Round 19 group 8: the refusal for an unreadable DSN prints the driver's own words",
+        PGS,
+        '        failed = type(exc).__name__\n    raise ConfigError(\n        f"store postgres: the database address',
+        '        failed = str(exc)\n    raise ConfigError(\n        f"store postgres: the database address',
+        (
+            k(
+                T_CHAN,
+                "test_a_dsn_that_cannot_be_read_is_a_plain_refusal_by_class_name_on_every_path[word-without-equals]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V174",
+        "Round 19 group 8: the refusal for an unreadable DSN is raised inside the except block (the driver error stays on __context__)",
+        PGS,
+        '        failed = type(exc).__name__\n    raise ConfigError(\n        f"store postgres: the database address',
+        '        raise ConfigError("store postgres: the database address (the DSN) is not a valid connection string (" + type(exc).__name__ + "); the words of the driver\'s error are not shown because they can quote part of the address.")\n    raise ConfigError(\n        f"store postgres: the database address',
+        (
+            k(
+                T_CHAN,
+                "test_a_dsn_that_cannot_be_read_is_a_plain_refusal_by_class_name_on_every_path[word-without-equals]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V175",
+        "Round 19 group 8: `tls_mode` reads the DSN with the driver directly",
+        PGS,
+        "    return _tls_mode_of(dsn_parts(dsn), iam_auth",
+        "    return _tls_mode_of(conninfo_to_dict(dsn), iam_auth",
+        (
+            k(
+                T_CHAN,
+                "test_a_dsn_that_cannot_be_read_is_a_plain_refusal_by_class_name_on_every_path[word-without-equals]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V176",
+        "Round 19 group 8: `connect` reads the DSN with the driver directly",
+        PGS,
+        "    parts = dsn_parts(dsn)  # read once",
+        "    parts = conninfo_to_dict(dsn)  # read once",
+        (
+            k(
+                T_CHAN,
+                "test_a_dsn_that_cannot_be_read_is_a_plain_refusal_by_class_name_on_every_path[word-without-equals]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V177",
+        "Round 19 group 8: the store build (IAM) reads the DSN with the driver directly",
+        PGS,
+        'settings.iam_auth and dsn_parts(dsn).get("password")',
+        'settings.iam_auth and conninfo_to_dict(dsn).get("password")',
+        (
+            k(
+                T_CHAN,
+                "test_a_dsn_that_cannot_be_read_is_a_plain_refusal_by_class_name_on_every_path[word-without-equals]",
             ),
         ),
     ),

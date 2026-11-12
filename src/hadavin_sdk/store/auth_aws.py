@@ -10,18 +10,55 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import boto3  # the extra: a missing install is turned into the install hint by store.postgres
+from botocore import exceptions as botocore_errors  # part of the same extra (boto3 needs it)
 
 from hadavin_sdk.errors import SignInError
 
+# Error codes of the cloud service that mean "too many requests / try again in a moment" (r19 group 3). The list is the
+# service's own published throttling names; an unknown code is NOT transient (it stays the refusal of exit 2).
+THROTTLING_CODES = frozenset(
+    {
+        "Throttling",
+        "ThrottlingException",
+        "ThrottledException",
+        "RequestThrottled",
+        "RequestThrottledException",
+        "TooManyRequestsException",
+        "RequestLimitExceeded",
+        "BandwidthLimitExceeded",
+        "LimitExceededException",
+        "PriorRequestNotComplete",
+        "ServiceUnavailable",
+        "SlowDown",
+    }
+)
 
-def _refused(kind: str) -> SignInError:
+
+def is_transient(exc: BaseException) -> bool:
+    """True for a failure that a second try can cure: a timeout or a lost network (`OSError`, which includes
+    `TimeoutError` and `ConnectionError`; the SDK's connection and HTTP-client errors; a failed read of the instance
+    metadata service) and a throttled request. A missing login, a refused request and every unknown error are not."""
+    if isinstance(exc, botocore_errors.ClientError):
+        return str(exc.response.get("Error", {}).get("Code", "")) in THROTTLING_CODES
+    return isinstance(
+        exc,
+        OSError
+        | botocore_errors.ConnectionError
+        | botocore_errors.HTTPClientError
+        | botocore_errors.MetadataRetrievalError,
+    )
+
+
+def _refused(kind: str, transient: bool = False) -> SignInError:
     # Round 17 group 3 (b) and round 18 group 1: the SDK's words are not printed (they can hold an account name) and the SDK
     # error itself is not kept on the refusal either (`__context__` and `__cause__` are both empty): every caller holds only
     # the NAME of the error class, leaves its `except` block, and raises from there, so no exception is being handled when
     # the refusal is made. `raise ... from None` alone would hide it from the printed traceback and nothing more.
     return SignInError(
         f"the sign-in for the database connection failed ({kind}); "
-        "check the cloud login of this process and the region."
+        "check the cloud login of this process and the region.",
+        kind=kind,
+        transient=transient,
     )
 
 
@@ -36,10 +73,12 @@ def rds_iam(region: str | None) -> Callable[[str, int, str], str]:
 
     def password(host: str, port: int, user: str) -> str:
         failed = ""
+        transient = False
         try:
             return client.generate_db_auth_token(DBHostname=host, Port=port, DBUsername=user)
         except Exception as exc:  # noqa: BLE001 - same as above; KeyboardInterrupt and SystemExit are not `Exception` and pass
             failed = type(exc).__name__
-        raise _refused(failed)
+            transient = is_transient(exc)
+        raise _refused(failed, transient)
 
     return password

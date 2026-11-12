@@ -8,7 +8,16 @@ class ConfigError(ValueError):
 class SignInError(ConfigError):
     """The cloud sign-in that gives a short-lived database password failed (no credentials, no region, a refused token
     request), so no connection was tried. It is a `ConfigError` (exit 2); the message names the kind of error, never the
-    SDK's own words (which can hold an account name)."""
+    SDK's own words (which can hold an account name).
+
+    `kind` is the class NAME of the error the SDK raised (no text of it). `transient` is true when the failure is one that a
+    second try can cure (a timeout, a lost network, a throttled request), so a caller that has a "try again" exit (the store
+    build: `StoreUnavailable`, exit 4) uses it instead of the "configuration is wrong" exit 2 (r19 group 3)."""
+
+    def __init__(self, message: str, *, kind: str = "", transient: bool = False) -> None:
+        super().__init__(message)
+        self.kind = kind
+        self.transient = transient
 
 
 class AppliedNotVerifiedError(Exception):
