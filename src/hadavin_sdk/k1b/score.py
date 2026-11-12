@@ -20,6 +20,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.bundle import Bundle, bad_citations, bundle_set_sha256, load_bundles
@@ -98,9 +99,12 @@ class ScoreResult:
 def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
     """``answers.json`` (``sealed`` is ignored in lite). Returns the answers and the SHA-256 of the file."""
     try:
-        raw = Path(path).read_bytes()  # NOSONAR S8707: the operator's own --answers file
+        real = pathguard.operator_file(
+            path, what="answers file"
+        )  # the operator's own --answers file
+        raw = real.read_bytes()
         data = strict_json_loads(raw.decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:  # PathRefused is a ValueError
         raise ConfigError("answers file is missing or not valid JSON") from exc
     if not isinstance(data, dict) or not set(data) <= {"sealed", "cases"}:
         raise ConfigError("answers file must be an object with the keys sealed and cases")
@@ -152,25 +156,29 @@ def classify(
     return "hit" if any(pair in answer.accepted for pair in first) else "miss"
 
 
-def _recorded_digest(sha_file: Path) -> str | None:
-    """The digest the replay wrote, ``None`` when absent, ``""`` when unreadable (counts as changed)."""
+def _recorded_digest(out: Path) -> str | None:
+    """The digest the replay wrote (``out/outputs.sha256``), ``None`` when absent, ``""`` when unreadable (counts as
+    changed; a file that leaves the folder through a link is refused by ``pathguard`` and is unreadable too)."""
     try:
-        if not sha_file.is_file():  # NOSONAR S8707: inside the operator's own --outputs folder
+        sha_file = pathguard.join(out, "outputs.sha256", what="replay digest file")
+        if not sha_file.is_file():
             return None
-        return sha_file.read_text(encoding="utf-8").strip()  # NOSONAR S8707
-    except (OSError, ValueError):
+        return sha_file.read_text(encoding="utf-8").strip()
+    except (OSError, ValueError):  # PathRefused is a ValueError
         return ""
 
 
-def _read_json(path: Path, what: str) -> Any:
+def _read_json(base: Path, *names: str, what: str) -> Any:
+    """The JSON file ``base/names``. ``base`` is a folder already validated; every name goes through ``pathguard``."""
     try:
+        path = pathguard.join(base, *names, what="output file", must_exist=True, kind="file")
         return strict_json_loads(path.read_bytes().decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:
+    except (OSError, ValueError, RecursionError) as exc:  # PathRefused is a ValueError
         raise ConfigError(f"{what} is missing or not valid JSON") from exc
 
 
-def _record(path: Path, case_id: str, ordinal: int) -> dict[str, Any]:
-    rec = _read_json(path, f"output file {ordinal}")
+def _record(base: Path, case_id: str, ordinal: int) -> dict[str, Any]:
+    rec = _read_json(base, f"{case_id}.json", what=f"output file {ordinal}")
     bad = (
         not isinstance(rec, dict)
         or rec.get("case_id") != case_id
@@ -190,8 +198,10 @@ def _record(path: Path, case_id: str, ordinal: int) -> dict[str, Any]:
 
 def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
     """Refuse a folder that is not exactly ``run1..runK`` with every case file and ``run.json``."""
-    if not out.is_dir():
-        raise ConfigError("outputs folder does not exist")
+    try:
+        out = pathguard.operator_dir(out, what="outputs folder")
+    except pathguard.PathRefused as exc:
+        raise ConfigError("outputs folder does not exist") from exc
     names = {p.name for p in out.iterdir()}
     if "FAILED.txt" in names:
         raise ConfigError("outputs folder holds FAILED.txt: the replay did not finish")
@@ -201,8 +211,9 @@ def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
         raise ConfigError("outputs folder is not exactly run1..runK plus its summary files")
     want = {f"{c}.json" for c in case_ids} | {"run.json"}
     for i in runs:
-        files = {p.name for p in (out / f"run{i}").rglob("*")}
-        if files != want or any(not p.is_file() for p in (out / f"run{i}").iterdir()):
+        rdir = pathguard.join(out, f"run{i}", what="run folder", must_exist=True, kind="dir")
+        files = {p.name for p in rdir.rglob("*")}
+        if files != want or any(not p.is_file() for p in rdir.iterdir()):
             raise ConfigError(
                 f"run{i} files differ from the answers (missing, extra or temporary files)"
             )
@@ -211,7 +222,6 @@ def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
 
 def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> ScoreResult:
     """Score a replay's outputs. Raises ``ConfigError`` for any refusal; nothing is written here."""
-    out = Path(out)
     cause = load_cause_list(cause_dir)
     answers, answers_sha = load_answers(answers_path, cause)
     bundles: dict[str, Bundle] = {b.case_id: b for b in load_bundles(bundles_dir)}
@@ -224,8 +234,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
     set_sha = bundle_set_sha256(bundles_dir, [bundles[c] for c in case_ids])
     runs = _check_layout(out, case_ids)
     digest = hash_files(out, outputs_files(out))
-    sha_file = out / "outputs.sha256"
-    recorded = _recorded_digest(sha_file)
+    recorded = _recorded_digest(out)
     changed = recorded is not None and recorded != digest
     warnings = (
         [
@@ -238,8 +247,8 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
     scores: list[RunScore] = []
     metas: list[dict[str, Any]] = []
     for i in runs:
-        rdir = out / f"run{i}"
-        meta = _read_json(rdir / "run.json", f"run{i}/run.json")
+        rdir = pathguard.join(out, f"run{i}", what="run folder", must_exist=True, kind="dir")
+        meta = _read_json(rdir, "run.json", what=f"run{i}/run.json")
         ok_meta = (
             isinstance(meta, dict)
             and meta.get("schema") == 1
@@ -270,7 +279,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
             k: [] for k in ("unreadable", "error", "timeout", "capped", "uncited")
         }
         for ordinal, cid in enumerate(case_ids, 1):
-            rec = _record(rdir / f"{cid}.json", cid, ordinal)
+            rec = _record(rdir, cid, ordinal)
             diag = parse_diagnosis(rec["diagnosis"]) if rec["diagnosis"] is not None else None
             if rec["status"] != "ok":
                 tally[rec["status"]] += 1

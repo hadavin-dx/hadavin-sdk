@@ -18,7 +18,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from hadavin_sdk import __version__
+from hadavin_sdk import __version__, pathguard
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.injection import Detector
 from hadavin_sdk.hashing import hash_files
@@ -71,15 +71,24 @@ def _diagnosis_dict(d: Diagnosis) -> dict[str, Any]:
     return out
 
 
-def _write_json(path: Path, obj: Any) -> None:
-    atomic_write(path, json.dumps(obj, sort_keys=True, ensure_ascii=False, indent=1) + "\n")
+def _write_json(base: Path, name: str, obj: Any) -> None:
+    """Write ``base/name`` as JSON. ``base`` is a folder already validated; the name (a case id or a fixed name) goes
+    through ``pathguard`` inside ``atomic_write``."""
+    atomic_write(base, name, json.dumps(obj, sort_keys=True, ensure_ascii=False, indent=1) + "\n")
 
 
 def outputs_files(out: Path) -> list[str]:
     """Every file under ``run*/`` as a posix path relative to ``out`` (what the outputs digest covers)."""
-    return sorted(
-        p.relative_to(out).as_posix() for d in out.glob("run*") for p in d.rglob("*") if p.is_file()
-    )
+    out = pathguard.operator_dir(out, what="outputs folder")
+    found = []
+    for run in out.glob(
+        "run*"
+    ):  # names from a listing: each goes through pathguard before it is used
+        rdir = pathguard.join(out, run.name, what="run folder", must_exist=True)
+        found += [
+            f"{run.name}/{p.relative_to(rdir).as_posix()}" for p in rdir.rglob("*") if p.is_file()
+        ]
+    return sorted(found)
 
 
 def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None:
@@ -121,8 +130,13 @@ def _replay(
             "k1b.redact is false: client data would go to the model unmasked. Pass "
             "--i-know-data-is-already-masked only if the bundles are already masked"
         )
-    out = Path(out)
-    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+    try:
+        out = pathguard.operator_dir(out, what="replay output folder", must_exist=False)
+    except pathguard.PathRefused as exc:
+        if exc.rule == "R11":  # it exists and is a file
+            raise ConfigError("replay output folder exists and is not empty") from exc
+        raise
+    if out.exists() and any(out.iterdir()):
         raise ConfigError("replay output folder exists and is not empty")
     cause = load_cause_list(cause_list_dir)
     bundles: list[Bundle] = load_bundles(bundles_dir)
@@ -141,7 +155,7 @@ def _replay(
         str, tuple[Bundle, Counter[str]]
     ] = {}  # masked once per case, reused for every run
     for run_index in range(1, k + 1):
-        rdir = out / f"run{run_index}"
+        rdir = pathguard.join(out, f"run{run_index}", what="run folder")
         rdir.mkdir()
         counts = dict.fromkeys(_COUNT_KEYS, 0)
         run_usd = Decimal(0)
@@ -219,7 +233,7 @@ def _replay(
                 issue_cases["unreadable"].append(b.case_id)
             if record.get("converted") == "uncited":
                 issue_cases["uncited"].append(b.case_id)
-            _write_json(rdir / f"{b.case_id}.json", record)
+            _write_json(rdir, f"{b.case_id}.json", record)
             counts[o.status] += 1
             counts["unreadable"] += o.status == "ok" and diag is None
             counts["hard_check_a"] += len(o.hard_check_a)
@@ -253,14 +267,24 @@ def _replay(
             "sdk_version": __version__,
             "temperature": "provider default",
         }
-        _write_json(rdir / "run.json", meta)
+        _write_json(rdir, "run.json", meta)
         runs.append(meta)
 
     result = stop or "complete"
     audit.emit("replay_run", run_id, object_ref=agent_id, inputs_hash=set_sha, result=result)
-    atomic_write(out / "outputs.sha256", hash_files(out, outputs_files(out)) + "\n")
-    atomic_write(out / "replay-report.md", render_replay_report(runs, result))
+    atomic_write(out, "outputs.sha256", hash_files(out, outputs_files(out)) + "\n")
+    atomic_write(out, "replay-report.md", render_replay_report(runs, result))
     return ReplayResult(0 if result == "complete" else 1, result, run_id, out, runs)
+
+
+def _mark_failed(out_arg: Path, exc: BaseException) -> None:
+    """Write ``FAILED.txt`` into a non-empty output folder; a folder that cannot be validated is left alone."""
+    try:
+        out = pathguard.operator_dir(out_arg, what="replay output folder", must_exist=False)
+    except pathguard.PathRefused:
+        return
+    if out.is_dir() and any(out.iterdir()):
+        atomic_write(out, "FAILED.txt", f"replay did not finish: {type(exc).__name__}\n")
 
 
 def replay(*args: Any, **kwargs: Any) -> ReplayResult:
@@ -271,7 +295,5 @@ def replay(*args: Any, **kwargs: Any) -> ReplayResult:
     except ConfigError:  # every refusal happens before anything is written
         raise
     except BaseException as exc:  # includes Ctrl-C: the folder must not look finished
-        out = Path(kwargs["out"])
-        if out.is_dir() and any(out.iterdir()):
-            atomic_write(out / "FAILED.txt", f"replay did not finish: {type(exc).__name__}\n")
+        _mark_failed(kwargs["out"], exc)
         raise

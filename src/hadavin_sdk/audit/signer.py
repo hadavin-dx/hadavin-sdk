@@ -21,6 +21,7 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519
 from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
 
 _RAW = (serialization.Encoding.Raw, serialization.PublicFormat.Raw)
@@ -136,8 +137,16 @@ def key_path(path: Path, base: Path | None = None) -> Path:
     target = Path(path).expanduser()
     if target.is_symlink():
         raise ValueError(f"{path} is a symlink: a key file is never used through one")
-    real = target.parent.resolve(strict=True) / target.name
-    if not real.is_relative_to(folder) or real == folder:
+    real: Path | None
+    try:
+        real = pathguard.inside(
+            folder, target.parent.resolve(strict=True) / target.name, what="key file"
+        )
+    except pathguard.PathRefused as exc:
+        if exc.rule != "R8":
+            raise
+        real = None  # leaves the key folder: the refusal below, with its pinned wording
+    if real is None or real == folder:
         raise ValueError(
             f"{path} is outside {folder}: key files are kept only there "
             f"(set {KEY_DIR_ENV} to choose another folder)"

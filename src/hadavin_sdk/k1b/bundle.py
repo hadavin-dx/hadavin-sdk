@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from hadavin_sdk.config import confined
+from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.diagnosis import Diagnosis, strict_json_loads
@@ -109,8 +109,15 @@ def _fail(case: str, msg: str) -> BundleError:
 
 def _load_json(case: str, root: Path, rel: str) -> Any:
     try:
-        obj = strict_json_loads((root / rel).read_bytes().decode("utf-8-sig"))
-    except (OSError, ValueError, RecursionError) as exc:  # UnicodeDecodeError is a ValueError
+        target = pathguard.join(
+            root, *rel.split("/"), what="bundle file", must_exist=True, kind="file"
+        )
+        obj = strict_json_loads(target.read_bytes().decode("utf-8-sig"))
+    except (
+        OSError,
+        ValueError,
+        RecursionError,
+    ) as exc:  # PathRefused and UnicodeDecodeError are ValueErrors
         raise _fail(case, f"{rel} is not valid JSON") from exc
     _no_surrogates(case, rel, obj)
     return obj
@@ -134,7 +141,10 @@ def _no_surrogates(case: str, rel: str, obj: Any) -> None:
 
 def _text(case: str, path: Path, rel: str) -> str:
     try:
-        return (path / rel).read_bytes().decode("utf-8-sig")
+        target = pathguard.join(
+            path, *rel.split("/"), what="bundle file", must_exist=True, kind="file"
+        )
+        return target.read_bytes().decode("utf-8-sig")
     except (OSError, ValueError) as exc:
         raise _fail(case, f"{rel} is not valid UTF-8 text") from exc
 
@@ -188,7 +198,11 @@ def load_bundle(path: Path) -> Bundle:
     case = path.name
     if not CASE_RE.fullmatch(case) or path.is_symlink() or not path.is_dir():
         raise _fail(case, "folder name must look like case-001")
-    man_path = path / "manifest.json"
+    try:
+        path = pathguard.operator_dir(path, what="bundle folder")
+    except pathguard.PathRefused as exc:
+        raise _fail(case, "folder name must look like case-001") from exc
+    man_path = pathguard.join(path, "manifest.json", what="bundle file")
     if not man_path.is_file():
         raise _fail(case, "manifest.json is missing")
     manifest = _keys(case, "manifest.json", _load_json(case, path, "manifest.json"), {"files"})
@@ -208,10 +222,12 @@ def load_bundle(path: Path) -> Bundle:
         shapes = ("incident.json", "deploys.json")
         if not (rel in shapes or any(r.fullmatch(rel) for r in _FILE_RES.values())):
             raise _fail(case, "a file name is outside the allowed layout")
-        confined(path, rel)
+        target = pathguard.join(
+            path, *rel.split("/"), what="bundle file", must_exist=True, kind="file"
+        )
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
             raise _fail(case, "a manifest hash is not a SHA-256 hex string")
-        if hashlib.sha256((path / rel).read_bytes()).hexdigest() != digest:
+        if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
             raise _fail(case, f"{rel} does not match the manifest")
     if "incident.json" not in listed:
         raise _fail(case, "incident.json is missing")
@@ -338,13 +354,19 @@ def load_bundle(path: Path) -> Bundle:
 
 def load_bundles(root: Path) -> list[Bundle]:
     """Every ``case-NNN`` folder under ``root``, in sorted case order. Any bad bundle refuses the whole set."""
-    root = Path(root)
-    if not root.is_dir():
-        raise ConfigError("bundles folder does not exist")
-    cases = sorted(p for p in root.iterdir() if not p.name.startswith("."))
-    if not cases:
+    try:
+        root = pathguard.operator_dir(root, what="bundles folder")
+    except pathguard.PathRefused as exc:
+        raise ConfigError("bundles folder does not exist") from exc
+    # each name from the listing goes through pathguard.component; load_bundle then checks the case-NNN shape
+    names = sorted(
+        pathguard.component(p.name, what="bundle folder")
+        for p in root.iterdir()
+        if not p.name.startswith(".")
+    )
+    if not names:
         raise ConfigError("bundles folder holds no incidents")
-    return [load_bundle(p) for p in cases]
+    return [load_bundle(root / name) for name in names]
 
 
 def bundle_set_sha256(root: Path, bundles: list[Bundle]) -> str:
