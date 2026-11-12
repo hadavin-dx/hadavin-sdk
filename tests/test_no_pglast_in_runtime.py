@@ -8,9 +8,14 @@ exactly a pglast module name. Not caught:
   `importlib.import_module` or `__import__`);
 - a copy of the pglast code under another name;
 - a single-file `pglast.py` or `pglast.pyi` is scanned only as source (an import inside it is
-  not an import of pglast), and a `pglast.libs` folder is flagged only by its name;
+  not an import of pglast);
 - compiled `.pyc` files and Cython `.pyx` source (not scanned, not flagged).
-Binary suffixes (.so, .pyd, .dylib, .dll) are matched in any letter case.
+Names are compared after one normaliser (`_norm`: lower case, runs of `-`, `_`, `.` become one
+`-`, edge separators dropped). A folder whose normalised name starts with `pglast` is flagged
+(`pglast`, `pglast.libs`, `pglast-8.7.dist-info`, `_pglast`). A file is flagged as a compiled
+module when its name ends in .so, .pyd, .dylib or .dll, in any letter case, optionally followed
+by version numbers (`libpg_query-<hash>.so.1`). Python files are read with a byte order mark
+allowed. Dependency-group names are compared normalised (PEP 735).
 
 Folders: `.venv` and `node_modules` directly under src, demos or tools are skipped, because they
 hold other people's code; the same names deeper down ARE scanned (they may be shipped code).
@@ -29,12 +34,16 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TREES = ("src", "demos", "tools")
-BINARY = (".so", ".pyd", ".dylib", ".dll")  # compiled modules on Linux, Windows and macOS
+BINARY = re.compile(r"(?i).*\.(so|pyd|dylib|dll)(\.\d+)*")  # compiled modules, versioned .so.N too
 SKIP_DIRS = {".venv", "node_modules"}  # other people's code, never shipped from here
 
 
-def _norm(name):
-    return re.sub(r"[-_.]+", "-", name).lower()
+def _norm(name):  # PEP 503 name; edge separators dropped so `_pglast` and `pglast.libs` match
+    return re.sub(r"[-_.]+", "-", name).lower().strip("-")
+
+
+def _vendored(name):  # a folder of pglast: pglast, pglast.libs, pglast-8.7.dist-info, _pglast
+    return _norm(name).startswith("pglast")
 
 
 def _is(
@@ -47,9 +56,10 @@ def _is(
 
 
 def _flat(groups, name, seen=()):  # entries of a group with include-group resolved
-    for d in groups.get(name, []):
-        if isinstance(d, dict) and d.get("include-group") not in seen:
-            yield from _flat(groups, d["include-group"], (*seen, name))
+    for d in groups.get(name, []):  # `groups` has normalised names (PEP 735)
+        inc = _norm(str(d.get("include-group"))) if isinstance(d, dict) else None
+        if inc is not None and inc not in seen:
+            yield from _flat(groups, inc, (*seen, name))
         else:
             yield d
 
@@ -74,15 +84,15 @@ def _walk(base):  # (files, dirs) under base; SKIP_DIRS are skipped only directl
 
 def _code(root, tree):
     files, dirs = _walk(root / tree) if (root / tree).is_dir() else ([], [])  # absent: no files
-    bad = [f"{tree}: vendored {p.name}" for p in files if p.suffix.lower() in BINARY]
-    bad += [f"{tree}: vendored dir" for p in dirs if _is(p.name)]
+    bad = [f"{tree}: vendored {p.name}" for p in files if BINARY.fullmatch(p.name)]
+    bad += [f"{tree}: vendored dir" for p in dirs if _vendored(p.name)]
     py = [p for p in files if p.suffix in (".py", ".pyi")]
     if not py:
         bad.append(f"{tree}: no python file scanned")
     for p in py:
         rel = p.relative_to(root / tree).as_posix()
         try:
-            nodes = list(ast.walk(ast.parse(p.read_text("utf-8"))))
+            nodes = list(ast.walk(ast.parse(p.read_text("utf-8-sig"))))
         except (SyntaxError, ValueError, UnicodeDecodeError):
             bad.append(f"{tree}: {rel} cannot parse")
             continue
@@ -90,7 +100,7 @@ def _code(root, tree):
             mods = [a.name for a in n.names] if isinstance(n, ast.Import) else []
             mods += [n.module or ""] if isinstance(n, ast.ImportFrom) else []
             if isinstance(n, ast.Constant) and isinstance(n.value, str):
-                mods += [n.value] if re.fullmatch(r"(?i)pglast(\.\w+)*", n.value) else []
+                mods += [n.value] if re.fullmatch(r"(?i)_?pglast(\.\w+)*", n.value) else []
             if any(_norm(m.split(".")[0]) == "pglast" for m in mods):
                 bad.append(f"{tree}: {rel} imports pglast")
     return bad
@@ -110,12 +120,14 @@ def _lock(root, name):
         sections |= {
             f"group {k}": v
             for k, v in p.get("dev-dependencies", {}).items()
-            if not top or k != "test"
+            if not top or _norm(k) != "test"
         }
         meta = p.get("metadata", {})
         sections |= {"requires-dist": meta.get("requires-dist", [])}
         sections |= {
-            f"requires-dev {k}": v for k, v in meta.get("requires-dev", {}).items() if k != "test"
+            f"requires-dev {k}": v
+            for k, v in meta.get("requires-dev", {}).items()
+            if _norm(k) != "test"
         }
         bad += [f"uv.lock {p['name']}: {k}" for k, v in sections.items() if _hit(v)]
     return bad
@@ -124,7 +136,8 @@ def _lock(root, name):
 def violations(root):
     """Where pglast reaches shipped code or a runtime dependency under `root`; empty when clean."""
     meta = tomllib.loads((root / "pyproject.toml").read_text("utf-8"))
-    groups, uv = meta.get("dependency-groups", {}), meta.get("tool", {}).get("uv", {})
+    uv = meta.get("tool", {}).get("uv", {})
+    groups = {_norm(k): v for k, v in meta.get("dependency-groups", {}).items()}
     bad = [b for t in TREES for b in _code(root, t)]
     bad += _lock(root, _norm(meta["project"]["name"]))
     bad += [f"dependencies: {d}" for d in meta["project"].get("dependencies", []) if _is(d)]
@@ -243,6 +256,39 @@ MUTANTS = {
     "unparsable stub file": ({"tools/bad.pyi": "class :\n"}, ["tools: bad.pyi cannot parse"]),
     "null byte in python file": ({"src/nul.py": "x = 1\0\n"}, ["src: nul.py cannot parse"]),
     "upper-case binary suffix": ({"src/_pglast.SO": ""}, ["src: vendored _pglast.SO"]),
+    "pglast.libs folder (wheel bundle)": ({"src/pglast.libs/x.txt": ""}, ["src: vendored dir"]),
+    "dist-info folder": ({"tools/pglast-8.7.dist-info/METADATA": ""}, ["tools: vendored dir"]),
+    "underscore-prefixed folder": ({"demos/_pglast/x.txt": ""}, ["demos: vendored dir"]),
+    "upper-case dotted folder": ({"src/PGLast.Libs/x.txt": ""}, ["src: vendored dir"]),
+    "versioned shared library": (
+        {"src/libpg_query-0a1b2c3d.so.1": ""},
+        ["src: vendored libpg_query-0a1b2c3d.so.1"],
+    ),
+    "doubly versioned shared library": (
+        {"tools/libpg_query.SO.1.2": ""},
+        ["tools: vendored libpg_query.SO.1.2"],
+    ),
+    "shared library suffix is not a version": ({"src/lib.so.old": ""}, []),
+    "import of the compiled module": (
+        {"src/m.py": "import _pglast\n"},
+        ["src: m.py imports pglast"],
+    ),
+    "python file with a byte order mark": (
+        {"src/m.py": "\ufeffimport pglast\n"},
+        ["src: m.py imports pglast"],
+    ),
+    "group name written in another form": (
+        {"pyproject.toml": PYPROJECT.replace("test=", "Test=") + 'ci=[{include-group="TEST"}]\n'},
+        ["group ci"],
+    ),
+    "lock group name written in another form": (
+        {
+            "uv.lock": LOCK.replace(
+                "[package.dev-dependencies]\ntest", "[package.dev-dependencies]\nTEST"
+            )
+        },
+        [],
+    ),
     "venv-like name outside the skip list is scanned": (
         {"src/venv/m.py": "import pglast\n"},
         ["src: venv/m.py imports pglast"],
@@ -287,7 +333,10 @@ def test_symlinked_dir_is_not_entered(tmp_path):
     (tmp_path / "ext" / "m.py").write_text("import pglast\n", "utf-8")
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "m.py").write_text("x = 1\n", "utf-8")
-    (tmp_path / "src" / "other").symlink_to(tmp_path / "ext", target_is_directory=True)
+    try:  # Windows without developer mode cannot create links
+        (tmp_path / "src" / "other").symlink_to(tmp_path / "ext", target_is_directory=True)
+    except OSError as err:
+        pytest.skip(f"cannot create a symbolic link here: {err}")
     assert _code(tmp_path, "src") == []
     (tmp_path / "src" / "pglast").symlink_to(tmp_path / "ext", target_is_directory=True)
     assert _code(tmp_path, "src") == ["src: vendored dir"]
