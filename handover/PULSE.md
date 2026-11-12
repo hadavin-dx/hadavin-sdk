@@ -142,3 +142,4 @@ PULSE 01:19Z: Q8a-1 r9 codebase reviewer done (1 Major: sources/kubernetes.py na
 - 03:41Z note: two earlier lines in this window carried a guessed 03:46Z label (real clock was ~03:39Z); corrected.
 - 03:41Z PULSE: Q8c-1 r7 second pass resolved (report r7b: 5 fixes for batch 8, Vault engine gate IMPOSSIBLE-NOW needs CI). Codebase review saved. Next: Q8c-1 b8 builder when load allows.
 - 03:42Z PULSE: Q8c-1 b8 builder started (box 60, check ~04:45Z). Agents running: PRH b6, Q8a-1 b11, Q8b b7, PR89 EV, P3a-2 3d x2 reviewers, P3a-2 45 builder, Q8c-1 b8 builder (8).
+- 03:42Z PULSE: 8 agents running (PRH b6 1h22m past box, asked to checkpoint and report; Q8a-1 b11; Q8b b7; PR89 EV; P3a-2 3d x2 reviewers; P3a-2 45 builder; Q8c-1 b8 builder). Load 2.7. LEAD-ORDERS pulled 03:43Z: newest still 247.
