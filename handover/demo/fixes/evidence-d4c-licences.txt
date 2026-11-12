@@ -1,0 +1,33 @@
+# D4c: licence lines of the installed browser-lock packages, read from the installed metadata in the lane's own venv (/tmp/work/l8d-venv: requirements-dev.txt then requirements-browser.txt, both --require-hashes), 2026-11-12
+## playwright
+<stdin>:6: DeprecationWarning: Implicit None on return values is deprecated and will raise KeyErrors.
+Name: playwright Version: 1.63.0
+License-Expression: Apache-2.0
+## greenlet
+<stdin>:6: DeprecationWarning: Implicit None on return values is deprecated and will raise KeyErrors.
+Name: greenlet Version: 3.5.6
+License-Expression: MIT AND PSF-2.0
+## pyee
+<stdin>:6: DeprecationWarning: Implicit None on return values is deprecated and will raise KeyErrors.
+Name: pyee Version: 13.0.1
+License: MIT
+Classifier: License :: OSI Approved :: MIT License
+## typing_extensions
+<stdin>:6: DeprecationWarning: Implicit None on return values is deprecated and will raise KeyErrors.
+Name: typing_extensions Version: 4.16.0
+License-Expression: PSF-2.0
+$ pip show playwright greenlet pyee typing-extensions (Version / License lines)
+Name: playwright
+Version: 1.63.0
+License: 
+Name: greenlet
+Version: 3.5.6
+License: 
+Name: pyee
+Version: 13.0.1
+License: MIT
+Name: typing_extensions
+Version: 4.16.0
+License: 
+## where the skip message and the build-number facts come from
+Executable doesn't exist / 1254 not found: see evidence-d4c2 (below)

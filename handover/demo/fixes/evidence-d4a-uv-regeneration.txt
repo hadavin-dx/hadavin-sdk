@@ -1,0 +1,14 @@
+# D4a: uv version and regeneration of the two browser locks (tree: 0841f36 + docs-and-deps v3 + sidebar guards; scratch dir /tmp/work/l8d-regen, copies of the in-file inputs)
+$ uv --version
+uv 0.11.32 (x86_64-unknown-linux-gnu)
+$ uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt
+$ cmp requirements-browser.txt committed-linux.txt   (committed-linux.txt = requirements-browser.txt of the tree)
+IDENTICAL, exit 0
+$ uv pip compile requirements-browser.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev-win.txt -o requirements-browser-win.txt
+$ cmp requirements-browser-win.txt committed-win.txt
+IDENTICAL, exit 0
+$ sha256sum committed-linux.txt committed-win.txt requirements-browser.txt requirements-browser-win.txt
+51a2a75694e23bfd3b297f08f9c0a4c2a4ac7f56daf2e0cc192c5a20a3582c00  committed-linux.txt
+e73175df52b6187982810c754dc9fceb857ee67c9ae5cb7a9500e0cc5ce2dd1c  committed-win.txt
+51a2a75694e23bfd3b297f08f9c0a4c2a4ac7f56daf2e0cc192c5a20a3582c00  requirements-browser.txt
+e73175df52b6187982810c754dc9fceb857ee67c9ae5cb7a9500e0cc5ce2dd1c  requirements-browser-win.txt

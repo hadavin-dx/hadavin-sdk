@@ -1,0 +1,5 @@
+# evidence-d1: 8 files, no Playwright, on 0841f36 + this change. Builder 8e.
+## node ON PATH (run by 8e Thu Nov 12 21:24:35 UTC 2026)
+ 21:24:35 up  2:34,  0 user,  load average: 1.22, 1.74, 1.74
+0841f36d1edf381b67a0da4793afacf834a36707
+$ PATH=/opt/node22/bin:/usr/bin:/bin /tmp/work/l8d-nopw/bin/python -m pytest -q -rs -p no:cacheprovider <8 files>

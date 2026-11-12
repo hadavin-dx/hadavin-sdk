@@ -1,0 +1,17 @@
+# D4c2: Playwright 1.65.1 (scratch venv, NOT the lock) with only the chromium build for 1.63.0 present in /opt/pw-browsers: launch message (the text the tests turn into a skip)
+$ ls /opt/pw-browsers
+chromium
+chromium-1243
+chromium_headless_shell-1243
+ffmpeg-1011
+$ l8d-pw165/bin/pip list | grep -i playwright
+playwright 1.65.1
+$ python -c "sync_playwright().chromium.launch()"
+BrowserType.launch: Executable doesn't exist at /opt/pw-browsers/chromium_headless_shell-1254/chrome-headless-shell-linux64/chrome-headless-shell
+$ sed -n 28,33p tests/test_portal_browser.py   (the skip helper in the tree)
+    with sync_api.sync_playwright() as pw:
+        try:
+            browser = pw.chromium.launch()
+        except Exception as e:  # noqa: BLE001 (no browser installed here)
+            pytest.skip(f"no browser: {e}")
+        try:

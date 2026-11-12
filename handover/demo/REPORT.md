@@ -12,6 +12,40 @@ FIXED (with proofs): A2 the new test literals built from parts (`_u`, `_j`, `_at
 - Apply: the four codeant2 patches REPLACE the old codeant-gitleaks/-scripts/-n8n-proof/-docs (the old ones conflict with them); order among the four does not matter; apply in both orders with the old codeant-desk/-demo-only/-portal-log/-tests-hardening (those four are being rewritten by 10c-2).
 - Review (fresh, read-only, adversarial, no cap): verifies each claimed fix against the A and C findings; asks whether scanning root-relative in the repo's own test is a legitimate change (what else scans absolute paths), whether the planting test can pass vacuously, ReDoS check of the scrub regexes by reading, the redirect change's default for feed.py/run_real_check.py, the proof.json expression, hygiene flags of the new test literals when tracked, hunk overlap with 10c-2's patches on tests/test_hygiene.py. Report to triage/REVIEW-codeant2-sec.md.
 
+## 2026-11-12 21:25Z / 02:55 IST - 8d HANDED BACK EARLY (stopped by me), 8e STARTED; 10c-2 patches appearing; no batch 2 ready yet
+FAILED / UNCERTAIN first:
+- Builder 8d did not finish: it started a wait loop with two full serial runs queued while 4 other pytest processes ran. I killed its script before the full runs (rule: one heavy run at a time). Nothing lost; its tree, guards and evidence are kept. NEW measured numbers on 0841f36 + change, eight browser/node files, no Playwright: node ON 114 passed / 113 skipped; node OFF 92 / 135 (80 s each). No full-suite run without Node exists on this commit; the doc will say so instead of a computed number.
+- Test guards added by 8d (not yet reviewed): `height - 40 > 900` (real page height 1436) and a third pixel on the brand mark; every mutation fails both tests.
+- Not yet reviewed: 10c-1b (codeant3 evidence files appeared; no summary yet), 10c-2 (codeant2-{desk,portal-log,demo-only,tests-hardening,fakes-body} patches + evidence present; no hand-back), lane 14 (semgrep-rebased.patch present), lane 13b. BATCH 2 IS NOT READY: it needs the fresh reviews plus INT-2. I will message you the moment it is.
+- Open lead questions still unanswered: PR 89 branch name, whether limits-burst-doc.patch is in (you said: batch 2, noted), reaper loops bound (desk.py:652-655).
+
+TABLE 1 - LIVE ITEMS (box 60 min; load 2.4; 4 pytest processes seen at 21:22, some belong to builders)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| 10c-1b | CodeAnt security fixes after review 2 | 21:11 | 14 min | 21:50 | running | triage/codeant3-*.patch + SUMMARY | evidence-codeant3-sec-1..3 written 21:2x |
+| 10c-2 | CodeAnt runtime/test fixes + fakes body sweep | 20:50 | 35 min | 21:50 | running | 5 codeant2-*.patch | patches + rt evidence present, no hand-back |
+| lane 14 | Semgrep PR rebase + fixes | 20:45 | 40 min | 21:45 | running | semgrep patch + evidence | semgrep-rebased.patch present |
+| lane 13b | drawer siblings + 390px cascade | 20:50 | 35 min | 21:40 | running | layout/*2.patch, mobile-cascade.patch | no files yet: WATCH (35 min no visible output) |
+| 8e | finish lane 8 v4 (docs numbers, PLAN, checks, v4 patch) | 21:24 | 1 min | 22:05 | running | docs-and-deps.patch v4 + evidence-d1..d6 | started |
+Totals: agents 5, shells 0, containers 0, processes: pytest 4 (others' runs), load 2.4 of 4, heavy slots in use 1 intended.
+Flags: 13b has shown no output for 35 min: will ask for a hand-back at 21:40 if still silent.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| lane 8 | 4 (build 8e) | R1 1B+3M, R2 2M, R3 2M+nits | numbers stated for a commit they were not measured on | R3 Majors real | no | fresh review clean |
+| CodeAnt security | 3 (10c-1b) | R1 2B+1M, R2 2M+8N | regex/test gaps | R2 Majors real; security: no cap | no | fresh review clean |
+| CodeAnt runtime | 2 (10c-2 built, not handed back) | R1 reviewers B 2M, C 3M | return vs continue, unlocked sibling reads | build unreviewed | no | fresh review clean |
+| Semgrep PR | 2 | R1 1B+3M | missing allowances, vacuous test | rebased patch unreviewed | no | fresh review clean |
+| layout | 2 | R1 2M | sibling dialog, cascade | fixes unreviewed | no | fresh review clean |
+No round is waste.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| 8d (stopped early) | guards, uv regeneration, licence and 1254-message evidence, interim-allowlist paragraph done; docs numbers/PLAN/v4 handed to 8e |
+| lane 8 review 3 + CodeAnt security review 2 saved and pushed | see block 21:20Z |
+
 ## 2026-11-12 21:20Z / 02:50 IST - LANE 8 REVIEW 3 SAVED (2 Majors, 0 Blocker) -> BUILDER 8d STARTED; CodeAnt security review 2 saved; 5 builders live
 FAILED / UNCERTAIN first:
 - Lane 8 (docs-and-deps v3) is NOT clean: round-3 reviewer found 2 Majors in docs/tests.md numbers (the 'Node missing' 2328/137 arithmetic is the OLD 2465-test total, this commit has 2516; the 113/134 skip counts were measured on 558d37f not on the shipped base). No Blocker, test not weakened, locks and allowlists confirmed. Saved as fixes/REVIEW-3.md. Builder 8d now re-measures on 0841f36 + change, adds the cheap `height - 40 > 900` guard, and fixes the nits. Another fresh review follows (changed test + new lock in a public repo: no round cap).
