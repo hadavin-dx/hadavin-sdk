@@ -1,0 +1,6 @@
+E       AssertionError: ((246, 244, 254), (246, 244, 254))
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f311d94cd60>)
+E       AssertionError: ((16, 15, 32), (16, 15, 32))
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f311d96c4a0>)

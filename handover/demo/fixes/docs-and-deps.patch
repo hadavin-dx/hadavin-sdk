@@ -1,0 +1,135 @@
+diff --git a/contract.md b/contract.md
+index 055933e..3b9409f 100644
+--- a/contract.md
++++ b/contract.md
+@@ -140,7 +140,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+   * The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal message names the open-file limit in force and what the desk needs.
+ * (2) The lock file (exit 2, "another desk is using this database").
+ * (3) The adapters (exit 1 if `/fake/info` cannot be read).
+-* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or not below the stuck grace minus its margin; the message is printed and nothing is served; this code differs from exit 1 on purpose).
++* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the message is printed and nothing is served; this code differs from exit 1 on purpose).
+ * (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
+ * (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
+ * (7) `desk.start_background()` (starts the reaper).
+diff --git a/docs/portal.md b/docs/portal.md
+index a023192..1f9f1f4 100644
+--- a/docs/portal.md
++++ b/docs/portal.md
+@@ -2,7 +2,7 @@
+ 
+ Two words to keep apart: the **lead stage** shown in the portal (New, Contacted and so on) is the stage of a lead, from the lead flow file (`DESK_LEADFLOW_FILE`) and is not a stage of any deployment.
+ 
+-Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company, the lead number and request numbers without an "@"), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
++Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company and the lead number; request numbers are not searched while masked), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
+ 
+ When every kind is a stand-in (no real CRM, no real mail sender, no live AI step) but the demo tools are not installed, a banner reads "Every lead is demo data. The demo CRM and demo mail are not connected. Nothing here is sent to real customers or real systems."
+ 
+diff --git a/docs/tests.md b/docs/tests.md
+index 2fb4069..63e310a 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -24,7 +24,27 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
+ 
+ ## Browser tests
+ 
+-The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
++The tests that drive the portal in a real browser need Playwright (a Python package that controls a browser) and a browser. Without them these tests are skipped, not failed. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. Playwright is not in the lock files on purpose: its version has to match the browser build that is installed, and that differs from one computer to the next. No other package is needed (the sidebar colour test reads the screenshot with the Python standard library, not Pillow).
++
++Steps that were measured on Linux with Python 3.12, starting from a new `.venv` made with `requirements-dev.txt` (see "How to run the tests"). The computer already had Chromium build 1243 and Node 22 installed, each in its own folder, so the two folders are written as placeholders below:
++
++    python -m pip install playwright==1.63.0
++    export PLAYWRIGHT_BROWSERS_PATH=<folder that holds the browser>
++    export PATH=<folder that holds node>:$PATH           # the tests also run Node
++    python -m pytest -q -rs
++
++* **The Playwright version must match the browser build.** Playwright 1.63.0 looks for Chromium build 1243. The newest version at the time (1.65.1) looks for build 1254, does not find it, and then every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. If you have no browser yet, install the newest Playwright and run `playwright install chromium`, which fetches the build that Playwright wants. That route was not measured here.
++* **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
++* **What a full run gives (Linux, Python 3.12, this commit, 2465 tests):** without Playwright, 2349 passed and 116 skipped; with Playwright 1.63.0 and Node, 2462 passed and 3 skipped. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows. A full run takes about 15 to 17 minutes on one process.
++* **The 116 skips without Playwright:** 113 are browser tests that need Playwright (22 in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 60 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`), plus the 3 above.
++* **Why this can differ from an earlier count of 2329 passed and 135 skipped:** that count is what you get when Node is not installed. Without Node on the path, 21 more tests skip (the tests that run the portal's JavaScript under Node: 1 in `test_mode_safety.py`, 2 in `test_portal_lead_pages.py`, 18 in `test_portal_mode.py`; measured on this commit, 134 skipped instead of 113 in those eight files). Those 21 move from passed to skipped, which gives 2328 passed and 137 skipped on this commit. The earlier count differs from that by one test and one skip. Not explained: whether that earlier run had one fewer test (the total then was 2464, now 2465) or had gitleaks installed; the run's log is not kept. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
++* The browser file `test_portal_browser.py` alone takes about 20 seconds; the whole set of browser files about 4 minutes.
++
++## Quality checks and what to do when a check fails
++
++The commands for ruff, mypy, bandit and the schema check are listed under "Quality commands" in `contract.md`, and the same commands, in order, are in `.github/workflows/lint.yml` (that file also has the secret scan and the scan for hardcoded literals). Run them from the repository folder with the `.venv` folder switched on.
++
++When a check fails: read the last lines of its output first; they name the file and line. For a test, run it alone (`python -m pytest -q tests/test_name.py::test_name`). A test that did not run is not a pass: to see why tests were skipped, run `python -m pytest -q -rs`, which prints one line per skip reason (for example "could not import 'playwright.sync_api'", "node is not installed", "no gitleaks program on PATH"). To make a missing secret scan a failure instead of a skip, set `DPLD_REQUIRE_SCAN=1` and `GITLEAKS_BIN` to the program's path.
+ 
+ ## What each promise rests on
+ 
+diff --git a/tests/test_portal_lead_pages.py b/tests/test_portal_lead_pages.py
+index 88e8c3f..fbfe6f5 100644
+--- a/tests/test_portal_lead_pages.py
++++ b/tests/test_portal_lead_pages.py
+@@ -415,6 +415,52 @@ def test_mode_off_shows_no_approval_and_no_step_control(env: Any) -> None:
+     _browse(base, body)
+ 
+ 
++def _png_pixels(png: bytes, points: list[tuple[int, int]]) -> list[tuple[int, int, int]]:
++    """Read the colour of some pixels of a PNG with the standard library only (no Pillow). Handles what a browser
++    writes: 8 bits per channel, RGB or RGBA, no interlacing; anything else raises so a change is not read wrongly."""
++    import struct
++    import zlib
++
++    assert png[:8] == b"\x89PNG\r\n\x1a\n", "not a PNG"
++    pos, idat, ihdr = 8, b"", b""
++    while pos < len(png):
++        size, kind = struct.unpack(">I4s", png[pos : pos + 8])
++        data = png[pos + 8 : pos + 8 + size]
++        if kind == b"IHDR":
++            ihdr = data
++        elif kind == b"IDAT":
++            idat += data
++        pos += 12 + size
++    width, height, depth, colour, _, _, interlace = struct.unpack(">IIBBBBB", ihdr)
++    assert (depth, interlace) == (8, 0) and colour in (2, 6), (depth, colour, interlace)
++    bpp = 3 if colour == 2 else 4
++    stride = width * bpp
++    raw = zlib.decompress(idat)
++    rows: list[bytearray] = []
++    prev = bytearray(stride)
++    for y in range(height):
++        ftype = raw[y * (stride + 1)]
++        row = bytearray(raw[y * (stride + 1) + 1 : (y + 1) * (stride + 1)])
++        for i in range(stride):
++            a = row[i - bpp] if i >= bpp else 0
++            b = prev[i]
++            c = prev[i - bpp] if i >= bpp else 0
++            if ftype == 1:
++                row[i] = (row[i] + a) & 255
++            elif ftype == 2:
++                row[i] = (row[i] + b) & 255
++            elif ftype == 3:
++                row[i] = (row[i] + (a + b) // 2) & 255
++            elif ftype == 4:
++                pa, pb, pc = abs(b - c), abs(a - c), abs(a + b - 2 * c)
++                row[i] = (row[i] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
++            else:
++                assert ftype == 0, ftype
++        rows.append(row)
++        prev = row
++    return [(rows[y][x * bpp], rows[y][x * bpp + 1], rows[y][x * bpp + 2]) for x, y in points]
++
++
+ @pytest.mark.parametrize("scheme", ["light", "dark"])
+ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+     """At 1200 px and below the strip under the sidebar was the page colour, not the sidebar's: a white block under
+@@ -424,17 +470,12 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
+         _new(rig, f"s-{i}", f"Sidney Hart{i}", f"s{i}@example.test")
+ 
+     def body(page: Any, base: str) -> None:
+-        import io
+-
+-        from PIL import Image
+-
+         page.goto(base + "/ui/#/leads")
+         page.wait_for_selector("[data-lead-id]")
+         page.wait_for_timeout(500)
+         height = page.evaluate("() => document.documentElement.scrollHeight")
+         assert height > 900, height  # the page really is taller than the window
+-        img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+-        above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
++        above, below = _png_pixels(page.screenshot(full_page=True), [(60, 880), (60, height - 40)])
+         assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+ 
+     _browse(base, body, width=1100, scheme=scheme)

@@ -1,0 +1,10 @@
+== new code, no Pillow
+..                                                                       [100%]
+2 passed, 29 deselected in 4.58s
+== OLD code, no Pillow
+
+tests/test_portal_lead_pages.py:429: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light]
+FAILED tests/test_portal_lead_pages.py::test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[dark]
+2 failed, 29 deselected in 1.62s

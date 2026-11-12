@@ -1,0 +1,8 @@
+All checks passed!
+1 file already formatted
+Success: no issues found in 26 source files
+...s......                                                               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+9 passed, 1 skipped in 4.06s
+195:        "requirements-dev.txt": h40,  # a 40-hex id is not a hash line
