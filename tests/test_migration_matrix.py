@@ -864,3 +864,108 @@ def test_the_clean_control_returns_with_no_excess_right(variant, ocell, monkeypa
         assert mig.migrate(dsn, **roles) == []
     finally:
         tp._drop_roles(other, rt)
+
+
+# --- 7. the shipped files give each role exactly the map (ticket 7.7) --------------------------------------------------
+
+APP = "app"  # the schema of the run in the 7.7 test and in the matrix
+
+
+def _migration_login(case: Case, schema: str = APP) -> str:
+    """Make the migration role of the case the way the printed SQL makes it (a plain login that may create in the
+    schema and pass USAGE on) and give it a password. Returns its connection string, which uses `schema` first."""
+    from hadavin_sdk.store import migrate as mig
+    from tests.fixtures import migration_role as helper
+
+    m = case.role["m"]
+    case.admin.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(m)))
+    case.db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    printed = mig.PLAIN_MIGRATION_ROLE_SQL.replace("migration_role", m).replace(
+        "<schema>", sql.Identifier(schema).as_string()
+    )
+    case.db.execute(printed)
+    case.db.execute(
+        sql.SQL("GRANT CREATE ON DATABASE {} TO {}").format(
+            sql.Identifier(case.db_name), sql.Identifier(m)
+        )
+    )
+    helper.set_login_password(case.db, m)
+    return helper.login_dsn(
+        make_conninfo(case._dsn, dbname=case.db_name, options=f"-c search_path={schema}"), m
+    )
+
+
+_REFERENCES_NO_KEY = re.compile(r"^\('table', '[^']+', 'REFERENCES'\): 42830 ")
+
+
+def _hand_facts(case: Case, role: str, schema: str) -> set[tuple[str, str, str]]:
+    """What the hand-written table says `role` (runtime, portal or purge) may do, as oracle facts. A right on a whole
+    table is also a right on each of its columns, and the oracle lists both."""
+    out: set[tuple[str, str, str]] = {
+        ("schema", schema, "USAGE")
+    }  # `migrate` lets each role reach the schema
+    for name, right in HAND_TABLE_RIGHTS[role]:
+        kind = "sequence" if name.endswith("_seq_seq") else "table"
+        out.add((kind, f"{schema}.{name}", right))
+        if kind == "table" and right in {"SELECT", "INSERT", "UPDATE"}:
+            for (col,) in case.db.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = %s",
+                (schema, name),
+            ).fetchall():
+                out.add(("column", f"{schema}.{name}.{col}", right))
+    if role == "purge":
+        for name, col in HAND_PURGE_COLUMNS:
+            out.add(("column", f"{schema}.{name}.{col}", "SELECT"))
+    return out
+
+
+@needs_pg
+@pytest.mark.real_connect
+def test_the_shipped_files_give_each_role_exactly_the_map(case):
+    """Ticket 7.7. In an empty case database, as a plain migration role made by the printed SQL, `migrate` runs the five
+    shipped files with the three role arguments. Direction 1: each of the three roles can do every operation of the
+    hand-written table. Direction 2: nothing else works for it (what a fresh role can do before the run, the baseline,
+    apart), and the fresh role that stands for everyone gains nothing. A second run with no pending file gives the same
+    answers."""
+    from hadavin_sdk.store import migrate as mig
+
+    # a database as it is made (not the stripped baseline of the sensitivity controls): everyone may use plpgsql
+    case.db.execute("GRANT USAGE ON LANGUAGE plpgsql TO PUBLIC")
+    dsn = _migration_login(case)
+    roles = {"runtime": case.role["n"], "portal": case.role["t"], "purge": case.role["o"]}
+    before = {k: case.oracle.can(case.role[k], APP).facts for k in "nftom"}
+    applied = mig.migrate(
+        dsn,
+        runtime_role=roles["runtime"],
+        portal_role=roles["portal"],
+        purge_role=roles["purge"],
+    )
+    assert applied == [p.stem for p in mig._migration_files()]
+
+    def judge(when: str) -> None:
+        for kind, who in (("runtime", "n"), ("portal", "t"), ("purge", "o")):
+            res = case.oracle.can(case.role[who], APP)
+            # The one thing the oracle cannot see by behaviour here: REFERENCES on a table with no unique key (the
+            # server refuses the test statement for that reason, whatever the right). Anything else it cannot see fails.
+            unseen = [x for x in res.inconclusive if not _REFERENCES_NO_KEY.match(str(x))]
+            assert unseen == [], f"{when}: the oracle cannot see {unseen}"
+            want = _hand_facts(case, kind, APP)
+            missing = want - res.facts
+            assert not missing, f"{when}: {kind} cannot do {sorted(missing)}"
+            extra = res.facts - want - before[who]
+            assert not extra, f"{when}: {kind} can also do {sorted(extra)}"
+        res = case.oracle.can(case.role["f"], APP)
+        extra = res.facts - before["f"]
+        assert not extra, f"{when}: everyone can also do {sorted(extra)}"
+
+    judge("after the first run")
+    assert (
+        mig.migrate(
+            dsn,
+            runtime_role=roles["runtime"],
+            portal_role=roles["portal"],
+            purge_role=roles["purge"],
+        )
+        == []
+    )
+    judge("after the second run")

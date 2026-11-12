@@ -52,6 +52,7 @@ T_NUM = "tests/test_migration_numbers.py"
 T_GUARDS = "tests/test_migration_numbers_guards.py"
 T_NAMES = "tests/test_migration_names.py"
 T_CMP = "tests/test_migration_compare.py"
+T_MX = "tests/test_migration_matrix.py"
 T_VERIFY = "tests/test_migration_verify.py"
 T_STEPS = "tests/test_migration_steps.py"
 T_VERIFY_PG = "tests/test_migration_verify_pg.py"
@@ -2858,8 +2859,8 @@ M: list[Mutant] = [
         "LW8",
         "a lock that no session holds (a prepared transaction) is not looked for",
         MIG,
-        "        if row is None and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]:",
-        "        if False:",
+        "                and (db.execute(_LOCK_PREPARED_SQL, (MIGRATE_LOCK,)).fetchone() or (0,))[0]\n",
+        "                and False\n",
         (
             k(T_CMP, "test_a_lock_held_by_a_prepared_transaction_is_said_so_with_what_finishes_it"),
             k(T_PG, "test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one"),
@@ -3431,18 +3432,18 @@ M: list[Mutant] = [
     ),
     Mutant(
         "V63",
-        "the promise table of the docstring says its first row is built (the CHANGELOG still says not built)",
+        "the promise table of the docstring says its first row is NOT BUILT YET (the CHANGELOG still names the test)",
         MIG,
-        "is NOT BUILT YET (planned for commit 5 of this package)",
-        "is built (planned for commit 5 of this package)",
+        "is caught before release by a test that runs the shipped files",
+        "is NOT BUILT YET (planned for commit 5 of this package) and would run the shipped files",
         "tests/test_migration_verify.py::test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog",
     ),
     Mutant(
         "V64",
-        "the promise table of the CHANGELOG says its first row is built (the docstring still says not built)",
+        "the promise table of the CHANGELOG says its first row is NOT BUILT YET (the docstring still names the test)",
         CL,
-        "is NOT BUILT YET (planned for commit 5 of this package)",
-        "is built (planned for commit 5 of this package)",
+        "is caught before release by a test that runs the shipped files",
+        "is NOT BUILT YET (planned for commit 5 of this package) and would run the shipped files",
         "tests/test_migration_verify.py::test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog",
     ),
     Mutant(
@@ -3557,6 +3558,22 @@ M: list[Mutant] = [
             T_CMP,
             "test_two_prepared_transactions_that_could_hold_the_lock_are_all_named_and_none_is_picked",
         ),
+    ),
+    Mutant(
+        "V76",
+        "7.7: the runtime role gets nothing in step 4 (the shipped files give it no right)",
+        MIG,
+        "                    if runtime_role:\n                        _apply_grants(db, schema, runtime_role, lambda g: g.runtime)",
+        "                    if False:\n                        _apply_grants(db, schema, runtime_role, lambda g: g.runtime)",
+        k(T_MX, "test_the_shipped_files_give_each_role_exactly_the_map"),
+    ),
+    Mutant(
+        "V77",
+        "7.7: the purge role gets its table rights but no column to read (its DELETE cannot name a row)",
+        MIG,
+        "db, schema, purge_role, lambda g: g.purge, lambda g: g.purge_cols\n",
+        "db, schema, purge_role, lambda g: g.purge, None\n",
+        k(T_MX, "test_the_shipped_files_give_each_role_exactly_the_map"),
     ),
 ]
 M.extend(STEP_MUTANTS)

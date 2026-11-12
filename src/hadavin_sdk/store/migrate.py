@@ -16,7 +16,7 @@ is still there when the check looks. The same table is in CHANGELOG.md (a test c
 [promise table]
 | Who wrote the file | What `migrate` does | Word |
 |---|---|---|
-| 1. We did, and made an honest mistake | When the file leaves a named role, or everyone, with a right outside the grant map, the run is refused and undone. Catching the same mistake before release, by running the shipped files on an empty database and testing what each role can really do, is NOT BUILT YET (planned for commit 5 of this package); until then the build server runs a smaller test of the same kind. | STOPPED |
+| 1. We did, and made an honest mistake | When the file leaves a named role, or everyone, with a right outside the grant map, the run is refused and undone. The same mistake is caught before release by a test that runs the shipped files on an empty database and tries what each role can really do (`test_the_shipped_files_give_each_role_exactly_the_map`). | STOPPED |
 | 2. Someone careless, or a file copied from elsewhere | The same, for lasting rights only. Nothing is promised about lost data, and nothing about code the file leaves behind to run later. | STOPPED, for lasting rights only |
 | 3. Someone who wants to do harm | NOT stopped. Lasting excess rights that exist when the check after the commit runs are reported, with the statements that remove them. Such a file can also cheat the check after the commit, or make it fail to run; a check that cannot run ends in the same loud "applied, not verified" result, never in "applied". | DETECTED, not stopped |
 [end of promise table]

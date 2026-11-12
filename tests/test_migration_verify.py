@@ -877,11 +877,12 @@ def test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog():
     assert (root / "CHANGELOG.md").read_text(encoding="utf-8").count("[promise table]") == 1
     assert "What migrate promises" in (root / "CHANGELOG.md").read_text(encoding="utf-8")
     assert any("What migrate promises" in str(c) for c in mig._after_commit.__code__.co_consts)
-    # Row 1 says what is NOT built yet while the test of the shipped files (ticket 7.7) does not exist, and stops saying it
-    # when the test exists: the text and the file cannot drift apart (Issue 2)
+    # Row 1 names the test of the shipped files (ticket 7.7) as built, and that test exists: the text and the file
+    # cannot drift apart (Issue 2)
     matrix = (root / "tests/test_migration_matrix.py").read_text(encoding="utf-8")
-    built = "def test_the_shipped_files_give_each_role_exactly_the_map(" in matrix
-    assert ("NOT BUILT YET" in in_code[2]) == (not built)
+    assert "def test_the_shipped_files_give_each_role_exactly_the_map(" in matrix
+    assert "NOT BUILT YET" not in in_code[2]
+    assert "test_the_shipped_files_give_each_role_exactly_the_map" in in_code[2]
 
 
 def test_usage_on_a_language_is_refused_for_everyone_only_when_the_migration_family_owns_it():
