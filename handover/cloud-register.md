@@ -1506,3 +1506,7 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | a147b438068dda7c9 | Q8c-1 light EV ad588599 | | | 00:50Z | CLOSED, evidence saved handover/evidence/Q8c-1/ad588599 (suite 10878 passed 13 skipped, policy_mutants 108/108 rc 0, fake clock 2026-12-12 head 346 passed) | Q8c-1 ledger rows still OPEN from earlier rounds, reconcile before any READY; Vault engine run IMPOSSIBLE-NOW |
 | a29df2677cc87fd98 | Q8c-1 ledger reconciliation table (read-only) | 00:50Z | 40 min | 00:50Z | running | check table, then edit ledger rows with evidence, push |
 | aea99c4308ed1d4fa | PR H fix batch 5 builder | 00:54Z | 90 min | running | check at 02:14Z |
+| a246cb8eb1388b501 | Q8a-1 b9 builder | closed 01:14Z, head f0febfb6 on wip/cloud-q8a1-b9 | - | done | - |
+| a957f51db34c5eafc | Q8a-1 r9 design reviewer (snap q8a1b9-f0febfb6) | 01:14Z | ~15 min | running | check 01:29Z |
+| a29359676c670090b | Q8a-1 r9 codebase reviewer | 01:14Z | ~15 min | running | check 01:29Z |
+| ab996c6e17b81a4b4 | Q8a-1 r9 EV runner (Q8a1r9) | 01:14Z | 50 min | running | check 02:04Z |
