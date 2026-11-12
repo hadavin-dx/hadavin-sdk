@@ -1,0 +1,14 @@
+$ /tmp/work/sg17/uvv/bin/uv --version
+uv 0.13.8 (x86_64-unknown-linux-gnu)
+$ uv pip compile requirements-semgrep.in --exclude-newer 2026-11-12 --python-platform x86_64-manylinux_2_34 --python-version 3.12 --generate-hashes --no-header -o regenerated.txt
+    --hash=sha256:b30cb6cd253122169c47de245ca24a86bac2a5d3802ba15bf7ba6414eb9e144d \
+    --hash=sha256:cf474b90b07ea932637e17c6b9479de2b2882900b0d311bdaf4f5c000a15a97f
+    # via importlib-metadata
+$ cmp committed.txt regenerated.txt
+cmp: identical (exit 0)
+a791abb7e447d8dbc04927779818f38580481c6b9f7cc0651cd35786e7903fdb  committed.txt
+a791abb7e447d8dbc04927779818f38580481c6b9f7cc0651cd35786e7903fdb  regenerated.txt
+  1130 committed.txt
+  1130 regenerated.txt
+  2260 total
+(committed.txt = requirements-semgrep.txt of the semgrep-rebased tree /tmp/work/sg14b-solo; uv installed from PyPI in scratch venv; Python host 3.13.18; docker not used)

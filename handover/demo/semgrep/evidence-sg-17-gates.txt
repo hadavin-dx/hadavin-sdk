@@ -1,0 +1,49 @@
+== standalone
+== STANDALONE: fresh 0841f36 clone + semgrep-rebased.patch
+apply OK: semgrep-rebased.patch sha256 5ede7b874cb316914c76de57ce2a03202711500fae176396ec8e6a60e0c68d0b
+215
+$ gitleaks dir .
+[90m10:12PM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+$ gitleaks git .
+[90m10:12PM[0m [32mINF[0m [1mno leaks found[0m
+$ ruff check / format --check
+All checks passed!
+130 files already formatted
+$ mypy linux / win32
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+$ pytest test_hygiene (with gitleaks, DPLD_REQUIRE_SCAN=1) test_nosemgrep_form test_gitleaks_semgrep_lock (incl. mutants)
+........................................................................ [ 96%]
+...                                                                      [100%]
+75 passed in 36.25s
+1 passed, 2580 deselected in 3.01s
+tests/test_gitleaks_semgrep_lock.py::test_exe_bare_name_and_symlink PASSED [ 33%]
+tests/test_gitleaks_semgrep_lock.py::test_semgrep_lock_allowances_are_narrow PASSED [ 66%]
+tests/test_gitleaks_semgrep_lock.py::test_widening_an_allowance_makes_the_negative_cases_pass PASSED [100%]
+
+== on-v4 (codeant3-gitleaks sha as applied above; the file's current sha at the end: 26b74f3cf8eff89dd91a0d93789405afa508373aa30570a21b600a73dcf951c4)
+== ON-V4: fresh 0841f36 + codeant3-gitleaks + docs-and-deps v4 + semgrep-on-v4
+apply OK: codeant3-gitleaks.patch sha256 26b74f3cf8eff89dd91a0d93789405afa508373aa30570a21b600a73dcf951c4
+apply OK: docs-and-deps.patch sha256 e4e227a4167ce6a919a355570d75b5042e189eb423ad579fe976de5b3cf66839
+apply OK: semgrep-on-v4.patch sha256 1783bfa9d82c6a5b2a5293227228bbc13383ecde47068327d0081c2035fad812
+218
+$ gitleaks dir .
+[90m10:10PM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+$ gitleaks git .
+[90m10:10PM[0m [32mINF[0m [1mno leaks found[0m
+$ ruff check / format --check
+All checks passed!
+130 files already formatted
+$ mypy linux / win32
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+$ pytest test_hygiene (with gitleaks, DPLD_REQUIRE_SCAN=1) test_nosemgrep_form test_gitleaks_semgrep_lock (incl. mutants)
+........................................................................ [ 90%]
+........                                                                 [100%]
+80 passed in 39.23s
+1 passed, 2585 deselected in 2.38s
+tests/test_gitleaks_semgrep_lock.py::test_exe_bare_name_and_symlink PASSED [ 33%]
+tests/test_gitleaks_semgrep_lock.py::test_semgrep_lock_allowances_are_narrow PASSED [ 66%]
+tests/test_gitleaks_semgrep_lock.py::test_widening_an_allowance_makes_the_negative_cases_pass PASSED [100%]

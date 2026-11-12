@@ -12,14 +12,14 @@ index 0b7d518..4b24593 100644
      }
 diff --git a/.github/workflows/semgrep.yml b/.github/workflows/semgrep.yml
 new file mode 100644
-index 0000000..2e824eb
+index 0000000..4c8bd25
 --- /dev/null
 +++ b/.github/workflows/semgrep.yml
 @@ -0,0 +1,78 @@
 +# Semgrep open-source CLI (engine licence LGPL-2.1). No account, no token, no repository secret, metrics off.
 +# Rules come from the public Semgrep registry (p/python, p/javascript). Their licence is the Semgrep Rules License v1.0:
-+# own internal use only, not redistributed (see the legal page on the Semgrep website; read 2026-11-12, its text was not
-+# fetched for this check). The job log of a public repository is public: it prints rule ids and messages (docs/tests.md, "Semgrep").
++# own internal use only, not redistributed (see the legal page on the Semgrep website; that text was not fetched or read for this
++# check, so these terms are not checked against it). The job log of a public repository is public: it prints rule ids and messages (docs/tests.md, "Semgrep").
 +# Same house rules as lint.yml: Actions pinned to a full SHA, read-only permissions, GitHub-hosted runner,
 +# nothing from pull request text inside a run: step, installs checked by hash.
 +name: semgrep
@@ -95,7 +95,7 @@ index 0000000..2e824eb
 +          fi
 +          exit "$status"
 diff --git a/.gitleaks.toml b/.gitleaks.toml
-index 4fad96b..9ed0e8f 100644
+index 4fad96b..224e81f 100644
 --- a/.gitleaks.toml
 +++ b/.gitleaks.toml
 @@ -54,6 +54,9 @@ paths = ['''(^|[/\\])src/lead_desk/constants\.py$''']  # the one home of the ven
@@ -108,20 +108,21 @@ index 4fad96b..9ed0e8f 100644
  condition = "AND"
  regexTarget = "match"
  regexes = ['''^demo\.invalid[^A-Za-z0-9-]?$''']
-@@ -85,6 +88,11 @@ id = "long-hex-token"
+@@ -85,6 +88,12 @@ id = "long-hex-token"
  description = "A run of 32 or more hex characters that is not exactly a git id or a SHA-256 checksum"
  regex = '''\b[A-Fa-f0-9]{32,}\b'''
  [[rules.allowlists]]
-+condition = "AND"  # the hash lines of the Semgrep lock, in a file of that name only: the whole line must be (spaces, then) `--hash=sha256:` and 64 hex characters, nothing in front (gitleaks hands over the line with the line break in front of it, so the `^` is followed by an optional one)
++condition = "AND"  # the hash lines of the Semgrep lock, in a file of that name in ANY folder (INTERIM, see the next line): the whole line must be (spaces, then) `--hash=sha256:` and 64 hex characters, nothing in front (gitleaks hands over the line with the line break in front of it, so the `^` is followed by an optional one)
 +regexTarget = "line"
 +regexes = ['''^\n?[ \t]*--hash=sha256:[0-9a-f]{64}( \\)?\r?$''']
++# INTERIM: the path is unanchored here, so a docs/requirements-semgrep.txt hash line would also pass. It is tightened to ^requirements-semgrep\.txt$ once the scan runs from the repository root (the semgrep-on-v4 form, after triage/codeant3-gitleaks.patch).
 +paths = ['''(^|[/\\])requirements-semgrep\.txt$''']
 +[[rules.allowlists]]
  condition = "AND"  # a git id or checksum is accepted only in the lock files and the workflow files, nowhere else
  regexTarget = "match"
  regexes = ['''^([0-9a-f]{40}|[0-9a-f]{64})$''']
 diff --git a/docs/tests.md b/docs/tests.md
-index 7061956..3e90045 100644
+index 7061956..4b046a5 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
 @@ -27,7 +27,25 @@ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene: `P
@@ -135,9 +136,9 @@ index 7061956..3e90045 100644
 +
 +`.github/workflows/semgrep.yml` runs the open-source Semgrep scanner (its own pinned, hash-checked install in `requirements-semgrep.txt`; no account, no token, no usage data sent) on every pull request and every push to main. It reads the rule packs `p/python` and `p/javascript` from the public Semgrep registry over `src`, `scripts`, `load_tools`, `tools` and `n8n`, and fails the job on a finding of severity ERROR. After the install the job runs `pip check` and `semgrep --version`, so that a package missing from the lock file is reported as an install problem and not as a finding. The findings are printed in the job log only (no code-scanning upload). It belongs with the checks of `lint.yml` and the tests, and it only makes sense once the whole stack is in: it needs the five folders above (a missing folder makes Semgrep exit 2, which the job retries three times and then fails with a message naming the possible causes), and the other checks (the hardcoded-literal scan, the test canary) need the files of the earlier pull requests.
 +
-+**Status of the scan:** ERROR-level clean on the stack head at 0841f36 as of the lead's run (Semgrep 1.185.0 with `p/python` and `p/javascript`, severity ERROR, the five folders above, exit code 0, no finding; that run used `--quiet`, so it did not list the packs it fetched). `tests/` and `demo_only/` were not scanned, and findings of lower severity were not looked at. No run of the workflow on GitHub has been seen yet: the first live CI run stays the check, and the job log prints the Semgrep version and the pack names at the start. If it fails on a finding that already exists, fix the code or suppress that one finding as described below in a separate change; do not read a red first run as a fault of this workflow. No GitHub run has been seen either.
++**Status of the scan:** ERROR-level clean on the stack head at 0841f36 as of the lead's run (Semgrep 1.185.0 with `p/python` and `p/javascript`, severity ERROR, the five folders above, exit code 0, no finding; that run used `--quiet`, so it did not list the packs it fetched, and it ran in the `semgrep/semgrep:1.185.0` container image without `--strict` and without `--disable-version-check`, with the `--config` options in front of the other options; the workflow runs the pinned install with `--strict` and `--disable-version-check` and the options in another order). `tests/` and `demo_only/` were not scanned, and findings of lower severity were not looked at. No run of the workflow on GitHub has been seen yet: the first live CI run stays the check, and the job log prints the Semgrep version and the pack names at the start. If it fails on a finding that already exists, fix the code or suppress that one finding as described below in a separate change; do not read a red first run as a fault of this workflow.
 +
-+**Licence and the public log:** the rules are under the Semgrep Rules License v1.0 (own internal use only, no redistribution; see the legal page on the Semgrep website; its text was not fetched for this check). This repository is public, and the job log prints the rule ids and rule messages of every finding, so anyone can read them. Whether that counts as making the rules available to others is for the repository owner to decide before the job is switched on; the files in this repository contain no copy of any rule.
++**Licence and the public log:** the rules are under the Semgrep Rules License v1.0 (own internal use only, no redistribution; see the legal page on the Semgrep website; the licence text was not fetched or read for this check, so the terms named here are not checked against it). This repository is public, and the job log prints the rule ids and rule messages of every finding, so anyone can read them. Whether that counts as making the rules available to others is for the repository owner to decide before the job is switched on; the files in this repository contain no copy of any rule.
 +
 +**What is scanned, and what is not:** `tests/` is left out on purpose: it holds planted fake secrets, hostile inputs and deliberately insecure code that exist to be caught by other checks, and Semgrep would report them. `demo_only/` (fake services and a demo page) is left out because it is not code the desk runs for real. This is a decision made without a scan result; add either folder to the command in the workflow and in the line below if you want them read. `n8n` holds 3 JSON files (the workflows) and is only nominal: no rule pack runs on JSON, and JavaScript inside an n8n Code node is not parsed, so Semgrep does not review the n8n workflows. A comment cannot be put in JSON either, so there is nothing to suppress there.
 +
@@ -145,7 +146,7 @@ index 7061956..3e90045 100644
 +
 +**Run it on your own computer** from the repository root, in a Python 3.12 virtual environment, with network access (the rules are downloaded): on Linux x86_64 `pip install --require-hashes --only-binary=:all: --no-deps -r requirements-semgrep.txt`, anywhere else `pip install semgrep==1.185.0` (the version pinned in `requirements-semgrep.in`), then `semgrep scan --metrics=off --strict --error --severity ERROR --config p/python --config p/javascript src scripts load_tools tools n8n`. The job adds `--disable-version-check` (no check for a newer Semgrep); on your computer you may leave it out.
 +
-+**To suppress one wrong finding:** write `# nosemgrep: <rule-id> <reason>` in Python, or `// nosemgrep: <rule-id> <reason>` or `/* nosemgrep: <rule-id> */` in JavaScript, on the line of the finding or on the line above it (for a finding that spans several lines, the first line), with the rule id the log printed, for example `# nosemgrep: python.lang.security.audit.dangerous-subprocess-use.dangerous-subprocess-use the command is a fixed list`. The short spelling `nosem` works the same way in Semgrep and follows the same rule. A suppression without a dotted rule id is refused by a test (`tests/test_nosemgrep_form.py`): Semgrep reads a bare `nosemgrep` or `nosem`, and a colon with nothing after it, as "hide every finding on this line" (checked with the pinned version on a made-up rule); it also reads `nosem` followed by any letters, and in any upper or lower case, as a suppression, so the test refuses those spellings too. The `--ignore-gitleaks-allow` switch of the lint job concerns gitleaks only and has nothing to do with this. The repository owner approves any suppression in the pull request.
++**To suppress one wrong finding:** write `# nosemgrep: <rule-id> <reason>` in Python, or `// nosemgrep: <rule-id> <reason>` or `/* nosemgrep: <rule-id> */` in JavaScript, on the line of the finding or on the line above it (for a finding that spans several lines, the first line), with the rule id the log printed, for example `# nosemgrep: python.lang.security.audit.dangerous-subprocess-use.dangerous-subprocess-use the command is a fixed list`. The short spelling `nosem` works the same way in Semgrep and follows the same rule. A suppression without a dotted rule id is refused by a test (`tests/test_nosemgrep_form.py`): Semgrep reads a bare `nosemgrep` or `nosem`, and a colon with nothing after it, as "hide every finding on this line" (checked with the pinned version on a made-up rule); it also reads `nosem` followed by any letters, in any upper or lower case, and with the long s `ſ` (U+017F) in place of the `s`, as a suppression, so the test refuses those spellings too. A tab after the colon is read like a space (the id after it is used), so `nosemgrep:` TAB id is accepted by the test like the space form. The `--ignore-gitleaks-allow` switch of the lint job concerns gitleaks only and has nothing to do with this. The repository owner approves any suppression in the pull request.
 +
 +**To bump the Semgrep version:** follow the comment at the top of `requirements-semgrep.in`. Dependabot is set up for GitHub Actions only, so it covers none of the lock files, this one included; the repository owner checks for a newer version when a Semgrep security advisory appears or about once a quarter. Three tools made the lock files of this repository: `pip-compile` (the dev locks, command in their header), `uv` 0.11.32 (`requirements-coverage.txt`) and `uv` 0.13.8 (`requirements-semgrep.txt`); each header or comment gives the exact command. The Semgrep lock and the dev lock are separate installs in separate jobs, so a shared package (for example `typing-extensions`) may have a different version in each; that is harmless.
  
@@ -164,7 +165,7 @@ index 749fb72..8595886 100644
 +^requirements-semgrep\.txt:[0-9]+:(opentelemetry-[a-z-]+)(==[0-9]+)?$
 diff --git a/requirements-semgrep.in b/requirements-semgrep.in
 new file mode 100644
-index 0000000..1a81e59
+index 0000000..32dcff6
 --- /dev/null
 +++ b/requirements-semgrep.in
 @@ -0,0 +1,13 @@
@@ -173,8 +174,8 @@ index 0000000..1a81e59
 +# Regenerate it from the repository root (relative paths below), in a linux container, with the command that made it:
 +#   docker run --rm -v "$PWD":/w -w /w python:3.12-slim sh -c "pip install uv==0.13.8 && uv pip compile requirements-semgrep.in --exclude-newer 2026-11-12 --python-platform x86_64-manylinux_2_34 --python-version 3.12 --generate-hashes --no-header -o requirements-semgrep.txt"
 +# --exclude-newer 2026-11-12 is the day of the first lock run: it stops later releases of the other packages from moving the lock.
-+# Re-run with uv 0.13.8 (pip-installed from PyPI, run directly, not through the docker command above) and that date:
-+# `cmp` found the new file byte-identical (same sha256, 1130 lines). The docker command itself was not run (no docker there).
++# Re-run on 2026-11-12 with uv 0.13.8 (pip-installed from PyPI into a scratch venv under Python 3.13, run directly, not through the
++# docker command above; same arguments): `cmp` found the regenerated file byte-identical to this one (sha256 starting a791abb7e447d8db..., 1130 lines). The docker command itself was not run (no docker there).
 +# To bump Semgrep: change the pin below, set --exclude-newer to today's date, rerun, READ the lock diff (every package may move),
 +# run `python -m pytest tests/test_hygiene.py -q` (new package names or hashes may need a line in exceptions.txt),
 +# then read the first scan result (docs/tests.md, "Semgrep": status of the scan).
@@ -1319,10 +1320,10 @@ index 0000000..ccc9891
 +    # via importlib-metadata
 diff --git a/tests/test_gitleaks_semgrep_lock.py b/tests/test_gitleaks_semgrep_lock.py
 new file mode 100644
-index 0000000..e8ed892
+index 0000000..3651a88
 --- /dev/null
 +++ b/tests/test_gitleaks_semgrep_lock.py
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,141 @@
 +"""The two gitleaks allowances for the Semgrep lock (`.gitleaks.toml`) are narrow: tested with the real gitleaks.
 +
 +Allowed: the hash lines of `requirements-semgrep.txt` (a line of spaces, `--hash=sha256:` and exactly 64 lowercase hex
@@ -1354,13 +1355,43 @@ index 0000000..e8ed892
 +
 +
 +def _exe() -> str:
-+    exe = os.environ.get(GITLEAKS_ENV) or shutil.which("gitleaks")
++    """The gitleaks program as an absolute path: a bare name is looked up on PATH, a name with a folder part is made
++    absolute; neither is resolved through symbolic links. A name with a folder part that names nothing is a ValueError
++    that names GITLEAKS_BIN."""
++    raw = os.environ.get(GITLEAKS_ENV) or "gitleaks"
++    exe = shutil.which(raw) if not os.path.dirname(raw) else raw
 +    if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
 +        pytest.skip(
 +            f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
 +        )
 +    assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
-+    return str(Path(exe).resolve())  # the scans run with cwd=<folder>: a relative program path would not be found
++    path = os.path.abspath(exe)
++    if not (os.path.exists(path) or (os.name == "nt" and os.path.exists(path + ".exe"))):
++        raise ValueError(f"{GITLEAKS_ENV}={exe!r} does not exist (looked for {path}); fix the path or unset it")
++    return path
++
++
++@pytest.mark.skipif(os.name == "nt", reason="a fake program on PATH needs the executable bit")
++def test_exe_bare_name_and_symlink(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    """A bare GITLEAKS_BIN is found on PATH; a symlink is not resolved; a relative path is made absolute."""
++    real = tmp_path / "bin" / "real-gl"
++    real.parent.mkdir()
++    real.write_text("#!/bin/sh" + NL, encoding="utf-8")
++    real.chmod(0o755)
++    link = tmp_path / "bin" / "gl-link"
++    link.symlink_to(real)
++    monkeypatch.setenv("PATH", str(real.parent))
++    monkeypatch.setenv(GITLEAKS_ENV, "gl-link")
++    assert _exe() == str(link)  # bare name: looked up on PATH, the link is not followed
++    monkeypatch.setenv(GITLEAKS_ENV, str(link))
++    assert _exe() == str(link)
++    assert _exe() != str(real.resolve())
++    monkeypatch.chdir(tmp_path)
++    monkeypatch.setenv(GITLEAKS_ENV, os.path.join("bin", "gl-link"))
++    assert _exe() == os.path.abspath(os.path.join("bin", "gl-link"))
++    monkeypatch.setenv(GITLEAKS_ENV, os.path.join("bin", "no-such-program"))
++    with pytest.raises(ValueError, match=GITLEAKS_ENV):
++        _exe()
 +
 +
 +def _scan(tmp: Path, name: str, files: dict[str, str], toml: Path) -> set[tuple[str, str]]:
@@ -1436,10 +1467,10 @@ index 0000000..e8ed892
 +    assert still == set(), f"hostname rule widened, a longer host name is still reported: {still}"
 diff --git a/tests/test_nosemgrep_form.py b/tests/test_nosemgrep_form.py
 new file mode 100644
-index 0000000..793a57c
+index 0000000..aa6992e
 --- /dev/null
 +++ b/tests/test_nosemgrep_form.py
-@@ -0,0 +1,139 @@
+@@ -0,0 +1,153 @@
 +"""A Semgrep suppression comment must name the rule: `# nosemgrep: <rule-id> <reason>`, never a bare `# nosemgrep`.
 +
 +Every mention of `nosem` (the short form `nosem` is read by Semgrep 1.185.0 exactly like `nosemgrep`; any letters after
@@ -1460,15 +1491,20 @@ index 0000000..793a57c
 +from support import REPO
 +
 +WORD = "nosem"  # the prefix of both spellings; Semgrep also accepts letters after it and any case, so refuse those
++# `noſem` (U+017F, long s): Semgrep 1.185.0 reads it as `nosem`; git grep -i folds it in some locales only
++LONG_S = "no" + chr(0x17F) + "em"
++WORD_RE = "no[s" + chr(0x17F) + "]em"  # the two spellings as one regular expression, for any case
++TAB = chr(9)
 +SKIP = (":(exclude)docs", ":(exclude)tests/test_nosemgrep_form.py", ":(exclude).github/workflows/semgrep.yml")
-+# after `nosem`: `grep` or nothing, a colon, at most one space or tab, a dotted rule id, then a blank, `*/` or line end
++# after `nosem`: `grep` or nothing, a colon, at most one space or tab (Semgrep 1.185.0 reads a tab after the colon
++# like a space: the id after it is used), a dotted rule id, then a blank, `*/` or line end
 +GOOD_TAIL = re.compile(r"(grep)?:[ \t]?[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)+(?=[ \t]|\*/|\r?$)")
 +
 +
 +def _mentions(root: Path) -> list[str]:
 +    """Every tracked line that holds the word, as `path:line:text` (git grep over the index, no absolute path)."""
 +    p = subprocess.run(  # noqa: S603
-+        ["git", "grep", "-n", "-I", "-i", "-F", WORD, "--", ".", *SKIP],  # noqa: S607
++        ["git", "grep", "-n", "-I", "-i", "-F", "-e", WORD, "-e", LONG_S, "--", ".", *SKIP],  # noqa: S607
 +        cwd=root,
 +        capture_output=True,
 +        text=True,
@@ -1485,7 +1521,7 @@ index 0000000..793a57c
 +    out = []
 +    for hit in _mentions(root):
 +        path, number, text = hit.split(":", 2)
-+        if not all(GOOD_TAIL.match(tail) for tail in re.split(WORD, text, flags=re.IGNORECASE)[1:]):
++        if not all(GOOD_TAIL.match(tail) for tail in re.split(WORD_RE, text, flags=re.IGNORECASE)[1:]):
 +            out.append(f"{path}:{number}")
 +    return out
 +
@@ -1512,6 +1548,9 @@ index 0000000..793a57c
 +    "short-block": ("a.js", "f(1);  /* nosem: javascript.lang.x.y */\n"),
 +    "short-crlf": ("a.py", "x = 1  # nosem: python.lang.x.y reason\r\n"),
 +    "id-at-end-of-line": ("a.py", "x = 1  # nosemgrep: python.lang.x.y\n"),
++    "tab-after-colon": ("a.py", "x = 1  # nosemgrep:" + TAB + "python.lang.x.y reason\n"),
++    "tab-after-colon-short": ("a.py", "x = 1  # nosem:" + TAB + "python.lang.x.y reason\n"),
++    "long-s-with-id": ("a.py", "x = 1  # " + LONG_S + ": python.lang.x.y reason\n"),
 +    "crlf-with-id": ("a.py", "x = 1  # nosemgrep: python.lang.x.y reason\r\n"),
 +}
 +LONG = "nosemgrep"
@@ -1558,6 +1597,12 @@ index 0000000..793a57c
 +    "upper-case-long": ("a.py", "x = 1  # NOSEMGREP\n"),
 +    "mixed-case-short": ("a.py", "x = 1  # NoSem\n"),
 +    "words-before-bare": ("a.py", "x = 1  # see nosem docs\n"),
++    # Unicode: Semgrep 1.185.0 reads U+017F (long s) as `s`; a zero-width or no-break space did not suppress
++    "long-s-bare": ("a.py", "x = 1  # " + LONG_S + "\n"),
++    "long-s-grep-bare": ("a.py", "x = 1  # " + LONG_S + "grep\n"),
++    "long-s-upper-bare": ("a.py", "x = 1  # NO" + chr(0x17F) + "EM\n"),
++    "long-s-colon-empty": ("a.py", "x = 1  # " + LONG_S + ":\n"),
++    "long-s-second-mention-bare": ("a.py", "x = 1  # nosem: python.lang.x.y reason # " + LONG_S + "\n"),
 +    "short-second-mention-bare": ("a.py", "x = 1  # nosem: python.lang.x.y reason # nosem\n"),
 +}
 +

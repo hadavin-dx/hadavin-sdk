@@ -1,0 +1,66 @@
+REAL SEMGREP 1.185.0 (venv /tmp/work/sg2-venv-sg), made-up rule demo.no-boom, local, no registry
+$ semgrep scan --metrics=off --disable-version-check --quiet --json --config rules.yml t
+1.185.0
+control_nosem.py           b'boom(1)  # nosem\n'                                          suppressed
+dotless_i.py               b'boom(1)  # nosem\xc4\xb1\n'                                  suppressed
+fullwidth.py               b'boom(1)  # \xef\xbd\x8e\xef\xbd\x8f\xef\xbd\x93\xef\xbd\x85\xef\xbd\x8d\n' FINDING REPORTED
+fullwidth_grep.py          b'boom(1)  # \xef\xbd\x8e\xef\xbd\x8f\xef\xbd\x93\xef\xbd\x85\xef\xbd\x8d\xef\xbd\x87\xef\xbd\x92\xef\xbd\x85\xef\xbd\x90\n' FINDING REPORTED
+kelvin.py                  b'boom(1)  # nosemgrep \xe2\x84\xaa\n'                         suppressed
+long_s.py                  b'boom(1)  # no\xc5\xbfem\n'                                   suppressed
+long_s_grep.py             b'boom(1)  # no\xc5\xbfemgrep\n'                               suppressed
+nbsp.py                    b'boom(1)  # nosem:\xc2\xa0demo.other\n'                       FINDING REPORTED
+nbsp_before.py             b'boom(1)  #\xc2\xa0nosem\n'                                   FINDING REPORTED
+space_wrong.py             b'boom(1)  # nosem: demo.other\n'                              FINDING REPORTED
+tab_js.js                  b'boom(1);  // nosemgrep:\tdemo.other\n'                       FINDING REPORTED
+tab_nosem.py               b'boom(1)  # nosem:\tdemo.no-boom\n'                           suppressed
+tab_nosemgrep.py           b'boom(1)  # nosemgrep:\tdemo.no-boom\n'                       suppressed
+tab_wrong_nosem.py         b'boom(1)  # nosem:\tdemo.other\n'                             FINDING REPORTED
+tab_wrong_nosemgrep.py     b'boom(1)  # nosemgrep:\tdemo.other\n'                         FINDING REPORTED
+upper.py                   b'boom(1)  # NOSEM\n'                                          suppressed
+zwsp.py                    b'boom(1)  # no\xe2\x80\x8bsem\n'                              FINDING REPORTED
+errors: []
+non-ASCII chars that fold onto e (Python re.I): []
+non-ASCII chars that fold onto g (Python re.I): []
+non-ASCII chars that fold onto m (Python re.I): []
+non-ASCII chars that fold onto n (Python re.I): []
+non-ASCII chars that fold onto o (Python re.I): []
+non-ASCII chars that fold onto p (Python re.I): []
+non-ASCII chars that fold onto r (Python re.I): []
+non-ASCII chars that fold onto s (Python re.I): ['0x17f']
+
+ANSWERS: N1 tab after the colon IS read like a space: nosem/nosemgrep:TAB<right id> suppresses, TAB<wrong id> does not -> GOOD_TAIL keeps [ \t]? and tab+id cases are tested as accepted (tab-after-colon, tab-after-colon-short). N2 U+017F (long s) suppresses (noſem, noſemgrep); fullwidth letters, no-break space, zero-width space do NOT; the only letter of nosemgrep with a non-ASCII case partner is s (U+017F); Kelvin sign K folds onto k, which is not in either word (not applicable; the kelvin.py line above is plain nosemgrep, shown for completeness).
+
+== OLD (round-3 patch) test on the same shapes, default locale then LC_ALL=C
+OLD (round-3 patch) test _bad() on 'long-s'          : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'long-s-grep'     : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'upper-long-s'    : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'long-s-with-id'  : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'plain NOSEM'     : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'tab+id'          : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'tab-colon-empty' : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'long-s'          : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'long-s-grep'     : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'upper-long-s'    : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'long-s-with-id'  : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'plain NOSEM'     : ['a.py:1']  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'tab+id'          : []  ('[]' = accepted/not reported)
+OLD (round-3 patch) test _bad() on 'tab-colon-empty' : ['a.py:1']  ('[]' = accepted/not reported)
+
+== NEW tests in LC_ALL=C: 62 passed (nosemgrep_form); mutants:
+== MUTANT A: test_nosemgrep_form search without the long-s term (the old search)
+62 passed in 0.72s
+== MUTANT B: old split (ASCII nosem only) in _bad
+62 passed in 0.47s
+== MUTANT C: GOOD_TAIL single space only (tab refused): tab cases (which Semgrep suppresses with the id) must fail
+1
+FAILED tests/test_nosemgrep_form.py::test_form_with_rule_id_is_accepted[tab-after-colon]
+FAILED tests/test_nosemgrep_form.py::test_form_with_rule_id_is_accepted[tab-after-colon-short]
+2 failed, 60 passed in 0.56s
+== MUTANT D (solo): _exe back to str(Path(exe).resolve())
+E       AssertionError: assert '/tmp/work/sg17/mD/gl-link' == '/tmp/pytest-...0/bin/gl-link'
+tests/test_gitleaks_semgrep_lock.py:55: AssertionError
+FAILED tests/test_gitleaks_semgrep_lock.py::test_exe_bare_name_and_symlink - ...
+1 failed, 2 deselected in 0.12s
+== MUTANT E (v4): _exe uses the old own lookup + resolve()
+FAILED tests/test_gitleaks_semgrep_lock.py::test_exe_bare_name_and_symlink - ...
+1 failed, 2 deselected in 0.11s
