@@ -1,29 +1,25 @@
 diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
-index e851736..b8002fd 100644
+index e851736..c809989 100644
 --- a/.github/workflows/sonar.yml
 +++ b/.github/workflows/sonar.yml
-@@ -2,7 +2,8 @@
- # One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
- # otherwise the scan stops with "You are running CI analysis while Automatic Analysis is enabled".
+@@ -4,3 +4,10 @@
  # The token is the repository secret SONAR_TOKEN (owner-created, read-only to this file; never printed).
 -# Coverage is not collected here yet: Sonar shows no coverage numbers until a test run writes coverage.xml.
 +# Coverage: the job runs the Python test suite once (serial, as in docs/tests.md) with pytest-cov and hands coverage.xml to the
-+# scan. The test step gets no secret; only the scan step holds SONAR_TOKEN. The Playwright tests skip here, as in lint.yml.
++# scan. The Playwright tests skip here, as in lint.yml.
++# What is and is not isolated: the SONAR_TOKEN secret is NOT in the environment of the install and test steps (it is set only on
++# the scan step, and the checkout keeps no credentials). But all steps run on the SAME runner, in the same job: the test code
++# (the repository's own tests) could write to $GITHUB_ENV or $GITHUB_PATH, to ~/.sonar/cache, or plant a sonar-project.properties or
++# coverage.xml that the later scan step then reads. This is accepted because a pull request from a fork or from Dependabot never
++# runs this job (the `if:` below) and an author of a same-repo pull request can already edit this workflow file itself.
++# A two-job split (tests without the secret, scan in a second job) is described in the lane 7 plan as an owner decision.
  name: SonarQube
- on:
-   push:
-@@ -20,7 +21,7 @@ jobs:
-   build:
-     name: Build and analyze
+@@ -22,3 +29,3 @@ jobs:
      runs-on: ubuntu-latest
 -    timeout-minutes: 20
-+    timeout-minutes: 35  # measured: tests 14.9 min (serial, no Playwright); about 1.6 times the expected whole job
++    timeout-minutes: 60  # same as lint.yml until a real run on a hosted runner shows the duration; then 1.6 times the longest observed run
      # A pull request from a fork or from Dependabot gets no repository secret: skip it instead of failing.
-     if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
-     steps:
-@@ -28,6 +29,18 @@ jobs:
-         with:
-           fetch-depth: 0  # Shallow clones are disabled for a better relevancy of analysis
+@@ -30,2 +37,14 @@ jobs:
            persist-credentials: false
 +      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0 (same pin as lint.yml)
 +        with:
@@ -38,46 +34,33 @@ index e851736..b8002fd 100644
 +          DPLD_REQUIRE_DEMO: "1"
 +        run: python -m pytest -q --cov --cov-report=xml:coverage.xml
        - name: Cache SonarQube packages
-         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-         with:
 diff --git a/.gitignore b/.gitignore
 index 5ad96a9..5cdc224 100644
 --- a/.gitignore
 +++ b/.gitignore
-@@ -32,3 +32,5 @@ result.json
- .idea/
- Thumbs.db
+@@ -34 +34,3 @@ Thumbs.db
  *.env
 +.coverage.*
 +coverage.xml
 diff --git a/.gitleaks.toml b/.gitleaks.toml
-index a834087..c1ee73a 100644
+index c6f07f8..0d1681b 100644
 --- a/.gitleaks.toml
 +++ b/.gitleaks.toml
-@@ -52,7 +52,7 @@ paths = ['''(^|[/\\])(README|SECURITY)\.md$''']
- paths = ['''(^|[/\\])src/lead_desk/constants\.py$''']  # the one home of the vendor host names; this rule only
- [[rules.allowlists]]
+@@ -54,3 +54,3 @@ paths = ['''(^|[/\\])src/lead_desk/constants\.py$''']  # the one home of the ven
  regexTarget = "match"  # file names and code words that end like a host name (same list as exceptions.txt)
 -regexes = ['''^requirements-dev\.in[^A-Za-z0-9_-]?$''', '''^(start_all|reset|all)\.sh[^A-Za-z0-9-]?$''', '''^log\.info\($''', '''^P\.page\($''', '''^counts\.info[^A-Za-z0-9_-]?$''']
 +regexes = ['''^requirements-(dev|coverage)\.in[^A-Za-z0-9_-]?$''', '''^(start_all|reset|all)\.sh[^A-Za-z0-9-]?$''', '''^log\.info\($''', '''^P\.page\($''', '''^counts\.info[^A-Za-z0-9_-]?$''']
  [[rules.allowlists]]
- condition = "AND"
- regexTarget = "match"
-@@ -88,6 +88,6 @@ regex = '''\b[A-Fa-f0-9]{32,}\b'''
- condition = "AND"  # a git id or checksum is accepted only in the lock files and the workflow files, nowhere else
- regexTarget = "match"
+@@ -90,3 +90,3 @@ regexTarget = "match"
  regexes = ['''^([0-9a-f]{40}|[0-9a-f]{64})$''']
 -paths = ['''requirements-dev(-win)?\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
-+paths = ['''requirements-(dev(-win)?|coverage)\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
++paths = ['''(^|[/\\])requirements-(dev(-win)?|coverage)\.txt$''', '''\.github[/\\]workflows[/\\][a-z]+\.yml$''']
  
- # Global allowlist: none by path. Add an entry here only as regex plus a stated reason, never a whole file.
 diff --git a/docs/tests.md b/docs/tests.md
 index 2fb4069..944b741 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
-@@ -16,6 +16,13 @@ Linux (Python 3.12 matches the lock file), with the `.venv` folder switched on a
-     python -m pip install --require-hashes -r requirements-dev.txt
-     python -m pytest -q                                  # the tests
+@@ -18,2 +18,9 @@ Linux (Python 3.12 matches the lock file), with the `.venv` folder switched on a
  
 +The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the code the tests run. On Linux, after the line above, install the coverage tools from their own lock file (it adds `pytest-cov` and `coverage` and changes no version of the dev lock) and add the coverage options:
 +
@@ -87,37 +70,25 @@ index 2fb4069..944b741 100644
 +The settings are in `pyproject.toml` (`[tool.coverage.run]`); the report `coverage.xml` is read by the SonarQube scan through `sonar.python.coverage.reportPaths`. The browser tests skip without Playwright, so the figure counts code that only they reach as not run.
 +
  The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene: `PYTHONPATH=src python scripts/crash_desk.py`, then write a point name (for example `D2`) into the flag file it prints, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`). The tests set the path for their own processes. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats.
- 
- The desk's settings (the `DESK_*` names, plus the extra names of the real-services script and `N8N_URL`, `N8N_API_KEY_FILE` and the `DPLD_*` names; n8n's own `N8N_PORT` and similar are in `docs/n8n-recipe.md`) are in `docs/settings.md`; the exit codes of the desk are in `docs/limits.md`.
 diff --git a/exceptions.txt b/exceptions.txt
 index 8a85359..65431aa 100644
 --- a/exceptions.txt
 +++ b/exceptions.txt
-@@ -6,7 +6,7 @@
- ^[^:]+:[0-9]+:https:/{2}(github\.com/(gitleaks/gitleaks|actions)|docs\.github\.com|docs\.n8n\.io)([:/].*)?$
- ^[^:]+:[0-9]+:(localhost|github\.com|docs\.github\.com|docs\.n8n\.io|example\.com|example\.test|example\.invalid)[^A-Za-z0-9-]?$
+@@ -8,3 +8,3 @@
  ^\.github/workflows/[a-z]+\.yml:[0-9]+:([0-9a-f]{40}|[0-9a-f]{64})$
 -^requirements-dev(-win)?\.txt:[0-9]+:[0-9a-f]{64}$
 +^requirements-(dev(-win)?|coverage)\.txt:[0-9]+:[0-9a-f]{64}$
  ^src/lead_desk/desk\.py:[0-9]+:threading\.local[^A-Za-z0-9_-]?$
- ^tests/[a-z_0-9]+\.py:[0-9]+:test_[a-z0-9]{1,12}(_[a-z0-9]{1,12}){0,8}$
- ^tests/test_server_hardening\.py:[0-9]+:http:/{2}[a]:[b]:[c]/$
-@@ -21,7 +21,7 @@
- ^src/lead_desk/constants\.py:[0-9]+:(https?:/{2})?[A-Za-z0-9.-]+\.[a-z]+[^A-Za-z0-9_-]?$
- ^tests/test_smtp_provider\.py:[0-9]+:10\.0\.0\.1$
+@@ -23,3 +23,3 @@
  ^[^:]+:[0-9]+:https:/{2}github\.com/n8n-io/n8n/blob/master/LICENSE\.md$
 -^[^:]+:[0-9]+:(requirements-dev\.in|(start_all|reset|all)\.sh|log\.info\(|P\.page\(|counts\.info)[^A-Za-z0-9_-]?$
 +^[^:]+:[0-9]+:(requirements-(dev|coverage)\.in|(start_all|reset|all)\.sh|log\.info\(|P\.page\(|counts\.info)[^A-Za-z0-9_-]?$
  ^README\.md:[0-9]+:hadavin\.com[^A-Za-z0-9-]?$
- ^SECURITY\.md:[0-9]+:sales@hadavin\.com$
- ^sonar-project\.properties:[0-9]+:projectKey=hadavin-dx_[a-z0-9-]+$
 diff --git a/pyproject.toml b/pyproject.toml
-index 79fdb4e..a62fdb4 100644
+index 79fdb4e..02a9b4a 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
-@@ -40,3 +40,13 @@ files = ["src", "tools", "scripts/hubspot_probe.py"]
- mypy_path = "src"
- strict = true
+@@ -42 +42,11 @@ strict = true
  warn_unused_ignores = true
 +
 +# Coverage for the SonarQube job (.github/workflows/sonar.yml; pytest-cov comes from requirements-coverage.txt).
@@ -128,17 +99,18 @@ index 79fdb4e..a62fdb4 100644
 +[tool.coverage.run]
 +relative_files = true
 +source = ["."]
-+omit = ["tests/*", "demo_only/*", ".venv*/*"]
++omit = ["tests/**", "demo_only/**", ".venv*/**"]
 diff --git a/requirements-coverage.in b/requirements-coverage.in
 new file mode 100644
-index 0000000..be3a3f3
+index 0000000..960196a
 --- /dev/null
 +++ b/requirements-coverage.in
-@@ -0,0 +1,5 @@
+@@ -0,0 +1,6 @@
 +# Extra tools for the coverage run of the SonarQube job (.github/workflows/sonar.yml) only. Linux, Python 3.12.
 +# Installed with --require-hashes ON TOP of requirements-dev.txt; the lint job and the Windows lock never see it.
 +# The lock is built against requirements-dev.txt (-c), so pytest and its helpers keep the versions of that lock.
-+# Regenerate with uv 0.11.32 (command in the header of requirements-coverage.txt).
++# Regenerate with uv 0.11.32 (command in the header of requirements-coverage.txt), and regenerate requirements-coverage.txt whenever
++# requirements-dev.txt changes (tests/test_hygiene.py fails if a package pinned in both has two different versions).
 +pytest-cov
 diff --git a/requirements-coverage.txt b/requirements-coverage.txt
 new file mode 100644
@@ -308,9 +280,29 @@ diff --git a/sonar-project.properties b/sonar-project.properties
 index 1f57193..524882a 100644
 --- a/sonar-project.properties
 +++ b/sonar-project.properties
-@@ -10,3 +10,5 @@ sonar.python.version=3.12
- sonar.sources=.
- sonar.test.inclusions=tests/**
+@@ -12 +12,3 @@ sonar.test.inclusions=tests/**
  sonar.exclusions=demo_only/**,tests/portal_fixtures/**,**/*.png,.git/**
 +# Python coverage: the report written by the test step in sonar.yml (pytest-cov, paths relative to the repository root).
 +sonar.python.coverage.reportPaths=coverage.xml
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 3b324e3..1d8a4ba 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -332 +332,17 @@ def test_workflows_are_pinned_and_limited() -> None:
+     assert _workflow_problems(good + NL.join(["on:", "  pull_request_target:", ""])) != []
++
++
++def _pins(text: str) -> dict[str, str]:
++    """name -> version of every `name==version` line of a pip lock file."""
++    return {m[1].lower(): m[2] for m in re.finditer(r"^([A-Za-z0-9._-]+)==([^\s;\\]+)", text, re.MULTILINE)}
++
++
++def test_coverage_lock_agrees_with_dev_lock() -> None:
++    """A package pinned in both requirements-dev.txt and requirements-coverage.txt has the same version in both:
++    the sonar.yml job installs the dev lock, then the coverage lock: a drifted pin silently replaces the dev pin."""
++    dev = _pins((REPO / "requirements-dev.txt").read_text(encoding="utf-8"))
++    cov = _pins((REPO / "requirements-coverage.txt").read_text(encoding="utf-8"))
++    shared = sorted(dev.keys() & cov.keys())
++    assert "pytest" in shared, "the two locks share no pytest pin: the test would prove nothing"
++    assert [(n, dev[n], cov[n]) for n in shared if dev[n] != cov[n]] == []
++    assert _pins("pytest==1.0 \\\n    --hash=sha256:aa") == {"pytest": "1.0"}  # the parser itself

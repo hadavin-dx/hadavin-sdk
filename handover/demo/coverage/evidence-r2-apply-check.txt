@@ -1,0 +1,8 @@
+fresh clones of the public repo at 558d37f (pr-3-tests); patch made with git diff -U1 so its context does not touch line 27 of exceptions.txt (the fix's line)
+== A: coverage patch alone on 558d37f
+A: OK
+== B: gitleaks-toml-fix.patch first, then the coverage patch
+B: OK
+== C: coverage first, then the fix: FAILS, and the cause is the fix patch's own 3-line context, which contains exceptions.txt line 24 that my patch edits (error shown below). Order B is the supported order; (not tested: a -U1 regeneration of the fix patch).
+error: patch failed: exceptions.txt:24
+error: exceptions.txt: patch does not apply

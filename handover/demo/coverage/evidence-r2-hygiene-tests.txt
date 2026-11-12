@@ -1,0 +1,3 @@
+== tree 558d37f + gitleaks-toml-fix.patch + coverage patch v2; real gitleaks via GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1, DPLD_REQUIRE_DEMO=1; one pytest process
+....................                                                     [100%]
+20 passed in 13.73s

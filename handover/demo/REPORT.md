@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:22Z / 01:52 IST - LANE 7b DONE (coverage patch v2); fresh security review round 2 running; 5 agents live
+FAILED / OPEN first (builder's words; unreviewed):
+- STILL UNVERIFIED: sonar-scanner accepting coverage.xml via `sonar.python.coverage.reportPaths`; how Sonar treats the empty `<source/>` entry in coverage.xml; that the action SHAs belong to the named actions; real package hashes. No scanner was allowed to run.
+- APPLY ORDER MATTERS: coverage v2 alone on 558d37f passes `git apply --check`; fix-then-coverage passes; COVERAGE-THEN-FIX FAILS (the gitleaks fix's 3-line context touches exceptions.txt line 24); the builder made its patch with `-U1` to avoid overlap. Apply the gitleaks fix FIRST. Lane 10a2 is placing its exceptions hunk so the order does not matter; I re-check both orders when v2 lands.
+- NOT re-run: the 92.57 percent and 2349-test figures come from the v1 run (v2 changes no Python source, but the new lock-drift hygiene test adds 1 test: expect 2350 passed, to be confirmed).
+RESOLVED (each with raw evidence in coverage/evidence-r2-*.txt): tree 558d37f + 10a's gitleaks fix + the coverage patch: `gitleaks dir` 0 findings, `gitleaks git` 0 findings (history plus a scratch commit), 20 hygiene tests passed incl. the real-binary one; CONTROL without the coverage patch's allowances: 133 findings (131 hash lines + 2 mentions of requirements-coverage.in); negative tests: other hex values planted in other files and old-requirements-coverage.txt are still reported (tarball sha256 of the gitleaks binary matches lint.yml's pin this time). (2) sonar.yml header comment corrected; the two-job split is an owner decision (PLAN.md section 8, not implemented). (3) `timeout-minutes: 60` (the 21-minute figure is now called an estimate). (4) a tiny hygiene test for lock drift between requirements-coverage.txt and requirements-dev.txt; mutation proof: with the dev pytest pin bumped the test fails with `[('pytest','9.3.0','9.2.0')]`. (5) path regex anchored `(^|[/\])`. (6) raw evidence saved: mypy linux and win32, check_schema, ruff, bandit, the pip install log, the lock regenerated twice (`cmp` identical, and identical to the committed lock; uv 0.11.32); the subprocess claim is deleted. (7) PLAN.md section 9: the venv-in-tree test failure described precisely with two fixes (recommend `.venv*/` and `venv/` in .gitignore); test and .gitignore untouched: your decision. (8) scan-skipped-on-test-failure: owner decision in PLAN.md section 8. (9) coverage.py 7.17.2 already omits nested files with `tests/*` (the round 1 reviewer's belief was wrong); changed to `**` globs only to match the Sonar globs.
+- Lane 10a2 (gitleaks v2), lane 10b (CodeAnt), lane 9 (hang), lane 8b: running; none handed back. Lane 8b has not shown me a D11 plan yet (its last file write is old; pytest alive): I will message it again if still silent at 20:35.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:22Z / 01:52 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 36 min | 20:50 | running | hang/RESULTS.md | per-run files |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b | 20:01 | 25 min | 20:50 | running | docs-and-deps.patch v2 | pytest in fresh-venv3 since 20:07; no new file seen in the fixes folder: WATCH |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 11 min | 21:15 | running | CODEANT-COVERAGE.md | started |
+| ab3f938c2486dd690 (agent, sonnet builder) | lane 10a2 gitleaks fix v2 | 20:23 | 3 min | 20:53 | running | gitleaks-toml-fix-v2.patch, SUMMARY2.md | started |
+| (new) egm reviewer, lane 7 round 2 (security path) | review | 20:22 | 0 min | +10 min | running | report (saved coverage/REVIEW-2.md) | started |
+Totals: agents live 5; shells 0; pytest runs about 2; `yes` x2 (lane 9); containers 0; load average 2.66, 3.33, 2.64; nothing past its time box; lane 8b: no progress file for about 15 minutes but its pytest is alive.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | review 2 running (after fix round 7b) | r1 0B/1M/8N | pre-existing gitleaks failure; shared-runner design; evidence gaps; sizing | security path (secret in a workflow, new lock, scanner allowlist): no cap | no cap | a fresh review finds no Major/Blocker |
+| gitleaks allowlist | fix round 2 (10a2); review 2 follows | v1 review 0B/1M/2m/2N | conflict with lane 7 patch; fix wider than needed; untested narrowness | security path: no cap | no cap | fresh review without Major/Blocker and the real binary agrees |
+| lane 8 browser tests | v3 design in build | v1 0B/3M/8N | see earlier | design reversals | none | fresh review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| ad3dab9715b1335af (lane 7b builder, sonnet) | 11 min (20:12 to 20:23) | patch v2 with raw evidence; sonar-scanner acceptance still unverified | yes |
+
 ## 2026-11-12 20:22Z / 01:52 IST - gitleaks fix reviewed (security path): 0 Blocker, 1 Major, 2 Minor; v2 builder started; 5 agents live
 FAILED / OPEN first:
 - gitleaks/REVIEW-1.md saved. MAJOR: the exceptions.txt hunk of 10a's fix (line 27) and the lane 7 coverage patch (exceptions.txt lines 9 and 24) sit within each other's diff context, so the second patch applied by plain `git apply` fails on context (same base blob 8a85359); `git apply --3way` or a merge should combine them but NOBODY has run both in sequence. .gitleaks.toml: no line overlap. Lane 8's patch touches neither file. Resolved by lane 10a2 (below) with both orders tested.

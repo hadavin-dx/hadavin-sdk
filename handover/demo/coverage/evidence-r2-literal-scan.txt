@@ -1,0 +1,3 @@
+== hardcoded-literal scan (lint.yml step), staged files
+git grep status 0
+lines before exceptions: 2149; left: 0

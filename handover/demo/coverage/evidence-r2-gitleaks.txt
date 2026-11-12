@@ -1,0 +1,14 @@
+tree = 558d37f + gitleaks-toml-fix.patch + coverage patch v2 (scratch clone, local commit, nothing pushed); binary 8.30.1 sha256-matched to lint.yml
+== (1) gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+[90m8:20PM[0m [32mINF[0m [1mno leaks found[0m
+== (2) gitleaks git . (same flags): full history + the scratch commit
+[90m8:20PM[0m [32mINF[0m [1mno leaks found[0m
+== (3) CONTROL: same tree, config = 558d37f + fix only (without my allowances): the 131 hash lines and the .in mentions appear
+[90m8:20PM[0m [33mWRN[0m [1mleaks found: 133[0m
+== (4) NEGATIVE: planted different hex values (made-up, built from parts), tracked or not, files under the patched config
+[90m8:20PM[0m [33mWRN[0m [1mleaks found: 4[0m	
+RuleID:      long-hex-token	File:        old-requirements-coverage.txt
+RuleID:      long-hex-token	File:        other.cfg
+RuleID:      long-hex-token	File:        requirements-coverage.txt.bak
+RuleID:      long-hex-token	File:        sub/notes.txt
+   expected: sub/notes.txt, other.cfg, old-requirements-coverage.txt, requirements-coverage.txt.bak REPORTED; x/requirements-coverage.txt allowed (path rule is anchored at a slash or the start; a 64-hex value in a lock file of that name is the accepted shape)

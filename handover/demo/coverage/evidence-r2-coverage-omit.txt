@@ -1,0 +1,21 @@
+== omit = ["tests/*","demo_only/*",".venv*/*"]  (coverage 7.17.2)
+Name       Stmts   Miss  Cover
+run.py         2      0   100%
+src/s.py       1      0   100%
+TOTAL          3      0   100%
+== omit = ["tests/**","demo_only/**",".venv*/**"]  (coverage 7.17.2)
+Name       Stmts   Miss  Cover
+run.py         2      0   100%
+src/s.py       1      0   100%
+TOTAL          3      0   100%
+== CONTROL: no omit at all (shows the nested files are otherwise measured)
+Name                 Stmts   Miss  Cover
+.venv-q/lib/v.py         1      0   100%
+demo_only/a/b/z.py       1      0   100%
+demo_only/d.py           1      0   100%
+run.py                   2      0   100%
+src/s.py                 1      0   100%
+tests/top.py             1      0   100%
+tests/x/y.py             1      0   100%
+TOTAL                    8      0   100%
+== omit = tests/*, tests/x/y.py is nested two levels: matched by * crossing / (see above). Conclusion: both forms omit nested files; ** chosen to match the Sonar globs (tests/**, demo_only/**)

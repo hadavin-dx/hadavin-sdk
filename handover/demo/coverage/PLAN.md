@@ -1,52 +1,65 @@
-# Lane 7 (ORDER D7): coverage in the SonarQube job
+# Lane 7b (after review 1): coverage in the SonarQube job, patch v2
 
-Final tree = public branch pr-3-tests head b29bb1f5b1c0b702e37198120d08b080861006fc (ORDER D8 move; the long run was done on
-this tree, not on bee6fff4). b29bb1f already holds main's sonar.yml, sonar-project.properties, .codeant and .deepsource.toml
-(identical to main). The patch `sonar-coverage.patch` is against b29bb1f; `git apply --check` passes on a fresh copy
-(evidence-apply-check.txt). Nothing was committed or pushed.
+Base: public branch pr-3-tests head **558d37f** (the lead's D12 move; v1 was made on b29bb1f and is kept as
+`sonar-coverage-v1.patch`; it still applies on 558d37f). `sonar-coverage.patch` (v2) is made with `git diff -U1` and passes
+`git apply --check` on a fresh clone of 558d37f (evidence-r2-apply-check.txt). Nothing was committed or pushed to the public repo.
 
 ## 1. Failures, open points, UNVERIFIED (read first)
 
-1. UNVERIFIED: that `sonar-scanner` accepts `coverage.xml` through `sonar.python.coverage.reportPaths`. The documentation
-   (docs.sonarsource.com) is not reachable from this machine (proxy answers 403) and no scanner is installed, so I could
-   not compare the file against the documented format. What I did check: the file is the standard coverage.py Cobertura XML
-   (`<coverage>`, `<packages>`, `<class filename=...>`, `<line number hits>`), and every `filename` is repo-relative and exists
-   on disk (evidence-xml-check.txt). My belief (from memory, not from a read page) is that Sonar's Python sensor reads
-   exactly this report and resolves `filename` against the project base directory. The first real run on the PR proves it:
-   the Sonar project page then shows a coverage number, and the scan log says "Imported coverage report" or, if the paths do
-   not match, "Cannot resolve the file path ... of the coverage report".
-2. One test failed in my local full run: `test_no_placeholder_text_ships`. Cause: my venv folder `.venv-cov` (the name the
-   brief asked for) sits inside the tree and that test only skips a folder named `.venv`; it read the venv's packages. This is
-   a local artefact and cannot happen in CI (no venv in the checkout; setup-python installs outside the tree). Proof: with the
-   venv moved outside the tree the same test passes (evidence-rerun-failed-test.txt: 18 passed, 1 skipped = gitleaks absent).
-   So the full run counts: 2348 passed + 1 failed (venv artefact, re-run passed) = 2349 passed, 116 skipped, as expected.
-3. PRE-EXISTING, not caused by this patch, and found only because I ran the real gitleaks 8.30.1 (the lint.yml binary, checksum
-   checked) on b29bb1f itself: `gitleaks dir` reports 1 leak, `generic-api-key` on `sonar-project.properties:4`
-   (`sonar.projectKey=...`). exceptions.txt (for the git-grep scan) was given an entry for that line in b29bb1f, but
-   `.gitleaks.toml` was not, so lint.yml's gitleaks step will fail on this file once it runs on the merged tree. Not fixed here
-   (it is outside lane 7 and the lead owns that tree); fix = one allowlist in `.gitleaks.toml` for rule `generic-api-key`,
-   path `sonar-project\.properties$`, match `^sonar\.projectKey=` ... (the key is not a secret). evidence-gitleaks.txt.
-   With my patch gitleaks reports the same 1 finding and no new one (the lock hash lines and the new file name would give 133
-   more with the original `.gitleaks.toml`; the patch adds the allowlist entries).
-4. Timing was NOT measured on a quiet machine of the final kind: uptime before the run 19:50:38 load average 0.64 0.51 0.71
-   (1/5/15 min); after 20:05:33 load average 2.91 2.05 1.32 (the other lanes started their busy loops during the last
-   minutes). Measured: 894.68 s pytest (14 min 55 s), wall 895 s, with coverage on. The unloaded references from the lead
-   (lane 1: 886 s, lane 4: 894.6 s, both without Playwright and without coverage) are about the same, so the coverage
-   overhead was not visible in this run and the load was mostly light; I make no claim about the runner beyond that.
-5. The Sonar-side figure will be lower than my local 92.57 percent: see section 4 (three scripts never imported, about 89.7
-   percent worst case for those) and Sonar counts its own line set.
-6. No Playwright in this run (113 tests skip: "No module named 'playwright'"); see section 4.
+1. **The lead's own gitleaks allowlist in 558d37f does not work** (found by me with the real gitleaks 8.30.1 and, independently,
+   by lane 10a): `[[allowlists]]` with `regexTarget = "line"` hands the regex the line WITH the line break before it, so `^...$`
+   never matches line 4 of sonar-project.properties; on 558d37f alone `gitleaks dir` still gives 1 finding. Lane 10a's
+   `/tmp/demo-wt/handover/demo/gitleaks/gitleaks-toml-fix.patch` (regexTarget "match", exact key) is NOT part of my patch (the lead
+   decides). I proved my patch together with it: gitleaks dir 0, gitleaks git 0, 20 hygiene tests passed (evidence-r2-gitleaks.txt,
+   evidence-r2-hygiene-tests.txt). Without the fix, tests/test_hygiene.py::test_hygiene_scan_public fails (real binary).
+   I did NOT write a separate gitleaks patch (lead's order D12).
+2. **Apply order:** coverage patch alone on 558d37f: OK. Fix patch first, then my patch: OK. My patch first, then the fix patch:
+   FAILS (the fix patch's 3-line context includes exceptions.txt line 24, which my patch edits). Apply the fix first
+   (evidence-r2-apply-check.txt). Final content is the same as far as the two touch different lines.
+3. UNVERIFIED (unchanged, no offline fix): (a) that sonar-scanner accepts `coverage.xml` through
+   `sonar.python.coverage.reportPaths` (docs.sonarsource.com unreachable here, no scanner run allowed); (b) how Sonar treats the EMPTY
+   `<source/>` entry that coverage.py writes next to `.` in `<sources>` (evidence-xml-check.txt: `sources: [None, '.']`);
+   (c) the action SHAs belong to the named actions and the lock hashes are real packages (only hash FORMAT and pip's own
+   `--require-hashes` acceptance are verified). The first real run on the PR settles (a) and (b): the Sonar page shows a number and the scan log
+   says "Imported coverage report" or "Cannot resolve the file path".
+4. The timeout is a placeholder: no Sonar scan time was measured and the 21-minute whole-job figure in v1 was an ESTIMATE, not a
+   measurement. Only measured: pytest 894.68 s on a shared 4-vCPU machine (v1 run).
+5. The numbers (92.57 percent local, 89.7 worst case, 2348 + 1 + 116) come from the v1 run on b29bb1f; v2 changes no Python source,
+   only the omit glob spelling (proved equivalent, item 9 below), a workflow comment and timeout, a lock comment, and one new test. I did NOT
+   re-run the full suite (15 min; lead's order). Small proofs only: hygiene tests 20 passed (evidence-r2-hygiene-tests.txt).
+6. Sonar-side acceptance, quality gate and settings: see section 6 (owner steps, not done).
+7. The v1 plan sentence 'the subprocess experiment (103 tests, +5 lines, 114 s vs 49 s)' had no raw evidence: DELETED (not re-run).
+   The note stays that code run only in child processes is not measured.
 
-## 2. What the patch changes (9 files)
+## 1b. What changed after review 1
+
+| # | Finding | What I did | Proof file |
+|---|---|---|---|
+| 1 | MAJOR gitleaks projectKey | Lead fixed it upstream in 558d37f, but that fix does not work (item 1 above); lane 10a's fix verified together with my patch: dir 0, git 0, hygiene 20 passed. No own gitleaks patch (order D12) | evidence-r2-gitleaks.txt, evidence-r2-hygiene-tests.txt |
+| 2 | Token not isolated from test code | Rewrote the sonar.yml header comment to say exactly what is true; two-job split written below as OWNER DECISION A, not built | sonar.yml (patch), section 8 |
+| 3 | timeout 35 vs 60 | `timeout-minutes: 60` with the one-sentence rule; 21 min called an estimate | sonar.yml (patch), section 4 |
+| 4 | Lock drift | Added `test_coverage_lock_agrees_with_dev_lock` (tiny, 12 lines) + header note in requirements-coverage.in; mutation: bumped dev pytest pin, test FAILS with `[('pytest','9.3.0','9.2.0')]`, passes unmutated | evidence-r2-lockdrift-test.txt |
+| 5 | Unanchored path regex | `(^|[/\\])requirements-(dev(-win)?\|coverage)\.txt$`; tested with the real binary: old-requirements-coverage.txt is reported, x/requirements-coverage.txt stays allowed (accepted shape) | evidence-r2-gitleaks.txt (4) |
+| 6 | Claims without raw evidence | Saved: mypy linux AND win32, check_schema, ruff, bandit; lock regenerated twice with `cmp` (identical to each other and to the committed lock); pip install log; subprocess claim deleted | evidence-r2-lint-checks.txt, evidence-r2-lock-regen.txt, evidence-r2-pip-install.txt, evidence-r2-ruff-final.txt |
+| 7 | .venv-x test failure wording | Described exactly in section 9 with two fixes and a recommendation; test and .gitignore untouched | section 9 |
+| 8 | Scan skipped on test failure | Owner decision B in section 8, not built | section 8 |
+| 9 | omit glob may not cross `/` | Tested with coverage.py 7.17.2: `tests/*` DOES already omit nested files (the reviewer's belief was wrong); changed to `tests/**`, `demo_only/**`, `.venv*/**` only to match the Sonar globs | evidence-r2-coverage-omit.txt |
+| - | Allowances in `regexTarget = "line"` have the line-break defect (order D12 point 3) | My new allowances use `regexTarget = "match"` (the existing style); tested positive (131 hash lines allowed) and negative (planted 40-hex and 64-hex values in other files reported) | evidence-r2-gitleaks.txt |
+
+Rung table for the one new piece of code (rule 20): | component | need | rung tried | evidence | what only our code gives | verdict |
+| lock drift check | catch a silently downgraded pytest pin | a tool: Dependabot does not cover pip locks here (dependabot.yml lists only Actions); `uv pip compile -c` guards at generation time, not at a later bump of the dev lock | repo files, dated 2026-11-12 | a CI failure the moment the two locks disagree (a safety property of the test run) | KEEP-CODE (12 lines in the existing hygiene test file, no new file) |
+
+## 2. What the patch changes (10 files, 3 of them new or test)
 
 | File | Change |
 |---|---|
-| `.github/workflows/sonar.yml` | setup-python 3.12; install dev lock then coverage lock with `--require-hashes`; test step; `timeout-minutes: 35`; scan step unchanged |
+| `.github/workflows/sonar.yml` | setup-python 3.12; install dev lock then coverage lock with `--require-hashes`; test step; `timeout-minutes: 60`; scan step unchanged |
 | `requirements-coverage.in` / `.txt` | new: separate hashed lock (section 3) |
-| `pyproject.toml` | new `[tool.coverage.run]`: `relative_files = true`, `source = ["."]`, `omit = tests, demo_only, .venv*` |
+| `pyproject.toml` | new `[tool.coverage.run]`: `relative_files = true`, `source = ["."]`, `omit = tests/**, demo_only/**, .venv*/**` |
 | `sonar-project.properties` | `sonar.python.coverage.reportPaths=coverage.xml` |
 | `.gitignore` | `.coverage.*` and `coverage.xml` (the dev can run it locally; `.coverage` was already ignored) |
 | `exceptions.txt`, `.gitleaks.toml` | the new lock's hash lines and the file name `requirements-coverage.in` get the same allowance the dev lock has (without it the hardcoded-literal scan in lint.yml fails: shown in evidence-lint-checks.txt / evidence-gitleaks.txt) |
+| `tests/test_hygiene.py` | one test: shared pins in the two locks agree |
 | `docs/tests.md` | 7 lines: how to run the coverage command locally |
 
 The lint locks `requirements-dev.txt` and `requirements-dev-win.txt` are untouched.
@@ -79,8 +92,8 @@ Generation command (header of `requirements-coverage.txt`), uv 0.11.32 (`/root/.
 
     uv pip compile requirements-coverage.in --python-version 3.12 --python-platform x86_64-manylinux_2_28 --generate-hashes --exclude-newer 2026-11-09 -c requirements-dev.txt -o requirements-coverage.txt
 
-- uv 0.11.32: the version installed here; the file's header names the command, and the lock was re-generated twice and
-  came out identical (only the header differs).
+- uv 0.11.32: the version installed here; the file's header names the command, and the lock was re-generated twice
+  with the same command and `cmp` says identical, also identical to the committed file (evidence-r2-lock-regen.txt).
 - `--exclude-newer 2026-11-09`: the date lint.yml uses for its "looked up" pins and the day before the lock was made: nothing
   released after it can enter. Date only (a time such as `T00:00:00Z` contains `00:00:00`, which the repo's hardcoded-literal
   scan flags as an IPv6 address: found and fixed).
@@ -124,21 +137,17 @@ Measured (evidence-pytest-coverage.txt, evidence-xml-check.txt, evidence-coverag
   1 needs the load-test setting `LEAD_DESK_LOAD_N`, 1 is the gitleaks test. Effect on the number: code that only
   the 113 browser tests reach counts as NOT covered; the portal JavaScript is not Python and is not in this report at all. So
   92.57 percent is the honest figure for "what the Python tests that run in CI reach", not a statement about browser behaviour.
-- Subprocess code: many tests start the desk as a separate process. coverage.py's `patch = ["subprocess"]` would measure it;
-  I tried it on 2 test files: 103 tests, +5 covered lines (2968 vs 2963) but 114 s instead of 49 s. Not worth it, so it is
-  left out; code run only inside such child processes (and SIGKILL crash scenes) counts as uncovered where in-process tests do
-  not also reach it.
+- Subprocess code: many tests start the desk as a separate process. coverage.py's `patch = ["subprocess"]` would measure it; I did
+  NOT measure the effect (the v1 numbers for it had no raw evidence and were deleted). Code run only inside such child processes (and
+  SIGKILL crash scenes) counts as uncovered where in-process tests do not also reach it.
 
 xdist: not used (no xdist in the lock). The serial command above is what was measured. pytest-cov supports xdist; when the
 separate xdist patch adds pytest-xdist to the dev lock, the variant is `python -m pytest -q -n auto --cov --cov-report=xml:coverage.xml`
 (needs `relative_files` as already set; this combination was NOT run here).
 
-Time budget: measured tests 14.9 min; expected job = checkout + setup-python + two pip installs (about 1 to 2 min) + tests
-(15) + Sonar scan (a few min, not measured: no scanner run allowed) = about 20 to 22 min. `timeout-minutes: 35` is
-about 1.6 times that, the rule being: expected whole job plus about 60 percent, never below twice the measured test time
-alone minus the ~15 min that the scan and setup need. The old 20 was too short for the tests alone plus setup. A hosted runner
-is not under this shared load; if its speed differs by 2x the job still ends inside 35 minutes only up to about 1.6x:
-after the first real run set it to about 1.6x of the observed duration (the same advice as the comment in lint.yml).
+Time budget: measured tests 14.9 min (one run, shared machine). The Sonar scan time was never measured (no scanner run allowed) and the
+"about 21 minutes" whole-job figure in v1 was an estimate. Rule in one sentence: `timeout-minutes` is 60, the same as lint.yml,
+until a real run on a hosted runner shows the duration; then set it to 1.6 times the longest observed run.
 
 ## 5. Lint-type checks run on the patched tree (evidence-lint-checks.txt, evidence-rerun-failed-test.txt, evidence-gitleaks.txt)
 
@@ -149,8 +158,7 @@ after the first real run set it to about 1.6x of the observed duration (the same
 - tests/test_hygiene.py incl. `test_workflows_are_pinned_and_limited` (rule applied to the new sonar.yml: all actions by
   full SHA, read-only top-level permissions, no `pull_request_target`), test_no_placeholders, test_http_guard,
   test_demo_folder_guard: 18 passed, 1 skipped (gitleaks absent for that test).
-- Gitleaks 8.30.1 (downloaded from the release, SHA-256 matched lint.yml's value) on the patched tree: 1 finding, the
-  pre-existing one in section 1 point 3; none from the patch.
+- Gitleaks 8.30.1 (tarball SHA-256 matched lint.yml's value; binary /tmp/work/gl/gitleaks): see section 1 point 1 and evidence-r2-gitleaks.txt: with the lane 10a fix, 0 findings for both `dir` and `git`.
 - No hygiene test asserts that a lock file is hashed beyond the above; I checked it myself: 7 pins, every one has hashes,
   no unpinned line, `pip --require-hashes --dry-run` accepts it.
 - Processes: one pytest at a time; none left running; the gitleaks binary and temp copies are under /tmp/work only.
@@ -173,7 +181,35 @@ after the first real run set it to about 1.6x of the observed duration (the same
 
 sonar-coverage.patch, PLAN.md, evidence-pytest-coverage.txt (raw, 2349 tests), evidence-coverage.xml (the produced report),
 evidence-xml-check.txt, evidence-uptime-before.txt / -after.txt, evidence-lint-checks.txt, evidence-rerun-failed-test.txt,
-evidence-gitleaks.txt, evidence-apply-check.txt, evidence-patch-stat.txt.
+evidence-gitleaks.txt (v1), evidence-apply-check.txt (v1), evidence-patch-stat.txt (v1); round 2: evidence-r2-*.txt (apply-check, coverage-omit, gitleaks, hygiene-tests, lint-checks, ruff-final, literal-scan, lock-regen, lockdrift-test, pip-install); old patch sonar-coverage-v1.patch.
 Rules cited from the preamble: 3 (no secrets), 4 (no spend), 5 (found problems fixed or stated), 6 (honest), 11 (least privilege:
 secret only in the scan step, read-only permissions), 13 (EGM review is the lead's next step, not done by me), 19 (hygiene).
 EGM skipped by me: the lead runs the review. Token use not measured.
+
+## 8. OWNER DECISIONS (described, not built)
+
+**A. Two jobs instead of one (isolation of the secret from test code).** Today (one job, lead's order) the test step and the scan step share
+one runner. The secret is not in the test step's environment, but test code can write `$GITHUB_ENV` or `$GITHUB_PATH`, write
+`~/.sonar/cache` (restored by the cache step) or plant `sonar-project.properties` / `coverage.xml`. Only a same-repo pull request can do it
+(forks and Dependabot are skipped by the job `if`), and such an author can already edit the workflow itself, so there is no new trust boundary.
+Alternative: job `test` (no secret) uploads `coverage.xml` with an upload-artifact action; job `scan` has `needs: test`, checks out again,
+downloads the artifact and holds `SONAR_TOKEN`. Cost: a second checkout (full history, fetch-depth 0), two more actions to pin by full SHA
+(upload-artifact, download-artifact; I invented no SHA), about 1 to 2 minutes more wall time, and the scan job still reads a file the test
+job produced (so the artifact is data from repo code; the gain is that `$GITHUB_ENV`/PATH/cache tricks no longer reach the secret step).
+Recommendation: keep one job until the owner wants the split; the risk is limited to people who already hold write access.
+
+**B. Scan when tests fail.** GitHub skips the scan step when an earlier step fails, so one flaky test of 2349 means no Sonar analysis for that push.
+Option: `if: ${{ !cancelled() }}` on the cache and scan steps. Care: after a failed test step `coverage.xml` may be missing or partial (pytest-cov
+writes it at the end of the session, so a failed run normally still writes it, but a crash or timeout does not), which Sonar would then show as a
+coverage drop. Safer variant: add `if: ${{ !cancelled() }}` and make the scan step stop when `coverage.xml` is missing. Decide whether a red-test push should still be analysed.
+
+## 9. Pre-existing test behaviour: a virtual environment inside the tree (not changed)
+
+`tests/test_no_placeholders.py` lines 20-28 build the file list with `git ls-files --cached --others --exclude-standard`: every tracked file plus every
+untracked file that .gitignore does not ignore. `.gitignore` line 2 ignores only a folder named exactly `.venv/`. It does not "skip .venv" by itself:
+the exclusion is .gitignore's. So any other virtual-environment folder inside the checkout (`.venv-cov`, `.venv-x`, `venv/`) is read file by file and the
+test fails on text in the packages (this happened with `.venv-cov` in the v1 run; evidence-pytest-coverage.txt lines 52-53). CI is not affected (no venv in the
+checkout), and moving the venv out of the tree makes the test pass (evidence-rerun-failed-test.txt; in round 2 my venv is /tmp/work/venv-cov2).
+Fix 1: add `.venv*/` and `venv/` to .gitignore. Cost: two lines, covers pip/uv/IDE venvs by name, but any odd name still fails. Fix 2: skip any directory that
+contains `pyvenv.cfg`. Cost: a few lines of test code, works for any name, but touches a test. Recommendation: fix 1 now (cheapest, no test change);
+fix 2 only if a venv with another name turns up. The lead decides; neither is in the patch.
