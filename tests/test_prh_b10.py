@@ -387,3 +387,25 @@ def test_b10_g3_a_known_value_with_a_visible_dash_is_not_read_and_the_statement_
     assert redact_mod.spaced_spans("n: " + "-".join(plain) + " e", [plain]) == [], (
         "mutant 157: a known value with a hyphen between its characters was read"
     )
+
+
+def test_b10_g6_a_crash_of_the_redactor_stops_the_run_and_is_never_shown_as_a_limit(monkeypatch):
+    """The redactor raising something that is not one of its own refusals is a `RedactorCrash` and passes through the
+    tool path; a work limit on the same path is still the withheld note."""
+    from hadavin_sdk import tools
+    from hadavin_sdk.guard import runmap
+
+    def crash(text, mapping=None, **kw):
+        raise RuntimeError("down")
+
+    monkeypatch.setattr(runmap, "redact", crash)
+    with pytest.raises(runmap.RedactorCrash):
+        tools.redact_layered("ERROR 10.0.0.5", {})
+    monkeypatch.undo()
+
+    def limit(text, mapping=None, **kw):
+        raise runmap.RedactionLimit("budget")
+
+    monkeypatch.setattr(runmap, "redact", limit)
+    shown = tools.redact_layered("ERROR 10.0.0.5", {})
+    assert "10.0.0.5" not in shown and shown.startswith(tools.MARKER)

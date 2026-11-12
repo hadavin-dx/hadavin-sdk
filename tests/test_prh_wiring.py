@@ -54,9 +54,10 @@ def _record(monkeypatch):
         seen_redact.append(text)
         return real_redact(text, **kw)
 
-    def spy_find(self, text, readings=True):
+    def spy_find(self, text, readings=True, **kw):
+        # `find` has a keyword of its own now (`swept`, the final guard); the spy passes every keyword on unchanged
         seen_find.append(text)
-        return real_find(self, text, readings)
+        return real_find(self, text, readings, **kw)
 
     monkeypatch.setattr(runmap, "redact", spy_redact)
     monkeypatch.setattr(redact_mod._Redactor, "find", spy_find)

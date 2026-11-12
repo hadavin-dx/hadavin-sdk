@@ -1504,6 +1504,24 @@ M = [
         "SpacedRunLimit",
         crash="SpacedRunLimit",
     ),
+    mutant(
+        "159 the tool path shows a crash of the redactor as a withheld note (the run goes on)",
+        T,
+        "    except runmap.RedactorCrash:\n        # the redactor itself crashed: that stops the run (redaction_error), it is never shown as a limit\n        raise\n",
+        "",
+        B10,
+        "test_b10_g6_a_crash_of_the_redactor_stops_the_run_and_is_never_shown_as_a_limit",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "160 a crash of the redactor is wrapped as a plain refusal, not a crash",
+        R,
+        "raise RedactorCrash(type(exc).__name__) from None",
+        "raise RedactionError(type(exc).__name__) from None",
+        B10,
+        "test_b10_g6_a_crash_of_the_redactor_stops_the_run_and_is_never_shown_as_a_limit",
+        "DID NOT RAISE",
+    ),
 ]
 
 

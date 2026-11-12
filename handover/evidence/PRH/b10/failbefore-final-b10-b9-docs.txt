@@ -1,5 +1,5 @@
-F.F.FF.FFFFFFFFFFFFFFFFF.FFFFFFF........................................ [ 73%]
-..........................                                               [100%]
+F.F..FF.FFFFFFFFFFFFFFFFF.FFFFFFF....................................... [ 69%]
+.............................FFF                                         [100%]
 =================================== FAILURES ===================================
 _ test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work _
 
@@ -22,29 +22,31 @@ _ test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work _
 E       AssertionError: mutant 133: the index search made 4163220 calls for a text of 52054 characters (a bucket scan per hit)
 E       assert 4163220 < (12 * 52054)
 
-tests/test_prh_b10.py:69: AssertionError
+tests/test_prh_b10.py:75: AssertionError
 _____ test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget ______
 
     def test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget():
-        """Group 1 (mutants 135, 136): a run of 60,000 single characters of 8 different ones would be read up to 4 times (240,000
+        """Group 1 (mutant 136): a run of 60,000 single characters of 8 different ones would be read up to 4 times (240,000
         characters against a budget of `SPACED_READ_MAX_CHARS`); the budget is counted BEFORE each read and the text is withheld."""
         text = spaced(CJK * 7500)
 >       with pytest.raises(SpacedRunLimit):
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       Failed: DID NOT RAISE SpacedRunLimit
 
-tests/test_prh_b10.py:119: Failed
+tests/test_prh_b10.py:133: Failed
 ______________ test_b10_g1_the_budget_counts_the_context_read_too ______________
 
     def test_b10_g1_the_budget_counts_the_context_read_too():
         """Group 1 (mutant 137): with 64 characters of context before the run a read scans the context twice and the token once more, so
         the cost of a run with context is above the cost of the same run without it. The text below stays within the budget without
         context and goes over it with context."""
->       n = (defaults.SPACED_READ_MAX_CHARS // defaults.SPACED_DROP_MAX) - 100  # tokens: 4 reads of n characters fit, barely
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        n = (
+>           defaults.SPACED_READ_MAX_CHARS // defaults.SPACED_DROP_MAX
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ) - 100  # tokens: 4 reads of n characters fit, barely
 E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_READ_MAX_CHARS'. Did you mean: 'SPACED_RUN_MAX_RUNS'?
 
-tests/test_prh_b10.py:134: AttributeError
+tests/test_prh_b10.py:162: AttributeError
 _ test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text _
 
     def test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text():
@@ -56,12 +58,14 @@ _ test_b10_g4_a_second_bare_copy_of_a_masked_secret_does_not_withhold_the_text _
 E           AssertionError: mutant 138: ordinary coloured text was withheld by the guard
 E           assert '(details withheld)' != '(details withheld)'
 
-tests/test_prh_b10.py:151: AssertionError
+tests/test_prh_b10.py:180: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[``] ___
 
 front = '`', back = '`'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -79,12 +83,14 @@ E
 E         - key: `<APIKEY_1>` end
 E         + key: `A K I A I O S F O D N N 7 E X A M P L E` end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[**] ___
 
 front = '*', back = '*'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -102,12 +108,14 @@ E
 E         - key: *<APIKEY_1>* end
 E         + key: *A K I A I O S F O D N N 7 E X A M P L E* end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 __ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[****] __
 
 front = '**', back = '**'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -125,12 +133,14 @@ E
 E         - key: **<APIKEY_1>** end
 E         + key: **A K I A I O S F O D N N 7 E X A M P L E** end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[__] ___
 
 front = '_', back = '_'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -148,12 +158,14 @@ E
 E         - key: _ <APIKEY_1> _ end
 E         + key: _A K I A I O S F O D N N 7 E X A M P L E_ end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 __ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[~~~~] __
 
 front = '~~', back = '~~'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -171,12 +183,14 @@ E
 E         - key: ~~<APIKEY_1>~~ end
 E         + key: ~~A K I A I O S F O D N N 7 E X A M P L E~~ end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[<>] ___
 
 front = '<', back = '>'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -194,12 +208,14 @@ E
 E         - key: <<APIKEY_1>> end
 E         + key: <A K I A I O S F O D N N 7 E X A M P L E> end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[{}] ___
 
 front = '{', back = '}'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -217,12 +233,14 @@ E
 E         - key: {<APIKEY_1>} end
 E         + key: {A K I A I O S F O D N N 7 E X A M P L E} end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[||] ___
 
 front = '|', back = '|'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -240,12 +258,14 @@ E
 E         - key: |<APIKEY_1>| end
 E         + key: |A K I A I O S F O D N N 7 E X A M P L E| end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[`] ____
 
 front = '`', back = ''
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -263,12 +283,14 @@ E
 E         - key: `<APIKEY_1> end
 E         + key: `A K I A I O S F O D N N 7 E X A M P L E end
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[}] ____
 
 front = '', back = '}'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -287,12 +309,14 @@ E         - key: <APIKEY_1>} end
 E         + key: <APIKEY_1> E} end
 E         ?                ++
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[>] ____
 
 front = '', back = '>'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -311,12 +335,14 @@ E         - key: <APIKEY_1>> end
 E         + key: <APIKEY_1> E> end
 E         ?                ++
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 ___ test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value[*] ____
 
 front = '', back = '*'
 
-    @pytest.mark.parametrize(("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS])
+    @pytest.mark.parametrize(
+        ("front", "back"), WRAPPERS, ids=[f"{a}{b}" or "none" for a, b in WRAPPERS]
+    )
     def test_b10_g5_a_wrapper_glued_to_a_spaced_key_is_not_part_of_the_value(front, back):
         """Group 5 (mutant 140; class: a spaced secret slips past a rule because of a character next to it). A model quotes a key in a code
         span, bold, italic, strike, angle brackets, braces or pipes; the wrapper makes the first or last token two characters long, so the
@@ -335,7 +361,7 @@ E         - key: <APIKEY_1>* end
 E         + key: <APIKEY_1> E* end
 E         ?                ++
 
-tests/test_prh_b10.py:190: AssertionError
+tests/test_prh_b10.py:221: AssertionError
 _____________ test_b10_g5_the_wrapper_list_is_the_one_in_the_code ______________
 
     def test_b10_g5_the_wrapper_list_is_the_one_in_the_code():
@@ -344,13 +370,15 @@ _____________ test_b10_g5_the_wrapper_list_is_the_one_in_the_code ______________
                    ^^^^^^^^^^^^^^^^^^^^
 E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_WRAPPERS'
 
-tests/test_prh_b10.py:198: AttributeError
+tests/test_prh_b10.py:229: AttributeError
 _ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[dcs] _
 
 opener = '\x90'
 
     @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
-    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(
+        opener,
+    ):
         """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
         the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
         text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
@@ -362,13 +390,15 @@ E
 E         - (details withheld)
 E         + k: <APIKEY_1> then AKIAIO
 
-tests/test_prh_b10.py:207: AssertionError
+tests/test_prh_b10.py:240: AssertionError
 _ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_c1] _
 
 opener = '\x9d'
 
     @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
-    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(
+        opener,
+    ):
         """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
         the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
         text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
@@ -380,13 +410,15 @@ E
 E         - (details withheld)
 E         + k: <APIKEY_1> then AKIAIO
 
-tests/test_prh_b10.py:207: AssertionError
+tests/test_prh_b10.py:240: AssertionError
 _ test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy[osc_esc] _
 
 opener = '\x1b]0;'
 
     @pytest.mark.parametrize("opener", ["\x90", "\x9d", ESC + "]0;"], ids=["dcs", "osc_c1", "osc_esc"])
-    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(opener):
+    def test_b10_g5_a_front_before_the_opener_withholds_when_the_value_is_masked_in_another_copy(
+        opener,
+    ):
         """Group 5 (mutant 141): a plain copy of a key, then a copy cut by a string opener (`AKIAIO` + opener + the rest). The first copy made
         the difference of the two readings empty, so the front standing before the opener was kept, one copy or two."""
         text = "k: " + KEY + " then " + KEY[:6] + opener + KEY[6:] + " tail"
@@ -398,7 +430,7 @@ E
 E         - (details withheld)
 E         + k: <APIKEY_1> then AKIAIO
 
-tests/test_prh_b10.py:207: AssertionError
+tests/test_prh_b10.py:240: AssertionError
 _______ test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked _______
 
     def test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked():
@@ -407,14 +439,16 @@ _______ test_b10_g5_a_pattern_shaped_value_with_an_encoded_gap_is_masked _______
         letter."""
         for gap in ("%20", "&#32;", "%09"):
             out = on_the_run_path("key: " + gap.join(KEY))
->           assert out == "key: <APIKEY_1>", f"mutant 147: a key with the gap {gap!r} was not masked: {out!r}"
+>           assert out == "key: <APIKEY_1>", (
+                f"mutant 147: a key with the gap {gap!r} was not masked: {out!r}"
+            )
 E           AssertionError: mutant 147: a key with the gap '%20' was not masked: 'key: A%20K%20I%20A%20I%20O%20S%20F%20O%20D%20N%20N%207%20E%20X%20A%20M%20P%20L%20E'
 E           assert 'key: A%20K%2...M%20P%20L%20E' == 'key: <APIKEY_1>'
 E             
 E             - key: <APIKEY_1>
 E             + key: A%20K%20I%20A%20I%20O%20S%20F%20O%20D%20N%20N%207%20E%20X%20A%20M%20P%20L%20E
 
-tests/test_prh_b10.py:216: AssertionError
+tests/test_prh_b10.py:249: AssertionError
 ____ test_b10_g6_backslash_e_is_read_only_before_a_bracket_or_a_parenthesis ____
 
     def test_b10_g6_backslash_e_is_read_only_before_a_bracket_or_a_parenthesis():
@@ -428,14 +462,16 @@ E
 E         - C:\env\etc
 E         + C:nvtc
 
-tests/test_prh_b10.py:234: AssertionError
+tests/test_prh_b10.py:269: AssertionError
 _ test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc0] _
 
 exc = RedactionError('x')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3866131220>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff090d31cd0>
 
     @pytest.mark.parametrize("exc", [runmap.RedactionError("x"), runmap.InputTooLarge("InputTooLarge")])
-    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(exc, monkeypatch):
+    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(
+        exc, monkeypatch
+    ):
         """Group 6 (mutant 143): a plain `RedactionError` or `InputTooLarge` from `redact_untrusted` was not caught by `redact_layered`
         (only `TooDeep` and `RedactionLimit` were) and raised out of `prepare_output`."""
     
@@ -443,10 +479,12 @@ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3866131220>
             raise exc
     
         monkeypatch.setattr(runmap, "redact_untrusted", boom)
->       assert tools.redact_layered("anything", {}) == WITHHELD, "mutant 143: a refusal escaped as an error"
+>       assert tools.redact_layered("anything", {}) == WITHHELD, (
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "mutant 143: a refusal escaped as an error"
+        )
 
-tests/test_prh_b10.py:250: 
+tests/test_prh_b10.py:295: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 src/hadavin_sdk/tools.py:1268: in redact_layered
     return runmap.redact_untrusted(raw, mapping)
@@ -459,14 +497,16 @@ raw = 'anything', mapping = {}
 >       raise exc
 E       hadavin_sdk.guard.runmap.RedactionError: x
 
-tests/test_prh_b10.py:247: RedactionError
+tests/test_prh_b10.py:292: RedactionError
 _ test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path[exc1] _
 
 exc = InputTooLarge('InputTooLarge')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f38661308a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff090d30640>
 
     @pytest.mark.parametrize("exc", [runmap.RedactionError("x"), runmap.InputTooLarge("InputTooLarge")])
-    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(exc, monkeypatch):
+    def test_b10_g6_any_refusal_of_the_redactor_gives_the_withheld_text_on_the_tool_path(
+        exc, monkeypatch
+    ):
         """Group 6 (mutant 143): a plain `RedactionError` or `InputTooLarge` from `redact_untrusted` was not caught by `redact_layered`
         (only `TooDeep` and `RedactionLimit` were) and raised out of `prepare_output`."""
     
@@ -474,10 +514,12 @@ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f38661308a0>
             raise exc
     
         monkeypatch.setattr(runmap, "redact_untrusted", boom)
->       assert tools.redact_layered("anything", {}) == WITHHELD, "mutant 143: a refusal escaped as an error"
+>       assert tools.redact_layered("anything", {}) == WITHHELD, (
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "mutant 143: a refusal escaped as an error"
+        )
 
-tests/test_prh_b10.py:250: 
+tests/test_prh_b10.py:295: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 src/hadavin_sdk/tools.py:1268: in redact_layered
     return runmap.redact_untrusted(raw, mapping)
@@ -490,7 +532,7 @@ raw = 'anything', mapping = {}
 >       raise exc
 E       hadavin_sdk.guard.runmap.InputTooLarge: InputTooLarge
 
-tests/test_prh_b10.py:247: InputTooLarge
+tests/test_prh_b10.py:292: InputTooLarge
 ___________ test_b10_g6_a_run_that_both_spellings_match_counts_once ____________
 
     def test_b10_g6_a_run_that_both_spellings_match_counts_once():
@@ -505,26 +547,34 @@ E         - a - b - c - d - e - f - g - h - i - j - k ok a - b - c - d - e - f -
 E         
 E         ...Full output truncated, use '-vv' to show
 
-tests/test_prh_b10.py:258: AssertionError
+tests/test_prh_b10.py:305: AssertionError
 _______ test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run ________
 
     def test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run():
         """Group 6 (mutant 145): the context width is `defaults.SPACED_CONTEXT_CHARS`; a context of 0 loses `password=` + a spaced value."""
         secret = "hunter2" + "xyzabc"
+        out = on_the_run_path(PW + " " + spaced(secret))
+        assert out.startswith(PW + " <SECRET_") and "u n t e r" not in out, (
+            f"mutant 145: the key word before the run was not read with it, the value stands in part: {out!r}"
+        )
 >       assert defaults.SPACED_CONTEXT_CHARS == 64
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_CONTEXT_CHARS'
 
-tests/test_prh_b10.py:264: AttributeError
+tests/test_prh_b10.py:315: AttributeError
 __________ test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read ___________
 
     def test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read():
         """Group 6 (mutant 146): the number of reads of a run is `defaults.SPACED_DROP_MAX`; one read loses `a A K I A ...`."""
+        out = on_the_run_path("a " + spaced(KEY))
+        assert out == "a <APIKEY_1>", (
+            f"mutant 146: a run with a one-letter word in front was not read: {out!r}"
+        )
 >       assert defaults.SPACED_DROP_MAX == 4
                ^^^^^^^^^^^^^^^^^^^^^^^^
 E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_DROP_MAX'
 
-tests/test_prh_b10.py:271: AttributeError
+tests/test_prh_b10.py:324: AttributeError
 _________ test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path __________
 
     def test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path():
@@ -537,14 +587,84 @@ _________ test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path __________
         ):
             with pytest.raises(runmap.RedactionError) as why:
                 runmap.redact_untrusted(text, {})
->           assert str(why.value) == "held value lost", f"mutant 151: the reason was lost: {why.value!r}"
+>           assert str(why.value) == "held value lost", (
+                f"mutant 151: the reason was lost: {why.value!r}"
+            )
 E           AssertionError: mutant 151: the reason was lost: RedactionError('RedactionError')
 E           assert 'RedactionError' == 'held value lost'
 E             
 E             - held value lost
 E             + RedactionError
 
-tests/test_prh_b10.py:286: AssertionError
+tests/test_prh_b10.py:337: AssertionError
+_____ test_b10_the_pass_counts_in_the_documents_are_the_ones_the_tests_pin _____
+
+    def test_b10_the_pass_counts_in_the_documents_are_the_ones_the_tests_pin():
+        """Batch 10 (finding M2): the seeded worst (`16`) and the most any recorded row needs (`8`) are read from the tests that assert them;
+        CHANGELOG.md and defaults.py state those numbers, and the old ones (14 and 7) are not stated as current."""
+        steps = (ROOT / "tests/test_prh_steps.py").read_text(encoding="utf-8")
+        worst = int(re.search(r'state\["peak"\] == (\d+)', steps).group(1))
+        rows = int(re.search(r"assert worst == (\d+), worst", steps).group(1))
+        defaults_text = (ROOT / "src/hadavin_sdk/defaults.py").read_text(encoding="utf-8")
+        assert re.search(rf"their worst is {worst}\)", defaults_text), (
+            "defaults.py names another seeded worst"
+        )
+        assert f"MAX_REDACT_PASSES = {defaults.MAX_REDACT_PASSES}" in defaults_text
+        assert defaults.MAX_REDACT_PASSES > worst
+>       assert f"(their worst is {worst}) and that no recorded row needs more than {rows}" in CHANGELOG
+E       AssertionError: assert '(their worst is 16) and that no recorded row needs more than 8' in '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Redaction, hidden characters and escape sequences (pull reques...495991b7852b855`\n  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`\n'
+
+tests/test_prh_b9_docs.py:64: AssertionError
+__________ test_b10_the_numbers_in_security_are_the_recorded_evidence __________
+
+    def test_b10_the_numbers_in_security_are_the_recorded_evidence():
+        """Batch 10 (findings M2, M4): every figure SECURITY.md gives for ordinary text, hostile text and the spaced-out rule is read from
+        the evidence files in `handover/evidence/PRH/b10/` and compared as a whole number."""
+        ev = ROOT / "handover/evidence/PRH/b10"
+        texts = {
+>           t: _evidence_number(ev / f"clean-corpus-{t}.txt", "texts")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            for t in ("head", "base", "old", "main")
+        }
+
+tests/test_prh_b9_docs.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_prh_b9_docs.py:43: in _evidence_number
+    found = re.search(rf"\b{re.escape(key)}=(\d+)\b", path.read_text(encoding="utf-8"))
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/build/B-PRH-b10-scratch/wt-base/handover/evidence/PRH/b10/clean-corpus-head.txt')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/B-PRH-b10-scratch/wt-base/handover/evidence/PRH/b10/clean-corpus-head.txt'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_________ test_b10_the_cost_bounds_in_security_are_the_live_constants __________
+
+    def test_b10_the_cost_bounds_in_security_are_the_live_constants():
+        """Batch 10: the work budget (characters read) and the number of reads of a run are the live constants."""
+>       assert f"{defaults.SPACED_READ_MAX_CHARS:,} characters of reading" in SECURITY
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'SPACED_READ_MAX_CHARS'. Did you mean: 'SPACED_RUN_MAX_RUNS'?
+
+tests/test_prh_b9_docs.py:134: AttributeError
 =========================== short test summary info ============================
 FAILED tests/test_prh_b10.py::test_b10_g1_values_that_share_their_first_twelve_characters_cost_linear_work
 FAILED tests/test_prh_b10.py::test_b10_g1_one_very_long_spaced_run_is_withheld_by_the_work_budget
@@ -574,4 +694,7 @@ FAILED tests/test_prh_b10.py::test_b10_g6_a_run_that_both_spellings_match_counts
 FAILED tests/test_prh_b10.py::test_b10_g6_a_key_word_before_a_spaced_run_is_read_with_the_run
 FAILED tests/test_prh_b10.py::test_b10_g6_a_run_with_a_one_letter_word_in_front_is_read
 FAILED tests/test_prh_b10.py::test_b10_g6_a_refusal_keeps_its_own_message_on_the_run_path
-28 failed, 70 passed in 3.17s
+FAILED tests/test_prh_b9_docs.py::test_b10_the_pass_counts_in_the_documents_are_the_ones_the_tests_pin
+FAILED tests/test_prh_b9_docs.py::test_b10_the_numbers_in_security_are_the_recorded_evidence
+FAILED tests/test_prh_b9_docs.py::test_b10_the_cost_bounds_in_security_are_the_live_constants
+31 failed, 73 passed in 1.92s

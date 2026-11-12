@@ -53,6 +53,11 @@ class RedactionError(RuntimeError):
     """The redactor failed: nothing may be sent to the model."""
 
 
+class RedactorCrash(RedactionError):
+    """The redactor itself raised something that is not one of its own refusals (a bug or a broken stand-in). Nothing
+    is sent, and no caller turns it into a withheld note: a crash must stop the run, not be shown as an ordinary limit."""
+
+
 class InputTooLarge(RedactionError):
     """The text, or a view of it that the second pass would scan, is longer than `defaults.MAX_REDACT_CHARS`."""
 
@@ -1140,7 +1145,7 @@ def redact_text(
     except RedactionError:  # InputTooLarge, RedactionLimit, TooDeep and the plain refusals keep their own type and message
         raise
     except Exception as exc:  # noqa: BLE001 - whatever the redactor raised, nothing is sent
-        raise RedactionError(type(exc).__name__) from None
+        raise RedactorCrash(type(exc).__name__) from None
     mapping.clear()
     mapping.update(current)
     return out

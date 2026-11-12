@@ -1268,6 +1268,9 @@ def redact_layered(raw: str, mapping: dict[str, str]) -> str:
     as `redact_text` does for its own views; a text nested deeper than the cap is not shown (fail closed)."""
     try:
         return runmap.redact_untrusted(raw, mapping)
+    except runmap.RedactorCrash:
+        # the redactor itself crashed: that stops the run (redaction_error), it is never shown as a limit
+        raise
     except runmap.RedactionError:
         # any refusal of the redactor (a work limit, a nesting limit, a size limit, or the plain error that wraps anything else it
         # raised): nothing is shown, the withheld text, never a raised error that drops the run (batch 10, group 6)
