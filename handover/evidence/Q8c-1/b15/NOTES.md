@@ -1,14 +1,35 @@
 # Q8c-1 batch 15, builder notes (round 14 fixes, security path)
 
-Base: a50d5b2e (batch 14). Task list: the round 14 report, Groups 1 to 5 and the evidence group. Section A and B are filled in at the end of the batch.
+Base: a50d5b2e (batch 14). Task list: the round 14 report, Groups 1 to 5 and the evidence group.
 
 ## A. What did not work, what is uncertain, what was not run (first)
 
-(filled in below)
+- **Not run, cannot be run here:** the 12 tests that need a real Vault server (IMPOSSIBLE-NOW: no Vault server in this box, `ENGINE_RUN` untouched); the CI notes step on GitHub (it needs a pull request run: the first real run of it stays a lead or owner item); the Vault CI job; the performance tests (`-m perf`) and the live tests (`-m live`), excluded by the brief's own command.
+- **Environment facts (not code):** own Postgres 16 on port 56215 (user postgres, UTF8); no Vault server; the box had 3 shared heavy slots.
+- **Where the heavy jobs waited:** `heavy.sh` slots are shared machine-wide with other builders, so my full suite, the stage mutants and the plants queued behind jobs of other sessions; the times in the logs include that wait.
+- **The `-p`/`pytest_plugins` rule is a reading of text, not of pytest.** The notes check treats a module named in `pytest_plugins` or in `-p` of `addopts` as acting on the tests below the conftest (or the whole tree for `addopts`). A plugin named only on the command line, or by an entry point, is still not seen (the docstring says so).
+- **The rows of older notes files still count for a unit of a later batch (C5).** It cannot be fixed inside the tool, because the change is read against the merge base, not against the last batch. It is now stated in the tool docstring and pinned by a test; nothing in the check can refuse it. A reviewer must still read the diff for a unit whose only row is old.
+- **Two things I said I might do and did not:** (1) the literal days in `tests/policy_mutants.py` (seven, all stand-ins for a planted defect) are named in the CHANGELOG but not scanned by a test; (2) the page sentence about the Kubernetes start-up check says what it does not refuse, it does not make the check refuse it (that is a change of what a client's role may read and needs the owner's decision: a deny list of resources would break clients that really read configmaps).
+- **Tests that pass on a50d5b2e, one reason each:** the four fast tests of `tests/test_policy_renewal_copy.py` pass on a50d5b2e too (`logs/fail-before-a50d5b2e.log`: 4 passed), because the renewal copy and the notes-check rehearsal are code of the tests folder, not of src or tools; their ten mutants show they can fail. The old tests that the check lists as changed (rows below, `control:`) pass before and after.
+- **My own slips, stated:** (1) I first added the fast plant tests inside `tests/test_policy_changelog.py`; then the mutation baseline ran the slow plants inside a plant (the baseline runs a whole test file) and failed, so they went back to their own file, with the checks they kill beside them. (2) I first measured the mutants of the plant helpers with a killer in another file than the helper messages; the runner called nine of them WEAK (its first-line check reads messages of the same file), so the helpers moved. (3) My Vault guard shifted line numbers that tests pin (the lines of the allow-listed calls in `secrets_vault.py` and `kubernetes.py`); six guard tests went red and I changed the numbers, not the tests' meaning. (4) Five older mutants (`B12`, `B14`) had search texts that my group 3 edits made unfindable; `python tests/policy_mutants.py --snippets` found them (350 of 350 found now). Nothing was found by a reviewer first.
+- **A fifth slip, found by the plants:** my mutant `B14 notes check ignores the module named as text in an import_module call` had a search text that matched two places of the tool, so it changed both and the fallback kept the test green (it survived on the real tree too, not only in the renewed copy). The search text is now the one comprehension tail it means; it is killed (`logs/mutant-b14-import-module.log`).
+- **Head of each result:** code head 3ad1cc45; the later commits only add notes and logs under `handover/` (checked with `git diff --name-only 3ad1cc45 HEAD`). Full suite, plants and the single mutant ran at 3ad1cc45 or the evidence-only commit after it; stage and policy mutants and static checks at d6f396f1 (see each log's `head:` line).
+
 
 ## B. Group by group
 
-(filled in below)
+**Group 1 (Major), the renewal plants run the notes check.** Class: a printed step that no plant rehearses. Fix: `_rows_for_the_renewal` commits the renewed copy on its base, runs `notes_lines_check.py --auto` as CI does, writes a row for each line it prints and requires the check to pass; the printed steps now say it prints one line per row and give the measured counts (36 rows for both lists, 35 for the kinds alone, 1 for the names and claims alone, measured on 2026-11-12).
+
+**Group 2 (Major), one mutant per plant and a fast assertion.** Fix: `tests/test_policy_renewal_copy.py` (four fast tests: each plant's copy edits exactly the files its printed steps name, the days move where they should, the notes check rehearsal) and ten mutants named `B15 the renewal ...`/`B15 the ... plant ...`; the mutation runner gained `extra_files` so a copy can hold `CHANGELOG.md` and `pyproject.toml`. Rows 116 and 117 of the batch 14 notes name their mutants now (and say that no mutant kills the slow plant itself).
+
+**Group 3 (Major), notes-check blind spots.** as10 (walrus in another assignment), ut1 and ut2 (unittest set-up and tear-down, lower case), fx1 (`usefixtures`, `getfixturevalue`), cf10 and cf11 (`pytest_plugins`, `-p` in `addopts`), rt3 (names built at run time), star imports, C3 (the `import_module` prefix rule) and C5 (one table, stated). One mutant for each new branch, all killed.
+
+**Group 5 (lead decision), an empty Vault `path_prefix`.** Class: a setting that widens a grant to the whole mount by being left out. Refused in three places: the settings (`VaultSettings`, where the pattern still admits an empty value so the refusal can say why), the start-up (`secrets_vault.build`), and the one place the secret path is built (`VaultProvider._fetch`, after the name check). The constructor does not refuse it, because the signing kind (transit) uses the same client with no prefix. One sentence everywhere (`VAULT_EMPTY_PREFIX`); the page text, the POLICY text, the CHANGELOG (behaviour change) and the three mutants are done. The docstring nits: six kinds, the Kubernetes module docstring against the POLICY, NOTES line 12, the over-broad read limit of the Kubernetes probe (one sentence on the page and a pin test).
+
+**Group 4 (Minor).** The plant's edits are compared with the files the printed steps name; step (1) of the kinds steps now says what the later group keeps; the CHANGELOG says which four policy test files the plants run and that the seven written days are stand-ins.
+
+**Evidence group.** Wildcard counts corrected (7, 5 and 1; all in the `never` lists of the two Vault kinds or one docstring, none a grant; also corrected in batch 14 notes). Fail-before: `logs/fail-before-a50d5b2e.log` (13 of 17 new tests fail on a50d5b2e for the named reason, 4 pass for the reason in section A).
+
 
 ## C. One row for each new or changed test and mutant
 

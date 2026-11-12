@@ -1,0 +1,3 @@
+head: d6f396f189efc7dd4c639276e8df234e65cb136d
+$ python tools/notes_lines_check.py --auto a50d5b2e --head HEAD
+exit 0

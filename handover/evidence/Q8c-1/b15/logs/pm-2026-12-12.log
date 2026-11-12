@@ -1,0 +1,7 @@
+head: d6f396f189efc7dd4c639276e8df234e65cb136d
+$ python tests/policy_mutants.py --day 2026-12-12
+not run at 2026-12-12: B12 an overdue unchecked claim is reported one day late (its killer is a date test that is red on that day)
+349 of 349 good; problems: []
+mutants killed ONLY by a test that reads the clock function (a result that can change with the day): 6 of 350: ['B12 an overdue unchecked claim is reported one day late', 'B10 the clock function of the date tests reads the real day', 'B11 the date test rule accepts an empty list that reports an over
+first-line check is weak (the expect text is in no assert message, `match=` or `what=` of the killer or of a helper it calls: the count of weak mutants is a LOWER bound, because a helper text can carry the expect text for a killer that never reaches it) for 0 of 350 mutants (exit 1 when any); killer
+exit 0

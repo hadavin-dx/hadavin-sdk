@@ -1,0 +1,18 @@
+head: d6f396f189efc7dd4c639276e8df234e65cb136d
+$ python tests/stage_mutants.py
+ok  KILLED       M5 the stage is compared by label (case and spaces tidied)  [test_values_are_compared_exactly_never_normalised]
+ok  KILLED       M5b the stage is tidied with NFKC, casefold and strip  [test_values_are_compared_exactly_never_normalised]
+ok  KILLED       M5c Dev and DEV get no rename sentence  [test_values_are_compared_exactly_never_normalised]
+ok  KILLED       M5d the rename sentence hides the other problems in the file  [test_dev_is_refused_with_the_rename]
+ok  KILLED       M6 the old word comes back in src  [test_the_old_stage_word_is_gone]
+ok  KILLED       M6b the old word comes back in src as a quoted value  [test_the_old_stage_word_is_gone]
+ok  KILLED       M6c a sibling word comes back in src as a quoted value  [test_the_old_stage_word_is_gone]
+ok  KILLED       M8 a half-renamed flag: the old name stays beside the new  [test_no_old_spelling_of_the_demo_only_flag_is_left]
+ok  KILLED       M9a registry.py goes back to an allowlist of live stages  [test_a_value_that_is_not_a_stage_is_live_for_every_guard]
+ok  KILLED       M9b deferred.py goes back to an allowlist of live stages  [test_a_value_that_is_not_a_stage_is_live_for_every_guard]
+ok  KILLED       M9c app.py goes back to an allowlist of live stages  [test_a_value_that_is_not_a_stage_is_live_for_every_guard]
+ok  KILLED       M10a pilot dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+ok  KILLED       M10b demo dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+ok  KILLED       M10c prod dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+37 of 37 good; problems: []
+exit 0
