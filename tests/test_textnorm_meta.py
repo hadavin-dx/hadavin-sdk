@@ -119,7 +119,8 @@ def test_a_the_list_has_226_mutants_77_of_p1a_fix4_26_of_p1b_14_of_p1a_fix5_5_of
     assert len(names[122:153]) == 31, (
         "the 32 of P1a fix7, less the one that the fix batch removed (a bool as a minimum is refused by the floor of 2 anyway)"
     )
-    assert len(names[153:]) == 63, (
+    assert len(names[153:163]) == 10, "the 10 of P1a fix8 (they come first after the fix7 mutants)"
+    assert len(names[163:]) == 63, (
         "the 63 of the P1b fix batch: 30 of the first batch and 33 of order 137"
     )
     assert all(
@@ -350,8 +351,8 @@ def test_the_ci_lint_job_holds_the_two_ban_steps_word_for_word():
 
 def test_the_split_of_the_mutants_into_behaviour_and_wording_only_is_derived_from_the_syntax_trees():
     behaviour, wording = mm.split_counts()
-    assert behaviour + wording == len(mm.M) == 138
-    new = mm.M[128:]
+    assert behaviour + wording == len(mm.M) == 226
+    new = mm.M[153:163]  # the 10 of P1a fix8
     assert len(new) == 10
     assert [m.name for m in new if mm.is_wording_only(m)] == [
         "words: the squeeze docstring calls itself a check name for a scan",

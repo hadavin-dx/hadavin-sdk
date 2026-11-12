@@ -1578,8 +1578,8 @@ def has_mixed_script(text: str) -> bool:
     fail-closed deny signal that does not depend on the look-alike table. Digits and punctuation are script-neutral.
 
     Two rules: (a) a Latin letter and a letter of another script in one word; (b) a Latin letter and a spacing mark (Mc) whose script group
-    is not Latin and is the group of no letter in the word ("ali" + U+0903 + "ce" and "iPhone" + U+093E are flagged; "Ramesh" + a Devanagari
-    syllable with its own sign is not). A modifier letter (Lm) is a letter: NFKC turns most into their Latin letter, so it never flags by itself;
+    is not Latin and is the group of no letter in the word ("ali" + U+0903 + "ce" and "iPhone" + U+093E are flagged; a Devanagari mark next to a
+    Devanagari letter adds nothing to what rule (a) says about that letter: "Ramesh" + a Devanagari syllable is flagged by rule (a)). A modifier letter (Lm) is a letter: NFKC turns most into their Latin letter, so it never flags by itself;
     the DENY check catches an inserted one. A non-spacing sign (Mn) of another script inserted into a Latin word is not flagged here (it is
     removed first; the fold drops it, so the DENY check catches it).
 
