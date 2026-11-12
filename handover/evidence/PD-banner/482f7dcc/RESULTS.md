@@ -28,3 +28,7 @@ Fail-before detail: test_mode_banner.py fails at collection (mode_banner has no 
 - 6c (probe_c.log): 8 odd objects under node, HADAVIN_REQUIRE_NODE=1, all rc 0, htmlWrites empty, no throw. Script tags in text/standins painted as plain text; null, array, {}, missing fields, wrong tone/mode combos, string/object lists paint the UNCONFIRMED banner.
 
 Raw logs: /home/user/build/evidence-raw/pdbanner-482f7dcc/
+
+## Update after report: full pytest finished
+full pytest exit 0; last line: 10640 passed, 1 skipped, 28 deselected in 264.52s (0:04:24)
+stage_mutants and banner_mutants still pending at this write (see raw logs).
