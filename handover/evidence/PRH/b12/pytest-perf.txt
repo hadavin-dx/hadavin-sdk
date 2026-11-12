@@ -1,0 +1,5 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+s..............................................................          [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:131: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+62 passed, 1 skipped, 13398 deselected in 168.50s (0:02:48)

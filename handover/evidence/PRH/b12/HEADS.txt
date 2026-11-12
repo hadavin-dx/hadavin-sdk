@@ -1,0 +1,8 @@
+Heads the evidence in this folder was taken at (git rev-parse HEAD of the tree that ran it).
+Source (src/) is identical between d0e8db2e and the final head 8a4b70d5 (git diff d0e8db2e 8a4b70d5 -- src is empty); only tests, documents and evidence differ.
+clean-corpus-*.txt, cells-*.jsonl, fuzz-b7-*.txt, ownfuzz-*.jsonl, spaced-*.txt, splitleak-diff.txt (tree "head"): d0e8db2e93682d39c0ca15de972d11c1535f6652
+  other trees: old = 242dfd66 (clean detached worktree), ea6 = ea6dbdaf, main = 2a8c2aac (origin/main)
+pytest-perf.txt, perf-compare.txt, perf-load.txt: d0e8db2e93682d39c0ca15de972d11c1535f6652
+failbefore-b12-new-and-changed-tests-on-242dfd66.txt: run on 242dfd66 with the test files of the head copied in (head of the copied tests: 9bc6ae89 plus later test edits listed in NOTES.md)
+failbefore-b11-new-tests-on-5c430b6a-regenerated.txt: run on 5c430b6a
+ruff, bandit, scan_repo, gitleaks (b12p-tmp/gates2, results quoted in NOTES.md): 8a4b70d5b9ce5c38f57d0c7a93962223e706ce76

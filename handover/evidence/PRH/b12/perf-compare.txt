@@ -1,0 +1,17 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+shape | chars | head median cpu | main median cpu | ratio
+S1 plain ASCII log | 262144 | 0.431 | 0.390 | 1.11
+S2 tab table | 262144 | 0.453 | 0.403 | 1.12
+S3 JSON lines | 262144 | 0.486 | 0.393 | 1.24
+S4 Hindi | 262144 | 0.831 | 0.801 | 1.04
+S5 Persian ZWNJ emoji | 262144 | 1.529 | 1.410 | 1.08
+H1 coloured output | 262144 | 0.718 | 0.240 | 2.99
+H2 colour inside a word | 262144 | 1.113 | 0.316 | 3.52
+H3 sgr0 inside a word | 262144 | 1.843 | 0.366 | 5.04
+H4 colourised log with sgr0 | 262144 | 1.129 | 0.301 | 3.75
+P1 one very long spaced run | 262144 | 0.581 | 0.480 | 1.21
+P2 32 medium spaced runs | 262144 | 0.416 | 0.234 | 1.77
+P3 32 spaced runs sharing a prefix | 262144 | 0.211 | 0.121 | 1.74
+P4 2000 values sharing 12 characters | 262144 | 0.589 | 0.465 | 1.27
+P5 encoded gaps in several views and a long run | 262144 | 1.827 | 0.415 | 4.40
+P6 40 held values of PEM size and a long text | 262144 | 0.713 | 0.540 | 1.32
