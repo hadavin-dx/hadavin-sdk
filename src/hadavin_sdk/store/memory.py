@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import threading
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from hadavin_sdk.models import (
@@ -13,16 +13,24 @@ from hadavin_sdk.models import (
     ApprovalRequest,
     ApprovalStatus,
     DeadLetter,
+    INBOUND_FINAL_STATES,
+    INBOUND_OPEN_STATES,
+    INBOUND_RETRY_REASONS,
     GateDecision,
+    InboundReceipt,
+    InboundRunView,
     KillSwitch,
     Plan,
     Run,
     RunState,
     TickState,
     ToolCallRecord,
+    check_inbound_move,
+    inbound_reason_allowed,
+    new_id,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState
+from hadavin_sdk.store.protocol import NotFound, ReceiveResult, RerunRefused, StaleState
 
 
 class MemoryStore:
@@ -40,6 +48,10 @@ class MemoryStore:
         self._ticks: dict[str, TickState] = {}
         self._tool_calls: dict[str, ToolCallRecord] = {}
         self._maps: dict[str, tuple[dict[str, str], datetime]] = {}
+        # inbound ledger (AK-G2-a), keyed (tenant, source, delivery_key); one lock, like every other table here
+        self._inbound: dict[tuple[str, str, str], InboundReceipt] = {}
+        self._inbound_bodies: dict[tuple[str, str, str], bytes] = {}
+        self._inbound_checks: dict[tuple[str, str], str] = {}
 
     @staticmethod
     def _get(table: dict, key: str):
@@ -280,3 +292,260 @@ class MemoryStore:
             for k in gone:
                 del self._maps[k]
             return len(gone)
+
+    # --- inbound ledger (AK-G2-a) -----------------------------------------------------------------------------
+
+    @staticmethod
+    def _check_inbound_insert(rec: InboundReceipt) -> None:
+        """The two legal shapes of a new receipt (the Postgres INSERT trigger's rule): a fresh `received` row with
+        the run id of generation 0, or a `refused id_reuse` row with no run id."""
+        if (
+            rec.generation != 0
+            or rec.attempts != 0
+            or rec.last_reason is not None
+            or rec.lease_until is not None
+            or rec.claim_token is not None
+            or rec.updated_at != rec.received_at
+        ):
+            raise ValueError("inbound receipt: not a legal new receipt")
+        fresh = (
+            rec.state == "received"
+            and rec.reason is None
+            and rec.reuse_of is None
+            and rec.run_id == "run-" + rec.delivery_key[:28] + "0000"
+        )
+        reuse = (
+            rec.state == "refused"
+            and rec.reason == "id_reuse"
+            and rec.reuse_of is not None
+            and rec.run_id is None
+        )
+        if not (fresh or reuse):
+            raise ValueError("inbound receipt: not a legal new receipt")
+
+    def receive_inbound(
+        self, rec: InboundReceipt, body: bytes | None, *, max_reuse: int, max_open: int
+    ) -> ReceiveResult:
+        self._check_inbound_insert(rec)
+        key = (rec.tenant, rec.source, rec.delivery_key)
+        with self._lock:
+            stored = self._inbound_checks.setdefault((rec.tenant, rec.source), rec.key_check)
+            if stored != rec.key_check:
+                return "key_changed"
+            if (found := self._inbound.get(key)) is not None:
+                return "duplicate" if found.body_sha256 == rec.body_sha256 else "conflict"
+            if rec.reuse_of is not None:
+                reuse_rows = sum(
+                    1
+                    for r in self._inbound.values()
+                    if r.tenant == rec.tenant
+                    and r.source == rec.source
+                    and r.reuse_of == rec.reuse_of
+                )
+                if reuse_rows >= max_reuse:
+                    return "conflict_capped"
+            if rec.state == "received":
+                open_rows = sum(
+                    1
+                    for r in self._inbound.values()
+                    if r.tenant == rec.tenant
+                    and r.source == rec.source
+                    and r.state in INBOUND_OPEN_STATES
+                )
+                if open_rows >= max_open:
+                    return "busy"
+            self._inbound[key] = rec.model_copy(deep=True)
+            if body is not None:
+                self._inbound_bodies[key] = bytes(body)
+            return "new"
+
+    def claim_inbound(
+        self, tenant: str, source: str, now: datetime, lease_s: int
+    ) -> InboundReceipt | None:
+        with self._lock:
+            ready = sorted(
+                (
+                    r
+                    for r in self._inbound.values()
+                    if r.tenant == tenant
+                    and r.source == source
+                    and (
+                        r.state == "received"
+                        or (
+                            r.state == "claimed"
+                            and r.lease_until is not None
+                            and r.lease_until < now
+                        )
+                    )
+                ),
+                key=lambda r: (r.received_at, r.delivery_key),
+            )
+            if not ready:
+                return None
+            r = ready[0]
+            taken = r.model_copy(
+                update={
+                    "attempts": r.attempts + (1 if r.state == "claimed" else 0),
+                    "state": "claimed",
+                    "claim_token": new_id("clm"),
+                    "lease_until": now + timedelta(seconds=lease_s),
+                    "updated_at": now,
+                }
+            )
+            self._inbound[(tenant, source, r.delivery_key)] = taken
+            return taken.model_copy(deep=True)
+
+    def get_inbound_body(self, tenant: str, source: str, delivery_key: str) -> bytes | None:
+        with self._lock:
+            return self._inbound_bodies.get((tenant, source, delivery_key))
+
+    def _claimed(self, tenant: str, source: str, delivery_key: str, token: str) -> InboundReceipt:
+        r = self._inbound.get((tenant, source, delivery_key))
+        if r is None:
+            raise NotFound(delivery_key)
+        if r.state != "claimed" or r.claim_token != token:
+            raise StaleState("inbound receipt is not claimed with this token")
+        return r
+
+    def finish_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        state: str,
+        reason: str | None,
+        now: datetime,
+    ) -> None:
+        if state not in INBOUND_FINAL_STATES or not inbound_reason_allowed(state, reason):
+            raise ValueError("inbound finish: not a final state with an allowed reason")
+        with self._lock:
+            r = self._claimed(tenant, source, delivery_key, claim_token)
+            check_inbound_move(r.state, state)
+            self._inbound[(tenant, source, delivery_key)] = r.model_copy(
+                update={
+                    "state": state,
+                    "reason": reason,
+                    "lease_until": None,
+                    "claim_token": None,
+                    "updated_at": now,
+                }
+            )
+
+    def release_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        reason: str,
+        now: datetime,
+    ) -> None:
+        if reason not in INBOUND_RETRY_REASONS:
+            raise ValueError("inbound release: not a retry reason")
+        with self._lock:
+            r = self._claimed(tenant, source, delivery_key, claim_token)
+            self._inbound[(tenant, source, delivery_key)] = r.model_copy(
+                update={
+                    "state": "received",
+                    "last_reason": reason,
+                    "lease_until": None,
+                    "claim_token": None,
+                    "attempts": r.attempts + (1 if reason == "step_error" else 0),
+                    "updated_at": now,
+                }
+            )
+
+    def reopen_inbound(
+        self, tenant: str, source: str, delivery_key: str, now: datetime
+    ) -> InboundReceipt:
+        raise RerunRefused(
+            "rerun_owner_only"
+        )  # only the Postgres re-run owner role may; memory has no such role
+
+    def _rerun_owner_reopen(
+        self, tenant: str, source: str, delivery_key: str, now: datetime
+    ) -> InboundReceipt:
+        """Test seam (not in any protocol): the re-run owner's reopen, with the database rule's checks."""
+        with self._lock:
+            r = self._inbound.get((tenant, source, delivery_key))
+            if r is None or r.state != "needs_person":
+                raise NotFound(delivery_key) if r is None else StaleState("rerun_shape")
+            run = self._runs.get(r.run_id) if r.run_id else None
+            if run is not None and run.state in OPEN_STATES:
+                raise StaleState("rerun_run_open")
+            if r.generation + 1 > 65535:
+                raise StaleState("rerun_shape")
+            gen = r.generation + 1
+            reopened = r.model_copy(
+                update={
+                    "state": "received",
+                    "generation": gen,
+                    "run_id": "run-" + r.delivery_key[:28] + format(gen, "04x"),
+                    "attempts": 0,
+                    "reason": None,
+                    "last_reason": None,
+                    "lease_until": None,
+                    "claim_token": None,
+                    "updated_at": now,
+                }
+            )
+            self._inbound[(tenant, source, delivery_key)] = reopened
+            return reopened.model_copy(deep=True)
+
+    def list_inbound_sources(self) -> list[tuple[str, str, int]]:
+        with self._lock:
+            counts: dict[tuple[str, str], int] = defaultdict(int)
+            for r in self._inbound.values():
+                if r.state in ("received", "claimed", "needs_person"):
+                    counts[(r.tenant, r.source)] += 1
+            return [(t, s, n) for (t, s), n in sorted(counts.items())]
+
+    def purge_inbound_bodies(self, before: datetime, ceiling: datetime) -> int:
+        """Never an open receipt's text. Past `ceiling`: any final receipt's. Past `before`: a refused receipt's, or a
+        done receipt whose run is missing or ended (not open, not waiting for a person, not stopped)."""
+        held = OPEN_STATES | {RunState.NEEDS_PERSON, RunState.STOPPED}
+        with self._lock:
+            gone = []
+            for key in self._inbound_bodies:
+                r = self._inbound.get(key)
+                if r is None or r.state not in INBOUND_FINAL_STATES:
+                    continue
+                run = self._runs.get(r.run_id) if r.run_id else None
+                aged = r.updated_at < before and (
+                    r.state == "refused"
+                    or (r.state == "done" and (run is None or run.state not in held))
+                )
+                if r.updated_at < ceiling or aged:
+                    gone.append(key)
+            for key in gone:
+                del self._inbound_bodies[key]
+            return len(gone)
+
+    def get_inbound_key_check(self, tenant: str, source: str) -> str | None:
+        with self._lock:
+            return self._inbound_checks.get((tenant, source))
+
+    def set_inbound_key_check(
+        self, tenant: str, source: str, old: str, new: str, now: datetime
+    ) -> None:
+        with self._lock:
+            stored = self._inbound_checks.get((tenant, source))
+            if stored is None:
+                raise NotFound(f"{tenant}/{source}")
+            if stored != old:
+                raise StaleState("inbound key check changed")
+            self._inbound_checks[(tenant, source)] = new
+
+    def get_inbound_run(self, run_id: str) -> InboundRunView:
+        with self._lock:
+            run = self._get(self._runs, run_id)
+        return InboundRunView(
+            run_id=run.run_id,
+            agent_id=run.agent_id,
+            principal_id=run.principal_id,
+            trigger_ref=run.trigger_ref,
+            state=run.state,
+            reason_code=run.reason_code,
+            updated_at=run.updated_at,
+        )

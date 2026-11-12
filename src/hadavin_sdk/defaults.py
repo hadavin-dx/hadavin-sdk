@@ -129,3 +129,10 @@ K8S_MAX_PAGES = 25  # pages followed per list; past that the answer says it is i
 K8S_JSON_CAP_BYTES = 1024 * 1024  # fetch cap for a JSON list reply
 K8S_LOG_SLACK_BYTES = 8192  # fetch-cap room over `log_bytes` for the line framing
 K8S_LOG_BYTES = 65536  # asked of the API as limitBytes
+
+# --- inbound triggers (AK-G2-a) ---
+INBOUND_MAX_SENDER_ID_CHARS = 256  # longest message id a sender may give (counted in characters)
+INBOUND_MAX_REUSE_ROWS = 8  # refused "same id, other text" rows kept per sender id
+INBOUND_BODY_MAX_DAYS = (
+    400  # a saved message text is deleted at the latest this long after it was last touched
+)

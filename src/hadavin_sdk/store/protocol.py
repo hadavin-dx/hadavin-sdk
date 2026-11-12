@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Protocol
+from typing import Literal, Protocol
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
@@ -13,6 +13,8 @@ from hadavin_sdk.models import (
     ApprovalStatus,
     DeadLetter,
     GateDecision,
+    InboundReceipt,
+    InboundRunView,
     KillSwitch,
     Plan,
     Run,
@@ -44,6 +46,15 @@ class StoreUnavailable(ConfigError):
 
 class NotFound(KeyError):
     pass
+
+
+class RerunRefused(RuntimeError):
+    """The caller is not the re-run owner (a database role); a person's re-run of a message goes through that role
+    only. A RuntimeError, not an OSError, so `is_connectivity_error` never reads it as an outage."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
 
 
 class Store(Protocol):
@@ -156,5 +167,71 @@ def missing_methods(store: object) -> list[str]:
     return sorted(
         n
         for n, v in vars(Store).items()
+        if callable(v) and not n.startswith("_") and not callable(getattr(store, n, None))
+    )
+
+
+ReceiveResult = Literal["new", "duplicate", "conflict", "conflict_capped", "busy", "key_changed"]
+
+
+class InboundStore(Protocol):
+    """The inbound ledger (AK-G2-a). A NEW protocol next to `Store`: a custom store written before it has no
+    inbound methods and still works until a webhook is configured. Every time is an argument or a record field
+    (no store clock). A missing receipt is `NotFound`; another state or claim token is `StaleState`."""
+
+    def receive_inbound(
+        self, rec: InboundReceipt, body: bytes | None, *, max_reuse: int, max_open: int
+    ) -> ReceiveResult:
+        """One transaction: first key check, key comparison, dedupe by delivery key (same text: `duplicate`,
+        other text: `conflict`), the reuse-row cap (`conflict_capped`), the open-message cap (`busy`, only for a
+        new message), then the receipt and its text. `key_changed` writes nothing."""
+        ...
+
+    def claim_inbound(
+        self, tenant: str, source: str, now: datetime, lease_s: int
+    ) -> InboundReceipt | None:
+        """Take the oldest `received` receipt, or a `claimed` one whose lease ran out (that counts one try)."""
+        ...
+
+    def get_inbound_body(self, tenant: str, source: str, delivery_key: str) -> bytes | None: ...
+    def finish_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        state: str,
+        reason: str | None,
+        now: datetime,
+    ) -> None: ...
+    def release_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        reason: str,
+        now: datetime,
+    ) -> None: ...
+    def reopen_inbound(
+        self, tenant: str, source: str, delivery_key: str, now: datetime
+    ) -> InboundReceipt:
+        """A person's re-run: only the re-run owner role may; every other caller gets `RerunRefused`."""
+        ...
+
+    def list_inbound_sources(self) -> list[tuple[str, str, int]]: ...
+    def purge_inbound_bodies(self, before: datetime, ceiling: datetime) -> int: ...
+    def get_inbound_key_check(self, tenant: str, source: str) -> str | None: ...
+    def set_inbound_key_check(
+        self, tenant: str, source: str, old: str, new: str, now: datetime
+    ) -> None: ...
+    def get_inbound_run(self, run_id: str) -> InboundRunView: ...
+
+
+def missing_inbound_methods(store: object) -> list[str]:
+    """The methods of `InboundStore` that `store` does not have (the app refuses such a store when a webhook is set)."""
+    return sorted(
+        n
+        for n, v in vars(InboundStore).items()
         if callable(v) and not n.startswith("_") and not callable(getattr(store, n, None))
     )

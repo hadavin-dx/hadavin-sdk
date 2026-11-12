@@ -103,6 +103,18 @@ def _main(argv: list[str] | None = None) -> int:
     mig.add_argument(
         "--portal-role", help="grant this database role SELECT on the portal's relations only"
     )
+    mig.add_argument(
+        "--inbound-door-role",
+        help="inbound ledger: the login of the door (appends saved message records and their texts); give the three inbound roles together",
+    )
+    mig.add_argument(
+        "--inbound-dispatch-role",
+        help="inbound ledger: the login of dispatch (claims, finishes, reads the text)",
+    )
+    mig.add_argument(
+        "--rerun-owner-role",
+        help="inbound ledger: the role that cannot log in and alone may send a message back for a re-run",
+    )
     aud = sub.add_parser("audit", help="check the chain audit")
     aud.add_argument("action", choices=["verify"])
     rep = sub.add_parser(
@@ -135,7 +147,15 @@ def _main(argv: list[str] | None = None) -> int:
         return _tick()
     cfg = load_config()
     if args.cmd == "migrate":
-        return _migrate(cfg, args.runtime_role, args.portal_role, args.purge_role)
+        return _migrate(
+            cfg,
+            args.runtime_role,
+            args.portal_role,
+            args.purge_role,
+            args.inbound_door_role,
+            args.inbound_dispatch_role,
+            args.rerun_owner_role,
+        )
     reg = load_registry(cfg)
     if args.cmd in (
         "replay",
@@ -310,8 +330,23 @@ def _tick() -> int:
 
 
 def _migrate(
-    cfg, runtime_role: str | None, portal_role: str | None = None, purge_role: str | None = None
+    cfg,
+    runtime_role: str | None,
+    portal_role: str | None = None,
+    purge_role: str | None = None,
+    inbound_door_role: str | None = None,
+    inbound_dispatch_role: str | None = None,
+    rerun_owner_role: str | None = None,
 ) -> int:
+    inbound = {
+        "--inbound-door-role": inbound_door_role,
+        "--inbound-dispatch-role": inbound_dispatch_role,
+        "--rerun-owner-role": rerun_owner_role,
+    }
+    if 0 < sum(v is not None for v in inbound.values()) < len(inbound):
+        missing = ", ".join(k for k, v in inbound.items() if v is None)
+        print(f"refused: the three inbound roles go together; missing: {missing}", file=sys.stderr)
+        return 2
     store = cfg.backends.store
     if store.kind != "postgres":
         print(
@@ -332,6 +367,9 @@ def _migrate(
         runtime_role=runtime_role,
         portal_role=portal_role,
         purge_role=purge_role,
+        inbound_door_role=inbound_door_role,
+        inbound_dispatch_role=inbound_dispatch_role,
+        rerun_owner_role=rerun_owner_role,
         iam_auth=store.iam_auth,
         region=store.region,
         sslmode=store.sslmode,

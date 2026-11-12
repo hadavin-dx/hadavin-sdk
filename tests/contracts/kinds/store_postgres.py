@@ -13,9 +13,11 @@ from tests.contracts.kinds import kind
 
 # runtime DSN -> the DSN of the purge role of the same schema (only for `pg_schema(runtime=True)`)
 PURGE_DSN: dict[str, str] = {}
+# runtime DSN -> the logins of an `inbound=True` schema: door, dispatch (DSNs), migrator (the scoped admin DSN), rerun (role name)
+INBOUND: dict[str, dict[str, str]] = {}
 
 
-def pg_schema(migrated=True, runtime=False):
+def pg_schema(migrated=True, runtime=False, inbound=False):
     """Yield a DSN whose search_path is a fresh (migrated) schema; drop the schema afterwards. With `runtime`,
     yield instead the DSN of a new non-owner login role that `migrate` granted its runtime rights (K2: the store
     suite must pass with only those rights); the role is dropped afterwards."""
@@ -34,22 +36,49 @@ def pg_schema(migrated=True, runtime=False):
     scoped = make_conninfo(dsn, options=f"-c search_path={schema}")
     if migrated:
         migrate(scoped)
-    role = purge = None
+    role = purge = door = dispatch = owner = None
     try:
         if runtime:
             role, purge = "rt_" + uuid.uuid4().hex[:12], "pu_" + uuid.uuid4().hex[:12]
             with psycopg.connect(dsn, autocommit=True) as db:
                 for r in (role, purge):
                     db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
-            migrate(scoped, runtime_role=role, purge_role=purge)
+                if inbound:  # AK-G2-a: door and dispatch log in; the re-run owner cannot
+                    door, dispatch, owner = (
+                        "dr_" + uuid.uuid4().hex[:12],
+                        "dp_" + uuid.uuid4().hex[:12],
+                        "ro_" + uuid.uuid4().hex[:12],
+                    )
+                    for r in (door, dispatch):
+                        db.execute(sql.SQL("CREATE ROLE {} LOGIN").format(sql.Identifier(r)))
+                    db.execute(sql.SQL("CREATE ROLE {} NOLOGIN").format(sql.Identifier(owner)))
+            if inbound:
+                migrate(
+                    scoped,
+                    runtime_role=role,
+                    purge_role=purge,
+                    inbound_door_role=door,
+                    inbound_dispatch_role=dispatch,
+                    rerun_owner_role=owner,
+                )
+            else:
+                migrate(scoped, runtime_role=role, purge_role=purge)
             runtime_dsn = make_conninfo(scoped, user=role)
             PURGE_DSN[runtime_dsn] = make_conninfo(scoped, user=purge)
+            if inbound:
+                INBOUND[runtime_dsn] = {
+                    "door": make_conninfo(scoped, user=door),
+                    "dispatch": make_conninfo(scoped, user=dispatch),
+                    "migrator": scoped,
+                    "rerun": owner,
+                    "schema": schema,
+                }
             yield runtime_dsn
         else:
             yield scoped
     finally:
         with psycopg.connect(dsn, autocommit=True) as db:
-            for r in (role, purge):
+            for r in (role, purge, door, dispatch, owner):
                 if r:
                     db.execute(sql.SQL("DROP OWNED BY {}").format(sql.Identifier(r)))
                     db.execute(sql.SQL("DROP ROLE {}").format(sql.Identifier(r)))
@@ -82,3 +111,59 @@ def postgres(tmp_path):
         yield _SplitStore(store, purge_store)
         store._db.close()
         purge_store._db.close()
+
+
+class InboundSplitStore:
+    """Each inbound call goes to the login that owns it: `receive_inbound` to the door, the purge to the purge login,
+    every other inbound call (and the Store calls tests need to set up runs) to dispatch or runtime, as the app
+    wires them. `reopen_inbound` goes through the door login on purpose: it must always be `RerunRefused`."""
+
+    def __init__(self, runtime, door, dispatch, purge, migrator_dsn, rerun_role):
+        self.runtime, self.door, self.dispatch, self.purge = runtime, door, dispatch, purge
+        self._migrator_dsn, self._rerun_role = migrator_dsn, rerun_role
+
+    def __getattr__(self, name):
+        if name in ("receive_inbound", "reopen_inbound"):
+            return getattr(self.door, name)
+        if name == "purge_inbound_bodies":
+            return getattr(self.purge, name)
+        if name.endswith("_inbound") or "inbound" in name:
+            return getattr(self.dispatch, name)
+        return getattr(self.runtime, name)
+
+    def rerun_owner_reopen(self, tenant, source, delivery_key, now):
+        """The re-run owner's reopen (a setup step, not a negative test): the migrator connection acts as that role."""
+        from hadavin_sdk.store.postgres import connect, PostgresStore
+
+        db = connect(self._migrator_dsn)
+        try:
+            db.execute(f'SET ROLE "{self._rerun_role}"')
+            return PostgresStore(db).reopen_inbound(tenant, source, delivery_key, now)
+        finally:
+            db.execute("RESET ROLE")
+            db.close()
+
+    def close(self):
+        for st in (self.runtime, self.door, self.dispatch, self.purge):
+            st._db.close()
+
+
+def inbound_postgres_store(tmp_path=None):
+    """Yield an `InboundSplitStore` over a fresh migrated schema (six roles)."""
+    for dsn in pg_schema(runtime=True, inbound=True):
+        settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
+        info = INBOUND[dsn]
+
+        def build(d):
+            return make("store", settings, FakeSecretProvider({"pg-dsn": d}))
+
+        split = InboundSplitStore(
+            build(dsn),
+            build(info["door"]),
+            build(info["dispatch"]),
+            build(PURGE_DSN[dsn]),
+            info["migrator"],
+            info["rerun"],
+        )
+        yield split
+        split.close()

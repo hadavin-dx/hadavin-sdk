@@ -15,7 +15,7 @@ import os
 import tempfile
 import threading
 from collections.abc import Callable
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Any
@@ -34,16 +34,28 @@ from hadavin_sdk.models import (
     ApprovalRequest,
     ApprovalStatus,
     DeadLetter,
+    INBOUND_FINAL_STATES,
+    INBOUND_RETRY_REASONS,
     GateDecision,
+    InboundReceipt,
+    InboundRunView,
     KillSwitch,
     Plan,
     Run,
     RunState,
     TickState,
     ToolCallRecord,
+    inbound_reason_allowed,
+    new_id,
     now,
 )
-from hadavin_sdk.store.protocol import NotFound, StaleState, StoreUnavailable
+from hadavin_sdk.store.protocol import (
+    NotFound,
+    ReceiveResult,
+    RerunRefused,
+    StaleState,
+    StoreUnavailable,
+)
 
 _LOG = logging.getLogger("hadavin_sdk.store")
 
@@ -173,6 +185,26 @@ def build(settings, deps) -> PostgresStore:
             f"store postgres: cannot connect ({exc.__class__.__name__})"
         ) from None
     return PostgresStore(conn)
+
+
+# The person's re-run of an inbound message: run by the re-run owner role only (a database trigger refuses every
+# other login). The new run id is spelled in SQL and checked again by the trigger.
+REOPEN_SQL = """
+UPDATE inbound_receipts SET state = 'received', generation = generation + 1,
+    run_id = 'run-' || substr(delivery_key, 1, 28) || lpad(to_hex(generation + 1), 4, '0'),
+    attempts = 0, reason = NULL, last_reason = NULL, lease_until = NULL, claim_token = NULL, updated_at = %(now)s
+WHERE tenant = %(tenant)s AND source = %(source)s AND delivery_key = %(delivery_key)s AND state = 'needs_person'
+RETURNING *
+"""
+
+_RECEIPT_COLS = (
+    "tenant, source, delivery_key, schema_version, readers, body_sha256, key_check, generation, run_id, state, "
+    "reason, last_reason, attempts, lease_until, claim_token, reuse_of, received_at, updated_at"
+)
+
+
+def _receipt(row: dict[str, Any]) -> InboundReceipt:
+    return InboundReceipt.model_validate(row)
 
 
 def _row(model: BaseModel) -> dict[str, Any]:
@@ -531,3 +563,282 @@ class PostgresStore:
                 "m.updated_at) < %s",
                 (sorted(keep_run_ids), before),
             ).rowcount
+
+    # --- inbound ledger (AK-G2-a): explicit SQL, one statement or one transaction per method --------------------
+
+    def _after_key_check_read(self) -> None:
+        """Test seam, no-op: a second connection can change the key check between the read and the insert."""
+
+    def _before_body_insert(self) -> None:
+        """Test seam, no-op: a fault here must leave neither the receipt nor the text."""
+
+    def receive_inbound(
+        self, rec: InboundReceipt, body: bytes | None, *, max_reuse: int, max_open: int
+    ) -> ReceiveResult:
+        try:
+            with self._lock, self._db.transaction():
+                return self._receive_inbound(rec, body, max_reuse, max_open)
+        except psycopg.errors.CheckViolation as exc:
+            # A key change committed between the re-read and the insert: the insert trigger refused it, the
+            # transaction rolled back, nothing was written.
+            if exc.diag.message_primary == "inbound_key_changed":
+                return "key_changed"
+            raise
+
+    def _receive_inbound(
+        self, rec: InboundReceipt, body: bytes | None, max_reuse: int, max_open: int
+    ) -> ReceiveResult:
+        key = {"tenant": rec.tenant, "source": rec.source, "delivery_key": rec.delivery_key}
+        self._exec(
+            "INSERT INTO inbound_key_checks (tenant, source, schema_version, readers, key_check, set_at) "
+            "VALUES (%(tenant)s, %(source)s, 1, %(readers)s, %(key_check)s, %(received_at)s) "
+            "ON CONFLICT (tenant, source) DO NOTHING",
+            {
+                **key,
+                "readers": sorted(rec.readers),
+                "key_check": rec.key_check,
+                "received_at": rec.received_at,
+            },
+        )
+        stored = self._exec(
+            "SELECT key_check FROM inbound_key_checks WHERE tenant = %(tenant)s AND source = %(source)s",
+            key,
+        ).fetchone()
+        if stored is None or stored["key_check"] != rec.key_check:
+            return "key_changed"
+        self._after_key_check_read()
+        if (found := self._inbound_dedupe(key, rec.body_sha256)) is not None:
+            return found
+        if rec.reuse_of is not None:
+            n = self._exec(
+                "SELECT count(*) AS n FROM inbound_receipts WHERE tenant = %(tenant)s AND source = %(source)s "
+                "AND reuse_of = %(reuse_of)s",
+                {**key, "reuse_of": rec.reuse_of},
+            ).fetchone()["n"]
+            if n >= max_reuse:
+                return "conflict_capped"
+        if rec.state == "received":
+            n = self._exec(
+                "SELECT count(*) AS n FROM inbound_receipts WHERE tenant = %(tenant)s AND source = %(source)s "
+                "AND state IN ('received', 'claimed')",
+                key,
+            ).fetchone()["n"]
+            if n >= max_open:
+                return "busy"
+        row = rec.model_dump()
+        row["readers"] = sorted(rec.readers)
+        inserted = self._exec(
+            f"INSERT INTO inbound_receipts ({_RECEIPT_COLS}) VALUES "
+            "(%(tenant)s, %(source)s, %(delivery_key)s, %(schema_version)s, %(readers)s, %(body_sha256)s, "
+            "%(key_check)s, %(generation)s, %(run_id)s, %(state)s, %(reason)s, %(last_reason)s, %(attempts)s, "
+            "%(lease_until)s, %(claim_token)s, %(reuse_of)s, %(received_at)s, %(updated_at)s) "
+            "ON CONFLICT (tenant, source, delivery_key) DO NOTHING RETURNING delivery_key",
+            row,
+        ).fetchone()
+        if inserted is None:  # a racer committed first: read its row
+            return self._inbound_dedupe(key, rec.body_sha256) or "duplicate"
+        self._before_body_insert()
+        if body is not None:
+            self._exec(
+                "INSERT INTO inbound_bodies (tenant, source, delivery_key, schema_version, readers, body, "
+                "received_at) VALUES (%(tenant)s, %(source)s, %(delivery_key)s, 1, %(readers)s, %(body)s, "
+                "%(received_at)s)",
+                {
+                    **key,
+                    "readers": sorted(rec.readers),
+                    "body": bytes(body),
+                    "received_at": rec.received_at,
+                },
+            )
+        return "new"
+
+    def _inbound_dedupe(self, key: dict[str, str], body_sha256: str) -> ReceiveResult | None:
+        found = self._exec(
+            "SELECT body_sha256 FROM inbound_receipts WHERE tenant = %(tenant)s AND source = %(source)s "
+            "AND delivery_key = %(delivery_key)s",
+            key,
+        ).fetchone()
+        if found is None:
+            return None
+        return "duplicate" if found["body_sha256"] == body_sha256 else "conflict"
+
+    def claim_inbound(
+        self, tenant: str, source: str, now: datetime, lease_s: int
+    ) -> InboundReceipt | None:
+        with self._lock:
+            row = self._exec(
+                "UPDATE inbound_receipts r SET state = 'claimed', claim_token = %(token)s, "
+                "lease_until = %(lease_until)s, "
+                "attempts = r.attempts + CASE WHEN r.state = 'claimed' THEN 1 ELSE 0 END, updated_at = %(now)s "
+                "WHERE (r.tenant, r.source, r.delivery_key) = ("
+                "SELECT tenant, source, delivery_key FROM inbound_receipts "
+                "WHERE tenant = %(tenant)s AND source = %(source)s "
+                "AND (state = 'received' OR (state = 'claimed' AND lease_until < %(now)s)) "
+                "ORDER BY received_at, delivery_key LIMIT 1 FOR UPDATE SKIP LOCKED) RETURNING r.*",
+                {
+                    "token": new_id("clm"),
+                    "lease_until": now + timedelta(seconds=lease_s),
+                    "now": now,
+                    "tenant": tenant,
+                    "source": source,
+                },
+            ).fetchone()
+        return _receipt(row) if row else None
+
+    def get_inbound_body(self, tenant: str, source: str, delivery_key: str) -> bytes | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT body FROM inbound_bodies WHERE tenant = %s AND source = %s AND delivery_key = %s",
+                (tenant, source, delivery_key),
+            ).fetchone()
+        return bytes(row["body"]) if row else None
+
+    def _inbound_missing_or_stale(
+        self, tenant: str, source: str, delivery_key: str, stale: str
+    ) -> Exception:
+        with self._lock:
+            exists = self._exec(
+                "SELECT 1 FROM inbound_receipts WHERE tenant = %s AND source = %s AND delivery_key = %s",
+                (tenant, source, delivery_key),
+            ).fetchone()
+        return StaleState(stale) if exists else NotFound(delivery_key)
+
+    def finish_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        state: str,
+        reason: str | None,
+        now: datetime,
+    ) -> None:
+        if state not in INBOUND_FINAL_STATES or not inbound_reason_allowed(state, reason):
+            raise ValueError("inbound finish: not a final state with an allowed reason")
+        with self._lock:
+            row = self._exec(
+                "UPDATE inbound_receipts SET state = %(state)s, reason = %(reason)s, lease_until = NULL, "
+                "claim_token = NULL, updated_at = %(now)s WHERE tenant = %(tenant)s AND source = %(source)s "
+                "AND delivery_key = %(delivery_key)s AND state = 'claimed' AND claim_token = %(token)s "
+                "RETURNING delivery_key",
+                {
+                    "state": state,
+                    "reason": reason,
+                    "now": now,
+                    "tenant": tenant,
+                    "source": source,
+                    "delivery_key": delivery_key,
+                    "token": claim_token,
+                },
+            ).fetchone()
+        if row is None:
+            raise self._inbound_missing_or_stale(tenant, source, delivery_key, "not claimed")
+
+    def release_inbound(
+        self,
+        tenant: str,
+        source: str,
+        delivery_key: str,
+        claim_token: str,
+        reason: str,
+        now: datetime,
+    ) -> None:
+        if reason not in INBOUND_RETRY_REASONS:
+            raise ValueError("inbound release: not a retry reason")
+        with self._lock:
+            row = self._exec(
+                "UPDATE inbound_receipts SET state = 'received', last_reason = %(reason)s, lease_until = NULL, "
+                "claim_token = NULL, attempts = attempts + CASE WHEN %(reason)s = 'step_error' THEN 1 ELSE 0 END, "
+                "updated_at = %(now)s WHERE tenant = %(tenant)s AND source = %(source)s "
+                "AND delivery_key = %(delivery_key)s AND state = 'claimed' AND claim_token = %(token)s "
+                "RETURNING delivery_key",
+                {
+                    "reason": reason,
+                    "now": now,
+                    "tenant": tenant,
+                    "source": source,
+                    "delivery_key": delivery_key,
+                    "token": claim_token,
+                },
+            ).fetchone()
+        if row is None:
+            raise self._inbound_missing_or_stale(tenant, source, delivery_key, "not claimed")
+
+    def reopen_inbound(
+        self, tenant: str, source: str, delivery_key: str, now: datetime
+    ) -> InboundReceipt:
+        try:
+            with self._lock:
+                row = self._exec(
+                    REOPEN_SQL,
+                    {"now": now, "tenant": tenant, "source": source, "delivery_key": delivery_key},
+                ).fetchone()
+        except psycopg.errors.InsufficientPrivilege:
+            raise RerunRefused("rerun_owner_only") from None
+        except psycopg.errors.ObjectNotInPrerequisiteState as exc:
+            if exc.diag.message_primary == "rerun_run_open":
+                raise StaleState("rerun_run_open") from None
+            raise
+        except psycopg.errors.CheckViolation:
+            raise StaleState("rerun_shape") from None
+        if row is None:
+            raise self._inbound_missing_or_stale(tenant, source, delivery_key, "not needs_person")
+        return _receipt(row)
+
+    def list_inbound_sources(self) -> list[tuple[str, str, int]]:
+        with self._lock:
+            rows = self._exec(
+                "SELECT tenant, source, count(*) AS n FROM inbound_receipts "
+                "WHERE state IN ('received', 'claimed', 'needs_person') GROUP BY tenant, source "
+                "ORDER BY tenant, source"
+            ).fetchall()
+        return [(r["tenant"], r["source"], r["n"]) for r in rows]
+
+    def purge_inbound_bodies(self, before: datetime, ceiling: datetime) -> int:
+        with self._lock:
+            return self._exec(
+                "DELETE FROM inbound_bodies b USING inbound_receipts r LEFT JOIN runs u ON u.run_id = r.run_id "
+                "WHERE r.tenant = b.tenant AND r.source = b.source AND r.delivery_key = b.delivery_key "
+                "AND r.state IN ('done', 'needs_person', 'refused') "
+                "AND (r.updated_at < %(ceiling)s OR (r.updated_at < %(before)s AND (r.state = 'refused' "
+                "OR (r.state = 'done' AND (u.run_id IS NULL OR u.state NOT IN "
+                "('RECEIVED', 'WORKING', 'PLAN_READY', 'WAITING_FOR_APPROVAL', 'EXECUTING', 'VERIFYING', "
+                "'NEEDS_PERSON', 'STOPPED'))))))",
+                {"before": before, "ceiling": ceiling},
+            ).rowcount
+
+    def get_inbound_key_check(self, tenant: str, source: str) -> str | None:
+        with self._lock:
+            row = self._exec(
+                "SELECT key_check FROM inbound_key_checks WHERE tenant = %s AND source = %s",
+                (tenant, source),
+            ).fetchone()
+        return row["key_check"] if row else None
+
+    def set_inbound_key_check(
+        self, tenant: str, source: str, old: str, new: str, now: datetime
+    ) -> None:
+        with self._lock:
+            row = self._exec(
+                "UPDATE inbound_key_checks SET key_check = %s, set_at = %s WHERE tenant = %s AND source = %s "
+                "AND key_check = %s RETURNING tenant",
+                (new, now, tenant, source, old),
+            ).fetchone()
+            if row is not None:
+                return
+            exists = self._exec(
+                "SELECT 1 FROM inbound_key_checks WHERE tenant = %s AND source = %s",
+                (tenant, source),
+            ).fetchone()
+        raise StaleState("inbound key check changed") if exists else NotFound(f"{tenant}/{source}")
+
+    def get_inbound_run(self, run_id: str) -> InboundRunView:
+        with self._lock:
+            row = self._exec(
+                "SELECT run_id, agent_id, principal_id, trigger_ref, state, reason_code, updated_at "
+                "FROM runs WHERE run_id = %s",
+                (run_id,),
+            ).fetchone()
+        if row is None:
+            raise NotFound(run_id)
+        return InboundRunView.model_validate(row)
