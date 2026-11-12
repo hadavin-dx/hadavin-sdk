@@ -1,0 +1,641 @@
+<h2><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_c.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_c.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_c.svg" height="20" align="right"/></picture><span>DeepSource Code Review</span></h2>
+
+<p>We reviewed changes in <code>1dfaa74...ca6edf0</code> on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments.</p>
+
+<p><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/">See full review on DeepSource</a>&nbsp;↗</p>
+
+
+> [!IMPORTANT]
+> Some issues found as part of this review are outside of the diff in this pull request and aren't shown in the inline review comments due to GitHub's API limitations. You can see those issues on the DeepSource dashboard.
+
+
+<h3>PR Report Card</h3>
+<table>
+<tr>
+<td width="375px" valign="top">
+<strong>Overall Grade</strong>&nbsp;&nbsp;<a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_c.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_c.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_c.svg" height="16" align="right"/></picture></a>
+<br/><br/><strong>Focus Area:</strong> Reliability
+</td>
+<td width="375px" valign="top">
+<strong>Security</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Reliability</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_c.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_c.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_c.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Complexity</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Hygiene</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_b.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_b.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_b.svg" height="16" align="right"/></picture>
+</td>
+</tr>
+</table>
+
+<h4>Feedback</h4>
+<p><strong>JavaScript scoping and error handling</strong></p>
+
+<ul>
+<li>The JS issues cluster around loose scoping and lifecycle: <code>Portal</code> not defined, <code>booted</code> used before definition, lots of implicit <code>var</code> via missing <code>let/const</code>, and functions declared in loops. They’re all symptoms of relying on implicit, mutable globals.</li>
+<li>Being deliberate about scope and declaration in the portal code would likely clear most of these in one pass.</li>
+</ul>
+
+<p><strong>Retry/exception structure in Python</strong></p>
+
+<ul>
+<li>The overlapping exceptions, unused <code>tries</code> variables, cell var <code>tries_now</code> in a loop, and handlers that immediately re‑raise all show the same thing: retry and error paths are a bit tangled across modules.</li>
+<li>Stepping back once to align how retries and exception hierarchies work would simplify the logic and avoid subtle reliability bugs.</li>
+</ul>
+
+
+
+<h3>Code Review Summary</h3>
+<table width="100%">
+<thead>
+<tr>
+<th width="200px" align="left">Analyzer</th>
+<th width="150px">Status</th>
+<th width="250px">Updated (UTC)</th>
+<th width="150px" align="center">Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Secrets</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/secrets/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Docker</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/docker/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ansible</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/ansible/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C &amp; C++</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/cxx/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Go</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/go/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Java</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/java/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Lua</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/lua/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PHP</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/php/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ruby</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/ruby/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Swift</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/swift/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Terraform</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/terraform/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Shell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/shell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Rust</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/rust/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PowerShell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/powershell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Objective-C</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/objc/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>JavaScript</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/javascript/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Groovy</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/groovy/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Elixir</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/elixir/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>CSS</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/css/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Apex</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/apex/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C#</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/csharp/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Dart</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/dart/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Erlang</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/erlang/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Helm</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/helm/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Kotlin</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/kotlin/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Perl</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/perl/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Python</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/python/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Scala</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/scala/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>SQL</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/sql/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>VB.NET</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/920b7c0b-2602-4e4e-8bc0-5d78ede30c51/vbnet/">Review</a>&nbsp;↗</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
+
+
+<h2><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="20" align="right"/></picture><span>DeepSource Code Review</span></h2>
+
+<p>We reviewed changes in <code>ca6edf0...1ca303a</code> on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments.</p>
+
+<p><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/">See full review on DeepSource</a>&nbsp;↗</p>
+
+
+
+<h3>PR Report Card</h3>
+<table>
+<tr>
+<td width="375px" valign="top">
+<strong>Overall Grade</strong>&nbsp;&nbsp;<a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture></a>
+<br/><br/><strong>Focus Area:</strong> Reliability
+</td>
+<td width="375px" valign="top">
+<strong>Security</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Reliability</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_b.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_b.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_b.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Complexity</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Hygiene</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_b.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_b.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_b.svg" height="16" align="right"/></picture>
+</td>
+</tr>
+</table>
+
+<h4>Feedback</h4>
+<p><strong>Demo-only code still affects runtime safety</strong></p>
+
+<ul>
+<li>The issues span JS (<code>var</code> usage, unused error <code>e</code>) and Python (tuple unpacking bug, redefining <code>format</code>), all inside <code>demo_only</code>. So even “just demo” paths contain things that can throw or behave oddly if someone runs them as-is.</li>
+<li>Worth treating this folder as runnable code: small hygiene fixes here prevent surprising failures during demos or quick experiments.</li>
+</ul>
+
+
+
+<h3>Code Review Summary</h3>
+<table width="100%">
+<thead>
+<tr>
+<th width="200px" align="left">Analyzer</th>
+<th width="150px">Status</th>
+<th width="250px">Updated (UTC)</th>
+<th width="150px" align="center">Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Secrets</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/secrets/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Docker</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/docker/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ansible</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/ansible/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C &amp; C++</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/cxx/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Go</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/go/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Java</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/java/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Lua</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/lua/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PHP</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/php/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ruby</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/ruby/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Swift</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/swift/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Terraform</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/terraform/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Shell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/shell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Rust</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/rust/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PowerShell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/powershell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Objective-C</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/objc/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>JavaScript</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/javascript/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Groovy</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/groovy/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Elixir</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/elixir/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>CSS</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/css/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Apex</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/apex/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C#</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/csharp/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Dart</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/dart/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Erlang</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/erlang/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Helm</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/helm/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Kotlin</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/kotlin/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Perl</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/perl/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Python</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/python/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Scala</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/scala/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>SQL</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/sql/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>VB.NET</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/a2b43ac0-cc79-4d93-913c-86a2207787fa/vbnet/">Review</a>&nbsp;↗</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
+
+
+<h2><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_d.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_d.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_d.svg" height="20" align="right"/></picture><span>DeepSource Code Review</span></h2>
+
+<p>We reviewed changes in <code>1ca303a...bee6fff</code> on this pull request. Below is the summary for the review, and you can see the individual issues we found as inline review comments.</p>
+
+<p><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/">See full review on DeepSource</a>&nbsp;↗</p>
+
+
+> [!IMPORTANT]
+> Some issues found as part of this review are outside of the diff in this pull request and aren't shown in the inline review comments due to GitHub's API limitations. You can see those issues on the DeepSource dashboard.
+
+
+<h3>PR Report Card</h3>
+<table>
+<tr>
+<td width="375px" valign="top">
+<strong>Overall Grade</strong>&nbsp;&nbsp;<a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_d.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_d.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_d.svg" height="16" align="right"/></picture></a>
+<br/><br/><strong>Focus Area:</strong> Reliability
+</td>
+<td width="375px" valign="top">
+<strong>Security</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Reliability</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Complexity</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+<br/><br/><strong>Hygiene</strong>&nbsp;&nbsp;<picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/grade_a.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/grade_a.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/grade_a.svg" height="16" align="right"/></picture>
+</td>
+</tr>
+</table>
+
+<h4>Feedback</h4>
+<p><strong>Intentional rough edges in test scaffolding</strong></p>
+
+<ul>
+<li>A bunch of issues cluster around “incomplete” or “loose” constructs in tests: empty <code>shutdown</code>/body, unused <code>calls</code>/<code>session</code>, <code>next()</code> without guarding, weird comparisons, redefining <code>sql</code>/<code>format</code>, <code>exec</code>, asserts, browser <code>console</code>, even the SQL-string helpers.</li>
+<li>Reads like a test harness that’s allowed to be sharp/low-ceremony. Worth deciding which of these are deliberate patterns vs accidental gotchas.</li>
+</ul>
+
+<p><strong>Helper/test utilities accumulating quirks</strong></p>
+
+<ul>
+<li>Several findings all land in shared helpers: <code>tests/support.py</code> has redefined names, potential SQL injection, asserts; class methods across many files don’t use <code>self</code>; dict comprehensions over query results recur.</li>
+<li>Small choices in shared utils ripple widely; tightening or documenting those conventions once would clean up a lot of noise.</li>
+</ul>
+
+
+
+<h3>Code Review Summary</h3>
+<table width="100%">
+<thead>
+<tr>
+<th width="200px" align="left">Analyzer</th>
+<th width="150px">Status</th>
+<th width="250px">Updated (UTC)</th>
+<th width="150px" align="center">Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Secrets</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/secrets/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Docker</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/docker/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ansible</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/ansible/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C &amp; C++</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/cxx/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Go</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/go/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Java</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/java/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Lua</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/lua/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PHP</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/php/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Ruby</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/ruby/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Swift</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/swift/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Terraform</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/terraform/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Shell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/shell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Rust</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/rust/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>PowerShell</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/powershell/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Objective-C</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/objc/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>JavaScript</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/javascript/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Groovy</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/groovy/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Elixir</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/elixir/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>CSS</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/css/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Apex</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/apex/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>C#</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/csharp/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Dart</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/dart/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Erlang</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/erlang/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Helm</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/helm/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Kotlin</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/kotlin/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Perl</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/perl/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Python</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_failed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_failed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_failed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/python/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>Scala</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/scala/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>SQL</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_passed.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_passed.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_passed.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/sql/">Review</a>&nbsp;↗</td>
+</tr><tr>
+<td><strong>VB.NET</strong></td>
+<td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="https://static.deepsource.com/comment_artifacts/dark/status_skipped.svg"/><source media="(prefers-color-scheme: light)" srcset="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg"/><img src="https://static.deepsource.com/comment_artifacts/light/status_skipped.svg" height="20"/></picture></td>
+<td align="center">Nov 12, 2026 5:38p.m.</td>
+<td align="center"><a href="https://app.deepsource.com/gh/hadavin-dx/duplicate-proof-lead-desk-n8n/run/7bc42135-8ab9-4c74-bec5-85ecd07dadd8/vbnet/">Review</a>&nbsp;↗</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+---
+> [!IMPORTANT]
+> AI Review is run only on demand for your team. We're only showing results of static analysis review right now. To trigger AI Review, comment `@deepsourcebot review` on this thread.
+
+
