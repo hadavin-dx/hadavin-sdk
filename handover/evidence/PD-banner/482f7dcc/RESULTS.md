@@ -32,3 +32,5 @@ Raw logs: /home/user/build/evidence-raw/pdbanner-482f7dcc/
 ## Update after report: full pytest finished
 full pytest exit 0; last line: 10640 passed, 1 skipped, 28 deselected in 264.52s (0:04:24)
 stage_mutants and banner_mutants still pending at this write (see raw logs).
+
+Items 2 and 3 (stage_mutants, banner_mutants) were not run to the end because head 482f7dcc was superseded (round 3 found a Blocker); this is not a failure. The stage_mutants run was stopped part-way and the worktree restored with git checkout (status clean). Postgres and the chain were stopped and removed.
