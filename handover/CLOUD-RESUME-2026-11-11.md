@@ -259,3 +259,10 @@ Nothing merged, nothing spent, no live call, no PR state change. Owner-needed it
 - Fix builders running (started ~23:21Z, boxes end ~00:50Z): PR H b4, Q8c-1 b6, PR89 r26, Q8a-1 b8.
 - P3a-2: 3b head 1ffa6559 suite RED (5 failed). Fix builder has uncommitted edits in /home/user/build/B-P3a2-fx (3 k5 tests re-pointed, psycopg moved behind store/postgres.py, EX1/EX2 tests); resumed to finish; nothing pushed to core/P3a-2-clean.
 - Owner-needed: see questions-for-lead.md (q-prh-stray-branch, q-p3a2-3b-decisions, Vault CI run, merge order Q8b before PR77).
+
+## Update 00:35Z (2026-11-12)
+- Q8a-1: head 18741c8c; round 8 resolved (4 Majors, owner question q-q8a1-hide-ids); fix builder b9 (branch core/q8a-1-b9, push wip/cloud-q8a1-b9) running.
+- Q8c-1: wip d598d967 r7 resolved (Nits); b7 edits uncommitted in /home/user/build/B-Q8c1-b7, suite running (rc file B-Q8c1-b7-full.log.rc); policy_mutants 108/108 rc 0 per builder; Vault engine run still IMPOSSIBLE-NOW.
+- PR H: round 4 design F1 Blocker (tools._scrub return alt), codebase C1 same, F2/C2 Major; EV running; fix builder next.
+- PR89: round 26 reviews saved (codebase F1/F2 Majors); EV running; resolve next.
+- Q8b b4 builder (core/q8b-partial-mask-and-card-redaction) running. P3a-2 WIP ee831364: EV and reviewers not started.
