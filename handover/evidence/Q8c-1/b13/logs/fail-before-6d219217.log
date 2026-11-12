@@ -1,0 +1,779 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///home/user/build/b13-old
+      Built hadavin-sdk @ file:///home/user/build/b13-old
+Installed 76 packages in 1.01s
+......................FFFFFFFFFFFFF..................................... [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+...............F........................................................ [ 82%]
+..........................F........F....F......................FF....... [ 99%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_a_change_to_a_helper_file_alone_lists_the_tests_of_the_files_that_import_it _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-17094/test_a_change_to_a_helper_file0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f25630bfe50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f256321a9f0>
+
+    def test_a_change_to_a_helper_file_alone_lists_the_tests_of_the_files_that_import_it(
+        tmp_path, monkeypatch, capsys
+    ):
+        monkeypatch.chdir(tmp_path)
+        _git(tmp_path, "init", "-q")
+        for d in ("tests/contracts", "tests/fixtures"):
+            (tmp_path / d).mkdir(parents=True)
+        (tmp_path / "tests" / "contracts" / "vault_fake.py").write_text(HELPER_OLD, encoding="utf-8")
+        (tmp_path / "tests" / "fixtures" / "fake_slack.py").write_text(HELPER_OLD, encoding="utf-8")
+        (tmp_path / "tests" / "test_uses_contract.py").write_text(
+            "from tests.contracts.vault_fake import helper\n\n\ndef test_c():\n    assert helper()\n\n\n"
+            "def test_free():\n    assert 1\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "tests" / "test_uses_fixture.py").write_text(
+            "import tests.fixtures.fake_slack\n\n\ndef test_f():\n    assert tests.fixtures.fake_slack.helper()\n",
+            encoding="utf-8",
+        )
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "-m", "base")
+        (tmp_path / "tests" / "contracts" / "vault_fake.py").write_text(HELPER_NEW, encoding="utf-8")
+        (tmp_path / "tests" / "fixtures" / "fake_slack.py").write_text(HELPER_NEW, encoding="utf-8")
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "-m", "helpers only")
+>       assert nlc.main(["--auto", "HEAD~1"]) == 1, (
+            "a change that touches only helper files under tests/ passed as nothing to check"
+        )
+E       AssertionError: a change that touches only helper files under tests/ passed as nothing to check
+E       assert 0 == 1
+E        +  where 0 = <function main at 0x7f2564d3aca0>(['--auto', 'HEAD~1'])
+E        +    where <function main at 0x7f2564d3aca0> = nlc.main
+
+/home/user/build/b13-old/tests/test_notes_lines_check.py:571: AssertionError
+----------------------------- Captured stdout call -----------------------------
+no test file changed in this change: nothing to check
+__ test_a_plain_import_of_a_tests_module_is_followed_through_its_dotted_chain __
+
+    def test_a_plain_import_of_a_tests_module_is_followed_through_its_dotted_chain():
+        source = (
+            "import tests.helpers\nimport tests.other\n\n\ndef test_a():\n"
+            "    assert tests.helpers.helper()\n\n\ndef test_b():\n    assert tests.other.helper()\n"
+        )
+        other = "VALUE = 5\n\n\ndef helper():\n    return VALUE\n"
+        old = _loader({"tests/helpers.py": HELPER_OLD, "tests/other.py": other})
+        new = _loader({"tests/helpers.py": HELPER_NEW, "tests/other.py": other})
+        got = nlc.changed_tests(source, source, "tests/test_x.py", old, new)
+>       assert got == (["test_a"], []), (
+            f"with two plain imports of tests modules the changed one lists {got}, expected only test_a"
+        )
+E       AssertionError: with two plain imports of tests modules the changed one lists ([], []), expected only test_a
+E       assert ([], []) == (['test_a'], [])
+E         
+E         At index 0 diff: [] != ['test_a']
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:593: AssertionError
+_ test_a_bare_file_name_in_a_row_serves_only_a_file_whose_name_no_other_path_has _
+
+    def test_a_bare_file_name_in_a_row_serves_only_a_file_whose_name_no_other_path_has():
+        notes = row("test_x.py", "test_a")
+        both = frozenset({"tests/test_x.py", "tests/contracts/test_x.py"})
+>       assert nlc.problems(["test_a"], [], notes, "tests/test_x.py", None, both), (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "a bare file name in a row served a file whose name another path also has"
+        )
+E       TypeError: problems() takes from 4 to 5 positional arguments but 6 were given
+
+tests/test_notes_lines_check.py:606: TypeError
+_ test_a_module_level_mark_a_class_mark_and_module_level_code_list_every_test_of_the_file _
+
+    def test_a_module_level_mark_a_class_mark_and_module_level_code_list_every_test_of_the_file():
+        body = "\n\ndef test_a():\n    assert 1\n\n\nclass TestK:\n    def test_m(self):\n        assert 1\n"
+        marked = "import pytest\n\npytestmark = pytest.mark.skip(reason='r')\n" + body
+        plain = "import pytest\n\npytestmark = pytest.mark.skipif(False, reason='r')\n" + body
+        got = nlc.changed_tests(plain, marked)
+>       assert got == (["TestK::test_m", "test_a"], []), (
+            f"a changed module-level pytestmark lists {got}, expected both tests"
+        )
+E       AssertionError: a changed module-level pytestmark lists ([], []), expected both tests
+E       assert ([], []) == (['TestK::tes...'test_a'], [])
+E         
+E         At index 0 diff: [] != ['TestK::test_m', 'test_a']
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:640: AssertionError
+____ test_a_conftest_assignment_is_a_unit_with_all_assignments_of_its_name _____
+
+    def test_a_conftest_assignment_is_a_unit_with_all_assignments_of_its_name():
+        rel = "tests/conftest.py"
+        old = "collect_ignore = ['a.py']\n\n\ndef fx():\n    return 1\n"
+        new = "collect_ignore = ['a.py', 'b.py']\n\n\ndef fx():\n    return 1\n"
+>       assert nlc.changed_tests(old, new, rel) == (["collect_ignore"], []), (
+            "a changed collect_ignore of a conftest is not a unit"
+        )
+E       AssertionError: a changed collect_ignore of a conftest is not a unit
+E       assert ([], []) == (['collect_ignore'], [])
+E         
+E         At index 0 diff: [] != ['collect_ignore']
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:666: AssertionError
+_ test_a_mutant_row_serves_only_the_mutant_whose_whole_cell_or_exact_item_it_is _
+
+    def test_a_mutant_row_serves_only_the_mutant_whose_whole_cell_or_exact_item_it_is():
+        # the name holds a backtick, so it is written in the cell and not in backticks; `X `a`` must not borrow the row of
+        # the longer name `X `a` b` (a substring), and an exact `;` item of a cell is that name's row
+        rel = "tests/policy_mutants.py"
+        reason = "killing mutant B1 in `policy_mutants.py`"
+        longer = f"| policy_mutants.py | X `a` b | new | {reason} |\n"
+>       assert nlc.problems(["X `a`"], [], longer, rel), (
+            "a mutant with no row of its own borrowed the row of a longer name by substring"
+        )
+E       AssertionError: a mutant with no row of its own borrowed the row of a longer name by substring
+E       assert []
+E        +  where [] = <function problems at 0x7f2564d3a8e0>(['X `a`'], [], '| policy_mutants.py | X `a` b | new | killing mutant B1 in `policy_mutants.py` |\n', 'tests/policy_mutants.py')
+E        +    where <function problems at 0x7f2564d3a8e0> = nlc.problems
+
+tests/test_notes_lines_check.py:689: AssertionError
+____ test_a_reason_must_point_at_a_test_a_log_file_and_a_mutant_that_exist _____
+
+    def test_a_reason_must_point_at_a_test_a_log_file_and_a_mutant_that_exist():
+>       refs = nlc.Refs(
+               ^^^^^^^^
+            frozenset({"test_real"}), frozenset({"B1 a real mutant"}), frozenset({"real.log"})
+        )
+E       AttributeError: module 'tools.notes_lines_check' has no attribute 'Refs'
+
+tests/test_notes_lines_check.py:699: AttributeError
+_ test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders _
+
+    def test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders():
+        files = {
+            "tests/test_a.py": "def test_one():\n    assert 1\n\n\nclass TestK:\n    def test_two(self):\n        assert 1\n",
+            "tests/policy_mutants.py": "M = [mutant('B1 first', 'f', 'o', 'n', 'test_one', 'e')]\n",
+        }
+        tree = [*files, "handover/evidence/x/logs/run.log", "handover/evidence/x/NOTES.md"]
+>       refs = nlc._refs(tree, _loader(files))
+               ^^^^^^^^^
+E       AttributeError: module 'tools.notes_lines_check' has no attribute '_refs'
+
+tests/test_notes_lines_check.py:724: AttributeError
+_ test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-17094/test_auto_refuses_a_row_whose_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f25633972f0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f25630f3240>
+
+    def test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit(
+        tmp_path, monkeypatch, capsys
+    ):
+        monkeypatch.chdir(tmp_path)
+        _git(tmp_path, "init", "-q")
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    assert 1\n", encoding="utf-8")
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "-m", "base")
+        (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    assert 2\n", encoding="utf-8")
+        notes_dir = tmp_path / "handover" / "evidence" / "x"
+        (notes_dir / "logs").mkdir(parents=True)
+        (notes_dir / "logs" / "run.log").write_text("raw\n", encoding="utf-8")
+    
+        def write(reason: str) -> None:
+            (notes_dir / "NOTES.md").write_text(row("test_a.py", "test_a", reason), encoding="utf-8")
+            _git(tmp_path, "add", "-A")
+            _git(tmp_path, "commit", "-q", "--allow-empty", "-m", "notes")
+    
+        write("fails on the base commit, see test_a and run.log for the raw output")
+        assert nlc.main(["--auto", "HEAD~1"]) == 0, (
+            f"a row naming a test and a log file that exist was refused: {capsys.readouterr().out}"
+        )
+        write("fails on the base commit, see test_gone and gone.log for the raw output")
+>       assert nlc.main(["--auto", "HEAD~2"]) == 1, (
+            "a row naming a test and a log file that are in no file of the commit passed `--auto`"
+        )
+E       AssertionError: a row naming a test and a log file that are in no file of the commit passed `--auto`
+E       assert 0 == 1
+E        +  where 0 = <function main at 0x7f2564d3aca0>(['--auto', 'HEAD~2'])
+E        +    where <function main at 0x7f2564d3aca0> = nlc.main
+
+/home/user/build/b13-old/tests/test_notes_lines_check.py:754: AssertionError
+___________ test_every_kind_is_declared_pending_or_holds_no_identity ___________
+
+    def test_every_kind_is_declared_pending_or_holds_no_identity():
+        declared = {k for k, p in pp.load_all(ROOT).items() if p is not None}
+>       problems = _kinds_problems_today()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_policy_guard.py:203: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_policy_guard.py:198: in _kinds_problems_today
+    return kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, _today())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 11, 12)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+__________________ test_plant_a_new_kind_on_no_list_is_caught __________________
+
+    def test_plant_a_new_kind_on_no_list_is_caught():
+>       problems = kind_problems(
+            all_kinds() | {"secrets/new_cloud"},
+            set(pp.KIND_MODULES),
+            PENDING_KINDS,
+            NO_IDENTITY,
+            DECIDED,
+        )
+
+tests/test_policy_guard.py:212: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 11, 11)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+________ test_plant_a_declared_kind_left_on_the_pending_list_is_caught _________
+
+    def test_plant_a_declared_kind_left_on_the_pending_list_is_caught():
+        pending = {
+            **PENDING_KINDS,
+            "secrets/vault": Pending("r", "t", DECIDED, DECIDED + timedelta(days=30)),
+        }
+>       problems = kind_problems(all_kinds(), set(pp.KIND_MODULES), pending, NO_IDENTITY, DECIDED)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_policy_guard.py:231: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 11, 11)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+_________________ test_plant_an_overdue_pending_kind_is_caught _________________
+
+    def test_plant_an_overdue_pending_kind_is_caught():
+        first = pp.review_day(PENDING_KINDS)
+        if first is None:  # every kind is declared: an empty list reports nothing overdue, on any day
+            late = DECIDED + timedelta(days=800)
+            declared = all_kinds() - set(NO_IDENTITY)
+            assert kind_problems(all_kinds(), declared, {}, NO_IDENTITY, late) == [], (
+                "an empty pending-kinds list reports an overdue kind"
+            )
+            return
+>       problems = kind_problems(
+            all_kinds(), set(pp.KIND_MODULES), PENDING_KINDS, NO_IDENTITY, first + timedelta(days=1)
+        )
+
+tests/test_policy_guard.py:250: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 12, 12)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+__ test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far __
+
+    def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far():
+        # the list as it is; with every kind declared (the end state) a made-up entry stands in, so that the wording
+        # of the overdue line is still shown
+        base = PENDING_KINDS or {
+            "channel/slack": Pending("r", "t", DECIDED, DECIDED + timedelta(days=30))
+        }
+>       problems = kind_problems(
+            all_kinds(),
+            set(pp.KIND_MODULES) - set(base),
+            base,
+            NO_IDENTITY,
+            pp.review_day(base) + timedelta(days=1),
+        )
+
+tests/test_policy_guard.py:2901: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 12, 12)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+_ test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f256327b2a0>
+
+    def test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day(monkeypatch):
+        # The consumers of `_today()` are the three date tests; each is checked by `_date_test_problems` against its
+        # own list. Independent of the day the run was given (the clock is set inside).
+        helpers = {
+            "kinds": (_kinds_problems_today, PENDING_KINDS),
+            "names": (_names_problems_today, PENDING_NAMES),
+            "claims": (_claims_problems_today, PENDING_CLAIMS),
+        }
+        for name, (helper, entries) in helpers.items():
+>           found = _date_test_problems(name, helper, entries, monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_policy_guard.py:4682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_policy_guard.py:4659: in _date_test_problems
+    found = helper()
+            ^^^^^^^^
+tests/test_policy_guard.py:198: in _kinds_problems_today
+    return kind_problems(all_kinds(), declared, PENDING_KINDS, NO_IDENTITY, _today())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'secrets/vault', 'signer/vault_transit', 'source/kubernetes'}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2026, 12, 11)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+_____ test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-17094/test_the_date_tests_branches_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f256326ac10>
+
+    def test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state(tmp_path, monkeypatch):
+        # The "no entry" branches of the date tests run on no day today (both lists hold entries): a typo in one would
+        # first show on the day the lists are emptied. Each body is run once here, on the end state of `_end_state`.
+        root = _tree(tmp_path)
+        _end_state(monkeypatch, root)
+        cleared = {k: p for k, p in pp.load_all(root).items() if p is not None}
+        _claims_date_body(cleared, {})
+        _review_day_page_body(pp.read_marks(root))
+        _docs_review_body(pp.page(root))
+        late = DECIDED + timedelta(days=800)
+        declared = all_kinds() - set(NO_IDENTITY)
+        same(
+>           kind_problems(all_kinds(), declared, {}, NO_IDENTITY, late),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            [],
+            what="the pending-kinds list is empty and every kind is declared: nothing is overdue",
+        )
+
+tests/test_policy_guard.py:5080: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/s3_object_lock', 'channel/slack', 'detector/bedrock_guardrail', 'llm/anthropic', ...}
+pending = {}
+no_identity = {'secrets/fake': 'in-memory test kind', 'secrets/env': "reads this process's own environment", 'secrets/mounted_file': "reads files the platform mounted; the file rights are the platform's", 'signer/none': 'signs nothing', ...}
+today = datetime.date(2029, 1, 19)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+_ test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist _
+
+    def test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist():
+        # the 16 kinds renew on their own day (`KINDS_DECIDED`), apart from the names and claims: a message that sent a
+        # person to the names and claims lists would send them to the wrong place on the first overdue day
+        kind = next(iter(PENDING_KINDS))
+        late = max(p.review_by for p in PENDING_KINDS.values()) + timedelta(days=1)
+>       lines = kind_problems(
+            all_kinds(), {k for k in all_kinds() if k not in PENDING_KINDS}, PENDING_KINDS, {}, late
+        )
+
+tests/test_policy_guard.py:5228: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+kinds = {'anchor/azure_immutable_blob', 'anchor/gcs_retention_lock', 'anchor/none', 'anchor/s3_object_lock', 'audit/chain', 'audit/local_dir', ...}
+declared = {'anchor/none', 'audit/chain', 'audit/local_dir', 'channel/fake', 'detector/llm_judge', 'detector/regex', ...}
+pending = {'secrets/aws_secrets_manager': Pending(reason='the permission names of this kind are not all checked yet', fix_ref='Q...all checked yet', fix_ref='Q8c PR 2', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...}
+no_identity = {}, today = datetime.date(2027, 2, 1)
+
+    def kind_problems(
+        kinds: set[str],
+        declared: set[str],
+        pending: dict[str, Pending],
+        no_identity: dict[str, str],
+        today: date,
+    ) -> list[str]:
+        out = []
+        for kind in sorted(kinds):
+            homes = [kind in declared, kind in pending, kind in no_identity]
+            if sum(homes) == 0:
+                out.append(
+                    f"kind {kind} has no POLICY and is on no list: declare it or add a dated entry"
+                )
+            if sum(homes) > 1:
+                out.append(f"kind {kind} is on more than one list")
+        out += [f"declared kind {k} is not a kind of the tables" for k in sorted(declared - kinds)]
+        out += [
+            f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
+        ]
+        return out + _pending_problems(
+            "PENDING_KINDS",
+            pending,
+            kinds - declared,
+            today,
+>           rule=pp.KINDS_RENEWAL_RULE,
+                 ^^^^^^^^^^^^^^^^^^^^^
+            steps=pp.KINDS_RENEWAL_STEPS,
+        )
+E       AttributeError: module 'tools.policy_page' has no attribute 'KINDS_RENEWAL_RULE'
+
+tests/test_policy_guard.py:131: AttributeError
+_ test_the_changelog_says_what_a_renewal_renews_in_the_words_of_the_code_and_not_the_old_one_list_wording _
+
+    def test_the_changelog_says_what_a_renewal_renews_in_the_words_of_the_code_and_not_the_old_one_list_wording():
+        # the code and the guard tests require BOTH lists of names and claims to carry one `decided` day, and the 16
+        # kinds a day of their own; "every entry of the same list is renewed with it" said the wrong thing
+        from tools import policy_page as pp
+    
+        flat = (
+            changelog_entry()
+        )  # the entry of this work, whitespace folded (the renewal bullet is nested in it)
+>       assert pp.RENEWAL_RULE in flat, (
+            "the changelog does not hold the renewal rule of the names and claims word for word"
+        )
+E       AssertionError: the changelog does not hold the renewal rule of the names and claims word for word
+E       assert 'Renew all or none: every entry of PENDING_NAMES and PENDING_CLAIMS gets the same new `decided` day (`DECIDED`); renewing only some of them is refused.' in '- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...whether a reason is true: that stays with the reviewer and the logs the row names. The step has not yet run on GitHub.'
+E        +  where 'Renew all or none: every entry of PENDING_NAMES and PENDING_CLAIMS gets the same new `decided` day (`DECIDED`); renewing only some of them is refused.' = <module 'tools.policy_page' from '/home/user/build/b13-old/tools/policy_page.py'>.RENEWAL_RULE
+
+tests/test_policy_changelog.py:133: AssertionError
+_ test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green _
+
+    def test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green():
+        """The whole renewal of both dated groups on a temporary copy, by the lists of the overdue messages and nothing
+        else: the guard, changelog, docs and notes tests, the page check and the mutant search texts must all pass on
+        the new decision day, and a sample of the mutants that build their texts from the live days must still be
+        killed. The steps the lists name and this plant are the same steps; a step that is missing from the list shows
+        here as a red test of the copy, not as a surprise on the first overdue day."""
+        from tests.test_policy_guard import pp
+    
+        root = Path(__file__).resolve().parents[1]
+        new_decided = pp.DECIDED + timedelta(days=31)
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "renewed"
+            copy.mkdir()
+            for name in ("src", "tests", "tools", "docs", ".github"):
+                shutil.copytree(
+                    root / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+                )
+            for name in ("CHANGELOG.md", "pyproject.toml", "README.md"):
+                shutil.copy(root / name, copy / name)
+            for rel, old, new in _renewal_edits(pp.DECIDED, new_decided):
+                text = (copy / rel).read_text(encoding="utf-8")
+                assert old in text, f"the renewal step does not apply: {old!r} is not in {rel}"
+                (copy / rel).write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+            # the changelog sentence that gives the days the kinds fail (CHANGELOG.md; the text may wrap)
+            first = min(p.review_by for p in PENDING_KINDS.values()) + timedelta(days=1)
+            text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
+            moved, n = re.subn(
+                rf"7 of them from {first}(\s+and\s+the other 9)",
+                f"7 of them from {new_decided + timedelta(days=31)}\\1",
+                text,
+            )
+            assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
+            (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
+            env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
+            env.update(
+                PYTHONPATH=os.pathsep.join([str(copy / "src"), str(copy)]),
+                PYTHONNOUSERSITE="1",
+                HADAVIN_POLICY_FIXED_DAY=str(new_decided),
+                HADAVIN_POLICY_MUTANT_RUN="1",
+            )
+    
+            def run(*args: str) -> subprocess.CompletedProcess:
+                return subprocess.run(  # noqa: S603  (argv list of this test, a temporary copy, no shell)
+                    [sys.executable, *args],
+                    cwd=copy,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=900,
+                    check=False,
+                )
+    
+            write = run(
+                "-c",
+                "import sys; from datetime import date; from tools import policy_page as p; "
+                f"sys.exit(p.main(['--write'], today=date.fromisoformat('{new_decided}')))",
+            )
+            assert write.returncode == 0, f"the page was not rewritten: {write.stderr[-600:]}"
+            tests = run(
+                "-m",
+                "pytest",
+                "-p",
+                "no:cacheprovider",
+                "-q",
+                "tests/test_policy_guard.py",
+                "tests/test_policy_changelog.py",
+                "tests/test_policy_docs.py",
+                "tests/test_notes_lines_check.py",
+                "--deselect",
+                f"tests/test_policy_changelog.py::{sys._getframe().f_code.co_name}",
+            )
+>           assert tests.returncode == 0, f"after the renewal the tests are red: {tests.stdout[-1500:]}"
+E           AssertionError: after the renewal the tests are red: /test_policy_guard.py::test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state
+E             FAILED tests/test_policy_guard.py::test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist
+E             FAILED tests/test_policy_changelog.py::test_the_changelog_says_what_a_renewal_renews_in_the_words_of_the_code_and_not_the_old_one_list_wording
+E             FAILED tests/test_notes_lines_check.py::test_a_change_to_a_helper_file_alone_lists_the_tests_of_the_files_that_import_it
+E             FAILED tests/test_notes_lines_check.py::test_a_plain_import_of_a_tests_module_is_followed_through_its_dotted_chain
+E             FAILED tests/test_notes_lines_check.py::test_a_bare_file_name_in_a_row_serves_only_a_file_whose_name_no_other_path_has
+E             FAILED tests/test_notes_lines_check.py::test_a_module_level_mark_a_class_mark_and_module_level_code_list_every_test_of_the_file
+E             FAILED tests/test_notes_lines_check.py::test_a_conftest_assignment_is_a_unit_with_all_assignments_of_its_name
+E             FAILED tests/test_notes_lines_check.py::test_a_mutant_row_serves_only_the_mutant_whose_whole_cell_or_exact_item_it_is
+E             FAILED tests/test_notes_lines_check.py::test_a_reason_must_point_at_a_test_a_log_file_and_a_mutant_that_exist
+E             FAILED tests/test_notes_lines_check.py::test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders
+E             FAILED tests/test_notes_lines_check.py::test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit
+E             18 failed, 417 passed, 1 deselected in 12.19s
+E             
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['/home/user/build/b13-old/.venv/bin/python', '-m', 'pytest', '-p', 'no:cacheprovider', '-q', 't...mes_a_test_or_a_log_file_that_is_in_no_file_of_the_commit\n18 failed, 417 passed, 1 deselected in 12.19s\n', stderr='').returncode
+
+tests/test_policy_changelog.py:263: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_a_change_to_a_helper_file_alone_lists_the_tests_of_the_files_that_import_it
+FAILED tests/test_notes_lines_check.py::test_a_plain_import_of_a_tests_module_is_followed_through_its_dotted_chain
+FAILED tests/test_notes_lines_check.py::test_a_bare_file_name_in_a_row_serves_only_a_file_whose_name_no_other_path_has
+FAILED tests/test_notes_lines_check.py::test_a_module_level_mark_a_class_mark_and_module_level_code_list_every_test_of_the_file
+FAILED tests/test_notes_lines_check.py::test_a_conftest_assignment_is_a_unit_with_all_assignments_of_its_name
+FAILED tests/test_notes_lines_check.py::test_a_mutant_row_serves_only_the_mutant_whose_whole_cell_or_exact_item_it_is
+FAILED tests/test_notes_lines_check.py::test_a_reason_must_point_at_a_test_a_log_file_and_a_mutant_that_exist
+FAILED tests/test_notes_lines_check.py::test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders
+FAILED tests/test_notes_lines_check.py::test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit
+FAILED tests/test_policy_guard.py::test_every_kind_is_declared_pending_or_holds_no_identity
+FAILED tests/test_policy_guard.py::test_plant_a_new_kind_on_no_list_is_caught
+FAILED tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+FAILED tests/test_policy_guard.py::test_plant_an_overdue_pending_kind_is_caught
+FAILED tests/test_policy_guard.py::test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+FAILED tests/test_policy_guard.py::test_the_three_date_tests_read_the_clock_function_and_go_red_after_the_review_day
+FAILED tests/test_policy_guard.py::test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state
+FAILED tests/test_policy_guard.py::test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist
+FAILED tests/test_policy_changelog.py::test_the_changelog_says_what_a_renewal_renews_in_the_words_of_the_code_and_not_the_old_one_list_wording
+FAILED tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green
+19 failed, 417 passed in 26.52s
+exit 1
