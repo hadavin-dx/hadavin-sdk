@@ -235,7 +235,7 @@ def _plain(exc: ValidationError) -> list[dict]:
 
 def test_a_second_pass_over_a_rebuilt_error_changes_nothing():
     """`model_validate` of a dict goes through `__init__` and then through the class method: the second pass must keep what the
-    first pass kept (the field name, the two fixed words of the place line, the sentence of the package)."""
+    first pass kept (the field name, the fixed words of the place line, the sentence of the package)."""
     c = _c19("twice")
     for data in ({c: 1}, {"table": {c: {"n": "x"}}}, {"number": c}, {"backend": {"kind": c}}):
         first = _refused(_Probe, "validate", data)

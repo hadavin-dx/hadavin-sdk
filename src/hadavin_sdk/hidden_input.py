@@ -41,7 +41,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from hadavin_sdk.errors import NOT_SHOWN, UNKNOWN_KEY, ConfigValueError, shown_name
+from hadavin_sdk.errors import UNKNOWN_KEY, ConfigValueError, shown_name
 
 HIDDEN = "<hidden>"
 REFUSED = (
@@ -49,9 +49,6 @@ REFUSED = (
 )
 # the text of these ctx keys is written in code (a type name, a pattern, the allowed words), never taken from the input
 _CODE_CTX = frozenset({"expected", "pattern", "discriminator", "expected_tags"})
-# the two fixed words this module itself puts in a place line: kept, so that a second pass over an error that was already
-# rebuilt (a dict goes through `__init__` and then through the class method) changes nothing
-_FIXED_PLACES = frozenset({UNKNOWN_KEY, NOT_SHOWN})
 _ERROR_KINDS = frozenset(
     {"value_error", "assertion_error"}
 )  # their ctx `error` is an exception object
@@ -100,7 +97,7 @@ def _place(error: dict[str, Any], words: frozenset[str]) -> tuple[int | str, ...
             out.append(part)
         elif error["type"] == "extra_forbidden" and i == len(loc) - 1:
             out.append(UNKNOWN_KEY)
-        elif type(part) is str and (part in words or part in _FIXED_PLACES):
+        elif type(part) is str and part in words:
             out.append(part)
         else:
             out.append(shown_name(part))  # NOT_SHOWN unless it is the id of a loaded thing
