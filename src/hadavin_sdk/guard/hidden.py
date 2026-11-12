@@ -65,6 +65,7 @@ _CSI_DROP = _chars(
 _ANY = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f\u2028\u2029]")
 ANY = _ANY  # public name: `ANY.search(text)` is None when the text holds no removed or space-like item
 _SEQ_ANY = re.compile(r"[\x1b\x90\x98\x9b\x9d-\x9f]")
+SEQ_ANY = _SEQ_ANY  # public name: the first character of a SEQUENCE item (ESC or a C1 opener)
 _CSI_PARAMS = re.compile(r"[\x30-\x3f]*([\x20-\x2f]*)")
 _CSI_INTER = re.compile(r"()[\x20-\x2f]*")
 # where a string sequence can end: ST, CAN, SUB, BEL (OSC only), ESC, a line end
@@ -336,6 +337,36 @@ def leaves_text(text: str) -> bool:
         end = _item_end(text, k)
         body = text[k + 1 : end]
         if body and not (len(body) == 1 and body.isalnum()):
+            return True
+        i = max(end, k + 1)
+        if i >= n:
+            break
+    return False
+
+
+def has_open_string(text: str) -> bool:
+    """Does `text` hold a string sequence (OSC, DCS, SOS, PM, APC) that no terminator closes (a line end, the end of the text
+    or another ESC ended it)? The grammar's reading blanks the rest of that line, so a value in it is gone from that reading
+    and shows in the character reading only (`U+0090` + a bell: a bell closes an OSC and nothing else). One pass over the
+    escape items, linear."""
+    i, n = 0, len(text)
+    while (m := _SEQ_ANY.search(text, i)) is not None:
+        k = m.start()
+        end = _item_end(text, k)
+        c = text[k]
+        if c == _ESC:
+            string = k + 1 < n and text[k + 1] in _ESC_STRING
+            osc = string and _ESC_STRING[text[k + 1]]
+        else:
+            string = c in _C1_STRING
+            osc = string and _C1_STRING[c]
+        if string and not (
+            text.endswith("\x9c", 0, end)
+            or text.endswith("\x18", 0, end)
+            or text.endswith("\x1a", 0, end)
+            or text.endswith("\x1b\\", 0, end)
+            or (osc and text.endswith("\x07", 0, end))
+        ):
             return True
         i = max(end, k + 1)
         if i >= n:

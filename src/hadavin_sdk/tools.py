@@ -728,7 +728,8 @@ def _decoded_readings(text: str) -> tuple[str, ...]:
     or a decoder wrote one, the consuming reading: `runmap.decodes`), so a handed-out secret cut by a percent-encoded
     escape, by an escape that cuts a percent token, or by `ESC ( B` written as `%1B%28B`, is found."""
     # `decodes` strips at the end of every round, in each reading
-    return tuple(dict.fromkeys(runmap.decodes(text)))
+    views = runmap.decodes(text, characters=True)
+    return tuple(dict.fromkeys(views))
 
 
 def _decoded(text: str) -> str:
@@ -902,6 +903,12 @@ def _has_form(text: str, form: str) -> bool:
     return form in text
 
 
+def _count_form(text: str, form: str) -> int:
+    if _HEXFORM.fullmatch(form):
+        return len(re.findall(re.escape(form), text, re.IGNORECASE))
+    return text.count(form)
+
+
 def _sub_form(text: str, form: str) -> str:
     if _HEXFORM.fullmatch(form):
         return re.sub(re.escape(form), MARKER, text, flags=re.IGNORECASE)
@@ -918,18 +925,96 @@ def _count_in(text: str, secret: str, scrub: ScrubSettings) -> int:
     return _scrub_layers(text, [secret], scrub).count(MARKER) - text.count(MARKER)
 
 
-_PIECE_WINDOWS = 64  # the most stretches tried per form: a longer form is sampled at a step, never scanned quadratically
-
-
 def _has_piece(text: str, forms: list[str], piece: int) -> bool:
-    """Does `text` hold a stretch of `piece` characters of one of the `forms`? Stretches are tried at a step that keeps
-    their number at `_PIECE_WINDOWS` or fewer per form, so a piece of `piece` + step - 1 characters is always seen."""
+    """Does `text` hold a stretch of `piece` characters (a form shorter than that: the whole form) of one of the `forms`
+    that the scrub did not mask? EXACT: every window of every form goes in a set (hex forms also in lower case, because
+    hex is read in any case) and `text` is read once with a window of the same width (linear; the old check sampled at a
+    step and missed a 6-character stretch of a long form).
+
+    Only stretches the scrub left standing count: the scrub's own marker is cut out first (a secret that holds `SECRET`
+    would match `<SECRET_REDACTED>`), and an ordinary word does not count: a stretch inside a run of letters (no digit, no
+    punctuation) that has a non-word character or the start of the text on both sides is a word in plain text
+    (`Company` in a log line next to a masked `ProdCompany2024!`), unless the run ends at the cut (`[truncated]` follows:
+    a fragment). The price, said plainly: a secret made only of letters, standing alone as a word and cut by a hidden item,
+    is not withheld by this check (the readings still mask every copy they can read whole)."""
+    windows: dict[int, set[str]] = {}
+    lower: dict[int, set[str]] = {}
     for form in forms:
         w = min(piece, len(form))
-        step = max(1, (len(form) - w + 1) // _PIECE_WINDOWS)
-        if any(form[i : i + w] in text for i in range(0, len(form) - w + 1, step)):
-            return True
+        if w == 0:
+            continue
+        windows.setdefault(w, set()).update(form[i : i + w] for i in range(len(form) - w + 1))
+        if _HEXFORM.fullmatch(form):
+            lower.setdefault(w, set()).update(
+                form[i : i + w].lower() for i in range(len(form) - w + 1)
+            )
+    for segment in text.split(MARKER):
+        cut_end = segment.endswith(TRUNCATED)
+        body = segment[: -len(TRUNCATED)] if cut_end else segment
+        for w, wins in windows.items():
+            for i in range(len(body) - w + 1):
+                stretch = body[i : i + w]
+                if (
+                    stretch in wins or (w in lower and stretch.lower() in lower[w])
+                ) and not _ordinary_word(body, i, i + w, cut_end):
+                    return True
     return False
+
+
+def _ordinary_word(body: str, start: int, end: int, cut_end: bool) -> bool:
+    """Is `body[start:end]` inside a whole word of letters only (see `_has_piece`)? A word that ends where a cut ended the
+    text is a fragment, not a word."""
+    a, b = start, end
+    while a > 0 and (body[a - 1].isalnum() or body[a - 1] == "_"):
+        a -= 1
+    while b < len(body) and (body[b].isalnum() or body[b] == "_"):
+        b += 1
+    if cut_end and b == len(body):
+        return False
+    return body[a:b].isalpha()
+
+
+# a text that holds a hidden item, or a spelled-out one (`%1b`, `\\u001b`, `&#27;`, `%C2%9B`, `\\x1b`)
+_HIDDENISH = re.compile(r"%(?:[01][0-9a-f]|7f|c2)|\\u00[01]|\\x[01]|&#", re.IGNORECASE)
+
+
+def _remnant_stands(original: str, out: str, scrub: ScrubSettings) -> bool:
+    """A last check on the finished result for a text that held a hidden item or a spelled-out one: a stretch of
+    `runmap.REMNANT_WINDOW` characters of a value the redactor finds in the text as written (a secret kind) must not
+    stand in the result (a key whose first half was masked and whose second half a hidden item cut off: `<APIKEY_1>` +
+    U+2066 + `7EXAMPLE`). One more redaction pass, only for such texts."""
+    if (
+        hidden.ANY.search(original) is None
+        and hidden.IGNORABLE_RE.search(original) is None
+        and _HIDDENISH.search(original) is None
+    ):
+        return False
+    w = runmap.REMNANT_WINDOW
+    values = _found_values(original, [], scrub)
+    if values is None:
+        return True
+    return any(v[i : i + w] in out for v in values if len(v) >= w for i in range(len(v) - w + 1))
+
+
+def _found_values(raw: str, known: list[str], scrub: ScrubSettings) -> list[str] | None:
+    """The values of a secret kind that the redactor finds in `raw` as written (every reading it keeps), at least
+    `min_secret` characters, that are not handed-out values already. None when the redactor refuses the text for a work
+    limit or because its readings cannot be merged (`RedactionLimit`): nothing is shown then."""
+    found: dict[str, str] = {}
+    try:
+        runmap.redact_untrusted(raw, found, refuse_remnants=False)
+    except runmap.RedactionLimit:
+        return None  # the redactor refuses this text (readings it cannot merge, a limit): the caller shows nothing
+    except runmap.RedactionError:
+        return []
+    return [
+        v
+        for ph, v in found.items()
+        if runmap.kind_of(ph) not in runmap.STORED_KINDS
+        and len(v) >= scrub.min_secret
+        and v not in known
+        and not v.startswith("\0seed")
+    ]
 
 
 def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
@@ -947,14 +1032,28 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
     grammar's reading has the letter after `ESC (` that the consuming reading eats. So the secrets found in ALL readings
     (the union) must stand whole in ONE reading; when no reading holds the whole union (`ESC e` + `yJ...` next to a secret
     cut by `ESC ( B`) nothing is shown. The readings are compared by how many copies of each secret they hold (a reading that
-    holds one copy of a secret another reading holds twice is not the result), and no stretch of `piece_min` characters of a
-    handed-out secret may stand in the result (else nothing is shown). The character reading is a result only when the text holds no control sequence
+    holds one copy of a secret another reading holds twice is not the result). Once a copy was found, no stretch of `piece_min`
+    characters of any form of a handed-out secret may stand in the result (`_has_piece`: exact; else nothing is shown), except
+    inside an ordinary word of letters only. NOT promised: a text where nothing was found and no reading changed is returned
+    as written (a piece of a secret in plain coloured text stays); a secret of letters only that stands alone as a word and
+    was cut by a hidden item is not withheld by the piece check; a found secret plus a non-word piece of it elsewhere withholds
+    the whole result (the availability cost). Secrets written with a space between their characters are not read (LIMITS). The character reading is a result only when the text holds no control sequence
     whose body it would show as text (`[0m` after a deleted ESC: `hidden.leaves_text`); otherwise a find in it only
     withholds the text. A result that still holds a spelling of a handed-out secret is withheld too."""
     try:
         rd = hidden.readings(raw)
         if rd.joined is raw:
             return _scrub_layers(raw, long_enough, scrub)
+        # The result below is a reading of the text with its hidden items gone, so the redactor that runs after the scrub
+        # can no longer read a key those items cut (`A` + `ESC ( B` + `KIA...` shows `A(BKIA...`, a key cut by BEL shows as
+        # `AKIAIOS FODNN7...`). The values the redactor finds in the text AS WRITTEN (the secret kinds) are scrubbed too,
+        # in every reading, like the handed-out ones (class: information lost between two stages, PR H batch 7, issue 4).
+        found_values = _found_values(raw, long_enough, scrub)
+        if found_values is None:
+            return MARKER + TRUNCATED
+        # longest first: a short value that is a front of a longer one (`AKIAIOSFODNN` inside the whole key) masked first would
+        # leave the longer one's tail standing, which the piece check then reads as a leak and withholds the result
+        long_enough = sorted([*long_enough, *found_values], key=len, reverse=True)
         # (joined, spaced, is the character reading) of each distinct reading, the grammar's first
         triples = list(
             dict.fromkeys(
@@ -1010,6 +1109,10 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         if chosen is None:
             return MARKER + TRUNCATED
         joined, spaced = chosen
+        # the redactor after this scrub reads the text with the ignorable characters taken out (`runmap.canonical`), so the forms
+        # are looked for in that text: a value one of them cuts is whole there, and a shorter form that matched first would
+        # otherwise mask its front and leave the tail standing (batch 7 resume)
+        spaced = hidden.IGNORABLE_RE.sub("", spaced)
         forms = sorted({f for x in long_enough for f in _secret_forms(x)}, key=len, reverse=True)
         plain_markers = spaced.count(MARKER)
         for form in forms:
@@ -1035,6 +1138,9 @@ def _scrub(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCR
         return MARKER + TRUNCATED
 
 
+_VIEW_ROUNDS = 4  # the most times one form is looked for in the decoded readings of a text that changed under it
+
+
 def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFAULT_SCRUB) -> str:
     """Replace every spelling of the handed-out secrets in `raw` (already cut to the redactor's window). Every cut
     that happens here, and the cut the caller made before, is followed by `_strip_fragment` on the text as it is
@@ -1055,15 +1161,20 @@ def _scrub_layers(raw: str, long_enough: list[str], scrub: ScrubSettings = _DEFA
         for form in _secret_forms(secret):
             if _has_form(raw, form):
                 raw = fit(_sub_form(raw, form))
-                continue
-            if seen is None or seen[0] != raw:
-                seen = (raw, _decoded_readings(raw))
-            for view in seen[1]:
-                if view != raw and _has_form(view, form):
-                    # the secret hides behind an encoding layer: use the decoded text (that one reply loses its
-                    # original spelling, which is the price of not showing the secret)
-                    raw = fit(_sub_form(view, form))
+            # a form found as written does not end the search: another copy of it may hide behind an encoding layer or an
+            # invisible character (`Qx7mLp` + U+200B + `-9v...` next to a plain copy). Bounded: a form that stands inside the
+            # marker (a secret of `SECRET_REDA`) would be found again in every round.
+            for _ in range(_VIEW_ROUNDS):
+                if seen is None or seen[0] != raw:
+                    seen = (raw, _decoded_readings(raw))
+                # the secret hides behind an encoding layer: use the decoded text (that one reply loses its original
+                # spelling, which is the price of not showing the secret). The reading that holds the MOST copies of the
+                # form is used: the grammar's reading of `%1b` + `R...` has lost the `R`, the character reading holds the copy
+                held = [(_count_form(v, form), v) for v in seen[1] if v != raw]
+                best = max((h for h in held if h[0] > 0), key=lambda h: h[0], default=None)
+                if best is None:
                     break
+                raw = fit(_sub_form(best[1], form))
     return raw
 
 
@@ -1089,6 +1200,7 @@ def prepare_output(
     raw = _cut(raw, defaults.MAX_REDACT_CHARS - len(TRUNCATED), tail)
     was_cut = raw != before  # cut at the redactor's cap (the fetch ceiling is far above it)
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
+    original = raw  # what the last check below reads the redactor's finds from
     if long_enough:
         scrubbed = _scrub(raw, long_enough, scrub)
         # the scrub can grow the text (a short secret becomes the longer marker) and cut it again at the cap
@@ -1099,6 +1211,8 @@ def prepare_output(
         )
         raw = scrubbed
     out = redact_layered(raw, mapping)
+    if _remnant_stands(original, out, scrub):
+        return MARKER + TRUNCATED
     if was_cut and out.endswith(
         TRUNCATED
     ):  # a secret straddling the cut is a fragment at the end: drop that end
@@ -1114,7 +1228,8 @@ def redact_layered(raw: str, mapping: dict[str, str]) -> str:
     as `redact_text` does for its own views; a text nested deeper than the cap is not shown (fail closed)."""
     try:
         return runmap.redact_untrusted(raw, mapping)
-    except runmap.TooDeep:
+    except (runmap.TooDeep, runmap.RedactionLimit):
+        # a work limit fired (not the size of the text): the withheld text, never a raised error that drops the run
         return MARKER + TRUNCATED
 
 
@@ -1129,6 +1244,7 @@ def error_reason(
     refused = isinstance(exc, ToolRefused)
     message = str(exc)
     long_enough = [x for x in secrets or [] if len(x) >= scrub.min_secret]
+    original = message
     if long_enough:
         message = _cut(
             message, defaults.MAX_REDACT_CHARS - len(TRUNCATED), scrub.tail_window
@@ -1140,6 +1256,8 @@ def error_reason(
     except (
         runmap.RedactionError
     ):  # too deep, or too large once normalised: a fixed note, never the text
+        message = runmap.SAFE_HEAD_NOTE
+    if message != runmap.SAFE_HEAD_NOTE and _remnant_stands(original, message, scrub):
         message = runmap.SAFE_HEAD_NOTE
     if refused:
         return message[:200]

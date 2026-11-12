@@ -115,7 +115,8 @@ def run_path(path: str, text: str, handed: list[str]) -> str | None:
         if path == "card":
             return channel.clean(text)
     except Exception as exc:  # a refusal shows nothing
-        if type(exc).__name__ in {"RedactionError", "InputTooLarge", "TooDeep"}:
+        # by class AND its parents: `RedactionLimit` (batch 7) is an `InputTooLarge` and shows nothing too
+        if {c.__name__ for c in type(exc).__mro__} & {"RedactionError", "InputTooLarge", "TooDeep"}:
             return None
         raise
     raise ValueError(path)
@@ -361,5 +362,5 @@ def test_every_prh_mutant_still_applies():
     each killer test still exists."""
     from tests import prh_mutants
 
-    assert len(prh_mutants.M) >= 81
+    assert len(prh_mutants.M) >= 95
     assert prh_mutants.check_applies() == []

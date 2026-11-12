@@ -81,9 +81,7 @@ SCRUB_FRAGMENT_MIN = 1  # characters of a secret's front that are removed next t
 SCRUB_MAX_LAYERS = (
     8  # nested encodings (percent, entity, backslash) undone before the scrub fails closed
 )
-SCRUB_PIECE_MIN = (
-    6  # a stretch of a handed-out secret this long may not stand in a text that held hidden items
-)
+SCRUB_PIECE_MIN = 6  # width of the stretch the piece check looks for (exact; see `tools._has_piece` for what it does not promise)
 SCRUB_PARTIAL_END = 10  # the longest half-written escape a cut can leave; added to the look-back
 SOURCE_REPROBE_S = 3600  # how often the scope of a configured source is probed again while running
 MAX_TOOL_BYTES_PER_RUN = 262_144  # bytes of tool results one run may send to the model

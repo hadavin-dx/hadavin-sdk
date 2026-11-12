@@ -313,7 +313,9 @@ def test_scrub_result_is_the_spaced_copy_of_the_reading_that_holds_the_secret():
     """The result of a find in the character reading keeps the space the bell made, so the key is a word of its own."""
     text = "a " + ESC + HAND + " ; user" + BEL + KEY
     out = tools._scrub(text, [HAND])
-    assert out == "a " + tools.MARKER + " ; user " + KEY, (
+    # batch 7: the scrub masks the secret-kind values the redactor finds in the text as written too (`_found_values`), so the key
+    # that follows the bell is masked here (as the marker) and still a word of its own
+    assert out == "a " + tools.MARKER + " ; user " + tools.MARKER, (
         f"result with no gap before the key: {out!r}"
     )
 
@@ -489,11 +491,13 @@ def test_b6_piece_check_unit():
     assert tools._has_piece("x " + HAND[3:9], forms, 6)
     assert not tools._has_piece("x " + HAND[3:8] + " y", forms, 6)
     assert not tools._has_piece("nothing here", forms, 6)
-    # a long form is sampled at a step: a stretch of piece + step - 1 characters is always seen
-    big = "".join(chr(0x4E00 + i) for i in range(1000))
-    step = (1000 - 6 + 1) // tools._PIECE_WINDOWS
-    for start in (0, 7, 500, 990 - 6 - step):
-        assert tools._has_piece(big[start : start + 6 + step - 1], [big], 6)
+    # batch 7 (Issue 7): the check is exact, not sampled: a stretch of `piece` characters at EVERY offset of a long form is seen
+    for n in (136, 300, 1000):
+        # every 6-window holds a digit, so none of them is "a word of letters only" (the ordinary-word rule has its own test)
+        big = "".join(chr(0x4E00 + i) if i % 4 else "7" for i in range(n))
+        for start in range(n - 6 + 1):
+            assert tools._has_piece(big[start : start + 6], [big], 6), (n, start)
+        assert not tools._has_piece(big[0:5] + "x" + big[6:11], [big], 6)
 
 
 def test_b6_h3_a_value_glued_by_a_bell_stays_a_word_of_its_own_in_the_character_reading():

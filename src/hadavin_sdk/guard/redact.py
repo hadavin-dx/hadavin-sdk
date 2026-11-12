@@ -875,6 +875,7 @@ def redact(
     near: tuple[str, ...] = (),
     _sweep_copies: bool = True,
     _cache: dict | None = None,
+    _readings: bool = True,
 ) -> RedactionResult:
     """Scrub `text`, then prove the scrub worked.
 
@@ -883,16 +884,41 @@ def redact(
     (a record's other fields) whose bank words still count as bank context here, as in redact_many.
 
     A text with escape sequences is read in the readings `_Redactor.find` lists (PR H): a key cut by `ESC ( B ESC [ m` is
-    masked, and a value the map already holds that an ESC cut in one copy (`ESC` + value) returns `WITHHELD_NOTE` (batch 6:
-    both used to leave the value's tail readable, as on main). Control characters other than escape sequences are not read
-    here; `runmap.redact_text` reads those too and is the entry point for text that goes to a model.
+    masked, and a value the map already holds that an escape cut in one copy (`ESC` or a C1 opener + value) returns
+    `WITHHELD_NOTE`. Batch 7: a text that also holds a bell, a zero-width, a bidirectional or another ignorable character
+    is read in that reading too (`runmap.canonical`'s view); two readings that mask different values return `WITHHELD_NOTE`
+    (rule: `compare_readings`). A combining mark (U+0301) is NOT a hidden item: it changes the character, so a key with one
+    inside is a different string and is left as written (decision d6, pinned in `tests/test_prh_b7.py`).
     """
     r = _Redactor(mapping, _cache)
     r.bank_near = any(_has_bank_word(strip_ansi(t)) for t in near)
-    out = r.find(text)
+    out = r.find(text, readings=_readings)
     if _sweep_copies:  # redact_many's first pass only FINDS values; its second pass masks
         out = r.sweep(out)
     return RedactionResult(text=out, mapping=r.mapping)
+
+
+def compare_readings(first: set[str], second: set[str]) -> str:
+    """The ONE rule that folds two readings of a text, each masked on its own (the direct `redact()` and
+    `runmap._consuming_wins` both ask it). `first` and `second` are the sets of VALUES each reading masked. A reading COVERS
+    the other when every value the other masks stands inside (or is) a value this one masks: a reading that glued a word to
+    a key finds a few digits of the key as a phone number; the reading that found the whole key covers it.
+    * "same": equal sets, or each covers the other (the caller keeps the one that masks more copies);
+    * "second": the second covers the first and not the other way round (it saw what the first could not read);
+    * "first": the first covers the second and not the other way round;
+    * "conflict": neither covers the other (an escape that took the first letter of one value in one reading and not in the
+      other): the readings cannot be merged, so the caller shows nothing (`WITHHELD_NOTE`, or a refusal)."""
+    if first == second:
+        return "same"
+    covers_first = all(any(v in w for w in second) for v in first)  # `second` covers `first`
+    covers_second = all(any(v in w for w in first) for v in second)  # `first` covers `second`
+    if covers_first and covers_second:
+        return "same"
+    if covers_first:
+        return "second"
+    if covers_second:
+        return "first"
+    return "conflict"
 
 
 def _countable(suffix: str) -> bool:
@@ -935,7 +961,7 @@ class _Redactor:
             text = pattern.sub(lambda m, label=label: self._mask(m, label), text)
         return text
 
-    def find(self, text: str) -> str:
+    def find(self, text: str, readings: bool = True) -> str:
         """Every value the patterns find, replaced by its placeholder. The one choke point of every caller of `redact` and
         `redact_many`, so the escape sequences in `text` are read here (PR H), in two readings:
 
@@ -951,29 +977,82 @@ class _Redactor:
         them) fails closed: `WITHHELD_NOTE` is returned, never the joined text (it has lost the word boundaries the
         sequences made, so a key glued to the word before it would read as part of that word). Inside `redact_text` no
         escape sequence is left, so this is reached only by a direct caller of `redact()` or `redact_many()`."""
+        if not readings:  # `runmap` calls with text it has already read (no sequence left): one reading, as before
+            return self._patterns(text)
         joined, spaced = hidden.sequence_readings(text)
-        known = (
-            [v for v in self.mapping.values() if len(v) >= 4 and not v.startswith("\0seed")]
-            if "\x1b" in text
-            else []
-        )
+        # every other reading of this text that can differ: only when it holds a sequence opener (ESC or a C1 opener, not only
+        # ESC: batch 7), or a hidden item the sequence reader leaves (a bell, a zero-width or a bidirectional character)
+        has_seq = hidden.SEQ_ANY.search(text) is not None
+        # as `runmap.canonical` does: ignorable characters do not count
+        plain_text = hidden.IGNORABLE_RE.sub("", text)
+        fj, fs = hidden.strip(plain_text)
+        if not has_seq and plain_text == text and hidden.ANY.search(text) is None:
+            return (
+                self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
+            )
+        known = [v for v in self.mapping.values() if len(v) >= 4 and not v.startswith("\0seed")]
         out = self._patterns(spaced) if joined == spaced else self._find_readings(joined, spaced)
-        if "\x1b" not in text:
-            return out
-        # the consuming reading (a sequence takes its final byte, a letter too: `ESC ( B ESC [ m` is what `tput sgr0` writes)
-        # finds a value the grammar's reading cannot join (it keeps the `B`): when it masks more values, its output is the
-        # result. Never the joined text of either reading.
-        cj, cs = hidden.sequence_readings(text, consume=True)
-        if (cj, cs) != (joined, spaced):
-            alt = self._patterns(cs) if cj == cs else self._find_readings(cj, cs)
-            if len(_PLACEHOLDER.findall(alt)) > len(_PLACEHOLDER.findall(out)):
-                out = alt
+        # the first reading refused the text (too many values to pair): no other reading may replace it
+        if out == WITHHELD_NOTE:
+            return WITHHELD_NOTE
+        verdict = out
+        # the readings, each masked on its own, are folded by ONE rule (`compare_readings`, shared with
+        # `runmap._consuming_wins`): the one that masks more values wins when it masks every value the other masks; two
+        # readings that mask different values, or a tie with different values, are not merged: `WITHHELD_NOTE`
+        readings: list[tuple[str, str]] = []
+        if has_seq:
+            # the consuming reading (a sequence takes its final byte, a letter too: `ESC ( B ESC [ m` is what `tput sgr0` writes)
+            cj, cs = hidden.strip_consuming(plain_text)
+            if (cj, cs) != (joined, spaced):
+                readings.append((cj, cs))
+        if (
+            (plain_text != text or hidden.ANY.search(text) is not None)
+            and (fj, fs) != (joined, spaced)
+            and (fj, fs) not in readings
+        ):
+            readings.append((fj, fs))
+        # the character reading (every hidden character deleted on its own, no sequence read as one): a string sequence a bell
+        # or a line end does not close (`U+0090` ... `BEL`) swallows the rest of the line in the grammar's reading, and a key
+        # cut by it shows only its front there (batch 7 resume). It is a CHECK, never the result: a value only it can read
+        # withholds the text; a text with no open string sequence is not read in it (a closed one is `ESC [ 0 m`: ordinary).
+        chars_j, chars_s = hidden.characters_readings(text)
+        open_string = hidden.has_open_string(text)
+        check_only = (
+            (chars_j, chars_s)
+            if open_string and (chars_j, chars_s) not in [(joined, spaced), *readings]
+            else None
+        )
+        if check_only is not None:
+            readings.append(check_only)
+        for rj, rs in readings:
+            alt = self._patterns(rs) if rj == rs else self._find_readings(rj, rs)
+            if alt == WITHHELD_NOTE:
+                return WITHHELD_NOTE
+            choice = compare_readings(self._held_values(verdict), self._held_values(alt))
+            if choice == "conflict":
+                return WITHHELD_NOTE
+            if (rj, rs) == check_only and choice == "second":
+                # the character reading holds a value the grammar's reading cannot read (an unterminated string sequence
+                # blanked it) and shows the text that reading removed: its output is not the result, and the grammar's
+                # output leaves that value readable. Nothing is shown.
+                return WITHHELD_NOTE
+            if (rj, rs) == check_only:
+                continue  # a check only: the character reading's output shows removed text and is never the result
+            if choice == "second" or (
+                choice == "same"
+                and len(_PLACEHOLDER.findall(alt)) > len(_PLACEHOLDER.findall(verdict))
+            ):
+                verdict = alt
         # a value the map already held that another reading shows more often than the grammar's reading (an ESC that takes
         # the letter after it cut one copy: `ESC` + value) is not masked in either output: nothing is shown
-        others = (hidden.characters_readings(text)[0], cj)
+        others = (hidden.characters_readings(text)[0], *(r[0] for r in readings), fj)
         if any(r.count(v) > joined.count(v) for v in known for r in others):
             return WITHHELD_NOTE
-        return out
+        return verdict
+
+    def _held_values(self, shown: str) -> set[str]:
+        """The values whose placeholders stand in `shown` (the readings are compared by what they mask)."""
+        return {self.mapping[ph] for ph in _PLACEHOLDER.findall(shown) if ph in self.mapping}
 
     def _find_readings(self, joined: str, spaced: str) -> str:
         found = self._patterns(joined)

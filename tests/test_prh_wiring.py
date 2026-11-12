@@ -54,9 +54,9 @@ def _record(monkeypatch):
         seen_redact.append(text)
         return real_redact(text, **kw)
 
-    def spy_find(self, text):
+    def spy_find(self, text, readings=True):
         seen_find.append(text)
-        return real_find(self, text)
+        return real_find(self, text, readings)
 
     monkeypatch.setattr(runmap, "redact", spy_redact)
     monkeypatch.setattr(redact_mod._Redactor, "find", spy_find)

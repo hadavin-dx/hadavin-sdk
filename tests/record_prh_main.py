@@ -334,7 +334,8 @@ def evaluate(path: str, case: Case) -> str | None:
     try:
         return run_path(path, case)
     except Exception as exc:
-        if type(exc).__name__ in {"RedactionError", "InputTooLarge", "TooDeep"}:
+        # by class AND its parents (`RedactionLimit`, batch 7, is an `InputTooLarge`)
+        if {c.__name__ for c in type(exc).__mro__} & {"RedactionError", "InputTooLarge", "TooDeep"}:
             return None
         raise
 
