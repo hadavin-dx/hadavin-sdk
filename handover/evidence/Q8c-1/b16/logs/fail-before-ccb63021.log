@@ -1,0 +1,288 @@
+head-under-test: ccb63021 (clean detached worktree, only the new test files of batch 16 copied in)
+ccb630218c4e12ee26be6a8ab52cc0ee8e721362
+FFFF.FFFF...F.F....FF                                                    [100%]
+=================================== FAILURES ===================================
+_ test_an_unreadable_run_time_import_name_lists_every_test_even_when_the_file_imports_a_package_of_tests _
+
+    def test_an_unreadable_run_time_import_name_lists_every_test_even_when_the_file_imports_a_package_of_tests():
+        # the one rule: a name that cannot be read lists every test of the file, whatever else the file imports
+        src = _DYN_TEST.format("from tests.helpers import make", "make(importlib.import_module(name))")
+        helpers = {"tests/helpers.py": "def make(m):\n    return m\n"}
+        got = _dyn_listed(src, "tests/zz/dyn_c.py", helpers)
+>       assert got == ["test_dyn", "test_other"], (
+            f"a file that imports a package of tests and a run-time name: a changed module listed {got}"
+        )
+E       AssertionError: a file that imports a package of tests and a run-time name: a changed module listed []
+E       assert [] == ['test_dyn', 'test_other']
+E         
+E         Right contains 2 more items, first extra item: 'test_dyn'
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:1289: AssertionError
+_ test_a_run_time_import_name_given_as_the_keyword_name_is_read_like_the_first_argument _
+
+    def test_a_run_time_import_name_given_as_the_keyword_name_is_read_like_the_first_argument():
+        for call in (
+            'importlib.import_module(name=f"tests.zz.dyn_{n}")',
+            'importlib.import_module(name="tests.zz.dyn_c")',
+        ):
+            src = _DYN_TEST.format("", call)
+            got = _dyn_listed(src, "tests/zz/dyn_c.py")
+>           assert got == ["test_dyn", "test_other"], f"{call}: a changed module listed {got}"
+E           AssertionError: importlib.import_module(name=f"tests.zz.dyn_{n}"): a changed module listed []
+E           assert [] == ['test_dyn', 'test_other']
+E             
+E             Right contains 2 more items, first extra item: 'test_dyn'
+E             Use -v to get more diff
+
+tests/test_notes_lines_check.py:1316: AssertionError
+_ test_a_package_is_reached_by_the_text_that_a_run_time_import_name_starts_with _
+
+    def test_a_package_is_reached_by_the_text_that_a_run_time_import_name_starts_with():
+        # the package `tests.zz` is the file tests/zz/__init__.py: the text `tests.zz.` starts the names of its modules
+        # and is the start of the name of the package itself
+        src = _DYN_TEST.format("", "importlib.import_module('tests.zz.' + str(n))")
+        got = _dyn_listed(src, "tests/zz/__init__.py")
+>       assert got == ["test_dyn", "test_other"], f"a changed package file listed {got}"
+E       AssertionError: a changed package file listed []
+E       assert [] == ['test_dyn', 'test_other']
+E         
+E         Right contains 2 more items, first extra item: 'test_dyn'
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:1335: AssertionError
+_ test_a_call_through_another_name_of_import_module_or_a_function_handed_on_is_the_same_call _
+
+    def test_a_call_through_another_name_of_import_module_or_a_function_handed_on_is_the_same_call():
+        forms = (
+            ("imp = importlib.import_module\n", "imp(f'tests.zz.dyn_{n}')"),
+            ("from importlib import import_module as imp\n", "imp(f'tests.zz.dyn_{n}')"),
+            ("imp = importlib.import_module\nimp2 = imp\n", "imp2(f'tests.zz.dyn_{n}')"),
+        )
+        for head, call in forms:
+            src = _DYN_TEST.format(head, call)
+            got = _dyn_listed(src, "tests/zz/dyn_c.py")
+>           assert got == ["test_dyn", "test_other"], (
+                f"{head.strip()!r}: a call by the alias listed {got}"
+            )
+E           AssertionError: 'imp = importlib.import_module': a call by the alias listed []
+E           assert [] == ['test_dyn', 'test_other']
+E             
+E             Right contains 2 more items, first extra item: 'test_dyn'
+E             Use -v to get more diff
+
+tests/test_notes_lines_check.py:1350: AssertionError
+_ test_a_fixture_registered_under_an_alias_lists_the_test_that_takes_the_alias _
+
+    def test_a_fixture_registered_under_an_alias_lists_the_test_that_takes_the_alias():
+        own = (
+            "import pytest\n\n\n@pytest.fixture(name='alias')\ndef _impl():\n    return {}\n\n\n"
+            "def test_use(alias):\n    assert alias\n\n\ndef test_free():\n    assert 1\n"
+        )
+        got = _changed(own.format(1), own.format(2))
+>       assert got == ["test_use"], f"a changed fixture with an alias listed {got}, not test_use"
+E       AssertionError: a changed fixture with an alias listed [], not test_use
+E       assert [] == ['test_use']
+E         
+E         Right contains one more item: 'test_use'
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:1394: AssertionError
+_ test_a_fixture_named_by_a_text_that_cannot_be_read_lists_the_test_for_every_fixture_in_reach _
+
+    def test_a_fixture_named_by_a_text_that_cannot_be_read_lists_the_test_for_every_fixture_in_reach():
+        fx_b = "@pytest.fixture\ndef fx_b():\n    return 5\n"
+        for body in (
+            "assert request.getfixturevalue(NAME)",
+            "assert request.getfixturevalue('fx_%s' % NAME)",
+        ):
+            src = _FX.format("{}", fx_b, body)
+            got = _changed(src.format(1), src.format(2))
+>           assert got == ["test_dyn"], f"{body}: a changed fixture listed {got}, not test_dyn"
+E           AssertionError: assert request.getfixturevalue(NAME): a changed fixture listed [], not test_dyn
+E           assert [] == ['test_dyn']
+E             
+E             Right contains one more item: 'test_dyn'
+E             Use -v to get more diff
+
+tests/test_notes_lines_check.py:1417: AssertionError
+_ test_a_fixture_named_by_lazy_fixture_or_by_parametrize_indirect_lists_the_test _
+
+    def test_a_fixture_named_by_lazy_fixture_or_by_parametrize_indirect_lists_the_test():
+        lazy = (
+            "import pytest\nfrom pytest_lazyfixture import lazy_fixture\n\n\n@pytest.fixture\ndef fx_a():\n    return {}\n\n\n"
+            "@pytest.mark.parametrize('v', [lazy_fixture('fx_a')])\ndef test_lazy(v):\n    assert v\n\n\n"
+            "def test_free():\n    assert 1\n"
+        )
+        got = _changed(lazy.format(1), lazy.format(2))
+>       assert got == ["test_lazy"], f"a fixture named by lazy_fixture listed {got}, not test_lazy"
+E       AssertionError: a fixture named by lazy_fixture listed [], not test_lazy
+E       assert [] == ['test_lazy']
+E         
+E         Right contains one more item: 'test_lazy'
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:1450: AssertionError
+_ test_a_name_bound_by_a_walrus_in_a_definition_header_or_behind_an_assignment_is_followed _
+
+    def test_a_name_bound_by_a_walrus_in_a_definition_header_or_behind_an_assignment_is_followed():
+        src = (
+            "def deco(fn):\n    return fn{d}\n\n\ndef helper():\n    return {h}\n\n\nW = (X := helper())\n\n\n"
+            "def f(a=(LIMIT := {l})):\n    return a\n\n\n@(D := deco)\ndef g():\n    return 1\n\n\n"
+            "def test_x():\n    assert X\n\n\ndef test_limit():\n    assert LIMIT\n\n\n"
+            "def test_d():\n    assert D\n\n\ndef test_free():\n    assert 1\n"
+        )
+        base = {"d": "", "h": "1", "l": "5"}
+        for key, new, expected in (
+            (
+                "h",
+                "2",
+                ["test_x"],
+            ),  # X is built by helper(): a change of helper lists the test that reads X
+            ("l", "6", ["test_limit"]),  # a walrus in a default argument binds LIMIT
+            ("d", " + 1", ["test_d"]),  # a walrus in a decorator binds D to deco
+        ):
+            got = _changed(src.format(**base), src.format(**{**base, key: new}))
+>           assert got == expected, f"a change of `{key}` listed {got}, expected {expected}"
+E           AssertionError: a change of `h` listed [], expected ['test_x']
+E           assert [] == ['test_x']
+E             
+E             Right contains one more item: 'test_x'
+E             Use -v to get more diff
+
+tests/test_notes_lines_check.py:1492: AssertionError
+_ test_the_limits_of_the_notes_check_are_stated_in_its_docstring_and_in_the_changelog _
+
+    def test_the_limits_of_the_notes_check_are_stated_in_its_docstring_and_in_the_changelog():
+        from pathlib import Path
+    
+        changelog = (Path(__file__).resolve().parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
+        flat = " ".join((nlc.__doc__ or "").split())
+        for limit in ("entry point", "PYTEST_ADDOPTS", "spec_from_file_location", "`getattr`"):
+>           assert limit in flat, f"the limit `{limit}` is not stated in the tool docstring"
+E           AssertionError: the limit `entry point` is not stated in the tool docstring
+E           assert 'entry point' in 'List the tests (and the files that make tests pass or fail) that are new or changed against a base commit and check t... is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads files; it never writes.'
+
+tests/test_notes_lines_check.py:1577: AssertionError
+_ test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes _
+
+    def test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes():
+        """Step (5) of the printed steps, rehearsed: the renewed copy is committed on the base, the notes check of CI
+        reads that change, a row is written for each line it prints, and it then passes. The count is printed (it is the
+        number a person doing the first renewal should expect)."""
+        from tests.test_policy_guard import pp
+    
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "renewed"
+            new = pp.DECIDED + timedelta(days=31)
+            _, base = _make_renewed_copy(copy, "both", pp.DECIDED, new, commit_base=True)
+            env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
+            env.update(PYTHONDONTWRITEBYTECODE="1", PYTHONNOUSERSITE="1")
+            asked = _rows_for_the_renewal(copy, base, env)
+            print(f"the notes check asked for {asked} rows after the full renewal")
+>           _assert_the_asked_rows_match_the_printed_figure("both", asked)
+
+tests/test_policy_renewal_copy.py:196: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_policy_renewal_copy.py:144: in _assert_the_asked_rows_match_the_printed_figure
+    printed = _printed_row_count(mode)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mode = 'both'
+
+    def _printed_row_count(mode: str) -> int:
+        """The figure the printed steps give for the rows a renewal of `mode` asks for ('both', 'kinds', 'names')."""
+        from tools import policy_page as pp
+    
+        text, pattern = {
+            "both": (pp.RENEWAL_STEPS, r"both lists asked for about (\d+) rows?"),
+            "names": (pp.RENEWAL_STEPS, r"names and claims alone asked for about (\d+) rows?"),
+            "kinds": (pp.KINDS_RENEWAL_STEPS, r"kinds alone asked for about (\d+) rows?"),
+        }[mode]
+        found = re.findall(pattern, text)
+>       assert len(found) == 1, (
+            f"the printed steps give {len(found)} figures for the {mode} renewal: {found}"
+        )
+E       AssertionError: the printed steps give 0 figures for the both renewal: []
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_policy_renewal_copy.py:135: AssertionError
+----------------------------- Captured stdout call -----------------------------
+the notes check asked for 36 rows after the full renewal
+_ test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not _
+
+tmp_path = PosixPath('/home/user/build/b16-tmp/pytest-of-root/pytest-32/test_a_file_named_in_extra_fil0')
+
+    def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not(tmp_path):
+        """`extra_files` carries a root file (a changelog) into the copies: a test that reads it passes only when it is
+        there (the copy of a mutant run holds `src`, the tests and the named folders, nothing else)."""
+        root = tmp_path / "pkg"
+        (root / "src").mkdir(parents=True)
+        (root / "tests").mkdir()
+        (root / "NOTE.md").write_text("hello\n", encoding="utf-8")
+        (root / "tests" / "test_a.py").write_text(
+            "from pathlib import Path\n\n\ndef test_a():\n"
+            "    assert (Path(__file__).parents[1] / 'NOTE.md').read_text() == 'hello\\n'\n",
+            encoding="utf-8",
+        )
+        kwargs = {"extra_dirs": (), "timeout": 120}
+        with_file = run_mutants(root, [], ["tests/test_a.py"], extra_files=("NOTE.md",), **kwargs)
+        assert with_file == [], (
+            "a run with the root file named in extra_files did not pass its baseline"
+        )
+        try:
+            run_mutants(root, [], ["tests/test_a.py"], **kwargs)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("the copy held a root file that extra_files did not name")
+        _must_refuse(
+            "an extra file that leaves the tree",
+            run_mutants,
+            root,
+            [],
+            ["tests/test_a.py"],
+            extra_dirs=(),
+            extra_files=("../x.md",),
+        )
+        # a link is left out (the docstring says so): a test that wants the name absent passes only when it is
+        (root / "tests" / "test_link.py").write_text(
+            "from pathlib import Path\n\n\ndef test_link_is_absent():\n"
+            "    assert not (Path(__file__).parents[1] / 'LINK.md').exists()\n",
+            encoding="utf-8",
+        )
+        _symlink_or_skip(root / "NOTE.md", root / "LINK.md")
+        try:
+            run_mutants(root, [], ["tests/test_link.py"], extra_files=("LINK.md",), **kwargs)
+        except RuntimeError:
+>           raise AssertionError("a link named in extra_files was copied into the copy") from None
+E           AssertionError: a link named in extra_files was copied into the copy
+
+tests/test_mutation_runner.py:1575: AssertionError
+_______ test_a_there_are_the_listed_number_of_mutants_with_unique_names ________
+
+    def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
+        names = [m.name for m in mm.M]
+>       assert len(names) == EXPECTED_MUTANTS and len(set(names)) == EXPECTED_MUTANTS, names
+E       AssertionError: ['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...]
+E       assert (62 == 65)
+E        +  where 62 = len(['judge: an exception line counts as a kill', 'judge: crash markers ignored', 'judge: short expect accepted', 'runner: crash counts as good', 'runner: an absolute path is accepted', 'runner: a dotdot part is accepted', ...])
+
+tests/test_mutation_runner_meta.py:112: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_an_unreadable_run_time_import_name_lists_every_test_even_when_the_file_imports_a_package_of_tests
+FAILED tests/test_notes_lines_check.py::test_a_run_time_import_name_given_as_the_keyword_name_is_read_like_the_first_argument
+FAILED tests/test_notes_lines_check.py::test_a_package_is_reached_by_the_text_that_a_run_time_import_name_starts_with
+FAILED tests/test_notes_lines_check.py::test_a_call_through_another_name_of_import_module_or_a_function_handed_on_is_the_same_call
+FAILED tests/test_notes_lines_check.py::test_a_fixture_registered_under_an_alias_lists_the_test_that_takes_the_alias
+FAILED tests/test_notes_lines_check.py::test_a_fixture_named_by_a_text_that_cannot_be_read_lists_the_test_for_every_fixture_in_reach
+FAILED tests/test_notes_lines_check.py::test_a_fixture_named_by_lazy_fixture_or_by_parametrize_indirect_lists_the_test
+FAILED tests/test_notes_lines_check.py::test_a_name_bound_by_a_walrus_in_a_definition_header_or_behind_an_assignment_is_followed
+FAILED tests/test_notes_lines_check.py::test_the_limits_of_the_notes_check_are_stated_in_its_docstring_and_in_the_changelog
+FAILED tests/test_policy_renewal_copy.py::test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and_then_passes
+FAILED tests/test_mutation_runner.py::test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not
+FAILED tests/test_mutation_runner_meta.py::test_a_there_are_the_listed_number_of_mutants_with_unique_names
+12 failed, 9 passed, 138 deselected in 54.75s
+rc=0

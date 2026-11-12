@@ -1,0 +1,5 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+probe ok: at the fixed day 2027-02-01 exactly the date tests of the non-empty lists are red, each with an overdue text: ['test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves', 'test_every_kind_is_declared_pending_or_holds_no_identity', 'test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue']
+probe ok: the fixed day 2026-12-10 reached the tool's clock in the child pytest (probe mutant killed)
+ok  KILLED       B16 notes check does not read the keyword name of a run-time import  [test_a_run_time_import_name_given_as_the_keyword_name_is_rea]
+ok  KILLED       B16 notes check does not reach a package file by the text its module names start with  [test_a_package_is_reached_by_the_text_that_a_run_time_import]

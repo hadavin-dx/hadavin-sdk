@@ -2066,10 +2066,10 @@ M = [
         test_file=NOTES_TEST,
     ),
     mutant(
-        "B16 notes check does not visit a star-imported module that only re-exports",
+        "B16 notes check follows a star import only in the file itself",
         NTOOL,
-        "                    touch(star)\n",
-        "                    pass\n",
+        "            for stem in m.stars:\n",
+        "            for stem in (m.stars if m is mod else []):\n",
         "test_a_star_import_is_followed_in_its_relative_form_and_through_a_module_that_only_re_exports",
         "behind a module that only re-exports listed",
         test_file=NOTES_TEST,
