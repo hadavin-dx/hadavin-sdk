@@ -909,7 +909,7 @@ def test_the_inbound_migration_is_the_next_number_and_is_not_yet_released(mn):
     assert (
         mn.released_problems(mn.MIGRATIONS, manifest) == []
     )  # a file numbered above the highest released one
-    assert names.index("0006_inbound.sql") == 5 and len(set(n[:4] for n in names)) == len(names)
+    assert names.index("0006_inbound.sql") == 5 and len({n[:4] for n in names}) == len(names)
 
 
 def test_the_inbound_migration_reads_clean_and_holds_the_fifteen_statements_of_the_ticket(mn):
