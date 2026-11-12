@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import Field, field_validator
 
 from hadavin_sdk import defaults
 from hadavin_sdk.config_url import ConfigUrl
@@ -61,8 +61,7 @@ class KubernetesSettings(StrictConfigModel):
     `hadavin_sdk/defaults.py`. `api_url` has no default: the endpoint is the deployment's, never the code's. It is scheme and host only, no
     path: the operation paths are absolute (`/api/v1/...`), so a base path would silently shift every call."""
 
-    # A URL typed here may hold a login: the error text never quotes the refused input.
-    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+    # A URL typed here may hold a login: the base class never quotes the refused input in an error.
     api_url: ConfigUrl = Field(pattern=r"^https?://[^\s/?#]+/?$")
     namespaces: tuple[str, ...] = Field(min_length=1)
 

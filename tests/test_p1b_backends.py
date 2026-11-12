@@ -223,8 +223,9 @@ def test_config_error_never_echoes_a_mistyped_value(cfg_dir):
     )
     with pytest.raises(ConfigError) as err:
         load_config(cfg_dir)
-    # an unknown key is never shown (it may be a mistyped value): the line says so, the value stays out
-    assert "<unknown key>" in str(err.value) and "pasword" not in str(err.value)
+    # an unknown key is never shown (it may be a mistyped value): the line says so and counts its place
+    assert "unknown setting at position 2 (name not shown)" in str(err.value)
+    assert "pasword" not in str(err.value) and value not in str(err.value)
     assert value not in str(err.value)
     _edit(
         cfg_dir,
