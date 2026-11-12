@@ -66,7 +66,7 @@ Status: resolved
 *   **Discrepancy:** `C10_EVERYONE` and its partition test are inert (O17's expectation comes from the default rule); reason texts name 16.15 only; a raising `close()` in `except BaseException: conn.close(); raise` would mask the original error; `questions-for-lead.md:1831` still has the old text ("built and tested ... Safe default: keep it OFF") and the replacement text is in BUILDER-notes.md.
 *   ***AI Suggestion:*** PROPOSE FIX (the item is worth doing in the same batch; no re-review round is needed for it)
 *   ***Justification:*** Cheap, and the reword is a lead-owned step on a file outside the snapshot.
-*   ***Proposed Edit:* **Remove or use `C10_EVERYONE`; take the server version in a reason from the probe (group 1); guard the close with `try` and re-raise the first error; the batch-7 builder applies the `questions-for-lead.md` reword from BUILDER-notes.md (M6 of r15, row P3a24b-r16-8) and records it. The lead does not edit that file here.
+*   ***Proposed Edit:*** Remove or use `C10_EVERYONE`; take the server version in a reason from the probe (group 1); guard the close with `try` and re-raise the first error; the batch-7 builder applies the `questions-for-lead.md` reword from BUILDER-notes.md (M6 of r15, row P3a24b-r16-8) and records it. The lead does not edit that file here.
 
 ### Group 7 [owner item, escalation unchanged] - Severity: not rated (OWNER-ONLY)
 *   **Scope:** `q-p3a2-o8-schema-owner`: `migrate.py:1286-1294`, `CHANGELOG.md` line 11.
