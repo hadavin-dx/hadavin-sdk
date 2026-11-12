@@ -263,6 +263,16 @@
   in the evals gate; that file is part of `golden_sha256`) and `bedrock_guardrail`
   (`guardrail_id`, `guardrail_version`, `region`; the PROMPT_ATTACK filter, extra `aws`).
 
+### Changed (CodeAnt findings, 2026-11-12)
+- **No behaviour change for users.** CodeAnt (the code scanner the owner runs from its own dashboard) listed findings on this repository. Each one is judged in `handover/triage/CODEANT-SDK-TRIAGE.md`; this entry lists only what changed in the code.
+- **A test password is joined from short pieces** (`tests/warden_port/fakes.py`), so the scanner no longer reads it as a real secret. The value is unchanged and the secret-guard test still passes.
+- **Narrower `except` lines where one error type already covers the others** (`k1b/redaction.py`, `k1b/causelist.py`, `extract.py`, and five demo files). Which errors are caught is the same; a new test pins the redaction case.
+- **One URL check written without an overlap** (`tools.py`): a fetch URL is refused for exactly the same characters as before (a test compares every Unicode character with the old rule).
+- **Plain `if` blocks instead of nested one-line conditions** (`runtime/tick.py`, and four demo files).
+- **A new test and mutant** show that the wait in `tools/mutation_runner.py` really stops only when the child has ended (the scanner thought a check was always true; it is not). The file itself is unchanged, because the demos hold byte-identical copies pinned by hash.
+- **A proposed `.codeant/` folder** (settings and review instructions for CodeAnt). It changes nothing in GitHub until the owner turns it on.
+- **A short licence note** in `docs/licences.md` says how psycopg, certifi and python-dateutil are used and that pglast (GPL) is used only by tests.
+
 ### Changed
 - P5/P6 follow-ups:
   - limits are checked again before a tool output is screened, so a reply that spent the budget never pays

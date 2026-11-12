@@ -18,7 +18,6 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     StringConstraints,
-    ValidationError,
     model_validator,
 )
 
@@ -104,7 +103,7 @@ def load_jsonl[T: BaseModel](path: Path, model: type[T]) -> list[T]:
             continue
         try:
             items.append(model.model_validate(json.loads(raw)))
-        except (ValueError, ValidationError) as err:
+        except ValueError as err:  # pydantic's ValidationError is a ValueError
             raise ValueError(f"{Path(path).name} line {n}: {type(err).__name__}") from None
     ids = [i.id for i in items]  # type: ignore[attr-defined]
     if len(set(ids)) != len(ids):

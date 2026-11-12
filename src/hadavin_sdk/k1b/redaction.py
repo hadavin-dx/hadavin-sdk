@@ -22,7 +22,6 @@ filter, not as proof that no client data leaves.
 from __future__ import annotations
 
 import base64
-import binascii
 import dataclasses
 import re
 from collections import Counter
@@ -107,7 +106,7 @@ def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
     spellings = [value]
     try:
         spellings.append(base64.b64decode(value, validate=True).decode("utf-8"))
-    except (binascii.Error, UnicodeDecodeError, ValueError):
+    except ValueError:  # bad base64 (`binascii.Error`) and bytes that are not UTF-8 (`UnicodeDecodeError`) are both ValueErrors
         pass
     for text in spellings:
         masked = f(f"{key}={text}")

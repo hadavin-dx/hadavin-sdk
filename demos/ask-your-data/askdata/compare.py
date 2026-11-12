@@ -42,6 +42,13 @@ def norm(value: object, scale: int = DEFAULT_SCALE) -> object:
     return ("s", str(value))
 
 
+def _width(rows: list | tuple, given: int | None) -> int:
+    """The column count: the width passed for an empty result, else the length of the first row."""
+    if given is not None:
+        return given
+    return len(rows[0]) if rows else 0
+
+
 def _scales(scale: list[int] | None, width: int) -> list[int]:
     return [(scale[i] if scale and i < len(scale) else DEFAULT_SCALE) for i in range(width)]
 
@@ -66,8 +73,8 @@ def match(
     cand_width: int | None = None,
 ) -> Match:
     """Does the candidate result equal the gold result? Widths are passed for empty results."""
-    gw = gold_width if gold_width is not None else (len(gold[0]) if gold else 0)
-    cw = cand_width if cand_width is not None else (len(cand[0]) if cand else 0)
+    gw = _width(gold, gold_width)
+    cw = _width(cand, cand_width)
     if gw != cw:
         return Match(False, "column_count")
     if len(gold) != len(cand):

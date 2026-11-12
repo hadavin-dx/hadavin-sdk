@@ -39,6 +39,7 @@ def _lines(path: Path) -> list[str]:
 
 
 def _banned(banned_src: Path, extra: Path) -> list[str]:
+    """The banned names: the `BANNED` list in `banned_src` plus one name per line of `extra`. Exits if the list is empty."""
     names: list[str] = []
     for node in ast.parse(banned_src.read_text(encoding="utf-8")).body:
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
@@ -69,6 +70,7 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
 
 
 def scan(repo: Path, allowlist: Path, extra: Path, banned_src: Path) -> list[str]:
+    """Scan every tracked file of `repo` for secret-shaped text and banned names; return one problem line per finding (none means clean)."""
     banned = _banned(banned_src, extra)
     allowed, hits = _allowed(allowlist)
     cmd = ["git", "-C", str(repo), "ls-files", "-z"]

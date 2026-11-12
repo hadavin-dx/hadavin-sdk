@@ -1,0 +1,28 @@
+{
+  "instructions": [
+    {
+      "id": "no-secrets-no-hardcoding",
+      "description": "Flag any secret-shaped literal, account number, region, model id or price written in code. Fake credentials in tests must be built from parts; the only literal allowed is the AWS documentation example key id.",
+      "files": ["src/**/*.py", "tests/**", "tools/**", "demos/**"],
+      "scope": ["pr"]
+    },
+    {
+      "id": "vendor-imports-only-in-kind-modules",
+      "description": "A cloud or vendor SDK may be imported only inside its own kind module. Core logic must use the core's own interfaces.",
+      "files": ["src/**/*.py"],
+      "scope": ["pr"]
+    },
+    {
+      "id": "least-privilege-and-masking",
+      "description": "Flag any role, permission or credential wider than the exact actions and resources needed, and any personal data or secret that can reach a model, a log or the audit trail unmasked.",
+      "files": ["src/**/*.py"],
+      "scope": ["pr"]
+    },
+    {
+      "id": "ascii-patterns-stay-ascii",
+      "description": "Do not replace [0-9] with \\d or [A-Za-z0-9_] with \\w in a Python str pattern that validates input or redacts text: \\d and \\w also match non-ASCII characters unless re.ASCII is set.",
+      "files": ["src/**/*.py", "tools/**"],
+      "scope": ["pr"]
+    }
+  ]
+}

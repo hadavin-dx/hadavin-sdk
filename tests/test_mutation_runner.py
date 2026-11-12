@@ -1369,6 +1369,35 @@ def test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_s
         proc.poll()
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32" or not hasattr(os, "waitid"), reason="the waitid wait is POSIX only"
+)
+def test_the_wait_ends_only_when_the_child_has_ended():
+    """CodeAnt said the ``os.waitid(...) is not None`` check in ``_wait_unreaped`` is always true. It is not: with ``WNOHANG``
+    ``os.waitid`` returns ``None`` while the child still runs. A wait that returned at once would let the caller kill a live run's
+    group as if it had ended; this test fails if the check is made constant (a mutant in tests/mutation_runner_mutants.py)."""
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(30)"]
+    )  # our own interpreter, a fixed argument
+    try:
+        returned = True
+        try:
+            mr._wait_unreaped(proc, 0.3)  # still running: the wait must keep waiting, then time out
+        except subprocess.TimeoutExpired:
+            returned = False
+        assert not returned, "the wait returned while the child was still running"
+        proc.kill()
+        mr._wait_unreaped(
+            proc, 30
+        )  # ended: the wait returns, and does not reap (the status stays for ``_kill_tree``)
+        assert proc.returncode is None, (
+            "the wait reaped the child, so a later group kill could hit a reused pid"
+        )
+    finally:
+        proc.kill()
+        proc.wait()
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="the signal state is POSIX only")
 def test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone(
     tmp_path, monkeypatch

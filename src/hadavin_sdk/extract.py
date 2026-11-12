@@ -6,7 +6,7 @@ import json
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.llm.protocol import LLM
@@ -54,7 +54,9 @@ def extract(
         replies.append(reply)
         try:
             return Valid(schema.model_validate(_parse(reply)), replies)
-        except (ValidationError, ValueError) as exc:  # JSONDecodeError is a ValueError
+        except (
+            ValueError
+        ) as exc:  # pydantic's ValidationError and JSONDecodeError are both ValueErrors
             errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}")
             messages = [
                 *messages,

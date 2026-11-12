@@ -245,3 +245,13 @@ def test_database_round_trip_reproduces_the_hashes(admin_dsn, builds, name):
     finally:
         with psycopg.connect(maint, autocommit=True) as c:
             c.execute(f'DROP DATABASE IF EXISTS "{tag}" WITH (FORCE)')
+
+
+def test_the_item_count_edges_give_the_same_counts_as_the_old_nested_conditional():
+    """CodeAnt flagged `1 if u < 0.25 else 2 if u < 0.55 else 3 if u < 0.85 else 4`; the table must give the same counts."""
+    seed = load_script("seed")
+
+    for i in range(1001):
+        u = i / 1000
+        old = 1 if u < 0.25 else 2 if u < 0.55 else 3 if u < 0.85 else 4
+        assert next((n for n, edge in seed.ITEM_COUNT_EDGES if u < edge), 4) == old, u

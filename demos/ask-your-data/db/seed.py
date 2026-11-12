@@ -17,6 +17,8 @@ COUNTRIES = ["US", "UK", "CA", "AU", "DE", "IN", "SG", "NL"]
 CATEGORIES = ["books", "toys", "garden", "kitchen", "sports"]
 STATUSES = ["placed", "paid", "shipped", "delivered", "cancelled", "refunded"]
 STATUS_CUM = [0.08, 0.2, 0.35, 0.8, 0.9, 1.0]
+# An order has 1, 2 or 3 items when the draw is under 0.25, 0.55 or 0.85, and 4 otherwise.
+ITEM_COUNT_EDGES = ((1, 0.25), (2, 0.55), (3, 0.85))
 FIRST = ["Asha", "Ben", "Chen", "Dara", "Eli", "Fay", "Gus", "Hana", "Ivo", "Jun"]
 LAST = ["Stone", "Reed", "Park", "Cole", "Vale", "Marsh", "Hale", "Frost", "Ward", "Quinn"]
 PLANT_ID = 7
@@ -76,7 +78,7 @@ def generate() -> dict[str, list[tuple]]:
         u = r.random()
         status = next(s for s, c in zip(STATUSES, STATUS_CUM, strict=True) if u < c)
         u = r.random()
-        n_items = 1 if u < 0.25 else 2 if u < 0.55 else 3 if u < 0.85 else 4
+        n_items = next((n for n, edge in ITEM_COUNT_EDGES if u < edge), 4)
         total = 0.0
         for _ in range(n_items):
             item_id += 1

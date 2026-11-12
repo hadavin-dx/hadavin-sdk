@@ -315,12 +315,16 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
     except Exception as exc:  # noqa: BLE001 - one step never stops the others
         error = f"{type(exc).__name__}: {_message(exc)}"
         _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+    if error is None:
+        last_ok_at = ctx.now
+    else:  # a failed run keeps the time of the last good one
+        last_ok_at = prev.last_ok_at if prev else None
     try:
         store.save_tick_state(
             TickState(
                 step=step.name,
                 last_run_at=ctx.now,
-                last_ok_at=ctx.now if error is None else (prev.last_ok_at if prev else None),
+                last_ok_at=last_ok_at,
                 last_error=error,
             )
         )

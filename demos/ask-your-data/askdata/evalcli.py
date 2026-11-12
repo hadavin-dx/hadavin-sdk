@@ -22,7 +22,7 @@ from pathlib import Path
 from askdata import audit as audit_mod
 from askdata import evalrun, htmlexport, prompt
 from askdata.config import AskdataConfig, ConfigError, config_hash, load_config
-from askdata.evalrun import EXIT, Config, Harness, HarnessError, Incomparable, RecordingExecutor
+from askdata.evalrun import EXIT, Config, Harness, HarnessError, RecordingExecutor
 from askdata.evalset import (
     AdversarialItem,
     GoldItem,
@@ -130,11 +130,12 @@ def cmd_run(
         out(f"startup: {err}")
         return 4
     adv = [a for a in adv_all if a.needs_llm] if split == "test" else adv_all
-    label = (
-        "sealed"
-        if split == "test" and lock.test_runs == 0
-        else ("second look" if split == "test" else "dev")
-    )
+    if split != "test":
+        label = "dev"
+    elif lock.test_runs == 0:
+        label = "sealed"
+    else:
+        label = "second look"
     meter = Meter(cfg.paths.meter_file)
     try:
         evalrun.sealed_gate(lock, meter.remaining(), split=split, second_look=second_look)
@@ -220,7 +221,7 @@ def cmd_compare(a: Path, b: Path) -> int:
     try:
         ra, rb = (json.loads((p / "report.json").read_text(encoding="utf-8")) for p in (a, b))
         diff = evalrun.compare_reports(ra, rb)
-    except (OSError, ValueError, KeyError, Incomparable) as err:
+    except (OSError, ValueError, KeyError) as err:  # Incomparable is a ValueError
         out(f"compare: not comparable ({type(err).__name__}: {err})")
         return 4
     out(json.dumps(diff, indent=2, sort_keys=True, default=str))

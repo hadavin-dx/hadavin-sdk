@@ -1299,3 +1299,18 @@ def test_k5_portal_never_reads_evidence_tables():
 
     assert not mig.GRANTS["redaction_maps"].portal and not mig.GRANTS["tool_calls"].portal
     assert "UPDATE" not in mig.GRANTS["tool_calls"].runtime  # tool calls are append-and-purge only
+
+
+def test_the_url_character_check_refuses_the_same_characters_as_the_old_pattern():
+    """CodeAnt flagged a duplicate in `[\\\\\\s\\x00-\\x1f\\x7f]` (`\\s` overlaps the control range). The new class is ASCII only and relies
+    on the `isascii` test for the rest; for EVERY code point the refusal must equal the old rule, so no URL is accepted that was refused."""
+    import re
+
+    from hadavin_sdk import tools
+
+    old = re.compile(r"[\\\s\x00-\x1f\x7f]")
+    for cp in range(0x110000):
+        url = "https://a.example/" + chr(cp)
+        assert bool(tools._URL_UNSAFE.search(url) or not url.isascii()) == bool(
+            old.search(url) or not url.isascii()
+        ), hex(cp)

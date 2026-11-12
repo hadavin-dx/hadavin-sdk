@@ -22,7 +22,6 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
-    ValidationError,
 )
 
 from askdata.policy import Alarm, ReasonCode
@@ -176,7 +175,7 @@ class QueryLedger:
                 continue
             try:
                 line = LedgerLine.model_validate(json.loads(data.decode("ascii")))
-            except (ValueError, ValidationError):
+            except ValueError:  # pydantic's ValidationError is a ValueError
                 bad.append(number)
                 continue
             items.append(Stored(line, hashlib.sha256(data).hexdigest(), number))

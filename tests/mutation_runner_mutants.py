@@ -19,7 +19,7 @@ Which mutants need what on Windows (this list is run on Linux and on Windows; th
   (``taskkill /T`` walks parent links and the parent of a finished run is gone), "a termination signal does not clean up",
   "a signal during the cleanup cuts it short", "a second signal cuts the cleanup of the first short", "a signal while the child
   starts orphans it" and "a signal while the temp folders go leaves one" (SIGTERM and SIGHUP are POSIX signals), and "the group is
-  killed after its leader was reaped" (``os.waitid`` is POSIX).
+  killed after its leader was reaped" and "the wait returns while the child still runs" (``os.waitid`` is POSIX).
 - Need the symlink privilege on Windows: "a symlink is copied as a file" and "a link out of the tree is listed" (both killers make a
   FILE link; they skip there, and only there (error 1314), when the account lacks the privilege, and a skipped killer makes the
   mutant SURVIVE in that run). The folder-link case (a junction on Windows, no privilege needed) is a separate test with no mutant:
@@ -121,6 +121,11 @@ M = [
         '    if arg.startswith(("-", "@")):', '    if arg.startswith(("-",)):',
         "test_a_path_that_starts_with_an_at_sign_is_refused_because_pytest_reads_it_as_an_argument_file",
         "a path that starts with an at sign was accepted"),
+    mutant("runner: the wait returns while the child still runs", MR,
+        "            if os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None:",
+        "            if True:",
+        "test_the_wait_ends_only_when_the_child_has_ended",
+        "the wait returned while the child was still running"),
     mutant("runner: a leader reaped by someone else stays unknown", MR,
         "            proc.poll()  # sets returncode (0, a guess) so ``_kill_tree`` will not signal a reaped group\n            raise", "            raise",
         "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",

@@ -41,8 +41,7 @@ def _load(path: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     except (
         OSError,
         ValueError,
-        RecursionError,
-        RuntimeError,
+        RuntimeError,  # also covers RecursionError (JSON nested too deep)
     ) as exc:  # missing file, bad UTF-8, bad JSON
         raise ConfigError(f"cause list: {name} is missing or not valid JSON") from exc
     if not isinstance(data, list) or not all(isinstance(v, str) for v in data):

@@ -146,6 +146,11 @@ _FORBIDDEN_NAMES = frozenset(
 )
 
 
+# ASCII characters a fetch URL may not hold: a backslash, a space and the control characters. (This was `[\\\s\x00-\x1f\x7f]`, in which `\s`
+# overlapped the control range; `\s` added only the space and non-ASCII spaces, and `not url.isascii()` refuses every non-ASCII
+# character anyway, so a URL is refused for exactly the same characters.)
+_URL_UNSAFE = re.compile(r"[\\ \x00-\x1f\x7f]")
+
 _NUMERIC_HOST = re.compile(r"(?:0x[0-9a-f]+|[0-9]+)(?:\.(?:0x[0-9a-f]+|[0-9]+))*", re.IGNORECASE)
 
 
@@ -557,7 +562,7 @@ class ToolContext:
             raise ToolRefused(f"method {method!r} is not the one bound to {operation!r}")
         # One parser, one answer: a URL the checks read differently from the HTTP client (backslashes, a `#` before
         # an `@`, percent-encoded hosts, control characters) is refused.
-        if re.search(r"[\\\s\x00-\x1f\x7f]", url) or not url.isascii():
+        if _URL_UNSAFE.search(url) or not url.isascii():
             raise ToolRefused(
                 "the URL holds a backslash, whitespace, a control or a non-ASCII character"
             )

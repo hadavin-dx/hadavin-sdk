@@ -226,3 +226,24 @@ def test_score_carries_redaction_into_its_meta_and_refuses_mixed_modes(tmp_path,
     assert res.meta["redaction"]["mode"] == "on"
     report = __import__("hadavin_sdk.k1b.report", fromlist=["x"]).render_score_report(res)
     assert "## Redaction" in report and "predates" not in report
+
+
+def test_a_credential_value_that_is_not_base64_or_not_text_is_still_masked_whole():
+    """`_pair` tries the base64-decoded text of a value under a credential key. Bad base64 raises `binascii.Error` and bytes that
+    are not UTF-8 raise `UnicodeDecodeError`; both are `ValueError`s, so one `except ValueError` covers them (CodeAnt asked for
+    that narrowing). Neither case may escape, and the value is masked whole when the redactor changes nothing."""
+    import base64
+    import binascii
+
+    from hadavin_sdk.k1b import redaction
+
+    assert issubclass(binascii.Error, ValueError) and issubclass(UnicodeDecodeError, ValueError)
+    keep = lambda s: s
+    not_base64 = "not base64 !!"
+    not_text = base64.b64encode(b"\xff\xfe\xfa\xfb").decode("ascii")
+    for value in (not_base64, not_text, ""):
+        assert redaction._pair("password", value, keep) == redaction.MASKED, value
+    # base64 of text the redactor does change: the decoded spelling is used and the key is stripped again
+    shout = lambda s: s.replace("hunter", "<MASK>")
+    encoded = base64.b64encode(b"hunter2").decode("ascii")
+    assert redaction._pair("password", encoded, shout) == "<MASK>2"

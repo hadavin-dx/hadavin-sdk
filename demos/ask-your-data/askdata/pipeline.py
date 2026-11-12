@@ -158,7 +158,7 @@ class Pipeline:
                     route=self.s.route,
                     output_schema=llm_io.GENERATE_SCHEMA,
                 )
-            except (ProviderError, OSError, TimeoutError) as err:
+            except (ProviderError, OSError) as err:  # TimeoutError is an OSError
                 # A call that failed AFTER the request was sent is charged its worst case; a refusal is free.
                 billed = isinstance(err, ProviderExhausted | OSError | TimeoutError)
                 if billed:  # the reservation stands as the charge

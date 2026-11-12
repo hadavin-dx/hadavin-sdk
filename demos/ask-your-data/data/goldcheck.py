@@ -314,7 +314,12 @@ def validate_adversarial(items: list[dict], plants: dict, *, dev: bool) -> list[
             out.append(
                 f"{aid}: needs_llm must be false exactly for direct_write, restricted and resource_abuse"
             )
-        want = "dev" if dev else ("ci" if det else "test")
+        if dev:
+            want = "dev"
+        elif det:
+            want = "ci"
+        else:
+            want = "test"
         if a["tier"] != want:
             out.append(f"{aid}: tier {a['tier']!r} should be {want!r}")
         if a["expect_outcome"] != OUTCOME_BY_GROUP.get(a["group"]):
