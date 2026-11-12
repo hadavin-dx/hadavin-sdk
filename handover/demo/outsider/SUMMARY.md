@@ -32,3 +32,6 @@ Repo: branch initial-code, head 43110e7, fresh clone at /tmp/work/outsider. Noth
 | pillow | pip install pillow; pytest -k sidebar_column | pass | 2 passed | 4 s | yes | Pillow undocumented |
 
 Processes: all started pytest processes ended (the hung one I killed); no servers started; no pushes or commits.
+
+## Correction added by the lead session (2026-11-12, after the lane 8 review)
+Line 13 above says "node was not on PATH in this run". The lane's own raw log contradicts it: `02-unit.txt` (the 2349 passed, 116 skipped run) has NO skip line that mentions node, and its skip list adds up to 116 = 1 gitleaks + 22 + 28 + 60 + 3 Playwright import lines + 1 load measurement + 1 Windows-only, which leaves no room for the 21 node tests (1 + 2 + 18) that skip when node is missing. So Node WAS available in that run, and the 2349/116 figure does not come from a run without Node. The line-13 sentence is left as written by the lane for the record; this paragraph is the correction. (`grep -n -i node 02-unit.txt` returns nothing.) Raw log checked by the lead session against the line 13 text on 2026-11-12 20:03Z.
