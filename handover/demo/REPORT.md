@@ -1,6 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 19:03Z - lane 2 reviewed: no Blocker/Major; lane 4 started; lanes 1, 3, 4 running (3 agents)
+- Lane 2 review saved: drift/REVIEW-1.md (3 doc-wrong confirmed, 3 Nits: wrong JS line cite, 'BOTH FINE' count is an inference, API default by_email=1; limits.md:108 to check). Review was read-only: it could not run git apply or tests; the lane agent's `git apply --check` passed.
+- Lane 1 (outsider, python3.12 venv): lint, mypy, bandit, schema, hygiene done (9 passed, 1 skipped, no gitleaks); full pytest running.
+- Lane 4 (second outsider pass on pr-3-tests, docker or uv instead of plain venv, 1 pytest process): started.
+- Lane 3: patches and evidence files appearing; agent still running.
+- Stuck: nothing. Needs: nothing.
+
 ## 2026-11-12 19:00Z / 00:30 IST - lane 2 builder done, EGM review of it running; lanes 1 and 3 still running (3 agents)
 - Lane 2 (drift): 3 doc-wrong, 0 code-wrong, 1 both-fine, 4 groups unverified. Files: drift/DRIFT-REPORT-1.md, drift/docs-fixes.patch (3 one-line hunks, git apply --check passed on a scratch copy). The lane agent had no Agent tool, so the egm reviewer agents inside the drift skill did NOT run; the Skill call itself was accepted ("Launching skill: egm:egm-drift-report"). Its own full pytest run was stopped at about 35 percent (no count claimed).
 - Now running: egm:egm-codebase-details reviewer (sonnet) checking the drift report and patch against the code and hunting for missed drift; I will save its report to drift/REVIEW-1.md.
