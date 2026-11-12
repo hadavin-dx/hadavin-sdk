@@ -1,0 +1,3 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+the change has no builder notes file (handover/evidence/**/NOTES.md)
+tests/test_notes_lines_check.py: the test test_plant_no_notes_row_zz is new or changed and has no row of its own in the notes
