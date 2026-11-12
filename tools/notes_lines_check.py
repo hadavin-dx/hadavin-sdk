@@ -4,8 +4,18 @@ that a builder's notes hold a row for each.
     python tools/notes_lines_check.py <base-commit> <notes.md> <file> [<file> ...]
     python tools/notes_lines_check.py --auto <base-commit> [--head <commit>]
 
-What it reads. In each test file it reads every top-level `test_*` function (plain or `async`) and every `test_*`
-method of a top-level class whose name starts with `Test` or that is a `unittest.TestCase` (named `Class::test_x`).
+The one rule: a change of a file under `tests/` lists every test unless the check proves that nothing can reach that
+file. Wherever it meets something it cannot read (a module name worked out at run time, a path it cannot work out, a
+file that does not parse, a base class it cannot find ...) it records a reason through ONE collector,
+`unresolved_edge`; with one reason or more in the tests tree, a change of any file under `tests/` lists every test
+(the first five reasons are printed). Only a file that no code can read (`.md`, `.rst`) is exempt. The resolver
+follows an alias of an alias (`imp = importlib.import_module`, then `imp2 = imp`) for at most 8 passes; a longer
+chain of aliases is not followed.
+
+What it reads. In each test file it reads every `test_*` function (plain or `async`; also one assigned as
+`test_x = factory()`, or defined under an `if`, `try`, `with` or `match`) and every `test_*` method, also an inherited
+one and one of a nested class, of a class whose name starts with `Test` or that has any base class other than `object`
+(it may be a `unittest.TestCase` through its base: named `Class::test_x`).
 A test is "new or changed" when it is missing from the base commit's copy of the file, or when its own syntax tree
 differs, or when the syntax tree of anything it uses differs, to any depth and through every link:
 - a module-level function, class, import, `+=`, or constant it names; a constant is followed through the value that
@@ -17,8 +27,14 @@ differs, or when the syntax tree of anything it uses differs, to any depth and t
   `setup_module`, `teardown_module`, `setup_function`, `pytest_generate_tests`, every other module-level statement
   that runs at collection (an `if`, a `try`, a `for`, a call); in a test class its decorators, bases, every helper
   method that is no test, `setup_method`, `setup_class`, and a class-level fixture;
-- the code of every `conftest.py` above the test file (its hooks and its module-level statements), and the text of
-  every module a `pytest_plugins` list names or a `-p name` in `addopts` loads (they act on every test);
+- the code of every `conftest.py` above the test file (each top-level function and class and each module-level
+  statement of it), the `__init__.py` of every package folder on the way, and the text of every module a
+  `pytest_plugins` list names (in any form: `=`, `+=`, `.append`) or a `-p name` in `addopts` of a settings file
+  loads (they act on every test). Every function of a conftest whose name starts with `pytest_` (a hook) acts on
+  every test below it, and so do the other 14 names a test file or conftest can use to switch tests on or off:
+  `__test__`, `setup_module`, `teardown_module`, `setUpModule`, `tearDownModule`, `setup_function`,
+  `teardown_function`, `pytest_generate_tests`, `pytest_collection_modifyitems`, `pytest_configure`,
+  `pytest_runtest_setup`, `pytest_plugins`, `collect_ignore` and `collect_ignore_glob`;
 - the ways a unittest class is set up and torn down (`setUp`, `setUpClass`, `tearDown`, `tearDownClass`, the async
   forms, and `setUpModule`, `tearDownModule`), a fixture a test names as a text (`usefixtures("x")`,
   `request.getfixturevalue("x")`), a name a walrus binds at module level (`W = (X := 1)` binds X too), and a star
@@ -41,7 +57,7 @@ that fell. `conftest.py` (also the one at the root of the repository): each top-
 each name a module-level assignment binds (`pytest_plugins`, `collect_ignore`, a constant) is one unit with all
 assignments of that name, and every other top-level statement (a `for`, an `if`, `collect_ignore.append(...)`) is
 the unit `conftest module code`. `tests/fixtures/policy_sources_*.txt`: the whole file is one unit named by its
-file name. The pytest settings of the repository (`pytest.ini`, `tox.ini`, `setup.cfg`, and the `[tool.pytest]`
+file name. The pytest settings of the repository (`pytest.ini`, `.pytest.ini`, `pytest.toml`, `tox.ini`, `setup.cfg`, and the `[tool.pytest]`
 tables of `pyproject.toml`; a change of a dependency is no change): one unit named by the file. Any other file
 under `tests/` that is not Python (data, a script): one unit named by the file name.
 
@@ -66,8 +82,9 @@ reads only the syntax of Python files, the settings files named above and the te
 package and found through its entry point), a change in `src/` or `tools/` that a test uses (those have their own
 mutants), a change to a file outside the kinds above (a workflow, a lock file, an environment variable of the test
 run such as `PYTEST_ADDOPTS`, a `-p` plugin named only on the command line) and a dependency version are not seen.
-A name built at run time with `getattr` or `exec`, and a module loaded from a path (`runpy`,
-`importlib.util.spec_from_file_location`), are not followed. A fixture whose name is built at run time
+A module loaded from a path (`runpy.run_path`, `importlib.util.spec_from_file_location`) is followed when the path
+can be worked out from `__file__`, `Path`, `/` and texts; `getattr` on a module of `tests` with a name that is no
+text, `exec`, and a path that cannot be read are unresolved edges. A fixture whose name is built at run time
 (`request.getfixturevalue(name)`, `usefixtures(*names)`, `parametrize(names, indirect=True)`, `lazy_fixture`) is read as
 every fixture the file and the conftests above it hold; `@pytest.fixture(name="alias")` is the name `alias`. A
 file that imports with `importlib`, `pkgutil` or `__import__` is read as reaching the modules it names as text and
@@ -99,6 +116,7 @@ files; it never writes."""
 from __future__ import annotations
 
 import ast
+import hashlib
 import re
 import shutil
 import subprocess
@@ -109,6 +127,10 @@ from pathlib import Path
 
 MIN_WORDS = 4  # words of the reason cell
 CONFTEST_CODE = "conftest module code"  # the unit that holds every top-level statement of a conftest that is no name
+ALLOWED_SUFFIXES = (
+    ".md",
+    ".rst",
+)  # a file under tests/ no code reads: the only exemption of a changed file
 PLACEHOLDERS = frozenset(
     {"ok", "todo", "tbd", "x", "n/a", "na", "same", "none", "-", "...", "later"}
 )
@@ -199,17 +221,122 @@ def _bound(alias: ast.alias) -> str:
     return alias.asname or alias.name.split(".")[0]
 
 
+def unresolved_edge(sink: list[str], reason: str) -> None:
+    """The ONE collector of the places where the check meets something it cannot read (an import by a name worked
+    out at run time, a file that does not parse, a plugin it cannot name ...). Each such place calls this with a
+    reason; one reason or more makes the check list EVERY test whenever a file under `tests/` changes (see
+    `_Signatures.closure`): the check must never silently reach nothing."""
+    if reason not in sink:
+        sink.append(reason)
+
+
+def _autouse_keyword(call: ast.Call) -> bool:
+    """True when a `fixture(...)` call may switch autouse on: any `autouse=` value that is not the constant False or
+    None (`True`, `1`, a name such as `AUTO`, an expression) is read as on."""
+    return any(
+        k.arg == "autouse"
+        and not (isinstance(k.value, ast.Constant) and k.value.value in (False, None))
+        for k in call.keywords
+    )
+
+
 def _is_autouse(fn: ast.AST) -> bool:
-    """True for a function decorated `@pytest.fixture(..., autouse=True, ...)` (or `@fixture(...)`)."""
+    """True for a function decorated `@pytest.fixture(..., autouse=<anything but False>, ...)` (or `@fixture(...)`)."""
     for d in getattr(fn, "decorator_list", []):
         if isinstance(d, ast.Call):
             callee = d.func.attr if isinstance(d.func, ast.Attribute) else getattr(d.func, "id", "")
-            if callee == "fixture" and any(
-                k.arg == "autouse" and isinstance(k.value, ast.Constant) and k.value.value is True
-                for k in d.keywords
-            ):
+            if callee == "fixture" and _autouse_keyword(d):
                 return True
     return False
+
+
+def _autouse_calls(tree: ast.AST) -> list[str]:
+    """The names an assignment gives to a fixture made as `f = pytest.fixture(autouse=True)(_impl)`: the assigned
+    name counts as an autouse fixture of the file (the function it wraps is reached through the assignment, so it
+    needs no name of its own)."""
+    out: list[str] = []
+    for n in ast.walk(tree):
+        if not isinstance(n, (ast.Assign, ast.AnnAssign)):
+            continue
+        call = n.value
+        if (
+            isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Call)
+            and _dotted(call.func.func)[-1:] == ["fixture"]
+            and _autouse_keyword(call.func)
+        ):
+            if isinstance(n, ast.Assign):
+                out += [name for t in n.targets for name in _target_names(t)]
+            elif isinstance(n, ast.AnnAssign):
+                out += _target_names(n.target)
+    return out
+
+
+def _path_parts(
+    e: ast.AST | None,
+    rel: str,
+    values: dict[str, list[ast.AST]],
+    depth: int = 0,
+    lookup: Callable[[str], tuple[str, dict[str, list[ast.AST]], ast.AST] | None] | None = None,
+) -> list[str] | None:
+    """The folders and file of a path an expression builds, from the root of the repository, with `*` for a part that
+    is worked out at run time (`Path(__file__).resolve().parents[2] / "demos" / f"{name}.py"` gives
+    `demos`, `*.py`); None when the expression cannot be read."""
+    if e is None or depth > 8:
+        return None
+    if isinstance(e, ast.Constant) and isinstance(e.value, str):
+        return [p for p in e.value.split("/") if p]
+    if isinstance(e, ast.JoinedStr):
+        text = "".join(
+            v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "*"
+            for v in e.values
+        )
+        return [p for p in text.split("/") if p]
+    if isinstance(e, ast.Name):
+        if e.id == "__file__":
+            return rel.split("/")
+        got = values.get(e.id, [])
+        if len(got) == 1:
+            return _path_parts(got[0], rel, values, depth + 1, lookup)
+        far = (
+            lookup(e.id) if lookup and not got else None
+        )  # a name imported from another module of `tests`
+        return _path_parts(far[2], far[0], far[1], depth + 1, lookup) if far else None
+    if isinstance(e, ast.BinOp) and isinstance(e.op, ast.Div):
+        left = _path_parts(e.left, rel, values, depth + 1, lookup)
+        right = _path_parts(e.right, rel, values, depth + 1, lookup)
+        return None if left is None or right is None else [*left, *right]
+    if isinstance(e, ast.Attribute) and e.attr == "parent":
+        base = _path_parts(e.value, rel, values, depth + 1, lookup)
+        return None if base is None else base[:-1]
+    if (
+        isinstance(e, ast.Subscript)
+        and isinstance(e.value, ast.Attribute)
+        and e.value.attr == "parents"
+        and isinstance(e.slice, ast.Constant)
+        and isinstance(e.slice.value, int)
+    ):
+        base = _path_parts(e.value.value, rel, values, depth + 1, lookup)
+        cut = e.slice.value + 1
+        return None if base is None or cut > len(base) else base[: len(base) - cut]
+    if isinstance(e, ast.Call):
+        callee = [_base_name(e.func)]
+        if callee in (["resolve"], ["absolute"]) and isinstance(e.func, ast.Attribute):
+            return _path_parts(e.func.value, rel, values, depth + 1, lookup)
+        if callee in (["Path"], ["PurePath"], ["join"], ["joinpath"]) and e.args:
+            parts: list[str] = []
+            if callee == ["joinpath"] and isinstance(e.func, ast.Attribute):
+                head = _path_parts(e.func.value, rel, values, depth + 1, lookup)
+                if head is None:
+                    return None
+                parts = head
+            for a in e.args:
+                got_parts = _path_parts(a, rel, values, depth + 1, lookup)
+                if got_parts is None:
+                    return None
+                parts += got_parts
+            return parts
+    return None
 
 
 def _star_stems(tree: ast.AST, rel: str) -> list[str]:
@@ -306,16 +433,29 @@ def _stem(rel: str, level: int, module: str | None) -> str | None:
     return "/".join(parts) if parts and parts[0] == "tests" else None
 
 
-def _imports(tree: ast.AST, rel: str) -> dict[str, tuple[str, str | None]]:
+def _imports(
+    tree: ast.AST,
+    rel: str,
+    sink: list[str] | None = None,
+    bare: list[tuple[str, str, str | None]] | None = None,
+) -> dict[str, tuple[str, str | None]]:
     """local name -> (path stem of a module under `tests`, the name taken from it or None for the module itself),
-    for every import of the file that reaches such a module (module level or inside a function)."""
+    for every import of the file that reaches such a module (module level or inside a function). A relative import
+    that does not end under `tests` is an unresolved edge; an absolute import whose first name is no module under
+    `tests` is listed in `bare` as (local name, dotted module, name taken) so the tree can tell whether it is a
+    module next to the file (`from helpers import x`)."""
     out: dict[str, tuple[str, str | None]] = {}
+    sink = sink if sink is not None else []
     for n in ast.walk(tree):
         if isinstance(n, ast.ImportFrom):
             stem = _stem(rel, n.level, n.module)
             if stem is not None:
                 # a star import binds no name of its own: `_star_stems` reads it (every name of the module)
                 out.update({a.asname or a.name: (stem, a.name) for a in n.names if a.name != "*"})
+            elif n.level:
+                unresolved_edge(sink, f"{rel}: a relative import that does not end under tests")
+            elif bare is not None and n.module:
+                bare += [(a.asname or a.name, n.module, a.name) for a in n.names if a.name != "*"]
         elif isinstance(n, ast.Import):
             for a in n.names:
                 stem = _stem(rel, 0, a.name)
@@ -323,6 +463,8 @@ def _imports(tree: ast.AST, rel: str) -> dict[str, tuple[str, str | None]]:
                     # `import tests.x as y` binds y; `import tests.x` binds the dotted name `tests.x` (two such imports
                     # must not share the key `tests`)
                     out[a.asname or a.name] = (stem, None)
+                elif bare is not None:
+                    bare.append((a.asname or a.name, a.name, None))
     return out
 
 
@@ -348,7 +490,37 @@ SWITCH_NAMES = (
 
 # The calls that import a module by a name that may be worked out at run time. A file that makes one (a conftest that
 # imports every module of a folder at collection) depends on the text of every module it can reach that way.
-DYNAMIC_IMPORTS = (["import_module"], ["iter_modules"], ["walk_packages"], ["__import__"])
+DYNAMIC_IMPORTS = (
+    ["import_module"],
+    ["iter_modules"],
+    ["walk_packages"],
+    ["__import__"],
+    ["importorskip"],
+    ["find_spec"],
+    ["run_module"],
+)
+# The loaders that take a PATH (not a module name): the path is worked out by `_path_parts`; a file under `tests` is
+# reached, a path outside `tests` reaches nothing of it, a path that cannot be read is an unresolved edge.
+PATH_LOADERS = (["spec_from_file_location"], ["run_path"])
+# The calls that run a spec's code; the spec itself comes from `find_spec` or a path loader.
+SPEC_MAKERS = (["find_spec"], ["spec_from_file_location"], ["spec_from_loader"])
+EXEC_CALLS = (["exec_module"], ["load_module"])
+# The options of `PYTEST_ADDOPTS` that can load code or change where tests are read from; any other option (a
+# `--deselect`, `-q`) cannot make a file of `tests` run that did not run before.
+LOADING_OPTIONS = (
+    "-p",
+    "-c",
+    "-o",
+    "--rootdir",
+    "--confcutdir",
+    "--import-mode",
+    "--pyargs",
+    "--override-ini",
+)
+ENV_CALLS = ("setenv", "delenv", "get", "setdefault", "putenv", "pop", "getenv", "unsetenv")
+# The names a name-reading loader reads as the module name (the first argument or `name=`), and the position and
+# keyword of the path of a path loader.
+PATH_ARG = {"spec_from_file_location": (1, "location"), "run_path": (0, "path_name")}
 # The calls that name a fixture as a text, not as a parameter.
 FIXTURE_BY_TEXT = (["usefixtures"], ["getfixturevalue"], ["getfuncargvalue"])
 # The plugin calls that name a fixture as a text (`lazy_fixture("x")`, the short form `lf("x")`) and the call that
@@ -409,20 +581,123 @@ class _Module:
                 continue
             for name in names:
                 self.dumps[name] = self.dumps.get(name, "") + ast.dump(n)
-        self.imports = _imports(self.tree, rel)
+        self.source = source
+        # every place where something cannot be read is one entry here (`unresolved_edge`)
+        self.unresolved: list[str] = []
+        self.bare: list[tuple[str, str, str | None]] = []
+        self.imports = _imports(self.tree, rel, self.unresolved, self.bare)
         self.stars = _star_stems(self.tree, rel)
-        # the modules a `pytest_plugins = [...]` list names (a text): pytest imports them, so each acts on every test
-        # under the folder of the conftest like the conftest itself
-        self.plugin_names: list[str] = [
-            c.value
-            for n in self.tree.body
-            if isinstance(n, (ast.Assign, ast.AnnAssign))
-            and "pytest_plugins" in _assigned_names(n)
-            and n.value is not None
-            for c in ast.walk(n.value)
-            if isinstance(c, ast.Constant) and isinstance(c.value, str)
+        # the modules a `pytest_plugins` list names (a text): pytest imports them, so each acts on every test
+        # under the folder of the conftest like the conftest itself. Every form is read: `=`, an annotated `=`,
+        # `+=`, `.append(...)`, `.extend([...])`, at any depth; a value that is no text or list of texts is an
+        # unresolved edge
+        self.plugin_names: list[str] = []
+        for n in ast.walk(self.tree):
+            if (
+                isinstance(n, (ast.Assign, ast.AnnAssign, ast.AugAssign))
+                and "pytest_plugins" in _assigned_names(n)
+                and n.value is not None
+            ):
+                value = n.value
+            elif (
+                isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Attribute)
+                and _dotted(n.func.value) == ["pytest_plugins"]
+                and n.func.attr in ("append", "extend", "insert")
+            ):
+                value = ast.Tuple(elts=list(n.args), ctx=ast.Load())
+            else:
+                continue
+            texts = [
+                c
+                for c in ast.walk(value)
+                if isinstance(c, ast.Constant) and isinstance(c.value, str)
+            ]
+            readable = all(
+                isinstance(x, (ast.Constant, ast.List, ast.Tuple, ast.Load, ast.BinOp, ast.Add))
+                for x in ast.walk(value)
+            )
+            if not readable:
+                unresolved_edge(
+                    self.unresolved,
+                    f"{rel}: pytest_plugins is built by an expression it cannot read",
+                )
+            self.plugin_names += [c.value for c in texts]
+        covered: set[int] = set()
+        for n in ast.walk(self.tree):
+            # `env["PYTEST_ADDOPTS"] = value`: read when the value has only text and the options that load no code
+            if (
+                isinstance(n, ast.Assign)
+                and isinstance(n.targets[0], ast.Subscript)
+                and isinstance(n.targets[0].slice, ast.Constant)
+                and n.targets[0].slice.value == "PYTEST_ADDOPTS"
+            ):
+                words = " ".join(
+                    c.value
+                    for c in ast.walk(n.value)
+                    if isinstance(c, ast.Constant) and isinstance(c.value, str)
+                ).split()
+                if words and not any(w.startswith(LOADING_OPTIONS) for w in words):
+                    covered.add(id(n.targets[0].slice))
+        for n in ast.walk(self.tree):
+            # the environment variable that adds pytest options (a plugin) to a run: its value is not in the tree
+            used = (
+                (isinstance(n, ast.Subscript) and n.slice)
+                or (
+                    isinstance(n, ast.Call)
+                    and n.func
+                    and _base_name(n.func) in ENV_CALLS
+                    and n.args
+                    and n.args[0]
+                )
+                or None
+            )
+            keys = [used] if used is not None else []
+            if isinstance(n, ast.Dict):
+                keys += [k for k in n.keys if k is not None]
+            for k in keys:
+                if (
+                    isinstance(k, ast.Constant)
+                    and k.value == "PYTEST_ADDOPTS"
+                    and id(k) not in covered
+                ):
+                    unresolved_edge(
+                        self.unresolved,
+                        f"{rel}: PYTEST_ADDOPTS is used, its options are not in the tree",
+                    )
+            # a fixture named by a value, or a parametrize with `indirect` and names it cannot read
+            if isinstance(n, ast.Call):
+                last = _dotted(n.func)[-1:]
+                if last in (*FIXTURE_BY_TEXT, *LAZY_FIXTURES) and any(
+                    not (isinstance(a, ast.Constant) and isinstance(a.value, str))
+                    for a in [*n.args, *(k.value for k in n.keywords)]
+                ):
+                    unresolved_edge(
+                        self.unresolved, f"{rel}: a fixture is named by a value it cannot read"
+                    )
+                elif last == PARAMETRIZE and DYNAMIC_FIXTURE in _parametrize_names(n):
+                    unresolved_edge(
+                        self.unresolved,
+                        f"{rel}: parametrize with indirect and names it cannot read",
+                    )
+                elif last == ["getattr"] and len(n.args) >= 2:
+                    # getattr on a module of `tests` with a name that is no text reaches a member it cannot name
+                    first = _dotted(n.args[0])
+                    if (
+                        first
+                        and first[0] in self.imports
+                        and not (
+                            isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str)
+                        )
+                    ):
+                        unresolved_edge(
+                            self.unresolved,
+                            f"{rel}: getattr on a module of tests with a name it cannot read",
+                        )
+        self.autouse = [
+            n.name for n in _block_nodes(self.tree.body) if isinstance(n, _FUNCS) and _is_autouse(n)
         ]
-        self.autouse = [n.name for n in self.tree.body if isinstance(n, _FUNCS) and _is_autouse(n)]
+        self.autouse += [x for x in _autouse_calls(self.tree) if x not in self.autouse]
         # module-level statements that bind nothing the table above knows (`if`, `try`, `for`, `with`, a call such
         # as `pytest.skip(allow_module_level=True)` or `collect_ignore.append(...)`, an assignment to a subscript
         # or an attribute): code that runs when the file is collected and can switch every test of it off or on,
@@ -430,12 +705,17 @@ class _Module:
         self.glue = [n for n in self.tree.body if not _is_declaration(n)]
         self.glue_dump = "".join(ast.dump(n) for n in self.glue)
         # modules that the file imports by a name worked out at run time (`importlib.import_module(...)`,
-        # `pkgutil.iter_modules(...)`, `__import__(...)`): see `_Signatures.closure`
+        # `pkgutil.iter_modules(...)`, `__import__(...)`, `pytest.importorskip(...)`, a spec ...): see
+        # `_Signatures.closure`
         self.dynamic = False
         self.dynamic_names: list[str] = []  # the dotted names written as text in such a call
         # a name built at run time (`import_module(f"tests.x.dyn_{n}")`, `import_module("tests.x." + n)`): the text it
         # starts with ("tests.x.dyn_"), or "" when it starts with a value (`import_module(name)`)
         self.dynamic_prefixes: list[str] = []
+        self.path_args: list[ast.AST | None] = []  # the path expression of each path loader call
+        self.package_names: list[
+            str
+        ] = []  # packages of `tests` a name starts with (`pkg.__name__ + "." + x`)
         aliases = _dynamic_aliases(self.tree)
         called = {id(n.func) for n in ast.walk(self.tree) if isinstance(n, ast.Call)}
         # the right side of `imp = importlib.import_module` only gives the function another name: no call, no hand-on
@@ -446,9 +726,24 @@ class _Module:
             and n.value is not None
             and isinstance(n.value, (ast.Name, ast.Attribute))
         }
+        calls = [
+            (n, _callee(n.func, aliases)) for n in ast.walk(self.tree) if isinstance(n, ast.Call)
+        ]
+        makes_spec = any(c in SPEC_MAKERS or c in PATH_LOADERS for _, c in calls)
         for n in ast.walk(self.tree):
             callee = _callee(n.func if isinstance(n, ast.Call) else n, aliases)
-            if isinstance(n, ast.Call) and callee in DYNAMIC_IMPORTS:
+            if isinstance(n, ast.Call) and callee in EXEC_CALLS:
+                # runs the code of a spec: the spec is made by a call this file makes (read below), or it comes from
+                # somewhere this file cannot see
+                self.dynamic = True
+                if not makes_spec:
+                    unresolved_edge(
+                        self.unresolved, f"{rel}: exec_module of a spec this file does not make"
+                    )
+            elif isinstance(n, ast.Call) and callee in PATH_LOADERS:
+                self.dynamic = True
+                self._path_loader(n, callee)
+            elif isinstance(n, ast.Call) and callee in DYNAMIC_IMPORTS:
                 self.dynamic = True
                 # the module name is the first argument or the keyword `name=`
                 named = [k.value for k in n.keywords if k.arg == "name"]
@@ -457,24 +752,71 @@ class _Module:
                     for a in (*n.args, *named)
                     if isinstance(a, ast.Constant) and isinstance(a.value, str)
                 ]
-                if callee in (["import_module"], ["__import__"]):
-                    first = n.args[0] if n.args else (named[0] if named else None)
-                    prefix = _literal_start(first) if first is not None else ""
-                    if prefix == "" and _starts_with_package_name(first, self.imports):
-                        prefix = None  # the folder of the package it imports is reached through the imports
-                    if prefix is not None:
-                        self.dynamic_prefixes.append(prefix)
+                if callee in (["iter_modules"], ["walk_packages"]):
+                    # a package of tests, `pkg.__path__` (its folder is reached through the imports)
+                    chain = _dotted(n.args[0]) if n.args else []
+                    if not (
+                        len(chain) == 2 and chain[1] == "__path__" and chain[0] in self.imports
+                    ):
+                        unresolved_edge(
+                            self.unresolved,
+                            f"{rel}: iter_modules or walk_packages of a path it cannot read",
+                        )
+                    continue
+                first = n.args[0] if n.args else (named[0] if named else None)
+                if first is None:
+                    unresolved_edge(self.unresolved, f"{rel}: an import call with no module name")
+                    self.dynamic_prefixes.append("")
+                    continue
+                prefix = _literal_start(first)
+                package = _package_name_prefix(first)
+                if package is not None and prefix == "":
+                    # `f"{pkg.__name__}.{x}"`: a module inside the package `pkg` that the file imports from `tests`
+                    # (checked against the tree: `_Signatures._cross_checks`); its folder is reached through the imports
+                    self.package_names.append(package)
+                elif (
+                    prefix is None
+                ):  # a plain text: followed as written, a leading dot is a relative name
+                    if first.value.startswith("."):  # type: ignore[attr-defined]
+                        unresolved_edge(
+                            self.unresolved,
+                            f"{rel}: a relative module name written as one text (starts with a dot)",
+                        )
+                elif prefix == "":
+                    unresolved_edge(
+                        self.unresolved, f"{rel}: a module name that starts with a value"
+                    )
+                    self.dynamic_prefixes.append(prefix)
+                elif prefix.startswith("."):
+                    unresolved_edge(
+                        self.unresolved,
+                        f"{rel}: a relative module name built from parts (starts with a dot)",
+                    )
+                    self.dynamic_prefixes.append("")
+                elif "tests".startswith(prefix) or prefix.startswith("tests"):
+                    self.dynamic_prefixes.append(prefix)
             # (a name that is the target of `imp = ...` hands nothing on: its context is Store)
             elif (
                 isinstance(n, (ast.Name, ast.Attribute))
                 and id(n) not in called
                 and not isinstance(n.ctx, ast.Store)
-                and callee in DYNAMIC_IMPORTS
+                and (callee in DYNAMIC_IMPORTS or callee in PATH_LOADERS)
             ):
                 # the function handed on as a value (`map(importlib.import_module, names)`): it is called somewhere
                 # we cannot see, with names we cannot read
                 self.dynamic = True
+                unresolved_edge(self.unresolved, f"{rel}: a loader is handed on as a value")
                 self.dynamic_prefixes.append("")
+
+    def _path_loader(self, call: ast.Call, callee: list[str]) -> None:
+        """`spec_from_file_location(name, path)` and `runpy.run_path(path)`: the path expression is kept; the tree
+        reads it (`_Signatures.path_folders`): a file under `tests` is reached, one outside it reaches nothing of
+        `tests`, one that cannot be read is an unresolved edge."""
+        position, keyword = PATH_ARG[callee[0]]
+        arg = call.args[position] if len(call.args) > position else None
+        self.path_args.append(
+            arg or next((k.value for k in call.keywords if k.arg == keyword), None)
+        )
 
     def _value(self, names: list[str], value: ast.AST) -> None:
         for name in names:
@@ -523,23 +865,52 @@ def _dynamic_aliases(tree: ast.AST) -> dict[str, str]:
     return out
 
 
-def _starts_with_package_name(
-    a: ast.AST | None, imports: dict[str, tuple[str, str | None]]
-) -> bool:
-    """True when a name built at run time starts with the name of a package of `tests` the file imports
-    (`f"{kinds.__name__}.{x}"`, `kinds.__name__ + "." + x`, `"%s.x" % kinds.__name__` is not one): that text is the
-    package, a folder that `_dynamic_files` already reaches, so it is no unreadable name."""
-    first: ast.AST | None = a
-    if isinstance(a, ast.JoinedStr) and a.values:
-        first = a.values[0]
-        if isinstance(first, ast.FormattedValue):
-            first = first.value
-    elif isinstance(a, ast.BinOp):
-        first = a.left
-        while isinstance(first, ast.BinOp):
-            first = first.left
+def _block_nodes(body: list[ast.stmt]) -> list[ast.stmt]:
+    """The statements of a body and, inside every `if`, `try`, `with`, `for` and `while` of it, theirs too (a test or
+    a fixture defined under a condition is still defined)."""
+    out: list[ast.stmt] = []
+    for n in body:
+        out.append(n)
+        for field in ("body", "orelse", "finalbody"):
+            out += _block_nodes(
+                getattr(n, field, []) if not isinstance(n, _FUNCS + (ast.ClassDef,)) else []
+            )
+        for h in getattr(n, "handlers", []) if not isinstance(n, _FUNCS + (ast.ClassDef,)) else []:
+            out += _block_nodes(h.body)
+        for c in getattr(n, "cases", []):
+            out += _block_nodes(c.body)
+    return out
+
+
+def _package_name_prefix(a: ast.AST) -> str | None:
+    """The local name `pkg` when a module name is built as `pkg.__name__` followed by a text that starts with a dot
+    (`f"{pkg.__name__}.{x}"`, `pkg.__name__ + "." + x`), else None. Whether `pkg` is a package of `tests` is checked
+    against the tree: anything else that starts with a value is a name the check cannot read."""
+    if isinstance(a, ast.JoinedStr) and len(a.values) >= 2:
+        head, nxt = a.values[0], a.values[1]
+        first = head.value if isinstance(head, ast.FormattedValue) else None
+    elif isinstance(a, ast.BinOp) and isinstance(a.op, ast.Add):
+        operands: list[ast.AST] = []
+        node: ast.AST = a
+        while isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            operands.insert(0, node.right)
+            node = node.left
+        operands.insert(0, node)
+        if len(operands) < 2:
+            return None
+        first, nxt = operands[0], operands[1]
+    else:
+        return None
     chain = _dotted(first) if first is not None else []
-    return len(chain) == 2 and chain[1] == "__name__" and chain[0] in imports
+    if (
+        len(chain) == 2
+        and chain[1] == "__name__"
+        and isinstance(nxt, ast.Constant)
+        and isinstance(nxt.value, str)
+        and nxt.value.startswith(".")
+    ):
+        return chain[0]
+    return None
 
 
 def _literal_start(a: ast.AST) -> str | None:
@@ -611,15 +982,211 @@ class _Signatures:
         # modules that a file imports by a name worked out at run time
         self.files: list[str] = list(getattr(loader, "files", None) or [])
         self._plugins: list[str] | None = None
+        self.sources: dict[str, str] = {}
+        self.syntax_errors: list[str] = []
+        self._tree: dict[str, tuple[list[str], str]] = {}
+        self._stems: set[str] | None = None
+        self._paths: dict[str, tuple[list[str], list[str]]] = {}
+        self._present = set(self.files)
 
     def module(self, rel: str, source: str | None = None) -> _Module | None:
-        if rel not in self.modules:
-            text = source if source is not None else (self.loader(rel) if self.loader else "")
-            try:
-                self.modules[rel] = _Module(rel, text) if text else None
-            except SyntaxError:
-                self.modules[rel] = None
-        return self.modules[rel]
+        text = source if source is not None else (self.loader(rel) if self.loader else "")
+        cached = self.modules.get(rel, False)
+        if cached is not False and self.sources.get(rel) == text:
+            return cached  # type: ignore[return-value]
+        self.sources[rel] = text
+        try:
+            mod = _Module(rel, text) if text else None
+        except SyntaxError:
+            mod = None
+            if rel.startswith("tests/") or kind_of(rel) == "conftest":
+                unresolved_edge(self.syntax_errors, f"{rel}: the file does not parse")
+        if mod is not None:
+            self._bare_imports(mod)
+        self.modules[rel] = mod
+        return mod
+
+    def _bare_imports(self, mod: _Module) -> None:
+        """An absolute import whose first name is a module or package next to the file (`from helpers import x` in
+        `tests/test_a.py` reads `tests/helpers.py`, as pytest puts the folder on the import path) is followed like an
+        import of `tests`; a first name that is a stem of files in other folders of `tests` only is an unresolved edge
+        (the check cannot tell which one runs); any other name (the standard library, a package, `src`) is outside."""
+        here = "/".join(mod.rel.split("/")[:-1])
+        for local, dotted, taken in mod.bare:
+            top, _, rest = dotted.partition(".")
+            if top in sys.stdlib_module_names:
+                continue
+            base = f"{here}/{top}" if here else top
+            if self._file_of(base) or self._file_of(
+                f"{base}/{rest.replace('.', '/')}" if rest else base
+            ):
+                stem = f"{base}/{rest.replace('.', '/')}" if rest else base
+                mod.imports[local] = (stem, taken)
+            elif top in self._test_stems():
+                unresolved_edge(
+                    mod.unresolved,
+                    f"{mod.rel}: the import of {top} may be a module of tests in another folder",
+                )
+
+    def path_folders(self, m: _Module) -> tuple[list[str], list[str]]:
+        """(the folders and files under `tests` that the path loaders of `m` read from, the reasons for each path that
+        cannot be read). A path outside `tests` (`demos/...`) reaches nothing of `tests`."""
+        if m.rel in self._paths:
+            return self._paths[m.rel]
+        folders: list[str] = []
+        reasons: list[str] = []
+
+        def lookup(name: str) -> tuple[str, dict[str, list[ast.AST]], ast.AST] | None:
+            head, attr = self._head(m.imports, name)
+            if head is None:
+                return None
+            target, member = self._imported(m.imports, head, attr)
+            got = target.values.get(member, []) if target is not None else []
+            return (
+                (target.rel, target.values, got[0])
+                if target is not None and len(got) == 1
+                else None
+            )
+
+        for arg in m.path_args:
+            parts = _path_parts(arg, m.rel, m.values, lookup=lookup)
+            if not parts or parts[0] == "*" or ".." in parts:
+                unresolved_edge(reasons, f"{m.rel}: a file is loaded from a path it cannot read")
+            elif parts[0] == "tests":
+                lead = parts[: next((i for i, p in enumerate(parts) if "*" in p), len(parts))]
+                folders.append("/".join(lead))
+        self._paths[m.rel] = (folders, reasons)
+        return self._paths[m.rel]
+
+    def _test_stems(self) -> set[str]:
+        """The names of every module and package under `tests/` (the stem of each file, each folder with an
+        `__init__.py`)."""
+        if self._stems is None:
+            self._stems = set()
+            for f in self.files:
+                if f.startswith("tests/") and f.endswith(".py"):
+                    parts = f.removesuffix(".py").split("/")
+                    self._stems.add(
+                        parts[-2] if parts[-1] == "__init__" and len(parts) > 1 else parts[-1]
+                    )
+        return self._stems
+
+    def inits(self, rel: str) -> list[_Module]:
+        """The `__init__.py` of every package folder on the way to the file `rel` (pytest runs each one when it
+        collects the file, so a change to it can change any test under the folder)."""
+        parts = rel.split("/")[:-1]
+        out = []
+        for i in range(1, len(parts) + 1):
+            candidate = "/".join([*parts[:i], "__init__.py"])
+            if candidate == rel:
+                continue
+            mod = self.module(candidate)
+            if mod is not None:
+                out.append(mod)
+        return out
+
+    def tree_state(self, mod: _Module) -> tuple[list[str], str]:
+        """(the reasons the check cannot read the tests tree, a digest of every file that can act on a test). With
+        the paths of the state (`files`) the whole tree is read; without them only the file itself and what it reaches
+        through its conftests. Every file under `tests/` is part of the digest except a note in `.md` or `.rst`
+        (an allow-list of suffixes no code reads); a state with a reason lists every unit of every file when the
+        digest changes."""
+        key = "" if self.files else mod.rel
+        if key in self._tree:
+            return self._tree[key]
+        paths = [f for f in self.files if f.startswith("tests/") or f == "conftest.py"] or [
+            mod.rel,
+            *(c.rel for c in self.conftests(mod.rel)),
+            *(i.rel for i in self.inits(mod.rel)),
+        ]
+        reasons: list[str] = list(self.syntax_errors)
+        for rel in sorted(paths):
+            if rel.endswith(".py"):
+                m = self.module(rel)
+                if m is None:
+                    continue
+                for reason in (*m.unresolved, *self.path_folders(m)[1]):
+                    unresolved_edge(reasons, reason)
+                self._cross_checks(m, reasons)
+                if kind_of(rel) == "test":
+                    _units_of_tests(
+                        m, self
+                    )  # reads the base classes: a base it cannot read is a reason
+                for reason in m.unresolved:
+                    unresolved_edge(reasons, reason)
+        for reason in self.syntax_errors:
+            unresolved_edge(reasons, reason)
+        digest = hashlib.sha256()
+        for rel in sorted(
+            paths if reasons else []
+        ):  # read only when there is a reason to list every test
+            if rel.endswith(ALLOWED_SUFFIXES):
+                continue
+            digest.update(f"\0{rel}\0".encode())
+            digest.update(
+                (self.sources.get(rel) if rel in self.sources else self._text(rel)).encode(
+                    "utf-8", "replace"
+                )
+            )
+        self._tree[key] = (reasons, digest.hexdigest())
+        return self._tree[key]
+
+    def _text(self, rel: str) -> str:
+        return self.loader(rel) if self.loader else ""
+
+    def _cross_checks(self, m: _Module, reasons: list[str]) -> None:
+        """The edges that need the whole tree: an import of a module under `tests` that is not there, and a plugin
+        name that names no file."""
+        for stem, taken in m.imports.values():
+            file = self._file_of(stem)
+            if file is None:
+                # (a folder with files and no `__init__.py` is a namespace package: the import is fine)
+                if not any(f.startswith(stem + "/") for f in self.files):
+                    unresolved_edge(
+                        reasons,
+                        f"{m.rel}: it imports {stem.replace('/', '.')}, which is not in the tree",
+                    )
+                continue
+            target = self.module(file)
+            if (
+                taken
+                and target is not None
+                and taken not in target.dumps
+                and not target.stars
+                and self._file_of(f"{stem}/{taken}") is None
+            ):
+                unresolved_edge(
+                    reasons,
+                    f"{m.rel}: it imports {taken} from {stem.replace('/', '.')}, which does not define it",
+                )
+        for local in m.package_names:
+            stem, taken = m.imports.get(local, ("", None))
+            folder = stem if taken is None else f"{stem}/{taken}"
+            if (
+                not stem
+                or self._file_of(f"{folder}/__init__") is None
+                and not (
+                    f"{folder}/__init__.py" in self._present or self.module(f"{folder}/__init__.py")
+                )
+            ):
+                unresolved_edge(
+                    reasons,
+                    f"{m.rel}: {local}.__name__ starts a module name but {local} is no package of tests",
+                )
+        for dotted in m.plugin_names:
+            stem = _stem(m.rel, 0, dotted)
+            if stem is not None and self._file_of(stem) is None:
+                unresolved_edge(reasons, f"{m.rel}: the plugin {dotted} is not in the tree")
+        for dotted in m.dynamic_names:
+            stem = _stem(m.rel, 0, dotted)
+            if (
+                stem is not None
+                and self._file_of(stem) is None
+                and not any(f.startswith(stem + "/") for f in self.files)
+            ):
+                unresolved_edge(
+                    reasons, f"{m.rel}: it imports {dotted} by name, which is not in the tree"
+                )
 
     def conftests(self, rel: str) -> list[_Module]:
         """The conftests that act on the file `rel`, the one nearest to it LAST: `conftest.py` at the root and
@@ -636,7 +1203,11 @@ class _Signatures:
         return out
 
     def _file_of(self, stem: str) -> str | None:
-        return next((c for c in (f"{stem}.py", f"{stem}/__init__.py") if self.module(c)), None)
+        """The file of the module `stem` names (`stem.py`, or the `__init__.py` of the package, which may be empty)."""
+        for c in (f"{stem}.py", f"{stem}/__init__.py"):
+            if c in self._present if self._present else self.module(c):
+                return c
+        return None
 
     def _dynamic_files(self, m: _Module) -> list[str]:
         """The files a file that imports by a run-time name can reach: each module it names as text in such a call
@@ -656,6 +1227,10 @@ class _Signatures:
         # package, its `__init__.py`, is the module `tests.zz` and the text `tests.zz.` reaches it); a name that
         # starts with a value cannot be read, whatever else the file imports, so it reaches every Python file under
         # `tests` (the one rule: a name that cannot be read lists every test of the file)
+        for folder in self.path_folders(m)[0]:
+            found |= {
+                f for f in self.files if f == folder or f.startswith(folder.rstrip("/") + "/")
+            }
         for prefix in m.dynamic_prefixes:
             if prefix:
                 found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
@@ -684,7 +1259,14 @@ class _Signatures:
         `addopts`); a `-p no:name` switches a plugin off and names no module."""
         if self._plugins is None:
             self._plugins = []
-            for rel in ("pyproject.toml", "pytest.ini", "tox.ini", "setup.cfg"):
+            for rel in (
+                "pyproject.toml",
+                "pytest.ini",
+                ".pytest.ini",
+                "pytest.toml",
+                "tox.ini",
+                "setup.cfg",
+            ):
                 text = self.loader(rel) if self.loader else ""
                 for line in re.findall(
                     r"addopts\s*[=:]\s*(.*?)(?:\n\s*\n|\n\S|\Z)", text, re.DOTALL
@@ -693,7 +1275,7 @@ class _Signatures:
                     for i, w in enumerate(words):
                         name = words[i + 1] if w == "-p" and i + 1 < len(words) else None
                         name = name or (w[2:] if w.startswith("-p") and len(w) > 2 else None)
-                        if name and not name.startswith("no:"):
+                        if name:  # (`-p no:name` names no module of `tests`: `_stem` leaves it out)
                             self._plugins.append(name)
         return self._plugins
 
@@ -772,12 +1354,23 @@ class _Signatures:
             # a conftest acts on every test under its folder: its collect-time code, its hooks and switches and its
             # autouse fixtures are part of the unit; a fixture a unit names as a parameter is looked up below
             touch(conf)
-            todo += [(conf, n) for n in (*SWITCH_NAMES, *conf.autouse) if n in conf.dumps]
+            # every hook of the conftest (a name that starts with `pytest_`: a session, collection or run hook acts on every
+            # test below it, whatever its name), the 14 switch names and the autouse fixtures
+            todo += [
+                (conf, n)
+                for n in conf.dumps
+                if n in SWITCH_NAMES or n.startswith("pytest_") or n in conf.autouse
+            ]
             for rel in self._named_files(conf.plugin_names, conf.rel):
                 plugin = self.module(rel)
                 if plugin is not None:
                     touch(plugin)
                     todo.extend((plugin, n) for n in sorted(plugin.dumps))
+        for init in self.inits(mod.rel):
+            # pytest runs the `__init__.py` of each package folder when it collects the file: all of its text acts
+            touch(init)
+            parts.append(f"|init {init.rel}={ast.dump(init.tree)}")
+            todo.extend((init, n) for n in sorted(init.dumps))
         if kind_of(mod.rel) != "conftest":  # (a conftest's own switches are its own units)
             todo += [(mod, n) for n in SWITCH_NAMES if n in mod.dumps]
         todo += [(mod, u) for u in sorted(_used(node))]
@@ -799,11 +1392,28 @@ class _Signatures:
                 # a fixture named by a text that cannot be read: any fixture of the file or of a conftest above it
                 for scope in (m, *self.conftests(m.rel)):
                     todo += [(scope, k) for k, v in scope.nodes.items() if _is_fixture(v)]
+                    todo += [
+                        (scope, k) for k in scope.imports
+                    ]  # a fixture imported from another module
                 continue
             if name in m.dumps:
                 parts.append(f"|{m.rel}:{name}={m.dumps[name]}")
                 # what the definition of the name uses, and what the values behind an assignment of it use
                 todo += [(m, u) for u in m.children_of(name)]
+                own_node = m.nodes.get(name)
+                if isinstance(own_node, _FUNCS) and name in {
+                    a.arg
+                    for a in (
+                        *own_node.args.posonlyargs,
+                        *own_node.args.args,
+                        *own_node.args.kwonlyargs,
+                    )
+                }:
+                    # a fixture that takes the fixture of its own name (`def client(client)`) overrides the one of a
+                    # nearer or farther conftest: that one is part of it
+                    todo += [
+                        (c, name) for c in self.conftests(m.rel) if c is not m and name in c.dumps
+                    ]
             else:
                 # a name the file does not define: a fixture of the nearest conftest that defines it
                 for conf in reversed(self.conftests(m.rel)):
@@ -824,6 +1434,10 @@ class _Signatures:
                 not member
             ):  # the module itself is used as a value: its whole text is the dependency
                 parts.append(f"|module {target.rel}={ast.dump(target.tree)}")
+        reasons, digest = self.tree_state(mod)
+        if reasons:
+            # something in the tree cannot be read: any change to a file under `tests/` changes every unit
+            parts.append(f"|tree {digest}")
         return ast.dump(node) + "".join(sorted(parts))
 
 
@@ -837,14 +1451,57 @@ def _is_fixture(fn: ast.AST) -> bool:
     return False
 
 
+def _base_name(b: ast.AST) -> str:
+    return b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "")
+
+
 def _is_test_class(n: ast.ClassDef) -> bool:
-    """pytest collects a class whose name starts with `Test` and, whatever its name, a `unittest.TestCase`."""
+    """pytest collects a class whose name starts with `Test` and, whatever its name, a `unittest.TestCase`. The check
+    reads a superset: any class that has a base other than `object` may be a `TestCase` through its base (a mixin,
+    `IsolatedAsyncioTestCase`, `TestCase as TC`, a project base), so it is read as one when it has tests."""
     if n.name.startswith("Test"):
         return True
-    return any(
-        (b.attr if isinstance(b, ast.Attribute) else getattr(b, "id", "")) == "TestCase"
-        for b in n.bases
-    )
+    return any(_base_name(b) != "object" for b in n.bases)
+
+
+def _class_chain(
+    cls: ast.ClassDef,
+    mod: _Module,
+    sigs: _Signatures | None,
+    seen: set[tuple[str, str]] | None = None,
+) -> list[tuple[ast.ClassDef, _Module]]:
+    """The class and every base class the tree can find (a base in the same file, or imported from a module of
+    `tests`), nearest first. A base that is no name or attribute is an unresolved edge; a base that is not found in
+    the tree is outside it (`unittest.TestCase`, `object`)."""
+    seen = seen if seen is not None else set()
+    if (mod.rel, cls.name) in seen:
+        return []
+    seen.add((mod.rel, cls.name))
+    out: list[tuple[ast.ClassDef, _Module]] = [(cls, mod)]
+    for b in cls.bases:
+        chain = _dotted(b)
+        if not chain:
+            unresolved_edge(
+                mod.unresolved,
+                f"{mod.rel}: the base of class {cls.name} is an expression it cannot read",
+            )
+            continue
+        found = mod.nodes.get(chain[-1]) if len(chain) == 1 else None
+        if isinstance(found, ast.ClassDef):
+            out += _class_chain(found, mod, sigs, seen)
+        elif sigs is not None:
+            head, attr = sigs._head(mod.imports, ".".join(chain))
+            if head is not None:
+                target, member = sigs._imported(mod.imports, head, attr)
+                base = target.nodes.get(member) if target is not None else None
+                if isinstance(base, ast.ClassDef) and target is not None:
+                    out += _class_chain(base, target, sigs, seen)
+                else:
+                    unresolved_edge(
+                        mod.unresolved,
+                        f"{mod.rel}: the base {'.'.join(chain)} is not found in the module it comes from",
+                    )
+    return out
 
 
 def _class_extras(cls: ast.ClassDef, method: ast.AST) -> tuple[ast.AST, ...]:
@@ -882,19 +1539,55 @@ def _class_extras(cls: ast.ClassDef, method: ast.AST) -> tuple[ast.AST, ...]:
     return (*cls.decorator_list, *cls.bases, *plain, *always, *reached)
 
 
-def _units_of_tests(mod: _Module) -> dict[str, tuple[ast.AST, tuple[ast.AST, ...]]]:
-    """key -> (node, extras): `name` for a top-level test function (plain or async), `Class::name` for a method of a
-    top-level test class. A test function or method is one whose name starts with `test` (pytest's default), and a
-    test class is one whose name starts with `Test` or that is a `unittest.TestCase`. The extras of a method are
-    those of `_class_extras` (a class-level `pytestmark` or `@pytest.mark.skip` switches every method off)."""
+def _units_of_tests(
+    mod: _Module, sigs: _Signatures | None = None
+) -> dict[str, tuple[ast.AST, tuple[ast.AST, ...]]]:
+    """key -> (node, extras): `name` for a test function (plain or async) or a name a `test*` assignment binds
+    (`test_x = factory()`), anywhere at module level (also under `if`, `try`, `with`), `Class::name` for a method of a
+    test class, `Outer::Inner::name` for a nested one. The tests a class inherits from a base class of the tree count
+    as its own (`class TestA(Base): pass`). A test function or method is one whose name starts with `test`, and a test
+    class is read by `_is_test_class`. The extras of a method are those of `_class_extras` of every class in its chain
+    (a class-level `pytestmark` or `@pytest.mark.skip` switches every method off)."""
     out: dict[str, tuple[ast.AST, tuple[ast.AST, ...]]] = {}
-    for n in mod.tree.body:
+
+    def add(key: str, node: ast.AST, extras: tuple[ast.AST, ...]) -> None:
+        if key in out:  # the same name under two branches of an `if`: both are part of it
+            out[key] = (out[key][0], (*out[key][1], node, *extras))
+        else:
+            out[key] = (node, extras)
+
+    def visit_class(cls: ast.ClassDef, prefix: str, outer: tuple[ast.AST, ...]) -> None:
+        chain = _class_chain(cls, mod, sigs)
+        for owner, _owner_mod in chain:
+            for m in _block_nodes(owner.body):
+                names = (
+                    [m.name]
+                    if isinstance(m, _FUNCS)
+                    else [t.id for t in m.targets if isinstance(t, ast.Name)]
+                    if isinstance(m, ast.Assign)
+                    else []
+                )
+                for name in names:
+                    if name.startswith("test"):
+                        extras = tuple(e for o, _ in chain for e in _class_extras(o, m))
+                        add(f"{prefix}{cls.name}::{name}", m, (*extras, *outer))
+            for inner in owner.body:
+                if isinstance(inner, ast.ClassDef) and _is_test_class(inner):
+                    visit_class(
+                        inner, f"{prefix}{cls.name}::", (*_class_extras(cls, inner), *outer)
+                    )
+
+    for n in _block_nodes(mod.tree.body):
         if isinstance(n, _FUNCS) and n.name.startswith("test"):
-            out[n.name] = (n, ())
+            add(n.name, n, ())
+        elif isinstance(n, ast.Assign) and any(
+            isinstance(t, ast.Name) and t.id.startswith("test") for t in n.targets
+        ):
+            for t in n.targets:
+                if isinstance(t, ast.Name) and t.id.startswith("test"):
+                    add(t.id, n, ())
         elif isinstance(n, ast.ClassDef) and _is_test_class(n):
-            for m in n.body:
-                if isinstance(m, _FUNCS) and m.name.startswith("test"):
-                    out[f"{n.name}::{m.name}"] = (m, _class_extras(n, m))
+            visit_class(n, "", ())
     return out
 
 
@@ -989,7 +1682,7 @@ _CONFTEST = re.compile(
     r"(?:tests/(?:.+/)?)?conftest\.py"
 )  # also the one at the root of the repository
 _FIXTURE_FILE = re.compile(r"tests/fixtures/policy_sources_[^/]*\.txt")
-_CONFIG_FILE = re.compile(r"(?:pyproject\.toml|pytest\.ini|tox\.ini|setup\.cfg)")
+_CONFIG_FILE = re.compile(r"(?:pyproject\.toml|\.?pytest\.ini|pytest\.toml|tox\.ini|setup\.cfg)")
 _DATA_FILE = re.compile(
     r"tests/(?!.*__pycache__).+"
 )  # any other file under tests/ (data, a plugin file, a script)
@@ -1026,6 +1719,21 @@ def _config_signature(rel: str, source: str) -> str:
     return source
 
 
+def _sigs_for(loader: Loader | None, rel: str = "", source: str | None = None) -> _Signatures:
+    """One `_Signatures` per loader (every file of a state is parsed once, and the tree is scanned once), unless the
+    text given for `rel` is not the text the loader has for it: then a fresh one."""
+    if loader is None or (source is not None and loader(rel) != source):
+        return _Signatures(loader)
+    sigs = getattr(loader, "_sigs", None)
+    if sigs is None:
+        sigs = _Signatures(loader)
+        try:
+            loader._sigs = sigs  # type: ignore[attr-defined]
+        except AttributeError:
+            pass
+    return sigs
+
+
 def units_of(rel: str, source: str, loader: Loader | None = None) -> dict[str, str]:
     """key -> a signature, for the file `rel` with text `source`; `loader` gives the text of another file in the
     same state (to follow imports). An empty source has no units, and nor has a file that does not parse (a
@@ -1037,13 +1745,13 @@ def units_of(rel: str, source: str, loader: Loader | None = None) -> dict[str, s
         return {Path(rel).name: source}
     if kind == "config":
         return {Path(rel).name: _config_signature(rel, source)}
-    sigs = _Signatures(loader)
+    sigs = _sigs_for(loader, rel, source)
     mod = sigs.module(rel, source)
     if mod is None:
         return {}
     if kind == "mutants":
         return _mutant_units(mod)
-    nodes = _units_of_tests(mod) if kind == "test" else _units_of_functions(mod)
+    nodes = _units_of_tests(mod, sigs) if kind == "test" else _units_of_functions(mod)
     return {
         key: sigs.closure(mod, node, key.split("::")[-1], extra)
         for key, (node, extra) in nodes.items()
@@ -1339,7 +2047,7 @@ def _refs(tree: list[str], load: Loader) -> Refs:
     for rel in tree:
         kind = kind_of(rel)
         if kind is not None:
-            units[rel] = frozenset(_unit_names(rel, kind, load(rel)))
+            units[rel] = frozenset(_unit_names(rel, kind, load(rel), _sigs_for(load)))
         if kind == "test":
             tests.update(
                 re.findall(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(test_\w+)", load(rel), re.MULTILINE)
@@ -1352,19 +2060,19 @@ def _refs(tree: list[str], load: Loader) -> Refs:
     return Refs(frozenset(tests), frozenset(mutants), frozenset(logs), units)
 
 
-def _unit_names(rel: str, kind: str, source: str) -> list[str]:
+def _unit_names(rel: str, kind: str, source: str, sigs: _Signatures | None = None) -> list[str]:
     """The names of the units of a file in scope, without the signatures (cheap): see `units_of`."""
     if not source:
         return []
     if kind in ("fixture", "data", "config"):
         return [Path(rel).name]
-    try:
-        mod = _Module(rel, source)
-    except SyntaxError:
+    sigs = sigs or _Signatures(None)
+    mod = sigs.module(rel, source)
+    if mod is None:
         return []
     if kind == "mutants":
         return list(_mutant_units(mod))
-    return list(_units_of_tests(mod) if kind == "test" else _units_of_functions(mod))
+    return list(_units_of_tests(mod, sigs) if kind == "test" else _units_of_functions(mod))
 
 
 def check(
@@ -1409,7 +2117,26 @@ def check(
         bad += problems(changed, gone, notes, rel, counts, known, refs)
     if refs is not None:
         bad += stale_row_problems(notes, refs, known)
+    reasons = _tree_reasons(new_load) + [
+        r for r in _tree_reasons(old_load) if r not in _tree_reasons(new_load)
+    ]
+    if bad and reasons:
+        shown = "; ".join(reasons[:5]) + (
+            f" (and {len(reasons) - 5} more)" if len(reasons) > 5 else ""
+        )
+        bad.insert(
+            0, f"every test is listed because the check cannot read part of the tests tree: {shown}"
+        )
     return bad
+
+
+def _tree_reasons(load: Loader) -> list[str]:
+    """The reasons the tests tree of a state cannot be read (empty when it can), see `_Signatures.tree_state`."""
+    sigs = _sigs_for(load)
+    if not sigs.files:
+        return []
+    root = next((m for m in sigs.modules.values() if m is not None), None)
+    return sigs.tree_state(root)[0] if root is not None else []
 
 
 def auto_files(

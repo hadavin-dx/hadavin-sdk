@@ -1223,7 +1223,8 @@ def test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_cou
         "    assert importlib.import_module({}).run()\n\n\ndef test_other():\n    assert 1\n"
     )
     mod = "def run():\n    return {}\n"
-    # the file imports a package of tests, so the open name below does not reach every file
+    # the name starts with a text (`tests.zz.dyn_`): it reaches the files whose dotted name starts with that text and
+    # no other (the import of a package of tests, as here, gives no further reach and takes none away)
     pkg = {"tests/yy/__init__.py": ""}
     for name in ('f"tests.zz.dyn_{n}"', '"tests.zz.dyn_" + str(n)'):
         src = test.format("from tests import yy", name)
@@ -1314,7 +1315,7 @@ def test_a_run_time_import_name_given_as_the_keyword_name_is_read_like_the_first
         src = _DYN_TEST.format("", call)
         got = _dyn_listed(src, "tests/zz/dyn_c.py")
         assert got == ["test_dyn", "test_other"], f"{call}: a changed module listed {got}"
-        got = _dyn_listed(src, "tests/zz/other_c.py")
+        got = _dyn_listed(src, "tests/zz/other_c.py", {"tests/zz/dyn_c.py": _DYN_MOD.format(0)})
         assert got == [], (
             f"{call}: a module outside the text the keyword name starts with listed {got}"
         )
@@ -1584,3 +1585,764 @@ def test_the_limits_of_the_notes_check_are_stated_in_its_docstring_and_in_the_ch
     assert "in a file that imports no package of `tests`" not in (nlc.__doc__ or ""), (
         "the docstring still says that a file that imports a package of tests is exempt"
     )
+
+
+# ---------------------------------------------------------------- batch 17: the fail-closed default (one rule)
+
+_B17_TESTS = "def test_one():\n    assert 1\n\n\ndef test_two():\n    assert 2\n"
+_B17_BOTH = ["test_one", "test_two"]
+_B17_BASE = {
+    "tests/__init__.py": "",
+    "tests/helpers.py": "def make(x):\n    return x\n\n\ndef other():\n    return 1\n",
+}
+_B17_PLAIN = "def zzz():\n    return {}\n"  # a file nothing in the tests tree reaches: the changed file of the cases
+
+
+def _b17(source, extra=None, change="tests/unrelated.py", test="tests/test_d.py"):
+    """The units of `tests/test_d.py` (text `source`) that a change of `change` lists, in a tree of `_B17_BASE`
+    plus the files `extra` (a change of a file nothing reaches lists nothing, unless something in the tree cannot be
+    read: then it lists every unit)."""
+    files = {**_B17_BASE, test: source, **(extra or {})}
+    old = _Tree({**files, change: _B17_PLAIN.format(1)})
+    new = _Tree({**files, change: _B17_PLAIN.format(2)})
+    return _changed(source, source, test, old, new)
+
+
+# tag -> (the text of tests/test_d.py or of the extra file, the extra files): each one holds something the resolver
+# cannot read, so a change of an unrelated file under tests/ must list every test
+_B17_UNREADABLE = {
+    "relative": ("from .. import helpers\n" + _B17_TESTS, {}),
+    "bare-ambiguous": ("import helpers2\n" + _B17_TESTS, {"tests/a/helpers2.py": "X = 1\n"}),
+    "plugins-expression": (_B17_TESTS, {"tests/conftest.py": "pytest_plugins = make_names()\n"}),
+    "plugins-augmented": (
+        _B17_TESTS,
+        {"tests/conftest.py": "pytest_plugins = []\npytest_plugins += OTHER\n"},
+    ),
+    "plugins-append": (
+        _B17_TESTS,
+        {"tests/conftest.py": "pytest_plugins = []\npytest_plugins.append(name)\n"},
+    ),
+    "addopts": ('import os\nos.environ["PYTEST_ADDOPTS"] = "-p x"\n' + _B17_TESTS, {}),
+    "fixture-by-value": (
+        "def test_one(request):\n    request.getfixturevalue(name)\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "fixture-keyword-by-value": (
+        "def test_one(request):\n    request.getfixturevalue(argname=name)\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "indirect": (
+        (
+            "import pytest\n\n\n@pytest.mark.parametrize(names, [1], indirect=True)\ndef test_one(x):\n    assert x\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "getattr-module": (
+        (
+            "from tests import helpers\n\n\ndef test_one():\n    assert getattr(helpers, name)\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "exec-without-spec": (
+        "def test_one(spec):\n    spec.loader.exec_module(spec)\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "iter-modules-path": (
+        (
+            "import pkgutil\n\n\ndef test_one(path):\n    list(pkgutil.iter_modules(path))\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "walk-packages-unnamed": (
+        (
+            "import pkgutil\n\n\ndef test_one():\n    list(pkgutil.walk_packages())\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "no-name": (
+        "import importlib\n\n\ndef test_one():\n    importlib.import_module()\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "value-start": (
+        (
+            "import importlib\n\n\ndef test_one(name):\n    importlib.import_module(name)\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "dot-text": (
+        (
+            "import importlib\n\n\ndef test_one():\n    importlib.import_module('.helpers', 'tests')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "dot-plus": (
+        (
+            "import importlib\n\n\ndef test_one(n):\n    importlib.import_module('.' + n, 'tests')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "dot-fstring": (
+        (
+            "import importlib\n\n\ndef test_one(n):\n    importlib.import_module(f'.{n}', 'tests')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "handed-on": (
+        (
+            "import importlib\n\n\ndef test_one(names):\n    list(map(importlib.import_module, names))\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "path-unreadable": (
+        (
+            "import importlib.util\n\n\ndef test_one(path):\n    spec = importlib.util.spec_from_file_location('m', path)\n"
+            "    spec.loader.exec_module(spec)\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "run-path-unreadable": (
+        "import runpy\n\n\ndef test_one(path):\n    runpy.run_path(path)\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "base-expression": (
+        "class TestA(make_base()):\n    def test_one(self):\n        assert 1\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "base-not-found": (
+        (
+            "from tests.basemod import Base\n\n\nclass TestA(Base):\n    def test_one(self):\n        assert 1\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {"tests/basemod.py": "def make():\n    return object\n\n\nBase = make()\n"},
+    ),
+    "base-expression-elsewhere": (
+        _B17_TESTS,
+        {
+            "tests/other/test_far.py": "class TestF(make_base()):\n    def test_f(self):\n        assert 1\n"
+        },
+    ),
+    "base-not-found-elsewhere": (
+        _B17_TESTS,
+        {
+            "tests/other/test_far.py": "from tests.basemod import Base\n\n\nclass TestF(Base):\n"
+            "    def test_f(self):\n        assert 1\n",
+            "tests/basemod.py": "def make():\n    return object\n\n\nBase = make()\n",
+        },
+    ),
+    "package-attr-not-name": (
+        (
+            "import importlib\nfrom tests import kinds\n\n\ndef test_one(n):\n"
+            "    importlib.import_module(f'{kinds.other}.{n}')\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {"tests/kinds/__init__.py": "", "tests/kinds/k.py": "X = 1\n"},
+    ),
+    "package-name-longer-chain": (
+        (
+            "import importlib\nfrom tests import kinds\n\n\ndef test_one(n):\n"
+            "    importlib.import_module(f'{kinds.__name__.x}.{n}')\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {"tests/kinds/__init__.py": "", "tests/kinds/k.py": "X = 1\n"},
+    ),
+    "iter-modules-not-path": (
+        (
+            "import pkgutil\nfrom tests import kinds\n\n\ndef test_one():\n    list(pkgutil.iter_modules(kinds.paths))\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {"tests/kinds/__init__.py": "", "tests/kinds/k.py": "X = 1\n"},
+    ),
+    "iter-modules-longer-chain": (
+        (
+            "import pkgutil\nfrom tests import kinds\n\n\ndef test_one():\n    list(pkgutil.iter_modules(kinds.__path__.x))\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {"tests/kinds/__init__.py": "", "tests/kinds/k.py": "X = 1\n"},
+    ),
+    "iter-modules-local-name": (
+        (
+            "import pkgutil\n\n\ndef test_one(kinds):\n    list(pkgutil.iter_modules(kinds.__path__))\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "syntax": (_B17_TESTS, {"tests/broken.py": "def (:\n"}),
+    "import-missing-module": ("from tests.nowhere import x\n" + _B17_TESTS, {}),
+    "import-missing-name": ("from tests.helpers import nothing\n" + _B17_TESTS, {}),
+    "plugin-missing": (_B17_TESTS, {"tests/conftest.py": "pytest_plugins = ['tests.nowhere']\n"}),
+    "dynamic-name-missing": (
+        (
+            "import importlib\n\n\ndef test_one():\n    importlib.import_module('tests.nowhere')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "package-name-of-a-function": (
+        (
+            "import importlib\nfrom tests.helpers import make\n\n\ndef test_one(n):\n"
+            "    importlib.import_module(f'{make.__name__}.{n}')\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "package-name-without-a-dot": (
+        (
+            "import importlib\nfrom tests import helpers\n\n\ndef test_one():\n"
+            "    importlib.import_module(f'{helpers.__name__}_v2')\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "package-name-plus-text": (
+        (
+            "import importlib\nfrom tests.helpers import make\n\n\ndef test_one():\n"
+            "    importlib.import_module(make.__name__ + 'x')\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "relative-import-in-conftest": (
+        _B17_TESTS,
+        {"tests/conftest.py": "from ... import something\n"},
+    ),
+}
+
+# a tree the check CAN read: a change of a file nothing reaches lists nothing (the fail-closed default is not a
+# blanket: it applies only when something cannot be read)
+_B17_READABLE = {
+    "outside-name": (
+        "import importlib\n\n\ndef test_one():\n    importlib.import_module('json')\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "importorskip-outside": (
+        "import pytest\n\n\ndef test_one():\n    pytest.importorskip('psycopg')\n\n\ndef test_two():\n    assert 2\n",
+        {},
+    ),
+    "path-outside": (
+        (
+            "import importlib.util\nfrom pathlib import Path\n\nDEMO = Path(__file__).resolve().parents[1] / 'demos'\n\n\n"
+            "def test_one(n):\n    spec = importlib.util.spec_from_file_location('m', DEMO / f'{n}.py')\n"
+            "    spec.loader.exec_module(spec)\n\n\ndef test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "getattr-literal": (
+        (
+            "from tests import helpers\n\n\ndef test_one():\n    assert getattr(helpers, 'other')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {},
+    ),
+    "addopts-deselect": (
+        'import os\nos.environ["PYTEST_ADDOPTS"] = "--deselect a"\n' + _B17_TESTS,
+        {},
+    ),
+    "package-name-with-a-dot": (
+        (
+            "import importlib\nfrom tests import kinds\n\n\ndef test_one(n):\n    importlib.import_module(f'{kinds.__name__}.{n}')\n\n\n"
+            "def test_two():\n    assert 2\n"
+        ),
+        {"tests/kinds/__init__.py": "", "tests/kinds/k.py": "X = 1\n"},
+    ),
+    "bare-sibling": ("import helpers\n" + _B17_TESTS, {}),
+}
+
+
+_B17_CHANGES = (
+    "tests/unrelated.py",
+    "tests/data/blob.json",
+)  # a module of the tree and a file that is no module
+
+
+def test_a_change_under_tests_lists_every_test_when_the_check_cannot_read_something_and_nothing_otherwise():
+    for tag, (source, extra) in _B17_UNREADABLE.items():
+        every = _b17_units(source, extra)
+        for change in _B17_CHANGES:
+            got = _b17(source, extra, change)
+            assert got == every and len(every) >= 2, (
+                f"{tag}: a change of {change}, which nothing reaches, listed {got}, not every test {every}"
+            )
+    for tag, (source, extra) in _B17_READABLE.items():
+        for change in _B17_CHANGES:
+            got = _b17(source, extra, change)
+            assert got == [], (
+                f"{tag}: a readable tree listed {got} for a change of {change}, which nothing reaches"
+            )
+    # a note that no code reads changes nothing, whatever the tree holds
+    unreadable = _b17(
+        _B17_TESTS, {"tests/conftest.py": "pytest_plugins = make_names()\n"}, "tests/NOTE.md"
+    )
+    assert unreadable == [], f"a .md note listed {unreadable}"
+    # the fail-closed default is global: a change of a file under tests lists the tests of EVERY file
+    far = _b17(
+        _B17_TESTS, {"tests/other/test_far.py": "import importlib\nimportlib.import_module(name)\n"}
+    )
+    assert far == _B17_BOTH, (
+        f"the unreadable file of another folder did not list this file's tests: {far}"
+    )
+
+
+def _b17_units(source, extra=None, rel="tests/test_d.py"):
+    files = {**_B17_BASE, rel: source, **(extra or {})}
+    return sorted(nlc.units_of(rel, source, _Tree(files)))
+
+
+def test_every_test_is_a_unit_whatever_its_form_or_base_class():
+    forms = {
+        "inherited": (
+            "from tests.mixin import Base\n\n\nclass TestA(Base):\n    pass\n",
+            {"tests/mixin.py": "class Base:\n    def test_m(self):\n        assert 1\n"},
+            ["TestA::test_m"],
+        ),
+        "inherited in the same file": (
+            "class Base:\n    def test_m(self):\n        assert 1\n\n\nclass TestA(Base):\n    pass\n",
+            {},
+            ["TestA::test_m"],
+        ),
+        "async unittest base": (
+            "import unittest\n\n\nclass T(unittest.IsolatedAsyncioTestCase):\n    async def test_x(self):\n        assert 1\n",
+            {},
+            ["T::test_x"],
+        ),
+        "renamed TestCase": (
+            "from unittest import TestCase as TC\n\n\nclass T(TC):\n    def test_x(self):\n        assert 1\n",
+            {},
+            ["T::test_x"],
+        ),
+        "project base": (
+            "from tests.helpers import make\n\n\nclass FooTests(make):\n    def test_x(self):\n        assert 1\n",
+            {},
+            ["FooTests::test_x"],
+        ),
+        "under if": (
+            "import sys\nif sys.platform:\n    def test_x():\n        assert 1\n",
+            {},
+            ["test_x"],
+        ),
+        "under try": (
+            "try:\n    def test_x():\n        assert 1\nexcept ImportError:\n    pass\n",
+            {},
+            ["test_x"],
+        ),
+        "under with": (
+            "import contextlib\nwith contextlib.suppress(Exception):\n    def test_x():\n        assert 1\n",
+            {},
+            ["test_x"],
+        ),
+        "nested class": (
+            "class TestA:\n    class TestB:\n        def test_x(self):\n            assert 1\n",
+            {},
+            ["TestA::TestB::test_x"],
+        ),
+        "assigned": (
+            "def factory():\n    return lambda: 1\n\n\ntest_x = factory()\n",
+            {},
+            ["test_x"],
+        ),
+        "class assigned": (
+            "class TestA:\n    test_x = staticmethod(lambda: 1)\n",
+            {},
+            ["TestA::test_x"],
+        ),
+        "only in else": (
+            "import sys\nif sys.platform:\n    pass\nelse:\n    def test_y():\n        assert 1\n",
+            {},
+            ["test_y"],
+        ),
+        "only in finally": (
+            "try:\n    pass\nfinally:\n    def test_z():\n        assert 1\n",
+            {},
+            ["test_z"],
+        ),
+        "only in except": (
+            "try:\n    import json\nexcept ImportError:\n    def test_h():\n        assert 1\n",
+            {},
+            ["test_h"],
+        ),
+        "only under match": (
+            "match 1:\n    case 1:\n        def test_c():\n            assert 1\n",
+            {},
+            ["test_c"],
+        ),
+        "nested class of a base": (
+            (
+                "class Base:\n    class TestInner:\n        def test_i(self):\n            assert 1\n\n\n"
+                "class TestA(Base):\n    pass\n"
+            ),
+            {},
+            ["TestA::TestInner::test_i"],
+        ),
+        "else branch": (
+            "import sys\nif sys.platform:\n    def test_x():\n        assert 1\nelse:\n    def test_x():\n        assert 2\n",
+            {},
+            ["test_x"],
+        ),
+    }
+    for tag, (source, extra, expected) in forms.items():
+        got = [u for u in _b17_units(source, extra) if "test" in u]
+        assert got == expected, f"{tag}: the units read are {got}, expected {expected}"
+    # the same name under two branches of an `if`: a change in either branch changes the one unit
+    for tag, branches in (
+        (
+            "else",
+            "import sys\nif sys.platform:\n    def test_x():\n        assert 1\nelse:\n    def test_x():\n        assert {}\n",
+        ),
+        (
+            "if",
+            "import sys\nif sys.platform:\n    def test_x():\n        assert {}\nelse:\n    def test_x():\n        assert 1\n",
+        ),
+    ):
+        got = nlc.changed_tests(branches.format(1), branches.format(2))[0]
+        assert got == ["test_x"], (
+            f"a change in the {tag} branch of a test defined twice listed {got}, not test_x"
+        )
+    # a test written twice one after the other (the second replaces the first): a change of the first is listed too
+    for tag, redefined, name in (
+        (
+            "module level",
+            "def test_x():\n    assert {}\n\n\ndef test_x():\n    assert 1\n",
+            "test_x",
+        ),
+        (
+            "in a class",
+            "class TestA:\n    def test_x(self):\n        assert {}\n\n    def test_x(self):\n        assert 1\n",
+            "TestA::test_x",
+        ),
+    ):
+        got = nlc.changed_tests(redefined.format(1), redefined.format(2))[0]
+        assert got == [name], (
+            f"a change of the first of a test written twice ({tag}) listed {got}, not {name}"
+        )
+    # a change of the mixin lists the inherited test, and a change of the same-file base too
+    mixin = "class Base:\n    def helper(self):\n        return {}\n\n    def test_m(self):\n        assert self.helper()\n"
+    source = "from tests.mixin import Base\n\n\nclass TestA(Base):\n    pass\n"
+    files = {**_B17_BASE, "tests/test_d.py": source}
+    got = _changed(
+        source,
+        source,
+        "tests/test_d.py",
+        _Tree({**files, "tests/mixin.py": mixin.format(1)}),
+        _Tree({**files, "tests/mixin.py": mixin.format(2)}),
+    )
+    assert got == ["TestA::test_m"], f"a change of the mixin of an inherited test listed {got}"
+
+
+def test_the_init_file_of_a_tests_package_acts_on_every_test_under_its_folder():
+    source = _B17_TESTS
+    for init in ("tests/__init__.py", "tests/sub/__init__.py"):
+        rel = "tests/sub/test_s.py"
+        files = {**_B17_BASE, rel: source, "tests/sub/__init__.py": ""}
+        old = _Tree({**files, init: "X = 1\n"})
+        new = _Tree({**files, init: "X = 2\n"})
+        got = _changed(source, source, rel, old, new)
+        assert got == _B17_BOTH, (
+            f"{init}: a change of the package init listed {got}, not every test under it"
+        )
+    files = {**_B17_BASE, "tests/sub/test_s.py": source, "tests/other/__init__.py": "X = 1\n"}
+    moved = {**files, "tests/other/__init__.py": "X = 2\n"}
+    got = _changed(source, source, "tests/sub/test_s.py", _Tree(files), _Tree(moved))
+    assert got == [], f"the init of a package that is not on the way to the file listed {got}"
+
+
+def test_a_fixture_that_overrides_the_fixture_of_its_own_name_follows_the_one_it_overrides():
+    test = "def test_one(client):\n    assert client\n\n\ndef test_two():\n    assert 2\n"
+    far = "import pytest\n\n\n@pytest.fixture\ndef {0}():\n    return {1}\n"
+    near = "import pytest\n\n\n@pytest.fixture\ndef {0}({0}):\n    return {0}\n"
+    for tag, name in (("client", "client"), ("db", "db")):
+        files = {
+            **_B17_BASE,
+            "tests/sub/test_s.py": test.replace("client", name),
+            "tests/sub/conftest.py": near.format(name),
+        }
+        old = _Tree({**files, "tests/conftest.py": far.format(name, 1)})
+        new = _Tree({**files, "tests/conftest.py": far.format(name, 2)})
+        got = _changed(
+            files["tests/sub/test_s.py"],
+            files["tests/sub/test_s.py"],
+            "tests/sub/test_s.py",
+            old,
+            new,
+        )
+        assert got == ["test_one"], (
+            f"{tag}: the overridden fixture of a farther conftest listed {got}, not test_one"
+        )
+    # the override in the test file itself, of a conftest fixture
+    own = "import pytest\n\n\n@pytest.fixture\ndef client(client):\n    return client\n\n\ndef test_one(client):\n    assert client\n"
+    files = {**_B17_BASE, "tests/test_o.py": own}
+    got = _changed(
+        own,
+        own,
+        "tests/test_o.py",
+        _Tree({**files, "tests/conftest.py": far.format("client", 1)}),
+        _Tree({**files, "tests/conftest.py": far.format("client", 2)}),
+    )
+    assert got == ["test_one"], (
+        f"the conftest fixture a test file overrides listed {got}, not test_one"
+    )
+
+
+def test_autouse_is_read_in_every_form_it_is_written():
+    forms = {
+        "constant name": (
+            "AUTO = True\n\n\n@pytest.fixture(autouse=AUTO)\ndef f():\n    return {}\n"
+        ),
+        "number": "@pytest.fixture(autouse=1)\ndef f():\n    return {}\n",
+        "call": "def _impl():\n    return {}\n\n\nf = pytest.fixture(autouse=True)(_impl)\n",
+        "under if": "if True:\n    @pytest.fixture(autouse=True)\n    def f():\n        return {}\n",
+        "bare fixture name": "from pytest import fixture\n\n\n@fixture(autouse=True)\ndef f():\n    return {}\n",
+        "call with no assignment": "def _impl():\n    return {}\n\n\npytest.fixture(autouse=True)(_impl)\n",
+        "call on a lambda": "f = pytest.fixture(autouse=True)(lambda: {})\n",
+        "annotated call on a lambda": "f: object = pytest.fixture(autouse=True)(lambda: {})\n",
+    }
+    for tag, body in forms.items():
+        source = "import pytest\n\n" + body + "\n\ndef test_one():\n    assert 1\n"
+        got = nlc.changed_tests(source.format(1), source.format(2))[0]
+        assert got == ["test_one"], f"{tag}: a changed autouse fixture listed {got}, not test_one"
+    nested = (
+        "import pytest\n\n\nclass TestK:\n    class TestN:\n        @pytest.fixture(autouse=AUTO)\n"
+        "        def f(self):\n            return {}\n\n        def test_m(self):\n            assert 1\n"
+    )
+    got = nlc.changed_tests(nested.format(1), nested.format(2))[0]
+    assert got == ["TestK::TestN::test_m"], f"an autouse fixture of a nested class listed {got}"
+    for value in ("False", "None", "0"):
+        off = f"import pytest\n\n\n@pytest.fixture(autouse={value})\ndef f():\n    return {{}}\n\n\ndef test_one():\n    assert 1\n"
+        assert nlc.changed_tests(off.format(1), off.format(2))[0] == [], (
+            f"a fixture with autouse={value} listed a test"
+        )
+
+
+def test_plugins_named_in_every_form_and_the_hidden_pytest_settings_files_are_read():
+    plugin = "def hook():\n    return {}\n"
+    test = "def test_one():\n    assert 1\n"
+    forms = {
+        "plain": "pytest_plugins = ['tests.plug']\n",
+        "annotated": "pytest_plugins: list[str] = ['tests.plug']\n",
+        "augmented": "pytest_plugins = []\npytest_plugins += ['tests.plug']\n",
+        "append": "pytest_plugins = []\npytest_plugins.append('tests.plug')\n",
+        "extend": "pytest_plugins = []\npytest_plugins.extend(['tests.plug'])\n",
+        "insert": "pytest_plugins = []\npytest_plugins.insert(0, 'tests.plug')\n",
+        "under if": "if True:\n    pytest_plugins = ['tests.plug']\n",
+    }
+    for tag, conftest in forms.items():
+        files = {**_B17_BASE, "tests/test_p.py": test, "tests/conftest.py": conftest}
+        got = _changed(
+            test,
+            test,
+            "tests/test_p.py",
+            _Tree({**files, "tests/plug.py": plugin.format(1)}),
+            _Tree({**files, "tests/plug.py": plugin.format(2)}),
+        )
+        assert got == ["test_one"], f"{tag}: a plugin named in this form listed {got}, not test_one"
+    for name, text in (
+        (".pytest.ini", "[pytest]\naddopts = -p tests.plug\n"),
+        ("pytest.toml", '[pytest]\naddopts = "-p tests.plug"\n'),
+    ):
+        files = {**_B17_BASE, "tests/test_p.py": test, name: text}
+        got = _changed(
+            test,
+            test,
+            "tests/test_p.py",
+            _Tree({**files, "tests/plug.py": plugin.format(1)}),
+            _Tree({**files, "tests/plug.py": plugin.format(2)}),
+        )
+        assert got == ["test_one"], (
+            f"{name}: a plugin of this settings file listed {got}, not test_one"
+        )
+        assert nlc.kind_of(name) == "config", f"{name} is not read as a pytest settings file"
+    # `-p no:name` switches a plugin off: it names no module, so it is no unresolved edge and lists nothing
+    files = {
+        **_B17_BASE,
+        "tests/test_p.py": test,
+        "pytest.ini": "[pytest]\naddopts = -p no:cacheprovider\n",
+    }
+    got = _changed(
+        test,
+        test,
+        "tests/test_p.py",
+        _Tree({**files, "tests/unrelated.py": "X = 1\n"}),
+        _Tree({**files, "tests/unrelated.py": "X = 2\n"}),
+    )
+    assert got == [], f"a -p no: option listed {got}"
+
+
+def test_every_hook_of_a_conftest_acts_on_every_test_below_it():
+    test = "def test_one():\n    assert 1\n\n\ndef test_two():\n    assert 2\n"
+    for hook in (
+        "pytest_sessionstart",
+        "pytest_runtest_call",
+        "pytest_fixture_setup",
+        "pytest_unconfigure",
+    ):
+        conftest = f"def {hook}(*args):\n    return {{}}\n"
+        files = {**_B17_BASE, "tests/sub/test_h.py": test}
+        got = _changed(
+            test,
+            test,
+            "tests/sub/test_h.py",
+            _Tree({**files, "tests/sub/conftest.py": conftest.format(1)}),
+            _Tree({**files, "tests/sub/conftest.py": conftest.format(2)}),
+        )
+        assert got == _B17_BOTH, (
+            f"{hook}: a change of this hook of a conftest listed {got}, not every test below it"
+        )
+        far = _changed(
+            test,
+            test,
+            "tests/sub/test_h.py",
+            _Tree({**files, "tests/other/conftest.py": conftest.format(1)}),
+            _Tree({**files, "tests/other/conftest.py": conftest.format(2)}),
+        )
+        assert far == [], f"{hook}: a hook of a conftest in another folder listed {far}"
+    helper = "def helper():\n    return {}\n"
+    files = {**_B17_BASE, "tests/sub/test_h.py": test}
+    got = _changed(
+        test,
+        test,
+        "tests/sub/test_h.py",
+        _Tree({**files, "tests/sub/conftest.py": helper.format(1)}),
+        _Tree({**files, "tests/sub/conftest.py": helper.format(2)}),
+    )
+    assert got == [], f"a helper of a conftest that no test and no hook uses listed {got}"
+
+
+def test_a_module_loaded_by_name_or_by_path_is_reached_in_every_loader_form():
+    mod = "def run():\n    return {}\n"
+    forms = {
+        "importorskip": "import pytest\n\n\ndef test_one():\n    pytest.importorskip('tests.zz.m')\n",
+        "find_spec": "import importlib.util\n\n\ndef test_one():\n    spec = importlib.util.find_spec('tests.zz.m')\n    spec.loader.exec_module(spec)\n",
+        "import_module keyword": "import importlib\n\n\ndef test_one():\n    importlib.import_module(name='tests.zz.m')\n",
+        "run_module": "import runpy\n\n\ndef test_one():\n    runpy.run_module('tests.zz.m')\n",
+        "run_path": "import runpy\n\n\ndef test_one():\n    runpy.run_path('tests/zz/m.py')\n",
+        "spec_from_file_location": (
+            "import importlib.util\n\n\ndef test_one():\n    spec = importlib.util.spec_from_file_location('m', 'tests/zz/m.py')\n"
+            "    spec.loader.exec_module(spec)\n"
+        ),
+        "path folder": (
+            "import importlib.util\nfrom pathlib import Path\n\nHERE = Path(__file__).resolve().parent\n\n\ndef test_one(n):\n"
+            "    spec = importlib.util.spec_from_file_location('m', HERE / 'zz' / f'{n}.py')\n    spec.loader.exec_module(spec)\n"
+        ),
+    }
+    for tag, source in forms.items():
+        files = {**_B17_BASE, "tests/test_l.py": source}
+        got = _changed(
+            source,
+            source,
+            "tests/test_l.py",
+            _Tree({**files, "tests/zz/m.py": mod.format(1)}),
+            _Tree({**files, "tests/zz/m.py": mod.format(2)}),
+        )
+        assert got == ["test_one"], (
+            f"{tag}: the module this loader reads listed {got}, not test_one"
+        )
+        far = _changed(
+            source,
+            source,
+            "tests/test_l.py",
+            _Tree({**files, "tests/zz/m.py": mod.format(1), "tests/yy/n.py": mod.format(1)}),
+            _Tree({**files, "tests/zz/m.py": mod.format(1), "tests/yy/n.py": mod.format(2)}),
+        )
+        assert far == [], f"{tag}: a module this loader does not read listed {far}"
+    # a path of the import table: `from tests.dirs import DEMO` is followed to its value
+    helper = "from pathlib import Path\n\nDEMO = Path(__file__).resolve().parent / 'zz'\n"
+    source = (
+        "import importlib.util\nfrom tests.dirs import DEMO\n\n\ndef test_one(n):\n"
+        "    spec = importlib.util.spec_from_file_location('m', DEMO / f'{n}.py')\n    spec.loader.exec_module(spec)\n"
+    )
+    files = {**_B17_BASE, "tests/test_l.py": source, "tests/dirs.py": helper}
+    got = _changed(
+        source,
+        source,
+        "tests/test_l.py",
+        _Tree({**files, "tests/zz/m.py": mod.format(1)}),
+        _Tree({**files, "tests/zz/m.py": mod.format(2)}),
+    )
+    assert got == ["test_one"], f"a path built from an imported constant listed {got}, not test_one"
+
+
+def test_a_bare_import_of_a_module_next_to_the_file_is_followed():
+    source = "from helpers import value\n\n\ndef test_one():\n    assert value()\n\n\ndef test_two():\n    assert 2\n"
+    helper = "def value():\n    return {}\n"
+    files = {**_B17_BASE, "tests/sub/test_b.py": source}
+    got = _changed(
+        source,
+        source,
+        "tests/sub/test_b.py",
+        _Tree({**files, "tests/sub/helpers.py": helper.format(1)}),
+        _Tree({**files, "tests/sub/helpers.py": helper.format(2)}),
+    )
+    assert got == ["test_one"], f"a bare import of a sibling module listed {got}, not test_one"
+    stdlib = "import json\n\n\ndef test_one():\n    assert json\n"
+    assert _b17(stdlib) == [], "an import of the standard library was read as an unresolved edge"
+
+
+def test_a_walrus_in_every_part_of_a_definition_header_binds_a_module_name():
+    forms = {
+        "class base": "class C((W := {})):\n    pass\n",
+        "class keyword": "class C(metaclass=(W := {})):\n    pass\n",
+        "keyword-only default": "def f(*, a=(W := {})):\n    return a\n",
+        "positional default": "def f(a=(W := {})):\n    return a\n",
+        "annotation": "def f(a: (W := {})):\n    return a\n",
+        "keyword-only annotation": "def f(*, a: (W := {})):\n    return a\n",
+        "positional-only annotation": "def f(a: (W := {}), /):\n    return a\n",
+        "positional-only default": "def f(a=(W := {}), /):\n    return a\n",
+        "return annotation": "def f() -> (W := {}):\n    return 1\n",
+        "decorator": "@(W := {})\ndef f():\n    return 1\n",
+    }
+    for tag, header in forms.items():
+        source = header + "\n\ndef test_one():\n    assert W\n\n\ndef test_two():\n    assert 2\n"
+        got = nlc.changed_tests(source.format("int"), source.format("str"))[0]
+        assert got == ["test_one"], (
+            f"{tag}: the name a walrus binds there listed {got}, not test_one"
+        )
+
+
+def test_a_fixture_named_in_the_short_forms_the_keyword_forms_and_by_alias_is_followed():
+    fixture = "import pytest\n\n\n@pytest.fixture\ndef fx():\n    return {}\n"
+    cases = {
+        "lf short form": (
+            "from pytest_lazyfixture import lazy_fixture as lf\n\n\n@pytest.mark.parametrize('a', [lf('fx')])\n"
+            "def test_one(a):\n    assert a\n"
+        ),
+        "getfixturevalue keyword": "def test_one(request):\n    assert request.getfixturevalue(argname='fx')\n",
+        "usefixtures keyword": "@pytest.mark.usefixtures(names='fx')\ndef test_one():\n    assert 1\n",
+        "getfixturevalue text": "def test_one(request):\n    assert request.getfixturevalue('fx')\n",
+    }
+    for tag, test in cases.items():
+        source = fixture + "\n" + test + "\n\ndef test_two():\n    assert 2\n"
+        got = nlc.changed_tests(source.format(1), source.format(2))[0]
+        assert got == ["test_one"], f"{tag}: the fixture named there listed {got}, not test_one"
+    bare = (
+        "from pytest import fixture\n\n\n@fixture(name='alias')\ndef impl():\n    return {}\n\n\n"
+        "def test_one(alias):\n    assert alias\n\n\ndef test_two():\n    assert 2\n"
+    )
+    got = nlc.changed_tests(bare.format(1), bare.format(2))[0]
+    assert got == ["test_one"], f"a bare @fixture(name=...) alias listed {got}, not test_one"
+    keyword = (
+        "import importlib\n\n\ndef test_one(n):\n    importlib.__import__(name=f'tests.zz.dyn_{n}')\n\n\n"
+        "def test_two():\n    assert 2\n"
+    )
+    files = {**_B17_BASE, "tests/test_k.py": keyword}
+    for changed, expected in (
+        ("tests/zz/dyn_c.py", ["test_one", "test_two"]),
+        ("tests/zz/other_c.py", []),
+    ):
+        got = _changed(
+            keyword,
+            keyword,
+            "tests/test_k.py",
+            _Tree({**files, changed: "X = 1\n", "tests/zz/dyn_c.py": "X = 0\n"}),
+            _Tree(
+                {
+                    **files,
+                    changed: "X = 2\n",
+                    "tests/zz/dyn_c.py": "X = 0\n" if changed != "tests/zz/dyn_c.py" else "X = 2\n",
+                }
+            ),
+        )
+        assert got == expected, (
+            f"__import__(name=...): a change of {changed} listed {got}, not {expected}"
+        )

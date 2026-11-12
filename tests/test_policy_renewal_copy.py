@@ -135,6 +135,7 @@ def _printed_row_count(mode: str) -> int:
     assert len(found) == 1, (
         f"the printed steps give {len(found)} figures for the {mode} renewal: {found}"
     )
+    assert int(found[0]) >= 1, f"the printed steps give no rows for the {mode} renewal"
     return int(found[0])
 
 
@@ -142,10 +143,17 @@ def _assert_the_asked_rows_match_the_printed_figure(mode: str, asked: int) -> No
     """The printed 'about N rows' is a size that was measured: the count the plant found may be half of it more or
     less (5 more or less when the figure is 10 or less), and then the printed figure is wrong and must be renewed."""
     printed = _printed_row_count(mode)
+    _assert_within_the_tolerance(mode, asked, printed)
+
+
+def _assert_within_the_tolerance(mode: str, asked: int, printed: int) -> None:
+    """The count a renewal asked for must be at least 1 (a renewal that asks for no row is not the one the figure was
+    measured on) and not more than the tolerance away from the printed figure."""
     tolerance = max(5, printed // 2)
-    assert abs(asked - printed) <= tolerance, (
+    low = max(1, printed - tolerance)
+    assert low <= asked <= printed + tolerance, (
         f"the {mode} renewal asked for {asked} rows, the printed steps say about {printed} "
-        f"(allowed difference {tolerance}): measure again and rewrite the figure in tools/policy_page.py "
+        f"(allowed {low} to {printed + tolerance}): measure again and rewrite the figure in tools/policy_page.py "
         "and in CHANGELOG.md"
     )
 
@@ -155,6 +163,7 @@ def _fast_renewal(mode: str) -> None:
     and days are compared with the steps (no tests run in the copy)."""
     from tests.test_policy_guard import KINDS_DECIDED, pp
 
+    assert _printed_row_count(mode) >= 1, f"no printed row figure for the {mode} renewal"
     old = pp.DECIDED
     new = {
         "both": pp.DECIDED + timedelta(days=31),
@@ -197,3 +206,80 @@ def test_the_notes_check_of_a_renewed_copy_asks_for_rows_that_can_be_written_and
             "a full renewal changes a day that tests use, so the notes check must ask for rows"
         )
         _assert_the_asked_rows_match_the_printed_figure("both", asked)
+
+
+def _refusal_of(call, *args) -> str | None:
+    """The text of the `AssertionError` that `call` raises, or None when it raises none."""
+    try:
+        call(*args)
+    except AssertionError as exc:
+        return str(exc)
+    return None
+
+
+def test_the_printed_row_figure_is_read_once_per_renewal_and_a_missing_or_doubled_one_is_refused(
+    monkeypatch,
+):
+    from tools import policy_page as pp
+
+    figures = [
+        _refusal_of(_printed_row_count, m) or _printed_row_count(m)
+        for m in ("both", "names", "kinds")
+    ]
+    assert figures == [36, 1, 35], (
+        f"the printed row figures of the three renewals are not 36, 1 and 35: {figures}"
+    )
+    for text, label in (
+        ("", "no"),
+        ("both lists asked for about 3 rows; both lists asked for about 4 rows", "two"),
+    ):
+        monkeypatch.setattr(pp, "RENEWAL_STEPS", text)
+        refusal = _refusal_of(_printed_row_count, "both")
+        assert refusal is not None, f"{label} printed figure: the figure was read"
+        assert "figures for the both renewal" in refusal, refusal
+    monkeypatch.setattr(pp, "RENEWAL_STEPS", "both lists asked for about 0 rows")
+    refusal = _refusal_of(_printed_row_count, "both")
+    assert refusal is not None, "a printed figure of 0 rows: the figure was read"
+    assert "no rows" in refusal, refusal
+
+
+def test_the_asked_row_count_must_be_within_the_tolerance_of_the_printed_figure():
+    def rejected(asked, printed):
+        try:
+            _assert_within_the_tolerance("both", asked, printed)
+        except AssertionError:
+            return True
+        return False
+
+    # a figure of 36: half is 18, so 18 to 54 are allowed and 17 and 55 are not
+    assert not rejected(18, 36) and not rejected(54, 36), (
+        "the edge of the tolerance of 36 was refused"
+    )
+    assert rejected(17, 36) and rejected(55, 36), "a count beyond the tolerance of 36 was accepted"
+    # a figure of 10 or less: 5 more or less, and never fewer than 1 row
+    assert not rejected(6, 10) and not rejected(15, 10), (
+        "the edge of the tolerance of 10 was refused"
+    )
+    assert rejected(16, 10) and rejected(4, 10), "a count beyond the tolerance of 10 was accepted"
+    assert not rejected(1, 1) and not rejected(6, 1), "the edge of the tolerance of 1 was refused"
+    assert rejected(7, 1), "a count of 7 was accepted for a figure of 1"
+    assert rejected(0, 1), "no row at all was accepted for a figure of 1"
+
+
+def test_the_assertion_helper_reads_the_printed_figure_of_its_own_mode(monkeypatch):
+    from tools import policy_page as pp
+
+    monkeypatch.setattr(
+        pp,
+        "RENEWAL_STEPS",
+        "both lists asked for about 36 rows; names and claims alone asked for about 1 row",
+    )
+    monkeypatch.setattr(pp, "KINDS_RENEWAL_STEPS", "kinds alone asked for about 35 rows")
+    _assert_the_asked_rows_match_the_printed_figure("names", 1)
+    _assert_the_asked_rows_match_the_printed_figure("kinds", 35)
+    accepted = [
+        (mode, asked)
+        for mode, asked in (("names", 7), ("kinds", 60), ("both", 3))
+        if _refusal_of(_assert_the_asked_rows_match_the_printed_figure, mode, asked) is None
+    ]
+    assert not accepted, f"a count outside the tolerance of its own figure was accepted: {accepted}"

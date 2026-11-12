@@ -391,7 +391,7 @@ def run_mutants(
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
     must name a file inside its tree (``ValueError``); ``extra_files`` are single files (a changelog, a settings file) that every copy also holds
-    when they exist (a missing one or a link is left out). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
+    when they exist (a missing one, a link, a file behind a folder link, or a link to a file outside the tree is left out; a junction in the folder part of the path is refused). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
     runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
     NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
@@ -534,7 +534,14 @@ def _run_mutants(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
         for f in extra_files:  # single files at the root of the tree (a changelog, a settings file)
-            if _inside(root, f).is_file() and not _through_a_link(root, f):
+            folder = Path(f).parent.as_posix()
+            if folder != ".":
+                _refuse_junctions(
+                    root, folder
+                )  # a junction in the folder part would copy a folder of another tree
+            # the link is asked about FIRST, as written: `_inside` resolves it, and a link to a file outside the tree would
+            # make it refuse the run instead of leaving the file out, as the docstring says
+            if not _through_a_link(root, f) and _inside(root, f).is_file():
                 _inside(snap, f).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(_inside(root, f), _inside(snap, f))
         _refuse_links_out(snap)

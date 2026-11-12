@@ -78,8 +78,9 @@ MOVED = (
     "test_a_reaped_child_is_an_error_row_for_a_mutant",
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
+    "test_a_junction_in_the_folder_part_of_an_extra_file_is_refused",
 )
-EXPECTED_MUTANTS = 65
+EXPECTED_MUTANTS = 67
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
