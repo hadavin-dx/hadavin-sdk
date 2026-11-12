@@ -1,0 +1,8 @@
+$ gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --report-format json (REPRO, scratch commit on top of 0841f36)
+exit 1
+924 findings
+('hardcoded-hostname', '.github/workflows/semgrep.yml') 2
+('hardcoded-hostname', 'requirements-semgrep.in') 1
+('hardcoded-hostname', 'requirements-semgrep.txt') 1
+('hardcoded-url', '.github/workflows/semgrep.yml') 1
+('long-hex-token', 'requirements-semgrep.txt') 919

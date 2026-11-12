@@ -1,0 +1,18 @@
+$ python neg.py   (planted made-up values in scratch copies of the fixed tree, real gitleaks 8.30.1 dir mode; planted values are generated at run time and never printed)
+baseline copy of the fixed tree: (0, [])
+case | expected | result (exit, extra findings vs baseline)
+bare 64-hex line in docs/requirements-semgrep.txt | must be reported | exit 1; REPORTED [('long-hex-token', 'docs/requirements-semgrep.txt')] OK
+hash-form line in old-requirements-semgrep.txt | must be reported | exit 1; REPORTED [('long-hex-token', 'old-requirements-semgrep.txt')] OK
+bare 64-hex line in the real lock requirements-semgrep.txt | must be reported | exit 1; REPORTED [('long-hex-token', 'requirements-semgrep.txt')] OK
+40-hex hash-form line in the real lock | must be reported | exit 1; REPORTED [('long-hex-token', 'requirements-semgrep.txt')] OK
+65-hex hash-form line in the real lock | must be reported | exit 1; REPORTED [('long-hex-token', 'requirements-semgrep.txt')] OK
+64-hex in another file (notes.txt) | must be reported | exit 1; REPORTED [('long-hex-token', 'notes.txt')] OK
+hash-form line in another file (notes.txt) | must be reported | exit 1; REPORTED [('long-hex-token', 'notes.txt')] OK
+hash-form line in docs/requirements-semgrep.txt (nested, same file name) | (observe) | exit 0; NOT reported 
+host x.<semgrep>.<dev> in another file | must be reported | exit 1; REPORTED [('hardcoded-hostname', 'notes.txt')] OK
+host x.<semgrep>.<dev> in the workflow | must be reported | exit 1; REPORTED [('hardcoded-hostname', '.github/workflows/semgrep.yml')] OK
+url https://<semgrep>.<dev>/x in the workflow | must be reported | exit 1; REPORTED [('hardcoded-hostname', '.github/workflows/semgrep.yml'), ('hardcoded-url', '.github/workflows/semgrep.yml')] OK
+generic key in the real lock | must be reported | exit 1; REPORTED [('generic-api-key', 'requirements-semgrep.txt')] OK
+generic key assignment in requirements-semgrep.in | must be reported | exit 1; REPORTED [('generic-api-key', 'requirements-semgrep.in')] OK
+word requirements-semgrep.io in notes.txt | must be reported | exit 1; REPORTED [('hardcoded-hostname', 'notes.txt')] OK
+word requirements-semgrep.in in notes.txt (allowed on purpose, like the dev one) | may pass | exit 0; NOT reported OK

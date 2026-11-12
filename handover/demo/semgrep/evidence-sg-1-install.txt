@@ -1,0 +1,10 @@
+$ pip install --require-hashes --only-binary=:all: --no-deps -r requirements-semgrep.txt  (venv python3.12 outside tree)
+seconds: 17
+2.21.0 pyjwt-2.15.1 python-dotenv-1.2.4 python-multipart-0.0.33 referencing-0.37.0 requests-2.34.2 rich-15.0.0 rpds-py-2026.9.1 ruamel-yaml-0.19.1 ruamel-yaml-clib-0.2.15 semantic-version-2.10.0 semgr
+exit 0
+$ python -m pip check
+No broken requirements found.
+pip check exit 0
+$ semgrep --version
+1.185.0
+exit 0

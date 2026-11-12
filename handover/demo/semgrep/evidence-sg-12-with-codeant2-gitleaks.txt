@@ -1,0 +1,11 @@
+$ [tree = 0841f36 + triage/codeant2-gitleaks.patch + semgrep-rebased.patch, one scratch commit]
+$ gitleaks dir . / gitleaks git . (from the root)
+9:19PM INF scanned ~2819834 bytes (2.82 MB) in 369ms
+9:19PM INF no leaks found
+exit 0
+9:20PM INF scanned ~5496174 bytes (5.50 MB) in 890ms
+9:20PM INF no leaks found
+exit 0
+$ pytest tests/test_hygiene.py tests/test_nosemgrep_form.py (GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1)
+....................................                                     [100%]
+36 passed in 32.20s

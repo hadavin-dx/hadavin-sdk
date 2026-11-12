@@ -1,0 +1,19 @@
+$ for each patch X: fresh tree of pr-3-tests 0841f36; git apply X then --check semgrep-rebased.patch (X,S); git apply S then --check X (S,X)
+patch | X then S | S then X
+triage/codeant-demo-only.patch |  OK | OK |
+triage/codeant-desk.patch |  OK | OK |
+triage/codeant-docs.patch |  OK | OK |
+triage/codeant-n8n-proof.patch |  OK | OK |
+triage/codeant-portal-log.patch |  OK | OK |
+triage/codeant-tests-hardening.patch |  OK | OK |
+triage/codeant2-demo-only.patch |  OK | OK |
+triage/codeant2-desk.patch |  OK | OK |
+triage/codeant2-docs.patch |  OK | OK |
+triage/codeant2-fakes-body.patch |  OK | OK |
+triage/codeant2-gitleaks.patch |  OK | OK |
+triage/codeant2-n8n-proof.patch |  OK | OK |
+triage/codeant2-portal-log.patch |  OK | OK |
+triage/codeant2-scripts.patch |  (first patch does not apply alone) | CONFLICT |
+triage/codeant2-tests-hardening.patch |  OK | OK |
+
+NOT testable on 0841f36 (the patch alone does not apply on this head; built for an older base): fixes/docs-and-deps.patch, fixes/docs-and-deps-v2.patch (v3 of lane 8c did not exist yet), triage/codeant-gitleaks*.patch (old), codeant-scripts, codeant2-scripts, extra-demo-only, js-portal, py-retry

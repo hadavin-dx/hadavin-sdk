@@ -1,0 +1,23 @@
+$ semgrep scan --metrics=off --disable-version-check --strict --error --severity ERROR --config rules.yml t/py_plain.py
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 1 file: 1 finding.
+exit 1
+
+$ semgrep scan --metrics=off --disable-version-check --strict --error --severity ERROR --config rules.yml t/py_ok.py
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 1 file: 0 findings.
+exit 0
+
+$ semgrep scan --metrics=off --disable-version-check --strict --error --severity ERROR --config rules.yml no_such_folder
+[ERROR] Invalid scanning root: no_such_folder
+exit 2
+
+$ semgrep scan --metrics=off --disable-version-check --strict --error --severity ERROR --config no_such_rules.yml t/py_ok.py
+[ERROR] WARNING: unable to find a config; path `no_such_rules.yml` does not exist
+[ERROR] invalid configuration file found (1 configs were invalid)
+exit 7
+

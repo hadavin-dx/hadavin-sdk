@@ -1,0 +1,2 @@
+$ hygiene.pipeline (git-grep side) on a scratch copy with a made-up hash-form line planted in docs/requirements-semgrep.txt (nested, same file name)
+1 reported: ['docs/requirements-semgrep.txt:1']

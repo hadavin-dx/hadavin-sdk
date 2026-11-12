@@ -1,0 +1,16 @@
+$ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 python -m pytest -p no:cacheprovider -q tests/test_hygiene.py  (REPRO)
+[90m9:01PM[0m [32mINF[0m [1mscanned ~40 bytes (40 bytes) in 2.67ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 2[0m
+[90m9:01PM[0m [32mINF[0m [1mscanned ~12 bytes (12 bytes) in 2.93ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m9:01PM[0m [32mINF[0m [1mscanned ~21 bytes (21 bytes) in 2.19ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m9:01PM[0m [32mINF[0m [1mscanned ~24 bytes (24 bytes) in 4.57ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 2[0m
+[90m9:01PM[0m [32mINF[0m [1mscanned ~37 bytes (37 bytes) in 2.82ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m9:01PM[0m [32mINF[0m [1mscanned ~78 bytes (78 bytes) in 2.57ms[0m
+[90m9:01PM[0m [33mWRN[0m [1mleaks found: 3[0m
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 9 passed in 30.76s

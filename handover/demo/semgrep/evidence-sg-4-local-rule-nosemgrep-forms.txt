@@ -1,0 +1,18 @@
+$ semgrep scan --metrics=off --disable-version-check --quiet --json --config rules.yml t   (LOCAL made-up rule, no registry; which files still report the finding after a nosemgrep comment)
+exit 0
+js_above.js            suppressed
+js_bare.js             suppressed
+js_block.js            suppressed
+js_emptyid.js          suppressed
+js_nospace.js          FINDING REPORTED
+js_ok.js               suppressed
+py_bare.py             suppressed
+py_crlf.py             suppressed
+py_emptyid.py          suppressed
+py_nospace.py          FINDING REPORTED
+py_ok.py               suppressed
+py_plain.py            FINDING REPORTED
+py_reason_only.py      FINDING REPORTED
+py_tab.py              FINDING REPORTED
+py_wrongid.py          FINDING REPORTED
+errors: []

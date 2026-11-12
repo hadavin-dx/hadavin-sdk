@@ -1,0 +1,17 @@
+$ semgrep scan --metrics=off --disable-version-check --strict --error --severity ERROR --config p/python --config p/javascript a   (registry reachable test, run outside the tree on a 1-line file)
+    response = super().request(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/adapters.py", line 723, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='semgrep.dev', port=443): Max retries exceeded with url: /c/p/python (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
+
+real	1m38.045s
+user	0m1.137s
+sys	0m0.085s
+exit 2

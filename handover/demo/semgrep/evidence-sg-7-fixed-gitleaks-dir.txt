@@ -1,0 +1,4 @@
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow   (FIXED tree = 0841f36 + semgrep-rebased.patch; ignored __pycache__ folders from earlier test runs removed first, they are not tracked and not in CI)
+9:21PM INF scanned ~2817450 bytes (2.82 MB) in 314ms
+9:21PM INF no leaks found
+exit 0

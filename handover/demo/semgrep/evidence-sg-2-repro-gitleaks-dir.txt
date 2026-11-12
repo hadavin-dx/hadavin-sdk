@@ -1,0 +1,13 @@
+$ gitleaks dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow --report-format json (REPRO: PR applied, no .gitleaks.toml change)
+exit 1
+924 findings
+hardcoded-hostname github/workflows/semgrep.yml 2
+hardcoded-hostname requirements-semgrep.in 1
+hardcoded-hostname requirements-semgrep.txt 1
+hardcoded-url github/workflows/semgrep.yml 1
+long-hex-token requirements-semgrep.txt 919
+('hardcoded-hostname', '.github/workflows/semgrep.yml') lines [3, 43] 
+('hardcoded-hostname', 'requirements-semgrep.in') lines [4] 
+('hardcoded-hostname', 'requirements-semgrep.txt') lines [940] 
+('hardcoded-url', '.github/workflows/semgrep.yml') lines [3] 
+('long-hex-token', 'requirements-semgrep.txt') lines [2, 3, 6, 7, 14, 15] ...

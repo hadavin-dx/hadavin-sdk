@@ -1,0 +1,5 @@
+$ gitleaks git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow   (FIXED tree, scratch commit(s) on top of 0841f36)
+9:20PM INF 18 commits scanned.
+9:20PM INF scanned ~5493615 bytes (5.49 MB) in 637ms
+9:20PM INF no leaks found
+exit 0

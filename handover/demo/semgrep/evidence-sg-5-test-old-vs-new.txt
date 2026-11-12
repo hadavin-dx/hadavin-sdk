@@ -1,0 +1,28 @@
+$ python cmp.py   (old tests/test_nosemgrep_form.py _bare() vs new _bad() on one scratch git repo per shape)
+shape | old test catches it | new test catches it
+block-bare               | MISSED | caught
+block-colon-empty        | MISSED | caught
+crlf-bare                | caught | caught
+crlf-colon-empty         | MISSED | caught
+hash-bare                | caught | caught
+hash-colon-empty         | MISSED | caught
+hash-colon-space-empty   | MISSED | caught
+hash-no-space-bare       | caught | caught
+hash-reason-no-id        | MISSED | caught
+hash-undotted-id         | MISSED | caught
+line-above-bare          | MISSED | caught
+line-bare                | MISSED | caught
+line-colon-empty         | MISSED | caught
+line-no-space-bare       | MISSED | caught
+second-mention-bare      | caught | caught
+tab-separated-bare       | caught | caught
+tab-then-text            | caught | caught
+good shapes (must NOT be flagged): shape | old | new
+block-comment            | ok      | ok
+crlf-with-id             | ok      | ok
+hash-comment             | ok      | ok
+hash-no-space            | ok      | ok
+id-at-end-of-line        | ok      | ok
+line-comment             | ok      | ok
+not-a-repo: old _bare returns [] (no error raised)
+not-a-repo: new raises: git grep failed (exit 128): fatal: not a git repository (or 
