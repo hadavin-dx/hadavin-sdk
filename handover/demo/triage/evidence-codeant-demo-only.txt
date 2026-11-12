@@ -1,0 +1,10 @@
+
+NOTE: the third test (burst --n 0) was DROPPED: `python -m demo_only.burst ... --n 0` on 558d37f exits 0 with 'SENT n=0 ... RESULT sent=0 expected=0'; threading.Barrier(0) is accepted by Python 3.12 and 3.13. The bot's claim (ValueError) is false: FALSE POSITIVE.
+
+== describe() test AFTER ==
+...                                                                      [100%]
+3 passed in 1.09s
+== describe() test BEFORE (portal_demo.js of 558d37f) ==
+E       AssertionError:  1 new 1 repeat 1 refused
+E       assert ('1 refused' in ' 1 new 1 repeat 1 refused' and '2 without an answer' in ' 1 new 1 repeat 1 refused')
+1 failed, 2 deselected in 0.06s

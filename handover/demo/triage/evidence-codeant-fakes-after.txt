@@ -1,0 +1,7 @@
+== AFTER (patched demo_only/fake_hubspot.py + fake_model_server.py) ==
+...........                                                              [100%]
+11 passed in 5.01s
+
+real	0m5.297s
+user	0m0.592s
+sys	0m0.392s

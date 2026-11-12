@@ -1,0 +1,25 @@
+git head: 558d37f
+alone codeant-gitleaks: OK (git apply --check)
+alone codeant-scripts: OK (git apply --check)
+alone codeant-docs: OK (git apply --check)
+alone codeant-n8n-proof: OK (git apply --check)
+alone codeant-desk: OK (git apply --check)
+alone codeant-portal-log: OK (git apply --check)
+alone codeant-demo-only: OK (git apply --check)
+alone codeant-tests-hardening: OK (git apply --check)
+all 8 codeant patches together: OK
+codeant + js-portal.patch: OK
+codeant + py-retry.patch: OK
+codeant + js-portal + py-retry: OK
+js-portal + py-retry first, then codeant: OK
+codeant + extra-demo-only.patch: OK
+extra-demo-only first, then codeant: OK
+  FAIL docs-and-deps.patch: error: patch failed: .gitleaks.toml:88 error: .gitleaks.toml: patch does not apply 
+codeant + fixes/docs-and-deps.patch: CONFLICT
+  FAIL sonar-coverage-v1.patch: error: patch failed: .gitleaks.toml:88 error: .gitleaks.toml: patch does not apply 
+codeant + coverage/sonar-coverage-v1.patch (gitleaks hunk): CONFLICT
+  FAIL codeant-gitleaks.patch: error: patch failed: .gitleaks.toml:88 error: .gitleaks.toml: patch does not apply 
+sonar-coverage-v1 first, then codeant: CONFLICT
+variant after-docs-and-deps: git apply --check OK (on 558d37f + that patch)
+variant after-sonar-coverage: git apply --check OK (on 558d37f + that patch)
+RECHECK after regenerating codeant-demo-only.patch: all 8 codeant + js-portal + py-retry + extra-demo-only apply on 558d37f (fresh clone): OK

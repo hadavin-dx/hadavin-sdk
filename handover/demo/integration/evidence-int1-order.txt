@@ -1,0 +1,22 @@
+COMMAND: ordered git apply (fallback --3way, -C1) with scratch commit per step, in clones /tmp/work/int1-o-*
+## order A: 1 2 3 4 5
+step 1: plain
+step 2: plain
+step 3: plain
+step 4: plain
+step 5: plain
+files changed vs 558d37f:  24 files changed, 381 insertions(+), 35 deletions(-)
+## order B: 5 1 2 3 4
+step 5: plain
+step 1: plain
+step 2: plain
+step 3: plain
+step 4: plain
+files changed vs 558d37f:  24 files changed, 381 insertions(+), 35 deletions(-)
+## order C: 1 2 3 4 5
+step 1: plain
+step 2: plain
+step 3: plain
+step 4: plain
+step 5: plain
+files changed vs 558d37f:  24 files changed, 381 insertions(+), 35 deletions(-)

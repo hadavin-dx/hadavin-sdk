@@ -1,0 +1,15 @@
+== lint on the fully patched copy (python 3.12.3, ruff 0.17.4, mypy 2.4.1) ==
+-- ruff check .
+All checks passed!
+-- ruff format --check .
+136 files already formatted
+-- mypy linux
+Success: no issues found in 26 source files
+-- mypy win32
+Success: no issues found in 26 source files
+-- bandit
+	No issues identified.
+	Total issues (by severity):
+		Medium: 0
+		High: 0
+	Total issues (by confidence):

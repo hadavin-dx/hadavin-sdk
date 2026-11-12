@@ -1,0 +1,18 @@
+== BEFORE (fake_hubspot.py and fake_model_server.py of 558d37f), whole file ==
+FAILED tests/test_codeant_fakes.py::test_the_search_reads_the_contacts_under_the_lock
+FAILED tests/test_codeant_fakes.py::test_only_one_create_hangs_in_timeout_after_create_mode
+FAILED tests/test_codeant_fakes.py::test_a_list_as_mode_in_the_control_file_falls_back_to_the_port_mode
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad0]
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad1]
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad2]
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad3]
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad4]
+FAILED tests/test_codeant_fakes.py::test_a_control_value_of_the_wrong_kind_is_a_400_not_a_dropped_connection[bad5]
+FAILED tests/test_codeant_fakes.py::test_mixed_mode_starts_with_hot - Asserti...
+10 failed, 3 deselected, 16 warnings in 4.64s
+== BEFORE, fault-count race (558d37f), mode r429 and r5xx_after_store ==
+2 passed, 11 deselected in 51.22s
+            assert status == 200 and body["total"] == 1
+>           assert watched.unlocked_reads == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = {'1000': {'id': '1000', 'properties': {'email': 'a@example.test', 'hadavin_lead_id': 'L1'}}}.unlocked_reads

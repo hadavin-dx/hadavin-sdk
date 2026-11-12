@@ -1,0 +1,7 @@
+== AFTER ==
+.                                                                        [100%]
+1 passed in 0.08s
+== BEFORE (reset.ps1 of 558d37f) ==
+E       AssertionError: reset.ps1 still compares paths that were not resolved
+tests/test_reset_ps1_links.py:20: AssertionError
+1 failed in 0.03s

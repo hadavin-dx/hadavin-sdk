@@ -1,0 +1,13 @@
+== hygiene/_demo_module guards: BEFORE (558d37f tests + new test file) ==
+FAILED tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: pull_request_target]
+FAILED tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: [push, pull_request_target]]
+FAILED tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: { pull_request_target: { types: [opened] } }]
+3 failed, 2 passed, 1 skipped in 0.18s
+
+== proxy: BEFORE (558d37f) with HTTP_PROXY set to a dead proxy ==
+E               ConnectionRefusedError: [Errno 111] Connection refused
+E               urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+FAILED tests/test_load_tools.py::test_mode_ok_logs_the_lead - urllib.error.UR...
+1 failed, 79 deselected in 0.78s
+== proxy: AFTER ==
+1 passed, 79 deselected in 0.68s

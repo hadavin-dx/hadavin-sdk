@@ -1,0 +1,4 @@
+== gitleaks 8.30.1 dir . with the before .gitleaks.toml (a 40-hex id placed in 4 files) ==
+files reported: ['docs/lint.yml']
+== gitleaks 8.30.1 dir . with the after .gitleaks.toml (a 40-hex id placed in 4 files) ==
+files reported: ['docs/lint.yml', 'docs/requirements-dev.txt']

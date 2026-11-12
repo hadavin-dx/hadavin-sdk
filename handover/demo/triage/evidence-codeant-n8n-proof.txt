@@ -1,0 +1,10 @@
+== AFTER ==
+..                                                                       [100%]
+2 passed in 0.21s
+== BEFORE (n8n/proof.json of 558d37f) ==
+E       AssertionError: assert 'PASS' == 'MISMATCH'
+E         
+E         - MISMATCH
+E         + PASS
+FAILED tests/test_n8n_proof_result.py::test_nine_lost_requests_are_not_a_pass
+1 failed, 1 passed in 0.20s

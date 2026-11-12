@@ -1,0 +1,226 @@
+diff --git a/tests/test_codeant_hygiene.py b/tests/test_codeant_hygiene.py
+new file mode 100644
+index 0000000..5f094eb
+--- /dev/null
++++ b/tests/test_codeant_hygiene.py
+@@ -0,0 +1,38 @@
++"""Guards that the CodeAnt review showed to be blind: an inline workflow trigger, a missing import inside demo_only."""
++
++from __future__ import annotations
++
++import importlib
++
++import pytest
++from test_hygiene import _workflow_problems
++
++READ_ONLY = "permissions:\n  contents: read\n"
++
++
++@pytest.mark.parametrize(
++    "trigger",
++    [
++        "on: pull_request_target",
++        "on: [push, pull_request_target]",
++        "on: { pull_request_target: { types: [opened] } }",
++        "on:\n  workflow_run:\n    workflows: [x]",
++    ],
++)
++def test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape(trigger: str) -> None:
++    assert any("forbidden trigger" in p for p in _workflow_problems(trigger + "\n" + READ_ONLY))
++
++
++def test_a_commented_or_harmless_line_is_not_a_forbidden_trigger() -> None:
++    assert _workflow_problems("# pull_request_target is never used here\non: [push]\n" + READ_ONLY) == []
++
++
++def test_a_missing_import_inside_demo_only_is_an_error_not_a_skip(monkeypatch: pytest.MonkeyPatch) -> None:
++    import test_portal_demo
++
++    def broken(name: str) -> object:
++        raise ModuleNotFoundError("No module named 'demo_only.gone'", name="demo_only.gone")
++
++    monkeypatch.setattr(importlib, "import_module", broken)
++    with pytest.raises(ModuleNotFoundError):
++        test_portal_demo._demo_module("demo_only.portal_demo")
+diff --git a/tests/test_desk_http_edge_cases.py b/tests/test_desk_http_edge_cases.py
+index 2ae2159..a2c3879 100644
+--- a/tests/test_desk_http_edge_cases.py
++++ b/tests/test_desk_http_edge_cases.py
+@@ -613,6 +613,7 @@ def make_book_at_schema_version_1(tmp: Path, leads: int = 0) -> Path:
+         ("followups", "crm_done"),
+         ("followups", "auto_attempts"),
+         ("followups", "ambiguous_prior"),
++        ("followups", "send_started"),
+     ):
+         if column in {r[1] for r in con.execute(f"PRAGMA table_info({table})")}:
+             con.execute(f"ALTER TABLE {table} DROP COLUMN {column}")
+diff --git a/tests/test_followup_edge_cases.py b/tests/test_followup_edge_cases.py
+index d6b39eb..7b778b8 100644
+--- a/tests/test_followup_edge_cases.py
++++ b/tests/test_followup_edge_cases.py
+@@ -54,7 +54,12 @@ def test_inflight_places_go_in_arrival_order() -> None:
+         t = threading.Thread(target=waiter, args=(i,))
+         t.start()
+         threads.append(t)
+-        time.sleep(0.05)  # arrival order is fixed
++        deadline = time.monotonic() + 5
++        while (
++            len(sem._waiters) < i + 1 and time.monotonic() < deadline
++        ):  # this waiter has its ticket: the order is fixed
++            time.sleep(0.005)
++        assert len(sem._waiters) == i + 1
+     sem.release()
+     for t in threads:
+         t.join(5)
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 3b324e3..eb00415 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -309,7 +309,10 @@ def _workflow_problems(text: str) -> list[str]:
+             block.append(ln)
+         if "write" in NL.join(block):
+             problems.append("top-level permissions must be read-only (raise per job)")
+-    problems += [f"forbidden trigger: {t}" for t in FORBIDDEN_TRIGGERS if re.search(rf"^[ ]*{t}\b", text, re.MULTILINE)]
++    # anywhere on a line that is not a comment: also `on: pull_request_target` and `on: [push, pull_request_target]`
++    problems += [
++        f"forbidden trigger: {t}" for t in FORBIDDEN_TRIGGERS if re.search(rf"^[^#\n]*\b{t}\b", text, re.MULTILINE)
++    ]
+     return problems
+ 
+ 
+diff --git a/tests/test_input_edge_cases.py b/tests/test_input_edge_cases.py
+index 4dcc781..6af8e0c 100644
+--- a/tests/test_input_edge_cases.py
++++ b/tests/test_input_edge_cases.py
+@@ -53,8 +53,12 @@ def test_head_options_and_malformed_requests_get_json(env) -> None:
+     assert (status, out) == (400, {"error": "bad_request"})
+ 
+ 
+-def test_long_lowercase_email_is_review(env) -> None:
+-    """One capital letter with a dot (U+0130) becomes two characters in lower case: 134 typed, 268 as the key."""
++def test_long_lowercase_email_is_review(env, monkeypatch) -> None:
++    """One capital letter with a dot (U+0130) becomes two characters in lower case: 134 typed, 268 as the key. The
++    ASCII-apart check would refuse U+0130 first: it is switched off here, so only the length check can catch it."""
++    from lead_desk import identity
++
++    monkeypatch.setattr(identity, "_lower_keeps_ascii_apart", lambda e: True)
+     rig = env.rig()
+     base = env.serve(rig)
+     email = "İ" * 130 + "@example.test"
+diff --git a/tests/test_load_tools.py b/tests/test_load_tools.py
+index 8f322c9..12cac54 100644
+--- a/tests/test_load_tools.py
++++ b/tests/test_load_tools.py
+@@ -674,8 +674,9 @@ def ask(model: Any, lead_id: str, timeout: float = 2.0) -> tuple[int, bytes]:
+     req = urllib.request.Request(  # noqa: S310
+         model.url + "/v1/messages", json.dumps(body).encode(), {"x-api-key": "fake", "Content-Type": "application/json"}
+     )
++    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # loopback: never through HTTP_PROXY
+     try:
+-        with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310
++        with opener.open(req, timeout=timeout) as r:  # noqa: S310
+             return r.status, r.read()
+     except urllib.error.HTTPError as e:
+         return e.code, e.read()
+diff --git a/tests/test_model_stamp_and_reaper.py b/tests/test_model_stamp_and_reaper.py
+index dae5fd0..b04de32 100644
+--- a/tests/test_model_stamp_and_reaper.py
++++ b/tests/test_model_stamp_and_reaper.py
+@@ -316,6 +316,10 @@ class LongQualifier(RecordedQualifier):
+ 
+ def test_main_exits_4_when_the_desk_refuses(env, monkeypatch, tmp_path, capsys) -> None:
+     rig = env.rig()
++    for name in [
++        n for n in os.environ if n.startswith("DESK_")
++    ]:  # a setting of the person running the tests must not leak in
++        monkeypatch.delenv(name)
+     monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "refused.sqlite3"))
+     monkeypatch.setenv("DESK_PORT", "0")
+     monkeypatch.setattr(
+diff --git a/tests/test_mutants_more.py b/tests/test_mutants_more.py
+index 86496d9..31e6255 100644
+--- a/tests/test_mutants_more.py
++++ b/tests/test_mutants_more.py
+@@ -282,7 +282,7 @@ def test_mutant_sender_shown_without_mask() -> None:  # drops the mask: the addr
+     text = (Path(__file__).resolve().parents[1] / "src/lead_desk/portal/pages/leads.js").read_text(encoding="utf-8")
+     bad = text.replace(
+         "P.ui.guarded('email', mailSender, P.reveal.key('sender', mailSender),",
+-        "(function (a, b, c, d) { return a; })('email', mailSender, P.reveal.key('sender', mailSender),",
++        "(function (a, b, c, d) { return b; })('email', mailSender, P.reveal.key('sender', mailSender),",
+     )
+     assert bad != text and not test_later_messages._sender_masked(bad)
+ 
+diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
+index 88b7435..55e03de 100644
+--- a/tests/test_portal_demo.py
++++ b/tests/test_portal_demo.py
+@@ -46,7 +46,10 @@ def _demo_module(name: str) -> Any:
+     try:
+         return importlib.import_module(name)
+     except ModuleNotFoundError as e:
+-        if e.name is not None and e.name.split(".")[0] == "demo_only":
++        if e.name in (
++            "demo_only",
++            name,
++        ):  # the folder (or this very module) is gone; a missing import INSIDE it is an error
+             pytest.skip(f"{e.name} is not there: demo_only/ was removed", allow_module_level=True)
+         raise
+ 
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 2248eb0..12980eb 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -8,6 +8,7 @@ import shutil
+ import socket
+ import subprocess
+ import sys
++import tempfile
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -62,8 +63,10 @@ def test_reset_still_deletes_a_database_inside_the_data_folder() -> None:
+ # -- the reset never deletes the lead book while the desk may still be using it
+ @pytest.fixture
+ def book() -> Any:
+-    folder = REPO / "data" / "reset-guard-test"
+-    folder.mkdir(parents=True, exist_ok=True)
++    (REPO / "data").mkdir(exist_ok=True)
++    folder = Path(
++        tempfile.mkdtemp(prefix="reset-guard-", dir=REPO / "data")
++    )  # a fresh folder: nothing else is ever removed
+     db = folder / "desk.sqlite3"
+     db.write_text("keep me", encoding="utf-8")
+     (folder / "desk.log").write_text("keep me", encoding="utf-8")
+diff --git a/tests/test_vendor_hosts.py b/tests/test_vendor_hosts.py
+index 4e810d6..86631be 100644
+--- a/tests/test_vendor_hosts.py
++++ b/tests/test_vendor_hosts.py
+@@ -9,16 +9,7 @@ from urllib.parse import urlsplit
+ from lead_desk import constants
+ 
+ REPO = Path(__file__).resolve().parents[1]
+-FOLDERS = ("src", "scripts", "tests", "load_tools", "demo_only", "docs", "n8n", ".github")
+-ROOT_FILES = (
+-    "README.md",
+-    "contract.md",
+-    "versions.md",
+-    "SECURITY.md",
+-    "pyproject.toml",
+-    "patterns.txt",
+-    "exceptions.txt",
+-)
++FOLDERS = ("src", "scripts", "tests", "tools", "load_tools", "demo_only", "docs", "n8n", ".github", ".codeant")
+ TEXT_SUFFIXES = {
+     ".py",
+     ".md",
+@@ -34,7 +25,10 @@ TEXT_SUFFIXES = {
+     ".toml",
+     ".yml",
+     ".in",
++    ".yaml",
++    ".properties",
+ }
++ROOT_FILES = tuple(sorted(p.name for p in REPO.iterdir() if p.is_file()))  # every file at the top, dotfiles too
+ 
+ 
+ def vendor_names() -> set[str]:

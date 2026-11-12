@@ -1,0 +1,13 @@
+== BEFORE (558d37f tools/scrub_n8n_export.py + scripts/n8n_api.py) ==
+FAILED tests/test_scrub_n8n_export.py::test_other_schemes_and_lookalike_domains_are_replaced[ftp://user:secretword@files.corp.example.org/in/x.csv-must_not_remain0]
+FAILED tests/test_scrub_n8n_export.py::test_other_schemes_and_lookalike_domains_are_replaced[file:///home/someone/.ssh/id_rsa-must_not_remain1]
+FAILED tests/test_scrub_n8n_export.py::test_other_schemes_and_lookalike_domains_are_replaced[wss://stream.vendor.net/live-must_not_remain3]
+FAILED tests/test_scrub_n8n_export.py::test_other_schemes_and_lookalike_domains_are_replaced[mail bob@example.com.au and jane@example.com.evil.net-must_not_remain4]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[http://n8n.example.test:5678]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[http://10.0.0.5]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[http://localhost.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[ftp://127.0.0.1]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[file:///x]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[n8n.example.test]
+FAILED tests/test_n8n_api_url.py::test_these_addresses_are_refused_before_the_key_is_used[]
+11 failed, 13 passed in 0.08s

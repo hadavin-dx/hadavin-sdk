@@ -1,0 +1,243 @@
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index bce502b..081cf01 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -8,6 +8,7 @@ The key is read from the file, sent as a header, never printed.
+ 
+ from __future__ import annotations
+ 
++import ipaddress
+ import json
+ import os
+ import sys
+@@ -15,10 +16,28 @@ import urllib.error
+ import urllib.request
+ from http import HTTPStatus
+ from pathlib import Path
++from urllib.parse import urlsplit
+ 
+ from http_guard import open_http
+ 
+-BASE = os.environ.get("N8N_URL", "http://127.0.0.1:5679").rstrip("/")
++
++def checked_base(url: str) -> str:
++    """The n8n address, only when the API key may travel to it: https, or http to this computer (127.0.0.1, ::1,
++    localhost). Plain http to another host would send the key unencrypted: refused before anything is read or sent."""
++    parts = urlsplit(url)
++    host = (parts.hostname or "").lower()
++    if parts.scheme.lower() == "https" and host:
++        return url.rstrip("/")
++    try:
++        on_this_computer = ipaddress.ip_address(host).is_loopback
++    except ValueError:
++        on_this_computer = host == "localhost"
++    if parts.scheme.lower() == "http" and on_this_computer:
++        return url.rstrip("/")
++    raise SystemExit("N8N_URL must be an https address, or http to this computer (127.0.0.1, ::1, localhost)")
++
++
++BASE = checked_base(os.environ.get("N8N_URL", "http://127.0.0.1:5679"))
+ KEY = Path(os.environ["N8N_API_KEY_FILE"]).read_text(encoding="utf-8").strip()
+ KEEP = ("name", "nodes", "connections", "settings")  # the create call refuses other top-level keys
+ 
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index 49906ed..42bdfc0 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -14,10 +14,9 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
+ }
+ $db = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path)").Trim()
+ $dataDir = Split-Path -Parent $db
+-$allowed = [System.IO.Path]::GetFullPath((Join-Path (Get-Location).Path 'data'))
+-if ([System.IO.Path]::IsPathRooted($dataDir)) { $abs = $dataDir } else { $abs = Join-Path (Get-Location).Path $dataDir }
+-$actual = [System.IO.Path]::GetFullPath($abs)
+-if (-not ($actual -ieq $allowed -or $actual.StartsWith($allowed + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase))) {
++# real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
++$inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
++if ("$inside".Trim() -ne 'True') {
+     Write-Host "refused: the database path is not inside this repository's data folder, so nothing was stopped or deleted"
+     exit 2
+ }
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+new file mode 100644
+index 0000000..3efac04
+--- /dev/null
++++ b/tests/test_n8n_api_url.py
+@@ -0,0 +1,59 @@
++"""scripts/n8n_api.py sends the n8n API key in a header: it must only go to https, or to http on this computer."""
++
++from __future__ import annotations
++
++import importlib
++import sys
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++
++
++def _load(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None):
++    key = tmp_path / "key.txt"
++    key.write_text("made-up-key-for-the-test\n", encoding="utf-8")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(key))
++    if url is None:
++        monkeypatch.delenv("N8N_URL", raising=False)
++    else:
++        monkeypatch.setenv("N8N_URL", url)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    return importlib.import_module("n8n_api")
++
++
++@pytest.mark.parametrize(
++    "url",
++    [
++        None,
++        "http://127.0.0.1:5679/",
++        "http://localhost:5678",
++        "http://[::1]:5678",
++        "https://n8n.example.test",
++        "HTTPS://N8N.EXAMPLE.TEST/x/",
++    ],
++)
++def test_these_addresses_are_accepted(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str | None) -> None:
++    mod = _load(monkeypatch, tmp_path, url)
++    assert not mod.BASE.endswith("/")
++
++
++@pytest.mark.parametrize(
++    "url",
++    [
++        "http://n8n.example.test:5678",
++        "http://10.0.0.5",
++        "http://localhost.example.test",
++        "ftp://127.0.0.1",
++        "file:///x",
++        "n8n.example.test",
++        "",
++    ],
++)
++def test_these_addresses_are_refused_before_the_key_is_used(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, url: str
++) -> None:
++    with pytest.raises(SystemExit, match="N8N_URL must be"):
++        _load(monkeypatch, tmp_path, url)
+diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
+new file mode 100644
+index 0000000..df907a2
+--- /dev/null
++++ b/tests/test_reset_ps1_links.py
+@@ -0,0 +1,44 @@
++"""scripts/reset.ps1 must judge the database folder by its REAL path (a symlink or a Windows junction inside data/ that
++points elsewhere must be refused), like scripts/reset.sh does with realpath. PowerShell is not run here: the Python
++check that reset.ps1 hands to `python -c` is cut out of the file and run on a symlink."""
++
++from __future__ import annotations
++
++import os
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++
++
++def _check_code() -> str:
++    text = (REPO / "scripts" / "reset.ps1").read_text(encoding="utf-8")
++    assert "GetFullPath" not in text, "reset.ps1 still compares paths that were not resolved"
++    found = re.search(r'\$inside = python -c "(?P<code>[^"]+)" \$dataDir', text)
++    assert found, "reset.ps1 has no real-path check"
++    return found.group("code")
++
++
++def _inside(folder: Path, cwd: Path) -> str:
++    done = subprocess.run(  # noqa: S603 (our own snippet and a path made by the test)
++        [sys.executable, "-c", _check_code(), str(folder)], cwd=cwd, capture_output=True, text=True, check=True
++    )
++    return done.stdout.strip()
++
++
++def test_the_real_path_check_accepts_a_folder_inside_data_and_refuses_a_link_out_of_it(tmp_path: Path) -> None:
++    (tmp_path / "data" / "run").mkdir(parents=True)
++    outside = tmp_path / "elsewhere"
++    outside.mkdir()
++    assert _inside(tmp_path / "data" / "run", tmp_path) == "True"
++    assert _inside(Path("data") / "run", tmp_path) == "True"
++    try:
++        os.symlink(outside, tmp_path / "data" / "link", target_is_directory=True)
++    except (OSError, NotImplementedError):
++        pytest.skip("this computer cannot make a symbolic link")
++    assert _inside(tmp_path / "data" / "link", tmp_path) == "False"
++    assert _inside(outside, tmp_path) == "False"
+diff --git a/tests/test_scrub_n8n_export.py b/tests/test_scrub_n8n_export.py
+new file mode 100644
+index 0000000..9dbce4c
+--- /dev/null
++++ b/tests/test_scrub_n8n_export.py
+@@ -0,0 +1,34 @@
++"""tools/scrub_n8n_export.py: URLs of any scheme and look-alike e-mail domains must not survive the scrub."""
++
++from __future__ import annotations
++
++import pytest
++
++from tools.scrub_n8n_export import _clean
++
++KEPT = [
++    "write to a@example.com",
++    "a@sub.example.test",
++    "end of sentence a@example.invalid.",
++    "http://localhost:5678/webhook/x",
++    "https://127.0.0.1/x",
++]
++GONE = [
++    ("ftp://user:secretword@files.corp.example.org/in/x.csv", ["corp.example.org", "secretword", "in/x.csv"]),
++    ("file:///home/someone/.ssh/id_rsa", ["someone", "id_rsa"]),
++    ("postgres://app:pw1234@db.internal.corp:5432/leads", ["pw1234", "db.internal.corp"]),
++    ("wss://stream.vendor.net/live", ["vendor.net"]),
++    ("mail bob@example.com.au and jane@example.com.evil.net", ["example.com.au", "evil.net", "bob@", "jane@"]),
++    ("x@example.comx.org", ["comx.org"]),
++]
++
++
++@pytest.mark.parametrize("text", KEPT)
++def test_allowed_values_are_kept(text: str) -> None:
++    assert _clean(text) == text
++
++
++@pytest.mark.parametrize(("text", "must_not_remain"), GONE)
++def test_other_schemes_and_lookalike_domains_are_replaced(text: str, must_not_remain: list[str]) -> None:
++    out = _clean(text)
++    assert not [w for w in must_not_remain if w in out], out
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 2b16b6d..30b8e46 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -2,7 +2,7 @@
+ 
+ Allow-list by key name: a key that is not listed is dropped, so a field n8n adds later cannot leak.
+ Never kept: ids, instance id, credentials, webhook ids, pinData, tags, project owner, timestamps.
+-Inside node parameters (free-form) strings are cleaned: absolute URLs other than localhost, and e-mail
++Inside node parameters (free-form) strings are cleaned: absolute URLs of any scheme other than localhost, and e-mail
+ addresses other than example.test / example.com / example.invalid, are replaced.
+ 
+ Usage: python -m tools.scrub_n8n_export in.json out.json
+@@ -37,8 +37,12 @@ NODE = (
+     "alwaysOutputData",
+     "continueOnFail",  # node settings that change what a run does
+ )
+-URL = re.compile(r"https?://(?!(?:localhost|127\.0\.0\.1)(?:[:/]|$))[^\s\"'<>]+")
+-MAIL = re.compile(r"[A-Za-z0-9._%+-]+@(?!(?:[A-Za-z0-9-]+\.)*example\.(?:com|test|invalid)\b)[A-Za-z0-9.-]+")
++# any scheme (http, https, ftp, ssh, postgres, file, ...): a host, a path or a user:password part must not survive
++URL = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://(?!(?:localhost|127\.0\.0\.1)(?:[:/]|$))[^\s\"'<>]+")
++# the allowed domain must END there: the allowed name with more labels after it is another, real domain
++MAIL = re.compile(
++    r"[A-Za-z0-9._%+-]+@(?!(?:[A-Za-z0-9-]+\.)*example\.(?:com|test|invalid)(?![A-Za-z0-9-]|\.[A-Za-z0-9-]))[A-Za-z0-9.-]+"
++)
+ 
+ 
+ def _clean(v: Any) -> Any:

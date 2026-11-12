@@ -1,0 +1,10 @@
+COMMAND: GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 python -m pytest -p no:cacheprovider -q -rs tests/test_hygiene.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /tmp/work/int1-o-A
+configfile: pyproject.toml
+collected 10 items
+
+tests/test_hygiene.py ..........                                         [100%]
+
+============================= 10 passed in 11.66s ==============================

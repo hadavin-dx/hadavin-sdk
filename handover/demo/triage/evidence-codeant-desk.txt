@@ -1,0 +1,35 @@
+== BEFORE (558d37f desk.py) ==
+
+tests/test_codeant_desk.py:27: Failed
+___ test_a_newer_stage_is_not_sent_while_an_abandoned_older_call_still_runs ____
+
+env = <conftest.Env object at 0x7f26290fce00>
+
+    def test_a_newer_stage_is_not_sent_while_an_abandoned_older_call_still_runs(env: Any) -> None:
+        crm = _HangingFirstCrm()
+        rig = env.rig(leadflow=_flow(), crm=crm, send_timeout_seconds=0.3)
+        assert rig.desk.handle("form", "x-1", lead()).status == 201
+        try:
+            assert _pass(rig)["mirrored"] == 0  # the first call hangs past its 0.3 s: abandoned, one try used
+            con = sqlite3.connect(rig.db_path)
+            con.execute("UPDATE lead_state SET step='qualified', step_rank=3")  # the stage moved on meanwhile
+            con.commit()
+            con.close()
+            _pass(rig)  # the next pass: the first call is still running
+>           assert len(crm.started) == 1, crm.started  # the newer stage waits; it never races the older one
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: ['ATTEMPTED_TO_CONTACT', 'OPEN_DEAL']
+E           assert 2 == 1
+E            +  where 2 = len(['ATTEMPTED_TO_CONTACT', 'OPEN_DEAL'])
+E            +    where ['ATTEMPTED_TO_CONTACT', 'OPEN_DEAL'] = <test_codeant_desk._HangingFirstCrm object at 0x7f26290fcfb0>.started
+
+tests/test_codeant_desk.py:60: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_codeant_desk.py::test_a_private_in_memory_book_is_refused[:memory:]
+FAILED tests/test_codeant_desk.py::test_a_private_in_memory_book_is_refused[]
+FAILED tests/test_codeant_desk.py::test_a_newer_stage_is_not_sent_while_an_abandoned_older_call_still_runs
+3 failed in 0.58s
+
+== AFTER (patched desk.py) ==
+...                                                                      [100%]
+3 passed in 0.41s

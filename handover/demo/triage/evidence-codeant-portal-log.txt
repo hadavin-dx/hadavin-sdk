@@ -1,0 +1,8 @@
+== AFTER (patched log.js) ==
+.                                                                        [100%]
+1 passed in 0.36s
+== BEFORE (log.js of 558d37f) ==
+E       AssertionError: {'before': ['••••••', '••••••', '••••••', '••••••', '••••••'], 'after': ['••••••', '••••••', '••••••', '••••••', '••••••']}
+E       assert 5 == 6
+E        +  where 5 = len(['••••••', '••••••', '••••••', '••••••', '••••••'])
+1 failed in 0.28s

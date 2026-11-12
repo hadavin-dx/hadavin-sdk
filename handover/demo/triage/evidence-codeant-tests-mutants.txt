@@ -1,0 +1,15 @@
+== input_edge: length check REMOVED from identity.py (mutant) ==
+-- original test (558d37f) on the mutant:
+1 passed, 4 deselected in 0.57s
+-- patched test on the mutant:
+1 failed, 4 deselected in 0.56s
+
+== migration: the send_started column is no longer added by db.py (mutant) ==
+-- original helper (558d37f) on the mutant:
+34 passed, 73 deselected in 1.09s
+-- patched helper on the mutant:
+        assert book_shape(path) == before, "a failed migration left part of its work behind"
+        assert book_shape(path) == before, "a failed migration left part of its work behind"
+18 failed, 16 passed, 73 deselected in 1.68s
+
+(the migration mutant run printed long assertion text; only the summary lines are kept)

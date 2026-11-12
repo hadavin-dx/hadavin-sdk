@@ -1,0 +1,99 @@
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 83d540a..548e8d5 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -360,8 +360,10 @@ class Desk:
+         self._inflight = FairSemaphore(INFLIGHT_MAX)
+         self._drives = FairSemaphore(DRIVE_MAX)
+         db_text = str(config.db_path)
++        if db_text in ("", ":memory:"):  # every request thread opens its own connection: a private memory book is empty
++            raise DeskSettingRefused("the lead book must be a file: ':memory:' is empty for every thread but the first")
+         # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
+-        self._db_path: Path | str = db_text if db_text in ("", ":memory:") else Path(db_text).resolve()
++        self._db_path: Path | str = Path(db_text).resolve()
+         self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
+         self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
+         self._decide_lock = threading.Lock()
+@@ -782,6 +784,7 @@ class Desk:
+                     self._call_deadline(),
+                     lambda: CrmTimeout("no answer in time"),
+                     tag=f"mirror:{lead_id}",
++                    exclusive=True,  # an abandoned call may still land: a newer stage must not overtake it
+                 )
+             except AdapterBusy:
+                 return  # nothing was asked and nothing is counted
+diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
+new file mode 100644
+index 0000000..3197dce
+--- /dev/null
++++ b/tests/test_codeant_desk.py
+@@ -0,0 +1,69 @@
++"""Two findings of the CodeAnt review, as tests: (1) a private in-memory lead book is refused (each request thread
++opens its own connection, so every thread but the first would see no tables); (2) while an abandoned CRM copy call for
++a lead is still running, the next copy for that lead is not started (a late old stage must not overwrite a newer one).
++Made-up data only."""
++
++from __future__ import annotations
++
++import sqlite3
++import threading
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import Clock, CountingCrm, KeyedOutbox, RecordedQualifier, lead
++from test_lead_crm_copy import _flow, _pass
++
++from demo_only.fakes import FakeCrm
++from lead_desk.config import Config
++from lead_desk.desk import Desk, DeskSettingRefused
++
++
++@pytest.mark.parametrize("where", [":memory:", ""])
++def test_a_private_in_memory_book_is_refused(tmp_path: Path, where: str) -> None:
++    replies = tmp_path / "replies.json"
++    replies.write_text("{}", encoding="utf-8")
++    config = Config(db_path=Path(where) if where else Path(":memory:"), port=0, replies_path=replies)
++    with pytest.raises(DeskSettingRefused, match="must be a file"):
++        Desk(config, FakeCrm(), KeyedOutbox(), RecordedQualifier(replies), now=Clock())
++
++
++class _HangingFirstCrm(CountingCrm):
++    """The first set_fields call blocks until released (an answer that comes back after the desk gave up on it)."""
++
++    def __init__(self) -> None:
++        super().__init__()
++        self.release = threading.Event()
++        self.started: list[str] = []
++        self._lock = threading.Lock()
++
++    def set_fields(self, lead_id: str, email_key: str, crm_owner_id: str, crm_status: str) -> None:
++        with self._lock:
++            self.started.append(crm_status)
++            first = len(self.started) == 1
++        if first:
++            self.release.wait(10)
++        super().set_fields(lead_id, email_key, crm_owner_id, crm_status)
++
++
++def test_a_newer_stage_is_not_sent_while_an_abandoned_older_call_still_runs(env: Any) -> None:
++    crm = _HangingFirstCrm()
++    rig = env.rig(leadflow=_flow(), crm=crm, send_timeout_seconds=0.3)
++    assert rig.desk.handle("form", "x-1", lead()).status == 201
++    try:
++        assert _pass(rig)["mirrored"] == 0  # the first call hangs past its 0.3 s: abandoned, one try used
++        con = sqlite3.connect(rig.db_path)
++        con.execute("UPDATE lead_state SET step='qualified', step_rank=3")  # the stage moved on meanwhile
++        con.commit()
++        con.close()
++        _pass(rig)  # the next pass: the first call is still running
++        assert len(crm.started) == 1, crm.started  # the newer stage waits; it never races the older one
++    finally:
++        crm.release.set()
++    # once the old call has ended, the newer stage goes through
++    for _ in range(100):
++        if not rig.desk._tagged:
++            break
++        threading.Event().wait(0.05)
++    assert _pass(rig)["mirrored"] == 1
++    assert crm.started[-1] == "OPEN_DEAL"
