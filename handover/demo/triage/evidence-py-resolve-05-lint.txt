@@ -1,0 +1,84 @@
+## lint and types on the patched tree 2026-11-12T19:21:07Z
+tree: /tmp/work/py-resolve (content identical to /tmp/work/py-after = fresh clone of 43110e7 + regenerated py-retry.patch; checked with diff -r, only .venv/.mypy_cache/.ruff_cache differ)
+$ git rev-parse HEAD
+43110e75b8ad96da306d5f8bb66a47ce9fa4323e
+$ git diff 43110e7 | sha256sum
+c1a038a54708c8ca20ba1651ee25c8f5e4198e0d8978cb529767b0c39ee9f272  -
+$ python --version
+Python 3.12.3
+
+$ ruff --version
+ruff 0.17.4
+exit 0
+
+$ mypy --version
+mypy 2.4.1 (compiled: yes)
+exit 0
+
+$ bandit --version
+bandit 1.9.4
+  python version = 3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]
+exit 0
+
+$ ruff check .
+All checks passed!
+exit 0
+
+$ ruff format --check .
+128 files already formatted
+exit 0
+
+$ mypy --platform linux
+Success: no issues found in 26 source files
+exit 0
+
+$ mypy --platform win32
+Success: no issues found in 26 source files
+exit 0
+
+$ bandit -ll -r src tools scripts -c pyproject.toml
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: None
+[main]	INFO	using config: pyproject.toml
+[main]	INFO	running on Python 3.12.3
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: just is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: above is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: HubspotSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+Run started:2026-11-12 19:21:10.624860+00:00
+
+Test results:
+	No issues identified.
+
+Code scanned:
+	Total lines of code: 10190
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 1
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+exit 0

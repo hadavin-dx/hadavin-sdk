@@ -1,0 +1,78 @@
+## full serial suite: (b) base 43110e7 + resolved py-retry.patch only (no js-portal.patch)
+started 2026-11-12T19:21:00Z
+tree: /tmp/work/py-after
+$ git rev-parse HEAD
+43110e75b8ad96da306d5f8bb66a47ce9fa4323e
+$ git status --short
+ M demo_only/fake_imap.py
+ M demo_only/fake_smtp_tls.py
+ M load_tools/catcher.py
+ M load_tools/load_driver.py
+ M src/lead_desk/config.py
+ M src/lead_desk/crm_hubspot.py
+ M src/lead_desk/desk.py
+ M src/lead_desk/live_claude.py
+ M src/lead_desk/portal_api.py
+ M src/lead_desk/smtp_outbox.py
+ M src/lead_desk/smtp_provider.py
+ M tests/test_lead_crm_copy.py
+?? tests/test_except_clause_hierarchy.py
+$ git diff 43110e7 | sha256sum
+7123d6ba1be1d99f8c43154bfee3fec6f8a79736ba8fdf780dee1b76e268dc35  -
+$ /tmp/work/py-resolve/.venv/bin/python --version
+Python 3.12.3
+$ /tmp/work/py-resolve/.venv/bin/python -m pip freeze | sha256sum   (venv /tmp/work/py-resolve/.venv, installed with pip install --require-hashes -r requirements-dev.txt, see evidence-py-resolve-00-setup.txt)
+9d517ca211bd2e0f00e020be6bb49a33c27ac5927d82504c82ceb1dfcdbfa0aa  -
+$ uptime
+ 19:21:00 up 30 min,  0 user,  load average: 0.89, 0.75, 0.50
+$ cd /tmp/work/py-after && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -rs -p no:cacheprovider
+........................................................................ [  2%]
+........................................................................ [  5%]
+........................................................................ [  8%]
+........................................................................ [ 11%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 20%]
+........................................................................ [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+........................................................................ [ 31%]
+........................................................................ [ 34%]
+........................................................................ [ 37%]
+......................s................................................. [ 40%]
+........................................................................ [ 42%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 51%]
+.................................................................ss..... [ 54%]
+..........................sssss....s.................................... [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 62%]
+........................................................................ [ 65%]
+..................................................ssssssssssssssss...... [ 68%]
+........................................................................ [ 71%]
+...................................................ssssssssssssss....... [ 74%]
+...sssssssssssssssssssssss......sssssss.sssssssssssss..sss.............. [ 77%]
+........................................ssssssssssss.................... [ 80%]
+............................ss..s....................................... [ 83%]
+........................................................................ [ 85%]
+........................................................................ [ 88%]
+......s................................................................. [ 91%]
+........................................................................ [ 94%]
+...............................................................sssssssss [ 97%]
+sssss..................................s...........................      [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:128: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2399 passed, 116 skipped in 977.42s (0:16:17)
+pytest exit code: 0; wall seconds: 978
+$ uptime
+ 19:37:18 up 46 min,  0 user,  load average: 1.63, 0.92, 0.77
+finished 2026-11-12T19:37:18Z

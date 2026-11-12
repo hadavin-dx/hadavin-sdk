@@ -1,0 +1,83 @@
+## mutation checks 2026-11-12T19:21:52Z; throwaway copy /tmp/work/py-mut = tar copy of /tmp/work/py-resolve (base 43110e7 + resolved patch) without .venv and caches; python: Python 3.12.3
+Each mutation is made in the throwaway copy only, the two new tests run, then the file is restored from /tmp/work/py-resolve.
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -c 'import sys; sys.path[:0]=["src","."]; import lead_desk; print(lead_desk.__file__)'
+/tmp/work/py-mut/src/lead_desk/__init__.py
+
+### M0 unmutated
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+50 passed in 0.24s
+
+### M1 (asked for) delete the 'except MemoryError: raise' handler in SmtpProviderOutbox._connect (smtp_provider.py:258-259)
+$ diff /tmp/work/py-resolve/src/lead_desk/smtp_provider.py src/lead_desk/smtp_provider.py
+258,259d257
+<         except MemoryError:
+<             raise
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_provider.py::SmtpProviderOutbox._connect]
+FAILED tests/test_except_clause_hierarchy.py::test_memory_and_send_errors_are_handed_back_before_except_exception[src/lead_desk/smtp_provider.py::SmtpProviderOutbox._connect[0][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_the_two_senders_have_exactly_the_six_bare_re_raise_handlers
+3 failed, 47 passed in 0.27s
+restore: $ cp /tmp/work/py-resolve/src/lead_desk/smtp_provider.py src/lead_desk/smtp_provider.py; diff ... && echo identical
+identical
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+50 passed in 0.27s
+
+### M2 drop MemoryError from the phase-1 tuple in SmtpOutbox._dialogue (smtp_outbox.py:274)
+274c274
+<         except (SendRefused, SendUnreachable, MemoryError):
+---
+>         except (SendRefused, SendUnreachable):
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_memory_and_send_errors_are_handed_back_before_except_exception[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue[0][0]]
+2 failed, 48 passed in 0.30s
+
+### M3 move 'except Exception' above 'except MemoryError' in SmtpOutbox._dialogue phase 2
+283,284d282
+<         except MemoryError:
+<             raise
+286a285,286
+>         except MemoryError:
+>             raise
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_memory_and_send_errors_are_handed_back_before_except_exception[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue[1][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_the_two_senders_have_exactly_the_six_bare_re_raise_handlers
+4 failed, 46 passed in 0.30s
+
+### M4 add RuntimeError (a parent of CrmError) to the broad clause of HubspotCrm._request (crm_hubspot.py:326)
+326c326
+<         except (OSError, ValueError, http.client.HTTPException) as e:  # a CrmError is none of these: it passes through
+---
+>         except (OSError, ValueError, RuntimeError, http.client.HTTPException) as e:  # a CrmError is none of these: it passes through
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/crm_hubspot.py::HubspotCrm._request]
+FAILED tests/test_except_clause_hierarchy.py::test_handed_on_error_is_caught_by_no_handler_of_its_try[src/lead_desk/crm_hubspot.py::HubspotCrm._request::CrmError]
+FAILED tests/test_except_clause_hierarchy.py::test_handed_on_error_is_caught_by_no_handler_of_its_try[src/lead_desk/crm_hubspot.py::HubspotCrm._request::CrmNothingStored]
+3 failed, 47 passed in 0.30s
+
+### M5 put UnicodeError back next to ValueError in config.read_approvers (config.py:266)
+266c266
+<     except (ValueError, RecursionError):  # UnicodeError is a ValueError
+---
+>     except (UnicodeError, ValueError, RecursionError):
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/config.py::read_approvers]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/config.py::read_approvers]
+2 failed, 48 passed in 0.26s
+
+### M6 desk.py: functools.partial back to the original lambda (late binding)
+784c784
+<                     functools.partial(self.crm.set_fields, lead_id, email_key, owner_sent, status_sent),
+---
+>                     lambda: self.crm.set_fields(lead_id, email_key, owner_sent, status_sent),
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FAILED tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+1 failed, 49 passed in 0.25s
+
+### after restoring all: tree identical to /tmp/work/py-resolve?
+$ diff -r -x .venv -x __pycache__ -x .mypy_cache -x .ruff_cache /tmp/work/py-resolve /tmp/work/py-mut && echo identical
+identical
+$ cd /tmp/work/py-mut && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+50 passed in 0.24s

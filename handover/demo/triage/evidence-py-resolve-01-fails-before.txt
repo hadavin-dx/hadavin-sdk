@@ -1,0 +1,175 @@
+## new tests on the OLD code (base 43110e7, source unpatched) 2026-11-12T19:21:31Z
+tree: /tmp/work/py-oldcode-newtests = cp -r /tmp/work/ro-clone, then only the two test files copied in from /tmp/work/py-resolve/tests/
+$ git rev-parse HEAD
+43110e75b8ad96da306d5f8bb66a47ce9fa4323e
+$ git status --short
+ M tests/test_lead_crm_copy.py
+?? tests/test_except_clause_hierarchy.py
+$ /tmp/work/py-resolve/.venv/bin/python --version
+Python 3.12.3
+$ cd /tmp/work/py-oldcode-newtests && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+FFFF.FF.FFFFFF..FF.FF.FFFFFF.................FFF.F                       [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert [['urllib.err...PException)']] == [['urllib.err...PException)']]
+      
+      At index 0 diff: ['urllib.error.HTTPError', 'urllib.error.URLError', 'CrmError', '(OSError, ValueError, http.client.HTTPException)'] != ['urllib.error.HTTPError', 'urllib.error.URLError', '(OSError, ValueError, http.client.HTTPException)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['urllib.err...PException)']] == [['urllib.err...PException)']]
+E   AssertionError: assert [['LiveCapRea...tFoundError']] == [['(ValueErro...tFoundError']]
+      
+      At index 0 diff: ['LiveCapReached', '(ValueError, KeyError, TypeError, ArithmeticError, RecursionError, OSError, MemoryError)'] != ['(ValueError, KeyError, TypeError, ArithmeticError, RecursionError, OSError, MemoryError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['LiveCapRea...tFoundError']] == [['(ValueErro...tFoundError']]
+E   AssertionError: assert [['urllib.err...'ValueError']] == [['urllib.err...'ValueError']]
+      
+      At index 0 diff: ['urllib.error.HTTPError', '(urllib.error.URLError, OSError, socket.timeout, ValueError, http.client.HTTPException)'] != ['urllib.error.HTTPError', '(OSError, ValueError, http.client.HTTPException)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['urllib.err...'ValueError']] == [['urllib.err...'ValueError']]
+E   AssertionError: assert [['(ValueErro..., ['OSError']] == [['(ValueErro..., ['OSError']]
+      
+      At index 0 diff: ['(ValueError, UnicodeError, MessageError)'] != ['(ValueError, MessageError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(ValueErro..., ['OSError']] == [['(ValueErro..., ['OSError']]
+E   AssertionError: assert [['(SendRefus...meoutError)']] == [['(SendRefus..., ['OSError']]
+      
+      At index 2 diff: ['(OSError, TimeoutError)'] != ['OSError']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(SendRefus...meoutError)']] == [['(SendRefus..., ['OSError']]
+E   AssertionError: assert [['(ValueErro..., ['OSError']] == [['(ValueErro..., ['OSError']]
+      
+      At index 0 diff: ['(ValueError, UnicodeError, MessageError)'] != ['(ValueError, MessageError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(ValueErro..., ['OSError']] == [['(ValueErro..., ['OSError']]
+E   AssertionError: assert [['(SendRefus...meoutError)']] == [['(SendRefus..., ['OSError']]
+      
+      At index 2 diff: ['(OSError, TimeoutError)'] != ['OSError']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(SendRefus...meoutError)']] == [['(SendRefus..., ['OSError']]
+E   AssertionError: assert [['OSError'],...rsionError)']] == [['OSError'],...rsionError)']]
+      
+      At index 1 diff: ['(UnicodeError, ValueError, RecursionError)'] != ['(ValueError, RecursionError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['OSError'],...rsionError)']] == [['OSError'],...rsionError)']]
+E   AssertionError: assert [['OSError'],...rsionError)']] == [['OSError'],...rsionError)']]
+      
+      At index 1 diff: ['(UnicodeError, ValueError, RecursionError)'] != ['(ValueError, RecursionError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['OSError'],...rsionError)']] == [['OSError'],...rsionError)']]
+E   AssertionError: assert [['(OSError, ..., KeyError)']] == [['(OSError, ..., KeyError)']]
+      
+      At index 0 diff: ['(OSError, ssl.SSLError, ValueError, IndexError, KeyError)'] != ['(OSError, ValueError, IndexError, KeyError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(OSError, ..., KeyError)']] == [['(OSError, ..., KeyError)']]
+E   AssertionError: assert [['(OSError, ..., ['OSError']] == [['(OSError, ..., ['OSError']]
+      
+      At index 0 diff: ['(OSError, ssl.SSLError, ValueError)'] != ['(OSError, ValueError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(OSError, ..., ['OSError']] == [['(OSError, ..., ['OSError']]
+E   AssertionError: assert [['(OSError, ...meoutError)']] == [['(OSError, ...errunError)']]
+      
+      At index 0 diff: ['(OSError, asyncio.IncompleteReadError, asyncio.LimitOverrunError, TimeoutError)'] != ['(OSError, asyncio.IncompleteReadError, asyncio.LimitOverrunError)']
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:155: AssertionError: assert [['(OSError, ...meoutError)']] == [['(OSError, ...errunError)']]
+E   AssertionError: src/lead_desk/live_claude.py:483: <class 'urllib.error.URLError'> and <class 'OSError'> overlap
+    assert not (True)
+     +  where True = issubclass(<class 'urllib.error.URLError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/live_claude.py:483: <class 'urllib.error.URLError'> and <class 'OSError'> overlap
+E   AssertionError: src/lead_desk/smtp_outbox.py:224: <class 'ValueError'> and <class 'UnicodeError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'ValueError'>, <class 'UnicodeError'>)
+     +  and   True = issubclass(<class 'UnicodeError'>, <class 'ValueError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/smtp_outbox.py:224: <class 'ValueError'> and <class 'UnicodeError'> overlap
+E   AssertionError: src/lead_desk/smtp_outbox.py:292: <class 'OSError'> and <class 'TimeoutError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'OSError'>, <class 'TimeoutError'>)
+     +  and   True = issubclass(<class 'TimeoutError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/smtp_outbox.py:292: <class 'OSError'> and <class 'TimeoutError'> overlap
+E   AssertionError: src/lead_desk/smtp_provider.py:234: <class 'ValueError'> and <class 'UnicodeError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'ValueError'>, <class 'UnicodeError'>)
+     +  and   True = issubclass(<class 'UnicodeError'>, <class 'ValueError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/smtp_provider.py:234: <class 'ValueError'> and <class 'UnicodeError'> overlap
+E   AssertionError: src/lead_desk/smtp_provider.py:313: <class 'OSError'> and <class 'TimeoutError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'OSError'>, <class 'TimeoutError'>)
+     +  and   True = issubclass(<class 'TimeoutError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/smtp_provider.py:313: <class 'OSError'> and <class 'TimeoutError'> overlap
+E   AssertionError: src/lead_desk/config.py:266: <class 'UnicodeError'> and <class 'ValueError'> overlap
+    assert not (True)
+     +  where True = issubclass(<class 'UnicodeError'>, <class 'ValueError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/config.py:266: <class 'UnicodeError'> and <class 'ValueError'> overlap
+E   AssertionError: src/lead_desk/config.py:389: <class 'UnicodeError'> and <class 'ValueError'> overlap
+    assert not (True)
+     +  where True = issubclass(<class 'UnicodeError'>, <class 'ValueError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: src/lead_desk/config.py:389: <class 'UnicodeError'> and <class 'ValueError'> overlap
+E   AssertionError: demo_only/fake_imap.py:113: <class 'OSError'> and <class 'ssl.SSLError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'OSError'>, <class 'ssl.SSLError'>)
+     +  and   True = issubclass(<class 'ssl.SSLError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: demo_only/fake_imap.py:113: <class 'OSError'> and <class 'ssl.SSLError'> overlap
+E   AssertionError: demo_only/fake_smtp_tls.py:89: <class 'OSError'> and <class 'ssl.SSLError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'OSError'>, <class 'ssl.SSLError'>)
+     +  and   True = issubclass(<class 'ssl.SSLError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: demo_only/fake_smtp_tls.py:89: <class 'OSError'> and <class 'ssl.SSLError'> overlap
+E   AssertionError: load_tools/catcher.py:91: <class 'OSError'> and <class 'TimeoutError'> overlap
+    assert not (False or True)
+     +  where False = issubclass(<class 'OSError'>, <class 'TimeoutError'>)
+     +  and   True = issubclass(<class 'TimeoutError'>, <class 'OSError'>)
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:166: AssertionError: load_tools/catcher.py:91: <class 'OSError'> and <class 'TimeoutError'> overlap
+E   AssertionError: src/lead_desk/crm_hubspot.py:326 catches <class 'lead_desk.adapters.CrmError'>
+    assert not True
+     +  where True = issubclass(<class 'lead_desk.adapters.CrmError'>, (<class 'lead_desk.adapters.CrmError'>,))
+     +    where (<class 'lead_desk.adapters.CrmError'>,) = tuple([<class 'lead_desk.adapters.CrmError'>])
+     +      where [<class 'lead_desk.adapters.CrmError'>] = _classes(<ast.ExceptHandler object at 0x7f2f5aa5a210>, 'src/lead_desk/crm_hubspot.py')
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:216: AssertionError: src/lead_desk/crm_hubspot.py:326 catches <class 'lead_desk.adapters.CrmError'>
+E   AssertionError: src/lead_desk/crm_hubspot.py:326 catches <class 'lead_desk.adapters.CrmNothingStored'>
+    assert not True
+     +  where True = issubclass(<class 'lead_desk.adapters.CrmNothingStored'>, (<class 'lead_desk.adapters.CrmError'>,))
+     +    where (<class 'lead_desk.adapters.CrmError'>,) = tuple([<class 'lead_desk.adapters.CrmError'>])
+     +      where [<class 'lead_desk.adapters.CrmError'>] = _classes(<ast.ExceptHandler object at 0x7f2f5acc0a50>, 'src/lead_desk/crm_hubspot.py')
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:216: AssertionError: src/lead_desk/crm_hubspot.py:326 catches <class 'lead_desk.adapters.CrmNothingStored'>
+E   AssertionError: src/lead_desk/live_claude.py:247 catches <class 'lead_desk.live_claude.LiveCapReached'>
+    assert not True
+     +  where True = issubclass(<class 'lead_desk.live_claude.LiveCapReached'>, (<class 'lead_desk.live_claude.LiveCapReached'>,))
+     +    where (<class 'lead_desk.live_claude.LiveCapReached'>,) = tuple([<class 'lead_desk.live_claude.LiveCapReached'>])
+     +      where [<class 'lead_desk.live_claude.LiveCapReached'>] = _classes(<ast.ExceptHandler object at 0x7f2f5aaaebd0>, 'src/lead_desk/live_claude.py')
+/tmp/work/py-oldcode-newtests/tests/test_except_clause_hierarchy.py:216: AssertionError: src/lead_desk/live_claude.py:247 catches <class 'lead_desk.live_claude.LiveCapReached'>
+E   AssertionError: assert [('Lf1bf277ae..._TO_CONTACT')] == [('Laabaef254..._TO_CONTACT')]
+      
+      At index 0 diff: ('Lf1bf277ae147', 'a@example.test', 'H1', 'ATTEMPTED_TO_CONTACT') != ('Laabaef254a2b', 'b@example.test', 'H2', 'ATTEMPTED_TO_CONTACT')
+      Use -v to get more diff
+/tmp/work/py-oldcode-newtests/tests/test_lead_crm_copy.py:351: AssertionError: assert [('Lf1bf277ae..._TO_CONTACT')] == [('Laabaef254..._TO_CONTACT')]
+=========================== short test summary info ============================
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/crm_hubspot.py::HubspotCrm._request]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/live_claude.py::SpendLedger._totals]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/live_claude.py::LiveQualifier._post_once]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbox.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_provider.py::SmtpProviderOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_provider.py::SmtpProviderOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/config.py::read_approvers]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/config.py::_read_leadflow]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_imap.py::FakeImap._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_smtp_tls.py::FakeSmtp._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[load_tools/catcher.py::Catcher.handle]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/live_claude.py::LiveQualifier._post_once]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbox.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbox.py::SmtpOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_provider.py::SmtpProviderOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_provider.py::SmtpProviderOutbox._dialogue]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/config.py::read_approvers]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/config.py::_read_leadflow]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_imap.py::FakeImap._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_smtp_tls.py::FakeSmtp._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[load_tools/catcher.py::Catcher.handle]
+FAILED tests/test_except_clause_hierarchy.py::test_handed_on_error_is_caught_by_no_handler_of_its_try[src/lead_desk/crm_hubspot.py::HubspotCrm._request::CrmError]
+FAILED tests/test_except_clause_hierarchy.py::test_handed_on_error_is_caught_by_no_handler_of_its_try[src/lead_desk/crm_hubspot.py::HubspotCrm._request::CrmNothingStored]
+FAILED tests/test_except_clause_hierarchy.py::test_handed_on_error_is_caught_by_no_handler_of_its_try[src/lead_desk/live_claude.py::SpendLedger._totals::LiveCapReached]
+FAILED tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+26 failed, 24 passed in 0.28s
+exit 1
+
+## the same tests on the patched tree
+$ cd /tmp/work/py-resolve && /tmp/work/py-resolve/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_except_clause_hierarchy.py tests/test_lead_crm_copy.py::test_mirror_call_keeps_the_values_of_its_own_row
+50 passed in 0.27s

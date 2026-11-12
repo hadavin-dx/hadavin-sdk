@@ -1,0 +1,45 @@
+## setup 2026-11-12T19:15:44Z
+$ uptime
+ 19:15:44 up 25 min,  0 user,  load average: 0.12, 0.34, 0.30
+$ nproc
+4
+$ cp -r /tmp/work/ro-clone /tmp/work/py-resolve && cd /tmp/work/py-resolve && git apply /tmp/demo-wt/handover/demo/triage/py-retry.patch  (exit 0)
+$ git rev-parse HEAD
+43110e75b8ad96da306d5f8bb66a47ce9fa4323e
+$ git -C /tmp/work/ro-clone rev-parse --abbrev-ref HEAD
+initial-code
+$ sha256sum py-retry.patch (input, before resolve)
+7ffc22906c398334c9397a37a756c750cc3b58a86480ab3f729dda5d723ee82a  /tmp/demo-wt/handover/demo/triage/py-retry.patch
+$ /usr/bin/python3.12 -m venv .venv
+exit 0
+$ .venv/bin/python --version
+Python 3.12.3
+$ .venv/bin/python -m pip install --require-hashes -r requirements-dev.txt
+Collecting ruff==0.17.4 (from -r requirements-dev.txt (line 380))
+  Using cached ruff-0.17.4-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (10.6 MB)
+Collecting stevedore==5.9.1 (from -r requirements-dev.txt (line 400))
+  Using cached stevedore-5.9.1-py3-none-any.whl (54 kB)
+Collecting typing-extensions==4.16.0 (from -r requirements-dev.txt (line 404))
+  Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+Installing collected packages: typing-extensions, stevedore, ruff, pyyaml, pygments, pluggy, pathspec, packaging, mypy-extensions, mdurl, librt, iniconfig, ast-serialize, pytest, mypy, markdown-it-py, rich, bandit
+Successfully installed ast-serialize-0.13.1 bandit-1.9.4 iniconfig-2.3.1 librt-0.16.0 markdown-it-py-4.2.0 mdurl-0.1.2 mypy-2.4.1 mypy-extensions-1.2.0 packaging-26.3 pathspec-1.1.1 pluggy-1.7.0 pygments-2.21.0 pytest-9.2.0 pyyaml-6.0.3 rich-15.0.0 ruff-0.17.4 stevedore-5.9.1 typing-extensions-4.16.0
+exit 0
+$ .venv/bin/python -m pip freeze
+ast_serialize==0.13.1
+bandit==1.9.4
+iniconfig==2.3.1
+librt==0.16.0
+markdown-it-py==4.2.0
+mdurl==0.1.2
+mypy==2.4.1
+mypy_extensions==1.2.0
+packaging==26.3
+pathspec==1.1.1
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0
+PyYAML==6.0.3
+rich==15.0.0
+ruff==0.17.4
+stevedore==5.9.1
+typing_extensions==4.16.0
