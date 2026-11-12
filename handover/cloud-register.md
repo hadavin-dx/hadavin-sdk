@@ -1489,3 +1489,6 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | ad452b86c1faa4ce7 | PR H b4 evidence runner (d08ec151) | 00:20Z | ~01:15Z | 00:20Z | running | on report: resolve |
 | ab4275eca45865271 | PR H b4 design reviewer (snap prhb4-d08ec151) | 00:20Z | ~00:45Z | 00:20Z | running | save report |
 | abf45cc4361f96c6c | PR H b4 codebase reviewer | 00:20Z | ~00:45Z | 00:20Z | running | save report |
+| afa3d00e7ff1aa851 | PR89 r26 evidence runner (916c71ea) | 00:22Z | ~01:20Z | 00:22Z | running | on report: resolve |
+| a5e56b1945a203c61 | PR89 r26 design reviewer (snap pr89r26-916c71ea) | 00:22Z | ~00:50Z | 00:22Z | running | save report |
+| a6ae758dd03c4aaa0 | PR89 r26 codebase reviewer | 00:22Z | ~00:50Z | 00:22Z | running | save report |
