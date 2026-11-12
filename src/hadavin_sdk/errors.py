@@ -59,14 +59,15 @@ def shown_name(name: object, loaded: Collection[object] | None = None) -> str:
     `_WORDLIKE`: letter first, at most 40 characters, no run of 20 or more digits or hex digits, no capital letter,
     space or look-alike character) AND it is the id of something that was loaded: a member of `loaded` (given by the
     caller) or, if none is given, of the names made active by `loaded_ids` (set by the loaders). Otherwise
-    `<not shown>`. With neither, there is no loaded set to compare with and only the word-like test applies (a name
-    printed before anything was loaded, or by a unit that is called alone). A pasted credential can sit where a name
+    `<not shown>`. With neither, there is no loaded set to compare with and the name is `<not shown>` too (batch 18:
+    before, the word-like test alone decided, so a word-like pasted key was printed by a unit called alone). A pasted credential can sit where a name
     belongs: this is a filter on shape and membership, not a secret detector. Wherever the position or the field name
     is enough, say that instead of the name."""
     if not word_like(name):
         return NOT_SHOWN
     names = loaded if loaded is not None else _LOADED.get()
-    if names is not None and name not in names:
+    # no loaded set to compare with: nothing is shown (batch 18; was: shown on shape alone)
+    if names is None or name not in names:
         return NOT_SHOWN
     return str.__str__(name)
 
@@ -179,13 +180,16 @@ def list_configured(path: object, what: str, suffix: str) -> list[Path]:
     return [Path(path) / n for n in names if n.endswith(suffix)]  # type: ignore[arg-type]
 
 
-def error_where(error: dict[str, Any], *, field_names: bool = False) -> str:
+def error_where(error: dict[str, Any], *, field_names: bool = False, cleaned: bool = False) -> str:
     """The place of one pydantic problem (an entry of `ValidationError.errors()`) as a dotted path. A key that the
     model does not know (`extra_forbidden`) is the pasted text itself, so it is replaced by `<unknown key>` and the
     parent path stays; any other name taken from the file (a mapping key) is shown only when `shown_name` allows it;
     positions are numbers and stay. `field_names=True` is for a model whose own field names are code-owned text (a
     tool manifest entry): a name is then shown on the word-like test alone, without the loaded-ids membership test
-    (the loaded set holds ids from the file, never the names of fields, so the test would hide every field)."""
+    (the loaded set holds ids from the file, never the names of fields, so the test would hide every field).
+    `cleaned=True` is for the problems of a `HiddenInputModel` (every model of this package): `hidden_input.without_input` has
+    already replaced each name that is not written in code, so a word-like name that is left is a field name or a loaded id, and
+    it is shown (batch 18: `shown_name` alone would hide a field name, because no loaded set holds it)."""
     loc = list(error["loc"])
     parts = []
     for i, part in enumerate(loc):
@@ -193,7 +197,7 @@ def error_where(error: dict[str, Any], *, field_names: bool = False) -> str:
             parts.append(str(part))
         elif error["type"] == "extra_forbidden" and i == len(loc) - 1:
             parts.append(UNKNOWN_KEY)
-        elif field_names:
+        elif field_names or cleaned:
             parts.append(str(part) if word_like(part) else NOT_SHOWN)
         else:
             parts.append(shown_name(part))

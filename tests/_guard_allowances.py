@@ -918,6 +918,7 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
 # with the same text elsewhere is a finding. Round 17 (Issue 4).
 SCOPED_ALLOWED: dict[tuple[str, str, str, int], str] = {
     ("guard/http.py", "box['error'] = exc", "lookup", 1): "HANDOFF",
+    ("hidden_input.py", "out.append(part)", "_place", 2): "FIELDS",
     ("k1b/bundle.py", "str(key)", "_scan", 1): "PROC",
     ("k1b/loop.py", "box['exc'] = exc", "work", 1): "HANDOFF",
     ("tools.py", "box['error'] = exc", "work", 1): "HANDOFF",

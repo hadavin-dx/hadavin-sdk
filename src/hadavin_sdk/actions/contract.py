@@ -8,19 +8,20 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hadavin_sdk.errors import ConfigValueError, shown_name
+from hadavin_sdk.hidden_input import HiddenInputModel
 from hadavin_sdk.models import RiskClass
 
 _ORDER: list[RiskClass] = ["read_only", "reversible", "sign_off"]
 
 
-class NoneExecutor(BaseModel):
+class NoneExecutor(HiddenInputModel, BaseModel):
     """Shadow-only contract: nothing can run it."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
     kind: Literal["none"]
 
 
-class ManualExecutor(BaseModel):
+class ManualExecutor(HiddenInputModel, BaseModel):
     """A posted fix a person runs themselves (built in K8; refused at load until then)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -31,7 +32,7 @@ class ManualExecutor(BaseModel):
     client_wait_s: int = 3600
 
 
-class HttpExecutor(BaseModel):
+class HttpExecutor(HiddenInputModel, BaseModel):
     """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in demo for the slice-1 tests."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -45,7 +46,7 @@ ExecutorSpec = Annotated[NoneExecutor | ManualExecutor | HttpExecutor, Field(dis
 _LABEL = re.compile(r"[a-z0-9_-]{1,40}")
 
 
-class ActionContract(BaseModel):
+class ActionContract(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     id: str
     version: int

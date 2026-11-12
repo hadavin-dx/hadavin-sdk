@@ -16,7 +16,7 @@ from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from hadavin_sdk.errors import shown_name
+from hadavin_sdk.errors import ConfigValueError, shown_name
 from hadavin_sdk.hidden_input import HiddenInputModel
 
 
@@ -45,8 +45,9 @@ _RESERVED_NAMES = frozenset(
 def plain_event_name(value: object) -> bool:
     """Is this an event id that is safe as a file name on every file system (see `AuditEvent`)? The one test: the model
     uses it, and the local audit folder uses it again before it makes a file (a model built without validation)."""
+    # `type(value) is str`, not a subclass: its own `__str__` or `__format__` could name another file than the text checked here
     return (
-        isinstance(value, str)
+        type(value) is str
         and EVENT_ID_PATTERN.fullmatch(value) is not None
         and value not in _RESERVED_NAMES  # no dot is allowed, so a device name is the whole id
     )
@@ -133,7 +134,7 @@ class Run(Shape):
     updated_at: datetime = Field(default_factory=now)
 
 
-class Target(BaseModel):
+class Target(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid")
     system: str
     ref: str | None = None
@@ -157,7 +158,7 @@ class Plan(Shape):
     def _utc(cls, value: datetime) -> datetime:
         """The hash covers created_at: one instant must serialise one way, whatever store returned it."""
         if value.utcoffset() is None:
-            raise ValueError("created_at must be timezone-aware")
+            raise ConfigValueError("created_at must be timezone-aware")
         return value.astimezone(UTC)
 
     # A field added after v1 goes in this set: the hash leaves it out while it equals its default, so a plan stored
@@ -184,7 +185,7 @@ class GateDecision(Shape):
     ts: datetime = Field(default_factory=now)
 
 
-class ChainStep(BaseModel):
+class ChainStep(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid")
     approver_ids: list[str]
     timeout_s: int
@@ -233,7 +234,7 @@ class AuditEvent(Shape):
     @classmethod
     def _event_id_is_a_plain_name(cls, value: object) -> object:
         if not plain_event_name(value):
-            raise ValueError(
+            raise ConfigValueError(
                 "event_id must be a plain file name: lower-case letters, digits, dash and underscore, "
                 "at most 128 characters, starting with a letter or digit, and not a reserved device name"
             )
@@ -272,7 +273,7 @@ class DeadLetter(Shape):
     ts: datetime = Field(default_factory=now)
 
 
-class TickState(BaseModel):
+class TickState(HiddenInputModel, BaseModel):
     """One tick step's last run (table tick_state)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -282,7 +283,7 @@ class TickState(BaseModel):
     last_error: str | None = None
 
 
-class ToolCallRecord(BaseModel):
+class ToolCallRecord(HiddenInputModel, BaseModel):
     """One read-tool call of a run (table tool_calls). Inputs and output are stored redacted (design 6.3)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -330,7 +331,7 @@ class GateRun(Shape):
     upper_error_bound: float | None = None
 
 
-class ToolCall(BaseModel):
+class ToolCall(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str
     input: dict[str, Any]

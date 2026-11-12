@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.hidden_input import HiddenInputModel
 
 if TYPE_CHECKING:
     from hadavin_sdk.registry import Registry
@@ -26,7 +27,7 @@ MIN_K = 3
 _LOG = logging.getLogger("hadavin_sdk.replay_records")
 
 
-class ReplayRecord(BaseModel):
+class ReplayRecord(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
     agent_id: str

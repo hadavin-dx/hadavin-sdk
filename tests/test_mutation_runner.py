@@ -599,7 +599,7 @@ def test_the_baseline_run_gets_its_own_timeout(tmp_path, monkeypatch):
     )
     seen = []
 
-    def fake(cwd, tests, junit, timeout):
+    def fake(cwd, tests, junit, timeout, **k):
         seen.append(timeout)
         return 0 if len(seen) == 1 else mr.TIMED_OUT
 
@@ -646,7 +646,7 @@ def test_the_runner_streams_each_result_and_keeps_a_sigkill_apart_from_a_timeout
         [0, -9, mr.TIMED_OUT]
     )  # baseline, a mutant killed by SIGKILL (the OOM killer), a mutant that timed out
 
-    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: next(codes))
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout, **k: next(codes))
     muts = [
         Mutant(f"m{i}", "src/pk/core.py", "return flag", "return not flag", "test_a_x")
         for i in range(2)
@@ -1481,17 +1481,17 @@ def test_a_reaped_child_is_an_error_row_for_a_mutant(tmp_path, monkeypatch):
     root = _raising_tree(tmp_path)
     muts = [Mutant("m0", "src/pk/core.py", "return flag", "return not flag", "test_a_x")]
     codes = iter([0, mr.REAPED_ELSEWHERE])
-    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: next(codes))
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout, **k: next(codes))
     out = run_mutants(root, muts, ["tests/test_core.py"], extra_dirs=())
     assert out == [("m0", Verdict.ERROR, "REAPED ELSEWHERE", False)], (
         "a mutant run reaped by someone else was not an error row"
     )
-    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout, **k: mr.REAPED_ELSEWHERE)
 
 
 def test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline(tmp_path, monkeypatch):
     root = _raising_tree(tmp_path)
-    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout: mr.REAPED_ELSEWHERE)
+    monkeypatch.setattr(mr, "_pytest", lambda cwd, tests, junit, timeout, **k: mr.REAPED_ELSEWHERE)
     with pytest.raises(RuntimeError) as refused:
         run_mutants(root, [], ["tests/test_core.py"], extra_dirs=())
     # outside the ``with``, so the failing line is this message and not a regex mismatch

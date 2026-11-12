@@ -29,6 +29,7 @@ from __future__ import annotations
 import ast
 import builtins
 import re
+from pathlib import Path
 
 SAFE_CALLS = frozenset(
     {
@@ -104,7 +105,29 @@ FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
 _PRINT_HOW = {"file", "flush"}
 # Round 17 (Issue 1b): a call whose name starts with one of these puts its positional arguments into a store, a queue, a file or a
 # query. An argument made from an error (`rec.update(exc)`, `q.put(exc)`, `cur.execute(sql, (exc,))`) is a site.
-STORE_CALL_PREFIXES = ("update", "insert", "write", "execute", "append", "put")
+_STORE_READS = ("get_", "list_", "spend_totals")
+
+
+def store_write_methods() -> tuple[str, ...]:
+    """The names of the store's methods that change a row, read from the `Store` protocol of `store/protocol.py` (the one list of
+    the store API; batch 18, Issue 6a): every method that is not a read (`get_*`, `list_*`, `spend_totals`) and not a dunder."""
+    path = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk" / "store" / "protocol.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "Store")
+    return tuple(
+        sorted(
+            n.name
+            for n in cls.body
+            if isinstance(n, ast.FunctionDef)
+            and not n.name.startswith("__")
+            and not n.name.startswith(_STORE_READS)
+        )
+    )
+
+
+STORE_CALL_PREFIXES = (
+    "update", "insert", "write", "execute", "append", "put", *store_write_methods(),
+)  # fmt: skip
 
 
 def _is_number(e) -> bool:
@@ -1046,11 +1069,53 @@ class Analysis:
                     )
                     for a in args
                 )
-            if isinstance(f, ast.Attribute) and f.attr in self._NUMBER_METHODS:
-                return True
-            if self._declared_number_function(f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")):
-                return True  # a function of the tree whose every definition is declared `-> int` or `-> float`
+            if (
+                isinstance(f, ast.Attribute)
+                and f.attr in self._NUMBER_METHODS
+                and not self._unknown_receiver(f, env)
+            ):
+                return True  # batch 18 (Issue 6b): `x.count(y)` is a number only when x is not an object the scan knows nothing about
+            if self._call_declared_number(e):
+                return True  # the function the call reaches is declared `-> int` or `-> float` (batch 18: by definition, not name)
         return self.safe(e, env) and not self._is_texty(e)
+
+    def _unknown_receiver(self, f, env) -> bool:
+        """A method receiver that is a plain name which is neither proven code-owned nor a parameter that every caller gives a
+        proven value: a library object or a client whose method of that name may return text (`client.count(name)`)."""
+        v = f.value
+        return isinstance(v, ast.Name) and v.id not in env and v.id not in self._string_names(f)
+
+    def _string_names(self, f) -> frozenset[str]:
+        """The names bound to a text or a collection literal in the function that holds the call (`parts = []`, `s = 'x'`)."""
+        scope = self.scope_of.get(id(f))
+        names: set[str] = set()
+        fn = self._enclosing_def(f)
+        if fn is not None:  # a parameter declared as text or as a collection of the language
+            args = fn.args
+            for a in [*args.posonlyargs, *args.args, *args.kwonlyargs]:
+                if a.annotation is not None and ast.unparse(a.annotation).split("[")[0] in {
+                    "str", "bytes", "list", "tuple", "set", "frozenset", "dict", "Sequence",
+                }:
+                    names.add(a.arg)
+        for n in _own(scope) if scope is not None else ():
+            if isinstance(n, ast.Assign) and isinstance(
+                n.value, (ast.Constant, ast.JoinedStr, ast.List, ast.Tuple, ast.Dict, ast.Set, ast.ListComp)
+            ):
+                names.update(t.id for t in n.targets if isinstance(t, ast.Name))
+        return frozenset(names)
+
+    def _call_declared_number(self, call) -> bool:
+        """Batch 18 (Issue 6b): like `fsafe`, the definition a call reaches decides, not the bare name. A call that `resolve`
+        reaches in the tree is a number when every definition reached is declared `-> int` or `-> float`; a method call on a
+        receiver the scan cannot resolve (a library object) is not a number (`client.count(name)` may return text)."""
+        found = self.resolve(call)
+        if not found:
+            return False
+        return all(
+            self.defs[i]["node"].returns is not None
+            and ast.unparse(self.defs[i]["node"].returns) in {"int", "float"}
+            for i in found
+        )
 
     def _declared_number_function(self, name) -> bool:
         """Round 17 (Issue 1d): every function of the scanned tree with this name is declared to return `int` or `float`
@@ -1383,6 +1448,8 @@ class Analysis:
                     # Round 17 (Issue 1b): a positional argument of `update`, `insert`, `write`, `execute`, `append`, `put` and their
                     # relatives (`updatemany`, `put_nowait`, `executemany`) that is made from an error
                     hit = any(self._tainted(a, tn, env) for a in node.args)
+                    if not hit:  # batch 18 (Issue 6a): a keyword of a store call too (`store.add_dead_letter(reason=...)`)
+                        hit = any(self._tainted(k.value, tn, env) for k in node.keywords)
                 if not hit and self._is_conversion(node):
                     # `str(x)`, `repr(x)`, `format(x)`, `ascii(x)` of a value not proven code-owned makes text on the spot
                     hit = any(not safe(a, env) for a in node.args)

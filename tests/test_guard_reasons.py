@@ -184,6 +184,13 @@ def check_literal() -> list[str]:
     text = (SRC / "actions/contract.py").read_text(encoding="utf-8")
     if "kind = self.executor.kind" not in text:
         bad.append("the `kind` of `needs chain_id` is not read from the executor's Literal field")
+    # the other two rows of this reason, each read by the field it names (batch 18, Issue 8)
+    from hadavin_sdk.backends.table import AnthropicSettings
+    from hadavin_sdk.registry import AgentRecord
+
+    for cls, field in ((AgentRecord, "data_class"), (AnthropicSettings, "platform")):
+        if typing.get_origin(cls.model_fields[field].annotation) is not typing.Literal:
+            bad.append(f"{cls.__name__}.{field} is not a Literal")
     return bad
 
 
@@ -360,11 +367,17 @@ def check_access() -> list[str]:
 
 def check_rowid() -> list[str]:
     text = (SRC / "audit/chain.py").read_text(encoding="utf-8")
-    return (
+    bad = (
         []
         if "seq INTEGER PRIMARY KEY" in text
         else ["the audit table's seq is not INTEGER PRIMARY KEY"]
     )
+    # the row numbers of the messages are read from the database (`seq` of a row), never from a stored text: the sites of this
+    # reason are the messages of `verify` and the `_LOG.error` of the checkpoint, so each must take its number from `seq`
+    for needle in ("f'row {seq} was changed after it was written'", "not anchored (%s)"):
+        if needle.replace("'", '"') not in text.replace("'", '"') and needle not in text:
+            bad.append(f"the audit chain no longer holds the site {needle}")
+    return bad
 
 
 def check_caller() -> list[str]:
@@ -522,9 +535,12 @@ def check_label() -> list[str]:
             why = _label_problem(rel, n.args[takes[n.func.id]])
             if why:
                 bad.append(f"{rel}:{n.lineno}: {n.func.id}: {why}")
-    # `what` in config._read_yaml is `shown_name(path.name)`; `what` in `unreadable` callers is the parameter
-    if "what = shown_name(path.name)" not in (SRC / "config.py").read_text(encoding="utf-8"):
-        bad.append("config._read_yaml: what is no longer shown_name(path.name)")
+    # `what` in config._read_yaml is `shown_name(path.name, _CONFIG_FILES)` (the two file names written in code; batch 18);
+    # `what` in `unreadable` callers is the parameter
+    if "what = shown_name(path.name, _CONFIG_FILES)" not in (SRC / "config.py").read_text(
+        encoding="utf-8"
+    ):
+        bad.append("config._read_yaml: what is no longer shown_name(path.name, _CONFIG_FILES)")
     # the backend label: the kind is looked up in TABLE before the label is built
     text = (SRC / "backends/factory.py").read_text(encoding="utf-8")
     if text.index("TABLE[capability][settings.kind]") > text.index(
@@ -969,6 +985,23 @@ def check_classnames() -> list[str]:
     return bad
 
 
+def library_http_handler(type_text: str, tree: ast.AST) -> bool:
+    """The handler names the standard library's class (`urllib.error.HTTPError`, not any class that ends in `HTTPError`) and the
+    module imports `urllib.error`, so the name is the library's own (batch 18)."""
+    if type_text != "urllib.error.HTTPError":
+        return False
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Import) and any(a.name == "urllib.error" for a in n.names):
+            return True
+        if (
+            isinstance(n, ast.ImportFrom)
+            and n.module == "urllib"
+            and any(a.name == "error" for a in n.names)
+        ):
+            return True
+    return False
+
+
 def check_httpcode() -> list[str]:
     """By the tree: every row of this reason is a `return (exc.code, ...)` inside `except urllib.error.HTTPError as exc`
     (the status code of the library's HTTP error is an `int` by its own definition; the library's text is not used)."""
@@ -982,7 +1015,7 @@ def check_httpcode() -> list[str]:
             ok = (
                 handler is not None
                 and handler.name is not None
-                and ast.unparse(handler.type or ast.Constant(None)).endswith("HTTPError")
+                and library_http_handler(ast.unparse(handler.type or ast.Constant(None)), _tree(m))
                 and isinstance(node, ast.Return)
                 and isinstance(node.value, ast.Tuple)
                 and ast.unparse(node.value.elts[0]) == f"{handler.name}.code"
@@ -2375,8 +2408,12 @@ def _filter_behaviour(name: str) -> list[str]:
             out = errors.shown_name(v)
             if out != errors.NOT_SHOWN:
                 bad.append(f"shown_name shows {type(v).__name__}: {out[:20]!r}")
-        if errors.shown_name("plain") != "plain" or type(errors.shown_name("plain")) is not str:
+        # batch 18: a name is shown only when it is a member of a loaded set, and then as a plain str
+        shown = errors.shown_name("plain", loaded=["plain"])
+        if shown != "plain" or type(shown) is not str:
             bad.append("shown_name does not show a plain word-like name as a plain str")
+        if errors.shown_name("plain") != errors.NOT_SHOWN:
+            bad.append("shown_name shows a name when no loaded set was given")
     else:
         good = "run-" + "a" * 32
         if errors.shown_id(good) != good:
@@ -2437,7 +2474,7 @@ def check_card() -> list[str]:
     posts them through the real channel code with a recording stand-in for the network, and looks for the canary in the
     card text, the blocks and the body that would go to the channel. The fields the card shows on purpose are the plan's
     action, its version, its inputs, its system, its expected outcome, the called ids it cites and the rule id. The half that
-    needs the demo repositories' own card fixture is ticket Q8a1-CARD-FIXTURE (handover/tickets, due 2026-11-19)."""
+    needs the demo repositories' own card fixture is ticket Q8a1-card-demo-fixture (handover/tickets, due 2026-11-19)."""
     import json
 
     from hadavin_sdk.approvals import cards

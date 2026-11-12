@@ -1141,16 +1141,19 @@ def _assert_value_free(exc: ConfigError, *secrets: str) -> None:
     for secret in secrets:
         assert secret not in shown, f"the error shows the refused value: {shown[:300]!r}"
     assert exc.__cause__ is None, "the cause (whose text may hold the value) is still attached"
-    assert "errors.pydantic.dev" not in shown and "input_value" not in shown, shown[:300]
+    assert "errors.pydantic.dev" not in shown and "input_value" not in shown, (
+        f"pydantic link or input_value in the error text: {shown[:300]!r}"
+    )
 
 
 def test_a_login_inside_a_system_base_url_is_refused_without_showing_the_url(cfg_dir):
     exc = _refused(
         cfg_dir, edit=lambda d: d["systems"]["fixture-records"].update(base_url=LOGIN_URL)
     )
-    assert "systems.fixture-records.base_url" in str(
+    # batch 18 (Issue 7): the key of `systems` is a name taken from the file and no loaded set holds it yet, so it is not shown
+    assert "systems.<not shown>.base_url" in str(exc) and "a URL must not contain a login" in str(
         exc
-    ) and "a URL must not contain a login" in str(exc)
+    )
     _assert_value_free(exc, PW, USER, LOGIN_URL, "records.example.invalid")
 
 
@@ -1537,9 +1540,12 @@ def test_the_name_filter_is_a_shape_and_membership_check_only():
     from hadavin_sdk.errors import NOT_SHOWN, shown_name
 
     assert (
-        shown_name("lookup_record") == "lookup_record"
-        and shown_name("k8s.pods-list") == "k8s.pods-list"
+        shown_name("lookup_record", loaded=["lookup_record"]) == "lookup_record"
+        and shown_name("k8s.pods-list", loaded=["k8s.pods-list"]) == "k8s.pods-list"
     )
+    assert (
+        shown_name("lookup_record") == NOT_SHOWN
+    )  # batch 18: with no loaded set, nothing is shown
     for fine in (
         "x" * 40,
         "a",
@@ -1549,7 +1555,7 @@ def test_the_name_filter_is_a_shape_and_membership_check_only():
         "tools.read-pods_v2",
         "k" + "0123456789" * 1 + "-" + "9876543210",  # digit runs under 20 are word-like
     ):  # 40 is the longest shown name (D-2322: letter first, at most 40 characters)
-        assert shown_name(fine) == fine, fine
+        assert shown_name(fine, loaded=[fine]) == fine, fine
     cyrillic_a = "\u0430"  # looks like the Latin a
     for odd in (
         PW,
@@ -1568,7 +1574,7 @@ def test_the_name_filter_is_a_shape_and_membership_check_only():
         "ab" + cyrillic_a,
         "a\n",
     ):
-        assert shown_name(odd) == NOT_SHOWN, odd
+        assert shown_name(odd, loaded=[odd]) == NOT_SHOWN, odd
 
 
 def test_a_name_with_a_long_run_of_hex_or_digits_is_not_shown_and_a_reference_that_matched_nothing_is_not_shown():
@@ -1578,8 +1584,11 @@ def test_a_name_with_a_long_run_of_hex_or_digits_is_not_shown_and_a_reference_th
 
     for token in ("k" + "0123456789abcdef" * 2, "a" + "9" * 20, "tok-" + "deadbeef" * 3, "f" * 20):
         assert shown_name(token) == NOT_SHOWN, token  # hex-like or digit-run: a key, hash or token
-    assert shown_name("z" + "9" * 19) == "z" + "9" * 19  # 19 digits: one short of the run limit
-    assert shown_name("a" + "9" * 19) == NOT_SHOWN  # but `a` is a hex digit, so this run is 20
+    z19 = "z" + "9" * 19
+    assert shown_name(z19, [z19]) == z19  # 19 digits: one short of the run limit
+    assert (
+        shown_name("a" + "9" * 19, ["a" + "9" * 19]) == NOT_SHOWN
+    )  # but `a` is a hex digit, so this run is 20
     assert shown_name("agent-a", ["agent-a"]) == "agent-a"
     assert shown_name("agent-b", ["agent-a"]) == NOT_SHOWN  # not a loaded id
     assert shown_name("agent-b", []) == NOT_SHOWN
@@ -1589,7 +1598,9 @@ def test_a_name_with_a_long_run_of_hex_or_digits_is_not_shown_and_a_reference_th
         with loaded_ids(["agent-b"]):  # groups add to the active names
             assert shown_name("agent-a") == "agent-a" and shown_name("agent-b") == "agent-b"
         assert shown_name("agent-b") == NOT_SHOWN  # and leave with their block
-    assert shown_name("agent-b") == "agent-b"  # no active set: only the word-like test
+    assert (
+        shown_name("agent-b") == NOT_SHOWN
+    )  # no active set: nothing is shown (batch 18; was: the word-like test alone)
 
 
 def test_a_name_in_a_tool_manifest_problem_is_not_shown(cfg_dir):
@@ -3412,7 +3423,7 @@ GUARD_ALLOWED = {
     ('config.py', "'; '.join([*(str(r) for r in renamed), *others])"): _CODE_TABLE,
     ('config.py', "f'backends.detector {d.kind}: its route is not in routes'"): _KIND_CODE,
     ('config.py', "f'{c}: {s.kind}'"): _KIND_CODE,
-    ('config.py', 'lines += [error_where(e), f"  {_what(e)} [type={e[\'type\']}]"]'): _FILTER_ITSELF,
+    ('config.py', 'lines += [error_where(e, cleaned=True), f"  {_what(e)} [type={e[\'type\']}]"]'): _FILTER_ITSELF,
     ('config.py', "refused += [f'{c}: {s.kind}' for c, s in b.entries() if (c, s.kind) in NOT_PROD]"): _KIND_CODE,
     ('deferred.py', "f'{where}: key {k!r} is not available until {DEFERRED_KEYS[k]}'"): _KIND_CODE,
     ('guard/injection.py', "'+'.join((v.backend for v in flagged or verdicts))"): _PATTERN,
@@ -3426,6 +3437,11 @@ GUARD_ALLOWED = {
     ('llm/anthropic.py', "f'https://{settings.resource}.services.ai.azure.com/anthropic/'"): _URL_BUILD,
     ('registry.py', "out += [f'action {shown_name(c.id)}: {p}' for p in schema_problems(c.input_schema)]"): _SENTENCES,
     ('registry.py', "problems += [f'{where}: tool {shown_name(spec.name)}: {p}' for p in schema_problems(spec.input_schema)]"): _SENTENCES,
+    ("hidden_input.py", "lines.append(line)"): "the rebuilt problem line of the filter of this module (`without_input`): its place, context and input were replaced by `_place`, `_context` and the fixed word before this line",
+    ("hidden_input.py", "str(m.value)"): "the text value of an enum member of a model of this package: a word written in code, collected as a code word",
+    ("runtime/tick.py", "calls += store.purge_tool_calls(_now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held)"): "the number of rows removed (`-> int` in `store/protocol.py`; the scan does not follow the type of a receiver)",
+    ("runtime/tick.py", "maps += store.purge_redaction_maps(_now(ctx) - timedelta(days=keep.redaction_maps_days), keep_run_ids=held)"): "the number of rows removed (`-> int` in `store/protocol.py`; the scan does not follow the type of a receiver)",
+    ("runtime/tick.py", "_LOG.info('purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d', calls, maps, len(held))"): "two row counts that the two lines above add up (numbers) and a length",
     ('runtime/tick.py', "f'stuck {state.value}'"): _CODE_NAME,
     ('sources/__init__.py', "out += [f'source {shown_name(key, sources)}: {p}' for p in found]"): _SENTENCES,
     ('sources/kubernetes.py', "f'incomplete/{scope}/{kind}'"): _EVIDENCE_ID,
@@ -3788,6 +3804,10 @@ _PLANTED_FAULTS = {
         "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(exc)",
         1,
     ),
+    "R18e a dict value made from an error, given to a call": (
+        "def f(g, h):\n    try:\n        g()\n    except OSError as exc:\n        h({'error': exc})",
+        1,
+    ),
     "R16c a dict value made from an error": (
         "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {'error': exc}",
         1,
@@ -3844,6 +3864,22 @@ _PLANTED_FAULTS = {
     ),
     "R16o a log call with a text directive": (
         "def f(log, name):\n    log.warning('bad %s', name)",
+        1,
+    ),
+    "R18a a number directive of a text parameter": (
+        "def f(log, name):\n    log.warning('bad %d', name)",
+        1,
+    ),
+    "R18b an error given to a store method of the protocol": (
+        "def f(store, dl):\n    try:\n        dl()\n    except OSError as exc:\n        store.add_dead_letter(exc.args)",
+        1,
+    ),
+    "R18c an error given by keyword to a store method of the protocol": (
+        "def f(store):\n    try:\n        store.get_run('x')\n    except OSError as exc:\n        store.add_dead_letter(reason=exc.args)",
+        1,
+    ),
+    "R18d a number directive of a library call that returns text": (
+        "def f(log, client, name):\n    log.warning('bad %d', client.count(name))",
         1,
     ),
     "R17c a number directive of a function that returns text": (
@@ -4001,6 +4037,7 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
     "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
     "R17c a log call with a number directive of a function declared as an int": "def count() -> int:\n    return 1\ndef f(log):\n    n = count()\n    log.warning('bad %d', n)",
+    "R18b a store method given a class name": "def f(store):\n    try:\n        store.get_run('x')\n    except OSError as exc:\n        store.add_dead_letter(type(exc).__name__)",
     "R17d a tuple of a class name": "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (type(exc).__name__, 1)",
     "R17h a class name given to update": "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.update(type(exc).__name__)",
     "R17m an assert message written in code": "def f(name):\n    assert name, 'fixed'",

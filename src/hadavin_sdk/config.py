@@ -376,7 +376,7 @@ def _inventory_ref_ok(ref: str) -> bool:
     )
 
 
-class Settings(BaseSettings):
+class Settings(HiddenInputModel, BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HADAVIN_")
     config_dir: Path
 
@@ -525,11 +525,17 @@ def load_yaml(text: str) -> Any:
         raise ConfigError(config_error_text(exc)) from None
 
 
+_CONFIG_FILES = (
+    "config.yaml",
+    "egress.yaml",
+)  # the two files `_read_yaml` reads: names written in code, so shown
+
+
 def _read_yaml(path: Path) -> dict:
     """A file of the configuration folder, `{}` only when it does not exist. One that exists but cannot be read (a
     folder, a loop of links, no permission, not UTF-8 text) is a `ConfigError` with a fixed sentence: reading it as
     empty could drop restrictions. This is the only place that guards the read (`errors.read_configured`)."""
-    what = shown_name(path.name)
+    what = shown_name(path.name, _CONFIG_FILES)
     text = read_configured(path, what, missing_ok=True)
     if text is None:
         return {}
@@ -653,7 +659,7 @@ def _what(e: Any) -> str:
 
 def _error_line(e: Any) -> str:
     """One problem as `where: what` (used beside the rename sentence)."""
-    where = error_where(e)
+    where = error_where(e, cleaned=True)
     return f"{where}: {_what(e)}" if where else _what(e)
 
 
@@ -665,7 +671,7 @@ def _value_free_text(exc: ValidationError) -> str:
     errors = exc.errors(include_url=False, include_input=False)
     lines = [f"{len(errors)} validation error{'s' if len(errors) != 1 else ''} for {exc.title}"]
     for e in errors:
-        lines += [error_where(e), f"  {_what(e)} [type={e['type']}]"]
+        lines += [error_where(e, cleaned=True), f"  {_what(e)} [type={e['type']}]"]
     return "\n".join(lines)
 
 

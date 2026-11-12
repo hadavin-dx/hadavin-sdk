@@ -21,6 +21,9 @@ from pydantic import (
     model_validator,
 )
 
+from hadavin_sdk.errors import ConfigValueError
+from hadavin_sdk.hidden_input import HiddenInputModel
+
 SCORED_CAUSES = 3
 
 DIAGNOSIS_SCHEMA: dict[str, Any] = {
@@ -53,7 +56,7 @@ DIAGNOSIS_SCHEMA: dict[str, Any] = {
 Name = Annotated[StrictStr, Field(min_length=1)]
 
 
-class Cause(BaseModel):
+class Cause(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
     service: Name
     fault_type: Name
@@ -62,11 +65,11 @@ class Cause(BaseModel):
     @model_validator(mode="after")
     def _has_evidence(self) -> Cause:
         if not self.evidence_ids:
-            raise ValueError("a cause needs at least one evidence id")
+            raise ConfigValueError("a cause needs at least one evidence id")
         return self
 
 
-class Diagnosis(BaseModel):
+class Diagnosis(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
     causes: list[Cause] = []  # may be omitted only with not_sure true (checked below)
     not_sure: StrictBool = False
@@ -75,7 +78,7 @@ class Diagnosis(BaseModel):
     @model_validator(mode="after")
     def _one_form(self) -> Diagnosis:
         if self.not_sure == bool(self.causes):  # both, or neither
-            raise ValueError("either not_sure with no causes, or causes without not_sure")
+            raise ConfigValueError("either not_sure with no causes, or causes without not_sure")
         return self
 
     @property

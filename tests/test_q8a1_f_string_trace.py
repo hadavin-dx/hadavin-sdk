@@ -588,7 +588,9 @@ def test_a_float_inside_a_data_object_says_the_path_without_the_text_of_a_key():
 
     with pytest.raises(ValueError) as err:
         canonical_json({SECRET_LOOKING: {"a": 1.5}})
-    assert str(err.value) == "float at $.<not shown>.a: use a decimal string", str(err.value)
+    assert str(err.value) == "float at $.<not shown>.<not shown>: use a decimal string", str(
+        err.value
+    )
 
 
 def test_an_input_key_the_schema_does_not_list_is_said_as_not_shown():

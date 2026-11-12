@@ -161,7 +161,10 @@ def test_a_valid_value_and_a_refusal_for_another_reason_still_work():
 def test_a_custom_error_type_that_pydantic_does_not_know_keeps_the_place_and_says_one_fixed_sentence():
     from pydantic_core import PydanticCustomError
 
-    from hadavin_sdk.hidden_input import HIDDEN, without_input
+    from hadavin_sdk.hidden_input import HIDDEN, HiddenInputModel, without_input
+
+    class Mini(HiddenInputModel):
+        x: str | None = None
 
     original = ValidationError.from_exception_data(
         "Mini",
@@ -175,7 +178,9 @@ def test_a_custom_error_type_that_pydantic_does_not_know_keeps_the_place_and_say
             }
         ],
     )
-    hidden = without_input(original)
+    hidden = without_input(
+        original, Mini
+    )  # batch 18: the model says which names are written in code
     seen = _everything_a_caller_can_print(hidden)
     assert _marker("c") not in seen
     assert hidden.errors()[0]["input"] == HIDDEN and "the value was refused" in seen
@@ -196,8 +201,12 @@ def test_a_str_subclass_is_never_shown_as_an_id_or_a_name():
 
     good = "run-" + "a" * 32
     assert shown_id(Loud(good)) == "?", "shown_id shows a str subclass"
-    assert shown_name(Loud("plain")) == NOT_SHOWN, "shown_name shows a str subclass"
-    assert shown_id(good) == good and shown_name("plain") == "plain"
+    assert shown_name(Loud("plain"), loaded=["plain"]) == NOT_SHOWN, (
+        "shown_name shows a str subclass"
+    )
+    assert (
+        shown_id(good) == good and shown_name("plain", loaded=["plain"]) == "plain"
+    )  # batch 18: a name needs a loaded set
 
 
 # ---- Issue 5c: the YAML reader that check-config reaches ------------------------------------------------------------------
@@ -215,12 +224,18 @@ def test_check_config_shows_no_text_of_a_failure_of_the_yaml_reader(
     text = _marker("yaml")
     cfg = make_cfg(tmp_path)
 
+    hit = []
+
     def boom(*a, **k):
+        hit.append(1)
         raise (yaml.YAMLError(text) if error_class == "yaml" else RuntimeError(text))
 
     monkeypatch.setattr(config.yaml, "load", boom)
     code = cli.main(["--config", str(cfg), "check-config"])
     seen = capsys.readouterr()
+    assert hit, (
+        "the patched name was never called: this test does not reach the YAML reader (batch 18)"
+    )
     assert text not in seen.out + seen.err, (
         "check-config printed the text of a failure of the YAML reader"
     )
@@ -296,8 +311,12 @@ def test_the_read_paths_refuse_an_index_key_that_is_not_a_plain_name(tmp_path):
         AuditEvent(event_id="evt-" + "a" * 32, **_EVENT).model_dump_json(), encoding="utf-8"
     )
     sink.objects.mkdir(parents=True)
+    import hashlib
+
+    # the right digest of the outside file: without the name check the read would succeed and return True
+    digest = hashlib.sha256(outside.read_bytes()).hexdigest()
     sink.index.write_text(
-        json.dumps({"key": "../outside.json", "run_id": "r", "sha256": "0"}) + "\n"
+        json.dumps({"key": "../outside.json", "run_id": "r", "sha256": digest}) + "\n"
     )
     assert sink.verify_object("../outside.json") is False, (
         "a key outside the objects folder was read"

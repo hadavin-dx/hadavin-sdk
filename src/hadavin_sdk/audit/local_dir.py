@@ -111,14 +111,20 @@ class LocalDirSink:
         return key
 
     def write_intent(self, event: AuditEvent) -> str:
+        if not plain_event_name(event.event_id):
+            # an event built without the model check whose id is not a plain file name: it can never be written here
+            # (tested before the `try`, so only this one case has this sentence; batch 18)
+            raise AuditUnavailable(
+                f"intent {shown_id(event.event_id)}: the event id is not a plain file name"
+            )
         failure = None
         try:
             return self._write(event)
         except DuplicateEvent:
             raise
-        except ValueError:
-            # an event built without the model check whose id is not a plain file name: it can never be written here
-            failure = f"intent {shown_id(event.event_id)}: the event id is not a plain file name"
+        except ValueError as exc:
+            # the event could not be turned into bytes (the text of the library error may quote a value): its class only
+            failure = f"intent {shown_id(event.event_id)}: the event could not be written ({exc.__class__.__name__})"
         except OSError as exc:
             # The OS error quotes the configured path; raised after this block so no cause or context carries it.
             failure = f"intent {shown_id(event.event_id)}: {exc.__class__.__name__}"

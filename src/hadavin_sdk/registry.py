@@ -27,6 +27,7 @@ from hadavin_sdk.errors import (
     shown_name,
 )
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
+from hadavin_sdk.hidden_input import HiddenInputModel
 from hadavin_sdk.identity import Principal
 from hadavin_sdk.models import ChainStep, sha256_hex
 from hadavin_sdk.stages import is_live
@@ -39,13 +40,13 @@ from hadavin_sdk.tools import (
 )
 
 
-class Budget(BaseModel):
+class Budget(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     daily: Money
     monthly: Money
 
 
-class AgentRecord(BaseModel):
+class AgentRecord(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     id: str
     status: Literal["draft", "live", "retired"]
@@ -64,7 +65,7 @@ class AgentRecord(BaseModel):
     )
 
 
-class Chain(BaseModel):
+class Chain(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     id: str
     steps: list[ChainStep]

@@ -51,6 +51,7 @@ from hadavin_sdk.errors import (
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.egress import EgressRefused, egress_check
+from hadavin_sdk.hidden_input import HiddenInputModel
 from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
 from hadavin_sdk.scrub_settings import ScrubSettings
 
@@ -77,7 +78,7 @@ class ToolRefused(Exception):
     too_large = False  # the reply was over an explicit cap: asking for less may work
 
 
-class ToolSpec(BaseModel):
+class ToolSpec(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     name: str = Field(pattern=r"^[a-z][a-z0-9_]{0,39}$")
     function: str  # "module:function", the module must be in config.tool_modules

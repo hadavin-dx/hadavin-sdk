@@ -232,7 +232,7 @@ def test_schema_problems_rejects_keywords_outside_the_subset(keyword):
     ]
     assert schema_problems(
         {"type": "object", "properties": {"a": {"type": "string", keyword: 1}}}
-    ) == [f"input_schema.a: unsupported keyword {keyword}"]
+    ) == [f"input_schema.<not shown>: unsupported keyword {keyword}"]
 
 
 def test_schema_problems_accepts_exactly_the_documented_subset():

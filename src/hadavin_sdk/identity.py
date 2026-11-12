@@ -6,8 +6,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from hadavin_sdk.hidden_input import HiddenInputModel
 
-class Principal(BaseModel):
+
+class Principal(HiddenInputModel, BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     id: str
     kind: Literal["person", "service"]

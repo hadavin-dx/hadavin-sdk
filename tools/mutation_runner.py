@@ -148,6 +148,15 @@ CHILD_ENV = (
 CHILD_FIXED_ENV = {
     "PYTHONNOUSERSITE": "1"
 }  # set, not inherited: the child never imports from the caller's user site-packages
+# The repo-root files a copied test may read (the one list: `run_mutants` copies each that exists, a guard test fails when a test
+# names a repo-root file that is not here). Q8a-1 batch 18: `tests/test_changelog_claims.py` read `CHANGELOG.md` at import and the copy
+# did not hold it, so the exact CI command could not start.
+ROOT_FILES: tuple[str, ...] = ("CHANGELOG.md", "pyproject.toml")
+# The unmutated copy (the baseline) runs everything EXCEPT the tests CI runs in their own step or never runs: a timing test (`perf`) is a
+# ratio of wall clocks and fails on a loaded machine, and the baseline is a check that the copy is whole, not a timing run. A mutant run
+# names its one killer, so this mark expression is applied to the baseline only. Q8a-1 batch 18: `migration_numbers_mutants` could not
+# start because its baseline held the known timing test.
+BASELINE_MARKS = "not live and not perf"
 SETUP_TRIES = 5  # attempts to clear and rebuild the temp copy (a Windows file lock may hold a file for a moment)
 SETUP_WAIT = 0.5  # seconds between those attempts
 # a refused JUnit file (DOCTYPE, ENTITY, too large) or a truncated one (ET.ParseError is a SyntaxError) is THIS mutant's ERROR, not the end of the run
@@ -194,7 +203,7 @@ class _ReapedElsewhere(Exception):
     """The child ended but another waiter reaped it, so its exit status is unknown (``Popen`` itself would call it 0)."""
 
 
-def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int:
+def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float, marks: str = "") -> int:
     # an ALLOWLIST, not os.environ: a mutant run must not see a database DSN, a token or any other secret of the caller; PYTHONPATH also holds the tree root (tests may import tools.*)
     for operand in tests:  # the one place the caller's strings reach the argv: refuse here too, not only where the paths are first checked
         _plain_operand(operand)
@@ -211,7 +220,7 @@ def _pytest(cwd: Path, tests: Sequence[str], junit: Path, timeout: float) -> int
             ini_dir = Path(tempfile.mkdtemp(prefix="mutant_ini_"))
         ini = ini_dir / "mutant_run.ini"
         ini.write_text("", encoding="utf-8")
-        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *tests]  # fmt: skip
+        cmd = [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--noconftest", "-x", "-c", str(ini), f"--rootdir={cwd}", f"--junitxml={junit}", *(["-m", marks] if marks else []), *tests]  # fmt: skip
         # own process group (POSIX session / Windows group): on a timeout the whole tree dies, not only pytest (a test may have started psql or a server)
         own = (
             {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
@@ -368,6 +377,7 @@ def run_mutants(
     tests: Sequence[str],
     *,
     extra_dirs: Sequence[str] = ("tests/fixtures",),
+    extra_files: Sequence[str] = ROOT_FILES,
     only: Sequence[str] = (),
     timeout: float = DEFAULT_TIMEOUT,
     baseline_timeout: float | None = None,
@@ -387,7 +397,7 @@ def run_mutants(
     with _terminations_raise():
         return _run_mutants(
             root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
-            {} if first_lines is None else first_lines,
+            {} if first_lines is None else first_lines, extra_files,
         )  # fmt: skip
 
 
@@ -443,11 +453,12 @@ def _run_mutants(
     baseline_timeout: float | None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
     first_lines: dict[str, str],
+    extra_files: Sequence[str] = ROOT_FILES,
 ) -> list[tuple[str, Verdict, str, bool]]:
     first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
-    for t in (*tests, *extra_dirs):
+    for t in (*tests, *extra_dirs, *extra_files):
         _relative(t)
     for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
         if m.test_file and m.test_file not in tests:
@@ -472,6 +483,9 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(snap, d), _inside(tmp, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in extra_files:
+            if _inside(snap, f).is_file():
+                shutil.copy(_inside(snap, f), _inside(tmp, f))
 
     def fresh() -> None:
         """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
@@ -514,10 +528,19 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in (
+            extra_files
+        ):  # a repo-root file a test reads (a link out of the tree is refused by ``_inside``)
+            if _inside(root, f).is_file():
+                shutil.copy(_inside(root, f), _inside(snap, f))
         _refuse_links_out(snap)
         fresh()
         base_rc = _pytest(
-            tmp, tests, tmp / "base.xml", timeout if baseline_timeout is None else baseline_timeout
+            tmp,
+            tests,
+            tmp / "base.xml",
+            timeout if baseline_timeout is None else baseline_timeout,
+            marks=BASELINE_MARKS,
         )
         if base_rc == REAPED_ELSEWHERE:
             raise RuntimeError(
