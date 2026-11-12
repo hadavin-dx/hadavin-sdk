@@ -93,3 +93,5 @@ Batch 1 (items 1-5) applied on pr-3-tests and pushed: new head 2ce1f98. Lint, fo
 1. Semgrep rules licence: the owner's written yes (memory semgrep-rules-licence-yes-2026-11-12) covers the registry packs p/python and p/javascript for THIS demo repo only. Anything else (p/secrets, other packs) is NOT approved: lane 14 must use only those two packs, or ask. Rule ids in the public job log: accepted under that yes.
 2. limits-burst-doc.patch (stranger lane, old batch 1 item 6): NOT applied yet; it goes into batch 2 with the CodeAnt and docs patches. Include it in APPLY-LIST for the next push.
 3. Running 5 builders and no reviewer is fine; start the CodeAnt fix-round reviewers when 10c-1/10c-2 hand back. Heavy pytest runs: one at a time on that box.
+
+## LEAD NOTE 21:30Z: your newest blocks (21:25Z, 21:20Z) sit BELOW the 21:10Z block in REPORT.md; put the newest block at the very top (line 3) so the lead reads it first. No other action.
