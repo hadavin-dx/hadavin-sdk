@@ -320,8 +320,8 @@ M = [
     ),
     mutant(
         "o100: the timing limit is not a ratio (everything passes)",
-        "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
-        "PER_SIZE, MIN_SMALL_S = 1000.0, 0.004",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.001",
+        "PER_SIZE, MIN_SMALL_S = 1000.0, 0.001",
         T3,
         "test_a_quadratic_stand_in_is_flagged_at_any_speed[1e-07]",
         "assert",
@@ -329,10 +329,10 @@ M = [
     ),
     mutant(
         "o100: the timing limit is too tight (everything is flagged)",
-        "PER_SIZE, MIN_SMALL_S = 3.0, 0.004",
-        "PER_SIZE, MIN_SMALL_S = 0.001, 0.004",
+        "PER_SIZE, MIN_SMALL_S = 3.0, 0.001",
+        "PER_SIZE, MIN_SMALL_S = 0.001, 0.001",
         T3,
-        "test_a_linear_cost_passes_at_any_speed[1e-07]",
+        "test_a_linear_cost_passes_at_any_speed[1e-09]",
         "assert not",
         src=TIMING,
     ),
@@ -342,7 +342,7 @@ M = [
         "t_small",
         T3,
         "test_the_limit_is_a_ratio_of_the_two_sizes",
-        "0.048",
+        "0.012",
         src=TIMING,
     ),
 ]

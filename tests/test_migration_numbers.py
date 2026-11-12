@@ -812,7 +812,9 @@ def test_lexer_is_linear(mn):
         (fn.__name__, unit)
         for fn in (mn.lex, mn.refused_statements)
         for unit in units
-        if timing.is_superlinear(lambda t, f=fn: timing.cpu_seconds(f, t), unit, small, big)
+        if timing.is_superlinear(
+            lambda t, f=fn: timing.block_seconds(f, t), unit, small, big, repeats=3
+        )
     ]
     assert not slow, slow
 
@@ -820,7 +822,11 @@ def test_lexer_is_linear(mn):
 @pytest.mark.perf
 def test_the_timing_harness_flags_a_quadratic_stand_in():
     assert timing.is_superlinear(
-        lambda t: timing.cpu_seconds(timing.quadratic_stand_in, t), "a", 16 * 1024, 128 * 1024
+        lambda t: timing.block_seconds(timing.quadratic_stand_in, t),
+        "a",
+        8 * 1024,
+        128 * 1024,
+        repeats=2,
     ), "a quadratic function must be flagged"
 
 
