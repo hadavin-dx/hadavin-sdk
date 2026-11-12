@@ -3773,17 +3773,25 @@ _PLANTED_FAULTS = {
     ),
     # ---- round 16 (Issues 2 and 3): sinks and proofs the round-15 reviewers named ----
     "R16a a local text of an error set on an attribute": (
-        "def f(self, exc):\n    text = str(exc)\n    self.error_code = text",
-        2,
+        "def f(self, g):\n    try:\n        g()\n    except OSError as exc:\n        text = exc.args[0]\n        self.error_code = text",
+        1,
+    ),
+    "R17a an error object set on an item": (
+        "def f(rec, g):\n    try:\n        g()\n    except OSError as exc:\n        rec['error'] = exc",
+        1,
     ),
     "R16b a positional argument of a class": (
         "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(exc)",
         1,
     ),
-    "R16c a dict value made from an error": ("def f(exc):\n    return {'error': str(exc)}", 2),
+    "R16c a dict value made from an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {'error': exc}",
+        1,
+    ),
     "R16d a helper returns the text of an error": (
         "def why(g):\n    try:\n        g()\n    except OSError as exc:\n        return exc\ndef f(g):\n    raise A(why(g))",
         2,
+        "return exc",  # the return is the site only the return rule finds; the raise is found by the call rule
     ),
     "R16e repr of an unproven value": ("def f(name):\n    return repr(name)", 1),
     "R16f a helper that raises, called in an except": (
@@ -3823,8 +3831,12 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R16n a number annotation on a text": (
-        "def f(exc):\n    x: int = str(exc)\n    raise A(f'{x}')",
-        2,
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        x: int = exc.args[0]\n    raise A(f'{x}')",
+        1,
+    ),
+    "R17b a derived error built outside a raise, two classes deep": (
+        "class Base(LibError):\n    pass\nclass Sub(Base):\n    pass\ndef f(name):\n    err = Sub(name)\n    raise err",
+        1,
     ),
     "R16o a log call with a text directive": (
         "def f(log, name):\n    log.warning('bad %s', name)",
@@ -3915,11 +3927,13 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
 def test_the_guard_finds_each_planted_fault_alone(shape):
     """One planted fault per shape (the 25 of the evidence probe 7 and the reviewers' extras): the guard reports exactly
     the stated number of sites, so a guard that lost a shape fails here by the shape's name."""
-    code, count = _PLANTED_FAULTS[shape]
+    code, count, *marker = _PLANTED_FAULTS[shape]
     found, _ = _guard_violations(
         code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={}
     )
     assert len(found) == count, (shape, found)
+    for text in marker:  # a shape with two sites names the one that only its own rule finds
+        assert any(text in line for line in found), (shape, "no site holds", text, found)
 
 
 @pytest.mark.parametrize("form", sorted(_CLEAN_FORMS))

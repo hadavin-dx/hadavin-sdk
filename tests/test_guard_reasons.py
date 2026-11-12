@@ -2285,15 +2285,23 @@ def _filter_behaviour(name: str) -> list[str]:
                 bad.append(f"status_text shows {type(v).__name__}: {out[:20]!r}")
         if errors.status_text(LoudInt(404)) != "404" or errors.status_text(200) != "200":
             bad.append("status_text does not show a plain status number as its digits")
+    elif name == "shown_name":
+        # a `str` subclass may define its own `__str__`, `__eq__` or `__hash__`: only a plain `str` is shown (batch 17)
+        for v in (Loud("plain"), Loud("zz-9"), None, 7, b"plain"):
+            out = errors.shown_name(v)
+            if out != errors.NOT_SHOWN:
+                bad.append(f"shown_name shows {type(v).__name__}: {out[:20]!r}")
+        if errors.shown_name("plain") != "plain" or type(errors.shown_name("plain")) is not str:
+            bad.append("shown_name does not show a plain word-like name as a plain str")
     else:
         good = "run-" + "a" * 32
         if errors.shown_id(good) != good:
             bad.append("shown_id does not show an id of the shape the code makes")
         got = errors.shown_id(
             Loud(good)
-        )  # the shape is the content; a subclass's own text methods are not used
-        if got != good or type(got) is not str:
-            bad.append(f"shown_id uses the text methods of a str subclass: {got[:20]!r}")
+        )  # a subclass may answer differently from its content: only a plain `str` is shown (batch 17)
+        if got != "?":
+            bad.append(f"shown_id shows a str subclass: {got[:20]!r}")
         for v in ("secret text", good + " x", "RUN-" + "a" * 32, good + "\n", None, 7):
             out = errors.shown_id(v)
             if out != "?":
@@ -2313,6 +2321,8 @@ def check_filter() -> list[str]:
             if fn.name in {"status_text", "shown_id"}:
                 bad += _filter_behaviour(fn.name)
                 continue
+            if fn.name == "shown_name":
+                bad += _filter_behaviour(fn.name)
             body = [
                 s
                 for s in fn.body

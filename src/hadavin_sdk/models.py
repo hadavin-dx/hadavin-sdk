@@ -17,6 +17,7 @@ from typing import Any, ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hadavin_sdk.errors import shown_name
+from hadavin_sdk.hidden_input import HiddenInputModel
 
 
 def now() -> datetime:
@@ -78,7 +79,9 @@ def sha256_hex(obj: Any) -> str:
     return hashlib.sha256(canonical_json(obj).encode("utf-8")).hexdigest()
 
 
-class Shape(BaseModel):
+class Shape(
+    HiddenInputModel, BaseModel
+):  # BaseModel is named too so the linter knows this is a pydantic model
     model_config = ConfigDict(extra="forbid")
     schema_version: int = 1
 

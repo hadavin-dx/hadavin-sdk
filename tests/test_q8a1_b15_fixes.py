@@ -205,7 +205,7 @@ def test_shown_id_shows_only_the_shape_of_an_id_the_code_makes():
 
         __format__ = lambda self, spec: text
 
-    assert shown_id(Odd(run)) == run and f"{shown_id(Odd(run))}" == run, (
+    assert shown_id(Odd(run)) == "?" and f"{shown_id(Odd(run))}" == "?", (
         "shown_id used the str or format hook of a str subclass (b15 odd subclass)"
     )
     for bad in (

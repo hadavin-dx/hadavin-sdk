@@ -50,7 +50,8 @@ def loaded_ids(*groups: Iterable[object]) -> Iterator[None]:
 
 
 def word_like(name: object) -> bool:
-    return isinstance(name, str) and bool(_WORDLIKE.fullmatch(name)) and not _LONG_RUN.search(name)
+    # `type(name) is str`: a `str` subclass may define its own `__str__` or `__eq__` and answer differently from its text
+    return type(name) is str and bool(_WORDLIKE.fullmatch(name)) and not _LONG_RUN.search(name)
 
 
 def shown_name(name: object, loaded: Collection[object] | None = None) -> str:
@@ -67,7 +68,7 @@ def shown_name(name: object, loaded: Collection[object] | None = None) -> str:
     names = loaded if loaded is not None else _LOADED.get()
     if names is not None and name not in names:
         return NOT_SHOWN
-    return str(name)
+    return str.__str__(name)
 
 
 _DIGEST = re.compile(r"[0-9a-f]{64}")
@@ -139,7 +140,7 @@ def shown_id(value: object) -> str:
     """An id for a message: the id itself if it has the shape of an id this code makes, else `?`. A caller can hand the
     store any text as an id (an argument of the command line, a field of a signed answer); that text must never reach a
     message, so only the shape the code itself makes is shown."""
-    return str.__str__(value) if isinstance(value, str) and _ID_SHAPE.fullmatch(value) else "?"
+    return str.__str__(value) if type(value) is str and _ID_SHAPE.fullmatch(value) else "?"
 
 
 def unreadable(what: str, exc: BaseException) -> ConfigError:

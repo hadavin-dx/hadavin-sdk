@@ -35,6 +35,7 @@ from hadavin_sdk.errors import (
     read_configured,
     shown_name,
 )
+from hadavin_sdk.hidden_input import HiddenInputModel
 from hadavin_sdk.safe_url import (
     InvalidUrl,
     safe_urlsplit,
@@ -80,7 +81,9 @@ def _no_key_shaped_run(value: str) -> str:
     return value
 
 
-class _Strict(BaseModel):
+class _Strict(
+    HiddenInputModel, BaseModel
+):  # BaseModel is named too so the linter knows these are pydantic models
     # A mistyped key may hold a secret: an error names the field (an unknown key shows as `<unknown key>`), never the
     # value; `config_error_text` is the one place that decides what text of a problem is shown.
     model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)

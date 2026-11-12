@@ -1013,8 +1013,8 @@ M = [
         'and all(\n            cls.__module__ == "builtins" or cls.__module__.split(".")[0] == "hadavin_sdk"\n            for cls in type(exc).__mro__\n        )', 'and True', 'tests/test_q8a1_b14_fixes.py', 'test_tick_message_withholds_the_text_of_an_error_of_a_library_whatever_the_library', 'a hadavin class with a library base shows the text', '[azure.core.exceptions]'),
     other_mutant('Z143 round 15: ToolRefused gets a __str__ that reads its argument (tools.py), seen by the __str__ scan', 'src/hadavin_sdk/tools.py',
         '    too_large = False  # the reply was over an explicit cap: asking for less may work\n', '    too_large = False  # the reply was over an explicit cap: asking for less may work\n\n    def __str__(self) -> str:\n        return str(self.args[0])\n', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'that is not a written text', '[PKGERR]'),
-    other_mutant('Z150 round 16: an attribute or item set from the text of an error is not a site (guard)', 'tests/_text_guard.py',
-        '                hit = node.value is not None and self._tainted(', '                hit = False and node.value is not None and self._tainted(', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16a', '[R16a a local text of an error set on an attribute]'),
+    other_mutant('Z150 round 17: an item set from an error is not a site (guard; moved off the line Z102 edits)', 'tests/_text_guard.py',
+        'isinstance(t, (ast.Attribute, ast.Subscript))', 'isinstance(t, (ast.Attribute,))', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R17a', '[R17a an error object set on an item]'),
     other_mutant('Z151 round 16: a positional argument of a class is not read (guard)', 'tests/_text_guard.py',
         '                    hit = any(self._tainted(a, tn, env) for a in node.args)', '                    hit = False', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16b', '[R16b a positional argument of a class]'),
     other_mutant('Z152 round 16: the values of a dict are not read (guard)', 'tests/_text_guard.py',
@@ -1022,7 +1022,7 @@ M = [
     other_mutant('Z153 round 16: a return is not a sink (guard)', 'tests/_text_guard.py',
         '            elif isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None:', '            elif isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None and False:', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16d', '[R16d a helper returns the text of an error]'),
     other_mutant('Z154 round 16: str, repr and format of an unproven value make no text (guard)', 'tests/_text_guard.py',
-        '                if not hit and self._is_conversion(node):', '                if False and self._is_conversion(node):', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16a', '[R16a a local text of an error set on an attribute]'),
+        '                if not hit and self._is_conversion(node):', '                if False and self._is_conversion(node):', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16e', '[R16e repr of an unproven value]'),
     other_mutant('Z155 round 16: a helper that raises in an except is not read (guard)', 'tests/_text_guard.py',
         '                if not hit and self._raising_helper_in_handler(node):', '                if False and self._raising_helper_in_handler(node):', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16f', '[R16f a helper that raises, called in an except]'),
     other_mutant('Z156 round 16: format_exception_only prints no chain (guard)', 'tests/_text_guard.py',
@@ -1089,6 +1089,12 @@ M = [
         'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9_-]{0,127}")', 'EVENT_ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}")', 'tests/test_guard_reasons.py', 'test_the_claim_of_each_reason_holds_in_the_code', 'an event id that is no plain name is accepted', '[FILENAME]'),
     other_mutant('Z187 round 16: NotFound passes the id to the base class (protocol.py), KEPTID', 'src/hadavin_sdk/store/protocol.py',
         '        super().__init__("no row has this id")', '        super().__init__(key)', 'tests/test_q8a1_b15_fixes.py', 'test_not_found_keeps_the_id_and_shows_one_fixed_sentence', 'shows the id it was given (b15 notfound marker)', ''),
+    other_mutant('Z188 round 17: a name made tainted by an assignment does not pass the taint on (guard, taint_of)', 'tests/_text_guard.py',
+        '                    if name not in tainted and self._tainted(val, frozenset(tainted), env):', '                    if False and name not in tainted and self._tainted(val, frozenset(tainted), env):', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16a', '[R16a a local text of an error set on an attribute]'),
+    other_mutant('Z189 round 17: an error class is not derived through another class of the tree (guard)', 'tests/_text_guard.py',
+        '                    b in errs\n                    or (isinstance', '                    False\n                    or (isinstance', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R17b', '[R17b a derived error built outside a raise, two classes deep]'),
+    other_mutant('Z190 round 17: every argument after a text directive is dropped as a number (guard)', 'tests/_text_guard.py',
+        'if j < len(rest) and c in "dixXofeEgG"}', 'if j < len(rest)}', 'tests/test_stage_names.py', 'test_the_guard_finds_each_planted_fault_alone', 'R16o', '[R16o a log call with a text directive]'),
 ]  # fmt: skip
 
 

@@ -846,14 +846,14 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "actions/secrets_vault.py",
         "ssl.create_default_context(cafile=str(settings.ca_cert) if settings.ca_cert else None)",
     ): "PROC",
-    ("errors.py", "return str(name)"): "FILTER",
+    ("errors.py", "str.__str__(name)"): "FILTER",
     (
         "errors.py",
         "int.__repr__(status) if isinstance(status, int) and (not isinstance(status, bool)) else '?'",
     ): "FILTER",
     (
         "errors.py",
-        "str.__str__(value) if isinstance(value, str) and _ID_SHAPE.fullmatch(value) else '?'",
+        "str.__str__(value) if type(value) is str and _ID_SHAPE.fullmatch(value) else '?'",
     ): "FILTER",
     ("guard/http.py", "box['error'] = exc"): "HANDOFF",
     ("k1b/loop.py", "box['exc'] = exc"): "HANDOFF",
