@@ -1207,19 +1207,25 @@ def test_list_batch_refuses_anything_but_one_number_from_1_to_4(argv, capsys):
 
 
 # --- 5b. the CHANGELOG states rule O8 as the code keeps it (round 15, Issue 1) ---------------------------------------------
-_O8_PHRASES = ("must be owned", "owned by a role of the migration role family")
+_O8_PHRASES = (
+    "must be owned",
+    "has to be owned",
+    "needs to be owned",
+    "required to be owned",
+    "owned by a role of the migration role family",
+    "owned by a family role",
+)
 _O8_SWITCH = "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START"
 # The conditions the code keeps (migration_verify.py, rule O8, in the schema of the run): the owner is judged when it changes
 # DURING the run; a schema owned from the START by a role outside the family is judged only when the switch (`_O8_SWITCH`)
-# is ON. A sentence is conditional when it names the switch, or says BOTH that the owner must not change AND that this is
-# during the run. One word of the three ("during the run" alone, "must not change owner" alone, "at the start" alone) is
-# not enough: each can sit in a sentence that still says the stricter thing.
-_O8_CHANGE = "must not change owner"
-_O8_WHEN = "during the run"
+# is ON. Round 17 (group 5): a sentence is conditional only when it NAMES THE SWITCH. Round 16 also accepted "must not change
+# owner" together with "during the run", and "The schema must be owned by a family role at the start and must not change owner
+# during the run" passed although it states the strict reading with the switch OFF. The words of the condition are not
+# enough; the name of the switch is the one thing a sentence cannot carry by accident.
 
 
 def states_its_condition(sentence: str) -> bool:
-    return _O8_SWITCH in sentence or (_O8_CHANGE in sentence and _O8_WHEN in sentence)
+    return _O8_SWITCH in sentence
 
 
 def o8_sentences(text: str) -> list[str]:
@@ -1253,7 +1259,7 @@ def test_the_o8_wording_check_sees_a_planted_unconditional_sentence():
     planted = "The schema of the run must be owned by a role of the migration role family; this is judged in the schema of the run only."
     assert unconditional_o8_sentences(planted, switch_is_on=False) == [planted]
     assert unconditional_o8_sentences(planted, switch_is_on=True) == []
-    ok = "The schema of the run must not change owner during the run, and must be owned by a role of the migration role family."
+    ok = f"The schema of the run must be owned by a role of the migration role family only when {_O8_SWITCH} is ON."
     assert unconditional_o8_sentences(ok, switch_is_on=False) == []
 
 
@@ -1265,6 +1271,13 @@ def test_the_o8_wording_check_sees_a_planted_unconditional_sentence():
         "The schema of the run must be owned by a role of the migration role family and must not change owner.",
         "The schema of the run must be owned by a role of the migration role family at the start of the run.",
         "The schema of the run must be owned by a role of the migration role family; it must be owned during the run.",
+        # round 17 group 5: the old rule accepted these two (words of the condition without the switch)
+        "The schema must be owned by a family role at the start and must not change owner during the run.",
+        "The schema of the run must be owned by a role of the migration role family and must not change owner during the run.",
+        # round 17: other ways to say "must be owned"
+        "The schema of the run has to be owned by a role of the migration role family.",
+        "The schema of the run needs to be owned by a family role.",
+        "The schema of the run is required to be owned by a role of the migration role family.",
     ],
 )
 def test_the_o8_wording_check_finds_each_sentence_that_keeps_only_part_of_the_condition(wrong):
@@ -1274,7 +1287,7 @@ def test_the_o8_wording_check_finds_each_sentence_that_keeps_only_part_of_the_co
 @pytest.mark.parametrize(
     "right",
     [
-        "The schema of the run must be owned by a role of the migration role family; it must not change owner during the run.",
+        f"The schema of the run must be owned by a role of the migration role family; it must not change owner during the run, and a schema owned from the start by another role is refused only when {_O8_SWITCH} is ON.",
         f"A schema owned from the start by another role must be owned by a role of the migration role family only when {_O8_SWITCH} is ON.",
     ],
 )
@@ -1288,6 +1301,10 @@ def test_the_changelog_does_not_state_a_postgresql_17_run_as_fact():
     assert not _PG17_AS_FACT.search(CHANGELOG), (
         "CI is configured for 17.10 but no run has been seen: say 'is configured to run'"
     )
+    assert pg17_run_sentences(CHANGELOG) == [], (
+        "a CHANGELOG sentence puts a result word (passing, green, verified, tested, confirmed) next to PostgreSQL 17 without "
+        "saying that nothing has run there"
+    )
 
 
 _PG17_AS_FACT = re.compile(
@@ -1295,6 +1312,64 @@ _PG17_AS_FACT = re.compile(
     r"|(PostgreSQL|Postgres|PG)\s*17(\.\d+)?\s+(runs|ran|passes|passed|is green|was green|has run|have run)",
     re.IGNORECASE,
 )
+
+
+# Round 17 (group 5): the result words that a reader takes as "it ran on 17", with the version token within 40 characters on
+# either side in the same sentence. A sentence that also says nothing has run (a negation or a plan word) is the honest one.
+_PG17_VERSION_RX = r"(?:(?:PostgreSQL|Postgres|PG)\s*17(?:\.\d+)?|\b17\.\d+)"
+_PG17_RESULT = (
+    r"(?:passing|passes|passed|green|verified|tested|confirmed|was run|were run|has been run|ran|"
+    r"worked|succeeded)"
+)
+_PG17_NEAR = re.compile(
+    rf"{_PG17_RESULT}\b[^.;]{{0,40}}?{_PG17_VERSION_RX}|{_PG17_VERSION_RX}[^.;]{{0,40}}?\b{_PG17_RESULT}\b",
+    re.IGNORECASE,
+)
+_PG17_NOT_YET = re.compile(
+    r"\b(not|no run|never|unrun|until|before the merge|before merge|configured|expected|will|would|must|decides|next step)\b",
+    re.IGNORECASE,
+)
+
+
+def pg17_run_sentences(text: str) -> list[str]:
+    """The sentences that put a result word near PostgreSQL 17 and do not also say that nothing has run there."""
+    return [
+        s
+        for s in re.split(r"(?<=\.)\s+", text)
+        if _PG17_NEAR.search(s) and not _PG17_NOT_YET.search(s)
+    ]
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "The suite is green on 17.10.",
+        "The case was run on PostgreSQL 17.",
+        "The case was verified on PostgreSQL 17.",
+        "The case was tested on PG 17.",
+        "The case was seen passing on 17.10.",
+        "The case was confirmed on PostgreSQL 17.",
+        "On PostgreSQL 17.10 the case is green.",
+        "PostgreSQL 17 has been tested.",
+    ],
+)
+def test_the_postgresql_17_wording_check_finds_each_new_form_of_a_result_claim(sentence):
+    """Round 17 group 5: the forms the round 16 regex missed. Killed by V126 (the window of the check is cut to nothing)."""
+    assert pg17_run_sentences(sentence) == [sentence]
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "CI is configured to run the case on PostgreSQL 17.10; no run has been seen.",
+        "The case is not verified on PostgreSQL 17.",
+        "PostgreSQL 17 is UNRUN here: three tests need it.",
+        "The next step is the first CI run on PostgreSQL 17.10, before the merge.",
+        "Round 17 is tested on PostgreSQL 16.15 only.",
+    ],
+)
+def test_the_postgresql_17_wording_check_leaves_the_honest_sentences_alone(sentence):
+    assert pg17_run_sentences(sentence) == []
 
 
 @pytest.mark.parametrize(

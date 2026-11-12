@@ -17,6 +17,7 @@ import os
 import re
 import uuid
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 
@@ -863,28 +864,167 @@ O_CONTROLS = ["K-clean-no-roles", "K-clean-with-roles"]
 # Table 2: pairs that are empty by logic, one written reason per effect (round 15: the reason is the true one for each effect,
 # and the list of effect ids is written out; the count test compares it with the effects that have no C10 statement).
 # O13-O16 are built under C10 (a right on another schema, a default right limited to another schema): they are not here.
-_MAP_REASON = (
-    "the map's own object lives in the schema of the run only; aimed at another schema the same statement fails (measured "
-    "on PostgreSQL 16.15: %s), and an equally named object made there by hand is the case of effects O19 to O27"
+# Round 17 (group 1): NO reason below is free-hand text. Each empty pair has ONE probe (`EMPTY_PROBES`: the statement, the
+# SQLSTATE and the text the server answers, the same statement on an object that exists as the control), and its reason is
+# BUILT from that probe by `_why`, so the state, the text and the server version in a reason are the probe's. The real-server
+# test `test_every_empty_reason_is_the_answer_of_a_real_server` runs control and probe; the pure test
+# `test_every_empty_reason_carries_the_state_text_and_version_of_its_probe` reads the built reason back.
+MEASURED_ON = "16.15"  # the server the texts were first measured on; the real-server test prints the version of the run
+_C10, _C8, _C13 = "C10-another-schema", "C8-extension-member", "C13-move-and-recreate"
+
+
+class Probe(NamedTuple):
+    statement: str  # run as the superuser in the scratch database of a `case` (parts split at "; ")
+    state: (
+        str | None
+    )  # the SQLSTATE of the server's refusal; None: the statement runs without an error
+    text: str  # the server's message (primary line) must contain this
+    shown: str  # the same message as a reader sees it in the reason (names written as <placeholders>); contains `text`
+    control: str | None = (
+        None  # a statement that must run without an error (the same form on an object that exists)
+    )
+
+
+# The map's own objects, made in the schema `s` of the scratch database for the controls (`s2` stands for another schema).
+MAP_SETUP = (
+    "CREATE TABLE s.audit_entries (seq int)",
+    "CREATE TABLE s.runs (state int)",
+    "CREATE TABLE s.tool_calls (a int)",
+    "CREATE TABLE s.approval_decisions (seq BIGSERIAL)",
+    "CREATE TABLE s.dead_letters (seq BIGSERIAL)",
+    "CREATE FUNCTION s.hadavin_audit_append_only() RETURNS int LANGUAGE sql AS 'SELECT 1'",
 )
-_NO_RELATION = _MAP_REASON % 'ERROR 42P01 relation "<schema>.<name>" does not exist'
+_NO_REL = ("42P01", "does not exist", 'relation "<schema>.<name>" does not exist')
+_MAP_NAMES = {
+    "O01-select-other": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
+    "O02-select-everyone": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
+    "O03-column-other": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
+    "O04-sequence-other": "GRANT USAGE ON SEQUENCE s2.approval_decisions_seq_seq TO PUBLIC",
+    "O06-delete-runtime": "GRANT DELETE ON s2.audit_entries TO PUBLIC",
+    "O07-everyone-delete-runs": "GRANT DELETE ON s2.runs TO PUBLIC",
+    "O08-everyone-truncate-runs": "GRANT TRUNCATE ON s2.runs TO PUBLIC",
+    "O09-everyone-column-select": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
+    "O10-third-column-update": "GRANT UPDATE (state) ON s2.runs TO PUBLIC",
+    "O11-everyone-setval": "GRANT UPDATE ON SEQUENCE s2.dead_letters_seq_seq TO PUBLIC",
+    "O12-grant-option": "GRANT SELECT ON s2.runs TO {n} WITH GRANT OPTION",  # a grant option goes to a role, never to PUBLIC
+    "O18-select-third-tool-calls": "GRANT SELECT ON s2.tool_calls TO PUBLIC",
+}
+_LO_C10 = "GRANT SELECT ON LARGE OBJECT s2.70001 TO PUBLIC"
+_ADD_ANY = "ALTER EXTENSION file_fdw ADD TABLE s.t; ALTER EXTENSION file_fdw DROP TABLE s.t"
+_MOVE_OK = "runs without an error"
+EMPTY_PROBES: dict[tuple[str, str], Probe] = {
+    **{
+        (_C10, e): Probe(st, _NO_REL[0], _NO_REL[1], _NO_REL[2], control=st.replace("s2.", "s."))
+        for e, st in _MAP_NAMES.items()
+    },
+    (_C10, "O05-function-other"): Probe(
+        "GRANT EXECUTE ON FUNCTION s2.hadavin_audit_append_only() TO PUBLIC",
+        "42883",
+        "does not exist",
+        "function <schema>.<name>() does not exist",
+        control="GRANT EXECUTE ON FUNCTION s.hadavin_audit_append_only() TO PUBLIC",
+    ),
+    **{
+        (_C10, e): Probe(
+            _LO_C10, "42601", 'syntax error at or near "s2"', 'syntax error at or near "s2" (s2 stands for another schema)',
+            control="GRANT SELECT ON LARGE OBJECT 70001 TO PUBLIC",
+        )
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    **{
+        (_C8, e): Probe(
+            "ALTER EXTENSION file_fdw ADD DEFAULT PRIVILEGES", "42601", 'syntax error at or near "DEFAULT"',
+            'syntax error at or near "DEFAULT"', control=_ADD_ANY,
+        )
+        for e in ("O16-default-right-named", "O17-default-right-everyone")
+    },
+    **{
+        (_C8, e): Probe(
+            "ALTER EXTENSION file_fdw ADD LARGE OBJECT 70001", "42601", 'syntax error at or near "LARGE"',
+            'syntax error at or near "LARGE"', control=_ADD_ANY,
+        )
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    **{
+        (_C13, e): Probe(
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA s SET SCHEMA s2", "42601", 'syntax error at or near "SET"',
+            'syntax error at or near "SET"',
+            control="ALTER DEFAULT PRIVILEGES IN SCHEMA s GRANT SELECT ON TABLES TO PUBLIC; "
+            "ALTER DEFAULT PRIVILEGES IN SCHEMA s REVOKE SELECT ON TABLES FROM PUBLIC",
+        )
+        for e in ("O16-default-right-named", "O17-default-right-everyone")
+    },
+    **{
+        (_C13, e): Probe(
+            "ALTER LARGE OBJECT 70001 SET SCHEMA s2", "42601", 'syntax error at or near "SET"',
+            'syntax error at or near "SET"', control="ALTER LARGE OBJECT 70001 OWNER TO CURRENT_USER",
+        )
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
+    (_C13, "O19-select-on-a-table-outside-the-map-named"): Probe("CREATE TABLE s.zz_t (a int); ALTER TABLE s.zz_t SET SCHEMA s2", None, "", "ALTER TABLE ... SET SCHEMA " + _MOVE_OK),
+    (_C13, "O21-usage-on-a-sequence-outside-the-map-named"): Probe("CREATE SEQUENCE s.zz_q; ALTER SEQUENCE s.zz_q SET SCHEMA s2", None, "", "ALTER SEQUENCE ... SET SCHEMA " + _MOVE_OK),
+    (_C13, "O22-select-on-a-view-outside-the-map-everyone"): Probe("CREATE VIEW s.zz_v AS SELECT 1 AS a; ALTER VIEW s.zz_v SET SCHEMA s2", None, "", "ALTER VIEW ... SET SCHEMA " + _MOVE_OK),
+    (_C13, "O23-execute-on-a-function-named"): Probe("CREATE FUNCTION s.zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'; ALTER FUNCTION s.zz_f() SET SCHEMA s2", None, "", "ALTER FUNCTION ... SET SCHEMA " + _MOVE_OK),
+    (_C13, "O26-execute-on-a-procedure-named"): Probe("CREATE PROCEDURE s.zz_p() LANGUAGE sql AS ''; ALTER PROCEDURE s.zz_p() SET SCHEMA s2", None, "", "ALTER PROCEDURE ... SET SCHEMA " + _MOVE_OK),
+    (_C13, "O27-usage-on-a-type-named"): Probe("CREATE TYPE s.zz_ty AS (a int); ALTER TYPE s.zz_ty SET SCHEMA s2", None, "", "ALTER TYPE ... SET SCHEMA " + _MOVE_OK),
+}  # fmt: skip
+# the effects whose moved object is the same kind as another effect's: the one probe of the kind stands for the rest
+for _e, _like in (
+    (
+        "O20-select-on-a-table-outside-the-map-everyone",
+        "O19-select-on-a-table-outside-the-map-named",
+    ),
+    ("O24-function-of-the-family-left-callable-by-everyone", "O23-execute-on-a-function-named"),
+    ("O25-security-definer-function-in-the-schema-of-the-run", "O23-execute-on-a-function-named"),
+):
+    EMPTY_PROBES[(_C13, _e)] = EMPTY_PROBES[(_C13, _like)]
+
+
+def _answer(probe: Probe) -> str:
+    """The measured answer, written from the probe: the server version, the SQLSTATE and the message."""
+    if probe.state is None:
+        return f"measured on PostgreSQL {MEASURED_ON}: {probe.shown}"
+    return f"measured on PostgreSQL {MEASURED_ON}: ERROR {probe.state} {probe.shown}"
+
+
+def _why(carrier: str, effect: str, form: str) -> str:
+    """The reason of one empty pair. `form` is the plain-words part; the measured part is the probe's own answer."""
+    return form.format(answer=_answer(EMPTY_PROBES[(carrier, effect)]))
+
+
+_MAP_REASON = (
+    "the map's own object lives in the schema of the run only; aimed at another schema the same statement fails ({answer}); "
+    "the same statement on the schema of the run succeeds (the control of the test), and an equally named object made in "
+    "another schema by hand is the case of effects O19 to O27"
+)
 _C10_EMPTY_REASONS: dict[str, str] = {
-    "O01-select-other": _NO_RELATION,
-    "O02-select-everyone": _NO_RELATION,
-    "O03-column-other": "a column of a map table: " + _NO_RELATION,
-    "O04-sequence-other": "a sequence of the map: " + _NO_RELATION,
-    "O05-function-other": "the one function of the map: "
-    + _MAP_REASON % "ERROR 42883 function <schema>.<name>() does not exist",
-    "O06-delete-runtime": _NO_RELATION,
-    "O07-everyone-delete-runs": _NO_RELATION,
-    "O08-everyone-truncate-runs": _NO_RELATION,
-    "O09-everyone-column-select": "a column of a map table: " + _NO_RELATION,
-    "O10-third-column-update": "a column of a map table: " + _NO_RELATION,
-    "O11-everyone-setval": "a sequence of the map: " + _NO_RELATION,
-    "O12-grant-option": _NO_RELATION,
-    "O18-select-third-tool-calls": _NO_RELATION,
-    "O28-select-on-a-large-object-everyone": 'a large object has no schema; measured: GRANT ... ON LARGE OBJECT <schema>.<number> is a syntax error at or near "<schema>"',
-    "O29-select-on-a-large-object-named": 'a large object has no schema; measured: GRANT ... ON LARGE OBJECT <schema>.<number> is a syntax error at or near "<schema>"',
+    **{
+        e: _why(_C10, e, form)
+        for e, form in {
+            "O01-select-other": _MAP_REASON,
+            "O02-select-everyone": _MAP_REASON,
+            "O03-column-other": "a column of a map table: " + _MAP_REASON,
+            "O04-sequence-other": "a sequence of the map: " + _MAP_REASON,
+            "O05-function-other": "the one function of the map: " + _MAP_REASON,
+            "O06-delete-runtime": _MAP_REASON,
+            "O07-everyone-delete-runs": _MAP_REASON,
+            "O08-everyone-truncate-runs": _MAP_REASON,
+            "O09-everyone-column-select": "a column of a map table: " + _MAP_REASON,
+            "O10-third-column-update": "a column of a map table: " + _MAP_REASON,
+            "O11-everyone-setval": "a sequence of the map: " + _MAP_REASON,
+            "O12-grant-option": _MAP_REASON,
+            "O18-select-third-tool-calls": _MAP_REASON,
+        }.items()
+    },
+    **{
+        e: _why(
+            _C10,
+            e,
+            "a large object has no schema, so a statement that names one in a schema is refused ({answer}); the same "
+            "statement without a schema succeeds (the control)",
+        )
+        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
+    },
 }
 O_EMPTY_BY_LOGIC: dict[tuple[str, str], str] = {
     (eid, "C10-another-schema"): why for eid, why in _C10_EMPTY_REASONS.items()
@@ -929,6 +1069,17 @@ def test_c10_every_effect_with_a_statement_is_in_one_set_or_is_the_one_refused_d
     # cells end refused in both variants (no pinned return in O_PINNED_RETURNS), so it needs no named/everyone split.
     assert set(C10_STATEMENTS) - decided == {"O16-default-right-named"}
     assert decided <= set(C10_STATEMENTS)
+    # round 17 group 6: the "everyone" set is used, not only written: each of its effects ends refused in BOTH variants,
+    # and each of the named set returns only with no role argument (the decision of B5), read from the one rule.
+    for effect in C10_EVERYONE:
+        for variant in O_VARIANTS:
+            assert _expected_outcome(effect, "C10-another-schema", variant) == "i", (
+                effect,
+                variant,
+            )
+    for effect in C10_NAMED:
+        assert _expected_outcome(effect, "C10-another-schema", "no-roles") == "iii", effect
+        assert _expected_outcome(effect, "C10-another-schema", "with-roles") == "i", effect
 
 
 for _eid in sorted(C10_NAMED):
@@ -1159,6 +1310,28 @@ def test_the_matrix_has_exactly_the_planned_cells():
     assert len(C13_CELLS) == (
         len(C13_FORMS) + len(C13_TABLE_EFFECTS) + len(C13_OTHER_MOVES) + len(C13_SCHEMA_EFFECTS) + 1
     ) * len(O_VARIANTS)
+    # round 17 group 2: the cells of C8 (schema as member) and C13 are split into those that end at the server's own refusal
+    # or at the trigger rule (no right of ours is judged) and those that judge a right, each number computed from the lists
+    # that build the cells and then compared with the number the CHANGELOG states
+    c8_server_refused = sum(
+        1 for _e, o, _v in C8_SCHEMA_CELLS if o == "administrator-owns-the-schema"
+    )
+    c8_judged = len(C8_SCHEMA_CELLS) - c8_server_refused
+    assert (c8_server_refused, c8_judged) == (6, 6), (c8_server_refused, c8_judged)
+    c13_new = [
+        (e, v)
+        for e in [*C13_OTHER_MOVES, *C13_SCHEMA_EFFECTS, C13_FUNCTION_EFFECT]
+        for v in O_VARIANTS
+    ]
+    c13_refused_not_judged = sum(
+        1 for e, _v in c13_new if e in C13_SCHEMA_EFFECTS or e == C13_FUNCTION_EFFECT
+    )
+    c13_judged = len(c13_new) - c13_refused_not_judged
+    assert (len(c13_new), c13_refused_not_judged, c13_judged) == (12, 8, 4), (
+        len(c13_new),
+        c13_refused_not_judged,
+        c13_judged,
+    )
     assert len(VARIANT_O_CELLS) == len(VARIANT_O_EFFECTS) * len(VARIANT_O_CARRIERS) * len(
         O_VARIANTS
     )
@@ -1683,13 +1856,15 @@ C8_OBJECT = {
     "O26-execute-on-a-procedure-named": "PROCEDURE zz_p()",
     "O27-usage-on-a-type-named": "TYPE zz_ty",
 }
-_C8_DEFAULT = 'a default right is not an object; measured: ALTER EXTENSION ... ADD DEFAULT PRIVILEGES is a syntax error at or near "DEFAULT"'
-_C8_LO = 'a large object cannot be added to an extension; measured: ALTER EXTENSION ... ADD LARGE OBJECT is a syntax error at or near "LARGE"'
+_C8_DEFAULT = "a default right is not an object, so it cannot be added to an extension ({answer}); adding a table succeeds (the control)"
+_C8_LO = "a large object cannot be added to an extension ({answer}); adding a table succeeds (the control)"
 C8_EMPTY_BY_LOGIC = {
-    "O16-default-right-named": _C8_DEFAULT,
-    "O17-default-right-everyone": _C8_DEFAULT,
-    "O28-select-on-a-large-object-everyone": _C8_LO,
-    "O29-select-on-a-large-object-named": _C8_LO,
+    "O16-default-right-named": _why(_C8, "O16-default-right-named", _C8_DEFAULT),
+    "O17-default-right-everyone": _why(_C8, "O17-default-right-everyone", _C8_DEFAULT),
+    "O28-select-on-a-large-object-everyone": _why(
+        _C8, "O28-select-on-a-large-object-everyone", _C8_LO
+    ),
+    "O29-select-on-a-large-object-named": _why(_C8, "O29-select-on-a-large-object-named", _C8_LO),
 }
 C8_CELLS = [(e, v) for e in C8_OBJECT for v in O_VARIANTS]
 
@@ -2023,15 +2198,20 @@ C13_TABLE_EFFECTS = {
 # Every reason below carries the text the real server answered (r16 groups 1 and 2: a reason that stays is the server's own
 # answer, never a thought). `test_every_empty_reason_is_the_answer_of_a_real_server` runs each statement and compares.
 _MOVED_OBJECT_REASON = (
-    "the object the file makes itself can be moved (measured on PostgreSQL 16.15: ALTER ... SET SCHEMA runs without an "
-    "error for a table, a sequence, a view, a function, a procedure and a type), but it is then an object of another schema, "
-    "which the C10 cell of the same effect judges"
+    "the object the file makes itself can be moved ({answer}), but it is then an object of another schema, which the C10 "
+    "cell of the same effect judges: this is an equivalence argument (the same right on the same kind of object in another "
+    "schema), not an impossibility"
 )
+_NO_OBJECT_TO_MOVE = "has no object to move ({answer}); the same statement form on an object that exists succeeds (the control)"
 C13_EMPTY_BY_LOGIC: dict[str, str] = {
-    "O16-default-right-named": 'a default right has no object to move; measured: ALTER DEFAULT PRIVILEGES ... SET SCHEMA is a syntax error at or near "SET"',
-    "O17-default-right-everyone": 'a default right has no object to move; measured: ALTER DEFAULT PRIVILEGES ... SET SCHEMA is a syntax error at or near "SET"',
+    "O16-default-right-named": _why(
+        _C13, "O16-default-right-named", "a default right " + _NO_OBJECT_TO_MOVE
+    ),
+    "O17-default-right-everyone": _why(
+        _C13, "O17-default-right-everyone", "a default right " + _NO_OBJECT_TO_MOVE
+    ),
     **{
-        e: _MOVED_OBJECT_REASON
+        e: _why(_C13, e, _MOVED_OBJECT_REASON)
         for e in (
             "O19-select-on-a-table-outside-the-map-named",
             "O20-select-on-a-table-outside-the-map-everyone",
@@ -2044,8 +2224,18 @@ C13_EMPTY_BY_LOGIC: dict[str, str] = {
             "O27-usage-on-a-type-named",
         )
     },
-    "O28-select-on-a-large-object-everyone": 'a large object has no schema; measured: ALTER LARGE OBJECT ... SET SCHEMA is a syntax error at or near "SET"',
-    "O29-select-on-a-large-object-named": 'a large object has no schema; measured: ALTER LARGE OBJECT ... SET SCHEMA is a syntax error at or near "SET"',
+    "O28-select-on-a-large-object-everyone": _why(
+        _C13,
+        "O28-select-on-a-large-object-everyone",
+        "a large object has no schema, so it cannot be moved to one "
+        + _NO_OBJECT_TO_MOVE[len("has no object to move ") :],
+    ),
+    "O29-select-on-a-large-object-named": _why(
+        _C13,
+        "O29-select-on-a-large-object-named",
+        "a large object has no schema, so it cannot be moved to one "
+        + _NO_OBJECT_TO_MOVE[len("has no object to move ") :],
+    ),
 }
 # r16 group 2: C13 for the map objects that are not tables. Measured on PostgreSQL 16.15: a sequence made by BIGSERIAL cannot
 # be moved alone ("cannot move an owned sequence into another schema") but it moves WITH its table (`ALTER TABLE ... SET
@@ -2084,118 +2274,181 @@ C13_CELLS = (
 )
 
 
-# --- r16 groups 1 and 2: every empty-by-logic reason is the answer of a real server --------------------------------------------
-# (carrier, effect) -> (statement run as the superuser in the scratch database of a `case`, sqlstate or None for "no error",
-# text the server's message must contain). `s` and `s2` exist in the scratch database; `s2` stands for "another schema".
-_MAP_NAMES = {
-    "O01-select-other": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
-    "O02-select-everyone": "GRANT SELECT ON s2.audit_entries TO PUBLIC",
-    "O03-column-other": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
-    "O04-sequence-other": "GRANT USAGE ON SEQUENCE s2.approval_decisions_seq_seq TO PUBLIC",
-    "O06-delete-runtime": "GRANT DELETE ON s2.audit_entries TO PUBLIC",
-    "O07-everyone-delete-runs": "GRANT DELETE ON s2.runs TO PUBLIC",
-    "O08-everyone-truncate-runs": "GRANT TRUNCATE ON s2.runs TO PUBLIC",
-    "O09-everyone-column-select": "GRANT SELECT (seq) ON s2.audit_entries TO PUBLIC",
-    "O10-third-column-update": "GRANT UPDATE (state) ON s2.runs TO PUBLIC",
-    "O11-everyone-setval": "GRANT UPDATE ON SEQUENCE s2.dead_letters_seq_seq TO PUBLIC",
-    "O12-grant-option": "GRANT SELECT ON s2.runs TO PUBLIC WITH GRANT OPTION",
-    "O18-select-third-tool-calls": "GRANT SELECT ON s2.tool_calls TO PUBLIC",
-}
-EMPTY_PROBES: dict[tuple[str, str], tuple[str, str | None, str]] = {
-    **{("C10-another-schema", e): (st, "42P01", "does not exist") for e, st in _MAP_NAMES.items()},
-    ("C10-another-schema", "O05-function-other"): (
-        "GRANT EXECUTE ON FUNCTION s2.hadavin_audit_append_only() TO PUBLIC", "42883", "does not exist",
-    ),
-    **{
-        ("C10-another-schema", e): ("GRANT SELECT ON LARGE OBJECT s2.70001 TO PUBLIC", "42601", 'syntax error at or near "s2"')
-        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
-    },
-    **{
-        (C8_CARRIER, e): ("ALTER EXTENSION file_fdw ADD DEFAULT PRIVILEGES", "42601", 'syntax error at or near "DEFAULT"')
-        for e in ("O16-default-right-named", "O17-default-right-everyone")
-    },
-    **{
-        (C8_CARRIER, e): ("ALTER EXTENSION file_fdw ADD LARGE OBJECT 70001", "42601", 'syntax error at or near "LARGE"')
-        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
-    },
-    **{
-        ("C13-move-and-recreate", e): ("ALTER DEFAULT PRIVILEGES IN SCHEMA s SET SCHEMA s2", "42601", 'syntax error at or near "SET"')
-        for e in ("O16-default-right-named", "O17-default-right-everyone")
-    },
-    **{
-        ("C13-move-and-recreate", e): ("ALTER LARGE OBJECT 70001 SET SCHEMA s2", "42601", 'syntax error at or near "SET"')
-        for e in ("O28-select-on-a-large-object-everyone", "O29-select-on-a-large-object-named")
-    },
-    ("C13-move-and-recreate", "O19-select-on-a-table-outside-the-map-named"): ("CREATE TABLE s.zz_t (a int); ALTER TABLE s.zz_t SET SCHEMA s2", None, ""),
-    ("C13-move-and-recreate", "O21-usage-on-a-sequence-outside-the-map-named"): ("CREATE SEQUENCE s.zz_q; ALTER SEQUENCE s.zz_q SET SCHEMA s2", None, ""),
-    ("C13-move-and-recreate", "O22-select-on-a-view-outside-the-map-everyone"): ("CREATE VIEW s.zz_v AS SELECT 1 AS a; ALTER VIEW s.zz_v SET SCHEMA s2", None, ""),
-    ("C13-move-and-recreate", "O23-execute-on-a-function-named"): ("CREATE FUNCTION s.zz_f() RETURNS int LANGUAGE sql AS 'SELECT 1'; ALTER FUNCTION s.zz_f() SET SCHEMA s2", None, ""),
-    ("C13-move-and-recreate", "O26-execute-on-a-procedure-named"): ("CREATE PROCEDURE s.zz_p() LANGUAGE sql AS ''; ALTER PROCEDURE s.zz_p() SET SCHEMA s2", None, ""),
-    ("C13-move-and-recreate", "O27-usage-on-a-type-named"): ("CREATE TYPE s.zz_ty AS (a int); ALTER TYPE s.zz_ty SET SCHEMA s2", None, ""),
-}  # fmt: skip
-# the effects whose moved object is the same kind as another effect's: the one probe of the kind stands for the rest
-for _e, _like in (
-    (
-        "O20-select-on-a-table-outside-the-map-everyone",
-        "O19-select-on-a-table-outside-the-map-named",
-    ),
-    ("O24-function-of-the-family-left-callable-by-everyone", "O23-execute-on-a-function-named"),
-    ("O25-security-definer-function-in-the-schema-of-the-run", "O23-execute-on-a-function-named"),
-):
-    EMPTY_PROBES[("C13-move-and-recreate", _e)] = EMPTY_PROBES[("C13-move-and-recreate", _like)]
-
-
 def _empty_pairs() -> dict[tuple[str, str], str]:
     pairs = {(c, e): why for (e, c), why in O_EMPTY_BY_LOGIC.items()}
     pairs.update({(C8_CARRIER, e): why for e, why in C8_EMPTY_BY_LOGIC.items()})
-    pairs.update({("C13-move-and-recreate", e): why for e, why in C13_EMPTY_BY_LOGIC.items()})
+    pairs.update({(_C13, e): why for e, why in C13_EMPTY_BY_LOGIC.items()})
     return pairs
 
 
-def test_every_empty_pair_has_a_probe_and_its_reason_carries_the_measured_text():
+def _reason_problems(pairs: dict, probes: dict) -> list[str]:
+    """What is wrong when a written reason is read back against its probe (pure, no server): the probe has the message it
+    quotes, and the reason holds the server version, the SQLSTATE and the quoted message of the probe."""
+    problems = []
+    for key, why in sorted(pairs.items()):
+        probe = probes.get(key)
+        if probe is None:
+            problems.append(f"{key}: an empty pair without a probe")
+            continue
+        if probe.text not in probe.shown:
+            problems.append(
+                f"{key}: the quoted message {probe.shown!r} does not hold the matched text {probe.text!r}"
+            )
+        if f"PostgreSQL {MEASURED_ON}" not in why:
+            problems.append(f"{key}: the reason does not name the server version {MEASURED_ON}")
+        if probe.state is not None and f"ERROR {probe.state} " not in why:
+            problems.append(
+                f"{key}: the reason does not carry the SQLSTATE {probe.state} of its probe"
+            )
+        if probe.shown not in why:
+            problems.append(
+                f"{key}: the reason does not carry the quoted message {probe.shown!r} of its probe"
+            )
+        if probe.state is not None and probe.control is None:
+            problems.append(
+                f"{key}: a refusal without a control that shows the same form succeeding"
+            )
+    problems += [
+        f"{key}: a probe without an empty pair" for key in sorted(set(probes) - set(pairs))
+    ]
+    return problems
+
+
+def test_every_empty_pair_has_a_probe_and_its_reason_carries_the_state_text_and_version_of_it():
+    """Round 17 group 1: each reason is read back against its probe: the version, the SQLSTATE and the quoted message are the
+    probe's, so a reason cannot say something the server was not asked. Killed by V127 (the reason is built with another
+    SQLSTATE than the probe's)."""
     pairs = _empty_pairs()
     assert set(pairs) == set(EMPTY_PROBES), (
         f"an empty pair without a probe, or a probe without an empty pair: {set(pairs) ^ set(EMPTY_PROBES)}"
     )
-    for key, why in pairs.items():
-        assert "measured" in why or "ALTER ... SET SCHEMA runs without an error" in why, (
-            f"{key}: the reason is not the server's answer: {why}"
+    assert _reason_problems(pairs, EMPTY_PROBES) == []
+    assert C8_CARRIER == _C8, "the carrier name of the probe table is not the one of the C8 cells"
+
+
+def test_a_reason_or_a_probe_that_is_edited_to_a_wrong_fact_is_found():
+    """Round 17 group 1, weaken-and-fail (no server): a reason edited to another SQLSTATE, another message or another server
+    version, and a probe edited to another SQLSTATE or message, are each reported by name. On 140a1268 changing the shared
+    text to '42P05' or '16.99' failed nothing."""
+    pairs = _empty_pairs()
+    key = (_C10, "O01-select-other")
+    assert "ERROR 42P01 " in pairs[key]
+    for wrong in ("42P05", "42883"):
+        edited = {**pairs, key: pairs[key].replace("ERROR 42P01 ", f"ERROR {wrong} ")}
+        problems = _reason_problems(edited, EMPTY_PROBES)
+        assert any(
+            "does not carry the SQLSTATE 42P01" in p and "O01-select-other" in p for p in problems
+        ), problems
+    edited = {**pairs, key: pairs[key].replace(MEASURED_ON, "16.99")}
+    assert any(
+        "does not name the server version" in p for p in _reason_problems(edited, EMPTY_PROBES)
+    )
+    edited = {
+        **pairs,
+        key: pairs[key].replace('relation "<schema>.<name>" does not exist', "no such thing"),
+    }
+    assert any(
+        "does not carry the quoted message" in p for p in _reason_problems(edited, EMPTY_PROBES)
+    )
+    probe = EMPTY_PROBES[key]
+    for field, value in (("state", "42P05"), ("shown", "something else entirely")):
+        probes = {**EMPTY_PROBES, key: probe._replace(**{field: value})}
+        assert _reason_problems(pairs, probes), f"an edited probe {field} was not found"
+    probes = {**EMPTY_PROBES, key: probe._replace(control=None)}
+    assert any("without a control" in p for p in _reason_problems(pairs, probes))
+
+
+_UNDO = (
+    "DROP TABLE IF EXISTS s.zz_t, s2.zz_t", "DROP SEQUENCE IF EXISTS s.zz_q, s2.zz_q",
+    "DROP VIEW IF EXISTS s.zz_v, s2.zz_v", "DROP FUNCTION IF EXISTS s.zz_f(), s2.zz_f()",
+    "DROP PROCEDURE IF EXISTS s.zz_p(), s2.zz_p()", "DROP TYPE IF EXISTS s.zz_ty, s2.zz_ty",
+)  # fmt: skip
+
+
+def _run_parts(db, statement: str, role: str) -> psycopg.Error | None:
+    """Run the parts of a statement text (`{n}` is a role of the case); the first error, or None."""
+    try:
+        for part in statement.replace("{n}", role).split("; "):
+            db.execute(part)
+    except psycopg.Error as exc:
+        return exc
+    return None
+
+
+def _probe_problems(db, key, probe: Probe, version: str, role: str) -> list[str]:
+    """Round 17 group 1: the control first (the same form on an object that exists must run without an error), then the
+    probe (the SQLSTATE and the text the reason quotes, or no error for a reason that says it runs)."""
+    problems = []
+    if probe.control is not None and (exc := _run_parts(db, probe.control, role)) is not None:
+        problems.append(
+            f"{key}: the control did not run, the server {version} said {exc.sqlstate} {exc}"
         )
+    exc = _run_parts(db, probe.statement, role)
+    if probe.state is None:
+        if exc is not None:
+            problems.append(
+                f"{key}: expected no error, the server {version} said {exc.sqlstate} {exc}"
+            )
+    elif exc is None:
+        problems.append(
+            f"{key}: expected {probe.state}, the server {version} ran it without an error"
+        )
+    elif exc.sqlstate != probe.state or probe.text not in (exc.diag.message_primary or ""):
+        problems.append(
+            f"{key}: expected {probe.state} with {probe.text!r}, the server {version} said {exc.sqlstate} {exc.diag.message_primary!r}"
+        )
+    for undo in _UNDO:
+        db.execute(undo)
+    return problems
 
 
 @needs_pg
 def test_every_empty_reason_is_the_answer_of_a_real_server(case):
-    """Each statement of the table runs on a real server, as the superuser, in a scratch database. A reason that says
-    "the server refuses it" must be refused with that sqlstate and text; one that says "it runs" must run without an error."""
-    from hadavin_sdk.store import migrate as mig  # noqa: F401  (the server version is printed with the result)
-
+    """Each probe of the table runs on a real server, as the superuser, in a scratch database, as a pair: the control (the same
+    form on an object of the schema `s` that exists, so the statement itself is valid and the object is there) and the probe
+    (aimed at `s2`, or the form that has no object). The reason of the pair is BUILT from the probe (`_why`), so this one
+    comparison is the one between the written reason and the server. Killed by V128 (a probe's SQLSTATE is edited)."""
     version = case.db.execute("SHOW server_version").fetchone()[0]
+    for statement in MAP_SETUP:
+        case.db.execute(statement)
     failures = []
-    for key, (statement, state, text) in sorted(EMPTY_PROBES.items()):
-        try:
-            for part in statement.split("; "):
-                case.db.execute(part)
-        except psycopg.Error as exc:
-            if state is None:
-                failures.append(
-                    f"{key}: expected no error, the server {version} said {exc.sqlstate} {exc}"
-                )
-            elif exc.sqlstate != state or text not in exc.diag.message_primary:
-                failures.append(
-                    f"{key}: expected {state} with {text!r}, the server {version} said {exc.sqlstate} {exc.diag.message_primary!r}"
-                )
-        else:
-            if state is not None:
-                failures.append(
-                    f"{key}: expected {state}, the server {version} ran it without an error"
-                )
-        for undo in (
-            "DROP TABLE IF EXISTS s.zz_t, s2.zz_t", "DROP SEQUENCE IF EXISTS s.zz_q, s2.zz_q",
-            "DROP VIEW IF EXISTS s.zz_v, s2.zz_v", "DROP FUNCTION IF EXISTS s.zz_f(), s2.zz_f()",
-            "DROP PROCEDURE IF EXISTS s.zz_p(), s2.zz_p()", "DROP TYPE IF EXISTS s.zz_ty, s2.zz_ty",
-        ):  # fmt: skip
-            case.db.execute(undo)
+    for key, probe in sorted(EMPTY_PROBES.items()):
+        failures += _probe_problems(case.db, key, probe, version, case.role["n"])
     assert not failures, "\n".join(failures)
+
+
+@needs_pg
+def test_the_real_server_check_of_a_probe_reports_a_wrong_state_a_wrong_text_and_a_failing_control(
+    case,
+):
+    """Round 17 group 1, weaken-and-fail on the server: a probe edited to another SQLSTATE or message, and a control that
+    does not run, are each reported by the function that the test above uses."""
+    for statement in MAP_SETUP:
+        case.db.execute(statement)
+    key = (_C10, "O01-select-other")
+    probe = EMPTY_PROBES[key]
+    assert _probe_problems(case.db, key, probe, "x", case.role["n"]) == []
+    assert any(
+        "expected 42P05" in p
+        for p in _probe_problems(case.db, key, probe._replace(state="42P05"), "x", case.role["n"])
+    )
+    assert any(
+        "with 'no such text'" in p
+        for p in _probe_problems(
+            case.db, key, probe._replace(text="no such text"), "x", case.role["n"]
+        )
+    )
+    bad_control = probe._replace(control=probe.statement)
+    assert any(
+        "the control did not run" in p
+        for p in _probe_problems(case.db, key, bad_control, "x", case.role["n"])
+    )
+    assert any(
+        "ran it without an error" in p
+        for p in _probe_problems(
+            case.db, key, probe._replace(statement=probe.control), "x", case.role["n"]
+        )
+    )
 
 
 @needs_pg
@@ -2334,8 +2587,9 @@ def test_c13_the_schema_of_the_run_renamed_and_made_again_is_refused_by_the_serv
 
 
 @needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
 def test_c13_the_function_of_the_map_moved_is_refused_by_the_trigger_rule_before_any_right_is_judged(
-    ocell, monkeypatch, tmp_path
+    variant, ocell, monkeypatch, tmp_path
 ):
     """O05 under C13 (r16 group 2): the function can be moved, but four triggers of the package call it, so the move is
     refused as a trigger change (another rule); no right on the moved function is ever judged. Measured text pinned."""
@@ -2370,7 +2624,7 @@ def test_c13_the_function_of_the_map_moved_is_refused_by_the_trigger_rule_before
         with pytest.raises(
             errors.ConfigError, match=r"changed a trigger: .*changed: definition"
         ) as seen:
-            mig.migrate(dsn, runtime_role=rt)
+            mig.migrate(dsn, **({"runtime_role": rt} if variant == "with-roles" else {}))
         assert "hadavin_audit_append_only" not in str(seen.value).split("changed a trigger")[0]
     finally:
         with psycopg.connect(DSN, autocommit=True) as admin:

@@ -645,6 +645,49 @@ def test_a_failure_to_connect_at_the_start_is_refused_with_exit_2_and_keeps_noth
     assert _ledger_of(mrun.dsn) == []
 
 
+def test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_nothing(
+    mrun, monkeypatch
+):
+    """Round 17 group 3 (b): a sign-in that fails before any connection exists (an SDK error, here a stand-in client that has no credentials) gives
+    exit 2 with the connection-specific sentence, nothing kept and none of the SDK's words; on 140a1268 it was exit 3.
+    Killed by V122 (the SDK error is not turned into the refusal) and V123 (the refusal is not worded for the connection)."""
+    from botocore.exceptions import NoCredentialsError
+
+    from hadavin_sdk.store import postgres as pg
+    from tests.test_migration_verify import _a_cloud_sdk_whose_token_request_fails
+
+    _a_cloud_sdk_whose_token_request_fails(monkeypatch, NoCredentialsError())
+    monkeypatch.setattr(pg, "conninfo_to_dict", lambda dsn: {"host": "made-up", "user": "made-up"})
+    with pytest.raises(ConfigError) as seen:  # a ConfigError is exit 2 in `cli.main`
+        mig.migrate(
+            mrun.dsn,
+            iam_auth=True,
+            region="made-up-region-1",
+            sslmode="verify-full",
+            sslrootcert="/made/up/ca.pem",
+        )
+    err = str(seen.value)
+    assert (
+        "kept nothing" in err
+        and "connecting to the database" in err
+        and "NoCredentialsError" in err
+    ), err
+    assert "nothing was started" in err.lower() and "rolled back" not in err, err
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_an_address_that_cannot_be_reached_is_refused_with_exit_2_with_a_real_driver_error():
+    """Round 17 group 3 (a): the three tests around this one inject the driver error; this one asks the real driver for a
+    connection that cannot exist (a folder with no server socket), so the error is the driver's own. Exit 2 path:
+    `ConfigError`, the connection-specific sentence, no 'rolled back'."""
+    with pytest.raises(ConfigError) as seen:
+        mig.migrate("host=/made-up-folder-without-a-socket port=5 dbname=made_up user=made_up")
+    message = str(seen.value)
+    assert "kept nothing" in message and "connecting to the database" in message, message
+    assert "OperationalError" in message and "nothing was started" in message, message
+    assert "rolled back" not in message, message
+
+
 def _the_setup_statement_fails_on_connection(monkeypatch, nth: int, closed: list[int]) -> None:
     """The `nth` connection of the run is made, then its one setup statement (`SET TIME ZONE`) fails with a driver error.
     The test helper first connects as the login and then as the plain role (two connections for one connection of the run),
@@ -898,7 +941,7 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
     with psycopg.connect(DSN, autocommit=True) as adm:
         helper.ensure_plain_role(adm)
         adm.execute(
-            sql.SQL("ALTER ROLE {} SET idle_in_transaction_session_timeout = '200ms'").format(
+            sql.SQL("ALTER ROLE {} SET idle_in_transaction_session_timeout = '1s'").format(
                 sql.Identifier(helper.PLAIN_ROLE)
             )
         )
@@ -907,9 +950,9 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
 
     def waits(saved):
         seen["n"] += 1
-        time.sleep(
-            1.5
-        )  # 7.5 times the limit (round 15: the margin was 4 times): the server ends the session while the runner thinks
+        # 6 times the limit (round 17: limit and wait were 200 ms and 1.5 s, so a pause of 200 ms in Python or CI between two
+        # statements of the transaction could end the session before this wait; now a pause must last a whole second)
+        time.sleep(6.0)
         return real(saved)
 
     monkeypatch.setattr(mig, "_refuse_unusual_strings", waits)
@@ -918,9 +961,10 @@ def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is
         _out, err = capsys.readouterr()
         assert seen["n"] == 1, "the wait never ran: the cell tests nothing"
         assert err.startswith("refused: migrate stopped and kept nothing"), err
-        # The outcome is what is pinned (exit 2, "kept nothing", not a failure of the file, ledger empty). The refusal's own
-        # wording for the server's code is pinned by the classifier unit tests, not here: it depends on how the driver
-        # reports a session the server ended, which is not what a timing-based cell should assert.
+        # The outcome is what is pinned here (exit 2, "kept nothing", not a failure of the file, ledger empty). Whether the
+        # refusal names the code is NOT asserted: it depends on how the driver reports a session the server ended (a lost
+        # session may carry no SQLSTATE at all). The wording rule "the refusal names the SQLSTATE when there is one" is
+        # pinned by `test_the_refusal_names_the_sqlstate_of_a_session_ending_error`, which uses no timing.
         assert "failed:" not in err, (
             f"a lost session must not be reported as a failure of the file: {err}"
         )
@@ -968,6 +1012,17 @@ def test_the_classifier_knows_which_sqlstates_are_not_a_files_own(code, own):
     assert got is own, (
         f"{code} must {'be' if own else 'not be'} a file's own error on a usable connection; the classifier said {got}"
     )
+
+
+@pytest.mark.parametrize("code", ["25P03", "25P04"])
+def test_the_refusal_names_the_sqlstate_of_a_session_ending_error(code):
+    """Round 17 group 4 (b): `_driver_error_before_commit` is the one place that words a driver error before the commit.
+    For the two session-ending codes it must print the SQLSTATE (the real-server test no longer asserts the text, because a
+    session the server ended may carry no code). No timing, no server. Killed by V124 (the class name is printed instead)."""
+    e = psycopg.errors.lookup(code)("made-up: the session was ended")
+    message = str(mig._driver_error_before_commit(e, "taking the migration lock"))
+    assert code in message and "kept nothing" in message, message
+    assert "made-up: the session" not in message, "the driver's own words must not be printed"
 
 
 class _UsableConnection:

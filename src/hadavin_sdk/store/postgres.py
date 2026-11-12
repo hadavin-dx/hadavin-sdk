@@ -15,6 +15,7 @@ import os
 import tempfile
 import threading
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -27,7 +28,7 @@ from psycopg.rows import dict_row, namedtuple_row, tuple_row
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, SignInError
 from hadavin_sdk.models import (
     OPEN_STATES,
     ApprovalDecision,
@@ -139,10 +140,16 @@ def connect(
         parts = conninfo_to_dict(dsn)
         # The migration role may log in with a password; the runtime never (refused in build()).
         if not parts.get("password"):
-            password = password_source(True, region)
-            extra["password"] = password(
-                parts["host"], int(parts.get("port") or 5432), parts["user"]
-            )
+            try:
+                host, port, user = parts["host"], int(parts.get("port") or 5432), parts["user"]
+            except (KeyError, ValueError) as exc:
+                # r17 group 3 (b): a DSN the sign-in cannot be asked for (no host or user, a port that is not a number) is
+                # the same plain refusal, before any connection exists
+                raise SignInError(
+                    f"the sign-in for the database connection needs a host, a user and a numeric port in the address "
+                    f"({type(exc).__name__})"
+                ) from None
+            extra["password"] = password_source(True, region)(host, port, user)
     conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
     # This is the ONLY statement `connect` runs (pinned by `test_connect_runs_exactly_one_statement_...`). A driver error here
     # (or at the connect itself) is turned into the refusal "kept nothing, exit 2" by the runner's `_connected_before_commit`
@@ -152,7 +159,10 @@ def connect(
     try:
         conn.execute("SET TIME ZONE 'UTC'")
     except BaseException:
-        conn.close()  # a connection that failed its one setup statement is not handed out and not left open
+        # a connection that failed its one setup statement is not handed out and not left open; a `close` that fails as well
+        # (a broken socket) must not hide the first error, which is the one the caller has to see (r17 group 6)
+        with suppress(psycopg.Error):
+            conn.close()
         raise
     return conn
 

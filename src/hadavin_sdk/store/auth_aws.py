@@ -10,12 +10,29 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import boto3  # the extra: a missing install is turned into the install hint by store.postgres
+from botocore.exceptions import BotoCoreError, ClientError
+
+from hadavin_sdk.errors import SignInError
+
+
+def _refused(exc: Exception) -> SignInError:
+    # Round 17 group 3 (b): the SDK's words are not printed (they can hold an account name); the kind of error is enough.
+    return SignInError(
+        f"the sign-in for the database connection failed ({type(exc).__name__}); "
+        "check the cloud login of this process and the region."
+    )
 
 
 def rds_iam(region: str | None) -> Callable[[str, int, str], str]:
-    client = boto3.client("rds", region_name=region)
+    try:
+        client = boto3.client("rds", region_name=region)
+    except (BotoCoreError, ClientError) as exc:
+        raise _refused(exc) from None
 
     def password(host: str, port: int, user: str) -> str:
-        return client.generate_db_auth_token(DBHostname=host, Port=port, DBUsername=user)
+        try:
+            return client.generate_db_auth_token(DBHostname=host, Port=port, DBUsername=user)
+        except (BotoCoreError, ClientError) as exc:
+            raise _refused(exc) from None
 
     return password

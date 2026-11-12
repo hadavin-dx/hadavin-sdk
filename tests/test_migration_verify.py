@@ -17,6 +17,10 @@ from hadavin_sdk.store import migration_verify as v
 from hadavin_sdk.store.migrate import GRANTS
 from tests.test_migration_steps import harness  # noqa: F401  (the fixture: `migrate` on made-up files and a stub)
 
+DSN = os.environ.get(
+    "HADAVIN_TEST_PG_DSN"
+)  # the one skip rule of the migration tests reads this name (see test_migration_rules)
+
 SCHEMA = "app"
 NAMED = {"rt": "runtime", "po": "portal", "pu": "purge"}
 FAMILY = ["mig"]
@@ -1506,6 +1510,99 @@ def test_connect_with_the_iam_sign_in_runs_one_statement_and_adds_only_the_passw
     assert seen["kwargs"]["password"] == made_up
 
 
+def _a_cloud_sdk_whose_token_request_fails(monkeypatch, error):
+    """The real sign-in helper (`store/auth_aws.py`) on a stand-in client whose token request raises `error`."""
+    import boto3
+
+    class Rds:
+        def generate_db_auth_token(self, **kwargs):
+            raise error
+
+    monkeypatch.setattr(boto3, "client", lambda service, **kwargs: Rds())
+
+
+@pytest.mark.parametrize("which", ["no-credentials", "refused-request"])
+def test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_words(
+    monkeypatch, which
+):
+    """Round 17 group 3 (b): the sign-in that gives the short-lived password runs before any connection exists; its SDK error
+    must be `SignInError`, a `ConfigError` (exit 2), without the SDK's own words (which can hold an account name), and no
+    connection is tried. On 140a1268 the raw SDK error came out (exit 3). Killed by V122 (the SDK error is not converted)."""
+    from botocore.exceptions import ClientError, NoCredentialsError
+
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import postgres as pg
+
+    words = "made-up-account-words"
+    error = (
+        NoCredentialsError()
+        if which == "no-credentials"
+        else ClientError(
+            {"Error": {"Code": "AccessDenied", "Message": words}}, "GenerateDbAuthToken"
+        )
+    )
+    _a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
+
+    def no_connection(*args, **kwargs):
+        raise AssertionError("a connection was tried after the sign-in failed")
+
+    monkeypatch.setattr(pg.psycopg, "connect", no_connection)
+    with pytest.raises(errors.SignInError) as seen:
+        pg.connect(
+            "host=made-up.example dbname=made-up user=made-up",
+            iam_auth=True,
+            region="r",
+            sslmode="verify-full",
+            sslrootcert="/made/up/ca.pem",
+        )
+    assert isinstance(seen.value, errors.ConfigError)
+    text = str(seen.value)
+    assert type(error).__name__ in text and words not in text, text
+    assert seen.value.__cause__ is None, "the SDK's error must not travel with the refusal"
+
+
+@pytest.mark.parametrize(
+    "dsn", ["host=made-up.example dbname=made-up", "dbname=made-up user=made-up"]
+)
+def test_an_iam_dsn_without_a_host_or_a_user_is_the_same_plain_refusal(monkeypatch, dsn):
+    """The sibling of the sign-in failure: the DSN parts the sign-in needs are read inside the same guard (a missing host or
+    user was a raw KeyError, exit 3)."""
+    from hadavin_sdk import errors
+    from hadavin_sdk.store import postgres as pg
+
+    monkeypatch.setattr(pg, "password_source", lambda iam, region: lambda h, p, u: "made-up")
+    with pytest.raises(errors.SignInError, match="KeyError"):
+        pg.connect(
+            dsn, iam_auth=True, region="r", sslmode="verify-full", sslrootcert="/made/up/ca.pem"
+        )
+
+
+def test_a_close_that_fails_after_a_failed_setup_statement_does_not_hide_the_first_error(
+    monkeypatch,
+):
+    """Round 17 group 6: `connect` closes a connection whose one setup statement failed. If `close` raises as well (a broken
+    socket), the caller must still see the FIRST error. On 140a1268 the error of `close` replaced it. Killed by V125."""
+    import psycopg
+
+    from hadavin_sdk.store import postgres as pg
+
+    tries = []
+
+    class Broken:
+        def execute(self, statement, *args, **kwargs):
+            raise psycopg.OperationalError("made-up: the setup statement failed")
+
+        def close(self):
+            tries.append(1)
+            raise psycopg.OperationalError("made-up: the close failed too")
+
+    monkeypatch.setattr(pg.psycopg, "connect", lambda *args, **kwargs: Broken())
+    with pytest.raises(psycopg.OperationalError, match="the setup statement failed"):
+        pg.connect("host=made-up dbname=made-up", sslmode="disable")
+    assert tries == [1], "the half-made connection was not closed"
+
+
+@pytest.mark.skipif(not DSN, reason="HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
 def test_on_a_real_server_connect_sends_exactly_one_statement_through_any_driver_path():
     """Real-server form: every statement the driver sends on a real connection goes through `Cursor.execute` (a
     `Connection.execute` calls it, and so does an explicit `cursor()`); counting there sees every form at once. The count
@@ -1514,9 +1611,6 @@ def test_on_a_real_server_connect_sends_exactly_one_statement_through_any_driver
 
     from hadavin_sdk.store import postgres as pg
 
-    DSN = os.environ.get("HADAVIN_TEST_PG_DSN")
-    if not DSN:
-        pytest.skip("HADAVIN_TEST_PG_DSN not set")
     dsn = DSN
     sent: list[str] = []
     real_execute = psycopg.Cursor.execute

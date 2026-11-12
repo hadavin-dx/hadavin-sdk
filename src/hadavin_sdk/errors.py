@@ -5,6 +5,12 @@ class ConfigError(ValueError):
     """The client config is invalid; the process must not start."""
 
 
+class SignInError(ConfigError):
+    """The cloud sign-in that gives a short-lived database password failed (no credentials, no region, a refused token
+    request), so no connection was tried. It is a `ConfigError` (exit 2); the message names the kind of error, never the
+    SDK's own words (which can hold an account name)."""
+
+
 class AppliedNotVerifiedError(Exception):
     """`migrate` committed the files but cannot say the database is as the grant map allows (ticket P3a-2, 4.2).
 

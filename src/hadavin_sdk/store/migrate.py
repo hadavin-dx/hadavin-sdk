@@ -119,7 +119,7 @@ from psycopg import errors as pg_errors
 from psycopg import sql
 from psycopg.pq import TransactionStatus
 
-from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError
+from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError, SignInError
 from hadavin_sdk.store import postgres as pg
 from hadavin_sdk.store.migration_numbers import (
     MIGRATE_LOCK,
@@ -1231,6 +1231,9 @@ def _is_a_files_own_error(e: psycopg.Error, db) -> bool:
     return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR) and _connection_is_usable(db)
 
 
+_CONNECTING = "connecting to the database"
+
+
 def _driver_error_before_commit(e: psycopg.Error, step: str) -> ConfigError:
     """The choke point for every driver error that comes before the commit and is not the text of a migration file (a lost
     connection, a saved `transaction_timeout` of PostgreSQL 17 and later that ends the session, any other
@@ -1240,6 +1243,12 @@ def _driver_error_before_commit(e: psycopg.Error, step: str) -> ConfigError:
     if (plain := _limit_error(e, step)) is not None:
         return plain
     code = getattr(e, "sqlstate", None) or type(e).__name__
+    if step == _CONNECTING:
+        # r17 group 3 (c): a refused connection (a wrong password, an unreachable host) is not "rolled back": nothing began
+        return ConfigError(
+            f"migrate stopped and kept nothing: while {step}, the connection could not be made or set up "
+            f"({_label(str(code))}); nothing was started. Check the address, the login and the password, then run migrate again."
+        )
     return ConfigError(
         f"migrate stopped and kept nothing: while {step}, the database returned an error ({_label(str(code))}). "
         "The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is "
@@ -1256,8 +1265,12 @@ def _connected_before_commit(dsn: str, **options):
     of step 8 does not use this: after the commit a failure is "applied, not verified" (exit 5), never "kept nothing"."""
     try:
         db = connect(dsn, **options)
+    except SignInError as e:  # r17 group 3 (b): the cloud sign-in failed before any connection existed: the same exit 2
+        raise ConfigError(
+            f"migrate stopped and kept nothing: while {_CONNECTING}, {e} Nothing was started."
+        ) from e
     except psycopg.Error as e:
-        raise _driver_error_before_commit(e, "connecting to the database") from e
+        raise _driver_error_before_commit(e, _CONNECTING) from e
     with db:
         yield db
 
