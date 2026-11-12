@@ -1,0 +1,6 @@
+E        +    where <function is_superlinear at 0x7fe2e381f560> = timing.is_superlinear
+
+tests/test_migration_numbers.py:836: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 62 passed, 13287 deselected in 134.53s (0:02:14)
