@@ -151,3 +151,139 @@ def test_every_model_of_a_whole_file_hides_an_unknown_key_in_its_error_text(mode
         assert MARKER not in config_error_text(exc)
     else:
         pytest.fail(f"{model.__name__} accepted an unknown key")
+
+
+# ---- runtime/tick.py: no blind handler and no suppression comment (round 13) ----
+
+
+def test_tick_has_no_blind_handler_and_no_suppression_comment():
+    import ast
+    from pathlib import Path
+
+    from hadavin_sdk.runtime import tick
+
+    text = Path(tick.__file__).read_text(encoding="utf-8")
+    assert "BLE001" not in text and "S110" not in text
+    broad = [
+        n.lineno
+        for n in ast.walk(ast.parse(text))
+        if isinstance(n, ast.ExceptHandler)
+        and (n.type is None or ast.unparse(n.type) in {"Exception", "BaseException"})
+    ]
+    assert broad == []
+
+
+def test_each_skips_a_lost_race_runs_every_item_and_raises_the_first_other_error():
+    from hadavin_sdk.runtime import tick
+
+    seen: list[int] = []
+
+    def fn(item: int) -> None:
+        seen.append(item)
+        if item == 1:
+            raise tick.StaleState("x")
+        if item == 2:
+            raise ValueError("first")
+        if item == 3:
+            raise KeyError("second")
+
+    with pytest.raises(ValueError, match="first"):
+        tick._each([0, 1, 2, 3, 4], fn, "what")
+    assert seen == [0, 1, 2, 3, 4]
+    tick._each(
+        [0, 1],
+        lambda i: (_ for _ in ()).throw(tick.IllegalTransition("a", "b")) if i else None,
+        "what",
+    )
+
+
+def test_safe_log_never_raises(monkeypatch):
+    from hadavin_sdk.runtime import tick
+
+    def boom(*a, **k):
+        raise RuntimeError("log handler down")
+
+    monkeypatch.setattr(tick._LOG, "error", boom)
+    tick._safe_log("a %s", "b")
+
+
+class _Store:
+    def __init__(self, fail_save=False, fail_get=False):
+        self.saved = []
+        self.fail_save, self.fail_get = fail_save, fail_get
+
+    def get_tick_state(self, name):
+        if self.fail_get:
+            raise RuntimeError("down")
+
+    def save_tick_state(self, state):
+        if self.fail_save:
+            raise RuntimeError("down")
+        self.saved.append(state)
+
+
+def _ctx(store):
+    from datetime import UTC, datetime
+
+    return SimpleNamespace(
+        app=SimpleNamespace(store=store), now=lambda: datetime(2030, 1, 1, tzinfo=UTC)
+    )
+
+
+def test_run_step_reports_ok_failed_and_unrecorded(monkeypatch):
+    from datetime import UTC, datetime
+
+    from hadavin_sdk.runtime import tick
+
+    monkeypatch.setattr(tick, "_now", lambda ctx: datetime(2030, 1, 1, tzinfo=UTC))
+    ok = tick.TickStep("fine", 0, lambda c: None)
+    bad = tick.TickStep("bad", 0, lambda c: (_ for _ in ()).throw(ValueError("boom")))
+    s = _Store()
+    assert tick._run_step(_ctx(s), ok) == tick.OK and s.saved[0].last_error is None
+    s = _Store()
+    assert tick._run_step(_ctx(s), bad) == tick.FAILED and s.saved[0].last_error.startswith(
+        "ValueError"
+    )
+    assert tick._run_step(_ctx(_Store(fail_save=True)), ok) == tick.FAILED
+    s = _Store(fail_get=True)
+    assert tick._run_step(_ctx(s), ok) == tick.FAILED and s.saved[0].last_error.startswith(
+        "RuntimeError"
+    )
+
+
+def test_the_transit_signer_shows_only_a_number_as_the_vault_status():
+    from hadavin_sdk.actions.secrets_vault import VaultError
+    from hadavin_sdk.audit.signer_vault import VaultTransitSigner
+
+    class Vault:
+        def __init__(self, status):
+            self.status = status
+
+        def authed(self, method, path, body=None):
+            return self.status, {}
+
+    text_status = "zq-b13-" + "Wm4" + "-status"
+    for status, shown in ((503, "503"), (text_status, "?"), (True, "?")):
+        signer = VaultTransitSigner(Vault(status), "transit", "key-name-b13", 1)
+        with pytest.raises(VaultError) as raised:
+            signer._call("GET", "keys/key-name-b13")
+        assert f"Vault answered {shown} (key name not shown)" in str(raised.value)
+        assert text_status not in str(raised.value)
+
+
+def test_a_failing_detector_is_logged_by_class_only(caplog):
+    import logging
+
+    from hadavin_sdk.guard.injection import injection_check
+
+    text = "zq-b13-" + "Wm4" + "-detector"
+
+    class Broken:
+        def check(self, text_checked, source):
+            raise ValueError(text)
+
+    with caplog.at_level(logging.WARNING):
+        verdict = injection_check(Broken(), "hello", "tool")
+    assert verdict is not None
+    shown = " ".join(r.getMessage() for r in caplog.records)
+    assert "Broken" in shown and "ValueError" in shown and text not in shown

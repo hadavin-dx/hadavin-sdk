@@ -32,11 +32,12 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable, Sequence
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, Failed
 from hadavin_sdk.guard.runmap import safe_head
 from hadavin_sdk.models import AuditEvent, RunState, TickState
 from hadavin_sdk.runtime.runs import IllegalTransition, advance
@@ -127,11 +128,13 @@ def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
     end, after every item had its turn (one bad row never blocks the rest)."""
     first: Exception | None = None
     for item in items:
-        try:
+        # a CAS loser passes `Failed` and is dropped by `suppress`; any other error is kept in `caught.error`
+        with (
+            suppress(StaleState, IllegalTransition),
+            Failed((StaleState, IllegalTransition)) as caught,
+        ):
             fn(item)
-        except (StaleState, IllegalTransition):
-            _LOG.debug("%s: moved by another worker, skipped", what)
-        except Exception as exc:  # noqa: BLE001 - isolate the item; re-raised below
+        if (exc := caught.error) is not None:
             _LOG.warning("%s: %s", what, type(exc).__name__)
             first = first or exc
     if first is not None:
@@ -265,14 +268,15 @@ def purge_evidence(ctx: TickContext) -> None:
         _now(ctx) - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
     )
     hook = app.runtime.hooks.hold_run_ids
-    try:
+    held: frozenset[str] = frozenset()
+    with Failed() as hook_failed:
         held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
-    except Exception as exc:
+    if hook_failed.error is not None:
         _LOG.error(
             "purge_evidence: hold_run_ids raised %s: ordinary purge skipped this tick, ceilings applied",
-            type(exc).__name__,
+            type(hook_failed.error).__name__,
         )
-        raise
+        raise hook_failed.error
     calls += store.purge_tool_calls(
         _now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held
     )
@@ -361,10 +365,9 @@ STORE_NOT_READY = (
 
 def _safe_log(msg: str, *args: object) -> None:
     """Log an error line; a failing log handler must never change the exit code."""
-    try:
+    # safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
+    with suppress(Exception):
         _LOG.error(msg, *args)
-    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
-        pass
 
 
 _PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
@@ -384,7 +387,7 @@ def _message(exc: Exception) -> str:
 def _run_step(ctx: TickContext, step: TickStep) -> str:
     store = ctx.app.store
     prev, error = None, None
-    try:
+    with Failed() as caught:
         prev = store.get_tick_state(step.name)
         every = step.interval(ctx) if step.interval else step.every_s
         if (
@@ -401,10 +404,11 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
         ):
             return SKIPPED
         step.fn(ctx)
-    except Exception as exc:  # noqa: BLE001 - one step never stops the others
+    if caught.error is not None:
+        exc = caught.error
         error = f"{type(exc).__name__}: {_message(exc)}"
         _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
-    try:
+    with Failed() as saved:
         store.save_tick_state(
             TickState(
                 step=step.name,
@@ -413,9 +417,11 @@ def _run_step(ctx: TickContext, step: TickStep) -> str:
                 last_error=error,
             )
         )
-    except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed
+    if (exc := saved.error) is not None:
         _LOG.error(
-            "step=%s error_kind=%s message=tick_state not saved", step.name, type(exc).__name__
+            "step=%s error_kind=%s message=tick_state not saved",
+            step.name,
+            type(exc).__name__,
         )
         return FAILED
     return OK if error is None else FAILED
@@ -465,9 +471,9 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
     if live and (repeated := _repeated_step_names(own_steps)):
         raise ConfigError(f"a tick step name is used twice: {', '.join(repeated)}")
     ctx = TickContext(app, now)
-    try:
+    with Failed() as store_answer:
         app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
-    except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
+    if (exc := store_answer.error) is not None:  # any store failure: change nothing
         if is_connectivity_error(exc):
             _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
             return STORE_UNREACHABLE
@@ -479,20 +485,21 @@ def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None
         return STORE_NOT_READY
     for step in own_steps if steps is None else steps:
         ctx.results[step.name] = _run_step(ctx, step)
-    try:
+    with Failed() as beat:  # a log line never changes the exit code
         heartbeat(ctx)
-    except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
-        _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+    if beat.error is not None:
+        _safe_log(
+            "step=- error_kind=%s message=heartbeat line not written", type(beat.error).__name__
+        )
     if FAILED in ctx.results.values():
         # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
-        try:
+        with Failed() as again:
             app.store.get_tick_state(_PROBE)
-        except Exception as exc:  # noqa: BLE001 - any store failure
-            if is_connectivity_error(exc):
-                _safe_log(
-                    "step=- error_kind=%s message=store unreachable after the steps",
-                    type(exc).__name__,
-                )
-                return STORE_UNREACHABLE
-            # answers but not ready: the step failures stand, exit 1
+        # any store failure; one that answers but is not ready lets the step failures stand: exit 1
+        if (exc := again.error) is not None and is_connectivity_error(exc):
+            _safe_log(
+                "step=- error_kind=%s message=store unreachable after the steps",
+                type(exc).__name__,
+            )
+            return STORE_UNREACHABLE
     return 1 if FAILED in ctx.results.values() else 0

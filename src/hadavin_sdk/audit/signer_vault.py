@@ -20,7 +20,7 @@ from typing import Any, Literal
 
 from hadavin_sdk.actions.secrets_vault import VaultError, connect
 from hadavin_sdk.audit.signer import probe
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import ConfigError, status_text
 
 
 class VaultTransitSigner:
@@ -40,7 +40,7 @@ class VaultTransitSigner:
             status, answer = self._vault.authed(method, f"{self.mount}/{path}", body)
         if status != 200:
             raise VaultError(
-                f"transit {path.split('/')[0]}: Vault answered {status} (key name not shown)"
+                f"transit {path.split('/')[0]}: Vault answered {status_text(status)} (key name not shown)"
             )
         data = answer.get("data")
         if not isinstance(data, dict):

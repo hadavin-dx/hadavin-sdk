@@ -22,9 +22,7 @@ SRC = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
 
 # Reasons of rounds 11 and 12 that have no check by code yet. The size may only go down.
 UNCHECKED = {
-    "PROC", "SIGN", "CARD", "TIME", "LLMREQ", "NUM", "STOREID", "URL", "SQL", "GEN", "STATE", "DIGEST", "PATTERN",
-    "CLASSNAMES", "BUNDLE", "KIND", "BUILT", "SEQ", "PKGERR", "MODELTEXT", "REDACTED", "FIELDS", "ARG", "NUMFIELD",
-    "MIGNAMES", "KEYVER",
+    "PROC", "CARD", "LLMREQ", "NUM", "STOREID", "URL", "BUNDLE", "KIND", "PKGERR", "MODELTEXT", "REDACTED", "NUMFIELD",
 }  # fmt: skip
 
 
@@ -503,6 +501,229 @@ def check_pydantictype() -> list[str]:
     )
 
 
+# --- round 13, second pass: the reasons of rounds 11 and 12, each checked by code now ---------------------------------
+
+
+def _row_asts(reason: str) -> list[ast.expr]:
+    return [ast.parse(site, mode="eval").body for _, site in _rows(reason)]
+
+
+def check_gen() -> list[str]:
+    from hadavin_sdk.models import new_id
+
+    bad = []
+    if not re.fullmatch(r"[a-z]+-[0-9a-f]{32}", new_id("run")):
+        bad.append("new_id no longer builds <word>-<32 hex digits>")
+    for p in SRC.rglob("*.py"):
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+            literal = (
+                bool(n.args) and isinstance(n.args[0], ast.Constant)
+                if isinstance(n, ast.Call)
+                else True
+            )
+            if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "new_id" and not literal:
+                bad.append(f"{p.name}:{n.lineno}: new_id gets a prefix that is not a literal")
+    return bad
+
+
+def check_state() -> list[str]:
+    from hadavin_sdk.models import RunState
+
+    bad = [
+        f"state {m!r} is not a fixed upper-case word"
+        for m in RunState
+        if not re.fullmatch(r"[A-Z_]+", m.value)
+    ]
+    fn = _fn("runtime/runs.py", "check")
+    notes = {a.arg: ast.unparse(a.annotation) for a in fn.args.args}  # type: ignore[attr-defined]
+    if notes != {"frm": "RunState", "to": "RunState"}:
+        bad.append(f"runs.check parameters are not both RunState: {notes}")
+    return bad
+
+
+def check_digest() -> list[str]:
+    from hadavin_sdk.errors import NOT_SHOWN, digest_prefix
+
+    digest = "ab12" * 16
+    bad = []
+    if digest_prefix(digest) != digest[:12] + "...":
+        bad.append("a real digest is not cut to 12 characters")
+    for other in ("short", "x" * 64, "secret-" + "k" * 60, 7, None):
+        if digest_prefix(other) != NOT_SHOWN:
+            bad.append(
+                f"digest_prefix shows part of a value that is no digest: {type(other).__name__}"
+            )
+    return bad
+
+
+def check_time() -> list[str]:
+    bad = []
+    ok = re.compile(
+        r"timedelta\(|\.ttl_s\b|\.retain\b|clock\(\)|monotonic\(\)|^now$|^at$|timeout_s"
+    )
+    for (mod, site), node in zip(_rows("TIME"), _row_asts("TIME"), strict=True):
+        if not (isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add)):
+            bad.append(f"{mod}: {site} is not a sum")
+        elif not (ok.search(ast.unparse(node.left)) and ok.search(ast.unparse(node.right))):
+            bad.append(f"{mod}: {site}: a part of the sum is not a time or a number of seconds")
+    return bad
+
+
+def check_sign() -> list[str]:
+    bad = []
+    allowed = {
+        "secret",
+        "base",
+        "hashlib",
+        "hmac",
+        "prefix",
+        "ts",
+        "body",
+        "seq",
+        "head",
+        "sha256",
+        "hexdigest",
+    }
+    for (mod, site), node in zip(_rows("SIGN"), _row_asts("SIGN"), strict=True):
+        if mod not in {"approvals/hmac_v0.py", "audit/chain.py"}:
+            bad.append(f"{mod}: not a signing module")
+        for n in ast.walk(node):
+            if isinstance(n, ast.Name) and n.id not in allowed:
+                bad.append(f"{mod}: {site}: unexpected name {n.id}")
+    tree = _tree("approvals/hmac_v0.py")
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", "")) in {
+            "print",
+            "warning",
+            "error",
+            "info",
+            "debug",
+        }:
+            bad.append(f"hmac_v0.py:{n.lineno}: prints or logs")
+    return bad
+
+
+def check_classnames() -> list[str]:
+    bad = []
+    for mod, site in _rows("CLASSNAMES"):
+        text = site
+        if "str(exc)" in text or "safe_head" in text or "exc.args" in text:
+            bad.append(f"{mod}: {site}: prints the text of an error")
+        if mod != "config.py" or "exc.title" not in text or "len(errors)" not in text:
+            bad.append(f"{mod}: {site}: not the pydantic count-and-title line")
+    return bad
+
+
+def check_seq() -> list[str]:
+    bad = []
+    src = (SRC / "audit/chain.py").read_text(encoding="utf-8")
+    m = re.search(r"type\(seq\) is not int", src)
+    if not m:
+        bad.append(
+            "chain.py no longer checks `type(seq) is not int` refusal before the message with seq"
+        )
+    elif src.index("holds seq") < m.start():
+        bad.append("the seq message comes before the integer check")
+    return bad
+
+
+def check_built() -> list[str]:
+    fn = _fn("audit/local_dir.py", "write_intent")
+    src = ast.unparse(fn)
+    bad = []
+    if (
+        "failure = None" not in src
+        or "failure = f'intent {event.event_id}: {exc.__class__.__name__}'" not in src
+    ):
+        bad.append("`failure` is no longer built from the event id and the class name")
+    raise_after_handler = False
+    for n in ast.walk(fn):
+        if isinstance(n, ast.Try):
+            raise_after_handler = raise_after_handler or any(
+                isinstance(x, ast.Raise) and ast.unparse(x) == "raise AuditUnavailable(failure)"
+                for x in ast.iter_child_nodes(fn)
+            )
+    if "raise AuditUnavailable(failure)" not in src:
+        bad.append("AuditUnavailable(failure) is gone")
+    # the raise is not inside any handler: no cause, no context
+    for n in ast.walk(fn):
+        if isinstance(n, ast.ExceptHandler):
+            for x in ast.walk(n):
+                if isinstance(x, ast.Raise) and "AuditUnavailable(failure)" in ast.unparse(x):
+                    bad.append(
+                        "AuditUnavailable(failure) is raised inside an except block (it would carry a cause)"
+                    )
+    return bad
+
+
+def check_keyver() -> list[str]:
+    bad = []
+    src = (SRC / "audit/signer_vault.py").read_text(encoding="utf-8")
+    if "key_version: int" not in src:
+        bad.append("key_version is not declared int in the signer")
+    if (
+        not re.search(r"status_text|isinstance\(status, int\)", src)
+        and "Vault answered {status}" in src
+    ):
+        bad.append("the Vault status is printed without a number check")
+    for call in re.findall(r"self\._call\(\s*\w+,\s*(\S+?),", src):
+        if not re.match(r"[\"'f](keys|sign)", call):
+            bad.append(f"a request path that does not start with keys or sign: {call}")
+    return bad
+
+
+def check_mignames() -> list[str]:
+    from hadavin_sdk.store import migrate
+
+    bad = []
+    names = [p.name for p in migrate.MIGRATIONS.glob("*.sql")]
+    if not names:
+        bad.append("no migration files found")
+    bad += [
+        f"{n}: not <number>_<words>.sql"
+        for n in names
+        if not re.fullmatch(r"\d{3,4}_[a-z0-9_]+\.sql", n)
+    ]
+    return bad
+
+
+def check_fields() -> list[str]:
+    from hadavin_sdk.strict_model import StrictConfigModel
+
+    class M(StrictConfigModel):
+        alpha: int = 1
+
+    marker = "Zq" + "9-typed-key"
+    try:
+        M.model_validate({"alpha": 1, marker: 2})
+    except Exception as exc:  # the test wants any error here  # noqa: BLE001
+        shown = f"{exc!s}{exc!r}"
+        return (
+            []
+            if (marker not in shown and "position 2" in shown and "alpha" in shown)
+            else [f"text: {shown[:200]}"]
+        )
+    return ["an unknown setting was accepted"]
+
+
+def check_arg() -> list[str]:
+    bad = []
+    tree = _tree("cli.py")
+    seen = 0
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "kill_switch":
+            seen += 1
+            if ast.unparse(n.args[2]) != "args.by":
+                bad.append(
+                    f"kill_switch is called with {ast.unparse(n.args[2])}, not the typed --by"
+                )
+    if seen == 0:
+        bad.append("no call of kill_switch in cli.py")
+    if "lim.add_argument('--by', required=True)" not in ast.unparse(tree):
+        bad.append("--by is no longer a required command-line argument")
+    return bad
+
+
 CHECKS = {
     "WORDS": check_words,
     "SCHEMA": check_schema,
@@ -525,6 +746,18 @@ CHECKS = {
     "REPORT": check_report,
     "TAGS": check_tags,
     "PYDANTICTYPE": check_pydantictype,
+    "GEN": check_gen,
+    "STATE": check_state,
+    "DIGEST": check_digest,
+    "TIME": check_time,
+    "SIGN": check_sign,
+    "CLASSNAMES": check_classnames,
+    "SEQ": check_seq,
+    "BUILT": check_built,
+    "KEYVER": check_keyver,
+    "MIGNAMES": check_mignames,
+    "FIELDS": check_fields,
+    "ARG": check_arg,
 }
 
 
@@ -533,7 +766,7 @@ def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
-    assert len(UNCHECKED) <= 26  # round 13: may only go down
+    assert len(UNCHECKED) <= 12  # round 13, second pass: may only go down
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))
