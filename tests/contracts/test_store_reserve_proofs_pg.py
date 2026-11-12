@@ -223,7 +223,7 @@ def test_the_probe_can_tell_an_inverted_order_apart(dsn, make, admin):
 
 
 RIGHTS = [
-    ("SELECT", "kill_switch"),
+    ("SELECT", "kill_switch_state"),
     ("SELECT", "runs"),
     ("UPDATE", "runs"),
     ("SELECT", "spend"),
@@ -386,7 +386,7 @@ def test_a_held_counter_row_makes_a_reserve_store_busy_and_books_nothing(dsn, ad
 
 def test_the_kill_switch_stops_a_reserve_on_real_connections(dsn, make):
     store = make()
-    store.set_kill_switch(KillSwitch(on=True, by="user:test"))
+    store.set_kill_switch(KillSwitch(on=True, by="id:k1:" + "a" * 32))
     from hadavin_sdk.store.protocol import KillSwitchOn
 
     with pytest.raises(KillSwitchOn):
@@ -892,7 +892,7 @@ def test_set_kill_switch_from_a_second_handle_completes_while_a_reserve_waits_at
     )
     thread, result = _start(lambda: _reserve(waiting, "ks-wait", "1", day=day))
     assert _wait_for_head(dsn, HEAD_DAY) is not None, "the reserve never waited at its spend UPDATE"
-    stopper, _ = _start(lambda: other.set_kill_switch(KillSwitch(on=True, by="user:test")))
+    stopper, _ = _start(lambda: other.set_kill_switch(KillSwitch(on=True, by="id:k1:" + "a" * 32)))
     stopper.join(10)
     finished = not stopper.is_alive()
     admin.rollback()  # let the waiting reserve go on in any case

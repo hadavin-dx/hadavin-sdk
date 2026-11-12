@@ -18,7 +18,7 @@ D = Decimal
 MIGRATIONS = Path(__file__).parents[2] / "src" / "hadavin_sdk" / "store" / "migrations"
 AGENT = "ag-behind"
 RUNTIME_RIGHTS = [
-    ("SELECT", "kill_switch"),
+    ("SELECT", "kill_switch_state"),
     ("SELECT", "runs"),
     ("UPDATE", "runs"),
     ("SELECT", "spend"),
@@ -75,6 +75,7 @@ def test_b8a_a_database_without_the_reservation_table_fails_loudly_and_books_not
             "0003_approvals_tick",
             "0004_audit_checkpoint_meta",
             "0005_evidence",
+            "0007_kill_switch_guard",  # the runtime reads the switch first: its state view must exist
         ],
     )
     grants = [*RUNTIME_RIGHTS]
@@ -98,6 +99,7 @@ def test_b8b_a_table_without_the_runtime_grant_fails_loudly_and_books_nothing(be
             "0004_audit_checkpoint_meta",
             "0005_evidence",
             "0006_spend_reservations",
+            "0007_kill_switch_guard",
         ],
     )
     with drv.connect_role(
@@ -118,6 +120,14 @@ def test_b8b_a_table_without_the_runtime_grant_fails_loudly_and_books_nothing(be
 
 ALL_STEMS = sorted(p.stem for p in MIGRATIONS.glob("*.sql"))
 BOOKKEEPING = {"schema_migrations"}  # written by `migrate()` itself, not by any migration file
+# The kill switch functions are installed by `migrate()` in code (their text names the reset group role), so no
+# migration file holds them; the file 0007 holds only a placeholder guard. They are left out of the file-by-file
+# comparison and checked to exist in the real schema.
+INSTALLED_BY_MIGRATE = (
+    "hadavin_kill_switch_stop",
+    "hadavin_kill_switch_reset",
+    "hadavin_kill_switch_guard",
+)
 
 
 @pytest.fixture
@@ -152,6 +162,7 @@ def _catalog(dsn):
                     tuple(str(v).replace(schema, "<schema>") for v in row)
                     for row in rows
                     if not any(b in str(row) for b in BOOKKEEPING)
+                    and not (name == "functions" and row[0] in INSTALLED_BY_MIGRATE)
                 }
             )
         return out
@@ -167,6 +178,15 @@ def test_the_local_schema_builder_gives_the_same_catalog_as_the_real_migration(
     )  # the snapshot is not empty
     assert len(real["constraints"]) > 20 and len(real["triggers"]) >= 2 and real["functions"]
     assert built == real
+    with drv.connect_admin(real_dsn) as conn:
+        found = {
+            r[0]
+            for r in drv.execute(
+                conn,
+                "SELECT proname FROM pg_proc WHERE pronamespace = current_schema()::regnamespace",
+            )
+        }
+    assert set(INSTALLED_BY_MIGRATE) <= found  # migrate() really installed them
 
 
 def test_the_catalog_comparison_notices_a_missing_migration_file(behind_dsn, real_dsn):

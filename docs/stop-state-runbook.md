@@ -73,4 +73,4 @@ processes first and grant it back at once.
 - `by` is a keyed label: it gives privacy, not proof of who typed it. The runtime process holds the label key.
 - The owner or a superuser can still set `cleared_by` by hand or disable the guard triggers; the probe sees a
   disabled trigger, not a hand-set `cleared_by`. In hand steps type exactly `dba`.
-- The dev-only per-process label key is allowed only when `environment` is `dev`.
+- The demo-only per-process label key is allowed only when `environment` is `demo`.

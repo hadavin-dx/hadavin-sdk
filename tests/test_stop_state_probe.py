@@ -124,7 +124,7 @@ def test_a_role_that_does_not_exist_is_a_problem(w):
     assert any("does not exist" in p for p in _report(w, runtime="p2a1_nobody").problems)
 
 
-def test_the_probe_fails_pilot_on_a_superuser_owned_function_and_passes_dev(w):
+def test_the_probe_fails_pilot_on_a_superuser_owned_function_and_passes_demo(w):
     store = PostgresStore(w.admin())
     args = {"runtime_role": w.runtime, "stop_role": w.stoprole, "reset_group": RESET_GROUP}
     assert stop_state.probe(store, environment="demo", **args).status == stop_state.OK

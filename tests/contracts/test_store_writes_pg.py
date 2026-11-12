@@ -48,15 +48,18 @@ BASE = {"kind": "postgres", "dsn_secret_name": "pg-dsn"}  # a secret NAME, not a
 EXPECTED = (ValueError, KeyError, RuntimeError, type(drv.make_error("42501")))
 SRC = Path(__file__).parents[2] / "src/hadavin_sdk/store/postgres.py"
 
-# The 22 write methods of PostgresStore (18 existing, 4 of P4d-b). ONE list: the scan test below compares it with
-# the methods that carry `@_writes`, and the lone-caller row runs every name in it.
+# The 21 wrapped write methods of PostgresStore (17 existing, 4 of P4d-b). ONE list: the scan test below compares it
+# with the methods that carry `@_writes`, and the lone-caller row runs every name in it. `set_kill_switch` is a write
+# that is NOT wrapped on purpose (P2a-1): a stop must never wait on the retry loop, so it runs on its own short
+# connection with its own small time limits; it is listed apart and still gets the lone-caller row.
 WRITE_METHODS = [
     "create_run", "transition", "add_cost", "touch", "save_plan", "save_gate_decision",
     "save_approval_request", "update_approval_request", "record_decision", "save_approval_decision",
-    "add_dead_letter", "add_spend", "set_kill_switch", "save_tick_state", "add_tool_call",
+    "add_dead_letter", "add_spend", "save_tick_state", "add_tool_call",
     "purge_tool_calls", "put_redaction_map", "purge_redaction_maps",
     "reserve_spend", "settle_spend", "release_spend", "sweep_spend_reservations",
 ]  # fmt: skip
+UNWRAPPED_WRITES = ["set_kill_switch"]
 NO_RETRY = {"add_spend", "add_cost", "add_dead_letter", "touch"}
 
 
@@ -340,7 +343,7 @@ def test_the_wrapped_methods_are_exactly_WRITE_METHODS():
         )
     }
     assert wrapped == set(WRITE_METHODS)
-    assert len(WRITE_METHODS) == len(set(WRITE_METHODS)) == 22
+    assert len(WRITE_METHODS) == len(set(WRITE_METHODS)) == 21
 
 
 def test_no_public_method_with_a_write_name_lacks_the_wrapper():
@@ -352,12 +355,16 @@ def test_no_public_method_with_a_write_name_lacks_the_wrapper():
     looks_like_a_write = {
         m.name for m in methods if not m.name.startswith("_") and pattern.match(m.name)
     }
-    assert looks_like_a_write == set(WRITE_METHODS)
+    assert looks_like_a_write == set(WRITE_METHODS) | set(UNWRAPPED_WRITES)
 
 
 def test_sql_leaves_only_through_exec_and_the_wrappers_first_statement():
     tree, _ = _class_methods()
     allowed = {"connect", "_exec", "_write", "attempt"}  # `attempt` is inside `_write`
+    # P2a-1 adds four places that send SQL outside the wrapper, each for a stated reason: the stop runs on its own
+    # short connection (`short_connect` made inside `build`, then `_call_switch`) so it never waits on the retry
+    # loop, and the two read-only guard probes (`_guard_report`, `table_privileges`) only read catalogs.
+    allowed |= {"build", "short_connect", "_call_switch", "_guard_report", "table_privileges"}
     offenders = []
     for fn in ast.walk(tree):
         if isinstance(fn, ast.FunctionDef) and fn.name not in allowed:
@@ -624,7 +631,9 @@ def _calls(store, run):
             DeadLetter(run_id=rid, reason="r", errors=[])
         ),
         "add_spend": lambda: store.add_spend("a", day, Decimal(1)),
-        "set_kill_switch": lambda: store.set_kill_switch(KillSwitch(on=False, by="user:a")),
+        "set_kill_switch": lambda: store.set_kill_switch(
+            KillSwitch(on=True, by="id:k1:" + "a" * 32)
+        ),
         "save_tick_state": lambda: store.save_tick_state(TickState(step="lone", last_run_at=now())),
         "add_tool_call": lambda: store.add_tool_call(
             ToolCallRecord(
@@ -649,7 +658,7 @@ def _calls(store, run):
     }
 
 
-@pytest.mark.parametrize("name", WRITE_METHODS)
+@pytest.mark.parametrize("name", [*WRITE_METHODS, *UNWRAPPED_WRITES])
 def test_a_lone_caller_finishes_for_every_write_method(make, name):
     """The setup runs on the thread too: with a plain Lock even `create_run` would wait for itself."""
     store = make()

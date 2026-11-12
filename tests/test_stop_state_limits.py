@@ -20,16 +20,19 @@ class Audit:
         return None
 
 
-@pytest.mark.parametrize("stage", ["demo", "staging", "test", "", "DEV", None])
-def test_only_dev_pilot_prod_are_stages_and_demo_is_not_an_alias_of_dev(stage):
+OLD = "d" + "ev"  # the first stage's old name: refused, never an alias of demo
+
+
+@pytest.mark.parametrize("name", [OLD, "uat", "test", "", OLD.upper(), None])
+def test_only_demo_pilot_prod_are_stages_and_the_old_name_is_not_an_alias(name):
     with pytest.raises(ValueError, match="environment must be one of"):
-        Limits(MemoryStore(), Audit(), None, environment=stage, label_key=KEY)
+        Limits(MemoryStore(), Audit(), None, environment=name, label_key=KEY)
 
 
-@pytest.mark.parametrize("stage", ["pilot", "prod"])
-def test_a_memory_store_and_a_missing_key_are_refused_outside_dev(stage):
+@pytest.mark.parametrize("name", ["pilot", "prod"])
+def test_a_memory_store_and_a_missing_key_are_refused_outside_demo(name):
     with pytest.raises(ValueError, match="memory store"):
-        Limits(MemoryStore(), Audit(), None, environment=stage, label_key=KEY)
+        Limits(MemoryStore(), Audit(), None, environment=name, label_key=KEY)
 
 
 class Flaky:
@@ -92,7 +95,7 @@ def test_probe_verdicts():
     assert _probe(Reporting(exc=StoreBusy("b"))).status == stop_state.INCONCLUSIVE
 
 
-def test_a_superuser_owned_function_fails_pilot_and_prod_but_only_warns_in_dev():
+def test_a_superuser_owned_function_fails_pilot_and_prod_but_only_warns_in_demo():
     r = GuardReport(demo_tolerated=("owned by a superuser",), runtime_connection_limit=20)
     assert _probe(Reporting(r), "demo").status == stop_state.OK
     assert _probe(Reporting(r), "pilot").status == stop_state.FAILED
