@@ -515,9 +515,7 @@ M = [
         "    return False",
         T_BG,
         "test_a_real_source_or_tools_dict_handed_in_is_counted_and_an_empty_one_is_not",
-        "BindRefused",
-        allow_crash=True,
-        crash_type="BindRefused",
+        "an empty tools or sources mapping was counted",
     ),
     mutant(
         "B51 a subclass of a stand-in is read as a stand-in",
