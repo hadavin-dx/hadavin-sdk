@@ -423,7 +423,8 @@ def test_a_check_that_cannot_run_after_the_commit_is_applied_not_verified(harnes
         err, opened, _rec, _ = harness([[], [], RuntimeError("catalog read failed")])
     assert isinstance(err, AppliedNotVerifiedError)
     assert err.applied == ["0001_f1", "0002_f2"] and err.problems == [] and err.statements == []
-    assert err.could_not_run in ("no more connections", "catalog read failed")
+    assert err.could_not_run == ("OperationalError" if how == "connect" else "RuntimeError")
+    assert "no more connections" not in str(err) and "catalog read failed" not in str(err)
     assert opened[0].committed is True
 
 
@@ -525,3 +526,35 @@ def test_a_read_after_a_file_ended_the_transaction_is_not_pinned_and_keeps_the_s
     now = mig._read_back(_Ended(), "s", (), if_ended=saved)
     assert now.values == ("a", "b")
     assert now.triggers == saved.triggers and now.members == saved.members
+
+
+def test_step_4_never_writes_a_function_with_a_control_character_in_its_name_into_a_statement(
+    monkeypatch,
+):
+    """`_revoke_default_execute` writes a statement only for names that print as they are; the one that does not is left
+    for the check at step 6 to refuse with a line a person can act on. The good function next to it is still revoked."""
+    import contextlib
+
+    class _Result:
+        def fetchall(self):
+            return [
+                ("x", "app", "bad\nname", "(integer)", "f"),
+                ("x", "app", "good", "(integer)", "f"),
+            ]
+
+    class _Recorder:
+        def __init__(self):
+            self.statements = []
+
+        def execute(self, statement, params=None):
+            if params is None:
+                self.statements.append(statement)
+            return _Result()
+
+    monkeypatch.setattr(mig, "pinned_read", lambda db, limits: contextlib.nullcontext())
+    db = _Recorder()
+    mig._revoke_default_execute(db, "app", "me", "me", [])
+    assert len(db.statements) == 1, db.statements
+    text = db.statements[0].as_string(None) if hasattr(db.statements[0], "as_string") else ""
+    assert "good" in repr(db.statements[0]) or "good" in text
+    assert "bad" not in repr(db.statements[0])

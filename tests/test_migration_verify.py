@@ -591,6 +591,34 @@ def test_a_server_below_16_is_refused_before_anything_else():
     v.check_version(160000)
 
 
+def test_the_minor_label_of_a_server_below_16_is_the_server_number_split_in_two():
+    """`150004` is PostgreSQL 15.4, not 15.4 by accident of a shorter number: the label is `version % 10000`."""
+    with pytest.raises(ConfigError, match=r"PostgreSQL 15\.4;"):
+        v.check_version(150004)
+    with pytest.raises(ConfigError, match=r"PostgreSQL 15\.12;"):
+        v.check_version(150012)
+
+
+def test_the_extension_refusal_names_the_way_out_and_prints_no_statement():
+    p = v.Problem(
+        kind="right",
+        schema="public",
+        obj="pg_stat_statements",
+        detail="",
+        role="EVERYONE",
+        right="SELECT",
+        grantor="postgres",
+        owner="postgres",
+        extension="pg_stat_statements",
+        by_hand="extension",
+        word="view",
+    )
+    text = p.line()
+    assert "a database of its own for this package" in text
+    assert "the extension installed in another schema" in text
+    assert "no statement is printed" in text
+
+
 def test_the_self_check_names_an_unknown_and_a_missing_column():
     have = list(v.KNOWN_ACL_COLUMNS)
     v.check_acl_columns(have)
@@ -823,3 +851,246 @@ def test_the_rights_table_equals_what_apply_grants_is_called_with(harness, monke
                 assert columns is not None and tuple(columns(g)) == g.purge_cols, name
             else:
                 assert columns is None, (role, name)
+
+
+def _between_markers(text: str) -> list[str]:
+    start, stop = text.index("[promise table]"), text.index("[end of promise table]")
+    lines = (line.strip() for line in text[start + len("[promise table]") : stop].splitlines())
+    return [line for line in lines if line]
+
+
+def test_the_promise_table_is_the_same_in_the_docstring_and_the_changelog():
+    """Promise table, rows 1 to 3: the module text of `migrate.py` and the CHANGELOG item hold the same words between the
+    two marker lines (leading space and blank lines apart), and each row names its word. Killed by: mutants that edit
+    one copy only (PT3, PT4)."""
+    from hadavin_sdk.store import migrate as mig
+
+    root = Path(__file__).resolve().parents[1]
+    in_code = _between_markers(mig.__doc__)
+    in_log = _between_markers((root / "CHANGELOG.md").read_text(encoding="utf-8"))
+    assert in_code == in_log
+    assert len(in_code) == 5 and in_code[2].endswith("| STOPPED |")
+    assert in_code[3].endswith("| STOPPED, for lasting rights only |")
+    assert in_code[4].endswith("| DETECTED, not stopped |")
+    assert 'never in "applied"' in in_code[4]
+    assert (root / "CHANGELOG.md").read_text(encoding="utf-8").count("[promise table]") == 1
+    assert "What migrate promises" in (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "What migrate promises" in mig._after_commit.__code__.co_consts.__repr__() or any(
+        "What migrate promises" in str(c) for c in mig._after_commit.__code__.co_consts
+    )
+
+
+def test_usage_on_a_language_is_refused_for_everyone_only_when_the_migration_family_owns_it():
+    """Everyone holds USAGE on a language by default; one the migration role family owns, in the schema of the run, is
+    refused; one another role owns is the server's, not ours. (V12: the language clause is not skipped.)"""
+    mine = judge(
+        rows(items=[item(kind="language", relkind="", name="lang", privilege_type="USAGE")])
+    )
+    assert kinds(mine) == ["everyone"], [p.line() for p in mine]
+    theirs = judge(
+        rows(
+            items=[
+                item(
+                    kind="language",
+                    relkind="",
+                    name="lang",
+                    privilege_type="USAGE",
+                    owner="third",
+                    family_owned=False,
+                )
+            ]
+        )
+    )
+    assert "everyone" not in kinds(theirs), [p.line() for p in theirs]
+
+
+@pytest.mark.parametrize(
+    ("right", "refused"), [("CREATE", True), ("CONNECT", False), ("TEMPORARY", False)]
+)
+def test_a_right_of_everyone_on_the_database_is_refused_only_beyond_connect_and_temporary(
+    right, refused
+):
+    """CONNECT is expected and TEMPORARY is the server default; CREATE on the database is refused. (V14.)"""
+    got = judge(
+        rows(items=[item(kind="database", relkind="", schema="", name="db", privilege_type=right)])
+    )
+    assert (kinds(got) == ["everyone"]) is refused, [p.line() for p in got]
+
+
+def test_an_object_of_pg_database_owner_is_the_familys_when_the_database_owner_is_in_the_family():
+    """`pg_database_owner` stands for whoever owns the database; when that is the migration role, what it owns is the
+    package's: a function it owns that everyone may call is refused as the family's, not left alone as foreign."""
+    mine = judge(
+        rows(
+            db_owner="mig",
+            items=[
+                item(
+                    kind="function",
+                    relkind="",
+                    name="door",
+                    sub="",
+                    owner="pg_database_owner",
+                    family_owned=False,
+                    privilege_type="EXECUTE",
+                )
+            ],
+        )
+    )
+    assert kinds(mine) == ["everyone"], [p.line() for p in mine]
+    theirs = judge(
+        rows(
+            db_owner="dbo",
+            items=[
+                item(
+                    kind="function",
+                    relkind="",
+                    name="door",
+                    sub="",
+                    owner="pg_database_owner",
+                    family_owned=False,
+                    privilege_type="EXECUTE",
+                )
+            ],
+        )
+    )
+    assert "everyone" not in kinds(theirs), [p.line() for p in theirs]
+
+
+def test_a_shipped_table_name_does_not_make_a_view_of_that_name_allowed():
+    """The grant map is keyed by kind: `runs` is a table there, so a view called `runs` that the runtime role may read is
+    a right the map does not give (V31)."""
+    table = judge(
+        rows(
+            items=[
+                item(
+                    name="runs",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    privilege_type="SELECT",
+                )
+            ]
+        )
+    )
+    assert "right" not in kinds(table), [p.line() for p in table]
+    view = judge(
+        rows(
+            items=[
+                item(
+                    kind="view",
+                    relkind="v",
+                    name="runs",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    privilege_type="SELECT",
+                )
+            ]
+        )
+    )
+    assert "right" in kinds(view), [p.line() for p in view]
+
+
+def test_usage_on_the_schema_through_a_group_that_does_not_inherit_is_not_usage():
+    """A membership with no inheritance does not hand the group's rights to the member at once, so USAGE that only the
+    group holds does not count: the role is reported as unable to use the schema (V35)."""
+
+    def missing(at_once: bool) -> list[str]:
+        got = judge(
+            rows(
+                usage=False,
+                subjects=[subj("rt"), subj("rt", "grp", at_once=at_once), subj("po"), subj("pu")],
+                items=[
+                    item(
+                        kind="schema",
+                        relkind="",
+                        name="",
+                        owner="mig",
+                        grantee="grp",
+                        grantee_is_subject=True,
+                        privilege_type="USAGE",
+                    )
+                ],
+            )
+        )
+        return [p.role for p in got if p.kind == "missing_schema_usage"]
+
+    assert "rt" not in missing(True)
+    assert "rt" in missing(False)
+
+
+def test_the_read_refuses_an_old_server_before_it_runs_a_query_that_needs_16(monkeypatch):
+    """`_read` checks the version as soon as it has it: nothing after the version query is run on PostgreSQL 15 (V39)."""
+    ran: list[str] = []
+
+    def fetch(db, text, params=None, *, named=True):
+        ran.append(text)
+        if text == v.V2_SQL:
+            return ((150004, "dbo"),)
+        raise AssertionError("a query that needs version 16 was run on version 15")
+
+    monkeypatch.setattr(v, "_fetch", fetch)
+    with pytest.raises(ConfigError, match="needs PostgreSQL 16 or later"):
+        v._read(object(), named=["rt"], family=["mig"], schema=SCHEMA, managed_functions=[])
+    assert ran == [v.V2_SQL]
+
+
+def test_the_read_runs_the_self_check_before_the_queries_that_use_the_columns(monkeypatch):
+    """`_read` calls the self-check of the access-list columns right after it has them (V40): a server with a column this
+    package does not know ends the read there, before the queries that read the access lists."""
+    ran: list[str] = []
+
+    def fetch(db, text, params=None, *, named=True):
+        ran.append(text)
+        if text == v.V2_SQL:
+            return ((160000, "dbo"),)
+        if text == v.Q0:
+            return tuple((c,) for c in [*v.KNOWN_ACL_COLUMNS, "pg_made_up.acl"])
+        raise AssertionError("a query that reads the access lists ran after a failed self-check")
+
+    monkeypatch.setattr(v, "_fetch", fetch)
+    with pytest.raises(ConfigError, match=r"does not read \(pg_made_up.acl\)"):
+        v._read(object(), named=["rt"], family=["mig"], schema=SCHEMA, managed_functions=[])
+    assert ran == [v.V2_SQL, v.Q0]
+
+
+def test_a_right_for_a_built_in_role_is_not_counted_a_second_time_as_a_right():
+    """A named role in `pg_monitor` is refused once, as a membership (S2); the rights of `pg_monitor` itself are the
+    server's and are not listed again as rights of the named role (V43)."""
+    got = judge(
+        rows(
+            subjects=[subj("rt"), subj("rt", "pg_monitor"), subj("po"), subj("pu")],
+            memberships=[mem("rt", "pg_monitor")],
+            items=[
+                item(
+                    name="secret",
+                    grantee="pg_monitor",
+                    grantee_is_subject=True,
+                    privilege_type="SELECT",
+                )
+            ],
+        )
+    )
+    assert kinds(got) == ["built_in_role"], [p.line() for p in got]
+
+
+def test_no_statement_is_printed_for_a_right_on_a_system_object():
+    """An object of `pg_catalog` or `information_schema` is the server's: the right is named and judged, but no REVOKE is
+    printed for it, and the line says a person decides (V44)."""
+    got = judge(
+        rows(
+            items=[
+                item(
+                    schema="pg_catalog",
+                    system=True,
+                    name="pg_made_up_table",
+                    grantee="rt",
+                    grantee_is_subject=True,
+                    grantee_is_named=True,
+                    privilege_type="UPDATE",
+                )
+            ]
+        )
+    )
+    assert [p.kind for p in got] == ["right"], [p.line() for p in got]
+    assert got[0].fix == "" and got[0].by_hand == "system"

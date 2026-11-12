@@ -2580,7 +2580,7 @@ def test_a_superuser_among_the_named_roles_does_not_widen_the_read_back(sql_text
     ],
 )
 def test_the_portal_role_is_refused_what_the_other_roles_are_refused(scratch, how, expected):
-    """The portal role gets the same scan as the runtime and purge roles (`effective_problems`): a right on one column
+    """The portal role gets the same scan as the runtime and purge roles (`verify`): a right on one column
     that comes through a group role, SELECT on the migration ledger (not in the portal map), and CREATE on the schema.
     The old check read table rights only. Killed by: mutants PC1 (no check) and PT1 (checked against the runtime map for
     the tables; the three cases here are outside both maps)."""
@@ -4425,6 +4425,7 @@ def test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one(sc
             with pytest.raises(psycopg.errors.ObjectNotInPrerequisiteState):
                 holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
             holder.execute("ROLLBACK")
+            assert mig.migrate(dsn) == REAL  # the lock is free again: the run goes through
             return
         holder.execute(sql.SQL("PREPARE TRANSACTION {}").format(sql.Literal(name)))
     try:

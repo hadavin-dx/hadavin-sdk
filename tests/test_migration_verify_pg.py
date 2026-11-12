@@ -242,7 +242,7 @@ def test_a_grant_option_from_two_grantors_is_removed_by_the_printed_statements(e
     assert len([p for p in problems if p.kind == "other_grantee" and p.role == n.boss]) >= 1
 
 
-def test_a_named_role_in_pg_monitor_prints_exactly_one_statement_verify(env):
+def test_a_named_role_in_pg_monitor_prints_exactly_one_statement(env):
     n = env.n
     x(env, "GRANT pg_monitor TO {}", n.rt)
     problems = run_verify(env)
@@ -405,7 +405,8 @@ def test_step_8_that_cannot_connect_gives_exit_5(mrun, cfg_dir, monkeypatch, cap
     mrun.before_call[2] = refuse
     assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 5
     out, err = capsys.readouterr()
-    assert "the check after the commit could not run" in err and "made-up: the server" in err
+    assert "the check after the commit could not run" in err
+    assert "(OperationalError)" in err and "made-up: the server" not in err  # the class name only
     assert out == ""
     assert _ledger_of(mrun.dsn) == REAL_FILES
 

@@ -681,7 +681,8 @@ _ROLE_MEMBERSHIP = re.compile(
 # A file may `GRANT` or `REVOKE` only on a table, a view, a sequence, a column or a function (`ON name`, `ON TABLE`,
 # `ON SEQUENCE`, `ON FUNCTION`, `ON ROUTINE`). A right on the schema itself, a database, a type, a domain, a language, a
 # large object, a foreign server or data wrapper, a tablespace, a parameter, or on `ALL ... IN SCHEMA` (every object, also
-# of another schema) is refused: the read-back after the file does not look at those places. Over-matching is the safe direction.
+# of another schema) is refused early, as a plain message for an accident. This rule carries no security claim: `verify` judges the result
+# whatever the text says. Over-matching is the safe direction.
 _GRANT_TARGET = re.compile(
     rf"(grant|revoke)\b.*?{_NAME_START}on{_W}"
     rf"(schema|database|type|domain|language|large|foreign|tablespace|parameter|all|procedure){_NAME_END}",
@@ -725,7 +726,7 @@ def refused_statements(text: str) -> list[str]:
     `CREATE ROLE|USER|GROUP|EXTENSION`, `ALTER DEFAULT PRIVILEGES`, `ALTER PUBLICATION`, `GRANT` and `REVOKE` without `ON` (role membership) or on anything but a table, view, sequence, column or function, `DROP OWNED`,
     `REASSIGN OWNED`; hidden characters (`hidden_character`) come first. A rule matches at the START of a
     statement (the cleaned text split at `;`, leading whitespace removed). A quick check that catches accidents, not a
-    sandbox: the read-back after each file is the guard."""
+    sandbox, and not the guard: `verify` judges the final state. A way around a text rule is not a defect of this module."""
     cleaned, problem = lex(text)
     reasons = [hidden] if (hidden := hidden_character(text)) else []
     if problem:

@@ -165,8 +165,6 @@ class _Db:
             return _Result([(self.parameters is not None,)])
         if text == mig._PARAMETER_GRANTS_SQL:
             return _Result([(x,) for x in (self.parameters or [])])
-        if text == mig._SCHEMA_USAGE_SQL:
-            return _Result([(self.schema_usage,)])
         if text == mig._READBACK_SETTINGS_SQL:
             return _Result(
                 [] if self.settings is None else self._next(self.settings, "saved settings")
@@ -1195,88 +1193,6 @@ def test_the_replication_flag_is_read_again_after_every_file(monkeypatch, tmp_pa
         mig.migrate("postgresql://unused")
     assert "rolreplication" in str(e.value)
     assert not any(s.startswith("INSERT INTO schema_migrations") for s in db.log)
-
-
-def _PORTAL(g):
-    """What the portal role may hold on a table: SELECT where the map says so, nothing else."""
-    return "SELECT" if (g and g.portal) else ""
-
-
-class _Privileges:
-    """A connection for `effective_problems` (runtime and portal role checks): a server of one version, one table in the map, and
-    a record of every privilege name it is asked about."""
-
-    def __init__(self, version: int):
-        self.version, self.asked = version, []
-
-    def execute(self, query, params=None):
-        text = str(query)
-        if "server_version_num" in text:
-            return _Result([(self.version,)])
-        if "FROM pg_roles WHERE rolname" in text:
-            return _Result([(False, False, False, False)])
-        if text == "SELECT current_schema()":
-            return _Result([("s",)])
-        if "has_schema_privilege" in text:
-            return _Result([(False,)])
-        if "FROM pg_class" in text:
-            return _Result([(1, "spend", "r", "someone_else")])
-        if "has_table_privilege" in text:
-            self.asked.append(params[2])
-            return _Result([(False,)])
-        if "has_sequence_privilege" in text:
-            return _Result([(False,)])
-        return _Result([])
-
-
-@pytest.mark.parametrize("version, asked", [(160015, False), (170010, True)])
-def test_the_maintain_privilege_is_asked_about_from_postgresql_17_only(version, asked):
-    """PostgreSQL 17 added the table privilege MAINTAIN and 16 refuses the name. Killed by: mutants MT1 (never asked) and MT2
-    (always asked)."""
-    db = _Privileges(version)
-    assert mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "") == []
-    assert ("MAINTAIN" in db.asked) is asked, db.asked
-    db = _Privileges(version)
-    assert mig.effective_problems(db, "pt_role", _PORTAL) == []
-    assert ("MAINTAIN" in db.asked) is asked, db.asked
-
-
-def test_a_maintain_grant_is_a_problem_on_postgresql_17():
-    class _Maintains(_Privileges):
-        def execute(self, query, params=None):
-            if "has_table_privilege" in str(query) and params[2] == "MAINTAIN":
-                self.asked.append("MAINTAIN")
-                return _Result([(True,)])
-            return super().execute(query, params)
-
-    db = _Maintains(170010)
-    assert any(
-        "can MAINTAIN spend" in p
-        for p in mig.effective_problems(db, "rt_role", lambda g: g.runtime if g else "")
-    )
-    assert any(
-        "can MAINTAIN spend" in p
-        for p in mig.effective_problems(_Maintains(170010), "pt_role", _PORTAL)
-    )
-
-
-def test_the_portal_role_is_asked_about_every_table_privilege_the_other_roles_are():
-    """The portal check is the same `effective_problems` scan as the runtime check, so REFERENCES and TRIGGER are
-    counted too. Killed by: mutant PT1 (the portal check goes back to a shorter list of its own)."""
-    db = _Privileges(160015)
-    assert mig.effective_problems(db, "pt_role", _PORTAL) == []
-    assert set(mig._TABLE_PRIVS) <= set(db.asked), db.asked
-
-    class _Triggers(_Privileges):
-        def execute(self, query, params=None):
-            if "has_table_privilege" in str(query) and params[2] in ("REFERENCES", "TRIGGER"):
-                return _Result([(True,)])
-            return super().execute(query, params)
-
-    extra = mig.effective_problems(_Triggers(160015), "pt_role", _PORTAL)
-    assert any("can REFERENCES spend" in p for p in extra) and any(
-        "can TRIGGER spend" in p for p in extra
-    ), extra
 
 
 # --- the released-file list is checked by migrate() itself ---------------------------------------------

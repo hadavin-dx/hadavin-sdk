@@ -515,7 +515,8 @@ class Problem:
             ending = (
                 f"belongs to the extension {_label(self.extension)} (owner {_label(self.owner)}), not to this package; "
                 "a REVOKE is undone by the next ALTER EXTENSION ... UPDATE; a database administrator decides "
-                "(for example a database of its own for this package); no statement is printed"
+                "(for example a database of its own for this package, or the extension installed in another schema); no "
+                "statement is printed"
             )
         else:
             ending = _BY_HAND.get(self.by_hand, "")
@@ -567,10 +568,8 @@ def pinned_read(db, limits: Sequence[str]) -> Iterator[None]:
 def check_version(version: int, shown: str | None = None) -> None:
     """Refuse a server below PostgreSQL 16 (ticket 3.5), before the first query that needs 16."""
     if version < 160000:
-        text = (
-            shown or f"{version // 10000}.{version % 10000 // 100}"
-            if version >= 100000
-            else shown or str(version)
+        text = shown or (
+            f"{version // 10000}.{version % 10000}" if version >= 100000 else str(version)
         )
         raise ConfigError(
             f"this database server is PostgreSQL {_label(str(text))}; migrate needs PostgreSQL 16 or later (it reads who is a "
@@ -836,8 +835,6 @@ def _judge(
             closure[n]["pg_database_owner"] = closure[n][rows.database_owner]
     fam_roles = {r.member_of for r in rows.family} | set(family)
     fam_has_db_owner = rows.database_owner in fam_roles
-    if fam_has_db_owner:
-        fam_roles.add("pg_database_owner")
     named_of: dict[str, list[str]] = {}
     for n in named:
         for role in closure[n]:
@@ -923,7 +920,6 @@ def _judge(
         in_run = (not it.system) and it.schema == schema
         ext = it.extension if (it.extension and not it.extension_family_owned) else ""
         outside = (not in_run) or not fam_owned
-        grantee_label = EVERYONE if it.grantee is None else it.grantee
 
         def make(
             kind,
@@ -1018,7 +1014,7 @@ def _judge(
             )
             if in_fn and it.definer and right == "EXECUTE" and not ext:
                 key = (it.schema, it.name, it.sub)
-                if key not in reviewed_definers or ext:
+                if key not in reviewed_definers:
                     out.append(
                         make(
                             "definer_callable",
@@ -1078,7 +1074,6 @@ def _judge(
             out.append(make("other_grantee", it.grantee, it.privilege_type))
             if it.is_grantable:
                 out.append(make("object_grant_option", it.grantee, it.privilege_type, option=True))
-        del grantee_label
 
     # O4 reviewed definers and O8 owner of the package's own objects: once per object, from the rows of the schema of the run
     for it in rows.items:

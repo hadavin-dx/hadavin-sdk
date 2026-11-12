@@ -671,3 +671,196 @@ def test_a_write_to_a_view_that_is_not_updatable_is_inconclusive_for_the_oracle(
         scaffold=["GRANT USAGE ON SCHEMA s TO " + case.role["n"]],
     )
     assert kind == "inconclusive" and detail.startswith("55000"), (kind, detail)
+
+
+# --- 6. the outcome-counting matrix through `migrate()` (reduced; the generated matrix is commit 5) ---------------------
+# Every cell is one effect, brought by one carrier, with or without role arguments, and judged by the three outcomes of
+# ticket 1.3: (i) `migrate` refuses and keeps nothing; (ii) `migrate` returns and reports excess rights (exit 5 through
+# the command line: `AppliedNotVerifiedError` here); (iii) `migrate` returns and the database holds no excess right.
+# "applied with excess: 0" is the count that must hold for every cell that returns. The tables below are written by hand;
+# `test_the_matrix_has_exactly_the_planned_cells` counts them.
+
+# (id, statement, True when the run repairs it by itself if it is given the role arguments)
+O_EFFECTS = [
+    ("O01-select-other", "GRANT SELECT ON audit_entries TO {other}", False),
+    ("O02-select-everyone", "GRANT SELECT ON audit_entries TO PUBLIC", False),
+    ("O03-column-other", "GRANT SELECT (seq) ON audit_entries TO {other}", False),
+    ("O04-sequence-other", "GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other}", False),
+    (
+        "O05-function-other",
+        "GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other}",
+        False,
+    ),
+    ("O06-delete-runtime", "GRANT DELETE ON audit_entries TO {rt}", True),
+]
+O_CARRIERS = ["C1-plain-file", "C2-dynamic-sql", "C12-by-hand-then-migrate"]
+O_VARIANTS = ["no-roles", "with-roles"]
+O_CONTROLS = ["K-clean-no-roles", "K-clean-with-roles"]
+
+
+def _cells() -> list[tuple[str, str, str]]:
+    return [(e[0], c, v) for e in O_EFFECTS for c in O_CARRIERS for v in O_VARIANTS]
+
+
+def test_the_matrix_has_exactly_the_planned_cells():
+    cells = _cells()
+    total = len(cells) + len(O_CONTROLS)
+    print(
+        f"matrix cells: {len(O_EFFECTS)} effects x {len(O_CARRIERS)} carriers x {len(O_VARIANTS)} variants = "
+        f"{len(cells)}; controls {len(O_CONTROLS)}; total {total}"
+    )
+    assert (len(O_EFFECTS), len(O_CARRIERS), len(O_VARIANTS)) == (6, 3, 2)
+    assert len(cells) == 36 and len(set(cells)) == 36
+    assert len(O_CONTROLS) == 2 and total == 38
+    assert [e[0] for e in O_EFFECTS] == sorted(e[0] for e in O_EFFECTS)
+
+
+def _kept_nothing(text) -> bool:
+    """The refusal says the run kept nothing: at step 2 "Nothing was changed. No file ran.", later "The whole run is
+    rolled back"."""
+    text = str(text)
+    return "Nothing was changed." in text or "The whole run is rolled back" in text
+
+
+@pytest.fixture
+def ocell():
+    """(dsn scoped to a fresh empty schema of the shared test database, schema name); the schema is dropped afterwards."""
+    if not DSN:
+        pytest.skip("HADAVIN_TEST_PG_DSN not set")
+    import uuid
+
+    schema = f"hadavin_test_{uuid.uuid4().hex[:12]}"
+    with psycopg.connect(DSN, autocommit=True) as db:
+        db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+    try:
+        yield make_conninfo(DSN, options=f"-c search_path={schema}"), schema
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as db:
+            db.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+
+
+def _has(db_role: str, schema: str, table: str, right: str) -> bool:
+    with psycopg.connect(DSN, autocommit=True) as db:
+        return db.execute(
+            "SELECT has_table_privilege(%s, %s, %s)",
+            (db_role, f"{schema}.{table}", right),
+        ).fetchone()[0]
+
+
+def _no_excess_rights(schema: str, other: str, rt: str | None) -> list[str]:
+    """What is wrong in the schema afterwards, read from the access lists with no help from `verify`: a right for the
+    other role or for everyone on the table, the column or the sequence the effects touch, or a right for the runtime
+    role that the grant map does not give. [] means "applied with excess: 0"."""
+    found: list[str] = []
+    with psycopg.connect(DSN, autocommit=True) as db:
+        for who in (other, "public"):
+            for table in ("audit_entries",):
+                for right in ("SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES"):
+                    if db.execute(
+                        "SELECT has_table_privilege(%s, %s, %s)",
+                        (who, f"{schema}.{table}", right),
+                    ).fetchone()[0]:
+                        found.append(f"{who} {right} on {table}")
+            if db.execute(
+                "SELECT has_column_privilege(%s, %s, 'seq', 'SELECT')",
+                (who, f"{schema}.audit_entries"),
+            ).fetchone()[0]:
+                found.append(f"{who} SELECT (seq) on audit_entries")
+            if db.execute(
+                "SELECT has_sequence_privilege(%s, %s, 'USAGE')",
+                (who, f"{schema}.approval_decisions_seq_seq"),
+            ).fetchone()[0]:
+                found.append(f"{who} USAGE on approval_decisions_seq_seq")
+            if db.execute(
+                "SELECT has_function_privilege(%s, %s, 'EXECUTE')",
+                (who, f"{schema}.hadavin_audit_append_only()"),
+            ).fetchone()[0]:
+                found.append(f"{who} EXECUTE on hadavin_audit_append_only")
+        if (
+            rt
+            and db.execute(
+                "SELECT has_table_privilege(%s, %s, 'DELETE')", (rt, f"{schema}.audit_entries")
+            ).fetchone()[0]
+        ):
+            found.append(f"{rt} DELETE on audit_entries")
+    return found
+
+
+@pytest.mark.parametrize("cell", _cells(), ids=["/".join(c) for c in _cells()])
+@needs_pg
+def test_every_matrix_cell_ends_in_one_of_the_three_outcomes(cell, ocell, monkeypatch, tmp_path):
+    """One cell, through `migrate()`. Expected by rule: with no role arguments every effect names a role the run does not
+    know, so the result is (i): refused, nothing kept (the carrier by hand is refused before any file: "No file
+    ran"). With the role arguments, an effect on the runtime role's own rights is repaired by step 4 and the run
+    returns with no excess right (iii). The outcome (ii) must never be the answer to a mistake the run could see."""
+    from hadavin_sdk import errors
+
+    # on a head that has no such outcome the class is one nothing raises (the old-head proof of ticket 7.9 relies on this)
+    AppliedNotVerifiedError = getattr(errors, "AppliedNotVerifiedError", None) or type(
+        "AppliedNotVerifiedError", (Exception,), {}
+    )
+    ConfigError = errors.ConfigError
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    eid, carrier, variant = cell
+    effect = next(e for e in O_EFFECTS if e[0] == eid)
+    dsn, schema = ocell
+    import uuid
+
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    roles = {"runtime_role": rt} if variant == "with-roles" else {}
+    statement = effect[1].format(other=other, rt=rt)
+    repaired = effect[2] and variant == "with-roles"
+    try:
+        if carrier == "C1-plain-file":
+            tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": statement + ";\n"})
+        elif carrier == "C2-dynamic-sql":
+            tp._with_files(monkeypatch, tmp_path, {"0006_effect.sql": tp._dynamic(statement)})
+        else:
+            assert mig.migrate(dsn, **roles) == tp.REAL  # a clean run first
+            with mig.connect(dsn) as db:  # then the effect by hand, as the owner of the tables
+                db.execute(statement)
+        outcome = None
+        try:
+            applied = mig.migrate(dsn, **roles)
+            outcome = "iii" if not _no_excess_rights(schema, other, rt if roles else None) else "ii"
+            assert applied is not None
+        except AppliedNotVerifiedError:
+            outcome = "ii"
+        except ConfigError as e:
+            outcome = "i"
+            assert _kept_nothing(e), str(e)
+            if carrier.startswith("C12"):
+                assert "No file ran" in str(e), str(e)
+        expected = "iii" if repaired else "i"
+        assert outcome == expected, f"{cell}: outcome {outcome}, expected {expected}"
+        if outcome == "iii":
+            assert _no_excess_rights(schema, other, rt) == [], "applied with excess: not 0"
+    finally:
+        tp._drop_roles(other, rt)
+
+
+@needs_pg
+@pytest.mark.parametrize("variant", O_VARIANTS)
+def test_the_clean_control_returns_with_no_excess_right(variant, ocell, monkeypatch, tmp_path):
+    """The control with no effect: the run goes through and "applied with excess: 0" holds, so a cell that refuses is
+    refused because of its effect and not because of the setup."""
+    import uuid
+
+    from hadavin_sdk.store import migrate as mig
+    from tests import test_migration_postgres as tp
+
+    dsn, schema = ocell
+    other = "hadavin_test_mx_" + uuid.uuid4().hex[:8]
+    rt = "hadavin_test_mxr_" + uuid.uuid4().hex[:8]
+    tp._create_roles(other, rt)
+    try:
+        roles = {"runtime_role": rt} if variant == "with-roles" else {}
+        assert mig.migrate(dsn, **roles) == tp.REAL
+        assert _no_excess_rights(schema, other, rt if roles else None) == []
+        assert mig.migrate(dsn, **roles) == []
+    finally:
+        tp._drop_roles(other, rt)

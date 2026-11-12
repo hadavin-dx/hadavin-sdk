@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import ast
 import itertools
+import sys
 import types
 from pathlib import Path
 
@@ -594,8 +595,8 @@ def test_the_rename_refusal_points_to_the_runbook_case_b(tmp_path):
 def test_the_migrate_docstring_counts_what_it_reads_back():
     doc = _words(mig.__doc__ or "")
     assert "three session settings" not in doc
-    assert "current user and the session user" in doc and "search path" in doc
-    assert "three settings that change how SQL text is read" in doc
+    assert "the values, memberships, saved settings and triggers it saved before the file" in doc
+    assert "the memberships are read from `pg_auth_members`" in doc
     assert "cases (a) to (h)" in doc
     assert "eleven values" in _words(mig._check_read_back.__doc__ or "")
     assert len(mig._READBACK_VALUES) == 11
@@ -676,11 +677,7 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     """migrate() calls the released-file check. Killed by: mutants R6 (the call removed; the wiring test) and R23 (the CHANGELOG sentence goes)."""
     first = _words(_upgrade_bullet())
     assert "refuses, before it connects, a released file that was edited or deleted" in first
-    assert (
-        "Not yet run on PostgreSQL 17.10, the CI version, so the `MAINTAIN` check is covered only by tests that fake the server version, until that run exists."
-        in first
-    )
-    assert "asks for `MAINTAIN` only from 17, because 16 rejects that name" in first
+    assert "there is no version branch for it" in first
     assert (
         "A role that holds `REPLICATION`, or is a member of a role that holds it, is refused"
         in first
@@ -699,10 +696,8 @@ def test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim():
     )
     assert "Why a test run keeps a connection open.** So that another test run" in tests_part
     assert "a *test schema* is a schema whose name starts with `hadavin_test_`" in tests_part
-    assert (
-        "Refused: rights for any other role, owners a file handed over, rights on the schema, default rights, and SECURITY DEFINER."
-        in first
-    )
+    assert "What is refused, and the baseline." in first
+    assert "`definer_unreviewed`" in first and "`default_for_everyone`" in first
     assert (
         "`REVIEWED_DEFINER_FUNCTIONS`" in first
         and "waits for the lock at most `lock_wait_seconds`" in first
@@ -1019,3 +1014,82 @@ def test_batch_2_names_only_real_mutants():
 
     known = {m.name for m in migrate_mutants.M}
     assert sorted(migrate_mutants.BATCH_2_IDS - known) == []
+
+
+# --- 7.8 no real-server test returns before it runs `migrate` ---------------------------------------------------------
+
+_RUNNERS = {"migrate", "_run_plant", "run_case", "main"}
+_VISIBLE_MARKER = "# visible: pytest.fail above"
+_REAL_SERVER_FILES = (
+    "tests/test_migration_postgres.py",
+    "tests/test_migration_verify_pg.py",
+    "tests/test_migration_matrix.py",
+)
+
+
+def _own_nodes(fn):
+    """The nodes of a function without the bodies of the functions defined inside it (their `return` is theirs)."""
+    stack = list(ast.iter_child_nodes(fn))
+    while stack:
+        n = stack.pop()
+        yield n
+        if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(n))
+
+
+def _early_returns(path: str) -> list[str]:
+    """Every `return` (bare or `return None`) of a `test_*` function that comes before the first call of a runner,
+    unless its line carries the marker. A function with `yield` is not checked; helpers are not checked."""
+    text = (ROOT / path).read_text(encoding="utf-8")
+    lines = text.splitlines()
+    found: list[str] = []
+    for fn in ast.walk(ast.parse(text)):
+        if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)) or not fn.name.startswith(
+            "test_"
+        ):
+            continue
+        if any(isinstance(n, (ast.Yield, ast.YieldFrom)) for n in ast.walk(fn)):
+            continue
+        calls = [
+            n.lineno
+            for n in ast.walk(fn)
+            if isinstance(n, ast.Call)
+            and (
+                (isinstance(n.func, ast.Name) and n.func.id in _RUNNERS)
+                or (isinstance(n.func, ast.Attribute) and n.func.attr in _RUNNERS)
+            )
+        ]
+        first = min(calls) if calls else None
+        for n in _own_nodes(fn):
+            if not isinstance(n, ast.Return):
+                continue
+            bare = n.value is None or (isinstance(n.value, ast.Constant) and n.value.value is None)
+            if not bare or _VISIBLE_MARKER in lines[n.lineno - 1]:
+                continue
+            if first is None or n.lineno < first:
+                found.append(f"{path}:{n.lineno} in {fn.name}")
+    return sorted(found)
+
+
+def test_no_real_server_test_returns_before_it_runs_migrate():
+    """A test that quietly returns before `migrate` ran passes without testing anything; it must fail loudly instead."""
+    problems = [p for f in _REAL_SERVER_FILES for p in _early_returns(f)]
+    assert problems == [], problems
+
+
+def test_the_early_return_check_sees_a_planted_early_return(tmp_path, monkeypatch):
+    """The check itself is tested: a planted early return is found, one before a runner call is found, the marker and a
+    `yield` function are exempt."""
+    sample = tmp_path / "sample.py"
+    sample.write_text(
+        "def test_a():\n    return\n    migrate()\n"
+        "def test_b():\n    migrate()\n    return\n"
+        "def test_c():\n    return None  # visible: pytest.fail above\n    migrate()\n"
+        "def test_d():\n    yield\n    return\n"
+        "def test_e():\n    x = 1\n    return None\n"
+        "def test_f():\n    def inner():\n        return\n    migrate()\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
+    got = _early_returns("sample.py")
+    assert sorted(g.split(" in ")[1] for g in got) == ["test_a", "test_e"], got

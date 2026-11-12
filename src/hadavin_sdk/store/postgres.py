@@ -151,8 +151,10 @@ def connect(
 
 # --- what the migration checker (`store/migration_verify.py`) needs from the driver -----------------------------------
 # Bug class: a vendor library imported outside its kind module (lock-in; the guard is
-# `tests/test_lockin_guard.py::test_vendor_sdks_stay_inside_their_kind_modules`). The checker builds its statements
-# and reads its rows only through these names, so a second database kind replaces this block and nothing else.
+# `tests/test_lockin_guard.py::test_vendor_sdks_stay_inside_their_kind_modules`). The checker module
+# `migration_verify.py` (and only that module) builds its statements and reads its rows through these names. The
+# runner `migrate.py` still imports the driver itself (the guard's allow list names it), so this block is not yet the
+# one place a second database kind would have to replace.
 SqlPart = sql.Composable
 Rollback = (
     psycopg.Rollback
@@ -167,7 +169,8 @@ def quote_identifier(*parts: str) -> SqlPart:
 
 
 def sql_words(text: str) -> SqlPart:
-    """Fixed SQL words written in our own code (never text from a database or a file)."""
+    """Fixed SQL words written in our own code. Text read from a database is passed only after a check that it is a plain
+    name (`migration_verify._plain`); never text from a file."""
     return sql.SQL(text)
 
 

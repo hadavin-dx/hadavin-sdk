@@ -292,7 +292,7 @@ def test_runs_that_disagree_are_refused(tmp_path):
     _refuses(fx, "disagree")
 
 
-def test_outputs_changed_since_replay_is_a_warning(tmp_path):
+def test_outputs_that_changed_after_the_replay_are_a_warning(tmp_path):
     fx = _fx(tmp_path)
     assert fx.score().outputs_changed is False  # no outputs.sha256 yet: nothing to compare
     (fx.out / "outputs.sha256").write_text("0" * 64 + "\n", encoding="utf-8")
