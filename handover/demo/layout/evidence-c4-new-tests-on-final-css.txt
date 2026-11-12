@@ -1,0 +1,3 @@
+cmd: [css state: FINAL (0841f36 + both patches r2)] python -m pytest tests/test_portal_phone_layout.py tests/test_portal_drawer_long_name.py tests/test_portal_long_values.py -q -p no:cacheprovider --tb=short
+......................................................                   [100%]
+54 passed in 75.21s (0:01:15)

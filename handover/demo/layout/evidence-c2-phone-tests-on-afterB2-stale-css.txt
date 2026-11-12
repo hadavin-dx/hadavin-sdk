@@ -1,0 +1,41 @@
+cmd: [css state: the stale state of the old afterB2 screenshots = patch 1 + app.css part of patch 2, WITHOUT the leads/needs/overview/demo phone rules] python -m pytest tests/test_portal_phone_layout.py -q -p no:cacheprovider --tb=line
+F.F.F.F.F.F.........F.F.........F                                        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: {'vw': 390, 'checked': 317, 'out': ['div.kpi-label 342..393', 'span. 354..393', 'div.kpi-value 342..393', 'div.kpi-caption 342..393', 'li. 269..415', 'span.faint 359..415', ...], 'count': 18, ...}
+    assert 415 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 317, 'out': ['div.kpi-label 342..393', 'span. 354..393', 'div.kpi-value 342..393', 'div.kpi-caption 342..393', 'li. 269..415', 'span.faint 359..415', ...], 'count': 18, ...}
+E   AssertionError: {'vw': 390, 'checked': 317, 'out': ['div.kpi-label 342..393', 'span. 354..393', 'div.kpi-value 342..393', 'div.kpi-caption 342..393', 'li. 269..415', 'span.faint 359..415', ...], 'count': 18, ...}
+    assert 415 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 317, 'out': ['div.kpi-label 342..393', 'span. 354..393', 'div.kpi-value 342..393', 'div.kpi-caption 342..393', 'li. 269..415', 'span.faint 359..415', ...], 'count': 18, ...}
+E   AssertionError: {'vw': 390, 'checked': 59, 'out': ['div.sumstrip 80..480', 'div.sumstat 346..479', 'div.sumstat-value 371..455', 'div.eyebrow 371..455', 'div.toolbar-block 80..480', 'div.toolbar 80..480', ...], 'count': 15, ...}
+    assert 480 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 59, 'out': ['div.sumstrip 80..480', 'div.sumstat 346..479', 'div.sumstat-value 371..455', 'div.eyebrow 371..455', 'div.toolbar-block 80..480', 'div.toolbar 80..480', ...], 'count': 15, ...}
+E   AssertionError: {'vw': 390, 'checked': 59, 'out': ['div.sumstrip 80..480', 'div.sumstat 346..479', 'div.sumstat-value 371..455', 'div.eyebrow 371..455', 'div.toolbar-block 80..480', 'div.toolbar 80..480', ...], 'count': 15, ...}
+    assert 480 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 59, 'out': ['div.sumstrip 80..480', 'div.sumstat 346..479', 'div.sumstat-value 371..455', 'div.eyebrow 371..455', 'div.toolbar-block 80..480', 'div.toolbar 80..480', ...], 'count': 15, ...}
+E   AssertionError: {'vw': 390, 'checked': 292, 'out': ['div.tabs 80..540', 'button.tab 373..540', 'span.tab-count 500..524', 'div.needs-list 80..540', 'div.needs-lead 80..540', 'p. 80..540', ...], 'count': 130, ...}
+    assert 540 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 292, 'out': ['div.tabs 80..540', 'button.tab 373..540', 'span.tab-count 500..524', 'div.needs-list 80..540', 'div.needs-lead 80..540', 'p. 80..540', ...], 'count': 130, ...}
+E   AssertionError: {'vw': 390, 'checked': 292, 'out': ['div.tabs 80..540', 'button.tab 373..540', 'span.tab-count 500..524', 'div.needs-list 80..540', 'div.needs-lead 80..540', 'p. 80..540', ...], 'count': 130, ...}
+    assert 540 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 292, 'out': ['div.tabs 80..540', 'button.tab 373..540', 'span.tab-count 500..524', 'div.needs-list 80..540', 'div.needs-lead 80..540', 'p. 80..540', ...], 'count': 130, ...}
+E   AssertionError: {'vw': 390, 'checked': 60, 'out': ['div.shell -81..309', 'aside.rail -81..-17', 'div.brand -69..-30', 'span.mark -61..-29', 'svg.[object -54..-36', 'nav.nav -69..-30', ...], 'count': 41, ...}
+    assert 480 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 60, 'out': ['div.shell -81..309', 'aside.rail -81..-17', 'div.brand -69..-30', 'span.mark -61..-29', 'svg.[object -54..-36', 'nav.nav -69..-30', ...], 'count': 41, ...}
+E   AssertionError: {'vw': 390, 'checked': 60, 'out': ['div.shell -81..309', 'aside.rail -81..-17', 'div.brand -69..-30', 'span.mark -61..-29', 'svg.[object -54..-36', 'nav.nav -69..-30', ...], 'count': 41, ...}
+    assert 480 <= 390
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:85: AssertionError: {'vw': 390, 'checked': 60, 'out': ['div.shell -81..309', 'aside.rail -81..-17', 'div.brand -69..-30', 'span.mark -61..-29', 'svg.[object -54..-36', 'nav.nav -69..-30', ...], 'count': 41, ...}
+E   AssertionError: {'height': 39, 'wrap': 'nowrap', 'ringTop': -9, 'ringLeft': -9, ...}
+    assert (-9 >= 0)
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:170: AssertionError: {'height': 39, 'wrap': 'nowrap', 'ringTop': -9, 'ringLeft': -9, ...}
+=========================== short test summary info ============================
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[overview-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[overview-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[leads-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[leads-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[needs-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[needs-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[lead-panel-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[lead-panel-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_the_tabs_do_not_wrap_and_nothing_of_the_active_tab_is_clipped_at_390_px
+9 failed, 24 passed in 33.10s

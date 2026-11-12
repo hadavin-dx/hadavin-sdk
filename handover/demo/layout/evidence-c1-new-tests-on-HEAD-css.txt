@@ -1,0 +1,62 @@
+cmd: [css state: HEAD 0841f36 css, new tests] python -m pytest tests/test_portal_phone_layout.py tests/test_portal_drawer_long_name.py tests/test_portal_long_values.py -q -p no:cacheprovider --tb=line
+0841f36
+    assert not ['DIV.toast-text 55..2882', 'BUTTON.toast-x 2894..2918', 'svg.[object SVGAnimatedString] 2900..2914', 'use.[object SVGAnimatedString] 2904..2911']
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:101: AssertionError: {'out': ['DIV.toast-text 55..2882', 'BUTTON.toast-x 2894..2918', 'svg.[object SVGAnimatedString] 2900..2914', 'use.[object SVGAnimatedString] 2904..2911'], 'box': [8, 2935], 'vw': 390}
+E   AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...], 'box': [768, 1248], 'vw': 1280})
+    assert not ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...]
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:122: AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...], 'box': [768, 1248], 'vw': 1280})
+E   AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...], 'box': [768, 1248], 'vw': 1280})
+    assert not ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...]
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:122: AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-meta 793..3521', 'SPAN.need-who 793..3521', 'DIV.need-head 793..3521', 'H2. 950..1264', 'P.need-why 793..1500', 'DETAILS.details 793..3521', ...], 'box': [768, 1248], 'vw': 1280})
+E   AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.fain....463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...], 'box': [232, 607.6875], 'vw': 390})
+    assert not ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.faint 352..463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...]
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:122: AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.fain....463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...], 'box': [232, 607.6875], 'vw': 390})
+E   AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.fain....463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...], 'box': [232, 607.6875], 'vw': 390})
+    assert not ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.faint 352..463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...]
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:122: AssertionError: ('FL0c4d8e2f6a19', {'out': ['DIV.need-main 257..583', 'DIV.need-meta 257..2985', 'SPAN.need-who 257..2985', 'SPAN.fain....463', 'SPAN.need-since 479..607', 'svg.[object SVGAnimatedString] 479..493', ...], 'box': [232, 607.6875], 'vw': 390})
+E   AssertionError: {'scroll': 3472, 'client': 974, 'name': 62.75}
+    assert 3472 <= (974 + 1)
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:140: AssertionError: {'scroll': 3472, 'client': 974, 'name': 62.75}
+E   AssertionError: {'scroll': 3472, 'client': 974, 'name': 62.75}
+    assert 3472 <= (974 + 1)
+/tmp/work/l13c-tree/tests/test_portal_long_values.py:140: AssertionError: {'scroll': 3472, 'client': 974, 'name': 62.75}
+=========================== short test summary info ============================
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[overview-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[overview-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[leads-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[leads-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[needs-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[needs-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[log-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[log-light-700]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[log-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[log-dark-700]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[data-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[data-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[lead-panel-light-390]
+FAILED tests/test_portal_phone_layout.py::test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it[lead-panel-dark-390]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[390-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[700-64]
+FAILED tests/test_portal_phone_layout.py::test_the_rail_is_icon_only_up_to_860_px_and_the_page_margin_follows[860-64]
+FAILED tests/test_portal_phone_layout.py::test_the_tabs_do_not_wrap_and_nothing_of_the_active_tab_is_clipped_at_390_px
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1280-dark]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[1100-dark]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[390-light]
+FAILED tests/test_portal_drawer_long_name.py::test_a_long_unbroken_name_stays_inside_the_lead_panel_header[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[1280-light]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[1280-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[390-light]
+FAILED tests/test_portal_long_values.py::test_a_long_name_stays_inside_the_confirm_question[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[1280-light]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[1280-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[390-light]
+FAILED tests/test_portal_long_values.py::test_a_long_desk_note_stays_inside_the_message_at_the_corner[390-dark]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[1280-light]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[1280-dark]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[390-light]
+FAILED tests/test_portal_long_values.py::test_long_values_stay_inside_their_needs_a_person_cards[390-dark]
+FAILED tests/test_portal_long_values.py::test_a_long_company_does_not_squeeze_the_leads_table[light]
+FAILED tests/test_portal_long_values.py::test_a_long_company_does_not_squeeze_the_leads_table[dark]
+38 failed, 15 passed in 58.03s

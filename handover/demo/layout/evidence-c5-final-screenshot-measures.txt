@@ -1,0 +1,13 @@
+cmd: shots.py final (final tree 0841f36 + both r2 patches; desk restarted after the css edit; per page: doc scrollWidth, .shell and .ov-kpis computed columns, boxes beyond a window edge)
+overview light 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": "141px 141px", "off": [], "nOff": 0}
+needs light 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": null, "off": [], "nOff": 0}
+leads light 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": null, "off": [], "nOff": 0}
+overview light 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": "296px 296px", "off": [], "nOff": 0}
+needs light 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": null, "off": [], "nOff": 0}
+leads light 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": null, "off": [], "nOff": 0}
+overview dark 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": "141px 141px", "off": [], "nOff": 0}
+needs dark 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": null, "off": [], "nOff": 0}
+leads dark 390 {"vw": 390, "sw": 390, "shell": "64px 326px", "kpi": null, "off": [], "nOff": 0}
+overview dark 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": "296px 296px", "off": [], "nOff": 0}
+needs dark 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": null, "off": [], "nOff": 0}
+leads dark 700 {"vw": 700, "sw": 700, "shell": "64px 636px", "kpi": null, "off": [], "nOff": 0}

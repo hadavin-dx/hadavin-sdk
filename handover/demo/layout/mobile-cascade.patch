@@ -10,10 +10,18 @@ index 5137a5e..da3ce6e 100644
 +/* a phone: the figures of the cross-check wrap onto the next line instead of widening the page */
 +@media (max-width: 860px) { .dm-proof-row { flex-wrap: wrap; } }
 diff --git a/src/lead_desk/portal/app.css b/src/lead_desk/portal/app.css
-index d7acc7c..107cdae 100644
+index 3732ee3..9a16111 100644
 --- a/src/lead_desk/portal/app.css
 +++ b/src/lead_desk/portal/app.css
-@@ -266,7 +266,7 @@ button, input, select { font: inherit; color: inherit; }
+@@ -259,14 +259,14 @@ button, input, select { font: inherit; color: inherit; }
+ .search .ico { position: absolute; left: var(--s3); width: 16px; height: 16px; color: var(--ink-3); pointer-events: none; }
+ .search .input { padding-left: var(--s6); width: 320px; }
+ .tabs { display: flex; gap: var(--s1); border-bottom: 1px solid var(--border-soft); }
+-.tab { display: inline-flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s4); border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ink-2); font-weight: 600; cursor: pointer; margin-bottom: 0; border-radius: var(--r-ctl) var(--r-ctl) 0 0; }
++.tab { white-space: nowrap; display: inline-flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s4); border: 0; border-bottom: 2px solid transparent; background: none; color: var(--ink-2); font-weight: 600; cursor: pointer; margin-bottom: 0; border-radius: var(--r-ctl) var(--r-ctl) 0 0; }
+ .tab:hover { color: var(--ink); background: var(--surface-2); }
+ .tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+ .tab-count { font-size: var(--t-xs); padding: 0 var(--s2); border-radius: var(--r-pill); background: var(--neutral-bg); color: var(--neutral-fg); font-variant-numeric: tabular-nums; }
  .tab[aria-selected="true"] .tab-count { background: var(--accent-wash); color: var(--accent); }
  
  /* table */
@@ -22,12 +30,21 @@ index d7acc7c..107cdae 100644
  .table { width: 100%; border-collapse: collapse; font-size: var(--t-base); }
  .table th { text-align: left; font: 600 var(--t-sm) / 1.3 var(--font); color: var(--ink-2); letter-spacing: 0; text-transform: none; padding: var(--s3) var(--s4); background: var(--surface-2); border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
  .table td { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
-@@ -613,10 +613,12 @@ dialog::backdrop { background: var(--scrim-solid); }
+@@ -577,7 +577,7 @@ dialog::backdrop { background: var(--scrim-solid); }
+ 
+ /* ===== strip, form controls and tables ===== */
+ /* the demo line and the page content share one left edge on wide screens (the page is capped at 1240 px and centred) */
+-@media (min-width: 861px) { .strip { padding-left: max(var(--s6), calc((100% - 1240px) / 2 + var(--s6))); padding-right: max(var(--s6), calc((100% - 1240px) / 2 + var(--s6))); } }
++@media (width > 860px) { .strip { padding-left: max(var(--s6), calc((100% - 1240px) / 2 + var(--s6))); padding-right: max(var(--s6), calc((100% - 1240px) / 2 + var(--s6))); } }
+ /* a small inline id or code: neutral chip, never the colour of a status */
+ .chip-id { display: inline-block; padding: 2px var(--s2); border-radius: var(--r-sm); background: var(--neutral-bg); color: var(--neutral-fg); }
+ .toolbar { align-items: center; }
+@@ -616,10 +616,12 @@ dialog::backdrop { background: var(--scrim-solid); }
  .drawer-more { background: var(--surface); border-top: 1px solid var(--border-faint); padding: var(--s1) 0; }
  
  /* 1200 and below: a slimmer rail and page margin give the tables room; Received stacks its two lines */
 -@media (max-width: 1200px) {
-+@media (min-width: 861px) and (max-width: 1200px) { /* not below 861: the 860 px rules (icon rail, 16 px margins) come earlier in this file and would lose to these */
++@media (width > 860px) and (width <= 1200px) { /* the exact complement of the (max-width: 860px) rules above (no gap at 860.5 px); not below: those come earlier in this file and would lose to these */
    .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--rail-bot) 207px, var(--border-soft) 207px 208px, transparent 208px); }
    .page { padding-left: var(--s5); padding-right: var(--s5); }
    .strip { padding-left: var(--s5); padding-right: var(--s5); }
@@ -37,10 +54,10 @@ index d7acc7c..107cdae 100644
    .log-out .table td:nth-child(2) { max-width: none; }
    .log-out .table td:nth-child(4) { min-width: 10rem; }
 diff --git a/src/lead_desk/portal/pages/leads.css b/src/lead_desk/portal/pages/leads.css
-index b586fdf..36409a6 100644
+index 5d5b0dc..80041d0 100644
 --- a/src/lead_desk/portal/pages/leads.css
 +++ b/src/lead_desk/portal/pages/leads.css
-@@ -99,3 +99,6 @@ details.details .kv { margin-top: var(--s3); grid-template-columns: max-content
+@@ -101,3 +101,6 @@ details.details .kv { margin-top: var(--s3); grid-template-columns: max-content
  .owner-name { overflow: hidden; text-overflow: ellipsis; }
  .avatar { flex: none; width: 22px; height: 22px; border-radius: var(--r-pill); display: inline-grid; place-items: center; font-size: var(--t-xs); font-weight: 700; background: var(--accent-wash); color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent); }
  .ledger-value .pill { white-space: normal; text-align: left; }
@@ -48,16 +65,16 @@ index b586fdf..36409a6 100644
 +/* a phone: the search box may shrink (its own 400 px width stretched the whole page) and the hint under it may wrap */
 +@media (max-width: 860px) { .toolbar-block { grid-template-columns: minmax(0, 1fr); } .toolbar .search { min-width: 0; } .search-hint { white-space: normal; } }
 diff --git a/src/lead_desk/portal/pages/needs.css b/src/lead_desk/portal/pages/needs.css
-index 061c2d9..560f9cd 100644
+index 61927ed..d64149d 100644
 --- a/src/lead_desk/portal/pages/needs.css
 +++ b/src/lead_desk/portal/pages/needs.css
-@@ -77,3 +77,6 @@
+@@ -78,3 +78,6 @@
  .needs-define { margin: var(--s2) 0 0; padding-left: var(--s5); display: grid; gap: var(--s1); }
  .need-check { display: inline-flex; align-items: center; gap: var(--s1); font-size: var(--t-sm); color: var(--ink-2); font-weight: 500; }
  .need-check .ico { width: 14px; height: 14px; color: var(--ink-3); }
 +
-+/* a phone: the three tabs scroll sideways inside their own row instead of widening the page */
-+@media (max-width: 860px) { .tabs { overflow-x: auto; } }
++/* a phone: the three tabs scroll sideways inside their own row instead of widening the page; a scroller clips what lies outside it, so the active-tab underline gets 1 px of room (padding-bottom) and the focus ring is drawn inside the tab */
++@media (max-width: 860px) { .tabs { overflow-x: auto; padding-bottom: 1px; } .tabs .tab { flex: none; } .tabs .tab:focus-visible { outline-offset: -2px; box-shadow: none; } }
 diff --git a/src/lead_desk/portal/pages/overview.css b/src/lead_desk/portal/pages/overview.css
 index 41daa78..f3e1064 100644
 --- a/src/lead_desk/portal/pages/overview.css
@@ -71,47 +88,100 @@ index 41daa78..f3e1064 100644
 +@media (max-width: 860px) { .ov { grid-template-columns: minmax(0, 1fr); } .ov .ov-kpis.ov-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ov-kpis .kpi-label { white-space: normal; } .ov-mid .donut { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
 diff --git a/tests/test_portal_phone_layout.py b/tests/test_portal_phone_layout.py
 new file mode 100644
-index 0000000..7ed343f
+index 0000000..1abd472
 --- /dev/null
 +++ b/tests/test_portal_phone_layout.py
-@@ -0,0 +1,55 @@
-+"""At phone width (390 px) and at 700 px the portal keeps its icon-only rail and its page margin, and no page is wider
-+than the window. The 860 px rules come before the 1200 px rules in app.css, so the later rules used to win and the
-+wide rail and margin stayed (the page then ran 60 to 240 px out of the window). Real browser (skipped when playwright
-+or its browser is missing). Made-up data only."""
+@@ -0,0 +1,189 @@
++"""At phone width (390 px) and at 700 px the portal keeps its icon-only rail and its page margin, no page is wider
++than the window, and EVERY box of every page lies inside the window (a card, a tile, a search box, a text block: its
++right edge is not beyond the window edge). The 860 px rules come before the 1200 px rules in app.css, so the later rules
++used to win and the wide rail and margin stayed (the page then ran 60 to 240 px out of the window). The two size ranges
++(up to 860 px, from 860.5 px; up to 1200 px, from 1200.5 px) leave no gap: this is tested at a width with a half pixel.
++Real browser (skipped when playwright or its browser is missing). Made-up data only."""
 +
 +from __future__ import annotations
 +
++import re
++from pathlib import Path
 +from typing import Any
 +
 +import pytest
 +from test_portal_lead_pages import _browse, _flow_rig, _seed_names
 +
++FIX = Path(__file__).parent / "portal_fixtures"
++JSON_HEAD = {"status": 200, "content_type": "application/json"}
 +PAGES = {
 +    "overview": '[data-testid="feed-item"]',
 +    "leads": "[data-lead-id]",
 +    "needs": '[data-testid="needs-card"]',
 +    "log": "table tbody tr",
 +    "data": "#main .card",
++    "lead-panel": '[data-testid="lead-drawer"] .drawer-head h2',
 +}
++# the page has finished drawing when the fonts are loaded and two animation frames have passed
++SETTLED = """() => document.fonts.ready.then(() => new Promise(
++  (done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true)))))"""
++# every box that has a size, except what lies inside a deliberate sideways scroller (the tabs bar, a wide table), the
++# 1 px screen-reader-only texts and the skip link (parked off the window on purpose until it gets the focus): its right
++# edge must not be beyond the window edge, its left edge not before it
++BOXES = """() => {
++  const vw = document.documentElement.clientWidth, out = [];
++  let checked = 0;
++  const inScroller = (el) => {
++    for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
++      const o = getComputedStyle(q).overflowX;
++      if (o === 'auto' || o === 'scroll') return true;
++    }
++    return false;
++  };
++  for (const el of document.body.querySelectorAll('*')) {
++    const r = el.getBoundingClientRect();
++    const tiny = r.width <= 1 && r.height <= 1, inSvg = el.closest('svg') && el.tagName !== 'svg';
++    if (tiny || el.classList.contains('skip') || inSvg || inScroller(el)) continue;
++    checked += 1;
++    if (r.right > vw + 0.5 || r.left < -0.5) {
++      const name = el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0];
++      out.push(name + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
++    }
++  }
++  return { vw, checked, out: out.slice(0, 12), count: out.length,
++           page: document.documentElement.scrollWidth, window: document.documentElement.clientWidth };
++}"""
 +
 +
++def _open(page: Any, base: str, name: str) -> None:
++    if name == "needs":  # the cards of every kind, from the fixture
++        text = (FIX / "review.json").read_text()
++        page.route("**/api/ui/review", lambda r: r.fulfill(body=text, **JSON_HEAD))
++    page.goto(base + f"/ui/#/{'leads' if name == 'lead-panel' else name}")
++    page.wait_for_selector(PAGES["leads" if name == "lead-panel" else name])
++    if name == "lead-panel":
++        page.locator("[data-lead-id]").first.click()
++        page.wait_for_selector(PAGES[name])
++        page.wait_for_function(
++            "() => Math.abs(document.querySelector('[data-testid=\"lead-drawer\"]').getBoundingClientRect().right"
++            " - innerWidth) < 0.5"
++        )  # the panel slides in from the right: it has stopped
++    page.wait_for_function(SETTLED)
++
++
++@pytest.mark.parametrize("width", [390, 700])
 +@pytest.mark.parametrize("scheme", ["light", "dark"])
 +@pytest.mark.parametrize("page_name", list(PAGES))
-+def test_no_page_is_wider_than_a_phone_window(env: Any, scheme: str, page_name: str) -> None:
++def test_no_page_is_wider_than_a_phone_window_and_every_box_lies_inside_it(
++    env: Any, scheme: str, width: int, page_name: str
++) -> None:
 +    rig, base = _flow_rig(env)
 +    _seed_names(rig)
 +
 +    def body(page: Any, base: str) -> None:
-+        page.goto(base + f"/ui/#/{page_name}")
-+        page.wait_for_selector(PAGES[page_name])
-+        page.wait_for_timeout(300)  # the lists draw in two steps
-+        m = page.evaluate(
-+            "() => ({ page: document.documentElement.scrollWidth, window: document.documentElement.clientWidth })"
-+        )
++        _open(page, base, page_name)
++        m = page.evaluate(BOXES)
 +        assert m["page"] <= m["window"], m  # no sideways scroll of the page (a wide table scrolls inside its card)
++        assert m["checked"] >= 10, m  # the check looked at something
++        assert not m["out"], m  # and no box (a card, a tile, a search box) lies beyond a window edge
 +
-+    _browse(base, body, width=390, scheme=scheme)
++    _browse(base, body, width=width, scheme=scheme)
 +
 +
 +@pytest.mark.parametrize("width, rail", [(390, 64), (700, 64), (860, 64), (861, 208), (1200, 208), (1201, 240)])
@@ -130,3 +200,84 @@ index 0000000..7ed343f
 +            assert m["margin"] == 16, m  # the 860 px page margin (16 px), not the 24 px of the 1200 px rule
 +
 +    _browse(base, body, width=width)
++
++
++@pytest.mark.parametrize("width, rail", [(860.5, 208), (1200.5, 240)])
++def test_a_window_with_a_half_pixel_falls_into_a_size_range_too(env: Any, width: float, rail: int) -> None:
++    """A page cannot be 860.5 px wide in a browser window, but a frame can: its media queries use its own width.
++    (Ranges written as min-width 861 and max-width 860 left such a width in neither block: the wide rail won.)"""
++    rig, base = _flow_rig(env)
++
++    def body(page: Any, base: str) -> None:
++        def no_embed_ban(
++            route: Any,
++        ) -> None:  # the desk forbids frames (CSP); this test page is the only one that allows it
++            headers = {
++                k: v
++                for k, v in route.fetch().headers.items()
++                if k not in ("content-security-policy", "x-frame-options")
++            }
++            route.fulfill(response=route.fetch(), headers=headers)
++
++        page.route("**/ui/", no_embed_ban)
++        page.goto(base + "/ui/#/overview")
++        page.wait_for_selector("#main")
++        page.evaluate(
++            """(w) => { const f = document.createElement('iframe');
++              f.style.cssText = `position:fixed;top:0;left:0;height:800px;width:${w}px;border:0`;
++              f.src = '/ui/#/leads'; document.body.appendChild(f); return new Promise((r) => { f.onload = r; }); }""",
++            width,
++        )
++        frame = page.frames[-1]
++        frame.wait_for_selector("#main")
++        m = frame.evaluate(
++            """() => ({ rail: parseFloat(getComputedStyle(document.querySelector('.shell')).gridTemplateColumns),
++              wide: matchMedia('(width > 860px)').matches, narrow: matchMedia('(max-width: 860px)').matches })"""
++        )
++        assert m["rail"] == rail, m
++        assert m["wide"] != m["narrow"], m  # the two ranges are complements: exactly one holds
++
++    _browse(base, body, width=1400)
++
++
++def test_the_tabs_do_not_wrap_and_nothing_of_the_active_tab_is_clipped_at_390_px(env: Any) -> None:
++    rig, base = _flow_rig(env)
++
++    def body(page: Any, base: str) -> None:
++        _open(page, base, "needs")
++        page.keyboard.press("Tab")  # the next focus counts as a keyboard focus (a visible ring)
++        page.evaluate("() => document.querySelector('.tabs .tab').focus()")
++        m = page.evaluate(
++            """() => {
++              const tabs = document.querySelector('.tabs'), first = document.querySelector('.tabs .tab');
++              const t = tabs.getBoundingClientRect(), r = first.getBoundingClientRect(), cs = getComputedStyle(first);
++              const grow = Math.max(0, parseFloat(cs.outlineOffset) + parseFloat(cs.outlineWidth));
++              const glow = (cs.boxShadow.match(/(\\d+)px\\s*$/) || [0, 0])[1];  // the spread of the ring's glow
++              const halo = Number(glow);
++              const room = parseFloat(getComputedStyle(tabs).paddingBottom);
++              return { height: r.height,
++                       wrap: cs.whiteSpace, ringTop: r.top - grow - halo - t.top,
++                       ringLeft: r.left - grow - halo - t.left,
++                       ringBottom: t.bottom - 1 - (r.bottom + grow + halo), underlineRoom: room };
++            }"""
++        )
++        assert m["wrap"] == "nowrap" and m["height"] < 60, m  # the first tab is not three lines high
++        assert m["ringTop"] >= 0 and m["ringLeft"] >= 0, m  # the focus ring is not cut off at the top or the left
++        assert m["underlineRoom"] >= 1, (
++            m
++        )  # the 2 px underline of the active tab reaches 1 px below the tab: room for it
++
++    _browse(base, body, width=390)
++
++
++def test_no_size_range_starts_one_pixel_after_another_one_ends() -> None:
++    """`(min-width: 861px)` next to `(max-width: 860px)` leaves the widths between 860 and 861 px in neither block (a
++    window with a half pixel, for example by zoom: Chromium rounds the window width, other engines may not). A range
++    from the next pixel is written `(width > 860px)` instead. No browser needed: the style sheets are read as text."""
++    css = "\n".join(p.read_text(encoding="utf-8") for p in sorted((Path(__file__).parents[1] / "src").rglob("*.css")))
++    css += (Path(__file__).parents[1] / "demo_only" / "portal_demo.css").read_text(encoding="utf-8")
++    queries = re.findall(r"@media[^{]*", css)
++    upper = {int(n) for q in queries for n in re.findall(r"max-width: *(\d+)px", q)}
++    lower = {int(n) for q in queries for n in re.findall(r"min-width: *(\d+)px", q)}
++    assert upper, "no media queries found: the check read nothing"
++    assert not [n for n in lower if n - 1 in upper], sorted(n for n in lower if n - 1 in upper)

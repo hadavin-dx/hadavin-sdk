@@ -1,0 +1,10 @@
+cmd: [css state: final, but the two ranges written the old way (min-width 861 / 1201 next to max-width 860 / 1200): the gap] python -m pytest tests/test_portal_phone_layout.py -k 'half_pixel or one_pixel_after' -q -p no:cacheprovider --tb=line
+NOTE: the two browser half-pixel tests PASS on the old gap css: Chromium rounds the frame width to 861 / 1201 before it evaluates the queries, so the gap cannot be reached in Chromium; they stay as a guard for the new range syntax (width > 860px) being understood by the browser. The text test is the one that catches the gap (engine independent).
+..F                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: [861, 1201]
+    assert not [1201, 861]
+/tmp/work/l13c-tree/tests/test_portal_phone_layout.py:189: AssertionError: [861, 1201]
+=========================== short test summary info ============================
+FAILED tests/test_portal_phone_layout.py::test_no_size_range_starts_one_pixel_after_another_one_ends
+1 failed, 2 passed, 31 deselected in 4.24s

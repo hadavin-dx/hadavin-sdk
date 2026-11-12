@@ -1,18 +1,22 @@
 diff --git a/src/lead_desk/portal/app.css b/src/lead_desk/portal/app.css
-index d7acc7c..bb01597 100644
+index d7acc7c..3732ee3 100644
 --- a/src/lead_desk/portal/app.css
 +++ b/src/lead_desk/portal/app.css
-@@ -328,7 +328,8 @@ dialog::backdrop { background: var(--scrim); }
+@@ -327,8 +327,11 @@ dialog { color: var(--ink); background: var(--surface); border: 1px solid var(--
+ dialog::backdrop { background: var(--scrim); }
  .drawer { margin: 0 0 0 auto; height: 100vh; max-height: none; width: min(600px, 100vw); max-width: 100vw; border-width: 0 0 0 1px; box-shadow: var(--shadow-pop); }
  .drawer[open] { display: flex; flex-direction: column; animation: slide-in var(--dur) ease-out; }
- .drawer-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border-soft); }
+-.drawer-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border-soft); }
 -.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; }
-+.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
++.drawer-head { display: flex; align-items: flex-start; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border-soft); }
++.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; min-height: 36px; display: flex; align-items: center; }
 +.drawer-head .pill, .drawer-head .icon-btn { flex: none; }
++/* a long title wraps onto many lines: the status chip and the close button stay at the top, next to its first line (36 px is the height of the close button; the chip is centred on it) */
++.drawer-head .pill { margin-top: calc((36px - 1.25rem) / 2); }
  .drawer-body { padding: var(--s5); overflow: auto; display: grid; gap: var(--s5); align-content: start; flex: 1; }
  .dialog { margin: auto; width: min(460px, calc(100vw - var(--s6))); border-radius: var(--r-card); box-shadow: var(--shadow-pop); padding: var(--s5); }
  .dialog[open] { display: grid; gap: var(--s4); animation: pop var(--dur) ease-out; }
-@@ -336,7 +337,7 @@ dialog::backdrop { background: var(--scrim); }
+@@ -336,7 +339,7 @@ dialog::backdrop { background: var(--scrim); }
  .dialog-warn { border-color: var(--warn-solid); }
  .dialog-head { display: flex; align-items: center; gap: var(--s3); }
  .dialog-head .ico { width: 24px; height: 24px; color: var(--warn-solid); flex: none; }
@@ -21,7 +25,7 @@ index d7acc7c..bb01597 100644
  .dialog-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
  @keyframes slide-in { from { transform: translateX(var(--s5)); opacity: 0; } }
  @keyframes pop { from { transform: translateY(var(--s2)); opacity: 0; } }
-@@ -509,7 +510,7 @@ dialog::backdrop { background: var(--scrim-solid); }
+@@ -509,7 +512,7 @@ dialog::backdrop { background: var(--scrim-solid); }
  .ov.is-stale .pill { box-shadow: inset 0 0 0 1px currentColor; }
  .ov-asof { color: var(--ink-3); font-weight: 400; }
  .toast { align-items: center; }
@@ -31,7 +35,7 @@ index d7acc7c..bb01597 100644
  .toast-x:hover { background: var(--surface-2); color: var(--ink); }
  .toast-x .ico { width: 14px; height: 14px; margin: 0; color: inherit; }
 diff --git a/src/lead_desk/portal/pages/leads.css b/src/lead_desk/portal/pages/leads.css
-index b586fdf..6d164f8 100644
+index b586fdf..5d5b0dc 100644
 --- a/src/lead_desk/portal/pages/leads.css
 +++ b/src/lead_desk/portal/pages/leads.css
 @@ -93,6 +93,8 @@ details.details .kv { margin-top: var(--s3); grid-template-columns: max-content
@@ -39,7 +43,7 @@ index b586fdf..6d164f8 100644
  .chip-with-note { display: grid; gap: var(--s1); justify-items: start; }
  .leads-out .table td:last-child { min-width: 7.5rem; }
 +/* Company: one line with an ellipsis, like the name (app.css does the same up to 1200 px with 9rem) */
-+@media (min-width: 1201px) { .leads-out .table td:nth-child(2) { max-width: 26ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
++@media (width > 1200px) { .leads-out .table td:nth-child(2) { max-width: 26ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
  
  /* owner initial and a step chip (the colour follows the step) */
  .lead-owner { display: inline-flex; align-items: center; gap: var(--s2); }
@@ -67,10 +71,10 @@ index 061c2d9..61927ed 100644
  
 diff --git a/tests/test_portal_drawer_long_name.py b/tests/test_portal_drawer_long_name.py
 new file mode 100644
-index 0000000..1612fa7
+index 0000000..02a7473
 --- /dev/null
 +++ b/tests/test_portal_drawer_long_name.py
-@@ -0,0 +1,51 @@
+@@ -0,0 +1,53 @@
 +"""The lead panel's header keeps its title, status chip and close button on screen when a name is one long unbroken
 +string (a real browser; skipped when playwright or its browser is missing). Made-up data only."""
 +
@@ -84,7 +88,7 @@ index 0000000..1612fa7
 +LONG_NAME = "W" * 200  # no space or hyphen anywhere: the browser has no natural place to break it
 +HEAD = '[data-testid="lead-drawer"] .drawer-head'
 +MEASURE = """() => {
-+  const rect = (el) => { const r = el.getBoundingClientRect(); return [r.left, r.right, r.width]; };
++  const rect = (el) => { const r = el.getBoundingClientRect(); return [r.left, r.right, r.width, r.top]; };
 +  const head = document.querySelector('[data-testid="lead-drawer"] .drawer-head');
 +  return {
 +    scroll: head.scrollWidth, client: head.clientWidth, vw: innerWidth,
@@ -118,6 +122,8 @@ index 0000000..1612fa7
 +        left, right = m["box"][0] - 1, min(m["box"][1], m["vw"]) + 1
 +        for part in ("h2", "pill", "close"):  # every part lies inside the panel and the window (left side too)
 +            assert left <= m[part][0] and m[part][1] <= right, (part, m)
++        first_line = m["h2"][3] + 36  # a title of many lines: the chip and the close button stay beside its first line
++        assert m["pill"][3] < first_line and m["close"][3] < first_line, m
 +        page.click('[data-testid="drawer-close"]')  # and it can be clicked
 +        page.wait_for_selector('[data-testid="lead-drawer"]', state="detached")
 +

@@ -1,0 +1,273 @@
+diff --git a/src/lead_desk/portal/app.css b/src/lead_desk/portal/app.css
+index d7acc7c..bb01597 100644
+--- a/src/lead_desk/portal/app.css
++++ b/src/lead_desk/portal/app.css
+@@ -328,7 +328,8 @@ dialog::backdrop { background: var(--scrim); }
+ .drawer { margin: 0 0 0 auto; height: 100vh; max-height: none; width: min(600px, 100vw); max-width: 100vw; border-width: 0 0 0 1px; box-shadow: var(--shadow-pop); }
+ .drawer[open] { display: flex; flex-direction: column; animation: slide-in var(--dur) ease-out; }
+ .drawer-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--border-soft); }
+-.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; }
++.drawer-head h2 { font-size: var(--t-lg); font-weight: 650; letter-spacing: -0.01em; min-width: 0; overflow-wrap: anywhere; }
++.drawer-head .pill, .drawer-head .icon-btn { flex: none; }
+ .drawer-body { padding: var(--s5); overflow: auto; display: grid; gap: var(--s5); align-content: start; flex: 1; }
+ .dialog { margin: auto; width: min(460px, calc(100vw - var(--s6))); border-radius: var(--r-card); box-shadow: var(--shadow-pop); padding: var(--s5); }
+ .dialog[open] { display: grid; gap: var(--s4); animation: pop var(--dur) ease-out; }
+@@ -336,7 +337,7 @@ dialog::backdrop { background: var(--scrim); }
+ .dialog-warn { border-color: var(--warn-solid); }
+ .dialog-head { display: flex; align-items: center; gap: var(--s3); }
+ .dialog-head .ico { width: 24px; height: 24px; color: var(--warn-solid); flex: none; }
+-.dialog p { color: var(--ink-2); }
++.dialog p { color: var(--ink-2); overflow-wrap: anywhere; }
+ .dialog-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
+ @keyframes slide-in { from { transform: translateX(var(--s5)); opacity: 0; } }
+ @keyframes pop { from { transform: translateY(var(--s2)); opacity: 0; } }
+@@ -509,7 +510,7 @@ dialog::backdrop { background: var(--scrim-solid); }
+ .ov.is-stale .pill { box-shadow: inset 0 0 0 1px currentColor; }
+ .ov-asof { color: var(--ink-3); font-weight: 400; }
+ .toast { align-items: center; }
+-.toast-text { flex: 1; }
++.toast-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+ .toast-x { width: 24px; height: 24px; display: grid; place-items: center; border: 0; background: transparent; color: var(--ink-3); border-radius: var(--r-sm); cursor: pointer; flex: none; }
+ .toast-x:hover { background: var(--surface-2); color: var(--ink); }
+ .toast-x .ico { width: 14px; height: 14px; margin: 0; color: inherit; }
+diff --git a/src/lead_desk/portal/pages/leads.css b/src/lead_desk/portal/pages/leads.css
+index b586fdf..6d164f8 100644
+--- a/src/lead_desk/portal/pages/leads.css
++++ b/src/lead_desk/portal/pages/leads.css
+@@ -93,6 +93,8 @@ details.details .kv { margin-top: var(--s3); grid-template-columns: max-content
+ .lead-cell .eye-btn { flex: none; }
+ .chip-with-note { display: grid; gap: var(--s1); justify-items: start; }
+ .leads-out .table td:last-child { min-width: 7.5rem; }
++/* Company: one line with an ellipsis, like the name (app.css does the same up to 1200 px with 9rem) */
++@media (min-width: 1201px) { .leads-out .table td:nth-child(2) { max-width: 26ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+ 
+ /* owner initial and a step chip (the colour follows the step) */
+ .lead-owner { display: inline-flex; align-items: center; gap: var(--s2); }
+diff --git a/src/lead_desk/portal/pages/needs.css b/src/lead_desk/portal/pages/needs.css
+index 061c2d9..61927ed 100644
+--- a/src/lead_desk/portal/pages/needs.css
++++ b/src/lead_desk/portal/pages/needs.css
+@@ -13,14 +13,15 @@
+ .err-detail { text-align: left; }
+ 
+ .need { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; gap: var(--s3) var(--s4); align-items: start; align-content: start; position: relative; overflow: hidden; }
+-.need-main { display: grid; gap: var(--s3); align-content: start; align-self: start; min-width: 0; }
++.need-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s3); align-content: start; align-self: start; min-width: 0; }
+ .need-head { display: flex; align-items: flex-start; flex-wrap: nowrap; gap: var(--s3); row-gap: var(--s1); }
+ .need-head h2 { font-size: var(--t-md); font-weight: 600; letter-spacing: -0.01em; min-width: 0; text-wrap: pretty; }
+ .need-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); font-size: var(--t-sm); color: var(--ink-2); }
+ .need-who, .need-since { display: inline-flex; align-items: center; gap: var(--s1); }
+-.need-who { color: var(--ink); font-weight: 600; }
++.need-who { color: var(--ink); font-weight: 600; min-width: 0; max-width: 100%; }
+ .need-who .ico, .need-since .ico { width: 14px; height: 14px; color: var(--ink-3); }
+ .need-why { color: var(--ink); max-width: 80ch; }
++.need-head h2, .need-why, .need-notes li { overflow-wrap: anywhere; }
+ .need-actions { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; padding-top: var(--s2); border-top: 0; margin-top: 0; }
+ .need details.details { border: 0; padding: 0; }
+ 
+diff --git a/tests/test_portal_drawer_long_name.py b/tests/test_portal_drawer_long_name.py
+new file mode 100644
+index 0000000..1612fa7
+--- /dev/null
++++ b/tests/test_portal_drawer_long_name.py
+@@ -0,0 +1,51 @@
++"""The lead panel's header keeps its title, status chip and close button on screen when a name is one long unbroken
++string (a real browser; skipped when playwright or its browser is missing). Made-up data only."""
++
++from __future__ import annotations
++
++from typing import Any
++
++import pytest
++from test_portal_lead_pages import _browse, _flow_rig, _new
++
++LONG_NAME = "W" * 200  # no space or hyphen anywhere: the browser has no natural place to break it
++HEAD = '[data-testid="lead-drawer"] .drawer-head'
++MEASURE = """() => {
++  const rect = (el) => { const r = el.getBoundingClientRect(); return [r.left, r.right, r.width]; };
++  const head = document.querySelector('[data-testid="lead-drawer"] .drawer-head');
++  return {
++    scroll: head.scrollWidth, client: head.clientWidth, vw: innerWidth,
++    box: rect(document.querySelector('[data-testid="lead-drawer"]')),
++    h2: rect(head.querySelector('h2')), pill: rect(head.querySelector('.pill')),
++    close: rect(document.querySelector('[data-testid="drawer-close"]')),
++  };
++}"""
++# the panel slides in from the right: it has stopped when its right edge is the window edge
++STOPPED = """() => { const r = document.querySelector('[data-testid="lead-drawer"]').getBoundingClientRect();
++  return Math.abs(r.right - innerWidth) < 0.5; }"""
++
++
++@pytest.mark.parametrize("scheme", ["light", "dark"])
++@pytest.mark.parametrize("width", [1280, 1100, 390])
++def test_a_long_unbroken_name_stays_inside_the_lead_panel_header(env: Any, scheme: str, width: int) -> None:
++    rig, base = _flow_rig(env)
++    lead_id = _new(rig, "long-1", LONG_NAME, "long@example.test")
++
++    def body(page: Any, base: str) -> None:
++        page.goto(base + "/ui/#/leads")
++        page.wait_for_selector("[data-lead-id]")
++        page.locator('[data-testid="leads-hide-personal"]').uncheck()  # names shown: the long text is on screen
++        page.click(f'[data-lead-id="{lead_id}"]')
++        page.wait_for_selector(HEAD + " h2")
++        assert LONG_NAME in page.inner_text(HEAD + " h2")
++        page.wait_for_function(STOPPED)
++        m = page.evaluate(MEASURE)
++        assert m["scroll"] <= m["client"] + 1, m  # the header does not run out of its own box
++        assert m["close"][2] >= 35, m  # the close button keeps its size (a squeezed button is 32 wide or less)
++        left, right = m["box"][0] - 1, min(m["box"][1], m["vw"]) + 1
++        for part in ("h2", "pill", "close"):  # every part lies inside the panel and the window (left side too)
++            assert left <= m[part][0] and m[part][1] <= right, (part, m)
++        page.click('[data-testid="drawer-close"]')  # and it can be clicked
++        page.wait_for_selector('[data-testid="lead-drawer"]', state="detached")
++
++    _browse(base, body, width=width, scheme=scheme)
+diff --git a/tests/test_portal_long_values.py b/tests/test_portal_long_values.py
+new file mode 100644
+index 0000000..939cff1
+--- /dev/null
++++ b/tests/test_portal_long_values.py
+@@ -0,0 +1,143 @@
++"""A long value with no space in it (a name, a company, a desk note, a title) must stay inside its box on the places
++that show desk text: the confirm question, the message at the corner, the Needs a person cards and the Leads table.
++Real browser (skipped when playwright or its browser is missing); every element is compared with its container on
++BOTH sides (an overflow to the left is invisible to scrollWidth). Made-up data only."""
++
++from __future__ import annotations
++
++import json
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import lead
++from test_portal_lead_pages import _browse, _flow_rig, _new
++
++FIX = Path(__file__).parent / "portal_fixtures"
++LONG = "W" * 200  # no space or hyphen anywhere: the browser has no natural place to break it
++UNKNOWN = "FL0c4d8e2f6a19"  # the card of the fixture with the "I checked" buttons
++SCHEMES = ["light", "dark"]
++WIDTHS = [1280, 390]
++JSON_HEAD = {"status": 200, "content_type": "application/json"}
++# every element inside `root` whose box leaves the box of `root` (or the window), on either side
++ESCAPES = """(root) => {
++  const box = document.querySelector(root).getBoundingClientRect();
++  const left = Math.max(box.left, 0) - 1, right = Math.min(box.right, innerWidth) + 1, out = [];
++  for (const el of document.querySelectorAll(root + ' *')) {
++    const r = el.getBoundingClientRect();
++    if (r.width && (r.left < left || r.right > right)) {
++      out.push(el.tagName + '.' + el.className + ' ' + Math.round(r.left) + '..' + Math.round(r.right));
++    }
++  }
++  return { out, box: [box.left, box.right], vw: innerWidth };
++}"""
++
++
++def _review() -> dict[str, Any]:
++    d: dict[str, Any] = json.loads((FIX / "review.json").read_text())
++    for it in d["items"]:
++        if it["item_id"] == UNKNOWN:
++            it["lead_name"], it["hint"] = LONG, LONG
++        elif it["item_id"] == "R13":  # a request to check: the title and the reason text carry the long value
++            it["title"], it["reason_text"] = "Incomplete request: " + LONG + " has a value the desk cannot accept", LONG
++        elif it["item_id"] == "D2":  # an information card with a merged title and notes
++            it["merged_title"], it["notes"] = "Repeat changed: " + LONG, [LONG, LONG]
++    return d
++
++
++def _serve_review(page: Any) -> None:
++    text = json.dumps(_review())
++    page.route("**/api/ui/review", lambda r: r.fulfill(body=text, **JSON_HEAD))
++
++
++def _open_needs(page: Any, base: str) -> None:
++    _serve_review(page)
++    page.goto(base + "/ui/#/needs")
++    page.wait_for_selector('[data-testid="needs-card"]')
++
++
++def _ask(page: Any) -> None:  # press "I checked: it was sent" on the card of the long name
++    page.locator(f'[data-item-id="{UNKNOWN}"] [data-action="resolve_sent"]').click()
++    page.wait_for_selector('[data-testid="confirm-dialog"]')
++
++
++@pytest.mark.parametrize("scheme", SCHEMES)
++@pytest.mark.parametrize("width", WIDTHS)
++def test_a_long_name_stays_inside_the_confirm_question(env: Any, scheme: str, width: int) -> None:
++    rig, base = _flow_rig(env)
++
++    def body(page: Any, base: str) -> None:
++        page.add_init_script("window.sessionStorage.setItem('lead-desk-hide-personal', '0')")  # names shown
++        _open_needs(page, base)
++        _ask(page)
++        assert LONG in page.inner_text('[data-testid="confirm-dialog"] p')
++        m = page.evaluate(ESCAPES, '[data-testid="confirm-dialog"]')
++        assert not m["out"], m  # text and buttons lie inside the dialog box and the window
++        d = page.evaluate("""() => { const e = document.querySelector('[data-testid="confirm-dialog"]');
++          return [e.scrollWidth, e.clientWidth]; }""")
++        assert d[0] <= d[1] + 1, d
++        page.click('[data-testid="confirm-ok"]')  # the buttons can be pressed
++        page.wait_for_selector('[data-testid="confirm-dialog"]', state="detached")
++
++    _browse(base, body, width=width, scheme=scheme)
++
++
++@pytest.mark.parametrize("scheme", SCHEMES)
++@pytest.mark.parametrize("width", WIDTHS)
++def test_a_long_desk_note_stays_inside_the_message_at_the_corner(env: Any, scheme: str, width: int) -> None:
++    rig, base = _flow_rig(env)
++
++    def body(page: Any, base: str) -> None:
++        _open_needs(page, base)
++        page.route(
++            f"**/review/{UNKNOWN}/resolve",
++            lambda r: r.fulfill(status=409, content_type="application/json", body=json.dumps({"hint": LONG})),
++        )
++        _ask(page)
++        page.click('[data-testid="confirm-ok"]')
++        page.wait_for_selector('[data-testid="toast"]')
++        assert LONG in page.inner_text('[data-testid="toast"]')
++        m = page.evaluate(ESCAPES, '[data-testid="toast"]')
++        assert not m["out"], m  # the text and its close button lie inside the message and the window
++        x = page.evaluate("document.querySelector('[data-testid=\"toast\"] .toast-x').getBoundingClientRect().width")
++        assert x >= 23, x  # the close button keeps its size
++
++    _browse(base, body, width=width, scheme=scheme)
++
++
++@pytest.mark.parametrize("scheme", SCHEMES)
++@pytest.mark.parametrize("width", WIDTHS)
++def test_long_values_stay_inside_their_needs_a_person_cards(env: Any, scheme: str, width: int) -> None:
++    rig, base = _flow_rig(env)
++
++    def body(page: Any, base: str) -> None:
++        page.add_init_script("window.sessionStorage.setItem('lead-desk-hide-personal', '0')")
++        for tab, item in (("action", UNKNOWN), ("action", "R13"), ("info", "D2")):
++            _open_needs(page, base)
++            if tab != "action":
++                page.click(f'[data-testid="needs-tab-{tab}"]')
++            card = f'[data-item-id="{item}"]'
++            page.wait_for_selector(card)
++            m = page.evaluate(ESCAPES, card)
++            assert not m["out"], (item, m)  # name, heading, reason, notes and desk note stay inside the card
++
++    _browse(base, body, width=width, scheme=scheme)
++
++
++@pytest.mark.parametrize("scheme", SCHEMES)
++def test_a_long_company_does_not_squeeze_the_leads_table(env: Any, scheme: str) -> None:
++    rig, base = _flow_rig(env)
++    _new(rig, "ok-1", "Wenda Brook", "wenda@example.test")
++    assert rig.desk.process("form", "long-1", lead(name=LONG, company=LONG, email="long@example.test")).status == 201
++
++    def body(page: Any, base: str) -> None:
++        page.goto(base + "/ui/#/leads")
++        page.wait_for_selector("[data-lead-id]")
++        page.locator('[data-testid="leads-hide-personal"]').uncheck()
++        m = page.evaluate("""() => { const w = document.querySelector('[data-testid="leads-table"]');
++          const name = w.querySelector('tbody tr td:first-child').getBoundingClientRect().width;
++          return { scroll: w.scrollWidth, client: w.clientWidth, name }; }""")
++        assert m["scroll"] <= m["client"] + 1, m  # the table needs no sideways scroll for one long company
++        assert m["name"] >= 120, m  # and the name column keeps a readable width
++
++    _browse(base, body, width=1280, scheme=scheme)

@@ -1,0 +1,248 @@
+fresh clone, head 0841f36d1edf381b67a0da4793afacf834a36707 (0841f36); git apply --check then apply in the order listed; tree reset between
+sha1:
+1b9fce74e0b5cd07dccecb555d44573d6401d5f5  /tmp/demo-wt/handover/demo/layout/drawer-long-name2.patch
+66eb4d26b0350c68d88ef820c4f5e9c20a399c97  /tmp/demo-wt/handover/demo/layout/mobile-cascade.patch
+e24d4e1f2491b0e239b4defbb825e9d7511ca68b  /tmp/demo-wt/handover/demo/fixes/docs-and-deps.patch
+0369cf5be032e631d284baa6edfc70192b705b22  /tmp/demo-wt/handover/demo/semgrep/semgrep-rebased.patch
+== P1 alone
+  ok
+== P2 alone
+  ok
+== P1 then P2
+  ok
+== P2 then P1
+  ok
+== docs-and-deps.patch alone
+  ok
+== P1 P2 then docs-and-deps.patch
+  ok
+== docs-and-deps.patch then P2 P1
+  ok
+== semgrep-rebased.patch alone
+  ok
+== P1 P2 then semgrep-rebased.patch
+  ok
+== semgrep-rebased.patch then P2 P1
+  ok
+== codeant-demo-only.patch alone
+  ok
+== P1 P2 then codeant-demo-only.patch
+  ok
+== codeant-demo-only.patch then P2 P1
+  ok
+== codeant-desk.patch alone
+  ok
+== P1 P2 then codeant-desk.patch
+  ok
+== codeant-desk.patch then P2 P1
+  ok
+== codeant-docs.patch alone
+  ok
+== P1 P2 then codeant-docs.patch
+  ok
+== codeant-docs.patch then P2 P1
+  ok
+== codeant-gitleaks-after-docs-and-deps.patch alone
+  FAIL at codeant-gitleaks-after-docs-and-deps.patch
+== P1 P2 then codeant-gitleaks-after-docs-and-deps.patch
+  FAIL at codeant-gitleaks-after-docs-and-deps.patch
+== codeant-gitleaks-after-docs-and-deps.patch then P2 P1
+  FAIL at codeant-gitleaks-after-docs-and-deps.patch
+== codeant-gitleaks-after-sonar-coverage.patch alone
+  FAIL at codeant-gitleaks-after-sonar-coverage.patch
+== P1 P2 then codeant-gitleaks-after-sonar-coverage.patch
+  FAIL at codeant-gitleaks-after-sonar-coverage.patch
+== codeant-gitleaks-after-sonar-coverage.patch then P2 P1
+  FAIL at codeant-gitleaks-after-sonar-coverage.patch
+== codeant-gitleaks.patch alone
+  FAIL at codeant-gitleaks.patch
+== P1 P2 then codeant-gitleaks.patch
+  FAIL at codeant-gitleaks.patch
+== codeant-gitleaks.patch then P2 P1
+  FAIL at codeant-gitleaks.patch
+== codeant-n8n-proof.patch alone
+  ok
+== P1 P2 then codeant-n8n-proof.patch
+  ok
+== codeant-n8n-proof.patch then P2 P1
+  ok
+== codeant-portal-log.patch alone
+  ok
+== P1 P2 then codeant-portal-log.patch
+  ok
+== codeant-portal-log.patch then P2 P1
+  ok
+== codeant-scripts.patch alone
+  ok
+== P1 P2 then codeant-scripts.patch
+  ok
+== codeant-scripts.patch then P2 P1
+  ok
+== codeant-tests-hardening.patch alone
+  ok
+== P1 P2 then codeant-tests-hardening.patch
+  ok
+== codeant-tests-hardening.patch then P2 P1
+  ok
+== codeant2-demo-only-r1.patch alone
+  ok
+== P1 P2 then codeant2-demo-only-r1.patch
+  ok
+== codeant2-demo-only-r1.patch then P2 P1
+  ok
+== codeant2-demo-only.patch alone
+  FAIL at codeant2-demo-only.patch
+== P1 P2 then codeant2-demo-only.patch
+  FAIL at codeant2-demo-only.patch
+== codeant2-demo-only.patch then P2 P1
+  FAIL at codeant2-demo-only.patch
+== codeant2-desk-r1.patch alone
+  ok
+== P1 P2 then codeant2-desk-r1.patch
+  ok
+== codeant2-desk-r1.patch then P2 P1
+  ok
+== codeant2-desk.patch alone
+  ok
+== P1 P2 then codeant2-desk.patch
+  ok
+== codeant2-desk.patch then P2 P1
+  ok
+== codeant2-docs.patch alone
+  ok
+== P1 P2 then codeant2-docs.patch
+  ok
+== codeant2-docs.patch then P2 P1
+  ok
+== codeant2-fakes-body-r1.patch alone
+  ok
+== P1 P2 then codeant2-fakes-body-r1.patch
+  ok
+== codeant2-fakes-body-r1.patch then P2 P1
+  ok
+== codeant2-fakes-body.patch alone
+  ok
+== P1 P2 then codeant2-fakes-body.patch
+  ok
+== codeant2-fakes-body.patch then P2 P1
+  ok
+== codeant2-gitleaks.patch alone
+  ok
+== P1 P2 then codeant2-gitleaks.patch
+  ok
+== codeant2-gitleaks.patch then P2 P1
+  ok
+== codeant2-n8n-proof.patch alone
+  ok
+== P1 P2 then codeant2-n8n-proof.patch
+  ok
+== codeant2-n8n-proof.patch then P2 P1
+  ok
+== codeant2-portal-log-r1.patch alone
+  ok
+== P1 P2 then codeant2-portal-log-r1.patch
+  ok
+== codeant2-portal-log-r1.patch then P2 P1
+  ok
+== codeant2-portal-log.patch alone
+  ok
+== P1 P2 then codeant2-portal-log.patch
+  ok
+== codeant2-portal-log.patch then P2 P1
+  ok
+== codeant2-scripts.patch alone
+  ok
+== P1 P2 then codeant2-scripts.patch
+  ok
+== codeant2-scripts.patch then P2 P1
+  ok
+== codeant2-tests-hardening-r1.patch alone
+  ok
+== P1 P2 then codeant2-tests-hardening-r1.patch
+  ok
+== codeant2-tests-hardening-r1.patch then P2 P1
+  ok
+== codeant2-tests-hardening.patch alone
+  ok
+== P1 P2 then codeant2-tests-hardening.patch
+  ok
+== codeant2-tests-hardening.patch then P2 P1
+  ok
+== codeant3-docs-r3.patch alone
+  ok
+== P1 P2 then codeant3-docs-r3.patch
+  ok
+== codeant3-docs-r3.patch then P2 P1
+  ok
+== codeant3-docs-r4.patch alone
+  ok
+== P1 P2 then codeant3-docs-r4.patch
+  ok
+== codeant3-docs-r4.patch then P2 P1
+  ok
+== codeant3-docs.patch alone
+  ok
+== P1 P2 then codeant3-docs.patch
+  ok
+== codeant3-docs.patch then P2 P1
+  ok
+== codeant3-gitleaks-r3.patch alone
+  ok
+== P1 P2 then codeant3-gitleaks-r3.patch
+  ok
+== codeant3-gitleaks-r3.patch then P2 P1
+  ok
+== codeant3-gitleaks-r4.patch alone
+  ok
+== P1 P2 then codeant3-gitleaks-r4.patch
+  ok
+== codeant3-gitleaks-r4.patch then P2 P1
+  ok
+== codeant3-gitleaks.patch alone
+  ok
+== P1 P2 then codeant3-gitleaks.patch
+  ok
+== codeant3-gitleaks.patch then P2 P1
+  ok
+== codeant3-n8n-proof-r3.patch alone
+  ok
+== P1 P2 then codeant3-n8n-proof-r3.patch
+  ok
+== codeant3-n8n-proof-r3.patch then P2 P1
+  ok
+== codeant3-n8n-proof-r4.patch alone
+  ok
+== P1 P2 then codeant3-n8n-proof-r4.patch
+  ok
+== codeant3-n8n-proof-r4.patch then P2 P1
+  ok
+== codeant3-n8n-proof.patch alone
+  ok
+== P1 P2 then codeant3-n8n-proof.patch
+  ok
+== codeant3-n8n-proof.patch then P2 P1
+  ok
+== codeant3-scripts-r3.patch alone
+  ok
+== P1 P2 then codeant3-scripts-r3.patch
+  ok
+== codeant3-scripts-r3.patch then P2 P1
+  ok
+== codeant3-scripts-r4.patch alone
+  ok
+== P1 P2 then codeant3-scripts-r4.patch
+  ok
+== codeant3-scripts-r4.patch then P2 P1
+  ok
+== codeant3-scripts.patch alone
+  ok
+== P1 P2 then codeant3-scripts.patch
+  ok
+== codeant3-scripts.patch then P2 P1
+  ok
+== CONTROL without mine: docs-and-deps then semgrep-rebased
+  FAIL at semgrep-rebased.patch
+== CONTROL: semgrep-rebased then docs-and-deps
+  FAIL at docs-and-deps.patch
+== P1 P2 docs-and-deps semgrep-rebased: semgrep-rebased does not apply after docs-and-deps even without mine (control above)
+== TALLY: 34 of 38 other patches apply alone on 0841f36; 0 of those 34 fail together with P1+P2 []; the 4 that fail alone fail without mine too. P1 alone / P2 alone / both orders: ok, ok, ok, ok
