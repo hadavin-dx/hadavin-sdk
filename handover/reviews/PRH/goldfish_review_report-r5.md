@@ -1,0 +1,25 @@
+Status: resolved
+
+# Goldfish Annotated Review Report (PR H, round 5)
+
+**Target:** branch `wip/cloud-prh-b5`, head `3db0d34d` (strip hidden controls before redaction; REDACTION path, no round cap). No person available: recommended option for every item. Reviews (by reading only): `handover/reviews/PRH/prhb5-design-r5.md` (1 Blocker, 2 Major, 2 Nit) and `prhb5-codebase-r5.md` (2 Major, 3 Nit). Independent evidence: `handover/evidence/PRH/3db0d34d/RESULTS.md`: full pytest 12935 passed, 1 skipped; prh_mutants 71 of 71 good; ruff, format, bandit, scan_repo, stage_mutants 37/37, gitleaks exit 0; no added noqa or type-ignore; 4 files outside the ticket's allowed list; H1a and H2 reproduced on the head; H3 not reproduced; 7 of 21 new test functions pass on old code; cost H rows 2.8 to 4.7 times main; timing test flaky (head pass, fail, fail; main fail x3). Not run: Python 3.12, full suite on main, CI steps outside the package, the ticket's F/B/M5 rows.
+
+## Prioritized findings
+| # | Source | Sev | Verdict | Edit |
+|---|---|---|---|---|
+| 1 | design H1 | Blocker | PROPOSE FIX | `tools.py:953-970` compares the union as a set, not per occurrence. Evidence: `"x "+HAND+" y "+ESC+HAND`: the copy after the ESC is readable on all four paths on the head; main masks it on tool and error. Fix at the choke point: count the marks per reading and require the counts to agree per occurrence; where they cannot be shown equal, return MARKER + TRUNCATED (fail closed). Add rows (single copy, two copies, copy before and after the ESC, cut copy plus plain copy) and a set-equality mutant that restores the set comparison |
+| 2 | design H2 | Major | PROPOSE FIX | `tools.py:957-959` `return raw` leaves a cut fragment: `"log "+ESC+HAND[:11]+TRUNCATED` shows HAND[1:11] on all four paths (masked on tool and error on main, so a regression). Never return the raw text in that branch: fail closed with MARKER + TRUNCATED or mask by the spaced reading. Rows plus a mutant |
+| 3 | design H3 | Major | PROPOSE FIX (guard only) | Not reproduced: evidence shows `id <APIKEY_1> user <IPV4_1>` on all four paths on head, and main leaves the key tail readable. I do not CONTEST: the reviewer's reading of `runmap.py:855-858` and `544-566` (the character-reading win returns the joined reading) is a code-reading fact the probe did not hit with this one input. Use `characters_spaced` in that branch as a guard, with a row for `user`+BEL+IP, and a mutant; note that the evidence found no failing input |
+| 4 | codebase R5-1 | Major | CONTEST | Mutant 58 "may be unkillable": the independent run `prh_mutants.py` gives 71 of 71 good at `3db0d34d` (RESULTS.md, last line "71 of 71 good; problems: []"), so every mutant including 58 is killed. The builder's figure is confirmed; the reviewer's claim rests on reading only |
+| 5 | codebase R5-2 | Major | PROPOSE FIX | The 4 files outside the ticket's allowed list (`defaults.py`, `prh_accidental_pairs.json`, `prh_main_passes.json`, `test_k5_fixes3.py`) are confirmed. They are legitimate (pass bound constant, two fixtures, one updated test), but the ticket list is stale: add them to the ticket errata (`handover/tickets/` PR H errata) with one reason each |
+| 6 | codebase R5-3 | Nit | PROPOSE FIX | Mutant floor 55 to 71 |
+| 7 | codebase R5-4 | Nit | PROPOSE FIX | Assert "worst is 13" in the pass-count test |
+| 8 | design H4, H5; codebase R5-5 | Nit | DECLINE | H4 and H5 are wording and the R5-5 reviewer says no fix is required; recorded, none lost. Re-check wording when the files are touched for items 1-3 |
+| 9 | evidence | Minor | PROPOSE FIX | One line each for the 7 tests that pass on old code: three tail rows (trail, nextline, longtail): need a mutant that reverts the tail handling or a stated control reason; "a refusal is not masked unless the row says so": control or mutant; undo entity cut: needs a mutant at the entity-branch strip point (codebase C5 of round 4); pass bound seeded search and every regression row at most seven passes: mutant that raises the bound or a row needing 8 passes. Add the mutants where cheap |
+| 10 | evidence | Minor | PROPOSE FIX | Direct `redact()` calls: d3 (key cut by ESC ( B ESC [ m) leaves the key tail readable; d11 seeded-map value tail readable, same as main. Say so in the `redact()` docstring and fix d3 if the choke point allows (round 4 C4 noted the same joined fallback); otherwise record as same-as-main with the next step |
+
+## Cost note for the owner
+Hidden-control cost rows (H1-H4) run 2.8 to 4.7 times the main-branch time at 262,144 characters; ordinary rows S1-S5 are 0.98 to 1.03 times. This is the price of reading each text in several ways; recorded, not a defect unless the lead sets a limit.
+
+## Handoff counts
+Accepted (PROPOSE FIX): 8 (items 1, 2, 3 guard, 5-7, 9, 10). Contested: 1 (item 4, 71 of 71). Declined: 1 group (item 8). Escalated: 0. Next: batch-6 fix builder (redaction path, no cap). Ledger: H1 Blocker and H2 Major OPEN until a fresh probe on the fixed head shows no readable piece; R5-1 closes with the 71 of 71 line.
