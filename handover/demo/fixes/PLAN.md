@@ -1,29 +1,54 @@
-# ORDER D8 fixes: PLAN (builder, lane 8). Tree: pr-3-tests, b29bb1f5b1c0b702e37198120d08b080861006fc. Nothing committed or pushed.
-Patch: docs-and-deps.patch (4 files: tests/test_portal_lead_pages.py, docs/tests.md, docs/portal.md, contract.md). `git apply --check` OK on a fresh clone at b29bb1f (evidence-5).
+# Lane 8b (v3, orders D11 and D12): PLAN (builder). Final tree: pr-3-tests 558d37f (rebased from b29bb1f). Nothing committed or pushed.
+Patch: docs-and-deps.patch = the NEW design (browser lock with Playwright only, sidebar test reads pixels inside Chromium, docs). Records: docs-and-deps-v1-own-decoder.patch (lane 8), docs-and-deps-v2-pillow-draft.patch + PLAN-v2-pillow-draft.md (D10 Pillow draft, evidence only, not shipped).
 
 ## Failures and open items FIRST
-1. NOT MEASURED BY ME: the full-suite counts (2349/116 no Playwright; 2462/3 with Playwright) are lane 1 and lane 4 numbers. I ran only the browser/Node files, the hygiene test and the two sidebar tests. I did not run the full suite (shared machine, 15 min).
-2. 20-test difference only PARTLY explained. Measured: Node on PATH vs not changes 21 tests (134 vs 113 skips in the 8 browser/Node files, evidence-4). Lead's 2329/135 equals "Node missing" within one test and one skip (here: 2328/137). The remaining 1 test + 1 skip: not explained (earlier total 2464 vs 2465 now; maybe gitleaks present; the lead's run log is not kept). docs/tests.md says "Not explained" for that part.
-3. Slip caught: my first docs text had absolute paths (/opt/...); test_hygiene_scan_public failed on it; replaced by placeholders, hygiene passes (evidence-6). 
-4. Not run: gitleaks, hardcoded-literal scan in CI form (I ran the same patterns.txt/exceptions.txt via git grep on docs/tests.md only, before fixing), Windows, Playwright 1.65.1 route / `playwright install chromium` (docs say not measured).
-5. Playwright is NOT in the lock and I did not add it (see below). Open for the lead: whether to add a CI browser job (then Playwright + browser install in lint.yml).
-6. Earlier hangs reported by lanes 1/4 (truncated full run): not investigated, out of scope.
+1. Full run (evidence-b4): on b29bb1f + both lock files + Playwright 1.63.0 + chromium 1243 + node, no Pillow: 2462 passed, 3 skipped in 1021 s (2465 tests), exit 0, one serial process, load average 2.5 before / 4.3 after (shared machine). It was NOT repeated on 558d37f: 558d37f differs from b29bb1f in .gitleaks.toml only (+7 lines, the sonar allowlist; `git diff --stat b29bb1f 558d37f`), so tests/test_portal_lead_pages.py, docs/tests.md, requirements files and exceptions.txt are unchanged by it; on 558d37f I re-ran only hygiene + the two sidebar tests (11 passed, 1 skipped: gitleaks absent from PATH, evidence-b7), ruff check and format.
+1b. D12 gitleaks: the lead's `[[allowlists]]` on 558d37f is broken (line target) and shows 1 finding with the real gitleaks 8.30.1 in baseline and with my patch (sonar-project.properties generic-api-key; not mine). My patch adds NO new finding: hash lines of the new locks allowed, a planted made-up 64-hex in docs/ and in a file named requirements-planted.txt still reported (evidence-b6). My allowlist lines use `regexTarget = "match"` (the existing style, no ^ on a line target) and the path regex `(^|[/\\])requirements-(dev|browser)(-win)?\.txt$`. The 10a fix patch applies on top of mine (git apply --check, evidence-b8) and the scan then says "no leaks found" (evidence-b6). To keep that so I added my exceptions.txt lines at line 9-10, not next to line 24 which 10a's hunk uses. My patch applies on 558d37f only (the .gitleaks.toml hunk has 558d37f context; `git apply --check` fails on b29bb1f for that hunk, expected).
+2. The brief named requirements-semgrep.in / requirements-coverage files and a documented `--exclude-newer` pattern: THEY DO NOT EXIST in b29bb1f (grep). I followed the real pattern (requirements-dev.in + Linux py3.12 lock + Windows py3.13 lock) and added `--exclude-newer` myself.
+3. Hygiene failed on my first try (new file names, a time stamp in the command, and the 64-hex hash lines were reported by `test_hygiene_scan_public`); fixed in exceptions.txt, .gitleaks.toml (2 regexes), .codeant/configuration.json; date written without time. Hygiene now 9 passed, 1 skipped (gitleaks absent). The real gitleaks was NOT run, so the .gitleaks.toml edit (same regex style as before) is untested by the tool.
+4. I started two pytest processes by mistake for a few minutes (a first background run survived its launcher); killed both, then ran one. Nothing else left running (checked pgrep).
+5. Not measured: Windows (lock compiled, never installed); `playwright install chromium` from scratch (chromium 1243 preinstalled in /opt/pw-browsers); gitleaks; mypy on win32 (only `--platform linux`).
+6. CI has no browser job: lint.yml installs only requirements-dev.txt, so no workflow uses the new locks and the two sidebar tests run in no CI. Open for the lead: add a browser job.
+7. Maintenance: Dependabot covers GitHub Actions only (docs/tests.md), so requirements-browser.* get NO update PRs. Whoever bumps Playwright re-runs the generation command (in each lock's header and in versions.md) AND must install the matching chromium build; a newer Playwright with only build 1243 makes ALL browser tests skip.
+8. The lead's 2329/135 and its 2462 with 2 skipped are not reconciled (docs say so: inference only, Node-missing fits, unknown OS/gitleaks/Node). Reviewer M2/M3/N4-N7 applied to docs/tests.md (counts named by commit: 2349/116 on bee6fff4 and 43110e7; 43110e7 with Playwright = 2 failed 2460 passed 3 skipped, 2462 was a would-be; "differs by +1 passed, -2 skipped"; skip counts "by reported line"; 1254 verified from the playwright 1.65.1 wheel browsers.json; the "20 seconds" claim and "newest at the time" dropped; Node and Chromium build explained in plain words; "on purpose" removed).
 
-## (a) Pillow: why CI and the lead passed
-- Only one PIL import in the repo: tests/test_portal_lead_pages.py (inside the test body, `from PIL import Image`). No pillow in requirements-dev.in, either lock, README, docs (grep).
-- lint.yml installs only requirements-dev.txt and runs `python -m pytest -q`; it does not install Playwright, so all browser tests (incl. these 2) SKIP in CI (`pytest.importorskip("playwright.sync_api")` in _browse, line 113). So CI never needed Pillow. The lead's own Linux run passed because Pillow was already present in that environment (inference: not checked, I cannot see that machine).
-## Decision: stdlib PNG reader in the test, no Pillow dependency
-Why: adding Pillow means a new dependency + two re-generated hashed locks (Linux py3.12, Windows py3.13) for ONE test, and Playwright (which the test needs anyway) is already outside the lock, so the lock would not make this test runnable by a stranger. A stdlib reader (`_png_pixels`: zlib + struct, all 5 PNG filter types, 8-bit RGB/RGBA, raises on anything else) removes the gap with no dependency and no skip. No silent skip added.
-Not done (so no uv lock generation): the lock files are untouched; uv 0.11.32 was only used to check the tool version. The existing locks' commands: Linux "pip-compile --allow-unsafe --generate-hashes ... --strip-extras" (pip-tools header), Windows "uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras" (contract.md). No --exclude-newer is documented for them; none needed as no lock changed.
-Proofs:
-- Decoder vs Pillow, 4 random PNGs (RGB/RGBA, optimized and default filters), pixel by pixel: all True (script /tmp/work/pxcheck.py, output in this PLAN section: RGB False True, RGB True True, RGBA False True, RGBA True True).
-- Brand-new venv /tmp/work/fresh-venv: python3.12 -m venv; `pip install --require-hashes -r requirements-dev.txt` OK; `pip install playwright==1.63.0`; no Pillow installed (pip list shows only playwright). With PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, PATH=/opt/node22/bin:$PATH, PYTHONPATH=src: new code `2 passed, 29 deselected in 4.58s`; old code (git stash) `2 failed` with ModuleNotFoundError at line 429 (evidence-1).
-- Mutation: tolerance made impossible (<= -1): both tests fail and print real colours ((246,244,254),(246,244,254)) light, ((16,15,32),(16,15,32)) dark, so pixels are really read (evidence-2). Restored after.
-- ruff check + ruff format --check on the changed test file pass; mypy --platform linux: no issues in 26 files; tests/test_hygiene.py 9 passed, 1 skipped (gitleaks) (evidence-3, 6). No "lock consistent with .in" test exists in the repo (grep in tests/test_hygiene.py found none; only a hash-lookalike allowlist entry).
-## (b) docs
-- docs/tests.md: the existing "Browser tests" section replaced and extended (versions, env vars, counts, 3 skips, Node explanation, link-by-name to contract.md "Quality commands" and lint.yml, "what to do when a check fails" with `python -m pytest -q -rs`). The tests.md:27 fix (adds test_stage_confirm_browser.py) is inside it.
-- Re-verified the 3 drift fixes on b29bb1f against code: (1) contract.md:143: src/lead_desk/desk.py:338 refuses declared > MODEL_CALL_BUDGET_SECONDS (9.0, constants.py:80); old text (stuck grace minus margin) is wrong: TRUE. (2) portal.md:5: portal_api.py `_LEADS_ROWS` matches name/email only with by_email=1, company and lead_id always, source_ref only with by_email=1; so masked search = company and lead number, request numbers not searched: TRUE. (3) tests.md: tests/test_stage_confirm_browser.py exists and needs Playwright: TRUE. Original patch applied cleanly (git apply --check rc=0).
-- Skip counts with no Playwright, Node on PATH: 113 skipped / 113 passed in the 8 files (22+28+60+3). Node off: 134 skipped (+21: mode_safety 1, lead_pages 2, portal_mode 18).
+## The test change: old vs new, side by side (tests/test_portal_lead_pages.py, test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100[light|dark])
+OLD (published):
+    import io
+    from PIL import Image
+    ...
+    height = page.evaluate("() => document.documentElement.scrollHeight")
+    assert height > 900, height
+    img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
+    above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
+    assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
+NEW:
+    import base64
+    ... (goto, wait, height, `assert height > 900` unchanged)
+    shot = "data:image/png;base64," + base64.b64encode(page.screenshot(full_page=True)).decode()
+    reader = page.context.new_page()            # blank page, same browser
+    try: got = reader.evaluate("""async ([src, points]) => { img = new Image(); img.src = src; await img.decode();
+            canvas 2D, default settings, same size as the image; drawImage; return {size, px: points.map(getImageData(x,y,1,1).data)} }""",
+                               [shot, [[60, 880], [60, height - 40]]])
+    finally: reader.close()
+    assert got["size"][1] > height - 40, got["size"]                    # both points inside the screenshot (old: getpixel raised IndexError; still loud)
+    above, below = got["px"]
+    assert above[3] == below[3] == 255, (above, below)                  # NEW extra check: opaque
+    assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (above, below)   # same tolerance 6, same points
+Nothing weakened: same two sample points, same tolerance, same height>900 guard, light and dark parametrisation and _browse(width=1100, scheme) untouched; out-of-range stays loud (explicit size assert; getImageData itself would silently return zeros, which is why the assert is there); two checks added (size, alpha).
+Why a blank page from page.context.new_page(), not the open portal page: the portal page may carry a content-security rule that refuses a data: image (not checked, avoided); the blank page has none, the data: URL is same-origin-clean so the canvas is not tainted (it ran without a SecurityError); the screenshot is decoded at its own pixel size, so the portal's viewport (1100) does not scale it. The reader page is closed in `finally`.
+Points thought through: colour management: canvas 2D default (sRGB, no colour space conversion for an untagged PNG); PNG from Chromium is RGB opaque (Pillow said mode RGB, size 1100x1436). Premultiplied alpha: irrelevant at alpha 255 (asserted). data: URL size: a 1100x1436 screenshot worked; Chromium data URLs up to 2 MB or more are fine in Chromium; a much taller page was not tried. Decode is async: `await img.decode()`.
+Cross-check (evidence-b3, Pillow in a THROWAWAY venv /tmp/work/pilvenv, not shipped, not in any lock): same screenshot, same two points: Pillow light (246,244,254) both, dark (16,15,32) both; in-browser light [246,244,254,255] both, dark [16,15,32,255] both: identical.
+Mutation (evidence-b2): tolerance made impossible (<= -1): both tests fail printing the real colours, light ([246,244,254,255],[246,244,254,255]) and dark ([16,15,32,255],[16,15,32,255]); restored (cmp with the good copy OK). Not done: reverting the sidebar CSS.
+
+## Lock design (D11: Playwright only, NO Pillow anywhere)
+requirements-browser.in: `playwright==1.63.0` only. Generated with uv 0.11.32 (/root/.local/bin/uv) on 2026-11-12:
+  uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt
+  uv pip compile requirements-browser.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev-win.txt -o requirements-browser-win.txt
+Two files, not --universal: the repo already ships one lock per OS and Python version, so a stranger already picks by OS. --exclude-newer (my choice; the repo has none): ignores releases after that date so the command reproduces; the date is the generation day. `-c <dev lock>`: shared packages held to the dev pins.
+Adds exactly (both files): playwright 1.63.0, greenlet 3.5.6, pyee 13.0.1, typing-extensions 4.16.0 (already in the dev locks at the same pin: nothing changes). Fresh venv freeze diff: greenlet, playwright, pyee added; `pip list | grep -ic pillow` = 0; pip check clean (evidence-b1). Lint locks untouched: git diff --stat requirements-dev.txt requirements-dev-win.txt requirements-dev.in is empty (evidence-b5). Licences (metadata, evidence-b2 of the v2 draft; Pillow no longer involved): playwright Apache-2.0, greenlet MIT AND PSF-2.0, pyee MIT (classifier), typing-extensions PSF-2.0 (listed in versions.md).
+Other files: exceptions.txt, .gitleaks.toml, .codeant/configuration.json (hash-line and file-name exceptions, see 3), versions.md (browser section), contract.md (line 71 sentence + the exit-4 drift fix), docs/portal.md (drift fix), docs/tests.md.
+Considered, not chosen (earlier): own PNG decoder (v1, rejected D10), Pillow lock (D10, replaced by D11).
+
 ## What a stranger now does
-python3.12 -m venv .venv; pip install --require-hashes -r requirements-dev.txt; pip install playwright==1.63.0 (match the browser build); set PLAYWRIGHT_BROWSERS_PATH and put node on PATH; python -m pytest -q -rs. Browser tests then pass without Pillow.
-Processes: all pytest runs ended; no servers left. Scratch: /tmp/work/{fix-tree,fix-check,fresh-venv,nopw-venv}.
+python3.12 -m venv .venv; pip install --require-hashes -r requirements-dev.txt; pip install --require-hashes -r requirements-browser.txt; playwright install chromium (build 1243 for Playwright 1.63.0); PLAYWRIGHT_BROWSERS_PATH if not default; node on PATH; python -m pytest -q -rs. No Pillow.

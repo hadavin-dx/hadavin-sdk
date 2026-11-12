@@ -1,0 +1,11 @@
+HEIGHT 1436
+FHEIGHT 1436
+            print("HEIGHT", height)
+        print("HEIGHT", height)
+E       AssertionError: ([246, 244, 254, 255], [246, 244, 254, 255])
+tests/test_portal_lead_pages.py:462: AssertionError
+            print("HEIGHT", height)
+        print("HEIGHT", height)
+E       AssertionError: ([16, 15, 32, 255], [16, 15, 32, 255])
+tests/test_portal_lead_pages.py:462: AssertionError
+2 failed in 3.30s

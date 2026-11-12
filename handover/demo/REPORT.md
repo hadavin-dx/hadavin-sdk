@@ -1,6 +1,41 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:26Z / 01:56 IST - LANE 8b DONE (D11 design: decode in Chromium, playwright-only locks); fresh review running; 5 agents live
+FAILED / OPEN first (builder's words; unreviewed):
+- Your brief assumed `requirements-semgrep.in`, requirements-coverage files and a documented `--exclude-newer` pattern in the repo: NONE exist on b29bb1f (lane 7 found the same). 8b copied the real pattern (requirements-dev.in + a Linux py3.12 lock + a Windows py3.13 lock) and added `--exclude-newer 2026-11-12` itself.
+- The first hygiene run failed (new file names and hash lines tripped it); fixed in exceptions.txt, .gitleaks.toml and .codeant/configuration.json (the CodeAnt bot config: the reviewer checks that change is justified and harmless).
+- The builder started two pytest processes by mistake for a few minutes; killed both, then ran one.
+- NOT measured: Windows (lock compiled, never installed), `playwright install chromium` from scratch (build 1243 was preinstalled), mypy win32.
+- CI has no browser job: no workflow uses the new locks or runs the sidebar tests. Dependabot covers GitHub Actions only, so the new locks get NO update PRs: whoever bumps Playwright must re-run the generation command (in each lock header and in versions.md) and install the matching chromium build.
+- The laptop's 2329/135 and its with-Playwright 2462 / 2 skipped are NOT reconciled; docs mark the Node-missing explanation as an inference only.
+- The full run was on b29bb1f, not 558d37f (558d37f changes only .gitleaks.toml, +7 lines): on 558d37f only hygiene and the two sidebar tests were re-run.
+- The lead's allowlist on 558d37f is broken (real gitleaks: 1 finding, both on baseline 558d37f and with the patch; the patch adds none). The patch applies on 558d37f ONLY, not on b29bb1f (its .gitleaks.toml hunk carries 558d37f context). 10a's fix patch still applies on top of it (8b's exceptions.txt lines are at 9-10, away from the fix hunk) and the combined scan says no leaks.
+DONE (evidence-b1..b8): locks: requirements-browser.in = `playwright==1.63.0` only; requirements-browser.txt (Linux) and requirements-browser-win.txt hashed, uv 0.11.32, 2026-11-12; they add playwright, greenlet 3.5.6, pyee 13.0.1 and typing-extensions 4.16.0 (already pinned identically in the dev locks); `git diff --stat` on requirements-dev*.txt/.in empty; fresh venv `pip list` shows NO Pillow; `pip check` clean. TEST: the two sidebar tests decode the screenshot inside Chromium (blank page in the same context, canvas, getImageData); same points (60,880) and (60,height-40), same tolerance 6, same `height > 900` guard; ADDED an explicit size assert (out-of-range stays loud) and an alpha-255 assert; old and new code side by side in PLAN.md. MUTATION: with the tolerance made impossible both tests fail and print the real colours: light [246,244,254,255] twice, dark [16,15,32,255] twice; a throwaway Pillow venv reads the SAME colours from the same screenshot (evidence-b3); Pillow is not shipped (its metadata licence was MIT-CMU: moot). FULL RUN: 2462 passed, 3 skipped in 1021 s (2465 tests, one process) in a fresh venv from the dev lock + the browser lock with chromium 1243 and node (all browser files included). LINT: ruff check and format pass, mypy linux clean; hygiene on 558d37f 11 passed, 1 skipped (gitleaks not on PATH). GITLEAKS (real binary): hash lines allowed; a planted made-up 64-hex value is still reported. APPLY: `git apply --check` passes on a fresh clone of 558d37f (evidence-b8). DOCS: review M2/M3/N4-N7 applied: counts named by commit (2349/116 on bee6fff4 and 43110e7; 43110e7 with Playwright was 2 failed, 2460 passed, 3 skipped), Node as 'fits', skips counted by reported line, '1254' checked in the playwright 1.65.1 wheel, plain words; the rung-table decision (own decoder rejected, Pillow replaced by D11) in PLAN.md. Old patches kept: docs-and-deps-v1-own-decoder.patch, docs-and-deps-v2-pillow-draft.patch, PLAN-v2-pillow-draft.md.
+- The fresh review (no cap: a changed test plus a new lock in a public repo) checks: the new test cannot pass vacuously, was not weakened (is there a CSS-level mutation, not only a broken tolerance?), canvas colour-management/alpha/size/decode pitfalls, the lock hashes, the allowlist lines, overlap with lane 7's patch (same two files), the docs numbers. Report to fixes/REVIEW-2.md.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:26Z / 01:56 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 38 min | 20:50 | running | hang/RESULTS.md | per-run files; no hand-back |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 13 min | 21:15 | running | CODEANT-COVERAGE.md | started |
+| ab3f938c2486dd690 (agent, sonnet builder) | lane 10a2 gitleaks fix v2 | 20:23 | 5 min | 20:53 | running | gitleaks-toml-fix-v2.patch, SUMMARY2.md | started |
+| ab3da4b190572dfd1 (agent, sonnet egm reviewer) | lane 7 security review round 2 | 20:25 | 3 min | 20:35 | running | coverage/REVIEW-2.md | started |
+| (new) egm reviewer, lane 8b v2 | review | 20:26 | 0 min | +10 min | running | fixes/REVIEW-2.md | started |
+Totals: agents live 5; shells 0; pytest runs about 1 plus lane 9's short runs; `yes` x2 (lane 9); containers 0; load average 3.82, 3.73, 2.94; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 8 browser tests | v3 (decode in Chromium) built; review 2 running | v1 review 0B/3M/8N | own code (rule 20); counts on the wrong commit; hypothesis as fact | two design reversals by decision (D10, D11), not defect rounds | none (public repo dependency/test) | fresh review without Major/Blocker |
+| lane 7 Sonar | review 2 running | r1 0B/1M/8N | pre-existing gitleaks failure; shared-runner design; evidence gaps | security path, no cap | no cap | fresh review without Major/Blocker |
+| gitleaks allowlist | fix round 2 (10a2) | v1 review 0B/1M/2m/2N | patch conflict; fix wider than needed; untested narrowness | security path | no cap | fresh review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| ac3a511599cfd9d0d (lane 8b builder, sonnet) | 25 min (20:01 to about 20:26) | D11 patch built; full run 2462/3 on b29bb1f; evidence b1-b8 | yes |
+
 ## 2026-11-12 20:22Z / 01:52 IST - LANE 7b DONE (coverage patch v2); fresh security review round 2 running; 5 agents live
 FAILED / OPEN first (builder's words; unreviewed):
 - STILL UNVERIFIED: sonar-scanner accepting coverage.xml via `sonar.python.coverage.reportPaths`; how Sonar treats the empty `<source/>` entry in coverage.xml; that the action SHAs belong to the named actions; real package hashes. No scanner was allowed to run.

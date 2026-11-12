@@ -1,0 +1,5 @@
+558d37f
+APPLY-CHECK-OK-558d37f
+10a fix still applies after mine
+error: patch failed: .gitleaks.toml:88
+error: .gitleaks.toml: patch does not apply

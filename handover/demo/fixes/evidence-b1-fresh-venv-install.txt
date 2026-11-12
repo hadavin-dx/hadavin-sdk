@@ -1,0 +1,20 @@
+== browser lock
+Installing collected packages: pyee, greenlet, playwright
+Successfully installed greenlet-3.5.6 playwright-1.63.0 pyee-13.0.1
+added:
+2a3
+> greenlet==3.5.6
+10a12
+> playwright==1.63.0
+11a14
+> pyee==13.0.1
+No broken requirements found.
+== pip list | grep -i pillow:
+0
+Version 1.63.0
+/opt/pw-browsers/chromium-1243/chrome-linux64/chrome
+== sidebar tests
+..                                                                       [100%]
+2 passed in 3.37s
+ tests/test_portal_lead_pages.py | 33 +++++++++++++++++++++++++++------
+ 1 file changed, 27 insertions(+), 6 deletions(-)

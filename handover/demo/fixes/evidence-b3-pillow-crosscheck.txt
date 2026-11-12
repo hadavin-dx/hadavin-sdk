@@ -1,0 +1,14 @@
+== Pillow cross-check (throwaway venv, not shipped)
+HEIGHT 1436
+FHEIGHT 1436
+            print("HEIGHT", height)
+        print("HEIGHT", height)
+            print("HEIGHT", height)
+        print("HEIGHT", height)
+ tests/test_portal_lead_pages.py | 33 +++++++++++++++++++++++++++------
+ 1 file changed, 27 insertions(+), 6 deletions(-)
+light RGB (1100, 1436)
+ Pillow (old test reads): (246, 244, 254) (246, 244, 254)
+dark RGB (1100, 1436)
+ Pillow (old test reads): (16, 15, 32) (16, 15, 32)
+in-browser (evidence-b2): light [246,244,254,255] both; dark [16,15,32,255] both

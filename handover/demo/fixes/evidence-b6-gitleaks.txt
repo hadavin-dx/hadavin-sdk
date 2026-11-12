@@ -1,0 +1,20 @@
+8.30.1
+== dir scan, my patch on 558d37f
+[90m8:19PM[0m [32mINF[0m [1mscanned ~2706222 bytes (2.71 MB) in 350ms[0m
+[90m8:19PM[0m [33mWRN[0m [1mleaks found: 1[0m
+exit 0
+== baseline 558d37f (stash)
+== real gitleaks 8.30.1: baseline 558d37f alone:
+[('generic-api-key', 'sonar-project.properties')]
+== 558d37f + my patch (no fix):
+[('generic-api-key', 'sonar-project.properties')]
+== 558d37f + my patch + 10a fix:
+1
+== planted made-up 64-hex in another file (should be reported):
+[('generic-api-key', 'sonar-project.properties'), ('long-hex-token', 'docs/planted.txt'), ('long-hex-token', 'requirements-planted.txt')]
+== 558d37f + my patch + 10a fix (patch applies on top: yes), real scan:
+1
+[90m8:19PM[0m [32mINF[0m [1mscanned ~2706241 bytes (2.71 MB) in 371ms[0m
+[90m8:19PM[0m [32mINF[0m [1mno leaks found[0m
+== planted made-up 64-hex in docs/planted.txt and requirements-planted.txt (must be reported):
+[('long-hex-token', 'docs/planted.txt'), ('long-hex-token', 'requirements-planted.txt')]
