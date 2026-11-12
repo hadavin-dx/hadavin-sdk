@@ -134,6 +134,7 @@ M = [
         "    if real and mode != _DEMO_STAGE:\n",
         "test_a_real_service_is_named_and_made_up_data_is_never_claimed",
         "does not name every real service",  # now stopped by the claim post-condition, before the old assertion
+        crash="ValueError",
     ),
     mb(
         "B6 the loud stand-ins line is replaced by the quiet one",
@@ -148,6 +149,7 @@ M = [
         'ModeBanner(mode, "quiet", tag, words.made_up,',
         "test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up",
         "claims made-up data",  # now stopped by the claim post-condition, before the old assertion
+        crash="ValueError",
     ),
     mb(
         "B7b a pilot or live screen hides its stand-ins",
@@ -620,42 +622,42 @@ M = [
         "        found.append(EXTERNAL_SYSTEMS)",
         "        pass",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B21 an egress host that is not this machine is not counted as real",
         "        found.append(EGRESS_HOSTS)",
         "        pass",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B22 a read source that is not this machine is not counted as real",
         "        found.append(READ_SOURCES)",
         "        pass",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B23 every address counts as this machine",
         '        return ipaddress.ip_address(host.strip("[]")).is_loopback',
         "        return True",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B24 a value that is not text is read as this machine",
         "if isinstance(url, str) else True",
         "if isinstance(url, str) else False",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B25 a source whose endpoint cannot be worked out is read as this machine",
         "and unknown is shown as real\n        return True",
         "and unknown is shown as real\n        return False",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "assert",
+        "AssertionError: ('",
     ),
     mb(
         "B26 a banner may leave without naming every real service",
