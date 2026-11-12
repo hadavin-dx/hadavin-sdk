@@ -1,6 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:18Z (00:48 IST): status
+- Part 2 (public-bind refusal) builder reported: head e75f9f25 pushed to wip/cloud-pd-bind; its own gates: full pytest 10187 passed, stage_mutants 37/37, bind_mutants 18/18 (builder numbers, not yet checked by an independent runner). It added an IN_PROCESS list of 5 backend kinds to backends/table.py: that is the builder's reading and needs a reviewer. Independent evidence runner started; then two reviewers, resolve (mode-safety, no round cap).
+- Part 3 (stand-ins) batch-2 builder started (merges the part-2 head first; stage_mutants must stay 37/37).
+- Part 5 (safe reset): head 89ef13c9 pushed; its full pytest and stage_mutants were still queued at 19:18Z, so NOT verified; earlier head 39434e8c had failed the stage-word test.
+- Machine load about 9 (limit I aim for: 4): heavy runs are queued, so some gates are late.
+
 ## 19:15Z: status (ORDER 258)
 - #72 MERGED (lead). READY-TO-MERGE.md updated at the top: #71 NEEDS-FIX, #72 MERGED, security-check correction, main now a8b4d8e8.
 - Started: #71 fix builder (2 Majors + nits; ref wip/cloud-p0a-fix) and #72 nits builder (4 nits, one change from main; ref wip/cloud-p6a-nits). Stack rebase builders told to use a8b4d8e8.
