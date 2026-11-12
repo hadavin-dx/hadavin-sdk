@@ -35,3 +35,4 @@ Files copied onto a detached worktree of origin/main (src from main; import path
 
 ## Cleanup
 Postgres on port 56281 stopped and its folder, worktrees and venv removed (see end of file for confirmation).
+Cleanup confirmed 2026-11-12 01:25 UTC: own Postgres stopped, 2 worktrees, venv and pg folder removed (env.sh script kept removed with folder). No commit, no push.
