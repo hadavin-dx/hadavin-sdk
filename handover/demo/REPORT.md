@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 23:30Z / 05:00 IST - INT-2b RUN A (pristine f5fe824): **2988 PASSED, 6 SKIPPED, 0 FAILED, 20:22 min: NO HANG**; RUN B (stack) CAUGHT A REAL REGRESSION in the runtime set; hang-guard v2 review CLEAN
+FAILED / UNCERTAIN first:
+1. **RUN B FAILURE (real, caused by the runtime set, missed by every focused run and by 4 review rounds):** `tests/test_claim_checks_and_crm_mode.py::test_other_value_error_is_not_exit_4` FAILS on the stack tree (f5fe824 + speed + six codeant2 + hang-fix-v2) with `AttributeError: 'function' object has no attribute 'book_problem'` at src/lead_desk/server.py:1120. Cause: the new `main()` refusal calls `Desk.book_problem(config.db_path)` BEFORE the desk is built; that test replaces `server.Desk` with a plain function (`monkeypatch.setattr(server, "Desk", broken)`) to check that a ValueError from the Desk constructor is a traceback not an exit-4 refusal; the classmethod no longer exists on the stand-in. I reproduced it alone in the stack tree (1 failed in 1.08 s). It is the NEW core touch (`main` refusal + `Desk.book_problem`). Fix (builder 10c-2d, starting now): make the check not depend on the name `server.Desk` (a module-level function in desk.py imported by server.py) with the failing test as the fails-before proof; then a fresh review (core path) and a re-run of INT-2b run B. Run B continues meanwhile so I get its COMPLETE failure list (it was at 72 tests / 1 failure after 1 minute); the runtime set stays NOT READY until it is green.
+2. Run A skips are all expected but note them: 3 x tests/test_hygiene.py (no gitleaks program: run A had no GITLEAKS_BIN; the gitleaks-dependent tests are run separately WITH the binary: 15 passed earlier on this head), root-readable file test, a load-measurement test (LEAD_DESK_LOAD_N), a Windows-only reset test. Not run: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+3. The earlier 'full-suite hang' is now disproved as far as one run can: run A completed unbuffered in 20:22 with nothing stuck (the 3 stall alarms the runner raised during A were false: file replaced by my autostash, then fine).
+READY TO APPLY NOW: nothing new. Applicable and clean: semgrep/semgrep-on-head.patch (own PR); hang/hang-fix-v2.patch (optional safety net; REVIEW-2 clean, 0B/0M/4N; its run B result is pending). NOT READY: the runtime set (7 patches) until the book_problem regression is fixed and re-run.
+Hang-guard v2 review (round 2): 0 Blocker, 0 Major, 4 Nits: CLEAN (details: hang/REVIEW-2.md, pushed 39eb4ca0): no cause is presented as known; the 60 s bound for product stops is sound (daemon handler threads, stop() with 4 stalled clients took 0.00 s); the `--capture=sys` dump bug fixed; apply order independent of the codeant2-tests-hardening conftest hunk.
+NEEDS FROM LEAD: nothing new (Semgrep `concurrency:` yes/no and hang-guard yes/no still open).
+
+TABLE 1 - LIVE ITEMS (load 0.2)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| INT-2b runner | run B (stack: runtime 7 + hang v2) full unbuffered, then lints/hygiene/gitleaks/restart x5/node-off | 23:07 (run B 23:27) | 22 min (run B 2 min) | 00:15 | running; run B 1 failure at test ~70; file mtime fresh | integration/INT-2b.md + evidence-int2b-B-* | run B writing (23:28:24) |
+| 10c-2d | fix the `book_problem` regression (core path) | 23:31 | 0 min | 00:00 | starting | codeant2-desk.patch regenerated (+ any dependants) + evidence | - |
+Totals: agents 2, shells 0, containers 0, heavy pytest 1 (run B), load 0.2.
+Flags: none over time box.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt runtime | 5 (fix 10c-2d) | R1 5M, R2 4M, R3 3M, R4 0B/0M/5N, INT-2b: 1 real failure | a new core call that breaks a test which replaces `server.Desk` | the full-suite run found what 4 reviews did not: real failure | no | green INT-2b run B + fresh review of the fix |
+| hang guard v2 | 2 done | R1 0B/1M/5N, R2 0B/0M/4N | honesty, bounds | none | YES: clean | optional apply; run B result pending |
+| Semgrep, security, nits, layout | done | - | - | - | YES | - |
+Waste check: reviews read patches, they did not run the whole suite: the lesson is that the full run (INT-2b) is the gate that matters; it paid for itself here.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (23:18Z)
+| item | result |
+|---|---|
+| INT-2b run A (pristine f5fe824) | 2988 passed, 6 skipped, 0 failed, 20:22 min, no hang |
+| hang-guard v2 review | 0B/0M/4N clean (saved, 39eb4ca0) |
+| INT-2b run B (in progress) | first real failure found: book_problem vs monkeypatched `server.Desk` |
+
 ## 2026-11-12 23:18Z / 04:48 IST - INT-2b RUN A (pristine f5fe824, unbuffered): 63% DONE, 1907 PASSED, 0 FAILED, NO HANG; hang-guard review: 1 Major (honesty of comments) + 5 Nits -> v2 being built; RUNTIME SET AND SEMGREP PATCH STILL READY TO APPLY
 FAILED / UNCERTAIN first:
 - No failures anywhere yet. INT-2b run A (git clone of pr-3-tests f5fe824, `python -u -m pytest tests -v -o faulthandler_timeout=300 -rs`, 2994 tests collected (not 2516: Playwright + the new tests are in)): at 23:16:51Z it is in tests/test_portal_demo.py (63%), 1907 PASSED, 0 FAILED/ERROR, after 9:49 minutes of runtime (~15 min total expected). The earlier 'hang' therefore did not reproduce: unbuffered the suite just runs (this supports my 23:12Z correction; it is still evidence from ONE run, not a proof that no hang can ever happen).
