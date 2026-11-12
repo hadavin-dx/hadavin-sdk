@@ -2815,3 +2815,9 @@
 | P3a2b3e-r14-d456 | Major | P3a-2 | r14 D4/D5/D6 (+design D5): table 1 wrong for E22 and variants (O)/(C) not built; tables hide missing cells, counts hard-coded; step-0 refused cells counted | OPEN | batch 4 | | 2026-11-12 |
 | P3a2b3e-r14-d7 | Major | P3a-2 | r14 D7 + design D2: C6b asserts only the exception type; X01t reason wrong, family-owned third-role cell not run on a server | OPEN | batch 4 | | 2026-11-12 |
 | P3a2b3e-r14-minors | Minor | P3a-2 | r14 D8-D11 + evidence: K8 group-owns-schema untested, driver-error test gaps, pg_roles marker raw exit 3 untraced, wording, weak guards, 433 pass-on-old tests | OPEN | batch 4 | | 2026-11-12 |
+| PRHb7-r7-i9 | Major | PR H | r7 F1/D1: spaced-out secret treated as owner-only; known values (map, sweep, tool scrub) must be masked now; "three rows pinned" false (one row) | OPEN | batch 8 after r7 resolve | | 2026-11-12 |
+| PRHb7-r7-compare | Major | PR H | r7 F2/D2: `compare_readings` shared in name; conflict branch runmap.py:629-633 unreachable, no mutant | OPEN | batch 8 | | 2026-11-12 |
+| PRHb7-r7-direct | Major | PR H | r7 D3: direct redact() shows 17+ key characters when an escape or opener eats a capital letter and the map is fresh | OPEN | batch 8 | | 2026-11-12 |
+| PRHb7-r7-fuzz9 | Major | PR H | r7 evidence: 9 of 3096 random multi-cut texts leave an 8-character readable stretch of a made-up secret on head and c802cc0f | OPEN | batch 8 | | 2026-11-12 |
+| PRHb7-r7-tests | Major | PR H | r7 F3/F4/D4/D6-D8: mutant 100 equivalence unreproducible, tests that cannot fail, no withheld-share bound, 46 pass-on-old tests untraced | OPEN | batch 8 | | 2026-11-12 |
+| PRHb7-r7-minors | Minor | PR H | r7 D9 mojibake openers, F5/D5 three noqa S311, 16 files outside allowed list, F6/D10 nits, perf numbers disagree builder vs runner | OPEN | batch 8 | | 2026-11-12 |
