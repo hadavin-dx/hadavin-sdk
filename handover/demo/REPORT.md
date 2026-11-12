@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:27Z / 01:57 IST - LANE 7 review 2 done (security path): 0 Blocker, 1 Major (a missing rule-20 rung), 7 Nits; lane 7c started; 5 agents live
+FAILED / OPEN first:
+- MAJOR (rule 20, R448): the lock-drift hygiene test (12 lines in tests/test_hygiene.py) skips an obvious higher rung: PIP ITSELF. The job installs the two lock files in two separate commands; ONE call `pip install --require-hashes -r requirements-dev.txt -r requirements-coverage.txt` might fail on drifting pins with no test code. Nobody has tested it (the reviewer could not run pip). Lane 7c tests it in a throwaway venv (conflicting pin across two -r files; identical pins in both; `-c` under --require-hashes), records raw output, and then either deletes the test (pip works) or keeps it with a rung-table row 'tried, pip does not detect it: evidence'.
+- NIT, order dependence: the coverage patch edits exceptions.txt line 24 in place, which is context of the gitleaks fix: fix-then-coverage applies, coverage-then-fix FAILS ('patch failed: exceptions.txt:24'). Lane 7c adds a NEW line near line 9 instead and tests both orders (plus --3way and the v2 fix when it exists).
+- NITS (lane 7c fixes all by class): stale or contradictory PLAN.md statements ('no Python file is changed; mypy win32 not re-run' is false for v2; the v1 hygiene count 18 vs 20; v1 venv path; an unevidenced `pip install --dry-run` claim); counts: '2349' is passed+failed of the v1 run on b29bb1f and excludes the 116 skips (collected 2465), expect about 2350 passed + 116 skipped after v2 and the full suite was NOT re-run on 558d37f: UNVERIFIED unless lane 7c runs one serial run when load allows; sonar.yml header refers to 'the lane 7 plan' (a studio file not in the repo); `runs-on: ubuntu-latest` floats while lint.yml pins ubuntu-24.04 (keep if deliberate on main) and `--only-binary=:all:` would stop a hashed sdist build running before the test step; the drift test does not normalise `_` vs `-`, compares versions only and its anti-vacuity guards were not mutation-tested; the gitleaks path regex allows requirements-coverage.txt in any directory (narrow: needs 40/64 hex AND the path) and also TIGHTENS the dev lock's entry (not mentioned).
+- PASSED again by reading (full file): sonar.yml permissions top-level read-only, trigger pull_request not pull_request_target, fork/Dependabot `if`, persist-credentials false, SONAR_TOKEN only in the scan step env, no `${ }` in `run:`, checkout and setup-python SHAs identical to lint.yml, timeout 60 with rationale, an accurate header comment; lock: 131 sha256 hashes, only coverage 7.17.2 and pytest-cov 7.1.0 added, 10 shared-pin hashes found in the dev lock; coverage.py claim has raw evidence (`*` crosses `/` in 7.17.2). Evidence: `gitleaks dir` and `git` both no leaks on 558d37f + fix + patch; 133 findings without the allowances (131 inferred, not counted).
+- STILL UNVERIFIED: sonar-scanner acceptance, the empty `<source/>` entry, the action SHAs belonging to the named actions, real package hashes; ADDED to the list: the full suite on 558d37f, and the pip single-invocation result.
+- Lane 8b review, lane 10a2, lane 10b, lane 9: running. Lane 9 is at 40 minutes of 60 with no hand-back; its time box ends 20:50.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:27Z / 01:57 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 40 min | 20:50 | running | hang/RESULTS.md | per-run files |
+| a03bfbfb75bd4ec81 (agent, sonnet builder) | lane 10b CodeAnt triage | 20:15 | 17 min | 21:15 | running | CODEANT-COVERAGE.md | no file seen yet in triage/ for it: WATCH |
+| ab3f938c2486dd690 (agent, sonnet builder) | lane 10a2 gitleaks fix v2 | 20:23 | 9 min | 20:53 | running | gitleaks-toml-fix-v2.patch, SUMMARY2.md | working |
+| a2963d9e2981958a0 (agent, sonnet egm reviewer) | lane 8b v2 review | 20:27 | 5 min | 20:40 | running | fixes/REVIEW-2.md | working |
+| (new) lane 7c builder, sonnet | lane 7 fixes after review 2 | 20:27 | 0 min | +40 min | running | coverage patch v3, PLAN.md, evidence-r3-* | started |
+Totals: agents live 5; shells 0; pytest runs about 1 plus lane 9's short runs; `yes` x2 (lane 9); containers 0; load average 2.21, 3.35, 2.87; nothing past its time box.
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 7 Sonar | fix round 7c; review 3 follows | r1 0B/1M/8N; r2 0B/1M/7N | r1: pre-existing gitleaks failure, design, evidence gaps; r2: a missing rule-20 rung (pip) plus stale statements | r2 was needed because 7b changed the workflow comment, the lock allowances and added test code (security path: no cap); r3 follows because r2 found a Major | no cap | a fresh review finds no Major or Blocker |
+| gitleaks allowlist | fix round 2 (10a2); review 2 follows | v1 0B/1M/2m/2N | conflict, wider than needed, untested narrowness | security path | no cap | fresh review without Major/Blocker |
+| lane 8 browser tests | review 2 running | v1 0B/3M/8N | design reversals | D10, D11 | none | fresh review without Major/Blocker |
+Waste check: lane 7 round 2's Major (pip rung) was in the lead's own brief ('like the Semgrep pattern, installed on top of the dev lock'), the first builder never tried the one-call install: the rung ladder was not in the builder brief; I added 'tried pip single install' to the 7c brief.
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| ab3da4b190572dfd1 (lane 7 review 2, sonnet read-only) | about 3 min of agent time (20:25 to 20:28) | 0B/1M/7N, saved coverage/REVIEW-2.md | yes |
+
 ## 2026-11-12 20:26Z / 01:56 IST - LANE 8b DONE (D11 design: decode in Chromium, playwright-only locks); fresh review running; 5 agents live
 FAILED / OPEN first (builder's words; unreviewed):
 - Your brief assumed `requirements-semgrep.in`, requirements-coverage files and a documented `--exclude-newer` pattern in the repo: NONE exist on b29bb1f (lane 7 found the same). 8b copied the real pattern (requirements-dev.in + a Linux py3.12 lock + a Windows py3.13 lock) and added `--exclude-newer 2026-11-12` itself.
