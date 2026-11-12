@@ -1,0 +1,32 @@
+# REVIEW-py: egm:egm-codebase-details (sonnet), read-only, no shell, of py-retry.patch (base 43110e7). Saved by the lead session.
+Verdict: no Blocker. Every hunk walked is behaviour-preserving on Python 3.12 and 3.13 (by reading, not by running). Two Majors are about the PROOF, not the code. No bible R-numbers looked up.
+
+## Problems first
+- MAJOR 1: the new test pins little and is decoupled from the code it guards (new tests/test_except_clause_hierarchy.py, patch lines 235-262). Test 1 asserts five language facts (UnicodeError is a ValueError; TimeoutError, URLError, socket.timeout, ssl.SSLError are OSErrors): fixed by the language, cannot fail on 3.12 or 3.13. Test 2 hard-codes its own copy of the "broader" tuples for CrmError and LiveCapReached and never imports or inspects the real except clauses (crm_hubspot.py:328, live_claude.py:249): if someone later adds a parent class to the real tuples, the test stays green (SUMMARY's "if one of the class relations ever changes, these tests fail" is true only for class relations, not for edits to the clauses). Nothing pins the functools.partial change at desk.py:781. Nothing pins that the six MemoryError and send-error re-raises stay (the genuinely risky handlers): deleting `except MemoryError: raise` would still pass this test (other tests not checked). The test passes on old and new code (evidence-hierarchy-test.txt, 3 passed each): honest, but "2352 passed, +3" proves only that nothing broke. Fix suggested: derive the tuples from the source (ast on the two files, or expose as module constants) and add a mutation check.
+- MAJOR 2: the evidence is thin and not reproducible. evidence-baseline-full.txt and evidence-after-full.txt are bare pytest dots plus the summary line: no command line, Python version, venv or hash-install record, no head SHA. The "after" run is base + js-portal.patch + py-retry.patch together, so the Python change is not isolated. ruff, ruff format and mypy (linux and win32) "clean" are claimed in SUMMARY but no evidence file exists for them (triage folder has only eslint and pytest evidence). Only Python 3.13.18 was run; the project says requires-python >=3.12 and the lock says 3.12; 3.12 equivalence is by analysis only. The two runs overlapped on a shared machine (low risk).
+
+## Hunk by hunk (all verified against base code; all safe)
+1. UnicodeError/ValueError (config.py:266, :389; smtp_outbox.py:224; smtp_provider.py:234): UnicodeError subclasses ValueError; MessageError is not a ValueError and correctly stays; message uses type(e).__name__, unchanged.
+2. TimeoutError/OSError (smtp_outbox.py:292, smtp_provider.py:313, catcher.py:91): OSError since 3.3; asyncio.TimeoutError is the builtin since 3.11; IncompleteReadError and LimitOverrunError stay.
+3. live_claude.py:483 URLError/OSError/socket.timeout: both are OSErrors (socket.timeout alias of TimeoutError since 3.10); handler order unchanged; `import socket` has no other use (line 34 and a docstring), removal correct.
+4. ssl.SSLError/OSError (fake_imap.py:113, fake_smtp_tls.py:89): SSLError is an OSError; `import ssl` still used.
+5. crm_hubspot.py:326 `except CrmError: raise` removed: CrmError is a RuntimeError (adapters.py:51), no later handler is its parent; order unchanged.
+6. live_claude.py:247 `except LiveCapReached: raise` removed: LiveCapReached is a LiveError (RuntimeError); no listed member is its parent.
+7. The six MemoryError / (SendRefused, SendUnreachable, MemoryError) re-raises kept (smtp_outbox.py 242, 274, 283; smtp_provider.py 258, 296, 304); each is followed by `except Exception`, so removing any would change behaviour: FALSE POSITIVE call correct.
+8. desk.py:781 lambda to functools.partial: equivalent; two tiny differences: arguments are bound at creation (intended) and `self.crm.set_fields` is now looked up on the calling thread before _bounded (still inside the try at line 778, caught by `except Exception` at 788); _bounded only calls fn() (desk.py:1460). Other lambdas (961, 1664, 1979) not in loops.
+9. Unused variables: desk.py:773 tries_before (never read, arity 6 unchanged); portal_api.py:493-496 (arity of the 8-name unpack unchanged; only owner, step, reminder are read after); load_driver.py:238 `j` to `_`.
+
+## Classification check
+P1, P4, P5, P7-P12 STYLE correct; P2 FALSE POSITIVE (latent) reasonable (strictly a hardening); P3 FALSE POSITIVE correct (closure runs inside _finish_update, iteration ends with `return` at line 821); P6 correct; P13 (all bare `raise` lines re-listed) correct; P14 (test files) not checked.
+
+## Missed instances (reviewer's own grep of src/, load_tools/, demo_only/, scripts/): none
+Overlapping clauses: every multi-name tuple checked, remaining ones unrelated pairs (e.g. live_claude.py:427 (UnicodeError, OSError), crm_hubspot.py:317, live_claude.py:530, desk.py:1309, server.py `_GONE` before `except OSError` intentional). Immediate re-raises: exactly the nine in scope. Unused tries: desk.py:717 `tries` is used. Closures over loop variables: only desk.py:781 and :795. Scope gap: the builder's astscan.py silently skips any exception name it cannot resolve (no overlap reported) and could not import scripts/n8n_api.py, feed.py, run_real_check.py (checked by hand).
+
+## What the proof shows / does not show
+Shows: full suite no failure before or after on 3.13.18; node portal tests ran. Does not show: Playwright (116 skips, about 112 Playwright), gitleaks, bandit, Python 3.12 execution, real-service scripts. A test that passes on old and new code is not a fails-before check (rule 7 not applicable only because behaviour is unchanged, as the builder says). SUMMARY did not see the DeepSource report; several cluster wordings found nothing in desk.py: reviewer agrees.
+
+## Nits
+desk.py:781 `# binds now` comment is terse and the partial now evaluates `self.crm.set_fields` before the busy check; test `broader` dict built inside the test body and parametrize could use ids; SUMMARY says 15 files while the py patch touches 14 (13 source plus the new test) and the JS patch the rest.
+
+## Not checked
+No command run (no pytest, ruff, mypy, bandit, gitleaks, Playwright); the 2349/2352 numbers only read from evidence files; Python 3.12 not executed; js-portal.patch not reviewed; patched tree not read (so apply and tests that regex-mutate source, e.g. tests/test_lead_owner_assignment.py:124, not confirmed beyond the evidence); P14 and test-file ruff B023 hits not verified.
