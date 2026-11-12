@@ -255,7 +255,7 @@ M = [
     + "session|authorization"
 )''', 'QUOTED_KEY_WORDS = KEY_WORDS',
         BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
-    mutant('M65 a new key is dropped from the one list', REDACT, r'''    _guarded_key("pass", "code"), _guarded_key("pass", "key"), ''', r'''    _guarded_key("pass", "key"), ''',
+    mutant('M65 a new key is dropped from the one list', REDACT, r'''    ("pass", "phrase"), ("pass", "code"), ("pass", "key"), ''', r'''    ("pass", "phrase"), ("pass", "key"), ''',
         BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
     mutant('M66 allow-list of words in front is back', RED, 'or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)',
         'or (w.endswith(BARE_ENDINGS) and w[:-4] in ("db", "user", "admin", "root", "api", "mysql"))',
@@ -280,12 +280,11 @@ M = [
     mutant('M72 flag words are a hand list', REDACT, r'''[a for a in KEY_ALTERNATIVES if "(?=" not in a and a not in _EXACT_FLAG_KEYS]
     + list(FLAG_ONLY_WORDS)''', r'''[r"password", r"passwd", r"pwd", r"secret", r"token", r"api[_\-]?key", "pass"]''',
         BATCH4, 'test_j4_every_spelling_of_the_key_list_is_a_flag', 'a flag of the key list is not masked'),
-    mutant('M73 cookie rule takes a session cookie key', REDACT, '_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_\\-])" + _COOKIE_KEY_BODY', '_COOKIE_ASSIGN_KEY = r"(?i)" + _COOKIE_KEY_BODY',
+    mutant('M73 cookie rule takes a session cookie key', REDACT, '_COOKIE_ASSIGN_KEY = r"(?i)(?<!session[_.\\-])" + _COOKIE_KEY_BODY', '_COOKIE_ASSIGN_KEY = r"(?i)" + _COOKIE_KEY_BODY',
         BATCH4, 'test_j1_a_cookie_key_with_a_session_word_in_front_masks_a_value_with_spaces', 'a word of the cookie value is readable'),
     mutant('M74 link scheme read inside a word', GATE, r'''(?<![\w+.\-])(?:https?|mailto|data|''', r'''\b(?:https?|mailto|data|''',
         BATCH4, 'test_j1_a_credential_key_ending_in_a_link_scheme_word_keeps_its_value_masked_after_a_colon', 'a key ending in a link scheme word'),
-    mutant('M75 new walk endings dropped', RED, r'''    "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
-''', '',
+    mutant('M75 new walk endings dropped', RED, r''') + GUARDED_ENDINGS  # fmt: skip''', r''')  # fmt: skip''',
         BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
     mutant('M76 session cookie rule loses the jar pairs', REDACT, '    + "+(?:"\n    + _JAR_PAIR\n    + "|[ \\t]+(?!"', '    + "+(?:"\n    + "|[ \\t]+(?!"',
         BATCH4, 'test_j1_a_session_cookie_keeps_its_whole_jar_masked', 'a pair of the cookie jar is readable'),
@@ -364,7 +363,10 @@ ORDINARY_WORDS = frozenset(["bypass"])''',
         BATCH7, 'test_b7_2_a_count_of_tokens_stays_readable_as_a_flag', 'a count of tokens was masked as a flag'),
     mutant('M99 cookie is no credential word of the record walk', RED, '        "cookie",\n        "cookies",\n    ]\n)\nGLUED_ENDINGS', '    ]\n)\nGLUED_ENDINGS',
         BATCH7, 'test_b7_3_a_record_key_named_for_a_cookie_is_masked_whatever_its_letter_case', 'a cookie record key is not sensitive'),
-    mutant('M100 cookie is no exact flag word', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"session[_\-]?cookie",)''',
+    mutant('M100 cookie is no exact flag word', REDACT, r'''FLAG_EXACT_WORDS = (
+    r"(?:set[_\-])?cookie",
+    _guarded_key("session", "cookie"),''', r'''FLAG_EXACT_WORDS = (
+    _guarded_key("session", "cookie"),''',
         BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
     mutant('M101 the cookie flag rule reads one letter case', REDACT, r'''(?:(?i:--(?:"''', r'''(?:(?:--(?:"''',
         BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
@@ -417,13 +419,17 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_1_a_count_of_tokens_stays_readable_as_a_flag_and_as_a_record_key', 'a count of tokens was masked as a flag'),
     mutant('M118 the record walk reads a glued plural tokens as a count', RED, r'''            and not is_count_run(w[: -len("tokens")])''', r'''            and False''',
         BATCH8, 'test_b8_1_a_plural_tokens_flag_after_a_glued_or_camel_case_word_is_masked_on_every_path', 'the record walk does not mask'),
-    mutant('M119 a cookie flag may have prefix words and a plural', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:[a-z0-9]+[_\-])*cookies?", r"session[_\-]?cookie")''',
+    mutant('M119 a cookie flag may have prefix words and a plural', REDACT, r'''FLAG_EXACT_WORDS = (
+    r"(?:set[_\-])?cookie",
+    _guarded_key("session", "cookie"),''', r'''FLAG_EXACT_WORDS = (
+    r"(?:[a-z0-9]+[_\-])*cookies?",
+    _guarded_key("session", "cookie"),''',
         BATCH8, 'test_b8_2_a_switch_or_a_file_flag_of_the_cookie_family_leaves_the_next_word_readable', 'a cookie switch or file flag masked the next word'),
     mutant('M120 a bare credential word has no ordinary-word look-behind (card)', REDACT, r'''    guard = _not_after_ordinary_word(word) if word in BARE_ENDINGS else ""''', r'''    guard = ""''',
         B10, 'test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_readable[bandpass]', 'an ordinary name was masked'),
     mutant('M121 the record walk skips a glued ending behind an ordinary word', RED, r'''    return w.endswith(GLUED_ENDINGS)''', r'''    return w.endswith(GLUED_ENDINGS) and not any(w.startswith(o) for o in ORDINARY_WORDS)''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'the record walk shows the key'),
-    mutant('M122 the scheme word and its token after --authorization are no rule', REDACT, r'''(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''', r'''(?![-\"'])(?!)([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''',
+    mutant('M122 the scheme word and its token after --authorization are no rule', REDACT, r'''(?![-\"'])([A-Za-z]+(?:{_SP}+(?:{_QUOTED_TEXT}''', r'''(?![-\"'])(?!)([A-Za-z]+(?:{_SP}+(?:{_QUOTED_TEXT}''',
         BATCH8, 'test_b8_4_any_scheme_word_and_its_token_are_masked_after_the_authorization_and_bearer_flags', 'a token after a scheme word is readable'),
     mutant('M123 a Digest value after --authorization is no rule', REDACT, r'''rf"{_SP}+(?:(digest{_SP}+{_DIGEST_WORD}''', r'''rf"{_SP}+(?!)(?:(digest{_SP}+{_DIGEST_WORD}''',
         BATCH8, 'test_b8_4_a_digest_value_after_the_flag_is_masked_up_to_the_next_flag_or_the_end_of_the_line', 'a Digest value after the flag is readable'),
@@ -453,7 +459,10 @@ COUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])''',
         BATCH8, 'test_b8_12_a_key_with_the_word_cookie_and_more_words_is_masked_in_text_as_the_record_walk_masks_it', 'a cookie word key leaves a value readable in text'),
     mutant('M132 the ordinary look-behind of a bare word need not start a word (a real key turns readable)', REDACT, r'''r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"''', r'''r"(?<!" + w[: -len(ending)] + ")"''',
         B10, 'test_b10_6_an_ordinary_word_must_start_a_word_to_stay_readable_so_xcompass_key_is_a_key_as_before', 'an ordinary word that does not start a word'),
-    mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie", r"session[_\-]?cookie")''', r'''FLAG_EXACT_WORDS = (r"(?:set[_\-])?cookie",)''',
+    mutant('M158 the curl cookie flag does not take the session spelling', REDACT, r'''FLAG_EXACT_WORDS = (
+    r"(?:set[_\-])?cookie",
+    _guarded_key("session", "cookie"),''', r'''FLAG_EXACT_WORDS = (
+    r"(?:set[_\-])?cookie",''',
         BATCH8, 'test_b8_2_the_cookie_flag_with_its_exact_name_still_masks_its_value', 'an exact cookie flag leaves its value readable'),
     # M145, M150 and M151 were never assigned in batch 8 (no mutant has those numbers; the controls file reads the table, not the numbers).
     # ---- batch 8, Issue 13: one planted fault for each K5 round 11 / producers / runner control that passed on old code ----
@@ -541,9 +550,9 @@ def _neutralise(text: str) -> str:
     mutant('M167 the record walk does not read an ordinary word and its second word as a credential', RED, r'''            or is_ordinary_pair(before, w)''', r'''            or False''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'the record walk shows the key'),
         mutant('M168 a flag with an ordinary word and a second word of its family is no flag', REDACT, r'''        w
-        + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+        + r"(?![a-z]|[0-9]+[a-z])(?![0-9]*[_.\-](?:"
         + "|".join(ordinary_second_words(w))
-        + r")(?![a-z0-9]))"''', r'''        w + r"(?![a-z]|[0-9]+[a-z])"''',
+        + r")[0-9]*(?![a-z]))"''', r'''        w + r"(?![a-z]|[0-9]+[a-z])"''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
     mutant('M169 a protection-bypass key is no text rule', REDACT, r'''    r"protection[_\-]?bypass",
 ''', r'''''',
@@ -570,21 +579,21 @@ def _neutralise(text: str) -> str:
     mutant('M176 a white-space control on a card is not turned into a space', CHANNEL, r'''sanitise_text(_WHITE_SPACE_CONTROLS.sub(" ", text), defang=False)''', r'''sanitise_text(text, defang=False)''',
         BATCH9, 'test_b9_1_a_white_space_control_inside_an_encoded_header_does_not_join_the_scheme_word_to_its_token[%0b]', 'a control inside an encoded header leaves the token readable'),
     mutant('M177 every credential flag takes a scheme word and its token', REDACT, r'''            _AUTH_FLAG
-            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''', r'''            _CRED_FLAG
-            + rf"{_SP}+(?![-\"'])([A-Za-z]+{_SP}+(?:{_QUOTED_TEXT}''',
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+(?:{_SP}+(?:{_QUOTED_TEXT}''', r'''            _CRED_FLAG
+            + rf"{_SP}+(?![-\"'])([A-Za-z]+(?:{_SP}+(?:{_QUOTED_TEXT}''',
         BATCH9, 'test_b9_5_a_flag_other_than_the_authorization_flags_keeps_the_one_word_rule[password]', 'a flag other than the authorization flags takes a scheme word'),
     mutant('M178 a cookie key needs no boundary in front of the word', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''', r'''r"(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''',
         BATCH8, 'test_b8_12_a_word_that_only_holds_cookie_inside_is_no_key_in_text_and_none_for_the_record_walk', 'mycookie was masked as text'),
     # ---- batch 10: one planted fault for each new branch (round 10, Issues 1, 2, 6) ----
     mutant('M179 the second words of an ordinary word are those of the pass pairs only', REDACT, r'''if word.endswith(bare))''', r'''if bare == "pass")''',
         B10, 'test_b10_6_every_ordinary_word_has_the_second_words_of_its_family_from_the_one_table', 'are not those of its bare word'),
-    mutant('M180 the record walk does not read a key in capitals with cookie and more letters', RED, r'''    if _CAPITALS_COOKIE.search(key):
+    mutant('M180 the record walk does not read a key in capitals with cookie and more letters', RED, r'''    if _CAPITALS_COOKIE.search(unicodedata.normalize("NFKC", key).translate(_FOLD)):
         return True
 ''', r'''''',
         B10, 'test_b10_6_the_text_rule_and_the_record_walk_agree_for_a_cookie_word_and_one_more_word', 'the text rule and the record walk disagree'),
     mutant('M181 a guarded pair needs its separator in the card rule', REDACT, r'''    return bare + r"(?:[0-9]*[_.\-])?" + second''', r'''    return bare + r"(?:[0-9]*[_.\-])" + second''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[bandpass]', 'an ordinary word and a second word of its family is readable'),
-    mutant('M182 an ordinary word and a second word of its family is read as a pair only for pass words', REDACT, r'''    return second in ordinary_second_words(first)''', r'''    return second in ordinary_second_words(first) and first.endswith("pass")''',
+    mutant('M182 an ordinary word and a second word of its family is read as a pair only for pass words', REDACT, r'''    return any(second.startswith(w) for w in ordinary_second_words(first))''', r'''    return any(second.startswith(w) for w in ordinary_second_words(first)) and first.endswith("pass")''',
         B10, 'test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_every_path_and_form[obsession]', 'the record walk shows the key'),
     # ---- batch 10: the stated-cost pins and the controls of batch 9 get a killing mutant (round 10, Issue 4) ----
     mutant('M183 the Basic rule takes a token of 4 characters, not 8 (a short first word after a scheme word is masked)', REDACT, r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{8,}={0,2})"''', r'''r"(?i)\bbasic" + _SCHEME_GAP + r"([a-z0-9+/<>_]{4,}={0,2})"''',
@@ -593,7 +602,7 @@ def _neutralise(text: str) -> str:
         BATCH9, 'test_b9_2_authorization_with_an_equals_sign_masks_the_first_word_and_shows_the_second', 'the second word after authorization= is not shown'),
     mutant('M186 a cookie key needs no boundary in front of the word (the fault of M178, killed by the digits pin)', REDACT, r'''r"(?<![A-Za-z])(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''', r'''r"(?:set-)?cookies?[0-9]*+(?:(?:[_.\-]''',
         BATCH9, 'test_b9_4_a_word_that_only_holds_cookie_and_digits_inside_is_no_key', 'was masked as text'),
-    mutant('M187 the record walk does not read a key in capitals with cookie and more letters (the fault of M180, killed by the pinned cost)', RED, r'''    if _CAPITALS_COOKIE.search(key):
+    mutant('M187 the record walk does not read a key in capitals with cookie and more letters (the fault of M180, killed by the pinned cost)', RED, r'''    if _CAPITALS_COOKIE.search(unicodedata.normalize("NFKC", key).translate(_FOLD)):
         return True
 ''', r'''''',
         BATCH9, 'test_b9_8_a_cookie_jar_name_in_capitals_is_masked_and_in_lower_case_it_is_not', 'the record walk shows COOKIEJAR'),
@@ -687,12 +696,30 @@ def _neutralise(text: str) -> str:
     mutant('M223 a flag other than the authorization flags takes a second word (the nine flags of the stated cost) [b11]', REDACT, r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}))"''', r'''|{_SP}+(?![A-Za-z_][\w.-]*=)(?![-\"'])({_AUTH_SCHEME_WORD}?[^\s\"']{{3,}}(?:{_SP}+[^\s\"'-][^\s\"']{{2,}})?))"''',
         BATCH9, 'test_b9_2_the_second_word_after_a_credential_flag_is_shown_for_every_flag_named_in_limits', 'is not shown'),
     mutant('M224 the decoded spelling of a value with white space is never paired [b11]', RUNMAP, r'''any(c.isspace() or c in _VALUE_END for c in decoded)''', r'''False''',
-        K5R11, 'test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked', 'zq9'),
+        K5R11, 'test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked', 'zq9tail'),
     mutant('M225 the inputs of a proposal are not redacted before the plan [b11]', "runtime/evidence.py", r'''        inputs = runmap.redact_value(inputs, mapping)
         stripped''', r'''        stripped''',
         K5R11, 'test_a_secret_in_a_declared_free_text_proposal_field_is_masked_in_the_stored_plan_and_the_card', 'hunter2'),
     mutant('M226 every entry of the run map is paired with its decoded spelling (junk uses up the slots) [b11]', RUNMAP, r'''        if len(out) >= MAX_DECODED_MASKS:''', r'''        if len(out) >= 1:''',
         K5R11, 'test_junk_ahead_cannot_use_up_the_pairing_slots_and_a_long_value_is_masked_or_refused', 'InputTooLarge'),
+    # ---- batch 11, group 1: a fault in the test file or helper that each former NO_FAULT test checks ----
+    test_file_mutant('M227 the corpus of credential keys holds a benign key too [b11]', 'tests/q8b_key_corpus.py', r'''CREDENTIAL = [
+''', r'''CREDENTIAL = [
+    "bypass",
+''',
+        BATCH3, 'test_i3_corpus_is_not_empty_and_disjoint', 'assert not ('),
+    test_file_mutant('M228 the random check counts no case of the second kind [b11]', 'tests/test_q8b_random.py', r'''        res[bucket[1]] += 1''', r'''        res[bucket[1]] += 0''',
+        RANDOM_TESTS, 'test_x9_has_cases_to_check', 'AssertionError: 0'),
+    test_file_mutant('M229 the scan for a second list of credential words wants four words, not three [b11]', 'tests/q8b_helpers.py', r'''len(hits := key_list_words(node)) >= 3''', r'''len(hits := key_list_words(node)) >= 4''',
+        BATCH4, 'test_j4_the_scan_finds_every_shape_of_a_second_list', '(8, ['),
+    test_file_mutant('M230 the older-rule check does not report a half-masked value [b11]', 'tests/test_q8b_batch4.py', r'''                    if part in out or pieces:''', r'''                    if part in out:''',
+        BATCH4, 'test_j1_the_older_rule_check_fails_when_only_the_first_word_of_a_value_is_masked', 'a half-masked value was not reported'),
+    test_file_mutant('M231 the check of the card text does not see a defang switched off [b11]', 'tests/test_q8b_card_text.py', r'''                if off and inside != "_neutralise":''', r'''                if False and inside != "_neutralise":''',
+        CARD_TESTS, 'test_n8_the_check_itself_catches_each_way_round', 'assert []'),
+    test_file_mutant('M232 the manifest test of the runner file is renamed [b11]', 'tests/test_mutation_runner.py', r'''def test_the_manifest_pins_the_files_a_demo_copies():''', r'''def test_the_manifest_pins_the_files_a_demo_copies_x():''',
+        META, 'test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each', "AssertionError: assert ['test_a_back"),
+    test_file_mutant('M233 a mutant of the runner file names a killer that does not exist [b11]', 'tests/mutation_runner_mutants.py', r'''        "test_a_test_file_that_is_not_among_the_copied_tests_fails_before_any_mutant_runs",''', r'''        "test_no_such_killer",''',
+        META, 'test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists', 'is not in'),
 ]  # fmt: skip
 
 

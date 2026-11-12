@@ -5,10 +5,10 @@ A test that passes on the old code is a control (it guards behaviour that must n
 table `tests/q8b_mutants.py` (one source). A control is in exactly one of three groups:
 
 * PLANTED: at least one mutant of the table names this test as its killer (the check is that mutant, run by the mutant runner);
-* NO_FAULT: no product line can be faulted for this test (it checks a test file, a helper or a corpus); the reason is written here
-  and names the file it is about, which must exist;
+* NO_FAULT: no fault can be planted for this test; a written reason that names an existing file (empty since batch 11: a test of a test file
+  has a `test_file_mutant`);
 * UNPLANTED: no planted fault yet. The group is listed in full below, its size is pinned (it can only shrink), and it is a
-  defect to fix (a planted fault or a reason): batch 10 did not finish it, see the constant `UNPLANTED_MAX` below.
+  defect to fix (a planted fault or a true reason): batch 11 left three, see the constant `UNPLANTED_MAX` below.
 A line that is missing, a test that does not exist, a line in two groups or a group name that has no line fails `_problems`."""
 
 from __future__ import annotations
@@ -182,24 +182,14 @@ def planted_killers() -> dict[str, list[str]]:
     return kills
 
 
-_META = "checks a test file or a helper or a corpus of tests, not a product line: the fault is an edit of "
-NO_FAULT = {
-    "test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each": _META
-    + "tests/test_mutation_runner_meta.py",
-    "test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists": _META
-    + "tests/q8b_mutants.py",
-    "test_x9_has_cases_to_check": _META + "tests/test_q8b_random.py",
-    "test_i3_corpus_is_not_empty_and_disjoint": _META + "tests/test_q8b_batch3.py",
-    "test_n8_the_check_itself_catches_each_way_round": _META + "tests/test_q8b_card_text.py",
-    "test_j1_the_older_rule_check_fails_when_only_the_first_word_of_a_value_is_masked": _META
-    + "tests/test_q8b_batch4.py",
-    "test_j4_the_scan_finds_every_shape_of_a_second_list": _META + "tests/test_q8b_batch4.py",
-}
-# The real size of the group without a planted fault at the head of batch 10 (29 ids; it was 28 in batch 9 and one more id lost its
-# mutant when M132 was re-pointed at a test of batch 10). It is a ratchet that only falls and the target is 0: each control needs a
-# planted fault (a mutant of the table, a test-file mutant for a test of a test file) or a TRUE reason. NOT DONE in batch 10: the
-# time box ended first; the list of the 29 is printed by `test_the_group_without_a_planted_fault_is_listed_and_its_size_is_pinned`.
-UNPLANTED_MAX = 29
+# NO_FAULT is empty since batch 11: the seven tests that held "no product line can be faulted" check a test file or a helper, and a fault
+# of that file is planted by a `test_file_mutant` (M227 to M233, like M136 and M142); the old reason was untrue.
+NO_FAULT: dict[str, str] = {}
+# The real size of the group without a planted fault at the head of batch 11: three wall-clock tests (the white space after a scheme word,
+# a very long run of digits, the guard of the address pattern, which runs in the perf step). Each fails only on a super-linear regex; the
+# planted fault found for the digits (a bare word that may start at every digit) runs longer than five minutes, so it was not put in the table
+# in batch 11 (NOT DONE; the next builder plants a smaller one). The number is a gate: a count ABOVE it fails the test below, and the number only falls.
+UNPLANTED_MAX = 3
 
 
 def _group_of(test_id: str, kills: dict[str, list[str]]) -> str:
@@ -296,3 +286,32 @@ def test_the_group_without_a_planted_fault_is_listed_and_its_size_is_pinned():
     assert count <= UNPLANTED_MAX, (
         f"{count} controls have no planted fault and no reason: {unplanted}"
     )
+
+
+def test_every_planted_fault_is_in_its_product_file_once_and_names_a_killer_that_exists():
+    """The table is read as code: the text each mutant replaces is in its file at least once (a stale text plants nothing; the runner replaces every copy) and its killer is a
+    test of the file it names. `planted_killers()` alone proves only that a mutant names a test."""
+    import sys
+
+    sys.path.insert(0, str(HERE.parent))
+    from tests import q8b_mutants
+
+    bad = []
+    for m in q8b_mutants.M:
+        path = HERE.parent / m.file
+        text = path.read_text(encoding="utf-8")
+        if text.count(m.old) < 1:
+            bad.append(f"{m.name}: its fault text is in {m.file} {text.count(m.old)} times, not at least once")
+        tests = (HERE.parent / m.test_file).read_text(encoding="utf-8")
+        if re.search(rf"^def {re.escape(m.only_test)}\(", tests, re.MULTILINE) is None:
+            bad.append(f"{m.name}: its killer {m.only_test} is not a test of {m.test_file}")
+    assert not bad, bad[:5]
+
+
+def test_the_ceiling_is_the_real_number_and_a_larger_group_fails():
+    kills = planted_killers()
+    count = sum(1 for i in EXPECTED_IDS if _group_of(i, kills) == "UNPLANTED")
+    assert count == UNPLANTED_MAX, (
+        f"{count} controls have no planted fault and no reason, the ceiling says {UNPLANTED_MAX}: lower the ceiling to the real number"
+    )
+    assert _problems() == [] and _problems(None) == []

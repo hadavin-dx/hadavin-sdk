@@ -161,6 +161,12 @@ def test_b10_1_the_differential_against_main_for_every_generated_token_length_sh
         "\x85",
         "\xa0",
         "  \n  ",
+        "\x1c",
+        "\x1d",
+        "\x1e",
+        "\x1f",
+        "\u2028",
+        "\u2029",
     )
     heads = ("Authorization: ", "authorization=", 'x "Authorization": "', "")
     schemes = ("Basic", "Token", "ApiKey", "Digest", "Bearer", "Negotiate", "Foo")

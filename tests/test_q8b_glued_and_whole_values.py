@@ -353,8 +353,10 @@ def _expand(fragment):
     """Every spelling of a fragment of the redactor's key list (`[_\\-]?` written three ways, `(?:ificate)?` two)."""
     fragment = strip_look_arounds(fragment)
     spellings = [""]
-    for part in re.split(r"(\[_\\-\]\?|\(\?:ificate\)\?)", fragment):
-        if part == r"[_\-]?":
+    for part in re.split(r"(\[_\\-\]\?|\(\?:ificate\)\?|\(\?:\[0-9\]\*\[_\.\\-\]\)\?)", fragment):
+        if part == r"(?:[0-9]*[_.\-])?":  # a pair: glued or with a separator, dot included (round 11)
+            spellings = [s + sep for s in spellings for sep in ("", "_", "-", ".")]
+        elif part == r"[_\-]?":
             spellings = [s + sep for s in spellings for sep in ("", "_", "-")]
         elif part == "(?:ificate)?":
             spellings = [s + e for s in spellings for e in ("", "ificate")]
