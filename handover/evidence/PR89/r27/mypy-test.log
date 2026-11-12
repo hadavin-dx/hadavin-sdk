@@ -1,0 +1,7 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+..                                                                       [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_mutation_runner_keywords.py::test_mypy_for_win32_reports_the_errors_the_texts_count[3.12]
+PASSED tests/test_mutation_runner_keywords.py::test_mypy_for_win32_reports_the_errors_the_texts_count[3.13]
+2 passed, 300 deselected in 1.73s

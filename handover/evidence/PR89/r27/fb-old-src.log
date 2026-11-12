@@ -1,0 +1,104 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.FFF..ss.....F.                                                          [100%]
+=================================== FAILURES ===================================
+_______ test_a_file_with_a_second_name_keeps_its_mode_when_it_is_refused _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9828/test_a_file_with_a_second_name0')
+
+    @posix_only
+    def test_a_file_with_a_second_name_keeps_its_mode_when_it_is_refused(tmp_path):
+        """The mode is changed only on a file that passes the kind, owner and names check (``_narrowable``): a second name shares its inode, so a ``chmod`` would reach the other name too."""
+        made = tmp_path / "result.xml"
+        made.write_text("old text of the file", encoding="utf-8")
+        os.chmod(made, 0o640)
+        other_name = tmp_path / "other_name.xml"
+        os.link(made, other_name)
+        with pytest.raises(RuntimeError):
+            mr._make_private_file(made, "result file")
+>       assert _mode(made) == 0o640 and _mode(other_name) == 0o640, (
+            f"a file with a second name was narrowed before it was refused: {_mode(made):o}"
+        )
+E       AssertionError: a file with a second name was narrowed before it was refused: 600
+E       assert (384 == 416)
+E        +  where 384 = _mode(PosixPath('/tmp/pytest-of-root/pytest-9828/test_a_file_with_a_second_name0/result.xml'))
+
+tests/test_mutation_runner_keywords.py:5489: AssertionError
+___ test_a_named_pipe_under_the_name_of_a_made_file_does_not_block_the_open ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9828/test_a_named_pipe_under_the_na0')
+
+    @posix_only
+    def test_a_named_pipe_under_the_name_of_a_made_file_does_not_block_the_open(tmp_path):
+        """``_make_private_file`` on a FIFO (not only ``_file_problem`` on its stat). With no reader the open fails at once (``ENXIO``); with a reader the
+        file is refused as not a regular file. Without ``O_NONBLOCK`` the open for writing waits for a reader for ever: the call runs in a thread
+        that is given 5 seconds, and a reader is opened afterwards to let a blocked thread end (nothing is killed)."""
+        fifo = tmp_path / "result.xml"
+        os.mkfifo(fifo, 0o600)
+        outcome: dict[str, BaseException] = {}
+    
+        def call() -> None:
+            try:
+                mr._make_private_file(fifo, "result file")
+            except BaseException as exc:  # noqa: BLE001  # whatever it raises is read below
+                outcome["exc"] = exc
+    
+        worker = threading.Thread(target=call, daemon=True)
+        worker.start()
+        worker.join(5)
+        if worker.is_alive():
+            release = os.open(
+                fifo, os.O_RDONLY | os.O_NONBLOCK
+            )  # a reader: the blocked open goes on and the thread ends
+            try:
+                worker.join(10)
+            finally:
+                os.close(release)
+>           raise AssertionError(
+                "a named pipe under the name of a made file blocked the open for writing"
+            )
+E           AssertionError: a named pipe under the name of a made file blocked the open for writing
+
+tests/test_mutation_runner_keywords.py:5525: AssertionError
+_________ test_the_docstring_says_that_ci_does_not_run_the_mypy_count __________
+
+    def test_the_docstring_says_that_ci_does_not_run_the_mypy_count():
+        """ALWAYS RUNS, in a mutant copy too (it reads only the docstring): the mypy test above is skipped where mypy is not installed, which is the CI case, so a
+        sentence asserted only there is not checked in CI."""
+        assert "CI does not run the mypy count" in _doc(), (
+            "the docstring does not say that CI does not run mypy"
+        )
+        assert "mypy is not in the locked test environment" in _doc()
+>       assert "the repo test is skipped where mypy is not installed" in _doc()
+E       AssertionError: assert 'the repo test is skipped where mypy is not installed' in 'A small mutation runner: put one deliberate bug at a time into a temp copy of a package and judge the kill by its rea...face and is copied byte for byte into other repositories. A caller changes the timeouts and the host list by argument.'
+E        +  where 'A small mutation runner: put one deliberate bug at a time into a temp copy of a package and judge the kill by its rea...face and is copied byte for byte into other repositories. A caller changes the timeouts and the host list by argument.' = _doc()
+
+tests/test_mutation_runner_keywords.py:6078: AssertionError
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+>           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: runner: a private file is not put back to 0600: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:489: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_mutation_runner_keywords.py::test_the_parts_between_are_made_by_the_private_helper_also_under_umask_0277
+PASSED tests/test_mutation_runner_keywords.py::test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers
+PASSED tests/test_mutation_runner_keywords.py::test_the_creation_site_walk_sees_aliases_module_level_code_and_the_other_creating_spellings
+PASSED tests/test_mutation_runner_meta.py::test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked
+PASSED tests/test_mutation_runner_meta.py::test_every_decorator_is_read_even_after_a_true_mark_and_an_unreadable_one_raises
+PASSED tests/test_mutation_runner_meta.py::test_a_module_level_pytestmark_and_a_named_mark_are_read_and_an_unknown_decorator_is_an_error
+PASSED tests/test_mutation_runner_meta.py::test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks
+PASSED tests/test_mutation_runner_meta.py::test_the_header_names_every_mutant_whose_killer_skips_inside_its_body_and_each_skip_is_there
+PASSED tests/test_mutation_runner_keywords.py::test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file
+SKIPPED [2] tests/test_mutation_runner_keywords.py:6018: mypy is not installed in this environment; the table test above counts the places, this one measures them
+FAILED tests/test_mutation_runner_keywords.py::test_a_file_with_a_second_name_keeps_its_mode_when_it_is_refused
+FAILED tests/test_mutation_runner_keywords.py::test_a_named_pipe_under_the_name_of_a_made_file_does_not_block_the_open
+FAILED tests/test_mutation_runner_keywords.py::test_the_docstring_says_that_ci_does_not_run_the_mypy_count
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+4 failed, 9 passed, 2 skipped in 13.94s

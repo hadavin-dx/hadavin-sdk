@@ -1,0 +1,127 @@
+== (a) hand list loses a name: new header test
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked _
+
+    def test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked():
+        """Two killers drop a case by ``os.name`` and have no mark and no ``pytest.skip``: the header names them between a third pair of marker lines, which is kept by
+        hand. This test reads the killers that use ``os.name`` or ``sys.platform`` in their body and compares: every killer found is in the hand list or in
+        ``STILL_KILLED_ON_WINDOWS``, and every name in either list is a mutant whose killer is found."""
+        named = _named_between("OS-BRANCH-MUTANTS-BEGIN", "OS-BRANCH-MUTANTS-END")
+        found = _system_name_killers()
+        assert len(found) >= 2, f"the system-name killers were not read: {found}"
+>       assert sorted(found) == sorted([*named, *STILL_KILLED_ON_WINDOWS]), (
+            f"found only: {sorted(set(found) - set(named) - set(STILL_KILLED_ON_WINDOWS))}; "
+            f"listed only: {sorted((set(named) | set(STILL_KILLED_ON_WINDOWS)) - set(found))}"
+        )
+E       AssertionError: found only: ['runner: the descriptor of the lock folder leaks']; listed only: []
+E       assert ['runner: a J...folder leaks'] == ['runner: a J...ject is made']
+E         
+E         Left contains one more item: 'runner: the descriptor of the lock folder leaks'
+E         Use -v to get more diff
+
+tests/test_mutation_runner_meta.py:431: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_meta.py::test_the_header_names_the_killers_that_drop_a_case_by_the_system_name_and_both_lists_are_checked
+1 failed, 12 deselected in 0.36s
+== (b) a second os.mkdir in _make_private_dir: NEW pin test
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers __
+
+    def test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers():
+        """The class: a creation site that is not one of the private helpers makes a folder or file with the mode of the umask and no check. Every
+        call of a function in ``CREATING_CALLS`` (and of a method in ``CREATING_METHODS``) is found in the whole module, aliased imports included,
+        and pinned as (spelling, owner function, COUNT of calls): a second call of the same spelling in the same function changes the count and fails. The pin
+        covers the spellings of those lists, not every way to make a file; the spellings that it does NOT find are a name assigned to a variable first,
+        ``getattr``, ``map`` or ``partial`` of a creating function, ``os.fdopen``, ``io.open``, ``codecs.open``, other ``Path`` methods and ``shutil.copyfileobj``.
+        The sites that are NOT helpers, and why each is on purpose:
+        ``shutil.copytree`` and ``shutil.copy`` of ``_run_mutants`` copy the CALLER's tree (``src``, the listed tests, the listed folders) into the
+        private folders of the run and keep the caller's modes (the module docstring says so: only the private folder protects them); making them
+        0700 or 0600 would change what the tests see. ``p.write_text`` of ``_run_mutants`` replaces the text of one file of that copy (it exists,
+        and keeps its mode: the mutant is the point)."""
+        sites = creation_sites(Path(mr.__file__).read_text(encoding="utf-8"))
+>       assert sites == {
+            "tempfile.mkdtemp": {"_make_private_temp_dir": 1},
+            "os.mkdir": {"_make_private_dir": 1, "_open_lock_dir": 1},
+            "os.open": {"_make_private_file": 1, "_open_lock_dir": 1, "_one_run_per_database": 2},
+            "shutil.copytree": {"_run_mutants": 4},
+            "shutil.copy": {"_run_mutants": 2},
+            "p.write_text": {"_run_mutants": 1},
+        }, f"a creation site that is not a private helper (or a helper that moved): {sites}"
+E       AssertionError: a creation site that is not a private helper (or a helper that moved): {'os.mkdir': {'_make_private_dir': 2, '_open_lock_dir': 1}, 'tempfile.mkdtemp': {'_make_private_temp_dir': 1}, 'os.open': {'_make_private_file': 1, '_open_lock_dir': 1, '_one_run_per_database': 2}, 'shutil.copytree': {'_run_mutants': 4}, 'shutil.copy': {'_run_mutants': 2}, 'p.write_text': {'_run_mutants': 1}}
+E       assert {'os.mkdir': ...nts': 4}, ...} == {'tempfile.mk...nts': 4}, ...}
+E         
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {'os.mkdir': {'_make_private_dir': 2, '_open_lock_dir': 1}} != {'os.mkdir': {'_make_private_dir': 1, '_open_lock_dir': 1}}
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:6265: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_every_folder_and_file_the_runner_creates_is_made_by_one_of_the_helpers
+1 failed, 301 deselected in 0.19s
+== (b) same change: OLD pin test (916c71ea)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.                                                                        [100%]
+1 passed, 298 deselected in 0.53s
+== (c) the POSIX-only list loses a new name: skip-marks header test
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks _
+
+    def test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks():
+        """The header of the mutant list says which mutants survive on Windows. The list between its two marker lines is compared with the one read
+        from the decorators of the killers, so a killer that gets (or loses) a Windows skip mark makes this test fail until the header agrees.
+        A killer that skips INSIDE its body (``pytest.skip(...)``) has no mark: those are in the second list of the header (compared by the test below)."""
+        named = _named_between("POSIX-ONLY-MUTANTS-BEGIN", "POSIX-ONLY-MUTANTS-END")
+        derived = _windows_skip_killers()
+        assert len(derived) > 40, f"the skip marks of the killers were not read: {len(derived)} found"
+>       assert sorted(named) == sorted(derived), (
+            f"header only: {sorted(set(named) - set(derived))}; marks only: {sorted(set(derived) - set(named))}"
+        )
+E       AssertionError: header only: []; marks only: ['runner: a named pipe under the name of a made file blocks the open']
+E       assert ['runner: a c...e check', ...] == ['runner: a c...e check', ...]
+E         
+E         At index 18 diff: 'runner: a nested run_mutants call is accepted' != 'runner: a named pipe under the name of a made file blocks the open'
+E         Right contains one more item: 'runner: what was opened as the lock folder is not checked to be a folder'
+E         Use -v to get more diff
+
+tests/test_mutation_runner_meta.py:463: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_meta.py::test_the_header_names_every_mutant_whose_killer_is_skipped_on_windows_derived_from_the_skip_marks
+1 failed, 12 deselected in 0.13s
+== (d) OLD creation_sites on a function with two calls (916c71ea test file)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+old creation_sites(two os.mkdir in f) -> {'os.mkdir': {'f'}}
+== (e) the workflow file names mypy: workflow-and-lock test
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file _
+
+    @pytest.mark.skipif(
+        not _CI_FILE.is_file(), reason="the workflow file is not in a mutant copy of the tree"
+    )
+    def test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file():
+        """The sentence of the docstring is true while the workflow file does not name mypy and the lock file has no package of that name. When mypy is added to
+        either, this test fails and the text (and the count test) must be revised. It runs in CI (the workflow file is there); a mutant copy has no workflow file."""
+        root = _CI_FILE.parents[2]
+        lock = (root / "uv.lock").read_text(encoding="utf-8")
+>       assert "mypy" not in _CI_FILE.read_text(encoding="utf-8").lower(), (
+            "the CI workflow names mypy: the text 'CI does not run the mypy count' is out of date"
+        )
+E       AssertionError: the CI workflow names mypy: the text 'CI does not run the mypy count' is out of date
+E       assert 'mypy' not in 'name: ci\n\... .\n# mypy\n'
+E         
+E         'mypy' is contained here:
+E           gress .
+E           # mypy
+
+tests/test_mutation_runner_keywords.py:6090: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_that_ci_does_not_run_the_mypy_count_is_true_of_the_workflow_and_the_lock_file
+1 failed, 302 deselected in 1.69s

@@ -1,0 +1,8 @@
+ruff check src tests demos tools rc=0 (All checks passed)
+ruff format --check src tests demos tools rc=0 (319 files already formatted)
+bandit -q -r src demos tools -ll rc=0 (only the existing nosec warning, tools.py:389)
+tools/scan_repo.py rc=0 (no output)
+gitleaks git --redact --config .gitleaks.toml --log-opts=origin/main..HEAD rc=0 (at 6690bb5f, before the evidence files)
+gitleaks dir . rc=0 (no leaks found)
+stage_mutants rc=0: 37 of 37 good; problems: []
+full pytest rc=0: 10832 passed, 3 skipped, 28 deselected in 340.13s (own Postgres 16, port 56941, via heavy.sh)

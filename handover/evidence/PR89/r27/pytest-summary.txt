@@ -1,0 +1,8 @@
+........................................................................ [ 99%]
+........................................................................ [ 99%]
+...................................                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [2] tests/test_mutation_runner_keywords.py:6018: mypy is not installed in this environment; the table test above counts the places, this one measures them
+10832 passed, 3 skipped, 28 deselected in 340.13s (0:05:40)
+rc=0
