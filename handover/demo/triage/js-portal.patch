@@ -20,15 +20,19 @@ index 5995c71..1989495 100644
            i = j;
          }
 diff --git a/src/lead_desk/portal/pages/overview.js b/src/lead_desk/portal/pages/overview.js
-index dc1b666..aeb6e0d 100644
+index dc1b666..a34d594 100644
 --- a/src/lead_desk/portal/pages/overview.js
 +++ b/src/lead_desk/portal/pages/overview.js
-@@ -119,7 +119,7 @@
-     var b = [];
+@@ -116,10 +116,10 @@
+     // thin bars are hard to read: buckets under 15 seconds are joined into bars of about 15 seconds (an oldest partial group is dropped)
+     var g = Math.max(1, Math.round(15 / step0));
+     b0 = b0.slice(b0.length % g);
+-    var b = [];
++    var b = [], jj, jEnd; // jj and jEnd: the inner loop below (no function inside the loop, and no new var statement)
      for (var j = 0; j < b0.length; j += g) {
        var grp = { t: b0[j].t, 'new': 0, duplicate: 0, review: 0 };
 -      b0.slice(j, j + g).forEach(function (x) { grp['new'] += x['new']; grp.duplicate += x.duplicate; grp.review += x.review; });
-+      for (var jj = j, jEnd = Math.min(j + g, b0.length); jj < jEnd; jj++) { grp['new'] += b0[jj]['new']; grp.duplicate += b0[jj].duplicate; grp.review += b0[jj].review; }
++      for (jj = j, jEnd = Math.min(j + g, b0.length); jj < jEnd; jj++) { grp['new'] += b0[jj]['new']; grp.duplicate += b0[jj].duplicate; grp.review += b0[jj].review; }
        b.push(grp);
      }
      var step = step0 * g;
@@ -82,3 +86,128 @@ index af9846d..5ce0cb5 100644
    function sourceChip(show) {
      var slot = clear(byId('source-slot'));
      if (show) slot.appendChild(h('span', { 'class': 'chip-warn', 'data-testid': 'source-unconfirmed' }, icon('alert'), 'Demo data not confirmed'));
+diff --git a/tests/portal_log_probe.js b/tests/portal_log_probe.js
+new file mode 100644
+index 0000000..5422538
+--- /dev/null
++++ b/tests/portal_log_probe.js
+@@ -0,0 +1,82 @@
++// Runs the real portal.js and pages/log.js in node against a stand-in page that keeps attributes, children and click handlers.
++// node portal_log_probe.js <portal dir>
++// The request log gets 4 repeats in a row from one lead, then 2 more requests. It prints what the table shows before and after
++// the "Show all N" button of the grouped line is clicked, and after the page re-renders once more (the opened group stays open).
++// Made-up data only. The probe waits for a condition (poll-until, with a limit), never for a fixed time.
++const fs = require('fs'), vm = require('vm'), path = require('path');
++const dir = process.argv[2];
++
++function classesOf(o) { return (o.attrs['class'] || '').split(/\s+/).filter(Boolean); }
++function el(tag) {
++  const o = { tag, attrs: {}, dataset: {}, style: {}, children: [], parent: null, nodeType: 1, namespaceURI: 'x', hidden: false, listeners: {},
++    classList: { add() {}, remove() {}, contains(c) { return classesOf(o).indexOf(c) >= 0; }, toggle() {} },
++    setAttribute(k, v) { o.attrs[k] = String(v); }, getAttribute(k) { return k in o.attrs ? o.attrs[k] : null; }, removeAttribute(k) { delete o.attrs[k]; },
++    addEventListener(t, f) { (o.listeners[t] = o.listeners[t] || []).push(f); }, appendChild(k) { if (k && k.nodeType === 1) k.parent = o; o.children.push(k); return k; },
++    insertBefore(k) { return o.appendChild(k); }, querySelectorAll() { return []; }, querySelector() { return null; }, focus() {}, blur() {},
++    remove() { if (o.parent) o.parent.children = o.parent.children.filter((x) => x !== o); }, closest() { return null; }, contains() { return false; },
++    get firstChild() { return o.children[0] || null; }, get lastChild() { return o.children[o.children.length - 1] || null; } };
++  let text = '';
++  Object.defineProperty(o, 'textContent', { get() { return text; }, set(v) { text = v; if (v === '') o.children = []; } });
++  Object.defineProperty(o, 'isConnected', { get() { return true; } });
++  return o;
++}
++const els = {};
++const doc = { documentElement: el('html'), hidden: false, createElement: el, createElementNS: (ns, t) => el(t), createTextNode: (t) => ({ nodeType: 3, t }),
++  getElementById: (id) => (els[id] = els[id] || el(id)), addEventListener(n, f) { if (n === 'DOMContentLoaded') doc.boot = f; },
++  querySelectorAll() { return []; }, querySelector() { return null; }, head: el('head'), body: el('body') };
++function walk(n, f) { if (!n) return; f(n); (n.children || []).forEach((k) => walk(k, f)); }
++function textOf(n) { let out = ''; walk(n, (x) => { if (x.t !== undefined) out += x.t + ' '; }); return out.replace(/\s+/g, ' ').trim(); }
++function byTestid(id) { const r = []; walk(els.main, (n) => { if (n.attrs && n.attrs['data-testid'] === id) r.push(n); }); return r; }
++
++// newest first: 4 repeats from one lead through one door (grouped into one line), then a new request and a review
++const row = (n, result, lead) => ({ request_id: 'ui-probe-' + n, received_at: 1000000100 - n, door: 'form', result, lead_id: lead ? 'Lprobe' : null,
++  lead_name: lead, followup_state: result === 'new' ? 'sent' : null, state_view: result === 'new' ? 'sent' : null, new_details: false });
++const log = { items: [row(1, 'duplicate', 'Probe Lead'), row(2, 'duplicate', 'Probe Lead'), row(3, 'duplicate', 'Probe Lead'), row(4, 'duplicate', 'Probe Lead'),
++  row(5, 'new', 'Probe Lead'), row(6, 'review', null)], total: 6, next: null };
++const summary = { now: 1000000100, desk_started_at: 1, mode: { demo_tools: false, sample_data: false }, counts: { received: 6, new: 1, duplicate: 4, review: 1, open: 0 },
++  needs_action: 0, waiting: 0, followups: { pending: 0, sending: 0, sent: 1, failed: 0, unknown: 0, did_not_finish: 0 }, doors: [], series: { bucket_seconds: 5, buckets: [] },
++  recent: [], refused_at_door: 0, reconciled: true };
++const calls = [];
++function fetchStub(p) {
++  p = String(p);
++  if (p.includes('/api/ui/log')) calls.push(p);
++  let body = {}, status = 200;
++  if (p.includes('/api/ui/summary')) body = summary;
++  else if (p.includes('/api/ui/log')) body = log;
++  else if (p.includes('/api/ui/review')) body = { now: 1, tabs: { action: 0, waiting: 0, info: 0 }, items: [] };
++  else if (p.includes('/api/demo/')) status = 404;
++  return Promise.resolve({ status, text: () => Promise.resolve(JSON.stringify(body)) });
++}
++const win = { document: doc, location: { hash: '#/log' }, addEventListener() {}, matchMedia: () => ({ matches: false, addEventListener() {} }),
++  localStorage: { getItem() { return null; }, setItem() {}, removeItem() {} }, sessionStorage: { getItem() { return null; }, setItem() {}, removeItem() {} }, scrollTo() {}, navigator: {} };
++win.window = win;
++const ctx = vm.createContext(Object.assign(win, { console, setTimeout: (f, ms) => setTimeout(f, Math.min(ms || 0, 15)), clearTimeout, MutationObserver: function () { this.observe = () => {}; }, fetch: fetchStub, Promise }));
++const load = (rel) => vm.runInContext(fs.readFileSync(path.join(dir, rel), 'utf8'), ctx);
++load('portal.js');
++load('pages/log.js');
++doc.boot();
++
++async function until(pred, what) {
++  for (let i = 0; i < 600; i++) { if (pred()) return; await new Promise((r) => setTimeout(r, 5)); }
++  throw new Error('timed out waiting for ' + what);
++}
++function snap(phase) {
++  const toggles = byTestid('log-group-toggle');
++  return { phase, rows: byTestid('log-row').length, toggles: toggles.map((t) => textOf(t)), grouped: textOf(els.main).includes('4 repeats, same lead') };
++}
++(async () => {
++  try {
++    await until(() => byTestid('log-row').length > 0, 'the log table');
++    const out = [snap('grouped')];
++    const tog = byTestid('log-group-toggle')[0];
++    let stopped = 0;
++    (tog.listeners.click || []).forEach((f) => f({ stopPropagation() { stopped++; } }));
++    out.push(Object.assign(snap('clicked'), { handlers: (tog.listeners.click || []).length, stopped }));
++    // the log poll answers again (timers are shortened to 15 ms) and the page renders again: the opened group must stay open
++    const before = calls.length;
++    await until(() => calls.length >= before + 2, 'two more log polls');
++    out.push(snap('later'));
++    console.log(JSON.stringify(out));
++  } catch (e) { console.log(JSON.stringify({ error: String(e) })); }
++  process.exit(0);
++})();
+diff --git a/tests/test_portal_mode.py b/tests/test_portal_mode.py
+index 16f0791..2089861 100644
+--- a/tests/test_portal_mode.py
++++ b/tests/test_portal_mode.py
+@@ -410,6 +410,32 @@ def test_chip_wording_and_needs_page_text_are_in_the_source() -> None:
+     assert "it.kind === 'failed') ? 'btn-outline'" in needs
+ 
+ 
++# -- the request log in node: the "Show all N" button of a grouped run of repeats (tests/portal_log_probe.js)
++LOG_PROBE = Path(__file__).resolve().parent / "portal_log_probe.js"
++
++
++@needs_node
++def test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open() -> None:
++    """Four repeats in a row from one lead are one line with "Show all 4".
++
++    A click shows all four, and a later poll keeps them shown (log.js openRun, the only user path to it)."""
++    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
++        ["node", str(LOG_PROBE), str(PORTAL_DIR)],  # noqa: S607
++        capture_output=True,
++        text=True,
++        encoding="utf-8",
++        timeout=60,
++        check=True,
++    )
++    seen = json.loads(out.stdout.strip().splitlines()[-1])
++    assert isinstance(seen, list), seen
++    phases = {p["phase"]: p for p in seen}
++    assert phases["grouped"] == {"phase": "grouped", "rows": 3, "toggles": ["Show all 4"], "grouped": True}
++    assert phases["clicked"]["handlers"] == 1 and phases["clicked"]["stopped"] == 1  # the click does not reach the row
++    for name in ("clicked", "later"):
++        assert phases[name]["rows"] == 6 and phases[name]["toggles"] == [] and phases[name]["grouped"] is False, name
++
++
+ # -- the pages in node: axis labels, last-update marks, the demo notice line, Retry cards, the pause flag
+ @needs_node
+ def test_the_activity_axis_uses_short_labels_that_fit() -> None:

@@ -1,0 +1,12 @@
+### 2026-11-12T19:25:30Z Nit 2 check: top-level statements of ORIGINAL portal.js (43110e7) between the new and the old position of the two moved declarations
+# rule: a line indented 2 spaces (top level of the IIFE) that is not a function declaration, a comment or a closing brace
+--- original lines 468 - 576
+468:   var pages = Object.create(null); // no inherited names: an id from the address bar can only hit a registered page
+469:   var current = null;
+470:   var demo = null;
+545:   var stopPage = null;
+576:   var routeForce = false, routed = false, booted = false;
+--- original lines 633 - 661
+635:   var demoTools = null;
+661:   var demoKnown = false, demoLoaded = false, stopDemo = null, demoMs = 0;
+# result: only var declarations with constant initializers (Object.create(null), null) run between the positions; no call, so no code can read routeForce/routed/booted or demoKnown/demoLoaded/stopDemo/demoMs between the old and the new position.

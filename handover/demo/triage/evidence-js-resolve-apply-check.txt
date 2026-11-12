@@ -1,0 +1,38 @@
+### 2026-11-12T19:26:01Z fresh copy of /tmp/work/ro-clone at 43110e7, status before: ''
+$ git apply --check /tmp/demo-wt/handover/demo/triage/js-portal.patch
+exit=0
+$ git apply /tmp/demo-wt/handover/demo/triage/js-portal.patch && git status --short
+exit=0
+ M src/lead_desk/portal/pages/log.js
+ M src/lead_desk/portal/pages/overview.js
+ M src/lead_desk/portal/portal.js
+ M tests/test_portal_mode.py
+?? tests/portal_log_probe.js
+$ diff -r (applied copy) (js-resolve work copy), src and tests, ignoring caches
+identical
+$ sha256sum js-portal.patch
+74d665a37e8c48c5a05eeedb30178e7f90f81d25ad745fab39128c541af5e046  /tmp/demo-wt/handover/demo/triage/js-portal.patch
+
+### 2026-11-12T19:33:33Z both patches together on another fresh copy of 43110e7 (py-retry.patch as it is in the triage folder now)
+$ git apply --check js-portal.patch py-retry.patch
+exit=0
+apply exit=0
+files changed or added: 18
+ M demo_only/fake_imap.py
+ M demo_only/fake_smtp_tls.py
+ M load_tools/catcher.py
+ M load_tools/load_driver.py
+ M src/lead_desk/config.py
+ M src/lead_desk/crm_hubspot.py
+ M src/lead_desk/desk.py
+ M src/lead_desk/live_claude.py
+ M src/lead_desk/portal/pages/log.js
+ M src/lead_desk/portal/pages/overview.js
+ M src/lead_desk/portal/portal.js
+ M src/lead_desk/portal_api.py
+ M src/lead_desk/smtp_outbox.py
+ M src/lead_desk/smtp_provider.py
+ M tests/test_lead_crm_copy.py
+ M tests/test_portal_mode.py
+?? tests/portal_log_probe.js
+?? tests/test_except_clause_hierarchy.py

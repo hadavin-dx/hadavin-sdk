@@ -1,0 +1,84 @@
+diff --git a/src/lead_desk/portal/pages/log.js b/src/lead_desk/portal/pages/log.js
+index 5995c71..1989495 100644
+--- a/src/lead_desk/portal/pages/log.js
++++ b/src/lead_desk/portal/pages/log.js
+@@ -58,6 +58,7 @@
+       // three or more repeats in a row from one lead become one line; the button shows them all
+       function groupRepeats(list) {
+         var out = [], i = 0;
++        function openRun(k) { opened[k] = 1; render(true); }
+         while (i < list.length) {
+           var r = list[i], j = i + 1;
+           if (r.result === 'duplicate' && r.lead_name) {
+@@ -65,7 +66,7 @@
+           }
+           var key = r.request_id + '|' + r.received_at;
+           if (j - i >= 3 && !opened[key]) {
+-            out.push(Object.assign({}, r, { _n: j - i, _key: key, _open: function (k) { opened[k] = 1; render(true); } }));
++            out.push(Object.assign({}, r, { _n: j - i, _key: key, _open: openRun }));
+           } else out.push.apply(out, list.slice(i, j));
+           i = j;
+         }
+diff --git a/src/lead_desk/portal/pages/overview.js b/src/lead_desk/portal/pages/overview.js
+index dc1b666..aeb6e0d 100644
+--- a/src/lead_desk/portal/pages/overview.js
++++ b/src/lead_desk/portal/pages/overview.js
+@@ -119,7 +119,7 @@
+     var b = [];
+     for (var j = 0; j < b0.length; j += g) {
+       var grp = { t: b0[j].t, 'new': 0, duplicate: 0, review: 0 };
+-      b0.slice(j, j + g).forEach(function (x) { grp['new'] += x['new']; grp.duplicate += x.duplicate; grp.review += x.review; });
++      for (var jj = j, jEnd = Math.min(j + g, b0.length); jj < jEnd; jj++) { grp['new'] += b0[jj]['new']; grp.duplicate += b0[jj].duplicate; grp.review += b0[jj].review; }
+       b.push(grp);
+     }
+     var step = step0 * g;
+diff --git a/src/lead_desk/portal/portal.js b/src/lead_desk/portal/portal.js
+index af9846d..5ce0cb5 100644
+--- a/src/lead_desk/portal/portal.js
++++ b/src/lead_desk/portal/portal.js
+@@ -468,10 +468,11 @@
+   var pages = Object.create(null); // no inherited names: an id from the address bar can only hit a registered page
+   var current = null;
+   var demo = null;
++  var routeForce = false, routed = false, booted = false; // declared before the functions that read them
+   function page(id, def) { pages[id] = def; def.id = id; if (booted) renderNav(); }
+   function registerDemo(d) {
+     demo = d || {};
+-    Portal.demo = Portal.demoExt = demo;
++    window.Portal.demo = window.Portal.demoExt = demo;
+     mergeLabels(demo.labels);
+     var line = demo.demoLine || (demo.labels && demo.labels.demoLine);
+     if (typeof line === 'string') {
+@@ -573,7 +574,6 @@
+     routed = true;
+     pollDemo();
+   }
+-  var routeForce = false, routed = false, booted = false;
+   function go(r) { location.hash = '#/' + r; }
+ 
+   // ---- connection state: live dot, offline banner, restart detection
+@@ -633,6 +633,7 @@
+   }
+   // the desk says whether the demo extension is loaded (summary.mode): no request goes to the extension's routes when it is not
+   var demoTools = null;
++  var demoKnown = false, demoLoaded = false, stopDemo = null, demoMs = 0; // declared before modeSeen, which reads them
+   function modeSeen(mode) {
+     if (!mode || typeof mode !== 'object') return;
+     if (mode.demo_tools === true) { demoTools = true; byId('demo-line').classList.remove('is-real'); pollDemo(); return; }
+@@ -640,7 +641,7 @@
+     if (stopDemo) { stopDemo(); stopDemo = null; }
+     demoKnown = true; state.demo = null; sourceChip(false);
+     try { window.localStorage.removeItem('lead-desk-demo-line'); } catch (e) { /* storage blocked */ }
+-    if (demo && !demoLoaded && pages.demo) { delete pages.demo; demo = null; Portal.demo = Portal.demoExt = null; renderNav(); if (current === 'demo') go('overview'); }
++    if (demo && !demoLoaded && pages.demo) { delete pages.demo; demo = null; window.Portal.demo = window.Portal.demoExt = null; renderNav(); if (current === 'demo') go('overview'); }
+     var strip = byId('demo-line');
+     delete strip.dataset.placeholder;
+     var REAL_NAMES = { crm: 'CRM', mail: 'mail', ai: 'AI step' };
+@@ -658,7 +659,6 @@
+   }
+ 
+   // ---- demo extension discovery: 200 = load it, 404 = none, anything else = say the source is not confirmed
+-  var demoKnown = false, demoLoaded = false, stopDemo = null, demoMs = 0;
+   function sourceChip(show) {
+     var slot = clear(byId('source-slot'));
+     if (show) slot.appendChild(h('span', { 'class': 'chip-warn', 'data-testid': 'source-unconfirmed' }, icon('alert'), 'Demo data not confirmed'));

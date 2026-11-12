@@ -1,0 +1,20 @@
+### 2026-11-12T19:25:31Z node v22.23.4; script /tmp/demo-wt/handover/demo/triage/equiv-overview-real.js (loads the REAL portal.js + pages/overview.js of each tree, unchanged)
+# A = /tmp/work/ro-clone (43110e7), B = /tmp/work/js-resolve (regenerated patch: inner loop uses jj/jEnd declared in the existing 'var b = []' statement)
+$ node equiv-overview-real.js <A portal> <B portal> 5000
+sample activity card (60 buckets of 5 s), A: ["section",{"class":"card","data-testid":"activity"},"",[["div",{"class":"card-head"},"",[["h2",{},"",[{"t":"Activity"}]],["p",{"class":"why"},"",[{"t":"Requests the desk decided, newest on the right. The marks count minutes back from now."}]]]],["div",{"class":"ov-chartbox"},"",[["div",{"class":"ov-ytitle"},"",[{"t":"Requests decided per 15 seconds"}]],["div",{"class":"ov-chart"},"",[["div",{"cla ...
+{"dirA":"/tmp/work/ro-clone/src/lead_desk/portal","dirB":"/tmp/work/js-resolve/src/lead_desk/portal","cases":5000,"identical":5000,"casesWithBars":4126,"casesJoiningBuckets":2645,"casesWithDroppedPartialGroup":1560}
+IDENTICAL full Overview render on all 5000 generated summaries
+exit=0
+
+### mutation check: B's overview.js changed to jEnd = Math.min(j + g - 1, ...) (one bucket per group lost); the script must stop with MISMATCH
+$ node equiv-overview-real.js <A portal> <mutant portal> 5000
+MISMATCH at case 3 bucket_seconds 5 buckets 3
+A activity: ["section",{"class":"card","data-testid":"activity"},"",[["div",{"class":"card-head"},"",[["h2",{},"",[{"t":"Activity"}]],["p",{"class":"why"},"",[{"t":"Requests the desk decided, newest on the right. The marks count minutes back from now."}]]]],["div",{"class":"ov-chartbox"},"",[["div",{"class":"ov-ytitle"},"",[{"t":"Requests decided per 15 seconds"}]],["div",{"class":"ov-chart"},"",[["div",{"class":"ov-y"},"",[["span",{"class":"num"},"",[{"t":"22"}]],["span",{"class":"num"},"",[{"t":"11"}]],["span",{"class":"num"},"",[{"t":"0"}]]]],["div",{"class":"ov-bars","role":"img","aria-label":"21 requ
+B activity: ["section",{"class":"card","data-testid":"activity"},"",[["div",{"class":"card-head"},"",[["h2",{},"",[{"t":"Activity"}]],["p",{"class":"why"},"",[{"t":"Requests the desk decided, newest on the right. The marks count minutes back from now."}]]]],["div",{"class":"ov-chartbox"},"",[["div",{"class":"ov-ytitle"},"",[{"t":"Requests decided per 15 seconds"}]],["div",{"class":"ov-chart"},"",[["div",{"class":"ov-y"},"",[["span",{"class":"num"},"",[{"t":"12"}]],["span",{"class":"num"},"",[{"t":"6"}]],["span",{"class":"num"},"",[{"t":"0"}]]]],["div",{"class":"ov-bars","role":"img","aria-label":"12 reque
+exit=1
+
+### sanity: A vs A
+sample activity card (60 buckets of 5 s), A: ["section",{"class":"card","data-testid":"activity"},"",[["div",{"class":"card-head"},"",[["h2",{},"",[{"t":"Activity"}]],["p",{"class":"why"},"",[{"t":"Requests the desk decided, newest on the right. The marks count minutes back from now."}]]]],["div",{"class":"ov-chartbox"},"",[["div",{"class":"ov-ytitle"},"",[{"t":"Requests decided per 15 seconds"}]],["div",{"class":"ov-chart"},"",[["div",{"cla ...
+{"dirA":"/tmp/work/ro-clone/src/lead_desk/portal","dirB":"/tmp/work/ro-clone/src/lead_desk/portal","cases":500,"identical":500,"casesWithBars":413,"casesJoiningBuckets":265,"casesWithDroppedPartialGroup":149}
+IDENTICAL full Overview render on all 500 generated summaries
+exit=0

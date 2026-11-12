@@ -1,0 +1,36 @@
+### 2026-11-12T19:32:15Z Major 3: the 'missing let/const' type = ESLint no-var hits (one per var statement), from the full-rule JSON reports of evidence-js-resolve-eslint-full.txt
+== ro-clone
+demo_only/portal_demo.js 82
+src/lead_desk/portal/pages/data.js 24
+src/lead_desk/portal/pages/leads.js 93
+src/lead_desk/portal/pages/log.js 32
+src/lead_desk/portal/pages/needs.js 53
+src/lead_desk/portal/pages/overview.js 74
+src/lead_desk/portal/portal.js 145
+src/lead_desk/portal/theme.js 1
+src/lead_desk/portal 422 | total 504
+== js-resolve-apply
+demo_only/portal_demo.js 82
+src/lead_desk/portal/pages/data.js 24
+src/lead_desk/portal/pages/leads.js 93
+src/lead_desk/portal/pages/log.js 32
+src/lead_desk/portal/pages/needs.js 53
+src/lead_desk/portal/pages/overview.js 74
+src/lead_desk/portal/portal.js 145
+src/lead_desk/portal/theme.js 1
+src/lead_desk/portal 422 | total 504
+== cross-check, ro-clone: grep -oE '\bvar\b' word count
+portal: 422  demo_only/portal_demo.js: 82
+== let/const/arrow uses in shipped portal JS (ES5 style check):
+0
+== 'use strict' per file:
+src/lead_desk/portal/portal.js:1
+src/lead_desk/portal/theme.js:1
+src/lead_desk/portal/pages/data.js:1
+src/lead_desk/portal/pages/leads.js:1
+src/lead_desk/portal/pages/log.js:1
+src/lead_desk/portal/pages/needs.js:1
+src/lead_desk/portal/pages/overview.js:1
+demo_only/portal_demo.js:1
+== no-undef / no-global-assign / no-implicit-globals hits in shipped portal JS after the patch (an assignment to an undeclared name would show here):
+count 0

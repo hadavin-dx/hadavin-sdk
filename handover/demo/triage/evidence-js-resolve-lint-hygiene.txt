@@ -1,0 +1,8 @@
+### 2026-11-12T19:32:46Z tree /tmp/work/js-resolve-apply (fresh 43110e7 + regenerated js-portal.patch)
+$ ruff check . ; ruff format --check .
+All checks passed!
+127 files already formatted
+$ git grep --untracked -n -o -I -E -f patterns.txt -- <changed files> | grep -v -E -f exceptions.txt   (the lint.yml hardcoded-literal scan, limited to the patch's files)
+left after exceptions: grep exit=1 (1 = nothing left)
+$ python -m pytest -q -p no:cacheprovider tests/test_hygiene.py
+9 passed, 1 skipped in 5.77s

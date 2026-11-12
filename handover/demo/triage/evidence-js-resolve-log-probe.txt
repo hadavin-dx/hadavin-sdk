@@ -1,0 +1,21 @@
+### 2026-11-12T19:18:13Z node v22.23.4; probe tests/portal_log_probe.js (new, in the patch). The pytest test asserts grouped rows=3 with ['Show all 4'], then clicked and later rows=6 with no toggle.
+
+## ORIGINAL 43110e7 log.js (must pass)
+$ node tests/portal_log_probe.js /tmp/work/ro-clone/src/lead_desk/portal
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":6,"toggles":[],"grouped":false,"handlers":1,"stopped":1},{"phase":"later","rows":6,"toggles":[],"grouped":false}]
+exit=0
+
+## PATCHED log.js (must pass)
+$ node tests/portal_log_probe.js /tmp/work/js-resolve/src/lead_desk/portal
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":6,"toggles":[],"grouped":false,"handlers":1,"stopped":1},{"phase":"later","rows":6,"toggles":[],"grouped":false}]
+exit=0
+
+## MUTANT 1, openRun without opened[k] = 1 (must fail the assertions, still grouped after the click)
+$ node tests/portal_log_probe.js /tmp/claude-0/-home-user/b34836a1-affe-5ae5-ba66-3c71b6499c1e/scratchpad/mut-log1
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":3,"toggles":["Show all 4"],"grouped":true,"handlers":1,"stopped":1},{"phase":"later","rows":3,"toggles":["Show all 4"],"grouped":true}]
+exit=0
+
+## MUTANT 2, openRun without render(true) (must fail the assertions, the click shows nothing until the next poll)
+$ node tests/portal_log_probe.js /tmp/claude-0/-home-user/b34836a1-affe-5ae5-ba66-3c71b6499c1e/scratchpad/mut-log2
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":3,"toggles":["Show all 4"],"grouped":true,"handlers":1,"stopped":1},{"phase":"later","rows":6,"toggles":[],"grouped":false}]
+exit=0

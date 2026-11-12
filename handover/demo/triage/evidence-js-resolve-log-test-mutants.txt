@@ -1,0 +1,43 @@
+### 2026-11-12T19:23:55Z BEFORE tree: original 43110e7 log.js
+$ python -m pytest -v -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open PASSED [100%]
+============================== 1 passed in 0.10s ===============================
+exit=0
+
+### 2026-11-12T19:23:55Z AFTER tree: patched log.js
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+$ python -m pytest -v -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open PASSED [100%]
+============================== 1 passed in 0.10s ===============================
+exit=0
+
+### 2026-11-12T19:23:56Z MUTANT 1 tree: openRun without opened[k] = 1 (must FAIL)
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+$ python -m pytest -v -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open FAILED [100%]
+E           AssertionError: clicked
+E           assert (3 == 6)
+tests/test_portal_mode.py:434: AssertionError
+FAILED tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+============================== 1 failed in 0.11s ===============================
+exit=1
+
+### 2026-11-12T19:23:56Z MUTANT 2 tree: openRun without render(true) (must FAIL)
+ 3 files changed, 7 insertions(+), 6 deletions(-)
+$ python -m pytest -v -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open FAILED [100%]
+E           AssertionError: clicked
+E           assert (3 == 6)
+tests/test_portal_mode.py:434: AssertionError
+FAILED tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+============================== 1 failed in 0.11s ===============================
+exit=1
+
+### 2026-11-12T19:24:15Z re-run after the docstring was split for ruff E501 (test body unchanged)
+$ (/tmp/work/js-resolve-base) python -m pytest -q -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+1 passed in 0.20s
+$ (/tmp/work/js-resolve) python -m pytest -q -p no:cacheprovider tests/test_portal_mode.py::test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open
+1 passed in 0.20s
+$ ruff check . && ruff format --check . (js-resolve)
+All checks passed!
+127 files already formatted

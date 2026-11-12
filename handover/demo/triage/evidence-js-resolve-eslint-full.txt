@@ -1,0 +1,100 @@
+### 2026-11-12T19:31:29Z ESLint v10.1.0 (preinstalled at /opt/node22/bin/eslint), config /tmp/demo-wt/handover/demo/triage/eslint.config.mjs (the builder's, ALL its rules, no output filter), targets: src/lead_desk/portal demo_only tests/*.js
+before = /tmp/work/ro-clone (43110e7, pristine); after = /tmp/work/js-resolve-apply (fresh copy of 43110e7 + regenerated js-portal.patch, which adds tests/portal_log_probe.js)
+Problems are matched on (file, rule, message, trimmed source line); line numbers are ignored so an unchanged line that only moved still matches.
+Compare script: /tmp/claude-0/-home-user/b34836a1-affe-5ae5-ba66-3c71b6499c1e/scratchpad/eslint-compare.js (copied below).
+
+rule                     before after delta
+no-implicit-globals          16    24     8
+no-loop-func                  1     0    -1
+no-restricted-syntax          4     3    -1
+no-shadow                     5     5     0
+no-undef                     29    30     1
+no-unused-vars               29    29     0
+no-use-before-define         13     0   -13
+no-var                      504   504     0
+TOTAL                       601   595    -6
+
+GONE after the patch (in before, not after): 24
+  - src/lead_desk/portal/pages/log.js:68 no-restricted-syntax | function inside loop
+  - src/lead_desk/portal/pages/overview.js:119 no-var | Unexpected var, use let or const instead.
+  - src/lead_desk/portal/pages/overview.js:122 no-loop-func | Function declared in a loop contains unsafe references to variable(s) 'grp'.
+  - src/lead_desk/portal/pages/overview.js:122 no-restricted-syntax | function inside loop
+  - src/lead_desk/portal/portal.js:471 no-use-before-define | 'booted' was used before it was defined.
+  - src/lead_desk/portal/portal.js:474 no-undef | 'Portal' is not defined.
+  - src/lead_desk/portal/portal.js:474 no-undef | 'Portal' is not defined.
+  - src/lead_desk/portal/portal.js:498 no-use-before-define | 'booted' was used before it was defined.
+  - src/lead_desk/portal/portal.js:498 no-use-before-define | 'routeForce' was used before it was defined.
+  - src/lead_desk/portal/portal.js:550 no-use-before-define | 'routeForce' was used before it was defined.
+  - src/lead_desk/portal/portal.js:551 no-use-before-define | 'routeForce' was used before it was defined.
+  - src/lead_desk/portal/portal.js:572 no-use-before-define | 'booted' was used before it was defined.
+  - src/lead_desk/portal/portal.js:572 no-use-before-define | 'routed' was used before it was defined.
+  - src/lead_desk/portal/portal.js:573 no-use-before-define | 'routed' was used before it was defined.
+  - src/lead_desk/portal/portal.js:576 no-var | Unexpected var, use let or const instead.
+  - src/lead_desk/portal/portal.js:640 no-use-before-define | 'stopDemo' was used before it was defined.
+  - src/lead_desk/portal/portal.js:640 no-use-before-define | 'stopDemo' was used before it was defined.
+  - src/lead_desk/portal/portal.js:640 no-use-before-define | 'stopDemo' was used before it was defined.
+  - src/lead_desk/portal/portal.js:641 no-use-before-define | 'demoKnown' was used before it was defined.
+  - src/lead_desk/portal/portal.js:643 no-use-before-define | 'demoLoaded' was used before it was defined.
+  - src/lead_desk/portal/portal.js:643 no-undef | 'Portal' is not defined.
+  - src/lead_desk/portal/portal.js:643 no-undef | 'Portal' is not defined.
+  - src/lead_desk/portal/portal.js:661 no-var | Unexpected var, use let or const instead.
+  - src/lead_desk/portal/portal.js:661 no-unused-vars | 'demoKnown' is assigned a value but never used.
+
+NEW after the patch (in after, not before): 18
+  + src/lead_desk/portal/pages/overview.js:119 no-var | Unexpected var, use let or const instead. | var b = [], jj, jEnd; // jj and jEnd: the inner loop below (no function inside the loop, and no new 
+  + src/lead_desk/portal/portal.js:471 no-var | Unexpected var, use let or const instead. | var routeForce = false, routed = false, booted = false; // declared before the functions that read t
+  + src/lead_desk/portal/portal.js:636 no-var | Unexpected var, use let or const instead. | var demoKnown = false, demoLoaded = false, stopDemo = null, demoMs = 0; // declared before modeSeen,
+  + src/lead_desk/portal/portal.js:636 no-unused-vars | 'demoKnown' is assigned a value but never used. | var demoKnown = false, demoLoaded = false, stopDemo = null, demoMs = 0; // declared before modeSeen,
+  + tests/portal_log_probe.js:6 no-undef | 'require' is not defined. | const fs = require('fs'), vm = require('vm'), path = require('path');
+  + tests/portal_log_probe.js:6 no-undef | 'require' is not defined. | const fs = require('fs'), vm = require('vm'), path = require('path');
+  + tests/portal_log_probe.js:6 no-undef | 'require' is not defined. | const fs = require('fs'), vm = require('vm'), path = require('path');
+  + tests/portal_log_probe.js:7 no-undef | 'process' is not defined. | const dir = process.argv[2];
+  + tests/portal_log_probe.js:9 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function classesOf(o) { return (o.attrs['class'] || '').split(/\s+/).filter(Boolean); }
+  + tests/portal_log_probe.js:10 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function el(tag) {
+  + tests/portal_log_probe.js:27 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function walk(n, f) { if (!n) return; f(n); (n.children || []).forEach((k) => walk(k, f)); }
+  + tests/portal_log_probe.js:28 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function textOf(n) { let out = ''; walk(n, (x) => { if (x.t !== undefined) out += x.t + ' '; }); ret
+  + tests/portal_log_probe.js:29 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function byTestid(id) { const r = []; walk(els.main, (n) => { if (n.attrs && n.attrs['data-testid'] 
+  + tests/portal_log_probe.js:40 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function fetchStub(p) {
+  + tests/portal_log_probe.js:59 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | async function until(pred, what) {
+  + tests/portal_log_probe.js:60 no-restricted-syntax | function inside loop | for (let i = 0; i < 600; i++) { if (pred()) return; await new Promise((r) => setTimeout(r, 5)); }
+  + tests/portal_log_probe.js:63 no-implicit-globals | Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable. | function snap(phase) {
+  + tests/portal_log_probe.js:81 no-undef | 'process' is not defined. | process.exit(0);
+
+### stylish summary lines
+ro-clone:
+✖ 601 problems (567 errors, 34 warnings)
+js-resolve-apply:
+✖ 595 problems (561 errors, 34 warnings)
+
+### src/lead_desk/portal + demo_only only (shipped code), after
+✖ 538 problems (504 errors, 34 warnings)
+### same, before
+✖ 558 problems (524 errors, 34 warnings)
+
+### compare script
+// compare two eslint JSON reports: per-rule totals, and problems keyed by (file, rule, message, source line text) so moved lines still match
+const fs = require('fs');
+function load(f, root) {
+  const out = [];
+  for (const r of JSON.parse(fs.readFileSync(f, 'utf8'))) {
+    const rel = r.filePath.slice(root.length + 1), lines = fs.readFileSync(r.filePath, 'utf8').split('\n');
+    for (const m of r.messages) out.push({ rel, rule: m.ruleId, sev: m.severity, msg: m.message, line: m.line, src: (lines[m.line - 1] || '').trim() });
+  }
+  return out;
+}
+const [fa, ra, fb, rb] = process.argv.slice(2);
+const A = load(fa, ra), B = load(fb, rb);
+const tally = (L) => L.reduce((o, p) => { o[p.rule] = (o[p.rule] || 0) + 1; return o; }, {});
+const ta = tally(A), tb = tally(B);
+console.log('rule'.padEnd(24), 'before', 'after', 'delta');
+for (const k of [...new Set([...Object.keys(ta), ...Object.keys(tb)])].sort()) console.log(String(k).padEnd(24), String(ta[k] || 0).padStart(6), String(tb[k] || 0).padStart(5), String((tb[k] || 0) - (ta[k] || 0)).padStart(5));
+console.log('TOTAL'.padEnd(24), String(A.length).padStart(6), String(B.length).padStart(5), String(B.length - A.length).padStart(5));
+const key = (p) => [p.rel, p.rule, p.msg, p.src].join(' | ');
+const count = (L) => L.reduce((m, p) => m.set(key(p), (m.get(key(p)) || 0) + 1), new Map());
+const ca = count(A), cb = count(B);
+const only = (x, y, L) => L.filter((p) => { const k = key(p); if ((y.get(k) || 0) < (x.get(k) || 0)) { x.set(k, x.get(k) - 1); return true; } return false; });
+const gone = only(new Map(ca), cb, A), added = only(new Map(cb), ca, B);
+console.log('\nGONE after the patch (in before, not after):', gone.length);
+gone.forEach((p) => console.log('  -', p.rel + ':' + p.line, p.rule, '|', p.msg));
+console.log('\nNEW after the patch (in after, not before):', added.length);
+added.forEach((p) => console.log('  +', p.rel + ':' + p.line, p.rule, '|', p.msg, '|', p.src.slice(0, 100)));
