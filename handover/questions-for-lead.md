@@ -1846,3 +1846,7 @@ Default (used now): not masked; stated plainly in LIMITS and CHANGELOG, three ro
 
 ### q-prh-spaced-secrets, update (2026-11-12, PR H batch 8, builder)
 Measured: the check for an UNKNOWN secret typed with spaces (a run of 10 or more single-character words that reads as a secret when the spaces are removed) changed 0 of 83,589 ordinary lines (repository prose, source, tests and the 15-text clean corpus); a planted example was caught (1 of 1). Per the brief (ship only if 0 changed texts) it is shipped ON, behind one constant, `defaults.READ_SPACED_OUT_UNKNOWN`. Known values of 12 or more characters are masked with spaces removed on every path. Your decision: keep it ON, or turn it OFF (one line). Honest limit: the corpus is repository text, not client text; a pilot corpus should repeat the count (`handover/evidence/PRH/b8/spaced_unknown_rate.py`).
+
+### q-q8b-bare-bypass (2026-11-12, Q8b round 10)
+Question: Should a bare word `bypass` followed by a value, such as `bypass=true`, be hidden as if it were a password? Hiding it also hides harmless switches; showing it could show a real bypass token.
+Default (used now): shown, and pinned by a test row. Main hid it only through an unbounded `pass` match. Names such as `bypass_key` and `bypass_token` stay hidden. The builder must not write "owner decision not needed".
