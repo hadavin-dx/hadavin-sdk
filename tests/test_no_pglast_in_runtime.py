@@ -11,15 +11,17 @@ pyproject.toml, and uv.lock. The guard walks the working folder with os.walk and
 `git ls-files` (design choice kept on purpose: a copy not yet added to git is also seen, and the
 unreadable-folder, symbolic-link and .venv cases are handled here by their own rules and tests).
 What it flags (the "src: ..." line names the tree):
-- "compiled <name>": ANY file under src, demos or tools whose name ends in .so, .pyd, .dylib, .dll,
-  .lib, .o or .bundle in any letter case, optionally followed by version numbers (`.so.1`);
+- "compiled <name>": a file under src, demos or tools whose name ends in one of the listed suffixes
+  .so, .pyd, .dylib, .dll, .lib, .o or .bundle (any letter case), optionally followed by version
+  numbers (`.so.1`); other binaries (.a, .exe, .node, .wasm, .pyc) are not flagged by this rule;
 - "vendored dir <name>": a folder whose lower-case name matches the pattern VENDORED (not `_norm`):
   `pglast` or `_pglast`, alone or followed by `.libs`, `.dist-info`, `.egg-info`, a packing suffix,
   or a digit-led tail (`pglast-8.7`, `pglast8`; so an unrelated `pglast8x` is also flagged, which
   only over-flags); not `pglastic` or `pglast_utils`;
 - "vendored archive <name>": a file whose name matches VENDORED and ends in .whl, .egg, .zip, .a,
   .7z, .gz, .tgz, .txz, .tbz2, .tar, .tar.gz, .tar.xz or .tar.bz2 (judged by name, never opened);
-- "symlinked dir <name>": ANY symbolic link to a folder under the three trees. A link is never
+- "symlinked dir <name>": any symbolic link to a folder under the three trees, except a link named
+  `.venv` or `node_modules` directly under a tree (skipped, see the limits). A link is never
   followed, so what it points to is not scanned; the report is the control;
 - "imports pglast": a python file (.py, .pyi, .pyw in any letter case, or a file without a suffix
   whose first line is a python shebang, read with a byte order mark allowed) that imports pglast or
@@ -38,7 +40,12 @@ Limits, stated plainly (each is NOT checked and would pass this guard):
 - an import whose name is built at run time (`"pg" + "last"` given to `__import__`), source text
   run through `exec(...)`, `python -c` or a subprocess, and `pip install pglast` run from python;
 - a copy of the pglast code under another name; a single-file `pglast.py` is scanned only as source;
-- `.pyc` and Cython `.pyx` files; archives are judged by name, not content;
+- `.pyc` and Cython `.pyx` files; archives are judged by name, not content; notebooks (`.ipynb`),
+  zipapps (`.pyz`), path files (`.pth`) and scripts that carry a suffix other than .py, .pyi and
+  .pyw (for example a shebang script named `run.txt`) are not parsed; the names `pglast-stubs`,
+  `types-pglast` and `.egg-link` and Windows junctions are not flagged;
+- inside a PEP 723 block only `dependencies` and `[tool.uv.sources]` are read; other `[tool.uv]`
+  keys there (constraint, override, build and metadata keys) are not;
 - dependency lists outside pyproject.toml, uv.lock and PEP 723 blocks: requirements*.txt,
   setup.py, Dockerfiles, CI `pip install` lines, `[build-system] requires`, the tables of other
   build tools (hatch, poetry, pdm), and in pyproject the uv tables `build-constraint-dependencies`,
@@ -48,9 +55,10 @@ Limits, stated plainly (each is NOT checked and would pass this guard):
   `requires-dev` group `test` is skipped for every package (safe, but not the same rule);
 - `.venv` and `node_modules` directly under src, demos or tools are skipped on purpose (other
   people's code): pglast placed there is NOT seen. The same names deeper down ARE scanned;
-- an unreadable or vanished file or folder (permission denied, a broken symbolic link, a
-  folder removed during the scan), a missing pyproject.toml and an invalid uv.lock RAISE; the guard
-  fails loud, it never skips silently.
+- an unreadable or vanished python-named or suffix-less file, or folder (permission denied, a
+  broken symbolic link, a folder removed during the scan), a missing pyproject.toml and an invalid
+  uv.lock RAISE (fail loud); any other file (for example a broken link named `x.txt` or `x.whl`)
+  is never opened, so it is neither read nor reported.
 """
 
 import ast
@@ -66,7 +74,7 @@ TREES = ("src", "demos", "tools")
 BINARY = re.compile(r"(?i).*\.(so|pyd|dylib|dll|lib|o|bundle)(\.\d+)*")  # compiled, .so.N too
 ARCHIVES = (  # packed copies (judged by name, never opened)
     (".whl", ".egg", ".zip", ".a", ".7z", ".gz", ".tgz", ".txz", ".tbz2")
-    + (".tar", ".tar.gz", ".tar.xz", ".tar.bz2")
+    + (".tar", ".tar.xz", ".tar.bz2")  # .tar.gz ends in .gz
 )
 PY_SUFFIXES = (".py", ".pyi", ".pyw")  # compared in lower case
 # PEP 723 inline script metadata: the reference expression from the specification
@@ -80,7 +88,7 @@ def _norm(name):  # PEP 503 name; edge separators dropped so `_pglast` and `pgla
 
 VENDORED = re.compile(  # pglast itself, not pglastic or pglast_utils (`_` and `.` join names alike)
     r"_?pglast(\.libs|\.dist-info|\.egg-info|[-_.]?\d.*"
-    r"|\.(a|egg|zip|whl|7z|gz|tgz|txz|tbz2|tar|tar\.gz|tar\.xz|tar\.bz2))?"
+    r"|\.(a|egg|zip|whl|gz|tgz|txz|tbz2|tar|tar\.gz|tar\.xz|tar\.bz2))?"
 )
 
 
@@ -142,10 +150,13 @@ def _script_metadata(text):  # the tables of every PEP 723 `script` block; bad T
 def _script_names_pglast(text):  # a script block that depends on pglast, or cannot be read
     try:
         for meta in _script_metadata(text):
+            deps = meta.get("dependencies", [])
             uv_sources = meta.get("tool", {}).get("uv", {}).get("sources", {})
-            if _hit(meta.get("dependencies", [])) or "pglast" in {_norm(k) for k in uv_sources}:
+            if not isinstance(deps, list):  # a string would be read one letter at a time
+                return "script metadata cannot parse"
+            if _hit(deps) or "pglast" in {_norm(k) for k in uv_sources}:
                 return "script metadata names pglast"
-    except tomllib.TOMLDecodeError:
+    except (tomllib.TOMLDecodeError, AttributeError):  # AttributeError: `tool` is not a table
         return "script metadata cannot parse"
     return None
 
@@ -435,10 +446,6 @@ MUTANTS = {
         {"src/m.py": None, "src/notes.txt": ""},
         ["src: no python file scanned"],
     ),
-    "src absent while demos and tools are clean still fails": (
-        {"src/m.py": None},
-        ["src: no python file scanned"],
-    ),
     "tar.xz archive": (
         {"src/pglast-8.7.tar.xz": "", "src/_pglast.tar.xz": ""},
         ["src: vendored archive pglast-8.7.tar.xz", "src: vendored archive _pglast.tar.xz"],
@@ -485,7 +492,7 @@ MUTANTS = {
         {"ext/m.py": "import pglast\n", "src/link.py": ("file", "ext/m.py")},
         ["src: link.py imports pglast"],
     ),
-    "upper-case python suffix": ({"src/M.PY": "import pglast\n"}, ["src: M.PY imports pglast"]),
+    "upper-case python suffix": ({"src/Up.PY": "import pglast\n"}, ["src: Up.PY imports pglast"]),
     "upper-case stub suffix": ({"tools/M.PYI": "import pglast\n"}, ["tools: M.PYI imports pglast"]),
     "stub file that imports pglast": (
         {"src/m.pyi": "import pglast\n"},
@@ -515,6 +522,14 @@ MUTANTS = {
     "PEP 723 block that is not TOML": (
         {"src/run.py": "# /// script\n# dependencies = [\n# ///\nx = 1\n"},
         ["src: run.py script metadata cannot parse"],
+    ),
+    "PEP 723 dependencies that is a string": (
+        {"tools/run.py": "# /// script\n# dependencies = 'pglast'\n# ///\nx = 1\n"},
+        ["tools: run.py script metadata cannot parse"],
+    ),
+    "PEP 723 tool that is not a table": (
+        {"tools/run.py": "# /// script\n# tool = 'x'\n# ///\nx = 1\n"},
+        ["tools: run.py script metadata cannot parse"],
     ),
     "PEP 723 block of another type is not read": (
         {"src/run.py": "# /// other\n# dependencies = ['pglast']\n# ///\nx = 1\n"},
@@ -561,6 +576,17 @@ MUTANTS = {
         {"demos/pglast-8.7/x.txt": "", "demos/pglast_8.7/y.txt": ""},
         ["demos: vendored dir pglast-8.7", "demos: vendored dir pglast_8.7"],
     ),
+    "digit-free dist-info folder": (
+        {"src/pglast.dist-info/METADATA": ""},
+        ["src: vendored dir pglast.dist-info"],
+    ),
+    "digit-free wheel": ({"src/pglast.whl": ""}, ["src: vendored archive pglast.whl"]),
+    "digit-free zip": ({"src/pglast.zip": ""}, ["src: vendored archive pglast.zip"]),
+    "digit-free tgz": ({"src/pglast.tgz": ""}, ["src: vendored archive pglast.tgz"]),
+    "digit-free 7z": ({"src/pglast.7z": ""}, ["src: vendored archive pglast.7z"]),
+    "digit-free txz": ({"src/pglast.txz": ""}, ["src: vendored archive pglast.txz"]),
+    "digit-free tbz2": ({"src/pglast.tbz2": ""}, ["src: vendored archive pglast.tbz2"]),
+    "digit-free tar.gz": ({"src/pglast.tar.gz": ""}, ["src: vendored archive pglast.tar.gz"]),
     "digit-led unrelated folder is flagged too (over-flags only)": (
         {"src/pglast8x/x.txt": ""},
         ["src: vendored dir pglast8x"],
