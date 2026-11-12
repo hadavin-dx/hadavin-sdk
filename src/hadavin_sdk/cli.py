@@ -251,8 +251,8 @@ def _limits(cfg, reg, secrets, store, audit, args) -> int:
             label_key = secrets.get(lim.label_key_secret_name).encode("utf-8")
         except Exception:  # noqa: BLE001 - a stop must work without the key (it falls back to a fixed label)
             label_key = b""
-    elif cfg.environment != "dev":
-        # No key name configured outside dev: the stop still works (fixed "actor not identified" label); reset and
+    elif cfg.environment != "demo":
+        # No key name configured outside demo: the stop still works (fixed "actor not identified" label); reset and
         # whois refuse because the key is unusable. `Limits` would otherwise raise here, outside the exit codes.
         label_key = b""
 

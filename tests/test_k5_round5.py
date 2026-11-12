@@ -244,7 +244,7 @@ def test_m2_a_toolbox_without_a_proposal_check_is_refused(tmp_path):
     qualify(reg)
     with pytest.raises(ValueError, match="needs hooks.validate_proposal"):
         Runtime(
-            reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg, environment="dev"),
+            reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg, environment="demo"),
             ["test-agent"], Hooks(toolbox=app_mod._toolbox(cfg, reg, SECRETS_PLUS)),
         )  # fmt: skip
 

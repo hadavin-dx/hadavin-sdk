@@ -31,7 +31,7 @@ from hadavin_sdk.store.protocol import (
 
 _LOG = logging.getLogger(__name__)
 MIN_KEY_BYTES = 16  # the same minimum as a restored audit key
-_STAGES = frozenset({"dev", "pilot", "prod"})  # exactly what Config.environment accepts; no alias
+_STAGES = frozenset({"demo", "pilot", "prod"})  # exactly what Config.environment accepts; no alias
 _MISSING_ROW = "the kill_switch row is missing; a database administrator must re-seed it"
 
 
@@ -64,17 +64,17 @@ class Limits:
     ) -> None:
         if not valid_key_id(key_id):
             raise ValueError("key_id must match [A-Za-z0-9_-]{1,32}")
-        if environment not in _STAGES:  # no alias: "demo" is not "dev" (Config.environment decides)
+        if environment not in _STAGES:  # no alias: Config.environment decides
             raise ValueError(f"environment must be one of {sorted(_STAGES)}, not {environment!r}")
-        dev = environment == "dev"
-        if not dev and isinstance(store, MemoryStore):
-            raise ValueError("a memory store is allowed only when environment is dev")
+        demo = environment == "demo"
+        if not demo and isinstance(store, MemoryStore):
+            raise ValueError("a memory store is allowed only when environment is demo")
         if label_key is None:
-            if not dev:
-                raise ValueError("a label key is required when environment is not dev")
+            if not demo:
+                raise ValueError("a label key is required when environment is not demo")
             label_key = secrets.token_bytes(32)
             _LOG.warning(
-                "limits: no label key given; using a per-process random key (environment dev only)"
+                "limits: no label key given; using a per-process random key (environment demo only)"
             )
         self.store, self.audit, self.registry = store, audit, registry
         self.environment = environment

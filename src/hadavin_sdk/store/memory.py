@@ -478,7 +478,7 @@ class MemoryStore:
 
     def get_kill_switch(self) -> StopState:
         with self._lock:
-            return self._state()
+            return self._kill_on()
 
     def set_kill_switch(self, ks: KillSwitch) -> StopState:
         if ks.on is not True:

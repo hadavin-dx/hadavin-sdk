@@ -31,7 +31,7 @@ def make(**kw) -> Limits:
     kw.setdefault("reset_names", {RESET_NAME})
     store = MemoryStore()
     kw.setdefault("reset_store", store)
-    return Limits(store, Audit(), None, environment="dev", label_key=KEY, **kw)
+    return Limits(store, Audit(), None, environment="demo", label_key=KEY, **kw)
 
 
 def test_stop_is_a_request_and_state_reads_on():
@@ -94,7 +94,7 @@ def test_reset_rejects_out_of_range_counts(bad):
 
 def test_stop_survives_a_short_key_with_the_nokey_label():
     store = MemoryStore()
-    lim = Limits(store, Audit(), None, environment="dev", label_key=b"short")
+    lim = Limits(store, Audit(), None, environment="demo", label_key=b"short")
     s = lim.stop("user:a")
     assert s.on and s.by == NOKEY_LABEL
     with pytest.raises(StopNotPermitted):
@@ -123,7 +123,7 @@ def test_memory_store_refused_outside_demo_stage_and_key_required():
     with pytest.raises(ValueError):
         Limits(object(), Audit(), None, environment="pilot")
     with pytest.raises(ValueError):
-        Limits(MemoryStore(), Audit(), None, environment="dev", label_key=KEY, key_id="bad id")
+        Limits(MemoryStore(), Audit(), None, environment="demo", label_key=KEY, key_id="bad id")
 
 
 def test_confirmation_failure_is_loud():
@@ -131,7 +131,7 @@ def test_confirmation_failure_is_loud():
         def set_kill_switch(self, ks):
             return super().get_kill_switch()
 
-    lim = Limits(Lying(), Audit(), None, environment="dev", label_key=KEY)
+    lim = Limits(Lying(), Audit(), None, environment="demo", label_key=KEY)
     with pytest.raises(StopNotConfirmed):
         lim.stop("user:a")
 

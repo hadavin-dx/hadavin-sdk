@@ -35,7 +35,7 @@ def test_a_clean_world_has_no_problem_and_a_superuser_owner_is_only_tolerated(w)
     r = _report(w)
     assert r.problems == ()
     assert any(
-        "superuser" in t for t in r.dev_tolerated
+        "superuser" in t for t in r.demo_tolerated
     )  # the test cluster is migrated as `postgres`
     assert r.runtime_connection_limit == 20 and r.stop_connection_limit == 2
 
@@ -127,7 +127,7 @@ def test_a_role_that_does_not_exist_is_a_problem(w):
 def test_the_probe_fails_pilot_on_a_superuser_owned_function_and_passes_dev(w):
     store = PostgresStore(w.admin())
     args = {"runtime_role": w.runtime, "stop_role": w.stoprole, "reset_group": RESET_GROUP}
-    assert stop_state.probe(store, environment="dev", **args).status == stop_state.OK
+    assert stop_state.probe(store, environment="demo", **args).status == stop_state.OK
     assert stop_state.probe(store, environment="pilot", **args).status == stop_state.FAILED
 
 

@@ -29,7 +29,7 @@ def make(store=None, **kw) -> Limits:
         store,
         Audit(),
         None,
-        environment="dev",
+        environment="demo",
         label_key=KEY,
         reset_store=kw.pop("reset_store", store),
         reset_names={RESET_NAME},
@@ -45,7 +45,7 @@ def test_whois_prints_the_label_not_the_name(capsys):
 
 
 def test_whois_with_a_short_key_is_refused_with_5(capsys):
-    lim = Limits(MemoryStore(), Audit(), None, environment="dev", label_key=b"short")
+    lim = Limits(MemoryStore(), Audit(), None, environment="demo", label_key=b"short")
     assert cli.kill_switch(lim, "whois", "user:a") == 5
 
 
@@ -185,7 +185,7 @@ def test_stop_on_pilot_without_a_label_key_name_works_not_a_traceback(capsys):
     )
     inner = MemoryStore()
 
-    class NotMemory:  # Limits refuses a MemoryStore outside dev; this stands in for a database store
+    class NotMemory:  # Limits refuses a MemoryStore outside demo; this stands in for a database store
         def __getattr__(self, name):
             return getattr(inner, name)
 

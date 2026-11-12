@@ -483,7 +483,7 @@ def _guard_report(db, runtime_role, stop_role, reset_group) -> GuardReport:
         limits[role] = row[0] if row else None
     return GuardReport(
         problems=tuple(problems),
-        dev_tolerated=tuple(tolerated),
+        demo_tolerated=tuple(tolerated),
         runtime_connection_limit=limits.get(runtime_role),
         stop_connection_limit=limits.get(stop_role),
     )

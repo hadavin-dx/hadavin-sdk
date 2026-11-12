@@ -47,7 +47,7 @@ class Flaky:
 
 def _limits(stop_store):
     return Limits(
-        MemoryStore(), Audit(), None, environment="dev", label_key=KEY, stop_store=stop_store
+        MemoryStore(), Audit(), None, environment="demo", label_key=KEY, stop_store=stop_store
     )
 
 
@@ -93,8 +93,8 @@ def test_probe_verdicts():
 
 
 def test_a_superuser_owned_function_fails_pilot_and_prod_but_only_warns_in_dev():
-    r = GuardReport(dev_tolerated=("owned by a superuser",), runtime_connection_limit=20)
-    assert _probe(Reporting(r), "dev").status == stop_state.OK
+    r = GuardReport(demo_tolerated=("owned by a superuser",), runtime_connection_limit=20)
+    assert _probe(Reporting(r), "demo").status == stop_state.OK
     assert _probe(Reporting(r), "pilot").status == stop_state.FAILED
     assert _probe(Reporting(r), "prod").status == stop_state.FAILED
 
@@ -104,4 +104,4 @@ def test_a_runtime_role_without_a_connection_limit_fails_in_pilot():
 
 
 def test_the_memory_store_probe_is_ok():
-    assert _probe(MemoryStore(), "dev").status == stop_state.OK
+    assert _probe(MemoryStore(), "demo").status == stop_state.OK

@@ -26,7 +26,7 @@ def build(cfg_dir, hooks=None, qualified=True):
     if qualified:
         qualify(reg)
     store, audit = MemoryStore(), LocalDirSink(cfg.backends.audit.dir)
-    limits = Limits(store, audit, reg, environment="dev")
+    limits = Limits(store, audit, reg, environment="demo")
     rt = Runtime(
         reg,
         store,

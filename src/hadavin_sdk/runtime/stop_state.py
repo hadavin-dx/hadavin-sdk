@@ -37,7 +37,7 @@ def probe(
         report = store.guard_report(runtime_role, stop_role, reset_group)
     except StoreBusy:
         return ProbeResult(INCONCLUSIVE)
-    problems = report.problems + (report.dev_tolerated if environment in LIVE_STAGES else ())
+    problems = report.problems + (report.demo_tolerated if environment in LIVE_STAGES else ())
     if (
         environment in LIVE_STAGES
         and runtime_role

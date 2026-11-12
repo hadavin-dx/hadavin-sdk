@@ -134,8 +134,8 @@ class _SplitStore:
     """The runtime role for everything, the purge role for the two purges: as `app.build` wires them
     (`purge_dsn_secret_name`), so the suite runs with each identity holding only its own rights."""
 
-    def __init__(self, main, purge, runtime_dsn):
-        self._main, self._purge, self.runtime_dsn = main, purge, runtime_dsn
+    def __init__(self, main, purge, runtime_dsn, reset=None):
+        self._main, self._purge, self.runtime_dsn, self._reset = main, purge, runtime_dsn, reset
 
     def __getattr__(self, name):
         return getattr(self._main, name)
@@ -146,22 +146,32 @@ class _SplitStore:
     def purge_redaction_maps(self, *a, **k):
         return self._purge.purge_redaction_maps(*a, **k)
 
+    def reset_kill_switch(self, *a, **k):
+        """Only a registered member of the reset group can clear a stop: the runtime login cannot."""
+        return self._reset.reset_kill_switch(*a, **k)
+
     @property
     def connection_id(self):
-        """The server process ids of the two connections: what a test compares to see that two handles do not
+        """The server process ids of the three connections (runtime, purge, reset): what a test compares to see that two handles do not
         share a connection, without naming the driver or reaching into a store's private field."""
-        return (self._main._db.info.backend_pid, self._purge._db.info.backend_pid)
+        return (
+            self._main._db.info.backend_pid,
+            self._purge._db.info.backend_pid,
+            self._reset._db.info.backend_pid,
+        )
 
     def close(self):
         self._main._db.close()
         self._purge._db.close()
+        self._reset._db.close()
 
 
 def _open_split(dsn):
     settings = PostgresSettings(kind="postgres", dsn_secret_name=DSN_NAME)
     store = make("store", settings, FakeSecretProvider({DSN_NAME: dsn}))
     purge_store = make("store", settings, FakeSecretProvider({DSN_NAME: PURGE_DSN[dsn]}))
-    return _SplitStore(store, purge_store, dsn)
+    reset_store = make("store", settings, FakeSecretProvider({DSN_NAME: RESET_DSN[dsn]}))
+    return _SplitStore(store, purge_store, dsn, reset_store)
 
 
 @kind("store", "postgres")

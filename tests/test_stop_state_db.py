@@ -4,7 +4,6 @@ Fails in CI (and with HADAVIN_REQUIRE_PG) and skips on a laptop without HADAVIN_
 
 from __future__ import annotations
 
-import os
 import uuid
 
 import pytest
@@ -19,6 +18,7 @@ from psycopg.conninfo import make_conninfo
 from hadavin_sdk.audit.labelkey import NOKEY_LABEL
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store.migrate import migrate
+from tests.contracts.kinds import pg_test_dsn
 from tests.stop_state_helpers import RESET_GROUP
 
 LABEL_A = "id:k1:" + "a" * 32
@@ -31,7 +31,7 @@ DENIED = (errors.InsufficientPrivilege,)
 class World:
     def __init__(self):
         sfx = uuid.uuid4().hex[:8]
-        self.dsn = os.environ["HADAVIN_TEST_PG_DSN"]
+        self.dsn = pg_test_dsn()
         self.schema = f"p2a1_s_{sfx}"
         self.runtime, self.stoprole = f"p2a1_rt_{sfx}", f"p2a1_st_{sfx}"
         self.member, self.unregistered, self.outsider = (
@@ -304,13 +304,13 @@ def test_a_registered_login_outside_the_group_cannot_clear_even_with_table_right
 
 
 def test_a_migration_file_cannot_lengthen_the_table_lock_bound(monkeypatch):
-    """Class: a file that SETs its own lock_timeout (0006 sets 10s) leaks that value to every later step.
+    """Class: a file that SETs its own lock_timeout (0007 sets 10s) leaks that value to every later step.
     `migrate()` puts the configured bound back after every file."""
     from hadavin_sdk.store import migrate as m
 
     sfx = uuid.uuid4().hex[:8]
     schema = f"p2a1_lt_{sfx}"
-    dsn = os.environ["HADAVIN_TEST_PG_DSN"]
+    dsn = pg_test_dsn()
     seen = []
     real = m._install_kill_switch
 

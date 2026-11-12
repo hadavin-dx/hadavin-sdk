@@ -51,7 +51,7 @@ M = [
         "        except StoreBusy:\n", "        except ZeroDivisionError:\n",
         LIMT, "test_a_busy_stop_is_tried_once_more_then_works", "StoreBusy", allow_crash=True, crash_type="StoreBusy"),
     mutant("cli: a pilot stop without a key name is a traceback", CLI,
-        '    elif cfg.environment != "dev":', "    elif False:",
+        '    elif cfg.environment != "demo":', "    elif False:",
         CL, "test_stop_on_pilot_without_a_label_key_name_works_not_a_traceback", "label key is required",
         allow_crash=True, crash_type="ValueError"),
     mutant("probe: a busy database is read as a finding", STOP,

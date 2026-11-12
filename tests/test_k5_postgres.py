@@ -55,7 +55,7 @@ def test_a_whole_tooled_run_on_postgres(tmp_path, pg_store):
         audit,
         llm,
         RegexDetector(0.5),
-        Limits(pg_store, audit, reg, environment="dev"),
+        Limits(pg_store, audit, reg, environment="demo"),
         ["test-agent"],
         hooks,
     )

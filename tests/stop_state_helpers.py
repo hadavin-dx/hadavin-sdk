@@ -16,7 +16,7 @@ def operator_limits(limits: Limits, names: tuple[str, ...] = (RESET_NAME,), **kw
         limits.store,
         limits.audit,
         limits.registry,
-        environment="dev",
+        environment="demo",
         reset_store=kw.pop("reset_store", limits.store),
         reset_names=frozenset(names),
         label_key=KEY,

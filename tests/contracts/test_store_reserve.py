@@ -203,7 +203,7 @@ def test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_re
     a = _reserve(store, agent, "1")
     b = _reserve(store, agent, "1")
     try:
-        store.set_kill_switch(KillSwitch(on=True, by="user:t"))
+        store.set_kill_switch(KillSwitch(on=True, by="id:k1:" + "a" * 32))
         with pytest.raises(KillSwitchOn):
             _reserve(store, agent, "1")
         with pytest.raises(KillSwitchOn):
@@ -211,7 +211,9 @@ def test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_re
         assert store.settle_spend(a.reservation.reservation_id, D("0.5")).applied is True
         assert store.release_spend(b.reservation.reservation_id).applied is True
     finally:
-        store.set_kill_switch(KillSwitch(on=False, by="user:t"))
+        state = store.get_kill_switch()
+        if state.on:
+            store.reset_kill_switch("id:k1:" + "e" * 32, state.version, state.open_requests)
 
 
 def test_the_run_must_exist_and_belong_to_the_agent(store):

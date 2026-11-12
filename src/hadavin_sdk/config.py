@@ -477,7 +477,7 @@ class Config(_Strict):
         refused += _anchor_refusals(self.environment, self.backends)
         store = self.backends.store
         if (
-            self.environment != "dev"
+            self.environment != "demo"
             and getattr(store, "kind", "") == "postgres"
             and not store.stop_credential_ref
         ):

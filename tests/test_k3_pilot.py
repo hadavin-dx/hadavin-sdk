@@ -101,7 +101,7 @@ def runtime(cfg_dir: Path, llm, hooks: Hooks | None = None, *, audit=None):
         audit,
         llm,
         RegexDetector(cfg.backends.detector[0].threshold),
-        Limits(store, audit, reg, environment="dev"),
+        Limits(store, audit, reg, environment="demo"),
         ["test-agent"],
         hooks,
     )
