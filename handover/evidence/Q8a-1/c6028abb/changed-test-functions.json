@@ -1,0 +1,46 @@
+{
+ "tests/contracts/test_sources.py": [
+  "test_a_read_only_rule_set_passes_the_probe",
+  "test_the_rules_probe_names_each_forbidden_grant"
+ ],
+ "tests/stage_mutants.py": [],
+ "tests/test_k5_classes.py": [
+  "test_class_c_every_spelling_that_covers_a_shell_subresource_is_refused",
+  "test_class_c_read_only_grants_that_cover_no_shell_or_secret_pass",
+  "test_class_c_secrets_are_refused_for_every_read_verb"
+ ],
+ "tests/test_k5_round9b.py": [
+  "test_a_malformed_rule_is_not_proven_read_only"
+ ],
+ "tests/test_q8a1_f_string_trace.py": [
+  "test_a_client_library_error_that_quotes_the_base_url_is_not_passed_on",
+  "test_a_cloud_error_that_quotes_the_secret_path_is_never_passed_on",
+  "test_a_database_role_option_that_is_not_a_plain_name_is_refused_by_option_never_by_text",
+  "test_a_fetch_error_that_quotes_the_api_path_never_shows_the_namespace",
+  "test_a_region_or_bucket_is_in_the_suggested_host_list_and_in_no_error_text",
+  "test_a_sentence_this_package_wrote_still_passes_through_the_shared_base",
+  "test_the_aws_and_azure_kinds_say_the_class_of_a_library_error_only",
+  "test_the_hand_recipe_prints_only_a_plain_schema_name_and_refuses_any_other_with_a_fixed_sentence",
+  "test_the_real_client_library_does_not_quote_the_resource_in_its_refusal"
+ ],
+ "tests/test_s3_gate.py": [
+  "test_bad_chain_step"
+ ],
+ "tests/test_stage_names.py": [
+  "test_a_chain_approver_must_be_a_person_who_is_in_principals",
+  "test_a_chain_that_no_principal_names_keeps_channel_native_approver_ids",
+  "test_a_configured_kubernetes_namespace_is_never_printed_only_its_position",
+  "test_a_host_of_a_tool_manifest_is_said_by_its_position_counted_from_one",
+  "test_a_kubernetes_namespace_that_is_not_a_dns_label_is_refused_by_position_never_by_text",
+  "test_a_name_pasted_where_the_registry_expects_a_known_one_is_not_shown",
+  "test_a_right_must_name_an_action_and_approver_of_must_name_a_chain",
+  "test_a_tool_module_pin_must_be_a_sha256_and_none_of_it_is_printed",
+  "test_a_word_like_loaded_id_prints_as_itself_and_a_reference_that_matched_nothing_never_does",
+  "test_the_guard_finds_each_planted_fault_alone",
+  "test_the_guard_passes_the_filtered_and_code_owned_forms",
+  "test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones",
+  "test_the_mounted_folder_provider_never_says_a_name_or_the_configured_dir",
+  "test_the_rules_problems_function_takes_a_position_and_never_a_label",
+  "test_with_a_manifest_a_tools_allowed_entry_with_no_tool_in_it_is_refused"
+ ]
+}

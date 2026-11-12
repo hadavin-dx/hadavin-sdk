@@ -1,0 +1,45 @@
+# EVIDENCE RUNNER results: Q8a-1 batch 11, head c6028abbe78cbe5d01521242054238aceb9e6961 (tag Q8a1b11)
+
+Recorded, not judged. Nothing was fixed, committed or pushed. Previous reviewed head f4acee28; delta = af4808e7 + c6028abb (15 files). Raw logs: `/home/user/build/evidence-raw/Q8a1b11-c6028abb/`. No ticket text was changed; builder notes not read.
+
+## Failed or not run (first)
+1. Nothing failed in the full suite, lint, mutants or gitleaks. The first bandit try failed to start (`bandit` is not in the venv, exit 2); rerun with `--with bandit`: exit 0.
+2. Item 5 on the head: 9 of 718 probe rows show a marker. All 9 are the same case: a settings form with an unknown KEY whose name is the marker (`AwsSecretsManagerSettings(**{<marker + text>: 1})`); pydantic's "extra forbidden" error names the key. Same 9 rows on f4acee28. Everything else: 0 rows (details below).
+3. Item 7: the guard saw 10 of the 25 planted shapes; 15 not seen (list below).
+4. Not run: the timing flake test (not in this brief), pip-audit, Semgrep, other CI steps (the only mutant runner named by the package is `tests/stage_mutants.py`). The previous probe scripts no longer existed (build folder removed), so I wrote new ones (`probe-scripts/`); rows are therefore not the same rows as last time.
+5. Wait for heavy slots: about 11 min (pytest) and 17 min (mutants). Postgres: own 16 cluster, user postgres, port 56733, UTF8; stopped, folder deleted. Worktrees and venv removed. `/tmp/askdata_p2_copy.csv` problem did not occur this time.
+
+## Table
+| # | Item | Command | Exit | Last line / count |
+|---|---|---|---|---|
+| 1 | files vs origin/main | `git diff --name-only origin/main...c6028abb` | 0 | 65 files (`diff-name-only-vs-main.txt`); vs f4acee28: 15 files (`diff-name-only-vs-f4acee28.txt`) |
+| 2a | ruff check | `ruff check src tests demos tools` | 0 | All checks passed! |
+| 2b | ruff format | `ruff format --check src tests demos tools` | 0 | 322 files already formatted |
+| 2c | bandit | `bandit -q -r src demos tools -ll` | 0 | warnings only (nosec comments without a finding) |
+| 2d | scan_repo | `python tools/scan_repo.py` | 0 | empty output |
+| 2e | stage mutants | `tests/stage_mutants.py` via heavy.sh | 0 | `184 of 184 good; problems: []` |
+| 3 | full pytest | `pytest -p no:cacheprovider -q -m "not live and not perf" -rfEs --junitxml` via heavy.sh, own Postgres | 0 | XML: tests 11084, failures 0, errors 0, skipped 1; text line `11083 passed, 1 skipped, 28 deselected in 264.51s`. The 1 skip: `tests/contracts/test_llm.py::test_a_malformed_answer_is_a_provider_error[bedrock]` ("Stubber refuses a malformed Converse shape before the kind sees it"). No failing file, so no rerun on main. |
+| 8a | gitleaks origin/main..c6028abb | `gitleaks git --redact --log-opts=...` | 0 | no leaks found |
+| 8b | gitleaks on this folder | `gitleaks dir handover/evidence/Q8a-1/c6028abb --redact --no-banner --config .gitleaks.toml` | 0 | no leaks found (after the lead's note: two lines of `fail-before-analysis.txt` had an ARN-shaped made-up probe name; replaced with `<made-up-name>`, test names and counts kept) |
+
+## 4 Fail-before (the 7 changed or new test files of the delta, copied from the head)
+Files: tests/contracts/test_sources.py, test_k5_classes.py, test_k5_round9b.py, test_q8a1_f_string_trace.py (new), test_s3_gate.py, test_stage_names.py (+ stage_mutants.py, run separately above). 33 changed or new test functions (list: `changed-test-functions.json`; per-test rows: `fail-before-analysis.txt`). Only the data tables of the guard (GUARD_ALLOWED etc.) also changed.
+- On f4acee28 src: `19 failed, 4283 passed`. Changed functions that FAIL there: 15 (all 3 gcp parametrized rows, the aws/azure test, the vertex base-URL test, the migrate role test, test_bad_chain_step x2, 0-to-1-based label tests in test_stage_names (7), the rules_problems position test, the DNS-1123 namespace test, one mixed (1 of 2 rows)); plus `test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter` fails (its allowance table no longer matches f4acee28 src). Changed functions that PASS on f4acee28 (listed, no judgment): test_sources x2, test_k5_classes x3, test_k5_round9b x1, f-string trace: sentence-passes-through, real-library-resource, fetch-error-path, hand-recipe, region-or-bucket-host-list (5 of 9), test_stage_names: kubernetes-namespace-never-printed, guard-finds-each-planted-fault (18 rows), guard-passes-clean-forms (8), guard-reads-migration-modules, mounted-folder-provider.
+- On origin/main src: `287 failed, 4015 passed`. The new guard tests `test_the_guard_finds_each_planted_fault_alone` (18), `..._passes_the_filtered_and_code_owned_forms` (8) and `..._reads_the_two_migration_modules...` pass on main src (they scan synthetic text); the changed functions that fail are the same set as above plus the kubernetes namespace test and the pin test (`NOT_SHOWN` import error).
+
+## 5 Planted-namespace probe (my own script `probe-scripts/probe5.py`; markers: a legal word, a capitalised secret-shaped text, a 32-hex text; rows = position x rule kind x answer shape x route)
+718 rows per tree. Kubernetes: 6 positions (one, 2 of 3, duplicate, 20 entries, last, with an empty entry) x 3 markers x 14 answer shapes (write verb, wildcard, pods/exec, secrets read, malformed, clean, no rules, incomplete, evaluationError quoting the namespace, resourceNames quoting it, status not a dict, invalid JSON quoting it, fetch raising with URL and body, fetch returning None), through `probe_scope` and `scope_problems`; settings forms (dict, bare string, int, upper-case, dot, slash, too long); direct `rules_problems` with a label. Also GCP/AWS/Azure providers (error quoting the path, name, URL, a chained cause, bad name pattern), settings forms (gcp project, vertex region/project, foundry resource, s3 bucket, azure URL, extra key), Anthropic client (fake library errors quoting the URL, real library with ANTHROPIC_FOUNDRY_RESOURCE and ANTHROPIC_BASE_URL set), migrate roles (3 options, quote, equal roles). Checked: message, repr, args, cause, non-suppressed context, formatted traceback, captured log, returned problem strings.
+- Head c6028abb: 9 of 718 rows show a marker: the extra-key rows (item 2 above). 0 rows in every other group: k8s probe_scope 252/252 clean, scope_problems 252/252, direct rules_problems 9 (all TypeError, clean), GCP 27, AWS 28, Azure 27, Anthropic 12, migrate 21 clean.
+- f4acee28: 88 of 718 rows: migrate role 21, GCP 18, AWS 16, Azure 9, direct rules_problems 9 (returned the label), Anthropic 6, extra-key 9. Kubernetes `probe_scope` and `scope_problems`: 0 rows on f4acee28 too.
+Summaries: `probe5-head-summary.txt`, `probe5-f4acee28-summary.txt`.
+
+## 6 The 11 f-string hits (`probe-scripts/probe6.py`, marker planted as the configured value; `probe6-eleven-hits-*.txt`)
+Head: in no message, exception, cause, traceback or log line for any of the 11 (gcp:39, anthropic:32/33, kubernetes:237/251 with 7 fetch behaviours each, migration_numbers:251, migrate.py:212, table.py:367/379/380/394). The marker IS in a returned value, by design of the code, in: kubernetes `recent_changes` evidence ids (`deployment/<ns>/<name>`), `hand_recipe` and `order_problems` text (schema as an underscore word; a dashed marker is refused with a fixed sentence), `effective_problems` problem strings (role and schema; also the older line "the role does not exist"), and `hosts()` lists (region, resource, bucket). f4acee28 for comparison: marker in text for hit 1 (gcp), 2 and 3 (anthropic).
+
+## 7 Widened guard (`probe-scripts/probe7.py`: faults are planted in memory into a copy of sources/kubernetes.py; the real function `_guard_violations` of tests/test_stage_names.py is run over all real sources with that one module replaced; baseline with no fault: 0 violations, 0 stale; nothing in the repo edited)
+Found (10): F2 `prefix + self.namespaces[0]`, F3 `"bad %s" % name`, F4 `tmpl.format(name)`, F5 `", ".join(names)`, F6 `msg += name`, F7 `audit.warning("x %s", host)`, F8 comprehension variable, X6 `warnings.warn(name)`, X9 `raise E("x", name)`, X15 `repr(name)`.
+NOT seen (15): F1 renamed variable (`val = self.namespaces[0]` then f-string of val); F9 attribute of `self._cfg.api_url`; F10 pass-through `f"{exc}"`; X1 `label = name` then f-string; X2 value through a helper function; X3 `%(a)s` with a dict; X4 `string.Template`; X5 `print(name)`; X7 `sys.stderr.write(name)`; X8 `extra={"n": name}`; X10 `exc.add_note(name)`; X11 `m = str(exc)` then raise; X12 `format_map`; X13 f-string of an unlisted variable name; X14 `json.dumps({"ns": name})`.
+(I ran the scan function directly, not the pytest test; the test asserts `not found` on the same function.)
+
+## Files in this folder
+RESULTS.md (junit XML stays in the raw folder: it holds fake-credential test data that gitleaks flags), diff-name-only-vs-main.txt, diff-name-only-vs-f4acee28.txt, fail-before-analysis.txt, changed-test-functions.json, probe5-*.txt, probe6-*.txt, probe7-guard-faults.txt, probe-scripts/, pytest-tail.txt, stage-mutants.log.
