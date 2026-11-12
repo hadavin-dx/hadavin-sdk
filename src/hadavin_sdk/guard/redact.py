@@ -343,7 +343,10 @@ _PLURAL_TOKENS = (
 _FLAG_NOT_ORDINARY = (
     r"(?!(?:"
     + "|".join(
-        w + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:" + "|".join(ordinary_second_words(w)) + r")(?![a-z0-9]))"
+        w
+        + r"(?![a-z]|[0-9]+[a-z])(?![_\-](?:"
+        + "|".join(ordinary_second_words(w))
+        + r")(?![a-z0-9]))"
         for w in sorted(ORDINARY_WORDS)
     )
     + r"))"

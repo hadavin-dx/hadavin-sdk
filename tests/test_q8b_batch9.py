@@ -407,7 +407,14 @@ def test_b9_6_a_bare_bypass_and_the_other_ordinary_words_stay_readable_by_choice
         for tmpl in ("cfg {k}={v} end", "cfg {k}: {v} end", "ran --{k} {v} --verbose"):
             text = tmpl.format(k=key, v=ORDINARY_VALUE)
             assert clean(text) == text, f"{key}: {clean(text)!r}"
-    for key in ("session_id", "xcompass_code", "xpossession_id", "bypass_key", "compass_code", "possession_id"):
+    for key in (
+        "session_id",
+        "xcompass_code",
+        "xpossession_id",
+        "bypass_key",
+        "compass_code",
+        "possession_id",
+    ):
         assert R.sensitive(key), key
         assert not readable_on(f"cfg {key}={V} end", V), key
 

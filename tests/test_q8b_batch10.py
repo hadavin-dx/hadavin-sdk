@@ -112,10 +112,14 @@ def test_b10_1_a_first_word_of_8_or_more_characters_after_a_scheme_word_is_maske
             ("abcdefghijklmnopqrstuvwx", "abcdefghijklmnopqrstuvwx"),
         ):
             out = clean(f"Authorization: {scheme}\n{line}")
-            assert masked_word not in out, f"the first word of 8 or more characters is readable: {out!r}"
+            assert masked_word not in out, (
+                f"the first word of 8 or more characters is readable: {out!r}"
+            )
         for line in ("short words only", "an ordinary line", "seven77 chars"):
             text = f"Authorization: {scheme}\n{line}"
-            assert clean(text) == text, f"a first word of fewer than 8 characters was masked: {clean(text)!r}"
+            assert clean(text) == text, (
+                f"a first word of fewer than 8 characters was masked: {clean(text)!r}"
+            )
 
 
 def test_b10_1_the_fix_changes_nothing_for_a_text_that_has_no_scheme_word_before_a_line_break():
@@ -143,7 +147,21 @@ def test_b10_1_the_differential_against_main_for_every_generated_token_length_sh
     bare and inside an Authorization header. Batch 9 passed this only for tokens of 16 or more characters."""
     main_basic = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
     main_auth = re.compile(r"(?i)authorization[\"']?\s*[:=]\s*[\"']?(?:[a-z]+\s+)?([^\s\"']{8,})")
-    gaps = (" ", "\t", "\n", "\r\n", "\r", "\n\n", "\n ", "\r\n\t", "\x0b", "\x0c", "\x85", "\xa0", "  \n  ")
+    gaps = (
+        " ",
+        "\t",
+        "\n",
+        "\r\n",
+        "\r",
+        "\n\n",
+        "\n ",
+        "\r\n\t",
+        "\x0b",
+        "\x0c",
+        "\x85",
+        "\xa0",
+        "  \n  ",
+    )
     heads = ("Authorization: ", "authorization=", 'x "Authorization": "', "")
     schemes = ("Basic", "Token", "ApiKey", "Digest", "Bearer", "Negotiate", "Foo")
     checked = 0
@@ -161,7 +179,9 @@ def test_b10_1_the_differential_against_main_for_every_generated_token_length_sh
                         continue
                     checked += 1
                     left = readable_on(text, piece[:8])
-                    assert not left, f"main masked {text!r} ({shape}), the redactor does not: {left[:3]}"
+                    assert not left, (
+                        f"main masked {text!r} ({shape}), the redactor does not: {left[:3]}"
+                    )
     assert checked > 2000, f"the differential compared only {checked} generated texts"
 
 
@@ -183,7 +203,9 @@ def test_b10_2_a_digest_header_folded_over_three_lines_is_masked_whole(brk):
         )
         left = readable_on(text, DIGEST_HASH, DIGEST_NONCE)
         assert not left, f"a folded Digest header leaves a hash readable: {left[:4]} for {text!r}"
-        assert clean(text).endswith("Next line stays") and "Next line stays" not in clean(text)[:-15], clean(text)
+        assert (
+            clean(text).endswith("Next line stays") and "Next line stays" not in clean(text)[:-15]
+        ), clean(text)
 
 
 def test_b10_2_a_digest_header_ends_at_the_first_line_that_does_not_start_with_a_space_or_a_tab():
@@ -224,9 +246,7 @@ ALL_SECOND_WORDS = ("key", "phrase", "code", "value", "id", "cookie")
 
 
 def _family_pairs():
-    return [
-        (w, s) for w in sorted(redact.ORDINARY_WORDS) for s in redact.ordinary_second_words(w)
-    ]
+    return [(w, s) for w in sorted(redact.ORDINARY_WORDS) for s in redact.ordinary_second_words(w)]
 
 
 def test_b10_6_every_ordinary_word_has_the_second_words_of_its_family_from_the_one_table():
@@ -242,7 +262,9 @@ def test_b10_6_every_ordinary_word_has_the_second_words_of_its_family_from_the_o
     assert redact.ordinary_second_words("compass") == ("phrase", "code", "key", "value")
     assert redact.ordinary_second_words("possession") == ("id", "key", "cookie", "value")
     assert redact.ordinary_second_words("author") == ()
-    assert redact.is_ordinary_pair("compass", "key") and not redact.is_ordinary_pair("compass", "id")
+    assert redact.is_ordinary_pair("compass", "key") and not redact.is_ordinary_pair(
+        "compass", "id"
+    )
 
 
 @pytest.mark.parametrize("word", sorted(redact.ORDINARY_WORDS))
@@ -253,8 +275,6 @@ def test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_eve
     for second in redact.ordinary_second_words(word):
         for sep in SEPARATORS:
             key = f"{word}{sep}{second}"
-            if second == "cookie" and sep != "_" and False:
-                continue
             assert R.sensitive(key), f"the record walk shows the key {key}"
             for form in FORMS:
                 if second == "cookie" and form.startswith("ran --"):
@@ -262,7 +282,9 @@ def test_b10_6_an_ordinary_word_and_a_second_word_of_its_family_is_masked_on_eve
                 left += [f"{key} {form}: {x}" for x in readable_on(form.format(k=key, v=V), V)]
             if V in record_key_output(key, V):
                 left.append(f"{key} record key")
-    assert not left, f"an ordinary word and a second word of its family is readable: {left[:6]} ({len(left)})"
+    assert not left, (
+        f"an ordinary word and a second word of its family is readable: {left[:6]} ({len(left)})"
+    )
 
 
 @pytest.mark.parametrize("word", sorted(redact.ORDINARY_WORDS))
@@ -280,7 +302,9 @@ def test_b10_6_a_name_that_ends_in_key_secret_token_or_password_after_an_ordinar
             if V in record_key_output(name, V):
                 left.append(f"{name} record key")
     # `key` is a second word of its family; the other three need no entry in the table (credential words after any word)
-    assert not left, f"a name ending in key, secret, token or password is readable: {left[:6]} ({len(left)})"
+    assert not left, (
+        f"a name ending in key, secret, token or password is readable: {left[:6]} ({len(left)})"
+    )
 
 
 @pytest.mark.parametrize("word", sorted(redact.ORDINARY_WORDS))
@@ -289,9 +313,7 @@ def test_b10_6_an_ordinary_word_alone_or_with_a_second_word_of_no_family_stays_r
     `possession`) stay readable in every form. A word of ANOTHER family's table is no entry here (`compass_id`)."""
     # `cookie` is a credential ending after any word (round 8), so it is no "second word of no family"
     other = tuple(
-        s
-        for s in ALL_SECOND_WORDS
-        if s != "cookie" and s not in redact.ordinary_second_words(word)
+        s for s in ALL_SECOND_WORDS if s != "cookie" and s not in redact.ordinary_second_words(word)
     )
     keys = [word] + [f"{word}{sep}{s}" for s in other for sep in ("_", "-")]
     keys += [f"{word}_direction", f"{word}-name", f"{word}_level"]
