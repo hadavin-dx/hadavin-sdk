@@ -1,0 +1,154 @@
+COMMAND: /tmp/work/c11-matrix.sh <each other patch>   (c10b-matrix.sh with the c11 paths; codeant2-demo-only gets speed/fake-hubspot-read-body-before-answer.patch applied first; base = fresh clone of 0841f36)
+DATE: 2026-11-12T22:08:25Z
+SHAS:
+26b74f3cf8eff89d  triage/codeant3-gitleaks.patch
+04ec9607f4e1e36b  triage/codeant3-scripts.patch
+ef212d9dd222d569  triage/codeant3-n8n-proof.patch
+2c203a9a2cf04b89  triage/codeant3-docs.patch
+2e9bc265ebef  triage/codeant2-demo-only.patch
+685585f6c018  triage/codeant2-desk.patch
+53a189d8202b  triage/codeant2-portal-log.patch
+508192cea7cf  triage/codeant2-tests-hardening.patch
+05c9fc0b4981  triage/codeant2-fakes-body.patch
+e24d4e1f2491  fixes/docs-and-deps.patch
+e24d4e1f2491  fixes/docs-and-deps-v4.patch
+d0ea831d8c8b  semgrep/semgrep-rebased.patch
+a268438d1eb6  layout/drawer-long-name.patch
+1b9fce74e0b5  layout/drawer-long-name2.patch
+66eb4d26b035  layout/mobile-cascade.patch
+382c365de639  speed/fake-hubspot-read-body-before-answer.patch
+----
+base: 0841f36
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-desk.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-portal-log.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+(speed patch applied first as base)
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-demo-only.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-tests-hardening.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/triage/codeant2-fakes-body.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/fixes/docs-and-deps.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/fixes/docs-and-deps-v4.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/semgrep/semgrep-rebased.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/drawer-long-name.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/drawer-long-name2.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
+=== other: /tmp/demo-wt/handover/demo/layout/mobile-cascade.patch
+other alone on base: ok
+order mine then other: ok (plain)
+  mine then other with --3way: ok
+order other then codeant3-gitleaks.patch: ok (plain)
+order other then codeant3-scripts.patch: ok (plain)
+order other then codeant3-n8n-proof.patch: ok (plain)
+order other then codeant3-docs.patch: ok (plain)
+  other then codeant3-gitleaks.patch --3way: ok
+  other then codeant3-scripts.patch --3way: ok
+  other then codeant3-n8n-proof.patch --3way: ok
+  other then codeant3-docs.patch --3way: ok
