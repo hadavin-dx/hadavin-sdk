@@ -6,3 +6,6 @@ ccb630218c4e12ee26be6a8ab52cc0ee8e721362	-	linux	tests/policy_mutants.py	real cl
 8b982dd3a06fa4c2ae9b728e0f38db2b5b2d8a69	-	linux	pytest full	-m "not live and not perf"	0	10233 passed 457 skipped	312	2026-11-12
 dd5c7242	-	linux	full pytest (own PG, extras)	-m not live and not perf	1	1 failed 10570 passed 1 skipped (dblink-connect: env socket, own PG on non-default port; that file alone 253 passed after PGHOST/PGPORT fix; whole suite not re-run)	251.7	2026-11-12
 dd5c7242	-	linux	stage_mutants + banner_mutants	default	0	37/37 and 28/28 good	-	2026-11-12
+a24d98ae	-	linux (nobody)	full pytest (own PG)	-m not live and not perf	0	11617 passed 1 skipped 28 deselected	523	2026-11-12
+a24d98ae	-	linux	stage_mutants	default	0	445 of 445 good	-	2026-11-12
+a24d98ae	-	linux	migration_numbers_mutants	default	0	36 of 36 good	-	2026-11-12
