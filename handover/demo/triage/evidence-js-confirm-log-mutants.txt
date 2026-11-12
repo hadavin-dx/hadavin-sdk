@@ -1,0 +1,37 @@
+# Mutants of the PATCHED log.js openRun (recreated by the lead session after review 2 nit N1; the first resolver's scratch copies were not kept)
+# command: node tests/portal_log_probe.js <portal dir> ; node v22.23.4; 2026-11-12T19:36:01Z
+
+## mutant 1 diff vs patched log.js
+--- patched/pages/log.js	2026-11-12 19:15:06.106672977 +0000
++++ mutant1/pages/log.js	2026-11-12 19:36:01.555420965 +0000
+@@ -58,7 +58,7 @@
+       // three or more repeats in a row from one lead become one line; the button shows them all
+       function groupRepeats(list) {
+         var out = [], i = 0;
+-        function openRun(k) { opened[k] = 1; render(true); }
++        function openRun(k) { render(true); }
+         while (i < list.length) {
+           var r = list[i], j = i + 1;
+           if (r.result === 'duplicate' && r.lead_name) {
+
+## mutant 2 diff vs patched log.js
+--- patched/pages/log.js	2026-11-12 19:15:06.106672977 +0000
++++ mutant2/pages/log.js	2026-11-12 19:36:01.555585992 +0000
+@@ -58,7 +58,7 @@
+       // three or more repeats in a row from one lead become one line; the button shows them all
+       function groupRepeats(list) {
+         var out = [], i = 0;
+-        function openRun(k) { opened[k] = 1; render(true); }
++        function openRun(k) { opened[k] = 1; }
+         while (i < list.length) {
+           var r = list[i], j = i + 1;
+           if (r.result === 'duplicate' && r.lead_name) {
+
+## patched (expect clean run, compare phases)
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":6,"toggles":[],"grouped":false,"handlers":1,"stopped":1},{"phase":"later","rows":6,"toggles":[],"grouped":false}]
+
+## mutant 1 run
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":3,"toggles":["Show all 4"],"grouped":true,"handlers":1,"stopped":1},{"phase":"later","rows":3,"toggles":["Show all 4"],"grouped":true}]
+
+## mutant 2 run
+[{"phase":"grouped","rows":3,"toggles":["Show all 4"],"grouped":true},{"phase":"clicked","rows":3,"toggles":["Show all 4"],"grouped":true,"handlers":1,"stopped":1},{"phase":"later","rows":6,"toggles":[],"grouped":false}]
