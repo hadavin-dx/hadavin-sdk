@@ -1,6 +1,34 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-12 20:02Z / 01:32 IST - lane 8 v1 reviewed (3 Majors, 8 Nits; reviewer recommends AGAINST adding Pillow); findings forwarded to lane 8b; 5 agents live
+Status lines:
+- fixes/REVIEW-1.md saved. The reviewer found no Blocker. M1: the own decoder breaks rule 20 (no rung table; higher rungs exist: Pillow, or decode INSIDE Chromium by drawing the screenshot to a canvas and reading getImageData: about 8 lines of JS, no new dependency; and the decoder logic is never run in CI because browser tests skip there); its reading of the decoder logic found it correct and loud on unsupported formats. M2: the docs counts are labelled 'this commit' and 'measured' but 2349/116 was measured on 43110e7 and bee6fff4 and 2462/3 on 43110e7 after a guessed `pip install pillow` (raw log: 2 failed, 2460 passed, 3 skipped); nothing ran the full suite on b29bb1f. M3: 'the 2329/135 count is what you get when Node is missing' is a hypothesis, not a measurement; AND lane 1's SUMMARY.md:13 ('node was not on PATH in this run') is CONTRADICTED by its own raw log (outsider/02-unit.txt has no 'node not installed' skip: 116 = 113 + 3 leaves no room for 21 Node skips), so lane 1's 2349/116 run HAD Node. I correct that here: lane 1's SUMMARY.md line 13 is wrong. Laptop OS, gitleaks and Node state are unknown, so the Node explanation may be a coincidence of counts.
+- THE REVIEWER'S DECISION ADVICE (for you, as D10 asks me to report concrete reasons): do NOT add Pillow to the two hashed locks (Playwright is already outside the lock so a stranger needs a manual step anyway; it is one test; a new image-parsing dev dependency that Dependabot will not watch (Dependabot covers GitHub Actions only in this repo); the locks come from two different tools: Linux pip-compile on py3.12, Windows uv on py3.13); recommends decode-in-Chromium. It names NO hash or licence problem. Your D10 route is a SEPARATE hashed optional file, which answers most of the lock concern; lane 8b proceeds as ordered; you decide. Lane 8b got M2, M3 and the nits (counts named by commit, 'fits' not 'is', plain words, N8 update plan for the new pins, the Chromium alternative recorded as considered-not-chosen).
+- Lane 9: SYN-flooding and memory facts are with it (see the previous block); no hand-back yet.
+- Lane 1 SUMMARY.md line 13 correction: I will edit outsider/SUMMARY.md to say the contradiction (not to rewrite the lane's record): see next block.
+
+### (1) LIVE ITEMS (now 2026-11-12 20:02Z / 01:32 IST)
+| id | purpose | started (UTC) | running for | expected end | state | must produce | last progress seen |
+|---|---|---|---|---|---|---|---|
+| abc77f40d2e06cb94 (agent, sonnet builder) | DeepSource clusters PR 3/PR 4 | 19:17 | 47 min | 20:07 box; asked for hand-back by 20:10 | running (my wrap-up message queued since 20:00) | DEEPSOURCE-COVERAGE.md + extra patches | no new file since 19:23: FLAG; pid 1849 pytest still alive; I cut it at 20:15 if no hand-back |
+| a28f5af6a766a1b53 (agent, sonnet builder) | lane 7 Sonar coverage | 19:45 | 20 min | about 20:35 | running (pytest --cov) | coverage patch, PLAN.md | pytest output |
+| a1efeaddf3232ebcb (agent, sonnet evidence runner) | lane 9 hang reproduction + memory | 19:50 | 14 min | 20:50 | running | hang/RESULTS.md | batch files |
+| ac3a511599cfd9d0d (agent, sonnet builder) | lane 8b hashed browser requirements + docs | 20:01 | 3 min | 20:50 | running; review findings forwarded | docs-and-deps.patch v2, PLAN.md | started |
+| pids: lane 7 pytest, DeepSource pytest, lane 9 short runs | tests | see earlier | | | running | | |
+Totals: agents live 4 (DeepSource builder, lane 7, lane 9, lane 8b); shells I hold 0; pytest runs 3 (heavy slots 3 of 4); containers 0; load see below; nothing past its time box; DeepSource builder flagged (no file progress for 40 minutes).
+
+### (2) ROUNDS
+| package | round now | findings per round | class | WHY | stop rule? | ends when |
+|---|---|---|---|---|---|---|
+| lane 8 (Pillow + docs) | review 1 done, build v2 (8b) running | r1 (v1 patch) 0B/3M/8N | rule-20 own code without rung table; docs counts labelled measured but not measured on the final tree; a hypothesis stated as fact | v2 exists because of YOUR D10 decision (reject the decoder) AND the docs Majors; this is a design reversal, not a failed gate | no cap (new dependency in a public repo) | a fresh review of v2 with no Major or Blocker |
+| lane 7 | 0 reviews | n/a | n/a | security path | no cap | fresh review without Major/Blocker |
+
+### (3) FINISHED SINCE LAST BLOCK
+| id | ran | result | row closed |
+|---|---|---|---|
+| a3e7ca5b01fc09496 (lane 8 v1 reviewer, sonnet, read-only) | 3 min (19:58 to 20:01) | 0B/3M/8N, saved fixes/REVIEW-1.md; advises against Pillow in the dev locks, recommends decode-in-Chromium | yes |
+
 ## 2026-11-12 20:01Z / 01:31 IST - ORDER D10 applied: decoder REJECTED, lane 8b started; memory facts for the hang; 6 agents live
 Status lines:
 - D10(1) PILLOW: lane 8's own PNG decoder is rejected as ordered (CODE-LAST). Lane 8b builder started: `requirements-browser.in` (playwright==1.63.0, pillow pinned) + hashed `requirements-browser.txt` (pinned uv 0.11.32, --exclude-newer as in requirements-semgrep.in, Linux and Windows hashes following requirements-dev.txt/-win.txt), the lint locks must stay byte-identical (proof by git diff), `_png_pixels` and every test edit reverted (tests/test_portal_lead_pages.py byte-identical to b29bb1f), docs/tests.md with ONE install line plus the `playwright install chromium` step (build 1243 matches 1.63.0), 'CI runs no browser tests (no browser job yet)', counts kept with the honest 'not explained' remainder and the laptop difference worded as an inference; proof in a fresh venv from the hashed locks, the two sidebar tests and all browser files pass. It also quotes the Pillow licence identifier from the wheel metadata. The lane 8 reviewer (running since 19:58) is still reviewing the OLD patch; if it names a concrete reason against the Pillow route (hash or licence) I report it and you decide; none so far.
