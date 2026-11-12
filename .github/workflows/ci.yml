@@ -195,7 +195,7 @@ jobs:
           if grep -nvE '^(#|$|[0-9a-f]{40}:[^:]+:(generic-api-key|curl-auth-user|private-key):[0-9]+$)' .gitleaksignore | cut -d: -f1 | grep .; then echo "malformed gitleaks ignore line(s) at the line numbers above (entry = <40-hex sha>:<path>:<generic-api-key|curl-auth-user|private-key>:<line>)"; fail=1; fi
           while read -r sha; do
             [ -n "$sha" ] || continue
-            if ! git branch -r --contains "$sha" | grep -qE '^ *origin/(core/cloud-handover|handover-src/c1a-8460813|core/P2d-1)$'; then echo "stale ignore entry (not on a named handover branch): $sha"; fail=1; fi
+            if ! git branch -r --contains "$sha" | grep -qE '^ *origin/(core/cloud-handover|wip/cloud-[A-Za-z0-9._-]+|handover-src/c1a-8460813|core/P2d-1)$'; then echo "stale ignore entry (not on a named handover branch): $sha"; fail=1; fi
             if git merge-base --is-ancestor "$sha" origin/main; then echo "ignore entry is in main history (needs an owner decision): $sha"; fail=1; fi
           done < <(grep -oE '^[0-9a-f]{40}' .gitleaksignore | sort -u)
           [ "$(grep -cE '^# EXPIRES ' .gitleaksignore || true)" -le 1 ] || { echo "more than one EXPIRES line"; fail=1; }
@@ -216,10 +216,16 @@ jobs:
             gl_tmp=$(mktemp)
             git ls-tree -r -z --name-only HEAD > "$gl_tmp" || { echo "git ls-tree failed"; fail=1; }
             if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ are in this checkout's tree: the temporary allowlist would hide generic keys in them"; fail=1; fi
-            if [ "$have_branch" = 1 ]; then range="HEAD --all --not origin/core/cloud-handover"; else range="HEAD --all"; fi
-            # shellcheck disable=SC2086
-            git log -m --name-only -z --format= $range -- > "$gl_tmp" || { echo "git log failed"; fail=1; }
-            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            # branches wip/cloud-* are handover lane refs: they carry the same files as core/cloud-handover and never merge into main,
+            # so they are subtracted together with it (any other branch name stays in the range and fails)
+            # (an array, so the quoted glob in --remotes is never expanded by the shell)
+            if [ "$have_branch" = 1 ]; then range=(HEAD --all --not origin/core/cloud-handover '--remotes=origin/wip/cloud-*'); else range=(HEAD --all); fi
+            git log -m --name-only -z --format= "${range[@]}" -- > "$gl_tmp" || { echo "git log failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover and the wip/cloud-* lane branches: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            # the range above subtracts every commit reachable from the lane refs, so a pull request built on lane commits would hide
+            # them there: the history of HEAD itself is checked again with nothing subtracted
+            git log -m --name-only -z --format= HEAD -- > "$gl_tmp" || { echo "git log of HEAD failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD itself (a lane branch does not excuse them)"; fail=1; fi
             rm -f "$gl_tmp"
           fi
           exit "$fail"
