@@ -1,0 +1,8 @@
+src /home/user/build/EV-Q8bb7-b7d7cd18/wt/src/hadavin_sdk/__init__.py load (3.39794921875, 3.0859375, 2.953125)
+A letters only 200k: [0.857, 0.742, 0.776] ok
+B 40 letters + pass, repeated (no sep): [0.783, 0.769, 0.769] ok
+C 40 letters + password= value space: [0.599, 0.535, 0.549] ok
+D 41 digits+letters glued, then token: : [0.512, 0.517, 0.518] ok
+E 39 letters + --pass flag repeated: [0.908, 1.005, 0.814] ok
+F 40 letters + password (no sep, no =): [0.829, 0.874, 0.842] ok
+G 200k of 'pass' words: [0.621, 0.635, 0.667] ok

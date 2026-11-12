@@ -1,0 +1,3 @@
+p1 {"seed": 20261111, "cases": 3000, "refused": 0, "a_not_placeholder": 2545, "b_runs_readable": 2301, "c_checked": 680, "c_readable": 526, "seconds": 18.8}
+p2 {"seed": 8, "cases": 4000, "a_identifier_readable": 2874, "b_bare_domain_token": 1801, "c_not_idempotent": 12, "seconds": 5.3, "b_examples": ["'pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40'", "' \\t\\t  **  priya.nair@example.co.in '", "';priya.nair@example.co.in[x] http://  ** '"]}
+n9 {"seed": 9, "cases": 3000, "readable": 0, "seconds": 1.4}
