@@ -306,19 +306,28 @@
     the four head lines (the claims a builder read, the claims nobody read, and the two lists of names) may now hold
     the single word `none`. It means "no claim of this kind is waiting for a check"; a line that mixes `none` with a
     claim text, or an empty line, is refused, and the page head then says that no claim on the page is waiting for a
-    check. Renew all or none: when a dated entry is decided again, every entry of the same list is renewed with it
-    (a day decided again, a new `review_by` at most 92 days later), the pin of the kinds sentence in
-    `tests/test_policy_changelog.py` and the sentence in this entry are changed with it, and the day of the last
-    decision in `DECIDED` in `tools/policy_page.py` moves up. When the last unchecked claim is checked, its entries
-    are deleted, its marker line becomes `none`, and its class in `NOTE_CLASSES` is moved off the claim lists. The
-    overdue message prints these steps.
+    check. Two groups are renewed on their own days. Renew all or none: every entry of PENDING_NAMES and PENDING_CLAIMS gets the same new `decided` day (`DECIDED`); renewing only some of them is refused. Renew all or none: every kind of PENDING_KINDS gets the new decision day (`KINDS_DECIDED`); the names and claims lists keep their own `DECIDED` and are not moved with it. A new decision day is a day decided again plus a new `review_by` at most 92 days later.
+    The steps are printed in the overdue message of each group (the names and claims: the day `DECIDED` and every `decided` and `review_by` in
+    `tools/policy_page.py`, the pin test of that day, the page rewritten, one notes row for each changed test; the 16 kinds: `KINDS_DECIDED`,
+    `_PR2` and the `review_by` days in the guard test, the pin `KINDS_LITERAL` and `KINDS_GROUPS` in `tests/test_policy_changelog.py`, and the
+    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: its search texts
+    take their days from the live lists. A test plants the whole renewal in a temporary copy and shows that the tests, the page check and the
+    mutants stay green. When the last unchecked claim is checked, its entries are deleted, its marker line becomes `none`, and its class in
+    `NOTE_CLASSES` is moved off the claim lists.
   - **What the builder-notes check now sees, and what it cannot see.** `tools/notes_lines_check.py` runs on every
     pull request (`--auto`, from the common ancestor of the base branch and the pull request head, read from the
     head commit, never from the merge commit). A new or changed test or mutant needs its own row in the notes with a
-    reason that names a killing mutant, a failing run, a plant or a control and something to look up after it. The
-    check follows helpers, fixtures (also ones that apply to every test), module-level names, imports of other test
-    modules, the support files (a conftest, the sources file) and the mutant files, where a fall in the mutant count
-    is a problem. It cannot tell whether a reason is true: that stays with the reviewer and the logs the row names.
+    reason that names a killing mutant, a failing run, a plant or a control and something to look up after it. What it
+    sees: every test file of the head commit is read whenever a file under `tests/` changed, so a change to a helper
+    (a file under `tests/` that is not a test, or a function, constant or fixture of a test file) lists every test that
+    imports or uses it, also through `import tests.x` with no alias; module-level code that runs when a file is
+    collected (an `if`, a call, a `pytestmark`) and the marks and body of a test class count as part of every test of
+    the file; each name a conftest assigns is a unit; a row names its file by the whole path (a bare file name serves
+    only a file that no other path shares the name of); a mutant row is found by its whole cell or an exact `;` item,
+    never by a part of one; and the tests, mutants and log files a reason names must exist in the head commit. What it
+    cannot see: a test written or collected another way (generated, or by a plugin), a change in `src/` or `tools/`
+    that a test reads (those have their own mutants), and a text a test reads from a file at run time (except the
+    sources file). It cannot tell whether a reason is true: that stays with the reviewer and the logs the row names.
     The step has not yet run on GitHub.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.

@@ -835,29 +835,56 @@ RENEWAL_RULE = (
 RENEWAL_STEPS = (
     "A renewal touches: (1) `DECIDED` and every `decided` and `review_by` in tools/policy_page.py; (2) the pin test "
     "test_the_tools_decision_day_is_the_day_the_names_and_claims_were_decided in tests/test_policy_guard.py "
-    "(the day written there); (3) the sentence of the changelog entry that names the review day "
-    "(CHANGELOG.md); (4) the page, rewritten with `python tools/policy_page.py --write`; (5) one row for each "
-    "test that changed, in the builder notes of the change (`python tools/notes_lines_check.py --auto`). "
-    "An emptying also touches: (6) `verified` and `claims_unverified` in the kind modules; (7) the four lists "
+    "(the day written there); (3) CHANGELOG.md: its entry writes no review day of the names and claims (a test "
+    "refuses a written day), so nothing is changed there for them; (4) the page, rewritten with "
+    "`python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder notes of the "
+    "change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py take every day "
+    "from the live lists, so nothing is edited there: run `python tests/policy_mutants.py` and again with `--day` "
+    "set to the new decision day and to the day after it. "
+    "An emptying also touches: (7) `verified` and `claims_unverified` in the kind modules; (8) the four lists "
     "at the head of the sources file (a list that is now empty is written as the one word "
-    f"`{EMPTY_MARKER}`); (8) NOTE_CLASSES (a note of class claim or pending needs another class once its "
-    "claim or its pending name is gone); (9) the sentences of the page head that name a pending item, "
+    f"`{EMPTY_MARKER}`); (9) NOTE_CLASSES (a note of class claim or pending needs another class once its "
+    "claim or its pending name is gone); (10) the sentences of the page head that name a pending item, "
     "in `_HEAD` of this tool."
+)
+# The 16 kinds without a POLICY keep a decision day of their own (`KINDS_DECIDED`), apart from `DECIDED`: a renewal
+# of the names and claims does not renew them, and the other way round. They have their own words and steps.
+KINDS_RENEWAL_RULE = (
+    "Renew all or none: every kind of PENDING_KINDS gets the new decision day (`KINDS_DECIDED`); the names and "
+    "claims lists keep their own `DECIDED` and are not moved with it."
+)
+KINDS_RENEWAL_STEPS = (
+    "A renewal of the kinds list touches, all in tests/test_policy_guard.py unless said: (1) `KINDS_DECIDED`, "
+    "`_PR2` and the `review_by` day of every kind of PENDING_KINDS (the groups of days are kept apart on "
+    "purpose), and the day written in test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date; "
+    "(2) `KINDS_LITERAL` and `KINDS_GROUPS` in tests/test_policy_changelog.py (the pin of the days the kinds start "
+    "to fail); (3) the sentence of the changelog entry that gives those days (CHANGELOG.md); (4) the page, "
+    "rewritten with `python tools/policy_page.py --write`; (5) one row for each test that changed, in the builder "
+    "notes of the change (`python tools/notes_lines_check.py --auto`); (6) the mutants in tests/policy_mutants.py "
+    "read these days from the guard file, so nothing is edited there: run `python tests/policy_mutants.py`."
 )
 
 
-def pending_problems(label: str, pending: dict, live: set, today: date) -> list[str]:
+def pending_problems(
+    label: str,
+    pending: dict,
+    live: set,
+    today: date,
+    rule: str = RENEWAL_RULE,
+    steps: str = RENEWAL_STEPS,
+) -> list[str]:
     """The one rule for every dated list: an entry whose subject is fixed or gone is stale; an entry past its
     `review_by` is overdue; a `review_by` more than MAX_PENDING_DAYS after `decided` is refused; a `decided` in
-    the future is refused."""
+    the future is refused. `rule` and `steps` are the words of an overdue entry: the names and claims lists and the
+    kinds list each have their own (they renew on their own days)."""
     out = [
         f"{label} {key} is fixed or gone: delete the entry" for key in pending if key not in live
     ]
     out += [
         f"{label} {key} is overdue (review_by {p.review_by}): {p.fix_ref}. What to do: finish that work "
         "and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day "
-        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it. {RENEWAL_RULE} "
-        f"{RENEWAL_STEPS}"
+        f"of the new decision and `review_by` to at most {MAX_PENDING_DAYS} days after it. {rule} "
+        f"{steps}"
         for key, p in pending.items()
         if key in live and today > p.review_by
     ]

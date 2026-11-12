@@ -123,7 +123,14 @@ def kind_problems(
     out += [
         f"NO_IDENTITY {k} is not a kind of the tables" for k in sorted(set(no_identity) - kinds)
     ]
-    return out + _pending_problems("PENDING_KINDS", pending, kinds - declared, today)
+    return out + _pending_problems(
+        "PENDING_KINDS",
+        pending,
+        kinds - declared,
+        today,
+        rule=pp.KINDS_RENEWAL_RULE,
+        steps=pp.KINDS_RENEWAL_STEPS,
+    )
 
 
 def same(found: object, expected: object, what: str = "") -> None:
@@ -217,7 +224,10 @@ def test_plant_a_new_kind_on_no_list_is_caught():
 
 
 def test_plant_a_declared_kind_left_on_the_pending_list_is_caught():
-    pending = {**PENDING_KINDS, "secrets/vault": Pending("r", "t", DECIDED, date(2026, 12, 11))}
+    pending = {
+        **PENDING_KINDS,
+        "secrets/vault": Pending("r", "t", DECIDED, DECIDED + timedelta(days=30)),
+    }
     problems = kind_problems(all_kinds(), set(pp.KIND_MODULES), pending, NO_IDENTITY, DECIDED)
     same(
         problems,
@@ -1671,10 +1681,10 @@ def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
     )
     entry = {
         **PENDING_NAMES,
-        ("secrets/vault", "R17"): Pending("r", "t", DECIDED, date(2026, 12, 10)),
+        ("secrets/vault", "R17"): Pending("r", "t", DECIDED, DECIDED + timedelta(days=29)),
     }
     assert name_problems(policies, entry, set(source_ids()), DECIDED) == []
-    overdue = name_problems(policies, entry, set(source_ids()), date(2026, 12, 11))
+    overdue = name_problems(policies, entry, set(source_ids()), DECIDED + timedelta(days=30))
     assert len(overdue) == 1 and "is overdue" in overdue[0]
     stale = name_problems(_policies(), entry, set(source_ids()), DECIDED)
     same(stale, ["PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"])
@@ -2885,7 +2895,9 @@ def test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_i
 def test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far():
     # the list as it is; with every kind declared (the end state) a made-up entry stands in, so that the wording
     # of the overdue line is still shown
-    base = PENDING_KINDS or {"channel/slack": Pending("r", "t", DECIDED, date(2026, 12, 11))}
+    base = PENDING_KINDS or {
+        "channel/slack": Pending("r", "t", DECIDED, DECIDED + timedelta(days=30))
+    }
     problems = kind_problems(
         all_kinds(),
         set(pp.KIND_MODULES) - set(base),
@@ -4839,14 +4851,30 @@ def test_the_message_scan_counts_only_assert_messages_match_and_what_texts():
     )
 
 
-_MONTH_NAMES = "January|Jan|February|Feb|March|Mar|April|Apr|May|June|Jun|July|Jul|August|Aug|September|Sept|Sep|October|Oct|November|Nov|December|Dec"
+# `May` is the one month name that is also an ordinary word ("7 may be"): it counts only with a capital M (or in
+# capitals), or with a year after it (the extra form below)
+_MONTH_NAMES = "January|Jan|February|Feb|March|Mar|April|Apr|(?-i:May|MAY)|June|Jun|July|Jul|August|Aug|September|Sept|Sep|October|Oct|November|Nov|December|Dec"
 # whole month names and their short forms only: "Decision 12", "Mark 12", "Marker 5" and "Mayor 3" are not days
 _MONTHS = r"\b(?:" + _MONTH_NAMES + r")\b\.?"
+_ONES = "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
+_ORDINALS = "first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth|twentieth|twenty-first|twenty-second|twenty-third|twenty-fourth|twenty-fifth|twenty-sixth|twenty-seventh|twenty-eighth|twenty-ninth|thirtieth|thirty-first"
+_SPELLED = (
+    r"\b(?:"
+    + _ORDINALS
+    + "|"
+    + _ONES
+    + r"|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty(?:-one)?)"
+)
 DAY_FORMS = (
     r"(?<!\d)\d{4}-\d{2}-\d{2}(?!\d)",  # 2026-12-12
     r"(?<!\d)\d{4}/\d{2}/\d{2}(?!\d)",  # 2026/12/12
     r"(?<!\d)\d{4}\.\d{2}\.\d{2}(?!\d)",  # 2026.12.12
-    r"(?<!\d)\d{1,2}[/.]\d{1,2}[/.]\d{4}(?!\d)",  # 12/12/2026, 12.12.2026
+    r"(?<!\d)(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])(?!\d)",  # 20261212
+    r"(?<!\d)\d{1,2}[/.-]\d{1,2}[/.-]\d{4}(?!\d)",  # 12/12/2026, 12.12.2026, 12-12-2026
+    r"(?<!\d)\d{1,2}/\d{1,2}/\d{2}(?!\d)",  # 12/12/26 (a two-digit year with slashes only: 12.12.12 is a version)
+    r"(?<!\d)\d{1,2}(?:st|nd|rd|th)?(?: of)? may(?: of)? \d{4}(?!\d)",  # 12 may 2026 (a lowercase may needs a year)
+    _SPELLED + r"(?: of)? " + _MONTHS,  # twelfth of December, twelve December
+    _MONTHS + r" (?:the )?" + _SPELLED + r"\b",  # December twelfth
     r"(?<!\d)\d{1,2}-" + _MONTHS + r"-\d{4}(?!\d)",  # 12-Dec-2026
     r"(?<!\d)\d{1,2}(?:st|nd|rd|th)?(?: of)? "
     + _MONTHS
@@ -4865,6 +4893,11 @@ def stray_days(text: str, allowed: str = "") -> list[str]:
     return DAY_PATTERN.findall(flat.replace(allowed, "") if allowed else flat)
 
 
+END_STATE_SOURCE = (
+    "V-POL"  # a real source id of the sources file: the page then lists a real source
+)
+
+
 def _cleared_policy(policy: pp.Policy | None) -> pp.Policy | None:
     """One policy of the END state: every name checked, no claim left unchecked (what the person who empties the
     lists writes into the kind module)."""
@@ -4874,7 +4907,10 @@ def _cleared_policy(policy: pp.Policy | None) -> pp.Policy | None:
     def clear(e):
         changes = {}
         if e.verified is None:
-            changes["verified"] = (DECIDED.isoformat(),)
+            changes["verified"] = (
+                DECIDED.isoformat(),
+                END_STATE_SOURCE,
+            )  # a day and a source id, as the loader needs
         if e.claims_unverified:
             changes["claims_unverified"] = ()
         return dataclasses.replace(e, **changes) if changes else e
@@ -4913,7 +4949,11 @@ def _end_state(monkeypatch, root: Path) -> None:
     kind modules of today still hold unchecked entries, that is what the dated lists are for); and the notes of
     class claim or pending, whose claim or pending name is gone, moved to class code. `read_marks`,
     `claim_mark_problems`, `note_problems`, `name_pending_problems`, `claim_pending_problems`, `--check` and
-    `--write` all run for real on that data; nothing is stubbed."""
+    `--write` all run for real on that data. What IS replaced (four things, each by `monkeypatch`): `pp.ROOT` and
+    `pp.DATA_ROOT` point at the temporary copy; `pp.PENDING_NAMES` and `pp.PENDING_CLAIMS` are empty; `pp.load` returns
+    each kind module's policy through `_cleared_policy` (a `verified` made of a day and the real source id
+    `END_STATE_SOURCE`, no unchecked claim; the policies are built here, not read by the loader, so the loader's
+    own checks of `verified` do not run on them); `pp.NOTE_CLASSES` has the claim and pending classes moved to code."""
     classes = {
         k: ("code",) if v and v[0] in ("claim", "pending") else v
         for k, v in pp.NOTE_CLASSES.items()
@@ -5180,6 +5220,79 @@ def test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renew
     )
 
 
+def test_the_overdue_message_of_the_kinds_has_its_own_rule_and_steps_and_names_only_things_that_exist():
+    # the 16 kinds renew on their own day (`KINDS_DECIDED`), apart from the names and claims: a message that sent a
+    # person to the names and claims lists would send them to the wrong place on the first overdue day
+    kind = next(iter(PENDING_KINDS))
+    late = max(p.review_by for p in PENDING_KINDS.values()) + timedelta(days=1)
+    lines = kind_problems(
+        all_kinds(), {k for k in all_kinds() if k not in PENDING_KINDS}, PENDING_KINDS, {}, late
+    )
+    overdue = [ln for ln in lines if "is overdue" in ln]
+    assert overdue, f"no kind is reported overdue on {late}: {lines}"
+    for line in overdue:
+        assert pp.KINDS_RENEWAL_RULE in line and pp.KINDS_RENEWAL_STEPS in line, (
+            f"the overdue message of a kind does not carry the rule and the steps of the kinds list: {line}"
+        )
+        assert pp.RENEWAL_STEPS not in line and "PENDING_NAMES" not in line, (
+            f"the overdue message of a kind sends a person to the names and claims lists: {line}"
+        )
+    assert kind in " ".join(overdue), "the kind is not named in its overdue message"
+    # every thing the steps name exists where they send a person (a name that is not in the file is a wrong step)
+    guard = Path(__file__).read_text(encoding="utf-8")
+    pin_file = (ROOT / "tests/test_policy_changelog.py").read_text(encoding="utf-8")
+    for name in ("KINDS_DECIDED", "_PR2", "PENDING_KINDS"):
+        assert name in pp.KINDS_RENEWAL_STEPS or name in pp.KINDS_RENEWAL_RULE, (
+            f"the kinds steps do not name {name}"
+        )
+        assert f"{name} =" in guard or f"{name}:" in guard, f"{name} is not in the guard file"
+    for name in ("KINDS_LITERAL", "KINDS_GROUPS"):
+        assert name in pp.KINDS_RENEWAL_STEPS and f"{name} =" in pin_file, (
+            f"{name} is named by the kinds steps but is not in tests/test_policy_changelog.py"
+        )
+    pin = "test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date"
+    assert pin in pp.KINDS_RENEWAL_STEPS and f"def {pin}(" in guard, (
+        "the kinds steps name a test that is not there"
+    )
+    for path in ("tests/policy_mutants.py", "tests/test_policy_changelog.py", "CHANGELOG.md"):
+        assert path in pp.KINDS_RENEWAL_STEPS, f"the kinds steps do not name {path}"
+    assert (
+        "`python tests/policy_mutants.py`" in pp.RENEWAL_STEPS and "`--day`" in pp.RENEWAL_STEPS
+    ), "the renewal steps of the names and claims do not name the mutant file"
+    assert (ROOT / "tests/policy_mutants.py").is_file(), (
+        "the mutant file named by the steps is gone"
+    )
+
+
+def test_the_kinds_pin_refuses_a_moved_kind_another_built_sentence_and_an_entry_without_it():
+    # the pin of the days the kinds start to fail lives in tests/test_policy_changelog.py (it reads the changelog,
+    # which is not in the copy the mutant runner tests); its three refusals are shown here, on made-up input only,
+    # so that a mutant of the pin has a test in this file to be killed by
+    from dataclasses import replace
+
+    from tests.test_policy_changelog import KINDS_LITERAL, _kinds_pin_problem
+
+    entry = f"text {KINDS_LITERAL} text"
+    same(
+        _kinds_pin_problem(PENDING_KINDS, KINDS_LITERAL, entry), "", what="the right list and text"
+    )
+    first = next(iter(PENDING_KINDS))
+    earliest = min(p.review_by for p in PENDING_KINDS.values())
+    moved = {
+        **PENDING_KINDS,
+        first: replace(PENDING_KINDS[first], review_by=earliest - timedelta(days=1)),
+    }
+    assert "no longer holds" in _kinds_pin_problem(moved, KINDS_LITERAL, entry), (
+        "a kind moved to another day was accepted by the kinds pin"
+    )
+    assert "not the one written in this pin" in _kinds_pin_problem(
+        PENDING_KINDS, KINDS_LITERAL[:-1] + "2", entry
+    ), "a built sentence with another day was accepted by the kinds pin"
+    assert "does not give the days" in _kinds_pin_problem(
+        PENDING_KINDS, KINDS_LITERAL, "text with no sentence"
+    ), "an entry without the sentence was accepted by the kinds pin"
+
+
 def test_with_one_dated_list_empty_the_page_names_the_review_day_of_the_other(monkeypatch):
     marks = pp.read_marks(ROOT)
     day = pp.DECIDED + timedelta(days=50)
@@ -5215,15 +5328,15 @@ def kinds_sentence(pending: dict | None = None) -> str:
 
 def changelog_entry(text: str | None = None) -> str:
     """The entry for this work, whitespace folded: from its heading line to the next TOP-LEVEL bullet of any kind
-    (a line that starts with `- `, `* ` or `+ ` at the left edge, bold or not) or the next heading (a line that
-    starts with `#`); an indented bullet inside the entry does not end it, and the last entry of the file ends
-    at the end of the file. The one cut used by
+    (a line that starts with `- `, `* `, `+ ` or a number and a point or bracket at the left edge, bold or not), the
+    next heading (a line that starts with `#`) or a horizontal rule; an indented bullet inside the entry does not
+    end it, and the last entry of the file ends at the end of the file. The one cut used by
     every changelog test of this folder (tests/test_policy_docs.py imports it)."""
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8") if text is None else text
     start = text.index(ENTRY_START)
     stop = re.search(
-        r"\n(?:[-*+] |#)", text[start + 1 :]
-    )  # the next top-level bullet of any kind, or a heading
+        r"\n(?:[-*+] |\d+[.)] |#|(?:-{3,}|\*{3,}|_{3,})[ \t]*(?:\n|$))", text[start + 1 :]
+    )  # the next top-level bullet of any kind (also a numbered one), a heading or a horizontal rule
     end = start + 1 + stop.start() if stop else len(text)
     return " ".join(text[start:end].split())
 
@@ -5395,15 +5508,92 @@ def test_the_runner_expects_red_only_for_lists_with_entries_and_exits_1_for_a_we
     same(runner.exit_code([], []), 0, "the exit code of a run with no problem")
     same(runner.exit_code(["m"], []), 1, "the exit code with a mutant that is not good")
     same(runner.exit_code([], [("m", "e", "k")]), 1, "the exit code with a weak mutant")
-    today = date(2026, 12, 11)
-    assert runner.canary_day(today, None) < today, (
+    # every day here is built from the decision day and the floor is given, so that a renewal (a later decision day,
+    # a later latest decision day in the lists) cannot move the answer
+    today = DECIDED + timedelta(days=30)
+    assert runner.canary_day(today, None, DECIDED) < today, (
         "with no review day the probe day is not before today"
     )
     same(
-        runner.canary_day(today, today + timedelta(days=1)),
+        runner.canary_day(today, today + timedelta(days=1), DECIDED),
         today - timedelta(days=1),
         "a day that is not today",
     )
+
+
+def literal_day_problems(source: str, rel: str, decided: date, span: int) -> list[str]:
+    """Every day written as a literal INSIDE a function (a test or a helper) of `source` that lies after `decided`
+    and at most `span` days after it: `date(2026, 12, 11)` and `date.fromisoformat("2026-12-11")`. Such a day is
+    the day of a renewal window, and after a renewal it is wrong with no message that says why: build it from the
+    decision day instead. A literal at the top level of the file is data (the kinds list, `KINDS_DECIDED`) and is
+    named by the renewal steps; the decision day itself (a pin) is not after it."""
+    out = []
+    for fn in (
+        n
+        for n in ast.walk(ast.parse(source))
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ):
+        for call in (c for c in ast.walk(fn) if isinstance(c, ast.Call)):
+            name = (
+                call.func.attr
+                if isinstance(call.func, ast.Attribute)
+                else getattr(call.func, "id", "")
+            )
+            args = [a.value for a in call.args if isinstance(a, ast.Constant)]
+            day = None
+            try:
+                if name == "date" and len(args) == 3 and len(call.args) == 3:
+                    day = date(*args)
+                elif name == "fromisoformat" and len(args) == 1 and isinstance(args[0], str):
+                    day = date.fromisoformat(args[0])
+            except (TypeError, ValueError):
+                day = None
+            if day is not None and decided < day <= decided + timedelta(days=span):
+                out.append(f"{rel}:{call.lineno}: the day {day} is written in `{fn.name}`")
+    return out
+
+
+def test_no_test_writes_a_day_of_the_renewal_window_as_a_literal_inside_a_function():
+    files = (
+        "tests/test_policy_guard.py",
+        "tests/test_policy_changelog.py",
+        "tests/test_policy_docs.py",
+        "tests/test_policy_engine.py",
+    )
+    found = [
+        line
+        for rel in files
+        for line in literal_day_problems(
+            (ROOT / rel).read_text(encoding="utf-8"), rel, DECIDED, 2 * MAX_PENDING_DAYS
+        )
+    ]
+    assert not found, (
+        "a day of the renewal window is written in a function; build it from the decision day "
+        f"(`DECIDED + timedelta(days=...)`): {found}"
+    )
+
+
+def test_plant_a_written_day_in_a_function_is_found_and_a_derived_day_a_top_level_day_and_the_pin_are_not():
+    d = DECIDED
+    w = d + timedelta(days=20)
+    inside = f"def test_x():\n    assert f(date({w.year}, {w.month}, {w.day}))\n"
+    far = f"def test_x():\n    assert f(date({d.year + 5}, 1, 1))\n"
+    assert literal_day_problems(inside, "f.py", d, 60), "a day written in a test was not found"
+    iso = w.isoformat()
+    assert literal_day_problems(
+        f"def test_x():\n    assert f(date.fromisoformat('{iso}'))\n", "f.py", d, 60
+    ), "a day written as an ISO text for `fromisoformat` was not found"
+    assert not literal_day_problems(far, "f.py", d, 60), "a day outside the window was flagged"
+    top = f"X = date({w.year}, {w.month}, {w.day})\n"
+    assert not literal_day_problems(top, "f.py", d, 60), (
+        "a day written at the top level was flagged"
+    )
+    pin = f"def test_x():\n    assert p == date({d.year}, {d.month}, {d.day})\n"
+    assert not literal_day_problems(pin, "f.py", d, 60), (
+        "the decision day itself (a pin) was flagged"
+    )
+    derived = "def test_x():\n    assert f(DECIDED + timedelta(days=20))\n"
+    assert not literal_day_problems(derived, "f.py", d, 60), "a derived day was flagged"
 
 
 def test_the_message_scan_counts_the_messages_of_a_helper_the_killer_calls_and_only_that():
@@ -5502,6 +5692,56 @@ def test_each_form_of_a_written_day_is_found_and_each_miss_names_its_form():
     )
     assert stray_days("on DECEMBER 12 it"), "the day form written in capital letters is not found"
     assert stray_days("on dec 12 it"), "the day form written in small letters is not found"
+
+
+def test_more_written_forms_of_a_day_are_found_and_an_ordinary_word_is_not_a_day():
+    # one assert and one fixed message for each form (batch 13)
+    assert stray_days("on 12-12-2026 it"), "the day form day-month-year with hyphens is not found"
+    assert stray_days("on 20261212 it"), "the day form of eight digits is not found"
+    assert stray_days("on 12/12/26 it"), (
+        "the day form with a two-digit year and slashes is not found"
+    )
+    assert stray_days("on twelfth of December it"), (
+        "the day form with a spelled ordinal is not found"
+    )
+    assert stray_days("on December the twelfth it"), (
+        "the day form month first with a spelled ordinal is not found"
+    )
+    assert stray_days("on twelve December it"), "the day form with a spelled number is not found"
+    assert stray_days("on twenty-first of March it"), (
+        "the day form with a spelled compound ordinal is not found"
+    )
+    assert stray_days("on 12 may 2026 it"), (
+        "the day form with a lowercase may and a year is not found"
+    )
+    assert stray_days("on 12 May it"), "the day form with May written with a capital is not found"
+    assert stray_days("on May 12 it"), "the day form month first with May is not found"
+    assert stray_days("on 12 MAY it"), "the day form with MAY in capitals is not found"
+    for plain in (
+        "7 may be",
+        "this may be",
+        "it may 12 times",
+        "version 12.12.12",
+        "id 20261399",
+        "number 123456789",
+    ):
+        assert stray_days(f"text {plain} text") == [], (
+            f"an ordinary word or number was found as a written day: {plain}"
+        )
+
+
+def test_the_changelog_entry_ends_at_a_numbered_item_and_at_a_horizontal_rule():
+    body = f"{ENTRY_START} first line\n  second line\n"
+    assert changelog_entry(body + "1. a numbered item\n") == changelog_entry(body), (
+        "a numbered item at the left edge does not end the entry"
+    )
+    assert changelog_entry(body + "---\nnext\n") == changelog_entry(body), (
+        "a horizontal rule at the left edge does not end the entry"
+    )
+    assert "second line" in changelog_entry(body + "1) item\n"), "the entry lost its own lines"
+    assert "text" in changelog_entry(body + "  1. nested numbered\n  text\n"), (
+        "an indented numbered item ended the entry"
+    )
 
 
 def test_a_word_that_only_starts_like_a_month_is_not_a_day():

@@ -539,3 +539,222 @@ def test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own
     assert len(only_one) == 1 and two in only_one[0] and "has no row" in only_one[0], (
         f"the second mutant of the same backticked word was taken as having a row: {only_one}"
     )
+
+
+# ------------------------------------------------------------------ what the check sees (batch 13)
+
+
+def test_a_change_to_a_helper_file_alone_lists_the_tests_of_the_files_that_import_it(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.chdir(tmp_path)
+    _git(tmp_path, "init", "-q")
+    for d in ("tests/contracts", "tests/fixtures"):
+        (tmp_path / d).mkdir(parents=True)
+    (tmp_path / "tests" / "contracts" / "vault_fake.py").write_text(HELPER_OLD, encoding="utf-8")
+    (tmp_path / "tests" / "fixtures" / "fake_slack.py").write_text(HELPER_OLD, encoding="utf-8")
+    (tmp_path / "tests" / "test_uses_contract.py").write_text(
+        "from tests.contracts.vault_fake import helper\n\n\ndef test_c():\n    assert helper()\n\n\n"
+        "def test_free():\n    assert 1\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "tests" / "test_uses_fixture.py").write_text(
+        "import tests.fixtures.fake_slack\n\n\ndef test_f():\n    assert tests.fixtures.fake_slack.helper()\n",
+        encoding="utf-8",
+    )
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-q", "-m", "base")
+    (tmp_path / "tests" / "contracts" / "vault_fake.py").write_text(HELPER_NEW, encoding="utf-8")
+    (tmp_path / "tests" / "fixtures" / "fake_slack.py").write_text(HELPER_NEW, encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-q", "-m", "helpers only")
+    assert nlc.main(["--auto", "HEAD~1"]) == 1, (
+        "a change that touches only helper files under tests/ passed as nothing to check"
+    )
+    out = capsys.readouterr().out
+    assert "tests/test_uses_contract.py: the test test_c is new or changed" in out, (
+        f"the test that imports a changed helper by `from` was not listed: {out}"
+    )
+    assert "tests/test_uses_fixture.py: the test test_f is new or changed" in out, (
+        f"the test that imports a changed helper by a plain `import tests.x.y` was not listed: {out}"
+    )
+    assert "test_free" not in out, f"a test that does not use the helper was listed: {out}"
+
+
+def test_a_plain_import_of_a_tests_module_is_followed_through_its_dotted_chain():
+    source = (
+        "import tests.helpers\nimport tests.other\n\n\ndef test_a():\n"
+        "    assert tests.helpers.helper()\n\n\ndef test_b():\n    assert tests.other.helper()\n"
+    )
+    other = "VALUE = 5\n\n\ndef helper():\n    return VALUE\n"
+    old = _loader({"tests/helpers.py": HELPER_OLD, "tests/other.py": other})
+    new = _loader({"tests/helpers.py": HELPER_NEW, "tests/other.py": other})
+    got = nlc.changed_tests(source, source, "tests/test_x.py", old, new)
+    assert got == (["test_a"], []), (
+        f"with two plain imports of tests modules the changed one lists {got}, expected only test_a"
+    )
+    new_other = _loader({"tests/helpers.py": HELPER_OLD, "tests/other.py": other.replace("5", "6")})
+    got = nlc.changed_tests(source, source, "tests/test_x.py", old, new_other)
+    assert got == (["test_b"], []), (
+        f"the second plain import was not followed: {got}, expected only test_b"
+    )
+
+
+def test_a_bare_file_name_in_a_row_serves_only_a_file_whose_name_no_other_path_has():
+    notes = row("test_x.py", "test_a")
+    both = frozenset({"tests/test_x.py", "tests/contracts/test_x.py"})
+    assert nlc.problems(["test_a"], [], notes, "tests/test_x.py", None, both), (
+        "a bare file name in a row served a file whose name another path also has"
+    )
+    assert nlc.problems(["test_a"], [], notes, "tests/contracts/test_x.py", None, both), (
+        "a bare file name in a row served the second file of the same name"
+    )
+    assert (
+        nlc.problems(
+            ["test_a"],
+            [],
+            row("contracts/test_x.py", "test_a"),
+            "tests/contracts/test_x.py",
+            None,
+            both,
+        )
+        == []
+    ), "a row with the end of the path was refused"
+    assert (
+        nlc.problems(
+            ["test_a"], [], row("tests/test_x.py", "test_a"), "tests/test_x.py", None, both
+        )
+        == []
+    ), "a row with the whole path was refused"
+    alone = frozenset({"tests/test_x.py", "tests/test_y.py"})
+    assert nlc.problems(["test_a"], [], notes, "tests/test_x.py", None, alone) == [], (
+        "a bare file name no other path shares was refused"
+    )
+
+
+def test_a_module_level_mark_a_class_mark_and_module_level_code_list_every_test_of_the_file():
+    body = "\n\ndef test_a():\n    assert 1\n\n\nclass TestK:\n    def test_m(self):\n        assert 1\n"
+    marked = "import pytest\n\npytestmark = pytest.mark.skip(reason='r')\n" + body
+    plain = "import pytest\n\npytestmark = pytest.mark.skipif(False, reason='r')\n" + body
+    got = nlc.changed_tests(plain, marked)
+    assert got == (["TestK::test_m", "test_a"], []), (
+        f"a changed module-level pytestmark lists {got}, expected both tests"
+    )
+    cls_old = "import pytest\n\n\nclass TestK:\n    def test_m(self):\n        assert 1\n"
+    cls_new = cls_old.replace("class TestK:", "@pytest.mark.skip\nclass TestK:")
+    assert nlc.changed_tests(cls_old, cls_new) == (["TestK::test_m"], []), (
+        "a class decorator that skips the class lists no method"
+    )
+    cls_attr = cls_old.replace("class TestK:\n", "class TestK:\n    pytestmark = 1\n")
+    assert nlc.changed_tests(cls_old, cls_attr) == (["TestK::test_m"], []), (
+        "a class-level pytestmark lists no method"
+    )
+    code_old = "import pytest\n\nif False:\n    pytest.skip('s', allow_module_level=True)\n" + body
+    code_new = code_old.replace("if False", "if True")
+    assert nlc.changed_tests(code_old, code_new) == (["TestK::test_m", "test_a"], []), (
+        "module-level code that skips the file lists no test"
+    )
+    assert nlc.changed_tests(code_old, code_old) == ([], []), (
+        "unchanged module-level code lists a test"
+    )
+
+
+def test_a_conftest_assignment_is_a_unit_with_all_assignments_of_its_name():
+    rel = "tests/conftest.py"
+    old = "collect_ignore = ['a.py']\n\n\ndef fx():\n    return 1\n"
+    new = "collect_ignore = ['a.py', 'b.py']\n\n\ndef fx():\n    return 1\n"
+    assert nlc.changed_tests(old, new, rel) == (["collect_ignore"], []), (
+        "a changed collect_ignore of a conftest is not a unit"
+    )
+    more = old + "collect_ignore += ['c.py']\n"
+    assert nlc.changed_tests(old, more, rel) == (["collect_ignore"], []), (
+        "an added `+=` of a conftest name is not part of the unit"
+    )
+    plugins = "pytest_plugins = ['x']\n"
+    assert nlc.changed_tests("", plugins, rel) == (["pytest_plugins"], []), (
+        "a new pytest_plugins of a conftest is not a unit"
+    )
+    assert nlc.changed_tests(old, old, rel) == ([], []), "an unchanged conftest lists a unit"
+
+
+# ------------------------------------------------------------------ a row must be whole and must point at something real (batch 13)
+
+
+def test_a_mutant_row_serves_only_the_mutant_whose_whole_cell_or_exact_item_it_is():
+    # the name holds a backtick, so it is written in the cell and not in backticks; `X `a`` must not borrow the row of
+    # the longer name `X `a` b` (a substring), and an exact `;` item of a cell is that name's row
+    rel = "tests/policy_mutants.py"
+    reason = "killing mutant B1 in `policy_mutants.py`"
+    longer = f"| policy_mutants.py | X `a` b | new | {reason} |\n"
+    assert nlc.problems(["X `a`"], [], longer, rel), (
+        "a mutant with no row of its own borrowed the row of a longer name by substring"
+    )
+    assert nlc.problems(["X `a` b"], [], longer, rel) == [], "the row of the whole name was refused"
+    listed = f"| policy_mutants.py | X `a`; Y `b` | new | {reason} |\n"
+    assert nlc.problems(["Y `b`"], [], listed, rel) == [], "an exact `;` item of a cell was refused"
+    assert nlc.problems(["Y"], [], listed, rel), "a part of an item of a cell served as its row"
+
+
+def test_a_reason_must_point_at_a_test_a_log_file_and_a_mutant_that_exist():
+    refs = nlc.Refs(
+        frozenset({"test_real"}), frozenset({"B1 a real mutant"}), frozenset({"real.log"})
+    )
+    good = "killing mutant `B1 a real mutant` through test_real; raw output in real.log"
+    assert nlc.reference_problems(good, refs) == [], "names that exist were refused"
+    bad = nlc.reference_problems("killing mutant `B1 no such mutant`, test_gone and gone.log", refs)
+    assert len(bad) == 3 and any("no such mutant" in b for b in bad), (
+        f"a mutant, a test and a log file that do not exist were not each reported: {bad}"
+    )
+    rows = row("test_x.py", "test_a", "control: see test_gone for the failing case")
+    found = nlc.problems(["test_a"], [], rows, "tests/test_x.py", None, None, refs)
+    assert len(found) == 1 and "points at nothing" in found[0], (
+        f"a row naming a test that is in no test file passed: {found}"
+    )
+    assert nlc.problems(["test_a"], [], rows, "tests/test_x.py") == [], (
+        "without refs a row is checked for form only (the unit-test default)"
+    )
+
+
+def test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders():
+    files = {
+        "tests/test_a.py": "def test_one():\n    assert 1\n\n\nclass TestK:\n    def test_two(self):\n        assert 1\n",
+        "tests/policy_mutants.py": "M = [mutant('B1 first', 'f', 'o', 'n', 'test_one', 'e')]\n",
+    }
+    tree = [*files, "handover/evidence/x/logs/run.log", "handover/evidence/x/NOTES.md"]
+    refs = nlc._refs(tree, _loader(files))
+    assert refs.tests == {"test_one", "test_two"}, f"the tests of the tree are {sorted(refs.tests)}"
+    assert refs.mutants == {"B1 first"}, f"the mutants of the tree are {sorted(refs.mutants)}"
+    assert refs.logs == {"run.log"}, f"the logs of the tree are {sorted(refs.logs)}"
+
+
+def test_auto_refuses_a_row_whose_reason_names_a_test_or_a_log_file_that_is_in_no_file_of_the_commit(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.chdir(tmp_path)
+    _git(tmp_path, "init", "-q")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    assert 1\n", encoding="utf-8")
+    _git(tmp_path, "add", "-A")
+    _git(tmp_path, "commit", "-q", "-m", "base")
+    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    assert 2\n", encoding="utf-8")
+    notes_dir = tmp_path / "handover" / "evidence" / "x"
+    (notes_dir / "logs").mkdir(parents=True)
+    (notes_dir / "logs" / "run.log").write_text("raw\n", encoding="utf-8")
+
+    def write(reason: str) -> None:
+        (notes_dir / "NOTES.md").write_text(row("test_a.py", "test_a", reason), encoding="utf-8")
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "--allow-empty", "-m", "notes")
+
+    write("fails on the base commit, see test_a and run.log for the raw output")
+    assert nlc.main(["--auto", "HEAD~1"]) == 0, (
+        f"a row naming a test and a log file that exist was refused: {capsys.readouterr().out}"
+    )
+    write("fails on the base commit, see test_gone and gone.log for the raw output")
+    assert nlc.main(["--auto", "HEAD~2"]) == 1, (
+        "a row naming a test and a log file that are in no file of the commit passed `--auto`"
+    )
+    out = capsys.readouterr().out
+    assert "test_gone is in no test file" in out and "gone.log is in no logs/ folder" in out, (
+        f"the missing test and the missing log file were not each named: {out}"
+    )
