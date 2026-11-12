@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 import psycopg
 import pytest
 
-from hadavin_sdk.models import InboundReceipt, Run, RunState
+from hadavin_sdk.models import Run, RunState
 from hadavin_sdk.store.memory import MemoryStore
 from hadavin_sdk.store.protocol import (
     NotFound,
@@ -18,8 +18,8 @@ from hadavin_sdk.store.protocol import (
 )
 from hadavin_sdk.triggers.ledger import (
     InboundKeyChanged,
-    Inbox,
     InboundSource,
+    Inbox,
     delivery_key,
     key_check_for,
     run_id_for,
@@ -227,8 +227,8 @@ def _dispatch_conn(ibx):
     dsn = next(v["dispatch"] for v in INBOUND.values() if v["migrator"] == ibx.sp._migrator_dsn)
     return make(
         "store",
-        PostgresSettings(kind="postgres", dsn_secret_name="d"),
-        FakeSecretProvider({"d": dsn}),
+        PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn"),  # noqa: S106 - a name
+        FakeSecretProvider({"pg-dsn": dsn}),
     )
 
 
@@ -333,7 +333,7 @@ def test_l11_busy_counts_open_receipts_of_this_address_only(ibx):
     assert ib.receive(src, "o-new", b"x") == "busy"
     other = _src("tenant-b", agent_id="agent-b")
     assert ib.receive(other, "o-new", b"x") == "new"  # another tenant's count is separate
-    a, b = (
+    a, _b = (
         _claim(ibx, src, clock),
         _claim(ibx, src, clock),
     )  # 2 claimed + 1 received is still 3 open
@@ -375,18 +375,18 @@ def test_l13_purge_rules(ibx):
         T0 - timedelta(days=400) + timedelta(days=100),
     )
     # received at T0; finished at T0 (all receipts are "31 days old" against `before` = T0 + 70 days)
-    kinds = {}
-    for name in ("refused", "done_ok", "done_missing", "needs_person", "done_np", "open"):
+    names = ("refused", "done_ok", "done_missing", "needs_person", "done_np", "open")
+    for name in names:
         ib.receive(src, name, b"body-" + name.encode())
     recs = {}
     for _ in range(6):
         rec = _claim(ibx, src, clock)
         recs[
-            [
+            next(
                 n
-                for n in ("refused", "done_ok", "done_missing", "needs_person", "done_np", "open")
+                for n in names
                 if delivery_key(KEY, "tenant-a", "src-orders", n) == rec.delivery_key
-            ][0]
+            )
         ] = rec
 
     def fin(name, state, reason):

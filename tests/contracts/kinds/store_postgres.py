@@ -133,7 +133,7 @@ class InboundSplitStore:
 
     def rerun_owner_reopen(self, tenant, source, delivery_key, now):
         """The re-run owner's reopen (a setup step, not a negative test): the migrator connection acts as that role."""
-        from hadavin_sdk.store.postgres import connect, PostgresStore
+        from hadavin_sdk.store.postgres import PostgresStore, connect
 
         db = connect(self._migrator_dsn)
         try:
@@ -154,7 +154,7 @@ def inbound_postgres_store(tmp_path=None):
         settings = PostgresSettings(kind="postgres", dsn_secret_name="pg-dsn")  # noqa: S106 - a name
         info = INBOUND[dsn]
 
-        def build(d):
+        def build(d, settings=settings):
             return make("store", settings, FakeSecretProvider({"pg-dsn": d}))
 
         split = InboundSplitStore(

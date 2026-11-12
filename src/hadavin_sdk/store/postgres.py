@@ -29,13 +29,13 @@ from pydantic import BaseModel
 
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.models import (
+    INBOUND_FINAL_STATES,
+    INBOUND_RETRY_REASONS,
     OPEN_STATES,
     ApprovalDecision,
     ApprovalRequest,
     ApprovalStatus,
     DeadLetter,
-    INBOUND_FINAL_STATES,
-    INBOUND_RETRY_REASONS,
     GateDecision,
     InboundReceipt,
     InboundRunView,
@@ -196,11 +196,6 @@ UPDATE inbound_receipts SET state = 'received', generation = generation + 1,
 WHERE tenant = %(tenant)s AND source = %(source)s AND delivery_key = %(delivery_key)s AND state = 'needs_person'
 RETURNING *
 """
-
-_RECEIPT_COLS = (
-    "tenant, source, delivery_key, schema_version, readers, body_sha256, key_check, generation, run_id, state, "
-    "reason, last_reason, attempts, lease_until, claim_token, reuse_of, received_at, updated_at"
-)
 
 
 def _receipt(row: dict[str, Any]) -> InboundReceipt:
@@ -628,7 +623,9 @@ class PostgresStore:
         row = rec.model_dump()
         row["readers"] = sorted(rec.readers)
         inserted = self._exec(
-            f"INSERT INTO inbound_receipts ({_RECEIPT_COLS}) VALUES "
+            "INSERT INTO inbound_receipts (tenant, source, delivery_key, schema_version, readers, body_sha256, "
+            "key_check, generation, run_id, state, reason, last_reason, attempts, lease_until, claim_token, "
+            "reuse_of, received_at, updated_at) VALUES "
             "(%(tenant)s, %(source)s, %(delivery_key)s, %(schema_version)s, %(readers)s, %(body_sha256)s, "
             "%(key_check)s, %(generation)s, %(run_id)s, %(state)s, %(reason)s, %(last_reason)s, %(attempts)s, "
             "%(lease_until)s, %(claim_token)s, %(reuse_of)s, %(received_at)s, %(updated_at)s) "

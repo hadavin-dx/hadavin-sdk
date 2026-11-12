@@ -85,12 +85,14 @@ def key_check_for(key: bytes | None) -> str:
 def check_sender_id(x: object) -> str:
     """The sender's message id: a real `str` (no subclass), 1 to 256 characters, no control, format, surrogate,
     private-use or unassigned character (Unicode category starting with C). The message names no value."""
-    if type(x) is not str:
-        raise ValueError("sender id: must be a string")
-    if not 1 <= len(x) <= INBOUND_MAX_SENDER_ID_CHARS:
-        raise ValueError("sender id: wrong length")
-    if any(unicodedata.category(c).startswith("C") for c in x):
-        raise ValueError("sender id: holds a control or invisible character")
+    if (
+        type(x) is not str
+        or not 1 <= len(x) <= INBOUND_MAX_SENDER_ID_CHARS
+        or any(unicodedata.category(c).startswith("C") for c in x)
+    ):
+        raise ValueError(
+            "sender id: not a string of 1-256 characters without control or invisible ones"
+        )
     return x
 
 
@@ -133,7 +135,7 @@ class Inbox:
     def receive(self, source: InboundSource, sender_id: str, body: bytes) -> ReceiveOutcome:
         check_sender_id(sender_id)  # the choke point: before any store call
         if not isinstance(body, bytes | bytearray):
-            raise ValueError("body must be bytes")
+            raise TypeError("body must be bytes")
         body = bytes(body)
         t = self.clock()
         dkey = delivery_key(self.hkey, source.tenant, source.name, sender_id)
