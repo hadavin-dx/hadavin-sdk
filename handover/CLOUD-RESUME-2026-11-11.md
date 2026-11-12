@@ -324,3 +324,11 @@ Resolved this window: Q8a-1 r13 (goldfish_review_report-r13.md; ledger Q8a1b13-r
 Running: Q8b b9 evidence a2745ef0c13c01418, design a3ab450259e81f1ef, codebase a1aad86f6ca5ec303 (head c36ce0dc, wip/cloud-q8b-b9); Q8a-1 b14 builder abfd640f9174da5a6 (core/q8a1-b14 from 918c0345 -> wip/cloud-q8a1-b14, started 07:37Z, ends ~09:10Z); P3a-2 b4 a55871b163d65c85a (ends ~08:15Z); PR H b8 aa4fb7889a3f81ebf (ends ~08:16Z).
 Next: Q8c-1 b12 builder (from e4f1b2a4 -> wip/cloud-q8c1-b12; report r11 is the task list); Q8b b9 reviews and resolve; P3a-2 b4 and PR H b8 hand-backs then snapshot, evidence, reviewers, resolve.
 New owner/lead items: Q8c-1 first CI run of the notes step needs a real pull request run (impossible now; lead opens the PR); `q-q8a1-hide-ids` and ConfigName type (E1/E2 in Q8a-1 r13).
+
+## Update 08:27Z (2026-11-12)
+Orders: 247 (GO, core lane) newest, no STOP (fetched 08:26Z).
+Resolved this window: Q8b r10 (goldfish_review_report-r10.md; ledger Q8bb9-r10-*; new question q-q8b-bare-bypass, default: shown and pinned).
+Saved, waiting for resolve: PR H b8 round 8 design (1 Blocker, 6 Major) and codebase (2 Blocker, 7 Major) for head b8fbf659 (waits for evidence runner af495150); P3a-2 b4 round 15 design and codebase (0 Blocker, 7 Major combined) for head c3b2efdb (waits for evidence runner a47bf2b9).
+Running: Q8b b10 builder a1d4a55b (core/q8b-b10 from c36ce0dc -> wip/cloud-q8b-b10, started 08:26Z, ends ~09:55Z); Q8a-1 b14 abfd640f and Q8c-1 b12 ae1a9c4f (both end ~09:10Z); evidence runners af495150 (PR H b8) and a47bf2b9 (P3a-2 b4).
+Next: resolve PR H r8 and P3a-2 r15 when evidence lands, then batch 9 (PR H, wip/cloud-prh-b9) and batch 5 (P3a-2, wip/cloud-p3a2-5) builders; Q8a-1 b14 and Q8c-1 b12 hand-backs.
+Open owner/lead items unchanged, plus q-q8b-bare-bypass.
