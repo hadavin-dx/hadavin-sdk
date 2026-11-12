@@ -3016,3 +3016,16 @@
 | Q8a1b18-r19-9 | Minor | Q8a-1 | r19 D6-D9 and m1 rest: guard checks read surface only, 77 unpinned, scan blind spots, Dict mutant, one-line handlers, weak expects | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
 | Q8a1b18-r19-10 | Major | Q8a-1 | r19 owner items q-q8a1-hide-ids E1/E2 and error_reason question: not built; do not report closed | OWNER-ONLY | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
 | Q8a1b18-r19-11 | Major | Q8a-1 | r19 evidence: final file not fail-before measured, 29 tests not 30, runner missed non-dict shapes, pytest counts differ | OPEN | reviews/Q8a-1/goldfish_review_report-r19.md | - | 2026-11-12 |
+| PRHb11-r11-1 | Major | PR H | r11 F4/F1: crash rule not at every catcher: approvals summary, injection check, tick step, evals, extract, k1b loop; downgrade not stated | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-2 | Major | PR H | r11 F2: backslash-e inside a value readable near the end, short values, symbols (10 of 12 on head) | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-3 | Major | PR H | r11 F3: sibling containment at runmap 634 and 657 uses every held value; cut copy of held piece stays readable | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-4 | Major | PR H | r11 F4: docs figure tests cannot fail, ghost mutant numbers, no error_reason mutant | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-5 | Major | PR H | r11 F1: 457 skipped tests not broken down; builder and runner pytest counts differ unexplained | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-6 | Major | PR H | r11 F5: glued letter or mark before a spaced run starts no run; lookbehind blocks ignorable marks (design Major, codebase Minor) | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-7 | Minor | PR H | r11 F7/F6: only_inside_held outside the work budget; spaced holder under 12 characters | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-8 | Minor | PR H | r11 F8: evidence at older heads; perf H3 5.00x and P5 4.38x against 6 s budget; spaced budget unmeasured | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-9 | Minor | PR H | r11 F6: committed evidence file holds made-up secret-shaped values in test ids | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-10 | Minor | PR H | r11 F9: stop later drops once earlier found nothing is parked as owner-only; fix not defer | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-11 | Minor | PR H | r11 F7/F10: SECURITY overstates backslash-e rule; CJK Ext J gap; docstring and mutant message nits | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-12 | Major | PR H | r11 owner items q-prh-piece-masking and q-prh-spaced-secrets: not built; do not report closed | OWNER-ONLY | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
+| PRHb11-r11-13 | Major | PR H | r11 evidence gate: b10 wrapper test cause unexamined, docs failures runner artefact, timing flake, probes miss catchers and glued marks | OPEN | reviews/PRH/goldfish_review_report-r11.md | - | 2026-11-12 |
