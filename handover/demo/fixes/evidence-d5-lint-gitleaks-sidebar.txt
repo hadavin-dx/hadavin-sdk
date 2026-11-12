@@ -1,0 +1,20 @@
+# evidence-d5: gitleaks, lint, mypy, sidebar tests on the final tree (l8d-tree), Thu Nov 12 21:28:16 UTC 2026
+(first gitleaks dir run counted 159 findings: all in ignored __pycache__ folders left by pytest; they were deleted, as lint.yml scans before any run)
+$ gitleaks dir .
+[90m9:28PM[0m [32mINF[0m [1mscanned ~2748810 bytes (2.75 MB) in 293ms[0m
+[90m9:28PM[0m [32mINF[0m [1mno leaks found[0m
+$ gitleaks git . (scratch commit of the final tree, /tmp/work/l8e-scratch)
+[90m9:28PM[0m [32mINF[0m [1mscanned ~5425000 bytes (5.43 MB) in 725ms[0m
+[90m9:28PM[0m [32mINF[0m [1mno leaks found[0m
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+128 files already formatted
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ pytest the two sidebar tests
+419:def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, scheme: str) -> None:
+..                                                                       [100%]
+2 passed, 29 deselected in 3.56s

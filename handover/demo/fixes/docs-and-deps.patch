@@ -35,10 +35,10 @@ index 3b9409f..d5578fe 100644
 +`requirements-dev.txt` is the authority: Linux x86_64, Python 3.12 (CI and containers). `requirements-dev-win.txt` is the Windows lock (Python 3.13, made with `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`); it has the same pins plus `colorama`. Install with `pip install --require-hashes -r <that file>`. Both files are regenerated together when `requirements-dev.in` changes. The browser tests have their own optional lock files, `requirements-browser.txt` and `requirements-browser-win.txt` (made from `requirements-browser.in`, see `versions.md`), installed after the development lock. Quality commands (all must pass): `ruff check .`, `ruff format --check .`, `mypy --platform linux`, `mypy --platform win32`, `bandit -ll -r src tools scripts -c pyproject.toml`, `python scripts/check_schema.py`.
  
 diff --git a/docs/tests.md b/docs/tests.md
-index 7061956..27550c3 100644
+index 7061956..e3cc059 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
-@@ -33,3 +33,38 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
+@@ -33,3 +33,39 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
  
 -The tests that drive the portal in a real browser need Playwright and a browser (`pip install playwright`, then `playwright install chromium`) and are skipped without them. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` do not install Playwright, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer. To see why any test was skipped, run `python -m pytest -q -rs`.
 +Some tests drive the portal in a real web browser. For that they need Playwright (a Python package that remote-controls a browser) and a copy of the Chromium browser. Without them these tests are skipped, not failed. They are in `tests/test_portal_browser.py`, `tests/test_portal_lead_pages.py`, `tests/test_stage_confirm_browser.py`, three in `tests/test_portal_wording_and_masking.py`, a few in `tests/test_mode_safety.py`, and the layout and look tests (`tests/test_portal_layout.py`, `tests/test_portal_look.py`), which use the same browser helpers. **The checks in `.github/workflows/lint.yml` install only `requirements-dev.txt` and there is no browser job yet, so they do not run the browser tests;** the masking promise P10 rests on them, so run them on your own computer.
@@ -67,10 +67,11 @@ index 7061956..27550c3 100644
 +
 +* **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
 +* **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
-+* **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which needed Pillow, so 2462 passed and 3 skipped is that run's expected figure with Pillow installed, not a measured run. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
-+* **A full run on this lock:** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. This is a measured figure for the two sidebar tests too: the browser reads the screenshot's pixels itself, no image library is installed, and they pass. The later commit that added the coverage settings (0841f36) was not run in full: it changes no test file and no test setting that a plain `python -m pytest` reads, but that is stated from its file list, not from a run.
-+* **Skips reported without Playwright:** 113 of the 116 are browser tests, counted by the line where the skip is reported, not by test file (22 at lines in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 60 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`; the helper functions that skip sit in those files, so tests from other browser files are counted there too). The 113 and the 134 below were measured again on 2026-11-12 on this commit and this change, in a run without Playwright of eight test files (the files named above plus `test_portal_mode.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`).
-+* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known. What fits the numbers, as an inference only: a run without Node on the path. Node missing makes 21 tests that run the portal's JavaScript skip (1 in `test_mode_safety.py`, 2 in `test_portal_lead_pages.py`, 18 in `test_portal_mode.py`; measured in a browserless run of those eight files here: 134 skipped with Node missing, 113 with Node present). Moving those 21 from passed to skipped on a full run of this commit gives 2328 passed and 137 skipped, against 2329 and 135: one more passed and two fewer skipped. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. Neither "one test fewer" nor "gitleaks installed" alone fits both numbers. The 2462 passed with 2 skipped reported for that computer with Playwright is not explained either (with `gitleaks` installed it would be 2463 passed here). The 2349/116 run on 43110e7 did have Node (its log has no "node is not installed" skip), even though its summary says otherwise. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
++* **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and this change's lock files, with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
++* **A full run on this lock:** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12, before the coverage commit 0841f36) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. The two sidebar tests pass in it: the browser reads the screenshot's pixels itself and no image library is installed. **Why 2462 became 2513:** commit 2ce1f98 holds 51 more tests than 558d37f (2516 against 2465, both counted with `python -m pytest --collect-only -q`): 49 in the new file `tests/test_except_clause_hierarchy.py`, 1 more in `tests/test_lead_crm_copy.py` and 1 more in `tests/test_portal_mode.py` (2465 + 51 = 2516; 2462 + 51 = 2513). Commit 0841f36 (the coverage settings) collects the same 2516 tests. That commit was not run in full. It adds a `[tool.coverage.run]` section in `pyproject.toml`, which only the `coverage` program reads, and it edits `exceptions.txt` and `.gitleaks.toml`, which `tests/test_hygiene.py` reads; it changes no other test or test setting. The hygiene tests were run with a real `gitleaks` program on the final tree and passed (see the evidence of this change, `evidence-d5-hygiene.txt`).
++* **Skips reported without Playwright (eight test files, 0841f36 plus this change):** the eight files are `test_mode_safety.py`, `test_portal_browser.py`, `test_portal_lead_pages.py`, `test_portal_mode.py`, `test_portal_wording_and_masking.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`. Two runs, 2026-11-12, one process each, Python 3.12, no Playwright installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set of tests that need Node: 1 in `test_mode_safety.py` (line 174), 2 in `test_portal_lead_pages.py` (line 488, "no node") and 19 in `test_portal_mode.py`. The 113 browser skips are counted by the line where the skip is reported, not by test file (22 at line 109 of `test_mode_safety.py`, 28 at line 27 of `test_portal_browser.py`, 60 at line 113 of `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py` at lines 171, 204 and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
++* **No full run without Node was done on this commit.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
++* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of this commit (2516 tests; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
 +
 +## Quality checks and what to do when a check fails
 +
@@ -337,7 +338,7 @@ index 3b324e3..dc17674 100644
 +    }
      assert reported == expected, sorted(reported)
 diff --git a/tests/test_portal_lead_pages.py b/tests/test_portal_lead_pages.py
-index 88e8c3f..59c7de7 100644
+index 88e8c3f..6beb731 100644
 --- a/tests/test_portal_lead_pages.py
 +++ b/tests/test_portal_lead_pages.py
 @@ -426,5 +426,3 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
@@ -347,11 +348,17 @@ index 88e8c3f..59c7de7 100644
 -        from PIL import Image
 +        import base64
  
-@@ -435,5 +433,32 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
+@@ -435,5 +433,43 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
          assert height > 900, height  # the page really is taller than the window
 -        img = Image.open(io.BytesIO(page.screenshot(full_page=True))).convert("RGB")
 -        above, below = img.getpixel((60, 880)), img.getpixel((60, height - 40))
 -        assert all(abs(a - b) <= 6 for a, b in zip(above, below, strict=True)), (above, below)
++        assert height - 40 > 900, ("second sample point is inside the rail", height)  # the rail is 900 px high
++        # A third point, on the brand mark (a fixed element in the rail's header): its colour is far from the rail's,
++        # so a reader that returned one value for every point would be caught below.
++        box = page.locator(".mark").first.bounding_box()
++        assert box is not None
++        mark_pt = [round(box["x"]) + 4, round(box["y"] + box["height"] / 2)]
 +        # The browser reads the screenshot's pixels itself (no image library): a blank page in the same browser
 +        # decodes the PNG onto a canvas. A blank page, because the portal page's own rules could refuse a data: image.
 +        shot = "data:image/png;base64," + base64.b64encode(page.screenshot(full_page=True)).decode()
@@ -370,12 +377,17 @@ index 88e8c3f..59c7de7 100644
 +                    return {size: [canvas.width, canvas.height],
 +                            px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};
 +                }""",
-+                [shot, [[60, 880], [60, height - 40]]],
++                [shot, [[60, 880], [60, height - 40], mark_pt]],
 +            )
 +        finally:
 +            reader.close()
 +        assert got["size"][1] > height - 40, got["size"]  # both sample points lie inside the screenshot
-+        above, below = got["px"]
++        above, below, mark = got["px"]
++        assert max(abs(a - b) for a, b in zip(above[:3], mark[:3], strict=True)) > 60, (
++            "the reader returns the same colour for different points",
++            above,
++            mark,
++        )
 +        assert above[3] == below[3] == 255, ("not opaque", above, below)  # opaque: the PNG's own colours
 +        assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
 +            "sidebar and strip differ",
@@ -384,15 +396,17 @@ index 88e8c3f..59c7de7 100644
 +        )
  
 diff --git a/versions.md b/versions.md
-index f0e3aef..ef18016 100644
+index f0e3aef..939bb45 100644
 --- a/versions.md
 +++ b/versions.md
-@@ -53,2 +53,15 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
+@@ -53,2 +53,17 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
  
 +### Browser tests (optional, a separate lock)
 +`requirements-browser.in` lists one direct pin: `playwright==1.63.0`. Two lock files made with uv 0.11.32, each with hashes and each held to the pins of the matching development lock (`-c`), so installing it after the development lock changes no development pin: `requirements-browser.txt` (`uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt`) and `requirements-browser-win.txt` (the same with `--python-version 3.13 --python-platform windows`, `-c requirements-dev-win.txt` and `-o requirements-browser-win.txt`). `--exclude-newer` ignores any release uploaded after that date, so the same command gives the same lock later. Install: `pip install --require-hashes -r requirements-browser.txt` after `requirements-dev.txt`. The checks in `.github/workflows/lint.yml` do not install it (no browser job yet).
 +
 +Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So the bot's check of dependencies for known vulnerabilities no longer reads these two files; it still reads `requirements-browser.in`, which names `playwright==1.63.0`, but not the three packages that only the lock lists (greenlet, pyee; typing-extensions is also in the development lock).
++
++Interim state of the secret-scan allowance for the browser lock files: the allowance in `.gitleaks.toml` accepts a 64-character hash line in a file named `requirements-browser.txt` or `requirements-browser-win.txt` in any folder, because the secret scan in `tests/test_hygiene.py` still passes absolute paths and cannot tell the repository root from a sub-folder. So today `gitleaks` does not report a planted hash in `docs/requirements-browser.txt`; the second check in the same test (the pattern list minus `exceptions.txt`, which is root-anchored) does report it. Follow-up, owned by the person who applies the secret-scan patch (`triage/codeant2-gitleaks.patch`, which makes the scan root-relative): after that patch is applied, change the `paths =` line of the browser-lock block in `.gitleaks.toml` to `paths = ['''^requirements-browser(-win)?\.txt$''']`. Do not change it earlier: with today's absolute-path scan the real lock files would then be reported (1051 findings were measured).
 +
 +| Package | Version | Licence (the package's own metadata) | Used for |
 +|---|---|---|---|

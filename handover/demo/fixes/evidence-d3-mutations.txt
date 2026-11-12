@@ -1,0 +1,117 @@
+# evidence-d3-mutations (assembled by 8e from builder 8d's /tmp/work/l8d-mut.out)
+Real values: page height 1436 px at width 1100; guard 'assert height - 40 > 900'; mark pixel at [24,37]: [26,89,145] light, [47,118,182] dark; channel diff from the rail pixel must be > 60; unmutated run: 2 passed.
+---- l8d-mut.sh ----
+set -u
+cd /tmp/work/l8d-tree
+export PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers PATH=/opt/node22/bin:$PATH
+T=tests/test_portal_lead_pages.py; C=src/lead_desk/portal/app.css
+cp $T /tmp/work/l8d-T.orig; cp $C /tmp/work/l8d-C.orig
+sha256sum $T $C
+run(){ echo "\$ python -m pytest -q --no-header -p no:cacheprovider $T -k sidebar_column"; /tmp/work/l8d-venv/bin/python -m pytest -q --no-header -p no:cacheprovider $T -k sidebar_column > /tmp/work/l8d-run.tmp 2>&1; grep -E '^E   ' /tmp/work/l8d-run.tmp | cut -c1-260 | head -8; tail -1 /tmp/work/l8d-run.tmp; }
+restore(){ cp /tmp/work/l8d-T.orig $T; cp /tmp/work/l8d-C.orig $C; cmp /tmp/work/l8d-T.orig $T && cmp /tmp/work/l8d-C.orig $C && echo "restored: cmp identical (test and css)"; }
+echo "## base (final test, real page)"; run
+echo "## M1 guard 1: the page height is 920 (the value at which point 2 would equal the rail's last row 880): line 'height = ...' inserted after the evaluate"
+python3 - <<'P'
+p='tests/test_portal_lead_pages.py'; s=open(p).read()
+s=s.replace('        assert height > 900, height','        height = 920\n        assert height > 900, height',1); open(p,'w').write(s)
+P
+diff -u /tmp/work/l8d-T.orig $T | grep '^[+-]' ; run; restore
+echo "## M2 tolerance impossible: '<= 6' changed to '< 0'"
+sed -i 's/for a, b in zip(above\[:3\], below\[:3\], strict=True)/for a, b in zip(above[:3], below[:3], strict=True)/; s/abs(a - b) <= 6 for/abs(a - b) < 0 for/' $T
+diff -u /tmp/work/l8d-T.orig $T | grep '^[+-]'; run; restore
+echo "## M3 accent strip: the three .shell gradients (lines 164, 372, 617) painted with var(--accent) instead of the rail colour"
+sed -i '164s/var(--surface) 239px/var(--accent) 239px/; 372s/var(--rail-bot) 239px/var(--accent) 239px/; 617s/var(--rail-bot) 207px/var(--accent) 207px/' $C
+diff -u /tmp/work/l8d-C.orig $C | grep '^[+-]' | cut -c1-200; run; restore
+echo "## M4 guard 2 mutation: reader returns the FIRST sample for every point (JS: points.map(() => first))"
+python3 - <<'P'
+p='tests/test_portal_lead_pages.py'; s=open(p).read()
+a='px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};'
+assert a in s
+s=s.replace(a,'px: points.map(() => Array.from(ctx.getImageData(points[0][0], points[0][1], 1, 1).data))};'); open(p,'w').write(s)
+P
+diff -u /tmp/work/l8d-T.orig $T | grep '^[+-]' | cut -c1-200; run; restore
+echo "## M4b same mutation together with the accent CSS regression (what review c1 run D showed passing before guard 2)"
+python3 - <<'P'
+p='tests/test_portal_lead_pages.py'; s=open(p).read()
+a='px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};'
+s=s.replace(a,'px: points.map(() => Array.from(ctx.getImageData(points[0][0], points[0][1], 1, 1).data))};'); open(p,'w').write(s)
+P
+sed -i '164s/var(--surface) 239px/var(--accent) 239px/; 372s/var(--rail-bot) 239px/var(--accent) 239px/; 617s/var(--rail-bot) 207px/var(--accent) 207px/' $C
+run; restore
+echo "## final: unmutated again"; run
+---- l8d-mut.out (raw) ----
+fb107cd978916c03aad682f27bd983963c8d13038dff353319e123a726073920  tests/test_portal_lead_pages.py
+f2804f467f24f6db26ebb68e2c08860b0eeb4fa1e749b0597cef51a3ff1dbdf4  src/lead_desk/portal/app.css
+## base (final test, real page)
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+2 passed, 29 deselected in 4.10s
+## M1 guard 1: the page height is 920 (the value at which point 2 would equal the rail's last row 880): line 'height = ...' inserted after the evaluate
+--- /tmp/work/l8d-T.orig	2026-11-12 21:19:29.804524753 +0000
++++ tests/test_portal_lead_pages.py	2026-11-12 21:19:34.198436539 +0000
++        height = 920
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+E       AssertionError: ('second sample point is inside the rail', 920)
+E       assert (920 - 40) > 900
+E       AssertionError: ('second sample point is inside the rail', 920)
+E       assert (920 - 40) > 900
+2 failed, 29 deselected in 3.24s
+restored: cmp identical (test and css)
+## M2 tolerance impossible: '<= 6' changed to '< 0'
+--- /tmp/work/l8d-T.orig	2026-11-12 21:19:29.804524753 +0000
++++ tests/test_portal_lead_pages.py	2026-11-12 21:19:37.712779027 +0000
+-        assert all(abs(a - b) <= 6 for a, b in zip(above[:3], below[:3], strict=True)), (
++        assert all(abs(a - b) < 0 for a, b in zip(above[:3], below[:3], strict=True)), (
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+E       AssertionError: ('sidebar and strip differ', [246, 244, 254, 255], [246, 244, 254, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7fca74d503c0>)
+E       AssertionError: ('sidebar and strip differ', [16, 15, 32, 255], [16, 15, 32, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7fca74da8820>)
+2 failed, 29 deselected in 3.28s
+restored: cmp identical (test and css)
+## M3 accent strip: the three .shell gradients (lines 164, 372, 617) painted with var(--accent) instead of the rail colour
+--- /tmp/work/l8d-C.orig	2026-11-12 21:19:29.806349475 +0000
++++ src/lead_desk/portal/app.css	2026-11-12 21:19:41.307493511 +0000
+-.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--surface) 239px, var(--border-soft) 239px 240px, transparent 240px);
++.shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; background: linear-gradient(to right, var(--accent) 239px, var(--border-soft) 239px 240px, transparent 240px); 
+-.shell { background: linear-gradient(to right, var(--rail-bot) 239px, var(--border-soft) 239px 240px, transparent 240px); }
++.shell { background: linear-gradient(to right, var(--accent) 239px, var(--border-soft) 239px 240px, transparent 240px); }
+-  .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--rail-bot) 207px, var(--border-soft) 207px 208px, transparent 208px); }
++  .shell { grid-template-columns: 208px minmax(0, 1fr); background: linear-gradient(to right, var(--accent) 207px, var(--border-soft) 207px 208px, transparent 208px); }
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+E       AssertionError: ('sidebar and strip differ', [246, 244, 254, 255], [34, 75, 178, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f10f0234900>)
+E       AssertionError: ('sidebar and strip differ', [16, 15, 32, 255], [129, 170, 247, 255])
+E       assert False
+E        +  where False = all(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f10f0284660>)
+2 failed, 29 deselected in 3.20s
+restored: cmp identical (test and css)
+## M4 guard 2 mutation: reader returns the FIRST sample for every point (JS: points.map(() => first))
+--- /tmp/work/l8d-T.orig	2026-11-12 21:19:29.804524753 +0000
++++ tests/test_portal_lead_pages.py	2026-11-12 21:19:44.857414002 +0000
+-                            px: points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data))};
++                            px: points.map(() => Array.from(ctx.getImageData(points[0][0], points[0][1], 1, 1).data))};
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+E       AssertionError: ('the reader returns the same colour for different points', [246, 244, 254, 255], [246, 244, 254, 255])
+E       assert 0 > 60
+E        +  where 0 = max(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f0e1cb58ac0>)
+E       AssertionError: ('the reader returns the same colour for different points', [16, 15, 32, 255], [16, 15, 32, 255])
+E       assert 0 > 60
+E        +  where 0 = max(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f0e1cbb10e0>)
+2 failed, 29 deselected in 3.21s
+restored: cmp identical (test and css)
+## M4b same mutation together with the accent CSS regression (what review c1 run D showed passing before guard 2)
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+E       AssertionError: ('the reader returns the same colour for different points', [246, 244, 254, 255], [246, 244, 254, 255])
+E       assert 0 > 60
+E        +  where 0 = max(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f3a527109e0>)
+E       AssertionError: ('the reader returns the same colour for different points', [16, 15, 32, 255], [16, 15, 32, 255])
+E       assert 0 > 60
+E        +  where 0 = max(<generator object test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100.<locals>.body.<locals>.<genexpr> at 0x7f3a527f91c0>)
+2 failed, 29 deselected in 3.10s
+restored: cmp identical (test and css)
+## final: unmutated again
+$ python -m pytest -q --no-header -p no:cacheprovider tests/test_portal_lead_pages.py -k sidebar_column
+2 passed, 29 deselected in 3.38s

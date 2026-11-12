@@ -1,0 +1,82 @@
+# evidence-d6 apply matrix for docs-and-deps v4 (Thu Nov 12 21:28:41 UTC 2026); script /tmp/work/l8d-apply.sh (read-only on triage/)
+0841f36d1edf381b67a0da4793afacf834a36707
+Y=/tmp/demo-wt/handover/demo/fixes/docs-and-deps-v4.patch sha256 1c0a71c71597; triage patches present now:
+2026-11-12 20:42 triage/codeant-demo-only.patch
+2026-11-12 20:38 triage/codeant-desk.patch
+2026-11-12 20:38 triage/codeant-docs.patch
+2026-11-12 20:39 triage/codeant-gitleaks-after-docs-and-deps.patch
+2026-11-12 20:39 triage/codeant-gitleaks-after-sonar-coverage.patch
+2026-11-12 20:38 triage/codeant-gitleaks.patch
+2026-11-12 20:38 triage/codeant-n8n-proof.patch
+2026-11-12 20:38 triage/codeant-portal-log.patch
+2026-11-12 20:38 triage/codeant-scripts.patch
+2026-11-12 20:38 triage/codeant-tests-hardening.patch
+2026-11-12 21:24 triage/codeant2-demo-only.patch
+2026-11-12 21:11 triage/codeant2-desk.patch
+2026-11-12 21:05 triage/codeant2-docs.patch
+2026-11-12 21:11 triage/codeant2-fakes-body.patch
+2026-11-12 21:05 triage/codeant2-gitleaks.patch
+2026-11-12 21:05 triage/codeant2-n8n-proof.patch
+2026-11-12 21:11 triage/codeant2-portal-log.patch
+2026-11-12 21:05 triage/codeant2-scripts.patch
+2026-11-12 21:24 triage/codeant2-tests-hardening.patch
+## X = codeant2-gitleaks.patch sha256 64834a993723
+order [X Y] plain: X=0 Y=0
+order [Y X] plain: Y=0 X=0
+order [X Y] 3way: X=0 Y=0
+order [Y X] 3way: Y=0 X=0
+X alone on 0841f36: --check exit 0
+## X = codeant-gitleaks-after-sonar-coverage.patch sha256 c3ade62ddf73
+order [X Y] plain: X=1 Y=0
+order [Y X] plain: Y=0 X=1
+order [X Y] 3way: X=1 Y=0
+order [Y X] 3way: Y=0 X=1
+X alone on 0841f36: --check exit 1
+## X = semgrep-pr-diff-lead.patch sha256 74b4bb0edcdd
+order [X Y] plain: X=1 Y=0
+order [Y X] plain: Y=0 X=1
+order [X Y] 3way: X=1 Y=1
+order [Y X] 3way: Y=0 X=1
+X alone on 0841f36: --check exit 1
+
+## the case [X Y] 3way: Y=1 (X = semgrep-pr-diff-lead.patch), reproduced by 8e
+$ git apply --3way semgrep ; (X failed, exit below)
+Falling back to direct application...
+Applied patch to 'docs/tests.md' with conflicts.
+Applied patch to 'exceptions.txt' with conflicts.
+Falling back to direct application...
+Falling back to direct application...
+Falling back to direct application...
+U docs/tests.md
+U exceptions.txt
+X exit 1
+$ git status --short  (after the failed 3way)
+A  .github/workflows/semgrep.yml
+UU docs/tests.md
+UU exceptions.txt
+A  requirements-semgrep.in
+A  requirements-semgrep.txt
+A  tests/test_nosemgrep_form.py
+$ git ls-files -u | head
+100644 e5a7badd9ec0ab0a5e2a425b1bd499258b3e5fdb 1	docs/tests.md
+100644 7061956431a49026e72c10c30fb8ef81ad85ad23 2	docs/tests.md
+100644 ea88eaef2b7dab28ce2d5b844bf74eab7d799871 3	docs/tests.md
+100644 db3edfa2bd0bad82353b52063ef029db4bbfe114 1	exceptions.txt
+100644 749fb72760abd7c8a6a222581dff4a5ab7b717bb 2	exceptions.txt
+100644 66e201bcc23f67cb3af38d2c3b5a4d2c19002aa7 3	exceptions.txt
+$ git apply --3way v4
+error: docs/tests.md: does not exist in index
+error: exceptions.txt: does not exist in index
+Falling back to direct application...
+Falling back to direct application...
+Falling back to direct application...
+Applied patch to 'tests/test_hygiene.py' cleanly.
+Applied patch to 'tests/test_portal_lead_pages.py' cleanly.
+Applied patch to 'versions.md' cleanly.
+Y exit 1
+
+## Reading (8e)
+- "[X Y] 3way: X=1 Y=1" (the old c8b line 28 case) is state left by the failed semgrep patch X: its failed --3way leaves docs/tests.md and exceptions.txt UNMERGED in the index (UU, conflict markers), so the next apply of v4 refuses those two files ("does not exist in index"). It is not a conflict between v4 and the Semgrep patch on its own: [Y X] gives Y=0 (v4 applies cleanly first), and plain [X Y] gives X=1, Y=0. The Semgrep patch does not apply by itself on 0841f36 (--check exit 1): it needs its own rebase; overlap with v4 is therefore still not provable by applying.
+- codeant-gitleaks-after-sonar-coverage.patch does not apply on 0841f36 (--check exit 1; it was made for the pre-coverage state): it is the older patch, replaced by codeant2-gitleaks.patch, which applies alone and with v4 in both orders, plain and --3way.
+- No triage/codeant3-*.patch exists at this time (only triage/evidence-codeant3-sec-*.txt files): nothing to test; the codeant3 changes are not in a patch file.
+- v4 sha256 prefix 1c0a71c71597; the public pr-3-tests head is still 0841f36 (fetched by l8d-apply.sh); plain `git apply --check` of docs-and-deps.patch (v4) on a fresh clone of that head: exit 0, `git apply` exit 0, resulting tree identical to /tmp/work/l8d-tree (diff -r).

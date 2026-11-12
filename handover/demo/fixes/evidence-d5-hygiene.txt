@@ -1,0 +1,23 @@
+# evidence-d5-hygiene: final tree /tmp/work/l8d-tree (0841f36 + change), Thu Nov 12 21:27:49 UTC 2026
+0841f36d1edf381b67a0da4793afacf834a36707
+ M .codeant/configuration.json
+ M .gitleaks.toml
+ M contract.md
+ M docs/tests.md
+ M exceptions.txt
+ A requirements-browser-win.txt
+ A requirements-browser.in
+ A requirements-browser.txt
+ M tests/test_hygiene.py
+ M tests/test_portal_lead_pages.py
+ M versions.md
+8.30.1
+(first attempt failed: my own docs/tests.md line used a literal system path; reworded, rerun below)
+$ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 pytest -q -rs -p no:cacheprovider tests/test_hygiene.py
+..........                                                               [100%]
+10 passed in 9.58s
+
+$ gitleaks dir .
+[90m9:28PM[0m [32mINF[0m [1mscanned ~8832798 bytes (8.83 MB) in 548ms[0m
+[90m9:28PM[0m [33mWRN[0m [1mleaks found: 159[0m
+$ git add -N . (new files) ; gitleaks git .  (needs commits: run on scratch copy below)

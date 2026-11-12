@@ -1,5 +1,79 @@
-# evidence-d1: 8 files, no Playwright, on 0841f36 + this change. Builder 8e.
-## node ON PATH (run by 8e Thu Nov 12 21:24:35 UTC 2026)
- 21:24:35 up  2:34,  0 user,  load average: 1.22, 1.74, 1.74
+# evidence-d1: 8 files, no Playwright, on 0841f36 + this change. Builder 8e. Files: test_mode_safety test_portal_browser test_portal_lead_pages test_portal_mode test_portal_wording_and_masking test_portal_layout test_portal_look test_stage_confirm_browser
+## node ON PATH (re-run by 8e Thu Nov 12 21:26:54 UTC 2026); load before: 1.2
+$ PATH=/opt/node22/bin:/usr/bin:/bin /tmp/work/l8d-nopw/bin/python -m pytest -q -rs -p no:cacheprovider <8 files>  (cwd /tmp/work/l8d-tree, HEAD 0841f36 + change)
+......ss...............................sssss....sssssssssssssssss.....ss [ 31%]
+sssss.sssssssssssss..sss................................................ [ 63%]
+.ss..s...ssssssssssssss..........sssssssssssssssssssssss.sssssssssssssss [ 95%]
+sssssssssss                                                              [100%]
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+114 passed, 113 skipped in 83.02s (0:01:23)
+
+## node OFF PATH (raw output of builder 8d, /tmp/work/l8d-measure.out)
+# MEASURE START Thu Nov 12 21:20:14 UTC 2026
+ 21:20:14 up  2:29,  0 user,  load average: 2.50, 1.64, 1.67
 0841f36d1edf381b67a0da4793afacf834a36707
-$ PATH=/opt/node22/bin:/usr/bin:/bin /tmp/work/l8d-nopw/bin/python -m pytest -q -rs -p no:cacheprovider <8 files>
+ M .codeant/configuration.json
+ M .gitleaks.toml
+ M contract.md
+ M docs/tests.md
+ M exceptions.txt
+ A requirements-browser-win.txt
+ A requirements-browser.in
+ A requirements-browser.txt
+ M tests/test_hygiene.py
+ M tests/test_portal_lead_pages.py
+ M versions.md
+## 8 files, node ON PATH
+$ PATH=/opt/node22/bin:$PATH /tmp/work/l8d-nopw/bin/python -m pytest -q -rs -p no:cacheprovider tests/test_mode_safety.py tests/test_portal_browser.py tests/test_portal_lead_pages.py tests/test_portal_mode.py tests/test_portal_wording_and_masking.py tests/test_portal_layout.py tests/test_portal_look.py tests/test_stage_confirm_browser.py
+......ss...............................sssss....sssssssssssssssss.....ss [ 31%]
+sssss.sssssssssssss..sss................................................ [ 63%]
+.ss..s...ssssssssssssss..........sssssssssssssssssssssss.sssssssssssssss [ 95%]
+sssssssssss                                                              [100%]
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+114 passed, 113 skipped in 82.72s (0:01:22)
+## 8 files, node OFF PATH
+no node
+$ PATH=/usr/bin:/bin /tmp/work/l8d-nopw/bin/python -m pytest -q -rs -p no:cacheprovider tests/test_mode_safety.py tests/test_portal_browser.py tests/test_portal_lead_pages.py tests/test_portal_mode.py tests/test_portal_wording_and_masking.py tests/test_portal_layout.py tests/test_portal_look.py tests/test_stage_confirm_browser.py
+......ss......s........................sssss....sssssssssssssssss.....ss [ 31%]
+sssss.sssssssssssssssssssss..........s..sss..ssssss.ss.ssss............. [ 63%]
+.ss..s...ssssssssssssss..........sssssssssssssssssssssss.sssssssssssssss [ 95%]
+sssssssssss                                                              [100%]
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:109: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_mode_safety.py:174: node is not installed
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [60] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [2] tests/test_portal_lead_pages.py:488: no node
+SKIPPED [1] tests/test_portal_mode.py:42: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:52: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:59: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:235: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:307: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:320: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:336: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:417: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:440: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:448: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:458: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:470: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:483: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:532: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:552: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:637: node is not installed
+SKIPPED [3] tests/test_portal_mode.py:642: node is not installed
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+92 passed, 135 skipped in 80.64s (0:01:20)
