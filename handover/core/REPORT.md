@@ -1,4 +1,10 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+
+## 19:51Z UTC / 01:21 IST: ORDER 260 started (SonarCloud path traversal)
+- STARTED: design note `handover/design/sonar-path-traversal-design.md` pushed (one new stdlib helper `pathguard.py`; `config.confined`, `causelist._inside`, `signer.key_path` become callers; `atomic_write` gets a required `base`; NOSONAR lines removed). EGM review-loop round 1 (design + implementation-readiness reviewers) running now. Builder starts after resolve, on `core/sonar-path-traversal` from main.
+- Not verified: nothing built yet. Windows junction and `\\?\` behaviour cannot run on this Linux box.
+- Load 9: no new heavy job started; Q8c-1 b16 and stack 2 hand-backs were interim notices only (stack 2 still queued for a slot).
+
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
 ## 19:45Z (01:15 IST): status
