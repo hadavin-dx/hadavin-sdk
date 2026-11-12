@@ -1,0 +1,17 @@
+# src of this branch head against c65d9c27 (batch 13 head) and against origin/main
+## git diff --stat c65d9c27 -- src (empty = no change)
+## git diff --numstat origin/main -- src
+137	0	src/hadavin_sdk/actions/secrets_vault.py
+156	0	src/hadavin_sdk/audit/signer_vault.py
+243	0	src/hadavin_sdk/sources/kubernetes.py
+## git diff --diff-filter=M --name-only origin/main -- src (files that exist on main and changed; empty = none)
+src/hadavin_sdk/actions/secrets_vault.py
+src/hadavin_sdk/audit/signer_vault.py
+src/hadavin_sdk/sources/kubernetes.py
+## git diff --diff-filter=A --name-only origin/main -- src (files added)
+## deleted lines in src against origin/main
+0
+## grants (policy lines) of the three files: lines naming an action or resource wildcard
+src/hadavin_sdk/actions/secrets_vault.py: wildcard-star-lines=0
+src/hadavin_sdk/audit/signer_vault.py: wildcard-star-lines=0
+src/hadavin_sdk/sources/kubernetes.py: wildcard-star-lines=4

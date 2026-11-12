@@ -1,0 +1,134 @@
+.F.                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green _
+
+    def test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green():
+        """The same for a renewal of the 16 kinds alone (the names and claims keep their day): done 20 days after the
+        last decision day of the kinds, a day on which the names and claims are still inside their window."""
+        from tests.test_policy_guard import KINDS_DECIDED, pp
+    
+>       _renew_and_check(
+            "kinds",
+            pp.DECIDED,
+            KINDS_DECIDED + timedelta(days=20),
+            os.environ.get(FULL_RENEWAL_ENV) == "1",
+        )
+
+tests/test_policy_changelog.py:357: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mode = 'kinds', old_decided = datetime.date(2026, 11, 11)
+new_decided = datetime.date(2026, 12, 1), full_mutants = False
+
+    def _renew_and_check(mode: str, old_decided: date, new_decided: date, full_mutants: bool) -> None:
+        """Renew a temporary copy of the repository by the printed steps (`mode` 'both' groups or 'kinds' only) and
+        check it on the new decision day and on the day after: the page check, the policy tests, the search texts of
+        the mutants, a sample of the mutants that build their days from the live lists, and, when `full_mutants` is
+        set, the whole mutant list."""
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = Path(tmp) / "renewed"
+            copy.mkdir()
+            for name in ("src", "tests", "tools", "docs", ".github"):
+                shutil.copytree(
+                    root / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc")
+                )
+            for name in ("CHANGELOG.md", "pyproject.toml", "README.md"):
+                shutil.copy(root / name, copy / name)
+            for rel, old, new in _renewal_edits(
+                old_decided, new_decided, mode in ("both", "names"), mode in ("both", "kinds")
+            ):
+                text = (copy / rel).read_text(encoding="utf-8")
+                assert old in text, f"the renewal step does not apply: {old!r} is not in {rel}"
+                (copy / rel).write_text(text.replace(old, new), encoding="utf-8", newline="\n")
+            # the changelog sentence that gives the days the kinds fail (CHANGELOG.md; the text may wrap)
+            if mode != "names":
+                words = re.escape(kinds_sentence()).replace("\\ ", r"\s+")
+                text = (copy / "CHANGELOG.md").read_text(encoding="utf-8")
+                moved, n = re.subn(words, kinds_sentence(_renewed_kinds(new_decided)), text)
+                assert n == 1, "the changelog sentence of the kinds days was not found exactly once"
+                (copy / "CHANGELOG.md").write_text(moved, encoding="utf-8", newline="\n")
+            base_env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG", "TMPDIR")}
+    
+            def run(day: date, *args: str) -> subprocess.CompletedProcess:
+                env = dict(
+                    base_env,
+                    PYTHONPATH=os.pathsep.join([str(copy / "src"), str(copy)]),
+                    PYTHONNOUSERSITE="1",
+                    HADAVIN_POLICY_FIXED_DAY=str(day),
+                    HADAVIN_POLICY_MUTANT_RUN="1",
+                )
+                return subprocess.run(  # noqa: S603  (argv list of this test, a temporary copy, no shell)
+                    [sys.executable, *args],
+                    cwd=copy,
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=1800,
+                    check=False,
+                )
+    
+            def page(day: date, what: str) -> subprocess.CompletedProcess:
+                return run(
+                    day,
+                    "-c",
+                    "import sys; from datetime import date; from tools import policy_page as p; "
+                    f"sys.exit(p.main(['{what}'], today=date.fromisoformat('{day}')))",
+                )
+    
+            write = page(new_decided, "--write")
+            assert write.returncode == 0, f"the page was not rewritten: {write.stderr[-600:]}"
+            for day in (new_decided, new_decided + timedelta(days=1)):
+                check = page(day, "--check")
+                assert check.returncode == 0, (
+                    f"after the {mode} renewal the page check is red on {day}: "
+                    f"{(check.stdout + check.stderr)[-800:]}"
+                )
+            tests = run(
+                new_decided,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cacheprovider",
+                "-q",
+                "tests/test_policy_guard.py",
+                "tests/test_policy_changelog.py",
+                "tests/test_policy_docs.py",
+                "tests/test_notes_lines_check.py",
+                "--deselect",
+                "tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green",
+                "--deselect",
+                "tests/test_policy_changelog.py::test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green",
+                "--deselect",
+                "tests/test_policy_changelog.py::test_plant_a_renewal_of_the_names_and_claims_alone_keeps_the_tests_the_page_and_the_mutants_green",
+            )
+>           assert tests.returncode == 0, (
+                f"after the {mode} renewal the tests are red: {tests.stdout[-1500:]}"
+            )
+E           AssertionError: after the kinds renewal the tests are red:   for line in literal_day_problems(
+E                             (ROOT / rel).read_text(encoding="utf-8"), rel, DECIDED, 2 * MAX_PENDING_DAYS
+E                         )
+E                     ]
+E             >       assert not found, (
+E                         "a day of the renewal window is written in a function; build it from the decision day "
+E                         f"(`DECIDED + timedelta(days=...)`): {found}"
+E                     )
+E             E       AssertionError: a day of the renewal window is written in a function; build it from the decision day (`DECIDED + timedelta(days=...)`): ['tests/test_policy_guard.py:4360: the day 2026-12-01 is written in `test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date`']
+E             E       assert not ['tests/test_policy_guard.py:4360: the day 2026-12-01 is written in `test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date`']
+E             
+E             tests/test_policy_guard.py:5570: AssertionError
+E             =========================== short test summary info ============================
+E             FAILED tests/test_policy_guard.py::test_plant_a_new_kind_on_no_list_is_caught
+E             FAILED tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+E             FAILED tests/test_policy_guard.py::test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+E             FAILED tests/test_policy_guard.py::test_the_runner_takes_day_in_both_written_forms_once_and_not_before_the_decision_day
+E             FAILED tests/test_policy_guard.py::test_no_test_writes_a_day_of_the_renewal_window_as_a_literal_inside_a_function
+E             5 failed, 430 passed, 3 deselected in 17.11s
+E             
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['/home/user/build/B-Q8c1-b14-venv/bin/python', '-m', 'pytest', '-p', 'no:cacheprovider', '-q', ...a_day_of_the_renewal_window_as_a_literal_inside_a_function\n5 failed, 430 passed, 3 deselected in 17.11s\n', stderr='').returncode
+
+tests/test_policy_changelog.py:317: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_policy_changelog.py::test_plant_a_renewal_of_the_kinds_list_alone_keeps_the_tests_the_page_and_the_mutants_green
+1 failed, 2 passed, 6 deselected in 534.85s (0:08:54)

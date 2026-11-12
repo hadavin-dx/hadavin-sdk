@@ -1,0 +1,86 @@
+.................F...........F.FFFFF.FFFFFF............................. [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 48%]
+........................................................................ [ 64%]
+........................................................................ [ 80%]
+........................................................................ [ 96%]
+...............                                                          [100%]
+=================================== FAILURES ===================================
+E   AssertionError: a data file of another family under tests/ is not in scope (batch 14: any file under tests/ that is not Python is one unit named by its file name)
+    assert None == 'data'
+     +  where None = <function kind_of at 0x7f50c43acfe0>('tests/fixtures/other.txt')
+     +    where <function kind_of at 0x7f50c43acfe0> = nlc.kind_of
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:392: AssertionError: a data file of another family under tests/ is not in scope (batch 14: any file under tests/ that is not Python is one unit named by its file name)
+E   AssertionError: the logs of the tree are ['run.log']
+    assert frozenset({'run.log'}) == {'handover/ev...logs/run.log'}
+      
+      Extra items in the left set:
+      'run.log'
+      Extra items in the right set:
+      'handover/evidence/x/logs/run.log'
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:731: AssertionError: the logs of the tree are ['run.log']
+E   AssertionError: a changed SKIP read by pytestmark listed [], not both tests
+    assert [] == ['test_a', 'test_b']
+      
+      Right contains 2 more items, first extra item: 'test_a'
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:799: AssertionError: a changed SKIP read by pytestmark listed [], not both tests
+E   AssertionError: a changed __test__ listed [], expected both tests
+    assert [] == ['test_a', 'test_b']
+      
+      Right contains 2 more items, first extra item: 'test_a'
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:828: AssertionError: a changed __test__ listed [], expected both tests
+E   AssertionError: a changed method of a unittest.TestCase listed []
+    assert [] == ['Foo::test_m']
+      
+      Right contains one more item: 'Foo::test_m'
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:877: AssertionError: a changed method of a unittest.TestCase listed []
+E   AttributeError: module 'tools.notes_lines_check' has no attribute 'CONFTEST_CODE'
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:890: AttributeError: module 'tools.notes_lines_check' has no attribute 'CONFTEST_CODE'
+E   AssertionError: a changed pytest option of pyproject.toml listed ([], [])
+    assert ([], []) == (['pyproject.toml'], [])
+      
+      At index 0 diff: [] != ['pyproject.toml']
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:918: AssertionError: a changed pytest option of pyproject.toml listed ([], [])
+E   AssertionError: a change of a module the conftest imports by a run-time name listed [], not test_a
+    assert [] == ['test_a']
+      
+      Right contains one more item: 'test_a'
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:981: AssertionError: a change of a module the conftest imports by a run-time name listed [], not test_a
+E   AssertionError: the rule for a new unused function is not written in the docstring
+    assert 'needs no row' in 'List the tests (and the files that make tests pass or fail) that are new or changed against a base commit and check\n...is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads\nfiles; it never writes.'
+     +  where 'List the tests (and the files that make tests pass or fail) that are new or changed against a base commit and check\n...is a problem (no row). It runs `git` only, with a fixed argument list and no shell, and reads\nfiles; it never writes.' = nlc.__doc__
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:1042: AssertionError: the rule for a new unused function is not written in the docstring
+E   TypeError: Refs.__init__() takes 4 positional arguments but 5 were given
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:1048: TypeError: Refs.__init__() takes 4 positional arguments but 5 were given
+E   AssertionError: a changed helper that one mutant calls listed ([], []), not only B1
+    assert ([], []) == (['B1 n'], [])
+      
+      At index 0 diff: [] != ['B1 n']
+      Use -v to get more diff
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:1079: AssertionError: a changed helper that one mutant calls listed ([], []), not only B1
+E   AssertionError: a mutant name without a code that exists nowhere was accepted: []
+    assert ([])
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:1097: AssertionError: a mutant name without a code that exists nowhere was accepted: []
+E   TypeError: reference_problems() takes 2 positional arguments but 3 were given
+/home/user/build/b14-fb/tests/test_notes_lines_check.py:1121: TypeError: reference_problems() takes 2 positional arguments but 3 were given
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none
+FAILED tests/test_notes_lines_check.py::test_the_refs_of_a_tree_are_its_tests_its_mutant_names_and_the_files_of_its_logs_folders
+FAILED tests/test_notes_lines_check.py::test_a_constant_is_followed_through_the_value_behind_it
+FAILED tests/test_notes_lines_check.py::test_each_way_a_file_or_a_class_is_switched_off_or_changed_lists_the_tests_it_acts_on
+FAILED tests/test_notes_lines_check.py::test_a_unittest_class_and_a_file_ending_in_test_are_read_like_a_test_class_and_a_test_file
+FAILED tests/test_notes_lines_check.py::test_module_code_and_a_fixture_of_a_conftest_list_what_they_act_on
+FAILED tests/test_notes_lines_check.py::test_a_pytest_settings_file_a_root_conftest_and_a_data_file_are_units_and_a_dependency_change_is_not
+FAILED tests/test_notes_lines_check.py::test_a_file_that_imports_modules_by_a_name_worked_out_at_run_time_lists_what_it_reaches
+FAILED tests/test_notes_lines_check.py::test_a_new_function_that_nothing_uses_needs_no_row_and_the_one_that_a_test_uses_does
+FAILED tests/test_notes_lines_check.py::test_a_row_whose_unit_cell_names_a_mutant_or_a_test_that_exists_nowhere_is_a_problem
+FAILED tests/test_notes_lines_check.py::test_a_helper_that_a_mutant_call_reaches_is_part_of_the_mutant
+FAILED tests/test_notes_lines_check.py::test_a_mutant_name_without_a_code_is_checked_and_a_quote_of_a_message_is_not
+FAILED tests/test_notes_lines_check.py::test_a_log_is_found_in_the_folder_of_the_notes_that_names_it_or_by_the_end_of_its_path
+13 failed, 434 passed, 4 deselected in 9.39s
