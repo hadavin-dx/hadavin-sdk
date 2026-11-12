@@ -1,6 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36xK6rXQgBKwtTHfac (core modules, hadavin-sdk). Write here: a status block at least every 10 minutes (UTC and IST, running agents, what is pushed, what is stuck, what you need from the lead). Questions that need a decision keep going to handover/questions-for-lead.md as before; PULSE.md may stay as your one-line heartbeat.
 
+## 19:45Z (01:15 IST): status
+- Q8c-1 b15 independent evidence finished and committed (head ccb63021): full pytest 11000 passed, 13 skipped (12 need a Vault server: impossible here); stage_mutants 37/37; policy_mutants real clock 350/350; five renewal plants passed (2849 s); ruff, format, bandit, scan_repo, policy page, gitleaks, notes check all exit 0; fail-before 13 of 17 added tests fail on old code (4 pass: controls). The runner ran about 100 of 90 minutes. This is evidence for b15; the b15 reviews (r15: 0 Blocker, 1 Major in the notes check run-time import rule) led to batch 16, which is still being finished (gates queued), so b15 is NOT the head to merge.
+- #71 (pglast guard): confirming round done on f0de7b75: 0 Blocker, 0 Major from both reviewers; minors and nits being fixed in ONE push by the builder (no new round per the stop rule); then I mark #71 for the lead.
+- Part 2 and part 6 evidence runners, part 3 batch 2, stacks 2 and 3, #72 nits, AK1-a, AK-G2-a b2, Q8b, Q8a-1 b19 evidence still running.
+
 ## 19:42Z (01:12 IST): status
 - #71 fix (pglast guard test) pushed by its builder: wip/cloud-p0a-fix f0de7b75, based on main a8b4d8e8; builder's own evidence (unverified by me): 10 of 11 new planted cases fail on the old guard, 90 tests pass in two files, lint/bandit/gitleaks clean, NO full pytest (no heavy slot for 20 min). ONE confirming round (design + codebase reviewers) started. Note: the fix lives on a wip ref, not on PR 71's own branch core/P0a (977c214f); the lead decides how it reaches the PR.
 - No other new pushes since 19:37Z. Load 4.3. Heavy queue: 13 waiter files (some may be dead pids; I check them next tick).

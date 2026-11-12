@@ -6,7 +6,9 @@ Own Postgres 16.15 on a private port. Raw logs: `/home/user/build/evidence-raw/Q
 ## Not run / deviations (first)
 - 12 tests skipped in the full run need a real Vault server (`HADAVIN_TEST_VAULT_ADDR` not set here; CI sets it). Not run here. One more skip: `tests/contracts/test_llm.py:95` (Stubber).
 - `uv sync --locked --no-build` fails (`hadavin-sdk` editable has no binary distribution); I used `uv sync --locked` without `--no-build` (exit 0).
-- policy_mutants was run with the real clock only. The `--day 2026-12-11/12-12/12-13` runs and the "B15 set" run were NOT run (brief item 2 asks real clock only).
+- policy_mutants was run with the real clock only (real day 2026-11-12). The `--day 2026-12-11/12-12/12-13` runs and a separate B15-set run were NOT run (the brief asks real clock only).
+- Time: the work ran past the 90-minute box (about 100 minutes) because the renewal plants took 47 minutes after waiting for a slot.
+- `-k plant` selected 5 tests (the brief says three plants); all 5 passed.
 - Postgres cannot run as root here: I started it as the `postgres` OS user from my own folder.
 - Fail-before: the first attempt used the head `src` by mistake (venv editable install points at the head); I stopped it and reran with `PYTHONPATH` = old `src`. Only the rerun is recorded.
 
@@ -23,6 +25,7 @@ Own Postgres 16.15 on a private port. Raw logs: `/home/user/build/evidence-raw/Q
 | 4d scan_repo | `python tools/scan_repo.py` | 0 | no output problems |
 | 4e policy page | `python tools/policy_page.py --check` | 0 | no problems printed |
 | 4f gitleaks | `gitleaks git --redact --log-opts origin/main..HEAD` | 0 | `no leaks found` |
+| 6 Renewal plants | `HADAVIN_POLICY_FULL_RENEWAL_RUN=1 heavy.sh pytest tests/test_policy_changelog.py -k plant` | 0 | `5 passed, 4 deselected in 2849.66s` (47 min, of which a part was heavy.sh queue wait is not separated) |
 | 5 Notes check | `python tools/notes_lines_check.py --auto a50d5b2e --head HEAD` | 0 | no problem lines |
 
 ## Fail-before detail (item 3)
