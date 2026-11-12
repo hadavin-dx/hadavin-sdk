@@ -14,3 +14,7 @@ ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd
 ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	tests/stage_mutants.py	default	0	37 of 37 good	41	2026-11-12
 ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	fail-before pathguard tests + test_k1b_cli on main a8b4d8e8 with name-only stub	4 files	1	37 failed 36 passed (test_pathguard_callers 5 passed)	10	2026-11-12
 ddf1d584c280593d4db82e81489b440fae3b876f	9a79548c419949c0bd0e501dbc8d4788834d3dd7	linux	ruff check + format --check + bandit 1.9.4 (uvx) + scan_repo + gitleaks	src tests demos tools	0	all clean	3	2026-11-12
+6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	pytest full (own PG)	-m not live and not perf	1	1 failed 10698 passed 2 skipped 28 deselected (dblink-connect: PGHOST not in PG server env; that file alone 253 passed after fix; whole suite not re-run)	520	2026-11-12
+6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	tests/stage_mutants.py	default	0	37 of 37 good	92	2026-11-12
+6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	tests/bind_mutants.py	default	0	39 of 39 good	26	2026-11-12
+6e6ae21124f5b77231c6dd1a99a11b4c4bfb1ee3	a49770b106a9bac3e7d5e18d6b107240e6e31017	linux	ruff check+format+bandit+scan_repo+gitleaks	default	0	all clean	3	2026-11-12
