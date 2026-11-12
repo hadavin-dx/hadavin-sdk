@@ -1492,3 +1492,4 @@ Heavy queue: 9 jobs for 3 slots (load 10).
 | afa3d00e7ff1aa851 | PR89 r26 evidence runner (916c71ea) | 00:22Z | ~01:20Z | 00:22Z | running | on report: resolve |
 | a5e56b1945a203c61 | PR89 r26 design reviewer (snap pr89r26-916c71ea) | 00:22Z | ~00:50Z | 00:22Z | running | save report |
 | a6ae758dd03c4aaa0 | PR89 r26 codebase reviewer | 00:22Z | ~00:50Z | 00:22Z | running | save report |
+| a246cb8eb1388b501 | Q8a-1 fix batch 9 builder (from 18741c8c, branch core/q8a-1-b9, wip/cloud-q8a1-b9) | 00:30Z | 75 min box | 00:30Z | running | check checkpoint note B-Q8a1-b9-checkpoint.md; then snapshot, EV, reviewers r9 |
