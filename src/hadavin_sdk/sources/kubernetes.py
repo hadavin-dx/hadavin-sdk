@@ -99,8 +99,10 @@ def _only_self_reviews(rule: dict[str, Any]) -> bool:
     )
 
 
-def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
-    """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only)."""
+def rules_problems(where: str, rules: list[dict[str, Any]]) -> list[str]:
+    """Problems in one namespace's ``resourceRules`` from a SelfSubjectRulesReview (empty: read-only). `where` is
+    the position label of the configured namespace (for example "namespace entry 2"); the namespace text itself is
+    configuration and is never put in a message."""
     out: list[str] = []
     for rule in rules:
         # The API answers lists of strings; anything else (a string `"create"`) proves nothing.
@@ -109,21 +111,21 @@ def rules_problems(namespace: str, rules: list[dict[str, Any]]) -> list[str]:
             or not all(isinstance(x, str) for x in rule.get(k) or [])
             for k in ("verbs", "resources", "apiGroups")
         ):
-            out.append(f"namespace {namespace}: a rule is malformed, so the scope is not proven")
+            out.append(f"{where}: a rule is malformed, so the scope is not proven")
             continue
         verbs = set(rule.get("verbs") or [])
         resources = set(rule.get("resources") or [])
         any_verb = "*" in verbs
         harmless = verbs == {"create"} and _only_self_reviews(rule)
         if (bad := sorted(verbs & _WRITE_VERBS)) and not harmless:
-            out.append(f"namespace {namespace}: write verb {', '.join(bad)} on {sorted(resources)}")
+            out.append(f"{where}: write verb {', '.join(bad)} on {sorted(resources)}")
         if any_verb:
-            out.append(f"namespace {namespace}: wildcard verb on {sorted(resources)}")
+            out.append(f"{where}: wildcard verb on {sorted(resources)}")
         hit = sorted(t for t in _SHELL_RESOURCES if any(covers(r, t) for r in resources))
         if hit and verbs:
-            out.append(f"namespace {namespace}: access to {', '.join(hit)} ({sorted(verbs)})")
+            out.append(f"{where}: access to {', '.join(hit)} ({sorted(verbs)})")
         if any(covers(r, "secrets") for r in resources) and (any_verb or verbs & _READ_VERBS):
-            out.append(f"namespace {namespace}: read access to secrets")
+            out.append(f"{where}: read access to secrets")
     return out
 
 
@@ -326,7 +328,8 @@ class KubernetesSource:
 
     def _probe_scope(self) -> list[str]:
         problems: list[str] = []
-        for ns in self.namespaces:
+        for i, ns in enumerate(self.namespaces, start=1):
+            where = f"namespace entry {i}"  # position, not the configured text
             review = self._get(
                 "/apis/authorization.k8s.io/v1/selfsubjectrulesreviews",
                 "k8s.rules_review",
@@ -340,14 +343,14 @@ class KubernetesSource:
             status = review.get("status")
             if not isinstance(status, dict) or not isinstance(status.get("resourceRules"), list):
                 problems.append(
-                    f"namespace {ns}: the rules review answered without status.resourceRules (not proven)"
+                    f"{where}: the rules review answered without status.resourceRules (not proven)"
                 )
                 continue
             if status.get(
                 "evaluationError"
             ):  # the review could not evaluate every rule: not proven
-                problems.append(f"namespace {ns}: the rules review reported an evaluation error")
+                problems.append(f"{where}: the rules review reported an evaluation error")
             if status.get("incomplete"):
-                problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")
-            problems += rules_problems(ns, status["resourceRules"])
+                problems.append(f"{where}: the rules review is incomplete, scope not proven")
+            problems += rules_problems(where, status["resourceRules"])
         return problems

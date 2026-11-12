@@ -2997,6 +2997,8 @@ def test_a_module_whose_pin_does_not_match_prints_the_real_digest_prefix_and_nev
         with pytest.raises(ConfigError) as err:
             tools_mod.load_tool_module("pinmod", {"pinmod": pin})
         text = _everything_shown(err.value)
+        if pin != "ab" * 32:  # a real SHA-256 pin prints its first 12 characters by design
+            assert pin[:12] not in text, "the first characters of a pasted pin are printed"
         assert "the pin says " + ("<not shown>" if pin != "ab" * 32 else "abababababab...") in text
         assert pin not in text and MARK not in text
 
@@ -3025,8 +3027,8 @@ def test_a_vault_environment_variable_name_and_field_are_pattern_checked_and_nev
         provider = make("secrets", settings)
         with pytest.raises(ConfigError) as err:
             provider.get("a_name")
+        assert envname not in _everything_shown(err.value), "the unset variable name is printed"
         assert str(err.value) == "secrets vault: the configured environment variable is not set"
-        assert envname not in _everything_shown(err.value)
 
 
 def test_a_vault_secret_name_and_field_are_not_quoted_in_vault_refusals(monkeypatch):
@@ -3062,7 +3064,86 @@ def test_an_alias_model_id_is_refused_without_quoting_the_model_id():
     with pytest.raises(ConfigError) as err:
         pinned(routes)
     assert "route default: model_id is an alias that moves to new models" in str(err.value)
-    assert MARK not in _everything_shown(err.value)
+    assert MARK not in _everything_shown(err.value), "the model id of the route is printed"
+
+
+_K8S_ROWS = (
+    # (the cluster's answer for the namespace, the sentence said about that entry); one row per message site
+    (
+        {"resourceRules": [{"verbs": ["get"], "resources": ["pods"]}, {"verbs": "get"}]},
+        "a rule is malformed, so the scope is not proven",
+    ),
+    (
+        {"resourceRules": [{"verbs": ["delete"], "resources": ["pods"]}]},
+        "write verb delete on ['pods']",
+    ),
+    ({"resourceRules": [{"verbs": ["*"], "resources": ["pods"]}]}, "wildcard verb on ['pods']"),
+    (
+        {"resourceRules": [{"verbs": ["get"], "resources": ["pods/exec"]}]},
+        "access to pods/exec (['get'])",
+    ),
+    ({"resourceRules": [{"verbs": ["get"], "resources": ["secrets"]}]}, "read access to secrets"),
+    ({"incomplete": False}, "the rules review answered without status.resourceRules (not proven)"),
+    (
+        {"resourceRules": [], "evaluationError": "x"},
+        "the rules review reported an evaluation error",
+    ),
+    ({"resourceRules": [], "incomplete": True}, "the rules review is incomplete, scope not proven"),
+)
+
+
+def test_a_configured_kubernetes_namespace_is_never_printed_only_its_position():
+    """C1 of round 9: `options.namespaces` of a tool manifest is configuration text, so no scope-probe message says it
+    (a pasted word is a legal namespace name). Every message site of the probe is a row: the entry is said by its
+    position, and neither the word nor a secret-shaped value is in the message, the cause or the traceback."""
+    import json
+
+    from hadavin_sdk.sources import scope_problems
+    from hadavin_sdk.sources.kubernetes import KubernetesSettings, KubernetesSource
+
+    for status, said in _K8S_ROWS:
+        asked = []
+
+        def fetch(
+            method,
+            url,
+            *,
+            operation,
+            body=None,
+            headers=None,
+            max_bytes=None,
+            _s=status,
+            _asked=asked,
+        ):
+            _asked.append(json.loads(body)["spec"]["namespace"])
+            return json.dumps({"status": _s})
+
+        settings = KubernetesSettings(
+            api_url="https://k8s.example.invalid", namespaces=("calm-ns", PLAIN, PW)
+        )
+        problems = KubernetesSource(fetch, settings).probe_scope()
+        assert asked == [
+            "calm-ns",
+            PLAIN,
+            PW,
+        ]  # each namespace is still asked about, by its real name
+        text = "\n".join(problems)
+        assert "swordfish" not in text, f"a configured namespace is printed: {text}"
+        assert PW not in text, f"a configured namespace is printed: {text}"
+        assert "calm-ns" not in text, f"a configured namespace is printed: {text}"
+        for i in (1, 2, 3):
+            assert f"namespace entry {i}: {said}" in problems, (i, said, problems)
+        fed = "; ".join(scope_problems({"k8s": KubernetesSource(fetch, settings)}, {}))
+        assert "swordfish" not in fed and PW not in fed, f"a configured namespace is printed: {fed}"
+
+
+def test_the_rules_problems_label_is_said_as_given_and_holds_no_namespace():
+    from hadavin_sdk.sources.kubernetes import rules_problems
+
+    found = rules_problems(
+        "namespace entry 4", [{"verbs": ["patch"], "resources": ["deployments"]}]
+    )
+    assert found == ["namespace entry 4: write verb patch on ['deployments']"], found
 
 
 def test_a_tool_call_names_no_operation_host_or_method_the_manifest_did_not_define():
@@ -3093,7 +3174,7 @@ def test_a_source_and_a_tool_secret_are_named_only_by_the_loaded_filter(cfg_dir)
     assert MARK not in _everything_shown(err.value)
 
 
-def test_the_platform_secret_probe_shows_a_configured_name_and_hides_a_pasted_one():
+def test_the_platform_secret_probe_names_a_secret_by_position_and_never_by_name():
     from hadavin_sdk.backends import platform_secrets as ps
 
     class Missing:
@@ -3136,7 +3217,7 @@ CONFIG_DERIVED = frozenset(
     {
         "name", "agent_id", "action", "key", "source", "module", "route", "field", "auth_mount",
         "token_env", "secret_id_env", "jwt_path", "role_id", "host", "operation", "method", "pin",
-        "named", "ca_file", "ca_cert", "model_id", "path", "root", "case", "input_ref", "ref",
+        "named", "ca_file", "ca_cert", "model_id", "path", "root", "case", "input_ref", "ref", "namespace", "ns",
     }
 )  # fmt: skip
 CONFIG_DERIVED_ATTRS = frozenset(
@@ -3149,7 +3230,7 @@ _FILTERED = "the variable was set from shown_name / _named on an earlier line"
 _CODE_NAME = "the spelling is a constant or a keyword of the code, not a value read from a file"
 _NOT_TEXT = "a URL, a dictionary key or a file name being built, never put in a message"
 _OPERATOR = "an operator's own command-line key file (not a value read from the configuration file)"
-_HOST = "a hostname that spec_problems / safe_url already refused unless it is a bare hostname"
+_HOST = "a hostname the code already resolved or tried to reach: a bare hostname is a defining id (open question q-q8a1-hide-ids), and a login or path in it was refused earlier by safe_url"
 _REQUEST = "text of a request or of the code's own data, not of the configuration"
 GUARD_ALLOWED = {
     ("app.py", "f'configure backends.{name} in pilot and prod'"): _CODE_NAME,
@@ -3188,6 +3269,8 @@ GUARD_ALLOWED = {
     ("runtime/agent_loop.py", "_LOG.warning('run %s: audit write for card %s failed', run.run_id, operation)"): "operation is an audit operation name written in code",
     ("runtime/tick.py", "_LOG.error('step=%s error_kind=%s message=%s', step.name, type(exc).__name__, _message(exc))"): "the step name is written in code",
     ("runtime/tick.py", "_LOG.error('step=%s error_kind=%s message=tick_state not saved', step.name, type(exc).__name__)"): "the step name is written in code",
+    ("sources/kubernetes.py", "f'/apis/apps/v1/namespaces/{ns}/deployments'"): _NOT_TEXT,
+    ("sources/kubernetes.py", "f'/api/v1/namespaces/{ns}/events'"): _NOT_TEXT,
     ("sources/kubernetes.py", "f\"deployment/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
     ("sources/kubernetes.py", "f\"event/{scope}/{meta.get('name', '?')}\""): "the name of an object in the cluster's own reply, used as an evidence label",
     ("store/memory.py", "NotFound(key)"): _REQUEST,
@@ -3614,7 +3697,7 @@ def test_the_runtime_names_an_agent_and_an_action_only_through_the_filter(tmp_pa
     assert long_id not in _everything_shown(err.value)
 
 
-def test_every_secret_provider_says_no_name_for_a_plain_word_and_imports_no_name_filter():
+def test_every_secret_provider_says_no_name_for_a_plain_word_and_imports_no_name_filter(tmp_path):
     """Issue 2 of round 8 for each provider kind: a plain lower-case word pasted into a secret name field is never
     quoted (the word-like test would let it through, and the loaded-ids test is vacuous for secret names)."""
     from tests.contracts.kinds import KINDS, builtin, secrets_cloud, secrets_neutral  # noqa: F401 - they register the kinds
@@ -3628,7 +3711,9 @@ def test_every_secret_provider_says_no_name_for_a_plain_word_and_imports_no_name
         "env",
     } <= set(KINDS["secrets"]), sorted(KINDS["secrets"])
     for kind, make_kind in sorted(KINDS["secrets"].items()):
-        provider = make_kind(Path(__import__("tempfile").mkdtemp()), {"known": "v" + "-value"})
+        folder = tmp_path / kind
+        folder.mkdir()
+        provider = make_kind(folder, {"known": "v" + "-value"})
         try:
             provider.get(PLAIN)
         except KeyError:  # the in-memory test double
@@ -3665,7 +3750,7 @@ def test_a_golden_case_that_cannot_be_redacted_is_named_by_position_not_by_its_v
     with pytest.raises(ConfigError) as err:
         evals.gate(reg, Never(), "test-agent")
     text = str(err.value)
-    assert "swordfish" not in text, text
+    assert "swordfish" not in text, "a golden case is named by its values"
     assert text.startswith("golden case 1 (the non-empty line of that number in the golden file)")
     assert "swordfish" not in _everything_shown(err.value)
 
