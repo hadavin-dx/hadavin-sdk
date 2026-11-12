@@ -34,6 +34,7 @@ BATCH = "test_q8b_batch2.py"
 BATCH3 = "test_q8b_batch3.py"
 BATCH4 = "test_q8b_batch4.py"
 BATCH6 = "test_q8b_batch6.py"
+BATCH7 = "test_q8b_batch7.py"
 # What the mutation copy holds besides src: a test reads CHANGELOG.md from the repo root (tests/test_q8b_batch3.py checks this list).
 EXTRA_DIRS = ("tests", "tools", "demos", "docs")
 EXTRA_FILES = ("CHANGELOG.md",)
@@ -52,6 +53,16 @@ def mutant(name, file, old, new, test_file, killer, expect):
         only_test=killer,
         pinned=f"tests/{test_file.removesuffix('.py')}::{killer}",
     )
+
+
+def test_file_mutant(name, file, old, new, test_file, killer, expect):
+    """A mutant of a file under tests/ (a test helper or corpus, not product code): the same pin and rules as `mutant`."""
+    return Mutant(
+        name, file, old, new, expect,
+        test_file="tests/" + test_file,
+        only_test=killer,
+        pinned=f"tests/{test_file.removesuffix('.py')}::{killer}",
+    )  # fmt: skip
 
 
 M = [
@@ -145,7 +156,7 @@ M = [
     mutant("M26 address read without any key guard", REDACT,
         '    + _NOT_GLUED_KEY\n    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + _NOT_GLUED_KEY\n    + r"[A-Za-z]){2,}(?:\\b|(?="\n    + GLUED_KEY\n    + "))"', '    + r"[A-Za-z0-9.\\-]){1,255}\\.(?:"\n    + r"[A-Za-z]){2,}\\b"',
         BATCH, "test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked", "glued to a key is readable"),
-    mutant("M27 Authorization boundary back", REDACT, 'r"(?i)authorization[\\"\']?\\s*[:=]', 'r"(?i)\\bauthorization[\\"\']?\\s*[:=]',
+    mutant("M27 Authorization boundary back", REDACT, 'r"(?i)authorization[\\"\']?\\s*[:=]\\s*[\\"\']?(?:[a-z]+\\s+)?("', 'r"(?i)\\bauthorization[\\"\']?\\s*[:=]\\s*[\\"\']?(?:[a-z]+\\s+)?("',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
     mutant("M28 ARN guard case-sensitive", REDACT, '    r"(?:(?i:(?![\\w.\\-*+@]{0,"', '    r"(?:(?:(?![\\w.\\-*+@]{0,"',
         GLUED_TESTS, "test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote", "glued to a credential key is readable"),
@@ -219,7 +230,14 @@ M = [
         BATCH4, 'test_j2_a_key_with_any_word_in_front_is_masked_in_a_record_and_as_text', 'is shown as written in a record'),
     mutant('M60 ordinary words ignored', RED, 'or (w.endswith(BARE_ENDINGS) and w not in ORDINARY_WORDS)', 'or (w.endswith(BARE_ENDINGS))',
         BATCH4, 'test_j2_ordinary_words_stay_readable_in_a_record', 'an ordinary word is taken for a credential key'),
-    mutant('M64 quoted rules lose the bare prefixes', REDACT, 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"', 'QUOTED_KEY_WORDS = KEY_WORDS',
+    mutant('M64 quoted rules lose the bare prefixes', REDACT, r'''QUOTED_KEY_WORDS = (
+    KEY_WORDS
+    + "|"
+    + _not_after_ordinary_word("pass")
+    + "pass|"
+    + _not_after_ordinary_word("session")
+    + "session|authorization"
+)''', 'QUOTED_KEY_WORDS = KEY_WORDS',
         BATCH4, 'test_j1_a_key_the_older_rule_masked_only_by_a_bare_prefix_is_still_masked', 'a bare prefix key stayed readable'),
     mutant('M65 a new key is dropped from the one list', REDACT, 'r"pass[_\\-]?code", ', '',
         BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
@@ -238,8 +256,8 @@ M = [
     mutant('M70 a semicolon in front of a key does not end the value', REDACT, r'''|;(?=[^\s\"';,&])(?![A-Za-z_][\w.\-]*[\"']?\s*[:=]))"''', r'''|;(?=[^\s\"';,&]))"''',
         BATCH4, 'test_j3_a_semicolon_in_front_of_a_key_a_space_or_the_end_stops_the_value', "expected 'Password=<SECRET_1>;Server=db1'"),
     mutant('M71 flag prefix joined by hyphens only', REDACT, r'''FLAG_NAME = (
-    r"(?:[a-z0-9]+[_\-]){0,2}"''', r'''FLAG_NAME = (
-    r"(?:[a-z0-9]+\-){0,2}"''',
+    r"(?:[a-z0-9]+[_\-]){0,3}"''', r'''FLAG_NAME = (
+    r"(?:[a-z0-9]+\-){0,3}"''',
         BATCH4, 'test_j4_a_flag_with_an_underscore_or_a_hyphen_masks_its_value', 'a flag value is readable'),
     mutant('M72 flag words are a hand list', REDACT, r'''[a for a in KEY_ALTERNATIVES if "(?=" not in a] + list(FLAG_ONLY_WORDS)''',
         r'''[r"password", r"passwd", r"pwd", r"secret", r"token", r"api[_\-]?key", "pass"]''',
@@ -253,10 +271,10 @@ M = [
         BATCH4, 'test_j1_the_d1_keys_are_masked_in_every_style_on_every_path', 'stayed readable'),
     mutant('M76 session cookie rule loses the jar pairs', REDACT, '    + "+(?:"\n    + _JAR_PAIR\n    + "|[ \\t]+(?!"', '    + "+(?:"\n    + "|[ \\t]+(?!"',
         BATCH4, 'test_j1_a_session_cookie_keeps_its_whole_jar_masked', 'a pair of the cookie jar is readable'),
-    mutant('M77 cookie assignment rule loses the jar pairs', REDACT, r'''([^\s;,\"'\[{][^\s;,\"']*(?:;\s*[^\s;=]+=[^\s;]*)*)"
+    mutant('M77 cookie assignment rule loses the jar pairs', REDACT, r'''([^\s;,\"'\[{][^\s;,\"']*(?:;\s*[^\s;=]+=[^\s;]*|;[^\s;,\"'=]+(?![^\s;,\"']*=))*)"
         ),
     ),
-    # `session_cookie=`''', r'''([^\s;,\"'\[{][^\s;,\"']*)"
+    # `session_cookie=`''', r'''([^\s;,\"'\[{][^\s;,\"']*(?:;[^\s;,\"'=]+(?![^\s;,\"']*=))*)"
         ),
     ),
     # `session_cookie=`''',
@@ -267,7 +285,9 @@ M = [
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"][^\"]{0,255})\""''', r'''(?:" + QUOTED_KEY_WORDS + r")"
             r"[\w.\-]{0,20}[\"']?\s*[:=]\s*\"([^\"\s]+)[^\"]*\""''',
         BATCH4, 'test_j1_every_key_the_older_rule_masked_is_still_masked', 'the older rule masks it and this one does not'),
-    mutant('M80 authorization is no bare prefix of the quoted rules', REDACT, 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session|authorization"', 'QUOTED_KEY_WORDS = KEY_WORDS + "|pass|session"',
+    mutant('M80 authorization is no bare prefix of the quoted rules', REDACT, r'''    + "session|authorization"
+)''', r'''    + "session"
+)''',
         BATCH4, 'test_j1_a_quoted_value_after_authorization_is_masked_whole', 'a word of the quoted value is readable'),
     mutant('M81 flags lose the glued ending branch', REDACT, '    + "|".join(BARE_ENDINGS)\n', '    + "zzqx"\n',
         BATCH4, 'test_j4_a_flag_with_a_word_glued_in_front_of_pass_or_auth_masks_its_value', 'a flag value is readable'),
@@ -281,18 +301,67 @@ M = [
         BATCH4, 'test_j4_names_that_are_no_credential_stay_readable', 'a name that is no credential was masked'),
     mutant('M86 a comma always ends an unquoted value', REDACT, r'''|,(?!\s*[A-Za-z_][\w.\-]*\s*[:=])|;(?=''', r'''|;(?=''',
         BATCH4, 'test_j6_the_comma_pin_matches_the_code', 'a comma ended the value'),
-    mutant('M87 a bearer key is not a key', REDACT, 'r"auth(?=[\\"\']?\\s*[:=])", r"session(?=[\\"\']?\\s*[:=])", r"bearer(?=[\\"\']?\\s*[:=])",', 'r"auth(?=[\\"\']?\\s*[:=])", r"session(?=[\\"\']?\\s*[:=])",',
+    mutant('M87 a bearer key is not a key', REDACT, '_bare_word("auth"), _bare_word("session"), _bare_word("bearer"),', '_bare_word("auth"), _bare_word("session"),',
         BATCH4, 'test_j6_the_whole_line_after_a_bearer_key_is_masked', 'a word after a bearer key is readable'),
     mutant('M88 a session cookie value stops at an ampersand', REDACT, '_COOKIE_VALUE_CHAR = r"(?:" + _VALUE_CHAR + "|&)"', '_COOKIE_VALUE_CHAR = r"(?:" + _VALUE_CHAR + ")"',
         BATCH6, 'test_k1_a_session_cookie_value_keeps_the_part_after_an_ampersand_masked', 'the part after the ampersand is readable'),
     mutant('M89 the cookie rule stops at a bracket again', REDACT, r"""([^\s;,\"'\[{][^\s;,\"']*(?:;""", r"""([^\s;,\"'\[{]+(?:;""",
         BATCH6, 'test_k1_a_cookie_key_value_with_a_bracket_after_its_first_character_is_masked_whole', 'a bracket ended the cookie value'),
-    mutant('M90 the record walk keeps its own ordinary words', RED, 'from hadavin_sdk.guard.redact import BARE_ENDINGS, ORDINARY_WORDS', 'from hadavin_sdk.guard.redact import BARE_ENDINGS\nORDINARY_WORDS = frozenset(["bypass"])',
+    mutant('M90 the record walk keeps its own ordinary words', RED, 'from hadavin_sdk.guard.redact import BARE_ENDINGS, COUNT_WORDS_BEFORE_TOKENS, ORDINARY_WORDS', 'from hadavin_sdk.guard.redact import BARE_ENDINGS, COUNT_WORDS_BEFORE_TOKENS\nORDINARY_WORDS = frozenset(["bypass"])',
         BATCH6, 'test_d6_the_record_walk_reads_the_one_list_of_ordinary_words_and_endings', 'the record walk keeps its own list of ordinary words'),
     mutant('M91 a glued flag is read through an ordinary word', REDACT, '    + _FLAG_NOT_ORDINARY\n    + "(?:[a-z0-9]{0,40}(?:"', '    + "(?:[a-z0-9]{0,40}(?:"',
         BATCH6, 'test_d6_a_flag_with_an_ordinary_word_stays_readable', 'an ordinary word was masked as a flag'),
-    mutant('M92 the bare words are no flag names', REDACT, '    "bearer",\n    "credentials",\n)', ')',
+    mutant('M92 the bare words are no flag names', REDACT, '    "bearer",\n    "credentials",\n    "cookie",\n)', ')',
         BATCH6, 'test_d6_a_flag_with_a_word_glued_in_front_masks_its_value_like_the_record_key', 'a glued flag value is readable'),
+    # ---- batch 7 (round 7): digits behind a credential word, plurals, cookie keys, authorization schemes, ordinary words ----
+    mutant('M93 a bare credential word takes no digits behind it', REDACT, 'return guard + word + r"(?=[0-9]{0,9}[\\"\']?\\s*[:=])"', 'return guard + word + r"(?=[\\"\']?\\s*[:=])"',
+        BATCH7, 'test_b7_1_a_credential_word_with_digits_behind_it_is_masked_on_every_path_and_form', 'a value behind a credential key with digits is readable'),
+    mutant('M94 a flag name takes no digits behind it', REDACT, '    + _PLURAL_TOKENS\n    + ")[0-9]*"\n', '    + _PLURAL_TOKENS\n    + ")"\n',
+        BATCH7, 'test_b7_1_a_credential_word_with_digits_behind_it_is_masked_on_every_path_and_form', 'a value behind a credential key with digits is readable'),
+    mutant('M95 a flag word takes no plural s', REDACT, '    + ")(?:s(?<!tokens))?|[a-z0-9]{0,40}(?:"\n', '    + ")|[a-z0-9]{0,40}(?:"\n',
+        BATCH7, 'test_b7_2_a_plural_credential_flag_masks_its_value_on_every_path', 'a plural credential key leaves a value readable'),
+    mutant('M96 a plural tokens flag after a non-count word is no flag', REDACT, '    + ")|"\n    + _PLURAL_TOKENS\n    + ")[0-9]*"\n', '    + "))[0-9]*"\n',
+        BATCH7, 'test_b7_2_the_plural_rule_follows_the_record_walk_for_tokens_after_a_non_count_word', 'a plural tokens flag after a non-count word is readable'),
+    mutant('M97 a count word before tokens is no exception', REDACT, '_PLURAL_TOKENS = r"(?<=[a-z0-9][_\\-])" + _COUNT_BEFORE_TOKENS + "tokens"', '_PLURAL_TOKENS = r"(?<=[a-z0-9][_\\-])" + "tokens"',
+        BATCH7, 'test_b7_2_a_count_of_tokens_stays_readable_as_a_flag', 'a count of tokens was masked as a flag'),
+    mutant('M98 a plural of the word token is read as a flag word', REDACT, '    + ")(?:s(?<!tokens))?|[a-z0-9]{0,40}(?:"\n', '    + ")(?:s)?|[a-z0-9]{0,40}(?:"\n',
+        BATCH7, 'test_b7_2_a_count_of_tokens_stays_readable_as_a_flag', 'a count of tokens was masked as a flag'),
+    mutant('M99 cookie is no credential word of the record walk', RED, '        "cookie",\n        "cookies",\n    ]\n)\nGLUED_ENDINGS', '    ]\n)\nGLUED_ENDINGS',
+        BATCH7, 'test_b7_3_a_record_key_named_for_a_cookie_is_masked_whatever_its_letter_case', 'a cookie record key is not sensitive'),
+    mutant('M100 cookie is no flag word', REDACT, '    "credentials",\n    "cookie",\n)', '    "credentials",\n)',
+        BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
+    mutant('M101 the cookie flag rule reads one letter case', REDACT, 'r"(?<![\\w-])(?:(?i:--(?:[a-z0-9]+[_\\-]){0,2}cookies?)|-b)(?:\\s+|=)', 'r"(?<![\\w-])(?:--cookie|-b)(?:\\s+|=)',
+        BATCH7, 'test_b7_3_a_cookie_key_in_text_is_masked_on_every_path_in_every_letter_case', 'a cookie key in text leaves a value readable'),
+    mutant('M102 a word glued behind a semicolon is no part of a cookie value', REDACT, '|;[^\\s;,\\"\'=]+(?![^\\s;,\\"\']*=))*)"', ')*)"',
+        BATCH7, 'test_b7_3_a_cookie_value_split_by_a_semicolon_with_no_space_is_one_secret', 'Qw8tail'),
+    mutant('M103 a Digest header is no credential', REDACT, 'authorization[\\"\']?\\s*[:=]\\s*[\\"\']?digest\\s+([^\\r\\n]{8,})', 'authorization[\\"\']?\\s*[:=]\\s*[\\"\']?digest\\s+(?!)([^\\r\\n]{8,})',
+        BATCH7, 'test_b7_4_a_digest_header_is_masked_to_the_end_of_the_line', 'AssertionError'),
+    mutant('M104 a scheme word after a credential flag is no part of the value', REDACT, '(?![-\\"\'])({_AUTH_SCHEME_WORD}?[^\\s\\"\']{{3,}}))"', '(?![-\\"\'])([^\\s\\"\']{{3,}}))"',
+        BATCH7, 'test_b7_4_the_scheme_word_after_a_credential_flag_is_masked_with_its_token', 'the scheme word is not masked with its token'),
+    mutant('M105 a bare credential word has no ordinary-word guard', REDACT, '    guard = _not_after_ordinary_word(word) if word in BARE_ENDINGS else ""', '    guard = ""',
+        BATCH7, 'test_b7_5_an_ordinary_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
+    mutant('M106 the quoted rules have no ordinary-word guard on pass', REDACT, '    + _not_after_ordinary_word("pass")\n    + "pass|"', '    + "pass|"',
+        BATCH7, 'test_b7_5_every_ordinary_word_of_the_one_list_is_readable_as_key_value_and_quoted', 'an ordinary word was masked as key value'),
+    mutant('M107 an ordinary word need not start a word', REDACT, '        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"', '        r"(?<!" + w[: -len(ending)] + ")"',
+        BATCH7, 'test_b7_5_the_ordinary_word_must_start_a_word_to_stay_readable', 'an ordinary word glued behind letters is no ordinary word'),
+    mutant('M108 a flag has two prefix words at most', REDACT, 'FLAG_NAME = (\n    r"(?:[a-z0-9]+[_\\-]){0,3}"', 'FLAG_NAME = (\n    r"(?:[a-z0-9]+[_\\-]){0,2}"',
+        BATCH7, 'test_b7_6_a_flag_with_three_prefix_words_masks_its_value', 'AssertionError'),
+    mutant('M109 an ordinary flag word with digits is a credential flag', REDACT, '(?![a-z]|[0-9]+[a-z])', '(?![a-z0-9])',
+        BATCH7, 'test_b7_5_an_ordinary_word_stays_readable_in_every_form_on_every_path', 'an ordinary word was masked'),
+    mutant('M110 the record walk keeps its own count words', RED, 'from hadavin_sdk.guard.redact import BARE_ENDINGS, COUNT_WORDS_BEFORE_TOKENS, ORDINARY_WORDS', 'from hadavin_sdk.guard.redact import BARE_ENDINGS, ORDINARY_WORDS\nCOUNT_WORDS_BEFORE_TOKENS = frozenset(["max"])',
+        BATCH7, 'test_b7_2_the_record_walk_reads_the_one_list_of_count_words', 'the record walk keeps its own list of count words'),
+    # ---- batch 7, Issue 11: the two path-hygiene tests pass on old src because the fix lives in tests/; each gets a mutant that puts the fault back ----
+    test_file_mutant('M111 the copy target has a fixed name again', 'tests/demo_askdata/corpus.py', 'f"askdata_p2_copy_{uuid.uuid4().hex}.csv"', '"askdata_p2_copy.csv"',
+        BATCH6, 'test_the_copy_attack_of_the_askdata_corpus_writes_a_per_run_file', 'the copy target has the fixed name again'),
+    test_file_mutant('M112 the copy target sits in a fixed shared folder', 'tests/demo_askdata/corpus.py', 'Path(tempfile.gettempdir()) / f"askdata_p2_copy_', 'Path("/' + 'tmp/") / f"askdata_p2_copy_',
+        BATCH6, 'test_no_test_names_a_fixed_path_in_the_shared_temporary_folder', 'a fixed shared-temporary path'),
+    # ---- batch 7, Issue 11: controls of the batch-7 tests that also pass on 8e8ccbef get a mutant that breaks the thing they guard ----
+    mutant('M113 a bare credential word takes letters and digits behind it', REDACT, 'return guard + word + r"(?=[0-9]{0,9}[\\"\']?\\s*[:=])"', 'return guard + word + r"(?=[a-z0-9]{0,9}[\\"\']?\\s*[:=])"',
+        BATCH7, 'test_b7_1_digits_in_the_middle_or_a_digit_only_neighbour_do_not_make_a_key', 'was masked on the card but not by the record walk'),
+    mutant('M114 the ordinary word need not start a word (a real key turns readable)', REDACT, '        r"(?<!(?<![a-z0-9])" + w[: -len(ending)] + ")"', '        r"(?<!" + w[: -len(ending)] + ")"',
+        BATCH7, 'test_b7_5_a_real_credential_key_never_turns_readable_because_of_the_ordinary_list', 'a credential key became readable'),
+    test_file_mutant('M115 the CHANGELOG says any number of letters glued in front', 'CHANGELOG.md', 'up to 40 letters or digits glued in front', 'any letters or digits glued in front',
+        BATCH7, 'test_b7_6_the_changelog_says_how_many_letters_may_be_glued_in_front', 'up to 40 letters or digits glued in front'),
 ]  # fmt: skip
 
 
@@ -324,6 +393,7 @@ if __name__ == "__main__":
             "tests/" + BATCH3,
             "tests/" + BATCH4,
             "tests/" + BATCH6,
+            "tests/" + BATCH7,
         ],
         extra_dirs=EXTRA_DIRS,
         extra_files=EXTRA_FILES,

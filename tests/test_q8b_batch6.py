@@ -182,19 +182,42 @@ def test_d6_a_flag_with_an_ordinary_word_stays_readable():
         assert clean(text) == text, f"an ordinary word was masked as a flag: {clean(text)!r}"
 
 
-# Keys the record walk masks and the card does NOT, each for a stated reason (the reverse drift test below reads them).
-# Flag AND `key=value` form: the credential word is followed by other words, so the key names a property OF a credential
-# (`auth_method`, `token_type`, `pass_rate`, `session_duration`, `password_policy_enabled`): the record rule masks them
-# (a named cost in `LIMITS`), the card rules need the credential word at the end of the name.
-# `--tokens` (flag only) is a count (`--tokens 4096`); `auth0` and `oauth2` (a digit ends the word) are shown as written on
-# a card in both forms (pinned in `tests/q8b_key_corpus.py` as a card cost).
-FLAG_ONLY_EXCEPTIONS = {"tokens", "auth0", "oauth2"}
-KEY_EQ_EXCEPTIONS = {"auth0", "oauth2"}
+# Keys the record walk masks and the card does NOT as a FLAG or as `key=value`, each for a stated reason (the reverse drift
+# test below reads them). They are skipped by the LAST WORD of the key only, never one by one:
+#   - `SETTING_WORDS` (`enabled`, `policy`, `count`, `ttl`, `days`, ...): the key names a setting ABOUT a credential
+#     (`password_policy_enabled`, `secrets_count`, `passkeyCount`);
+#   - `PROPERTY_LAST_WORDS`: the key names a property OF a credential, not its value (`auth_method`, `authMode`,
+#     `oauthProvider`, `oauth_scopes`, `pass_rate`, `pass_fail`, `session_affinity`, `session_duration`, `tokenBucket`,
+#     `token_type`, `tokenUsage`). The record rule masks them (a named cost in `LIMITS`). The FLAG rule needs the credential
+#     word at the END of the name (`--token-type` stays readable). The card `key=value` rule does not need that: it accepts up
+#     to 20 key characters after the credential word, so `token_type=x` is masked there; only the keys whose credential word
+#     is a bare word (`auth_method=`, `pass_rate=`, `session_duration=`) stay readable in that form.
+# `--tokens` (flag only) is a count (`--tokens 4096`). Round 7: `auth0` and `oauth2` are NOT exceptions any more: a digit
+# glued to a credential word is masked on every path, as the record walk masks it.
+PROPERTY_LAST_WORDS = frozenset(
+    [
+        "method",
+        "mode",
+        "provider",
+        "scopes",
+        "rate",
+        "fail",
+        "affinity",
+        "duration",
+        "bucket",
+        "type",
+        "usage",
+    ]
+)
+FLAG_ONLY_EXCEPTIONS = {"tokens"}
+KEY_EQ_EXCEPTIONS: set[str] = set()
+# The least number of keys the drift test must COMPARE (after the skip above): 215 measured at batch 7 (236 walked, 21 skipped).
+COMPARED_KEYS_FLOOR = 210
 
 
-def _property_of_a_credential(key: str) -> bool:
-    """The credential word is not the last word: the last word alone names no credential."""
-    return not R.sensitive(R._key_words(key)[-1])
+def _skipped_by_last_word(key: str) -> bool:
+    """The key is a setting or a property of a credential: its LAST word (digits dropped) is in one of the two short lists."""
+    return R._key_words(key)[-1] in (R.SETTING_WORDS | PROPERTY_LAST_WORDS)
 
 
 def test_d6_every_key_the_record_walk_masks_is_masked_as_a_flag_and_as_key_value_on_the_card():
@@ -207,10 +230,12 @@ def test_d6_every_key_the_record_walk_masks_is_masked_as_a_flag_and_as_key_value
     )
     walked = sorted(k for k in keys if R.sensitive(k))
     assert len(walked) > 150, f"the key sample shrank: {len(walked)}"
+    compared = [k for k in walked if not _skipped_by_last_word(k)]
+    assert len(compared) >= COMPARED_KEYS_FLOOR, (
+        f"the drift test compares {len(compared)} keys, fewer than the floor {COMPARED_KEYS_FLOOR}: the filter skips too much"
+    )
     flag_left, eq_left = [], []
-    for key in walked:
-        if _property_of_a_credential(key):
-            continue
+    for key in compared:
         if key not in FLAG_ONLY_EXCEPTIONS and readable_pieces(clean(f"run --{key} {P1}{P2} now")):
             flag_left.append(key)
         if key not in KEY_EQ_EXCEPTIONS and readable_pieces(clean(f"run {key}={P1}{P2} now")):
@@ -223,6 +248,25 @@ def test_d6_every_key_the_record_walk_masks_is_masked_as_a_flag_and_as_key_value
     )
 
 
+def test_d6_the_skip_by_last_word_holds_back_no_credential_key_that_the_card_leaves_readable_without_a_reason():
+    """Without the skip, the keys left readable on the card are exactly the settings and properties of a credential (the
+    two short lists), plus the count `--tokens`: nothing else is hidden from the drift test by the filter."""
+    walked = sorted(
+        k
+        for k in (
+            set(corpus.CREDENTIAL)
+            | set(corpus.BENIGN)
+            | set(corpus.UNLISTED_PREFIX)
+            | set(key_spellings())
+        )
+        if R.sensitive(k)
+    )
+    for key in walked:
+        for text in (f"run --{key} {P1}{P2} now", f"run {key}={P1}{P2} now"):
+            if readable_pieces(clean(text)) and not (key == "tokens" and text.startswith("run --")):
+                assert _skipped_by_last_word(key), f"left readable, and no listed reason: {text!r}"
+
+
 def test_d6_the_documented_exceptions_are_real_and_stay_readable_where_pinned():
     for key in ("--token-type", "--auth-method", "--pass-rate", "--session-duration"):
         text = f"run {key} {P1}{P2} now"
@@ -230,16 +274,9 @@ def test_d6_the_documented_exceptions_are_real_and_stay_readable_where_pinned():
             f"a property of a credential was masked as a flag: {clean(text)!r}"
         )
     assert clean(f"run --tokens {P1}{P2} now") == f"run --tokens {P1}{P2} now"
-    for key in sorted(KEY_EQ_EXCEPTIONS):
-        assert R.sensitive(key), f"{key} is no exception: the record walk reads it as a plain word"
-        assert readable_pieces(clean(f"run {key}={P1}{P2} now")), (
-            f"{key}= is masked: drop it from the list"
-        )
     for fragment in (
         "`--token-type`",
         "`--auth-method`",
-        "`auth0=`",
-        "`oauth2=`",
         "`--tokens` is a count",
     ):
         assert fragment in CHANGELOG, f"the CHANGELOG lacks {fragment!r}"

@@ -33,7 +33,7 @@ from typing import Any
 
 from hadavin_sdk import defaults
 from hadavin_sdk.guard import runmap
-from hadavin_sdk.guard.redact import BARE_ENDINGS, ORDINARY_WORDS
+from hadavin_sdk.guard.redact import BARE_ENDINGS, COUNT_WORDS_BEFORE_TOKENS, ORDINARY_WORDS
 from hadavin_sdk.k1b.bundle import Bundle, parse_ts
 
 SCHEME = (
@@ -65,7 +65,7 @@ LIMITS = (
     "`possession`). `oauth`, `oauth_scopes` and `oauthProvider` are masked: `oauth` may hold a token. A harmless word that ends that way and is not on the list is hidden too, although it holds no "
     "credential. The record rule also masks some other keys that hold no credential "
     "(`session_duration`, `auth_method`, `pass_rate`, `tokenCount`, `tokenType`).\n"
-    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command. Written `--newpass=a b`, both words are masked.\n"
+    "- A flag that names a credential (`--password`, `--newpass`, `--dbpass`, `--oauth`) takes the one word after a space as its value, on a card, in a tool result and in a log line: in `--newpass a b` the word `a` is masked and `b` is shown, because `b` may be a file name or another argument of the command (this second word is shown after every credential flag: a stated design choice). After the flag `--authorization` and the scheme words `Bearer`, `Basic`, `Token`, `Digest` and `ApiKey` the token IS masked. Written `--newpass=a b`, both words are masked. A flag with four or more hyphen-joined words in front of the credential word (`--a-b-c-d-password v`) keeps its value readable: the flag rule reads at most three words in front.\n"
     "Masking is a first filter, not proof that no client data reached the model."
 )
 KINDS_NOTE = "Counts are distinct values masked per class (EMAIL, IPV4, ARN, ...), summed over the cases; no values."
@@ -137,6 +137,8 @@ CREDENTIAL_WORDS = frozenset(
         "jsessionid",
         "phpsessid",
         "sessid",
+        "cookie",
+        "cookies",
     ]
 )
 GLUED_ENDINGS = (
@@ -146,10 +148,14 @@ GLUED_ENDINGS = (
     "passcode", "passkey", "passvalue", "sessionkey", "sessioncookie", "sessionvalue", "authvalue", "bearervalue",
 )  # fmt: skip
 # `pass`, `auth` and `session` end many credential keys written as one word (`newpass`, `dbpass`, `postgresauth`,
-# `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `obsession`; `oauth` is NOT one: a record key `oauth` may hold a token, so it is masked, as the card rule masks `oauth=`). A list of the words
-# allowed in front of `pass` fails open (an unlisted `newpass` stayed readable, round 4); a list of the ordinary words
-# fails closed (a harmless value is hidden). So a word that ends with one of them is a credential unless the whole
-# word is in `ORDINARY_WORDS`. After `_`, `-` or a capital letter they are words of their own (`CREDENTIAL_WORDS`).
+# `jenkinssession`), and a few ordinary English words (`bypass`, `compass`, `obsession`). `BARE_ENDINGS`,
+# `ORDINARY_WORDS` and `COUNT_WORDS_BEFORE_TOKENS` are NOT defined in this file: they are imported from `guard/redact.py`,
+# the one place the card rules read them too. `oauth` is no ordinary word: a record key `oauth` may hold a token,
+# so it is masked, as the card rule masks `oauth=`. A list of the words allowed in front of `pass` fails open (an unlisted
+# `newpass` stayed readable, round 4); a list of the ordinary words fails closed (a harmless value is hidden). So a word that
+# ends with one of them is a credential unless the whole word is in `ORDINARY_WORDS`. After `_`, `-` or a capital letter they
+# are words of their own (`CREDENTIAL_WORDS`). `cookie` and `cookies` are credential words (a header or record key named
+# `Cookie`, `COOKIE` or `Set-Cookie` holds a session credential; the key is read case-folded).
 # Measured on `tests/q8b_key_corpus.py` (made up by the builder, so the numbers hold for that corpus only).
 # The words in front of `key` or `keys` that make a credential: `api_key`, `dbaccess_key` (the word BEFORE ends with one of
 # them), and the exact pairs (word before, word) `client-key-data`, `connect.sid`.
@@ -157,12 +163,6 @@ KEY_QUALIFIERS = ("api", "private", "access", "secret", "signing", "encryption",
 WORD_PAIRS = frozenset(
     {("key", "data"), ("cert", "data"), ("certificate", "data"), ("connect", "sid")}
 )
-COUNT_WORDS_BEFORE_TOKENS = frozenset(
-    [
-        "max", "min", "input", "output", "prompt", "completion", "total", "cached", "cache", "reasoning",
-        "thinking", "audio", "image", "text", "read", "creation", "billed", "usage",
-    ]
-)  # fmt: skip
 COUNT_WORDS_AFTER_TOKENS = frozenset(
     [
         "used",

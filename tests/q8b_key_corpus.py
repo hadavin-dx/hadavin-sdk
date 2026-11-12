@@ -305,6 +305,27 @@ CREDENTIAL = [
     "xyzsession",
     "ordersqpass",
     "lunchauth",
+    # round 7 (batch 7): a credential word with digits glued behind it (the record walk drops the digits at the end of a word)
+    "pass2",
+    "newpass2",
+    "session2",
+    "auth1",
+    "rootauth2",
+    "token2",
+    "password3",
+    "api_key2",
+    # round 7: the plural of a credential word, and `tokens` after a word that is no count
+    "secrets",
+    "passwords",
+    "apikeys",
+    "api_tokens",
+    "access_tokens",
+    "refresh_tokens",
+    # round 7: a record or header key named for a cookie (any letter case)
+    "Cookie",
+    "COOKIE",
+    "Set-Cookie",
+    "cookies",
 ]
 
 # Credential keys written as one word with a word in front that no list could hold (round 4: the record walk masks them,
@@ -351,16 +372,13 @@ WALK_COST = [
 
 # Benign keys the CARD rule (`key=value` text) masks too: a word that merely contains `pass`, `token`, `secret` or `auth`,
 # or ends in `_data` after an animal or a show. Over-masking, never a leak. Measured on this corpus; compared exactly.
+# Round 7: the ordinary words that end in `pass` or `session` (`bypass`, `compass`, `obsession`, ...) are no longer here (they stay
+# readable); `oauth2` and `auth0` are (a digit glued to a credential word is masked, as the record walk masks it).
 CARD_COST = [
-    "bypass",
-    "compass",
     "oauth",
+    "oauth2",
+    "auth0",
     "password_policy_enabled",
-    "trespass",
-    "surpass",
-    "overpass",
-    "underpass",
-    "encompass",
     "passwordless",
     "tokenizer",
     "tokenizers",
@@ -383,10 +401,4 @@ CARD_COST = [
     "concert_data",
     "account_id",
     "passkeyCount",
-    "impass",
-    "possession",
-    "obsession",
-    "supersession",
-    "lowpass",
-    "bandpass",
 ]

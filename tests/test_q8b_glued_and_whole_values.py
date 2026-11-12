@@ -20,7 +20,7 @@ from hadavin_sdk.approvals.requests import summary
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.k1b import redaction as R
 from hadavin_sdk.models import Plan, Target
-from tests.q8b_helpers import ONLY_PLACEHOLDERS, shown_records
+from tests.q8b_helpers import ONLY_PLACEHOLDERS, shown_records, strip_look_arounds
 
 redact_module = importlib.import_module("hadavin_sdk.guard.redact")
 
@@ -351,7 +351,7 @@ def test_r6_a_key_with_a_letter_the_older_rule_read_as_ascii_is_still_a_key():
 
 def _expand(fragment):
     """Every spelling of a fragment of the redactor's key list (`[_\\-]?` written three ways, `(?:ificate)?` two)."""
-    fragment = re.sub(r"\(\?=.*?\)", "", fragment)
+    fragment = strip_look_arounds(fragment)
     spellings = [""]
     for part in re.split(r"(\[_\\-\]\?|\(\?:ificate\)\?)", fragment):
         if part == r"[_\-]?":

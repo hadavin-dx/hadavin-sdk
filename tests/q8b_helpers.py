@@ -117,10 +117,20 @@ def shown_records(*records):
     return list(redact_bundle(bundle)[0].deploys)
 
 
+_ORDINARY_LOOKBEHIND = re.compile(r"\(\?<!\(\?<!\[a-z0-9\]\)[a-z]+\)")
+_LOOKAHEAD = re.compile(r"\(\?=[^()]*\)")
+
+
+def strip_look_arounds(fragment: str) -> str:
+    """A fragment of `redact.KEY_ALTERNATIVES` without its look-arounds: the look-ahead after a bare word (`pass(?=...)`) and the
+    look-behinds that keep the bare word out of an ordinary word (`(?<!(?<![a-z0-9])by)pass`). What is left is the key word."""
+    return _LOOKAHEAD.sub("", _ORDINARY_LOOKBEHIND.sub("", fragment))
+
+
 def _spellings(fragment: str) -> list[str]:
     """Every way a fragment of `redact.KEY_ALTERNATIVES` can be written: `[_\\-]?` as nothing, `_` and `-`, `(?:ificate)?` with
     and without its letters, `\\.` as a dot, and a look-ahead (`pass(?=["']?\\s*[:=])`) as the word before it."""
-    out = [re.sub(r"\(\?=[^()]*\)", "", fragment).replace("\\.", ".")]
+    out = [strip_look_arounds(fragment).replace("\\.", ".")]
     for pat, subs in (("[_\\-]?", ["", "_", "-"]),):
         out = [o.replace(pat, s) for o in out for s in subs]
     more = []
