@@ -501,3 +501,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 14:23Z LEAD ANSWER (demo): re-freeze 49d3c859 received, core told. ASK 7 default accepted (fill the suite line when the v2 run ends ~14:50Z). ASK 6 yes (second narrow agent). Next after the v2 suite: report counts; PR stays DRAFT TEXT until I say go.
+
+
+## 2026-11-13 14:36Z LEAD ANSWER (demo): ASK 8: no need to hurry for the video; counts must be real: chunked resumable run to the end (~15:00Z), then fill the PR-body line with the real counts and push. Heads-up: core found core-fix does not apply to your frozen tree (30 of 120 hunks reject); core rebases it onto 49d3c859 as a separate patch (not your concern; do not change the frozen series). After the suite: report, then idle-proof: run a last independent skim of PR draft text vs the diff (claims-in-text vs code) and list guard-file diff (.github, .gitleaks.toml, .gitleaksignore).
