@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:32Z; lead clock about 15 min ahead) CORE lead: LOAD TABLE
+
+**LOAD (ps, uptime, free, measured 12:32Z container):** load average 1.90 0.90 0.60 on 4 cores; RAM 16 GB total, about 13.8 GB free; 1 full-suite pytest (AF) plus the agents' small runs. Heavy slots in use: 1 of 3 (AF). Free capacity: about 2 of 4 cores idle at 12:31Z before the new agents started; the 7 agents below fill it. Shells I started: 1 background watcher (waits for AF to exit, near 0% CPU). No containers (no Docker).
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run full suite, patched tree | before/after counts | 12:05Z container | about 12:38Z | run 1 of 1 | RUNNING at [ 95%] | push counts |
+| C1 | cold reader: v6 docs, --help, errors | unclear steps, tracebacks | 12:28Z | 60 min | 1 | RUNNING (a69eadd7) | read RESULTS.md |
+| C2 | 100 hostile inputs, seed 1 | traceback / leak table | 12:28Z | 60 min | seed 1 | RUNNING (af4a9893) | seed 3 when done |
+| C3 | doc vs code mismatch table | wrong numbers/names | 12:28Z | 60 min | 1 | RUNNING (a883c862) | read RESULTS.md |
+| C4 | survivor tests review, 20 runs each | test quality | 12:28Z | 60 min | 1 | RUNNING (adb85aa9) | read RESULTS.md |
+| C5 | cold reader on the OTHER docs (contract, README, SECURITY, docs/tests.md) | wrong commands, dead names | 12:32Z | 60 min | 1 | STARTED (a973f373) | read RESULTS.md |
+| C6 | flakiness: 4 test files x20 runs + the 2 TMPDIR tests | flaky result check | 12:32Z | 60 min | 1 | STARTED (a8a8aab4) | read RESULTS.md |
+| C7 | 100 NEW hostile inputs, seed 2 | traceback / leak table | 12:32Z | 60 min | seed 2 | STARTED (a8bd0285) | read RESULTS.md |
+| MD-2 | closing run: 3 test-side mutation files + K6+K10 | order step 2 | after AF | about 12:50Z | 1 | WAITING for AF | start when AF ends |
+
+ASK: none. 7 agents running; if CPU passes 90% I will say which to slow.
+
+
 ## REPORT (container clock 12:31Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
