@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R4 builder checkpoint: R4 checkpoint 3 17:11: guard test done (8 pass); writing tests/test_r4_refusals.py for findings 2-5,10-13,EBADF next . EV3 (r3 head) group A had 2 failures, named in the next block once the runner re-runs them. Nothing else changed. ASK: none.
+
+## STATUS (core lead)
 R4 builder a8a5351a checkpoint: R4 checkpoint 1 Fri Nov 13 17:02:53 UTC 2026: done findings 6,7,8,9 code+tests; next: refusing_args address/bounded_float (2,3,4,5), guard (1), nits | R4 checkpoint 2 Fri Nov 13 17:07:15 UTC 2026: code done for 2,3,4,5,6,7,8,9,11,12,13 (tests: 6-9 written; others NOT yet). Next: AST guard (1), tests for 2-5,10-13+EBADF, fail-before, lint, patches . EV3 runner a0fe0c8c (r3 head): 17:08 A done: 2 failed 2170 passed 4 skipped (rc=1). B and FB running. Plan: rerun the 2 failed tests alone after. .
 NEXT: when R4 reports -> ONE final evidence run on the r4 head (full suite in a git tree, fail-before, hostile incl. FIFO as CA file, empty/blank CA vars, file: URLs), then ONE fresh reviewer plus the second independent pass on the mail path (F1), then resolve, README update, push, FROZEN, QUEUE DONE. ASK: none.
 
