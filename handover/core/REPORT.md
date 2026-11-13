@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:26Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Probe is a pattern test only: pathguard.py plus atomic_write and _read_json routed through it; no new tests, no handover files. 21 focused k1b CLI tests pass on it; ruff clean, gitleaks 0 on the commit. Whether SonarCloud clears either S8707 issue is UNKNOWN until a draft PR is analysed. Nothing is claimed cleared.
+- The other three NOSONAR S8707 lines in score.py (102, 159, 161) are untouched by the probe.
+- My first try used a venv path that did not exist; fixed (q8c1-b17fix venv, PYTHONPATH set, hadavin_sdk.__file__ printed from the probe worktree).
+
+**PROBE READY: wip/cloud-sonar-probe 247caa5a3cb1fe1f05f05758df83e3cdfff1593b** (base origin/main 81a5aadb). Lead: please open the DRAFT PR and read which S8707 issues vanish.
+
+**LIVE ITEMS:** builders aa234f9b (Part 2 batch 10), ab741cc2 (Part 6 batch 10), a73b09c1 (SONAR-PATH batch 3) running; no new pushes seen yet.
+**ROUNDS (WHY):** Part 2 r10 and Part 6 r10 required (fail-open majors); SONAR-PATH r3 required (security, no cap).
+**FINISHED SINCE LAST BLOCK:** probe pushed.
+**EGM STEP PER PACKAGE:** Part 2 and Part 6: builder (resolve r9 done). SONAR-PATH: builder (resolve r3 done). Probe: EGM skipped, throwaway pattern test with no merge path.
+**LANE SONAR-PATH:** builder a73b09c1; EGM step 5 done for round 2; A (design) done, B (build) running, C/D pending.
+**RUN ON LAPTOP:** none new (only final heads).
+
+
 ## 03:20Z block (lead core session)
 
 **FAILED/UNCERTAIN FIRST**
