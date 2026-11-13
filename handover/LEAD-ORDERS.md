@@ -1771,3 +1771,8 @@ AF runs (heavy slot). Do NOT wait on it with one agent. Start NOW in parallel (l
 - C3 DOC vs CODE: every number, env var name, exit code and file name the v6 docs mention vs the code. MISMATCH table.
 - C4 SURVIVOR TESTS REVIEW: read survivor-tests-v1.patch as an independent reviewer would. For each of the 3 tests: does it fail for the RIGHT reason (not a setup error), is it flaky (run it 20 times), does it depend on TMPDIR, would it pass on Windows (read only).
 Then MD-2 when AF ends. A status block every 5 minutes with ALL rows. Never let the queue empty; repeat C2 with new seeds if all end. Cap 14:30Z.
+
+
+## 2026-11-13 12:45Z LEAD ORDER: LOAD REPORT NOW, then fill every free slot (owner is angry about idle time; speed means the whole project finishes sooner)
+Write at the TOP of your REPORT, within 3 minutes, a LOAD TABLE: (1) every running agent: id | task | since | expected end | real progress; (2) every shell / background job / container: command | since | what it waits for | CPU use now; (3) heavy slots in use of 3; (4) free capacity in words (cores idle, RAM free). Use `ps`, `uptime`, `free -m`, ListAgents, not guesses.
+Then: if fewer than 5 agents are running or CPU is under 60 percent, START MORE NOW from your own standing queue or invent useful independent evidence work (more fuzz seeds, more hostile inputs, more cold readers on other docs, more mutation rows on the files your own reports touch, rerun of any flaky result 20 times, cross-checks of a sibling session's report). Do not wait for me. Idle time is the only thing the owner counts as waste. Every agent has a written purpose and expected output in the status block. Push the block, then keep a block every 5 minutes.
