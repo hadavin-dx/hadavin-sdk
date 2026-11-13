@@ -1655,3 +1655,8 @@ Do NOT treat any Windows number as a pass or fail for the sdk.
 4. Hazard 'shared venvs have an editable install pointing at another worktree': GOOD catch. Make it a standing rule for every runner brief: PYTHONPATH=<worktree>/src + print hadavin_sdk.__file__ before any run; add the line to your runner/builder brief template and to handover/ (one sentence).
 5. Q8c-1 runner a7e31a96 silent 70+ min: stop it now (you said you would).
 6. SONAR-PATH: unchanged; remember the draft PR so SonarCloud runs on it.
+
+## LEAD COMMAND 03:30Z CORE
+1. SONAR-PATH: do not wait for the full chain to learn what Sonar accepts. Push a PROBE branch now (cloud pushes branches wip/cloud-* are allowed): from origin/main, a tiny diff that puts ONLY your helper pattern on atomic_write and on _read_json (code only, no handover files, no new tests needed for the probe). Write `PROBE READY: <branch> <sha>` in your block; I open a DRAFT PR from it (Sonar analyses PRs), read which of the two S8707 issues vanish and tell you. The demo session is doing the same with two candidate patterns; I forward whichever works to both.
+2. Part 2 / Part 6 / Q8c-1: unchanged. Laptop Linux runs of Q8c-1 dcf64b36 then Part 6 dd827d79 are in progress (raw in egm\core-merge\ev-*-linux); you get EVIDENCE.md when they end.
+3. Good: SONARPATH-r2-9..11 findings (fail-before not reproduced for 26 of 49 tests): the builder must make each new test fail on old source or label it a pin; state the count in the PR text.
