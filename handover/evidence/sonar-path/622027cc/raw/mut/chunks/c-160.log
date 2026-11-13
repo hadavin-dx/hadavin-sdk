@@ -8,3 +8,5 @@ ok  KILLED         D the event id is not checked (a bad id is written as a file 
 ok  KILLED         D reconcile compares with the typed outbox path, not the resolved one  [test_control_reconcile_replays_a_file_when_the_outbox_folder] t=15s
 ok  KILLED         D a refusal for another reason drops the outcome (the drop is not limited to the event id)  [test_an_outcome_refused_for_another_reason_takes_the_outbox_] t=16s
 ok  KILLED         D a bad event id is no longer dropped  [test_an_outcome_with_a_bad_event_id_is_dropped_and_counted] t=18s
+ok  KILLED         A a tools file name built from an agent id is not joined through the guard (3.12: OSError)  [test_a_tools_file_for_an_agent_id_longer_than_a_file_name_is] t=19s
+SLICE 160:170 10 of 10 good; problems: []; elapsed 20s

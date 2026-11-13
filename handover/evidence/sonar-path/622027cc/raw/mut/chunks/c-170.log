@@ -1,0 +1,7 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  CRASH          A the symlink check of a key file lets the error of the system out (3.12)  [test_a_key_file_name_too_long_for_the_system_is_a_refusal_no] t=8s
+ok  CRASH          A a home folder that cannot be found lets a RuntimeError out of key_path  [test_a_key_path_with_an_unknown_home_is_a_refusal_not_a_runt] t=10s
+ok  KILLED         S-atomic the output name is not joined through pathguard  [test_atomic_write_refuses_a_data_name_with_a_colon_or_a_devi] t=12s
+ok  KILLED         S-signer the key file is not checked  [test_build_local_refuses_a_key_path_with_a_control_character] t=13s
+ok  KILLED         S-local_dir the object name is not joined through pathguard  [test_local_dir_object_names_are_joined_through_pathguard] t=13s
+SLICE 170:175 5 of 5 good; problems: []; elapsed 13s

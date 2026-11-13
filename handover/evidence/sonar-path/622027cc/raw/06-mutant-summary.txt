@@ -1,0 +1,3 @@
+rows in M: 175 | unique names: 175 | results recorded: 175 | missing: []
+verdicts: {'KILLED': 153, 'CRASH': 22} | BAD rows: 0
+allow_crash rows in table: 22

@@ -17,3 +17,6 @@ chunk 130:140 try 1 rc=0 1
 chunk 140:150 try 1 rc=0 1
 chunk 150:160 try 1 rc=0 0
 chunk 150:160 try 2 rc=0 1
+chunk 160:170 try 1 rc=0 1
+chunk 170:175 try 1 rc=0 1
+DONE
