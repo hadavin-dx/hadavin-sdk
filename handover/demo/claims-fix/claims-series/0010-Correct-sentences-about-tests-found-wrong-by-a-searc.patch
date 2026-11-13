@@ -1,7 +1,7 @@
 From ce0b97543b8100944471ac2e2973bbcac69c3496 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 10/18] Correct sentences about tests found wrong by a search
+Subject: [PATCH 10/19] Correct sentences about tests found wrong by a search
  of tests/
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

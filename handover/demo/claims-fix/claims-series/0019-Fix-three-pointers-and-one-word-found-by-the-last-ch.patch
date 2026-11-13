@@ -1,0 +1,68 @@
+From 4c21eff718d8e237b9476ca6ec1a924dbab7c938 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 14:18:28 +0000
+Subject: [PATCH 19/19] Fix three pointers and one word found by the last
+ check: review-item id sections, semgrep lock comment, replay wording
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ README.md               | 8 ++++----
+ requirements-semgrep.in | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5c055d3..5b995e1 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@
+ 
+ After the steps in "Try it" below, three things confirm that it works. Every number below comes from the demo programs (the demo server and the file of pre-written answers), not from a real CRM or mail system.
+ 
+-* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The replay is still counted in `attempts` in the receipt, and it can use up a receipt number, so the numbers can skip (no test pins this). If the lead's follow-up email is due and not yet sent, the repeat starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
++* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The replay is still counted in `attempts` in the receipt, and it can use up a receipt number, so the numbers can skip (no test pins this). If the lead's follow-up email is due and not yet sent, the replay starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
+ * The counts page shows 2 requests received, 1 new, 1 duplicate.
+ * The demo mail system holds exactly one email until the reminder email is due. The demo start scripts also switch on the reminder email (see "Optional features") with a waiting time of 90 seconds (`nudge_after_seconds` in `demo_only/leadflow.json`): once a lead is 90 seconds old and has not reached the stage that the same file names as `reminder_until` (`replied`), the desk's background pass sends a second email, so a later look can show 2.
+ 
+@@ -39,7 +39,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: the desk gives every email one fixed label, the send key; a keyed mail system sends only once for a send key it has seen, and a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left, or whether the CRM row was written. It does not guess and does not resend; a person must check.
+-* **Crash point**: a named moment in the desk's work where a test stops the desk on purpose. There are ten, and an eleventh, N1, for the reminder email. Example: `D2`, the moment after an email was sent but before the desk noted it. The table is in `docs/tests.md`. Crash point names (`A`, `C0`, `D2`, `N1`) are not the same as review-item ids such as `D12` (D plus a receipt number), `R12`, `O12`, `F` plus a lead id or `N` plus a lead id; the item ids are explained in `contract.md`, section "Replies, verdicts and review items".
++* **Crash point**: a named moment in the desk's work where a test stops the desk on purpose. There are ten, and an eleventh, N1, for the reminder email. Example: `D2`, the moment after an email was sent but before the desk noted it. The table is in `docs/tests.md`. Crash point names (`A`, `C0`, `D2`, `N1`) are not the same as review-item ids such as `D12` (D plus a receipt number), `R12`, `O12`, `F` plus a lead id or `N` plus a lead id; the item ids are explained in `contract.md`, sections "Other rules" and "HTTP table" (the `GET /review` row).
+ * **Reaper**: a background job inside the desk. It puts stuck follow-ups back in line, retries a refused send a few times with growing waits (1, 2, 4 and 8 seconds, up to 5 automatic tries in a row; a person's Retry starts the count again), and decides receipts that were written but never got an answer (it writes a verdict for them).
+ * **Webhook** (as a door): requests sent by another program. In n8n the word also names an address that starts a workflow when something is posted to it.
+ 
+@@ -62,7 +62,7 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer (`pyprojec
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+     python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+     python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate"
+-    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt)
++    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two, if you look within 90 seconds; the reminder email comes later)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+ 
+@@ -79,7 +79,7 @@ Run both scripts with `bash`, as above. They need features that only bash is sur
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+     python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+     python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate"
+-    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt)
++    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1 (within 90 seconds; the reminder email comes later)
+     .\scripts\reset.ps1        # stops what start_all started and DELETES the desk's records and the logs
+ 
+diff --git a/requirements-semgrep.in b/requirements-semgrep.in
+index adb3f4f..922ca9e 100644
+--- a/requirements-semgrep.in
++++ b/requirements-semgrep.in
+@@ -5,7 +5,7 @@
+ # --exclude-newer 2026-11-12 is a fixed date: it stops later releases of the other packages from moving the lock.
+ # To bump Semgrep: change the pin below, set --exclude-newer to today's date, rerun, READ the lock diff (every package may move),
+ # run `python -m pytest tests/test_hygiene.py -q` (new package names or hashes may need a line in exceptions.txt),
+-# then read the first scan result (docs/tests.md, "Semgrep": status of the scan).
++# then read the first scan result in the job log (docs/tests.md, "Semgrep": no result is stored; look for the "Ran N rules on M files" line).
+ # This lock needs the gitleaks `cwd=target` change in tests/test_hygiene.py (the scan runs from the repository root) to be in place first.
+ # Who bumps: the author, when a Semgrep security advisory appears.
+ # Dependabot does NOT cover this file (.github/dependabot.yml asks for GitHub Actions only).
+-- 
+2.43.0
+

@@ -1,7 +1,7 @@
 From 616f8c42d44e6c5089d51d06d06fc24bd4288cac Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 04/18] Soften or source unbacked sentences in README, SECURITY
+Subject: [PATCH 04/19] Soften or source unbacked sentences in README, SECURITY
  and versions.md
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

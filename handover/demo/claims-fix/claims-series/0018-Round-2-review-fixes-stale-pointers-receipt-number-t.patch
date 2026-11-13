@@ -1,7 +1,7 @@
 From 1092597b9697cf64ab119d80f01df327a9a0d9b5 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 14:03:57 +0000
-Subject: [PATCH 18/18] Round-2 review fixes: stale pointers, receipt number,
+Subject: [PATCH 18/19] Round-2 review fixes: stale pointers, receipt number,
  timeout wording, limits and tests rows
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>

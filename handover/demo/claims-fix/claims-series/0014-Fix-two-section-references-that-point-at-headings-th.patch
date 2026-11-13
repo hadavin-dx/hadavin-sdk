@@ -1,7 +1,7 @@
 From 1db544a6b949ebfab0ad1a3caefea81447916cc3 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 13:20:37 +0000
-Subject: [PATCH 14/18] Fix two section references that point at headings that
+Subject: [PATCH 14/19] Fix two section references that point at headings that
  do not exist
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

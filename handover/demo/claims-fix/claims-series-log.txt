@@ -1,7 +1,8 @@
-FROZEN SERIES (candidate for lead): main f3c39cf8 + 18 commits
-head commit (build tree): 1092597b9697cf64ab119d80f01df327a9a0d9b5
-tree hash (build tree == git am result): a019c44835f26e0ef314129d7d92a047eb67d1b8
-combined patch sha256: 7e147d3a0f9cfde7722f1abb84705fcb0e4eec430aa851090692cd84af708921
-git diff --shortstat f3c39cf8: 41 files changed, 601 insertions(+), 546 deletions(-)
-trailer Co-Authored-By on 18 of 18 commits
-full suite 3.12 on this exact tree: running (log f18-full-312.log); result follows in REPORT.md
+FROZEN SERIES v2: main f3c39cf8 + 19 commits (replaces the 18-commit freeze a019c448)
+head commit (git am result): 36dbb1060c3c5023e918344449730c5a56960a75
+tree hash (build tree == git am result): 49d3c85938fe5323a3378a49195d3b8da434b3ca
+combined patch sha256: 79891d58cd8877bc7600a3fa830ca25a8d458086a8381ab3c5e75c18361800ef
+git diff --shortstat f3c39cf8: 41 files changed, 602 insertions(+), 547 deletions(-)
+trailer Co-Authored-By on 19 of 19 commits
+last commit only: README.md pointer (review-item id sections), requirements-semgrep.in comment, README replay wording (3 lines + 1 file comment)
+full suite 3.12 on this exact tree: running (log f19-full-312.log); result follows in REPORT.md

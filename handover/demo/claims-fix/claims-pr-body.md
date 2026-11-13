@@ -6,7 +6,7 @@ The desk is the lead-handling program in `src/lead_desk`. The reaper is its back
 
 Text only, apart from two small behaviour changes and one comment change listed below. Every sentence in the changed text (README, SECURITY, versions.md, contract.md, docs/*.md, workflow comments, and the docstrings that make a promise) that states a number, a guarantee, a command output or a test result was looked up in the code and the tests. Sentences that did not match were rewritten to what the code does. Sentences that could not be proved from this repository (results of earlier runs, outside facts) were deleted. A sentence that says "no test checks" or "read from the code" says in itself that it is not backed by a test.
 
-This is a series of 18 commits, 41 files, 601 insertions and 546 deletions. Each commit says what it changes. Of the 41 files, 12 are documentation, 6 are workflow or settings files (comments only: four workflow files, `.coderabbit.yaml`, `requirements-semgrep.in`), and 23 are code files (comments and docstrings only, plus the two behaviour changes below).
+This is a series of 19 commits, 41 files, 602 insertions and 547 deletions. Each commit says what it changes. Of the 41 files, 12 are documentation, 6 are workflow or settings files (comments only: four workflow files, `.coderabbit.yaml`, `requirements-semgrep.in`), and 23 are code files (comments and docstrings only, plus the two behaviour changes below).
 
 | Kind of change | What was done |
 |---|---|
@@ -30,13 +30,11 @@ The other code files differ from main only in docstrings and comments (checked: 
 * No code behaviour changed apart from items 1 and 2 (a start-up script condition and one test assertion; item 3 is a comment).
 * Numbers that only a run can give (a full-suite time, an earlier pass count, the Semgrep run log) are no longer in the text; they are not replaced by new ones.
 * Three tests were found that do not catch the behaviour the docs cited them for: `tests/test_portal_api.py::test_broken_extension_leaves_no_socket` (it shows that nothing is left listening, not the order of two lines in `make_server`), `tests/test_mirror_gate.py::test_the_copy_keeps_the_promised_waits_then_gives_up_and_leaves_no_entry` (it takes the expected waits from the constant, not from written-out values) and `tests/test_input_edge_cases.py::test_deeply_nested_json_is_bad_envelope` (it was not shown here to fail when the recursion guards are removed; no mutation run was made). The sentences now say what the tests assert. The three tests are not changed here: this series changes text only (apart from the one tightened assertion listed above and docstring or comment edits); they are named here so they can be fixed in a separate change.
-* One behaviour difference was found and is not changed here (text-only series; named here so it can be fixed in a separate change): a start-up without the background reaper drives pending follow-ups without waiting for their backoff (the server always starts the reaper first, so the server is not affected).
+* One behaviour difference was found and is not changed here (this series changes text only, so a behaviour change belongs in its own change; it is named here so it is not lost): a start-up without the background reaper drives pending follow-ups without waiting for their backoff (the server always starts the reaper first, so the server is not affected).
 
 ## Checks
 
-Results are filled in from the final tree (main f3c39cf8 plus the 18 commits, applied with `git am`):
-
-Run on the final tree (main f3c39cf8 plus the 18 commits applied with `git am`; the resulting tree is identical to the build tree, tree hash a019c44835f26e0ef314129d7d92a047eb67d1b8). Raw logs are in the handover folder, not in this repository.
+Run on the final tree (main f3c39cf8 plus the 19 commits applied with `git am`; head commit 36dbb1060c3c5023e918344449730c5a56960a75; the resulting tree is identical to the build tree, tree hash 49d3c85938fe5323a3378a49195d3b8da434b3ca). Raw logs are in the handover folder, not in this repository.
 
 * gitleaks 8.30.1 with the repository config: `dir`, `git` (all history) and `git` over f3c39cf8..HEAD: no leaks found (exit 0 each).
 * `ruff check .`: exit 0. `ruff format --check .`: 159 files already formatted.
