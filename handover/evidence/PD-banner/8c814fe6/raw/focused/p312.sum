@@ -30,3 +30,6 @@ tests/test_k5_fixes7.py :: rc=0 :: 533 passed in 9.02s
 tests/test_k5_fixes6.py :: rc=0 :: 22 passed in 13.14s
 tests/test_k5_fixes8.py :: rc=0 :: 58 passed in 1.26s
 tests/test_k5_fixes9.py :: rc=0 :: ..............................
+tests/test_k5_postgres.py :: rc=0 :: 1 skipped in 2.88s
+tests/test_k5_producers.py :: rc=0 :: 25 passed in 2.52s
+tests/test_k5_review.py :: rc=0 :: 54 passed in 9.50s

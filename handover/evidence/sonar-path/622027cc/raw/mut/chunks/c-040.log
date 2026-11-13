@@ -1,1 +1,8 @@
 sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  CRASH          S-vault jwt path is not guarded  [test_vault_kubernetes_token_path_with_a_nul_is_a_config_erro] t=10s
+ok  CRASH          S-config root is not guarded  [test_site_config_root_nul] t=12s
+ok  KILLED         S-cli --config is not guarded  [test_site_cli_config_flag_nul_is_refused] t=13s
+ok  KILLED         S-cli score outputs is not guarded  [test_score_with_a_nul_in_the_outputs_path_is_refused_with_ex] t=15s
+ok  KILLED         R4-00 the range is dropped: C0 controls and NUL  [test_pin_r4_range_00] t=17s
+ok  KILLED         R4-00 the range ends one early: C0 controls and NUL  [test_pin_r4_range_00] t=19s
+ok  KILLED         R4-00 the range starts one late: C0 controls and NUL  [test_pin_r4_range_00] t=21s
