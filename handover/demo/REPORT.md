@@ -1,6 +1,29 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:03Z / 10:33 IST - semgrep-on-db54e13-v5 built (fixes the P1 tripwire clash: 4 single-bracket tests in semgrep.yml -> [[ ]]); fresh read running; READY TO PUSH list unchanged: P1 v3.2 only; 8 agents
+FAILED / UNCERTAIN first:
+1. **Series interaction found and fixed (builder): semgrep-on-2db3926-v4 + P1 v3/v3.2 FAILS P1's own tripwire** (`semgrep.yml#block-3` lines 7, 9, 11, 13: the S7688 class, in our OWN new workflow). `semgrep/semgrep-on-db54e13-v5.patch` sha256 99c185b0298fa8a9e4798bf571ab72c3c27cfd0a7a1094efbd7c3fc62622b7c5 (applies on db54e13; 9 files): v4 applied unchanged on db54e13, only two edits: (1) the four integer comparisons `[ ]` -> `[[ ]]`; (2) the stale 'ERROR-level clean on the stack head at 0841f36' -> 'on commit 0841f36 of the branch pr-3-tests' (docs/tests.md and the semgrep.yml Status comment; adds: the scan was not repeated on later commits; measured since 0841f36: 13 files in the scanned folders, 405 lines added 60 removed; 2db3926..db54e13 changes nothing in them: builder's claim, my fresh reader re-measures). No `shell: bash` added (without a shell key GitHub runs `bash -e {0}`; explicit adds only pipefail; no pipe in the block): the scan step run with a stub semgrep for exits 0,1,2,3,7 and '2 then 0' under both shell forms: identical status, tries and messages in all 6 cases (shell logic only, NOT Semgrep). 19 of 19 apply orders OK with P1 v3.2, yaml trimmed-v2, crlf v5, P2 v2.1, P3 v3, nodemo-fix-v2 + six full orders; tests: nosemgrep_form 63, gitleaks_semgrep_lock 3, gitleaks_exceptions 44, workflow_files_parse 5, hygiene 15; combined tree test_shell_single_bracket 107 passed; gitleaks clean clone + `gitleaks git` 24 commits clean. **NOT run: Semgrep 1.185.0 with the p/python and p/javascript rules (registry only, not fetched), any GitHub run.** PR text (pr-text/semgrep-pr-body-v5.md) still says 2db3926 and the old sha: the fresh reader lists every stale sentence with the corrected text; the drafter applies it after the read. Licence line / owner's yes for p/python and p/javascript only: unchanged.
+2. **READY TO PUSH remains: 1. sonar-p1-quickwins-v3.2.patch (sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c).** Next likely candidates (each needs its clean read): semgrep v5 (read running af3b85004357a54b3), P2 v2.1 (third read running), nodemo-fix-v2 + nodemo-ruff-isort (core pieces fine, v3 for tests/CI job running), crlf v5 + yaml trimmed-v2 (read running).
+3. Still running: probe-ab v3 safety read (no push before PROBE v3 SAFE), start-prompt v2 + desk-address-required (core: needs your approval), real-run v5, nodemo v3, P1 v3.2.1 delta. Not run anywhere: full suite WITH demo present, Windows autocrlf=true run, any Sonar/Semgrep result of the series.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| af3b85004357a54b3 | fresh reader semgrep v5 + PR text staleness list | 05:02 | running | CLEAN / NOT |
+| a99100116aa473145 | P1 v3.2.1 delta builder | 04:58 | running | delta |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a00a7504872aa22f0 | fresh safety reader probe-ab v3 + writes2 | 04:52 | running | SAFE / READING |
+| ab6c25f7e78008d2e | fresh third reader P2 v2.1 | 04:37 | running | CLEAN / NOT |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 8.
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| semgrep-on-db54e13-v5 | built, pushed, read running |
+
 ## 2026-11-13 05:00Z / 10:30 IST - **P1 v3.2 CLEAN (fifth fresh read): READY TO PUSH: P1 v3.2** ; nothing else clean yet; 8 agents
 **READY TO PUSH (in this order): 1. sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c** (applies on db54e13). Replaces v1/v2/v3/v3.1: do NOT apply any of those. A small test-only delta (v3.2.1: fixes the reviewer's Minors/Nits) will follow and applies on top; it is not needed for the gate.
 FAILED / UNCERTAIN first:
