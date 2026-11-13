@@ -200,3 +200,8 @@ tests/test_crm_hubspot.py::test_put_creates_one_contact_with_our_property PASSED
 tests/test_crm_hubspot.py::test_second_put_same_lead_is_already_present_without_a_second_contact PASSED [  5%]
 tests/test_crm_hubspot.py::test_409_without_an_id_is_confirmed_by_email PASSED [  5%]
 tests/test_crm_hubspot.py::test_real_409_wording_is_read_back_by_the_named_id PASSED [  5%]
+tests/test_crm_hubspot.py::test_the_fake_refuses_dot_test_like_the_real_crm_when_asked PASSED [  5%]
+tests/test_crm_hubspot.py::test_same_email_other_lead_id_is_taken_and_nothing_is_changed PASSED [  5%]
+tests/test_crm_hubspot.py::test_same_person_different_email_makes_a_second_contact PASSED [  5%]
+tests/test_crm_hubspot.py::test_timeout_after_create_then_retry_finds_it_and_does_not_double PASSED [  5%]
+tests/test_crm_hubspot.py::test_slow_answer_inside_budget_is_ok_and_beyond_it_is_unclear PASSED [  5%]
