@@ -1,6 +1,26 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 13:47Z / 19:17 IST - STATUS TABLE, FAILURES AND RETRIES, then ASK; ASK 2 applied ("the author" everywhere); verifier round done (4 FALSE, 2 UNPROVEN, all fixed); 3 builders running; two full suites running
+**LOAD (13:47Z):** 4 cores, 15 GB RAM; agents running: 3 (b3 leftover-deletion a825e9f52822430ad, b4 receipt-number + crash-command aa4481750787b04de, b6 "the author" replace aec6508cec8874b06); background shells: 2 (full suites 3.12 about 70 percent, 3.13 about 60 percent); heavy slots 2 of 3.
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| adb952be59950662c (fresh verifier) | verified every row of notes-r1fix2 against code | item 2 re-verify | 13:40 | done 13:46 | n/a | **done**: 4 FALSE, 2 UNPROVEN (`tools-claims/ver-r1fix2.md`); FALSE example: "`DESK_SEND_TIMEOUT_SECONDS` above 9 has no effect" (the value plus 25 s sets the stuck grace, `desk.py:409`) | fixed |
+| a986ab51760f2651c (builder b5) | applied all verifier rows + leftovers (limits.md:118, contract.md:227 and :155, README:47: demo run on Windows 3.13, tests on Linux 3.12); also a docstring in `tests/test_gitleaks_exceptions.py` claimed a variant the file lacks: removed (comment only) | item 2 | 13:42 | done 13:46 | fix round 2 | **done** (`tools-claims/notes-r1fix5.md`) | a second fresh verifier on notes 3-6 |
+| a825e9f52822430ad (b3) | deletes leftover dated no-log results | your 13:21Z order | 13:40 | ~13:52 | n/a | running | verifier |
+| aa4481750787b04de (b4) | core's two true mismatches: "a repeated request changes nothing" (false: it consumes a receipt number) and the crash-script command (`PYTHONPATH=src` makes the desk exit with "demo_only is missing"); runs the command literally in a copy | your 13:32Z order (fold real mismatches, fails-before shown) | 13:42 | ~13:55 | n/a | running | verifier |
+| aec6508cec8874b06 (b6) | ASK 2 answer: "the author" replaces owner/lead/licence-holder words; lists every replaced usage | your 13:41Z answer | 13:46 | ~13:56 | n/a | running | notes list |
+| E8 suites | 3.12 (pid 1103) and 3.13 | item 3 | 13:21 / 13:36 | ~14:00 / ~14:20 | see F55 | running | the final tree is re-checked after the builders end |
+| next (me, after the 3 builders): freeze | rebuild the 16-commit series (+ fix commits), `git am` tree proof, AST/YAML proof, gitleaks/ruff/mypy/hygiene/numbers/links, docs-reading tests on the final tree, second fresh verifier, ONE more fresh comprehension read; then tell you the hash | your 13:32Z order | ~13:56 | ~14:20 | round 2 of cap 2 for the egm reviewers | planned | n/a |
+**ASK 3: the lead said "the author" everywhere. README:14 says "Made by the founder of Hadavin"; that is a company name, kept as before (E6 rated it a Blocker by the no-employer-name rule). Default: kept; tell me to change it to "Made by the author".**
+**FAILURES AND RETRIES (new; F1-F59 stand):**
+| id | test or step | result | failure first line verbatim | cause | retries so far and why | what I did | verified how |
+|---|---|---|---|---|---|---|---|
+| F60 | verifier round on round-1 fixes | 4 FALSE / 2 UNPROVEN of about 35 rows | n/a | real text defects made by my builder | fix round 2 | fixed by b5 | second verifier |
+| F55 | E8 suites | still no summary; both suites in progress | n/a | open | 0 | wait | logs |
+**Numbers changed since I published them:** none new (see 13:41Z).
+**Totals line: 6 tests failed in total today in my own runs before F55 (F7, F8, F10, F27, F40, F41), 6 real defects of text, 0 flakes; F55 unexplained so far; F45 unexplained; semgrep blocked (F48). Round 1 of the two egm reviewers found 23 Majors, all fixed or answered; cap is 2 rounds.**
+
 ## 2026-11-13 13:41Z / 19:11 IST - STATUS TABLE, FAILURES AND RETRIES, then ASK; both egm reviewers done (0 Blocker, 23 Major in all); round-1 fixes applied in the working tree; fresh verifier + leftover-deletion builder running; two full suites running; E10 answered (my series first)
 **LOAD (13:41Z):** 4 cores, 15 GB RAM; agents running: 2 (verifier adb952be59950662c, builder a825e9f52822430ad); background shells: 2 (full suite 3.12 pid 1103 at 65 percent; full suite 3.13 on a copy of the same tree at 27 percent); heavy slots 2 of 3 (my earlier block said 2 agents and 1 shell: you were right, that was too little; the 3.13 suite, the README-clone check, the core-patch map and the PR-body numbers check were started at 13:36).
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
