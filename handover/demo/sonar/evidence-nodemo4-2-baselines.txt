@@ -1,0 +1,9 @@
+== B (demo deleted; git copy), stack of 11 patches
+...........................                                              [100%]
+27 passed in 46.74s
+== C (demo deleted; no .git)
+..ssss...................s.                                              [100%]
+=========================== short test summary info ============================
+SKIPPED [4] tests/_repo_root.py:20: not a git work tree (a source archive): git cannot list the files
+SKIPPED [1] tests/test_no_placeholders.py:27: not a git work tree (a source archive): the file list is not available
+22 passed, 5 skipped in 3.74s

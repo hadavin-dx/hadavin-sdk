@@ -1,0 +1,6 @@
+== P: demo present, DPLD_REQUIRE_DEMO=1 DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1, stack of v4 + 10 patches (committed after git add -A)
+tests/test_hygiene.py tests/test_no_placeholders.py tests/test_except_clause_hierarchy.py tests/test_gitleaks_exceptions.py: 123 passed in 72.53s
+tests/test_workflow_files_parse.py tests/test_workflow_run_flags.py: 24 passed in 0.36s
+== B (git copy, demo deleted): a tracked scripts/planted_probe.py holding the literal http://<169.254.169.254>/latest/meta-data (after git add)
+tests/test_hygiene.py::test_hygiene_scan_public FAILED, message names: scripts/planted_probe.py:1:http://169.254.169.254/latest/meta-data
+(file removed again, tree clean)

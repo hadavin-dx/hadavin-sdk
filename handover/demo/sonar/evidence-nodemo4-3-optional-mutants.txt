@@ -1,0 +1,27 @@
+O1 helper never skips
+    B git copy, demo deleted : 1 failed, 26 passed in 48.55s
+    C no-.git copy : 5 failed, 21 passed, 1 skipped in 4.48s
+O2 _git does not call helper
+    B git copy, demo deleted : 1 failed, 26 passed in 54.80s
+    C no-.git copy : 4 failed, 21 passed, 2 skipped in 4.98s
+O3 scan test does not call helper
+    B git copy, demo deleted : 27 passed in 67.77s (0:01:07)
+    C no-.git copy : 1 failed, 22 passed, 4 skipped in 5.43s
+O4 .git must be a dir
+    B git copy, demo deleted : 1 failed, 26 passed in 56.39s
+    C no-.git copy : 1 failed, 21 passed, 5 skipped in 4.34s
+O5 REPO one level too low
+    B git copy, demo deleted : 13 failed, 11 passed, 3 skipped in 1.45s
+    C no-.git copy : 13 failed, 10 passed, 4 skipped in 1.52s
+O6 helper inverted
+    B git copy, demo deleted : 1 failed, 22 passed, 4 skipped in 4.08s
+    C no-.git copy : 5 failed, 21 passed, 1 skipped in 5.50s
+O7 _git skips for any folder
+    B git copy, demo deleted : 1 failed, 26 passed in 54.20s
+    C no-.git copy : 1 failed, 16 passed, 10 skipped in 3.51s
+O8 .git must be a file
+    B git copy, demo deleted : 1 failed, 22 passed, 4 skipped in 3.93s
+    C no-.git copy : 1 failed, 21 passed, 5 skipped in 3.82s
+O9 _git skips only for OTHER folders
+    B git copy, demo deleted : 1 failed, 26 passed in 51.58s
+    C no-.git copy : 4 failed, 16 passed, 7 skipped in 3.68s
