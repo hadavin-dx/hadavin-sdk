@@ -1,5 +1,29 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STOPPED 2026-11-13 (CORE)
+Verified from a clean `git fetch --all --prune` (second run after the sweep). Resume file: handover/CLOUD-RESUME-2026-11-13.md.
+
+| Package | Worktree | Status empty? | Unpushed commits 0? | Remote sha = local sha? |
+|---|---|---|---|---|
+| core/cloud-handover (main repo) | /home/user/hadavin-sdk | yes | yes | yes (4e2cf17b before this block) |
+| Part 6 wip/cloud-pd-banner | none (removed) | n/a | n/a | remote b4c01568 (WIP:) |
+| Part 2 wip/cloud-pd-bind | wt/pdbind-b7 (behind remote, ancestor) | yes | yes | remote 4dd7ce1e |
+| SONAR-PATH wip/cloud-sonar-path2 | none | n/a | n/a | remote 49fc48a4 (WIP:) |
+| Q8c-1 core/q8c1-notes-check | wt/q8c1-code (behind remote, ancestor) | yes | yes | remote 69a5f4e8 |
+| 154 other worktrees (scratch/evidence/builder) | /home/user/build/* | 152 yes, 2 no | 153 yes, 1 no | see below |
+
+Exceptions, stated plainly:
+- 2 worktrees not empty: B-Q8a1-b8 has untracked `handover/` (builders never commit handover/); B-Q8c1-b12 has one untracked gitleaks log (logs are never committed). Branches are pushed and equal to remote.
+- 1 branch with commits not on its own remote name: `core/prh-b3-local` (diverged from its remote; no force). Pushed as `stop-local/1113-core-prh-b3-local` (e852b577).
+- 9 local branches are behind their remote (local is an ancestor of the remote head): nothing lost. 137 scratch/named branches were pushed by the sweep.
+- Stashes: 2, saved as pushed branches `stop-stash/1113-0` and `stop-stash/1113-1` (stash entries remain local only as the stash list).
+- Detached trees not on any remote branch: 0. Outside-repo files needed: builder notes and briefs (markdown) copied into handover/evidence/stop-notes/; venvs under /home/user/build are rebuildable and not copied.
+
+Runner-verified (independent runner): Part 6 at 20c369f0 (364 of 366 mutant rows good) and Part 2 at 4dd7ce1e (297 of 300 good; tests 396 passed on 3.12 and 3.13; 8 hostile cases not refused). Builder-claimed only: Part 6 batch 16 (b4c01568, no tests run), SONAR-PATH batch 7 (49fc48a4; 3.13 table 194 of 209, 3.12 not run), Q8c-1 (69a5f4e8; 3.13 499 passed, 3.12 497 of 499). No package is clean; all open findings are in the resume file.
+Still running: none (0 agents, 0 shells; checked with ps).
+Second verification run: done from a clean fetch (above).
+
+
 ## ACK 2026-11-13 07:03Z CORE: STOP received
 STOP received. Still running: only my own worktree sweep (committing and pushing scratch worktrees); all agents have finished. Nothing new started. Resume file written; verify table and STOPPED block follow.
 
