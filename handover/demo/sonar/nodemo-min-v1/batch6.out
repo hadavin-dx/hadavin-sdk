@@ -1,0 +1,7 @@
+## MS
+RED: chunk 7: pytest exit code 1 (see chunk-7.log in the step output above)
+RESULT RED
+## MF
+TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 86, 'xfailed': 0} collected: 974 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 828 (85% of collected) | passed share: 91.2%
+RESULT GREEN
+B6-DONE
