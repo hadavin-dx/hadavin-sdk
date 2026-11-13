@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:57Z / 09:27 IST - **A REVIEWER BREACHED THE NO-LIVE-CALL RULE (logged, no harm found)**; probe-ab needs a better design (2 design Majors: v2 building) - hold the draft PR if you can; real-run v4 has 1 Major (v5 building); 8 agents
+FAILED / UNCERTAIN first:
+1. **BREACH (the reviewer of real-run fixes v4, report sonar... real-run/REVIEW-v4-fresh.md, slip 1):** in its first matrix it answered `y` on five VALID synthetic configs; the desk started and each run made 52 CRM create attempts toward the vendor's DEFAULT address through the sandbox proxy, with a MADE-UP key. Result: `created 0`, no real account, no real mail, no model call; but it was NOT loopback-only. My brief said loopback only but did not forbid `y` on a config whose base URLs were not pointed at fakes: my miss. After that every valid-config case used `n`; no process left. I have written the hard rule (never answer y unless every base URL is a loopback fake / --dry-fakes / network disabled) into the v5 builder's brief and will put it in every real-run brief from now on. If you want the vendor-side effect checked (a made-up key cannot authenticate: expected 401s), that is your call.
+2. **probe-ab.patch has 2 design Majors** (sonar/REVIEW-probe-p3v2-fresh.md): (a) helper A returns either a listing path or a table-built new name: a summary-based engine takes the UNION, so a tainted new-name branch could keep the read sites open too; env-var roots are a second confound; (b) every inline-B site is a READ: a B result says nothing about writes. Behaviour of the probe is correct (no site weaker than base, no bypass, 560 passed). Builder (a7d18e4fa0b28d940) is making probe-ab-v2: one difference per pair (split confine_existing 63 vs combined 597; env-free roots at 178; dict-table vs `next(k for k in CONSTANT if k == c)` at 366/377; inline guard on a WRITE site; a name-only-contract third shape on one extra site; controls read_book/load_env untouched, matched by function name), every outcome mapped to the decision it drives. **Please hold the draft PR until probe-ab-v2 lands (about 15 min).** Reviewer's odds (inference, docs unreachable): inline B ~85% NOT accepted; listing-based A 35-50% for reads if split and clean.
+3. **P3 v2 (security review): Major (narrow): `--config` in anywhere mode is refused when an ancestor folder is traverse-only (mode 0711; base reads it)**; Minors: wrong message for a missing file with a space/non-ASCII name; Windows device names / trailing dot not refused; macOS NFC/NFD not matched; 5 of 24 mutants survive. P3 v3 building (aaafa804a801b78ad). The documented real run works (config, DB path, run folder outside the allowed folders: exit 0).
+4. **real-run fixes v4 (handover only): 1 Major**: REAL_RESULT_FILE is not checked before the question (a directory or a missing parent ends in a traceback after the whole real run with contacts un-archived); nits: SpendLedger.check_readable duplicates read_totals() (v5 removes this CORE TOUCH: only _read_key multi-line stays), the AST scan has holes, refusal formats are mixed. v5 builder a71eeae97124ff4bb.
+5. **Reviews still running**: P1 v3 (third reader), crlf v4 + yaml delta v2. In progress builders: P2 v2.1, nodemo v2.
+6. Not run: full suite with demo present, Windows, any Sonar result.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7d18e4fa0b28d940 | probe-ab v2 builder | 03:52 | running | probe-ab-v2.patch |
+| aaafa804a801b78ad | P3 v3 builder | 03:52 | running | v3 patch |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | v5 patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| a82407284069d4fa2 | nodemo v2 + optional + isort + CI job builder | 03:46 | running | 4 patches |
+| acf3543755ae6a393 | fresh reviewer P1 v3 | 03:42 | running | report |
+| a5174404d55a3357a | fresh reviewer crlf v4 + yaml delta v2 | 03:31 | running | report |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| probe | review 1 | 2 design Major | experiment must be sound | no | v2 read |
+| P3 | review 2 | 1 Major narrow + minors | fix | no | v3 read |
+| real-run | review 4 | 1 Major | REAL_RESULT_FILE | no | v5 read |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| probe + P3 v2 security review | done, pushed |
+| real-run v4 review | done, pushed (with breach) |
+
 ## 2026-11-13 03:51Z / 09:21 IST - P2 v2 review CLEAN (0 Blocker/Major, 4 Nits: v2.1 building); nodemo-fix has 2 Majors (v2 building); 6 agents
 FAILED / UNCERTAIN first:
 1. **nodemo-fix.patch must not go in as it is** (sonar/REVIEW-nodemo-fresh.md): MAJOR 1 its skip is too broad: it also skips PRODUCT rows whose file is missing: a typo in a product row path (smtp_outbox.py -> smtp_outbx.py) gave '46 passed, 3 skipped' with demo_only present (plain db54e13: 2 failed); a renamed product file would go green in CI. Narrow fix (skip only `demo_only/` rows and only when the folder is absent) measured by the reviewer: demo present 49 passed; demo deleted 43 passed 6 skipped; typo in either case: 2 failed; row ids identical. MAJOR 2 the optional hygiene patch fails in a client copy with NO .git (5 failed; with git init: 59 passed): needs a skip. MINOR: `ruff check .` with demo_only deleted reports 27 I001 on plain db54e13 (a client cut is not lint-green): `[tool.ruff.lint.isort] known-first-party=["demo_only"]` fixes both ways; no CI job runs a no-demo copy. Builder a82407284069d4fa2 is making nodemo-fix-v2 + optional-v2 + ruff-isort + an OPTIONAL CI job patch (your decision) and a chunked no-demo run on the final stack.
