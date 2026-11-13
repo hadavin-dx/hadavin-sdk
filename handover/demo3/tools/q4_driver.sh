@@ -3,8 +3,8 @@
 SC=$1; P=$2; K=$3; PB=$4; W=${5:-2}; TH=${6:-50}
 L=/home/user/work/q4-logs; Q=/home/user/work/q4-base
 tag=$(echo $SC | tr ':' '_')-p$P-$K
-for t in $(seq 1 10); do a=$(cut -d' ' -f1 /proc/loadavg); awk "BEGIN{exit !($a>3.0)}" || break; sleep 30; done
-noisy=""; awk "BEGIN{exit !($a>3.0)}" && noisy=NOISY
+[ -z "$NOWAIT" ] && for t in $(seq 1 10); do a=$(cut -d' ' -f1 /proc/loadavg); awk "BEGIN{exit !($a>3.0)}" || break; sleep 30; done
+a=$(cut -d" " -f1 /proc/loadavg); noisy=""; awk "BEGIN{exit !($a>3.0)}" && noisy=NOISY
 T=$(mktemp -d /tmp/q4drv.XXXXXX); cd $Q
 export PYTHONPATH=src:. TMPDIR=$T DESK_DB_PATH=$T/desk.db DESK_PORT=$PB DESK_FAKES_PORT=$((PB+1)) PY=/home/user/work/final-venv/bin/python
 echo "scenario=$SC pass=$P run=$K workers=$W threads=$TH load_before=$(cat /proc/loadavg) $noisy" > $L/drv-$tag.log

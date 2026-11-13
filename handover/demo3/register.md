@@ -49,3 +49,7 @@ Q8 | agent a101c8..: mutation on pathconfine | 12:34Z | ~13:35Z | running
 Q6 | reported 12:36Z closed (4 fails, n8n not installable here)
 Q6b | agent a0a58e..: cold reader tests/real-services/hubspot-probe docs, dry mode only | 12:37Z | ~13:25Z | running
 Q9 | agent ab82f8..: cross-check demo numbers script | 12:37Z | ~13:20Z | running
+Q7 | reported 12:40Z closed: 196 tests pass under 3.13 BASE and STACK
+Q9 | reported 12:40Z closed: 1 mismatch (versions.md:9 collect flags); edge-case test x20 passed
+B1 | agent a089825..: lane3-fix-1 prose patch (builder) | 12:42Z | ~13:20Z, stop 14:00Z | running
+R1 | agent a502a2..: numbers audit (read-only) | 12:42Z | ~13:05Z, stop 13:30Z | running
