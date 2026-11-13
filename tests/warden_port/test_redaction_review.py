@@ -50,9 +50,10 @@ def test_status_codes_and_common_words_are_not_rewritten():
         ("wh" + "sec_abcdef+b5sSYspob7oD/xyz", "b5sSYspob7oD"),
         ("host ec2-54-12-34-56.compute-1.amazonaws.com", "54-12-34-56"),
         ("pod 10-0-3-22.default.pod.cluster.local", "10-0-3-22"),
-        (
+        pytest.param(
             "-----BEGIN " + "PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC",
             "MIIEvQIBADANBgkqhkiG9w0BAQEFAASC",
+            id="private-key-block",
         ),
         ("Private-Lines: 2\nAAAAgQDputtybody\nAAAAsecond\nPrivate-MAC: ab", "AAAAgQDputtybody"),
     ],

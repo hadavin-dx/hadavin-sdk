@@ -4,8 +4,7 @@ outcome only for a bad event id.
 Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 1 control, 6 pin, 20 other. Nothing here says a test "fails on old main".
 
 A third run, (c) = origin/main source plus the ``pathguard.py`` of the commit before this change (abb3e90a), is the real
-fail-before for the long-name and audit tests: a raw ``OSError`` escaped there and a bad outcome was dropped for any
-refusal. Fake paths only; the tests build every name from parts.
+fail-before for the long-name tests only: a raw ``OSError`` escaped there. The audit tests in this file (a bad event id is dropped and counted, another reason takes the outbox path, a loop in the objects folder) PASS on (c): they pin behaviour and are not fail-before. A test with several parameters carries the label of its worst case; the long-name cases of 250, 254 and 255 bytes pass on (c) too. ``test_control_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry`` is a control by (a) and (b) but fails on (c), because it reads this change's mutant table against the older source. Fake paths only; the tests build every name from parts.
 """
 
 from __future__ import annotations

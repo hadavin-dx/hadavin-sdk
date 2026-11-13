@@ -390,7 +390,9 @@ def test_a_long_value_is_swept_even_inside_a_longer_token():
         ("cli --api-" + "key " + "abcd1234" + "efgh", "abcd1234" + "efgh"),
         ("stripe wh" + "sec_abcdefghijklmnop123", "wh" + "sec_abcdefghijklmnop123"),
         ("slack " + "xapp" + "-1-A0B1C2D3-12345-abcdef", "xapp" + "-1-A0B1C2D3-12345-abcdef"),
-        (private_key_block("PGP", "lQOYBGbody"), "lQOYBGbody"),
+        pytest.param(
+            private_key_block("PGP", "lQOYBGbody"), "lQOYBGbody", id="pgp-private-key-block"
+        ),
         ("node ip-10-0-3-22.ap-south-2.compute.internal NotReady", "10-0-3-22"),
     ],
 )

@@ -1,7 +1,7 @@
 """pathguard batch 6: links an operator typed, names that grow after the check, errors of the system in the key folder,
 the audit sink edges, and a header test that counts the label sentences from the files themselves.
 
-Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 3 control, 6 pin, 29 other. Nothing here says a test "fails on old main".
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 3 control, 7 pin, 30 other. Nothing here says a test "fails on old main".
 
 Fake paths only; names are built from parts.
 """
@@ -335,3 +335,32 @@ def test_control_every_header_count_is_the_count_of_ids_in_its_file():
 def test_control_a_header_count_test_sees_the_ids_of_every_labelled_file():
     ids = _collected()
     assert set(ids) == set(LABELLED) and all(ids[name] for name in LABELLED)
+
+
+def test_pin_an_error_while_asking_if_a_path_exists_is_a_refusal_in_words(tmp_path, monkeypatch):
+    """A name over 255 bytes is now refused by length, so the long-name test no longer reaches the existence check; an error
+    of the system raised there (no right to look) must still be a refusal in words, with no path."""
+
+    def refuse(self, **_kw):
+        raise PermissionError(13, "denied")
+
+    monkeypatch.setattr(Path, "exists", refuse)
+    with pytest.raises(PathRefused) as caught:
+        pathguard.operator_dir(tmp_path / "f", what="n", must_exist=False)
+    assert str(caught.value) == "n: cannot be resolved" and caught.value.rule == "R10"
+    assert caught.value.__cause__ is None and caught.value.__context__ is None
+
+
+def test_a_key_file_check_that_raises_an_oserror_is_a_value_error_with_no_path(
+    tmp_path, monkeypatch
+):
+    """The symlink check of a key file can fail in the system; the caller gets one fixed sentence, not the OSError."""
+
+    def refuse(self):
+        raise OSError(36, "File name too long")
+
+    monkeypatch.setattr(Path, "is_symlink", refuse)
+    with pytest.raises(ValueError) as caught:
+        key_path(tmp_path / "k.pem", tmp_path)
+    assert "cannot be checked" in str(caught.value) and str(tmp_path) not in str(caught.value)
+    assert caught.value.__cause__ is None
