@@ -389,11 +389,14 @@ _SCHEME_WORDS = frozenset({"bearer", "basic", "digest"})
 _SCHEME_TOKEN = re.compile(r"(?i)\b(?:bearer|basic)\s+([a-z0-9._~+/\-<>_]+={0,2})")
 
 
+SHAPED_TOKEN_MIN = 16  # the lead rule: a bare scheme word and a token of 16 or more is hidden
+
+
 def _looks_secret_shaped(token: str) -> bool:
-    """A token after a bare scheme word that is long (16 or more characters) or mixes letters and
-    digits."""
-    body = token.rstrip("=")
-    return len(body) >= 16 or (any(c.isalpha() for c in body) and any(c.isdigit() for c in body))
+    """A token after a bare scheme word is hidden by this pass when its part before the `=` padding
+    has 16 or more characters. A shorter one stays as the core leaves it (the two core rules of the
+    pass before this one still apply)."""
+    return len(token.rstrip("=")) >= SHAPED_TOKEN_MIN
 
 
 def _hide_shaped_scheme_token(line: str) -> str:
@@ -437,6 +440,8 @@ def _hide_pairs(line: str) -> str:
             start -= 1
         name = line[start:at]
         named_secret = bool(_SECRET_NAME.search(name)) if start < at else False
+        if start < at and _BARE_WORD in name.lower() and name.lower() != _BARE_WORD:
+            named_secret = True  # not the bare word: `--bypass`, `a.bypass`, `bypass_key`
         if start < at and (named_secret or name.lower() == _BARE_WORD):
             end = _value_end(line, at + 1)
             value = line[at + 1 : end]
