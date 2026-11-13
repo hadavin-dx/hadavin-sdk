@@ -3809,15 +3809,15 @@ def test_a_million_shared_members_of_a_detector_list_cost_a_bounded_time_and_mem
     assert peak < 4_000_000, f"10^6 shared members were copied: peak {peak} bytes"
 
 
-def test_a_hundred_thousand_references_to_one_stand_in_cost_one_shape_comparison_per_class(
+def test_fifteen_hundred_references_to_one_stand_in_cost_one_shape_comparison_per_class(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     channel = FakeChannel("sig" + "-b8-shared")
     store = MemoryStore()
-    store.extra = [channel] * 100_000  # type: ignore[attr-defined]
+    store.extra = [channel] * 1_500  # type: ignore[attr-defined]  # inside the budget: each reference is visited
     calls = _counting(monkeypatch, "_same_shape", 20)
-    assert not is_stand_in_object(store), "100,000 references to one stand-in were trusted"
-    assert calls[0] <= 20
+    assert is_stand_in_object(store), "1,500 references to one stand-in were refused"
+    assert 1 <= calls[0] <= 20
 
 
 def test_a_stand_in_is_charged_fifty_values_and_a_few_hundred_references_are_fine() -> None:
@@ -3851,6 +3851,30 @@ def test_an_over_budget_structure_is_named_apart_from_a_real_service() -> None:
     assert held_services_found({"store": foreign}) == ("held store: MemoryStore",), (
         "a real object inside a store was reported as over budget"
     )
+
+
+def test_serve_refuses_with_bind_refused_when_an_object_raises_while_the_approvals_are_read(
+    tmp_path: Path,
+) -> None:
+    """New test, fails on the old code (an object that raises while ``held_services`` reads it escaped as its own
+    error): a hostile mapping in the overrides slot raises when it is read, not when a slot is missing."""
+
+    class Hostile:
+        def keys(self) -> object:
+            raise RuntimeError("hostile overrides")
+
+        def __getitem__(self, key: object) -> object:
+            raise RuntimeError("hostile overrides")
+
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    saved = object.__getattribute__(a, "_overrides")
+    object.__setattr__(a, "_overrides", Hostile())
+    try:
+        with pytest.raises(BindRefused, match="could not read what the approvals hold"):
+            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+    finally:
+        object.__setattr__(a, "_overrides", saved)
 
 
 @pytest.mark.parametrize("slot", Approvals.__slots__)
@@ -3893,6 +3917,9 @@ def test_operator_config_names_are_filtered_in_the_refusal_line(stand_in_config:
     )
     lines = config_services(cfg)
     assert "tools:ok.module-name" in lines, "a plain module name was refused its own name"
+    assert "tools:bad name: x" not in lines, (
+        "a tools module name with a space was written to the refusal line"
+    )
     assert "tools:(unreadable)" in lines, (
         "a hostile tools module name was written to the refusal line"
     )
