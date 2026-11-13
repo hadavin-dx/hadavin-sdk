@@ -1,6 +1,31 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:18Z / 09:48 IST - P3 v3 fresh security review: no bypass, 1 Windows Major (reading only), 6 mutants survive; P3 stays PARKED until the probe says which shape Sonar accepts; probe-ab-v2 built, safety read running; 7 agents
+FAILED / UNCERTAIN first:
+1. **P3 v3 (sonar/REVIEW-p3v3-fresh.md): no Blocker, no bypass for non-anywhere callers** (`anywhere` is keyword-only; the only caller is run_real_check.py:844 with a literal True: no user input reaches it). **Major (Windows, from reading CPython, NOT run on Windows):** anywhere mode tests containment against drive-letter anchors only; on Windows realpath of a mapped network drive returns the UNC form, so `--config Z:\run.env` or a UNC config would be refused (base reads both); fix: in anywhere mode skip the containment test and take the root from os.path.splitroot(real) (also removes an A:-Z: isdir probe that could stall on a disconnected drive). **6 of 16 reviewer mutants survive** (C1 controls allowed, DEL allowed, temp folder not an allowed root, explicit roots= not realpath'd, fallback tries the raw argument before the resolved path, a path equal to an allowed root): no test pins them though the helper text/README promise them. Minors: wide roots (all of /tmp and the whole repo are allowed: an output option can overwrite an existing file inside, e.g. `--json src/lead_desk/desk.py`, `.git/hooks/pre-commit`: README must say it in one sentence); a folder you can enter but not list inside an allowed root is refused (only anywhere has the fallback; README silent); run_live_check.py --key-file/--ledger stay unconfined (README's 'same reason' is weak for the ledger: OWNER DECISION). Nits: `python tools/scrub_n8n_export.py` direct start now raises ModuleNotFoundError (-m works); com0/lpt0 allowed as new names; U+202E/U+2028 accepted in existing names; a deleted working folder makes allowed_roots raise a traceback. Passed: real run with config/book outside the roots (all base URLs loopback fakes) exit 0; missing scrub input 'refused: in.json: no such file' (was a traceback); all 11 S8707 and the S8706 are reached only through confine; 152 + 542 + 111 tests passed.
+   **DECISION: P3 is PARKED** (not rebuilt now): the rollout shape (helper / inline / listing / name-only) depends on the probe result; the fixes above are folded into the FINAL P3 built after the probe, so we do not polish a shape Sonar may reject. v3 is not for applying.
+2. **probe-ab-v2 (sonar/probe-ab-v2.patch, sha256 prefix a22bc29769aa3093, applies on db54e13; one difference per pair A..F; controls read_book L96 and load_env L645 untouched; PROBE ONLY, DO NOT MERGE; `--help` without PYTHONPATH fails in it): built; fresh safety read running (a937a30c97cc18b5b): I send `PROBE SAFE` or the reasons the moment it lands: do NOT push it before that line.** Builder deviations explained in the note: the inline write guard is at scrub 179 (366/377 are the dict-vs-iteration pair), the name-only site is _drain_marker (a fixed folder at n8n_api would break 5 subprocess tests). 8 of 10 mutants killed (2 equivalent survivors).
+3. Strays: `/nonexistent`, `/nonexistent-x` exist on this machine from reviewers' tests as root (mtimes 03:02 and 03:18): harmless; not removed (my rm was blocked by the safety check).
+4. **READY TO PUSH: NOTHING YET** (P1 v3.1, nodemo v2 review, P2 v2.1 still open). Not run anywhere: full suite WITH demo present, Windows, Sonar.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a0b62ed1f6ca160f5 | P1 v3.1 builder | 04:00 | running | patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| ae8bce55f3b3082f4 | fresh reviewer nodemo v2 + CI job | 04:11 | running | report |
+| a937a30c97cc18b5b | fresh safety reader probe-ab-v2 | 04:15 | running | PROBE SAFE / NOT |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| ab6c6365b3c5052ec | start-prompt hardening builder (breach response) | 04:12 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P3 | review 3 | 1 Major (Win), 6 survivors | shape pending | no | final P3 after probe |
+| probe | review 3 (v2) | pending | design | no | PROBE SAFE |
+
 ## 2026-11-13 04:11Z / 09:41 IST - 04:02/04:08 commands read: breach-response patch lane started; nodemo v2 + CI job built (no-demo chunked stack run: 0 failed, 938 passed, 80 skipped); P3 v3 built; first push batch NOT clean yet (P1 v3.1, nodemo v2 review, P2 v2.1 still open); 8 agents
 FAILED / UNCERTAIN first:
 1. **Your 04:02Z item 4 (proxy-line evidence): I CANNOT show it.** The sandbox proxy exposes no request log (only counters at $HTTPS_PROXY/__agentproxy/status; no per-request lines; /root/.ccr has CA files only). What exists: the reviewer's own report (real-run/REVIEW-v4-fresh.md, slip 1): made-up key, `created 0`, requests toward the vendor's default address through the proxy; its scratch /tmp/work/rv11-1 (cases.sh etc.) holds its harness but no proxy capture. So: 'made-up key' and 'nothing sent to a mail server' are the reviewer's statements, NOT verified by a proxy log; the key was built from parts by the test harness (hygiene scan clean), and the session environment secrets were not in the desk's environment (cases ran under `env -i`), which I can confirm only from its report. To verify for real the owner would need the vendor-side/proxy-side logs. No mail: the SMTP host was loopback in those configs per its report (unverified).
