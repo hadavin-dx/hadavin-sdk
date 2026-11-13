@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/e7-base
+configfile: pyproject.toml
+collected 230 items
+
+tests/test_reset_scripts.py ............................................ [ 19%]
+.                                                                        [ 19%]
+tests/test_reset_ps_width.py ...............                             [ 26%]
+tests/test_shell_single_bracket.py ..................................... [ 42%]
+........................................................................ [ 73%]
+.....................................                                    [ 89%]
+tests/test_hygiene.py ...s.......s.......ss...                           [100%]
+
+================== 226 passed, 4 skipped in 74.20s (0:01:14) ===================

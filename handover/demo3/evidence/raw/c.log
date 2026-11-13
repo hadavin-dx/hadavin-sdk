@@ -1,0 +1,288 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/e7-base
+configfile: pyproject.toml
+collected 206 items
+
+tests/test_reset_scripts.py ............................................ [ 21%]
+.                                                                        [ 21%]
+tests/test_reset_ps_width.py FFFFFFFF.......                             [ 29%]
+tests/test_shell_single_bracket.py ..................................... [ 47%]
+........................................................................ [ 82%]
+.....................................                                    [100%]
+
+=================================== FAILURES ===================================
+____ test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80 _____
+
+book = PosixPath('/home/user/work/e7-base/data/reset-guard-7zeqe6ba/desk.sqlite3')
+
+    def test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80(book: Path) -> None:
+        code = (
+            "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+            "open(sys.argv[2], 'w').close(); time.sleep(60)"
+        )
+        ready = book.parent / "ready"
+        slow = _start(ready, code)
+        try:
+            wait_until(ready.exists, what="the child has installed its signal handler")
+            (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+            done = _run(
+                SCRIPT,
+                book,
+                RESET_STOP_WAIT_SECONDS="1",
+                DESK_PORT=str(_free_port()),
+                DESK_FAKES_PORT=str(_free_port()),
+                **NARROW,
+            )
+        finally:
+            _end(slow)
+        said = done.stdout + done.stderr
+>       assert done.returncode == 5 and "did not stop" in said, (done.stdout, done.stderr)
+E       AssertionError: ('', 'refused: pid 23781 in /home/user/work/e7-base/data/reset-guard-7zeqe6ba/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+E         ')
+E       assert (6 == 5)
+E        +  where 6 = CompletedProcess(args=['bash', '/home/user/work/e7-base/scripts/reset.sh'], returncode=6, stdout='', stderr='refused: ...id is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)\n').returncode
+
+tests/test_reset_ps_width.py:63: AssertionError
+_ test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_width_is_80 _
+
+book = PosixPath('/home/user/work/e7-base/data/reset-guard-3drx07om/desk.sqlite3')
+
+    def test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_width_is_80(book: Path) -> None:
+        code = (
+            "import signal, sys, time\n"
+            "def stop(*a):\n"
+            "    time.sleep(3)\n"
+            "    sys.exit(0)\n"
+            "signal.signal(signal.SIGTERM, stop)\n"
+            "open(sys.argv[2], 'w').close()\n"
+            "time.sleep(60)\n"
+        )
+        ready = book.parent / "ready"
+        slow = _start(ready, code)
+        try:
+            wait_until(ready.exists, what="the child has installed its signal handler")
+            (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+        finally:
+            _end(slow)
+>       assert done.returncode == 0, (done.stdout, done.stderr)
+E       AssertionError: ('', 'refused: pid 23798 in /home/user/work/e7-base/data/reset-guard-3drx07om/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+E         ')
+E       assert 6 == 0
+E        +  where 6 = CompletedProcess(args=['bash', '/home/user/work/e7-base/scripts/reset.sh'], returncode=6, stdout='', stderr='refused: ...id is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)\n').returncode
+
+tests/test_reset_ps_width.py:85: AssertionError
+_ test_a_command_line_over_200_characters_with_the_marker_last_is_still_the_desk _
+
+book = PosixPath('/home/user/work/e7-base/data/reset-guard-t2s_m8wb/desk.sqlite3')
+
+    def test_a_command_line_over_200_characters_with_the_marker_last_is_still_the_desk(book: Path) -> None:
+        code = (
+            "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+            "open(sys.argv[-1], 'w').close(); time.sleep(60)"
+        )
+        ready = book.parent / "ready"
+        padding = [f"padding-word-{i:02d}" for i in range(20)]  # about 300 characters before the marker
+        slow = _start(ready, code, *padding)
+        try:
+            wait_until(ready.exists, what="the child has installed its signal handler")
+            (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+            done = _run(
+                SCRIPT,
+                book,
+                RESET_STOP_WAIT_SECONDS="1",
+                DESK_PORT=str(_free_port()),
+                DESK_FAKES_PORT=str(_free_port()),
+                COLUMNS="20",
+                LINES="24",
+            )
+        finally:
+            _end(slow)
+        # the desk was recognised (so it was asked to stop, and refused to): 5, never 6 "not the desk"
+        said = done.stdout + done.stderr
+>       assert done.returncode == 5 and "did not stop" in said, (done.stdout, done.stderr)
+E       AssertionError: ('', 'refused: pid 23840 in /home/user/work/e7-base/data/reset-guard-t2s_m8wb/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+E         ')
+E       assert (6 == 5)
+E        +  where 6 = CompletedProcess(args=['bash', '/home/user/work/e7-base/scripts/reset.sh'], returncode=6, stdout='', stderr='refused: ...id is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)\n').returncode
+
+tests/test_reset_ps_width.py:113: AssertionError
+___ test_proc_args_asks_ps_with_ww_first_when_the_pid_is_not_a_plain_number ____
+
+tmp_path = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_with_ww0')
+
+    def test_proc_args_asks_ps_with_ww_first_when_the_pid_is_not_a_plain_number(tmp_path: Path) -> None:
+>       out, calls, rc = _proc_args(tmp_path, "abc", 'echo "line from ww"')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_with_ww0')
+pid = 'abc', ps_body = 'echo "line from ww"', tr_body = None
+
+    def _proc_args(tmp: Path, pid: str, ps_body: str, tr_body: str | None = None) -> tuple[str, list[str], int]:
+        """Run reset.sh's `proc_args` for `pid`. The stand-in `ps` writes its arguments (one call per line) to a file and
+        then runs ps_body; a stand-in `tr` (tr_body) is added only when given. Returns (output, ps calls, exit code)."""
+        stubs = tmp / "stubs"
+        stubs.mkdir()
+        log = tmp / "ps-calls.txt"
+        ps_text = f'#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "{log}"\n{ps_body}\n'
+        (stubs / "ps").write_text(ps_text, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        if tr_body is not None:
+            (stubs / "tr").write_text(f"#!/usr/bin/env bash\n{tr_body}\n", encoding="utf-8")
+            (stubs / "tr").chmod(0o755)
+        text = REPO_SCRIPT.read_text(encoding="utf-8")
+>       start = text.index("proc_args() {")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps_width.py:131: ValueError
+____________ test_proc_args_falls_back_to_plain_ps_when_ps_ww_fails ____________
+
+tmp_path = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_falls_back_to_p0')
+
+    def test_proc_args_falls_back_to_plain_ps_when_ps_ww_fails(tmp_path: Path) -> None:
+        body = 'if [[ "$1" == "-ww" ]]; then exit 1; fi; echo "plain ps line"'
+>       out, calls, rc = _proc_args(tmp_path, "abc", body)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:146: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_falls_back_to_p0')
+pid = 'abc'
+ps_body = 'if [[ "$1" == "-ww" ]]; then exit 1; fi; echo "plain ps line"'
+tr_body = None
+
+    def _proc_args(tmp: Path, pid: str, ps_body: str, tr_body: str | None = None) -> tuple[str, list[str], int]:
+        """Run reset.sh's `proc_args` for `pid`. The stand-in `ps` writes its arguments (one call per line) to a file and
+        then runs ps_body; a stand-in `tr` (tr_body) is added only when given. Returns (output, ps calls, exit code)."""
+        stubs = tmp / "stubs"
+        stubs.mkdir()
+        log = tmp / "ps-calls.txt"
+        ps_text = f'#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "{log}"\n{ps_body}\n'
+        (stubs / "ps").write_text(ps_text, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        if tr_body is not None:
+            (stubs / "tr").write_text(f"#!/usr/bin/env bash\n{tr_body}\n", encoding="utf-8")
+            (stubs / "tr").chmod(0o755)
+        text = REPO_SCRIPT.read_text(encoding="utf-8")
+>       start = text.index("proc_args() {")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps_width.py:131: ValueError
+____ test_proc_args_reads_proc_first_and_never_calls_ps_for_a_live_process _____
+
+tmp_path = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_reads_proc_firs0')
+
+    @pytest.mark.skipif(not Path("/proc/self/cmdline").exists(), reason="needs /proc (Linux)")
+    def test_proc_args_reads_proc_first_and_never_calls_ps_for_a_live_process(tmp_path: Path) -> None:
+>       out, calls, rc = _proc_args(tmp_path, str(os.getpid()), 'echo "ps must not run"')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_reads_proc_firs0')
+pid = '21286', ps_body = 'echo "ps must not run"', tr_body = None
+
+    def _proc_args(tmp: Path, pid: str, ps_body: str, tr_body: str | None = None) -> tuple[str, list[str], int]:
+        """Run reset.sh's `proc_args` for `pid`. The stand-in `ps` writes its arguments (one call per line) to a file and
+        then runs ps_body; a stand-in `tr` (tr_body) is added only when given. Returns (output, ps calls, exit code)."""
+        stubs = tmp / "stubs"
+        stubs.mkdir()
+        log = tmp / "ps-calls.txt"
+        ps_text = f'#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "{log}"\n{ps_body}\n'
+        (stubs / "ps").write_text(ps_text, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        if tr_body is not None:
+            (stubs / "tr").write_text(f"#!/usr/bin/env bash\n{tr_body}\n", encoding="utf-8")
+            (stubs / "tr").chmod(0o755)
+        text = REPO_SCRIPT.read_text(encoding="utf-8")
+>       start = text.index("proc_args() {")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps_width.py:131: ValueError
+_________ test_proc_args_asks_ps_when_proc_gives_an_empty_command_line _________
+
+tmp_path = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_when_pr0')
+
+    @pytest.mark.skipif(not Path("/proc/self/cmdline").exists(), reason="needs /proc (Linux)")
+    def test_proc_args_asks_ps_when_proc_gives_an_empty_command_line(tmp_path: Path) -> None:
+        # a stand-in `tr` prints nothing and succeeds, as `tr` does for a process whose command line is empty
+>       out, calls, rc = _proc_args(tmp_path, str(os.getpid()), 'echo "[kernel-thread]"', tr_body="exit 0")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_when_pr0')
+pid = '21286', ps_body = 'echo "[kernel-thread]"', tr_body = 'exit 0'
+
+    def _proc_args(tmp: Path, pid: str, ps_body: str, tr_body: str | None = None) -> tuple[str, list[str], int]:
+        """Run reset.sh's `proc_args` for `pid`. The stand-in `ps` writes its arguments (one call per line) to a file and
+        then runs ps_body; a stand-in `tr` (tr_body) is added only when given. Returns (output, ps calls, exit code)."""
+        stubs = tmp / "stubs"
+        stubs.mkdir()
+        log = tmp / "ps-calls.txt"
+        ps_text = f'#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "{log}"\n{ps_body}\n'
+        (stubs / "ps").write_text(ps_text, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        if tr_body is not None:
+            (stubs / "tr").write_text(f"#!/usr/bin/env bash\n{tr_body}\n", encoding="utf-8")
+            (stubs / "tr").chmod(0o755)
+        text = REPO_SCRIPT.read_text(encoding="utf-8")
+>       start = text.index("proc_args() {")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps_width.py:131: ValueError
+______________ test_proc_args_asks_ps_when_proc_gives_only_blanks ______________
+
+tmp_path = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_when_pr1')
+
+    @pytest.mark.skipif(not Path("/proc/self/cmdline").exists(), reason="needs /proc (Linux)")
+    def test_proc_args_asks_ps_when_proc_gives_only_blanks(tmp_path: Path) -> None:
+        # a process whose command line is only NUL bytes: `tr` turns them into spaces, so the answer is blank, not empty
+>       out, calls, rc = _proc_args(tmp_path, str(os.getpid()), 'echo "[kernel-thread]"', tr_body="printf '   '")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:169: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp = PosixPath('/home/user/work/priv/e7-tmp/bt-c/test_proc_args_asks_ps_when_pr1')
+pid = '21286', ps_body = 'echo "[kernel-thread]"', tr_body = "printf '   '"
+
+    def _proc_args(tmp: Path, pid: str, ps_body: str, tr_body: str | None = None) -> tuple[str, list[str], int]:
+        """Run reset.sh's `proc_args` for `pid`. The stand-in `ps` writes its arguments (one call per line) to a file and
+        then runs ps_body; a stand-in `tr` (tr_body) is added only when given. Returns (output, ps calls, exit code)."""
+        stubs = tmp / "stubs"
+        stubs.mkdir()
+        log = tmp / "ps-calls.txt"
+        ps_text = f'#!/usr/bin/env bash\nprintf \'%s\\n\' "$*" >> "{log}"\n{ps_body}\n'
+        (stubs / "ps").write_text(ps_text, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        if tr_body is not None:
+            (stubs / "tr").write_text(f"#!/usr/bin/env bash\n{tr_body}\n", encoding="utf-8")
+            (stubs / "tr").chmod(0o755)
+        text = REPO_SCRIPT.read_text(encoding="utf-8")
+>       start = text.index("proc_args() {")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: substring not found
+
+tests/test_reset_ps_width.py:131: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps_width.py::test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80
+FAILED tests/test_reset_ps_width.py::test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_width_is_80
+FAILED tests/test_reset_ps_width.py::test_a_command_line_over_200_characters_with_the_marker_last_is_still_the_desk
+FAILED tests/test_reset_ps_width.py::test_proc_args_asks_ps_with_ww_first_when_the_pid_is_not_a_plain_number
+FAILED tests/test_reset_ps_width.py::test_proc_args_falls_back_to_plain_ps_when_ps_ww_fails
+FAILED tests/test_reset_ps_width.py::test_proc_args_reads_proc_first_and_never_calls_ps_for_a_live_process
+FAILED tests/test_reset_ps_width.py::test_proc_args_asks_ps_when_proc_gives_an_empty_command_line
+FAILED tests/test_reset_ps_width.py::test_proc_args_asks_ps_when_proc_gives_only_blanks
+======================== 8 failed, 198 passed in 28.50s ========================

@@ -8,3 +8,56 @@ exit=124
 ## E3 start fakes with src:. (background, mine), then desk with src only
 fakes pid 4983
 desk listening on http://127.0.0.1:18765
+exit=124
+## E4 desk with src:. servers up (timeout 6 s, exit 124 is the timeout)
+desk listening on http://127.0.0.1:18765
+exit=124
+fakes stopped
+## NOTE E2/E3/E4: with 'python -m' from the repository root the current folder is on the module path, so src alone found demo_only in all three; the plan's expected ModuleNotFoundError/RuntimeError did NOT happen here
+## E5 scripts/crash_desk.py (a script: its own folder scripts/ is on the path, not the current folder), servers up, PYTHONPATH=src
+crash flag file: /home/user/work/priv/b6b/d4/crash.flag  (write a point name such as D2 into it to arm the crash)
+Traceback (most recent call last):
+  File "/home/user/work/b6b-base/src/lead_desk/loader.py", line 91, in load_demo_adapters
+    fakes = importlib.import_module("demo_only.fakes")  # dynamic: src is type-checked without the demo folder
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1310, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'demo_only'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/user/work/b6b-base/scripts/crash_desk.py", line 19, in <module>
+    main(hooks=FlagFileHooks(flag))
+  File "/home/user/work/b6b-base/src/lead_desk/server.py", line 1166, in main
+    crm, outbox, qualifier = load_demo_adapters(config)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/b6b-base/src/lead_desk/loader.py", line 95, in load_demo_adapters
+    raise RuntimeError(
+RuntimeError: the desk is set to use the pre-written demo answers (the default), but the folder demo_only is missing. Put the demo_only folder back, or set DESK_QUALIFIER=live_claude.
+exit=1
+## E6 scripts/crash_desk.py PYTHONPATH=src:. (timeout 6)
+crash flag file: /home/user/work/priv/b6b/d4/crash.flag  (write a point name such as D2 into it to arm the crash)
+desk listening on http://127.0.0.1:18765
+exit=124
+## E7 feed.py with PYTHONPATH=src, desk up (crash_desk with src:. in background)
+canned-1 form -> 201 {"receipt_id": 1, "verdict": "new", "lead_id": "L5677c838f745", "replayed": false}
+feed src exit=0
+canned-2 form -> 201 {"receipt_id": 2, "verdict": "new", "lead_id": "L8d3972c639ed", "replayed": false}
+feed src:. exit=0
+## E8 flag D2 then feed (src), desk exit code
+canned-3 form -> 201 {"receipt_id": 3, "verdict": "new", "lead_id": "L8437503ad32c", "replayed": false}
+feed exit=0
+desk exit=137 ; flag exists: no
+crash flag file: /home/user/work/priv/b6b/d4/crash.flag  (write a point name such as D2 into it to arm the crash)
+desk listening on http://127.0.0.1:18765
+simulate crash
+done

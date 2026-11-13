@@ -2,3 +2,4 @@ start 13:46Z (19:16 IST) setup done
 13:48Z (19:18 IST) a done x2 rc0; b/c/e running via e7-run.sh
 13:52Z (19:22 IST) b,c done; b n=2 run1 had 1 flaky failure (port). full suite (e) running since ~13:51Z, expect ~14:13Z
 14:04Z (19:34 IST) full suite at ~73%
+14:10Z (19:40 IST) all runs done; reporting

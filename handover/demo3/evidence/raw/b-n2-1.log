@@ -1,0 +1,38 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/e7-base
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 2/2 workers
+2 workers [60 items]
+
+.......................................................F....             [100%]
+=================================== FAILURES ===================================
+________ test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[] _________
+[gw1] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/e7-base/data/reset-guard-dchwgoz6/desk.sqlite3')
+text = ''
+
+    @pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
+    @pytest.mark.parametrize(
+        "text",
+        ["abc", "1 ; touch {marker}", "$(touch {marker})", "`touch {marker}`", "", "   ", "99999999999999999999"],
+    )
+    def test_a_pid_file_with_text_that_is_not_a_number_runs_nothing(book: Path, text: str) -> None:
+        marker = book.parent / "injected"
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(text.format(marker=marker), encoding="utf-8")
+        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+        assert not marker.exists(), "text from the pid file was run as a command"
+        # ps cannot find such a process, so the file counts as stale: removed, the reset goes on (as the old script did)
+>       assert done.returncode == 0 and not pidfile.exists(), (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (4, 'refused: something still answers on port 43217; nothing was deleted
+E         ', '')
+E       assert (4 == 0)
+E        +  where 4 = CompletedProcess(args=['bash', '/home/user/work/e7-base/scripts/reset.sh'], returncode=4, stdout='refused: something still answers on port 43217; nothing was deleted\n', stderr='').returncode
+
+tests/test_reset_ps_width.py:187: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[]
+======================== 1 failed, 59 passed in 16.70s =========================

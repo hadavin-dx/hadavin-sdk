@@ -1,0 +1,180 @@
+# base-docs
+..................FFFFFFF                                                [100%]
+=================================== FAILURES ===================================
+_____________ test_docs_name_the_letters[README, Not claimed list] _____________
+
+place = 'README, Not claimed list'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+>       text = _place_text(place)
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_email_case_rule.py:160: in _place_text
+    return _line(*DOC_PLACES[name])
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'README.md', anchor = 'the same address in capitals'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: README.md: 0 lines hold 'the same address in capitals', expected exactly 1; the anchor words moved
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_email_case_rule.py:155: AssertionError
+_________ test_docs_name_the_letters[README, definition of Same lead] __________
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+        for letter in letters:
+>           assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
+E           AssertionError: README, definition of Same lead must name 'ß': the desk keeps it apart from its capital
+E           assert 'ß' in '* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of spaces and lower-cased, nothing more.'
+
+tests/test_email_case_rule.py:170: AssertionError
+___________________ test_docs_name_the_letters[contract.md] ____________________
+
+place = 'contract.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+>       text = _place_text(place)
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_email_case_rule.py:160: in _place_text
+    return _line(*DOC_PLACES[name])
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'contract.md', anchor = 'not `casefold()`'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: contract.md: 0 lines hold 'not `casefold()`', expected exactly 1; the anchor words moved
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_email_case_rule.py:155: AssertionError
+__________________ test_docs_name_the_letters[docs/limits.md] __________________
+
+place = 'docs/limits.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+>       text = _place_text(place)
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_email_case_rule.py:160: in _place_text
+    return _line(*DOC_PLACES[name])
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'docs/limits.md', anchor = 'Email addresses written in capitals'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: docs/limits.md: 0 lines hold 'Email addresses written in capitals', expected exactly 1; the anchor words moved
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_email_case_rule.py:155: AssertionError
+_________________ test_limits_sentences_are_there[other_forms] _________________
+
+pinned = ('docs/limits.md', 'Other address forms stay separate leads', ('xn--', 'brackets', '64', '254'))
+
+    @pytest.mark.parametrize("pinned", [OTHER_FORMS_LINE, REFUSED_LINE], ids=["other_forms", "refused_letters"])
+    def test_limits_sentences_are_there(pinned: tuple[str, str, tuple[str, ...]]) -> None:
+        """The two sentences of docs/limits.md that test_other_forms_stay_apart and test_refused_letters stand behind."""
+        path, anchor, words = pinned
+>       text = _line(path, anchor)
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'docs/limits.md', anchor = 'Other address forms stay separate leads'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: docs/limits.md: 0 lines hold 'Other address forms stay separate leads', expected exactly 1; the anchor words moved
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_email_case_rule.py:155: AssertionError
+_______________ test_limits_sentences_are_there[refused_letters] _______________
+
+pinned = ('docs/limits.md', 'The Kelvin sign (U+212A)', ('U+212A', 'U+0130', 'refused', 'review list'))
+
+    @pytest.mark.parametrize("pinned", [OTHER_FORMS_LINE, REFUSED_LINE], ids=["other_forms", "refused_letters"])
+    def test_limits_sentences_are_there(pinned: tuple[str, str, tuple[str, ...]]) -> None:
+        """The two sentences of docs/limits.md that test_other_forms_stay_apart and test_refused_letters stand behind."""
+        path, anchor, words = pinned
+>       text = _line(path, anchor)
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'docs/limits.md', anchor = 'The Kelvin sign (U+212A)'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: docs/limits.md: 0 lines hold 'The Kelvin sign (U+212A)', expected exactly 1; the anchor words moved
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_email_case_rule.py:155: AssertionError
+___________________________ test_tests_page_lists_it ___________________________
+
+    def test_tests_page_lists_it() -> None:
+        text = (REPO / "docs/tests.md").read_text(encoding="utf-8")
+>       assert "tests/test_email_case_rule.py" in text, "docs/tests.md must list tests/test_email_case_rule.py"
+E       AssertionError: docs/tests.md must list tests/test_email_case_rule.py
+E       assert 'tests/test_email_case_rule.py' in '# Crash points, promises and tests\n\nThis page holds the detail behind the short summary in the README.\n\n## How to...\n* **UNKNOWN**: the desk is not sure whether a follow-up email left; it does not resend, and a person must check.\n\n'
+
+tests/test_email_case_rule.py:185: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, Not claimed list]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[contract.md]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[docs/limits.md]
+FAILED tests/test_email_case_rule.py::test_limits_sentences_are_there[other_forms]
+FAILED tests/test_email_case_rule.py::test_limits_sentences_are_there[refused_letters]
+FAILED tests/test_email_case_rule.py::test_tests_page_lists_it - AssertionErr...
+7 failed, 18 passed in 2.50s
+
+
+EXIT_CODE=1
