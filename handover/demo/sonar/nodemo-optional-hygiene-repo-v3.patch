@@ -1,0 +1,106 @@
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 66ec7ef..d2b0207 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -18,10 +18,11 @@ from typing import Any
+ 
+ import pytest
+ import yaml
+-from support import REPO
+ 
+ from tools import hygiene
+ 
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
++
+ SRC = REPO / "src"
+ GITLEAKS_ENV = "GITLEAKS_BIN"
+ FILL_TOKEN = "<<" + "FILL"
+@@ -44,7 +45,16 @@ def _gitleaks_exe() -> str | None:
+     return path
+ 
+ 
++def _need_git_work_tree() -> None:
++    """A copy made from an archive (or with .git removed) has no repository: the tests that list this repository's files
++    with git are skipped by name there, not failed."""
++    if not (REPO / ".git").exists():
++        pytest.skip("not a git work tree (a source archive): git cannot list the files")
++
++
+ def _git(cwd: Path, *args: str) -> str:
++    if cwd == REPO:
++        _need_git_work_tree()
+     p = subprocess.run(  # noqa: S603
+         ["git", *args],  # noqa: S607
+         cwd=cwd,
+@@ -57,6 +67,49 @@ def _git(cwd: Path, *args: str) -> str:
+     return p.stdout
+ 
+ 
++def _skipped(call: Any, *args: Any) -> bool:
++    try:
++        call(*args)
++    except pytest.skip.Exception:
++        return True
++    return False
++
++
++def test_git_work_tree_skip_is_for_this_repository_only_and_accepts_a_git_file(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The skip fires only when REPO has no `.git` at all and only for calls about REPO. `.git` may be a folder (a
++    clone) or a FILE (a git worktree or a submodule): both are work trees. The temp repositories the other tests build
++    are never skipped. Pinned with REPO pointed at folders made here, so it holds in a copy with or without .git."""
++    bare = tmp_path / "archive"
++    bare.mkdir()
++    folder = tmp_path / "clone"
++    (folder / ".git").mkdir(parents=True)
++    other = tmp_path / "other"  # a repository a test builds: not REPO
++    other.mkdir()
++    # the set-up below runs with a REPO that has a .git, so no skip can get in its way
++    monkeypatch.setitem(globals(), "REPO", folder)
++    # a real linked worktree: its .git is a file that points at the main repository
++    main = tmp_path / "main"
++    main.mkdir()
++    ident = ["-c", "user.name=t", "-c", "user.email=t@example.test"]
++    _git(main, "init", "-q")
++    _git(main, *ident, "commit", "-q", "--allow-empty", "-m", "m")
++    linked = tmp_path / "linked"
++    _git(main, "worktree", "add", "-q", str(linked))
++    assert (linked / ".git").is_file()
++
++    monkeypatch.setitem(globals(), "REPO", bare)
++    assert _skipped(_need_git_work_tree)
++    assert _skipped(_git, bare, "--version")  # about REPO and REPO has no repository: skipped by name
++    assert not _skipped(_git, other, "--version")  # not about REPO: runs even though REPO has no .git
++    monkeypatch.setitem(globals(), "REPO", folder)
++    assert not _skipped(_need_git_work_tree)
++    monkeypatch.setitem(globals(), "REPO", linked)
++    assert not _skipped(_need_git_work_tree)  # .git as a file is a work tree
++    assert not _skipped(_git, linked, "ls-files")  # and git really works there
++
++
+ def test_no_demo_only_outside_loader() -> None:
+     """src/ may name demo_only only in loader.py; tests/, scripts/, conftest.py, README and docs may."""
+     offenders = [
+@@ -139,6 +192,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+         assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+     # 2. the real tree
++    _need_git_work_tree()  # the canaries above need no repository; the scan of this tree does
+     left = hygiene.pipeline(REPO, patterns, exceptions)
+     assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+     # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+diff --git a/tests/test_no_placeholders.py b/tests/test_no_placeholders.py
+index 459c521..a488d5e 100644
+--- a/tests/test_no_placeholders.py
++++ b/tests/test_no_placeholders.py
+@@ -8,7 +8,8 @@ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
+ 
+ MARKERS = ("DATE-TO-" + "FILL", "TO" + "DO", "FIX" + "ME", "X" * 3)
+ FOUND = re.compile(r"\b(" + "|".join(MARKERS) + r")\b")

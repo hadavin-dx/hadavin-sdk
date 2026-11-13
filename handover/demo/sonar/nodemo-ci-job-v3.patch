@@ -1,0 +1,135 @@
+diff --git a/.github/workflows/nodemo.yml b/.github/workflows/nodemo.yml
+new file mode 100644
+index 0000000..b22574c
+--- /dev/null
++++ b/.github/workflows/nodemo.yml
+@@ -0,0 +1,129 @@
++# Client-copy check: the same repository with the demo_only/ folder deleted, as a client copy is cut. Deleting demo_only/ must
++# leave the build and the tests green; nothing else in CI runs without it (lint.yml and sonar.yml set DPLD_REQUIRE_DEMO=1).
++# Rules for this file are those of lint.yml: every Action pinned to a full commit SHA, read-only permissions, no secrets,
++# GitHub-hosted runner, no pull request text inside a run: step, versions and URLs through env:.
++name: no-demo
++
++on:
++  pull_request:
++    branches: [main]
++  push:
++    branches: [main]
++
++permissions:
++  contents: read
++
++jobs:
++  no-demo:
++    runs-on: ubuntu-24.04
++    timeout-minutes: 60  # same as lint.yml until the first real run shows the duration
++    env:
++      GITLEAKS_VERSION: "8.30.1"
++      # same checksum as in lint.yml (SHA-256 of gitleaks_8.30.1_linux_x64.tar.gz from the release's checksums file)
++      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
++      # The run must really execute the tests. Three checks on top of "0 failed", all in the last step:
++      #  1. every chunk exits with pytest code 0 AND its last line is pytest's own summary ("N passed ... in 1.2s"), so a
++      #     chunk that dies, or a test that stops pytest early, turns the job red;
++      #  2. passed + skipped summed over the 9 chunks equals the number of tests pytest collects for the same files;
++      #  3. a skip budget and a floor, both close to the measurement (2026-11-13, Python 3.13 locally, the no-demo copy of
++      #     the pull request stack): 988 passed, 80 skipped, 1068 collected. Of the 80 skips, 74 are "needs the demo_only
++      #     folder" (68 test files that conftest.py replaces by one placeholder, 6 tests that reach the folder at run time)
++      #     and 6 are the named rows of test_except_clause_hierarchy.py. The budget is 80 + 5 and the floor is 988 - 18,
++      #     the margin being for a different Python or platform on the runner. A conftest change that skips more files
++      #     lowers passed and raises skipped, so it turns the job red. When a pull request adds tests or skips, it
++      #     moves these two numbers in the same change.
++      MIN_PASSED: "970"
++      MAX_SKIPPED: "85"
++    steps:
++      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
++        with:
++          fetch-depth: 0
++          persist-credentials: false
++
++      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0 (same pin as lint.yml)
++        with:
++          python-version: "3.12"
++
++      - name: Install gitleaks (release binary, checksum checked)
++        run: |
++          curl --proto '=https' --proto-redir '=https' --tlsv1.2 -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
++          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check -
++          mkdir "${RUNNER_TEMP}/gitleaks"
++          tar -xzf gitleaks.tar.gz -C "${RUNNER_TEMP}/gitleaks" gitleaks
++          rm gitleaks.tar.gz
++
++      - name: Install the pinned dev tools (hashes are checked)
++        run: |
++          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
++
++      - name: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
++        run: |
++          git rm -r -q demo_only
++          if [[ -e demo_only ]]; then echo "demo_only/ is still there"; exit 1; fi
++
++      - name: Ruff (lint and format) without demo_only/
++        run: |
++          ruff check .
++          ruff format --check .
++
++      - name: Tests without demo_only/ (9 chunks, one pytest at a time; every chunk exit code 0 and summary line)
++        env:
++          GITLEAKS_BIN: ${{ runner.temp }}/gitleaks/gitleaks
++          DPLD_REQUIRE_SCAN: "1"
++          # DPLD_REQUIRE_DEMO is deliberately NOT set: it would stop the run because the folder is gone
++        # No `shell:` key: GitHub runs this as `bash -e {0}`, WITHOUT pipefail. The pytest exit code is therefore taken
++        # from PIPESTATUS right after each pipe to tee, never from the pipe's own status.
++        run: |
++          mapfile -t files < <(git ls-files 'tests/test_*.py')
++          if [[ "${#files[@]}" -lt 9 ]]; then echo "too few test files found: ${#files[@]}"; exit 1; fi
++          # a test file that pytest would collect but no chunk would run (a name outside tests/test_*.py)
++          mapfile -t named < <(git ls-files tests | grep -E '(^|/)(test[^/]*|[^/]*_test)\.py$' || true)
++          mapfile -t missed < <(comm -13 <(printf '%s\n' "${files[@]}" | sort) <(printf '%s\n' "${named[@]}" | sort))
++          if [[ "${#missed[@]}" -ne 0 ]]; then echo "test files that no chunk would run: ${missed[*]}"; exit 1; fi
++          # how many tests exist in this copy (pytest's own count, one collect-only run over the same files)
++          python -u -m pytest --collect-only -q -p no:cacheprovider "${files[@]}" | tee "${RUNNER_TEMP}/collect.txt"
++          rc=${PIPESTATUS[0]}
++          if [[ "$rc" -ne 0 ]]; then echo "collecting the tests failed with exit code ${rc}"; exit 1; fi
++          collected=$(tail -n 1 "${RUNNER_TEMP}/collect.txt" | sed -nE 's/^([0-9]+) tests? collected in [0-9.]+s.*$/\1/p')
++          if [[ -z "$collected" ]]; then echo "no 'N tests collected' line from pytest"; exit 1; fi
++          : > "${RUNNER_TEMP}/summaries.txt"
++          for i in 0 1 2 3 4 5 6 7 8; do
++            chunk=()
++            for ((j = i; j < ${#files[@]}; j += 9)); do chunk+=("${files[j]}"); done
++            echo "== chunk ${i}: ${#chunk[@]} files"
++            python -u -m pytest -q -p no:cacheprovider "${chunk[@]}" | tee "${RUNNER_TEMP}/chunk.txt"
++            rc=${PIPESTATUS[0]}
++            echo "rc=${rc} $(tail -n 1 "${RUNNER_TEMP}/chunk.txt")" >> "${RUNNER_TEMP}/summaries.txt"
++          done
++          python - "${RUNNER_TEMP}/summaries.txt" "${MIN_PASSED}" "${MAX_SKIPPED}" "${collected}" <<'PY'
++          import re
++          import sys
++
++          path, min_passed, max_skipped, collected = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
++          SUMMARY = re.compile(r"^=*\s*[0-9]+ .*(passed|skipped).* in [0-9.]+s")  # pytest's closing line, nothing else
++          lines = open(path, encoding="utf-8").read().split("\n")
++          if lines[-1] == "":
++              lines.pop()  # the file ends with a newline
++          if len(lines) != 9:
++              sys.exit(f"{len(lines)} chunk lines instead of 9")
++          total = {"passed": 0, "failed": 0, "error": 0, "skipped": 0}
++          for n, line in enumerate(lines):
++              m = re.fullmatch(r"rc=([0-9]+) (.*)", line)
++              if not m:
++                  sys.exit(f"chunk {n}: malformed line {line!r}")
++              if m.group(1) != "0":
++                  sys.exit(f"chunk {n}: pytest exit code {m.group(1)}: {m.group(2)!r}")
++              if not SUMMARY.match(m.group(2)):
++                  sys.exit(f"chunk {n}: pytest did not finish, last line {m.group(2)!r}")
++              for count, word in re.findall(r"([0-9]+) (passed|failed|errors?|skipped)", m.group(2)):
++                  total["error" if word.startswith("error") else word] += int(count)
++          print("TOTAL (no demo_only/):", total, "collected:", collected, "floor:", min_passed, "skip budget:", max_skipped)
++          if total["failed"] or total["error"]:
++              sys.exit("tests failed in the no-demo copy")
++          if total["passed"] + total["skipped"] != collected:
++              sys.exit(f"{total['passed'] + total['skipped']} tests reported but {collected} collected: a chunk lost tests")
++          if total["passed"] < min_passed:
++              sys.exit(f"only {total['passed']} passed, the floor is {min_passed}: tests are being skipped that should run")
++          if total["skipped"] > max_skipped:
++              sys.exit(f"{total['skipped']} skipped, the budget is {max_skipped}: tests are being skipped that should run")
++          PY
