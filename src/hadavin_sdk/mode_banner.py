@@ -41,9 +41,7 @@ names a host for it (no manifest read for that module, or only manifests with an
 nothing but declares no host therefore also reads as real, which is the safe mistake. (3) The banner is worked out when `banner_from_config` is called; a caller that
 keeps it, a page cache, or a config whose fields are changed or reloaded afterwards, can show an out-of-date banner: call it
 again when the config is loaded again. (4) `localhost` is trusted to resolve to the loopback address on this machine. (5) The
-settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build`
-(`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`) replace what the config names and are not seen by
-the banner; a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. (7) The page script paints the
+settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build` (`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`) replace what the config names, so the config cannot say what they connect to: `App.overridden` lists the ones given and `App.mode_banner()` then shows the "unconfirmed" banner with their names, never the made-up sentence (a banner worked out from a bare config with no `overridden` list cannot know about them, so the caller must pass the names); a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. The check of what such an override really connects to waits for the stand-in labelling of those parts (Part 2). (7) The page script paints the
 `tone` it is given and checks it against the mode, the real list and the names; the made-up sentences themselves are checked here,
 in Python, before a banner leaves (`_check_what_is_claimed`), not again in the page. (8) "This machine" is decided for a bare host and
 for a url by one function (`_is_this_machine`): a host with a space, a control character, a non-ASCII character or padding is NOT
@@ -54,7 +52,7 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Collection, Iterable, Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 from urllib.parse import urlsplit
@@ -70,15 +68,14 @@ if TYPE_CHECKING:  # the type only: no load-time import of the tool client
 
 _LOG = logging.getLogger(__name__)
 
-# A screen calls `banner_or_unconfirmed`; `banner_from_config` is the same decision but raises when it cannot say. The
-# older public names `banner_for`, `services_in` and `stand_ins_in` are gone (the lower-level pieces keep a leading
-# underscore); a test pins that.
+# A screen calls `banner_or_unconfirmed`; `banner_from_config` is the same decision but raises when it cannot say.
 __all__ = [
     "DEFAULT_WORDS",
     "EGRESS_HOSTS",
     "EXTERNAL_SYSTEMS",
     "MAX_TEXT_LENGTH",
     "NOTHING_CONNECTED",
+    "OVERRIDES",
     "READ_SOURCES",
     "TONES",
     "TOOL_HOSTS",
@@ -123,7 +120,7 @@ TONES = ("demo", "real", "quiet", "unconfirmed")
 #   ("anchor", "none")   no anchoring at all: nothing is called.
 #   ("detector", <the default detector kind>)  the built-in pattern detector runs inside the process.
 # Not listed on purpose: ("signer", "ed25519_local") signs in process but reads its key from the secrets component or a
-# file and is shown as real (the safe reading, and the same as before this list was explicit); every other signer and
+# file and is shown as real (the safe reading); every other signer and
 # anchor kind calls a key service or a storage service over the network.
 NOTHING_CONNECTED: frozenset[tuple[str, str]] = frozenset(
     {("signer", "none"), ("anchor", "none"), ("detector", DEFAULTS["detector"])}
@@ -144,6 +141,7 @@ class BannerWords:
     standins_none: str = "No real service is connected."
     standins_still: str = "Still stand-ins, not connected: {names}."
     none_real: str = "No real service is connected."
+    overridden_note: str = "These parts were supplied by code and are not checked here: {names}."
     not_confirmed_tag: str = "UNCONFIRMED"
     not_confirmed: str = (
         "The mode of this system could not be confirmed. Treat everything here as real."
@@ -187,6 +185,31 @@ class ModeBanner:
         return d
 
 
+_DICT_KEYS = type({}.keys())
+_READERS: tuple[tuple[type, Any], ...] = (
+    (list, list.__iter__),
+    (tuple, tuple.__iter__),
+    (set, set.__iter__),
+    (frozenset, frozenset.__iter__),
+    (_DICT_KEYS, _DICT_KEYS.__iter__),
+)
+
+
+def _collection(value: object, what: str, *, ordered: bool = False) -> tuple[Any, ...]:
+    """The entries of an argument the banner reads, copied ONCE into a tuple. Only a `list`, a `tuple`, a `set`, a
+    `frozenset` or the keys view of a dict is accepted (with `ordered=True` only a list or a tuple: a set has no order to
+    keep), and it is read with the builtin reader of that type, so a subclass that overrides `__iter__` is never asked.
+    Anything else raises TypeError: a one-shot iterator or generator (a config whose property hands back the same used up
+    object would give a full answer the first time and an empty one the second, which reads as "nothing real"), a
+    `bytearray`, a `memoryview`, a bare text, a mapping, and any object that merely has `__iter__`."""
+    for kind, reader in _READERS[:2] if ordered else _READERS:
+        if isinstance(value, kind):
+            return tuple(reader(value))
+    raise TypeError(
+        f"{what} must be a list, tuple, set, frozenset or dict keys view, not {type(value).__name__}"
+    )
+
+
 def _reserved_for(words: BannerWords) -> re.Pattern[str]:
     """The words a service name may not hold: the fixed English words, the made-up sentences of `words` (the two
     sentences that claim made-up data) and its `reserved_words` (their key words). An empty sentence adds nothing here
@@ -205,11 +228,15 @@ def _clean_names(
     """The shown names of a list of service keys: each mapped through `names` (a key without an entry is shown as
     "component <key>"), checked, de-duplicated in order. A name is plain ASCII words only (see `_NAME_OK`)."""
     reserved = _reserved_for(words)
-    if isinstance(keys, (str, bytes, Mapping, set, frozenset)) or not isinstance(keys, Iterable):
-        # a bare string would be read letter by letter; a dict or set has no order to keep
-        raise TypeError(f"{kind} must be a list of service names, not {type(keys).__name__}")
+    # a bare string would be read letter by letter; a dict or set has no order to keep; a generator is read once
+    try:
+        entries = _collection(keys, kind, ordered=True)
+    except TypeError:
+        raise TypeError(
+            f"{kind} must be a list of service names, not {type(keys).__name__}"
+        ) from None
     out: dict[str, None] = {}
-    for key in keys:
+    for key in entries:
         if not isinstance(key, str) or not key:
             raise ValueError(f"{kind}: every entry must be a non-empty text, got {key!r}")
         shown = names.get(key, f"component {key}")
@@ -230,10 +257,11 @@ def _clean_names(
 def _banner_for(
     mode: str,
     *,
-    real_services: Iterable[str],
-    stand_ins: Iterable[str],
+    real_services: Sequence[str],
+    stand_ins: Sequence[str],
     names: Mapping[str, str] | None = None,
     words: BannerWords = DEFAULT_WORDS,
+    overridden: Sequence[str] = (),
 ) -> ModeBanner:
     """The banner for a stage and the services it is connected to (the lower-level call: prefer `banner_from_config`).
 
@@ -241,7 +269,10 @@ def _banner_for(
     default, so an empty list always means "checked, none". `names` maps a service key to the name a person reads (a key
     without an entry is shown as "component <key>"). A stage that is not in `stages.STAGES`, a bare string, dict or set
     where a list is wanted, a `names` that is not a mapping, a name that is not plain words, or a text too long for the
-    page script raises (the screen must not show a banner built from a value nobody checked)."""
+    page script raises (the screen must not show a banner built from a value nobody checked). `overridden` names the
+    `app.build` overrides that were given (see `OVERRIDES`): the banner then lists them in the words
+    `BannerWords.overridden_note`, and never claims made-up data or "no real service" (tone "unconfirmed", unless a real
+    service is already listed, which keeps tone "real")."""
     if mode not in STAGES:
         raise ValueError(f"mode {mode!r} is not one of {', '.join(STAGES)}")
     if names is not None and not isinstance(names, Mapping):
@@ -265,7 +296,31 @@ def _banner_for(
     else:
         extra = words.standins_still.format(names=", ".join(pretend)) if pretend else ""
         banner = ModeBanner(mode, "quiet", tag, words.none_real, extra, real, pretend)
+    if given := _override_names(overridden):
+        note = words.overridden_note.format(names=", ".join(given))
+        if banner.tone == "real":
+            banner = ModeBanner(
+                mode, "real", tag, banner.text + " " + note, banner.standins, real, pretend
+            )
+        else:  # the made-up claim and "no real service" both rest on the config alone: neither can be said
+            banner = ModeBanner(
+                mode,
+                "unconfirmed",
+                words.not_confirmed_tag,
+                words.not_confirmed + " " + note,
+                "",
+                (),
+                (),
+            )
     _check_what_is_claimed(banner, words)
+    if (
+        not banner.tag.strip()
+        or not banner.text.strip()
+        or (banner.standins and not banner.standins.strip())
+    ):
+        raise ValueError(
+            "the banner tag, text or second line is blank: a banner is never painted blank"
+        )
     if (
         len(banner.text) > MAX_TEXT_LENGTH
         or len(banner.standins) > MAX_TEXT_LENGTH
@@ -275,6 +330,16 @@ def _banner_for(
             f"the banner text or tag is longer than the {MAX_TEXT_LENGTH} characters the page script shows: too many services"
         )
     return banner
+
+
+def _override_names(overridden: object) -> tuple[str, ...]:
+    """The `app.build` overrides that were given, in the fixed order of `OVERRIDES`. A value that is not a list or tuple of
+    those names raises (an unknown name could be a new override nobody taught the banner about)."""
+    given = _collection(overridden, "overridden", ordered=True)
+    unknown = [g for g in given if g not in OVERRIDES]
+    if unknown:
+        raise ValueError(f"overridden: not an app.build override: {unknown[0]!r}")
+    return tuple(o for o in OVERRIDES if o in given)
 
 
 def names_in(text: str, name: str) -> bool:
@@ -338,7 +403,8 @@ class ConfigLike(Protocol):
     `systems`, `egress_hosts`, `sources` and `tool_modules`, the other fields that can name an endpoint. All of them are
     required: a config that lacks one, or holds None or a value of the wrong type, makes the banner raise (see `_field`).
     `systems` values hold a `base_url` (`config.System.base_url` is a `str`; a value of any other type is read as a place
-    that is not this machine). `egress_hosts` is any collection or iterable of host texts: it is read once."""
+    that is not this machine). `egress_hosts` is a list, tuple, set, frozenset or dict keys view of host texts (an iterator
+    or generator is refused: it could be used up by the first reading)."""
 
     @property
     def environment(self) -> str: ...
@@ -350,7 +416,7 @@ class ConfigLike(Protocol):
     def systems(self) -> Mapping[str, Any]: ...
 
     @property
-    def egress_hosts(self) -> Collection[str] | Iterable[str]: ...
+    def egress_hosts(self) -> Collection[str]: ...
 
     @property
     def sources(self) -> Mapping[str, Any]: ...
@@ -358,6 +424,10 @@ class ConfigLike(Protocol):
     @property
     def tool_modules(self) -> Sequence[str]: ...
 
+
+# The keyword arguments of `app.build` that replace what the config names with an object the caller made. The banner is built
+# from the config and cannot judge such an object, so `app.build` records which were given and the banner says so.
+OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets")
 
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"
@@ -437,6 +507,19 @@ def _field(config: object, name: str, kind: type | tuple[type, ...]) -> Any:
     return value
 
 
+def _config_collection(config: object, name: str, *, ordered: bool = False) -> tuple[Any, ...]:
+    """A field of the config that is a list of texts, copied once (see `_collection`). Missing or None is a ValueError, any
+    other value that is not a list-like one (an iterator or generator included) a TypeError naming the field."""
+    value = _field(config, name, object)
+    try:
+        return _collection(value, name, ordered=ordered)
+    except TypeError:
+        raise TypeError(
+            f"the config's {name} is a {type(value).__name__}, not a usable value (a list, tuple, set, frozenset or dict keys "
+            "view is needed: an iterator is read once and could be used up)"
+        ) from None
+
+
 def _tool_hosts_leave(
     tool_specs: Mapping[str, Mapping[str, ToolSpec]],
 ) -> tuple[bool, frozenset[str]]:
@@ -453,8 +536,11 @@ def _tool_hosts_leave(
                 f"tool_specs[{agent!r}] must be a mapping of tool name to spec, not {type(by_name).__name__}"
             )
         for tool, spec in by_name.items():
-            hosts = getattr(spec, "hosts", None)
-            if not isinstance(hosts, (tuple, list)) or not all(isinstance(h, str) for h in hosts):
+            try:
+                hosts = _collection(getattr(spec, "hosts", None), "hosts", ordered=True)
+            except TypeError:
+                hosts = None
+            if hosts is None or not all(isinstance(h, str) for h in hosts):
                 raise TypeError(
                     f"tool {tool!r} of agent {agent!r} has no `hosts` list of text: the banner cannot say where it reaches"
                 )
@@ -479,17 +565,13 @@ def _outside_endpoints(
     systems = _field(config, "systems", Mapping)
     if any(_url_leaves_this_machine(getattr(s, "base_url", None)) for s in systems.values()):
         found.append(EXTERNAL_SYSTEMS)
-    egress = _field(config, "egress_hosts", Iterable)
-    if isinstance(egress, (str, bytes, Mapping)):
-        raise TypeError(
-            f"the config's egress_hosts is a {type(egress).__name__}, not a list of hosts"
-        )
-    if any(not _is_this_machine(h) for h in tuple(egress)):
+    egress = _config_collection(config, "egress_hosts")
+    if any(not _is_this_machine(h) for h in egress):
         found.append(EGRESS_HOSTS)
     sources = _field(config, "sources", Mapping)
     if any(_source_leaves_this_machine(src) for src in sources.values()):
         found.append(READ_SOURCES)
-    modules = _field(config, "tool_modules", (list, tuple))
+    modules = _config_collection(config, "tool_modules", ordered=True)
     if tool_specs is None:
         if modules:
             found.append(TOOL_MODULES)
@@ -520,7 +602,9 @@ def _services_in(
     not guessed into a list."""
     real: list[str] = []
     stand_ins: list[str] = []
-    for component, setting in config.backends.entries():
+    for component, setting in _collection(
+        config.backends.entries(), "the config's backend entries", ordered=True
+    ):
         kind = getattr(setting, "kind", None)
         if not isinstance(component, str) or not component or not isinstance(kind, str) or not kind:
             raise ValueError(
@@ -540,16 +624,24 @@ def banner_from_config(
     words: BannerWords = DEFAULT_WORDS,
     *,
     tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,
+    overridden: Sequence[str] = (),
 ) -> ModeBanner:
     """The banner of a loaded `Config`: the stage is `config.environment`, and the real services and stand-ins come
     from `config.backends.entries()`, the endpoint fields and `tool_specs` (see `_services_in`). `tool_specs` has no
     default, so forgetting it is a TypeError and never a silent "nothing real": pass the registry's `tools` (agent ->
     tool name -> spec), or None when you cannot (a configured tool module then counts as one real service). A spec
     without a `hosts` list raises `TypeError`; so does an agent entry that is not a mapping. This is the one place the
-    decision is made. It RAISES when it cannot say: a screen should call `banner_or_unconfirmed`."""
+    decision is made. `overridden` names the `app.build` overrides that were given (`App.overridden`); any of them
+    makes the banner say so and drop the made-up claim (see `_banner_for`). It RAISES when it cannot say: a screen
+    should call `banner_or_unconfirmed`."""
     real, stand_ins = _services_in(config, tool_specs)
     return _banner_for(
-        config.environment, real_services=real, stand_ins=stand_ins, names=names, words=words
+        config.environment,
+        real_services=real,
+        stand_ins=stand_ins,
+        names=names,
+        words=words,
+        overridden=overridden,
     )
 
 
@@ -559,13 +651,16 @@ def banner_or_unconfirmed(
     words: BannerWords = DEFAULT_WORDS,
     *,
     tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,
+    overridden: Sequence[str] = (),
 ) -> dict[str, Any]:
     """What a screen should call: the finished banner as plain data (`banner_from_config(...).as_dict()`), or, when the
     banner cannot be built for any reason (a missing config field, a name that is not plain words, a spec without
     hosts), `not_confirmed(words)`. One log line names the kind of error and nothing from the config (no value, no host,
     no name). `tool_specs` is still required, so forgetting it is a TypeError at the call, before this function runs."""
     try:
-        return banner_from_config(config, names, words, tool_specs=tool_specs).as_dict()
+        return banner_from_config(
+            config, names, words, tool_specs=tool_specs, overridden=overridden
+        ).as_dict()
     except Exception as exc:  # noqa: BLE001 - whatever went wrong, the screen must still say something
         _LOG.warning(
             "mode banner could not be built (%s): showing the not-confirmed banner",
@@ -581,7 +676,7 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
     try:
         tag = words.not_confirmed_tag  # type: ignore[attr-defined]
         text = words.not_confirmed  # type: ignore[attr-defined]
-        if all(isinstance(s, str) and 0 < len(s) <= MAX_TEXT_LENGTH for s in (tag, text)):
+        if all(isinstance(s, str) and s.strip() and len(s) <= MAX_TEXT_LENGTH for s in (tag, text)):
             return {
                 "mode": "",
                 "tone": "unconfirmed",

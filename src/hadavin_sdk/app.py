@@ -29,6 +29,12 @@ from hadavin_sdk.config import Config, ConfigError, confined, load_config
 from hadavin_sdk.guard.injection import Detector, combine
 from hadavin_sdk.limits import Limits
 from hadavin_sdk.llm.protocol import LLM
+from hadavin_sdk.mode_banner import (
+    DEFAULT_WORDS,
+    OVERRIDES,
+    BannerWords,
+    banner_or_unconfirmed,
+)
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
 from hadavin_sdk.runtime import evidence
@@ -57,6 +63,34 @@ class App:
     sources: dict[str, Source] = field(default_factory=dict)
     disabled_sources: set[str] = field(default_factory=set)
     purge_store: Store | None = None
+    # The `build` overrides that were given (names only, in the fixed order of `mode_banner.OVERRIDES`): objects the caller
+    # made replace what the config names, and the mode banner cannot judge them (it says so and claims nothing made-up).
+    overridden: tuple[str, ...] = ()
+
+    def mode_banner(
+        self, names: Mapping[str, str] | None = None, words: BannerWords = DEFAULT_WORDS
+    ) -> dict:
+        """The banner for a screen: `mode_banner.banner_or_unconfirmed` for this app's config, tool manifests and overrides."""
+        return banner_or_unconfirmed(
+            self.config,
+            names,
+            words,
+            tool_specs=self.registry.tools,
+            overridden=self.overridden,
+        )
+
+
+def _given_overrides(**given: object) -> tuple[str, ...]:
+    """The names of the `build` overrides that replace something: an object handed in (not None), or a mapping that holds
+    at least one entry (an empty `tools={}` or `sources={}` replaces nothing). Names only, in the order of `OVERRIDES`; a
+    name `OVERRIDES` does not list is a ValueError, so a new override cannot be added without teaching the banner."""
+    if unknown := sorted(set(given) - set(OVERRIDES)):
+        raise ValueError(f"build override not known to the mode banner: {unknown[0]}")
+    return tuple(
+        n
+        for n in OVERRIDES
+        if given.get(n) is not None and not (isinstance(given[n], Mapping) and not given[n])
+    )
 
 
 def build(
@@ -76,6 +110,9 @@ def build(
     """Build every backend from the config's table entries, in the design 4.2 order. The keyword overrides
     replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
     and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
+    overridden = _given_overrides(
+        tools=tools, sources=sources, channel=channel, llm=llm, detector=detector, secrets=secrets
+    )  # before the names below are reassigned
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
     b = cfg.backends
@@ -248,6 +285,7 @@ def build(
         sources={**built_sources, **(sources or {})},
         disabled_sources=disabled_sources,
         purge_store=purge_store,
+        overridden=overridden,
     )
 
 

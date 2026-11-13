@@ -5,6 +5,7 @@ that it does."""
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from tests import banner_mutants as bm
@@ -99,3 +100,83 @@ def test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported
     ]
     same = bm.mutant("Z7 same", "x.py", "a", "a", "t.py", "test_k", "wrong value written")
     assert [m.name for m in [good, same] if m.old == m.new] == ["Z7 same"]
+
+
+EXCEPTION_ONLY = re.compile(r"[A-Za-z_.]*(Error|Exception|Exit|Warning)")
+
+
+def shape_problems(rows=None, same=None) -> list[tuple[str, str]]:
+    """Rows whose `expect` is a shape that cannot tell its own killer assert from another failure: a bare exception type,
+    pytest's own `DID NOT RAISE` line (it names no input), a fragment that starts with a quote or an operator (it is the
+    middle of a comparison, so it also fits any other line holding that value), and two rows that share one killer and one
+    expectation unless `same` (label group -> reason) lists the group with a reason."""
+    same = bm.SAME_ASSERT if same is None else same
+    rows = bm.M if rows is None else rows
+    problems: list[tuple[str, str]] = []
+    groups: dict[tuple[str, str], list[str]] = {}
+    for m in rows:
+        label = m.name.split(" ", 1)[0]
+        e = m.expect.strip()
+        if EXCEPTION_ONLY.fullmatch(e):
+            problems.append((label, "expect is a bare exception type"))
+        elif e.startswith("DID NOT RAISE"):
+            problems.append((label, "expect is pytest's DID NOT RAISE line"))
+        elif e[:1] in "'\"" or e.startswith(("==", "!=", "<", ">", "]", ")", "}")):
+            problems.append((label, "expect starts mid-comparison"))
+        groups.setdefault((m.only_test, m.expect), []).append(label)
+    listed = {tuple(k.split()) for k, reason in same.items() if reason.strip()}
+    for labels in groups.values():
+        if len(labels) > 1 and tuple(labels) not in listed:
+            problems.append(
+                (
+                    " ".join(labels),
+                    "rows share one killer and one expect without a same-assert reason",
+                )
+            )
+    return problems
+
+
+def test_no_row_has_a_bare_type_a_did_not_raise_a_mid_comparison_fragment_or_an_unexplained_shared_assert() -> (
+    None
+):
+    assert shape_problems() == []
+
+
+def test_every_same_assert_entry_names_a_group_that_exists_and_has_a_reason() -> None:
+    labels = {m.name.split(" ", 1)[0] for m in bm.M}
+    for group, reason in bm.SAME_ASSERT.items():
+        assert reason.strip(), f"the same-assert group {group!r} has no reason"
+        missing = [x for x in group.split() if x not in labels]
+        assert not missing, (
+            f"the same-assert group {group!r} names rows that do not exist: {missing}"
+        )
+
+
+def test_planted_shapes_are_each_reported() -> None:
+    def row(label: str, killer: str, expect: str):
+        return bm.mutant(f"{label} planted", "x.py", "a", "b", "t.py", killer, expect)
+
+    rows = [
+        row("Z1", "t1", "TypeError"),
+        row("Z2", "t2", "DID NOT RAISE"),
+        row("Z3", "t3", "DID NOT RAISE <class 'ValueError'>"),
+        row("Z4", "t4", "'internal-host' not in"),
+        row("Z5", "t5", "== [1, 2]"),
+        row("Z6", "t6", "own message of the killer"),
+        row("Z7", "t7", "shared message"),
+        row("Z8", "t7", "shared message"),
+        row("Z9", "t9", "shared again"),
+        row("Z10", "t9", "shared again"),
+    ]
+    got = shape_problems(rows=rows, same={"Z9 Z10": "both break the single assert of t9"})
+    assert got == [
+        ("Z1", "expect is a bare exception type"),
+        ("Z2", "expect is pytest's DID NOT RAISE line"),
+        ("Z3", "expect is pytest's DID NOT RAISE line"),
+        ("Z4", "expect starts mid-comparison"),
+        ("Z5", "expect starts mid-comparison"),
+        ("Z7 Z8", "rows share one killer and one expect without a same-assert reason"),
+    ]
+    assert shape_problems(rows=rows[8:], same={"Z9 Z10": " "}) == [
+        ("Z9 Z10", "rows share one killer and one expect without a same-assert reason")
+    ], "a same-assert entry with a blank reason was accepted"

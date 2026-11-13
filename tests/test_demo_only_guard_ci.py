@@ -40,7 +40,7 @@ def test_ci_runs_the_copy_run_the_banner_mutants_and_checks_node_is_there() -> N
     assert copy_run in runs  # the copy run takes the same test selection as the main tests step
     assert "python tests/banner_mutants.py" in runs
     assert "node --version" in runs
-    # the node check comes before the tests that need node, and HADAVIN_REQUIRE_NODE is set for them
+    # the node check comes before the tests that need node (checked on the parsed workflow below)
     assert runs.index("node --version") < runs.index('pytest -q -m "not live and not perf" -rs')
     assert 'HADAVIN_REQUIRE_NODE: "1"' in _step_block(
         check_job, 'pytest -q -m "not live and not perf" -rs'
@@ -88,3 +88,63 @@ def test_the_changelog_lists_the_refused_endings_the_guard_refuses() -> None:
         )
     )
     assert listed == set(guard.REFUSED_SUFFIXES), sorted(listed ^ set(guard.REFUSED_SUFFIXES))
+
+
+def test_the_parsed_workflow_has_node_before_both_node_test_steps_and_requires_it_in_their_env() -> (
+    None
+):
+    import yaml
+
+    doc = yaml.safe_load((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    steps = doc["jobs"]["check"]["steps"]
+    runs = [str(st.get("run", "")) for st in steps]
+    node_at = runs.index("node --version")
+    copy_at = next(
+        i for i, r in enumerate(runs) if "demo_only_guard.py --without-folder-if-present" in r
+    )
+    tests_at = next(
+        i for i, r in enumerate(runs) if r.startswith('pytest -q -m "not live and not perf"')
+    )
+    assert node_at < copy_at, "the node check comes after the copy run, whose tests need node"
+    assert node_at < tests_at, "the node check comes after the main tests step"
+    for at, what in ((copy_at, "the copy run"), (tests_at, "the main tests step")):
+        env = steps[at].get("env") or {}
+        assert str(env.get("HADAVIN_REQUIRE_NODE")) == "1", (
+            f"{what} does not set HADAVIN_REQUIRE_NODE to 1"
+        )
+
+
+def test_the_changelog_names_exactly_the_first_byte_kinds_the_guard_lists_and_states_the_banner_limits() -> (
+    None
+):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_guard_kinds", ROOT / "tools" / "demo_only_guard.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    import sys
+
+    sys.modules["_guard_kinds"] = guard  # a dataclass in the module looks its module up by name
+    try:
+        spec.loader.exec_module(guard)
+    finally:
+        sys.modules.pop("_guard_kinds", None)
+    log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    found = re.search(r"first bytes are those of: ([^.]*?) \(whatever its ending\)", log)
+    assert found, (
+        "the CHANGELOG has no sentence 'first bytes are those of: ... (whatever its ending)'"
+    )
+    named = re.split(r", | or ", found.group(1))
+    assert sorted(named) == sorted(guard.MAGIC_KINDS), (
+        f"the CHANGELOG names {sorted(named)} but the guard lists {sorted(guard.MAGIC_KINDS)}"
+    )
+    for phrase in (
+        "a loopback address can still be a port forward",
+        "`localhost` is trusted to resolve to the loopback address and that is not checked",
+        "the objects handed to `app.build` are invisible to the banner except by name",
+        "`App.overridden`",
+        "the tone `unconfirmed`",
+    ):
+        assert phrase in log, f"the CHANGELOG no longer says: {phrase}"

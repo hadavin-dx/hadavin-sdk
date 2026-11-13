@@ -11,14 +11,16 @@
   'use strict';
   var TONES = Object.freeze(['demo', 'real', 'quiet', 'unconfirmed']);
   var MODES = Object.freeze(['demo', 'pilot', 'prod']); // the stages; a test pins this list to hadavin_sdk.stages.STAGES
-  var MAX_TEXT = 600; // a test pins this number to hadavin_sdk.mode_banner.MAX_TEXT_LENGTH
+  var MAX_TEXT = 600; // characters (code points, as Python counts them); a test pins this number to hadavin_sdk.mode_banner.MAX_TEXT_LENGTH
   // the fallback when the system gave no usable banner: same words as hadavin_sdk.mode_banner.not_confirmed()
   var NOT_CONFIRMED = Object.freeze({
     mode: '', tone: 'unconfirmed', tag: 'UNCONFIRMED',
     text: 'The mode of this system could not be confirmed. Treat everything here as real.',
     standins: '', real: Object.freeze([]), stand_ins: Object.freeze([])
   });
-  function isText(v) { return typeof v === 'string' && v.length > 0 && v.length <= MAX_TEXT; }
+  // text the page may show: a string with something visible in it (not only white space) of at most MAX_TEXT characters,
+  // counted in code points like Python does (Array.from), not in UTF-16 units
+  function isText(v) { return typeof v === 'string' && v.trim().length > 0 && Array.from(v).length <= MAX_TEXT; }
   function isTextList(v) {
     if (!Array.isArray(v)) return false;
     for (var i = 0; i < v.length; i++) if (typeof v[i] !== 'string' || v[i].length === 0) return false;
@@ -50,7 +52,7 @@
       if (b === null || typeof b !== 'object' || Array.isArray(b)) return NOT_CONFIRMED;
       var mode = b.mode, tone = b.tone, tag = b.tag, text = b.text, standins = b.standins;
       var real = b.real, standIns = b.stand_ins;
-      if (TONES.indexOf(tone) < 0 || tone === 'unconfirmed') return NOT_CONFIRMED;
+      if (TONES.indexOf(tone) < 0) return NOT_CONFIRMED;
       if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;
       if (standins === undefined || standins === null) standins = '';
       if (standins !== '' && !isText(standins)) return NOT_CONFIRMED;
@@ -59,6 +61,10 @@
       standIns = standIns.slice();
       if (MODES.indexOf(mode) < 0) return NOT_CONFIRMED;
       // the tone must agree with the mode and the real services: a mismatch is never painted as given
+      // an "unconfirmed" banner is painted as given only when it is the system's own not-confirmed words, then the note of
+      // which parts were supplied by code (hadavin_sdk.mode_banner, `overridden`); any other text under that tone is not
+      if (tone === 'unconfirmed' && (tag !== NOT_CONFIRMED.tag || text.indexOf(NOT_CONFIRMED.text) !== 0 ||
+          real.length !== 0 || standins !== '')) return NOT_CONFIRMED;
       if (tone === 'demo' && (mode !== 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'quiet' && (mode === 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'real') {
@@ -86,10 +92,7 @@
   }
   function fill(el, b, nodes) {
     // The tone goes in first, then the words as plain text, then the element is cleared and filled. Any failure is
-    // caught by paint, which writes the "not confirmed" tone and then its text. Two cases when even those writes fail:
-    // (a) the tone write works but the text write fails: the previous text stays under the "not confirmed" tone (the
-    // safe direction), and data-mode is not cleared; (b) the tone write itself fails: nothing else is written, so the
-    // previous tone, text and data-mode all stay together (data-mode is never cleared in that case either).
+    // caught by paint, which clears the element and writes the "not confirmed" words (see below).
     el.setAttribute('data-tone', b.tone);
     el.textContent = b.tag + ' ' + b.text;
     el.textContent = '';
@@ -98,9 +101,11 @@
     el.hidden = false;
   }
   // Paints the banner into `el` and returns the banner that was painted. The nodes are built BEFORE `el` is touched.
-  // If painting fails, the "not confirmed" tone and then its text are written as plain text, and the element is unhidden
-  // first. If those writes fail too, whatever the element held before stays (it may be out of date, or empty if it was
-  // empty before); nothing more can be done from inside a broken page.
+  // If painting fails, the element is repaired in this order, each step on its own so that one failing write cannot
+  // skip the rest: unhidden, emptied (so the words of an earlier or half written banner, which may claim made-up data,
+  // are gone first), data-mode cleared, the "not confirmed" tone written, then its words as plain text. If the word write
+  // fails the element is left empty (nothing is shown, never the old claim); if the clearing write fails, the earlier
+  // content may remain (nothing more can be done from inside a broken page).
   function paint(el, banner, doc) {
     var b = NOT_CONFIRMED;
     var nodes = null;
@@ -118,12 +123,16 @@
       fill(el, b, nodes);
     } catch (e) {
       b = NOT_CONFIRMED;
-      try {
-        el.hidden = false; // first: whatever else fails below, the element is never left hidden
-        el.setAttribute('data-tone', b.tone); // before the text, so the words are never shown with another tone
-        el.textContent = b.tag + ' ' + b.text;
-        el.setAttribute('data-mode', '');
-      } catch (e2) { /* nothing more can be done: the page itself is broken */ }
+      var repair = [
+        function () { el.hidden = false; },
+        function () { el.textContent = ''; },
+        function () { el.setAttribute('data-mode', ''); },
+        function () { el.setAttribute('data-tone', b.tone); },
+        function () { el.textContent = b.tag + ' ' + b.text; }
+      ];
+      for (var r = 0; r < repair.length; r++) {
+        try { repair[r](); } catch (e2) { /* the next step still runs */ }
+      }
     }
     return b;
   }
