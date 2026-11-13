@@ -1,0 +1,1 @@
+96c6697547a33686b140b53b041f25fcbf5966efe6e288dc8ecc412df4b3ac06  /home/user/hadavin-sdk/handover/demo3/evidence/lane3-fix-1-r6.patch

@@ -72,7 +72,7 @@ Pass on r5 by design (they check the program, not the new text): test_the_causes
 The newest fix-3 patch is lane3-fix-3-r5.patch and the newest fix-5 patch is lane3-fix-5-r4.patch (the brief named r3; both were tried).
 
 ## sha256
-SHA_PLACEHOLDER
+lane3-fix-1-r6.patch: 96c6697547a33686b140b53b041f25fcbf5966efe6e288dc8ecc412df4b3ac06 (computed before the full suite and again after it: identical; `git diff --cached` of /home/user/work/b1f-base gave the same hash; raw/b1f-patch-sha-before.txt and raw/b1f-patch-sha-after.txt)
 
 ## Full suite
-FULL_PLACEHOLDER
+Command: `/home/user/work/priv/b1f-full.sh` (detached; `pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120` in /home/user/work/b1f-base, serial, TMPDIR and --basetemp outside every git worktree, no cloud settings set by me; the shell had AWS_* and ANTHROPIC_BASE_URL variables of the session, which the tests did not need). Result: EXIT_CODE=0, 3716 passed, 200 skipped in 1203 s (WALL_SECONDS=1204), log raw/b1f-full.log. 0 FAILED, 0 ERROR lines. The 200 skips are the same count as in the r5 run (3713 passed, 200 skipped; +3 = the three new tests); I did not read every skip reason (they are by design here: no playwright, no gitleaks, Windows-only tests, measurement runs that need an environment variable). The tree did not change during the run.
