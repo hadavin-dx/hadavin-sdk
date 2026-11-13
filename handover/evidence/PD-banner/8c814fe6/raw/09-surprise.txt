@@ -1,110 +1,25 @@
-mode banner could not be built (TypeError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (TypeError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (TypeError): showing the not-confirmed banner
-mode banner could not be built (ValueError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (ValueError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (ValueError): showing the not-confirmed banner
-mode banner could not be built (AttributeError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (AttributeError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (AttributeError): showing the not-confirmed banner
 sdk /home/user/build/er14-H/src/hadavin_sdk/__init__.py
 Weird                  surprise mode_banner.py _source_leaves_this_machine (565)               RAISED Weird                                                           OK
 Weird                  surprise mode_banner.py banner_or_unconfirmed (749)                     RAISED Weird                                                           OK
 Weird                  surprise mode_banner.py _not_confirmed_that_cannot_fail words (781)     RAISED Weird                                                           OK
 Weird                  surprise app.py _seal (270)                                             RAISED Weird                                                           OK
 Weird                  surprise app.py _known_overrides (298)                                  RAISED Weird                                                           OK
-Weird                  surprise app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  UNEXPECTED
+Weird                  surprise app.py App.mode_banner (323)                                   RAISED Weird                                                           OK
 Weird                  surprise app.py post_card (482, _DELIVERY_ERRORS)                       RAISED Weird                                                           OK
 ZeroDivisionError      surprise mode_banner.py _source_leaves_this_machine (565)               RAISED ZeroDivisionError                                               OK
 ZeroDivisionError      surprise mode_banner.py banner_or_unconfirmed (749)                     RAISED ZeroDivisionError                                               OK
 ZeroDivisionError      surprise mode_banner.py _not_confirmed_that_cannot_fail words (781)     RAISED ZeroDivisionError                                               OK
 ZeroDivisionError      surprise app.py _seal (270)                                             RAISED ZeroDivisionError                                               OK
 ZeroDivisionError      surprise app.py _known_overrides (298)                                  RAISED ZeroDivisionError                                               OK
-ZeroDivisionError      surprise app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  UNEXPECTED
+ZeroDivisionError      surprise app.py App.mode_banner (323)                                   RAISED ZeroDivisionError                                               OK
 ZeroDivisionError      surprise app.py post_card (482, _DELIVERY_ERRORS)                       RAISED ZeroDivisionError                                               OK
 Weird2                 surprise mode_banner.py _source_leaves_this_machine (565)               RAISED Weird2                                                          OK
 Weird2                 surprise mode_banner.py banner_or_unconfirmed (749)                     RAISED Weird2                                                          OK
 Weird2                 surprise mode_banner.py _not_confirmed_that_cannot_fail words (781)     RAISED Weird2                                                          OK
 Weird2                 surprise app.py _seal (270)                                             RAISED Weird2                                                          OK
 Weird2                 surprise app.py _known_overrides (298)                                  RAISED Weird2                                                          OK
-Weird2                 surprise app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  UNEXPECTED
+Weird2                 surprise app.py App.mode_banner (323)                                   RAISED Weird2                                                          OK
 Weird2                 surprise app.py post_card (482, _DELIVERY_ERRORS)                       RAISED Weird2                                                          OK
 KeyboardInterrupt      surprise mode_banner.py _source_leaves_this_machine (565)               RAISED KeyboardInterrupt                                               OK
 KeyboardInterrupt      surprise mode_banner.py banner_or_unconfirmed (749)                     RAISED KeyboardInterrupt                                               OK
-KeyboardInterrupt      surprise mode_banner.py _not_confirmed_that_cannot_fail words (781)     RAISED KeyboardInterrupt                                               OK
-KeyboardInterrupt      surprise app.py _seal (270)                                             RAISED KeyboardInterrupt                                               OK
-KeyboardInterrupt      surprise app.py _known_overrides (298)                                  RAISED KeyboardInterrupt                                               OK
-KeyboardInterrupt      surprise app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  UNEXPECTED
-KeyboardInterrupt      surprise app.py post_card (482, _DELIVERY_ERRORS)                       RAISED KeyboardInterrupt                                               OK
-TypeError              in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-TypeError              in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-TypeError              in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-TypeError              in-tuple app.py _seal (270)                                             returned None                                                          OK
-TypeError              in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-TypeError              in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-TypeError              in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       RAISED TypeError                                                       UNEXPECTED
-ValueError             in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-ValueError             in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-ValueError             in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-ValueError             in-tuple app.py _seal (270)                                             returned None                                                          OK
-ValueError             in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-ValueError             in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-ValueError             in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='ValueError')             OK
-AttributeError         in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-AttributeError         in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-AttributeError         in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-AttributeError         in-tuple app.py _seal (270)                                             returned None                                                          OK
-AttributeError         in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-AttributeError         in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OKmode banner could not be built (KeyError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (KeyError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (KeyError): showing the not-confirmed banner
-mode banner could not be built (IndexError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (IndexError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (IndexError): showing the not-confirmed banner
-mode banner could not be built (RuntimeError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (RuntimeError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (RuntimeError): showing the not-confirmed banner
-mode banner could not be built (NotImplementedError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (NotImplementedError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (NotImplementedError): showing the not-confirmed banner
-mode banner could not be built (RecursionError): showing the not-confirmed banner
-mode banner: the app could not be read when it was built (RecursionError): showing the not-confirmed banner
-mode banner: the connected parts of the app could not be read (RecursionError): showing the not-confirmed banner
-
-AttributeError         in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       RAISED AttributeError                                                  UNEXPECTED
-KeyError               in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-KeyError               in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-KeyError               in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-KeyError               in-tuple app.py _seal (270)                                             returned None                                                          OK
-KeyError               in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-KeyError               in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-KeyError               in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='KeyError')               OK
-IndexError             in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-IndexError             in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-IndexError             in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-IndexError             in-tuple app.py _seal (270)                                             returned None                                                          OK
-IndexError             in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-IndexError             in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-IndexError             in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='IndexError')             OK
-RuntimeError           in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-RuntimeError           in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RuntimeError           in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RuntimeError           in-tuple app.py _seal (270)                                             returned None                                                          OK
-RuntimeError           in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-RuntimeError           in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RuntimeError           in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='RuntimeError')           OK
-NotImplementedError    in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-NotImplementedError    in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-NotImplementedError    in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-NotImplementedError    in-tuple app.py _seal (270)                                             returned None                                                          OK
-NotImplementedError    in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-NotImplementedError    in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-NotImplementedError    in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='NotImplementedError')    OK
-RecursionError         in-tuple mode_banner.py _source_leaves_this_machine (565)               returned True                                                          OK
-RecursionError         in-tuple mode_banner.py banner_or_unconfirmed (749)                     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RecursionError         in-tuple mode_banner.py _not_confirmed_that_cannot_fail words (781)     returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RecursionError         in-tuple app.py _seal (270)                                             returned None                                                          OK
-RecursionError         in-tuple app.py _known_overrides (298)                                  returned None                                                          OK
-RecursionError         in-tuple app.py App.mode_banner (323)                                   returned {'mode': '', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 't  OK
-RecursionError         in-tuple app.py post_card (482, _DELIVERY_ERRORS)                       returned Delivery(ok=False, ref=None, reason='RecursionError')         OK
-UNEXPECTED count 6
+KeyboardInterrupt      surprise mode_banner.py _not_confirmed_that_cannot_fail words (781)     RAISED KeyboardInterrupt                                  

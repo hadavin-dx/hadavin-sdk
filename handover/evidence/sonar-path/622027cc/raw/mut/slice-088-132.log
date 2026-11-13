@@ -1,0 +1,5 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R6a a trailing dot is accepted  [test_pin_r6_a_trailing_dot_is_refused] t=5s
+ok  KILLED         R6b a trailing space is accepted  [test_pin_r6_a_trailing_space_is_refused] t=6s
+ok  KILLED         R7c the part before the LAST dot decides, not the first  [test_pin_r7_the_part_before_the_first_dot_decides] t=7s
+ok  KILLED         R7d spaces before the dot hide a device name  [test_pin_r7_spaces_before_the_dot_do_not_hide_a_device_name] t=8s
