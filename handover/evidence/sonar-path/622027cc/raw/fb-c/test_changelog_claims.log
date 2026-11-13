@@ -1,0 +1,110 @@
+....................FFFFFFFFF.............FFF..F.FFFFFFF......FFF        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'R3, R6, R7 and R12 apply to', found 0
+E   AssertionError: only for such an id
+    assert 'only for such an id' in '- **`LocalDirSink` refuses an event id that is not one plain file name, such as one with `:` or `?`.** On origin/main...t is for a person, and a link inside the outbox is skipped, so reconcile never moves or removes the file it points to.'
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:425: AssertionError: only for such an id
+E   AssertionError: expected one bullet that starts with 'An error from the operating system while a typed path is checked', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'An error from the operating system while a typed path is checked', found 0
+E   AssertionError: expected one bullet that starts with 'What is accepted', found 0
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:31: AssertionError: expected one bullet that starts with 'What is accepted', found 0
+E   AssertionError: k1b/score.py:load_answers holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: k1b/score.py:load_answers holds no join assignment
+E   AssertionError: hashing.py:hash_files holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: hashing.py:hash_files holds no join assignment
+E   AssertionError: actions/secrets_file.py:MountedFileProvider._fetch holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: actions/secrets_file.py:MountedFileProvider._fetch holds no join assignment
+E   AssertionError: audit/signer.py:build_local holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: audit/signer.py:build_local holds no join assignment
+E   AssertionError: audit/signer.py:load_private_key holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: audit/signer.py:load_private_key holds no join assignment
+E   AssertionError: audit/signer.py:load_public_key holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: audit/signer.py:load_public_key holds no join assignment
+E   AssertionError: guard/judge.py:qualify holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: guard/judge.py:qualify holds no join assignment
+E   AssertionError: actions/secrets_vault.py:connect holds no join assignment
+    assert {}
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:575: AssertionError: actions/secrets_vault.py:connect holds no join assignment
+E   AssertionError: registry.py
+    assert '`registry.py`' in '- **Suppression comments.** The Sonar exemption comments in `k1b/score.py` and `cli.py` are gone, and a test fails if...vault.py`) keep the suppressions they had; a test holds each to the count it had on origin/main, so none can be added.'
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:709: AssertionError: registry.py
+E   AssertionError: assert ['- **R3, R6,...come from da'] == []
+      
+      Left contains one more item: '- **R3, R6, R7 and R12 apply only to names that come from da'
+      Use -v to get more diff
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:731: AssertionError: assert ['- **R3, R6,...come from da'] == []
+E   AssertionError: [20]
+    assert 1 >= 2
+     +  where 1 = len([20])
+/home/user/build/E-work/c-tree/tests/test_changelog_claims.py:738: AssertionError: [20]
+=========================== short test summary info ============================
+FAILED tests/test_changelog_claims.py::test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R3-a:b]
+FAILED tests/test_changelog_claims.py::test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x.]
+FAILED tests/test_changelog_claims.py::test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x ]
+FAILED tests/test_changelog_claims.py::test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R7-con]
+FAILED tests/test_changelog_claims.py::test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R12-a?b]
+FAILED tests/test_changelog_claims.py::test_a_name_the_caller_typed_is_refused_where_the_join_pattern_reads_it[vault:token]
+FAILED tests/test_changelog_claims.py::test_a_name_the_caller_typed_is_refused_where_the_join_pattern_reads_it[con]
+FAILED tests/test_changelog_claims.py::test_a_name_the_caller_typed_is_refused_where_the_join_pattern_reads_it[x.]
+FAILED tests/test_changelog_claims.py::test_a_name_the_caller_typed_is_refused_where_the_join_pattern_reads_it[a?b]
+FAILED tests/test_changelog_claims.py::test_local_dir_refuses_an_id_drops_the_outcome_and_skips_a_link
+FAILED tests/test_changelog_claims.py::test_pin_an_error_from_the_operating_system_is_a_fixed_refusal
+FAILED tests/test_changelog_claims.py::test_what_is_accepted_facts_in_the_entry_are_true
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[k1b/score.py-load_answers-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[hashing.py-hash_files-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[actions/secrets_file.py-MountedFileProvider._fetch-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[audit/signer.py-build_local-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[audit/signer.py-load_private_key-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[audit/signer.py-load_public_key-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[guard/judge.py-qualify-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[actions/secrets_vault.py-connect-join]
+FAILED tests/test_changelog_claims.py::test_the_suppression_bullet_matches_the_files_and_the_counts
+FAILED tests/test_changelog_claims.py::test_control_every_bullet_of_the_entry_is_named_by_a_claim_test
+FAILED tests/test_changelog_claims.py::test_every_range_count_in_the_entry_is_the_length_of_the_code_table
+23 failed, 42 passed in 0.48s

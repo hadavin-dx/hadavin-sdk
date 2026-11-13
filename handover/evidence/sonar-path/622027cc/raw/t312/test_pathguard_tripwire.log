@@ -1,0 +1,19 @@
+F....................................................................... [ 90%]
+........                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason _
+
+    def test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason():
+        problems = compare(_exception_rows(), _all_hits())
+>       assert problems == [], "unchecked paths:\n" + "\n".join(problems)
+E       AssertionError: unchecked paths:
+E         src/hadavin_sdk/registry.py | _load_tools | .is_file: listed (1) but no hit is left
+E       assert ['src/hadavin... hit is left'] == []
+E         
+E         Left contains one more item: 'src/hadavin_sdk/registry.py | _load_tools | .is_file: listed (1) but no hit is left'
+E         Use -v to get more diff
+
+tests/test_pathguard_tripwire.py:471: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_tripwire.py::test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason
+1 failed, 79 passed in 1.37s

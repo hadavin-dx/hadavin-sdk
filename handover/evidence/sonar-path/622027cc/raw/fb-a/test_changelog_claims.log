@@ -1,0 +1,6 @@
+
+==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_changelog_claims.py ________________
+E   StopIteration
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.16s
