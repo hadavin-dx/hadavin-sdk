@@ -4,3 +4,4 @@
 14:05Z full suite started (pid 26309, log priv/b1e-full.log); IST +5:30
 14:06Z patch r5 written, apply checks ok, fails-before 9; waiting on full suite; writing notes (IST +5:30)
 14:17Z full suite ~65%
+14:25Z B1e done: full suite exit 0 (3713 passed, 200 skipped); notes + patch written

@@ -81,4 +81,4 @@ The other test files that mention the three documents were run in the first hygi
 lane3-fix-1-r5.patch: f7e9c78b629b8983d3305f70edc85ac60c119cd17a32d4e88cde57ad85f12857 (1160 lines; computed after the last change; the full suite ran on the same tree)
 
 ## Full suite
-(filled in below)
+Command: `/home/user/work/priv/b1e-full.sh` (detached; `pytest -q -rs -p no:cacheprovider -o faulthandler_timeout=120` in /home/user/work/b1e-base, TMPDIR and --basetemp outside the git folder, no cloud settings). Result: EXIT_CODE=0, 3713 passed, 200 skipped in 1224 s (about 20 min 24 s), log raw/b1e-full-suite.log. The 200 skips are by design on this computer (no playwright, gitleaks and ruff-style tools not installed, Windows-only tests, measurement runs that need an environment variable); I did not read every skip reason. The tree did not change during the run (patch sha256 identical before and after).
