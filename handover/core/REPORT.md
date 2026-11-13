@@ -1,4 +1,10 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:12Z (core lead)
+V4e DONE (independent, docs-on-frozen-49d3c859.patch sha256 f0677496..., 456 lines, on tree hash 49d3c859): patch applies, result identical to the builder's tree; docs test 14 passed x3; fails-before 10 failed/4 passed (matches); builder's 8-file set 206 passed/28 skipped/0 failed; a 10-file extra set 999 passed/3 skipped/0 failed; ruff clean (160 files); both real doc-vs-tool mismatches re-checked by the runner (probe --plan with a bad --token-env: yes; contract.md:323 5 s wait: read from the code, not run end to end); test-file count 93 matches. Builder-claimed vs measured: all match.
+FAILED / OPEN: 5 of the runner's 12 own doc-sentence mutants SURVIVE both the docs test and the 999-test set: README 'the replay uses up a receipt number' -> 'does not'; settings.md HubSpot key file 'not at start' -> 'only at start'; load_tools/README.md port 18765 -> 18775; settings.md SMTP password file 'opened again for every send' -> 'once at start'; load_tools/README.md 'seq 1 60' -> 'seq 1 30'. Cause proven (the mutant runs): no test pins those sentences. Not fixed: the freeze order forbids a new builder. fix-dont-defer says fix; the freeze order is the lead's explicit later order, so this is a lead decision.
+ASK: fix the 5 untested doc sentences (a small test-only change, about 20 minutes, one builder) or list them as open test gaps in the freeze README? My default (freeze order) = list them with the exact next step.
+Running: F8, CODE-REBASE (2 agents, the minimum). LOAD low.
+
 ## STATUS 16:05Z (core lead; freeze order stands)
 | agent | latest checkpoint (verbatim, builder/runner words, unverified) |
 |---|---|

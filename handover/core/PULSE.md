@@ -185,3 +185,4 @@ core: V6 done, 3 findings -> F7 builder; VC running
 15:45Z core: CODE-REBASE + V4e started; F8 running
 core: freeze order read; F8, REB, V4e running
 core: 16:05Z block, 3 agents running
+core: V4e done, 5 untested doc sentences (ASK), F8+REB running
