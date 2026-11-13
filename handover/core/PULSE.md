@@ -22,3 +22,4 @@
 21:29Z Q8a-1 b20 builder handed back: head 764a1cce pushed to wip/cloud-q8a1-b20 (one commit on wip/cloud-q8a1-b19 a24d98ae; the commit touches 0 handover files; the inherited b10 handover files are in the already-existing lane history, so the check script flags the whole range, not this commit). Targeted 1498 passed, 24 mutants good, fail-before 26 failed. GATE OWED: full pytest, stage_mutants, migration_numbers_mutants (queue after #71 and guard). Confirming round needed for class A and E2. Ledger row Q8A1-ISSUE6 written by builder from a guess: lead to check wording.
 00:44Z Part 6 r6 not clean, batch 7 builder started; Part 2 batch 7 pushed 7d2e6f3e, r7 runner and 2 reviewers started
 00:48Z Part 2 r7 not clean (2B 3M), batch 8 builder started; PR 98 merged noted
+00:59Z Part 2 r7 runner done (Blocker confirmed by running), batch 8 and Part 6 batch 7 building
