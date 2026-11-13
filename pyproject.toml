@@ -47,7 +47,7 @@ gcp = [
 hadavin-sdk = "hadavin_sdk.cli:main"
 
 [dependency-groups]
-dev = ["pytest==9.2.0", "ruff==0.17.1"]
+dev = ["pytest==9.2.0", "ruff==0.17.4"]
 # Contract-suite stand-ins for cloud services (CI installs it with every extra).
 test = ["moto[s3,kms,secretsmanager]==5.2.5", "pglast==8.7", "pytest-xdist==3.8.0"]
 # Free scanners that keep working when the repository turns private.
