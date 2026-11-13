@@ -1,0 +1,58 @@
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n] _________
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n] __________
+___________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[] ___________
+______ test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal ______
+_____________ test_stdin_is_a_terminal_only_when_it_says_so[None] ______________
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin1] _____________
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin2] _____________
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin3] _____________
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin4] _____________
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+_________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n] _________
+_________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n] __________
+___________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[] ___________
+__________ test_live_check_assume_yes_is_for_a_loopback_address_only ___________
+____________________ test_live_check_has_no_default_address ____________________
+_________ test_live_check_a_closed_terminal_is_a_stop_not_a_traceback __________
+E       AssertionError: assert (False)
+___________ test_real_check_the_live_model_address_must_be_named_too ___________
+E       AssertionError: assert False
+_______________________ test_unnamed_remote_default_unit _______________________
+E       AttributeError: module 'run_real_check' has no attribute 'unnamed_remote_default'
+______ test_every_script_that_asks_a_question_checks_for_a_terminal_first ______
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[None]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin1]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin2]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin3]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin4]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_is_for_a_loopback_address_only
+FAILED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_closed_terminal_is_a_stop_not_a_traceback
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_the_live_model_address_must_be_named_too
+FAILED tests/test_start_prompt_hardening.py::test_unnamed_remote_default_unit
+FAILED tests/test_start_prompt_hardening.py::test_every_script_that_asks_a_question_checks_for_a_terminal_first
+     10 E   test_start_prompt_hardening.Reached
+     10 /tmp/work/b11-old-14333/tests/test_start_prompt_hardening.py:51: test_start_prompt_hardening.Reached
+      1 E   SystemExit: 2
+      1 /usr/local/lib/python3.13/argparse.py:2673: SystemExit: 2

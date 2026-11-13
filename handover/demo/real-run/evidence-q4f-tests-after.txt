@@ -1,0 +1,15 @@
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_start_prompt_hardening.py:169:https://model-host.example.test
+E         tests/test_start_prompt_hardening.py:169:http://10.0.0.5:9
+E       assert not ['tests/test_start_prompt_hardening.py:169:https://model-host.example.test', 'tests/test_start_prompt_hardening.py:169:http://10.0.0.5:9']
+
+tests/test_hygiene.py:140: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+1 failed, 663 passed, 3 skipped in 127.22s (0:02:07)

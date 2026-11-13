@@ -1,0 +1,60 @@
+
+tests/test_start_prompt_hardening.py:220: AssertionError
+_______________________ test_unnamed_remote_default_unit _______________________
+
+    def test_unnamed_remote_default_unit() -> None:
+        named = {
+            "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,  # the vendor's own address, named on purpose: allowed
+            "REAL_IMAP_1_USER": "u",
+            "REAL_IMAP_1_HOST": MAIL_IMAP_DEFAULT_HOST,
+            "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL,
+        }
+>       assert rrc.unnamed_remote_default(named, True) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'unnamed_remote_default'
+
+tests/test_start_prompt_hardening.py:230: AttributeError
+______ test_every_script_that_asks_a_question_checks_for_a_terminal_first ______
+
+    def test_every_script_that_asks_a_question_checks_for_a_terminal_first() -> None:
+        asking: dict[str, str] = {}
+        for folder in ("scripts", "load_tools", "tools", "src", "demo_only"):
+            for path in sorted((REPO / folder).rglob("*.py")):
+                text = path.read_text(encoding="utf-8")
+                if _reads_a_person(ast.parse(text)):
+                    asking[path.relative_to(REPO).as_posix()] = text
+        assert set(asking) == {"scripts/run_live_check.py", "scripts/run_real_check.py"}, "a new question: guard it"
+        for name, text in asking.items():
+>           assert 0 <= text.index("not stdin_is_terminal()") < text.index('input("Start?'), name  # check, then ask
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           ValueError: substring not found
+
+tests/test_start_prompt_hardening.py:264: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[None]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin1]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin2]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin3]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin4]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_is_for_a_loopback_address_only
+FAILED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_closed_terminal_is_a_stop_not_a_traceback
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_the_live_model_address_must_be_named_too
+FAILED tests/test_start_prompt_hardening.py::test_unnamed_remote_default_unit
+FAILED tests/test_start_prompt_hardening.py::test_every_script_that_asks_a_question_checks_for_a_terminal_first
+26 failed, 3 passed in 2.81s

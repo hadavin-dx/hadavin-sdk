@@ -1,0 +1,81 @@
+# apply matrix for start-prompt-hardening.patch (git apply --check; worktree reset and cleaned between steps)
+## db54e13: hardening alone
+OK
+## db54e13: real-run-fixes-v4.patch alone
+   OK
+## db54e13: real-run-fixes-v4.patch applied, then hardening --check
+   error: patch failed: docs/settings.md:113
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:8
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:66
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:606
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:467
+   error: tests/test_real_check_dry.py: patch does not apply
+## db54e13: hardening applied, then real-run-fixes-v4.patch --check
+   error: patch failed: docs/settings.md:108
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:10
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:65
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:607
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:469
+   error: tests/test_real_check_dry.py: patch does not apply
+## db54e13: real-run-fixes-v4-after-sonar-p3.patch alone
+   error: patch failed: scripts/run_real_check.py:87
+   error: scripts/run_real_check.py: patch does not apply
+## db54e13: hardening applied, then real-run-fixes-v4-after-sonar-p3.patch --check
+   error: patch failed: docs/settings.md:108
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:10
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:65
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:607
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:469
+   error: tests/test_real_check_dry.py: patch does not apply
+## 2db3926: hardening alone
+OK
+## 2db3926: real-run-fixes-v4.patch alone
+   OK
+## 2db3926: real-run-fixes-v4.patch applied, then hardening --check
+   error: patch failed: docs/settings.md:113
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:8
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:66
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:606
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:467
+   error: tests/test_real_check_dry.py: patch does not apply
+## 2db3926: hardening applied, then real-run-fixes-v4.patch --check
+   error: patch failed: docs/settings.md:108
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:10
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:65
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:607
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:469
+   error: tests/test_real_check_dry.py: patch does not apply
+## 2db3926: real-run-fixes-v4-after-sonar-p3.patch alone
+   error: patch failed: scripts/run_real_check.py:87
+   error: scripts/run_real_check.py: patch does not apply
+## 2db3926: hardening applied, then real-run-fixes-v4-after-sonar-p3.patch --check
+   error: patch failed: docs/settings.md:108
+   error: docs/settings.md: patch does not apply
+   error: patch failed: scripts/run_live_check.py:10
+   error: scripts/run_live_check.py: patch does not apply
+   error: patch failed: scripts/run_real_check.py:65
+   error: scripts/run_real_check.py: patch does not apply
+   error: patch failed: tests/test_live_claude.py:607
+   error: tests/test_live_claude.py: patch does not apply
+   error: patch failed: tests/test_real_check_dry.py:469
+   error: tests/test_real_check_dry.py: patch does not apply

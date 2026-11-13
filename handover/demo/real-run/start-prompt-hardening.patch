@@ -1,0 +1,673 @@
+diff --git a/docs/settings.md b/docs/settings.md
+index 95e7942..adf3582 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -113,11 +113,12 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ 
+ ## Settings of the helper scripts (not read by the desk)
+ 
+-* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
++* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_BASE_URL`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
+ * Optional names of that script: `REAL_PERSONS` (default 12, at least 8, at most 1000), `REAL_DRAIN_SECONDS` (seconds to wait for the desk, default 150), `REAL_MAIL_WAIT_SECONDS` (default 90), `REAL_MAIL_SETTLE_SECONDS` (default 10, the mail poll time: after every mail is seen once, wait this long and count once more), each of these three above 0 and at most 86,400; `REAL_RESULT_FILE` (where the JSON result goes; default `result.json` next to the database).
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+-* Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+-* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
++* Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (the mail server; required: the script never falls back to the provider's address `MAIL_IMAP_DEFAULT_HOST` in `constants.py`, because a key goes there), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
++* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or the terminal closed before you could); 2 includes "standard input is not a terminal": the y/N question needs a person, so a pipe, a file or a scheduled job is refused before anything starts (the only scripted use is `--assume-yes` together with `--dry-fakes`, which uses local fakes); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
++* Addresses a key goes to are never filled in by a default in the check scripts. `scripts/run_real_check.py` refuses (exit 2, `refused: <NAME>: not named in the settings ...`) when `DESK_HUBSPOT_BASE_URL`, any `REAL_IMAP_n_HOST` or, with `--live-model`, `DESK_LIVE_BASE_URL` is missing or blank, unless the default itself would be this computer; name the vendor's own address on purpose or a loopback address for a test. `DESK_SMTPP_HOST` is already required. `scripts/run_live_check.py` has no default `--base-url` and refuses without one. Both scripts' y/N question needs an interactive terminal: with standard input from a pipe, a file or a scheduled job they refuse (exit 2) and start nothing; `run_live_check.py --assume-yes` is accepted only with a loopback `--base-url`. `scripts/hubspot_probe.py` has no question; it needs `--yes-spend-calls N` and a token from the environment, and always talks to the vendor's address unless `--dry-run` names a loopback stub.
+ * `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+diff --git a/scripts/real-run.env.example b/scripts/real-run.env.example
+index 0e84309..e160861 100644
+--- a/scripts/real-run.env.example
++++ b/scripts/real-run.env.example
+@@ -14,9 +14,11 @@ DESK_HUBSPOT_KEY_FILE=<SECRETS_FOLDER>\hubspot-key.txt
+ DESK_HUBSPOT_MAX_CALLS=400
+ # Hard cap of HubSpot calls of this script's read-back and clean-up.
+ REAL_HUBSPOT_READBACK_MAX_CALLS=200
+-# Optional: DESK_HUBSPOT_TIMEOUT_SECONDS, DESK_HUBSPOT_MAX_429_RETRIES. The base address defaults to HUBSPOT_BASE_URL in
+-# src/lead_desk/constants.py; DESK_HUBSPOT_BASE_URL may name another https host of the vendor's own domains (see
+-# HUBSPOT_HOST_SUFFIXES there); any other host needs DESK_HUBSPOT_ALLOW_ANY_BASE_URL=yes.
++# REQUIRED: the address the HubSpot key is sent to. The script never falls back to a default address: name it. Use the
++# value of HUBSPOT_BASE_URL in src/lead_desk/constants.py (the vendor's own address) or another https host of the vendor's
++# own domains (see HUBSPOT_HOST_SUFFIXES there); any other host also needs DESK_HUBSPOT_ALLOW_ANY_BASE_URL=yes.
++DESK_HUBSPOT_BASE_URL=<HUBSPOT_ADDRESS>
++# Optional: DESK_HUBSPOT_TIMEOUT_SECONDS, DESK_HUBSPOT_MAX_429_RETRIES.
+ # Optional (only with --live-model): the DESK_LIVE_* names with their own key file.
+ # A contact archived into the HubSpot recycle bin is ASSUMED to keep its email reserved (an assumption): a later run that reuses that email stops with a
+ # clear message (restore or permanently delete the contact in HubSpot first). The made-up emails are new in every run.
+@@ -37,13 +39,16 @@ DESK_SMTPP_RECIPIENTS=sender@example.com,second@example.com
+ DESK_SMTPP_MAX_SENDS=60
+ 
+ # Counting: one block per mailbox, in the SAME order as DESK_SMTPP_RECIPIENTS; the user of block n MUST be the n-th
+-# recipient (the script refuses otherwise). REAL_IMAP_n_HOST defaults to MAIL_IMAP_DEFAULT_HOST in
+-# src/lead_desk/constants.py (a Workspace mailbox uses the same host as a Gmail one).
++# recipient (the script refuses otherwise). REAL_IMAP_n_HOST is REQUIRED (no default is used on its own): name the
++# mail server of each mailbox (MAIL_IMAP_DEFAULT_HOST in src/lead_desk/constants.py is the provider's usual one; a
++# Workspace mailbox uses the same host as a Gmail one).
+ # Each mailbox has its own app password file (ONE line, nothing else).
+ REAL_IMAP_1_USER=sender@example.com
+ REAL_IMAP_1_PASSWORD_FILE=<SECRETS_FOLDER>\sender-app-password.txt
++REAL_IMAP_1_HOST=<IMAP_HOST>
+ REAL_IMAP_2_USER=second@example.com
+ REAL_IMAP_2_PASSWORD_FILE=<SECRETS_FOLDER>\second-app-password.txt
++REAL_IMAP_2_HOST=<IMAP_HOST>
+ # Optional: DESK_SMTPP_PORT, DESK_SMTPP_SECURITY (starttls or ssl), DESK_SMTPP_CA_FILE, DESK_SMTPP_TIMEOUT_SECONDS,
+ # REAL_IMAP_n_HOST, REAL_IMAP_n_PORT, REAL_IMAP_n_CA_FILE, REAL_IMAP_n_FOLDERS (default INBOX and MAIL_SPAM_FOLDER in
+ # src/lead_desk/constants.py)
+diff --git a/scripts/run_live_check.py b/scripts/run_live_check.py
+index 16523b3..ae14c39 100644
+--- a/scripts/run_live_check.py
++++ b/scripts/run_live_check.py
+@@ -8,9 +8,12 @@ Usage (run it from your own terminal, not from a script that runs without you):
+ IN_PRICE and OUT_PRICE are US$ per million tokens, read from the provider's price page on --price-date.
+ Use the model ids and prices from your provider's own price page (the form is ID=IN_PRICE,OUT_PRICE).
+ Nothing is assumed: without caps, prices and a price date the script refuses to start. It prints the exact
+-worst-case cost of the whole run and waits for y/N before the first call. --base-url is the provider address
+-(default: the desk's own default address). The key is sent in a header of every request; any address other than
+-the provider's own or this computer is refused. The leads' e-mail addresses are made up (example.com)."""
++worst-case cost of the whole run and waits for y/N before the first call. --base-url is required: name the
++provider's address (or a loopback address for a test); there is no default, so a key never goes to the vendor's
++address by omission. The key is sent in a header of every request; any address other than the provider's own or
++this computer is refused. The y/N question needs a person at a terminal: standard input from a pipe or a file is
++refused (exit 2); the one scripted use is --assume-yes with a loopback --base-url (a local fake model).
++The leads' e-mail addresses are made up (example.com)."""
+ 
+ from __future__ import annotations
+ 
+@@ -21,14 +24,14 @@ import time
+ import uuid
+ from decimal import ROUND_CEILING, Decimal, InvalidOperation, localcontext
+ from pathlib import Path
++from urllib.parse import urlsplit
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ sys.path.insert(0, str(REPO / "src"))
+ 
+-from lead_desk.config import LiveSettings  # noqa: E402
++from lead_desk.config import LiveSettings, is_loopback_host  # noqa: E402
+ from lead_desk.constants import (  # noqa: E402
+     AI_LABELS,
+-    LIVE_DEFAULT_BASE_URL,
+     LIVE_DEFAULT_EFFORT,
+     LIVE_DEFAULT_MAX_TOKENS,
+ )
+@@ -39,6 +42,10 @@ RUNS = 3
+ PCT = 100
+ P95 = 0.95
+ EXIT_REFUSED = 2
++NO_TERMINAL_TEXT = (
++    "refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a "
++    "file or a scheduled job), so nothing was called. Run it from your own terminal"
++)
+ BODY_OVERHEAD = 600  # bytes of JSON and system text around the question (a safe upper bound, for the estimate)
+ 
+ 
+@@ -101,10 +108,26 @@ def run_model(s: LiveSettings, leads: list[tuple[str, str]], runs: int, ledger:
+     }
+ 
+ 
++def stdin_is_terminal() -> bool:
++    """True only when standard input is an interactive terminal; fails closed (a piped `y` is never an answer)."""
++    try:
++        return bool(sys.stdin.isatty())
++    except (AttributeError, ValueError, OSError):
++        return False
++
++
++def _loopback_url(url: str) -> bool:
++    try:
++        return is_loopback_host(urlsplit(url).hostname or "")
++    except ValueError:  # a bad port or bracket: not readable, so not loopback
++        return False
++
++
+ def main(argv: list[str] | None = None) -> int:
+     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+     ap.add_argument("--key-file", required=True, help="file holding the key; read by this script only")
+-    ap.add_argument("--base-url", default=LIVE_DEFAULT_BASE_URL)
++    ap.add_argument("--base-url", default=None, help="the provider's address, or a loopback address (required)")
++    ap.add_argument("--assume-yes", action="store_true", help="skip the y/N question; only with a loopback --base-url")
+     ap.add_argument("--ledger", required=True, help="spend ledger file (kept; counts across runs)")
+     ap.add_argument("--cap-run", type=_usd_arg, required=True, help="US$ cap for one model run")
+     ap.add_argument("--cap-total", type=_usd_arg, required=True, help="US$ cap over the whole ledger")
+@@ -118,6 +141,15 @@ def main(argv: list[str] | None = None) -> int:
+     a = ap.parse_args(argv)
+     if a.leads < 1 or a.runs < 1:
+         ap.error("--leads and --runs must each be at least 1")
++    if a.base_url is None:  # no default: the key must never go to the vendor's address by omission
++        print("refused: --base-url: not given; name the provider's address (a loopback address for a test)")
++        return EXIT_REFUSED
++    if a.assume_yes and not _loopback_url(a.base_url):
++        print("refused: --assume-yes is only for a test against this computer (a loopback --base-url)")
++        return EXIT_REFUSED
++    if not a.assume_yes and not stdin_is_terminal():  # before anything is read or called
++        print(NO_TERMINAL_TEXT)
++        return EXIT_REFUSED
+     batch = uuid.uuid4().hex[:8]
+     leads = _emails(a.leads)
+     settings: list[LiveSettings] = []
+@@ -150,9 +182,15 @@ def main(argv: list[str] | None = None) -> int:
+         worst_shown = worst.quantize(Decimal("0.0001"), rounding=ROUND_CEILING)
+     print(f"models: {len(settings)}, calls per model: {a.leads * a.runs}, prices dated {a.price_date}")
+     print(f"expected MAXIMUM cost of this whole run: US${worst_shown} (caps: run {a.cap_run}, total {a.cap_total})")
+-    if input("Start? [y/N] ").strip().lower() != "y":
+-        print("stopped, nothing was called")
+-        return 1
++    if not a.assume_yes:
++        try:
++            answer = input("Start? [y/N] ").strip().lower()
++        except EOFError:  # the terminal closed under us: never read as a yes
++            print("stopped, nothing was called: there is no terminal to answer the question on")
++            return 1
++        if answer != "y":
++            print("stopped, nothing was called")
++            return 1
+     ledger = SpendLedger(Path(a.ledger))
+     for s in settings:
+         try:
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index a6e743e..253fcd1 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -13,14 +13,18 @@ it: only the paths of the key files. Required names (the script refuses to start
+                                   inboxes, comma separated), DESK_SMTPP_MAX_SENDS (hard cap per desk process)
+   REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE  the two counted mailboxes,
+                                   in the order of DESK_SMTPP_RECIPIENTS (more can be added: REAL_IMAP_3_*)
++  DESK_HUBSPOT_BASE_URL, REAL_IMAP_n_HOST (one per mailbox)  the addresses a key is sent to: NAME THEM, even when you
++                                  mean the vendor's own (a default that is not this computer is never used on its own)
+ Optional: DESK_SMTPP_PORT, DESK_SMTPP_SECURITY, DESK_SMTPP_CA_FILE,
+-REAL_IMAP_n_HOST (default: MAIL_IMAP_DEFAULT_HOST in src/lead_desk/constants.py),
+ REAL_IMAP_n_PORT, REAL_IMAP_n_CA_FILE, REAL_IMAP_n_FOLDERS (comma list, default INBOX and the spam folder),
+ REAL_PERSONS (default 12), REAL_DRAIN_SECONDS
+ (default 150), REAL_MAIL_WAIT_SECONDS (default 90),
+ REAL_MAIL_SETTLE_SECONDS (default MAIL_POLL_SECONDS), REAL_RESULT_FILE (default result.json next to the database),
+-DESK_HUBSPOT_BASE_URL, DESK_PORT. With --live-model also every DESK_LIVE_* name (its own cap in dollars; the key goes
+-only to the provider's own address or this computer unless the config says DESK_LIVE_ALLOW_ANY_BASE_URL=yes).
++DESK_PORT. With --live-model also every DESK_LIVE_* name, DESK_LIVE_BASE_URL among them (required: its own cap in
++dollars; the key goes only to the provider's own address or this computer unless the config says
++DESK_LIVE_ALLOW_ANY_BASE_URL=yes).
++The y/N question needs a person at a terminal: with standard input from a pipe, a file or a scheduled job the script
++refuses (exit 2) and starts nothing. The only scripted use is --assume-yes together with --dry-fakes (local fakes).
+ Every name is upper-case letters, digits and underscore (a lower-case name is refused). DESK_DB_PATH must NOT exist
+ yet: the clean-up relies on a book that holds only this run's leads.
+ 
+@@ -57,6 +61,7 @@ from dataclasses import replace
+ from decimal import Decimal
+ from pathlib import Path
+ from typing import Any
++from urllib.parse import urlsplit
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ for _p in (str(REPO / "src"), str(REPO)):
+@@ -66,10 +71,12 @@ for _p in (str(REPO / "src"), str(REPO)):
+ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.adapters import CrmError  # noqa: E402
+-from lead_desk.config import Config  # noqa: E402
++from lead_desk.config import Config, is_loopback_host  # noqa: E402
+ from lead_desk.constants import (  # noqa: E402
+     CAP_COUNT_MAX,
+     EXIT_SIMULATED_KILL,
++    HUBSPOT_BASE_URL,
++    LIVE_DEFAULT_BASE_URL,
+     MAIL_IMAP_DEFAULT_HOST,
+     MAIL_SPAM_FOLDER,
+     PORT_MAX,
+@@ -93,6 +100,10 @@ from load_tools.check_invariants import InputError, read_book, render_table, run
+ from load_tools.load_driver import send_with_retries  # noqa: E402
+ 
+ EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = 2, 1, 3
++NO_TERMINAL_TEXT = (
++    "refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a "
++    "file or a scheduled job), so nothing was started. Run it from your own terminal"
++)
+ # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+ # address: an assumption). Nothing is ever
+ # mailed to it: follow-ups go only to the configured inboxes
+@@ -610,6 +621,35 @@ def positive_seconds(name: str, env: dict[str, str], default: float) -> float:
+     return value
+ 
+ 
++def stdin_is_terminal() -> bool:
++    """True only when standard input is an interactive terminal. Fails closed: a closed, missing or odd stdin is no
++    terminal, so a piped `y` is never read as the answer."""
++    try:
++        return bool(sys.stdin.isatty())
++    except (AttributeError, ValueError, OSError):
++        return False
++
++
++def unnamed_remote_default(env: dict[str, str], live_model: bool) -> str | None:
++    """The name of the first setting whose address would fall back to a default that is not this computer, or None.
++    The defaults are the vendor's public addresses (HubSpot, the mailbox host, the live model): a made-up or real
++    key must never go there without the settings naming the address on purpose. A loopback value needs no care."""
++    wanted = [("DESK_HUBSPOT_BASE_URL", HUBSPOT_BASE_URL)]
++    n = 1
++    while env.get(f"REAL_IMAP_{n}_USER"):
++        wanted.append((f"REAL_IMAP_{n}_HOST", MAIL_IMAP_DEFAULT_HOST))
++        n += 1
++    if live_model:
++        wanted.append(("DESK_LIVE_BASE_URL", LIVE_DEFAULT_BASE_URL))
++    for name, default in wanted:
++        if env.get(name, "").strip():
++            continue
++        host = urlsplit(default).hostname if "://" in default else default
++        if not is_loopback_host(host or ""):
++            return name
++    return None
++
++
+ def imap_settings(env: dict[str, str]) -> list[ImapSettings]:
+     """The counted mailboxes REAL_IMAP_1_*, REAL_IMAP_2_* ... (host default MAIL_IMAP_DEFAULT_HOST, a Workspace mailbox
+     uses the same host). Mailbox n is the n-th address of DESK_SMTPP_RECIPIENTS."""
+@@ -824,6 +864,9 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+     if a.assume_yes and not a.dry_fakes:
+         print("refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks")
+         return EXIT_REFUSED
++    if not (a.assume_yes and a.dry_fakes) and not stdin_is_terminal():  # before anything is started or read
++        print(NO_TERMINAL_TEXT)
++        return EXIT_REFUSED
+     env: dict[str, str] = {}
+     live_cap: Decimal | None = None
+     try:
+@@ -842,6 +885,13 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         if missing:
+             print("refused: the config lacks: " + ", ".join(missing))
+             return EXIT_REFUSED
++        unnamed = unnamed_remote_default(env, a.live_model)
++        if unnamed is not None:
++            print(
++                f"refused: {unnamed}: not named in the settings; the default address is the vendor's and is never "
++                "used on its own: name the address you mean (a loopback address for a test)"
++            )
++            return EXIT_REFUSED
+         persons = number("REAL_PERSONS", env, int, DEFAULT_PERSONS, high=REAL_PERSONS_MAX)
+         if persons < MIN_PERSONS:
+             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+diff --git a/tests/test_ledger_amounts.py b/tests/test_ledger_amounts.py
+index 40127c7..aebee4e 100644
+--- a/tests/test_ledger_amounts.py
++++ b/tests/test_ledger_amounts.py
+@@ -451,8 +451,7 @@ def test_check_script_refuses_zero_leads_or_runs_and_a_broken_ledger_cleanly(
+         with pytest.raises(SystemExit) as e:
+             rlc.main(base + bad)
+         assert e.value.code == 2
+-    monkeypatch.setattr("builtins.input", lambda prompt="": "y")
+-    assert rlc.main(base + ["--leads", "1", "--runs", "1"]) == rlc.EXIT_REFUSED
++    assert rlc.main(base + ["--leads", "1", "--runs", "1", "--assume-yes"]) == rlc.EXIT_REFUSED  # loopback fake only
+     out = capsys.readouterr()
+     assert "Traceback" not in out.out + out.err and "spend ledger" in out.out
+ 
+@@ -526,8 +525,11 @@ def test_check_script_worst_case_figure_never_reads_too_low(
+     key.write_text("sk-" + "fake-" + "key-" + "0123456789abcdef\n", encoding="utf-8")
+     argv = ["--key-file", str(key), "--ledger", str(tmp_path / "l.jsonl"), "--price-date", "2026-01-01"]
+     argv += ["--model", "m=0.01,0.01", "--cap-run", "1", "--cap-total", "3", "--leads", "1", "--runs", "1"]
++    monkeypatch.setattr(
++        sys, "stdin", type("Terminal", (), {"isatty": staticmethod(lambda: True)})()
++    )  # `input` is mocked
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert rlc.main(argv) == 1
++    assert rlc.main([*argv, "--base-url", "http://127.0.0.1:9"]) == 1
+     assert "US$0.0001 (caps" in capsys.readouterr().out  # a tiny cost is rounded UP, not down to 0.0000
+ 
+ 
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index 7b9d857..32130a3 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -560,6 +560,8 @@ def test_crash_windows_ignore_other_names(tmp_path: Path) -> None:
+ 
+ # -- check runner against the fake
+ def _run_runner(tmp_path: Path, model: Model, extra: list[str], stdin: str = "") -> subprocess.CompletedProcess[str]:
++    """stdin is never read as an answer (the script refuses a stdin that is not a terminal); a run that is meant to go
++    on says --assume-yes, which the script allows only with the loopback fake `model.url`."""
+     key = tmp_path / "key.txt"
+     key.write_text(FAKE_KEY, encoding="utf-8")
+     cmd = [
+@@ -581,10 +583,10 @@ def _run_runner(tmp_path: Path, model: Model, extra: list[str], stdin: str = "")
+ def test_runner_prints_counts_only_and_asks_first(tmp_path: Path, model: Model) -> None:
+     model.state.mode = "mixed"
+     args = ["--cap-run", "1", "--cap-total", "3", "--model", "fake-a=2,10", "--model", "fake-b=1,5"]
+-    no = _run_runner(tmp_path, model, args, stdin="n\n")
+-    assert no.returncode == 1 and "MAXIMUM cost" in no.stdout and "nothing was called" in no.stdout
+-    assert model.state.calls == 0  # the question came before the first call
+-    yes = _run_runner(tmp_path, model, args, stdin="y\n")
++    piped = _run_runner(tmp_path, model, args)  # a pipe (stdin here is not a terminal): refused, no question
++    assert piped.returncode == 2 and "needs a person at a terminal" in piped.stdout and "MAXIMUM" not in piped.stdout
++    assert model.state.calls == 0  # nothing was called
++    yes = _run_runner(tmp_path, model, [*args, "--assume-yes"])
+     assert yes.returncode == 0, yes.stderr[-500:]
+     assert FAKE_KEY not in yes.stdout + yes.stderr
+     assert model.state.calls == 72  # 2 models x 12 leads x 3 runs
+@@ -606,7 +608,7 @@ def test_runner_refuses_without_caps_or_prices(tmp_path: Path, model: Model) ->
+ def test_runner_counts_failures_by_class(tmp_path: Path, model: Model) -> None:
+     model.state.mode = "refusal"
+     args = ["--cap-run", "1", "--cap-total", "3", "--model", "fake-a=2,10", "--leads", "2", "--runs", "2"]
+-    r = _run_runner(tmp_path, model, args, stdin="y\n")
++    r = _run_runner(tmp_path, model, [*args, "--assume-yes"])
+     assert r.returncode == 0 and "valid labels 0 (0%)" in r.stdout and "LiveRefused" in r.stdout
+     assert "flip rate n/a" in r.stdout
+ 
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 66461fc..7402932 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+ 
+ from lead_desk.adapters import CrmError  # noqa: E402
++from lead_desk.constants import HUBSPOT_BASE_URL, LIVE_DEFAULT_BASE_URL  # noqa: E402
+ from lead_desk.imap_count import ImapSettings  # noqa: E402
+ 
+ FILLER = "x-value-" + "0001"  # a made-up setting value, built from parts
+@@ -157,6 +158,13 @@ def test_mailbox_order_must_match_the_recipients() -> None:
+     assert rrc.check_mailbox_order(env, [box("a@example.test")]) is not None  # one mailbox missing
+ 
+ 
++@pytest.fixture(autouse=True)
++def _a_person_at_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
++    """pytest has no terminal; the script refuses a stdin that is not one (tests/test_start_prompt_hardening.py), so
++    these tests, which mock `input`, stand in for the person at the terminal."""
++    monkeypatch.setattr(sys, "stdin", type("Terminal", (), {"isatty": staticmethod(lambda: True)})())
++
++
+ def _valid_config(tmp_path: Path, **over: str) -> Path:
+     """A config that passes every check except the ones the test breaks on purpose (two inboxes, in order)."""
+     return _config_file(
+@@ -176,6 +184,9 @@ def _config_file(tmp_path: Path, **over: str) -> Path:
+         "DESK_HUBSPOT_MAX_CALLS": "5",
+         "REAL_HUBSPOT_READBACK_MAX_CALLS": "5",
+         "DESK_SMTPP_HOST": "localhost",
++        "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,  # the settings must name every address (here the vendor's own)
++        "REAL_IMAP_1_HOST": "localhost",
++        "REAL_IMAP_2_HOST": "localhost",
+         "DESK_SMTPP_FROM": "a@example.test",
+         "DESK_SMTPP_RECIPIENTS": "a@example.test",
+         "DESK_SMTPP_MAX_SENDS": "5",
+@@ -467,12 +478,13 @@ def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+         "DESK_LIVE_CAP_TOTAL_USD": "3",
+         "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger"),
+         "DESK_LIVE_RUN_ID": "r1",
++        "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL,  # named on purpose: the settings never fall back to it
+     }
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+     assert rrc.main(["--config", str(_valid_config(tmp_path, **live)), "--live-model"]) == rrc.EXIT_STOPPED
+     assert "per-run cap US$1.25" in capsys.readouterr().out
+     other = "https://" + "model-host" + ".example.test"
+-    cfg = _valid_config(tmp_path, DESK_LIVE_BASE_URL=other, **live)
++    cfg = _valid_config(tmp_path, **{**live, "DESK_LIVE_BASE_URL": other})
+     assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED  # a stranger's host: no key goes there
+     assert "not the provider's own address" in capsys.readouterr().out
+     # the host check lives in the settings themselves (tests/test_live_claude.py); here only that the script
+diff --git a/tests/test_start_prompt_hardening.py b/tests/test_start_prompt_hardening.py
+new file mode 100644
+index 0000000..a21836f
+--- /dev/null
++++ b/tests/test_start_prompt_hardening.py
+@@ -0,0 +1,264 @@
++"""The start question of the check scripts needs a person at a terminal, and no key goes to a default vendor address.
++
++Two classes (the incident of 2026-11-13: a `y` came in through a pipe and a valid synthetic config made the desk try
++52 real network calls toward the vendor's default address with a made-up key):
++  1. a y/N question that reads a pipe, a file or a closed stdin as an answer;
++  2. an address that falls back to the vendor's default when the settings do not name it.
++Nothing here starts a desk, opens a connection or answers y: `input` raises if it is reached, `Desk`, `DryFakes` and
++`run_model` raise if they are reached, and every socket connect raises."""
++
++from __future__ import annotations
++
++import ast
++import io
++import socket
++import sys
++from pathlib import Path
++from typing import Any, NoReturn
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++for _p in (str(REPO / "src"), str(REPO / "scripts"), str(REPO)):
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++
++import run_live_check as rlc  # noqa: E402
++import run_real_check as rrc  # noqa: E402
++
++from lead_desk.constants import HUBSPOT_BASE_URL, LIVE_DEFAULT_BASE_URL, MAIL_IMAP_DEFAULT_HOST  # noqa: E402
++
++FILLER = "x"
++
++
++class _Pipe(io.StringIO):
++    """What a pipe or a file looks like to the script: readable text, not a terminal."""
++
++    def isatty(self) -> bool:
++        return False
++
++
++class _Terminal(io.StringIO):
++    def isatty(self) -> bool:
++        return True
++
++
++class Reached(AssertionError):
++    """A thing that must not happen was reached."""
++
++
++def _boom(*_a: Any, **_k: Any) -> NoReturn:
++    raise Reached
++
++
++@pytest.fixture(autouse=True)
++def _nothing_can_start_or_connect(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
++    monkeypatch.setattr(socket.socket, "connect", _boom)
++    monkeypatch.setattr(rrc, "Desk", _boom)
++    monkeypatch.setattr(rrc, "DryFakes", _boom)
++    monkeypatch.setattr(rlc, "run_model", _boom)
++
++
++def _config(tmp_path: Path, drop: tuple[str, ...] = (), **over: str) -> Path:
++    values = dict.fromkeys(rrc.REQUIRED, FILLER) | {
++        "DESK_DB_PATH": str(tmp_path / "run" / "desk.db"),
++        "DESK_HUBSPOT_MAX_CALLS": "5",
++        "REAL_HUBSPOT_READBACK_MAX_CALLS": "5",
++        "DESK_SMTPP_HOST": "localhost",
++        "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,  # named on purpose: allowed (the check is that it is NAMED)
++        "REAL_IMAP_1_HOST": "localhost",
++        "REAL_IMAP_2_HOST": "localhost",
++        "DESK_SMTPP_FROM": "a@example.test",
++        "DESK_SMTPP_RECIPIENTS": "a@example.test,b@example.test",
++        "REAL_IMAP_1_USER": "a@example.test",
++        "REAL_IMAP_2_USER": "b@example.test",
++        "DESK_SMTPP_MAX_SENDS": "5",
++    }
++    values = {k: v for k, v in (values | over).items() if k not in drop}
++    cfg = tmp_path / "c.env"
++    cfg.write_text("\n".join(f"{k}={v}" for k, v in values.items()), encoding="utf-8")
++    return cfg
++
++
++# -- class 1: the question needs a terminal (run_real_check.py) -------------------------------------------------------
++@pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", ""])
++def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Pipe(piped))
++    assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "needs a person at a terminal" in out and "nothing was started" in out and "Start?" not in out
++    assert not (tmp_path / "run").exists()  # nothing was made
++
++
++def test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Pipe("y\n"))
++    assert rrc.main(["--dry-fakes"]) == rrc.EXIT_REFUSED  # DryFakes is not even constructed (it raises)
++    assert "needs a person at a terminal" in capsys.readouterr().out
++
++
++def test_real_check_assume_yes_with_dry_fakes_is_the_one_scripted_use(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(sys, "stdin", _Pipe(""))
++    with pytest.raises(Reached):  # it got past the terminal check and went on to start the local fakes
++        rrc.main(["--dry-fakes", "--assume-yes"])
++
++
++def test_real_check_a_real_run_never_takes_assume_yes(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    assert rrc.main(["--config", str(_config(tmp_path)), "--assume-yes"]) == rrc.EXIT_REFUSED
++    assert "self-test" in capsys.readouterr().out
++
++
++def test_a_terminal_reaches_the_question_and_n_stops(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    monkeypatch.setattr("builtins.input", lambda prompt="": "n")
++    assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_STOPPED
++    assert "stopped, nothing was called" in capsys.readouterr().out
++
++
++class _Odd:
++    def __init__(self, error: type[Exception] | None) -> None:
++        self.error = error
++
++    def isatty(self) -> bool:
++        if self.error is not None:
++            raise self.error
++        return False
++
++
++@pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
++def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
++    monkeypatch.setattr(sys, "stdin", stdin)
++    assert rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    assert rrc.stdin_is_terminal() is True and rlc.stdin_is_terminal() is True
++
++
++# -- class 1: the same for run_live_check.py --------------------------------------------------------------------------
++def _live_args(tmp_path: Path, *extra: str) -> list[str]:
++    key = tmp_path / "k.txt"
++    key.write_text("sk-" + "fake-" + "key-" + "0123456789abcdef\n", encoding="utf-8")
++    return [
++        *("--key-file", str(key), "--ledger", str(tmp_path / "l.jsonl"), "--price-date", "2026-01-01"),
++        *("--model", "m=1,2", "--cap-run", "1", "--cap-total", "3", "--leads", "1", "--runs", "1", *extra),
++    ]
++
++
++@pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", ""])
++def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Pipe(piped))
++    assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "needs a person at a terminal" in out and "Start?" not in out and "MAXIMUM" not in out
++
++
++def test_live_check_assume_yes_is_for_a_loopback_address_only(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Pipe(""))
++    for bad in (
++        LIVE_DEFAULT_BASE_URL,
++        "https://" + "model-host" + ".example.test",
++        "http://[::1",
++        "http://" + "10.0.0." + "5:9",
++    ):
++        assert rlc.main(_live_args(tmp_path, "--base-url", bad, "--assume-yes")) == rlc.EXIT_REFUSED
++        assert "loopback" in capsys.readouterr().out
++    with pytest.raises(Reached):  # loopback + --assume-yes: past both checks, on to the (blocked) first call
++        rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9", "--assume-yes"))
++
++
++def test_live_check_has_no_default_address(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    assert rlc.main(_live_args(tmp_path)) == rlc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "--base-url" in out and "not given" in out and "Start?" not in out
++
++
++def test_live_check_a_closed_terminal_is_a_stop_not_a_traceback(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    def closed(prompt: str = "") -> str:
++        raise EOFError
++
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    monkeypatch.setattr("builtins.input", closed)
++    assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == 1
++    assert "no terminal" in capsys.readouterr().out
++
++
++# -- class 2: no address falls back to a vendor default (run_real_check.py) ------------------------------------------
++@pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
++@pytest.mark.parametrize("how", ["absent", "blank"])
++def test_real_check_refuses_an_address_the_settings_do_not_name(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
++    cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert out.startswith(f"refused: {name}: not named in the settings") and "Start?" not in out
++
++
++def test_real_check_the_live_model_address_must_be_named_too(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(sys, "stdin", _Terminal())
++    assert rrc.main(["--config", str(_config(tmp_path)), "--live-model"]) == rrc.EXIT_REFUSED
++    assert capsys.readouterr().out.startswith("refused: DESK_LIVE_BASE_URL: not named in the settings")
++
++
++def test_unnamed_remote_default_unit() -> None:
++    named = {
++        "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,  # the vendor's own address, named on purpose: allowed
++        "REAL_IMAP_1_USER": "u",
++        "REAL_IMAP_1_HOST": MAIL_IMAP_DEFAULT_HOST,
++        "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL,
++    }
++    assert rrc.unnamed_remote_default(named, True) is None
++    assert rrc.unnamed_remote_default({}, False) == "DESK_HUBSPOT_BASE_URL"
++    assert rrc.unnamed_remote_default({k: v for k, v in named.items() if k != "REAL_IMAP_1_HOST"}, False) == (
++        "REAL_IMAP_1_HOST"
++    )
++    no_live = {k: v for k, v in named.items() if k != "DESK_LIVE_BASE_URL"}
++    assert rrc.unnamed_remote_default(no_live, False) is None  # the live model is only looked at with --live-model
++    assert rrc.unnamed_remote_default(no_live, True) == "DESK_LIVE_BASE_URL"
++    for hs in ("", " ", "\t"):
++        assert rrc.unnamed_remote_default({**named, "DESK_HUBSPOT_BASE_URL": hs}, False) == "DESK_HUBSPOT_BASE_URL"
++
++
++# -- sibling sweep: every question in product and tool code is guarded ------------------------------------------------
++def _reads_a_person(tree: ast.AST) -> bool:
++    for node in ast.walk(tree):
++        if isinstance(node, ast.Call):
++            f = node.func
++            if isinstance(f, ast.Name) and f.id in {"input", "getpass"}:
++                return True
++            if isinstance(f, ast.Attribute) and f.attr in {"getpass", "readline", "read", "readlines"}:
++                if isinstance(f.value, ast.Attribute) and f.value.attr == "stdin":
++                    return True
++    return False
++
++
++def test_every_script_that_asks_a_question_checks_for_a_terminal_first() -> None:
++    asking: dict[str, str] = {}
++    for folder in ("scripts", "load_tools", "tools", "src", "demo_only"):
++        for path in sorted((REPO / folder).rglob("*.py")):
++            text = path.read_text(encoding="utf-8")
++            if _reads_a_person(ast.parse(text)):
++                asking[path.relative_to(REPO).as_posix()] = text
++    assert set(asking) == {"scripts/run_live_check.py", "scripts/run_real_check.py"}, "a new question: guard it"
++    for name, text in asking.items():
++        assert 0 <= text.index("not stdin_is_terminal()") < text.index('input("Start?'), name  # check, then ask

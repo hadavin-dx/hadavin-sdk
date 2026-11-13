@@ -1,0 +1,29 @@
+$ ruff check
+All checks passed!
+$ ruff format --check
+147 files already formatted
+$ mypy linux
+Success: no issues found in 26 source files
+$ mypy win32
+Success: no issues found in 26 source files
+$ git diff --cached --check
+clean
+$ bandit -ll -r src scripts
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+$ gitleaks dir
+[90m4:19AM[0m [32mINF[0m [1mscanned ~5097167 bytes (5.10 MB) in 1.05s[0m
+[90m4:19AM[0m [33mWRN[0m [1mleaks found: 81[0m
+$ gitleaks dir (staged tree export, venv excluded)
+[90m4:19AM[0m [32mINF[0m [1mscanned ~2989982 bytes (2.99 MB) in 479ms[0m
+[90m4:19AM[0m [32mINF[0m [1mno leaks found[0m
+$ gitleaks git (history, then staged tree via hygiene test)
+[90m4:19AM[0m [32mINF[0m [1m22 commits scanned.[0m
+[90m4:19AM[0m [32mINF[0m [1mscanned ~5671494 bytes (5.67 MB) in 1.03s[0m
+[90m4:19AM[0m [32mINF[0m [1mno leaks found[0m

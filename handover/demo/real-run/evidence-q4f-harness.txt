@@ -1,0 +1,39 @@
+# settings used: every URL/host loopback (DESK_HUBSPOT_BASE_URL=http://127.0.0.1:9 with ALLOW_ANY=yes, DESK_SMTPP_HOST=localhost, REAL_IMAP_n_HOST=localhost); made-up keys; env -i; empty cwd; only ever n, never y; (note: python -I cannot import scripts/http_guard.py, the documented call is plain python)
+DESK_HUBSPOT_BASE_URL=http://127.0.0.1:9
+DESK_SMTPP_HOST=localhost
+REAL_IMAP_1_HOST=localhost
+REAL_IMAP_2_HOST=localhost
+DESK_HUBSPOT_ALLOW_ANY_BASE_URL=yes
+## A. piped stdin 'n' (not a terminal)
+refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a file or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## B. stdin /dev/null
+refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a file or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## B2. --dry-fakes without --assume-yes, piped
+refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a file or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## C. pseudo-terminal, valid loopback config, n sent at the question
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+exit 1 | n-sent: True
+## D. pseudo-terminal, HubSpot address not named
+refused: DESK_HUBSPOT_BASE_URL: not named in the settings; the default address is the vendor's and is never used on its own: name the address you mean (a loopback address for a test)
+exit 2 | n-sent: False
+## E. pseudo-terminal, REAL_IMAP_2_HOST not named
+refused: REAL_IMAP_2_HOST: not named in the settings; the default address is the vendor's and is never used on its own: name the address you mean (a loopback address for a test)
+exit 2 | n-sent: False
+## F. live check piped, loopback base
+refused: this script asks y/N and needs a person at a terminal; standard input here is not one (a pipe, a file or a scheduled job), so nothing was called. Run it from your own terminal
+exit 2
+## G. live check without --base-url
+refused: --base-url: not given; name the provider's address (a loopback address for a test)
+exit 2
+## cwd after (entries):
+0
