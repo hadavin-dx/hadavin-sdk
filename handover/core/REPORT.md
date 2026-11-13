@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:52Z / quiet tick: no push from any builder yet
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 runner a7e31a96 is over 1 hour with no report and no reply to my status request; I will stop it at the next tick if still silent and mark its items RUN ON LAPTOP. Part 2 batch 9 builder a37e6e83 is 44 min in (time box 60). Still no clean round on any lane; branch heads unchanged (pd-bind 3db352f5, pd-banner 07bfda12, q8c1-b16 c5aa1c26, sonar-path ddf1d584).
+
+**LEAD ACTIONS**: none new. No GH013.
+**LIVE ITEMS**: a7e31a96, a37e6e83, a69287e2, a51ea641, a14748c3.
+**ROUNDS (WHY)**: unchanged. **FINISHED SINCE LAST BLOCK**: nothing.
+**EGM STEP PER PACKAGE**: Part 2, Part 6, Q8c-1 code-only branch, SONAR-PATH: step 3 (building).
+
+
 ## 02:47Z / quiet tick: lead confirmed 5 agents are fine; waiting for builder pushes
 
 **FAILED / UNCERTAIN FIRST**
