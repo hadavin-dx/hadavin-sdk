@@ -1,4 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:42Z (core lead; freeze order stands)
+CODE-REBASE REPORTED (builder numbers, NOT independently run yet): core-fix-on-frozen.patch (3698 lines, 49 files, sha256 a29c7f83...) applies on frozen 49d3c859, fresh-apply result identical to its tree. Fail-before on the OLD frozen tree: 259 failed / 22 passed of 281 new tests (22 pass on old code: 9 probe cases, 2 reader cases, 3 over-refusal controls, 8 writer cases that frozen already refused). Touched-module run 2 failed / 3718 passed / 8 skipped; the 2 were test_ledger_amounts tests (argparse text is now one 'refused:' line on stdout, leads/runs 0 now EXIT_REFUSED); builder adapted them; rerun 275 passed. Ruff, format, bandit clean.
+FAILED / OPEN (read first):
+1. NOT the whole v2: 3 files (precheck.py, test_core_key_readers.py, test_survivor_r20_config_read.py) exist only in the real-run patches, kept as ontop-3files.patch. Ports in run_live_check.py and run_real_check.py are smaller than v2 (frozen lacks --assume-yes, terminal guard, precheck); 2 control tests and 1 precheck test dropped.
+2. COLLISION: the real-run patches applied AFTER this patch conflict in run_live_check.py, run_real_check.py, live_claude.py. No reconciling patch built (HANDOVER-ONLY chain; ASK below).
+3. F8 (final run on its own set: 2220 passed / 6 skipped, rc=0; patch f8-on-v2.patch 1561 lines) does NOT apply cleanly on the rebase: I measured 9 files with rejected hunks (fake_model_server, portal_demo, constants, catcher, check_invariants, reset_check, run_real_check, scrub_n8n_export, docs/settings.md) and tests/test_real_run_v6.py missing on frozen. F8 also changed 4 V6 tests that were already failing on v2 and added 1 line to exceptions.txt; both need the final review.
+ASK: (a) have the F8 builder (still alive, has context) rebase f8 onto the rebase tree, in-flight work, no new agent; default yes. (b) real-run chain collision: leave unreconciled and list in the freeze README (default), or reconcile.
+Running: F8, CODE-REBASE (finishing hand-back). LOAD low. Files copied to handover/core/fix/ (REB-*, F8-*).
+
 ## STATUS 16:35Z (core lead; freeze order stands)
 | agent | state (builder words, unverified) |
 |---|---|

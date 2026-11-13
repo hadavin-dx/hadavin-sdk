@@ -1,0 +1,118 @@
+diff --git a/scripts/precheck.py b/scripts/precheck.py
+index 1a4c226..4cd71c0 100644
+--- a/scripts/precheck.py
++++ b/scripts/precheck.py
+@@ -17,7 +17,7 @@ def is_special_file(path: str | os.PathLike[str]) -> bool:
+     say what is wrong with those); a path that cannot be looked at (too long, a NUL character) is False too."""
+     try:
+         mode = os.stat(path).st_mode
+-    except (OSError, ValueError):
++    except (OSError, ValueError, TypeError):
+         return False
+     return stat.S_ISFIFO(mode) or stat.S_ISSOCK(mode) or stat.S_ISCHR(mode) or stat.S_ISBLK(mode)
+ 
+@@ -33,18 +33,33 @@ def folder_part_is_a_file(path: str | os.PathLike[str]) -> bool:
+             if here.parent == here:
+                 return False
+             here = here.parent
+-    except (OSError, ValueError):
++    except (OSError, ValueError, TypeError):
+         return False
+ 
+ 
++def folder_cannot_be_made(path: str | os.PathLike[str]) -> bool:
++    """True when the folder of `path` surely cannot be made or written to: the path holds a NUL character, or the
++    nearest part that exists is not a folder this process may write to (for example a read-only mount). Looks only: it
++    makes nothing. False means "no reason found", not a promise: the maker still has to handle its own failure."""
++    try:
++        if "\0" in os.fspath(path):
++            return True
++        here = Path(os.path.abspath(path)).parent
++        while not os.path.lexists(here) and here.parent != here:
++            here = here.parent
++        return not (here.is_dir() and os.access(here, os.W_OK | os.X_OK))
++    except (OSError, ValueError, TypeError):
++        return True
++
++
+ def same_file(a: str | os.PathLike[str], b: str | os.PathLike[str]) -> bool:
+     """True when both paths name the same file: the same path after links are followed, or (both exist) the same file
+     on disk (a hard link). Looks only."""
+     try:
+         return os.path.samefile(a, b)
+-    except (OSError, ValueError):
++    except (OSError, ValueError, TypeError):
+         pass
+     try:
+         return os.path.realpath(a) == os.path.realpath(b)
+-    except (OSError, ValueError):
++    except (OSError, ValueError, TypeError):
+         return False
+diff --git a/tests/test_core_key_readers.py b/tests/test_core_key_readers.py
+index a961c38..b28ad30 100644
+--- a/tests/test_core_key_readers.py
++++ b/tests/test_core_key_readers.py
+@@ -197,13 +197,15 @@ def test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files(
+     assert 0 < accepted < len(CASES) // 2
+ 
+ 
+-def test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line(tmp_path: Path) -> None:
++def test_live_accept_and_refuse_equal_the_old_rule_except_more_than_one_line_or_too_large(tmp_path: Path) -> None:
+     accepted = changed = 0
+     for raw in CASES:
+         got, _ = outcome("live", raw, tmp_path)
+         old = old_live(raw)
+         multi = old is not None and "\n" in old
+-        assert got == (None if multi else old), raw  # the ONE behaviour change: a multi-line key is now refused
++        too_big = len(raw) > SECRET_FILE_MAX_BYTES
++        # the two behaviour changes: a multi-line key is refused, and so is a file over the shared size limit
++        assert got == (None if multi or too_big else old), raw
+         accepted += got is not None
+         changed += multi
+     assert accepted > 0 and changed > 0  # both sides are exercised by the generated files
+@@ -239,6 +241,8 @@ OTHER = (
+ def _reason(reader: str, raw: bytes) -> str:
+     """Which text the NEW code must give for a refused key file (the order of the checks is part of the contract)."""
+     if reader == "live":
++        if len(raw) > SECRET_FILE_MAX_BYTES:
++            return "other"
+         key = _live_text(raw)
+         if key is None:
+             return "other"
+diff --git a/tests/test_survivor_r20_config_read.py b/tests/test_survivor_r20_config_read.py
+index 5771f3a..e9d7913 100644
+--- a/tests/test_survivor_r20_config_read.py
++++ b/tests/test_survivor_r20_config_read.py
+@@ -17,6 +17,8 @@ sys.path.insert(0, str(REPO / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+ from test_real_check_dry import _valid_config  # noqa: E402
+ 
++from lead_desk import regfile  # noqa: E402
++
+ 
+ def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
+     tmp_path: Path,
+@@ -25,17 +27,17 @@ def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
+     a_terminal: None,
+ ) -> None:
+     cfg = _valid_config(tmp_path)
+-    real_read_text = Path.read_text
++    real_open_regular = regfile.open_regular  # the one reader every script uses (lead_desk.regfile)
+ 
+-    def read_text(self: Path, *args: object, **kwargs: object) -> str:
+-        if self.name == cfg.name:
+-            raise PermissionError(13, "denied", str(self))  # the OS error text holds the path
+-        return real_read_text(self, *args, **kwargs)  # type: ignore[arg-type]
++    def open_regular(path: object) -> object:
++        if Path(str(path)).name == cfg.name:
++            raise PermissionError(13, "denied", str(path))  # the OS error text holds the path
++        return real_open_regular(path)  # type: ignore[arg-type]
+ 
+     def no_question(prompt: str = "") -> str:
+         raise AssertionError("the start question was asked")
+ 
+-    monkeypatch.setattr(Path, "read_text", read_text)
++    monkeypatch.setattr(regfile, "open_regular", open_regular)
+     monkeypatch.setattr("builtins.input", no_question)
+     assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+     out = capsys.readouterr().out

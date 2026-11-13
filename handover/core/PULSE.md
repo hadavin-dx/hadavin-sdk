@@ -189,3 +189,4 @@ core: V4e done, 5 untested doc sentences (ASK), F8+REB running
 16:20Z core lead: F8 + CODE-REBASE running, block pushed
 16:27Z core lead: F8 final run ~51%, REB run ~67%, block pushed
 16:35Z core lead: F8 patch written, REB run 2 failed (unexplained)
+16:42Z core lead: REB reported, F8 patch exists, F8-on-REB rejects in 9 files
