@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:45Z / 07:15 IST - SINGLE-PROCESS RUN OF 2db3926 RUNNING (290 passed, 0 failed so far; ETA about 02:05Z); node-off pass DONE (205 passed, 22 skipped); PR #2-#4 descriptions v2 (internal items moved out) under confirming review; Semgrep body v5 done
+FAILED / UNCERTAIN first:
+1. The single-process (un-chunked) run you require for the final claim is NOT finished: started 01:42:49Z in a fresh clone (/tmp/work/h4, pr-3-tests 2db3926 verified, no git operations in it), python -u, gitleaks required: 290 passed, 0 failed at 01:45Z; no container restart since about 01:10Z. If a restart kills it I rerun at once. Until it ends the claim is: chunked green (3138 passed, 3 skipped, 0 failed), single-process pending.
+2. Node-off pass of the 8 browser files on the chunk tree (PATH without node): exit 0: 205 passed, 22 skipped in 3:42 (the node-dependent tests skip; expected).
+3. PR #2-#4 descriptions v2 (drafter, from the reviewer's findings): internal items moved into QUESTIONS-FOR-LEAD.md (9 items; they need YOUR answers: approve or drop the 5 extra core touches (wait/exclusive in desk.py, functools.partial, except lists, portal_api renames, portal.js/overview.js/log.js), whether CodeAnt still reviews the 142 files of #4, branch protection and retargeting, the Sonar two-job split, the Windows figure). Two earlier review points were WRONG and corrected: the 325 gitleaks hits in the history of #2/#3 are not early lock-file commits (the scan reads every branch; #2's older rules flag lock files that #4 added later); `exclusive=True` covers only the CRM stage-copy call, not every CRM call. #4 touches 16 files under src (9 Python, 4 CSS, 3 JS). The one marker left in #4 is [FILL: single-process result] for you. A third fresh review (confirming) is running.
+4. Semgrep PR: patch v4 ready (sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9), PR body v5 + claims table done (round-3 nits fixed); not yet re-read by a fresh reviewer after v5 (small changes only).
+5. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13.
+READY TO APPLY NOW: Semgrep v4 (own PR). Nothing pending on pr-3-tests.
+NEEDS FROM LEAD: answers to QUESTIONS-FOR-LEAD.md (pr-text/proposed/); the wording of 'stack head at 0841f36' for readers of main.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| single-process run (shell) | whole suite of 2db3926 in ONE pytest process | 01:42:49 | 290 passed, 0 failed | /tmp/work/full2db-b.txt/.exit -> INT-3 update |
+| rev PRtext3 (sonnet) | confirming review of the v2 descriptions | 01:45 | running | report |
+| Q4 builder | dry-run checks of the real-run scripts | 01:27 | running | real-run/DRY-RUN-CHECKS.md |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 2, shells 2, containers 0, heavy pytest 1, load about 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | single-process run | chunked 3138 passed 0 failed; node-off 205 passed | the lead requires one process | no | run ends green |
+| PR #2-#4 descriptions | v2 review 3 | R2: 1 Blocker + 11 Majors (all addressed in v2) | confirm | no | clean + the lead's answers |
+| Semgrep PR text | body v5 | R3: 0B/1M(typo)/nits fixed | none big | YES unless the lead wants a fresh read | lead pastes |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| Q1 post-chunk steps | all clean (ruff, mypy x2, bandit, hygiene 59 passed, gitleaks dir+git, restart x5, node-off 205 passed) |
+| PR descriptions v2 + questions file | written, pushed (a7c850a6), under review |
+| Semgrep body v5 | written, pushed (7a1e7ac6) |
+
 ## 2026-11-13 01:42Z / 07:12 IST - Q1 VERDICT: pr-3-tests 2db3926 = GREEN IN CHUNKS (3138 passed, 3 skipped, 0 failed) + lints/scans/restart x5 all clean (node-off pass finishing); PR-TEXT FINDINGS FOR THE LEAD (more core code changed than the approval lists; #4 has 142 files); Semgrep v4 + body v5 in progress
 FAILED / UNCERTAIN first:
 1. PR TEXTS #2-#4 (verifier D-PR, evidence VERIFY.md 61 rows): things only the LEAD can decide. (a) MORE CORE CODE CHANGED than your approval lists cover: batch 1 (2ce1f98) changed src config.py, crm_hubspot.py, live_claude.py, portal_api.py, smtp_outbox.py, smtp_provider.py, desk.py (functools.partial), and portal.js, overview.js, log.js; batch 3's desk.py also adds a longer CRM-copy wait (`_mirror_busy`, `exclusive=True`) and log.js changed again: none of these is on the approved lists (ORDERS ~L100/L110/L117/L120): the proposed #4 text lists them as '[UNVERIFIED: approval]': approve (name them) or tell me to remove them from the text; (b) `KnowsBoundAddress` is NOT behaviour-free: make_server now passes the real address to a demo extension that has `set_bound_address` (only demo_only/portal_demo.py has it); (c) file counts: #2 86, #3 39, #4 142 files (93 under tests/): the current texts say each PR has 100 files or fewer: FALSE for #4 (whether the review tool still reviews all 142 files: [UNVERIFIED]); the PRs were opened at 17:36-17:37Z (20:16Z is when #2/#3 were last updated); (d) the final tree differs from #1 (initial-code 43110e7, closed without merging) in 95 files (9 settings files from main + the batches): the current texts' 'final tree is identical to #1' is FALSE (all three texts). The proposed replacement descriptions are in pr-text/proposed/ (pushed 6cc39278): a second fresh reviewer (comprehension) is checking them against the real diff now.
