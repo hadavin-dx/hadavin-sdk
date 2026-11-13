@@ -1,1 +1,5 @@
 == chk-b
+SKIPPED [1] tests/test_hygiene.py:580: no gitleaks program on PATH (set GITLEAKS_BIN)
+88 passed, 4 skipped in 50.42s
+EXIT=0
+== chk-e
