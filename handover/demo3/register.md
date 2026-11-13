@@ -157,3 +157,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B4b | closed 13:59Z: fix-4 r2 (docs+23 tests), 5 fail on base docs, 10 fail on casefold copy; ONE full run 3706 passed 200 skipped rc 0 (19m28s). Not run: ruff/mypy/bandit/gitleaks (CI only). Open: loc@.dom / loc@a..b accepted (ASK to lead). Patches lane3-fix-4-r2.patch, -for-stack-r2.patch | | | closed; REV-4c next |
 | B1d | closed (report relayed 14:03Z; already reviewed as r4; replaced by B1e round 5) | | | closed |
 | B8 | BUILDER lane3-fix-8 (LEAD Q-19 ANSWERED 13:37Z: dotted/double-dot domain goes to review; sweep domain-shape checks) | 14:03Z | stop 14:50Z | running |
+| REV-6b | closed 14:05Z: 0 blocker, 9 major (F1-3,8-10,13,14 + F11 minor), 10 minor/nit; saved evidence/review-lane3-fix-6-r1-comprehension.md | | | closed; waits for REV-6a then resolve |
+| REV-4c | closed 14:05Z: 0 blocker, 2 major (loose README doc anchor; "emails" vs queued rows), 4 minor, 3 nit; saved evidence/review-lane3-fix-4-r2-technical.md | | | closed; resolve next |
