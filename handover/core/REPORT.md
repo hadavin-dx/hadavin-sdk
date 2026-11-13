@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:57Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F3 | builder: readers block on FIFOs; control characters in addresses | fix order | 12:45Z | done 12:57Z | build 1 | DONE (builder's claims, unverified): fix.patch (9 files; new src/lead_desk/regfile.py open_regular, 8 readers switched, envnum.split_url and DESK_BIND/DESK_FAKES_HOST refuse control characters; new tests/test_special_files_and_plain_text.py 42 tests); fails-before 39 failed + 3 passed (3 are accept-still-works pins), after 42 passed; regression 942 passed 9 skipped, 137 passed 28 skipped, 185 passed 1 skipped; ruff clean. Builder's own slips: two first test drafts wrong (one tripped ruff S603, one hung on old code), rewritten. NOT fixed by builder: append-mode opens at lockfile.py:51, live_claude.py:162/:291, trace.py:57 (FIFO as an OUTPUT path would block too). That is the same bug class, so under fix-dont-defer it goes to F6 (writer side), not a limitation | V3 evidence; F6 writers |
+| V3 | independent evidence runner for F3 (fails-before, 3x after, 8 mutants, 20 hostile inputs) | proof | 12:57Z | 45 min | 1 | RUNNING | then reviewer |
+| V1 | evidence for F1 | proof | 12:58Z | 13:43Z | 1 | RUNNING | read |
+| V4 | evidence for F4 | proof | 12:52Z | 13:37Z | 1 | RUNNING | read |
+| F2 | builder: shared refusing parser, option checks | fix order | 12:45Z | about 13:45Z | build 1 | RUNNING | V2 evidence |
+| E1 | root-cause experiments | fix order | 12:47Z | 13:45Z | 1 | RUNNING | table |
+| D1, C6 | full suite + docs patch; flakiness 20x | proof | 12:38Z, 12:33Z | 13:10Z, 13:30Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: none new from my side. Totals: no new failures.
+LOAD: 6 agents + D1 on 4 cores.
+ASK: none.
+
+
 ## REPORT (container clock 12:54Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
