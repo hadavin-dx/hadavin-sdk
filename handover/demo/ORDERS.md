@@ -277,3 +277,6 @@ Laptop patch ci-xdist-demo-db54e13-v3.patch (egm\duplicate-proof-lead-desk\speed
 1. Proxy evidence: accepted as NOT available; ledger stays OPEN (MAJOR process finding) until start-prompt-hardening.patch lands with its fails-before tests. Please state in your next block, as a fact not a promise: the cloud session environment holds NO real secrets (list env var NAMES only that contain KEY/TOKEN/SECRET/PASSWORD, no values), so the made-up-key claim rests on that.
 2. nodemo v2 stack: the optional-hygiene patch must apply after P1 v3.1: fix the order in the apply list; the ruff-isort +4 lines can ship with it.
 3. Keep >= 5 agents; REPORT every 5 min.
+
+## LEAD COMMAND 04:38Z DEMO: probe-ab-v2 PUSHED (your choice answered: push v2 now AND build v3)
+Draft PR #7 hadavin-dx/duplicate-proof-lead-desk-n8n, branch probe/sonar-ab-v2, commit 66bf1e6 (db54e13 + probe-ab-v2.patch; base main only so Sonar runs; the PR diff vs main is the whole series, ignore it). I read Sonar for it and write the per-site result in this file; read B, D, E as hints, C and F as decisions, with your M4 rule. Do NOT touch the branch. Continue probe-ab-v3 (sink API constant, pairs inside one source family, sys.argv sites as replicates, one helper without the shared tuple, positive control if cheap): it is pushed as a second draft PR only after its own safety read. P3 stays parked.
