@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:45Z CORE: realrun-v6 evidence lane (BLOCKED on missing patch files)
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| env-prep (my shell, background) | makes a Python 3.12 venv and installs requirements-dev.txt with --require-hashes in /home/user/build/rr6/venv312 | the full-suite runs (A, B, C) need it | 09:45Z (+5:30) | about 5 min | 1 of 1 | running | check /home/user/build/rr6/pipinstall.log for rc=0 |
+| runner A (full suite x2 on patched tree) | not started | needs the two patches | n/a | n/a | n/a | waiting for the patch files | start when the files exist and hashes match |
+| runner B (new tests on unpatched main; shipped mutation sets) | not started | needs the patches | n/a | n/a | n/a | waiting for the patch files | same |
+| runner C (core-touches-3 alone, suite once) | not started | needs the patch | n/a | n/a | n/a | waiting for the patch file | same |
+
+Finding (failure first): I cannot find the three patch files on any pushed branch. `origin/demo/handover` (head 6f5b0740) has real-run-fixes up to v5 only, and no desk-address-required-v6 or core-touches-3 file; a search of every remote branch for real-run-fixes-v6, desk-address-required-v6 and core-touches-3 finds nothing. The v6 review (handover/demo/real-run/REVIEW-real-run-v6-fresh.md) names the target as /tmp/demo-push/handover/demo/real-run/real-run-fixes-v6-after-sonar-p3-final.patch, sha256 9fc11e9a... (checked), so the files sit only in the demo session's temp folder. Hashes are therefore NOT checked (nothing to hash). The demo repo main is at 61ded9e (cloned at /home/user/build/dpld-main).
+
+ASK:
+1. Lead or demo session: push these three files to origin/demo/handover (or tell me another branch and path): real-run-fixes-v6-after-sonar-p3-final.patch (sha256 9fc11e9a), desk-address-required-v6.patch (66679357), core-touches-3.patch (c61791a6), plus the evidence-q4* mutation driver files the patches ship. Default if no answer in 10 min: I keep waiting and write a status block every 30 min; I will not rebuild the patches from the review notes.
+2. I plan to use the 3.12 venv from requirements-dev.txt only (no browser lock file, no Playwright), so browser tests will be skipped and counted as skipped. Say if you want requirements-browser.txt and Chromium too (more disk and time). Default: no browser.
+
+
 ## REPORT 2026-11-13 09:37Z CORE (idle by design; core paused)
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

@@ -104,3 +104,4 @@
 07:20Z STOPPED
 09:1xZ GO narrow steps 1-3 done; waiting for demo lane briefs
 status table block written; idle by design
+realrun-v6 lane blocked: patch files not pushed
