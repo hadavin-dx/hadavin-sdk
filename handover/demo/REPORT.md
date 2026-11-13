@@ -1,6 +1,14 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 10:04Z / 15:34 IST - STATUS TABLE then ASK; 10:08Z order (PR #13 docs delta `semgrep-docs-v11`) read and started
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ade4ba8cbca94afb4 | semgrep-docs-v11: text-only delta on the REAL PR #13 head (branch semgrep-ci, `ls-remote` 15b8b15e): docs/tests.md (M1 'green is not proof, the log line is'; M3 live result replaces the 'no run seen' and 0841f36 paragraphs: run 43403502735, 64 files tracked, 79 Code rules, 77 rules on 47 files, 0 findings, exit 0), workflow COMMENTS only (network hosts: setup-python CPython download, semgrep.dev rule CDN), PR body v11 (M2 `cwd=target` already on main 61ded9e with the line cited; 39 -> 42 mutant cases) | the 3 Majors of the independent review of PR #13 | 10:06 / 15:36 | ~15 min | Semgrep: text-only delta, no new read (cap) | running | deliver semgrep-docs-v11.patch + apply check on the real head; I re-run the apply check myself |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+**ASK: (1) PR body: you wrote 'the PR body text file': I build `semgrep-pr-body-v11.md` (short) from v10's: tell me if the lead keeps the PR body in a different file. Default: v11 body replaces v10's. (2) none else.**
+**NOTES:** the live numbers (run 43403502735: 'Scanning 64 files tracked by git with 79 Code rules', 'Ran 77 rules on 47 files: 0 findings', exit 0) are from YOUR read of the GitHub log: the docs will say so ('as read from the GitHub log by the lead'), I did not read the log myself (no network). My own v10 limits still hold: registry packs result was unseen until your run; NOW it is (47 files = the same 47 files I measured with a made-up rule locally; the 64 'tracked by git' include non-code files: stated as such if the docs need it). No rule-count assertion is added (no new code), per your order. Previous READY lines unchanged: FINAL2 (PR #12) `852eaaf961eed0e195f54df3c27df2a73ae89580a5b4d2fcb12b36b023aad08c`, nodemo-min-v2 `2e4ffcb2e2442e4f8afa0a47e32a8de46c2941a059b6d8043fcdd773d8b08be9`.
+
 ## 2026-11-13 10:02Z / 15:32 IST - STATUS TABLE then ASK; **READY: FINAL2 for PR #12 (`followup-ab-v4-delta-final2.patch`), apply-checked on the real PR head, with the nodemo job GREEN on the stack**
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
