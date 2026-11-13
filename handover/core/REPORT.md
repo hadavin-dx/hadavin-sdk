@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 10:50Z (15:20 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-A | full product suite, serial, twice, on 61ded9e + 2 patches | LEAD 10:00Z order | 09:50Z / 15:20 | DONE 10:46Z | run 2 of 2 | runner reported (runner output, not judged): run 2 = 3781 passed, 0 failed, 198 skipped, 1293 s, no hang. Run 1 = 3779 passed, 2 failed, 198 skipped, 1303 s: both failures caused by MY brief putting TMPDIR inside the tree; rerun of those 2 files with TMPDIR outside: 3 passed in 2 s. Run 1 not repeated in full | pushing A to handover/core/evidence/realrun-v6/A |
+| RR6-B | new tests vs unpatched main | fails-before | 09:50Z / 15:20 | DONE | 1 of 1 | pushed earlier | none |
+| RR6-B2 | mutation sets on tree-M | mutants the patches ship | 10:15Z / 15:45 | hard stop 11:50Z | 1 of 1 | running (K set in progress; R and SP pending); interim counts unjudged | wait for report |
+| RR6-C | core-touches-3 alone | lane C | 09:50Z / 15:20 | DONE | 1 of 1 | pushed earlier | none |
+| RR6-sum | summary.md combining A, B, B2, C | LEAD order | after B2 | about 11:15Z | n/a | not started; waits for B2 | write when B2 reports |
+| CORE modules | Part 6, Part 2, SONAR-PATH, Q8c-1 | paused by owner/LEAD | n/a | n/a | n/a | PAUSED, all pushed; no core work done | none |
+
+Skipped in A (198, same in both runs): Playwright missing 166, gitleaks missing 28, 4 others (root-can-read, ntpath.isreserved needs 3.13, load-measure, Windows-only). Ran with plain `unshare -n` (loopback up). ruff/mypy/bandit/gitleaks/hygiene not run (out of scope).
+
+ASK:
+1. Is mut_portable.py the intended mutant driver? Default: yes.
+2. Hard stop for B2 at 11:50Z. Default: keep.
+3. Run 1 repeated in full with TMPDIR outside tree (about 22 min, one slot)? Default: no, run 2 already covers it.
+
+
 ## REPORT 2026-11-13 10:43Z CORE: realrun-v6 runners A and B2 still running
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
