@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R5 builder a6c708de latest checkpoint: Done: all findings coded; new tests (test_r5_refusals.py 214 tests, additions in reset_scripts, live_claude, ledger_and_bind_retry); c5 passed 284/284; fail-before: f1 (new files on frozen R4) 178 failed / 48 passed; f2 (changed files) 40 failed 940 passed; guard old-vs-new: old guard misses 29 of 30 new shapes, new guard 0. Patch generation methods verified byte-for-byte against R4 patches (CRLF, | In progress: final-head test batches d1-d3. Next: patches + apply tests, RESULTS.md, cleanup. | Known: the 100,000-row log test and the exit-3 real run take about 30-60 s. . Nothing failed that I can verify; only agent running. ASK: none.
+
+## STATUS (core lead)
 R5 builder a6c708de latest checkpoint: Done: stale-test fixes (load_driver loopback text, catcher host text, 256 MiB cap, whitespace number, n8n cut-off, no-terminal key file, burst cut-off, path-confinement _main, reset.sh [[ ]], hygiene wording); R4-08 guard lists extended with ports + 40 planted shapes (guard test passes); new tests: tests/test_r5_refusals.py, additions to test_reset_scripts.py and test_live_claude.py. | Batches b1/b2/b3 earlier: b2 all passed; b1/b3 failures listed above, now fixed or timing flakes (crm_hubspot 429 x2, shell_single_bracket linear-time) - rerun running (c2). | In progress: c1 (new tests) and c2 (re-run) running. Next: fail-before runs, lint/bandit, patches, RESULTS.md. . Nothing failed that I can verify; only agent running. ASK: none.
 
 ## STATUS (core lead)
