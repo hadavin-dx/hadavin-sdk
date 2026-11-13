@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:33Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 82dd69c1 round 11 NOT clean: 0 Blocker, 8 Major across both reviewers. Two are possible fail-open or pre-auth foreign-code paths reasoned from reading only (limits/audit/registry/_evidence sealed by identity, so replacing rt.limits.store may keep the seal; the hook walk reads an entered object's __dict__ before comparing identity). The builder must first prove or refute each by test. Also: CHANGELOG "exact list" not exact; the 5,000-node cap is not a cost bound and is not enforced at build; a vacuous test still present; no real tool-call/execute test between snapshots; suppressions 244 lines vs main. Fail-open status unverified.
+- Part 2 runner a909a11d has not reported.
+- Part 6 06ed4b4c runner reported (RESULTS.md committed): 1102 focused tests pass on 3.12 and 3.13; 109 of 112 mutant rows killed, 3 allowed crashes, 0 survived; 69 suppression lines; bandit -ll flags B102 exec in a test (CI does not scan tests); masker leaves 11-char Bearer and 7-char Basic visible (binding: equals main, not changed). Not run: full suite, 205 of 317 rows, Playwright.
+- SONAR-PATH batch 4 (a982868e): nothing pushed yet.
+
+**LEAD ACTIONS (decision for you):** broad `except Exception` sites in Part 2 and Part 6 that the mode-safety design needs (unknown must read as counted/503 or unconfirmed). Builders narrow what they can and list the rest. Options for the rest: (a) module-level ruff rule in pyproject with a written reason, (b) named tuple plus a test that a surprise error still gives the refusal. I recommend (b). Your 04:25Z: B12 check handed to the Part 6 batch 12 builder.
+**LIVE ITEMS (4):** a7978edf P6 batch 12 builder (started 04:21Z, end 05:21Z); a805b93d P2 batch 12 builder (started 04:33Z, end 05:33Z); a909a11d P2 runner; a982868e SONAR-PATH batch 4 builder. Closed: a6fe5106, aac377ea, a2432ae7, aa049db0.
+**ROUNDS (WHY):** P2 round 12 after batch 12 (possible fail-open, no cap); P6 round 12 after batch 12 (mode safety, no cap); SONAR-PATH round 4 after batch 4.
+**FINISHED SINCE LAST BLOCK:** P2 round 11 reviews condensed, resolve report goldfish_review_report-r11.md; ledger PDBIND-r11-0..8; P6 runner evidence committed; PDBANNER-r11-10, -11.
+**EGM STEP PER PACKAGE:** P2 build batch 12; P6 build batch 12; SONAR-PATH build batch 4.
+**LANE SONAR-PATH:** a982868e building; EGM step build; A-D not complete; no PR claim.
+**RUN ON LAPTOP:** none (no clean final head).
+
 ## 04:28Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
