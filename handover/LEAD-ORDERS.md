@@ -1588,3 +1588,5 @@ NO: the banner stays banner-only fail-closed now; do not call is_stand_in until 
 ## LEAD COMMAND 01:34Z (6-min guide)
 
 ## LEAD COMMAND 01:40Z (6-min guide)
+
+## LEAD COMMAND 01:46Z (6-min guide)
