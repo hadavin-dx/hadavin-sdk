@@ -26,3 +26,6 @@ Patch: lane3-fix-5-r4.patch (full diff from f3c39cf8), sha256 97a01910c3a79ab13a
 - ruff / format / mypy / bandit not run (CI only); import order and line wrapping follow ruff by reading.
 - macOS/BSD ps, busybox, hidepid /proc, Windows reset.ps1 (its own `-match 'lead_desk\.server|...'` substring is unchanged and has the same wide-match weakness; not in this patch).
 - A venv path with the word "python" only in a directory is accepted as interpreter (the rule is "python appears earlier in the line"); `python -mlead_desk.server` (no space) is not recognised.
+
+## Final run on the final head
+Full suite, `q1-xdist-venv ... pytest tests -q -n 4` (NOT the serial run: serial needs 21 min, hard stop was 14:35Z): 3734 passed, 200 skipped, rc=0, 14:34Z. Log: raw/lane3-fix-5-r4-full-suite-n4.log. Earlier head runs had 1 failure (hygiene, fixed above). git apply --check of r4 after claims-stack-on-f3c39cf8, lane3-fix-3-r5, lane3-fix-1-r4 (applied in that order): rc=0.
