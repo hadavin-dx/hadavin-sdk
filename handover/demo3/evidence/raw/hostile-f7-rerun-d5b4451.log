@@ -1,0 +1,115 @@
+INPUT NT object path '\\??\\UNC\\host\\share\\x'
+  uri/ntpath -> EXC PathRefused: book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+  uri/os.path -> OK 'file:///tmp/%5C%3F%3F%5CUNC%5Chost%5Cshare%5Cx?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT empty ''
+  uri/ntpath -> EXC PathRefused: book path: the path is empty
+  uri/os.path -> EXC PathRefused: book path: the path is empty
+  confine_anywhere -> EXC PathRefused: f: empty path
+  confine(roots=[jail]) -> EXC PathRefused: f: empty path
+INPUT NUL text '\x00'
+  uri/ntpath -> EXC PathRefused: book path: contains a control character
+  uri/os.path -> EXC PathRefused: book path: contains a control character
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT a NUL b 'a\x00b'
+  uri/ntpath -> EXC PathRefused: book path: contains a control character
+  uri/os.path -> EXC PathRefused: book path: contains a control character
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT C1 U+0080 inside 'a\x80b.db'
+  uri/ntpath -> OK 'file:///tmp/a%C2%80b.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/a%C2%80b.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT C1 U+0085 inside 'a\x85b.db'
+  uri/ntpath -> OK 'file:///tmp/a%C2%85b.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/a%C2%85b.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT C1 U+009F inside 'a\x9fb.db'
+  uri/ntpath -> OK 'file:///tmp/a%C2%9Fb.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/a%C2%9Fb.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT C1 U+0090 leading '\x90book.db'
+  uri/ntpath -> OK 'file:///tmp/%C2%90book.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/%C2%90book.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT C1 U+0090 trailing 'book.db\x90'
+  uri/ntpath -> OK 'file:///tmp/book.db%C2%90?mode=ro'
+  uri/os.path -> OK 'file:///tmp/book.db%C2%90?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: contains a control character
+  confine(roots=[jail]) -> EXC PathRefused: f: contains a control character
+INPUT leading space ' book.db'
+  uri/ntpath -> OK 'file:///tmp/%20book.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/%20book.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT trailing space 'book.db '
+  uri/ntpath -> OK 'file:///tmp/book.db%20?mode=ro'
+  uri/os.path -> OK 'file:///tmp/book.db%20?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT inner space 'my book.db'
+  uri/ntpath -> OK 'file:///tmp/my%20book.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/my%20book.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT only space ' '
+  uri/ntpath -> OK 'file:///tmp/%20?mode=ro'
+  uri/os.path -> OK 'file:///tmp/%20?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: empty path
+  confine(roots=[jail]) -> EXC PathRefused: f: empty path
+INPUT only tab '\t'
+  uri/ntpath -> EXC PathRefused: book path: contains a control character
+  uri/os.path -> EXC PathRefused: book path: contains a control character
+  confine_anywhere -> EXC PathRefused: f: empty path
+  confine(roots=[jail]) -> EXC PathRefused: f: empty path
+INPUT NBSP only '\xa0'
+  uri/ntpath -> OK 'file:///tmp/%C2%A0?mode=ro'
+  uri/os.path -> OK 'file:///tmp/%C2%A0?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: empty path
+  confine(roots=[jail]) -> EXC PathRefused: f: empty path
+INPUT NBSP inner 'a\xa0b.db'
+  uri/ntpath -> OK 'file:///tmp/a%C2%A0b.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/a%C2%A0b.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT NBSP leading '\xa0book.db'
+  uri/ntpath -> OK 'file:///tmp/%C2%A0book.db?mode=ro'
+  uri/os.path -> OK 'file:///tmp/%C2%A0book.db?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT NBSP trailing 'book.db\xa0'
+  uri/ntpath -> OK 'file:///tmp/book.db%C2%A0?mode=ro'
+  uri/os.path -> OK 'file:///tmp/book.db%C2%A0?mode=ro'
+  confine_anywhere -> EXC PathRefused: f: no such file
+  confine(roots=[jail]) -> EXC PathRefused: f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+INPUT bytes b'book.db'
+  uri/ntpath -> EXC TypeError: ord() expected string of length 1, but int found
+  uri/os.path -> EXC TypeError: ord() expected string of length 1, but int found
+  confine_anywhere -> EXC PathRefused: f: not a path
+  confine(roots=[jail]) -> EXC PathRefused: f: not a path
+INPUT bytes NUL b'book\x00.db'
+  uri/ntpath -> EXC TypeError: ord() expected string of length 1, but int found
+  uri/os.path -> EXC TypeError: ord() expected string of length 1, but int found
+  confine_anywhere -> EXC PathRefused: f: not a path
+  confine(roots=[jail]) -> EXC PathRefused: f: not a path
+INPUT bytes non-UTF-8 b'book\xff\xfe.db'
+  uri/ntpath -> EXC TypeError: ord() expected string of length 1, but int found
+  uri/os.path -> EXC TypeError: ord() expected string of length 1, but int found
+  confine_anywhere -> EXC PathRefused: f: not a path
+  confine(roots=[jail]) -> EXC PathRefused: f: not a path
+INPUT bytes empty b''
+  uri/ntpath -> EXC PathRefused: book path: the path is empty
+  uri/os.path -> EXC PathRefused: book path: the path is empty
+  confine_anywhere -> EXC PathRefused: f: not a path
+  confine(roots=[jail]) -> EXC PathRefused: f: not a path
+INPUT bytearray bytearray(b'book.db')
+  uri/ntpath -> EXC TypeError: expected str, bytes or os.PathLike object, not bytearray
+  uri/os.path -> EXC TypeError: expected str, bytes or os.PathLike object, not bytearray
+  confine_anywhere -> EXC PathRefused: f: not a path
+  confine(roots=[jail]) -> EXC PathRefused: f: not a path
