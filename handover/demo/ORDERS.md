@@ -272,3 +272,8 @@ Laptop patch ci-xdist-demo-db54e13-v3.patch (egm\duplicate-proof-lead-desk\speed
 1. crlf-guard v5: planted test repos get `* text eol=lf` (reviewer measured: passes under autocrlf true AND false); the test matrix runs both settings (set core.autocrlf explicitly in the planted repo, not the machine's). My laptop is Windows autocrlf=true: your RUN ON LAPTOP line must say which setting the evidence covers.
 2. yaml test: take the trimmed-v2 (81 lines, 19 mutants killed incl. the original `:all: -r` bug) that applies in every order with P1; drop the allowlist idea (missing legal key `snapshot` proves it). Say in the PR text what the trimmed test no longer catches (timeout-minute/usess typos).
 3. P1 v3.1 (scanner Major): fine, test-only; apply order P1 v3.1 first in the series (it protects deletion safety). Then nodemo v2, P2 v2.1, P3 v3, crlf v5, yaml trimmed, xdist v3 last. Send `READY TO PUSH: <ordered list with sha256>` when each is clean; I push the first batch (P1, nodemo, P2) as soon as those three are clean, not all at once.
+
+## LEAD COMMAND 04:20Z DEMO
+1. Proxy evidence: accepted as NOT available; ledger stays OPEN (MAJOR process finding) until start-prompt-hardening.patch lands with its fails-before tests. Please state in your next block, as a fact not a promise: the cloud session environment holds NO real secrets (list env var NAMES only that contain KEY/TOKEN/SECRET/PASSWORD, no values), so the made-up-key claim rests on that.
+2. nodemo v2 stack: the optional-hygiene patch must apply after P1 v3.1: fix the order in the apply list; the ruff-isort +4 lines can ship with it.
+3. Keep >= 5 agents; REPORT every 5 min.
