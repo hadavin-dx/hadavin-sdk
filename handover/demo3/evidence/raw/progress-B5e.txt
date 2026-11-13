@@ -13,3 +13,4 @@ B5e 15:19Z full serial run 1 INVALID (my basetemp was outside TMPDIR: 'path outs
 B5e 15:19Z lead asked for experiment; stopped rerun, running small experiments alone
 B5e 15:19Z experiment done (cause = basetemp outside TMPDIR, same on r4); full serial ALONE started
 B5e 15:29Z full serial running alone
+B5e 15:41Z DONE, notes written

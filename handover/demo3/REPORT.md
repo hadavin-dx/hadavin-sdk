@@ -1,3 +1,8 @@
+## HEARTBEAT 70 (15:45Z / 21:15 IST) - FROZEN
+
+B5e reported: its failed run was its own mistake (basetemp outside TMPDIR; proof raw/b5e-smtp-experiment.log: 13 errors outside, 67 passed inside); valid run 3780 passed, 206 skipped, 0 failed; xdist 20 of 20 passed. Agents running: 0. All rows closed. The one-page freeze report is in `handover/demo3/FREEZE.md` (merged-ready vs not, with unverified parts named).
+FROZEN.
+
 ## HEARTBEAT 69 (15:41Z / 21:11 IST) - B5e RESULT IN; FROZEN except B5e's closing report
 
 B5e (fix-5 r5) valid full serial suite, run alone, on the final tree: 3780 passed, 206 skipped, 0 failed, EXIT_CODE=0, 1273 s (raw/b5e-full.log). This replaces the invalid 57-failed run 1 (kept as raw/b5e-full-invalid-run1-basetemp-outside-TMPDIR.log). NOT verified by me: 206 skipped is 6 more than the 200 baseline and I have not reconciled the 6; the xdist log on disk (raw/b5e-xdist.log, 15:03Z) is from an EARLIER tree and does not count for the final tree; B5e's notes file and its own report are not in yet, so the REV-5c major fix (reset.ps1) is claimed only in its patch, not reviewed (freeze) and not run on Windows.
