@@ -185,3 +185,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-2d | egm-design fix-2 r3 (fresh, product code) | 14:5xZ | | running |
 | REV-2d | closed 14:5xZ: fix-2 r3 design review 0 blocker, 3 major (settings.md:96 false after read_secret_file; secret-file rule 3 copies + live kind imports smtp kind; ENOTDIR parent walk missing for stats/ledger), 5 minor; saved evidence/review-lane3-fix-2-r3-design.md; waiting REV-2c then resolve | | | closed |
 | REV-2c | closed 15:0xZ: fix-2 r3 technical review: no code blocker; 4 major (settings.md:96 false; 'password' noun in live key texts; cross-kind import + 3 copies + interior-space behaviour change; 'only once demo servers reachable' overstated), 7 minor; evidence/review-lane3-fix-2-r3-technical.md; resolve next | | | closed |
+| RES-2c | closed 15:1xZ: egm-resolve fix-2 r3: 14 accepted, 1 contested (bind boundary), 0 escalated, 0 declined; evidence/resolve-lane3-fix-2-r3.md | | | closed |
+| B2d | builder fix-2 r4 (resolve plan; full suite required) | 15:1xZ | 16:15Z | running |

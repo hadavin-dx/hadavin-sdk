@@ -1,2 +1,3 @@
 B6c progress
 14:30Z start; worktree b6c-base made, r2+6b applied
+14:31Z docs edited (README, tests.md, real-services, contract, 5 one-demo-server fixes); tests next
