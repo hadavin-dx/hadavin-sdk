@@ -1,0 +1,11 @@
+        adding the repository folder afterwards changed nothing and the start failed with ModuleNotFoundError."""
+        adding the repository folder afterwards changed nothing and the start failed with ModuleNotFoundError."""
+FAILED tests/test_path_confinement.py::test_a_script_start_survives_a_foreign_tools_package[check_invariants.py]
+FAILED tests/test_path_confinement.py::test_a_script_start_survives_a_foreign_tools_package[load_driver.py]
+FAILED tests/test_path_confinement.py::test_the_hard_link_limit_is_documented
+FAILED tests/test_path_confinement.py::test_a_windows_network_path_is_refused_for_the_sqlite_uri
+FAILED tests/test_sonar_p2_choke_points.py::test_the_portal_demo_re_exports_the_scheme_name_explicitly
+FAILED tests/test_sonar_p2_choke_points.py::test_the_urls_docstring_makes_no_claim_about_every_file
+6 failed, 4 passed, 244 deselected in 0.78s
+FAILED tests/test_sonar_p2_choke_points.py::test_the_exclusive_bind_is_not_set_off_windows
+1 failed, 1 passed, 19 deselected in 0.07s

@@ -1,0 +1,310 @@
+diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
+index 8665849..71fb1db 100644
+--- a/demo_only/portal_demo.py
++++ b/demo_only/portal_demo.py
+@@ -47,7 +47,7 @@ from lead_desk.constants import (
+ from lead_desk.desk import Desk
+ from lead_desk.hooks import HOOK_POINTS, FlagFileHooks
+ from lead_desk.portal_api import connect_readonly
+-from lead_desk.urls import DESK_SCHEME  # the one place that names the scheme (loopback only)
++from lead_desk.urls import DESK_SCHEME as DESK_SCHEME  # explicit re-export; names the scheme (loopback only)
+ 
+ ASSET_TYPES: Final = {
+     "portal_demo.js": "text/javascript; charset=utf-8",
+diff --git a/load_tools/README.md b/load_tools/README.md
+index e13c55f..d89ae85 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -5,7 +5,7 @@ Run every tool from the repository root with `PYTHONPATH=src:.` (on Windows use
+ 
+ Every file path you give a tool on its command line (`--log`, `--facts`, `--requests`, `--book`, `--catcher`, `--crm`, `--model-log`, `--drain`, `--json`, `--out`, `--control`) must lie inside the folder you started it in, the repository folder, or the system temporary folder; a path that leaves them (`..`, an absolute path elsewhere, a link that points out) is refused with a message that names the option, and nothing is read or written. To use another folder, name it in the environment variable `LEAD_DESK_PATH_ROOTS` (several folders separated by `:`, or `;` on Windows). A NEW output file may only use letters, digits, `.`, `_` and `-` in its name (a file that already exists may have any name except one with a control character; a new name that ends with a dot or is a Windows device name such as `nul`, `aux`, `con`, `prn`, `com1` or `lpt1`, with or without an extension, is refused on every system, so the file also opens on Windows). A file that is read and does not exist is reported as "no such file". A name with accented letters is found also when it is written in the other Unicode form (macOS stores `é` as two characters, other systems as one), below the allowed folder (upper and lower case must match on macOS, and the allowed folder itself must be written the way the system reports it). The same rule applies to `scripts/n8n_api.py import FILE` and `tools/scrub_n8n_export.py` (an n8n export kept in another folder, for example Downloads, is read after you copy it into the repository folder or list its folder in `LEAD_DESK_PATH_ROOTS`).
+ 
+-Not covered, on purpose: `scripts/run_real_check.py` reads its config from any folder (the documentation tells you to keep it outside the repository) and uses the paths named inside it as written, and `scripts/run_live_check.py` takes its key file and its spend ledger from any folder for the same reason (`docs/real-services.md`). The config of `run_real_check.py` is found by looking the name up in the folder listings from the top of the file system, so it must be a file in a folder you can list: a config below a folder that you can enter but not list (mode 0711 owned by another user), or one handed over as `--config <(command)` or `/dev/fd/N`, is refused with a message; copy it to a normal file first. What this check is: a fence against a WRONG argument (a faulty script, a copied path). It is not a defence against an agent or a person who controls the shell: they can start the tool in another folder or set `LEAD_DESK_PATH_ROOTS`. The allowed folders are wide, and a file that already exists in one of them (the repository, the shared system temporary folder) can be overwritten by an output option that names it: the check does not know which files in them matter. It does not stop another process that swaps a folder for a link between the check and the open. The tools also start directly (`python load_tools/load_driver.py --help`, `python tools/scrub_n8n_export.py in.json out.json`) without setting `PYTHONPATH`.
++Not covered, on purpose: `scripts/run_real_check.py` reads its config from any folder (the documentation tells you to keep it outside the repository) and uses the paths named inside it as written, and `scripts/run_live_check.py` takes its key file and its spend ledger from any folder for the same reason (`docs/real-services.md`). The config of `run_real_check.py` is found by looking the name up in the folder listings from the top of the file system, so it must be a file in a folder you can list: a config below a folder that you can enter but not list (mode 0711 owned by another user), or one handed over as `--config <(command)` or `/dev/fd/N`, is refused with a message; copy it to a normal file first. What this check is: a fence against a WRONG argument (a faulty script, a copied path). It is not a defence against an agent or a person who controls the shell: they can start the tool in another folder or set `LEAD_DESK_PATH_ROOTS`. The allowed folders are wide, and a file that already exists in one of them (the repository, the shared system temporary folder) can be overwritten by an output option that names it: the check does not know which files in them matter. It does not stop another process that swaps a folder for a link between the check and the open. Hard links are not detected: a hard link is a second name for the same file contents, so a hard link made inside an allowed folder to a file outside it passes the check, and reading or writing it reads or changes the outside file (only someone who can write in an allowed folder can make one). A book on a Windows network path (`\\\\server\\share\\desk.sqlite3`) is refused by `--book`'s read-only open, because SQLite takes only an empty or `localhost` name after `file://`; copy it to a local folder or a mapped drive. Not measured: SQLite on Windows itself (the URI text was tested on Linux only). The tools also start directly (`python load_tools/load_driver.py --help`, `python tools/scrub_n8n_export.py in.json out.json`) without setting `PYTHONPATH`.
+ 
+ | File | What it does |
+ |---|---|
+diff --git a/load_tools/check_invariants.py b/load_tools/check_invariants.py
+index 7ac5f61..2f2b96f 100644
+--- a/load_tools/check_invariants.py
++++ b/load_tools/check_invariants.py
+@@ -19,8 +19,13 @@ from typing import Any
+ 
+ try:  # started as a script (python load_tools/check_invariants.py): the repository folder is not on the path yet
+     from tools.pathconfine import PathRefused, confine, confine_anywhere, confine_existing, readonly_sqlite_uri
+-except ModuleNotFoundError:
+-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++except ImportError:  # also a foreign `tools` package (another project's) that has no pathconfine
++    _repo = Path(__file__).resolve().parents[1]
++    sys.path.insert(0, str(_repo))
++    for _name in [n for n in sys.modules if n == "tools" or n.startswith("tools.")]:
++        _file = getattr(sys.modules[_name], "__file__", None)  # a `tools` package of another project, already loaded
++        if _file is None or not Path(_file).resolve().is_relative_to(_repo):
++            del sys.modules[_name]
+     from tools.pathconfine import PathRefused, confine, confine_anywhere, confine_existing, readonly_sqlite_uri
+ 
+ # ---- config block (the only place for numbers and words) ----
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index b6273e9..e22ed97 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -27,8 +27,13 @@ from typing import Any
+ 
+ try:  # started as a script (python load_tools/load_driver.py): the repository folder is not on the path yet
+     from tools.pathconfine import PathRefused, confine
+-except ModuleNotFoundError:
+-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++except ImportError:  # also a foreign `tools` package (another project's) that has no pathconfine
++    _repo = Path(__file__).resolve().parents[1]
++    sys.path.insert(0, str(_repo))
++    for _name in [n for n in sys.modules if n == "tools" or n.startswith("tools.")]:
++        _file = getattr(sys.modules[_name], "__file__", None)  # a `tools` package of another project, already loaded
++        if _file is None or not Path(_file).resolve().is_relative_to(_repo):
++            del sys.modules[_name]
+     from tools.pathconfine import PathRefused, confine
+ 
+ FALLBACK_RETRY_VALUES = (
+diff --git a/src/lead_desk/urls.py b/src/lead_desk/urls.py
+index 4ca46ef..034f7ec 100644
+--- a/src/lead_desk/urls.py
++++ b/src/lead_desk/urls.py
+@@ -1,10 +1,11 @@
+-"""The one place that writes the address of the desk or of its stand-ins.
++"""The one place that names the scheme of the desk's own address.
+ 
+ The desk and the stand-ins speak plain HTTP on purpose: they run on this computer and listen on a loopback address
+ (`Config.public_bind_problem` refuses a public bind when a real service is in use; `Config.problem` refuses a stand-ins
+-host that is not loopback). Nothing is sent over a network, so there is nothing to encrypt. The scheme is therefore
+-named once here, with this reason, and every address is built from it; no file writes the clear-text scheme as a
+-literal, so a clear-text address elsewhere in the code stands out as a mistake."""
++host that is not loopback). The scheme is named once here, with this reason, and the addresses built by `desk_origin`
++use it. Not every address is built here: a few files (for example the demo code and the scripts) still write a literal
++literal loopback address of their own, and no test scans for them. Whoever writes an address for another host
++must use a secure scheme."""
+ 
+ from __future__ import annotations
+ 
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index a208606..a1205a8 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -1066,3 +1066,60 @@ def test_each_flagged_function_calls_the_helper_itself_and_never_an_inline_guard
+     # the INLINE guard (realpath + commonpath in the tool) is the shape the analyser keeps refusing: not in tools
+     attrs = {c.attr for c in ast.walk(node) if isinstance(c, ast.Attribute)}
+     assert not {"realpath", "commonpath"} & attrs, (rel, func)
++
++
++# -- follow-up A: a foreign `tools` package, hard links, Windows network paths ------------------------------
++
++
++@pytest.mark.parametrize("script", ["check_invariants.py", "load_driver.py"])
++def test_a_script_start_survives_a_foreign_tools_package(tmp_path: Path, script: str) -> None:
++    """Class: the fallback import assumed that any failure means "the repository folder is not on the path yet". A
++    ``tools`` package of another project (here an empty one, first on PYTHONPATH) is found first and cached, so
++    adding the repository folder afterwards changed nothing and the start failed with ModuleNotFoundError."""
++    foreign = tmp_path / "foreign" / "tools"
++    foreign.mkdir(parents=True)
++    (foreign / "__init__.py").write_text("", encoding="utf-8")
++    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
++    env["PYTHONPATH"] = str(tmp_path / "foreign") + os.pathsep + str(REPO / "src")
++    proc = start_proc([str(REPO / "load_tools" / script), "--help"], env)
++    proc.wait(timeout=60)
++    out = stop_proc(proc).decode("utf-8", "replace")
++    assert proc.returncode == 0, out[-500:]
++    assert "usage" in out.lower()
++
++
++def test_a_hard_link_to_an_outside_file_passes_the_check(jail: tuple[Path, Path]) -> None:
++    """Pins the documented limit (tools/pathconfine.py, load_tools/README.md): a hard link is another name for the same
++    contents, there is no path to follow, so the check accepts it and a write goes through to the outside file."""
++    inside, outside = jail
++    target = outside / "secret.txt"
++    target.write_text(SECRET, encoding="utf-8")
++    try:
++        os.link(target, inside / "alias.txt")
++    except OSError as exc:  # a file system without hard links
++        pytest.skip(f"no hard links here: {exc}")
++    read = pc.confine_existing(inside / "alias.txt", what="f")
++    assert read.parent == inside.resolve() and read.read_text(encoding="utf-8") == SECRET
++    pc.confine(inside / "alias.txt", what="f").write_text("changed", encoding="utf-8")
++    assert target.read_text(encoding="utf-8") == "changed"
++
++
++def test_the_hard_link_limit_is_documented() -> None:
++    assert "Hard links are not detected" in (pc.__doc__ or "")
++    assert "Hard links are not detected" in (REPO / "load_tools" / "README.md").read_text(encoding="utf-8")
++
++
++def test_a_windows_network_path_is_refused_for_the_sqlite_uri() -> None:
++    """The text ``Path.as_uri`` builds for a share has a host name after ``file://``; SQLite accepts only an empty one
++    or ``localhost`` (SQLite's documentation of its URI names), so the open cannot work: refuse it with a clear
++    message. Linux cannot run SQLite on Windows: only the URI text and the refusal are measured here.
++    """
++    from pathlib import PureWindowsPath
++
++    unc = r"\\server\share\x.db"
++    assert PureWindowsPath(unc).as_uri() == "file://server/share/x.db"
++    for text in (unc, "//server/share/x.db"):
++        with pytest.raises(pc.PathRefused, match="network path"):
++            pc.readonly_sqlite_uri(text, ntpath)
++    pc._refuse_network_path("C" + r":\books\x.db", ntpath)  # a drive letter is fine
++    pc._refuse_network_path("//server/share/x.db")  # on this system it is an ordinary path
+diff --git a/tests/test_sonar_p2_choke_points.py b/tests/test_sonar_p2_choke_points.py
+index ae04f9f..576bb0d 100644
+--- a/tests/test_sonar_p2_choke_points.py
++++ b/tests/test_sonar_p2_choke_points.py
+@@ -11,6 +11,7 @@ import itertools
+ import re
+ import socket
+ import sqlite3
++import sys
+ import time
+ from collections.abc import Callable, Iterator
+ from contextlib import contextmanager
+@@ -116,6 +117,17 @@ def test_desk_origin_and_the_addresses_built_from_it() -> None:
+ # -- S5332 on the HTTP server: the bind rule lives in its own class ------------------------------------------
+ 
+ 
++class _SysWithPlatform:
++    """The ``sys`` module as the server module sees it, with only ``platform`` changed: patching ``sys.platform``
++    itself would change it for the whole process (every thread and every other module)."""
++
++    def __init__(self, platform: str) -> None:
++        self.platform = platform
++
++    def __getattr__(self, name: str) -> Any:
++        return getattr(sys, name)
++
++
+ def test_the_windows_exclusive_bind_is_set_before_the_http_server_binds(monkeypatch: pytest.MonkeyPatch) -> None:
+     assert server._Server.__mro__.index(server._ExclusiveBind) < server._Server.__mro__.index(
+         server.ThreadingHTTPServer
+@@ -132,7 +144,7 @@ def test_the_windows_exclusive_bind_is_set_before_the_http_server_binds(monkeypa
+ 
+     monkeypatch.setattr(socket.socket, "setsockopt", record)
+     monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", option, raising=False)
+-    monkeypatch.setattr(server.sys, "platform", "win32")
++    monkeypatch.setattr(server, "sys", _SysWithPlatform("win32"))
+     srv = server._Server(("127.0.0.1", 0), server._Handler)
+     try:
+         assert calls == [(socket.SOL_SOCKET, option, 1)]
+@@ -141,9 +153,30 @@ def test_the_windows_exclusive_bind_is_set_before_the_http_server_binds(monkeypa
+         srv.server_close()
+ 
+ 
+-def test_the_exclusive_bind_is_not_set_off_windows() -> None:
++def test_a_platform_stand_in_leaves_the_global_sys_alone(monkeypatch: pytest.MonkeyPatch) -> None:
++    real = sys.platform
++    monkeypatch.setattr(server, "sys", _SysWithPlatform("win32"))
++    assert server.sys.platform == "win32" and sys.platform == real  # only the server module sees the stand-in
++    assert server.sys.argv is sys.argv  # everything else is the real module
++
++
++def test_the_exclusive_bind_is_not_set_off_windows(monkeypatch: pytest.MonkeyPatch) -> None:
++    calls: list[int] = []
++    option = 0x7FFF0001
++    real = socket.socket.setsockopt
++
++    def record(self: socket.socket, level: int, name: int, value: Any, *rest: Any) -> None:
++        if name == option:
++            calls.append(name)
++            return
++        real(self, level, name, value, *rest)  # type: ignore[call-overload]
++
++    monkeypatch.setattr(socket.socket, "setsockopt", record)
++    monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", option, raising=False)
++    monkeypatch.setattr(server, "sys", _SysWithPlatform("linux"))
+     srv = server._Server(("127.0.0.1", 0), server._Handler)
+     try:
++        assert calls == []  # the option exists on this "computer" and was still not set
+         assert srv.server_address[1] > 0
+     finally:
+         srv.server_close()
+@@ -310,3 +343,38 @@ def test_the_server_class_order_and_a_real_double_bind_rebind_cycle() -> None:
+         first.server_close()
+     again = server._Server(("127.0.0.1", port), server._Handler)  # the port is free at once after the close
+     again.server_close()
++
++
++# -- follow-up A: the scheme name is re-exported on purpose; the docstring says only what is true -----------
++
++
++def test_the_portal_demo_re_exports_the_scheme_name_explicitly() -> None:
++    """``from X import N`` alone is a private import under mypy strict (no implicit re-export); the demo module's
++    ``DESK_SCHEME`` must be written ``import ... as DESK_SCHEME`` (or listed in ``__all__``)."""
++    import ast
++
++    from demo_only import portal_demo
++
++    assert portal_demo.DESK_SCHEME is urls.DESK_SCHEME
++    tree = ast.parse(Path(portal_demo.__file__).read_text(encoding="utf-8"))
++    imports = [
++        a
++        for n in ast.walk(tree)
++        if isinstance(n, ast.ImportFrom) and n.module == "lead_desk.urls"
++        for a in n.names
++        if a.name == "DESK_SCHEME"
++    ]
++    assert len(imports) == 1 and imports[0].asname == "DESK_SCHEME"
++
++
++def test_the_urls_docstring_makes_no_claim_about_every_file() -> None:
++    """The text once said that no file writes the clear-text scheme as a literal. Files do (demo_only/, scripts/);
++    the smaller honest fix was to say so, not to scan them."""
++    doc = urls.__doc__ or ""
++    assert "no file writes" not in doc and "nothing is sent over a network" not in doc.lower()
++    assert "still write a literal" in doc
++    root = Path(__file__).resolve().parent.parent
++    literal = "http" + "://127.0.0.1"
++    assert any(literal in p.read_text(encoding="utf-8") for p in (root / "demo_only").glob("*.py")) or any(
++        literal in p.read_text(encoding="utf-8") for p in (root / "scripts").glob("*.py")
++    )
+diff --git a/tools/pathconfine.py b/tools/pathconfine.py
+index 5029f51..7016e4a 100644
+--- a/tools/pathconfine.py
++++ b/tools/pathconfine.py
+@@ -30,6 +30,11 @@ three folders are wide: inside them an existing file (source code, a workflow fi
+ shared temporary folder) can be overwritten by an output option that names it. The check fences a wrong path, not a
+ wrong file name inside an allowed folder.
+ 
++Hard links are not detected. A hard link is a second NAME for the same file contents, not a pointer to another path,
++so ``os.path.realpath`` has nothing to follow: a hard link made inside an allowed folder to a file outside it passes
++the check, and reading or writing it reads or changes the outside file. Only a person with write access to an allowed
++folder (and read access to the target) can make one; the check fences a wrong argument, not that person.
++
+ ``confine_anywhere`` is for the settings file of a real run, which the documentation says to keep outside the
+ repository. It does the same listing lookup, but starts it at the top of the file system (the drive or share of the
+ resolved path: ``os.path.splitroot``, so a Windows network share works too) and has no containment test: every
+@@ -53,7 +58,11 @@ system reports it.
+ 
+ ``readonly_sqlite_uri`` builds the connection string for a read-only SQLite file from a path that one of the three
+ functions returned: the path, percent-encoded by ``Path.as_uri`` (a ``?`` or ``#`` in a file name cannot start a new
+-option), plus the fixed option ``mode=ro``.
++option), plus the fixed option ``mode=ro``. A Windows network path (``\\\\server\\share\\x.db``) is refused:
++``Path.as_uri`` turns it into ``file://server/share/x.db``, and SQLite accepts only an empty or ``localhost`` name
++after ``file://`` (SQLite's documentation of its URI names), so the read-only open could not work. Copy the book to a
++local folder or a mapped drive. What is NOT measured: the behaviour of SQLite on Windows itself (this was tested on
++Linux, on the URI text only).
+ """
+ 
+ from __future__ import annotations
+@@ -273,9 +282,18 @@ def confine_anywhere(path: str | os.PathLike[str], *, what: str) -> Path:
+     return Path(_locate_existing(top, _parts(relative), what))
+ 
+ 
+-def readonly_sqlite_uri(path: str | os.PathLike[str]) -> str:
++def _refuse_network_path(text: str, path_module: ModuleType = os.path) -> None:
++    """Refuse a Windows network path (``\\\\server\\share\\...``, or ``//server/share/...``). ``path_module`` is
++    ``os.path``; a test hands in ``ntpath``. On Linux and macOS ``splitroot`` never reports a drive, so nothing is
++    refused."""
++    if path_module.splitroot(text)[0][:2] in ("\\\\", "//"):
++        raise PathRefused("book path: a Windows network path (\\\\server\\share) cannot be opened read-only by SQLite")
++
++
++def readonly_sqlite_uri(path: str | os.PathLike[str], path_module: ModuleType = os.path) -> str:
+     """``file:`` connection string that opens an existing SQLite file read-only. The path is made absolute and
+     percent-encoded by ``Path.as_uri`` (a ``?`` or ``#`` in a file name cannot start a new option); the only text added
+     is the fixed option, never a value from the caller. It does not check WHERE the file is: use it on the result of
+     ``confine_existing`` or ``confine_anywhere``."""
++    _refuse_network_path(os.fspath(path), path_module)
+     return Path(path).absolute().as_uri() + "?mode=ro"
