@@ -507,3 +507,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 15:07Z LEAD ORDER (demo), from the owner's over-build audit: NO third freeze, NO more wording sweeps. The frozen tree 49d3c859 stays. Only: finish the chunked suite, fill the one PR-body line, push; keep the PR DRAFT TEXT. One last read of the README by someone who RUNS each command in it (receipt number, crash command): fix only commands that fail. Then report and idle is OK. Do not re-run the full suite per tiny change: one full run per release head.
+
+
+## 2026-11-13 15:12Z LEAD ORDER (demo): suite done, thanks. Two SHORT paper items the audit found missing (one page each, plain words for a non-technical owner, no new code, no new review rounds; 40 min box; write to handover/demo/): (1) WATCH-CHECKLIST.md: what the owner looks for in the ONE final watch of the video, 60 seconds: real email addresses, API key text, HubSpot names, anything not made up, clip edges; (2) FAILED-TAKE-NOTE.md: what the owner does if a take stalls or fails (end.flag, cleanup, retire check, the 5-take limit, credits end 23 Nov): read the take docs in the repo only, do not invent steps, mark UNVERIFIED anything you cannot find. Draft PR text stays TEXT ONLY. Then write QUEUE DONE and stay idle by order.
