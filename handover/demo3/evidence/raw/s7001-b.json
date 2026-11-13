@@ -1,0 +1,465 @@
+{
+ "campaign": "b",
+ "seed": 7001,
+ "pairs": 40000,
+ "requests_sent": 80000,
+ "wall_s": 96.0,
+ "violations": 0,
+ "counterexamples_total": 0,
+ "counterexamples_listed": 0,
+ "label_counts": {},
+ "counterexamples": [],
+ "pair_types": {
+  "swapadj": 1618,
+  "unrelated": 1681,
+  "ins": 1651,
+  "nul": 1684,
+  "ws-only": 1642,
+  "tld": 1607,
+  "same-pad": 1635,
+  "kelvin": 1746,
+  "del": 1689,
+  "namesw": 1628,
+  "long-end": 1651,
+  "same-case": 1702,
+  "bidi": 1686,
+  "homoglyph": 1713,
+  "ctrl": 1741,
+  "fullwidth": 1655,
+  "empty": 1669,
+  "long": 1657,
+  "dots": 1631,
+  "sub1": 1689,
+  "domain1": 1646,
+  "nf": 1679,
+  "plus2": 1646,
+  "plus": 1654
+ },
+ "both_sides_ok": 29130,
+ "side_reviews": 12402,
+ "unexpected_reviews": 0,
+ "tally": {
+  "swapadj": {
+   "ok-kept-apart": 1576,
+   "ok-merged-as-documented": 42
+  },
+  "unrelated": {
+   "ok-kept-apart": 1681
+  },
+  "ins": {
+   "ok-kept-apart": 1651
+  },
+  "nul": {
+   "a side is review (no identity, cannot merge)": 1684
+  },
+  "ws-only": {
+   "a side is review (no identity, cannot merge)": 1642
+  },
+  "tld": {
+   "ok-kept-apart": 1607
+  },
+  "same-pad": {
+   "ok-merged-as-documented": 1635
+  },
+  "kelvin": {
+   "a side is review (no identity, cannot merge)": 1746
+  },
+  "del": {
+   "ok-kept-apart": 1689
+  },
+  "namesw": {
+   "ok-kept-apart": 1628
+  },
+  "long-end": {
+   "a side is review (no identity, cannot merge)": 920,
+   "ok-kept-apart": 731
+  },
+  "same-case": {
+   "ok-merged-as-documented": 1702
+  },
+  "bidi": {
+   "a side is review (no identity, cannot merge)": 1686
+  },
+  "homoglyph": {
+   "ok-kept-apart": 1713
+  },
+  "ctrl": {
+   "a side is review (no identity, cannot merge)": 1741
+  },
+  "fullwidth": {
+   "ok-kept-apart": 1655
+  },
+  "empty": {
+   "a side is review (no identity, cannot merge)": 1451,
+   "ok-merged-as-documented": 218
+  },
+  "long": {
+   "ok-kept-apart": 1657
+  },
+  "dots": {
+   "ok-kept-apart": 1631
+  },
+  "sub1": {
+   "ok-kept-apart": 1689
+  },
+  "domain1": {
+   "ok-kept-apart": 1605,
+   "ok-merged-as-documented": 41
+  },
+  "nf": {
+   "ok-kept-apart": 1502,
+   "ok-merged-as-documented": 177
+  },
+  "plus2": {
+   "ok-kept-apart": 1646
+  },
+  "plus": {
+   "ok-kept-apart": 1654
+  }
+ },
+ "doc_samples": {
+  "nul:review": [
+   {
+    "a": "'73dpyga94k5\\x006@mail.example.test'",
+    "b": "'73dpyga94k56@mail.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'7kw044\\x00c@mail.example.test'",
+    "b": "'7kw044c@mail.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'lc3vag7\\x005@mail.example.test'",
+    "b": "'lc3vag75@mail.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   }
+  ],
+  "ws-only:review": [
+   {
+    "a": "'\\xa0'",
+    "b": "'p8ehkc5o87vrs2@example.com'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "' '",
+    "b": "'rrbyy39g@mail.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "' '",
+    "b": "'6ie3hgk38t5@a1.example.com'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   }
+  ],
+  "kelvin:review": [
+   {
+    "a": "'w3e5v9nmrhcgmvk@a1.example.com'",
+    "b": "'w3e5v9nmrhcgmv\\u212a@a1.example.com'",
+    "verdicts": [
+     "ok",
+     "review"
+    ]
+   },
+   {
+    "a": "'7hbw0zl1pk@mail.example.test'",
+    "b": "'7hbw0zl1p\\u212a@mail.example.test'",
+    "verdicts": [
+     "ok",
+     "review"
+    ]
+   },
+   {
+    "a": "'orjxlb75uk@example.com'",
+    "b": "'orjxlb75u\\u212a@example.com'",
+    "verdicts": [
+     "ok",
+     "review"
+    ]
+   }
+  ],
+  "namesw": [
+   {
+    "a": "'dwlus-48kfyn@example.test'",
+    "b": "'48kfyn-dwlus@example.test'",
+    "key_a": "'dwlus-48kfyn@example.test'",
+    "key_b": "'48kfyn-dwlus@example.test'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'99n75_3crqor@a1.example.com'",
+    "b": "'3crqor_99n75@a1.example.com'",
+    "key_a": "'99n75_3crqor@a1.example.com'",
+    "key_b": "'3crqor_99n75@a1.example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'4v7x2.sb21d4@example.test'",
+    "b": "'sb21d4.4v7x2@example.test'",
+    "key_a": "'4v7x2.sb21d4@example.test'",
+    "key_b": "'sb21d4.4v7x2@example.test'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   }
+  ],
+  "long-end:review": [
+   {
+    "a": "'5xq1fhs80335wvgbiga7r7s1olaytr8vclytaaukaegvzy3ztjpum9b52dyfsf1tw3pdgiitkd6se0zuni67rke98reu71091efjhqrf8qsza2pxy4rlo5d",
+    "b": "'5xq1fhs80335wvgbiga7r7s1olaytr8vclytaaukaegvzy3ztjpum9b52dyfsf1tw3pdgiitkd6se0zuni67rke98reu71091efjhqrf8qsza2pxy4rlo5d",
+    "verdicts": [
+     "review",
+     "review"
+    ]
+   },
+   {
+    "a": "'7b4fjhwxo1yt3hp3kewayqucz3bgevznuvh4smeraydd3jfhtc0mce8ry9hzf8ah6qh17cxy2ouetvs0q39c2e7pf48zj3r3ytaj2twthmyh37ax3hogum0",
+    "b": "'7b4fjhwxo1yt3hp3kewayqucz3bgevznuvh4smeraydd3jfhtc0mce8ry9hzf8ah6qh17cxy2ouetvs0q39c2e7pf48zj3r3ytaj2twthmyh37ax3hogum0",
+    "verdicts": [
+     "review",
+     "review"
+    ]
+   },
+   {
+    "a": "'dc16m4dxvigvync6j6vnyh3avyykzyqona7882qqxafhfimdc36zlxajhtggat3okfhp70c59b3gzjtquzkg97gyg0e5zwjcws8hucsew267jcxi1s5xdmp",
+    "b": "'dc16m4dxvigvync6j6vnyh3avyykzyqona7882qqxafhfimdc36zlxajhtggat3okfhp70c59b3gzjtquzkg97gyg0e5zwjcws8hucsew267jcxi1s5xdmp",
+    "verdicts": [
+     "review",
+     "review"
+    ]
+   }
+  ],
+  "bidi:review": [
+   {
+    "a": "'4nf\\u2067p0l1bdchdn7@sub.example.com'",
+    "b": "'4nfp0l1bdchdn7@sub.example.com'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'2n\\u200e524amt@a1.example.com'",
+    "b": "'2n524amt@a1.example.com'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'w3z9j61d\\u202c@corp-x.example.test'",
+    "b": "'w3z9j61d@corp-x.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   }
+  ],
+  "homoglyph": [
+   {
+    "a": "'pa6a84l1q4b@a1.example.com'",
+    "b": "'p\\uff416a84l1q4b@a1.example.com'",
+    "key_a": "'pa6a84l1q4b@a1.example.com'",
+    "key_b": "'p\\uff416a84l1q4b@a1.example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'paq7hem8q6@example.com'",
+    "b": "'paq7h\\u0435m8q6@example.com'",
+    "key_a": "'paq7hem8q6@example.com'",
+    "key_b": "'paq7h\\u0435m8q6@example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'paz0ew1ebi@example.com'",
+    "b": "'paz0\\u0435w1ebi@example.com'",
+    "key_a": "'paz0ew1ebi@example.com'",
+    "key_b": "'paz0\\u0435w1ebi@example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   }
+  ],
+  "ctrl:review": [
+   {
+    "a": "'9\\tr5l94ex7@example.test'",
+    "b": "'9r5l94ex7@example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'2a\\x1be@a1.example.com'",
+    "b": "'2ae@a1.example.com'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   },
+   {
+    "a": "'yqecr5\\x1b0m2283m@corp-x.example.test'",
+    "b": "'yqecr50m2283m@corp-x.example.test'",
+    "verdicts": [
+     "review",
+     "ok"
+    ]
+   }
+  ],
+  "fullwidth": [
+   {
+    "a": "'thwi0zblapq4m@a1.example.com'",
+    "b": "'\\uff54\\uff48\\uff57\\uff49\\uff10\\uff5a\\uff42\\uff4c\\uff41\\uff50\\uff51\\uff14\\uff4d@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "key_a": "'thwi0zblapq4m@a1.example.com'",
+    "key_b": "'\\uff54\\uff48\\uff57\\uff49\\uff10\\uff5a\\uff42\\uff4c\\uff41\\uff50\\uff51\\uff14\\uff4d@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'wqil5mns@a1.example.com'",
+    "b": "'\\uff57\\uff51\\uff49\\uff4c\\uff15\\uff4d\\uff4e\\uff53@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "key_a": "'wqil5mns@a1.example.com'",
+    "key_b": "'\\uff57\\uff51\\uff49\\uff4c\\uff15\\uff4d\\uff4e\\uff53@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'i1p@a1.example.com'",
+    "b": "'\\uff49\\uff11\\uff50@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "key_a": "'i1p@a1.example.com'",
+    "key_b": "'\\uff49\\uff11\\uff50@\\uff41\\uff11.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   }
+  ],
+  "empty:review": [
+   {
+    "a": "'zaosh8n2@sub.example.com'",
+    "b": "''",
+    "verdicts": [
+     "ok",
+     "review"
+    ]
+   },
+   {
+    "a": "'6nyrbj4se3@example.com'",
+    "b": "''",
+    "verdicts": [
+     "ok",
+     "review"
+    ]
+   },
+   {
+    "a": "''",
+    "b": "''",
+    "verdicts": [
+     "review",
+     "review"
+    ]
+   }
+  ],
+  "dots": [
+   {
+    "a": "'ygw.l53eqmfe1@example.test'",
+    "b": "'ygwl53eqmfe1@example.test'",
+    "key_a": "'ygw.l53eqmfe1@example.test'",
+    "key_b": "'ygwl53eqmfe1@example.test'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'.xmn.8bjbj3ioya@sub.example.com'",
+    "b": "'xmn.8bjbj3ioya@sub.example.com'",
+    "key_a": "'.xmn.8bjbj3ioya@sub.example.com'",
+    "key_b": "'xmn.8bjbj3ioya@sub.example.com'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'h2f.rylxa1@corp-x.example.test'",
+    "b": "'h2f..rylxa1@corp-x.example.test'",
+    "key_a": "'h2f.rylxa1@corp-x.example.test'",
+    "key_b": "'h2f..rylxa1@corp-x.example.test'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   }
+  ],
+  "nf": [
+   {
+    "a": "'zo\\xebg3ni@example.com'",
+    "b": "'zoe\\u0308g3ni@example.com'",
+    "key_a": "'zo\\xebg3ni@example.com'",
+    "key_b": "'zoe\\u0308g3ni@example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'fran\\xe7oissxl6@sub.example.com'",
+    "b": "'franc\\u0327oissxl6@sub.example.com'",
+    "key_a": "'fran\\xe7oissxl6@sub.example.com'",
+    "key_b": "'franc\\u0327oissxl6@sub.example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   },
+   {
+    "a": "'fran\\xe7ois2nz7@a1.example.com'",
+    "b": "'franc\\u0327ois2nz7@a1.example.com'",
+    "key_a": "'fran\\xe7ois2nz7@a1.example.com'",
+    "key_b": "'franc\\u0327ois2nz7@a1.example.com'",
+    "doc": "README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)"
+   }
+  ],
+  "plus2": [
+   {
+    "a": "'g0xks114i0o2r+a@example.test'",
+    "b": "'g0xks114i0o2r+b@example.test'",
+    "key_a": "'g0xks114i0o2r+a@example.test'",
+    "key_b": "'g0xks114i0o2r+b@example.test'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'t5t8x2akvj2+a@a1.example.com'",
+    "b": "'t5t8x2akvj2+b@a1.example.com'",
+    "key_a": "'t5t8x2akvj2+a@a1.example.com'",
+    "key_b": "'t5t8x2akvj2+b@a1.example.com'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'dalxjlzk0+a@example.com'",
+    "b": "'dalxjlzk0+b@example.com'",
+    "key_a": "'dalxjlzk0+a@example.com'",
+    "key_b": "'dalxjlzk0+b@example.com'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   }
+  ],
+  "plus": [
+   {
+    "a": "'ztrq0whuwzed0n+a@example.test'",
+    "b": "'ztrq0whuwzed0n@example.test'",
+    "key_a": "'ztrq0whuwzed0n+a@example.test'",
+    "key_b": "'ztrq0whuwzed0n@example.test'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'mmi+a@a1.example.com'",
+    "b": "'mmi@a1.example.com'",
+    "key_a": "'mmi+a@a1.example.com'",
+    "key_b": "'mmi@a1.example.com'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   },
+   {
+    "a": "'ay28hff+a@sub.example.com'",
+    "b": "'ay28hff@sub.example.com'",
+    "key_a": "'ay28hff+a@sub.example.com'",
+    "key_b": "'ay28hff@sub.example.com'",
+    "doc": "docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28"
+   }
+  ]
+ }
+}

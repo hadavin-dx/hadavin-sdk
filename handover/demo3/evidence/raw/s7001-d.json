@@ -1,0 +1,880 @@
+{
+ "db_leads": 40182,
+ "campaign": "d",
+ "seed": 7001,
+ "bases": 1200,
+ "requests_sent": 66000,
+ "wall_s": 84.4,
+ "violations": 0,
+ "counterexamples_total": 45600,
+ "counterexamples_listed": 50,
+ "label_counts": {
+  "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28": 22800,
+  "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)": 7200,
+  "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)": 6000,
+  "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)": 6000,
+  "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28": 3600
+ },
+ "counterexamples": [
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-1",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'\\u0440orepo85253x0@sub.example.com'",
+   "key": "'\\u0440orepo85253x0@sub.example.com'",
+   "lead_id": "L3295866066e0",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-3",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'p\\u043er\\u0435p\\u043e85253x0@sub.example.com'",
+   "key": "'p\\u043er\\u0435p\\u043e85253x0@sub.example.com'",
+   "lead_id": "La4b6e94264f2",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-all-upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'\\u0420\\u041eR\\u0415\\u0420\\u041e85253\\u04250@sub.example.com'",
+   "key": "'\\u0440\\u043er\\u0435\\u0440\\u043e85253\\u04450@sub.example.com'",
+   "lead_id": "Le16a6d480421",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-1",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'p\\u03bfrepo85253x0@sub.example.com'",
+   "key": "'p\\u03bfrepo85253x0@sub.example.com'",
+   "lead_id": "L35a95c45acb7",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-3",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'\\u03c1\\u03bfrep\\u03bf85253x0@sub.example.com'",
+   "key": "'\\u03c1\\u03bfrep\\u03bf85253x0@sub.example.com'",
+   "lead_id": "Lf5ea6c7f23b3",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-all-upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'\\u03a1\\u039fRE\\u03a1\\u039f85253\\u03a70@sub.example.com'",
+   "key": "'\\u03c1\\u03bfre\\u03c1\\u03bf85253\\u03c70@sub.example.com'",
+   "lead_id": "L0886c81aeb72",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-sigma",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'\\u03a3porepo85253x0\\u03a3@sub.example.com'",
+   "key": "'\\u03c3porepo85253x0\\u03c3@sub.example.com'",
+   "lead_id": "Lac0068598963",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@sub.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "key": "'porepo85253x0@sub.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "lead_id": "L24a6671bb780",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:63",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'7i8ob4bo0wqyw888qb3x1dbkhfjliw4yw9oqpuob0gho2lnjrlnjv9qvhjctgxc@sub.example.com'",
+   "key": "'7i8ob4bo0wqyw888qb3x1dbkhfjliw4yw9oqpuob0gho2lnjrlnjv9qvhjctgxc@sub.example.com'",
+   "lead_id": "L55d95f10bd43",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:64",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'skzalfpxqyz5wd0swx69g7s2z9qsdy86qubwbb72vv4c5weq1msbgb28hphlmvvy@sub.example.com'",
+   "key": "'skzalfpxqyz5wd0swx69g7s2z9qsdy86qubwbb72vv4c5weq1msbgb28hphlmvvy@sub.example.com'",
+   "lead_id": "Lcf66589b4a23",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:65",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'g1f2j8qlmrdw0f7x0usi9rpowgbleta7wuqooeanfyopo2x8yz7vap9wpnxomjy2n@sub.example.com'",
+   "key": "'g1f2j8qlmrdw0f7x0usi9rpowgbleta7wuqooeanfyopo2x8yz7vap9wpnxomjy2n@sub.example.com'",
+   "lead_id": "L3c80854a9139",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:128",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'stpwmrgzk9z03xsmahepk7da0tu7b3z0hf12eadxsbir0s670webdun4xs0y0bhkovz0bearjs5j3pi9z8ooo5brppojt5ou5awp49xnoqdl7hlv9n64okv2aj709sts@sub.example.com'",
+   "key": "'stpwmrgzk9z03xsmahepk7da0tu7b3z0hf12eadxsbir0s670webdun4xs0y0bhkovz0bearjs5j3pi9z8ooo5brppojt5ou5awp49xnoqdl7hlv9n64okv2aj709sts@sub.example.com'",
+   "lead_id": "Ldab30419b414",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-total:253",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'6ym0cvm672omfi84fvckkujjark255outlkfxoz48ctccqnujlil08cisu37jva9ukcjoo7l3p4oh3i0m9b5afrst7kpva3c2rmf39zpe6u36wrjieqwrik7m7mrrqfmyx2ralod3vlfh6wouhs5ny6qcliwkxx4srvs1ulq97t20u2kjy1jcatc87b5tw2kn74phw1wlexec9zb9gk23jolqx3ppmve36svpkpi285b6@sub.example.com'",
+   "key": "'6ym0cvm672omfi84fvckkujjark255outlkfxoz48ctccqnujlil08cisu37jva9ukcjoo7l3p4oh3i0m9b5afrst7kpva3c2rmf39zpe6u36wrjieqwrik7m7mrrqfmyx2ralod3vlfh6wouhs5ny6qcliwkxx4srvs1ulq97t20u2kjy1jcatc87b5tw2kn74phw1wlexec9zb9gk23jolqx3ppmve36svpkpi285b6@sub.example.com'",
+   "lead_id": "L7ac0791de029",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-total:254",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'9yfin6zkxsnd21ngxgg6woe6cdm4zyxg5932r1iju9hkmhfl03uuut8795sy6b6v71a3wry51xshxsbhcyd9jgu6df9yle0933tzru9n2l7bhy2owvnnfhdxq3r32hat8wh7ujigntkzkvg7xv8o6ssdinnmib7q59oiad631uawl27mpt4u7aqexlpmwbeok1vuvgqc1y0r0vlfse1e3dgleuvi6uhhrnkqkkwilw21v5@sub.example.com'",
+   "key": "'9yfin6zkxsnd21ngxgg6woe6cdm4zyxg5932r1iju9hkmhfl03uuut8795sy6b6v71a3wry51xshxsbhcyd9jgu6df9yle0933tzru9n2l7bhy2owvnnfhdxq3r32hat8wh7ujigntkzkvg7xv8o6ssdinnmib7q59oiad631uawl27mpt4u7aqexlpmwbeok1vuvgqc1y0r0vlfse1e3dgleuvi6uhhrnkqkkwilw21v5@sub.example.com'",
+   "lead_id": "L194eb18189e4",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-after-local",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0(comment)@sub.example.com'",
+   "key": "'porepo85253x0(comment)@sub.example.com'",
+   "lead_id": "L267983c3ac23",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-before-local",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'(c)porepo85253x0@sub.example.com'",
+   "key": "'(c)porepo85253x0@sub.example.com'",
+   "lead_id": "Lfca33e29781d",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-after-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@sub.example.com(c)'",
+   "key": "'porepo85253x0@sub.example.com(c)'",
+   "lead_id": "L5b705bddb12f",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-before-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@(c)sub.example.com'",
+   "key": "'porepo85253x0@(c)sub.example.com'",
+   "lead_id": "L1b13b1748bd8",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "domain-literal",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@[sub.example.com]'",
+   "key": "'porepo85253x0@[sub.example.com]'",
+   "lead_id": "Le19c2c38fb0e",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@\\u043f\\u043e\\u0447\\u0442\\u0430.example'",
+   "key": "'porepo85253x0@\\u043f\\u043e\\u0447\\u0442\\u0430.example'",
+   "lead_id": "Lc1879c551ecb",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:punycode-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@xn--80a1acny.example'",
+   "key": "'porepo85253x0@xn--80a1acny.example'",
+   "lead_id": "L8ce4dd80a1a2",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain-upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@\\u041f\\u041e\\u0427\\u0422\\u0410.EXAMPLE'",
+   "key": "'porepo85253x0@\\u043f\\u043e\\u0447\\u0442\\u0430.example'",
+   "lead_id": "Lc1879c551ecb",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain-NFD",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@\\u043f\\u043e\\u0447\\u0442\\u0430.example'",
+   "key": "'porepo85253x0@\\u043f\\u043e\\u0447\\u0442\\u0430.example'",
+   "lead_id": "Lc1879c551ecb",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:punycode-upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@XN--80A1ACNY.EXAMPLE'",
+   "key": "'porepo85253x0@xn--80a1acny.example'",
+   "lead_id": "L8ce4dd80a1a2",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "trailing-dot-local",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0.@sub.example.com'",
+   "key": "'porepo85253x0.@sub.example.com'",
+   "lead_id": "L83821679f247",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "leading-dot-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@.sub.example.com'",
+   "key": "'porepo85253x0@.sub.example.com'",
+   "lead_id": "Lcaee4c74687a",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "double-dot-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@sub..example.com'",
+   "key": "'porepo85253x0@sub..example.com'",
+   "lead_id": "L08e34532bc20",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0%7E@sub.example.com'",
+   "key": "'porepo85253x0%7e@sub.example.com'",
+   "lead_id": "L46ae22aa0d0b",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:lower",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0%7e@sub.example.com'",
+   "key": "'porepo85253x0%7e@sub.example.com'",
+   "lead_id": "L46ae22aa0d0b",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:mixed-case",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0%c3%A9@sub.example.com'",
+   "key": "'porepo85253x0%c3%a9@sub.example.com'",
+   "lead_id": "L8baf753fd123",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:decoded-char",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0\\xe9@sub.example.com'",
+   "key": "'porepo85253x0\\xe9@sub.example.com'",
+   "lead_id": "L09c6094ec4b3",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "pct:decoded-plus-lower",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0%2b@sub.example.com'",
+   "key": "'porepo85253x0%2b@sub.example.com'",
+   "lead_id": "L9b75ef1bb6a3",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "pct:decoded-plus",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0+@sub.example.com'",
+   "key": "'porepo85253x0+@sub.example.com'",
+   "lead_id": "L87b053e1dc3f",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-local",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "\"o'porepo85253x0@sub.example.com\"",
+   "key": "\"o'porepo85253x0@sub.example.com\"",
+   "lead_id": "Le147a858730c",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-removed",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'oporepo85253x0@sub.example.com'",
+   "key": "'oporepo85253x0@sub.example.com'",
+   "lead_id": "L446472969cd5",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-upper",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "\"O'POREPO85253X0@sub.example.com\"",
+   "key": "\"o'porepo85253x0@sub.example.com\"",
+   "lead_id": "Le147a858730c",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "hyphen-local",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0-x@sub.example.com'",
+   "key": "'porepo85253x0-x@sub.example.com'",
+   "lead_id": "L9d635e4bd92a",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "hyphen-lead-domain",
+   "base": "'porepo85253x0@sub.example.com'",
+   "variant": "'porepo85253x0@-sub.example.com'",
+   "key": "'porepo85253x0@-sub.example.com'",
+   "lead_id": "L8e4e9ac84830",
+   "base_lead_id": "Le3eb887093fd"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-1",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'red\\u043evido87654x1@a1.example.com'",
+   "key": "'red\\u043evido87654x1@a1.example.com'",
+   "lead_id": "L895d750d3169",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-3",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'red\\u043ev\\u0456do87654\\u04451@a1.example.com'",
+   "key": "'red\\u043ev\\u0456do87654\\u04451@a1.example.com'",
+   "lead_id": "L03c1a77adf6d",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-all-upper",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'R\\u0415D\\u041eV\\u0406D\\u041e87654\\u04251@a1.example.com'",
+   "key": "'r\\u0435d\\u043ev\\u0456d\\u043e87654\\u04451@a1.example.com'",
+   "lead_id": "L5775c50ceea0",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-1",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'red\\u03bfvido87654x1@a1.example.com'",
+   "key": "'red\\u03bfvido87654x1@a1.example.com'",
+   "lead_id": "L9b17b847945c",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-3",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'red\\u03bf\\u03bdid\\u03bf87654x1@a1.example.com'",
+   "key": "'red\\u03bf\\u03bdid\\u03bf87654x1@a1.example.com'",
+   "lead_id": "Lb8e1e165738a",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-all-upper",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'RED\\u039f\\u039d\\u0399D\\u039f87654\\u03a71@a1.example.com'",
+   "key": "'red\\u03bf\\u03bd\\u03b9d\\u03bf87654\\u03c71@a1.example.com'",
+   "lead_id": "L8e5b8c6769fe",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-sigma",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'\\u03a3redovido87654x1\\u03a3@a1.example.com'",
+   "key": "'\\u03c3redovido87654x1\\u03c3@a1.example.com'",
+   "lead_id": "Lc4836d8a078f",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-domain",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'redovido87654x1@\\u04301.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "key": "'redovido87654x1@\\u04301.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "lead_id": "Lf5cee7a50e1a",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:63",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'96vmhhzusfs5w9gh16f67q40jvjgu8i4m4stwfflpix7njfq1o8ib35jc10p00f@a1.example.com'",
+   "key": "'96vmhhzusfs5w9gh16f67q40jvjgu8i4m4stwfflpix7njfq1o8ib35jc10p00f@a1.example.com'",
+   "lead_id": "Ld19ea86e3a0c",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:64",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'ppgmhsmr8cp1qz8s78xzgabymtzjr5gss89wt9t6z39ztenrihfhw22p6j7fdc9x@a1.example.com'",
+   "key": "'ppgmhsmr8cp1qz8s78xzgabymtzjr5gss89wt9t6z39ztenrihfhw22p6j7fdc9x@a1.example.com'",
+   "lead_id": "L6ca0ec121d7a",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:65",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'v8hu09ahggkq7a8nmssxhc1xsc6dd4o5c934q85iy1skt7lq59cyhd8k9tenu7hfq@a1.example.com'",
+   "key": "'v8hu09ahggkq7a8nmssxhc1xsc6dd4o5c934q85iy1skt7lq59cyhd8k9tenu7hfq@a1.example.com'",
+   "lead_id": "Lfcebdf722540",
+   "base_lead_id": "La239516e1faa"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:128",
+   "base": "'redovido87654x1@a1.example.com'",
+   "variant": "'8s5tlwy4yu391avotrwyjwp7gvvybf7gjd5mkwokj0uqin8m9k1zg7hw9axrszz3cjh6h6jb8cf4v9sfzlq2tvov88l3j2vh4euzrvt2pc1afbljyn4xuje2z340g5ds@a1.example.com'",
+   "key": "'8s5tlwy4yu391avotrwyjwp7gvvybf7gjd5mkwokj0uqin8m9k1zg7hw9axrszz3cjh6h6jb8cf4v9sfzlq2tvov88l3j2vh4euzrvt2pc1afbljyn4xuje2z340g5ds@a1.example.com'",
+   "lead_id": "L6dab7e0f848b",
+   "base_lead_id": "La239516e1faa"
+  }
+ ],
+ "tally": {
+  "name-variant": {
+   "same": 4800
+  },
+  "mixed-script:cyrillic-1": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-3": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-all-upper": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-1": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-3": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-all-upper": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-sigma": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-domain": {
+   "different-identity": 1200
+  },
+  "long-local:63": {
+   "different-identity": 1200
+  },
+  "long-local:64": {
+   "different-identity": 1200
+  },
+  "long-local:65": {
+   "different-identity": 1200
+  },
+  "long-local:128": {
+   "different-identity": 1200
+  },
+  "long-total:253": {
+   "different-identity": 1200
+  },
+  "long-total:254": {
+   "different-identity": 1200
+  },
+  "long-total:255": {
+   "review": 1200
+  },
+  "long-total:256": {
+   "review": 1200
+  },
+  "quoted-local": {
+   "review": 1200
+  },
+  "quoted-local-space": {
+   "review": 1200
+  },
+  "quoted-local-dot": {
+   "review": 1200
+  },
+  "comment-after-local": {
+   "different-identity": 1200
+  },
+  "comment-before-local": {
+   "different-identity": 1200
+  },
+  "comment-after-domain": {
+   "different-identity": 1200
+  },
+  "comment-before-domain": {
+   "different-identity": 1200
+  },
+  "domain-literal": {
+   "different-identity": 1200
+  },
+  "angle-brackets": {
+   "review": 1200
+  },
+  "idn:unicode-domain": {
+   "different-identity": 1200
+  },
+  "idn:punycode-domain": {
+   "different-identity": 1200
+  },
+  "idn:unicode-domain-upper": {
+   "different-identity": 1200
+  },
+  "idn:unicode-domain-NFD": {
+   "different-identity": 1200
+  },
+  "idn:punycode-upper": {
+   "different-identity": 1200
+  },
+  "trailing-dot-domain": {
+   "review": 1200
+  },
+  "trailing-2-dots-domain": {
+   "review": 1200
+  },
+  "trailing-dot-local": {
+   "different-identity": 1200
+  },
+  "leading-dot-domain": {
+   "different-identity": 1200
+  },
+  "double-dot-domain": {
+   "different-identity": 1200
+  },
+  "pct:upper": {
+   "different-identity": 1200
+  },
+  "pct:lower": {
+   "different-identity": 1200
+  },
+  "pct:mixed-case": {
+   "different-identity": 1200
+  },
+  "pct:decoded-char": {
+   "different-identity": 1200
+  },
+  "pct:decoded-plus-lower": {
+   "different-identity": 1200
+  },
+  "pct:decoded-plus": {
+   "different-identity": 1200
+  },
+  "apostrophe-local": {
+   "different-identity": 1200
+  },
+  "apostrophe-removed": {
+   "different-identity": 1200
+  },
+  "apostrophe-upper": {
+   "different-identity": 1200
+  },
+  "apostrophe-domain": {
+   "review": 1200
+  },
+  "hyphen-local": {
+   "different-identity": 1200
+  },
+  "hyphen-lead-domain": {
+   "different-identity": 1200
+  },
+  "double-space-local": {
+   "review": 1200
+  },
+  "double-space-pad": {
+   "same-identity": 1200
+  },
+  "double-space-after": {
+   "review": 1200
+  }
+ },
+ "doc_samples": {
+  "long-total:255:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'nsxkt55i1oojb34mrunkyldtreailzh1yolaf3zx04q441n076wzrcg7o749th4coagjlrp7iq5aopty3wq3nga9p8bw6kg7xvjilsdq6h8g3clyrfc76ptpkh6bjhrty4a7isrwizyb276qm9ia5pvcowyqe320e2klapzlza8w1spigguw2hoofzqkzhc4s9watq3onba9l6q9oap5f0k2bl799xsvi6hcm54gqe0oikr@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'7s8nbqfhrd40x2wpk4yzqaf7ehgk79lscierbv9cqfux1d31rgjzpyvw8gqcpu6xdes94niigbcmdv4oqbdzair6uh2akmelb4e094n6usygtd60y8aq29hoxonb0ylop5squletitqutlgov5to3o6gee0zv0uorgmecio9mo5vzjxghcl3q57vn7umv0l8j60tmyonhfsxzys77ihqjnwvb4s0hsqfxjmxjlyupcc9f5aq@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'a9yheds9cp14bj89136z8l5nm4vohf8es1yavz6e2926t0wphuexuo3hafw107su49fvtuw3s2x5h7de69rwyvrk5ul9862hcc5pvs7mb4oab5imcom18sdflh1ahk54jtn2cl4zmegf8p8uf5n0vmm88hu4oe4a9iczlvdu11gdz52zaokcovos61s9t42e7cv8s0uxsvcp00kaya18wnark1z5qjqo41tu7ko3qbd@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "long-total:256:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'jokhmv2a0a9bjlqvw2cntd69baiycfrif16q16x47sgi6bil2jct8x2z7frxgm5qme919cqeah7izfyf996xkzpaurms33v8rmd4mihpi75c3czbp0isitqboscizsk8c2644nyk881ey5axc88v6620rq82kp3oqxj5gwnpa5rzr8k4m51tfevk0vwnpg0vmmwq7iv8hhdg67txjzr8ive2c7lozy1lrha1m7dfmblrm237@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'5f0vxorq5g20zi7oy3dnpggwa726tonu6csetuj732bas81oz62usses6dj5gpx0hdrem2ou8ceb2ibpkwnk855zr0zry0dydopls7kfxxh8ogm2m6ca2h6g6uhu6xy53dxe3jgp884770e5gv4hi9mvl397xv2ykejmd3hjmzjw3sl9s6xmqil43lca8cbxvbtecwkr3815jxm6fywi7rozlsytcs6cbid532r02kxomatav@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'kgokvq3eaenu6w9w5lsqx47c41lpabs9txwh8lcmu1fz3vwihzlnlu1ljv4iubqala3tkkjyrzsrqfkzgf1hjrcn3kio5o280m0gr0s68ymfpx087jyf2uc302i5nq9xnr5pdxb7zofig5i8mb4m7oq000f4bq7q7miugwlyl3yag6yffjo9tvcxavbqbk6wrfd6rth8bf4cjomoriu0rdvuhzyhz83g5llfa0vgm0lc@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'\"porepo85253x0\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'\"redovido87654x1\"@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'\"mire3742x2\"@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local-space:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'\"porepo85253x0 x\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'\"redovido87654x1 x\"@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'\"mire3742x2 x\"@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local-dot:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'\"porepo85253x0.y\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'\"redovido87654x1.y\"@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'\"mire3742x2.y\"@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "angle-brackets:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'<porepo85253x0@sub.example.com>'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'<redovido87654x1@a1.example.com>'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'<mire3742x2@corp-x.example.test>'",
+    "reason": "invalid_email"
+   }
+  ],
+  "trailing-dot-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'porepo85253x0@sub.example.com.'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'redovido87654x1@a1.example.com.'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'mire3742x2@corp-x.example.test.'",
+    "reason": "invalid_email"
+   }
+  ],
+  "trailing-2-dots-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'porepo85253x0@sub.example.com..'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'redovido87654x1@a1.example.com..'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'mire3742x2@corp-x.example.test..'",
+    "reason": "invalid_email"
+   }
+  ],
+  "apostrophe-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "\"porepo85253x0@o'sub.example.com\"",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "\"redovido87654x1@o'a1.example.com\"",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "\"mire3742x2@o'corp-x.example.test\"",
+    "reason": "invalid_email"
+   }
+  ],
+  "double-space-local:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'porepo85253x0  x@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'redovido87654x1  x@a1.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'mire3742x2  x@corp-x.example.test'",
+    "reason": "invalid_email"
+   }
+  ],
+  "double-space-after:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'porepo85253x0@sub.example.com'",
+    "variant": "'porepo85253x0@sub.example.com  x'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'redovido87654x1@a1.example.com'",
+    "variant": "'redovido87654x1@a1.example.com  x'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'mire3742x2@corp-x.example.test'",
+    "variant": "'mire3742x2@corp-x.example.test  x'",
+    "reason": "invalid_email"
+   }
+  ]
+ }
+}

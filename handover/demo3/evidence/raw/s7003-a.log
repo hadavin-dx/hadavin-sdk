@@ -1,0 +1,1 @@
+{"campaign": "a", "seed": 7003, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 101.1, "violations": 0, "counterexamples_total": 827, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 827}}

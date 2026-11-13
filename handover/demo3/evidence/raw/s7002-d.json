@@ -1,0 +1,880 @@
+{
+ "db_leads": 40250,
+ "campaign": "d",
+ "seed": 7002,
+ "bases": 1200,
+ "requests_sent": 66000,
+ "wall_s": 84.0,
+ "violations": 0,
+ "counterexamples_total": 45600,
+ "counterexamples_listed": 50,
+ "label_counts": {
+  "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28": 22800,
+  "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)": 7200,
+  "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)": 6000,
+  "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)": 6000,
+  "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28": 3600
+ },
+ "counterexamples": [
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-1",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidor\\u043e36765x0@example.test'",
+   "key": "'anmidor\\u043e36765x0@example.test'",
+   "lead_id": "Ldcfb68327e5d",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-3",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u0430nmidor\\u043e36765\\u04450@example.test'",
+   "key": "'\\u0430nmidor\\u043e36765\\u04450@example.test'",
+   "lead_id": "L364d0e6773a3",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-all-upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u0410NM\\u0406D\\u041eR\\u041e36765\\u04250@example.test'",
+   "key": "'\\u0430nm\\u0456d\\u043er\\u043e36765\\u04450@example.test'",
+   "lead_id": "L764c20ae5997",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-1",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u03b1nmidoro36765x0@example.test'",
+   "key": "'\\u03b1nmidoro36765x0@example.test'",
+   "lead_id": "L6f0a8b98ea5b",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-3",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u03b1\\u03b7midor\\u03bf36765x0@example.test'",
+   "key": "'\\u03b1\\u03b7midor\\u03bf36765x0@example.test'",
+   "lead_id": "L979de5880a46",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-all-upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u0391\\u0397M\\u0399D\\u039fR\\u039f36765\\u03a70@example.test'",
+   "key": "'\\u03b1\\u03b7m\\u03b9d\\u03bfr\\u03bf36765\\u03c70@example.test'",
+   "lead_id": "Lba636a2c4df6",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-sigma",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'\\u03a3anmidoro36765x0\\u03a3@example.test'",
+   "key": "'\\u03c3anmidoro36765x0\\u03c3@example.test'",
+   "lead_id": "L04709560b6df",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@\\u0435\\u0445\\u0430m\\u0440l\\u0435.t\\u0435st'",
+   "key": "'anmidoro36765x0@\\u0435\\u0445\\u0430m\\u0440l\\u0435.t\\u0435st'",
+   "lead_id": "L1deca8541ed7",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:63",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'oc0jo7jc3w2to5a1av470aqe36zoy52eeq1j0ev4y2saju1kgdgkv0r7o8pz9uf@example.test'",
+   "key": "'oc0jo7jc3w2to5a1av470aqe36zoy52eeq1j0ev4y2saju1kgdgkv0r7o8pz9uf@example.test'",
+   "lead_id": "Lb1c927d2a4af",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:64",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'xnr5oydtcw4pmh76wm7rntmoyrml1s0z5gjlxkyvmglpm57casvyxq2rbilh3s66@example.test'",
+   "key": "'xnr5oydtcw4pmh76wm7rntmoyrml1s0z5gjlxkyvmglpm57casvyxq2rbilh3s66@example.test'",
+   "lead_id": "L32cb2071e793",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:65",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'psqd3yoz0c6b5637bbkl2x7m8ui2y5tlkh9lsd3inshnrgmc023cw7yon5fkg489i@example.test'",
+   "key": "'psqd3yoz0c6b5637bbkl2x7m8ui2y5tlkh9lsd3inshnrgmc023cw7yon5fkg489i@example.test'",
+   "lead_id": "L95fd37a7b34e",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:128",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'m3o6u90l8ca4d4x8y9zxzekkdv65tlkelf3pshjl0ey5ri98liot14kyuxy47nyqxzl05o4tat1et4kffkkr6rukpmus21thw15ovybb8n6i0bb3of2ljfkiuflv8obw@example.test'",
+   "key": "'m3o6u90l8ca4d4x8y9zxzekkdv65tlkelf3pshjl0ey5ri98liot14kyuxy47nyqxzl05o4tat1et4kffkkr6rukpmus21thw15ovybb8n6i0bb3of2ljfkiuflv8obw@example.test'",
+   "lead_id": "Lea4775242867",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-total:253",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'j423h9rg0ff5ks8lcfgpiuc1f0wamhxdogkqfbp187sbg7oiefj7v0is594d4h7aph18p0b2qpxwfic2ofc6or7mp6q87n28eom8scbovr56yeo06he1ozecx34phtfxbmgk4efi11jyrmamt4uj6d6n4jilrn8ligf9fx3c5ioiathm82ik1evpwbem4btpbgfmy16j1czhvtnm5ii7sx6ky8sizj7p66s5d9z7e102ahp5@example.test'",
+   "key": "'j423h9rg0ff5ks8lcfgpiuc1f0wamhxdogkqfbp187sbg7oiefj7v0is594d4h7aph18p0b2qpxwfic2ofc6or7mp6q87n28eom8scbovr56yeo06he1ozecx34phtfxbmgk4efi11jyrmamt4uj6d6n4jilrn8ligf9fx3c5ioiathm82ik1evpwbem4btpbgfmy16j1czhvtnm5ii7sx6ky8sizj7p66s5d9z7e102ahp5@example.test'",
+   "lead_id": "L042bd66b9545",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-total:254",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'fakjmujegetenz6cekvjuuhqyqtfubne83jjscp5b0ywnvlgx99fqwddwr8f3i4vg3mdz94k1yx9mh73e25occdx7zq0manopkh36r7sesjnfm6scdjozcwnc44x5wy67cpfsgcnp7x29uej005eh9a62ezjwxuy5dp7vel1kqee2caozch4qknzp8086j0747hzlmwpf8isps583dyxvbs7hj29rhdwjcxh4jwd5as1smnsv@example.test'",
+   "key": "'fakjmujegetenz6cekvjuuhqyqtfubne83jjscp5b0ywnvlgx99fqwddwr8f3i4vg3mdz94k1yx9mh73e25occdx7zq0manopkh36r7sesjnfm6scdjozcwnc44x5wy67cpfsgcnp7x29uej005eh9a62ezjwxuy5dp7vel1kqee2caozch4qknzp8086j0747hzlmwpf8isps583dyxvbs7hj29rhdwjcxh4jwd5as1smnsv@example.test'",
+   "lead_id": "L2be2bf5533cf",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-after-local",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0(comment)@example.test'",
+   "key": "'anmidoro36765x0(comment)@example.test'",
+   "lead_id": "L2409527b01af",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-before-local",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'(c)anmidoro36765x0@example.test'",
+   "key": "'(c)anmidoro36765x0@example.test'",
+   "lead_id": "L5942788d667e",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-after-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@example.test(c)'",
+   "key": "'anmidoro36765x0@example.test(c)'",
+   "lead_id": "L55050282d59d",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "comment-before-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@(c)example.test'",
+   "key": "'anmidoro36765x0@(c)example.test'",
+   "lead_id": "Lcfebd1f35bea",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention RFC 5322 comments/quoted parts; code keeps them different or rejects them: identity.py:20-21 regex)",
+   "class": "domain-literal",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@[example.test]'",
+   "key": "'anmidoro36765x0@[example.test]'",
+   "lead_id": "L44460988e941",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@m\\xfcnchen.example'",
+   "key": "'anmidoro36765x0@m\\xfcnchen.example'",
+   "lead_id": "L9eafccb7a31c",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:punycode-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@xn--mnchen-3ya.example'",
+   "key": "'anmidoro36765x0@xn--mnchen-3ya.example'",
+   "lead_id": "L4632ffb8e7b1",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain-upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@M\\xdcNCHEN.EXAMPLE'",
+   "key": "'anmidoro36765x0@m\\xfcnchen.example'",
+   "lead_id": "L9eafccb7a31c",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:unicode-domain-NFD",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@mu\\u0308nchen.example'",
+   "key": "'anmidoro36765x0@mu\\u0308nchen.example'",
+   "lead_id": "L53e261ef4a2f",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)",
+   "class": "idn:punycode-upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@XN--MNCHEN-3YA.EXAMPLE'",
+   "key": "'anmidoro36765x0@xn--mnchen-3ya.example'",
+   "lead_id": "L4632ffb8e7b1",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "trailing-dot-local",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0.@example.test'",
+   "key": "'anmidoro36765x0.@example.test'",
+   "lead_id": "L1d5f9ad541ec",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "leading-dot-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@.example.test'",
+   "key": "'anmidoro36765x0@.example.test'",
+   "lead_id": "La32cf371c313",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "double-dot-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@example..test'",
+   "key": "'anmidoro36765x0@example..test'",
+   "lead_id": "Lf25aff253d9e",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0%7E@example.test'",
+   "key": "'anmidoro36765x0%7e@example.test'",
+   "lead_id": "Le941e820a60f",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:lower",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0%7e@example.test'",
+   "key": "'anmidoro36765x0%7e@example.test'",
+   "lead_id": "Le941e820a60f",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:mixed-case",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0%c3%A9@example.test'",
+   "key": "'anmidoro36765x0%c3%a9@example.test'",
+   "lead_id": "L8dbada74b402",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "pct:decoded-char",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0\\xe9@example.test'",
+   "key": "'anmidoro36765x0\\xe9@example.test'",
+   "lead_id": "L4049020e419c",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "pct:decoded-plus-lower",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0%2b@example.test'",
+   "key": "'anmidoro36765x0%2b@example.test'",
+   "lead_id": "L06eff3a8a573",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+   "class": "pct:decoded-plus",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0+@example.test'",
+   "key": "'anmidoro36765x0+@example.test'",
+   "lead_id": "L38334272b684",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-local",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "\"o'anmidoro36765x0@example.test\"",
+   "key": "\"o'anmidoro36765x0@example.test\"",
+   "lead_id": "L57225d063007",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-removed",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'oanmidoro36765x0@example.test'",
+   "key": "'oanmidoro36765x0@example.test'",
+   "lead_id": "L5d07a3f88aee",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "apostrophe-upper",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "\"O'ANMIDORO36765X0@example.test\"",
+   "key": "\"o'anmidoro36765x0@example.test\"",
+   "lead_id": "L57225d063007",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "hyphen-local",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0-x@example.test'",
+   "key": "'anmidoro36765x0-x@example.test'",
+   "lead_id": "L5eb0256f87da",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "hyphen-lead-domain",
+   "base": "'anmidoro36765x0@example.test'",
+   "variant": "'anmidoro36765x0@-example.test'",
+   "key": "'anmidoro36765x0@-example.test'",
+   "lead_id": "L6f78deba0fe9",
+   "base_lead_id": "L4133d30c9064"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-1",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xe6s\\u0456r43791x1@sub.example.com'",
+   "key": "'\\xe6s\\u0456r43791x1@sub.example.com'",
+   "lead_id": "L546da1ae2809",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-3",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xe6s\\u0456r43791\\u04451@sub.example.com'",
+   "key": "'\\xe6s\\u0456r43791\\u04451@sub.example.com'",
+   "lead_id": "Lfd5054aae437",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-all-upper",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xc6S\\u0406R43791\\u04251@sub.example.com'",
+   "key": "'\\xe6s\\u0456r43791\\u04451@sub.example.com'",
+   "lead_id": "Lfd5054aae437",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-1",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xe6s\\u03b9r43791x1@sub.example.com'",
+   "key": "'\\xe6s\\u03b9r43791x1@sub.example.com'",
+   "lead_id": "Lffcf589d3e4c",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-3",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xe6s\\u03b9r43791\\u03c71@sub.example.com'",
+   "key": "'\\xe6s\\u03b9r43791\\u03c71@sub.example.com'",
+   "lead_id": "L4ca13119f82c",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-all-upper",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xc6S\\u0399R43791\\u03a71@sub.example.com'",
+   "key": "'\\xe6s\\u03b9r43791\\u03c71@sub.example.com'",
+   "lead_id": "L4ca13119f82c",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:greek-sigma",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\u03a3\\xe6sir43791x1\\u03a3@sub.example.com'",
+   "key": "'\\u03c3\\xe6sir43791x1\\u03c3@sub.example.com'",
+   "lead_id": "L126a957d3e9a",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at identity.py:44-46 (key = strip + lower, nothing more); README.md:28",
+   "class": "mixed-script:cyrillic-domain",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'\\xe6sir43791x1@sub.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "key": "'\\xe6sir43791x1@sub.\\u0435\\u0445\\u0430m\\u0440l\\u0435.\\u0441\\u043em'",
+   "lead_id": "L0875c3f091d1",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:63",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'iu2tb2cqp6bqlk30cykrw5j2e0gcn31el8r4x7pttnze6thcp23e0cgrb01n55w@sub.example.com'",
+   "key": "'iu2tb2cqp6bqlk30cykrw5j2e0gcn31el8r4x7pttnze6thcp23e0cgrb01n55w@sub.example.com'",
+   "lead_id": "L7bd536cc765a",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:64",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'olti1lk8tvimcrjo2wb3tmbzmrg9le04dznr59xrgesmtibgolmlkqoshztw5o6e@sub.example.com'",
+   "key": "'olti1lk8tvimcrjo2wb3tmbzmrg9le04dznr59xrgesmtibgolmlkqoshztw5o6e@sub.example.com'",
+   "lead_id": "L35d38c888d66",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:65",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'yxlnls6sno3ec2q4acgrzpjgnq2ca1g56m2wx0oas6xr90ae6ah7pzi52zpok1k60@sub.example.com'",
+   "key": "'yxlnls6sno3ec2q4acgrzpjgnq2ca1g56m2wx0oas6xr90ae6ah7pzi52zpok1k60@sub.example.com'",
+   "lead_id": "L6f092dd9b00d",
+   "base_lead_id": "L7761bfbb9c94"
+  },
+  {
+   "label": "documented as different at documented limit: identity.py:96 + constants.py:38 (EMAIL_MAX=254 on the whole address)",
+   "class": "long-local:128",
+   "base": "'\\xe6sir43791x1@sub.example.com'",
+   "variant": "'j9ri3qntu838ytk3tgjgtle9s96khvqtm9s76ax8smw8hnembgfkzed4y10fy1x6p02lisqgr71k5a71jbg9qbxo8ex9t0084idt4mpdc3g8p7zpnd3e1ceteihmlkyq@sub.example.com'",
+   "key": "'j9ri3qntu838ytk3tgjgtle9s96khvqtm9s76ax8smw8hnembgfkzed4y10fy1x6p02lisqgr71k5a71jbg9qbxo8ex9t0084idt4mpdc3g8p7zpnd3e1ceteihmlkyq@sub.example.com'",
+   "lead_id": "Ld84689d27a7c",
+   "base_lead_id": "L7761bfbb9c94"
+  }
+ ],
+ "tally": {
+  "name-variant": {
+   "same": 4800
+  },
+  "mixed-script:cyrillic-1": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-3": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-all-upper": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-1": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-3": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-all-upper": {
+   "different-identity": 1200
+  },
+  "mixed-script:greek-sigma": {
+   "different-identity": 1200
+  },
+  "mixed-script:cyrillic-domain": {
+   "different-identity": 1200
+  },
+  "long-local:63": {
+   "different-identity": 1200
+  },
+  "long-local:64": {
+   "different-identity": 1200
+  },
+  "long-local:65": {
+   "different-identity": 1200
+  },
+  "long-local:128": {
+   "different-identity": 1200
+  },
+  "long-total:253": {
+   "different-identity": 1200
+  },
+  "long-total:254": {
+   "different-identity": 1200
+  },
+  "long-total:255": {
+   "review": 1200
+  },
+  "long-total:256": {
+   "review": 1200
+  },
+  "quoted-local": {
+   "review": 1200
+  },
+  "quoted-local-space": {
+   "review": 1200
+  },
+  "quoted-local-dot": {
+   "review": 1200
+  },
+  "comment-after-local": {
+   "different-identity": 1200
+  },
+  "comment-before-local": {
+   "different-identity": 1200
+  },
+  "comment-after-domain": {
+   "different-identity": 1200
+  },
+  "comment-before-domain": {
+   "different-identity": 1200
+  },
+  "domain-literal": {
+   "different-identity": 1200
+  },
+  "angle-brackets": {
+   "review": 1200
+  },
+  "idn:unicode-domain": {
+   "different-identity": 1200
+  },
+  "idn:punycode-domain": {
+   "different-identity": 1200
+  },
+  "idn:unicode-domain-upper": {
+   "different-identity": 1200
+  },
+  "idn:unicode-domain-NFD": {
+   "different-identity": 1200
+  },
+  "idn:punycode-upper": {
+   "different-identity": 1200
+  },
+  "trailing-dot-domain": {
+   "review": 1200
+  },
+  "trailing-2-dots-domain": {
+   "review": 1200
+  },
+  "trailing-dot-local": {
+   "different-identity": 1200
+  },
+  "leading-dot-domain": {
+   "different-identity": 1200
+  },
+  "double-dot-domain": {
+   "different-identity": 1200
+  },
+  "pct:upper": {
+   "different-identity": 1200
+  },
+  "pct:lower": {
+   "different-identity": 1200
+  },
+  "pct:mixed-case": {
+   "different-identity": 1200
+  },
+  "pct:decoded-char": {
+   "different-identity": 1200
+  },
+  "pct:decoded-plus-lower": {
+   "different-identity": 1200
+  },
+  "pct:decoded-plus": {
+   "different-identity": 1200
+  },
+  "apostrophe-local": {
+   "different-identity": 1200
+  },
+  "apostrophe-removed": {
+   "different-identity": 1200
+  },
+  "apostrophe-upper": {
+   "different-identity": 1200
+  },
+  "apostrophe-domain": {
+   "review": 1200
+  },
+  "hyphen-local": {
+   "different-identity": 1200
+  },
+  "hyphen-lead-domain": {
+   "different-identity": 1200
+  },
+  "double-space-local": {
+   "review": 1200
+  },
+  "double-space-pad": {
+   "same-identity": 1200
+  },
+  "double-space-after": {
+   "review": 1200
+  }
+ },
+ "doc_samples": {
+  "long-total:255:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'t0lnjvz4cvaq0o7wr8owhhc2p15ioirywggdjnr4de66ez2nho0jhwopww87q1n553d8fq0gjq2sx24s4fj0obb28prdp5i1xjs86erg4orvb8g88wgyybearyw6cas8m4cmlo5meder28n7hlsp5gi9tnuc7817mysur2dn7ofvepnr9cc4q7hz9oxozirhi52fjd9gel7f6yam5jrtjyt8zy0f07pr828jedtepjveymwzgb@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'495sfp7cj3ula25jrb96qkri1wlxeimcbvc60kiowy8ar6134kl4tc6p8siw89t5vuyogjz239t7bdpk6s554gl3h2zajf3f53viuz498vtu81t5chlhfjt6x9q2088i2iiv519bxoe5r641apq8zrsps1m76f72lmjh5jqe4itaxl3dgzdhwzllw8fdgw3ojpyc3fu57vh77zr3nc7bucov3ryy0k4himhrsdmyovln3bz@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:255",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'e8pbgew29ab4uokquuuazr962nruvh6opwz3ly9rzlkmsqgp81i6r1klvpzp7030xjdhvd5kzeb2559ife5fieztfu6dnnwico8nr3vxktryegf3rrymxcchrj58svmp2ia66z24h06afa3z9qd49hmnkidtmps37yjgh5ejp7novly2sj7qupmqrrphrv90fwulfnwetvqfo7k756ama2y2nt8v3v38nwio05uttoggcfnn6f2@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "long-total:256:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'nxpz1ntauw5ayyw5zmqikicxf2ldxt7n53m1e7lkjnenzfp47642v9yv1vomnmu5nfcval54ixn3t1i7wyzvm8cdp7bhlvkz21ahoiqrxwg99m2j0pmkhqbmzv1dw0a5y7yr2mn5xv1kd6lxa2h5db6is3890f4rd5raj4pwibausmzt2t4lqbzai1l362nw81m2igzlxsxhw8oh1bhldgcmio3ryqze7kbk3xeyu4syuglzwjx@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'5j34y4wosvwtpgzyb0cxc3qkj7b4qdwmosi5cyt8oeb6ahnaaifpgfjrllw89l2iisyr95ssk5ozjcvrmdxv5cn0osx5bctajosmbt330lo5ka940gxaxd12hbv2ljif4fi4fkzicvhif73do80cvvjk4h8wzmr3x9ei4iwoq2djnmgbpcljg4znxu8arq434v5k0ra3d05ib3r72haf9li4njkhmupf1sqvlz804iwr8mkv@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "long-total:256",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'rdqo126u4oign458d8ytxvku46a7tnepr0s1h9cn9a2oyintn5n71g83rok7th99t86hjoncw8szgwuomsday0pan6biku1cfvj3cp64jbmrjolxyh5b6zfw63xk9rb1bpic1ds48xcf8kydhvbmyp5lgf9xwkam35afpf5fz1g9n9aqgpv7uwrflh1pn8esz3ua2dikk904re72k9j9g78187pfrc5qhax29hldua1d3lym2czo@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'\"anmidoro36765x0\"@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\"\\xe6sir43791x1\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'\"jub.emi66057x2\"@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local-space:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'\"anmidoro36765x0 x\"@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\"\\xe6sir43791x1 x\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-space",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'\"jub.emi66057x2 x\"@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "quoted-local-dot:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'\"anmidoro36765x0.y\"@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\"\\xe6sir43791x1.y\"@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "quoted-local-dot",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'\"jub.emi66057x2.y\"@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "angle-brackets:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'<anmidoro36765x0@example.test>'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'<\\xe6sir43791x1@sub.example.com>'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "angle-brackets",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'<jub.emi66057x2@example.com>'",
+    "reason": "invalid_email"
+   }
+  ],
+  "trailing-dot-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'anmidoro36765x0@example.test.'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\\xe6sir43791x1@sub.example.com.'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-dot-domain",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'jub.emi66057x2@example.com.'",
+    "reason": "invalid_email"
+   }
+  ],
+  "trailing-2-dots-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'anmidoro36765x0@example.test..'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\\xe6sir43791x1@sub.example.com..'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "trailing-2-dots-domain",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'jub.emi66057x2@example.com..'",
+    "reason": "invalid_email"
+   }
+  ],
+  "apostrophe-domain:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "\"anmidoro36765x0@o'example.test\"",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "\"\\xe6sir43791x1@o'sub.example.com\"",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "apostrophe-domain",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "\"jub.emi66057x2@o'example.com\"",
+    "reason": "invalid_email"
+   }
+  ],
+  "double-space-local:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'anmidoro36765x0  x@example.test'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\\xe6sir43791x1  x@sub.example.com'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-local",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'jub.emi66057x2  x@example.com'",
+    "reason": "invalid_email"
+   }
+  ],
+  "double-space-after:review": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'anmidoro36765x0@example.test'",
+    "variant": "'anmidoro36765x0@example.test  x'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'\\xe6sir43791x1@sub.example.com'",
+    "variant": "'\\xe6sir43791x1@sub.example.com  x'",
+    "reason": "invalid_email"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside) ; or length/shape rule identity.py:96-103",
+    "class": "double-space-after",
+    "base": "'jub.emi66057x2@example.com'",
+    "variant": "'jub.emi66057x2@example.com  x'",
+    "reason": "invalid_email"
+   }
+  ]
+ }
+}
