@@ -55,3 +55,4 @@ B1 | agent a089825..: lane3-fix-1 prose patch (builder) | 12:42Z | ~13:20Z, stop
 R1 | agent a502a2..: numbers audit (read-only) | 12:42Z | ~13:05Z, stop 13:30Z | running
 Q5b | reported 12:41Z closed: 5 fails (bad-value claims, line count, switch wording, extra key, portal pages)
 B2 | agent a5bf93..: lane3-fix-2 settings/docs patch builder | 12:45Z | ~13:30Z stop 14:00Z | running
+R1 | reported 12:47Z closed: 20 rows invalid/unknown, all in the lane's own files

@@ -1,5 +1,24 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:52Z / 18:22 IST  HEARTBEAT 42 (R1 reported; real CPU vs load average measured)
+**Load, measured properly (`vmstat 1 4`, 12:48Z):** CPU user 13-15 percent, system 7-9 percent, **idle 64-69 percent, IO-wait 11-12 percent**, disk writes 72-83 MB/s, 10-14 thousand context switches per second, free RAM 12 GB. The load average (14.5 / 10.1 / 5.4) is inflated by processes waiting for the disk (the crash soak and the test suites write SQLite files): the 4 cores are about two thirds idle, the DISK is the busy part. So CPU capacity is free; further CPU-light work is fine, further disk-heavy work (more full suites or soaks) would only add IO wait. Agents running: 9 (Q1, Q2, Q3, Q4, Q6b, Q8, B1, B2 and none other).
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof (serial first, log outside git) | 12:31Z | serial ~12:58Z; xdist ~13:50Z | serial 2522 passed, 0 FAILED (about 65 percent) | running |
+| Q2 | identity fuzz, fixed seeds | 12:31Z | ~13:30Z | campaign b running (seed 1202), one core (41 percent CPU) | running |
+| Q3 | crash soak 300 rounds | 12:31Z | ~13:15Z | 150 rounds, 0 violations, 0 hangs (12:44Z) | running |
+| Q4 | load numbers vs docs claims | 12:31Z | pass 1 ~13:30Z | measuring (NOISY) | running |
+| Q6b | cold reader tests/real-services/hubspot docs | 12:37Z | ~13:25Z | part A running | running |
+| Q8 | mutation check, 30 mutants of pathconfine | 12:34Z | ~13:35Z | 15 of 30 done; M15 SURVIVED (survivor details in its report) | running |
+| B1 | BUILDER lane3-fix-1 (Q5, Q6 doc findings) | 12:42Z | ~13:20Z | reproducing findings; a new test file tests/test_docs_claims_lane3.py exists in its worktree | running |
+| B2 | BUILDER lane3-fix-2 (Q5b findings) | 12:43Z | ~13:30Z | started | running |
+| R1, Q5b, Q7, Q9, Q5, Q6 | reported, closed | - | - | - | closed |
+**R1 RESULT (numbers audit; evidence/numbers-audit.md; R1 is grep-based, read-only):** **INVALID or UNKNOWN rows (20):** the four A runs (2412/56 F, 2489/57 F, 2488/57 F/2 E) appear ONLY in this lane's own files (summary.md rows and the old marker, the REPORT TOTALS lines and the A rows, failures.md, ORDERS.md ORDER 4 text, questions-for-lead.md); the "57 failed in total" TOTALS are derived from them (they are labelled invalid and explained, not wrong as a record of what happened); partial logs: 290 passed (suite-pr14.md, already carrying my CORRECTION), 3426+ (d5b4451, recovered, exit 0), 3328+ (C2 run 1, recovered, exit 0), in-flight heartbeat counts; UNKNOWN (no log shipped): "2449/15" and "2462/2" (older runs of the demo session); the core session's 3779/2 F, 3417/2 F and 3405/2 F were run with TMPDIR inside the tree (so basetemp-valid) but show 2 failures each (not mine; core's own business); 3978 in the core report is a prediction, not a run. **No demo or core text, patch or series commit copies a number from my four invalid runs.** Stale numbers (old heads, not invalid): 3605, 3407, 3681 and the "3726" in the v1 patch (series commit 0011 already corrects it to 3883); core's 3781 is on 61ded9e. Valid numbers (3683/200, 3684/199, 3883 collected) are listed in section 2 of the audit. Two sentences in my REPORT (lines saying the audit is "to come") now point to this file.
+
+ASK:
+1. Q8 has one SURVIVED mutant (M15) so far: it means a change in tools/pathconfine.py that the path tests did not catch. Q8 will tell whether it is equivalent or a real test gap; a real gap becomes a builder task (tests only, fails-before = the mutant). Default: yes, builder B3 when Q8's report is in.
+2. The core session's 2 failures in 3 runs (3779/2F, 3417/2F, 3405/2F): not my lane; I only name them. Do you want me to look (read-only) at what fails there? Default: no, unless you ask.
+
 ## 2026-11-13 12:46Z / 18:16 IST  HEARTBEAT 41 (Q5b reported; builder B2 started)
 **Load (measured 12:43Z):** loadavg 6.91 / 5.39 / 3.29 on 4 cores (high), 10 agents running. I start no more agents until the load is under 4.
 | id | what it does | since | expected end | real progress now | state |
