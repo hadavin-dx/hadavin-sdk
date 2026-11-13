@@ -54,9 +54,8 @@ def _recheck(approvals: object) -> tuple[str, ...]:
             return ("the approvals object is no longer an exact Approvals",)
         if not standins.is_pinned_instance(approvals):
             return ("the Approvals class was changed after it was pinned",)
-        for slot in (
-            Approvals.__slots__
-        ):  # every slot is read: an empty one raises AttributeError, answered 503
+        # every slot is read: an empty one raises AttributeError, answered 503
+        for slot in Approvals.__slots__:
             object.__getattribute__(approvals, slot)
         return Approvals.real_now(approvals)
     except Exception:  # noqa: BLE001 - a deleted slot or any unreadable state is refused, never dropped

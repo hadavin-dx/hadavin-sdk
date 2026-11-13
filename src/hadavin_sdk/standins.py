@@ -60,7 +60,7 @@ that a function was put inside a held container, which costs what the scan costs
 ``SCAN_NODES`` (an instance over the budget reads as real: the receiver answers 503 to every request, and
 ``serve()`` is refused at the start, until the store is smaller).
 
-Fragile on purpose: touching ``cls.__annotations__`` adds an empty entry to the class dictionary on Python 3.10 to
+Fragile on purpose: touching ``cls.__annotations__`` adds an empty entry to the class dictionary on Python 3.12 and
 3.13, so the pin touches it at pin time and at every comparison; a class whose dictionary changes in any other way
 (for example ``importlib.reload``) reads as real (fail closed).
 
@@ -166,7 +166,7 @@ _CLASS_ANNOTATIONS = vars(type)[
 
 
 def _touch_annotations(cls: type) -> None:
-    """Python 3.10 to 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
+    """Python 3.12 and 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
     3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it."""
     with contextlib.suppress(Exception):  # a class without one (3.14 reads it differently) is fine
         _CLASS_ANNOTATIONS.__get__(cls)

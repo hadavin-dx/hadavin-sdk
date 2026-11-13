@@ -1,5 +1,5 @@
 """The mutants of the public-bind refusal and the shared loopback check (named B1 and up; the runner prints the count; the
-numbers are names, not an order or a count: B42, B68, B69, B78, B85 and B115 do not exist (removed with a reason in the
+numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115 and B147 do not exist (removed with a reason in the
 change that removed them: B85 had the same killer and the same effect as B84), and the rows are not in number order), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
@@ -28,6 +28,7 @@ APP = "src/hadavin_sdk/app.py"
 RQ = "src/hadavin_sdk/approvals/requests.py"
 DF = "src/hadavin_sdk/defaults.py"
 SI = "src/hadavin_sdk/standins.py"
+SEC = "src/hadavin_sdk/actions/secrets.py"
 INJ = "src/hadavin_sdk/guard/injection.py"
 SCAN = "tools/server_scan.py"
 T_NG = "tests/test_netguard.py"
@@ -920,7 +921,7 @@ M = [
         "a bind with a reason was refused",
     ),
     mutant(
-        "B87 the recheck forgets the exact type of the approvals",
+        "B87 the recheck forgets the exact type of the approvals (a second layer, the pin check, also refuses: this row pins the log text)",
         RC,
         '        if type(approvals) is not Approvals:\n            return ("the approvals object',
         '        if False:\n            return ("the approvals object',
@@ -1064,7 +1065,7 @@ M = [
         "a patched AnyOf.check was not noticed",
     ),
     mutant(
-        "B117 a detector list's own attributes are not scanned",
+        "B117 a detector list's own attributes are not scanned (the second layer, the pin check, still holds: this row pins the text of the refusal)",
         SI,
         "    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):\n",
         "    if not _class_ok(_DETECTOR_LIST):\n",
@@ -1103,16 +1104,16 @@ M = [
     mutant(
         "B121 the instance scan looks at the first level only",
         SI,
-        "    for _ in range(SCAN_DEPTH):\n",
+        "    for _ in range(SCAN_DEPTH_VALUES):\n",
         "    for _ in range(1):\n",
         T_BG,
         "test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit",
         "at the depth limit was refused",
     ),
     mutant(
-        "B122 the scan has no node budget",
+        "B122 the scan has no node budget (the size of a container is not compared with what is left)",
         SI,
-        "                if budget < 0:\n                    return True\n",
+        "            if length(container) * per > limit:  # type: ignore[operator]\n                return None\n",
         "",
         T_BG,
         "test_an_instance_with_more_values_than_the_budget_reads_as_real",
@@ -1240,7 +1241,7 @@ M = [
     mutant(
         "B136 containers are accepted by isinstance",
         SI,
-        "    if kind in _PLAIN_CONTAINERS or kind is Counter:",
+        "    if _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter:",
         "    if isinstance(value, _PLAIN_CONTAINERS) or kind is Counter:",
         T_BG,
         "test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is",
@@ -1249,8 +1250,8 @@ M = [
     mutant(
         "B137 plain values are accepted by isinstance",
         SI,
-        "    if kind in _ATOMS or kind in leaf:",
-        "    if isinstance(value, tuple(_ATOMS)) or kind in leaf:",
+        "    if _is_one_of(kind, _ATOM_TYPES):",
+        "    if isinstance(value, _ATOM_TYPES):",
         T_BG,
         "test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is",
         "was trusted",
@@ -1267,8 +1268,8 @@ M = [
     mutant(
         "B139 a defaultdict with any factory is trusted",
         SI,
-        "        return _values(value) if any(factory is f for f in _DEFAULT_FACTORIES) else None\n",
-        "        return _values(value)\n",
+        "        return _values(value, limit) if any(factory is f for f in _DEFAULT_FACTORIES) else None\n",
+        "        return _values(value, limit)\n",
         T_BG,
         "test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is",
         "was trusted",
@@ -1276,8 +1277,8 @@ M = [
     mutant(
         "B140 the keys of a dict are not judged",
         SI,
-        "        return (*dict.keys(container), *dict.values(container))  # type: ignore[arg-type]\n",
-        "        return tuple(dict.values(container))  # type: ignore[arg-type]\n",
+        "                return (*dict.keys(container), *dict.values(container))  # type: ignore[arg-type]\n",
+        "                return tuple(dict.values(container))  # type: ignore[arg-type]\n",
         T_BG,
         "test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_builtin_iterator",
         "used as a dict key was trusted",
@@ -1285,8 +1286,8 @@ M = [
     mutant(
         "B141 a container is read with its own iteration",
         SI,
-        "            return tuple(base.__iter__(container))  # type: ignore[arg-type]\n",
-        "            return tuple(iter(container))  # type: ignore[arg-type]\n",
+        "            return tuple(base.__iter__(container))  # type: ignore[attr-defined]\n",
+        "            return tuple(iter(container))  # type: ignore[attr-defined]\n",
         T_BG,
         "test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_builtin_iterator",
         "own iteration was run",
@@ -1312,7 +1313,7 @@ M = [
     mutant(
         "B144 the attributes of a nested stand-in are not scanned",
         SI,
-        '    if key is not None and _class_ok(key):\n        return _values(object.__getattribute__(value, "__dict__"))\n',
+        '    if key is not None and _class_ok(key):\n        return _values(object.__getattribute__(value, "__dict__"), limit)\n',
         "    if key is not None and _class_ok(key):\n        return ()\n",
         T_BG,
         "test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn",
@@ -1321,8 +1322,8 @@ M = [
     mutant(
         "B145 the attributes of a model row are not entered",
         SI,
-        '    if kind in data:\n        return _values(object.__getattribute__(value, "__dict__"))\n',
-        "    if kind in data:\n        return ()\n",
+        '    if _is_one_of(kind, data):\n        return _values(object.__getattribute__(value, "__dict__"), limit)\n',
+        "    if _is_one_of(kind, data):\n        return ()\n",
         T_BG,
         "test_a_model_row_holding_a_foreign_object_reads_as_real",
         "inside a model row was trusted",
@@ -1330,20 +1331,11 @@ M = [
     mutant(
         "B146 the depth limit fails open again",
         SI,
-        "    for values in level:\n        for value in values:\n            budget -= 1\n            if budget < 0 or type(value) not in _ATOMS:\n                return True\n    return False\n",
+        "    return any(not _is_one_of(type(v), _ATOM_TYPES) for values in level for v in values)\n",
         "    return False\n",
         T_BG,
         "test_a_container_left_unexplored_at_the_depth_limit_reads_as_real",
-        "four lists down was trusted",
-    ),
-    mutant(
-        "B147 values left unexplored do not count against the budget",
-        SI,
-        "            if budget < 0 or type(value) not in _ATOMS:\n",
-        "            if type(value) not in _ATOMS:\n",
-        T_BG,
-        "test_a_container_left_unexplored_at_the_depth_limit_reads_as_real",
-        "past the node budget passed",
+        "lists down was trusted",
     ),
     mutant(
         "B148 an Approvals slot can be deleted",
@@ -1440,7 +1432,7 @@ M = [
         crash_type="RuntimeError",
     ),
     mutant(
-        "B158 the annotations of a class are not read when it is pinned",
+        "B158 the annotations of a class are not read when it is pinned (Python 3.12 and 3.13; equivalent on 3.14 and later, where the row is skipped)",
         SI,
         "            _touch_annotations(c)\n",
         "            pass\n",
@@ -1466,7 +1458,205 @@ M = [
         "test_a_class_dictionary_key_that_is_a_text_subclass_is_not_the_pinned_key",
         "a key of another type",
     ),
+    mutant(
+        "B161 a held class is judged as a plain value by `in` (hash and equality of the class are run)",
+        SI,
+        "    if _is_one_of(kind, _ATOM_TYPES):\n        return ()\n",
+        "    if kind in _ATOM_TYPES:\n        return ()\n",
+        T_BG,
+        "test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_an_atom",
+        "passed as an atom",
+    ),
+    mutant(
+        "B162 a held class is judged as a container by `in`",
+        SI,
+        "    if _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter:",
+        "    if kind in _PLAIN_CONTAINERS or kind is Counter:",
+        T_BG,
+        "test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_container",
+        "passed as a container",
+    ),
+    mutant(
+        "B163 a held class is judged as a model row by `in`",
+        SI,
+        "    if _is_one_of(kind, data):\n        return _values(",
+        "    if kind in data:\n        return _values(",
+        T_BG,
+        "test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_model_row",
+        "passed as a model row",
+    ),
+    mutant(
+        "B164 a held class is judged as the run state by `in`",
+        SI,
+        "    if _is_one_of(kind, leaf):\n",
+        "    if kind in leaf:\n",
+        T_BG,
+        "test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_the_run_state",
+        "passed as the run state",
+    ),
+    mutant(
+        "B165 the last level is judged by `not in`",
+        SI,
+        "    return any(not _is_one_of(type(v), _ATOM_TYPES) for values in level for v in values)\n",
+        "    return any(type(v) not in _ATOM_TYPES for values in level for v in values)\n",
+        T_BG,
+        "test_a_held_class_that_fakes_equality_is_not_an_atom_at_the_depth_tail",
+        "at the depth tail",
+    ),
+    mutant(
+        "B166 the depth for held values is back to four",
+        SI,
+        "SCAN_DEPTH_VALUES = 8 ",
+        "SCAN_DEPTH_VALUES = 4 ",
+        T_BG,
+        "test_a_store_holding_one_of_each_model_row_it_keeps_reads_as_a_stand_in",
+        "every kind of row was refused",
+    ),
+    mutant(
+        "B167 a dict is charged one per entry (its keys and its values are both read)",
+        SI,
+        "    (dict, dict.__len__, 2),\n",
+        "    (dict, dict.__len__, 1),\n",
+        T_BG,
+        "test_the_size_check_reads_the_builtin_length_not_the_one_of_a_subclass",
+        "a dict counts its keys and its values",
+    ),
+    mutant(
+        "B168 the size is read with the container's own length",
+        SI,
+        "            if length(container) * per > limit:",
+        "            if len(container) * per > limit:",
+        T_BG,
+        "test_the_size_check_reads_the_builtin_length_not_the_one_of_a_subclass",
+        "own length was believed",
+    ),
+    mutant(
+        "B169 a container that is entered again is not charged",
+        SI,
+        "                budget -= len(inner)\n",
+        "                pass\n",
+        T_BG,
+        "test_a_container_referenced_many_times_is_charged_each_time_it_is_entered",
+        "charged once",
+    ),
+    mutant(
+        "B170 a run state is a plain value without being a real member",
+        SI,
+        "    if not any(value is m for m in members.values()):\n        return False\n",
+        "",
+        T_BG,
+        "test_a_run_state_that_is_not_a_real_member_or_has_an_attribute_hung_on_it_reads_as_real",
+        "not a member was trusted",
+    ),
+    mutant(
+        "B171 an attribute hung on a run state member is not seen",
+        SI,
+        "    if not all(type(k) is str and k in _ENUM_MEMBER_KEYS for k in dict.keys(own)):\n        return False\n",
+        "",
+        T_BG,
+        "test_a_run_state_that_is_not_a_real_member_or_has_an_attribute_hung_on_it_reads_as_real",
+        "hung on it was trusted",
+    ),
+    mutant(
+        "B172 the on_decided of the approvals is not counted",
+        RQ,
+        "        if not _is_core_on_decided(self.on_decided):",
+        "        if False:",
+        T_BG,
+        "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B173 any plain function that closes over a dict is the core's on_decided",
+        RQ,
+        "    if type(func) is not FunctionType or func.__code__ is not _ON_DECIDED_CODE:",
+        "    if type(func) is not FunctionType:",
+        T_BG,
+        "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B174 the closure of the core's on_decided may hold anything",
+        RQ,
+        "    return cells is not None and len(cells) == 1 and type(cells[0].cell_contents) is dict",
+        "    return cells is not None and len(cells) == 1",
+        T_BG,
+        "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
+        "DID NOT RAISE",
+    ),
+    mutant(
+        "B175 serve lets an unreadable approvals object raise another error than BindRefused",
+        RC,
+        "    except Exception:  # noqa: BLE001 - any error while reading is a refusal of the one type\n",
+        "    except ZeroDivisionError:  # noqa: BLE001\n",
+        T_BG,
+        "test_serve_with_an_unreadable_approvals_object_raises_bind_refused_not_another_error",
+        "AttributeError",
+        allow_crash=True,
+        crash_type="AttributeError",
+    ),
+    mutant(
+        "B176 the recheck reads only the slots the held-object scan happens to read",
+        RC,
+        "        for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
+        "",
+        T_BG,
+        "test_every_slot_deleted_with_the_object_level_call_is_answered_503",
+        "was still served",
+    ),
+    mutant(
+        "B177 the secrets module does not pin its own stand-in",
+        SEC,
+        "\n_standins.pin_module(__name__)\n",
+        "\n",
+        T_BG,
+        "test_the_fake_secret_provider_is_pinned_when_its_module_is_loaded_whichever_comes_first",
+        "not pinned when its module was loaded",
+    ),
+    mutant(
+        "B178 pin_module pins nothing",
+        SI,
+        "        if key[0] == module:\n",
+        "        if False:\n",
+        T_BG,
+        "test_the_fake_secret_provider_is_pinned_when_its_module_is_loaded_whichever_comes_first",
+        "not pinned when its module was loaded",
+    ),
+    mutant(
+        "B179 a long key is written to the refusal line",
+        BG,
+        "len(text) <= _WORD_MAX_CHARS",
+        "len(text) <= 10**6",
+        T_BG,
+        "test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line",
+        "was written to the refusal line",
+    ),
+    mutant(
+        "B180 a key with a control character is written to the refusal line",
+        BG,
+        "text.isprintable() and len(text)",
+        "len(text)",
+        T_BG,
+        "test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line",
+        "control character was written",
+    ),
+    mutant(
+        "B181 a long class name is written to the refusal line",
+        BG,
+        '    return text if _is_plain_word(text) else "(unreadable)"  # type: ignore[return-value]\n',
+        "    return text  # type: ignore[return-value]\n",
+        T_BG,
+        "test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line",
+        "class name was written to the refusal line",
+    ),
 ]
+
+
+if sys.version_info >= (
+    3,
+    14,
+):  # B158 touches ``__annotations__``, which 3.14 reads differently: equivalent there
+    M = [m for m in M if not m.name.startswith("B158 ")]
 
 
 if __name__ == "__main__":

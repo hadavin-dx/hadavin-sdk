@@ -3366,9 +3366,8 @@ def _fresh(code: str) -> str:
     done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
         [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
     )
-    assert done.returncode == 0 and "ok" in done.stdout, (
-        f"{done.stdout[-200:]} {done.stderr[-400:]}"
-    )
+    last = (done.stderr.strip().splitlines() or [""])[-1]
+    assert done.returncode == 0 and "ok" in done.stdout, f"{last} | {done.stdout[-100:]}"
     return done.stdout
 
 
@@ -3416,13 +3415,25 @@ def test_the_fake_secret_provider_is_pinned_when_its_module_is_loaded_whichever_
 
 
 def test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line() -> None:
-    long_key = "k" * 10_000
-    assert held_services_found({long_key: _Opaque()}) == ("held (unreadable)",)
-    assert held_services_found({"a" * 41: _Opaque()}) == ("held (unreadable)",)
-    assert held_services_found({"a\x1bb": _Opaque()}) == ("held (unreadable)",)
-    assert held_services_found({"x" * 40: _Opaque()}) == (f"held {'x' * 40}: _Opaque",)
-    Long = type("N" * 500, (), {})
-    assert held_services_found({"channel": Long()}) == ("held channel: (unreadable)",)
-    Odd = type("a\x1bb", (), {})
-    assert held_services_found({"channel": Odd()}) == ("held channel: (unreadable)",)
+    unreadable = ("held (unreadable)",)
+    assert held_services_found({"k" * 10_000: _Opaque()}) == unreadable, (
+        "a 10,000-character key was written to the refusal line"
+    )
+    assert held_services_found({"a" * 41: _Opaque()}) == unreadable, (
+        "a 41-character key was written"
+    )
+    assert held_services_found({"a\x1bb": _Opaque()}) == unreadable, (
+        "a key with a control character was written"
+    )
+    assert held_services_found({"x" * 40: _Opaque()}) == (f"held {'x' * 40}: _Opaque",), (
+        "a plain 40-character key was refused its own name"
+    )
+    long_name = type("N" * 500, (), {})
+    assert held_services_found({"channel": long_name()}) == ("held channel: (unreadable)",), (
+        "a long class name was written to the refusal line"
+    )
+    odd_name = type("a\x1bb", (), {})
+    assert held_services_found({"channel": odd_name()}) == ("held channel: (unreadable)",), (
+        "a class name with a control character was written"
+    )
     assert held_services_found({"channel": _Opaque()}) == ("held channel: _Opaque",)
