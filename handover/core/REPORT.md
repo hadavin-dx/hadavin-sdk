@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:34Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| C4 | survivor tests review | lead queue | 12:28Z | done 12:34Z | 1 | DONE (pushed standing/C4/RESULTS.md): 3 tests fail for the right reason (mutants K6, K10, 3 R20 variants killed), 20/20 passes each, not TMPDIR-dependent, Windows read-only: low risk. Agent's own report; I re-read RESULTS.md headline only. Gaps it names: K6+K10 together not run; tests would KeyError under python -OO (docstring is None) | C9 |
+| C9 | K6+K10 together, -OO check, survivor-tests-v2.patch (not applied) | self-assigned (b): the two gaps in C4's report | 12:34Z | 45 min | 1 | STARTED (a8050a38) | read RESULTS.md |
+| AF | after-run full suite | before/after counts | 12:05Z | about 12:42Z | run 1 | RUNNING at 97% | push counts |
+| C1 C2 C3 C5 C6 C7 C8 | cold reader / hostile 1 / doc vs code / other docs / flakiness / hostile 2 / cross-check demo claims | queue | 12:28-12:34Z | 60 min | 1 | RUNNING (7 agents) | read RESULTS.md |
+| MD-2 | closing mutation run | order step 2 | after AF | about 12:52Z | 1 | WAITING for AF | start when AF ends |
+
+ASK: none.
+
+
 ## REPORT (container clock 12:33Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
