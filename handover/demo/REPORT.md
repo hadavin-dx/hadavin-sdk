@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:28Z / 08:58 IST - P2 reviewed (code correct, 2 of 4 regex issues likely STAY: v2 building); real-run fixes v4 built (2 core touches: your approval needed before it ever leaves handover); 5 agents
+FAILED / UNCERTAIN first:
+1. **P2 (sonar-p2-regex-http-bug.patch): fresh review: no regression, but my '11 of 11' was overstated.** Reviewer's honest odds (read from Sonar's public analyzer source, not run): S8786 identity.py x2 about 80% clear each; S8786 run_real_check.py:116 about 15% (will likely stay); S8786 scrub_n8n_export.py:102 about 25% (will likely stay: a leading repetition in a partial-match regex is reported whether or not it is possessive, and a look-behind does not stop it; the OLD pattern had the same look-behind and was flagged at baseline); S5332 x4 f-string sites about 90% clear; server.py:492 about 85%; S2583 about 65%; S8703 about 50% (closed engine). Fix designed (one mandatory char before the repetition, equivalence verified: 0 differences on 1.5M+ cases): P2 v2 builder running (ae184ee748e1ae95d). Undocumented behaviour changes of P2 to put in the PR text: `feed.py --url` (undocumented) now refuses a URL without a port, /leads/, 127.0.0.2, long-form IPv6 and remote hosts. DO NOT apply P2 v1 if you can wait for v2.
+2. **real-run fixes v4 (handover only) touches CORE in 2 places**: `LiveQualifier._read_key` (refuse a multi-line key file, 2 lines) and a new read-only `SpendLedger.check_readable()` (4 lines): both are core touches that need your approval like the earlier five. It also has a CORRECTION: v3's FIXES.md claimed 'settings.md line 116 says so' about the unchecked file settings: that sentence was not in the doc; v4 documents exactly what is and is not checked. v4 applies on db54e13 AND 2db3926 (120 orders with the other patches checked by the builder); `real-run-fixes-v4-after-sonar-p3.patch` is the version rebased on sonar-p3 (they conflict in run_real_check.py import block/load_env). A fresh review of v4 is running.
+3. Still not applicable: P3 (3 Majors; v2 + probe A/B building), crlf-guard-v3 (v4 building), sonar yaml test delta (building). P1 v2: fresh review running.
+4. Full suite on any combined series: NOT RUN; no Sonar result on any patch.
+5. Stray folder `/nonexistent` in this container (created as root by a reviewer's test; my rm was blocked by the safety check): harmless, left.
+READY TO APPLY (db54e13): none finished review yet; P1 v2 closest.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7652eeec21645d91 | fresh reviewer P1 v2 | 03:17 | running | report |
+| a75929772685cf304 | P3 v2 + probe A/B builder | 03:11 | running | 3 patches |
+| adf8ad218658bc26e | crlf-guard-v4 + sonar test delta v2 builder | 03:14 | running | 2 patches |
+| ae184ee748e1ae95d | P2 v2 builder | 03:20 | running | v2 patch |
+| a425d1049580d6b03 | fresh reviewer real-run fixes v4 | 03:28 | running | report |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 5.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P2 | review 1 | 1 Major (2 regexes stay) | design fix | no | v2 read |
+| real-run | build 4 | 2 Minor closed (claimed) | verify | no | review clean |
+| P1 | build 2 | review 2 pending | fresh read | no | clean |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P2 fresh review | done, pushed |
+| real-run fixes v4 | built, pushed (handover only) |
+| P1 v2 | built, pushed |
+
 ## 2026-11-13 03:17Z / 08:47 IST - P1 v2 built (closes its Major; found that v1 made `sh scripts/reset.sh` BYPASS a deletion safety check under dash: fixed by a bash guard); crlf-guard-v3 + sonar-yaml-fix-v2 FAILED review (v4 building); 5 agents
 FAILED / UNCERTAIN first:
 1. **crlf-guard-v3: fresh review says the 9/9 rule is NOT met**: 8 of 19 new mutants survive; and the `sed -i 's/\r$//'` cure does NOT cure the lone-CR file the patch itself plants (tests only check the text 'sed -i', never run it); `sed -i` is GNU-only. Not ready; v4 builder running (cure commands will be run by a test; `git checkout -- <file>` first). **sonar-yaml-fix-v2 does NOT apply on db54e13** (it already has the v1 fix + the 38-line v1 test): a reviewer's delta (merge-ready/sonar-yaml-test-delta-on-db54e13.patch, 11 tests) applies; its test has 4 unreached branches; the same builder fixes it. db54e13 also already contains versions-md-allowance (a no-op there).
