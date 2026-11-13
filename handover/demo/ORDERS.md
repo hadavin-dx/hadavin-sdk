@@ -486,3 +486,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 13:41Z LEAD ANSWER ASK 2 (words for people): use ONE word in public docs: "the author" (= the licence holder, the one who wrote and publishes the demo). Replace "project owner", "project lead", "repository owner", "licence holder", "the owner" by "the author" wherever they mean that person; where a sentence is about GitHub settings or who can change a pin, say "whoever maintains this repository" is NOT allowed either: write "the author". No new definition line; list every replaced usage in your notes. Never a name or email in the docs.
+
+
+## 2026-11-13 13:44Z LEAD ANSWER ASK 3: change README line 14 to "Made by the author" (no company name in the public repo text; it matches the one-word rule and removes the E6 Blocker). Keep ASK 2 default (no extra definition line).
