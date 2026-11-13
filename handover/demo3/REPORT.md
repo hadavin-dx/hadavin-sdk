@@ -1,5 +1,18 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:14Z / 15:44 IST  HEARTBEAT 7 (ORDER 3 received)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner (Sonnet): full suite on main 61ded9e and PR #12 head 8d65577 (PR #12 is now closed, content moved to PR #14) | run-2 evidence for the old head and main | 09:39Z / 15:09 | run2 ends ~10:18-10:20Z / ~15:50 IST (container clock) | run 2 of 2 per head | running | when A reports, start D at once |
+| B | Evidence runner (Sonnet): hostile-input pass | path-confinement evidence | 09:39Z / 15:09 | done 09:49Z | 5 of 5 groups | reported, closed | none |
+| C | Evidence runner (Sonnet): hang hunt on test_burst_run_logs_every_request, main copy | whether the test hangs | 09:53Z / 15:23 | after A ends: d2 and full suite c (~20 min); hard stop 11:07Z / 16:37 IST | a, b, d1 done (no hang); d2 and c not started | waiting for A | none until A ends |
+| D | NOT STARTED: Evidence runner (Sonnet) for ORDER 3: full suite serial twice on origin/followup-final d5b4451 (public clone, python3.12, hash-locked, no browser tests) plus F7 rerun (NT object path `\??\UNC\host\share\x`, empty, NUL) on d5b4451 | evidence for PR #14 | start when A reports | about 45 min after start; hard stop 11:07Z / 16:37 IST | round 0 | waiting for A (order says: start when A is done) | start D the moment A reports |
+| lead-me | register, supervision, pushes | keeps all watched | 09:37Z / 15:07 | cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:24Z |
+
+ASK:
+1. D starts only after A reports (3 heavy runs would otherwise run at once with C's later full suite: A 2 + C 1 + D 1 = 4 > 3). Default: D starts when A ends; C's full suite (c) and D's runs share at most 3 heavy slots, so D runs its two suite runs one after the other (serial) and C runs (c) at the same time as D (2 heavy). Keep.
+2. The 90-minute cap ends 11:07Z; D (about 45 min for two serial suite runs of ~19 min each) starting ~10:20Z ends ~11:00Z, tight. If D cannot finish both runs by 11:07Z I report one run plus the partial second. Default: keep, unless you extend the cap.
+
 ## 2026-11-13 10:12Z / 15:42 IST  HEARTBEAT 6
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
