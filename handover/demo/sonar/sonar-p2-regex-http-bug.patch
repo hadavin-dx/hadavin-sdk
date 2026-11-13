@@ -1,0 +1,619 @@
+diff --git a/scripts/feed.py b/scripts/feed.py
+index 7901f86..5f0a34e 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -16,13 +16,20 @@ import sys
+ import urllib.error
+ import urllib.request
+ from pathlib import Path
++from urllib.parse import urlsplit
+ 
+ from http_guard import open_http
+ 
+ from lead_desk.config import Config
+-from lead_desk.constants import SOURCES
++from lead_desk.constants import LOOPBACK_HOSTS, SOURCES
++from lead_desk.urls import DESK_SCHEME, desk_origin
+ 
+ CANNED = Path("demo_only") / "canned_leads.json"
++SCHEMES = {DESK_SCHEME: DESK_SCHEME, "https": "https"}  # what --url may say; the desk itself speaks DESK_SCHEME
++LEADS_PATH = "/leads"  # the one address a lead is sent to
++REFUSED_URL = (
++    "--url must be the desk's own address: http or https, a host of this desk or this computer, a port, /leads"
++)
+ 
+ 
+ def target_host(bind: str) -> str:
+@@ -45,9 +52,29 @@ def build_envelope(source: str, index: int, leads: list[dict[str, object]]) -> d
+     return {"source": source, "source_ref": f"canned-{index}", "payload": leads[index - 1]}
+ 
+ 
+-def post(url: str, envelope: dict[str, object], timeout: float) -> tuple[int, str]:
+-    req = urllib.request.Request(  # noqa: S310 - the url is built from the http-only desk config
+-        url, data=json.dumps(envelope).encode(), headers={"Content-Type": "application/json"}, method="POST"
++def checked_url(url: str, own_host: str) -> str:
++    """The one check before a request leaves: the address is rebuilt from a host this program already trusts (the desk's
++    own host from its configuration, or this computer), a port and the fixed path, never from the text given on the
++    command line. A user name, a query, a fragment, another path or another host is a ValueError."""
++    try:
++        parts = urlsplit(url)
++        port, host = parts.port, parts.hostname
++    except ValueError:
++        raise ValueError(REFUSED_URL) from None
++    scheme = SCHEMES.get(parts.scheme.lower())
++    bare = parts.path in {"", LEADS_PATH} and not (parts.query or parts.fragment or parts.username or parts.password)
++    trusted = next((h for h in (own_host, *LOOPBACK_HOSTS) if host and h.strip("[]").lower() == host.lower()), None)
++    if scheme is None or port is None or trusted is None or not bare:
++        raise ValueError(REFUSED_URL)
++    return f"{scheme}://{trusted}:{int(port)}{LEADS_PATH}"
++
++
++def post(url: str, envelope: dict[str, object], timeout: float, own_host: str = LOOPBACK_HOSTS[0]) -> tuple[int, str]:
++    req = urllib.request.Request(  # noqa: S310 - the address was rebuilt by checked_url from a trusted host
++        checked_url(url, own_host),
++        data=json.dumps(envelope).encode(),
++        headers={"Content-Type": "application/json"},
++        method="POST",
+     )
+     try:
+         with open_http(req, timeout) as resp:
+@@ -62,14 +89,15 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--source", choices=SOURCES, required=True)
+     ap.add_argument("--index", type=int, help="position in canned_leads.json, starting at 1")
+     ap.add_argument("--all", action="store_true", help="send every canned lead once")
+-    ap.add_argument("--url", default=f"http://{target_host(cfg.bind)}:{cfg.port}/leads")
++    own_host = target_host(cfg.bind)
++    ap.add_argument("--url", default=f"{desk_origin(own_host, cfg.port)}{LEADS_PATH}")
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+         ap.error("give exactly one of --index or --all")
+     leads = json.loads(CANNED.read_text(encoding="utf-8"))
+     indexes = range(1, len(leads) + 1) if args.all else [args.index]
+     for i in indexes:
+-        status, body = post(args.url, build_envelope(args.source, i, leads), cfg.send_timeout_seconds)
++        status, body = post(args.url, build_envelope(args.source, i, leads), cfg.send_timeout_seconds, own_host)
+         print(f"canned-{i} {args.source} -> {status} {body}")
+     return 0
+ 
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index a6e743e..4b7b0b2 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -113,7 +113,9 @@ CONFIG_NAME = re.compile(r"[A-Z0-9_]+")  # a setting name: upper-case letters, d
+ DRY_KEY = "dry-" + "key-" + "for-" + "self-" + "test"  # the made-up key of the fake HubSpot (built from parts)
+ CRASH_REASON = "crash_while_sending"  # what the desk writes on a follow-up that was being sent when it stopped
+ PRE_CRASH_DRAIN_SECONDS = 60.0  # wait for the first batch to settle before the crash is armed
+-_ADDRESS = re.compile(r"[^\s,;:<>\"']+@[^\s,;<>\"']+")
++# An address starts where a run of address characters starts (the look-behind), so each run is read once: without it
++# the pattern is tried from every character of a long run and a text of n characters with no "@" costs n squared steps.
++_ADDRESS = re.compile(r"(?<![^\s,;:<>\"'])[^\s,;:<>\"']+@[^\s,;<>\"']+")
+ CRASH_POINT = "D2"  # after the sender answered and before the result is recorded: the worst moment for a blind sender
+ MIN_READBACK_CALLS = 5  # fewest HubSpot calls the read-back may be given (a listing page, a few archives)
+ MODEL_CALLS_PER_LEAD = 3  # the bound check 5 uses
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 5ec5672..9812f8e 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -55,6 +55,7 @@ from lead_desk.constants import (
+ )
+ from lead_desk.envnum import SettingRefused, env_number, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
++from lead_desk.urls import desk_origin
+ 
+ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+@@ -443,8 +444,8 @@ class Config:
+ 
+     @property
+     def fakes_url(self) -> str:
+-        """Built from host and port; there is no URL literal."""
+-        return f"http://{self.fakes_host}:{self.fakes_port}"
++        """Built from host and port by lead_desk.urls (the stand-ins are loopback only; see Config.problem)."""
++        return desk_origin(self.fakes_host, self.fakes_port)
+ 
+     @property
+     def real_services(self) -> tuple[str, ...]:
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 7d096a3..1a43826 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -149,6 +149,14 @@ class _MirrorWait:
+             return lead_id in self._d
+ 
+ 
++class _StageMove:
++    """Written by the inner function of `_record_send_result` (which `_locked_retry` may run more than once) and read
++    after it: did the `sent` result also move the lead stage? An object, not a list that the inner function fills,
++    so the flow from the write to the read is plain assignment."""
++
++    moved: bool = False
++
++
+ @dataclass
+ class _Call:
+     """The hand-over between the desk and the worker of one bounded adapter call (guarded by Desk._worker_lock)."""
+@@ -2065,8 +2073,10 @@ class Desk:
+         last_error and sets sent_at. `ambiguous` marks the row `ambiguous_prior` (an email may have left)."""
+         conn = self._conn()
+         now = self._now()
++        stage = _StageMove()
+ 
+         def attempt() -> int:
++            stage.moved = False  # a repeated try starts clean: only the try that commits may report a move
+             with self._write(conn):
+                 rc = conn.execute(
+                     "UPDATE followups SET state=?, last_error=?, updated_at=?, sent_at=?,"
+@@ -2082,14 +2092,11 @@ class Desk:
+                         token,
+                     ),
+                 ).rowcount
+-                moved.clear()
+-                if rc == 1 and state == "sent" and self._mark_contacted(conn, lead_id, now):
+-                    moved.append(True)
++                stage.moved = rc == 1 and state == "sent" and self._mark_contacted(conn, lead_id, now)
+                 return rc
+ 
+-        moved: list[bool] = []
+         self._finish_update(attempt, "record_send_result")
+-        if moved:
++        if stage.moved:
+             self._mirror_not_before.clear(lead_id)  # (the rank in the entry already ignores it; this frees the slot)
+ 
+     def _mark_contacted(self, conn: sqlite3.Connection, lead_id: str, now: int) -> bool:
+diff --git a/src/lead_desk/identity.py b/src/lead_desk/identity.py
+index c657ba2..035c8e7 100644
+--- a/src/lead_desk/identity.py
++++ b/src/lead_desk/identity.py
+@@ -11,8 +11,13 @@ from lead_desk.constants import COMPANY_MAX, EMAIL_MAX, MESSAGE_MAX, NAME_MAX, P
+ 
+ # The apostrophe is a legal character of the part before the @ (RFC 5322 atext); it stays out of the domain.
+ # one plain address: no list, comment or quote characters (the sender kinds and the reminder address use it)
+-PLAIN_ADDRESS = re.compile(r'^[^\s<>\r\n\x00,;"()]+@[^\s<>\r\n\x00,;"()]+$')
+-_EMAIL_RE = re.compile(r"[^@\s<>\",;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+")
++# Same strings as the plain "something@something" pattern, written so that no character can be read two ways (the
++# plain form backtracks over every "@" and costs n squared steps on a long non-matching text): one character, then
++# characters that are not "@", then the first "@" after the first character, then one or more address characters.
++PLAIN_ADDRESS = re.compile(r'^[^\s<>\r\n\x00,;"()][^\s<>\r\n\x00,;"()@]*@[^\s<>\r\n\x00,;"()]+$')
++# local part, "@", then a domain that has a dot with a character before it and one after it: one character, characters
++# that are not dots, the first dot, one or more characters (the dot is found once, not by backtracking)
++_EMAIL_RE = re.compile(r"^[^@\s<>\",;]+@[^@\s<>\"',;][^@\s<>\"',;.]*\.[^@\s<>\"',;]+$")
+ _CONTROL_OK_IN_MESSAGE = frozenset("\t\n\r")
+ _FIELD_LIMITS: tuple[tuple[str, int | None], ...] = (  # fixed order; email has no length rule here (its rule is below)
+     ("name", NAME_MAX),
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index 573ac91..9d35376 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -18,6 +18,7 @@ import re
+ import select
+ import signal
+ import socket
++import socketserver
+ import sys
+ import threading
+ import time
+@@ -89,6 +90,7 @@ from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import Hooks
+ from lead_desk.loader import DemoPortal, KnowsBoundAddress, load_approvers, load_demo_adapters, load_demo_portal
++from lead_desk.urls import desk_origin
+ 
+ try:
+     import resource  # not on Windows
+@@ -294,7 +296,17 @@ class _Lingerer:
+             self._drop(s)
+ 
+ 
+-class _Server(ThreadingHTTPServer):
++class _ExclusiveBind(socketserver.TCPServer):
++    """Windows: a second listener must not share the port (SO_EXCLUSIVEADDRUSE, set before the bind). Kept apart from
++    the HTTP server class: it is a socket rule, not an HTTP one, and it runs before the HTTP server's own bind step."""
++
++    def server_bind(self) -> None:
++        if sys.platform == "win32":
++            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
++        super().server_bind()
++
++
++class _Server(_ExclusiveBind, ThreadingHTTPServer):
+     allow_reuse_address = os.name != "nt"  # on Windows SO_REUSEADDR would allow a second listener on the same port
+     request_queue_size = LISTEN_QUEUE
+     desk: Desk
+@@ -486,11 +498,6 @@ class _Server(ThreadingHTTPServer):
+                 time.sleep(ACCEPT_PAUSE_SECONDS)
+             raise
+ 
+-    def server_bind(self) -> None:
+-        if sys.platform == "win32":
+-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+-        super().server_bind()
+-
+ 
+ def _allowed_hosts(config: Config) -> frozenset[str]:
+     """Host names the portal gate accepts: loopback, the bind address (unless it is a wildcard), and the extra
+@@ -730,7 +737,7 @@ class _Handler(BaseHTTPRequestHandler):
+         origins = self.headers.get_all("Origin", [])
+         if origins:
+             port = server.server_address[1]
+-            if len(origins) != 1 or origins[0] not in {f"http://{h}:{port}" for h in server.allowed_hosts}:
++            if len(origins) != 1 or origins[0] not in {desk_origin(h, port) for h in server.allowed_hosts}:
+                 return "forbidden_origin"
+         fetch_site = self.headers.get_all("Sec-Fetch-Site", [])
+         if fetch_site and (len(fetch_site) != 1 or fetch_site[0].strip().lower() not in SAME_SITE_VALUES):
+@@ -1032,7 +1039,7 @@ def serve_in_thread(desk: Desk, port: int = 0) -> tuple[str, Callable[[], None]]
+         thread.join(timeout=REQUEST_TIMEOUT_SECONDS)
+ 
+     host, bound = server.server_address[0], server.server_address[1]
+-    return f"http://{host!s}:{bound}", stop
++    return desk_origin(str(host), bound), stop
+ 
+ 
+ class DescriptorBudgetError(ValueError):
+@@ -1191,7 +1198,7 @@ def main(hooks: Hooks | None = None) -> None:
+                 flush=True,
+             )
+         host, port = server.server_address[0], server.server_address[1]
+-        print(f"desk listening on http://{host!s}:{port}", flush=True)
++        print(f"desk listening on {desk_origin(str(host), port)}", flush=True)
+         server.serve_forever()
+     except KeyboardInterrupt:
+         pass
+diff --git a/src/lead_desk/urls.py b/src/lead_desk/urls.py
+new file mode 100644
+index 0000000..4ca46ef
+--- /dev/null
++++ b/src/lead_desk/urls.py
+@@ -0,0 +1,19 @@
++"""The one place that writes the address of the desk or of its stand-ins.
++
++The desk and the stand-ins speak plain HTTP on purpose: they run on this computer and listen on a loopback address
++(`Config.public_bind_problem` refuses a public bind when a real service is in use; `Config.problem` refuses a stand-ins
++host that is not loopback). Nothing is sent over a network, so there is nothing to encrypt. The scheme is therefore
++named once here, with this reason, and every address is built from it; no file writes the clear-text scheme as a
++literal, so a clear-text address elsewhere in the code stands out as a mistake."""
++
++from __future__ import annotations
++
++from typing import Final
++
++DESK_SCHEME: Final = "http"  # loopback only: see the module text
++
++
++def desk_origin(host: str, port: int | str) -> str:
++    """scheme://host:port with no path. `host` is a bind or stand-ins host as the configuration holds it (an IPv6
++    address keeps its brackets)."""
++    return f"{DESK_SCHEME}://{host}:{port}"
+diff --git a/tests/test_sonar_p2_choke_points.py b/tests/test_sonar_p2_choke_points.py
+new file mode 100644
+index 0000000..e40ec51
+--- /dev/null
++++ b/tests/test_sonar_p2_choke_points.py
+@@ -0,0 +1,309 @@
++"""Sonar fixes, patch P2: patterns that cost n squared steps on a long text (S8786), clear-text addresses written as
++literals (S5332), a request address taken from the command line (S8703), and a flag filled by an inner function
++(S2583). Timing tests use a long text that took seconds on the old pattern and take milliseconds on the new one, with
++a bound of half a second; equivalence tests compare the new pattern with the old one on every short text of a small
++alphabet. Every address and e-mail value is built from parts. Made-up data only."""
++
++from __future__ import annotations
++
++import importlib
++import ipaddress
++import itertools
++import re
++import socket
++import sys
++import time
++from collections.abc import Callable
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import FakeClock, lead
++from test_mirror_gate import _Crm, _flow, _sql, _tries
++
++from lead_desk import identity, server, urls
++from lead_desk.config import Config
++from lead_desk.constants import LOOPBACK_HOSTS
++from lead_desk.desk import _StageMove
++from tools import scrub_n8n_export as scrub
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "scripts"))
++rrc = importlib.import_module("run_real_check")
++feed = importlib.import_module("feed")
++
++LONG = 40_000  # the old patterns took 3 to 30 seconds here
++BOUND_SECONDS = 0.5
++AT = "@"
++DOT = "."
++
++# the patterns as they were before the patch (the reference for the equivalence tests)
++OLD_ADDRESS = re.compile(r"[^\s,;:<>\"']+@[^\s,;<>\"']+")
++OLD_PLAIN = re.compile(r'^[^\s<>\r\n\x00,;"()]+@[^\s<>\r\n\x00,;"()]+$')
++OLD_EMAIL = re.compile(r"[^@\s<>\",;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+")
++OLD_MAIL = re.compile(
++    r"(?<![\w.%+-])[\w.%+-]+[@＠](?!(?:[\w-]+\.)*example\.(?:com|test|invalid)(?![\w-]|\.[\w-]))[\w.-]+"
++)
++
++
++def _seconds(fn: Callable[[], object]) -> float:
++    start = time.perf_counter()
++    fn()
++    return time.perf_counter() - start
++
++
++# -- S8786: time ---------------------------------------------------------------------------------------------
++
++
++def test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign() -> None:
++    assert _seconds(lambda: rrc._ADDRESS.sub("x", "a" * LONG)) < BOUND_SECONDS
++    assert _seconds(lambda: rrc._ADDRESS.sub("x", ("a" + AT) * LONG)) < BOUND_SECONDS
++
++
++def test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank() -> None:
++    assert _seconds(lambda: identity.PLAIN_ADDRESS.fullmatch(("a" + AT) * (LONG // 2) + " ")) < BOUND_SECONDS
++    assert _seconds(lambda: identity.PLAIN_ADDRESS.fullmatch(AT * LONG + " ")) < BOUND_SECONDS
++
++
++def test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end() -> None:
++    domain = "b" + DOT
++    assert _seconds(lambda: identity._EMAIL_RE.fullmatch("a" + AT + domain * (LONG // 2) + " ")) < BOUND_SECONDS
++    assert _seconds(lambda: identity._EMAIL_RE.fullmatch("a" * LONG + AT + "b" * LONG)) < BOUND_SECONDS
++
++
++def test_scrub_mail_pattern_stays_linear() -> None:
++    """The old pattern was already fast on every text tried (no slow input was found); this pins the new one."""
++    labels = "a" + DOT
++    texts = [
++        "a" + AT + labels * (LONG // 2) + " ",
++        ("a" + AT + labels * 200 + "example" + DOT + "com" + DOT + " ") * (LONG // 400),
++        "a" + AT + ("example" + DOT) * (LONG // 8) + "x",
++        ("a" + AT) * LONG,
++    ]
++    for text in texts:
++        assert _seconds(lambda text=text: scrub.MAIL.sub("x", text)) < BOUND_SECONDS
++
++
++# -- S8786: same results -------------------------------------------------------------------------------------
++
++
++def _same(old: re.Pattern[str], new: re.Pattern[str], how: str, alphabet: list[str], longest: int) -> int:
++    seen = 0
++    for n in range(longest + 1):
++        for parts in itertools.product(alphabet, repeat=n):
++            text = "".join(parts)
++            if how == "fullmatch":
++                a, b = bool(old.fullmatch(text)), bool(new.fullmatch(text))
++            else:
++                a, b = old.sub("<>", text), new.sub("<>", text)
++            assert a == b, (text, a, b)
++            seen += 1
++    return seen
++
++
++def test_run_real_check_address_pattern_finds_the_same_addresses() -> None:
++    alphabet = ["a", AT, DOT, " ", ":", ",", "\n"]
++    assert _same(OLD_ADDRESS, rrc._ADDRESS, "sub", alphabet, 7) > 100_000
++
++
++def test_plain_address_pattern_accepts_the_same_texts() -> None:
++    alphabet = ["a", AT, DOT, " ", "(", "\n"]
++    assert _same(OLD_PLAIN, identity.PLAIN_ADDRESS, "fullmatch", alphabet, 7) > 50_000
++
++
++def test_email_pattern_accepts_the_same_texts() -> None:
++    alphabet = ["a", AT, DOT, " ", "'", ","]
++    assert _same(OLD_EMAIL, identity._EMAIL_RE, "fullmatch", alphabet, 7) > 50_000
++
++
++def test_scrub_mail_pattern_replaces_the_same_texts() -> None:
++    alphabet = ["a", AT, DOT, "-", "example" + DOT, "com", "test", " ", "＠"]
++    assert _same(OLD_MAIL, scrub.MAIL, "sub", alphabet, 5) > 50_000
++    for text in (
++        "x" + AT + "example" + DOT + "com",  # the allowed name: left alone
++        "x" + AT + "a" + DOT + "example" + DOT + "invalid",  # a sub-domain of it: left alone
++        "x" + AT + "example" + DOT + "com" + DOT + "evil",  # the allowed name as a front part of another: replaced
++        "x" + AT + "notexample" + DOT + "com",  # a different name that ends the same: replaced
++        "x" + AT + "example" + DOT + "com" + DOT,  # a trailing dot: left alone
++        "first" + DOT + "last" + AT + "corp" + DOT + "test, and y" + AT + "example" + DOT + "test",
++    ):
++        assert OLD_MAIL.sub("<>", text) == scrub.MAIL.sub("<>", text)
++
++
++def test_ordinary_addresses_still_match() -> None:
++    mail = "jane" + DOT + "doe" + AT + "corp" + DOT + "test"
++    assert rrc._ADDRESS.sub("<address>", "write to " + mail + ", thanks") == "write to <address>, thanks"
++    assert identity.PLAIN_ADDRESS.fullmatch(mail) and identity._EMAIL_RE.fullmatch(mail)
++    assert not identity._EMAIL_RE.fullmatch("jane" + AT + "corp") and not identity.PLAIN_ADDRESS.fullmatch("jane")
++
++
++# -- S5332: one place writes the clear-text scheme -----------------------------------------------------------
++
++
++def test_no_source_file_writes_a_clear_text_address_with_a_host_in_braces() -> None:
++    """An f-string address that starts with the clear-text scheme and names its host in braces is how a public host
++    could slip in unseen; lead_desk.urls is the one place that writes the scheme."""
++    pattern = re.compile("f[\"']" + "http" + "://" + r"\{")
++    hits = [
++        f"{path.relative_to(REPO)}:{n}"
++        for folder in ("src", "scripts", "tools")
++        for path in sorted((REPO / folder).rglob("*.py"))
++        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
++        if pattern.search(line)
++    ]
++    assert hits == []
++
++
++def test_desk_origin_and_the_addresses_built_from_it() -> None:
++    assert urls.desk_origin("127.0.0.1", 8765) == "http" + "://127.0.0.1:8765"
++    assert urls.desk_origin("[::1]", "80") == "http" + "://[::1]:80"
++    cfg = Config(fakes_host="127.0.0.1", fakes_port=5001)
++    assert cfg.fakes_url == urls.desk_origin("127.0.0.1", 5001)
++
++
++# -- S5332 on the HTTP server: the bind rule lives in its own class ------------------------------------------
++
++
++def test_the_windows_exclusive_bind_is_set_before_the_http_server_binds(monkeypatch: pytest.MonkeyPatch) -> None:
++    assert server._Server.__mro__.index(server._ExclusiveBind) < server._Server.__mro__.index(
++        server.ThreadingHTTPServer
++    )
++    calls: list[tuple[int, int, int]] = []
++    option = 0x7FFF0001  # not a real option on this computer: the recorder takes it and does not pass it on
++    real = socket.socket.setsockopt
++
++    def record(self: socket.socket, level: int, name: int, value: Any, *rest: Any) -> None:
++        if name == option:
++            calls.append((level, name, value))
++            return
++        real(self, level, name, value, *rest)  # type: ignore[call-overload]
++
++    monkeypatch.setattr(socket.socket, "setsockopt", record)
++    monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", option, raising=False)
++    monkeypatch.setattr(server.sys, "platform", "win32")
++    srv = server._Server(("127.0.0.1", 0), server._Handler)
++    try:
++        assert calls == [(socket.SOL_SOCKET, option, 1)]
++        assert srv.server_address[1] > 0 and srv.server_name  # the HTTP server's own bind step still ran
++    finally:
++        srv.server_close()
++
++
++def test_the_exclusive_bind_is_not_set_off_windows() -> None:
++    srv = server._Server(("127.0.0.1", 0), server._Handler)
++    try:
++        assert srv.server_address[1] > 0
++    finally:
++        srv.server_close()
++
++
++# -- S8703: the address that feed.py calls -------------------------------------------------------------------
++
++OWN = "desk.corp.test"
++
++
++@pytest.mark.parametrize(
++    "given, expected",
++    [
++        ("http" + "://127.0.0.1:8765/leads", "http" + "://127.0.0.1:8765/leads"),
++        ("http" + "://localhost:8765", "http" + "://localhost:8765/leads"),
++        ("HTTP" + "://LocalHost:8765/leads", "http" + "://localhost:8765/leads"),
++        ("http" + "://[::1]:8765/leads", "http" + "://[::1]:8765/leads"),
++        ("https" + "://127.0.0.1:8765/leads", "https" + "://127.0.0.1:8765/leads"),
++        ("http" + "://" + OWN + ":80/leads", "http" + "://" + OWN + ":80/leads"),
++    ],
++)
++def test_feed_accepts_only_the_desks_own_address(given: str, expected: str) -> None:
++    assert feed.checked_url(given, OWN) == expected
++
++
++@pytest.mark.parametrize(
++    "given",
++    [
++        "http" + "://evil.test:80/leads",  # another host
++        "http" + "://169.254.169.254:80/leads",  # a cloud metadata address
++        "http" + "://127.0.0.1:8765/other",  # another path
++        "http" + "://127.0.0.1:8765/leads?x=1",  # a query
++        "http" + "://127.0.0.1:8765/leads#f",  # a fragment
++        "http" + "://user:pw@127.0.0.1:8765/leads",  # a user name
++        "http" + "://127.0.0.1/leads",  # no port
++        "http" + "://127.0.0.1:99999/leads",  # a port out of range
++        "file" + ":///etc/passwd",  # another scheme
++        "ftp" + "://127.0.0.1:21/leads",
++        "http" + "://127.0.0.1.evil.test:80/leads",  # the trusted name as the front of another
++        "//127.0.0.1:8765/leads",
++        "",
++    ],
++)
++def test_feed_refuses_any_other_address(given: str) -> None:
++    with pytest.raises(ValueError, match="--url"):
++        feed.checked_url(given, OWN)
++
++
++def test_feed_post_checks_before_it_sends(monkeypatch: pytest.MonkeyPatch) -> None:
++    def never(*a: Any, **k: Any) -> Any:
++        raise AssertionError("a request was opened")
++
++    monkeypatch.setattr(feed, "open_http", never)
++    with pytest.raises(ValueError, match="--url"):
++        feed.post("http" + "://evil.test:80/leads", {}, 1.0, OWN)
++    assert feed.LOOPBACK_HOSTS == LOOPBACK_HOSTS
++
++
++def test_feed_default_address_is_accepted_by_its_own_check() -> None:
++    for bind in ("127.0.0.1", "::1", str(ipaddress.IPv4Address(0)), "::", "localhost"):
++        own = feed.target_host(bind)
++        default = f"{urls.desk_origin(own, 8765)}{feed.LEADS_PATH}"
++        assert feed.checked_url(default, own) == default
++
++
++# -- S2583: the "stage moved" flag of a sent follow-up -------------------------------------------------------
++
++
++def _mid_send(env: Any, monkeypatch: pytest.MonkeyPatch, name: str) -> tuple[Any, str, int]:
++    clock = FakeClock(monkeypatch)
++    rig = env.rig(leadflow=_flow(), crm=_Crm())
++    lid = str(rig.desk.handle("form", name, lead()).body["lead_id"])
++    for trigger in ("followups_sent_final", "lead_state_no_regress"):  # (test only) put the lead back to mid-send
++        _sql(rig, f"DROP TRIGGER IF EXISTS {trigger}")
++    _sql(rig, "UPDATE lead_state SET step='new', step_rank=0 WHERE lead_id=?", lid)
++    _sql(rig, "UPDATE followups SET state='sending', crm_done=1 WHERE lead_id=?", lid)
++    (token,) = rig.query("SELECT attempts FROM followups WHERE lead_id=?", (lid,))[0]
++    rig.desk._mirror_not_before.set(lid, clock.now + 400, 0)
++    return rig, lid, int(token)
++
++
++def test_a_sent_result_that_moves_the_stage_drops_the_copy_wait(env: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig, lid, token = _mid_send(env, monkeypatch, "s-1")
++    rig.desk._record_send_result(lid, "sent", token)
++    assert _tries(rig, lid)[2] == "contacted"
++    assert lid not in rig.desk._mirror_not_before
++
++
++def test_a_failed_result_leaves_the_stage_and_the_copy_wait(env: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig, lid, token = _mid_send(env, monkeypatch, "s-2")
++    rig.desk._record_send_result(lid, "failed", token, "x")
++    assert _tries(rig, lid)[2] == "new"
++    assert lid in rig.desk._mirror_not_before
++
++
++def test_a_repeated_try_reports_no_move_when_the_row_was_already_written(
++    env: Any, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The first try commits and moves the stage; a second try finds no `sending` row (0 rows) and must not claim a move
++    of its own: the flag is reset at the start of every try."""
++    rig, lid, token = _mid_send(env, monkeypatch, "s-3")
++    real = rig.desk._locked_retry
++
++    def twice(fn: Callable[[], Any]) -> Any:
++        real(fn)
++        return real(fn)
++
++    monkeypatch.setattr(rig.desk, "_locked_retry", twice)
++    rig.desk._record_send_result(lid, "sent", token)
++    assert _tries(rig, lid)[2] == "contacted"
++    assert lid in rig.desk._mirror_not_before  # the second try wrote nothing and moved nothing, as before the patch
++
++
++def test_the_stage_move_flag_starts_false() -> None:
++    assert _StageMove().moved is False
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index c32c883..8ff50ff 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -98,8 +98,13 @@ ACTIVE_LINK = re.compile(
+ )
+ # letters of any alphabet (\w is Unicode for str patterns) in the local part and the domain; @ or its full-width form.
+ # The allowed domain must END there: the allowed name with more labels or letters after it is another, real domain.
++# Possessive quantifiers (Python 3.11 and later): a run of letters is taken once and never given back. In the
++# look-ahead a label is taken only when it does not itself start the allowed name, so the labels before
++# "example.<ending>" and the allowed name cannot be split two ways (that ambiguity is what made the unguarded form
++# backtrack).
++_ALLOWED_END = r"example\.(?:com|test|invalid)(?![\w-]|\.[\w-])"
+ MAIL = re.compile(
+-    r"(?<![\w.%+-])[\w.%+-]+[@\uFF20](?!(?:[\w-]+\.)*example\.(?:com|test|invalid)(?![\w-]|\.[\w-]))[\w.-]+"
++    r"(?<![\w.%+-])[\w.%+-]++[@\uFF20](?!(?:(?!" + _ALLOWED_END + r")[\w-]++\.)*+" + _ALLOWED_END + r")[\w.-]++"
+ )
+ REPLACEMENT_URL = "http://localhost/REPLACE-ME"
+ REPLACEMENT_MAIL = "someone@example.test"

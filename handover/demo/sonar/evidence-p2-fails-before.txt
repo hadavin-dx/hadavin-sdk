@@ -1,0 +1,259 @@
+FFF......FFF.FFFFFFFFFFFFFFFFFFFFF...F                                   [100%]
+=================================== FAILURES ===================================
+_ test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign _
+
+>       assert _seconds(lambda: rrc._ADDRESS.sub("x", "a" * LONG)) < BOUND_SECONDS
+E       assert 2.001773692000029 < 0.5
+E        +  where 2.001773692000029 = _seconds(<function test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign.<locals>.<lambda> at 0x7f5384fb25c0>)
+
+tests/test_zz_old.py:66: AssertionError
+______ test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank ______
+
+>       assert _seconds(lambda: identity.PLAIN_ADDRESS.fullmatch(("a" + AT) * (LONG // 2) + " ")) < BOUND_SECONDS
+E       assert 1.7973685790000218 < 0.5
+E        +  where 1.7973685790000218 = _seconds(<function test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank.<locals>.<lambda> at 0x7f5384fb0b80>)
+
+tests/test_zz_old.py:71: AssertionError
+____ test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end _____
+
+>       assert _seconds(lambda: identity._EMAIL_RE.fullmatch("a" + AT + domain * (LONG // 2) + " ")) < BOUND_SECONDS
+E       assert 1.8508337549999396 < 0.5
+E        +  where 1.8508337549999396 = _seconds(<function test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end.<locals>.<lambda> at 0x7f5384fb09a0>)
+
+tests/test_zz_old.py:77: AssertionError
+____ test_no_source_file_writes_a_clear_text_address_with_a_host_in_braces _____
+
+>       assert hits == []
+E       AssertionError: assert ['src/lead_de...s/feed.py:65'] == []
+E         
+E         Left contains 4 more items, first extra item: 'src/lead_desk/config.py:447'
+E         Use -v to get more diff
+
+tests/test_zz_old.py:161: AssertionError
+_______________ test_desk_origin_and_the_addresses_built_from_it _______________
+
+>       assert urls.desk_origin("127.0.0.1", 8765) == "http" + "://127.0.0.1:8765"
+E       AttributeError: 'NoneType' object has no attribute 'desk_origin'
+
+tests/test_zz_old.py:165: AttributeError
+_____ test_the_windows_exclusive_bind_is_set_before_the_http_server_binds ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5384f27450>
+
+>       assert server._Server.__mro__.index(server._ExclusiveBind) < server._Server.__mro__.index(
+E       AttributeError: module 'lead_desk.server' has no attribute '_ExclusiveBind'
+
+tests/test_zz_old.py:175: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[http://127.0.0.1:8765/leads-http://127.0.0.1:8765/leads] _
+
+given = 'http://127.0.0.1:8765/leads', expected = 'http://127.0.0.1:8765/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[http://localhost:8765-http://localhost:8765/leads] _
+
+given = 'http://localhost:8765', expected = 'http://localhost:8765/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[HTTP://LocalHost:8765/leads-http://localhost:8765/leads] _
+
+given = 'HTTP://LocalHost:8765/leads', expected = 'http://localhost:8765/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[http://[::1]:8765/leads-http://[::1]:8765/leads] _
+
+given = 'http://[::1]:8765/leads', expected = 'http://[::1]:8765/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[https://127.0.0.1:8765/leads-https://127.0.0.1:8765/leads] _
+
+given = 'https://127.0.0.1:8765/leads'
+expected = 'https://127.0.0.1:8765/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+_ test_feed_accepts_only_the_desks_own_address[http://desk.corp.test:80/leads-http://desk.corp.test:80/leads] _
+
+given = 'http://desk.corp.test:80/leads'
+expected = 'http://desk.corp.test:80/leads'
+
+>       assert feed.checked_url(given, OWN) == expected
+E       AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:224: AttributeError
+________ test_feed_refuses_any_other_address[http://evil.test:80/leads] ________
+
+given = 'http://evil.test:80/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+_____ test_feed_refuses_any_other_address[http://169.254.169.254:80/leads] _____
+
+given = 'http://169.254.169.254:80/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+_______ test_feed_refuses_any_other_address[http://127.0.0.1:8765/other] _______
+
+given = 'http://127.0.0.1:8765/other'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+_____ test_feed_refuses_any_other_address[http://127.0.0.1:8765/leads?x=1] _____
+
+given = 'http://127.0.0.1:8765/leads?x=1'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+______ test_feed_refuses_any_other_address[http://127.0.0.1:8765/leads#f] ______
+
+given = 'http://127.0.0.1:8765/leads#f'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+___ test_feed_refuses_any_other_address[http://user:pw@127.0.0.1:8765/leads] ___
+
+given = 'http://user:pw@127.0.0.1:8765/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+_________ test_feed_refuses_any_other_address[http://127.0.0.1/leads] __________
+
+given = 'http://127.0.0.1/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+______ test_feed_refuses_any_other_address[http://127.0.0.1:99999/leads] _______
+
+given = 'http://127.0.0.1:99999/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+___________ test_feed_refuses_any_other_address[file:///etc/passwd] ____________
+
+given = 'file:///etc/passwd'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+________ test_feed_refuses_any_other_address[ftp://127.0.0.1:21/leads] _________
+
+given = 'ftp://127.0.0.1:21/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+___ test_feed_refuses_any_other_address[http://127.0.0.1.evil.test:80/leads] ___
+
+given = 'http://127.0.0.1.evil.test:80/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+_________ test_feed_refuses_any_other_address[//127.0.0.1:8765/leads] __________
+
+given = '//127.0.0.1:8765/leads'
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+____________________ test_feed_refuses_any_other_address[] _____________________
+
+given = ''
+
+>           feed.checked_url(given, OWN)
+E           AttributeError: module 'feed' has no attribute 'checked_url'
+
+tests/test_zz_old.py:247: AttributeError
+____________________ test_feed_post_checks_before_it_sends _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5384de6190>
+
+>           feed.post("http" + "://evil.test:80/leads", {}, 1.0, OWN)
+E           TypeError: post() takes 3 positional arguments but 4 were given
+
+tests/test_zz_old.py:256: TypeError
+____________ test_feed_default_address_is_accepted_by_its_own_check ____________
+
+>           default = f"{urls.desk_origin(own, 8765)}{feed.LEADS_PATH}"
+E           AttributeError: 'NoneType' object has no attribute 'desk_origin'
+
+tests/test_zz_old.py:263: AttributeError
+____________________ test_the_stage_move_flag_starts_false _____________________
+
+>       assert _StageMove().moved is False
+E       TypeError: 'NoneType' object is not callable
+
+tests/test_zz_old.py:316: TypeError
+============================= slowest 8 durations ==============================
+2.00s call     tests/test_zz_old.py::test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign
+1.85s call     tests/test_zz_old.py::test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end
+1.80s call     tests/test_zz_old.py::test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank
+1.18s call     tests/test_zz_old.py::test_run_real_check_address_pattern_finds_the_same_addresses
+0.22s call     tests/test_zz_old.py::test_plain_address_pattern_accepts_the_same_texts
+0.14s call     tests/test_zz_old.py::test_email_pattern_accepts_the_same_texts
+0.12s call     tests/test_zz_old.py::test_a_sent_result_that_moves_the_stage_drops_the_copy_wait
+0.12s call     tests/test_zz_old.py::test_a_failed_result_leaves_the_stage_and_the_copy_wait
+=========================== short test summary info ============================
+FAILED tests/test_zz_old.py::test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign
+FAILED tests/test_zz_old.py::test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank
+FAILED tests/test_zz_old.py::test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end
+FAILED tests/test_zz_old.py::test_no_source_file_writes_a_clear_text_address_with_a_host_in_braces
+FAILED tests/test_zz_old.py::test_desk_origin_and_the_addresses_built_from_it
+FAILED tests/test_zz_old.py::test_the_windows_exclusive_bind_is_set_before_the_http_server_binds
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[http://127.0.0.1:8765/leads-http://127.0.0.1:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[http://localhost:8765-http://localhost:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[HTTP://LocalHost:8765/leads-http://localhost:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[http://[::1]:8765/leads-http://[::1]:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[https://127.0.0.1:8765/leads-https://127.0.0.1:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_accepts_only_the_desks_own_address[http://desk.corp.test:80/leads-http://desk.corp.test:80/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://evil.test:80/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://169.254.169.254:80/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1:8765/other]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1:8765/leads?x=1]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1:8765/leads#f]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://user:pw@127.0.0.1:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1:99999/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[file:///etc/passwd]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[ftp://127.0.0.1:21/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[http://127.0.0.1.evil.test:80/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[//127.0.0.1:8765/leads]
+FAILED tests/test_zz_old.py::test_feed_refuses_any_other_address[] - Attribut...
+FAILED tests/test_zz_old.py::test_feed_post_checks_before_it_sends - TypeErro...
+FAILED tests/test_zz_old.py::test_feed_default_address_is_accepted_by_its_own_check
+FAILED tests/test_zz_old.py::test_the_stage_move_flag_starts_false - TypeErro...
+28 failed, 10 passed in 8.22s
