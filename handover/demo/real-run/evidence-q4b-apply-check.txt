@@ -1,0 +1,5 @@
+A: fixes alone OK
+B: semgrep,versions,fixes OK
+C: versions,semgrep,fixes OK
+D: fixes,semgrep,versions OK
+E: fixes,versions,semgrep OK

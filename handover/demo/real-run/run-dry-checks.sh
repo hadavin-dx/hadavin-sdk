@@ -26,8 +26,10 @@ SAFE_PATH="$(dirname "$PY"):/usr/bin:/bin"
 GEN="$HERE/make_synthetic_config.py"
 STUB="$HERE/probe_stub.py"
 
-# Mismatches seen on head 2db3926 (see DRY-RUN-CHECKS.md). A case listed here still counts as FAIL unless ALLOW_KNOWN=1.
-KNOWN=" rrc-y-keyfile-missing rrc-y-keyfile-2line rrc-y-keyfile-short rrc-y-memory rrc-cfg-binary rrc-dry-fakes-stray rlc-eof-prompt rlc-n-keyfile-missing "
+# Mismatches seen on head 2db3926 (D1 to D6 in DRY-RUN-CHECKS.md) were all fixed by real-run-fixes.patch: the list is empty
+# on a patched tree. On the unpatched 2db3926 the eight cases rrc-y-keyfile-missing rrc-y-keyfile-2line rrc-y-keyfile-short
+# rrc-y-memory rrc-cfg-binary rrc-dry-fakes-stray rlc-eof-prompt rlc-n-keyfile-missing fail. A case listed here still counts as FAIL unless ALLOW_KNOWN=1.
+KNOWN=" "
 
 [ -f "$REPO/scripts/run_real_check.py" ] || { echo "setup: $REPO is not the repo clone"; exit 2; }
 [ -x "$PY" ] || { echo "setup: $PY not executable"; exit 2; }
@@ -198,7 +200,7 @@ do_pass() {
     GROUPSTRAY=allow
     local DEAD="DESK_HUBSPOT_BASE_URL=http://127.0.0.1:1 DESK_HUBSPOT_ALLOW_ANY_BASE_URL=yes DESK_SMTPP_PORT=1 REAL_IMAP_1_HOST=localhost REAL_IMAP_2_HOST=localhost REAL_IMAP_1_PORT=1 REAL_IMAP_2_PORT=1 REAL_DRAIN_SECONDS=5 REAL_MAIL_WAIT_SECONDS=5 REAL_MAIL_SETTLE_SECONDS=1"
     mkcfg ymem $DEAD DESK_DB_PATH=:memory: DESK_PORT="$PORT_X"
-    run_case rrc-y-memory rrc 2 'refus' - y -- "$PY" "$RRC" --config "$P/ymem/real-run.env"
+    run_case rrc-y-memory rrc 4 'refuses to start' - y -- "$PY" "$RRC" --config "$P/ymem/real-run.env"
     rm -f "$P/cwd/desk-1.log" "$P/cwd/desk-2.log"
     mkcfg ykm $DEAD DESK_HUBSPOT_KEY_FILE="$P/none-key.txt" DESK_PORT="$PORT_X"
     run_case rrc-y-keyfile-missing rrc 2 'refus' - y -- "$PY" "$RRC" --config "$P/ykm/real-run.env"
@@ -224,6 +226,9 @@ do_pass() {
   run_case rlc-answer-n rlc 1 'stopped, nothing was called' - n -- "$PY" "$RLC" --key-file "$P/lv/k.txt" --base-url http://127.0.0.1:9 $LB
   run_case rlc-eof-prompt rlc 1 'stopped, nothing was called' - null -- "$PY" "$RLC" --key-file "$P/lv/k.txt" --base-url http://127.0.0.1:9 $LB
   run_case rlc-n-keyfile-missing rlc 2 'refus' - n -- "$PY" "$RLC" --key-file "$P/lv/none.txt" --base-url http://127.0.0.1:9 $LB
+  printf 'short\n' > "$P/lv/ks.txt"
+  run_case rlc-y-keyfile-short rlc 2 'refus' - y -- "$PY" "$RLC" --key-file "$P/lv/ks.txt" --base-url http://127.0.0.1:9 $LB
+  run_case rlc-y-all-calls-failed rlc 3 'at least one call failed' - y -- "$PY" "$RLC" --key-file "$P/lv/k.txt" --base-url http://127.0.0.1:9 --leads 1 --runs 1 --ledger "$P/lv/ledger2.jsonl" --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
   run_case rlc-n-keyfile-2line rlc 1 'stopped, nothing was called' - n -- "$PY" "$RLC" --key-file "$P/lv/k2.txt" --base-url http://127.0.0.1:9 $LB
 
   # ---------------- scripts/hubspot_probe.py (never the real path: always --plan, a refusal, or a loopback stub) ----
