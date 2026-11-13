@@ -48,7 +48,7 @@ names a host for it (no manifest read for that module, or only manifests with an
 nothing but declares no host therefore also reads as real, which is the safe mistake. (3) The banner is worked out when `banner_from_config` is called; a caller that
 keeps it, a page cache, or a config whose fields are changed or reloaded afterwards, can show an out-of-date banner: call it
 again when the config is loaded again. (4) `localhost` is trusted to resolve to the loopback address on this machine. (5) The
-settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build` (`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`) replace what the config names, so the config cannot say what they connect to: `App.overridden` lists the ones given (`hold_run_ids=` too: caller code that decides which runs are held can query any store) and `App.mode_banner()` then shows the "unconfirmed" banner with their names in its separate `overridden` list, never the made-up sentence (a banner worked out from a bare config cannot know about them, so the caller must pass the names or `None`); a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. The check of what such an override really connects to waits for the stand-in labelling of those parts (Part 2). (7) The page script paints the
+settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build` (`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`, `clock=`) replace what the config names, so the config cannot say what they connect to: `App.overridden` lists the ones given (`hold_run_ids=` too: caller code that decides which runs are held can query any store) and `App.mode_banner()` then shows the "unconfirmed" banner with their names in its separate `overridden` list, never the made-up sentence (a banner worked out from a bare config cannot know about them, so the caller must pass the names or `None`); a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. The check of what such an override really connects to waits for the stand-in labelling of those parts (Part 2). (7) The page script paints the
 `tone` it is given and checks it against the mode, the real list and the names; the made-up sentences themselves are checked here,
 in Python, before a banner leaves (`_check_what_is_claimed`), not again in the page. (8) "This machine" is decided for a bare host and
 for a url by one function (`_is_this_machine`): a host with a space, a control character, a non-ASCII character or padding is NOT
@@ -318,11 +318,10 @@ def _banner_for(
     default: "none handed in" is `()`) and names the `app.build` overrides that were given (see `OVERRIDES`). With one or more
     given: tone "real" (a real service is already listed) keeps its tone and gets the sentence `BannerWords.overridden_note`
     added; any other tone becomes "unconfirmed" and its text is EXACTLY `words.not_confirmed` (the made-up claim and "no real
-    service" both rest on the config alone). The unconfirmed banner carries the names only in `overridden`: the PAGE builds the
-    note itself, in its own English words (`OVERRIDDEN_NOTE`), and paints the unconfirmed banner only when its tag and text are
-    exactly the default not-confirmed words; a banner reworded through `words.not_confirmed` is therefore painted by the page
-    as its own English fallback (the names are then shown there too). That is a stated limit of the ready-made page, pinned by
-    a test; a screen with other words writes its own painter."""
+    service" both rest on the config alone). The unconfirmed banner carries the names only in `overridden`: the PAGE builds the note itself, in its own English words
+    (`OVERRIDDEN_NOTE`), and paints every unconfirmed banner with its own English tag and text, whatever tag and text it was
+    given; a banner reworded through `words.not_confirmed` is therefore painted as the English fallback WITH the names (the
+    rewording is lost, the names are not). That is a stated limit of the ready-made page, pinned by a test; a screen with other words writes its own painter."""
     if mode not in STAGES:
         raise ValueError(f"mode {mode!r} is not one of {', '.join(STAGES)}")
     if names is not None and not isinstance(names, Mapping):
@@ -487,7 +486,7 @@ OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_
 NOT_CONNECTIVITY: dict[str, str] = {
     "config_dir": "a folder that `load_config` reads; the config is what the banner reads; checked: used only there in `build`",
     "agents": "a list of agent names that `Runtime` checks against the registry; checked: no callable or object is handed in",
-    "timeout_s": "a number of seconds handed to the executor; checked: it is not called, only compared",
+    "timeout_s": "a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); checked: it is a number, never a callable or an object that connects",
 }
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"

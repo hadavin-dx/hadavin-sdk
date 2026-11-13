@@ -207,7 +207,10 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     assert hits == [], f"scan hits: {hits}"
 
 
-def test_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
     names = [
         "a.cfg",
         "a.ini",
@@ -298,7 +301,10 @@ def test_a_product_root_that_is_itself_a_symlink_is_a_hit(tmp_path: Path) -> Non
     assert g.scan(repo, _cfg()) == ["src: symlink-in-product-root"]
 
 
-def test_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling(
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling(
     tmp_path: Path,
 ) -> None:
     for i, name in enumerate(["Demo_Only", "demo-only", "demo only", "DEMO_ONLY", "demo_only"]):
@@ -318,7 +324,10 @@ def test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit(tmp_path: Pat
     ], "a_file_or_folder_name_that_holds_the_folder_name_is_a_hit: check 1"
 
 
-def test_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Path) -> None:
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Path) -> None:
     for i, spelling in enumerate(
         ["Demo_Only", "demo-only", "demo only", "DEMO-ONLY", "Demo  Only", "demo_-only"]
     ):
@@ -1897,18 +1906,27 @@ def _only_the_mark_and_nul_bytes(tmp_path: Path, label: str, raw: bytes, kind: s
     ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
 
 
-def test_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark is valid UTF-8, so such a file was read as text and passed)
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
+    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "mz", b"MZ" + b"\x00" * 30, "DOS or Windows program")
 
 
-def test_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark is valid UTF-8, so such a file was read as text and passed)
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
+    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR")
 
 
-def test_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8 only through the same two tests above: it needs the kinds to exist; otherwise a pin that text is not refused)
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
+    # What it guards against (a fault of the code before batch 8): it needs the kinds to exist; otherwise a pin that text is not refused)
     text = _repo(tmp_path / "text", {**CLEAN, "src/pkg/a.txt": "MZ is fine as text, so is Rar!\n"})
     assert g.scan(text, _cfg()) == [], "plain text that starts like a mark was refused"
     utf16 = _repo(tmp_path / "u16", CLEAN)
@@ -1918,8 +1936,11 @@ def test_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path
     )
 
 
-def test_bzip2_needs_a_level_from_1_to_9() -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the level byte was not looked at). On purpose, level 0 and ":" are not bzip2: the format
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
+    # What it guards against (a fault of the code before batch 8): the level byte was not looked at). On purpose, level 0 and ":" are not bzip2: the format
     # has levels 1 to 9, so a file with another level byte is not a valid bzip2 file.
     for head, is_bzip2 in (
         (b"BZh1" + b"1AY&SY", True),
@@ -1932,8 +1953,11 @@ def test_bzip2_needs_a_level_from_1_to_9() -> None:
         assert (got == "bzip2") == is_bzip2, f"bzip2 level check: {head!r} was read as {got!r}"
 
 
-def test_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark after the level byte was not looked at). On purpose, a bad block mark is not bzip2.
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
+    # What it guards against (a fault of the code before batch 8): the mark after the level byte was not looked at). On purpose, a bad block mark is not bzip2.
     for head, is_bzip2 in (
         (b"BZh9" + b"XXXXXX", False),
         (b"BZh5" + b"1AY&SX", False),
@@ -1951,7 +1975,7 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     # Decision (also in the CHANGELOG): core has no shared helper, so the guard, `tools/scan_repo.py` and
     # `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED files (exact names, `-z`), and these THREE listings must be equal;
     # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a reference file counts too), so it is only a SUPERSET check
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): (it must hold every tracked file, and is not compared for equality). Proof (fails only on the code before batch 8: test_repo_rules listed without -z and quoted the name).
+    # What it guards: (it must hold every tracked file, and is not compared for equality). Proof (fails only on the code before batch 8: test_repo_rules listed without -z and quoted the name).
     import importlib.util
 
     from tests.test_repo_rules import tracked_files
@@ -1991,8 +2015,11 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     assert from_guard <= set(nr._tracked()), "the folder walk misses a tracked file"
 
 
-def test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
-    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the whole first line of git was shown as it came)
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
+    # What it guards against (a fault of the code before batch 8): the whole first line of git was shown as it came)
     line = (
         "fatal: bypass=true bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
         "plain Bearer yyy8 Authorization: Bearer zzz9"
@@ -2126,9 +2153,14 @@ def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() 
     )
 
 
-def test_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line() -> None:
-    # new feature (fails on old code: its `[\w.-]*` name pattern is quadratic on a long run of hyphens). Counted work, not seconds:
-    # the number of regex searches and the output length are bounded by the line length.
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Counted work, not seconds: the number of characters the name check reads and the output length are bounded by the
+    # line length. (The old quadratic pattern is shown by `test_pin_the_masker_time_grows_in_proportion_not_in_the_square`.)
     for line in (
         "a-" * 5000,
         "=" * 10000,
@@ -2148,13 +2180,54 @@ def test_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_l
             steps += len(text)
             return real(text)
 
-    saved = g._SECRET_NAME
-    g._SECRET_NAME = Counting()  # type: ignore[assignment]
-    try:
-        g._hide_secrets("a=" * 5000 + "x-" * 5000)
-    finally:
-        g._SECRET_NAME = saved
+    monkeypatch.setattr(g, "_SECRET_NAME", Counting())
+    g._hide_secrets("a=" * 5000 + "x-" * 5000)
     assert steps <= 3 * 10000, f"the name check read {steps} characters for a 20000 character line"
+
+
+def test_pin_the_masker_time_grows_in_proportion_not_in_the_square() -> None:
+    # pin (passes on dd827d79; fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of name characters, with
+    # no name of the new code needed): the best of three timings of a line four times longer is under ten times
+    # the shorter one (linear: about four; quadratic: about sixteen)
+    import time
+
+    def best(n: int) -> float:
+        line = "a-" * n
+        runs = []
+        for _ in range(3):
+            t0 = time.perf_counter()
+            g._hide_secrets(line)
+            runs.append(time.perf_counter() - t0)
+        return min(runs)
+
+    short, long_ = best(3000), best(12000)
+    assert long_ < 10 * max(short, 1e-4), (
+        f"a line 4 times longer took {long_ / max(short, 1e-4):.1f} times as long (linear is about 4)"
+    )
+
+
+def _a_scheme_after_a_secret_name(scheme: str, token: str) -> None:
+    for name in ("authorization", "auth", SEC, TOK, PW, "api_ke" + "y"):
+        for tail in ("", " tail"):
+            line = f"fatal: {name}={scheme} {token}{tail}"
+            shown = g._hide_secrets(line)
+            assert token not in shown, f"{name}={scheme}: the token stayed visible: {shown!r}"
+
+
+def test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
+    # proof (fails on dd827d79: the pair step ran first and hid only the word `Bearer`, leaving the token in clear)
+    _a_scheme_after_a_secret_name("Bearer", "a1" * 10)
+
+
+def test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
+    # proof (fails on dd827d79: the pair step ran first and hid only the word `Basic`, leaving the token in clear)
+    _a_scheme_after_a_secret_name("Basic", "b2" * 6)
+
+
+def test_pin_the_colon_form_is_not_read_and_the_docstring_of_the_masker_says_so() -> None:
+    # pin: only `name=value` pairs are hidden; the colon form is a stated limit (it is in the comment above `_BEARER`)
+    text = (ROOT / "tools" / "demo_only_guard.py").read_text(encoding="utf-8")
+    assert "the colon form" in text and "is NOT" in text, "the limit of the masker is not stated"
 
 
 def test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders(tmp_path: Path) -> None:
@@ -2248,3 +2321,99 @@ def test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     g._copy_regular(repo, "d/run.sh", target)
     assert target.read_text(encoding="utf-8") == "x\n"
     assert stat.S_IMODE(target.stat().st_mode) == 0o751, "the mode was not copied without fchmod"
+
+
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> None:
+    # proof (fails on dd827d79: no test read the mode of a copy made through `fchmod`, so a wrong mode went unseen)
+    repo = tmp_path / "r"
+    (repo / "d").mkdir(parents=True)
+    (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
+    (repo / "d" / "run.sh").chmod(0o751)
+    target = tmp_path / "out.sh"
+    g._copy_regular(repo, "d/run.sh", target)
+    assert stat.S_IMODE(target.stat().st_mode) == 0o751, (
+        f"the mode of the copy is {oct(stat.S_IMODE(target.stat().st_mode))}, not 0o751"
+    )
+
+
+def test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on dd827d79: a bare OSError came out of `copy_without_folder`)
+    repo = _tracked_repo(tmp_path / "r", {"docs/plain.txt": "x\n"})
+    real = g._stat_kind
+
+    def says_link(full: Path | str) -> str:
+        return "link" if str(full).endswith("docs/plain.txt") else real(full)
+
+    monkeypatch.setattr(
+        g, "_stat_kind", says_link
+    )  # the check saw a link; the entry is a file by the time it is read
+    try:
+        g.copy_without_folder(repo, _cfg(), tmp_path / "copy")
+    except SystemExit as exc:
+        assert "changed or could not be copied" in str(exc), f"the refusal is not in words: {exc}"
+    except OSError as exc:
+        raise AssertionError(f"a bare OSError came out of the copy: {exc!r}") from None
+    else:
+        raise AssertionError("a swapped entry was copied without a word")
+
+
+def _swap_parent_for_link(repo: Path, parent: str, tmp_path: Path) -> None:
+    outside = tmp_path / "outside"
+    shutil.copytree(repo / parent, outside)
+    shutil.rmtree(repo / parent)
+    (repo / parent).symlink_to(outside)
+
+
+def test_a_loader_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
+    # proof (fails on dd827d79: the loader was read through the swapped folder and passed)
+    repo = _tracked_repo(tmp_path / "r", {"src/pkg/loader.py": f"x = '{FOLDER}'\n"})
+    cfg = _cfg(loaders=("src/pkg/loader.py",))
+    assert g.scan(repo, cfg) == [], "the control repository is not clean"
+    _swap_parent_for_link(repo, "src/pkg", tmp_path)
+    hits = g.scan(repo, cfg)
+    assert any(h.startswith("src/pkg/loader.py: symlink-loader-entry") for h in hits), (
+        f"a loader behind a link was read through it: {hits}"
+    )
+
+
+def test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
+    # proof (fails on dd827d79: the exempt file was read through the swapped folder)
+    repo = _tracked_repo(tmp_path / "r", {"src/pkg/self.py": "x = 1\n"})
+    cfg = _cfg(exempt_files=("src/pkg/self.py",))
+    assert g.scan(repo, cfg) == [], "the control repository is not clean"
+    _swap_parent_for_link(repo, "src/pkg", tmp_path)
+    hits = g.scan(repo, cfg)
+    assert any(h.startswith("src/pkg/self.py: symlink-exempt-file") for h in hits), (
+        f"an exempt file behind a link was read through it: {hits}"
+    )
+
+
+def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
+    # proof (fails on dd827d79: the marker was read through the swapped folder and counted as a regular file)
+    repo = _tracked_repo(tmp_path / "r")
+    assert g.scan(repo, _cfg()) == [], "the control repository is not clean"
+    _swap_parent_for_link(repo, "tools", tmp_path)
+    hits = g.scan(repo, _cfg())
+    assert any("copy-run-marker-not-a-regular-file" in h for h in hits), (
+        f"the marker behind a link was read through it: {hits}"
+    )
+
+
+def test_a_chain_of_links_that_is_too_long_is_named_as_such_in_the_scan(tmp_path: Path) -> None:
+    # proof (fails on dd827d79: the rule said only "a loop of links cannot be followed" for any ELOOP, a long chain included)
+    repo = _tracked_repo(tmp_path / "r", {"docs/end.txt": "x\n"})
+    previous = "end.txt"
+    for i in range(45):
+        name = f"link{i:02d}"
+        os.symlink(previous, repo / "docs" / name)
+        previous = name
+    _track(repo)
+    hits = g.scan(repo, _cfg())
+    assert any(h.startswith("docs/link44: symlink-loop") and "chain too long" in h for h in hits), (
+        f"a chain of 45 links was not named as a chain: {hits}"
+    )

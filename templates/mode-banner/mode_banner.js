@@ -57,7 +57,8 @@
     return false;
   }
   // The names of the handed-in parts: a list of known names only (any other entry makes the banner unusable).
-  // The same rule as Python applies (`_override_names`): known names only, no duplicates, in the order of OVERRIDES.
+  // The list is read by the rule of Python's `_override_names` (known names only, no duplicates, in the order of OVERRIDES);
+  // Python normalises a missing list to "not known"; the page refuses it for demo and quiet (see `usable`).
   function isOverrideList(v) {
     if (!Array.isArray(v) || v.length > OVERRIDES.length) return false;
     var last = -1;
@@ -80,22 +81,30 @@
       if (standins === undefined || standins === null) standins = '';
       if (standins !== '' && !isText(standins)) return NOT_CONFIRMED;
       if (!isTextList(real) || !isTextList(standIns)) return NOT_CONFIRMED;
-      if (overridden === undefined || overridden === null) overridden = [];
+      // a missing or null `overridden` is NOT "none handed in": Python reads it as "not known" (the unconfirmed banner). The page
+      // does the same for the two tones that claim "nothing real" (demo, quiet): it never paints made-up or quiet on a missing
+      // answer. For a real or an unconfirmed banner (which claim nothing made-up) it reads a missing list as empty.
+      var overriddenKnown = !(overridden === undefined || overridden === null);
+      if (!overriddenKnown) overridden = [];
       if (!isOverrideList(overridden)) return NOT_CONFIRMED;
       real = real.slice();
       standIns = standIns.slice();
       overridden = overridden.slice();
       if (MODES.indexOf(mode) < 0) return NOT_CONFIRMED;
       // the tone must agree with the mode and the real services: a mismatch is never painted as given
-      // an "unconfirmed" banner is painted only when its text is EXACTLY the own not-confirmed words; the note of which parts
-      // were supplied by code is built here from `overridden` (the system's own note text is never painted); any other
-      // text under that tone is replaced by the fallback
+      // an "unconfirmed" banner is painted with the page's own not-confirmed words only: whatever tag and text it carries (a
+      // banner reworded in Python, any other text) are replaced by the English words here, and the note of which parts were
+      // supplied by code is built from `overridden` (the system's own note text is never painted), so the names are kept;
+      // a banner that also lists real services or a second line contradicts its tone and is the plain fallback
       if (tone === 'unconfirmed') {
-        if (tag !== NOT_CONFIRMED.tag || text !== NOT_CONFIRMED.text || real.length !== 0 || standins !== '') return NOT_CONFIRMED;
-        if (overridden.length > 0) text = NOT_CONFIRMED.text + ' ' + OVERRIDDEN_NOTE.replace('{names}', overridden.join(', '));
+        if (real.length !== 0 || standins !== '') return NOT_CONFIRMED;
+        mode = NOT_CONFIRMED.mode;
+        tag = NOT_CONFIRMED.tag;
+        text = NOT_CONFIRMED.text;
+        if (overridden.length > 0) text = text + ' ' + OVERRIDDEN_NOTE.replace('{names}', overridden.join(', '));
       }
       // a demo or quiet banner says "nothing real, made up" from the config alone: with any handed-in part it cannot stand
-      if ((tone === 'demo' || tone === 'quiet') && overridden.length !== 0) return NOT_CONFIRMED;
+      if ((tone === 'demo' || tone === 'quiet') && (!overriddenKnown || overridden.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'demo' && (mode !== 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'quiet' && (mode === 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'real') {

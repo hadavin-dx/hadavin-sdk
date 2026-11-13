@@ -251,16 +251,21 @@ def _git_env() -> dict[str, str]:
 # What is hidden in git's own line (`_hide_secrets`), in this order:
 #  1. everything after a literal `Authorization:` header name, to the end of the line, whatever the scheme (Basic, Bearer,
 #     Digest ...). This is WIDER than the core redactor on purpose: a header name was given, so everything after it is a credential;
-#  2. the user and password part of a URL: everything between `://` and the LAST `@` before the next white space (a password
-#     that holds `@` or `/` is hidden whole; a path that holds an `@` is over-hidden, the safe side);
-#  3. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
-#     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
-#     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
-#     `bypass=true` is shown;
-#  4. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`) by EXACTLY the two rules of `hadavin_sdk.guard.redact`
+#  2. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`) by EXACTLY the two rules of `hadavin_sdk.guard.redact`
 #     (BEARER: token of 12 or more characters; BASIC: 8 or more): the same patterns, copied here because the guard runs
 #     without importing the product package; a test compares the pattern text with the core and runs both on a table of inputs.
-#     Shorter tokens stay visible, as in the core.
+#     Shorter tokens stay visible, as in the core. These run BEFORE the pairs below: in `authorization=Bearer <token>` the pair
+#     value stops at the first white space, so a pair step that ran first would hide only the word `Bearer` and leave the
+#     token in clear;
+#  3. the user and password part of a URL: everything between `://` and the LAST `@` before the next white space (a password
+#     that holds `@` or `/` is hidden whole; a path that holds an `@` is over-hidden, the safe side);
+#  4. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
+#     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
+#     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
+#     `bypass=true` is shown.
+# Stated limits: only the `name=value` form is read, so the colon form (`password: x`, `"token": "x"`, `--password x`) is NOT
+# hidden here (git's own first error line does not use it; the core redactor is the place for such text). A pair name is
+# looked for to the left of the `=` only.
 # Every step is one pass over the line with no nested repetition, so a very long line costs time in proportion to its length.
 _BEARER = re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")
 _BASIC = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
@@ -330,10 +335,10 @@ def _hide_group(pattern: re.Pattern[str], line: str) -> str:
 
 def _hide_secrets(line: str) -> str:
     line = _AUTH_HEADER.sub(lambda m: m.group(1) + " " + _HIDDEN, line)
-    line = _hide_urls(line)
-    line = _hide_pairs(line)
     line = _hide_group(_BEARER, line)
-    return _hide_group(_BASIC, line)
+    line = _hide_group(_BASIC, line)
+    line = _hide_urls(line)
+    return _hide_pairs(line)
 
 
 def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
@@ -408,8 +413,10 @@ _PYC_MAGIC_MAX = min(
 )
 
 # (kind, does the head say so): ONE table; `MAGIC_KINDS` and `_magic_kind` both come from it, and the CHANGELOG sentence
-# about first bytes is checked against it by a test. A compiled Python file has a 2-byte version number (little-endian,
-# 3000 to 3999) and "\r\n"; Mach-O is the four 32- and 64-bit magic values in both byte orders; bzip2 needs a level 1 to 9 and then a block or end-of-stream mark.
+# about first bytes is checked against it by a test. A compiled Python file has a 2-byte version number (little-endian, from
+# 3000 up to `_PYC_MAGIC_MAX`: that end follows the interpreter that RUNS the guard, 4531 on Python 3.12, 4627 on 3.14) and
+# "\r\n"; Mach-O is four magic values (32 and 64 bit, each in both byte orders; the fat form is a separate kind below); bzip2
+# needs a level 1 to 9 and then a block or end-of-stream mark.
 _MAGIC_CHECKS: tuple[tuple[str, Callable[[bytes], bool]], ...] = (
     ("zip", lambda d: d[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")),
     ("ELF", lambda d: d[:4] == b"\x7fELF"),
@@ -535,13 +542,23 @@ def _parent_is_link(repo: Path, rel: str) -> bool:
     return False
 
 
+def _entry_info(repo: Path, rel: str) -> tuple[str, int]:
+    """`_stat_info` of `repo/rel` that never reads through a link on the way: when a folder on the way is a link (or cannot
+    be inspected) the entry is a "link" (it would be read through that folder), unless it is gone."""
+    kind, size = _stat_info(repo / rel)
+    if kind != "gone" and _parent_is_link(repo, rel):
+        return "link", 0
+    return kind, size
+
+
 def _stat_kind(full: Path | str) -> str:
     """What the entry at `full` is: the kind of `_stat_info`."""
     return _stat_info(full)[0]
 
 
 def _link_rule(full: Path, folder_target: Path) -> str:
-    """The rule a tracked link outside the product folders breaks, or "": a loop of links is a hit (it cannot be followed);
+    """The rule a tracked link outside the product folders breaks, or "": a loop of links, or a chain too long for the system to
+    follow (both are ELOOP: the system does not tell them apart), is a hit (it cannot be followed);
     a link whose place, worked out by the file system (`os.path.realpath`, which never raises on a loop), is the
     demo-only folder or inside it is a hit. No `Path.resolve()`: it raises RuntimeError on a loop on Python 3.12, and a
     traceback is never an answer here."""
@@ -549,7 +566,7 @@ def _link_rule(full: Path, folder_target: Path) -> str:
         os.stat(full)
     except OSError as exc:
         if exc.errno == errno.ELOOP:
-            return "symlink-loop (a loop of links cannot be followed)"
+            return "symlink-loop (a loop of links, or a chain too long to follow)"
     if Path(os.path.realpath(full)).is_relative_to(folder_target):
         return "symlink-to-demo-only-folder"
     return ""
@@ -567,7 +584,7 @@ def _shape_hits(repo: Path, cfg: GuardConfig, gitlinks: set[str]) -> list[str]:
     folder name on purpose), but their shape is."""
     hits: list[str] = []
     marker = cfg.copy_run_marker
-    kind, size = _stat_info(repo / marker)
+    kind, size = _entry_info(repo, marker)
     if kind == "file" and size != 0:
         hits.append(
             f"{marker}: copy-run-marker-not-empty (the marker must be an empty regular file)"
@@ -577,7 +594,7 @@ def _shape_hits(repo: Path, cfg: GuardConfig, gitlinks: set[str]) -> list[str]:
     for rel in sorted(set(cfg.exempt_files)):
         if rel in gitlinks:
             continue
-        kind, size = _stat_info(repo / rel)
+        kind, size = _entry_info(repo, rel)
         if kind == "link":
             hits.append(f"{rel}: symlink-exempt-file (an exempt file must be a regular file)")
         elif kind == "unreadable":
@@ -623,9 +640,14 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
             )
     for rel in sorted(loaders):
         f = repo / rel
-        loader_kind = _stat_kind(f)
+        loader_kind = _entry_info(repo, rel)[0]
         if loader_kind == "unreadable":
             hits.append(f"{rel}: unreadable-file (the entry cannot be inspected)")
+            continue
+        if loader_kind == "link":
+            hits.append(
+                f"{rel}: symlink-loader-entry (a loader must be a regular file, reached through no link)"
+            )
             continue
         if loader_kind != "file":
             hits.append(f"{rel}: stale-loader-entry (file does not exist)")
@@ -647,7 +669,7 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
     if (
         not running_copy_run
         and _folder_present(repo, cfg)
-        and _stat_kind(repo / cfg.copy_run_marker) != "file"
+        and _entry_info(repo, cfg.copy_run_marker)[0] != "file"
     ):
         hits.append(
             f"{cfg.copy_run_marker}: copy-run-not-wired (the folder exists, so CI must run the copy run "
@@ -947,12 +969,17 @@ def copy_without_folder(repo: Path, cfg: GuardConfig, dest: Path) -> None:
             raise SystemExit(
                 f"demo_only_guard: {rel} cannot be copied (not a file or a link); refusing"
             )
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if kind == "link":
-            os.symlink(os.readlink(source), target)
-            links.append(rel)
-        else:
-            _copy_regular(repo, rel, target)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if kind == "link":
+                os.symlink(os.readlink(source), target)
+                links.append(rel)
+            else:
+                _copy_regular(repo, rel, target)
+        except OSError as exc:  # an entry swapped after `_stat_kind`, or a write that failed: refuse, never a traceback
+            raise SystemExit(
+                f"demo_only_guard: {printable(rel)} changed or could not be copied ({type(exc).__name__}); refusing"
+            ) from exc
     for rel in links:
         if problem := _link_problem(dest, rel, root, folder):
             raise SystemExit(

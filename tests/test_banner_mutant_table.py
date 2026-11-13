@@ -233,7 +233,10 @@ def test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported() 
     ]
 
 
-def test_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported() -> None:
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported() -> None:
     from collections import Counter
 
     kill = Counter(m.only_test for m in bm.M).most_common(1)[0][0]
@@ -243,3 +246,26 @@ def test_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported()
     assert bm.shared_first_lines(same) == [[n.split(" ", 1)[0] for n in names]]
     assert bm.shared_first_lines({names[0]: "assert 1 == 2", names[1]: "assert 3 == 4"}) == []
     assert bm.shared_first_lines({}) == []
+
+
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file() -> None:
+    """A renamed or removed killer left its row naming a test that is not there (R9A4 did, found by running it); the run
+    then reports an error for the row only when someone runs that row. Checked here for every row, with no run."""
+    root = Path(bm.ROOT)
+    missing = []
+    for m in bm.M:
+        text = (root / m.test_file).read_text(encoding="utf-8")
+        if f"def {m.only_test}(" not in text:
+            missing.append((m.name.split(" ", 1)[0], m.only_test))
+    assert missing == []
+
+
+# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+
+
+def test_pin_the_row_count_is_the_number_of_distinct_labels_in_the_table() -> None:
+    labels = [m.name.split(" ", 1)[0] for m in bm.M]
+    assert len(labels) == len(set(labels)) == len(bm.M) and len(labels) >= 300

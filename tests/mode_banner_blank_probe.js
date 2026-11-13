@@ -12,6 +12,6 @@ function ranges(test) {
   if (start >= 0) out.push([start, 0x10ffff]);
   return out;
 }
-const page = ranges((cp) => api.usable({ mode: 'demo', tone: 'demo', tag: String.fromCodePoint(cp), text: 'x', standins: '', real: [], stand_ins: [] }).tone !== 'demo');
+const page = ranges((cp) => api.usable({ mode: 'demo', tone: 'demo', tag: String.fromCodePoint(cp), text: 'x', standins: '', real: [], stand_ins: [], overridden: [] }).tone !== 'demo');
 const trim = ranges((cp) => String.fromCodePoint(cp).trim() === '');
 console.log(JSON.stringify({ page, trim }));
