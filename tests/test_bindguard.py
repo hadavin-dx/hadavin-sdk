@@ -5182,9 +5182,10 @@ def _pin_sentence_problems(flat: str) -> list[str]:
 def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
     """Class: TEXT-TEST. The sentence that lists the pinned classes is PARSED: the count of classes pinned at import, the
     count of all pinned classes and every class name in the list are the ones in ``standins``; the 1,000-row figure is
-    ``MIXED_ROWS``. On 83cdb7a2 (a real run, old source with this file) it errors with
-    ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the
-    behaviour. The mutation runner copies no CHANGELOG, so this test is
+    ``MIXED_ROWS``. On 83cdb7a2 (batch 9; a real run of the whole file against that source, batch 13 builder: 300 passed,
+    96 failed, 1 skipped; 82dd69c1 gives 330 passed, 66 failed, 1 skipped) it errors with
+    ``AttributeError: module 'hadavin_sdk.standins' has no attribute 'HOOKS'`` (that source has no ``HOOKS`` name): a
+    missing name, so it is NOT a fail-before test of the behaviour. The mutation runner copies no CHANGELOG, so this test is
     skipped there: the check that a count off by one is noticed is ``test_the_pin_count_check_notices_a_count_off_by_one``."""
     changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
     if not changelog.is_file():
@@ -5197,8 +5198,10 @@ def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
 def test_the_pin_count_check_notices_a_count_off_by_one() -> None:
     """Class: MUTANT-KILLER for the count itself, without the CHANGELOG file (so it runs in a mutation copy): a made-up
     sentence with the right counts agrees with the code, and the same sentence with each count one too high, or one class
-    name left out, does not. On 83cdb7a2 (a real run, old source with this file) it errors with
-    ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the
+    name left out, does not. On 83cdb7a2 (batch 9; a real run of the whole file against that source, batch 13 builder: 300 passed,
+    96 failed, 1 skipped; 82dd69c1 gives 330 passed, 66 failed, 1 skipped) it errors with
+    ``AttributeError: module 'hadavin_sdk.standins' has no attribute 'HOOKS'`` (that source has no ``HOOKS`` name): a
+    missing name, so it is NOT a fail-before test of the
     behaviour; its proof is the mutant rows B270 and B272."""
     from hadavin_sdk import standins
 
