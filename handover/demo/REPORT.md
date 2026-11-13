@@ -1,6 +1,21 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 13:53Z - STATUS; round 2 (cap 2) of the egm reviewers: comprehension is back with 1 Blocker (the PR body Checks line, filled when the suite ends) + 9 Major; two builders fixing; codebase-details round 2 still running; 3.12 pre-fix suite finished
+**LOAD:** 4 cores, 15 GB RAM; agents running: 3 (builders b7 ac7b6e91d78c2771d and b8 a3f3b4e84731a9119, `egm:egm-codebase-details` round 2 af8b7a891895fa771); background shells: 1 (full suite 3.12 on the freeze candidate); heavy slots 1 of 3.
+| id | what it does | why | round | state | next action |
+|---|---|---|---|---|---|
+| a9ddd9bcf50f206b7 `egm:egm-comprehension` | round 2 on the candidate | item 2 | **round 2 of cap 2** | done: 1 Blocker (PR body RESULTS-PLACEHOLDER: expected), 9 Major, 10 Nit; saved `tools-claims/egm-comprehension-r2-report.md`; Majors: stale pointers to deleted load figures (README:117, tests.md P5 row, limits.md:91), n8n-recipe.md:18/24, tests.md:127, "repeat"/"replay"/"counted" used for two things, PR body line 11 contradicting the new settings text (send timeout), a dead pointer in sonar.yml, PR body deferrals without a reason | fix then a different fresh agent verifies the changed sentences (no round 3: cap) |
+| a3a343d4e4f7c966c (second verifier) | verified notes 3-6 | item 2 re-verify | n/a | done: 7 FALSE/UNPROVEN + 1 leftover person word (`tools-claims/ver2.md`) | b7 fixes them (overlaps M1, M3, M4 above) |
+| b7 ac7b6e91d78c2771d, b8 a3f3b4e84731a9119 | b7: verifier rows + n8n/limits/README:117/sonar:4/semgrep.in/settings:72; b8: the other round-2 Majors and Nits (M2, M5, M6, M10, N1-N7, N9) | fixes | fix round | running | freeze after both |
+| PR body (me) | M7, M8, M9, N10 fixed: plain intro of "desk" and "reaper", send-timeout wording fixed, the three weak tests and the start-up difference now say "text-only series; logged for a separate change", insertion/deletion numbers to be re-counted at the freeze | | | done in the file | Checks line after the suite |
+**FAILURES AND RETRIES (new):**
+| id | test or step | result | failure first line verbatim | cause | retries so far and why | what I did | verified how |
+|---|---|---|---|---|---|---|---|
+| F55 (named) | 3.12 full suite, pre-fix tree | **1 failed, 3878 passed, 4 skipped in 1557.59 s (0:25:57)** | `tests/test_path_confinement.py::test_v1_a_config_below_a_traverse_only_folder_is_refused_with_a_message_as_an_unprivileged_user`: `ModuleNotFoundError: No module named 'tools'` | environment: that test starts the code as the user nobody, and my clone sits in a folder made by `mktemp -d` (mode 700), so nobody cannot enter it; the candidate suite runs from a mode-755 copy | 1 (rerun in the 755 copy is the candidate suite, running) | explained | `stat`: 700 vs 755 |
+| F64 | review against my output: egm comprehension round 2 | 1 Blocker (placeholder) / 9 Major / 10 Nit | n/a | real text defects (stale references to what round 1 deleted; PR body statements) | round 2 of cap 2 | fixing | fresh verifier |
+**Totals line: 6 tests failed in total today in my own runs before F55 (F7, F8, F10, F27, F40, F41); F55 and F61 environment (explained), F62 real defect (ruff), F63 checker blind spot; 0 flakes; F45 (a full run that died silently) unexplained; semgrep blocked (F48).**
+
 ## 2026-11-13 13:49Z - STATUS; FREEZE CANDIDATE built: 17 commits, `git am` tree 74480f88d8aac8c09d4197257dd724a879de5675; checks done on it; round 2 of the two egm reviewers + a second fresh verifier running; full suite 3.12 re-running on it
 **LOAD:** 4 cores, 15 GB RAM; agents running: 3 (second verifier a3a343d4e4f7c966c, `egm:egm-codebase-details` round 2 af8b7a891895fa771, `egm:egm-comprehension` round 2 a9ddd9bcf50f206b7); background shells: 3 (old pre-fix suite 3.12 at 97 percent, 3.13 finished, NEW full suite 3.12 on the freeze candidate); heavy slots 2 of 3.
 | id | what it does | why | started | expected end / left | round or retry n of cap | state | next action |
