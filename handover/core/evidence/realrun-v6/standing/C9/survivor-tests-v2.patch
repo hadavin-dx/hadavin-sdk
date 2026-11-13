@@ -1,0 +1,29 @@
+--- a/tests/test_survivor_keep_scan.py
++++ b/tests/test_survivor_keep_scan.py
+@@ -15,18 +15,26 @@
+ import sys
+ from pathlib import Path
+ 
++import pytest
++
+ sys.path.insert(0, str(Path(__file__).resolve().parent))
+ from keep_scan import keep_self_tests_that_leak  # noqa: E402
+ 
++# `python -OO` strips docstrings, so the made-up sources above would be gone: skip with a plain reason.
++_NO_DOCSTRING = pytest.mark.skipif(
++    __doc__ is None, reason="python -OO removed the module docstring that holds the made-up sources"
++)
+ _SOURCES = dict(part.split("\n", 1) for part in (__doc__ or "").split("--- ")[1:])
+ 
+ 
++@_NO_DOCSTRING
+ def test_a_flag_that_only_the_format_fold_can_read_is_found() -> None:
+     """`"{1}{0}".format("keep", "--")` is the keep flag; the pieces glued in source order give
+     `keep--`, which holds no flag. Only the fold of the `.format` call finds it (mutant K6)."""
+     assert keep_self_tests_that_leak(_SOURCES["fold"]) == (["test_a"], 1)
+ 
+ 
++@_NO_DOCSTRING
+ def test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces() -> None:
+     """The pieces `--`, `{}`, `keep` stand in a list (no `+`, no call to fold): only the glued
+     text with its format fields removed holds the flag (mutant K10)."""

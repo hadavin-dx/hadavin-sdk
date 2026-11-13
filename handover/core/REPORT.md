@@ -1,5 +1,32 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:42Z; lead clock about 15 min ahead) CORE lead (fix order 12:55Z received; EGM note: plan review folded into the one reviewer after the builders, because the lead order sets the design; plan-review skipped on purpose, say so if you want it first)
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F1 | builder: feed.py tracebacks + sibling scripts (class: uncaught exception instead of refusal); tree-F1 | lead fix order | 12:42Z | 60 min | build 1 | RUNNING (a94ba961) | evidence runner, then reviewer |
+| F2 | builder: argparse echo (run_real_check.py) + --dry-port-base range + --dry-smtp-script + --price-date/--effort/duplicate --model; tree-F2 | same | 12:42Z | 60 min | build 1 | RUNNING (a8fca61d) | same |
+| F3 | builder: library readers on FIFO + control characters in env values; tree-F3 | same | 12:42Z | 60 min | build 1 | RUNNING (aed88e89) | same |
+| F4 | builder: doc mismatches (C10 patch re-checked + C5 and C8 items); tree-F4 | same | 12:42Z | 60 min | build 1 | RUNNING (aa6588f2) | same |
+| E1 | evidence runner: B2 baseline rc=1 re-run 5x alone, 5x with a parallel run on the same TMPDIR, 3x separate TMPDIR; the two "environment" failures with TMPDIR inside/outside on clean main and patched | root causes by experiment | 12:42Z | 60 min | 1 | RUNNING (aff4d904) | table in FAILURES |
+| C9 | K6+K10 together; -OO | self-assigned | 12:35Z | done | 1 | DONE standing/C9: K6+K10 together: both keep_scan tests fail (`([], 0) != (['test_a'], 1)`); v1 under python -OO: 2 failed (KeyError 'fold' / 'glue': module docstring is None), 1 passed; survivor-tests-v2.patch (not applied) adds skipif for -OO; v2: normal 3 passed, -OO 1 passed 2 skipped, K6 alone / K10 alone / both kill the right test; with test_take_script_refusals 145 passed in 204.64 s. Agent slip: its restore helper once saved a mutated file as good; re-copied and cmp-checked | none |
+| D1 | full suite + docs-fix-v1.patch | docs patch breaks no test | 12:38Z | about 13:05Z | 1 | RUNNING | compare |
+| C2 C6 C11 | hostile 1, flakiness 20x, echo-class search | queue | 12:28-12:44Z | 60 min | 1 | RUNNING | read results |
+
+LOAD 12:42Z: load average 1.64 2.31 1.60 on 4 cores, 9 agents + D1 (heavy slot 1 of 3). If timings in D1 or C6 look skewed I say so.
+
+**FAILURES AND RETRIES** (earlier table in standing/FAILURES-AND-RETRIES.md; new column "root cause proven? yes/no (how)" added now):
+| id | result | cause | root cause proven? |
+|---|---|---|---|
+| A run 1, C, A3 (the 2 tests failing with TMPDIR inside the tree) | 2 failed each | environment | PARTLY: A3 shows clean main fails the same two with the in-tree TMPDIR, and 2-file re-runs outside passed (3 passed). NOT yet a clean A/B experiment on one tree: E1 does it now |
+| B2 first baseline rc=1 | unexplained | UNKNOWN | NO: the rc=1 log was overwritten by the second run (the script ran twice at once); E1 re-runs it 5+5+3 times |
+| A attempt 1 SIGTERM, A2 attempt 1 | no result | harness / container restart | NO experiment possible; evidence: exit 143 and a container restart about 10:22Z |
+| gitleaks 927 hits | tool config | wrong .gitleaks.toml | YES: same command with main's own toml gives 0 leaks (gates/G, GL) |
+| C1/C5/C7/C8 findings | real product defects and doc mismatches | real | YES for feed.py tracebacks, the argparse echo (reproduced by me), collect-only -q text (reproduced); NO for crash_desk PYTHONPATH (not reproduced), SMTP timeout default (agent ran python -I: 5.0) |
+Totals: 2 distinct tests failed today (environment, cause partly shown), 0 real test failures, 0 flakes shown, 1 unexplained (B2 rc=1) until E1 reports. Real product defects found by agents: 7 classes, fix patches in progress (F1-F4).
+ASK: none.
+
+
 ## REPORT (container clock 12:40Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
