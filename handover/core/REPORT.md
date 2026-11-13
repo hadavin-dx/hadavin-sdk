@@ -1,6 +1,6 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
-## 06:27Z CORE lead block
+## 06:23Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
 - Part 6 batch 15 pushed as 20c369f0 (builder-claimed, unverified): 47 targeted mutant rows good including B12; the 60-row sample and an all-rows run were NOT run on this head; 34 test files outside its 54-file set not run; about 85 added lines still over 100 columns (strings, code, tables; comments rewrapped); 9 sibling direct program starts not moved to the helper (listed in FOLLOW_UP_DIRECT_STARTS: that is a deferral I will have the builder fix or justify). The lead's claim "bypass=true stays visible" does not match the core as the builder found it: the core hides bypass=true, the masker hides bypass=0 and bypass=1 where the core does not. Round 15 started (runner af6574fd, reviewers a54db384 design and a969e991 codebase).
