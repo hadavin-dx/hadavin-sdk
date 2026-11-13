@@ -3649,6 +3649,11 @@ def test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_no
         )
 
 
+# the five error types the banner reads as "cannot be read" (written out here, so that the pins below also run on a head
+# that has no `READ_ERRORS` name; `test_the_list_of_read_errors_holds_no_type_that_takes_every_error` compares it)
+NAMED_READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
+
+
 class _Surprise(Exception):
     """An error type that no tuple of the banner or of the app names: it stands for a bug in the code."""
 
@@ -3757,14 +3762,15 @@ def test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner(tmp_path, monk
     _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App._seal (reads the app at build)")
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: TypeError: unreadable (a named error leaves the site there)
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @pytest.mark.parametrize("site", sorted(SURPRISE_SITES))
 def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
 ) -> None:
     # the other side of the rule above: each error in `READ_ERRORS` is an unreadable banner, shown
     # as not confirmed
-    for kind in mb.READ_ERRORS:
+    for kind in NAMED_READ_ERRORS:
 
         def raise_kind(*_a, _kind=kind, **_k):
             raise _kind("unreadable")
@@ -3779,13 +3785,18 @@ def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
         monkeypatch.undo()  # the next error type starts from an untouched app
 
 
-# fail-before: the old heads name no READ_ERRORS tuple (they have a private one), so the first run there fails on that name, which is not a behaviour result; this is a new check of the tuple itself.
+# fail-before (real run on dd827d79, batch 14): it FAILS there on a missing name, first failing line: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'. That is not a behaviour result (the old head keeps the private name).
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there on a missing name, first failing line: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'. That is not a behaviour result (the old head keeps the private name).
 def test_the_list_of_read_errors_holds_no_type_that_takes_every_error() -> None:
+    assert mb.READ_ERRORS == NAMED_READ_ERRORS, (
+        f"READ_ERRORS is not the five named types: {mb.READ_ERRORS}"
+    )
     wide = [kind.__name__ for kind in mb.READ_ERRORS if issubclass(_Surprise, kind)]
     assert not wide, f"READ_ERRORS holds a type that takes every error: {wide}"
 
 
-# fail-before: not run on the old heads; the source check at mode_banner.py `_source_leaves_this_machine` is the sixth `except READ_ERRORS` site (the other five are in the surprise list above).
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a bug of an unnamed type in the endpoint of a source was turned into an answer
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there (that head already named the five types at this site), so it fixes nothing there; row R14C1 shows it kills the broad catch.
 def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
     monkeypatch,
 ) -> None:
@@ -3799,10 +3810,12 @@ def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
     )
 
 
-def test_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine(
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine(
     monkeypatch,
 ) -> None:
-    for kind in mb.READ_ERRORS:
+    for kind in NAMED_READ_ERRORS:
 
         def raise_kind(*_a, _kind=kind, **_k):
             raise _kind("unreadable")

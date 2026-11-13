@@ -2048,6 +2048,8 @@ def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> 
     )
 
 
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> None:
     # letters only: the guard and the core agree (the rows where the guard hides more are in the next test)
     for scheme, core, low in (
@@ -2071,6 +2073,8 @@ def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> N
             )
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
 def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_stated_ones() -> (
     None
 ):
@@ -2104,6 +2108,8 @@ def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_s
         assert shown == guard_shows, f"a stated row differs: {line!r} gave {shown!r}"
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a 17 character Basic token with a dash stayed visible
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: a 17 character Basic token with a dash stayed visible
 def test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_shows_it() -> None:
     line = "x Basic abc-defghijklmnop y"
     assert _core("BASIC").search(line) is None, (
@@ -2114,11 +2120,15 @@ def test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_sho
     )
 
 
-def test_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core() -> None:
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core() -> None:
     line = "x Basic abc-defghijk y"
     assert g._hide_secrets(line) == line, "a 12 character Basic token with a dash was hidden"
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the quoted authorization value was not hidden whole
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the quoted authorization value was not hidden whole
 def test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole() -> None:
     shown = g._hide_secrets('authorization=Bearer "abc def" tail')
     assert shown == "authorization=<hidden> tail", (
@@ -2616,8 +2626,9 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     )
 
 
-# fail-before: the helper file does not exist on the old heads, so there is nothing to run there; it is a new contract, tested here and by rows R13A9 and R14D1.
-def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
     None
 ):
 
@@ -2641,7 +2652,9 @@ def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it
     )
 
 
-def test_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text() -> (
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+def test_pin_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text() -> (
     None
 ):
 
@@ -2667,7 +2680,9 @@ def test_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elemen
         raise AssertionError(f"a text with a NUL character was run: {bad!r}")
 
 
-def test_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
+def test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
 
     done = fixed_run.run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
     assert done.stdout.strip() == b"7", f"the program did not run: {done.stdout!r}"
@@ -2695,6 +2710,8 @@ def _calls_of(path: Path, names: set[str]) -> list[Any]:
     return out
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: demo_only_guard.py line 362: a program is started without the helper
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: demo_only_guard.py line 400: a program is started without the helper
 def test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper() -> None:
     import ast
 

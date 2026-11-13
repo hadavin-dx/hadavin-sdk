@@ -145,6 +145,8 @@ def _and_list(kinds: tuple[type, ...]) -> str:
     return ", ".join(names[:-1]) + " and " + names[-1]
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the tests
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the tests
 def test_the_changelog_counts_the_read_error_sites_as_the_source_has_them() -> None:
     sites = sum(
         (ROOT / "src/hadavin_sdk" / name).read_text(encoding="utf-8").count("except READ_ERRORS")
@@ -159,6 +161,8 @@ def test_the_changelog_counts_the_read_error_sites_as_the_source_has_them() -> N
     )
 
 
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
 def test_the_changelog_states_the_log_rule_of_each_path_of_the_banner() -> None:
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     for phrase in (
@@ -170,7 +174,9 @@ def test_the_changelog_states_the_log_rule_of_each_path_of_the_banner() -> None:
         assert phrase in text, f"the log rule is not in the CHANGELOG: {phrase}"
 
 
-def test_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_and_by_the_function(
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_and_by_the_function(
     tmp_path, monkeypatch, caplog
 ) -> None:
     import logging

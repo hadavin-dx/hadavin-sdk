@@ -293,7 +293,8 @@ def test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_tab
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 332 rows
+# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 337 rows
+# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 337 rows
 def test_the_changelog_states_the_row_count_of_the_table() -> None:
     text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"the table has {bm.ROW_COUNT} rows" in text, (
@@ -614,7 +615,9 @@ def test_pin_three_loose_expectations_and_a_short_one_are_each_reported(tmp_path
     assert reported == {"Z5", "Z6", "Z7", "Z8", "Z9"}, reported
 
 
-def test_a_focused_run_names_a_word_that_matches_nothing_and_a_row_outside_the_list() -> None:
+# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_focused_run_names_a_word_that_matches_nothing_and_a_row_outside_the_list() -> None:
     names = ["R1A one", "R2B two"]
     assert bm.focus_problems(["R1A"], ["R1A one"], names) == []
     assert bm.focus_problems(["R9Z"], [], names) == ["focus word matches no row: R9Z"], (

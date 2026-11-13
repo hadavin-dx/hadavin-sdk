@@ -2484,7 +2484,7 @@ M = [
         "    if refused:\n",
         "    if False:\n",
         T_G,
-        "test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list",
+        "test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list",
         "a program was started with {'shell'",
     ),
     gd(
@@ -2505,7 +2505,7 @@ M = [
         "R14A3 a token of 12 characters after a bare scheme word is hidden",
         "return len(body) >= 16 or",
         "return len(body) >= 12 or",
-        "test_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core",
+        "test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core",
         "a 12 character Basic token with a dash was hidden",
     ),
     gd(
