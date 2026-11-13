@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:12Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No head is final and no builder has pushed since 04:08Z: P2 304c3bd3 (6 Major incl. fail-open; B98 survives), SONAR-PATH 9602b4ca (1 Blocker + 10 Major), P6 cdbe1445 (1 Blocker + 8 Major). Nothing new was measured in this window. No SonarCloud claim. No laptop run requested.
+
+**LEAD ACTIONS:** no new order since 04:02Z (both items already applied).
+**LIVE ITEMS (3):** P2 batch 11 builder aa049db0 (started 04:03Z); SONAR-PATH batch 4 builder a982868e (started 04:04Z); P6 batch 11 builder ab741cc2 (started about 03:50Z; past 20 minutes without a push, will ask for a checkpoint note at 04:20Z if still silent).
+**ROUNDS (WHY):** P2 round 11, SONAR-PATH round 4, P6 round 11 (security and mode-safety; no cap).
+**FINISHED SINCE LAST BLOCK:** nothing.
+**EGM STEP PER PACKAGE:** P2 3, SONAR-PATH 3, P6 3 (builders working).
+**LANE SONAR-PATH:** a982868e; EGM step 3; A done, B in batch 4, C and D not started.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:07Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
