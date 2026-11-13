@@ -5,7 +5,7 @@ Repo under test: public demo repo, main 61ded9e, made-up data. Patches: (1) real
 All numbers are RUNNER OUTPUT (evidence runners record, they do not judge). I did not re-run them; I only read them. I wrote no fix and changed no code.
 
 ## What failed or is uncertain (first)
-1. 9 mutants survived in runner B2's run (R20, K6, K10, C9, N20, P2, P4, P10, and see table). None was investigated; nothing was fixed (LEAD order).
+1. 8 mutants survived in runner B2's run (R20, K6, K10, C9, N20, P2, P4, P10; the runner's report text says "6" and "9", but its own per-set counts add to 8, so 8 is used here). None was investigated; nothing was fixed (LEAD order).
 2. R20 survived here but the demo's first-pass evidence says it was KILLED. Cause unknown.
 3. P2, P4, P10 survive singly; the demo evidence has no results for muts2.json, so there is no first pass to compare with. Their two combined mutants P2b and P4b were killed.
 4. K6 and K10: the demo says only the pair together is killed. The pair was NOT run, so that claim is not re-verified.
