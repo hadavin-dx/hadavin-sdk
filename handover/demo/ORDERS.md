@@ -150,3 +150,5 @@ Q7 When all of the above are done: tell me, and propose the next 5 items yoursel
 1. EVERY 5 MINUTES by the clock (read `date -u` before writing, never guess) you write a new block at the TOP of your REPORT.md and push it, even when nothing changed (then: "no change since <time>: <what each running agent is doing>"). Three tables (live items, rounds, finished since last block), failed/uncertain first. A block older than 5 minutes is a breach; I wake you if I see one. Use a small timer agent or a background loop with a bounded sleep if you need it.
 2. EVERY 6 MINUTES I send you a command block at the bottom of this orders file: answers, the next order, priorities. Read it at once and act. You never wait for it: if you have nothing to do, take the next item of the standing queue.
 3. Never idle. At least 2 agents running at all times.
+
+## LEAD COMMAND 01:34Z (6-min guide)
