@@ -1,0 +1,985 @@
+26124 round 1 blind --port 27501
+26150 round 1 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26471 round 1 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27329 round 2 blind --port 27502
+27366 round 2 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27445 round 2 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28367 round 3 blind --port 27503
+28438 round 3 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28775 round 3 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29095 round 3 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31039 round 4 blind --port 27504
+31083 round 4 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31335 round 4 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32206 round 5 blind --port 27505
+32256 round 5 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+388 round 5 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+619 round 5 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1261 round 6 blind --port 27506
+1328 round 6 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1437 round 6 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2364 round 7 blind --port 27507
+2416 round 7 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2603 round 7 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2748 round 8 blind --port 27508
+2756 round 8 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2913 round 8 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3365 round 8 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3680 round 9 blind --port 27509
+3708 round 9 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3904 round 9 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4525 round 10 blind --port 27510
+4586 round 10 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4825 round 10 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5562 round 11 blind --port 27511
+5566 round 11 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5796 round 11 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6386 round 12 blind --port 27512
+6419 round 12 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6476 round 12 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6633 round 12 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6929 round 13 blind --port 27513
+6950 round 13 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7113 round 13 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7441 round 14 blind --port 27514
+7468 round 14 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7505 round 14 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7730 round 15 blind --port 27515
+7746 round 15 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7951 round 15 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9187 round 16 blind --port 27516
+9267 round 16 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9721 round 16 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11655 round 17 blind --port 27517
+11746 round 17 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12239 round 17 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12806 round 18 blind --port 27518
+12814 round 18 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12872 round 18 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13197 round 19 blind --port 27519
+13221 round 19 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13388 round 19 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13844 round 20 blind --port 27520
+13861 round 20 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14035 round 20 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14549 round 20 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14823 round 21 blind --port 27521
+14834 round 21 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14995 round 21 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15426 round 22 blind --port 27522
+15440 round 22 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15542 round 22 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15926 round 23 blind --port 27523
+15950 round 23 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16388 round 23 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16646 round 24 blind --port 27524
+16656 round 24 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16916 round 24 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17729 round 25 blind --port 27525
+17785 round 25 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17859 round 25 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18384 round 26 blind --port 27526
+18406 round 26 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18577 round 26 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19428 round 27 blind --port 27527
+19551 round 27 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20134 round 27 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20454 round 28 blind --port 27528
+20513 round 28 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21142 round 28 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21638 round 28 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22282 round 29 blind --port 27529
+22384 round 29 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23174 round 29 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24117 round 30 blind --port 27530
+24143 round 30 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24258 round 30 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24731 round 31 blind --port 27531
+24738 round 31 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24905 round 31 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24944 round 31 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25592 round 32 blind --port 27532
+25607 round 32 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25842 round 32 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26111 round 32 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26853 round 33 blind --port 27533
+26874 round 33 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27054 round 33 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27555 round 34 blind --port 27534
+27564 round 34 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27724 round 34 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28091 round 35 blind --port 27535
+28099 round 35 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28450 round 35 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28631 round 36 blind --port 27536
+28657 round 36 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28805 round 36 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29362 round 37 blind --port 27537
+29371 round 37 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29523 round 37 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29945 round 38 blind --port 27538
+29966 round 38 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30127 round 38 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30425 round 39 blind --port 27539
+30440 round 39 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30498 round 39 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30804 round 40 blind --port 27540
+30822 round 40 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30876 round 40 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30973 round 40 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31385 round 41 blind --port 27541
+31404 round 41 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31489 round 41 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31963 round 42 blind --port 27542
+31969 round 42 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32129 round 42 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+722 round 43 blind --port 27543
+729 round 43 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+845 round 43 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+950 round 43 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1541 round 44 blind --port 27544
+1571 round 44 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1658 round 44 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2399 round 45 blind --port 27545
+2425 round 45 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2503 round 45 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2954 round 46 blind --port 27546
+2958 round 46 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3029 round 46 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3175 round 46 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3616 round 47 blind --port 27547
+3628 round 47 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3807 round 47 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4120 round 48 blind --port 27548
+4125 round 48 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4258 round 48 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4283 round 48 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4688 round 49 blind --port 27549
+4690 round 49 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4891 round 49 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5309 round 50 blind --port 27550
+5319 round 50 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5358 round 50 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5768 round 51 blind --port 27551
+5798 round 51 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5991 round 51 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6431 round 52 blind --port 27552
+6449 round 52 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6924 round 52 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7107 round 53 blind --port 27553
+7110 round 53 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7458 round 53 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7718 round 53 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8184 round 54 blind --port 27554
+8214 round 54 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8413 round 54 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9080 round 55 blind --port 27555
+9092 round 55 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9189 round 55 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9990 round 56 blind --port 27556
+10030 round 56 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10406 round 56 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10670 round 57 blind --port 27557
+10673 round 57 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10841 round 57 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11232 round 57 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11531 round 58 blind --port 27558
+11553 round 58 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11634 round 58 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12162 round 59 blind --port 27559
+12208 round 59 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12293 round 59 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12771 round 60 blind --port 27560
+12785 round 60 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13286 round 60 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13479 round 60 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14019 round 61 blind --port 27561
+14030 round 61 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14235 round 61 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14855 round 62 blind --port 27562
+14940 round 62 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15180 round 62 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15996 round 63 blind --port 27563
+16010 round 63 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16201 round 63 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16404 round 63 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16862 round 64 blind --port 27564
+16868 round 64 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16902 round 64 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16998 round 64 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17280 round 65 blind --port 27565
+17284 round 65 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17456 round 65 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17609 round 66 blind --port 27566
+17617 round 66 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17701 round 66 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18056 round 67 blind --port 27567
+18074 round 67 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18504 round 67 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18770 round 68 blind --port 27568
+18781 round 68 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18885 round 68 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19457 round 69 blind --port 27569
+19501 round 69 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19695 round 69 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19881 round 70 blind --port 27570
+19909 round 70 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20075 round 70 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20192 round 70 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20796 round 71 blind --port 27571
+20826 round 71 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20903 round 71 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21343 round 72 blind --port 27572
+21355 round 72 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21410 round 72 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21862 round 73 blind --port 27573
+21866 round 73 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21890 round 73 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22387 round 74 blind --port 27574
+22401 round 74 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22532 round 74 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22916 round 75 blind --port 27575
+22925 round 75 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23018 round 75 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24232 round 76 blind --port 27576
+24487 round 76 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24946 round 76 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26111 round 77 blind --port 27577
+26170 round 77 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26523 round 77 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26922 round 78 blind --port 27578
+27029 round 78 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27813 round 78 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28563 round 79 blind --port 27579
+28612 round 79 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29444 round 79 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30664 round 80 blind --port 27580
+30733 round 80 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31399 round 80 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31724 round 80 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31887 round 81 blind --port 27581
+31899 round 81 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31943 round 81 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31976 round 81 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32198 round 82 blind --port 27582
+32206 round 82 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32556 round 82 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32686 round 82 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+636 round 83 blind --port 27583
+645 round 83 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+765 round 83 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1023 round 83 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1157 round 84 blind --port 27584
+1181 round 84 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1215 round 84 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1338 round 84 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1719 round 85 blind --port 27585
+1736 round 85 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1780 round 85 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2477 round 85 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2713 round 86 blind --port 27586
+2717 round 86 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2938 round 86 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3863 round 87 blind --port 27587
+3869 round 87 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4022 round 87 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4562 round 88 blind --port 27588
+4574 round 88 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4667 round 88 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5607 round 89 blind --port 27589
+5628 round 89 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5707 round 89 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6549 round 90 blind --port 27590
+6587 round 90 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7019 round 90 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7383 round 91 blind --port 27591
+7405 round 91 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7495 round 91 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8394 round 92 blind --port 27592
+8432 round 92 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8693 round 92 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8944 round 92 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9761 round 93 blind --port 27593
+9786 round 93 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9921 round 93 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10206 round 93 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11104 round 94 blind --port 27594
+11149 round 94 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11825 round 94 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12436 round 95 blind --port 27595
+12474 round 95 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12675 round 95 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12838 round 95 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13419 round 96 blind --port 27596
+13421 round 96 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13536 round 96 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14100 round 97 blind --port 27597
+14133 round 97 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14330 round 97 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14604 round 98 blind --port 27598
+14628 round 98 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15017 round 98 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15321 round 99 blind --port 27599
+15344 round 99 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15365 round 99 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15517 round 99 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15974 round 100 blind --port 27600
+16002 round 100 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16118 round 100 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16669 round 101 blind --port 27601
+16703 round 101 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16860 round 101 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17246 round 102 blind --port 27602
+17252 round 102 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17442 round 102 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17601 round 103 blind --port 27603
+17620 round 103 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17694 round 103 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18009 round 104 blind --port 27604
+18023 round 104 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18070 round 104 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18478 round 105 blind --port 27605
+18503 round 105 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18561 round 105 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18741 round 105 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18871 round 106 blind --port 27606
+18875 round 106 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19306 round 106 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19543 round 106 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19795 round 107 blind --port 27607
+19804 round 107 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19840 round 107 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20028 round 108 blind --port 27608
+20030 round 108 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20129 round 108 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20562 round 109 blind --port 27609
+20569 round 109 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20867 round 109 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20974 round 109 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21099 round 110 blind --port 27610
+21106 round 110 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21238 round 110 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21295 round 110 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21433 round 111 blind --port 27611
+21435 round 111 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21521 round 111 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21830 round 112 blind --port 27612
+21836 round 112 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22071 round 112 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22197 round 112 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22347 round 113 blind --port 27613
+22352 round 113 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22397 round 113 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22789 round 114 blind --port 27614
+22794 round 114 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22840 round 114 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23019 round 115 blind --port 27615
+23021 round 115 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23120 round 115 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23391 round 116 blind --port 27616
+23397 round 116 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23495 round 116 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23515 round 116 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23754 round 117 blind --port 27617
+23758 round 117 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23875 round 117 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24143 round 118 blind --port 27618
+24171 round 118 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24248 round 118 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24549 round 119 blind --port 27619
+24560 round 119 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24672 round 119 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24932 round 120 blind --port 27620
+24934 round 120 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25081 round 120 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25142 round 121 blind --port 27621
+25145 round 121 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25273 round 121 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25736 round 122 blind --port 27622
+25744 round 122 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26017 round 122 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26152 round 123 blind --port 27623
+26158 round 123 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26254 round 123 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26754 round 124 blind --port 27624
+26769 round 124 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26878 round 124 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27015 round 124 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27567 round 125 blind --port 27625
+27570 round 125 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27651 round 125 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27967 round 126 blind --port 27626
+27969 round 126 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28074 round 126 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28396 round 127 blind --port 27627
+28400 round 127 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28554 round 127 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28863 round 128 blind --port 27628
+28868 round 128 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28963 round 128 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29257 round 129 blind --port 27629
+29271 round 129 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29492 round 129 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29841 round 130 blind --port 27630
+29845 round 130 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30313 round 130 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30439 round 131 blind --port 27631
+30443 round 131 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30612 round 131 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30719 round 132 blind --port 27632
+30753 round 132 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30888 round 132 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30972 round 132 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31229 round 133 blind --port 27633
+31235 round 133 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31384 round 133 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31849 round 134 blind --port 27634
+31854 round 134 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32177 round 134 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32455 round 135 blind --port 27635
+32465 round 135 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32557 round 135 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+344 round 135 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+613 round 136 blind --port 27636
+627 round 136 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+720 round 136 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1048 round 136 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1603 round 137 blind --port 27637
+1631 round 137 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1906 round 137 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2245 round 138 blind --port 27638
+2262 round 138 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2438 round 138 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2893 round 139 blind --port 27639
+2904 round 139 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2962 round 139 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3270 round 140 blind --port 27640
+3276 round 140 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3319 round 140 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3789 round 141 blind --port 27641
+3813 round 141 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3929 round 141 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4025 round 141 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4332 round 142 blind --port 27642
+4349 round 142 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4678 round 142 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4996 round 143 blind --port 27643
+5017 round 143 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5069 round 143 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5488 round 144 blind --port 27644
+5500 round 144 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5713 round 144 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6513 round 145 blind --port 27645
+6520 round 145 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6842 round 145 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7069 round 145 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7234 round 146 blind --port 27646
+7245 round 146 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7278 round 146 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7590 round 147 blind --port 27647
+7593 round 147 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7918 round 147 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8107 round 147 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8310 round 148 blind --port 27648
+8314 round 148 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8453 round 148 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8693 round 149 blind --port 27649
+8695 round 149 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8822 round 149 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9004 round 149 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9595 round 150 blind --port 27650
+9601 round 150 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9701 round 150 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9732 round 150 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10088 round 151 blind --port 27651
+10097 round 151 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10139 round 151 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10414 round 152 blind --port 27652
+10416 round 152 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10509 round 152 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10595 round 152 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10838 round 153 blind --port 27653
+10840 round 153 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10861 round 153 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11125 round 154 blind --port 27654
+11127 round 154 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11146 round 154 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11164 round 154 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11391 round 155 blind --port 27655
+11395 round 155 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11468 round 155 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11684 round 156 blind --port 27656
+11686 round 156 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11764 round 156 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11848 round 156 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12201 round 157 blind --port 27657
+12231 round 157 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12326 round 157 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12707 round 158 blind --port 27658
+12709 round 158 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12781 round 158 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13021 round 159 blind --port 27659
+13025 round 159 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13201 round 159 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13507 round 160 blind --port 27660
+13512 round 160 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13528 round 160 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13925 round 161 blind --port 27661
+13930 round 161 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14002 round 161 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14246 round 162 blind --port 27662
+14250 round 162 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14320 round 162 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14342 round 162 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14434 round 163 blind --port 27663
+14436 round 163 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14609 round 163 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14674 round 164 blind --port 27664
+14710 round 164 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15014 round 164 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15137 round 165 blind --port 27665
+15142 round 165 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15240 round 165 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15346 round 165 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15692 round 166 blind --port 27666
+15728 round 166 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15956 round 166 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16183 round 167 blind --port 27667
+16187 round 167 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16455 round 167 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16599 round 168 blind --port 27668
+16626 round 168 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16803 round 168 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17160 round 169 blind --port 27669
+17162 round 169 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17181 round 169 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17556 round 170 blind --port 27670
+17567 round 170 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17587 round 170 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17612 round 170 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18008 round 171 blind --port 27671
+18011 round 171 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18179 round 171 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18401 round 171 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18542 round 172 blind --port 27672
+18559 round 172 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18662 round 172 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18994 round 173 blind --port 27673
+19010 round 173 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19128 round 173 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19317 round 173 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19514 round 174 blind --port 27674
+19534 round 174 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19568 round 174 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19796 round 175 blind --port 27675
+19803 round 175 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19918 round 175 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20455 round 175 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20647 round 176 blind --port 27676
+20654 round 176 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20692 round 176 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20970 round 177 blind --port 27677
+20980 round 177 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21103 round 177 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21505 round 178 blind --port 27678
+21509 round 178 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21728 round 178 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22184 round 179 blind --port 27679
+22190 round 179 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22523 round 179 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22650 round 180 blind --port 27680
+22652 round 180 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22744 round 180 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22948 round 180 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23275 round 181 blind --port 27681
+23277 round 181 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23430 round 181 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23519 round 181 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23672 round 182 blind --port 27682
+23682 round 182 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23918 round 182 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24008 round 183 blind --port 27683
+24019 round 183 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24134 round 183 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24680 round 184 blind --port 27684
+24694 round 184 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24734 round 184 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24981 round 185 blind --port 27685
+24988 round 185 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25108 round 185 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25447 round 185 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25938 round 186 blind --port 27686
+25944 round 186 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26017 round 186 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26493 round 187 blind --port 27687
+26499 round 187 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26600 round 187 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26909 round 188 blind --port 27688
+26915 round 188 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27159 round 188 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27211 round 188 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27373 round 189 blind --port 27689
+27378 round 189 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27475 round 189 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28077 round 190 blind --port 27690
+28104 round 190 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28336 round 190 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29259 round 191 blind --port 27691
+29281 round 191 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29364 round 191 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29612 round 191 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30766 round 192 blind --port 27692
+30836 round 192 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31160 round 192 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31970 round 193 blind --port 27693
+32025 round 193 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32124 round 193 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32657 round 194 blind --port 27694
+32680 round 194 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+390 round 194 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2692 round 195 blind --port 27695
+2713 round 195 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3041 round 195 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3362 round 196 blind --port 27696
+3364 round 196 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3604 round 196 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3695 round 197 blind --port 27697
+3697 round 197 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3723 round 197 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3927 round 198 blind --port 27698
+3930 round 198 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3964 round 198 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4291 round 199 blind --port 27699
+4307 round 199 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4402 round 199 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4730 round 200 blind --port 27700
+4732 round 200 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4826 round 200 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4898 round 201 blind --port 27701
+4926 round 201 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5067 round 201 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5754 round 202 blind --port 27702
+5772 round 202 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5851 round 202 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6112 round 203 blind --port 27703
+6114 round 203 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6216 round 203 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6649 round 204 blind --port 27704
+6663 round 204 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6700 round 204 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7069 round 205 blind --port 27705
+7075 round 205 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7213 round 205 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7348 round 205 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7808 round 206 blind --port 27706
+7818 round 206 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7902 round 206 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8400 round 207 blind --port 27707
+8414 round 207 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8616 round 207 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9735 round 208 blind --port 27708
+9812 round 208 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9957 round 208 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10150 round 208 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11157 round 209 blind --port 27709
+11231 round 209 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11814 round 209 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12692 round 210 blind --port 27710
+12709 round 210 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13160 round 210 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13315 round 211 blind --port 27711
+13319 round 211 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13441 round 211 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13550 round 211 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14062 round 212 blind --port 27712
+14073 round 212 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14149 round 212 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14554 round 213 blind --port 27713
+14571 round 213 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14601 round 213 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14896 round 214 blind --port 27714
+14914 round 214 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15007 round 214 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15734 round 215 blind --port 27715
+15747 round 215 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16045 round 215 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16137 round 216 blind --port 27716
+16169 round 216 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16243 round 216 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16393 round 216 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16720 round 217 blind --port 27717
+16732 round 217 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16835 round 217 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17242 round 218 blind --port 27718
+17244 round 218 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17496 round 218 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17701 round 219 blind --port 27719
+17718 round 219 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17863 round 219 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18332 round 220 blind --port 27720
+18357 round 220 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18489 round 220 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19093 round 221 blind --port 27721
+19101 round 221 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19368 round 221 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19447 round 222 blind --port 27722
+19457 round 222 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19530 round 222 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19817 round 223 blind --port 27723
+19825 round 223 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19899 round 223 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20163 round 224 blind --port 27724
+20175 round 224 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20266 round 224 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20485 round 225 blind --port 27725
+20499 round 225 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20581 round 225 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20992 round 226 blind --port 27726
+21004 round 226 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21130 round 226 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21152 round 226 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21545 round 227 blind --port 27727
+21547 round 227 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21651 round 227 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22173 round 228 blind --port 27728
+22312 round 228 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22579 round 228 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23033 round 229 blind --port 27729
+23035 round 229 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23116 round 229 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23463 round 230 blind --port 27730
+23471 round 230 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23799 round 230 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23830 round 230 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24015 round 231 blind --port 27731
+24020 round 231 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24216 round 231 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24288 round 231 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24489 round 232 blind --port 27732
+24494 round 232 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24559 round 232 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24732 round 233 blind --port 27733
+24740 round 233 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24893 round 233 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24978 round 234 blind --port 27734
+24983 round 234 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25065 round 234 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25452 round 235 blind --port 27735
+25454 round 235 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25565 round 235 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25663 round 235 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26137 round 236 blind --port 27736
+26149 round 236 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26327 round 236 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26664 round 237 blind --port 27737
+26667 round 237 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26786 round 237 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26907 round 237 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27512 round 238 blind --port 27738
+27514 round 238 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27621 round 238 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28136 round 239 blind --port 27739
+28201 round 239 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28497 round 239 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28629 round 239 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29826 round 240 blind --port 27740
+29829 round 240 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29998 round 240 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30995 round 241 blind --port 27741
+31000 round 241 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31057 round 241 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31193 round 242 blind --port 27742
+31201 round 242 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31760 round 242 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+31909 round 243 blind --port 27743
+31917 round 243 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32089 round 243 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32366 round 244 blind --port 27744
+32369 round 244 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32405 round 244 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+32709 round 245 blind --port 27745
+32722 round 245 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+337 round 245 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+604 round 246 blind --port 27746
+610 round 246 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+844 round 246 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+957 round 247 blind --port 27747
+961 round 247 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1378 round 247 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1575 round 248 blind --port 27748
+1579 round 248 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1721 round 248 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1835 round 249 blind --port 27749
+1837 round 249 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+1904 round 249 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2218 round 250 blind --port 27750
+2251 round 250 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2393 round 250 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2445 round 250 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2873 round 251 blind --port 27751
+2877 round 251 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+2982 round 251 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3155 round 251 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+3775 round 252 blind --port 27752
+3785 round 252 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4252 round 252 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4300 round 252 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4545 round 253 blind --port 27753
+4564 round 253 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+4598 round 253 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5422 round 254 blind --port 27754
+5431 round 254 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+5809 round 254 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6003 round 255 blind --port 27755
+6009 round 255 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6215 round 255 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6295 round 256 blind --port 27756
+6300 round 256 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6400 round 256 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6737 round 257 blind --port 27757
+6739 round 257 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6771 round 257 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+6928 round 257 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7307 round 258 blind --port 27758
+7314 round 258 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7675 round 258 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7820 round 259 blind --port 27759
+7831 round 259 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+7879 round 259 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8028 round 260 blind --port 27760
+8030 round 260 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8218 round 260 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8338 round 260 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8613 round 261 blind --port 27761
+8625 round 261 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+8940 round 261 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9058 round 262 blind --port 27762
+9060 round 262 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9088 round 262 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9263 round 263 blind --port 27763
+9266 round 263 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9556 round 263 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+9689 round 263 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10019 round 264 blind --port 27764
+10047 round 264 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10180 round 264 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10603 round 265 blind --port 27765
+10661 round 265 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+10889 round 265 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11315 round 266 blind --port 27766
+11330 round 266 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11462 round 266 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11768 round 267 blind --port 27767
+11774 round 267 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+11875 round 267 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12313 round 268 blind --port 27768
+12327 round 268 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12413 round 268 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12672 round 269 blind --port 27769
+12677 round 269 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12709 round 269 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12933 round 270 blind --port 27770
+12935 round 270 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+12979 round 270 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13096 round 270 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13503 round 271 blind --port 27771
+13520 round 271 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13658 round 271 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13796 round 271 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13899 round 272 blind --port 27772
+13901 round 272 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+13973 round 272 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14238 round 273 blind --port 27773
+14243 round 273 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14312 round 273 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14341 round 273 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14610 round 274 blind --port 27774
+14640 round 274 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14786 round 274 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+14869 round 275 blind --port 27775
+14874 round 275 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15066 round 275 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15193 round 276 blind --port 27776
+15228 round 276 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15475 round 276 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+15562 round 276 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16167 round 277 blind --port 27777
+16201 round 277 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16286 round 277 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+16607 round 278 blind --port 27778
+16633 round 278 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17183 round 278 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17316 round 278 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17551 round 279 blind --port 27779
+17570 round 279 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17612 round 279 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17633 round 279 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17880 round 280 blind --port 27780
+17882 round 280 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+17904 round 280 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18207 round 281 blind --port 27781
+18209 round 281 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18497 round 281 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+18980 round 282 blind --port 27782
+19014 round 282 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19456 round 282 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19686 round 283 blind --port 27783
+19701 round 283 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19812 round 283 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+19880 round 283 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20281 round 284 blind --port 27784
+20287 round 284 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20305 round 284 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20381 round 284 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20719 round 285 blind --port 27785
+20721 round 285 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+20815 round 285 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21000 round 286 blind --port 27786
+21002 round 286 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21037 round 286 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21505 round 287 blind --port 27787
+21507 round 287 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21598 round 287 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+21931 round 288 blind --port 27788
+21933 round 288 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22006 round 288 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22393 round 289 blind --port 27789
+22395 round 289 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22430 round 289 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22498 round 289 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+22986 round 290 blind --port 27790
+22989 round 290 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23200 round 290 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23409 round 291 blind --port 27791
+23416 round 291 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23716 round 291 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+23834 round 291 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24127 round 292 blind --port 27792
+24183 round 292 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+24490 round 292 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25150 round 293 blind --port 27793
+25163 round 293 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25482 round 293 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25762 round 294 blind --port 27794
+25767 round 294 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+25789 round 294 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26453 round 295 blind --port 27795
+26533 round 295 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26757 round 295 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+26838 round 295 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27200 round 296 blind --port 27796
+27205 round 296 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27453 round 296 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27563 round 297 blind --port 27797
+27577 round 297 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+27765 round 297 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28477 round 298 blind --port 27798
+28511 round 298 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28540 round 298 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+28706 round 298 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29224 round 299 blind --port 27799
+29280 round 299 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29436 round 299 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+29961 round 300 blind --port 27800
+29963 round 300 /home/user/work/final-venv/bin/python scripts/crash_desk.py
+30702 round 300 /home/user/work/final-venv/bin/python scripts/crash_desk.py

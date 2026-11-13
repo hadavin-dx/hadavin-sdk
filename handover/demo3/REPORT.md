@@ -1,5 +1,24 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:30Z / 19:00 IST  HEARTBEAT 56 (Q2b, Q3c, Q6b reported; both lane3-fix-4 reviews saved)
+**Idle (`vmstat`, 13:28Z): user 74, IDLE 22, free RAM about 8 GB.** Queue not empty.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q8b | mutation check identity + claim logic | 12:49Z | ~13:40Z | 35 of 40 mutants, all killed so far | running |
+| E4b | EVIDENCE RUNNER proof lane3-fix-3 r3 | 13:15Z | ~13:40Z | r3 running | running |
+| B2b | BUILDER lane3-fix-2 round 2 (product code) | 13:15Z | ~14:00Z; stop 14:15Z | building | running |
+| E3b | EVIDENCE RUNNER lane3-fix-1 round 2 suites | 13:16Z | ~14:15Z | first full run since 13:18:11Z | running |
+| B1c | BUILDER lane3-fix-1 round 3 | 13:22Z | ~14:05Z; stop 14:25Z | building | running |
+| B5b | BUILDER lane3-fix-5 round 2 (4 minors) | 13:27Z | ~13:55Z; stop 14:15Z | building | running |
+| Q2b, Q3c, Q6b, REV-4a, REV-4b | reported, closed | - | - | see below | closed |
+**Q3c RESULT:** 300 of 300 rounds, 0 violations, 0 hangs (progress-Q3c.txt, end 13:24:36Z). No document is contradicted by blind mode in this seed.
+**Q2b RESULT:** seeds 7001-7005: 0 violations, 0 false merges, no replay created a second row. Undocumented identity classes found: domains that differ only as IDN/punycode stay different; parenthesis comments and domain literals are accepted; `loc@.dom` and `loc@a..b` are accepted; there is no 64-character local-part limit. To be folded into lane3-fix-4.
+**Q6b RESULT (evidence/cold-reader-tests-realservices.md): REAL DOC DEFECTS.** (1) docs/tests.md crash-desk command fails without `PYTHONPATH=src:.` (exit 1 ModuleNotFoundError); (2) "desk alone" command exits 1 unless demo servers are started first; (3) `run_real_check.py --dry-fakes` stops at "Start? [y/N]" without a terminal; `--assume-yes` is not documented; (4) counts stale: docs 2513 passed/3 skipped, measured 3683 passed/200 skipped (21m24s; coverage run 23m14s, line rate 0.9352), skip reasons undocumented; (5) "about 12 invented people" vs 8 plus a twin. Browser tests 227 passed match the docs. Slip by Q6b: one blocked command that would have run the probe without --dry-run; no token set, nothing ran. Not real defects to fix now; I start builder B6 for these (docs only, fails-before test) next.
+**lane3-fix-4 round 1 reviews (evidence/review-lane3-fix-4-r1-*.md): 0 blocker, 10 major (hygiene hit on upper-case domain `Example.COM` in the test; line over 120 characters; README bullet lists only ß and ı while ſ and more exist; wording unexplained; test claims false; documented harm (two follow-ups) not asserted), minors.** Next: `egm:egm-resolve` then builder B4b.
+### FAILURES AND RETRIES: no new failures. Open: 2 unexplained PR #12 `E` marks; Q4 F1/F2 doc mismatches (quiet re-measurement queued); defects above are being fixed (fix-1..5, B6 next).
+
+ASK: same open asks as heartbeat 55 (ß/ı rule default patch A docs + pinning test; quiet re-measurement near 14:15Z; fix-4 for stack variant).
+
 ## 2026-11-13 13:29Z / 18:59 IST  HEARTBEAT 55 (round 2 reviews of lane3-fix-1 resolved; B5 reported; B1c and a reviewer for lane3-fix-5 started)
 **Idle (`vmstat`, 13:22Z): user 39, system 11, IDLE 46, IO-wait 2, free RAM about 8 GB.**
 | id | what it does | since | expected end | real progress now | state |
