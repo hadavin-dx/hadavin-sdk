@@ -21,10 +21,14 @@ git apply --check desk-address-required-v6.patch && git apply desk-address-requi
 ```
 (real-run-fixes-v6.patch alone does NOT apply on main: it conflicts with the merged P3 in scripts/run_real_check.py.)
 
-## Commands the fresh readers used (Linux, no network, no secrets; made-up data only)
+## Commands (reconstructed from the readers' reports and drivers; Linux, no network, no secrets; made-up data only)
 Safety: NEVER answer y/yes or type a destination host at any start/confirm prompt of the desk/take/real-run scripts; loopback-only settings; any test that answers `y` only under a network namespace with loopback up and a connect blocker:
 ```
-unshare -rn python3 drivers/lo_up-q4g.py -- python -m pytest tests/test_real_run_v6.py ...   # (-rn breaks one setuid test: use `unshare -n` + lo up as root for it)
+unshare -n python3 drivers/lo_up-q4g.py python -m pytest -q -p no:cacheprovider tests/test_real_run_v6.py ...
+# lo_up-q4g.py brings `lo` up inside the new network namespace and then execs the rest of its command line.
+# The first readers also used `unshare -rn` plus a connect blocker (drivers/sitecustomize-q4g.py logs every connect/lookup; check its log shows 0 BLOCK);
+# `unshare -rn` breaks one existing setuid test (os.setuid EINVAL): that test passes under plain `unshare -n` as root.
+# The exact wrapper used by the later readers was a private script (run-un.sh = the unshare -n line above): the exact per-reader command lines were NOT all recorded; this section is the reconstruction, not a transcript.
 ```
 Tests (product tests only): `tests/test_core_key_readers.py`, `tests/test_real_run_v6.py`, the files named in evidence-q4h-tests-v6.txt / evidence-q4h-da-tests.txt; differential of the three key readers old vs new: `python core-differential-q4h.py` (see evidence-q4h-core-differential.txt); fails-before: copy only the new test files onto a clean 61ded9e and run them (evidence-q4h-fail-before*.txt: 70 failed cases in 16 distinct tests for the scripts, 7 failed / 5 passed for the key readers, 12 failed / 4 passed for desk-address without its src hunks).
 Not run by anyone: Windows, the full suite, run-dry-checks.sh on this exact tree.
