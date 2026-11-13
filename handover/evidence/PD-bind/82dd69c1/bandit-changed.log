@@ -1,0 +1,3 @@
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+rc=0

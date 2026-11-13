@@ -1,0 +1,38 @@
+hadavin_sdk file: /home/user/build/ER-pdbind11/src/hadavin_sdk/__init__.py
+
+== (7) hostile inputs on a sealed core runtime, serve on 0.0.0.0 (REFUSED = good, SERVED = believed)
+hooks fields: ['execute', 'hold_run_ids', 'level_override', 'post_card', 'request_approval', 'restored_key', 'rollback', 'toolbox', 'tools', 'validate_proposal', 'verify']
+hooks.tools keys: [] | toolbox: NoneType
+control (untouched): SERVED
+1a hooks.tools['probe-tool'] = fn: REFUSED
+   after removing it again: SERVED
+1c hooks.tools field replaced by a copy dict: SERVED
+2 toolbox is None in this fixture: member replacement not applicable; instead set hooks.toolbox to a new object:
+2' hooks.toolbox = object(): REFUSED
+3 hooks.post_card cell 0 (FakeChannel) rewritten: REFUSED
+3 hooks.request_approval cell 0 (Approvals) rewritten: REFUSED
+3 hooks.request_approval cell 1 (FakeChannel) rewritten: REFUSED
+3 hooks.request_approval cell 2 (RegexDetector) rewritten: REFUSED
+3 hooks.execute: no closure cells (method)
+3 hooks.verify: no closure cells (method)
+3 hooks.rollback: no closure cells (method)
+3 hooks.hold_run_ids: no closure cells (NoneType)
+3 hooks.level_override: no closure cells (NoneType)
+3 control after restoring cells: SERVED
+4a own['_kinds'] = other frozenset: REFUSED
+4b own['_kinds'] = was + one name: REFUSED
+4c own['_kinds'] = a plain set with the same names: REFUSED
+4d own['_kinds'] = frozenset subclass, same names, own __contains__: REFUSED
+4e restored: SERVED
+4f class attribute Runtime._kinds put on the pinned class: REFUSED
+4g after deleting it: SERVED
+4h hand-built Runtime (object.__new__) with the same dict incl. _kinds: REFUSED
+5 seals now: 1
+   after building a second app: 2
+   second app asked while alive: SERVED
+   third app, seals: 3
+   after dropping the third app and gc x3: runtime alive: False | seals: 2
+   seals left (every other live app still holds its own): 2
+   hand-built runtime made after gc: REFUSED
+   control, the real runtime still: SERVED
+rc=0

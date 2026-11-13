@@ -1,0 +1,14 @@
+3 noqa src/hadavin_sdk/approvals/receiver.py | e.g. +    except Exception:  # noqa: BLE001 - a deleted slot or any unreadable state is refused, never dropped
+2 noqa src/hadavin_sdk/approvals/requests.py | e.g. +    except Exception:  # noqa: BLE001 - anything unreadable is not the core's runtime
+2 noqa src/hadavin_sdk/bindguard.py | e.g. +    except Exception:  # noqa: BLE001 - a mapping that cannot be read is not nothing
+2 type-ignore src/hadavin_sdk/bindguard.py | e.g. +    return text if _is_plain_word(text) else "(unreadable)"  # type: ignore[return-value]
+2 noqa src/hadavin_sdk/standins.py | e.g. +    except Exception:  # noqa: BLE001 - anything unreadable is not the pinned class
+9 type-ignore src/hadavin_sdk/standins.py | e.g. +        copyreg._slotnames(cls)  # type: ignore[attr-defined]
+12 noqa tests/bind_mutants.py | e.g. +        "        except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in\n",
+9 type-ignore tests/bind_mutants.py | e.g. +        "    if len(now[1]) != len(pin[1]) or not all(a is b for a, b in zip(now[1], pin[1], strict=True)):  # type: ignore[arg-type]\n    
+9 noqa tests/test_bindguard.py | e.g. +    out = subprocess.run(  # noqa: S603 - our own interpreter and our own probe text
+1 pragma-no-cover tests/test_bindguard.py | e.g. +    def do_POST(self) -> None:  # pragma: no cover - never called
+190 type-ignore tests/test_bindguard.py | e.g. +            require_safe_bind(bind, cfg, allow_public_bind_reason=reason, held={})  # type: ignore[arg-type]
+1 noqa tests/test_netguard.py | e.g. +    rng = random.Random(20261112)  # noqa: S311 - a seeded test generator, not a secret
+2 type-ignore tools/server_scan.py | e.g. +    args = node.args  # type: ignore[attr-defined]
+noqa codes {'BLE001': 23, 'S603': 4, 'F401': 3, 'S311': 1}
