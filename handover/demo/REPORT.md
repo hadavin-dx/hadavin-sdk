@@ -1,6 +1,39 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:35Z / 10:05 IST - 04:38Z command read (probe-ab-v2 = draft PR #7, Sonar read is yours; I do NOT touch the branch); nodemo v2 review = 2 Majors (v3 building); P1 v3.1 fresh read running; first push batch still NOT clean; 7 agents
+FAILED / UNCERTAIN first:
+1. **Batch 1 (P1 v3.1 + nodemo + P2 v2.1) is NOT clean yet; I send `READY TO PUSH: <list with sha256>` the moment all three are.** State: P1 v3.1 (sonar-p1-quickwins-v3.1.patch, sha256 prefix 6ec3179d990e3fa1, applies on db54e13, builder's own matrix 90 random orders 0 failures, the two guard lines byte-identical to v3 per the builder): fourth fresh reader running (a63caaf41858dcf1f) incl. a byte-diff of the scripts v3 vs v3.1 and its own 40+ scanner probes. nodemo: v2 review = **2 Majors (sonar/REVIEW-nodemo2-fresh.md): (1) the optional CI job's gate can go GREEN when a chunk dies** (it keeps `tail -n 1`, ignores the pytest exit code (`| tee || true`); the reviewer's test file with `os._exit(0)` in the last chunk gave 884 passed / exit 0; 'no tests ran', a progress line and a pytest.Exit message also passed the gate); (2) **nothing tests that the skip guard stays narrow** (mutants: also skip product rows / skip when the demo is present / or-instead-of-and / is_file-on-folder survive; with product rows skipped and demo deleted: 5 passed 44 skipped is still green and 900 passed in the job is above the floor 800). The core nodemo-fix-v2 (the guard) is correct as far as measured (49 row ids identical, demo present 49 passed, demo deleted 43 passed 6 skipped, typo in a product row fails both ways, a missing demo file while the folder exists fails): only the TESTS around it and the optional CI job are weak. v3 builder (ac09125403a1f310b) is fixing: `_present(demo_gone)` + a pinning test, the CI job taking each chunk's exit code without pipefail (GitHub's default shell is `bash -e` only), a floor near the measured value, a `*_test.py` gap guard, optional-hygiene `.git` as a FILE (worktree/submodule) and the temp-repo skip, and a new no-demo chunked run on the final stack. **If you want the first batch sooner: nodemo-fix-v2 + nodemo-ruff-isort alone are fine to apply (they carry the fix and the lint cure); hold nodemo-ci-job and nodemo-optional-hygiene-repo for v3.**
+2. **P2 v2.1 (nits of the P2 v2 review: missing mutant test, lambda qualname, scheme constant, _Server bases): builder still running** (a598e93b5e583706a, started 03:51: longer than planned: it is the guarantee-class send path, so I do not hurry it). P2 v2 itself was review-clean of Blocker/Major (sonar/REVIEW-p2v2-fresh.md; reviewer judged the one behaviour change on the send path correct and safe; 3.1M regex comparisons 0 differences): v2 is applyable as it is if you must go now; v2.1 only adds a test for the one surviving mutant and cleans nits.
+3. **probe-ab-v3 (a618f8b74bc576883) building**: the reviewer's better design (constant sink API, pairs inside ONE source family, sys.argv sites as replicates, a helper variant without the shared (root, relative) tuple, a positive control, M4 reading rule, no new text:S6389 from the probe's own test, plus probe-ab-v3-writes2.patch for a second cheap push); it gets its own fresh safety read: I say PROBE SAFE before you push it. For PR #7 your reading rules: B, D, E hints only; C (#7 vs #8) and F (#6 vs #2/#5) decisions; M4: an S8707 appearing in tools/pathconfine.py or at an inline open(real) = the sink MOVED (count all helper sites as stayed even if the caller's issue vanished; read ALL components, not only the 12 files); the note's '13 issues' means 13 pythonsecurity issues of the file's 38.
+4. Breach-response lane: start-prompt-hardening.patch fresh safety review running (a38979cd722e47378); root cause as in the 04:24Z block (omitted DESK_HUBSPOT_BASE_URL -> vendor default, no stdin guard existed). real-run v5 (REAL_RESULT_FILE Major, drop the check_readable core touch) building (a71eeae97124ff4bb); crlf v5 + trimmed yaml (autocrlf, 17 survivors) building (aa25bbd93a8dd5a23).
+5. Not run: full suite WITH demo present on any series (laptop), Windows autocrlf=true, any Sonar result of the series patches.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a63caaf41858dcf1f | fresh reader P1 v3.1 (4th) | 04:25 | running | P1 v3.1 CLEAN / NOT CLEAN |
+| ac09125403a1f310b | nodemo v3 builder (2 Majors) | 04:27 | running | 4 patches + no-demo run |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| a618f8b74bc576883 | probe-ab v3 builder | 04:26 | running | probe v3 + writes2 |
+| a38979cd722e47378 | fresh safety reviewer start-prompt hardening | 04:24 | running | report |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 4 (v3.1) | pending | first in series, deletion safety | no | CLEAN |
+| nodemo | review 2 (v2) | 2 Major (tests/CI job) | fix | no | v3 read |
+| P2 | build 2.1 | review 2: 0 Major | nits | no | v2.1 read |
+| probe | v3 | v2: PROBE SAFE, confounded | re-cut | no | PROBE SAFE for v3 |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v3.1 | built, pushed |
+| nodemo v2 review | done (2 Majors), pushed |
+| probe-ab-v2 safety read | PROBE SAFE (confounded) |
+
 ## 2026-11-13 04:24Z / 09:54 IST - **PROBE SAFE: probe-ab-v2.patch is safe to push as a throwaway draft PR** (fresh read, measured) BUT its Sonar reading is confounded; v3 re-cut is building (~15 min); your choice: push v2 now with the corrected reading rules, or wait for v3
 FAILED / UNCERTAIN first:
 1. **VERDICT: PROBE SAFE** (sonar/REVIEW-probe2-fresh.md): applies alone on db54e13 (7 files, +648/-6); 'PROBE ONLY, DO NOT MERGE' in 6 patch files and the note; 406 + 492 tests passed with gitleaks 8.30.1 + DPLD_REQUIRE_SCAN=1; ruff/mypy linux+win32/bandit clean; no site weaker than base (.., absolute, links, prefix sibling, NUL, newline, ESC, C1, bidi, empty, 5000 chars all refused cleanly; confine precedes the only sink on every path); 12 of 14 reviewer mutants killed (2 equivalent); controls read_book L96 and load_env L645 in no hunk and not reachable from any probed helper (negative controls only: there is NO positive control).
