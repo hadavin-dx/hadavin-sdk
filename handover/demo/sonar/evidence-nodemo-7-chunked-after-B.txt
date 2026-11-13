@@ -1,0 +1,38 @@
+# CHUNKED NO-DEMO RUN, AFTER, tree B (db54e13 + P1v2 + P2 + P3(v1) + nodemo-fix + optional)
+--- chunk 0 2026-11-13T03:34:38Z exit=0 2026-11-13T03:34:39Z 
+SKIPPED [9] tests/conftest.py:45: needs the demo_only folder, which is not here
+============================== 9 skipped in 0.20s ==============================
+--- chunk 1 2026-11-13T03:34:39Z exit=0 2026-11-13T03:34:45Z 
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+SKIPPED [1] tests/test_except_clause_hierarchy.py:164: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:164: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:170: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:170: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:210: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:210: demo_only/fake_smtp_tls.py: demo_only/ was removed
+======================= 398 passed, 12 skipped in 6.19s ========================
+--- chunk 2 2026-11-13T03:34:45Z exit=1 2026-11-13T03:34:59Z 
+tests/test_hygiene.py::test_hygiene_scan_public FAILED                   [ 33%]
+SKIPPED [7] tests/conftest.py:45: needs the demo_only folder, which is not here
+=================== 1 failed, 43 passed, 7 skipped in 13.03s ===================
+--- chunk 3 2026-11-13T03:34:59Z exit=0 2026-11-13T03:35:01Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================== 104 passed, 8 skipped in 1.86s ========================
+--- chunk 4 2026-11-13T03:35:01Z exit=0 2026-11-13T03:35:01Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+========================= 1 passed, 8 skipped in 0.22s =========================
+--- chunk 5 2026-11-13T03:35:01Z exit=0 2026-11-13T03:35:03Z 
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================== 39 passed, 6 skipped in 1.58s =========================
+--- chunk 6 2026-11-13T03:35:03Z exit=0 2026-11-13T03:35:05Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+========================= 2 passed, 8 skipped in 0.73s =========================
+--- chunk 7 2026-11-13T03:35:05Z exit=0 2026-11-13T03:35:36Z 
+SKIPPED [6] tests/test_real_check_dry.py:0: needs the demo_only folder, which is not here
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================= 334 passed, 12 skipped in 31.57s =======================
+--- chunk 8 2026-11-13T03:35:36Z exit=0 2026-11-13T03:35:37Z 
+SKIPPED [9] tests/conftest.py:45: needs the demo_only folder, which is not here
+============================== 9 skipped in 0.21s ==============================
+--- chunk 9 2026-11-13T03:35:37Z exit=0 2026-11-13T03:35:38Z 
+============================== 16 passed in 0.53s ==============================

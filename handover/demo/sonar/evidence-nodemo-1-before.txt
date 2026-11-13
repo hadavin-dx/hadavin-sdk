@@ -1,0 +1,23 @@
+# BEFORE: plain db54e13, demo_only/ deleted
+db54e13 sonar.yml: valid YAML (block scalar for the pip install line) plus a test that every workflow file parses
+ls: cannot access 'demo_only': No such file or directory
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/sn-nd/nodemo/demo_only/fake_imap.py'
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+_ test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_smtp_tls.py::FakeSmtp._serve[0][0]] _
+path = 'demo_only/fake_smtp_tls.py', function = 'FakeSmtp._serve', t = 0, h = 0
+must_catch = [<class 'ssl.SSLError'>]
+>       classes = tuple(_classes(_tries(path, function)[t].handlers[h], path))
+tests/test_except_clause_hierarchy.py:202: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_except_clause_hierarchy.py:124: in _tries
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+self = PosixPath('/tmp/work/sn-nd/nodemo/demo_only/fake_smtp_tls.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/sn-nd/nodemo/demo_only/fake_smtp_tls.py'
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+=========================== short test summary info ============================
+SKIPPED [2] tests/conftest.py:45: needs the demo_only folder, which is not here
+6 failed, 43 passed, 2 skipped in 0.45s

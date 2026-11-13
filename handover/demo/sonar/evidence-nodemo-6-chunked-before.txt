@@ -1,0 +1,25 @@
+# CHUNKED NO-DEMO RUN, BEFORE: plain db54e13, demo_only/ deleted (9 chunks of 9 files, one pytest at a time, python -u, venv with playwright)
+--- chunk 0 2026-11-13T03:30:25Z exit=0 2026-11-13T03:30:26Z 
+============================== 9 skipped in 0.26s ==============================
+--- chunk 1 2026-11-13T03:30:26Z exit=1 2026-11-13T03:30:32Z 
+tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_imap.py::FakeImap._serve] FAILED [ 90%]
+tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_smtp_tls.py::FakeSmtp._serve] FAILED [ 90%]
+tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_imap.py::FakeImap._serve] FAILED [ 94%]
+tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_smtp_tls.py::FakeSmtp._serve] FAILED [ 94%]
+tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_imap.py::FakeImap._serve[0][0]] FAILED [ 98%]
+tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_smtp_tls.py::FakeSmtp._serve[0][0]] FAILED [ 98%]
+=================== 6 failed, 398 passed, 6 skipped in 6.03s ===================
+--- chunk 2 2026-11-13T03:30:32Z exit=0 2026-11-13T03:30:33Z 
+========================= 6 passed, 8 skipped in 0.21s =========================
+--- chunk 3 2026-11-13T03:30:33Z exit=0 2026-11-13T03:30:34Z 
+======================== 104 passed, 8 skipped in 0.84s ========================
+--- chunk 4 2026-11-13T03:30:34Z exit=0 2026-11-13T03:30:34Z 
+========================= 1 passed, 8 skipped in 0.18s =========================
+--- chunk 5 2026-11-13T03:30:34Z exit=0 2026-11-13T03:30:35Z 
+======================== 12 passed, 8 skipped in 0.69s =========================
+--- chunk 6 2026-11-13T03:30:35Z exit=0 2026-11-13T03:30:37Z 
+======================== 67 passed, 13 skipped in 1.24s ========================
+--- chunk 7 2026-11-13T03:30:37Z exit=0 2026-11-13T03:31:05Z 
+======================= 269 passed, 7 skipped in 28.44s ========================
+--- chunk 8 2026-11-13T03:31:05Z exit=0 2026-11-13T03:31:06Z 
+======================== 10 passed, 7 skipped in 0.27s =========================

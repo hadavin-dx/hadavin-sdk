@@ -1,0 +1,22 @@
+## tree A
+All checks passed!
+ruff check rc=0
+146 files already formatted
+format rc=0
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+	No issues identified.
+	Total issues (by severity):
+		Medium: 0
+		High: 0
+## tree B
+All checks passed!
+ruff check rc=0
+150 files already formatted
+format rc=0
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+	No issues identified.
+	Total issues (by severity):
+		Medium: 0
+		High: 0

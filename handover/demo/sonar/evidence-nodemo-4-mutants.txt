@@ -1,0 +1,11 @@
+# mutant 1: demo_only present, fake_imap handler edited -> must FAIL
+=========================== short test summary info ============================
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_imap.py::FakeImap._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_imap.py::FakeImap._serve]
+2 failed, 47 passed in 0.36s
+
+# mutant 2: demo_only deleted, a product handler (smtp_outbox) edited -> must still FAIL (product rows are not skipped)
+tests/test_except_clause_hierarchy.py:167: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbox.py::SmtpOutbox.send]
+1 failed, 42 passed, 6 skipped in 0.31s

@@ -1,0 +1,11 @@
+# WITH demo_only/ present, db54e13 + nodemo-fix.patch
+demo_only
+tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_imap.py::FakeImap._serve] PASSED [ 10%]
+tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_smtp_tls.py::FakeSmtp._serve] PASSED [ 11%]
+tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_imap.py::FakeImap._serve] PASSED [ 23%]
+tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_smtp_tls.py::FakeSmtp._serve] PASSED [ 24%]
+tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_imap.py::FakeImap._serve[0][0]] PASSED [ 40%]
+tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_smtp_tls.py::FakeSmtp._serve[0][0]] PASSED [ 40%]
+  /tmp/work/sn-nd/A/tests/test_hygiene.py:191: UserWarning: gitleaks history scan skipped: set DPLD_REQUIRE_SCAN=1 to scan the history
+    warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+======================= 110 passed, 1 warning in 31.47s ========================

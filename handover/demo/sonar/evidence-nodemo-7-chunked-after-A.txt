@@ -1,0 +1,35 @@
+# CHUNKED NO-DEMO RUN, AFTER, tree A (db54e13 + nodemo-fix.patch)
+--- chunk 0 2026-11-13T03:33:57Z exit=0 2026-11-13T03:33:58Z 
+SKIPPED [9] tests/conftest.py:45: needs the demo_only folder, which is not here
+============================== 9 skipped in 0.18s ==============================
+--- chunk 1 2026-11-13T03:33:58Z exit=0 2026-11-13T03:34:04Z 
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+SKIPPED [1] tests/test_except_clause_hierarchy.py:164: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:164: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:170: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:170: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:210: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:210: demo_only/fake_smtp_tls.py: demo_only/ was removed
+======================= 398 passed, 12 skipped in 5.56s ========================
+--- chunk 2 2026-11-13T03:34:04Z exit=0 2026-11-13T03:34:04Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+========================= 6 passed, 8 skipped in 0.25s =========================
+--- chunk 3 2026-11-13T03:34:04Z exit=0 2026-11-13T03:34:06Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================== 104 passed, 8 skipped in 0.96s ========================
+--- chunk 4 2026-11-13T03:34:06Z exit=0 2026-11-13T03:34:06Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+========================= 1 passed, 8 skipped in 0.20s =========================
+--- chunk 5 2026-11-13T03:34:06Z exit=0 2026-11-13T03:34:07Z 
+SKIPPED [8] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================== 12 passed, 8 skipped in 0.78s =========================
+--- chunk 6 2026-11-13T03:34:07Z exit=0 2026-11-13T03:34:09Z 
+SKIPPED [7] tests/conftest.py:45: needs the demo_only folder, which is not here
+SKIPPED [6] tests/test_real_check_dry.py:0: needs the demo_only folder, which is not here
+======================== 67 passed, 13 skipped in 1.29s ========================
+--- chunk 7 2026-11-13T03:34:09Z exit=0 2026-11-13T03:34:37Z 
+SKIPPED [7] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================= 269 passed, 7 skipped in 28.03s ========================
+--- chunk 8 2026-11-13T03:34:37Z exit=0 2026-11-13T03:34:38Z 
+SKIPPED [7] tests/conftest.py:45: needs the demo_only folder, which is not here
+======================== 10 passed, 7 skipped in 0.40s =========================

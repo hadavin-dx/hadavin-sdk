@@ -1,0 +1,32 @@
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 9871928..d72e6e3 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -16,10 +16,11 @@ from pathlib import Path
+ 
+ import pytest
+ import yaml
+-from support import REPO
+ 
+ from tools import hygiene
+ 
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
++
+ SRC = REPO / "src"
+ GITLEAKS_ENV = "GITLEAKS_BIN"
+ FILL_TOKEN = "<<" + "FILL"
+diff --git a/tests/test_no_placeholders.py b/tests/test_no_placeholders.py
+index 459c521..cde1f83 100644
+--- a/tests/test_no_placeholders.py
++++ b/tests/test_no_placeholders.py
+@@ -8,7 +8,9 @@ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
++
+ 
+ MARKERS = ("DATE-TO-" + "FILL", "TO" + "DO", "FIX" + "ME", "X" * 3)
+ FOUND = re.compile(r"\b(" + "|".join(MARKERS) + r")\b")
