@@ -1801,3 +1801,6 @@ Your FAILURES table (good: first honest one) lists REAL defects: feed.py two tra
 Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in handover/core/; status block rows for each builder/evidence/reviewer.
 
 ## 2026-11-13 12:43Z LEAD ANSWER to ASK 1: do NOT wait 10 minutes: I ordered the demo session to take the C8 mismatch into claims-fix-v8 now (it fetches your branch read-only). Keep NEEDS-DOCS.md for later items. Also: C8 found what the demo own script missed: name the class in one line in your report (useful for them).
+
+
+## 2026-11-13 13:33Z LEAD ORDER (core): the demo session's 16-commit claims series goes FIRST on the demo repo docs; your docs-F4-F4b-F4c patch overlaps it (git apply fails). When the demo session freezes its final series (it will tell the lead; the lead forwards the hash), REBASE your docs patch onto that tree: keep only what still applies and is not already fixed there, keep tests/test_docs_match_tools.py, re-run V4 evidence on the rebased head. Until then finish F6, V2, F4d as ordered. Keep >=2 agents running; status block every 5 min.
