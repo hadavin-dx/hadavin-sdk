@@ -77,7 +77,7 @@ Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = t
 | 67 | v3: author-reported gitleaks and DPLD_REQUIRE_SCAN=1 settings for the 125 tests | coordinator message; not in evidence-sg-20 | NOT VERIFIED in saved output; body says so |
 | 68 | v3: no repo-external paths, no "builder"/"patch author", no patch file name in the body | `grep` of semgrep-pr-body-v3.md for builder, patch author, semgrep-on-, evidence-sg, stacked: none | Drafter ran |
 
-| 69 | v4: patch sha256 60e362731652...f5b3, 9 files, applies on 2db3926 | `sha256sum`, `grep -c '^diff --git'` = 9, `git -C /tmp/work/q4-base apply --check` -> V4_APPLY_OK | Drafter ran |
+| 69 | v4: patch sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9, 9 files, applies on 2db3926 | `sha256sum` (drafter, run after the file was re-made at 01:37:17; an earlier sha256sum at ~01:36 gave 5004871c11b5..., an earlier state of the file), `grep -c '^diff --git'` = 9, `git -C /tmp/work/q4-base apply --check` -> OK | Drafter ran. Table typo "...f5b3" (tail of the old sha) fixed |
 | 70 | v4: today's scanned folders of 2db3926 + v4: 45 files, ~100% parsed, exit 0 with and without --strict, made-up local rule, not the registry packs | semgrep/evidence-sg-22b-s3-real-folders-strict.txt (header: "1.185.0, made-up local rule, not the registry packs; run in a copy of 2db3926 plus v4, cwd=repo root"; "Targets scanned: 45", "Parsed lines: ~100.0%", exit 0 twice) | Drafter read. The coordinator named evidence-sg-22-real-folders-strict-2db3926.txt (the lead's run): that file does NOT exist (checked with find); only the 22b file (S3's run) exists, so the body cites that run. "~100.0%" is rounded: the output also carries the skipped-files note, so a few skipped lines cannot be ruled out; exit 0 under --strict is the decisive part |
 | 71 | v4: "If the job goes red" advice (exit 1 fix or suppress; exit 2 re-run, check folders; exit 3 run with --verbose, fix syntax error, else report and decide separately) | Exit meanings: rows 7, 12, 48; `--verbose` output: evidence-sg-21 line 182-184; suppression form: v4 docs "To suppress one wrong finding" | Read. The advice itself is guidance, not a measurement |
 | 72 | v4: local run section adds "3 means a file could not be fully read" | row 12 | Read |
@@ -85,6 +85,14 @@ Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = t
 | 74 | Measurement stated in the patch: "the install took 17 s on a fast link in one test" (workflow timeout comment) | semgrep/evidence-sg-1-install.txt ("seconds: 17", exit 0, pip check clean, 1.185.0) | Drafter read: saved |
 | 75 | Measurement stated in the patch: exit codes 0, 1, 2, 7 "seen with this pinned Semgrep 1.185.0" (workflow and docs); 3 for a syntax error under --strict | semgrep/evidence-sg-6-exit-codes-local.txt (0, 1, 2 for a missing folder, 7 for a missing rule file); exit 2 for a blocked registry: semgrep/evidence-sg-3-registry.txt (ProxyError 403, exit 2); exit 3: evidence-sg-21 | Drafter read: saved |
 | 76 | Statement in the patch and body: "no run of this workflow on GitHub has been seen yet" | An absence: no GitHub run log exists in semgrep/ or anywhere the drafter looked; the drafter made no GitHub calls (brief forbids them) | NOT verifiable from here; true only as of the handover notes. The lead checks on GitHub |
+
+| 77 | v5: exit 3 means "for example" a file that cannot be fully read; also seen in two made-up tests of undescribed cause with ~100% parsed; the log may not show a "Syntax error" warning for other causes | evidence-sg-21: d5 and d6 exit 3 under --strict with "Parsed lines: ~100.0%", no description of the folders; `--verbose` "Syntax error" line shown only for d1 | Drafter read |
+| 78 | v5: job prints "NOT findings" | v4 workflow: `echo "semgrep failed with exit ${status}: a tool or network error, NOT findings ..."` | Drafter read |
+| 79 | v5: "any other exit code: a tool error, read the log" | v4 workflow `elif [ "$status" -ne 0 ]` branch; v4 docs "any other non-zero code is a tool error" | Drafter read |
+| 80 | v5: never a bare nosemgrep (hides every finding on the line; a test refuses it) | rows 32, 65; v4 docs "To suppress one wrong finding" | Read |
+| 81 | v5: dropping --strict would hide files Semgrep cannot read | evidence-sg-21: without --strict the broken .py/.js gave exit 0 with only a skipped-lines note | Drafter read |
+| 82 | v5: "Semgrep with the registry packs on tests/, demo_only/ or 2db3926" not run (distinct from the local-rule run of row 70) | lead-registry-run.txt (0841f36 only, five folders only); evidence-sg-22b is a local rule | Read |
+| 83 | v5: `cmp` defined as a byte-by-byte file comparison | evidence-sg-17-uv-lock-identical.txt (`cmp committed.txt regenerated.txt` -> identical) | Read |
 
 ## Points the lead should know (not in the body as claims)
 
@@ -114,5 +122,11 @@ Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = t
 ## What changed (fourth update, v4 patch)
 
 - New semgrep-pr-body-v4.md (v3 kept). [V4-PENDING]/[V4-SHA256] replaced: real sha256; a plain bullet "The job fails when any scanned file cannot be fully read" (exit 3 under --strict); the measured syntax-error results (sg-21) and the real-folder local-rule run (sg-22b: 45 files, ~100% parsed, exit 0 with and without --strict, not the registry packs); a new "If the job goes red" section for exit 1, 2 and 3; exit 3 added to the local-run line. The scan sentence is unchanged.
-- Header names v4 (60e362731652...); row 12 rewritten; rows 69-76 added, including the map of measurements stated in the patch to their saved evidence (lead-registry-run.txt, sg-1, sg-6/sg-3/sg-21, and the absence of a GitHub run).
+- Header names v4 (60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9); row 12 rewritten; rows 69-76 added, including the map of measurements stated in the patch to their saved evidence (lead-registry-run.txt, sg-1, sg-6/sg-3/sg-21, and the absence of a GitHub run).
 - The lead's evidence-sg-22 file named in the order does not exist; only evidence-sg-22b (S3's run) does, and the body relies on it.
+
+## What changed (fifth update, round-3 review)
+
+- New semgrep-pr-body-v5.md (v4 kept). Row 69 now carries the full v4 sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9 (recomputed by the drafter; it matches the body). The old "...f5b3" tail came from a sha256sum of an earlier state of the file (5004871c11b5...), before it was re-made at 01:37:17.
+- Body v5: exit 3 described as "for example" a file that cannot be read, plus the two undescribed exit-3 cases; "NOT findings" quoted in capitals; "any other exit code" advice; never a bare nosemgrep; do not drop --strict; "with the registry packs" in Tests NOT run; `cmp` defined; long sentences split (options line, the run-differences line, the install line, first-run line, the exit-code list now a bullet list). The scan sentence is unchanged.
+- Rows 77-83 added.
