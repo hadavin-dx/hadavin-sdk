@@ -65,3 +65,13 @@ tests/test_p5p6_followups.py :: rc=0 :: 46 passed in 2.45s
 tests/test_p6_detectors.py :: rc=0 :: 32 passed in 2.29s
 tests/test_peel_run_id.py :: rc=0 :: 34 passed, 1 skipped in 5.05s
 tests/test_repo_rules.py :: rc=0 :: 40 passed in 0.68s
+tests/test_review_pr3_round2.py :: rc=0 :: ..........
+tests/test_p7_tick.py :: rc=0 :: .........................
+tests/test_s4_llm_guard.py :: rc=0 :: 35 passed in 0.61s
+tests/test_s6_approvals.py :: rc=0 :: 12 passed in 0.77s
+tests/test_runmap_partial_escape.py :: rc=0 :: 48 passed in 3.33s
+tests/test_scan_repo.py :: rc=0 :: 31 passed in 2.32s
+tests/test_workflow_files_parse.py :: rc=0 :: 4 passed in 0.05s
+tests/test_stage_names.py :: rc=0 :: 97 passed in 3.76s
+tests/warden_port/test_audit_chain.py :: rc=0 :: 42 passed, 3 skipped in 1.50s
+DONE

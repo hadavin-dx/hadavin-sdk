@@ -1,0 +1,6 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R8 a path that leaves the base is accepted (join and inside share the tail)  [test_pin_r8_a_link_out_of_the_base_is_refused] t=9s
+ok  KILLED         R9 a rooted or UNC backslash name is accepted  [test_pin_r9_absolute_drive_rooted_and_unc_names_are_refused] t=10s
+ok  KILLED         R10 a NUL in a path is not turned into a refusal  [test_pin_r10_a_value_error_from_resolve_is_refused_as_r10] t=11s
+ok  KILLED         R11a a folder named as a file is accepted  [test_pin_r11_the_wrong_type_is_refused] t=12s
+ok  KILLED         R11b a file named as a folder is accepted  [test_pin_r11_the_wrong_type_is_refused] t=13s

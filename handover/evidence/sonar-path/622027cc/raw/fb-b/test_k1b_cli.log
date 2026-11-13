@@ -1,0 +1,14 @@
+..............F......                                                    [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'TypeError' == 'OSError'
+      
+      - OSError
+      + TypeError
+----------------------------- Captured stdout call -----------------------------
+replay complete: outputs in /tmp/pytest-of-unknown/pytest-1465/test_report_write_failure_leav0/out (see replay-report.md)
+----------------------------- Captured stderr call -----------------------------
+failed: TypeError (set HADAVIN_DEBUG=1 for the traceback)
+/home/user/build/E-work/b-tree/tests/test_k1b_cli.py:216: AssertionError: assert 'TypeError' == 'OSError'
+=========================== short test summary info ============================
+FAILED tests/test_k1b_cli.py::test_report_write_failure_leaves_started_then_failed_and_no_score_run
+1 failed, 20 passed in 5.42s

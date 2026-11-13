@@ -1,0 +1,9 @@
+tests/test_pathguard.py rc=2 1 error in 0.36s
+tests/test_pathguard_batch3.py rc=2 1 error in 0.17s
+tests/test_pathguard_batch4.py rc=2 1 error in 0.14s
+tests/test_pathguard_batch5.py rc=2 1 error in 0.09s
+tests/test_pathguard_callers.py rc=1 2 failed, 3 passed in 2.59s
+tests/test_pathguard_sites.py rc=2 1 error in 0.14s
+tests/test_pathguard_tripwire.py rc=1 2 failed, 78 passed in 0.99s
+tests/test_changelog_claims.py rc=2 1 error in 0.19s
+tests/test_k1b_cli.py rc=1 1 failed, 20 passed in 5.42s
