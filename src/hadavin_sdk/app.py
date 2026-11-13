@@ -36,6 +36,7 @@ from hadavin_sdk.llm.protocol import LLM
 from hadavin_sdk.mode_banner import (
     DEFAULT_WORDS,
     OVERRIDES,
+    READ_ERRORS,
     BannerWords,
     _services_in,
     banner_or_unconfirmed,
@@ -76,9 +77,13 @@ _PLAIN = object()  # stands for "plain data" in the list of references
 # What `_sealed` holds when `build` could not read the app (a config the banner cannot read, a named container missing): the
 # banner of that app is the unconfirmed one, and `build` itself goes on (the banner never decides whether the app starts).
 _UNREADABLE: tuple = ("the app could not be read when it was built",)
-# The errors that reading an app for the seal can raise (a shape the banner cannot read: a tool spec without hosts, a backend
-# entry without a kind, a named container that is missing or not a mapping, an attribute that is not there).
-_SEAL_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
+# The errors that delivering an approval card can raise (the network, a reply that does not parse, a
+# client library): an
+# undelivered card, never a crash. Any other type is a bug in the channel; it leaves `post_card` and
+# the agent loop (which
+# turns every hook failure into an undelivered card) deals with it, so the card is never reported as
+# delivered.
+_DELIVERY_ERRORS = (OSError, ValueError, LookupError, RuntimeError)
 
 
 class _Given(tuple):
@@ -252,7 +257,8 @@ class App:
     def _seal(self, overridden: _Given) -> None:
         """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end, with the
         names `_given_overrides` computed (a `_Given`; any other value, such as `()`, is refused). Private by name: it is not
-        part of the supported API. If the app cannot be read (see `_SEAL_ERRORS`), one warning line names the error type
+        part of the supported API. If the app cannot be read (an error in
+        `mode_banner.READ_ERRORS`), one warning line names the error type
         and the app is sealed as unreadable: its banner is the unconfirmed one and `build` still returns it."""
         if not isinstance(overridden, _Given):
             raise TypeError("an app is sealed only with the names that build worked out")
@@ -264,14 +270,14 @@ class App:
                 self._banner_services(),
                 self._stage(),
             )
-        except _SEAL_ERRORS as exc:
+        except READ_ERRORS as exc:
             _warn_once("the app could not be read when it was built", exc)
             self._sealed = _UNREADABLE
 
     def _known_overrides(self) -> tuple[str, ...] | None:
         """`overridden` when this app is exactly what `build` sealed (the recorded names equal the sealed names, every
         connected part is the same object as then, and the services the banner reads are the same lists), else None. Never
-        raises: any failure to read the parts is None."""
+        raises one of `READ_ERRORS`: a failure to read the parts is None. An error of any other type is a bug and propagates."""
         try:
             sealed = self._sealed
             if (
@@ -292,7 +298,7 @@ class App:
             if self._stage() != sealed[3]:
                 return None
             return sealed[0]
-        except Exception as exc:
+        except READ_ERRORS as exc:
             _warn_once("the connected parts of the app could not be read", exc)
             return None
 
@@ -301,7 +307,9 @@ class App:
     ) -> dict:
         """The banner for a screen (the supported call): `mode_banner.banner_or_unconfirmed` for this app's config, tool
         manifests and overrides. An app that `build` did not record, or whose connected parts changed since (see
-        `_connected_parts`), gets the unconfirmed banner (`overridden=None`). Never raises."""
+        `_connected_parts`), gets the unconfirmed banner (`overridden=None`). Raises only an
+        error outside `READ_ERRORS`
+        (a bug): then no banner is returned at all, never a made-up or a quiet one."""
         try:
             known = self._known_overrides()
             if known is None:
@@ -309,8 +317,8 @@ class App:
             return banner_or_unconfirmed(
                 self.config, names, words, tool_specs=self.registry.tools, overridden=known
             )
-        except Exception as exc:
-            # whatever is wrong with the app, the screen must still say something
+        except READ_ERRORS as exc:
+            # an app the banner cannot read is shown as not confirmed
             _warn_once("the app could not be read", exc)
             return not_confirmed_banner(words)
 
@@ -468,7 +476,7 @@ def build(
             return Delivery(ok=False, reason="card_too_long")
         try:
             return channel.post_card(card)
-        except Exception as exc:  # a broken channel is an undelivered card, never a crash
+        except _DELIVERY_ERRORS as exc:  # a broken channel is an undelivered card, never a crash
             return Delivery(ok=False, reason=type(exc).__name__)
 
     def request_approval(plan, decision, requested_by) -> Delivery:

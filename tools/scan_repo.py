@@ -11,9 +11,13 @@ If BANNED cannot be found or is empty the scan fails (it never silently turns th
 import argparse
 import ast
 import re
-import subprocess
 import sys
 from pathlib import Path
+
+try:  # imported as `tools.scan_repo` (tests) or run as a script, where `tools/` is the first path entry
+    from tools.fixed_run import run_fixed
+except ModuleNotFoundError:
+    from fixed_run import run_fixed
 
 HERE = Path(__file__).resolve().parent
 EXAMPLE_KEY = "AKIAIOSFODNN7EXAMPLE"  # the one literal AWS documents as a placeholder
@@ -71,7 +75,7 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
 def tracked_paths(repo: Path) -> set[str]:
     """The files git tracks (`git ls-files -z`: exact names, no quoting of unusual ones; ignore files do not matter)."""
     cmd = ["git", "-C", str(repo), "ls-files", "-z"]
-    listing = subprocess.run(cmd, capture_output=True, check=True).stdout
+    listing = run_fixed(cmd, capture_output=True, check=True).stdout
     return {rel for rel in listing.decode("utf-8").split("\0") if rel}
 
 

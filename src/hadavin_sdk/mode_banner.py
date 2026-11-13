@@ -12,7 +12,8 @@ as objects, shows the unconfirmed banner and not the made-up one, until the stan
 
 The stage and both lists of services (the real ones and the pretend ones, called stand-ins) are read from the loaded
 config in one place, `banner_from_config(config, names, words, tool_specs=..., overridden=...)` (a screen calls `banner_or_unconfirmed`, which
-calls it and never raises), so a caller cannot forget to name a real service and so get the made-up
+calls it and turns an error in `READ_ERRORS` into the unconfirmed banner), so a caller cannot forget
+to name a real service and so get the made-up
 sentence by accident. `_banner_for` is the private lower-level function they use: its lists are required keyword arguments with
 no defaults, because an empty default would answer "nothing real is connected" when nobody had checked.
 
@@ -85,6 +86,7 @@ __all__ = [
     "NOTHING_CONNECTED",
     "NOT_CONNECTIVITY",
     "OVERRIDES",
+    "READ_ERRORS",
     "READ_SOURCES",
     "TONES",
     "TOOL_HOSTS",
@@ -101,9 +103,18 @@ __all__ = [
 # The stage whose banner may say "made-up". A test (`test_the_demo_stage_is_one_of_the_stages`) fails if a stage rename
 # leaves it out of `stages.STAGES`; it is the name that counts, not the position.
 _DEMO_STAGE = "demo"
-# The errors that reading a source for its endpoint can raise: a kind this file does not know (LookupError), settings that do
-# not build (ValueError, which includes a validation error), a missing attribute or a wrong type.
-_READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
+# The ONE list of errors that reading an app, a config, a source or the words of a banner can raise,
+# and that mean "the banner
+# cannot be read": a wrong type (TypeError), settings that do not build (ValueError, which includes
+# a validation error and
+# UnicodeError), a missing attribute, a kind this file does not know or a missing entry
+# (AttributeError, LookupError), and a
+# failure inside a getter or a validator (RuntimeError, which includes RecursionError). Every place
+# that turns a read failure
+# into the not-confirmed banner catches exactly these. Any other error type is a bug and is NOT
+# caught: it leaves the
+# function as an error, so no banner at all is returned, and never a made-up or a quiet one.
+READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
 
 # What a service name may look like when it is shown to a person: words made of letters, digits and . _ - joined by
 # SINGLE spaces; a word never ends with "." (so a name cannot hold a sentence break) and the whole name is at most 40
@@ -550,7 +561,7 @@ def _source_leaves_this_machine(source: object) -> bool:
     worked out (a kind this file does not know, settings that do not build)."""
     try:
         return _url_leaves_this_machine(source_endpoint(source))
-    except _READ_ERRORS:
+    except READ_ERRORS:
         return True  # any failure to read the source means "unknown", and unknown is shown as real
 
 
@@ -728,7 +739,8 @@ def banner_or_unconfirmed(
         return banner_from_config(
             config, names, words, tool_specs=tool_specs, overridden=overridden
         ).as_dict()
-    except Exception as exc:  # whatever went wrong, the screen must still say something
+    except READ_ERRORS as exc:
+        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates
         _LOG.warning(
             "mode banner could not be built (%s): showing the not-confirmed banner",
             type(exc).__name__,
@@ -737,9 +749,13 @@ def banner_or_unconfirmed(
 
 
 def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
-    """`not_confirmed(words)`, but built so that it cannot raise: the tag and the text of `words` are used only when both are
-    non-empty texts the page script will show; otherwise (malformed `words`, a missing field, a getter that raises) the
-    default words are used. The screen always gets a finished banner."""
+    """`not_confirmed(words)`, but built so that malformed `words` cannot make it fail: the tag
+    and the text of `words` are used
+    only when both are non-empty texts the page script will show; otherwise (malformed `words`,
+    a missing field, a getter that
+    fails with one of `READ_ERRORS`) the default words are used. An error of any other type is a
+    bug and propagates, so the
+    caller gets an error and no banner (never a made-up or a quiet one)."""
     shown: dict[str, Any] | None = None
     try:
         given = cast(BannerWords, words)
@@ -756,14 +772,17 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
                 "stand_ins": [],
                 "overridden": [],
             }
-    except Exception as exc:  # malformed words (a missing field, a getter that raises anything): the fixed defaults
+    except READ_ERRORS as exc:  # malformed words
+        # (a missing field, a getter that fails): the fixed defaults
         _LOG.debug("mode banner: malformed words (%s): using the default words", type(exc).__name__)
     return shown if shown is not None else not_confirmed(DEFAULT_WORDS)
 
 
 def not_confirmed_banner(words: object = DEFAULT_WORDS) -> dict[str, Any]:
-    """`not_confirmed(words)` that never raises (malformed words give the default words): for a caller that must always get a
-    finished banner."""
+    """`not_confirmed(words)` that malformed words cannot make fail (they give the default
+    words; see
+    `_not_confirmed_that_cannot_fail` for the one rule on error types): for a caller that must
+    get a finished banner."""
     return _not_confirmed_that_cannot_fail(words)
 
 

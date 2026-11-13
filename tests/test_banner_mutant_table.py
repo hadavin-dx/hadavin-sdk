@@ -11,7 +11,7 @@ from pathlib import Path
 from tests import banner_mutants as bm
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert [('J1b an unc... times'), ...] == []
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: assert [('B25 a sour... times'), ...] == [] (new rows whose search text is not in the old files)
 def test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once() -> None:
     assert bm.non_unique_rows() == []
 
@@ -293,7 +293,7 @@ def test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_tab
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not say that the table has 320 rows
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 332 rows
 def test_the_changelog_states_the_row_count_of_the_table() -> None:
     text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"the table has {bm.ROW_COUNT} rows" in text, (
@@ -301,13 +301,39 @@ def test_the_changelog_states_the_row_count_of_the_table() -> None:
     )
 
 
-def _text_pieces(tree, name: str) -> list[tuple[bool, str]]:
-    """The strings a killer can print, as (is a literal part of an f-string, text): every string constant in the function
-    `name` of a parsed test file and in the functions of that file it calls by name DIRECTLY (its helpers; the helpers of the
-    helpers are not read) and in the module-level tables those read by name. Nothing else counts: not the rest of the file."""
+def _module_functions(tree) -> dict:
+    """The functions of the module level of a parsed test file, by name (a killer and its helpers are found only here)."""
     import ast
 
-    funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    return {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+
+
+def _shadowed_names(tree, names) -> list[str]:
+    """Of `names`, those that are defined more than once at the module level, or again as a nested function anywhere in
+    the file: the name then does not say which function runs, and the check would read the wrong one."""
+    import ast
+
+    top = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
+    nested = [
+        sub.name
+        for outer in ast.walk(tree)
+        if isinstance(outer, (ast.FunctionDef, ast.ClassDef))
+        for sub in ast.iter_child_nodes(outer)
+        if isinstance(sub, ast.FunctionDef)
+    ]
+    return sorted(
+        name for name in set(names) if top.count(name) > 1 or name in set(nested) - set(top[:0])
+    )
+
+
+def _text_pieces(tree, name: str) -> list[tuple[str, object]]:
+    """The strings a killer can print: ("plain", text) for a string constant and ("fstring", parts) for an f-string, where
+    `parts` lists its literal texts and None for each formatted value. They are read from the function `name` of a parsed
+    test file and from the module-level functions of that file it calls by name DIRECTLY (its helpers; the helpers of the
+    helpers are not read) and from the module-level tables those read by name. Nothing else counts: not the rest of the file."""
+    import ast
+
+    funcs = _module_functions(tree)
     node = funcs.get(name)
     if node is None:
         return []
@@ -330,7 +356,7 @@ def _text_pieces(tree, name: str) -> list[tuple[bool, str]]:
         if isinstance(sub, ast.Name) and sub.id in tables
     }
     scopes += [tables[name] for name in sorted(read)]
-    pieces: list[tuple[bool, str]] = []
+    pieces: list[tuple[str, object]] = []
     for scope in scopes:
         in_fstring = {
             id(part)
@@ -340,9 +366,64 @@ def _text_pieces(tree, name: str) -> list[tuple[bool, str]]:
             if isinstance(part, ast.Constant)
         }
         for sub in ast.walk(scope):
-            if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-                pieces.append((id(sub) in in_fstring, sub.value))
+            if isinstance(sub, ast.JoinedStr):
+                pieces.append(
+                    (
+                        "fstring",
+                        [
+                            part.value if isinstance(part, ast.Constant) else None
+                            for part in sub.values
+                        ],
+                    )
+                )
+            elif (
+                isinstance(sub, ast.Constant)
+                and isinstance(sub.value, str)
+                and id(sub) not in in_fstring
+            ):
+                pieces.append(("plain", sub.value))
     return pieces
+
+
+MIN_FRAGMENT = 8  # the least text of the killer's own that an expectation must hold
+
+
+def _is_part_of_fstring_output(parts: list, fragment: str) -> bool:
+    """True when `fragment` can be a stretch of the text that the f-string prints: the literal parts it covers are matched
+    exactly and in order, a formatted value may print anything, and the literal text matched is at least MIN_FRAGMENT
+    characters. A literal that merely occurs inside the fragment, with other text around it, does not count."""
+    from functools import cache
+
+    @cache
+    def rest(i: int, pos: int, matched: int) -> bool:
+        # parts[i:] must continue the fragment from `pos`; the fragment may end inside the part
+        if pos >= len(fragment):
+            return matched >= MIN_FRAGMENT
+        if i >= len(parts):
+            return False
+        part = parts[i]
+        if part is None:  # a value: it prints anything, including nothing
+            return any(rest(i + 1, k, matched) for k in range(pos, len(fragment) + 1))
+        tail = fragment[pos:]
+        if tail.startswith(part):
+            return rest(i + 1, pos + len(part), matched + len(part))
+        if part.startswith(tail):  # the fragment ends inside this literal
+            return matched + len(tail) >= MIN_FRAGMENT
+        return False
+
+    for i, part in enumerate(parts):
+        if part is None:  # the fragment starts inside a value
+            if any(rest(i + 1, k, 0) for k in range(len(fragment) + 1)):
+                return True
+        else:  # it starts inside a literal: a tail of the literal is the start of the fragment
+            for off in range(len(part)):
+                piece = part[off:]
+                if fragment.startswith(piece):
+                    if rest(i + 1, len(piece), len(piece)):
+                        return True
+                elif piece.startswith(fragment) and len(fragment) >= MIN_FRAGMENT:
+                    return True
+    return False
 
 
 # Rows whose `expect` holds text that is made at run time and is in no string of the killer or of its direct helpers: a value
@@ -351,6 +432,14 @@ def _text_pieces(tree, name: str) -> list[tuple[bool, str]]:
 # of the killer, or the row is not good). Each entry says where its text comes from; `test_every_computed_expectation_has_
 # a_reason_and_is_not_seen_by_the_static_check` keeps the list honest (a row that the static check accepts must leave it).
 COMPUTED_EXPECT = {
+    "B1": "the case is the loop variable `mode` of the killer (f'stage {mode!r}' printed by the shared refused helper)",
+    "B39": "the odd url is a value of the killer's own data list, printed in the failure",
+    "B40": "the odd url is a value of the killer's own data list, printed in the failure",
+    "B41": "the odd url is a value of the killer's own data list, printed in the failure",
+    "G56": "the encoding name is the loop variable of the killer (f'binary {encoding}')",
+    "G57": "the encoding name is the loop variable of the killer (f'binary {encoding}')",
+    "G81": "the file ending is the loop variable of the killer (f'named {ending}')",
+    "G82": "the file ending is the loop variable of the killer (f'named {ending}')",
     "B2": "the killer loops over inputs and the message holds the repr of one input (str 'crm')",
     "B2b": "the killer loops over inputs and the message holds the repr of one input (set {'crm'})",
     "J3": "the word is from the page script's own probe output (the write that was made), not from the killer",
@@ -367,20 +456,30 @@ COMPUTED_EXPECT = {
     "G53": "the archive ending is the loop variable of the killer",
     "G54": "the archive ending is the loop variable of the killer",
     "G55": "the archive ending is the loop variable of the killer",
-    "R7E4": "the case label is the loop variable of a helper of a helper",
-    "R7E5": "the case label is the loop variable of a helper of a helper",
-    "R9D4": "the case label is the loop variable of a helper of a helper",
-    "R9D5": "the case label is the loop variable of a helper of a helper",
 }
 
 
+def _printable(pieces: list, fragment: str) -> bool:
+    """Whether the killer can print `fragment`: inside one plain string (at least MIN_FRAGMENT characters) or as a stretch
+    of what one of its f-strings prints."""
+    for kind, payload in pieces:
+        if kind == "plain":
+            if len(fragment) >= MIN_FRAGMENT and fragment in payload.strip():
+                return True
+        elif _is_part_of_fstring_output(payload, fragment):
+            return True
+    return False
+
+
 def expectation_nowhere_in_killer(rows=None, root=None, strict=False) -> list[tuple[str, str]]:
-    """Rows whose `expect` cannot come from the killer's own text. `expect` is a fragment of the killer's assertion message
-    AS PRINTED. It is accepted when it lies inside one string of the killer or of its direct helpers, or, where the message
-    formats a value (an f-string), when it holds a literal part of that f-string of at least 5 characters (the fragment then
-    also holds the value, which no string does). Not accepted: a fragment found only elsewhere in the test file, or an
-    f-string of another function. Crash rows (the pinned set) expect the text of the interpreter or of the changed code and
-    are left out."""
+    """Rows whose `expect` cannot come from the killer's own assertion message. `expect` is a fragment of that message AS
+    PRINTED. It is accepted when it lies inside one string of the killer or of its direct helpers (at least MIN_FRAGMENT
+    characters), or, where the message formats a value (an f-string), when it is a stretch of what that f-string prints (its
+    literal parts exact and in order, any value in between, at least MIN_FRAGMENT characters of the killer's own text). Not
+    accepted: a fragment found only elsewhere in the test file, an f-string of another function, a literal that only occurs
+    somewhere inside the fragment, a start-of-text match of a few characters, or a killer whose name is defined twice (the
+    check would not know which one runs). Crash rows (the pinned set) expect the text of the interpreter or of the changed
+    code and are left out."""
     import ast
 
     base = Path(bm.ROOT if root is None else root)
@@ -392,15 +491,26 @@ def expectation_nowhere_in_killer(rows=None, root=None, strict=False) -> list[tu
             continue
         if m.test_file not in trees:
             trees[m.test_file] = ast.parse((base / m.test_file).read_text(encoding="utf-8"))
-        pieces = [(f, p.strip()) for f, p in _text_pieces(trees[m.test_file], m.only_test)]
-        if any(m.expect in p or (f and len(p) >= 5 and p in m.expect) for f, p in pieces):
+        tree = trees[m.test_file]
+        helpers = {
+            sub.func.id
+            for fn in [_module_functions(tree).get(m.only_test)]
+            if fn is not None
+            for sub in ast.walk(fn)
+            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name)
+        }
+        if shadowed := _shadowed_names(
+            tree, {m.only_test} | (helpers & set(_module_functions(tree)))
+        ):
+            nowhere.append((label, f"the function name {shadowed[0]} is defined more than once"))
+            continue
+        pieces = _text_pieces(tree, m.only_test)
+        if _printable(pieces, m.expect):
             continue
         # the shared `refused` helper (tests/refusal.py) prints "<what> was not refused" or "<what>: refused, but with
         # another text": `what` is the killer's own text (a string, or the start of an f-string with a value after it)
         what = re.split(r" was not refused|: refused, but with another text", m.expect)[0]
-        if what != m.expect and any(
-            what in p or (f and len(p) >= 4 and what.startswith(p)) for f, p in pieces
-        ):
+        if what != m.expect and _printable(pieces, what):
             continue
         nowhere.append((label, m.expect))
     return nowhere
@@ -444,8 +554,8 @@ def test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_stat
     assert not seen_statically, f"these rows no longer need an entry: {sorted(seen_statically)}"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: ' or sealed is _UNREADABLE\n'
-def test_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file() -> None:
+# fail-before (batch 13): cannot fail on old code. It reads `bm.EQUIVALENT`, a table that exists only in this new file, so a pin (same new file).
+def test_pin_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file() -> None:
     assert bm.EQUIVALENT, "the list of equivalent mutations is empty"
     for (path, text), why in bm.EQUIVALENT.items():
         source = (Path(bm.ROOT) / path).read_text(encoding="utf-8")
@@ -468,3 +578,37 @@ def test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_repo
     assert expectation_nowhere_in_killer(rows=[elsewhere], root=tmp_path) == [
         ("Z4", "a sentence of another test")
     ]
+
+
+# fail-before (batch 13): cannot fail on old code, because the checker it tests is in this same new file. A pin.
+def test_pin_three_loose_expectations_and_a_short_one_are_each_reported(tmp_path: Path) -> None:
+    (tmp_path / "t.py").write_text(
+        "def test_k():\n    assert False, 'the message of the killer'\n", encoding="utf-8"
+    )
+    (tmp_path / "twin.py").write_text(
+        "def test_dup():\n    assert False, 'first body of the twin'\n"
+        "def test_dup():\n    assert False, 'second body of the twin'\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "nest.py").write_text(
+        "def helper():\n    def test_n():\n        pass\n"
+        "def test_n():\n    assert False, 'message of nest'\n",
+        encoding="utf-8",
+    )
+
+    def row(label: str, file: str, killer: str, expect: str):
+        return bm.mutant(f"{label} planted", "x.py", "a", "b", file, killer, expect)
+
+    rows = [
+        # an invented sentence that only holds a 5 character literal of the killer ("the m")
+        row("Z5", "t.py", "test_k", "the m is an invented sentence"),
+        # an invented sentence that starts like the killer text for 4 characters ("the ")
+        row("Z6", "t.py", "test_k", "the minister wrote this"),
+        # a message of 5 characters, shorter than the 8 character minimum
+        row("Z7", "t.py", "test_k", "the m"),
+        row("Z8", "twin.py", "test_dup", "first body of the twin"),
+        row("Z9", "nest.py", "test_n", "message of nest"),
+        row("Z10", "t.py", "test_k", "message of the killer"),  # a real stretch: not reported
+    ]
+    reported = {label for label, _ in expectation_nowhere_in_killer(rows=rows, root=tmp_path)}
+    assert reported == {"Z5", "Z6", "Z7", "Z8", "Z9"}, reported

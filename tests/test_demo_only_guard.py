@@ -1199,6 +1199,9 @@ def test_a_tracked_file_in_a_folder_that_cannot_be_entered_is_a_hit_not_a_skip(
         repo = _track(_repo(base / "r", {**CLEAN, "src/pkg/locked/x.py": "X = 1\n"}))
         script = base / "demo_only_guard.py"
         shutil.copy(ROOT / "tools" / "demo_only_guard.py", script)
+        shutil.copy(
+            ROOT / "tools" / "fixed_run.py", base / "fixed_run.py"
+        )  # the guard starts programs through it
         settings = base / "s.toml"
         settings.write_text(
             f'folder = "{FOLDER}"\nproduct_roots = ["src"]\nproduct_packages = ["pkg"]\n',
@@ -1583,9 +1586,9 @@ def test_the_copy_run_does_not_start_when_the_scan_has_a_hit(
             called.append(" ".join(map(str, argv)))
         return real_run(argv, **kw)
 
-    import tools.demo_only_guard as mod
+    import tools.fixed_run as fixed_run_mod
 
-    monkeypatch.setattr(mod.subprocess, "run", watch)
+    monkeypatch.setattr(fixed_run_mod.subprocess, "run", watch)
     rc = g.run_without_folder(repo, _cfg(), [])
     out = capsys.readouterr().out
     assert rc == 1 and "names-demo-only-folder" in out and "copy run is not started" in out, (
@@ -2012,14 +2015,14 @@ def test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_lik
     # What it guards against (a fault of the code before batch 8): the whole first line of git was shown as it came)
     line = (
         "fatal: bypass=true bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
-        "plain Bearer yyy8 Authorization: Bearer zzz9"
+        "plain Bearer yyyy Authorization: Bearer zzz9"
     )
     shown = g._git_failure("git ls-files failed", line.encode(), Path("/nowhere"))
     for secret in ("abc123", "def456", "user:pw", "zzz9"):
         assert secret not in shown, f"a secret value was shown: {secret}"
     assert "bypass=true" in shown, f"a bare word was hidden: {shown}"
     assert "bypass_key=<hidden>" in shown and "bypass_token=<hidden>" in shown, shown
-    assert "Bearer yyy8" in shown, f"a bare scheme word was changed: {shown}"
+    assert "Bearer yyyy" in shown, f"a bare scheme word was changed: {shown}"
 
 
 # -- batch 9: the git-message masker (class 4) and the guard minors (class 5) ---------------------------------------------
@@ -2055,7 +2058,9 @@ def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -
         ("BEARER", "BEARER", 12),
     ):
         for n in (low - 1, low, low + 1, 40):
-            token = ("a1" * 30)[:n]
+            token = ("a" * 30)[
+                :n
+            ]  # letters only: a token that mixes digits is hidden at any length
             line = f"x {scheme} {token} y"
             hidden = g._hide_secrets(line)
             m = _core(core).search(line)
@@ -2085,6 +2090,62 @@ def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
     assert "<hidden>" in g._hide_secrets("Bearer " + "a" * 12 + "=="), (
         "a bearer token with padding was shown"
     )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
+def test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters() -> None:
+    # what it shows (`authorization=Bearer <token>` of 8, 10 or 11 characters stayed visible; the core hides them)
+    for n in (8, 10, 11):
+        token = "q" * n
+        for scheme in ("Bearer", "bearer", "Basic"):
+            shown = g._hide_secrets(f"fatal: authorization={scheme} {token} tail")
+            assert token not in shown, f"{scheme} {n} characters stayed visible: {shown!r}"
+    # the colon header form and the `token=Bearer` form are unchanged
+    assert g._hide_secrets("authorization: Bearer " + "q" * 8) == "authorization: <hidden>"
+    assert "q" * 11 in g._hide_secrets(f"{TOK}=Bearer " + "q" * 11), (
+        "the stated 11 character limit moved"
+    )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a hidden-side value stayed visible, bypass=abc123: 'bypass=abc123 tail'
+def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() -> None:
+    # visible side
+    for line in (
+        "bypass=true",
+        "BYPASS=False",
+        "bypass=Yes",
+        "bypass=no",
+        "bypass=ON",
+        "bypass=off",
+        "bypass=0",
+        "bypass=1 x",
+    ):
+        assert g._hide_secrets(line) == line, f"a plain flag was hidden: {line!r}"
+    # hidden side: any other value, a flag with more stuck to it, case does not matter
+    for value in ("abc123", "truex", "true,abc123", "2", "yes!", "Secret7"):
+        for name in ("bypass", "BYPASS", "Bypass"):
+            shown = g._hide_secrets(f"{name}={value} tail")
+            assert shown == f"{name}=<hidden> tail", (
+                f"a hidden-side value stayed visible, {name}={value}: {shown!r}"
+            )
+    assert g._hide_secrets("bypass_ke" + "y=true") == "bypass_ke" + "y=<hidden>"
+    assert g._hide_secrets("bypass_" + TOK + "=true") == "bypass_" + TOK + "=<hidden>"
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
+def test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits() -> (
+    None
+):
+    assert "<hidden>" in g._hide_secrets("Bearer " + "a" * 16), "a 16 letter bearer token stayed"
+    assert "<hidden>" in g._hide_secrets("Basic " + "a" * 16), "a 16 letter basic token stayed"
+    for scheme, n in (("Bearer", 11), ("Bearer", 3), ("basic", 7), ("BASIC", 2)):
+        token = ("a1" * 10)[:n]
+        shown = g._hide_secrets(f"x {scheme} {token} y")
+        assert token not in shown, f"{scheme} {n} mixed characters stayed: {shown!r}"
+    assert "Bearer " + "a" * 11 in g._hide_secrets("Bearer " + "a" * 11), (
+        "letters only: still the core limit"
+    )
+    assert "Basic " + "b" * 7 in g._hide_secrets("Basic " + "b" * 7)
 
 
 def test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden() -> None:
@@ -2261,7 +2322,7 @@ def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
 def test_a_bearer_token_of_11_characters_stays_visible_as_on_main() -> None:
     # pin: the bearer rule needs 12 or more characters, as on main (`hadavin_sdk.guard.redact`), so a shorter token after a
     # name stays visible; 12 characters are hidden. A made-up token built from parts.
-    short, long_ = "c3" * 5 + "c", "c3" * 6
+    short, long_ = "c" * 11, "c3" * 6
     assert len(short) == 11 and len(long_) == 12
     assert short in g._hide_secrets(f"fatal: {TOK}=Bearer {short}"), (
         "an 11 character token was hidden"
@@ -2480,3 +2541,36 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     assert any(h.startswith("docs/link44: symlink-loop") and "chain too long" in h for h in hits), (
         f"a chain of 45 links was not named as a chain: {hits}"
     )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there (the helper file is copied in; the old head has no such file). A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_the_shared_start_of_a_program_refuses_a_shell_and_a_command_string() -> None:
+    from tools.fixed_run import run_fixed
+
+    for kwargs in ({"shell": True}, {"shell": 1}):
+        try:
+            run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
+        except ValueError:
+            continue
+        raise AssertionError(f"a shell was started with {kwargs}")
+    for bad in ("echo hello", b"echo hello", [], ()):
+        try:
+            run_fixed(bad, check=True)
+        except TypeError:
+            continue
+        raise AssertionError(f"a command that is not a list was run: {bad!r}")
+
+
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there (the helper file is copied in; the old head has no such file). A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
+    from tools.fixed_run import run_fixed
+
+    done = run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
+    assert done.stdout.strip() == b"7", f"the program did not run: {done.stdout!r}"
+    missing = "no-such-program-" + "x" * 8
+    try:
+        run_fixed([missing], check=True)
+    except SystemExit as stop:
+        assert missing in str(stop), f"the missing program is not named: {stop}"
+    else:
+        raise AssertionError("a missing program did not stop the caller")

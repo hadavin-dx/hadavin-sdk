@@ -77,17 +77,6 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101"]
-# Mode-safety path, owner decision pending: these two files must treat ANY failure while reading an app or its words as
-# "unknown" and show the not-confirmed banner (a surprise error type must never turn into a made-up or blank banner), so a
-# short list of exception names cannot replace `except Exception` at four sites (`App._known_overrides`, `App.mode_banner`,
-# `mode_banner.banner_or_unconfirmed`, `mode_banner._not_confirmed_that_cannot_fail`). Each site logs the error type once.
-"src/hadavin_sdk/app.py" = ["BLE001"]
-"src/hadavin_sdk/mode_banner.py" = ["BLE001"]
-# The ONE place each of these starts a program: a fixed list of arguments, never a shell string, the program found on the PATH
-# and run by its full path. The rule cannot tell a fixed list from untrusted input, so it is waived at those places only.
-"tests/fixed_run.py" = ["S603"]
-"tools/demo_only_guard.py" = ["S603"]
-"tools/scan_repo.py" = ["S603"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -70,7 +70,6 @@ import os
 import re
 import shutil
 import stat
-import subprocess
 import sys
 import tempfile
 import tomllib
@@ -78,7 +77,24 @@ import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+
+try:  # imported as `tools.demo_only_guard` (tests) or run as a script, where `tools/` is the first path entry
+    from tools.fixed_run import run_fixed
+except (
+    ModuleNotFoundError
+):  # run by path with `-I`: the script folder is not on the path, so read the sibling by its file
+    import importlib.util as _util
+
+    _spec = _util.spec_from_file_location(
+        "fixed_run", Path(__file__).resolve().with_name("fixed_run.py")
+    )
+    if _spec is None or _spec.loader is None:
+        raise SystemExit(
+            "the guard helper next to this file (fixed_run.py) cannot be read"
+        ) from None
+    _mod = _util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    run_fixed = _mod.run_fixed
 
 HERE = Path(__file__).resolve().parent
 # The first bytes a file with each of the endings that may hold a non-text file must start with. The content decides: a
@@ -314,6 +330,29 @@ def _hide_urls(line: str) -> str:
     return "".join(out)
 
 
+_BARE_WORD = "bypass"
+_PLAIN_FLAGS = frozenset({"true", "false", "yes", "no", "on", "off", "0", "1"})
+_SCHEME_WORDS = frozenset({"bearer", "basic", "digest"})
+_SCHEME_TOKEN = re.compile(r"(?i)\b(?:bearer|basic)\s+([a-z0-9._~+/\-<>_]+={0,2})")
+
+
+def _looks_secret_shaped(token: str) -> bool:
+    """A token after a bare scheme word that is long (16 or more characters) or mixes letters and digits."""
+    body = token.rstrip("=")
+    return len(body) >= 16 or (any(c.isalpha() for c in body) and any(c.isdigit() for c in body))
+
+
+def _hide_shaped_scheme_token(line: str) -> str:
+    return _SCHEME_TOKEN.sub(
+        lambda m: (
+            m.group(0).replace(m.group(1), _HIDDEN, 1)
+            if _looks_secret_shaped(m.group(1)) and _HIDDEN not in m.group(1)
+            else m.group(0)
+        ),
+        line,
+    )
+
+
 def _hide_pairs(line: str) -> str:
     out: list[str] = []
     pos = 0
@@ -323,7 +362,9 @@ def _hide_pairs(line: str) -> str:
         start = at
         while start > pos and _is_name_char(line[start - 1]):
             start -= 1
-        if start < at and _SECRET_NAME.search(line[start:at]):
+        name = line[start:at]
+        named_secret = bool(_SECRET_NAME.search(name)) if start < at else False
+        if start < at and (named_secret or name.lower() == _BARE_WORD):
             end = at + 1
             if end < n and line[end] in "'\"":
                 quote = line[end]
@@ -334,6 +375,23 @@ def _hide_pairs(line: str) -> str:
             else:
                 while end < n and not line[end].isspace():
                     end += 1
+            value = line[at + 1 : end]
+            if not named_secret and value.lower() in _PLAIN_FLAGS:
+                at = line.find("=", at + 1)  # a bare flag word with a plain on/off value is shown
+                continue
+            if (
+                "auth" in name.lower()
+                and value.lower() in _SCHEME_WORDS
+                and not value.startswith(("'", '"'))
+            ):
+                tail = end
+                while tail < n and line[tail].isspace() and line[tail] != "\n":
+                    tail += 1
+                stop = tail
+                while stop < n and not line[stop].isspace():
+                    stop += 1
+                if stop > tail and line[tail:stop] != _HIDDEN:
+                    end = stop  # `authorization=Bearer <token>`: the scheme word and the token, whatever the length
             out.append(line[pos : at + 1] + _HIDDEN)
             pos = end
             at = line.find("=", pos)
@@ -352,7 +410,7 @@ def _hide_header(line: str) -> str:
 
 
 def _hide_bearer(line: str) -> str:
-    return _hide_group(_BEARER, line)
+    return _hide_shaped_scheme_token(_hide_group(_BEARER, line))
 
 
 def _hide_basic(line: str) -> str:
@@ -389,17 +447,6 @@ def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
     return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"
 
 
-def _run(argv: list[str], *, check: bool, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
-    """The ONE place the guard starts a program: a fixed list of arguments (never a shell string), the program found on the
-    PATH and run by its full path (this interpreter is already one). A missing program stops the guard with its name."""
-    exe = argv[0] if os.path.isabs(argv[0]) else shutil.which(argv[0])
-    if exe is None:
-        raise SystemExit(
-            f"demo_only_guard: {argv[0]} was not found on the PATH; the guard does not guess"
-        )
-    return subprocess.run([exe, *argv[1:]], check=check, **kwargs)
-
-
 def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
     """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
     unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
@@ -410,7 +457,7 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
             f"demo_only_guard: {repo} is not a git checkout; the scan lists files with git and will not guess"
         )
     flags = ["--cached", "--others", "--exclude-standard"] if include_new else ["--cached"]
-    done = _run(
+    done = run_fixed(
         ["git", "-C", str(repo), *GIT_NO_USER_EXCLUDES, "ls-files", "-z", *flags],
         capture_output=True,
         check=False,
@@ -424,7 +471,7 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
 
 def _gitlinks(repo: Path) -> set[str]:
     """The paths git holds as git links (a submodule: mode 160000), whether or not their folder is on the disk."""
-    done = _run(
+    done = run_fixed(
         ["git", "-C", str(repo), "ls-files", "-s", "-z", "--cached"],
         capture_output=True,
         check=False,
@@ -1073,7 +1120,7 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
         env = {k: v for k, v in os.environ.items() if k in cfg.child_env_allowed}
         env["PYTHONPATH"] = str(dest / "src")
         for package in cfg.product_packages:
-            checked = _run(
+            checked = run_fixed(
                 [sys.executable, "-c", _IMPORT_CHECK, package, str(dest)],
                 cwd=dest,
                 env=env,
@@ -1084,7 +1131,7 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
                     f"demo_only_guard: package {package} is not imported from the copy: no pass reported"
                 )
                 return checked.returncode or 3
-        return _run(
+        return run_fixed(
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *pytest_args],
             cwd=dest,
             env=env,

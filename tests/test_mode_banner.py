@@ -2223,7 +2223,7 @@ def _given(*names: str):
     return getattr(app_mod, "_Given", tuple)(names)
 
 
-def _built_app(tmp_path: Path):
+def _built_app(tmp_path: Path, channel=None):
     from hadavin_sdk import app as app_mod
     from hadavin_sdk.actions.secrets import FakeSecretProvider
     from hadavin_sdk.approvals.channel import FakeChannel
@@ -2233,7 +2233,7 @@ def _built_app(tmp_path: Path):
     cfg_dir = make_cfg(tmp_path)
     qualify(load_registry(load_config(cfg_dir)))
     secrets = FakeSecretProvider({"fixture-token": "t" * 8})
-    return app_mod.build(cfg_dir, ["test-agent"], channel=FakeChannel(), secrets=secrets)
+    return app_mod.build(cfg_dir, ["test-agent"], channel=channel or FakeChannel(), secrets=secrets)
 
 
 def test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one(
@@ -2730,8 +2730,8 @@ def test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_othe
         copy.deepcopy(app)
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: an app of plain parts was deep-copied
-def test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well() -> None:
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well(tmp_path: Path) -> None:
     # what it shows (an app of plain parts was copied, and whether the copy read known depended on how the standard
     # library copies a sentinel object): one rule for every app
     import copy
@@ -2739,7 +2739,10 @@ def test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well() -> None
     from hadavin_sdk.app import App
 
     plain = App.__new__(App)
-    plain.__dict__.update({"overridden": (), "_sealed": ((), (), ((), ()))})
+    slots = len(
+        _sealed_app(tmp_path, "slots")._sealed
+    )  # the real number of seal slots, not a guess
+    plain.__dict__.update({"overridden": (), "_sealed": ((),) * slots})
     try:
         copy.deepcopy(plain)
     except TypeError as exc:
@@ -3105,7 +3108,9 @@ def _warnings(caplog: pytest.LogCaptureFixture) -> list:
 def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # what it shows (a NameError or AttributeError made every app unconfirmed with one debug line)
+    # what it shows (an AttributeError, as a typo in the code would raise, made every app
+    # unconfirmed with one debug line; the same banner error is logged once, at warning level, with
+    # its type and never its message)
     import logging
 
     from hadavin_sdk import app as app_mod
@@ -3114,7 +3119,7 @@ def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
     monkeypatch.setattr(app_mod, "_WARNED", set(), raising=False)
 
     def boom(self) -> tuple:
-        raise NameError("a typo")
+        raise AttributeError("a typo")
 
     app = _built_app(tmp_path / "w1")
     monkeypatch.setattr(App, "_connected_parts", boom)
@@ -3129,7 +3134,7 @@ def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
     )
     assert len(logged) == 1, f"the same banner error was logged {len(logged)} times, not once"
     seen = logged
-    assert "NameError" in seen[0].getMessage(), (
+    assert "AttributeError" in seen[0].getMessage(), (
         "the type of the error was not named in the log line"
     )
     assert "a typo" not in seen[0].getMessage(), "the message of the error was logged"
@@ -3486,38 +3491,6 @@ def test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too(tmp_path: Pat
         raise AssertionError("a built app was deep-copied")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the error was logged 2 times for two banners (one expected)
-def test_a_banner_error_is_logged_once_at_warning_level_whatever_the_name_of_the_log_helper(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # what it shows (it fails on dd827d79 for the behaviour itself, a debug line instead of a warning, and does
-    # not name the helper added in batch 10): a real error in reading the app is shown by captured log records
-    import logging
-
-    from hadavin_sdk import app as app_mod
-    from hadavin_sdk.app import App
-
-    getattr(app_mod, "_WARNED", set()).clear()
-
-    def boom(self) -> tuple:
-        raise NameError("a typo")
-
-    app = _built_app(tmp_path / "w9")
-    monkeypatch.setattr(App, "_connected_parts", boom)
-    with caplog.at_level(logging.DEBUG):
-        app.mode_banner()
-        app.mode_banner()
-    mine = [
-        r
-        for r in caplog.records
-        if "NameError" in r.getMessage() or "mode banner" in r.getMessage()
-    ]
-    assert len(mine) == 1, f"the error was logged {len(mine)} times for two banners (one expected)"
-    assert all(r.levelno >= logging.WARNING for r in mine), (
-        f"logged below warning: {[r.levelname for r in mine]}"
-    )
-
-
 def _entry_change_is_seen(tmp_path: Path, name: str, change) -> str:
     app = _sealed_app(tmp_path, name)
     change(app)
@@ -3593,13 +3566,24 @@ def test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed(tmp_
 def test_a_stage_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # The stage text `config.environment` decides the mode and the tag of the banner. A forced change of it (the config is
     # read-only for normal code, so this goes round it with `object.__setattr__`) must not keep the made-up banner.
-    for stage in (s for s in STAGES if s != "demo"):
-        app = _sealed_app(tmp_path, f"stage-{stage}")
-        object.__setattr__(app.config, "environment", stage)
+    for later in (s for s in STAGES if s != "demo"):
+        app = _sealed_app(tmp_path, f"changed-{later}")
+        object.__setattr__(app.config, "environment", later)
         tone = app.mode_banner()["tone"]
         assert tone == "unconfirmed", (
-            f"a stage changed after build (demo to {stage}) was read as {tone!r}"
+            f"a stage changed after build (demo to {later}) was read as {tone!r}"
         )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_stage_that_is_not_text_is_an_error_that_names_it(tmp_path: Path) -> None:
+    app = _sealed_app(tmp_path, "nostage")
+    for value in (None, 5, b"demo", ["demo"]):
+        object.__setattr__(app.config, "environment", value)
+        with refused(TypeError, f"a stage of {value!r}", match="no stage text"):
+            app._stage()
+        tone = app.mode_banner()["tone"]
+        assert tone == "unconfirmed", f"a stage of {value!r} read as {tone!r}"
 
 
 # fail-before (real run, batch 12): it FAILS on dd827d79 (a toolbox without an attribute dictionary was not refused) and PASSES on 06ed4b4c, which already refuses; it is the killer of row R12C1, shown by the row run
@@ -3643,6 +3627,10 @@ def test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_no
     # read gives (the control) and "unconfirmed" can only come from the unreadable seal, not from a recorded override.
     from hadavin_sdk import app as app_mod
 
+    # Older heads read the services in `mode_banner` only, so the shape is put in both places;
+    # `_UNREADABLE` is looked up by
+    # name with a default, so a head without it fails on what it stored, not on a missing name.
+    unreadable = getattr(app_mod, "_UNREADABLE", None)
     for i, (label, shape) in enumerate(_unreadable_shapes().items()):
         app = _built_app(tmp_path / f"seal{i}")
         app._seal(_given())
@@ -3650,11 +3638,197 @@ def test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_no
             f"{label}: the control (a readable app) lost its banner"
         )
         with monkeypatch.context() as patch:
+            patch.setattr(mb, "_services_in", shape)
             patch.setattr(app_mod, "_services_in", shape, raising=False)
             app._seal(_given())
             sealed = app._sealed
             tone = app.mode_banner()["tone"]
-        assert sealed is not None and sealed == app_mod._UNREADABLE, (
-            f"{label}: the app was not sealed as unreadable"
-        )
         assert tone == "unconfirmed", f"{label}: an unreadable app read as {tone!r}"
+        assert unreadable is not None and sealed == unreadable, (
+            f"{label}: the app was not sealed as unreadable (it was sealed with {type(sealed).__name__})"
+        )
+
+
+class _Surprise(Exception):
+    """An error type that no tuple of the banner or of the app names: it stands for a bug in the code."""
+
+
+def _raise_surprise(*_a, **_k):
+    raise _Surprise("a bug")
+
+
+def _reading_the_parts(app, monkeypatch, boom):
+    from hadavin_sdk.app import App
+
+    monkeypatch.setattr(App, "_connected_parts", boom)
+    return app.mode_banner
+
+
+def _building_the_banner(app, monkeypatch, boom):
+    monkeypatch.setattr(mb, "banner_from_config", boom)
+    return app.mode_banner
+
+
+def _the_outer_catch_of_the_app(app, monkeypatch, boom):
+    from hadavin_sdk import app as app_mod
+
+    monkeypatch.setattr(app_mod, "banner_or_unconfirmed", boom)
+    return app.mode_banner
+
+
+def _banner_or_unconfirmed_itself(app, monkeypatch, boom):
+    monkeypatch.setattr(mb, "banner_from_config", boom)
+    return lambda: mb.banner_or_unconfirmed(
+        app.config, None, mb.DEFAULT_WORDS, tool_specs=app.registry.tools, overridden=()
+    )
+
+
+def _the_words_of_the_banner(app, monkeypatch, boom):
+    class Words:
+        @property
+        def not_confirmed_tag(self):
+            boom()
+
+    return lambda: mb.not_confirmed_banner(Words())
+
+
+def _sealing_the_app(app, monkeypatch, boom):
+    from hadavin_sdk.app import App
+
+    monkeypatch.setattr(App, "_connected_parts", boom)
+    return lambda: app._seal(_given())
+
+
+SURPRISE_SITES = {
+    "App._known_overrides (reads the parts)": _reading_the_parts,
+    "App.mode_banner (the outer catch)": _the_outer_catch_of_the_app,
+    "banner_or_unconfirmed": _banner_or_unconfirmed_itself,
+    "_not_confirmed_that_cannot_fail (the words)": _the_words_of_the_banner,
+    "App._seal (reads the app at build)": _sealing_the_app,
+}
+
+
+def _a_bug_is_not_turned_into_a_banner(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+) -> None:
+    app = _sealed_app(tmp_path, "s1")
+    call = SURPRISE_SITES[site](app, monkeypatch, _raise_surprise)
+    try:
+        call()
+    except _Surprise:
+        return  # no banner is returned at all: not a made-up one, not a quiet one, not even an unconfirmed one
+    raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
+
+
+# fail-before: on c7eb5c79 and dd827d79 each of these sites caught `Exception`, so the bug was
+# swallowed
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: App._known_overrides (reads the parts): a bug of an unnamed type was turned into a banner
+def test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner(
+    tmp_path, monkeypatch
+) -> None:
+    _a_bug_is_not_turned_into_a_banner(
+        tmp_path, monkeypatch, "App._known_overrides (reads the parts)"
+    )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: App.mode_banner (the outer catch): a bug of an unnamed type was turned into a banner
+def test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner(
+    tmp_path, monkeypatch
+) -> None:
+    _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App.mode_banner (the outer catch)")
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
+def test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner(tmp_path, monkeypatch) -> None:
+    _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "banner_or_unconfirmed")
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
+def test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner(
+    tmp_path, monkeypatch
+) -> None:
+    _a_bug_is_not_turned_into_a_banner(
+        tmp_path, monkeypatch, "_not_confirmed_that_cannot_fail (the words)"
+    )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner(tmp_path, monkeypatch) -> None:
+    _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App._seal (reads the app at build)")
+
+
+# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+@pytest.mark.parametrize("site", sorted(SURPRISE_SITES))
+def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+) -> None:
+    # the other side of the rule above: each error in `READ_ERRORS` is an unreadable banner, shown
+    # as not confirmed
+    for kind in (
+        getattr(mb, "READ_ERRORS", None) or mb._READ_ERRORS
+    ):  # the old head has the private name
+
+        def raise_kind(*_a, _kind=kind, **_k):
+            raise _kind("unreadable")
+
+        app = _sealed_app(tmp_path, f"s2-{kind.__name__}")
+        call = SURPRISE_SITES[site](app, monkeypatch, raise_kind)
+        result = call()
+        if isinstance(result, dict):
+            assert result["tone"] == "unconfirmed", f"{site}: {kind.__name__} gave {result['tone']}"
+        else:  # `_seal` returns nothing: the app is sealed as unreadable
+            assert app.mode_banner()["tone"] == "unconfirmed", f"{site}: {kind.__name__}"
+        monkeypatch.undo()  # the next error type starts from an untouched app
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a bug in the channel was reported as an undelivered card
+def test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # fail-before: on c7eb5c79 and dd827d79 `post_card` caught `Exception`
+    from hadavin_sdk.approvals.cards import Card
+    from hadavin_sdk.approvals.channel import FakeChannel
+
+    channel = FakeChannel()
+    app = _built_app(tmp_path / "c1", channel)
+    card = Card(text="a card", blocks=[], display_hash="0" * 64)
+    monkeypatch.setattr(channel, "post_card", _raise_surprise)
+    try:
+        app.runtime.hooks.post_card(card)
+    except _Surprise:
+        pass
+    else:
+        raise AssertionError("a bug in the channel was reported as an undelivered card")
+    for kind in (OSError, ValueError, LookupError, RuntimeError):
+
+        def failing(_card, _kind=kind):
+            raise _kind("gone")
+
+        monkeypatch.setattr(channel, "post_card", failing)
+        done = app.runtime.hooks.post_card(card)
+        assert done.ok is False and done.reason == kind.__name__, f"{kind.__name__}: {done}"
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a catch of every error is back: ['hadavin_sdk.app:295', 'hadavin_sdk.app:312', 'hadavin_sdk.app:471']
+def test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything() -> None:
+    import ast
+    import inspect
+
+    from hadavin_sdk import app as app_mod
+
+    for module in (app_mod, mb):
+        tree = ast.parse(inspect.getsource(module))
+        bad = [
+            f"{module.__name__}:{h.lineno}"
+            for h in ast.walk(tree)
+            if isinstance(h, ast.ExceptHandler)
+            and (
+                h.type is None
+                or (isinstance(h.type, ast.Name) and h.type.id in ("Exception", "BaseException"))
+            )
+        ]
+        assert not bad, f"a catch of every error is back: {bad}"
+    assert app_mod.READ_ERRORS is mb.READ_ERRORS, "the app has its own list of read errors"
+    assert mb.READ_ERRORS == (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
+    assert app_mod._DELIVERY_ERRORS == (OSError, ValueError, LookupError, RuntimeError)
+    assert not hasattr(app_mod, "_SEAL_ERRORS") and not hasattr(mb, "_READ_ERRORS")

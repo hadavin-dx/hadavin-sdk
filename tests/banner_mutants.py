@@ -665,8 +665,8 @@ M = [
     ),
     mb(
         "B25 a source whose endpoint cannot be worked out is read as this machine",
-        "    except _READ_ERRORS:\n        return True",
-        "    except _READ_ERRORS:\n        return False",
+        "    except READ_ERRORS:\n        return True",
+        "    except READ_ERRORS:\n        return False",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
         "unknown-kind",
     ),
@@ -856,7 +856,7 @@ M = [
     ),
     mb(
         "B43 a source that does not build is read as this machine",
-        "    except _READ_ERRORS:\n        return True  # any failure to read",
+        "    except READ_ERRORS:\n        return True  # any failure to read",
         "    except KeyError:\n        return True  # any failure to read",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
         "2 validation errors for KubernetesSettings",
@@ -1072,8 +1072,8 @@ M = [
     ),
     mb(
         "B62 banner_or_unconfirmed lets the error out",
-        "    except Exception as exc:  # whatever went wrong, the screen must still say something",
-        "    except ZeroDivisionError as exc:  # narrowed",
+        "    except READ_ERRORS as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
+        "    except ZeroDivisionError as exc:\n        # narrowed\n",
         "test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one",
         "TypeError: tool 'internal-host-xxxxx' of agent 'a' has no `hosts` list of text",
         crash="TypeError",
@@ -1834,8 +1834,8 @@ M = [
     ap(
         "R9A4 mode_banner has no catch-all for a tampered app",
         "src/hadavin_sdk/app.py",
-        "        except Exception as exc:\n            # whatever is wrong with the app",
-        "        except KeyError as exc:\n            # whatever is wrong with the app",
+        "        except READ_ERRORS as exc:\n            # an app the banner cannot read is shown as not confirmed",
+        "        except KeyError as exc:\n            # an app the banner cannot read is shown as not confirmed",
         T_MB,
         "test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises",
         "object has no attribute 'tools'",
@@ -1958,7 +1958,7 @@ M = [
     ),
     gd(
         "R9D4 a bare bearer scheme word is not hidden",
-        "    return _hide_group(_BEARER, line)\n",
+        "    return _hide_shaped_scheme_token(_hide_group(_BEARER, line))\n",
         "    return line\n",
         "test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table",
         "Bearer 12: the guard and the core disagree",
@@ -1986,8 +1986,8 @@ M = [
     ),
     gd(
         "R9D8 an inner quote or ampersand ends an unquoted value",
-        "                while end < n and not line[end].isspace():\n                    end += 1\n            out.append(line[pos : at + 1]",
-        '                while end < n and not line[end].isspace() and line[end] not in "\'\\"&":\n                    end += 1\n            out.append(line[pos : at + 1]',
+        "                while end < n and not line[end].isspace():\n                    end += 1\n            value = line[at + 1 : end]",
+        '                while end < n and not line[end].isspace() and line[end] not in "\'\\"&":\n                    end += 1\n            value = line[at + 1 : end]',
         "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
         'unquoted password="ab\'cd"',
     ),
@@ -2028,7 +2028,7 @@ M = [
     ),
     gd(
         "R9D14 the name check reads the whole line for every equals sign",
-        "_SECRET_NAME.search(line[start:at])",
+        "_SECRET_NAME.search(name)",
         "_SECRET_NAME.search(line)",
         "test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line",
         "the name check read",
@@ -2159,7 +2159,7 @@ M = [
         "    def __deepcopy__(self, memo: dict) -> App:",
         "    def _not_deepcopy(self, memo: dict) -> App:",
         T_MB,
-        "test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well",
+        "test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well",
         "an app of plain parts was deep-copied",
     ),
     ap(
@@ -2356,7 +2356,7 @@ M = [
     ap(
         "R11B1 an app the seal cannot read stops the build",
         "src/hadavin_sdk/app.py",
-        "        except _SEAL_ERRORS as exc:\n",
+        '        except READ_ERRORS as exc:\n            _warn_once("the app could not be read when it was built", exc)\n',
         "        except KeyboardInterrupt as exc:\n",
         T_MB,
         "test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed",
@@ -2373,7 +2373,7 @@ M = [
     ),
     gd(
         "R11C1 the name before an equals sign is looked for from the start of the line",
-        "_SECRET_NAME.search(line[start:at])",
+        "_SECRET_NAME.search(name)",
         "_SECRET_NAME.search(line[:at])",
         "test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line",
         "reads for a line of",
@@ -2405,6 +2405,102 @@ M = [
         "test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it",
         "a per-agent tool entry that is a list was not refused",
     ),
+    ap(
+        "R13A1 a stage that is not text is not an error",
+        "src/hadavin_sdk/app.py",
+        '        if not isinstance(stage, str):\n            raise TypeError("the config of this app has no stage text to read")\n',
+        "",
+        T_MB,
+        "test_pin_a_stage_that_is_not_text_is_an_error_that_names_it",
+        "a stage of None was not refused",
+    ),
+    ap(
+        "R13A2 the seal catches every error",
+        "src/hadavin_sdk/app.py",
+        '        except READ_ERRORS as exc:\n            _warn_once("the app could not be read when it was built", exc)\n',
+        '        except Exception as exc:\n            _warn_once("the app could not be read when it was built", exc)\n',
+        T_MB,
+        "test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    ap(
+        "R13A3 reading the parts catches every error",
+        "src/hadavin_sdk/app.py",
+        '        except READ_ERRORS as exc:\n            _warn_once("the connected parts of the app could not be read", exc)\n',
+        '        except Exception as exc:\n            _warn_once("the connected parts of the app could not be read", exc)\n',
+        T_MB,
+        "test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    ap(
+        "R13A4 the outer catch of the app catches every error",
+        "src/hadavin_sdk/app.py",
+        "        except READ_ERRORS as exc:\n            # an app the banner cannot read is shown as not confirmed",
+        "        except Exception as exc:\n            # an app the banner cannot read is shown as not confirmed",
+        T_MB,
+        "test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    mb(
+        "R13A5 banner_or_unconfirmed catches every error",
+        "    except READ_ERRORS as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
+        "    except Exception as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
+        "test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    mb(
+        "R13A6 the words of the banner may fail with any error",
+        "    except READ_ERRORS as exc:  # malformed words\n",
+        "    except Exception as exc:  # malformed words\n",
+        "test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    ap(
+        "R13A7 a card that fails with any error is reported as undelivered",
+        "src/hadavin_sdk/app.py",
+        "        except _DELIVERY_ERRORS as exc:",
+        "        except Exception as exc:",
+        T_MB,
+        "test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card",
+        "a bug in the channel was reported as an undelivered card",
+    ),
+    mb(
+        "R13A8 the list of read errors takes every error",
+        "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)",
+        "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError, Exception)",
+        "test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner",
+        "a bug of an unnamed type was turned into a banner",
+    ),
+    ap(
+        "R13A9 the shared start of a program accepts a shell",
+        "tools/fixed_run.py",
+        '    if kwargs.get("shell"):\n',
+        "    if False:\n",
+        T_G,
+        "test_pin_the_shared_start_of_a_program_refuses_a_shell_and_a_command_string",
+        "a shell was started",
+    ),
+    gd(
+        "R13B1 the token after a scheme word in an authorization pair is not hidden",
+        "                if stop > tail and line[tail:stop] != _HIDDEN:\n",
+        "                if False:\n",
+        "test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters",
+        "Bearer 8 characters stayed visible",
+    ),
+    gd(
+        "R13B2 a bare word bypass is shown with any value",
+        "            if not named_secret and value.lower() in _PLAIN_FLAGS:\n",
+        "            if not named_secret:\n",
+        "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
+        "a hidden-side value stayed visible",
+    ),
+    gd(
+        "R13B3 a token that mixes letters and digits is not hidden after a bare scheme word",
+        "any(c.isalpha() for c in body) and any(c.isdigit() for c in body)",
+        "False",
+        "test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits",
+        "Bearer 11 mixed characters stayed",
+    ),
 ]
 
 # Mutations that cannot change what the code does, with the reason (a test checks that each has one and that its text is
@@ -2422,13 +2518,19 @@ EQUIVALENT = {
 
 # The number of rows in `M` (the CHANGELOG states it; a table test compares this constant with the rows it parses out of
 # the text of this file, so it cannot drift from the table).
-ROW_COUNT: int = 320
+ROW_COUNT: int = 332
 
-# Rows that share one killer AND one expectation on purpose: none are left (batch 8). Each of the six groups that used to
+# Rows that share one killer AND one expectation on purpose: one is left (batch 13). Each of the six groups that used to
 # share one assertion now has an assertion message that shows the observed value, and each row expects the fragment of
 # that value its own mutation produces. A new pair needs its own entry here (key: the space-joined labels in table order,
 # as `shape_problems` builds it) with a reason read from the killer, or its own message in the killer.
-SAME_ASSERT: dict[str, str] = {}
+SAME_ASSERT: dict[str, str] = {
+    "R13A5 R13A8": (
+        "one site, two ways to catch every error there: R13A5 writes `except Exception` at the site, R13A8 adds `Exception` to "
+        "the shared tuple that the site names; the killer assert is the same one by design (an error of an unnamed type is "
+        "turned into a banner)"
+    ),
+}
 
 # The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an assertion of the killer),
 # so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row

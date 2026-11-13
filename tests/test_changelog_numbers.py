@@ -119,3 +119,22 @@ def test_pin_the_changelog_names_four_product_folders_and_the_settings_list_them
     assert re.search(
         r'product_roots\s*=\s*\[\s*"src",\s*"templates",\s*"tools",\s*"demos"\s*\]', toml
     )
+
+
+# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: the CHANGELOG does not list READ_ERRORS as the code has it: (the old head has only the private `_READ_ERRORS`, read below)
+def test_the_changelog_names_the_exact_error_types_the_banner_reads_and_the_card_delivery_catches() -> (
+    None
+):
+    from hadavin_sdk import app as app_mod
+    from hadavin_sdk import mode_banner as mb
+
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    read = ", ".join(f"`{t.__name__}`" for t in getattr(mb, "READ_ERRORS", None) or mb._READ_ERRORS)
+    assert f"({read}; one tuple, defined once" in text, (
+        f"the CHANGELOG does not list READ_ERRORS as the code has it: {read}"
+    )
+    delivery = ", ".join(f"`{t.__name__}`" for t in app_mod._DELIVERY_ERRORS)
+    for name in delivery.split(", ")[:-1]:
+        assert name in text
+    assert "`build` does NOT fail" not in text, "the old, wider sentence is still there"
+    assert "`banner_or_unconfirmed` logs a warning on every call" in text, "the log rule per path"
