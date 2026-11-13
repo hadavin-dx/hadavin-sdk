@@ -1,0 +1,88 @@
+diff --git a/tests/test_survivor_keep_scan.py b/tests/test_survivor_keep_scan.py
+new file mode 100644
+index 0000000..e37d0d7
+--- /dev/null
++++ b/tests/test_survivor_keep_scan.py
+@@ -0,0 +1,33 @@
++"""Two spellings of the self-test run that only ONE of the two readers in tests/keep_scan.py
++finds (made-up sources, held in this docstring: the scan skips docstrings, so the suite scan
++of tests/ does not read them as real runs).
++
++--- fold
++def test_a():
++    main(["--dry-fakes", "{1}{0}".format("keep", "--")])
++--- glue
++def test_a():
++    main(["--dry-fakes", "--", "{}", "keep"])
++"""
++
++from __future__ import annotations
++
++import sys
++from pathlib import Path
++
++sys.path.insert(0, str(Path(__file__).resolve().parent))
++from keep_scan import keep_self_tests_that_leak  # noqa: E402
++
++_SOURCES = dict(part.split("\n", 1) for part in (__doc__ or "").split("--- ")[1:])
++
++
++def test_a_flag_that_only_the_format_fold_can_read_is_found() -> None:
++    """`"{1}{0}".format("keep", "--")` is the keep flag; the pieces glued in source order give
++    `keep--`, which holds no flag. Only the fold of the `.format` call finds it (mutant K6)."""
++    assert keep_self_tests_that_leak(_SOURCES["fold"]) == (["test_a"], 1)
++
++
++def test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces() -> None:
++    """The pieces `--`, `{}`, `keep` stand in a list (no `+`, no call to fold): only the glued
++    text with its format fields removed holds the flag (mutant K10)."""
++    assert keep_self_tests_that_leak(_SOURCES["glue"]) == (["test_a"], 1)
+diff --git a/tests/test_survivor_r20_config_read.py b/tests/test_survivor_r20_config_read.py
+new file mode 100644
+index 0000000..5771f3a
+--- /dev/null
++++ b/tests/test_survivor_r20_config_read.py
+@@ -0,0 +1,43 @@
++"""Survivor R20 (scripts/run_real_check.py): a config file that exists but cannot be read.
++
++A missing file or a folder is refused earlier, by the path check in `load_env`. The
++`except OSError` arm of `main` is reached only when the read itself fails (no permission,
++a disk error). Its text must hold no path and no error name. The read is made to fail here,
++because the tests may run as a user who can read every file."""
++
++from __future__ import annotations
++
++import sys
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "scripts"))
++import run_real_check as rrc  # noqa: E402
++from test_real_check_dry import _valid_config  # noqa: E402
++
++
++def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
++    tmp_path: Path,
++    capsys: pytest.CaptureFixture[str],
++    monkeypatch: pytest.MonkeyPatch,
++    a_terminal: None,
++) -> None:
++    cfg = _valid_config(tmp_path)
++    real_read_text = Path.read_text
++
++    def read_text(self: Path, *args: object, **kwargs: object) -> str:
++        if self.name == cfg.name:
++            raise PermissionError(13, "denied", str(self))  # the OS error text holds the path
++        return real_read_text(self, *args, **kwargs)  # type: ignore[arg-type]
++
++    def no_question(prompt: str = "") -> str:
++        raise AssertionError("the start question was asked")
++
++    monkeypatch.setattr(Path, "read_text", read_text)
++    monkeypatch.setattr("builtins.input", no_question)
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert out == "refused: --config: the config file cannot be read\n"
++    assert cfg.name not in out and "Error" not in out and "denied" not in out

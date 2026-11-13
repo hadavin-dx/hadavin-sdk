@@ -1,0 +1,33 @@
+"""Two spellings of the self-test run that only ONE of the two readers in tests/keep_scan.py
+finds (made-up sources, held in this docstring: the scan skips docstrings, so the suite scan
+of tests/ does not read them as real runs).
+
+--- fold
+def test_a():
+    main(["--dry-fakes", "{1}{0}".format("keep", "--")])
+--- glue
+def test_a():
+    main(["--dry-fakes", "--", "{}", "keep"])
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from keep_scan import keep_self_tests_that_leak  # noqa: E402
+
+_SOURCES = dict(part.split("\n", 1) for part in (__doc__ or "").split("--- ")[1:])
+
+
+def test_a_flag_that_only_the_format_fold_can_read_is_found() -> None:
+    """`"{1}{0}".format("keep", "--")` is the keep flag; the pieces glued in source order give
+    `keep--`, which holds no flag. Only the fold of the `.format` call finds it (mutant K6)."""
+    assert keep_self_tests_that_leak(_SOURCES["fold"]) == (["test_a"], 1)
+
+
+def test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces() -> None:
+    """The pieces `--`, `{}`, `keep` stand in a list (no `+`, no call to fold): only the glued
+    text with its format fields removed holds the flag (mutant K10)."""
+    assert keep_self_tests_that_leak(_SOURCES["glue"]) == (["test_a"], 1)

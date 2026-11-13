@@ -126,3 +126,4 @@ A run2 ~95%; B2 sets in progress
 T3 done: P2 P4 P10 equivalent (verified by me)
 11:40Z T1 T2 drafts exist, running
 T1 done: R20 real gap (test), N20 killed by full file
+T2 done; combined patch built; EV runner started

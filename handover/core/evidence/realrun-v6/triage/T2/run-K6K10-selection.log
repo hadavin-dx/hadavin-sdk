@@ -1,0 +1,56 @@
+..F........................................F.......F.................... [ 98%]
+.                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder ________
+
+    def test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder() -> None:
+        """A test that runs the self-test with --keep leaves a folder behind: it must use the own_tempdir fixture (or set
+        tempfile.tempdir itself). A new test that forgets this fails here, so the system temp folder stays clean."""
+        found = 0
+        for path in sorted(p for p in (REPO / "tests").rglob("*.py") if p.name != "keep_scan.py"):
+            leaks, n = keep_self_tests_that_leak(path.read_text(encoding="utf-8"))
+            found += n
+>           assert leaks == [], f"{path.name}: {leaks} run the keep self-test without own_tempdir: they leave a folder"
+E           AssertionError: survivor_tests_T2.py: ['<module level>'] run the keep self-test without own_tempdir: they leave a folder
+E           assert ['<module level>'] == []
+E             
+E             Left contains one more item: '<module level>'
+E             Use -v to get more diff
+
+tests/test_take_script_refusals.py:283: AssertionError
+_______ test_the_scan_judges_every_sample_source[flags built by format] ________
+
+name = 'flags built by format', leaks = ['test_a'], found = 1
+source = 'def test_a():\n    main(["--dry-fakes", "--{}".format("keep")])'
+
+    @pytest.mark.parametrize(("name", "leaks", "found", "source"), _scan_cases(), ids=[c[0] for c in _scan_cases()])
+    def test_the_scan_judges_every_sample_source(name: str, leaks: list[str], found: int, source: str) -> None:
+>       assert keep_self_tests_that_leak(source) == (leaks, found), name
+E       AssertionError: flags built by format
+E       assert ([], 0) == (['test_a'], 1)
+E         
+E         At index 0 diff: [] != ['test_a']
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:300: AssertionError
+____ test_the_scan_judges_every_sample_source[format with its own fixture] _____
+
+name = 'format with its own fixture', leaks = [], found = 1
+source = 'def test_a(own_tempdir):\n    main(["--dry-fakes", "--{}".format("keep")])'
+
+    @pytest.mark.parametrize(("name", "leaks", "found", "source"), _scan_cases(), ids=[c[0] for c in _scan_cases()])
+    def test_the_scan_judges_every_sample_source(name: str, leaks: list[str], found: int, source: str) -> None:
+>       assert keep_self_tests_that_leak(source) == (leaks, found), name
+E       AssertionError: format with its own fixture
+E       assert ([], 0) == ([], 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by format]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[format with its own fixture]
+3 failed, 70 passed, 70 deselected in 1.52s
+restored tests/keep_scan.py 15fec8c4cf36

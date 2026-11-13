@@ -1,5 +1,32 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:50Z (17:20 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-T2 | builder: K6, K10, C9, pair run | LEAD order | 11:32Z / 17:02 | DONE 11:45Z | 1 of 1 | reported (builder claims, proofs by runner pending): K6 REAL GAP, test test_a_flag_that_only_the_format_fold_can_read_is_found: killed on K6 yes (1 failed), passes unmutated yes. K10 REAL GAP, test test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces: killed yes, passes unmutated yes. C9 EQUIVALENT by reading live_claude.py:423-428 (key is stripped; an empty key has no line break; a key with a line break is not empty; each input takes the same branch in either order); not tested by a run. PAIR K6+K10 together: KILLED (selection: 2 failed, 71 passed; whole refusals file: 2 failed, 141 passed), by two existing sample cases only; each single survives because the fold and the glue overlap (defence in depth, not equivalence). Its first draft broke an existing self-test (samples in a .py under tests/); fixed by moving samples into the docstring | pushed to triage/T2 |
+| survivor-tests-v1.patch | the two builder tests combined, as test_*.py names so pytest collects them | order (b) | 11:46Z / 17:16 | DONE | | built by me: renames only (tests/test_survivor_r20_config_read.py, tests/test_survivor_keep_scan.py), 88 lines, 0 lines over 100 columns, `git apply --check` passes on a clean patched tree; NOT applied anywhere in the repos; pushed at realrun-v6/survivor-tests-v1.patch | proofs below |
+| TRI-EV | evidence runner (agent a6acf359): proofs of the patch: unmutated pass, R20, K6, K10, K6+K10 fail, existing files still pass, collection, columns | order | 11:48Z / 17:18 | hard stop 12:20Z (about 30 min); report about 12:05-12:15Z | 1 of 1 | running | wait for report |
+| TRI-T1 / T3 | R20, N20 / P2, P4, P10 | | | DONE | | see 11:45Z and 11:36Z blocks | none |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdict table for the 8 survivors (builder claims; killed = test kills the mutant, proof pending runner):
+| mutant | verdict | test | killed |
+|---|---|---|---|
+| R20 | REAL GAP | test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line | yes (builder) |
+| K6 | REAL GAP (overlap with glue) | test_a_flag_that_only_the_format_fold_can_read_is_found | yes (builder) |
+| K10 | REAL GAP (overlap with fold) | test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces | yes (builder) |
+| N20 | covered in the full suite (not a gap) | existing test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder] | yes (full refusals file) |
+| C9 | EQUIVALENT (code reading only) | none needed | n/a |
+| P2 | EQUIVALENT | none needed | n/a |
+| P4 | EQUIVALENT | none needed | n/a |
+| P10 | EQUIVALENT | none needed | n/a |
+Cause of "R20 survived here, killed in the demo": the demo's first pass ran before the sonar-p3-final patch (inference, see 11:45Z block). Pair K6+K10: killed.
+
+ASK:
+1. The three new tests (R20, K6, K10) are for the demo repo: who applies survivor-tests-v1.patch? Default: I leave it unapplied and the lead hands it to the demo session.
+
+
 ## REPORT 11:45Z (17:15 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
