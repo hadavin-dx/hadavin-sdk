@@ -1,11 +1,14 @@
+# CURRENT HEAD c14a514: path tests only (agent G, running); last full suite: 6b1fe49 (below)
+
 # NUMBERS (valid rows first; updated 10:46Z / 16:16 IST). head | passed | failed | skipped | wall time | hang yes/no
 
 | head | passed | failed | skipped | wall time | hang | note |
 |---|---|---|---|---|---|---|
-| PR #14 d5b4451 (STALE head, replaced by edadd00), run 1, -v, basetemp inside TMPDIR | at least 3426 (counted from the recovered log up to 97 percent; the last ~3 percent of its output was lost when the process ended before my last copy) | 0 FAILED lines in the recovered part | 197 in the recovered part | 1127 s | no | **exit code 0** (EXIT_CODE line survived): pytest itself reports no failure. No summary line saved. Run 2 NOT run (order 5). |
+| PR #14 d5b4451 (STALE head), run 1, -v, basetemp inside TMPDIR | at least 3426 (counted from the recovered log up to 97 percent; the last ~3 percent of its output was lost when the process ended before my last copy) | 0 FAILED lines in the recovered part | 197 in the recovered part | 1127 s | no | **exit code 0** (EXIT_CODE line survived): pytest itself reports no failure. No summary line saved. Run 2 NOT run (order 5). |
 | main 61ded9e, full suite -v -u with junitxml, basetemp inside TMPDIR (agent C2, run c2) | 3407 | 0 | 198 | 1067 s | no | **exit 0, 3605 tests collected (3407+198=3605)**; complete summary from junit. Skips mostly: Playwright missing (6), no gitleaks (3), Windows-only or root-only tests. Run c1 (same head, -v) also exit 0 in 1121 s but its log was cut by my git slip |
 | main 61ded9e, -v, basetemp inside TMPDIR (agent C2, hang hunt full run 1) | at least 3328 (recovered log up to 97 percent; last ~3 percent lost) | 0 FAILED lines | 197 | about 1130 s (10:25:50Z to 10:44:53Z) | no | **exit code 0**; no summary line saved. C2 started a second full run with `-u` and junitxml at 10:44:53Z (ends about 11:04Z) to get a complete summary |
-| **PR #14 edadd00 (current head)**, 1 run, -v, basetemp inside TMPDIR | **3681** | **0** | **200** | **1215 s (20:15)** | no | 0 errors, **exit 0**, all counts from pytest's own summary line; run once only (no flake data); skips: Playwright missing, no gitleaks, Windows-only, root-user and env-gated tests (reasons in the log with -rs) |
+| **PR #14 6b1fe49**, 1 run, -v, basetemp inside TMPDIR (agent F) | **3683** | **0** | **200** (166 Playwright, 30 gitleaks, 4 other) | **1155 s (19:15)** | no | 0 errors, **exit 0**, counts from pytest's summary line; 2 more passing tests than edadd00; one run (no flake data) |
+| **PR #14 edadd00** (older head), 1 run, -v, basetemp inside TMPDIR | **3681** | **0** | **200** | **1215 s (20:15)** | no | 0 errors, **exit 0**, all counts from pytest's own summary line; run once only (no flake data); skips: Playwright missing, no gitleaks, Windows-only, root-user and env-gated tests (reasons in the log with -rs) |
 
 **INVALID rows (agent A, `-q -rs`, basetemp OUTSIDE TMPDIR, logs cut by my git operations):** main 61ded9e run1 and run2 (56 F each), PR #12 8d65577 run1 and run2 (57 F each). Reason: path confinement refused the test folders (56 tests fail with "path is outside the allowed folders" when `--basetemp` is outside `TMPDIR`, pass when inside) and the logs lost their tails; see evidence/failures.md. Do not use these four rows as pass/fail evidence.
 

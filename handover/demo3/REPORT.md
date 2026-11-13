@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:31Z / 17:01 IST  HEARTBEAT 19 (F reported; G started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| F | Evidence runner: PR #14 6b1fe49 full suite once + F7/new cases | evidence for the previous head | 11:09Z / 16:39 | ended 11:28Z | run 1 of 1 | reported, closed | none |
+| G | Evidence runner: head c14a514 (second review-fix delta): tests/test_path_confinement.py alone on c14a514 and on 6b1fe49 (side by side), the other changed test file if any, and the 31 F7/C1/whitespace/bytes/surrogate/stateful-`__fspath__` inputs plus any case the 6b1fe49..c14a514 diff implies | evidence for the newest head without a full suite | 11:31Z / 17:01 | about 10 min (ends about 11:42Z / 17:12); cap 11:55Z | run 1 of 1 | running | read progress-G.txt at 11:38Z |
+| others | A, B, C2, D, E | closed | - | - | - | closed | none |
+
+ASK: none.
+**F RESULT (head 6b1fe49): 3683 passed, 0 failed, 200 skipped (166 Playwright, 30 gitleaks, 4 other), 0 errors, 1155 s, exit 0, no hang.** Counts from pytest's summary line; one run only, so no flake data; Windows itself not run (ntpath stands in). Two more passing tests than edadd00 (3681).
+F7 rerun (31 inputs on edadd00 and 6b1fe49; the 23 earlier inputs unchanged): on 6b1fe49 the stateful `__fspath__` cases (3) now make one call and build the URI from the checked text (edadd00 built it from the second call: other.db, a name with %00, a `\\host\share` text); a lone surrogate and a split surrogate pair now raise PathRefused "not a valid file name" (edadd00: UnicodeEncodeError). Observation, no verdict: `\udcff` inside a longer path is accepted on both heads (URI with %FF). The repo's new tests alone: 10 passed in 0.10 s. Files: evidence/suite-pr14-6b1fe49.md, evidence/hostile-f7-rerun-6b1fe49.md.
+
 ## 2026-11-13 11:25Z / 16:55 IST  HEARTBEAT 18
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

@@ -14,3 +14,5 @@ C2 | reported 11:02Z, closed: no hang, no failure; c2 full main 3407 passed 198 
 E | reported 11:05Z, closed: edadd00 3681 passed 0 failed 200 skipped exit 0 1215 s | closed
 F | agent a48ec4..: 6b1fe49 full suite once + F7/new cases | 11:09Z / 16:39 | ~11:30Z, hard stop 11:50Z | 11:10Z | running | check 11:20Z
 G | NOT STARTED (ORDER 7), waits for F | c14a514 path tests only | - | waiting
+F | reported 11:28Z closed: 6b1fe49 3683 passed 0 failed 200 skipped
+G | agent a5f7fd..: c14a514 path tests + F7 cases | 11:31Z / 17:01 | ~11:42Z | 11:31Z | running | check 11:38Z
