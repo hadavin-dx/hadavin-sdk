@@ -122,3 +122,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-1f | closed: 0 blocker, 0 major, 9 minor | | | closed |
 | B1d | BUILDER lane3-fix-1 round 4 (5 majors + 20 minors from r3 reviews) | 14:00Z | ~14:30Z; stop 14:35Z | running |
 | REV-3d | fresh egm-codebase-details on lane3-fix-3-r4 (security path, no cap) | 14:00Z | ~14:15Z | running |
+| B5b | closed: lane3-fix-5-r2.patch sha256 d6edf82c...ad09f; old script + new tests 7 failed 4 passed; xdist -n 2 56 passed; serial 76 passed 4 skipped; builder's claim that pid files 'abc'/'1 ; true' exit 6 was wrong (exit 0, stale file removed; those 4 tests are regression guards); 1 unexplained xdist failure in the existing zombie test (message lost; 16 reruns passed) -> E6 chases it | | | closed |
+| REV-5b | fresh egm-codebase-details on lane3-fix-5-r2 | now | ~14:00 | running |
+| E6 | EVIDENCE RUNNER lane3-fix-5-r2 + xdist chase of the lost-message failure | now | stop 14:35Z | running |

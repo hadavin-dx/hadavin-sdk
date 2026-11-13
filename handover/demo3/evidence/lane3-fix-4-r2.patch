@@ -43,14 +43,14 @@ index d24f76c..9dd3d08 100644
  - Follow-up send results: a reply that came back with the wrong mode is `unknown` / `mode_mismatch`.
    * A refused or unreachable sender (nothing sent), an unclear end on a KEYED sender (sending again is safe), a CRM that failed, or an AI step that failed puts the follow-up back to `pending` (last_error `refused` / `unreachable` / `ambiguous` / `internal:<class>`). `attempts` counts the claims (the starts of a try) and is never lowered, because it is the ownership token; the automatic tries that set the cap are counted in `auto_attempts`, which a give-back lowers.
 diff --git a/docs/limits.md b/docs/limits.md
-index b249bba..f40d38d 100644
+index b249bba..34a8afd 100644
 --- a/docs/limits.md
 +++ b/docs/limits.md
 @@ -23,6 +23,8 @@ This page holds the detail behind the short "What is not claimed" list in the RE
    The licence text has not been reviewed by a lawyer.
  * The same person with two email addresses is two leads: `ada+sales@example.com` and `a.da@example.com` are different leads.
    Two people sharing one address are one lead.
-+* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join (a-z and é, ü, ö, ç were checked and are safe). Three rare letters do not, so each pair is a different lead: `straße@example.com` and `STRASSE@example.com` (`ß` is the German sharp s; its capital form is `SS`), `ıstanbul@example.com` and `ISTANBUL@example.com` (`ı` is the Turkish dotless i; its capital form is the ordinary `I`), and `ſam@example.com` and `SAM@example.com` (`ſ` is the old long s, which looks like an f without the crossbar). The first-capital and mixed-case spellings (`Istanbul@example.com`, `StraSSe@example.com`) also differ from the `ı` and `ß` spellings. The same person gets two leads and two follow-up emails (in this demo, two entries in the stand-in mail system). 95 other rare letters behave the same way (for example `µ`, `ŉ`, and a Greek `ς` before a full stop). `casefold()` would join the `ß` and `ſ` pairs but not the `ı` pair. The Kelvin sign (U+212A) and the dotted capital I (U+0130) are refused with verdict `review`, not split. What to do: check the Leads list for pairs that differ only in capitals. Tests: `tests/test_email_case_rule.py`.
++* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join (a-z and é, ü, ö, ç were checked and are safe). Three rare letters do not, so each pair is a different lead: `straße@example.com` and `STRASSE@example.com` (`ß` is the German sharp s; its capital form is `SS`), `ıstanbul@example.com` and `ISTANBUL@example.com` (`ı` is the Turkish dotless i; its capital form is the ordinary `I`), and `ſam@example.com` and `SAM@example.com` (`ſ` is the old long s, which looks like an f without the crossbar). The first-capital and mixed-case spellings (`Istanbul@example.com`, `StraSSe@example.com`) also differ from the `ı` and `ß` spellings. The same person gets two leads and two follow-up emails (in this demo, two entries in the stand-in mail system). Many other rare letters behave the same way (for example `µ`, `ŉ`, `ǰ`, and a Greek `ς` before a full stop). `casefold()` would join the `ß` and `ſ` pairs but not the `ı` pair. The Kelvin sign (U+212A) and the dotted capital I (U+0130) are refused with verdict `review`, not split. What to do: check the Leads list for pairs that differ only in capitals. Tests: `tests/test_email_case_rule.py`.
 +* Other address forms stay separate leads, and the desk accepts them (each is tested): a domain with non-ASCII letters and the same domain as punycode (`ada@xü.example.com` and `ada@xn--x-eha.example.com`); a comment in brackets (`ada(sales)@example.com` and `ada@example.com`); a domain in square brackets (`ada@[example.com]`). There is no 64-character limit on the part before the `@`; only the whole address is limited, to 254 characters.
  * A real mail system or CRM was not tested (except by the one probe in `docs/hubspot-probe.md`). The keyed mail system is a simulation; a real provider may remember a send key for a
    shorter or longer time. The AI step is a set of pre-written replies; nothing is said about real AI behaviour.
@@ -70,10 +70,10 @@ index 16bac04..17666c8 100644
  
 diff --git a/tests/test_email_case_rule.py b/tests/test_email_case_rule.py
 new file mode 100644
-index 0000000..3b11c42
+index 0000000..ca9933f
 --- /dev/null
 +++ b/tests/test_email_case_rule.py
-@@ -0,0 +1,147 @@
+@@ -0,0 +1,161 @@
 +"""Which email addresses become one lead, and which letters the desk cannot join when they are written in capitals.
 +
 +The desk makes the lead key with Python's `lower()` (identity.normalise_email). A few letters do not turn back into
@@ -167,6 +167,20 @@ index 0000000..3b11c42
 +    for size, kind in ((65, "ok"), (room, "ok"), (room + 1, "review")):  # no 64-character limit before the @
 +        got = check_payload({"name": "Ada", "email": "a" * size + DOMAIN}).kind
 +        assert got == kind, f"{size} characters before the @ gave {got}, docs/limits.md says {kind}"
++
++
++def test_other_rare_letters() -> None:
++    """docs/limits.md names µ, ŉ, ǰ and a Greek final sigma before a full stop as more letters that split."""
++    for letter in "µŉǰ":
++        assert _splits(letter), f"{letter!r} now joins its capital form: change docs/limits.md"
++    small, capitals = "οδος.x" + DOMAIN, "ΟΔΟΣ.X" + DOMAIN
++    assert normalise_email(small) != normalise_email(capitals), "the Greek final sigma now joins: change docs/limits.md"
++
++
++def test_refused_letters() -> None:
++    """The Kelvin sign and the dotted capital I are refused (verdict review), not split into two leads."""
++    for email in ("\u212a" + DOMAIN, "\u0130stanbul" + DOMAIN):
++        assert check_payload({"name": "Ada", "email": email}).kind == "review", f"{email!r} is no longer refused"
 +
 +
 +def _desk_run(env, first: str, second: str) -> tuple[tuple[int, str], tuple[int, str], int, int]:
