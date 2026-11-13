@@ -4,6 +4,25 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| D1 | full suite on the patched tree + docs-fix-v1 (C10 patch) | is the docs patch safe? | 12:38Z | done 13:11Z | 1 | DONE (my own run; last 40 lines pushed): 3950 passed, 0 failed, 32 skipped, 29:27, rc 0. Compared with the after-run AF (3978 passed, 4 skipped): same total 3982; the 28 extra skips are explained by the run script: D1 did not set GITLEAKS_BIN / PLAYWRIGHT / DPLD_REQUIRE_* (24 skips are test_gitleaks_exceptions.py "no gitleaks program", 3 more gitleaks in test_hygiene.py). Root cause proven: yes, skip reasons printed in the log. So docs-fix-v1 caused no failure; the 28 "missing passes" were not run, not lost | none |
+| F2 | builder: shared refusing parser for 10 scripts, option checks | fix order | 12:45Z | done 13:11Z | build 1 | DONE (builder's claims, unverified; handover/core/fix/F2-fix.patch, 1322 lines, 21 files): fails-before 109 failed / 32 passed (fake key printed 356 times); after 355 passed, and 678 passed 4 skipped on neighbours; ruff clean. Builder slips fixed: hygiene "/usr/bin" literal, 2 live-key tests. UNCERTAIN (builder's words): LIVE_EFFORTS words not checked against the vendor page; price-date window and the 4096-byte key limit are its own choices; it CHANGED one existing test (key file over 4096 bytes now refused); n8n_api.py and run_real_check still print an exception class name for two pinned cases (no typed value); kernel out-of-memory notice in its last run; repo ruff line length is 120, not 100 | V2 |
+| V2 | independent evidence runner for F2: fails-before, 3x after, FULL SUITE once in the AF environment, 8 mutants, 20 hostile inputs | proof | 13:11Z | 13:55Z start of full suite, report about 14:10Z | 1 | RUNNING | reviewer |
+| F4 / F4b | docs fix + round 2 | docs | 12:45Z / 13:24Z | built | F4 evidence done, F4b done | V4b RUNNING (13:11Z start) | V4b report, short round-2 review, F4c (contract.md:303) |
+| V1 | evidence for F1 | proof | 12:58Z | 13:45Z | 1 | RUNNING (it has written hostile-table and 6 mutant logs) | read |
+| V3 | evidence for F3 | proof | 13:03Z | 13:50Z | 1 | RUNNING | read |
+| R4 | review of F4 | independent read | done | | round 1 of 2 | DONE (3 Majors, fixed in F4b) | round 2 review after V4b |
+| F6 (to start) | builder: writer-side FIFO/special-file opens (lockfile.py:51, live_claude.py:162/:291, trace.py:57) + the F1 wrappers (reset.sh, start_all.sh, .ps1) | same classes, found by builders, not limitations | | | | NOT STARTED: waiting for a free slot (5 agents + a full suite at once); starts when V1 or V3 ends | |
+| F1, F3 | builders | | | | | DONE (see earlier blocks) | |
+
+FAILURES AND RETRIES: none new. Counts today: failures with proven cause 1 (T1 in-tree TMPDIR); unexplained 2 (B2-first, T2-earlier); flakes found 0; real defects found by agents are all in lanes F1-F4b (fixes as patches, not applied). Agents crashed or restarted: 0 (C5-era: one stopped chain in C6, re-run complete). Non-zero commands from me: git pull rebase 503 once, retried. Blocker/Major findings against my output: R4 3 Majors on F4, fixed in F4b (round 2 of 2).
+LOAD: 5 agents running (V1, V2, V3, V4b + none), full suite starts inside V2.
+ASK: 1. F2's ruff setting: the repo says line length 120; the brief says 100. Default if no answer in 10 min: follow the repo's setting and list added lines over 100 columns (V2 counts them). 2. The fallback reviewer question from the 13:2xZ block stands (default yes, labelled fallback).
+
+
+## REPORT (container clock 13:11Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | F4b | builder round 2: fix all 9 findings of R4 | resolve order | 13:24Z | done 13:11Z | round 2 of 2 | DONE (builder's claims, unverified; handover/core/fix/F4b-fix.patch): all 9 fixed, 10 and 11 verified; load_tools recipe run once on loopback with its new ports: 30 requests, "ALL 7 CHECKS HOLD"; new switch DPLD_REQUIRE_COUNT (not DPLD_REQUIRE_SCAN, which already means the secret scan) makes a skipped count check a failure; CI answer: both workflows install only requirements-dev.txt, no playwright install, so in CI the count check would have skipped silently. TEST COUNT now 3993 in 97 files. Fails-before 5 failed / 6 passed; 14 files 1250 passed 32 skipped; ruff clean. UNCERTAIN (builder's words): the CI switch is not proven on the real runner; the 14-file run printed a kernel out-of-memory notice; Windows not run. NOT fixed on purpose: contract.md:303 does not mention that a replay of a new request can drive a due follow-up. **This patch edits .github/workflows/lint.yml and sonar.yml: it is a patch only, nothing applied; the lead and owner decide.** | V4b evidence |
 | V4b | independent evidence runner for F4b (fails-before, passes-after, 8 mutants, load_tools recipe re-run) | proof | 13:11Z | 45 min | 1 | RUNNING | then short round-2 review |
 | V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |

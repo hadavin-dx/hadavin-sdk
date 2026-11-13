@@ -160,3 +160,4 @@ E2 done: T2 not reproduced
 R4 done 3 majors; F4b started
 C6 done: no flakes
 F4b done; V4b started
+D1 done 3950 passed; F2 done; V2 started
