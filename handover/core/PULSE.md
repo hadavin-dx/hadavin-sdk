@@ -138,3 +138,4 @@ status block, AF running
 status block, AF running
 C1-C4 started, AF running
 LOAD TABLE, C5-C7 started
+C8 self-assigned

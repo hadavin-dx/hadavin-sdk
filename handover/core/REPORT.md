@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:33Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run full suite, patched tree | before/after counts | 12:05Z | about 12:40Z | run 1 of 1 | RUNNING, near the end | push counts |
+| C1-C4 | cold reader / hostile seed 1 / doc vs code / survivor tests review | lead standing queue | 12:28Z | 60 min | 1 | RUNNING (4 agents) | read RESULTS.md |
+| C5-C7 | cold reader on other docs / flakiness 20x / hostile seed 2 | load order, fill slots | 12:33Z | 60 min | 1 | RUNNING (3 agents) | read RESULTS.md |
+| C8 | independent cross-check of the demo session's "1046 items, 0 real mismatches": 60 claims I pick myself, docs vs code, on main f3c39cf + their 13 claims commits | self-assigned (c): newest sibling claim in handover/demo/REPORT.md 12:27Z | 12:33Z | 60 min | 1 | STARTED (ac20f122) | read RESULTS.md, send mismatches to the lead |
+| MD-2 | closing run: 3 test-side mutation files + K6+K10 | order step 2 | after AF | about 12:50Z | 1 | WAITING for AF | start when AF ends |
+
+LOAD 12:33Z: load average 2.79 1.26 0.74 (4 cores), 8 agents + AF. ASK: none.
+
+
 ## REPORT (container clock 12:32Z; lead clock about 15 min ahead) CORE lead: LOAD TABLE
 
 **LOAD (ps, uptime, free, measured 12:32Z container):** load average 1.90 0.90 0.60 on 4 cores; RAM 16 GB total, about 13.8 GB free; 1 full-suite pytest (AF) plus the agents' small runs. Heavy slots in use: 1 of 3 (AF). Free capacity: about 2 of 4 cores idle at 12:31Z before the new agents started; the 7 agents below fill it. Shells I started: 1 background watcher (waits for AF to exit, near 0% CPU). No containers (no Docker).
