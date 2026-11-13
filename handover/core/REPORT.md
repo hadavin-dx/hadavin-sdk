@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:34Z (17:04 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-T1 (agent ab2b8122) | builder: triage R20 and N20, find why R20 survived here but was killed in the demo first pass | LEAD 11:33Z order (a), (b), (d) | 11:32Z / 17:02 | hard stop 12:30Z (about 56 min); report about 12:10Z | 1 of 1 | running, tree-T1 (main + 2 patches), TMPDIR outside | wait for report |
+| TRI-T2 (agent ace94a9e) | builder: triage K6, K10, C9, and run the K6+K10 pair once | order (a), (b), (c) | 11:32Z / 17:02 | hard stop 12:30Z | 1 of 1 | running, tree-T2 | wait |
+| TRI-T3 (agent ad047b28) | builder: triage P2, P4, P10 | order (a), (b) | 11:32Z / 17:02 | hard stop 12:30Z | 1 of 1 | running, tree-T3 | wait |
+| TRI-EV | evidence runner: re-runs every proof (test fails on mutant, passes unmutated) from the three patches | order: runner for proof runs | after builders report | about 12:10-12:25Z | n/a | not started; waits for the three patches (builder-claimed results stay labelled until then) | start when patches exist |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdict table for the 8 survivors (verdict, test name, killed yes/no): empty so far; the builders have not reported. No verdict is given before their evidence.
+Slots: 3 builders plus 1 runner later, 4 cores; each builder runs one test process at a time. Heavy runs (full file runs of about 2 minutes) are limited to what 4 cores allow; no conflict with other lanes known.
+
+ASK: none. (Default: if the runner cannot start by 12:10Z because a builder is late, I run the proofs myself.)
+
+
 ## REPORT 11:30Z (17:00 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
