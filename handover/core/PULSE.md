@@ -67,3 +67,4 @@
 03:53Z SONARPATH b3 9602b4ca pushed; runner a5cd050d + reviewers a08b59d2 a0dc0020 started; no Sonar evidence on this head
 03:57Z P2 r10 design 0B/3M (1 fail-open); SONARPATH r3 design 0B/4M; codebase reviews + runners pending; P6 b11 builder working
 04:02Z P2 r10 resolved: 6 Major incl fail-open + B98 survives; SONARPATH r3 resolved: 1B/9M; builders aa049db0 (P2) and a982868e (SONAR) started; P6 b11 pending
+04:07Z 04:02Z order applied (size/guards, no-y rule to 3 builders); 3 builders live; no heads final; no laptop request

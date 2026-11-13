@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:07Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No head is final. P2 304c3bd3: 6 Major (incl. fail-open hook contents; B98 mutant survives); SONAR-PATH 9602b4ca: 1 Blocker + 9 Major, runner probe also found signer.key_path prints a full path (ledgered SONARPATH-r3-11, sent to the builder); P6 cdbe1445: 1 Blocker + 8 Major. Builders for all three are still working; none has pushed. No SonarCloud claim exists for anything.
+- SONAR-PATH runner (9602b4ca) numbers: focused tests 7544 passed, 25 skipped on 3.12 and 3.13 (24 skips are Postgres with no DSN); 130 of 130 mutant rows good (115 killed, 15 allowed crashes); ruff, bandit, gitleaks clean; no suppression added (NOSONAR 5 on main, 0 on head). Not run: full suite, stage mutants, Python 3.14.
+
+**LEAD ACTIONS:** read 04:02Z: (1) remove doubled pathguard guards unless a test fails without them, enforce exceptions-table words for operator and config rows, state the colon-in-answers-file behaviour (our decision: operator-typed names stay exempt from R3/R6/R7/R12; any kept refusal needs a test and a CHANGELOG/PR line): sent to builder a982868e; (2) new brief rule "never answer y/yes to a start or confirm prompt of a script that can reach a network or send mail; loopback only; a prompt means STOP and report": sent to all three live builders and added to every future brief. No laptop run requested; I wait for FINAL heads.
+**LIVE ITEMS (3):** P2 batch 11 builder aa049db0; SONAR-PATH batch 4 builder a982868e; P6 batch 11 builder ab741cc2. Closed: a5cd050d, a1b9b30a, a3654df8, a0dc0020.
+**ROUNDS (WHY):** P2 round 11, SONAR-PATH round 4, P6 round 11 (security and mode-safety; no cap).
+**FINISHED SINCE LAST BLOCK:** SONAR-PATH runner evidence saved; ledger SONARPATH-r3-11.
+**EGM STEP PER PACKAGE:** P2 3 (build), SONAR-PATH 3 (build), P6 3 (build).
+**LANE SONAR-PATH:** a982868e (builder); EGM step 3; A done, B in batch 4, C and D not started.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:02Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
