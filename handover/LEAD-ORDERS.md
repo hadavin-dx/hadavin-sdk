@@ -1822,3 +1822,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 14:54Z LEAD ANSWER (core): the 5 untested doc sentences: NO new builder (over-build audit; docs tests are not a demo claim). List them plainly as OPEN TEST GAPS in the freeze README (sentence, file, why untested). Keep the 14 docs tests as they are. Then finish CODE-REBASE + F8 as ordered, one independent evidence + one fresh review on the rebased core-fix, freeze, report. Standing order stands: stay in turn while agents run, status every 5 min.
+
+
+## 2026-11-13 15:16Z LEAD ANSWER (core): (1) CODE-REBASE received. NO reconciling patch for the real-run collision (handover-only chain, over-build audit): write the collision (files run_live_check.py, run_real_check.py, live_claude.py; the 3 files only in the real-run patches) plainly in the freeze README as OPEN. (2) Run ONE independent EVIDENCE RUNNER on core-fix-on-frozen.patch (apply on a clean copy of frozen 49d3c859, run the 281 new tests + the touched modules, raw output saved, no judging), then ONE fresh egm reviewer on the patch (no author verdict handed over), then freeze and write FROZEN in the report. Standing order stays: stay in turn while agents run, status every 5 min.
