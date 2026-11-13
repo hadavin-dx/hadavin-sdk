@@ -1,0 +1,90 @@
+.......................................................................  [100%]
+==================================== PASSES ====================================
+______ test_a_total_time_limit_after_a_full_poll_keeps_the_earlier_counts ______
+----------------------------- Captured stdout call -----------------------------
+mailbox read: the first read ran out of time; trying once more with more time
+mailbox read failed: the mailbox read took longer than its total time limit
+___ test_one_dropped_connection_on_the_last_poll_does_not_fail_the_last_read ___
+----------------------------- Captured stdout call -----------------------------
+mailbox read: a poll failed on its connection; trying that poll once more
+mailbox read failed: x
+_____________ test_a_dropped_first_poll_connection_is_repeated_too _____________
+----------------------------- Captured stdout call -----------------------------
+mailbox read: a poll failed on its connection; trying that poll once more
+________________ test_a_login_or_folder_error_is_never_repeated ________________
+----------------------------- Captured stdout call -----------------------------
+mailbox read failed: login
+=========================== short test summary info ============================
+PASSED tests/test_real_check_dry.py::test_refuses_without_config_and_without_required_names
+PASSED tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end
+PASSED tests/test_real_check_dry.py::test_a_run_where_every_follow_up_ended_unknown_fails_the_floor
+PASSED tests/test_real_check_dry.py::test_the_crash_window_excuses_only_the_rows_the_desk_marked_as_in_flight
+PASSED tests/test_real_check_dry.py::test_the_window_cannot_be_larger_than_the_desks_send_workers
+PASSED tests/test_real_check_dry.py::test_the_floor_needs_mails_crm_contacts_and_a_counter_file
+PASSED tests/test_real_check_dry.py::test_the_desk_may_not_send_more_than_leads_plus_unknown_leads
+PASSED tests/test_real_check_dry.py::test_addresses_are_masked_in_a_failure_table
+PASSED tests/test_real_check_dry.py::test_cleanup_goes_on_after_one_error_and_names_what_is_left
+PASSED tests/test_real_check_dry.py::test_mailbox_order_must_match_the_recipients
+PASSED tests/test_real_check_dry.py::test_assume_yes_is_refused_for_a_real_run
+PASSED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_HUBSPOT_MAX_CALLS]
+PASSED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_PERSONS]
+PASSED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_SMTPP_MAX_SENDS]
+PASSED tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_IMAP_1_PORT]
+PASSED tests/test_real_check_dry.py::test_a_refusal_for_a_missing_file_shows_no_path
+PASSED tests/test_real_check_dry.py::test_dry_fakes_leave_no_certificate_or_key_folder_behind
+PASSED tests/test_real_check_dry.py::test_a_dry_run_where_every_send_ends_in_doubt_fails
+PASSED tests/test_real_check_dry.py::test_a_crash_that_did_not_happen_fails_floor_f5
+PASSED tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[0]
+PASSED tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[-3]
+PASSED tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[4]
+PASSED tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[abc]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_DRAIN_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_MAIL_WAIT_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_DRAIN_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_MAIL_WAIT_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_DRAIN_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_MAIL_WAIT_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_DRAIN_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_MAIL_WAIT_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_DRAIN_SECONDS]
+PASSED tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_MAIL_WAIT_SECONDS]
+PASSED tests/test_real_check_dry.py::test_no_terminal_to_answer_on_is_a_stop_not_a_traceback
+PASSED tests/test_real_check_dry.py::test_the_desk_child_gets_desk_and_real_names_from_the_config_only
+PASSED tests/test_real_check_dry.py::test_stale_shell_values_do_not_reach_the_child_and_the_banner_tells_the_truth
+PASSED tests/test_real_check_dry.py::test_folders_the_server_did_not_have_are_named_as_not_checked
+PASSED tests/test_real_check_dry.py::test_the_imap_host_is_named_and_the_folder_default_comes_from_constants
+PASSED tests/test_real_check_dry.py::test_one_more_poll_after_everything_was_seen_counts_a_late_second_delivery
+PASSED tests/test_real_check_dry.py::test_a_total_time_limit_after_a_full_poll_keeps_the_earlier_counts
+PASSED tests/test_real_check_dry.py::test_the_expected_keys_of_a_mailbox_follow_the_senders_recipient_hash
+PASSED tests/test_real_check_dry.py::test_an_unknown_that_is_not_an_in_flight_row_at_the_kill_fails_the_floor
+PASSED tests/test_real_check_dry.py::test_the_sending_rows_are_read_from_the_book
+PASSED tests/test_real_check_dry.py::test_f4_uses_the_larger_of_the_desk_counter_and_the_mails_counted
+PASSED tests/test_real_check_dry.py::test_f3_says_in_its_output_that_it_relies_on_list_after_create
+PASSED tests/test_real_check_dry.py::test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call
+PASSED tests/test_real_check_dry.py::test_an_existing_database_file_is_refused
+PASSED tests/test_real_check_dry.py::test_the_banner_shows_the_mailbox_reading_bound
+PASSED tests/test_real_check_dry.py::test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked
+PASSED tests/test_real_check_dry.py::test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refusals
+PASSED tests/test_real_check_dry.py::test_dry_fakes_with_a_config_says_the_config_is_ignored
+PASSED tests/test_real_check_dry.py::test_a_failed_late_poll_sets_the_flag_and_fails_the_floor
+PASSED tests/test_real_check_dry.py::test_the_slow_scan_runs_on_the_first_and_the_last_poll_only
+PASSED tests/test_real_check_dry.py::test_a_poll_never_lowers_a_count_an_earlier_poll_saw
+PASSED tests/test_real_check_dry.py::test_only_sent_follow_ups_end_the_wait_and_a_failed_leads_mail_does_not
+PASSED tests/test_real_check_dry.py::test_a_first_poll_that_runs_out_of_time_is_tried_once_more_with_more_time
+PASSED tests/test_real_check_dry.py::test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note
+PASSED tests/test_real_check_dry.py::test_made_up_lead_addresses_use_the_reserved_example_domain_and_are_never_recipients
+PASSED tests/test_real_check_dry.py::test_the_banner_names_the_domain_from_the_constant
+PASSED tests/test_real_check_dry.py::test_one_dropped_connection_on_the_last_poll_does_not_fail_the_last_read
+PASSED tests/test_real_check_dry.py::test_a_dropped_first_poll_connection_is_repeated_too
+PASSED tests/test_real_check_dry.py::test_a_login_or_folder_error_is_never_repeated
+PASSED tests/test_real_check_dry.py::test_the_imap_module_marks_only_connection_errors_as_repeatable
+PASSED tests/test_real_check_dry.py::test_the_repeat_count_is_in_the_f6_details
+PASSED tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False0]
+PASSED tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-True]
+PASSED tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False1]
+PASSED tests/test_real_check_dry.py::test_a_failure_after_the_total_time_limit_is_not_repeated
+PASSED tests/test_real_check_dry.py::test_drain_is_measured_from_the_real_send_not_from_plan_creation
+PASSED tests/test_real_check_dry.py::test_made_up_addresses_that_may_reach_a_real_crm_do_not_use_the_test_domain
+PASSED tests/test_real_check_dry.py::test_the_dry_run_waits_up_to_240_seconds_for_the_recovery_drain_and_the_real_default_stays_150
+71 passed in 200.02s (0:03:20)
+rc=0 wall=200s

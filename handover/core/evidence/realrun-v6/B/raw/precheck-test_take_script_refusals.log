@@ -1,0 +1,3043 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.F........................................ [ 50%]
+.............................FFFFFFFFFFFFFFFFFFFFFFF.FFF.FF..FFFFFFFFFF  [100%]
+=================================== FAILURES ===================================
+_______ test_a_bad_hubspot_key_file_is_refused_before_the_question[None] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_hubspot_key_file_is0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245760260>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245742000>
+content = None
+
+    @pytest.mark.parametrize(
+        "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
+    )
+    def test_a_bad_hubspot_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        key = tmp_path / "bad.key"
+        if isinstance(content, str):
+            key.write_text(content, encoding="utf-8")
+        elif content is not None:
+            key.write_bytes(content)
+        cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_hubspot_key_file_is_refused_before_the_question[made-up-key-0002\nmade-up-key-0002\n] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_hubspot_key_file_is1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457616d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245741d30>
+content = 'made-up-key-0002\nmade-up-key-0002\n'
+
+    @pytest.mark.parametrize(
+        "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
+    )
+    def test_a_bad_hubspot_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        key = tmp_path / "bad.key"
+        if isinstance(content, str):
+            key.write_text(content, encoding="utf-8")
+        elif content is not None:
+            key.write_bytes(content)
+        cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_a_bad_hubspot_key_file_is_refused_before_the_question[short] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_hubspot_key_file_is2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457622d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245762900>
+content = 'short'
+
+    @pytest.mark.parametrize(
+        "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
+    )
+    def test_a_bad_hubspot_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        key = tmp_path / "bad.key"
+        if isinstance(content, str):
+            key.write_text(content, encoding="utf-8")
+        elif content is not None:
+            key.write_bytes(content)
+        cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xff\\xfek\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00'] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_hubspot_key_file_is3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245763890>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457626c0>
+content = b'\xff\xfek\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00'
+
+    @pytest.mark.parametrize(
+        "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
+    )
+    def test_a_bad_hubspot_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        key = tmp_path / "bad.key"
+        if isinstance(content, str):
+            key.write_text(content, encoding="utf-8")
+        elif content is not None:
+            key.write_bytes(content)
+        cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3('] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_hubspot_key_file_is4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457afe30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245762450>
+content = b'\xc3(\xc3(\xc3(\xc3(\xc3(\xc3(\xc3(\xc3(\xc3('
+
+    @pytest.mark.parametrize(
+        "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
+    )
+    def test_a_bad_hubspot_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        key = tmp_path / "bad.key"
+        if isinstance(content, str):
+            key.write_text(content, encoding="utf-8")
+        elif content is not None:
+            key.write_bytes(content)
+        cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_________ test_memory_book_is_refused_like_the_desk_and_leaves_no_file _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_memory_book_is_refused_li0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457ae3c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457aeea0>
+
+    def test_memory_book_is_refused_like_the_desk_and_leaves_no_file(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(_valid_config(tmp_path, DESK_DB_PATH=":memory:"))]) == rrc.EXIT_BOOK_REFUSED == 4
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/user/build/rr6/tree-B2/tests/test_take_script_refusals.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/user/build/rr6/tree-B2/scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+/home/user/build/rr6/tree-B2/scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+/home/user/build/rr6/tree-B2/tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+________ test_a_config_that_is_not_utf8_is_refused_without_a_byte_value ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_config_that_is_not_utf80')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457618e0>
+
+    def test_a_config_that_is_not_utf8_is_refused_without_a_byte_value(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        cfg = tmp_path / "bin.env"
+        cfg.write_bytes(b"\xff\xfe\x00DESK_DB_PATH=x\n")
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert "not UTF-8" in out and "0xff" not in out and "position" not in out
+E       assert ('not UTF-8' in "refused: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte\n")
+
+tests/test_take_script_refusals.py:72: AssertionError
+________ test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_dry_fakes_folder_is_delet0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245763470>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245763bc0>
+
+    def test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class Broken:
+            def __init__(self, folder: Path, *_a: object) -> None:
+                (folder / "fakes").mkdir()
+                raise ValueError("the openssl program is needed for --dry-fakes")
+    
+        monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+        monkeypatch.setattr(rrc, "DryFakes", Broken)
+        assert rrc.main(["--dry-fakes", "--assume-yes"]) == rrc.EXIT_REFUSED
+        assert "refused" in capsys.readouterr().out
+>       assert list(tmp_path.glob("real-dry-*")) == []
+E       AssertionError: assert [PosixPath('/...ry-x8bfofeb')] == []
+E         
+E         Left contains one more item: PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_dry_fakes_folder_is_delet0/real-dry-x8bfofeb')
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:87: AssertionError
+_______ test_the_readback_note_says_plainly_when_no_contact_was_created ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_readback_note_says_pl0')
+
+    def test_the_readback_note_says_plainly_when_no_contact_was_created(tmp_path: Path) -> None:
+        class A:
+            cleanup = False
+            dry_fakes = False
+            keep = False
+    
+        env = {"REAL_RESULT_FILE": str(tmp_path / "r.json")}
+        code = rrc._readback_failed(A(), tmp_path, env, rrc.CrmError("x"), 0, {"created": 0})  # type: ignore[arg-type]
+        text = (tmp_path / "r.json").read_text(encoding="utf-8")
+>       assert code == rrc.EXIT_FAILED and "no contact" in text and "by hand" not in text
+E       assert (3 == 3 and 'no contact' in '{\n  "ok": false,\n  "note": "the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The des...sk\'s book. Archive them by hand.",\n  "leads_in_book": 0,\n  "hubspot_calls_by_the_desk": {\n    "created": 0\n  }\n}')
+E        +  where 3 = rrc.EXIT_FAILED
+
+tests/test_take_script_refusals.py:102: AssertionError
+----------------------------- Captured stdout call -----------------------------
+the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The desk created 0 contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: /home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_readback_note_says_pl0/r.json
+____ test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_live_check_without_a_term0')
+
+    def test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback(tmp_path: Path) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        r = _live(tmp_path, key, subprocess.DEVNULL, assume_yes=False)
+>       assert r.returncode == 2 and "Traceback" not in r.stderr and "needs a person at a terminal" in r.stdout
+E       assert (1 == 2)
+E        +  where 1 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...if input("Start? [y/N] ").strip().lower() != "y":\n       ^^^^^^^^^^^^^^^^^^^^^^\nEOFError: EOF when reading a line\n').returncode
+
+tests/test_take_script_refusals.py:144: AssertionError
+____________ test_live_check_exits_non_zero_when_every_call_failed _____________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_live_check_exits_non_zero0')
+
+    def test_live_check_exits_non_zero_when_every_call_failed(tmp_path: Path) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        r = _live(tmp_path, key, "")
+>       assert r.returncode == 3, r.stdout[-400:]
+E       AssertionError: 
+E       assert 2 == 3
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').returncode
+
+tests/test_take_script_refusals.py:151: AssertionError
+_____ test_live_check_refuses_a_bad_key_file_before_the_question[missing] ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_live_check_refuses_a_bad_0')
+content = None
+
+    @pytest.mark.parametrize("content", [None, "short"], ids=["missing", "short"])
+    def test_live_check_refuses_a_bad_key_file_before_the_question(tmp_path: Path, content: str | None) -> None:
+        key = tmp_path / "k"
+        if content is not None:
+            key.write_text(content, encoding="utf-8")
+        r = _live(tmp_path, key, "")  # nothing is piped: the file is checked first
+>       assert r.returncode == 2 and "refused" in r.stdout and "To start" not in r.stdout
+E       AssertionError: assert (2 == 2 and 'refused' in '')
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').returncode
+E        +  and   '' = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').stdout
+
+tests/test_take_script_refusals.py:161: AssertionError
+______ test_live_check_refuses_a_bad_key_file_before_the_question[short] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_live_check_refuses_a_bad_1')
+content = 'short'
+
+    @pytest.mark.parametrize("content", [None, "short"], ids=["missing", "short"])
+    def test_live_check_refuses_a_bad_key_file_before_the_question(tmp_path: Path, content: str | None) -> None:
+        key = tmp_path / "k"
+        if content is not None:
+            key.write_text(content, encoding="utf-8")
+        r = _live(tmp_path, key, "")  # nothing is piped: the file is checked first
+>       assert r.returncode == 2 and "refused" in r.stdout and "To start" not in r.stdout
+E       AssertionError: assert (2 == 2 and 'refused' in '')
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').returncode
+E        +  and   '' = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').stdout
+
+tests/test_take_script_refusals.py:161: AssertionError
+__________________ test_keep_without_the_self_test_is_refused __________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_keep_without_the_self_tes0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457ade50>
+
+    def test_keep_without_the_self_test_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+>       assert rrc.main(["--config", str(_valid_config(tmp_path)), "--keep"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:827: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/argparse.py:1911: in parse_args
+    self.error(msg % ' '.join(argv))
+/usr/lib/python3.12/argparse.py:2677: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description="Real services run: the desk with a REAL CRM (HubSpot free ...nd asks y/N.", formatter_class=<class 'argparse.RawDescriptionHelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2, message = '__main__.py: error: unrecognized arguments: --keep\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.12/argparse.py:2664: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] [--config CONFIG] [--dry-fakes] [--live-model]
+                   [--cleanup] [--assume-yes] [--dry-port-base DRY_PORT_BASE]
+                   [--dry-smtp-script DRY_SMTP_SCRIPT]
+__main__.py: error: unrecognized arguments: --keep
+_______ test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_closing_line_of_a_sel0')
+
+    def test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs(tmp_path: Path) -> None:
+        class A:
+            dry_fakes = True
+            keep = False
+    
+>       assert "--keep" in rrc.result_line(A(), tmp_path / "r.json")  # type: ignore[arg-type]
+                           ^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'result_line'
+
+tests/test_take_script_refusals.py:175: AttributeError
+_ test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d04b30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d040b0>
+setting = 'DESK_SMTPP_PASSWORD_FILE', content = None
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457afe00>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457ade50>
+setting = 'DESK_SMTPP_PASSWORD_FILE'
+content = 'made-up-key-0002\nmade-up-key-0002\n'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245760d10>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457ad520>
+setting = 'DESK_SMTPP_PASSWORD_FILE', content = 'abc'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245760cb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457607d0>
+setting = 'DESK_SMTPP_PASSWORD_FILE'
+content = b'\xff\xfek\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d06e40>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245761e20>
+setting = 'REAL_IMAP_1_PASSWORD_FILE', content = None
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_5')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d07440>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d07e90>
+setting = 'REAL_IMAP_1_PASSWORD_FILE'
+content = 'made-up-key-0002\nmade-up-key-0002\n'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_6')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d06180>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d05f40>
+setting = 'REAL_IMAP_1_PASSWORD_FILE', content = 'abc'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_7')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a48230>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a48350>
+setting = 'REAL_IMAP_1_PASSWORD_FILE'
+content = b'\xff\xfek\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_8')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a49850>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a486b0>
+setting = 'REAL_IMAP_2_PASSWORD_FILE', content = None
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_9')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d05760>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a49e80>
+setting = 'REAL_IMAP_2_PASSWORD_FILE'
+content = 'made-up-key-0002\nmade-up-key-0002\n'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_10')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d062a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d054f0>
+setting = 'REAL_IMAP_2_PASSWORD_FILE', content = 'abc'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_mail_password_file_11')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457618e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d05430>
+setting = 'REAL_IMAP_2_PASSWORD_FILE'
+content = b'\xff\xfek\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00k\x00'
+
+    @pytest.mark.parametrize("content", _BAD_SECRET_FILES, ids=_BAD_IDS)
+    @pytest.mark.parametrize(
+        "setting", ["DESK_SMTPP_PASSWORD_FILE", "REAL_IMAP_1_PASSWORD_FILE", "REAL_IMAP_2_PASSWORD_FILE"]
+    )
+    def test_a_bad_mail_password_file_is_refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        content: str | bytes | None,
+    ) -> None:
+        bad = tmp_path / "bad.pw"
+        _write(bad, content)
+        cfg = _valid_config(tmp_path, **{setting: str(bad)})
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+____ test_a_bad_live_model_key_file_is_refused_before_the_question[missing] ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_live_model_key_file0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457ae4b0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245760cb0>
+content = None
+
+    @pytest.mark.parametrize("content", [None, "abc", ""], ids=["missing", "too-short", "empty"])
+    def test_a_bad_live_model_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        key = tmp_path / "bad.livekey"
+        _write(key, content)
+        cfg = _valid_config(tmp_path, **_live_lines(tmp_path, key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___ test_a_bad_live_model_key_file_is_refused_before_the_question[too-short] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_live_model_key_file1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d072f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d05af0>
+content = 'abc'
+
+    @pytest.mark.parametrize("content", [None, "abc", ""], ids=["missing", "too-short", "empty"])
+    def test_a_bad_live_model_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        key = tmp_path / "bad.livekey"
+        _write(key, content)
+        cfg = _valid_config(tmp_path, **_live_lines(tmp_path, key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_____ test_a_bad_live_model_key_file_is_refused_before_the_question[empty] _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_live_model_key_file2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a48da0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d06270>
+content = ''
+
+    @pytest.mark.parametrize("content", [None, "abc", ""], ids=["missing", "too-short", "empty"])
+    def test_a_bad_live_model_key_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        key = tmp_path / "bad.livekey"
+        _write(key, content)
+        cfg = _valid_config(tmp_path, **_live_lines(tmp_path, key))
+        monkeypatch.setattr("builtins.input", _no_question)
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+________________ test_a_three_character_key_is_called_too_short ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_three_character_key_is_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f92457afe00>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457ada30>
+
+    def test_a_three_character_key_is_called_too_short(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        short = tmp_path / "short.txt"
+        short.write_text("abc", encoding="utf-8")
+        monkeypatch.setattr("builtins.input", _no_question)
+        for setting, extra, flags in (
+            ("DESK_HUBSPOT_KEY_FILE", {}, []),
+            ("DESK_SMTPP_PASSWORD_FILE", {}, []),
+            ("REAL_IMAP_1_PASSWORD_FILE", {}, []),
+            ("DESK_LIVE_KEY_FILE", _live_lines(tmp_path, short), ["--live-model"]),
+        ):
+            cfg = _valid_config(tmp_path, **{**extra, setting: str(short)})
+>           assert rrc.main(["--config", str(cfg), *flags]) == rrc.EXIT_REFUSED
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:263: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+________________ test_a_clean_self_test_deletes_its_folder_too _________________
+
+own_tempdir = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_clean_self_test_deletes0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244ccd4f0>
+
+    def test_a_clean_self_test_deletes_its_folder_too(own_tempdir: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        """The success path: no --keep, every check passes, exit 0, and the folder is gone (not only after a failure)."""
+        assert rrc.main(["--dry-fakes", "--assume-yes"]) == 0
+        out = capsys.readouterr().out
+>       assert list(own_tempdir.glob("real-dry-*")) == []
+E       AssertionError: assert [PosixPath('/...ry-_upep9i7')] == []
+E         
+E         Left contains one more item: PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_clean_self_test_deletes0/real-dry-_upep9i7')
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:326: AssertionError
+_______ test_a_bad_smtp_ca_file_is_refused_before_the_question[missing] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_smtp_ca_file_is_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a31070>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a32e70>
+kind = 'missing'
+
+    @pytest.mark.parametrize("kind", ["missing", "not-a-certificate", "a-folder"])
+    def test_a_bad_smtp_ca_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        bad = tmp_path / "bad-ca.pem"
+        if kind == "not-a-certificate":
+            bad.write_text("garbage-" + KEY, encoding="utf-8")
+        elif kind == "a-folder":
+            bad.mkdir()
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_SMTPP_CA_FILE", "bad-ca.pem", DESK_SMTPP_CA_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:364: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+__ test_a_bad_smtp_ca_file_is_refused_before_the_question[not-a-certificate] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_smtp_ca_file_is_ref1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a32720>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a30d70>
+kind = 'not-a-certificate'
+
+    @pytest.mark.parametrize("kind", ["missing", "not-a-certificate", "a-folder"])
+    def test_a_bad_smtp_ca_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        bad = tmp_path / "bad-ca.pem"
+        if kind == "not-a-certificate":
+            bad.write_text("garbage-" + KEY, encoding="utf-8")
+        elif kind == "a-folder":
+            bad.mkdir()
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_SMTPP_CA_FILE", "bad-ca.pem", DESK_SMTPP_CA_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:364: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_a_bad_smtp_ca_file_is_refused_before_the_question[a-folder] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_smtp_ca_file_is_ref2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d579e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a32d50>
+kind = 'a-folder'
+
+    @pytest.mark.parametrize("kind", ["missing", "not-a-certificate", "a-folder"])
+    def test_a_bad_smtp_ca_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        bad = tmp_path / "bad-ca.pem"
+        if kind == "not-a-certificate":
+            bad.write_text("garbage-" + KEY, encoding="utf-8")
+        elif kind == "a-folder":
+            bad.mkdir()
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_SMTPP_CA_FILE", "bad-ca.pem", DESK_SMTPP_CA_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:364: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+__ test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[missing] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a33f80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a335c0>
+kind = 'missing'
+
+    @pytest.mark.parametrize("kind", ["missing", "not-a-certificate"])
+    def test_a_bad_imap_ca_file_is_refused_before_the_question_and_named(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        bad = tmp_path / "bad-imap-ca.pem"
+        if kind == "not-a-certificate":
+            bad.write_text("garbage", encoding="utf-8")
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_IMAP_2_CA_FILE", "bad-imap-ca.pem", REAL_IMAP_2_CA_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:377: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a33f80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a335c0>
+setting = 'REAL_IMAP_2_CA_FILE', bad_name = 'bad-imap-ca.pem'
+over = {'REAL_IMAP_2_CA_FILE': '/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref0/bad-imap-ca.pem'}
+
+    def _refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        bad_name: str,
+        **over: str,
+    ) -> str:
+        monkeypatch.setattr("builtins.input", _no_question)
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert f"refused: {setting}: " in out, out
+E       AssertionError: refused: FileNotFoundError
+E         
+E       assert 'refused: REAL_IMAP_2_CA_FILE: ' in 'refused: FileNotFoundError\n'
+
+tests/test_take_script_refusals.py:349: AssertionError
+_ test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[not-a-certificate] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a31f40>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a30890>
+kind = 'not-a-certificate'
+
+    @pytest.mark.parametrize("kind", ["missing", "not-a-certificate"])
+    def test_a_bad_imap_ca_file_is_refused_before_the_question_and_named(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str
+    ) -> None:
+        bad = tmp_path / "bad-imap-ca.pem"
+        if kind == "not-a-certificate":
+            bad.write_text("garbage", encoding="utf-8")
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_IMAP_2_CA_FILE", "bad-imap-ca.pem", REAL_IMAP_2_CA_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:377: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a31f40>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a30890>
+setting = 'REAL_IMAP_2_CA_FILE', bad_name = 'bad-imap-ca.pem'
+over = {'REAL_IMAP_2_CA_FILE': '/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_imap_ca_file_is_ref1/bad-imap-ca.pem'}
+
+    def _refused_before_the_question(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        setting: str,
+        bad_name: str,
+        **over: str,
+    ) -> str:
+        monkeypatch.setattr("builtins.input", _no_question)
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert f"refused: {setting}: " in out, out
+E       AssertionError: refused: SSLError
+E         
+E       assert 'refused: REAL_IMAP_2_CA_FILE: ' in 'refused: SSLError\n'
+
+tests/test_take_script_refusals.py:349: AssertionError
+_______ test_a_bad_leadflow_file_is_refused_before_the_question[missing] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_leadflow_file_is_re0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9245a33350>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244ccec90>
+content = None
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"rota": []}', "[]", b"\xff\xfe\x00"],
+        ids=["missing", "not-json", "wrong-keys", "not-an-object", "not-utf8"],
+    )
+    def test_a_bad_leadflow_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        bad = tmp_path / "bad-flow.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "bad-flow.json", DESK_LEADFLOW_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_a_bad_leadflow_file_is_refused_before_the_question[not-json] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_leadflow_file_is_re1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d4fe90>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9245a31f10>
+content = 'this is not json {'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"rota": []}', "[]", b"\xff\xfe\x00"],
+        ids=["missing", "not-json", "wrong-keys", "not-an-object", "not-utf8"],
+    )
+    def test_a_bad_leadflow_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        bad = tmp_path / "bad-flow.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "bad-flow.json", DESK_LEADFLOW_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_____ test_a_bad_leadflow_file_is_refused_before_the_question[wrong-keys] ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_leadflow_file_is_re2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d4c2f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d4d7f0>
+content = '{"rota": []}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"rota": []}', "[]", b"\xff\xfe\x00"],
+        ids=["missing", "not-json", "wrong-keys", "not-an-object", "not-utf8"],
+    )
+    def test_a_bad_leadflow_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        bad = tmp_path / "bad-flow.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "bad-flow.json", DESK_LEADFLOW_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+____ test_a_bad_leadflow_file_is_refused_before_the_question[not-an-object] ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_leadflow_file_is_re3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244db01d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d4ea50>
+content = '[]'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"rota": []}', "[]", b"\xff\xfe\x00"],
+        ids=["missing", "not-json", "wrong-keys", "not-an-object", "not-utf8"],
+    )
+    def test_a_bad_leadflow_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        bad = tmp_path / "bad-flow.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "bad-flow.json", DESK_LEADFLOW_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_a_bad_leadflow_file_is_refused_before_the_question[not-utf8] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_leadflow_file_is_re4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244db07a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244db0530>
+content = b'\xff\xfe\x00'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"rota": []}', "[]", b"\xff\xfe\x00"],
+        ids=["missing", "not-json", "wrong-keys", "not-an-object", "not-utf8"],
+    )
+    def test_a_bad_leadflow_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
+    ) -> None:
+        bad = tmp_path / "bad-flow.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "bad-flow.json", DESK_LEADFLOW_FILE=str(bad)
+        )
+
+tests/test_take_script_refusals.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_leadflow_with_reminders0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d4cbf0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d4eab0>
+
+    def test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import json  # noqa: PLC0415
+    
+        flow = json.loads(_LEADFLOW_OK)
+        flow["nudge_after_seconds"] = 3600  # reminders on, DESK_NUDGE_TO not set: the desk refuses this pair
+        path = tmp_path / "flow.json"
+        path.write_text(json.dumps(flow), encoding="utf-8")
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_LEADFLOW_FILE", "flow.json", DESK_LEADFLOW_FILE=str(path)
+        )
+
+tests/test_take_script_refusals.py:406: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_a_bad_approvers_file_is_refused_before_the_question[missing] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_approvers_file_is_r0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d19880>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d4fb60>
+content = None
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"approvers": 3}', '{"approvers": [{"id": 1}]}'],
+        ids=["missing", "not-json", "shape", "entry"],
+    )
+    def test_a_bad_approvers_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-approvers.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            "DESK_APPROVERS_FILE",
+            "bad-approvers.json",
+            DESK_LATER_MODE="approval",
+            DESK_APPROVERS_FILE=str(bad),
+        )
+
+tests/test_take_script_refusals.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_a_bad_approvers_file_is_refused_before_the_question[not-json] ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_approvers_file_is_r1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d19df0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1a5a0>
+content = 'this is not json {'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"approvers": 3}', '{"approvers": [{"id": 1}]}'],
+        ids=["missing", "not-json", "shape", "entry"],
+    )
+    def test_a_bad_approvers_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-approvers.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            "DESK_APPROVERS_FILE",
+            "bad-approvers.json",
+            DESK_LATER_MODE="approval",
+            DESK_APPROVERS_FILE=str(bad),
+        )
+
+tests/test_take_script_refusals.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_a_bad_approvers_file_is_refused_before_the_question[shape] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_approvers_file_is_r2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d7aea0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1b9e0>
+content = '{"approvers": 3}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"approvers": 3}', '{"approvers": [{"id": 1}]}'],
+        ids=["missing", "not-json", "shape", "entry"],
+    )
+    def test_a_bad_approvers_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-approvers.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            "DESK_APPROVERS_FILE",
+            "bad-approvers.json",
+            DESK_LATER_MODE="approval",
+            DESK_APPROVERS_FILE=str(bad),
+        )
+
+tests/test_take_script_refusals.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_a_bad_approvers_file_is_refused_before_the_question[entry] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_approvers_file_is_r3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d7a210>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d78740>
+content = '{"approvers": [{"id": 1}]}'
+
+    @pytest.mark.parametrize(
+        "content",
+        [None, _NOT_JSON, '{"approvers": 3}', '{"approvers": [{"id": 1}]}'],
+        ids=["missing", "not-json", "shape", "entry"],
+    )
+    def test_a_bad_approvers_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-approvers.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            "DESK_APPROVERS_FILE",
+            "bad-approvers.json",
+            DESK_LATER_MODE="approval",
+            DESK_APPROVERS_FILE=str(bad),
+        )
+
+tests/test_take_script_refusals.py:422: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_a_bad_replies_file_is_refused_before_the_question[missing] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_replies_file_is_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d7abd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d7a2d0>
+content = None
+
+    @pytest.mark.parametrize("content", [None, _NOT_JSON, "[1, 2]"], ids=["missing", "not-json", "not-an-object"])
+    def test_a_bad_replies_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-replies.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_REPLIES_PATH", "bad-replies.json", DESK_REPLIES_PATH=str(bad)
+        )
+
+tests/test_take_script_refusals.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_a_bad_replies_file_is_refused_before_the_question[not-json] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_replies_file_is_ref1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d78410>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d793a0>
+content = 'this is not json {'
+
+    @pytest.mark.parametrize("content", [None, _NOT_JSON, "[1, 2]"], ids=["missing", "not-json", "not-an-object"])
+    def test_a_bad_replies_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-replies.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_REPLIES_PATH", "bad-replies.json", DESK_REPLIES_PATH=str(bad)
+        )
+
+tests/test_take_script_refusals.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+____ test_a_bad_replies_file_is_refused_before_the_question[not-an-object] _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_bad_replies_file_is_ref2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d7a000>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244ccd460>
+content = '[1, 2]'
+
+    @pytest.mark.parametrize("content", [None, _NOT_JSON, "[1, 2]"], ids=["missing", "not-json", "not-an-object"])
+    def test_a_bad_replies_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | None
+    ) -> None:
+        bad = tmp_path / "bad-replies.json"
+        _write(bad, content)
+>       _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "DESK_REPLIES_PATH", "bad-replies.json", DESK_REPLIES_PATH=str(bad)
+        )
+
+tests/test_take_script_refusals.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+________ test_a_setting_the_desk_refuses_is_refused_before_the_question ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_setting_the_desk_refuse0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d79910>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d79670>
+
+    def test_a_setting_the_desk_refuses_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Not a file: the desk's own parser (Config.from_env) is the one that says no, so the script says it too."""
+>       _refused_before_the_question(tmp_path, capsys, monkeypatch, "DESK_SIZE_CAP_BYTES", "zzz", DESK_SIZE_CAP_BYTES="0")
+
+tests/test_take_script_refusals.py:448: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______________ test_valid_files_of_every_kind_reach_the_question _______________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_valid_files_of_every_kind0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1aba0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1b380>
+
+    def test_valid_files_of_every_kind_reach_the_question(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Control: the same checks pass good files, so the refusals above are not a check that refuses everything."""
+        files = {"flow.json": _LEADFLOW_OK, "approvers.json": _APPROVERS_OK, "replies.json": _REPLIES_OK}
+        for name, text in files.items():
+            (tmp_path / name).write_text(text, encoding="utf-8")
+        cfg = _valid_config(
+            tmp_path,
+            DESK_LEADFLOW_FILE=str(tmp_path / "flow.json"),
+            DESK_NUDGE_TO="a@example.test",
+            DESK_LATER_MODE="approval",
+            DESK_APPROVERS_FILE=str(tmp_path / "approvers.json"),
+            DESK_REPLIES_PATH=str(tmp_path / "replies.json"),
+        )
+        asked: list[str] = []
+        monkeypatch.setattr("builtins.input", lambda prompt="": asked.append(prompt) or "n")
+        code = rrc.main(["--config", str(cfg)])
+        out = capsys.readouterr().out
+>       assert code == rrc.EXIT_STOPPED and len(asked) == 1 and asked[0].startswith("To start, type the HubSpot host ("), (
+            out
+        )
+E       AssertionError: people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+E         worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+E         (each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+E         worst case mails: 10, all to your own inboxes (2 configured)
+E         worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+E         model: the recorded replies (no live call)
+E         made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+E         stopped, nothing was called
+E         
+E       assert (1 == 1 and 1 == 1 and False)
+E        +  where 1 = rrc.EXIT_STOPPED
+E        +  and   1 = len(['Start? [y/N] '])
+E        +  and   False = <built-in method startswith of str object at 0x7f9245a82330>('To start, type the HubSpot host (')
+E        +    where <built-in method startswith of str object at 0x7f9245a82330> = 'Start? [y/N] '.startswith
+
+tests/test_take_script_refusals.py:473: AssertionError
+___ test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_two_line_live_key_is_re0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1b350>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1bc50>
+
+    def test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        key = tmp_path / "two.livekey"
+        key.write_text(KEY + "\n" + KEY + "\n", encoding="utf-8")
+        monkeypatch.setattr("builtins.input", _no_question)
+        cfg = _valid_config(tmp_path, **_live_lines(tmp_path, key))
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:485: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+__ test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_damaged_live_ledger_is_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d068d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d19e80>
+
+    def test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        ledger = tmp_path / "ledger"
+        ledger.write_text("garbage not json\n", encoding="utf-8")
+        monkeypatch.setattr("builtins.input", _no_question)
+        cfg = _valid_config(tmp_path, **_live_lines(tmp_path, key))
+>       assert rrc.main(["--config", str(cfg), "--live-model"]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:502: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_result_path_that_cannot0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1e840>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457afad0>
+kind = 'a-folder', text = 'the result path is a folder: give a file path'
+
+    @pytest.mark.parametrize(
+        ("kind", "text"),
+        [
+            ("a-folder", "the result path is a folder: give a file path"),
+            ("no-folder", "the folder for the result file does not exist"),
+            ("folder-is-a-file", "the folder for the result file does not exist"),
+        ],
+    )
+    def test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str, text: str
+    ) -> None:
+        (tmp_path / "plain-file").write_text("x", encoding="utf-8")
+        (tmp_path / "a-folder").mkdir()
+        path = {
+            "a-folder": tmp_path / "a-folder",
+            "no-folder": tmp_path / "missing" / "r.json",
+            "folder-is-a-file": tmp_path / "plain-file" / "r.json",
+        }[kind]
+        before = sorted(p.name for p in tmp_path.iterdir())
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_RESULT_FILE", "plain-file", REAL_RESULT_FILE=str(path)
+        )
+
+tests/test_take_script_refusals.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_result_path_that_cannot1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d4ede0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f92457ad3a0>
+kind = 'no-folder', text = 'the folder for the result file does not exist'
+
+    @pytest.mark.parametrize(
+        ("kind", "text"),
+        [
+            ("a-folder", "the result path is a folder: give a file path"),
+            ("no-folder", "the folder for the result file does not exist"),
+            ("folder-is-a-file", "the folder for the result file does not exist"),
+        ],
+    )
+    def test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str, text: str
+    ) -> None:
+        (tmp_path / "plain-file").write_text("x", encoding="utf-8")
+        (tmp_path / "a-folder").mkdir()
+        path = {
+            "a-folder": tmp_path / "a-folder",
+            "no-folder": tmp_path / "missing" / "r.json",
+            "folder-is-a-file": tmp_path / "plain-file" / "r.json",
+        }[kind]
+        before = sorted(p.name for p in tmp_path.iterdir())
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_RESULT_FILE", "plain-file", REAL_RESULT_FILE=str(path)
+        )
+
+tests/test_take_script_refusals.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_result_path_that_cannot2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d18da0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d4cb30>
+kind = 'folder-is-a-file'
+text = 'the folder for the result file does not exist'
+
+    @pytest.mark.parametrize(
+        ("kind", "text"),
+        [
+            ("a-folder", "the result path is a folder: give a file path"),
+            ("no-folder", "the folder for the result file does not exist"),
+            ("folder-is-a-file", "the folder for the result file does not exist"),
+        ],
+    )
+    def test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str, text: str
+    ) -> None:
+        (tmp_path / "plain-file").write_text("x", encoding="utf-8")
+        (tmp_path / "a-folder").mkdir()
+        path = {
+            "a-folder": tmp_path / "a-folder",
+            "no-folder": tmp_path / "missing" / "r.json",
+            "folder-is-a-file": tmp_path / "plain-file" / "r.json",
+        }[kind]
+        before = sorted(p.name for p in tmp_path.iterdir())
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_RESULT_FILE", "plain-file", REAL_RESULT_FILE=str(path)
+        )
+
+tests/test_take_script_refusals.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_result_file_that_cannot0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1d1c0>
+
+    def test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        folder = tmp_path / "now-a-folder"
+        folder.mkdir()
+>       assert rrc.write_result(folder, {"ok": True}) is False  # what the unwritable-after-the-question case does
+               ^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'write_result'
+
+tests/test_take_script_refusals.py:572: AttributeError
+_ test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_read_back_failure_pat0')
+
+    def test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written(
+        tmp_path: Path,
+    ) -> None:
+        class A:
+            cleanup = False
+            dry_fakes = False
+            keep = False
+    
+        (tmp_path / "r").mkdir()
+        env = {"REAL_RESULT_FILE": str(tmp_path / "r")}
+>       assert rrc._readback_failed(A(), tmp_path, env, rrc.CrmError("x"), 0, {"created": 0}) == rrc.EXIT_FAILED  # type: ignore[arg-type]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:588: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:562: in _readback_failed
+    out.write_text(
+/usr/lib/python3.12/pathlib.py:1049: in write_text
+    with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_read_back_failure_pat0/r')
+mode = 'w', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IsADirectoryError: [Errno 21] Is a directory: '/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_read_back_failure_pat0/r'
+
+/usr/lib/python3.12/pathlib.py:1015: IsADirectoryError
+----------------------------- Captured stdout call -----------------------------
+the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The desk created 0 contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+___________ test_every_refusal_before_the_question_has_the_same_form ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_every_refusal_before_the_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1e390>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1fe30>
+
+    def test_every_refusal_before_the_question_has_the_same_form(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        ok = _valid_config(tmp_path)
+        bad_line = tmp_path / "bad-line.env"
+        bad_line.write_text("not a pair\n", encoding="utf-8")
+        cases: list[tuple[list[str], dict[str, str], str]] = [
+            (["--assume-yes"], {}, "--assume-yes"),
+            (["--keep"], {}, "--keep"),
+            ([], {}, "--config"),  # no --config
+            (["--config", str(tmp_path / "nope.env")], {}, "--config"),
+            (["--config", str(bad_line)], {}, "--config"),
+            (["--config"], {"REAL_PERSONS": "3"}, "REAL_PERSONS"),
+            (["--config"], {"DESK_BIND": ALL_ADDRESSES}, "DESK_BIND"),
+            (["--config"], {"DESK_SEND_TIMEOUT_SECONDS": "abc"}, "DESK_SEND_TIMEOUT_SECONDS"),
+            (["--config"], {"DESK_HUBSPOT_BASE_URL": "http://" + "hs.example" + ".org"}, "DESK_HUBSPOT_BASE_URL"),
+            (["--config"], {"DESK_SMTPP_PORT": "99999"}, "DESK_SMTPP_PORT"),
+            (["--config"], {"REAL_IMAP_1_PORT": "99999"}, "REAL_IMAP_1_PORT"),
+            (["--config"], {"DESK_SMTPP_RECIPIENTS": "a@example.test"}, "REAL_IMAP_n_USER"),
+            (["--config"], {"REAL_DRAIN_SECONDS": "0"}, "REAL_DRAIN_SECONDS"),
+            (["--config"], {"DESK_HUBSPOT_KEY_FILE": str(tmp_path / "no-key")}, "DESK_HUBSPOT_KEY_FILE"),
+            (["--config"], {"DESK_NUDGE_TO": "a@example.test"}, "DESK_NUDGE_TO"),
+        ]
+        for args, over, setting in cases:
+            monkeypatch.chdir(tmp_path)
+            if args == ["--config"]:
+                argv = ["--config", str(_valid_config(tmp_path, **over))]
+            elif args in (["--keep"], ["--assume-yes"]):
+                argv = ["--config", str(ok), *args]
+            else:
+                argv = args
+>           out = _one_refusal(rrc.main(argv), capsys)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/user/build/rr6/tree-B2/tests/test_take_script_refusals.py:663: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rc = 2, capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1e390>
+want = 2
+
+    def _one_refusal(rc: int, capsys: pytest.CaptureFixture[str], want: int = rrc.EXIT_REFUSED) -> str:
+        out = capsys.readouterr().out
+        assert rc == want
+>       assert _REFUSAL_LINE.fullmatch(out), out  # exactly one line: refused: <SETTING>: <text>
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+E         
+E       assert None
+E        +  where None = <built-in method fullmatch of re.Pattern object at 0x7f9245aaf490>('refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks\n')
+E        +    where <built-in method fullmatch of re.Pattern object at 0x7f9245aaf490> = re.compile('refused: [A-Za-z0-9_,\\- ]+: \\S.*\\n').fullmatch
+
+/home/user/build/rr6/tree-B2/tests/test_take_script_refusals.py:626: AssertionError
+_________________ test_the_bind_refusal_names_the_setting_once _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_bind_refusal_names_th0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1f7a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1fda0>
+
+    def test_the_bind_refusal_names_the_setting_once(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        cfg = _valid_config(tmp_path, DESK_BIND=ALL_ADDRESSES)
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:682: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___ test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE] ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_certificate_refusal_h0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1e5d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1d0a0>
+setting = 'DESK_SMTPP_CA_FILE'
+
+    @pytest.mark.parametrize("setting", ["DESK_SMTPP_CA_FILE", "REAL_IMAP_1_CA_FILE", "REAL_IMAP_2_CA_FILE"])
+    def test_the_certificate_refusal_has_this_exact_wording(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, setting: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        junk = tmp_path / "junk.pem"
+        junk.write_text("garbage", encoding="utf-8")
+>       assert rrc.main(["--config", str(_valid_config(tmp_path, **{setting: str(junk)}))]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_take_script_refusals.py:697: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___ test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_1_CA_FILE] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_certificate_refusal_h1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d1c590>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d1e630>
+setting = 'REAL_IMAP_1_CA_FILE'
+
+    @pytest.mark.parametrize("setting", ["DESK_SMTPP_CA_FILE", "REAL_IMAP_1_CA_FILE", "REAL_IMAP_2_CA_FILE"])
+    def test_the_certificate_refusal_has_this_exact_wording(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, setting: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        junk = tmp_path / "junk.pem"
+        junk.write_text("garbage", encoding="utf-8")
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **{setting: str(junk)}))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == f"refused: {setting}: {_CERT_TEXT}\n"
+E       AssertionError: assert 'refused: SSLError\n' == 'refused: REA...certificate\n'
+E         
+E         - refused: REAL_IMAP_1_CA_FILE: the certificate file cannot be read or holds no certificate
+E         + refused: SSLError
+
+tests/test_take_script_refusals.py:698: AssertionError
+___ test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_2_CA_FILE] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_the_certificate_refusal_h2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244d18f80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244d18050>
+setting = 'REAL_IMAP_2_CA_FILE'
+
+    @pytest.mark.parametrize("setting", ["DESK_SMTPP_CA_FILE", "REAL_IMAP_1_CA_FILE", "REAL_IMAP_2_CA_FILE"])
+    def test_the_certificate_refusal_has_this_exact_wording(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, setting: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        junk = tmp_path / "junk.pem"
+        junk.write_text("garbage", encoding="utf-8")
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **{setting: str(junk)}))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == f"refused: {setting}: {_CERT_TEXT}\n"
+E       AssertionError: assert 'refused: SSLError\n' == 'refused: REA...certificate\n'
+E         
+E         - refused: REAL_IMAP_2_CA_FILE: the certificate file cannot be read or holds no certificate
+E         + refused: SSLError
+
+tests/test_take_script_refusals.py:698: AssertionError
+________ test_the_docs_state_the_refusal_form_and_the_result_file_check ________
+
+    def test_the_docs_state_the_refusal_form_and_the_result_file_check() -> None:
+        doc = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
+>       assert "prints one line, `refused: <SETTING>: <fixed text>`, and ends with exit code 2" in doc
+E       AssertionError: assert 'prints one line, `refused: <SETTING>: <fixed text>`, and ends with exit code 2' in '# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ...he run look green). Without it a missing folder skips each such test file as one item and the other files still run.\n'
+
+tests/test_take_script_refusals.py:703: AssertionError
+_ test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3 _
+
+own_tempdir = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_a_result_file_that_fails_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244cffd40>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244cff0b0>
+
+    def test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3(
+        own_tempdir: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The v4 gap, end to end on the loopback fakes only (--dry-fakes: no real service, made-up data): the result
+        write fails after the run. Before v5 this was a traceback that skipped the clean-up."""
+>       real = rrc.write_result
+               ^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'write_result'
+
+tests/test_take_script_refusals.py:714: AttributeError
+_ test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_an_unexpected_error_befor0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244cfc7d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244cfcb60>
+error = OSError('/secret/place/file')
+line = 'refused: the settings: a file or folder cannot be used (OSError)\n'
+
+    @pytest.mark.parametrize(
+        ("error", "line"),
+        [
+            (OSError("/secret/place/file"), "refused: the settings: a file or folder cannot be used (OSError)\n"),
+            (ValueError("a text without a setting name"), "refused: the settings: a text without a setting name\n"),
+            (ValueError("REAL_X_Y is wrong"), "refused: REAL_X_Y: is wrong\n"),
+        ],
+        ids=["os-error-no-path", "no-name", "name-split"],
+    )
+    def test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        error: Exception,
+        line: str,
+    ) -> None:
+        def boom(_env: dict[str, str]) -> list[object]:
+            raise error
+    
+        monkeypatch.setattr("builtins.input", _no_question)
+        monkeypatch.setattr(rrc, "imap_settings", boom)
+        assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == line
+E       AssertionError: assert 'refused: OSError\n' == 'refused: the...d (OSError)\n'
+E         
+E         - refused: the settings: a file or folder cannot be used (OSError)
+E         + refused: OSError
+
+tests/test_take_script_refusals.py:745: AssertionError
+_ test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[no-name] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_an_unexpected_error_befor1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244cfed50>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244cfeb40>
+error = ValueError('a text without a setting name')
+line = 'refused: the settings: a text without a setting name\n'
+
+    @pytest.mark.parametrize(
+        ("error", "line"),
+        [
+            (OSError("/secret/place/file"), "refused: the settings: a file or folder cannot be used (OSError)\n"),
+            (ValueError("a text without a setting name"), "refused: the settings: a text without a setting name\n"),
+            (ValueError("REAL_X_Y is wrong"), "refused: REAL_X_Y: is wrong\n"),
+        ],
+        ids=["os-error-no-path", "no-name", "name-split"],
+    )
+    def test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        error: Exception,
+        line: str,
+    ) -> None:
+        def boom(_env: dict[str, str]) -> list[object]:
+            raise error
+    
+        monkeypatch.setattr("builtins.input", _no_question)
+        monkeypatch.setattr(rrc, "imap_settings", boom)
+        assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == line
+E       AssertionError: assert 'refused: Val...etting name\n' == 'refused: the...etting name\n'
+E         
+E         - refused: the settings: a text without a setting name
+E         + refused: ValueError: a text without a setting name
+
+tests/test_take_script_refusals.py:745: AssertionError
+_ test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[name-split] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-11/test_an_unexpected_error_befor2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9244cff7a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9244cfe270>
+error = ValueError('REAL_X_Y is wrong'), line = 'refused: REAL_X_Y: is wrong\n'
+
+    @pytest.mark.parametrize(
+        ("error", "line"),
+        [
+            (OSError("/secret/place/file"), "refused: the settings: a file or folder cannot be used (OSError)\n"),
+            (ValueError("a text without a setting name"), "refused: the settings: a text without a setting name\n"),
+            (ValueError("REAL_X_Y is wrong"), "refused: REAL_X_Y: is wrong\n"),
+        ],
+        ids=["os-error-no-path", "no-name", "name-split"],
+    )
+    def test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        error: Exception,
+        line: str,
+    ) -> None:
+        def boom(_env: dict[str, str]) -> list[object]:
+            raise error
+    
+        monkeypatch.setattr("builtins.input", _no_question)
+        monkeypatch.setattr(rrc, "imap_settings", boom)
+        assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == line
+E       AssertionError: assert 'refused: Val..._Y is wrong\n' == 'refused: REA...Y: is wrong\n'
+E         
+E         - refused: REAL_X_Y: is wrong
+E         ?                  -
+E         + refused: ValueError: REAL_X_Y is wrong
+E         ?          ++++++++++++
+
+tests/test_take_script_refusals.py:745: AssertionError
+==================================== PASSES ====================================
+________ test_the_live_key_file_is_not_looked_at_without_the_live_flag _________
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+_________ test_a_new_live_ledger_is_fine_and_the_check_writes_nothing __________
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0020 (caps: run 1, total 3)
+stopped, nothing was called
+____ test_a_usable_result_path_reaches_the_question_and_nothing_is_written _____
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+_ test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question _
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+=========================== short test summary info ============================
+PASSED tests/test_take_script_refusals.py::test_the_live_key_file_is_not_looked_at_without_the_live_flag
+PASSED tests/test_take_script_refusals.py::test_own_tempdir_puts_temporary_folders_under_the_test_folder
+PASSED tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[plain list, no fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[single quotes]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[split on spaces]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated keep]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated self-test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep with a value]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[fixture as parameter]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by plus]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by an f-string]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by join]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method without fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method with fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[module level]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper with the fixture still counts as a leak]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test without fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test with fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[decorator that only contains the word]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[another marker that names the word as an argument]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[skipif reason that only contains the word]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[only the word tempfile]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr by dotted name]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr inside with]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr of another module]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr to None is a no-op]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under if False]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under try]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr only]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr and its own environment]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a nested helper belongs to its test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a docstring that talks about the flags]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the self-test without keep]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep refused without the self-test, in a test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by format]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format with a tuple]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned before the plus]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in the module and used in a test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in a class]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flag assigned whole in a name]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[order of pieces follows the source]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[format with its own fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes after the run]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes before the run]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder by gettempdir]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder built from tmp_path]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder from the tmp_path_factory]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a name that has nothing to do with tmp_path]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures by the mark spelling]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a decorator called usefixtures on any object]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a bare function called usefixtures]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a local object called monkeypatch]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch is not a parameter at all]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by a with]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by an import]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags in two lists that are added together]
+PASSED tests/test_take_script_refusals.py::test_the_scan_reads_the_pieces_of_a_place_in_source_order
+PASSED tests/test_take_script_refusals.py::test_the_sample_file_has_all_its_cases
+PASSED tests/test_take_script_refusals.py::test_the_scan_reads_every_python_file_under_tests_not_only_test_files
+PASSED tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing
+PASSED tests/test_take_script_refusals.py::test_a_usable_result_path_reaches_the_question_and_nothing_is_written
+PASSED tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing
+PASSED tests/test_take_script_refusals.py::test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[None]
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[made-up-key-0002\nmade-up-key-0002\n]
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xff\\xfek\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00']
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(']
+FAILED tests/test_take_script_refusals.py::test_memory_book_is_refused_like_the_desk_and_leaves_no_file
+FAILED tests/test_take_script_refusals.py::test_a_config_that_is_not_utf8_is_refused_without_a_byte_value
+FAILED tests/test_take_script_refusals.py::test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails
+FAILED tests/test_take_script_refusals.py::test_the_readback_note_says_plainly_when_no_contact_was_created
+FAILED tests/test_take_script_refusals.py::test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback
+FAILED tests/test_take_script_refusals.py::test_live_check_exits_non_zero_when_every_call_failed
+FAILED tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[short]
+FAILED tests/test_take_script_refusals.py::test_keep_without_the_self_test_is_refused
+FAILED tests/test_take_script_refusals.py::test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+FAILED tests/test_take_script_refusals.py::test_a_clean_self_test_deletes_its_folder_too
+FAILED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[not-a-certificate]
+FAILED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[a-folder]
+FAILED tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[not-a-certificate]
+FAILED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-json]
+FAILED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[wrong-keys]
+FAILED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-an-object]
+FAILED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-utf8]
+FAILED tests/test_take_script_refusals.py::test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question
+FAILED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[not-json]
+FAILED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[shape]
+FAILED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[entry]
+FAILED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-json]
+FAILED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-an-object]
+FAILED tests/test_take_script_refusals.py::test_a_setting_the_desk_refuses_is_refused_before_the_question
+FAILED tests/test_take_script_refusals.py::test_valid_files_of_every_kind_reach_the_question
+FAILED tests/test_take_script_refusals.py::test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts
+FAILED tests/test_take_script_refusals.py::test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist]
+FAILED tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback
+FAILED tests/test_take_script_refusals.py::test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written
+FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form
+FAILED tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once
+FAILED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE]
+FAILED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_1_CA_FILE]
+FAILED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_2_CA_FILE]
+FAILED tests/test_take_script_refusals.py::test_the_docs_state_the_refusal_form_and_the_result_file_check
+FAILED tests/test_take_script_refusals.py::test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3
+FAILED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path]
+FAILED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[no-name]
+FAILED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[name-split]
+69 failed, 74 passed in 107.15s (0:01:47)
+rc=1 wall=107s

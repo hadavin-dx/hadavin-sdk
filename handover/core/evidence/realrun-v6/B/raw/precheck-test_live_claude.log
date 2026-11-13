@@ -1,0 +1,149 @@
+.............F.........................F.F......                         [100%]
+=================================== FAILURES ===================================
+_______________________ test_settings_need_money_values ________________________
+
+    def test_settings_need_money_values() -> None:
+        base: dict[str, Any] = {
+            "model": "m",
+            "key_file": Path("k"),
+            "price_in_per_mtok": Decimal("1"),
+            "price_out_per_mtok": Decimal("1"),
+            "price_date": "d",
+            "cap_run_usd": Decimal("1"),
+            "cap_total_usd": Decimal("2"),
+            "ledger_path": Path("l"),
+            "run_id": "r",
+            "base_url": LIVE_DEFAULT_BASE_URL,  # named: there is no default address
+        }
+        LiveSettings(**base)
+>       with pytest.raises(TypeError):
+E       Failed: DID NOT RAISE TypeError
+
+tests/test_live_claude.py:194: Failed
+________________ test_runner_prints_counts_only_and_asks_first _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-16/test_runner_prints_counts_only0')
+model = <test_live_claude.Model object at 0x7f8f47ea6ff0>
+
+    def test_runner_prints_counts_only_and_asks_first(tmp_path: Path, model: Model) -> None:
+        model.state.mode = "mixed"
+        args = ["--cap-run", "1", "--cap-total", "3", "--model", "fake-a=2,10", "--model", "fake-b=1,5"]
+        piped = _run_runner(tmp_path, model, args)  # a pipe (stdin here is not a terminal): refused, no question
+>       assert piped.returncode == 2 and "needs a person at a terminal" in piped.stdout and "MAXIMUM" not in piped.stdout
+E       assert (1 == 2)
+E        +  where 1 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...if input("Start? [y/N] ").strip().lower() != "y":\n       ^^^^^^^^^^^^^^^^^^^^^^\nEOFError: EOF when reading a line\n').returncode
+
+tests/test_live_claude.py:592: AssertionError
+_____________________ test_runner_counts_failures_by_class _____________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-16/test_runner_counts_failures_by0')
+model = <test_live_claude.Model object at 0x7f8f47e96f60>
+
+    def test_runner_counts_failures_by_class(tmp_path: Path, model: Model) -> None:
+        model.state.mode = "refusal"
+        args = ["--cap-run", "1", "--cap-total", "3", "--model", "fake-a=2,10", "--leads", "2", "--runs", "2"]
+        r = _run_runner(tmp_path, model, [*args, "--assume-yes"])
+>       assert r.returncode == 3 and "valid labels 0 (0%)" in r.stdout and "LiveRefused" in r.stdout
+E       AssertionError: assert (2 == 3)
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...  [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: unrecognized arguments: --assume-yes\n').returncode
+
+tests/test_live_claude.py:617: AssertionError
+==================================== PASSES ====================================
+__ test_desk_failure_ends_in_failed_never_lost[r429-internal:LiveRateLimited] __
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRateLimited
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRateLimited
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRateLimited
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRateLimited
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRateLimited
+_ test_desk_failure_ends_in_failed_never_lost[malformed-internal:LiveBadReply] _
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveBadReply
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveBadReply
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveBadReply
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveBadReply
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveBadReply
+__ test_desk_failure_ends_in_failed_never_lost[refusal-internal:LiveRefused] ___
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+___ test_desk_failure_ends_in_failed_never_lost[r5xx-internal:LiveTransport] ___
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+_ test_desk_failure_ends_in_failed_never_lost[timeout-internal:LiveTransport] __
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveTransport
+______________________ test_cap_holds_with_five_refusals _______________________
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveRefused
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveCapReached
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveCapReached
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveCapReached
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveCapReached
+WARNING  lead_desk:desk.py:1843 follow-up steps 1-2 failed after the claim: LiveCapReached
+=========================== short test summary info ============================
+PASSED tests/test_live_claude.py::test_ok_label_and_cost_log
+PASSED tests/test_live_claude.py::test_failure_modes_raise_classed_errors[r429-LiveRateLimited]
+PASSED tests/test_live_claude.py::test_failure_modes_raise_classed_errors[malformed-LiveBadReply]
+PASSED tests/test_live_claude.py::test_failure_modes_raise_classed_errors[refusal-LiveRefused]
+PASSED tests/test_live_claude.py::test_failure_modes_raise_classed_errors[r5xx-LiveTransport]
+PASSED tests/test_live_claude.py::test_failure_modes_raise_classed_errors[badlabel-LiveBadReply]
+PASSED tests/test_live_claude.py::test_error_body_and_retry_after_are_read_defensively
+PASSED tests/test_live_claude.py::test_5xx_names_the_error_type_only
+PASSED tests/test_live_claude.py::test_worst_case_reserve_uses_max_tokens_as_output
+PASSED tests/test_live_claude.py::test_timeout_is_hard_and_short
+PASSED tests/test_live_claude.py::test_slow_drip_hits_the_whole_call_deadline
+PASSED tests/test_live_claude.py::test_slow_three_seconds_still_answers_inside_the_limit
+PASSED tests/test_live_claude.py::test_key_never_leaks
+PASSED tests/test_live_claude.py::test_the_key_goes_only_to_the_providers_host_or_this_computer
+PASSED tests/test_live_claude.py::test_the_environment_opt_out_is_the_word_yes_only
+PASSED tests/test_live_claude.py::test_the_key_file_path_is_not_printed_with_the_settings
+PASSED tests/test_live_claude.py::test_config_from_env_live
+PASSED tests/test_live_claude.py::test_loader_picks_live_and_smtp
+PASSED tests/test_live_claude.py::test_cap_survives_restart_and_counts_worst_case
+PASSED tests/test_live_claude.py::test_total_cap_spans_runs_and_crash_keeps_reserve
+PASSED tests/test_live_claude.py::test_broken_ledger_stops_spending
+PASSED tests/test_live_claude.py::test_ledger_concurrent_reserves_never_pass_the_cap
+PASSED tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[r429-internal:LiveRateLimited]
+PASSED tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[malformed-internal:LiveBadReply]
+PASSED tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[refusal-internal:LiveRefused]
+PASSED tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[r5xx-internal:LiveTransport]
+PASSED tests/test_live_claude.py::test_desk_failure_ends_in_failed_never_lost[timeout-internal:LiveTransport]
+PASSED tests/test_live_claude.py::test_desk_slow_model_works
+PASSED tests/test_live_claude.py::test_duplicates_never_call_the_model
+PASSED tests/test_live_claude.py::test_cap_holds_with_five_refusals
+PASSED tests/test_live_claude.py::test_trace_wrappers_and_hooks
+PASSED tests/test_live_claude.py::test_trace_records_a_failure_and_reraises
+PASSED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[ai_after]
+PASSED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[crm_before_put]
+PASSED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[crm_after_put]
+PASSED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[send_before]
+PASSED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[send_after]
+PASSED tests/test_live_claude.py::test_crash_windows_ignore_other_names
+PASSED tests/test_live_claude.py::test_runner_refuses_without_caps_or_prices
+PASSED tests/test_live_claude.py::test_live_adapter_declares_its_limit_for_the_desk_check
+PASSED tests/test_live_claude.py::test_header_trickle_hits_the_total_deadline
+PASSED tests/test_live_claude.py::test_ledger_append_is_flushed_to_disk
+PASSED tests/test_live_claude.py::test_trace_write_failure_does_not_change_the_call
+PASSED tests/test_live_claude.py::test_busy_ledger_counts_against_the_call_limit
+PASSED tests/test_live_claude.py::test_no_request_after_ledger_used_the_limit
+FAILED tests/test_live_claude.py::test_settings_need_money_values - Failed: D...
+FAILED tests/test_live_claude.py::test_runner_prints_counts_only_and_asks_first
+FAILED tests/test_live_claude.py::test_runner_counts_failures_by_class - Asse...
+3 failed, 45 passed in 16.22s
+rc=1 wall=16s

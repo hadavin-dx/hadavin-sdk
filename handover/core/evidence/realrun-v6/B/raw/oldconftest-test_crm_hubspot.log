@@ -1,0 +1,85 @@
+........................................................                 [100%]
+==================================== PASSES ====================================
+--------------------------- Captured stderr teardown ---------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38392)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/build/rr6/tree-B/demo_only/fake_hubspot.py", line 325, in do_POST
+    self._create()
+  File "/home/user/build/rr6/tree-B/demo_only/fake_hubspot.py", line 373, in _create
+    self._send(201, st.public(cid, by_email=False) or {"id": cid, "properties": dict(props)})
+  File "/home/user/build/rr6/tree-B/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+=========================== short test summary info ============================
+PASSED tests/test_crm_hubspot.py::test_put_creates_one_contact_with_our_property
+PASSED tests/test_crm_hubspot.py::test_second_put_same_lead_is_already_present_without_a_second_contact
+PASSED tests/test_crm_hubspot.py::test_409_without_an_id_is_confirmed_by_email
+PASSED tests/test_crm_hubspot.py::test_real_409_wording_is_read_back_by_the_named_id
+PASSED tests/test_crm_hubspot.py::test_the_fake_refuses_dot_test_like_the_real_crm_when_asked
+PASSED tests/test_crm_hubspot.py::test_same_email_other_lead_id_is_taken_and_nothing_is_changed
+PASSED tests/test_crm_hubspot.py::test_same_person_different_email_makes_a_second_contact
+PASSED tests/test_crm_hubspot.py::test_timeout_after_create_then_retry_finds_it_and_does_not_double
+PASSED tests/test_crm_hubspot.py::test_slow_answer_inside_budget_is_ok_and_beyond_it_is_unclear
+PASSED tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx]
+PASSED tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx_after_store]
+PASSED tests/test_crm_hubspot.py::test_429_waits_the_named_seconds_then_succeeds
+PASSED tests/test_crm_hubspot.py::test_429_uses_the_backoff_without_retry_after_and_gives_up_busy
+PASSED tests/test_crm_hubspot.py::test_429_with_a_wait_longer_than_the_budget_does_not_sleep
+PASSED tests/test_crm_hubspot.py::test_4xx_is_refused_and_stored_nothing[unauthorized]
+PASSED tests/test_crm_hubspot.py::test_4xx_is_refused_and_stored_nothing[forbidden_400]
+PASSED tests/test_crm_hubspot.py::test_malformed_201_is_unclear
+PASSED tests/test_crm_hubspot.py::test_not_reached_is_stored_nothing
+PASSED tests/test_crm_hubspot.py::test_a_rejected_call_still_gets_its_answer_when_the_body_arrives_after_the_close
+PASSED tests/test_crm_hubspot.py::test_call_cap_stops_before_the_network
+PASSED tests/test_crm_hubspot.py::test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path[None]
+PASSED tests/test_crm_hubspot.py::test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path[]
+PASSED tests/test_crm_hubspot.py::test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path[   \n]
+PASSED tests/test_crm_hubspot.py::test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path[short]
+PASSED tests/test_crm_hubspot.py::test_key_is_read_at_call_time_and_never_appears_in_errors_or_logs
+PASSED tests/test_crm_hubspot.py::test_lead_id_outside_the_allowed_set_is_refused_before_the_network[]
+PASSED tests/test_crm_hubspot.py::test_lead_id_outside_the_allowed_set_is_refused_before_the_network[L 1]
+PASSED tests/test_crm_hubspot.py::test_lead_id_outside_the_allowed_set_is_refused_before_the_network[L\r\n1]
+PASSED tests/test_crm_hubspot.py::test_lead_id_outside_the_allowed_set_is_refused_before_the_network[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+PASSED tests/test_crm_hubspot.py::test_lead_id_outside_the_allowed_set_is_refused_before_the_network[L"1]
+PASSED tests/test_crm_hubspot.py::test_read_back_list_search_lag_and_archive
+PASSED tests/test_crm_hubspot.py::test_concurrent_puts_of_one_lead_make_one_contact
+PASSED tests/test_crm_hubspot.py::test_settings_validation_and_env
+PASSED tests/test_crm_hubspot.py::test_config_and_loader_select_hubspot_and_default_stays_fake
+PASSED tests/test_crm_hubspot.py::test_a_redirect_to_another_host_is_never_followed_and_the_key_never_leaves
+PASSED tests/test_crm_hubspot.py::test_rotated_key_never_appears_in_errors_or_logs
+PASSED tests/test_crm_hubspot.py::test_429_waits_at_least_the_named_seconds
+PASSED tests/test_crm_hubspot.py::test_listing_pages_are_followed_until_the_end
+PASSED tests/test_crm_hubspot.py::test_a_hanging_listing_ends_inside_one_budget_not_fifty
+PASSED tests/test_crm_hubspot.py::test_recycle_bin_makes_the_conflict_loud_and_unclear
+PASSED tests/test_crm_hubspot.py::test_the_fake_creates_atomically
+PASSED tests/test_crm_hubspot.py::test_the_key_goes_only_to_hubspot_hosts_unless_overridden[https://example.test]
+PASSED tests/test_crm_hubspot.py::test_the_key_goes_only_to_hubspot_hosts_unless_overridden[https://api.hubapi.com.example.test]
+PASSED tests/test_crm_hubspot.py::test_the_key_goes_only_to_hubspot_hosts_unless_overridden[https://hubspot.com.example.test]
+PASSED tests/test_crm_hubspot.py::test_the_key_goes_only_to_hubspot_hosts_unless_overridden[https://x]
+PASSED tests/test_crm_hubspot.py::test_a_bad_number_names_the_setting_and_not_its_value
+PASSED tests/test_crm_hubspot.py::test_the_adapter_budget_is_clamped_to_the_desks_send_timeout
+PASSED tests/test_crm_hubspot.py::test_key_file_formats[\xef\xbb\xbfkeeeeeeeeeeeeeee-for-tests-0001\r\n-True]
+PASSED tests/test_crm_hubspot.py::test_key_file_formats[keeeeeeeeeeeeeee-for-tests-0001\nkeeeeeeeeeeeeeee-for-tests-0001-False]
+PASSED tests/test_crm_hubspot.py::test_key_file_formats[\xff\xfe\xff\xfek\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00e\x00-\x00f\x00o\x00r\x00-\x00t\x00e\x00s\x00t\x00s\x00-\x000\x000\x000\x001\x00-False]
+PASSED tests/test_crm_hubspot.py::test_key_file_formats[raw3-False]
+PASSED tests/test_crm_hubspot.py::test_a_409_whose_lead_id_matches_but_whose_email_differs_is_not_this_leads_contact
+PASSED tests/test_crm_hubspot.py::test_the_read_back_asks_for_the_email_property_too
+PASSED tests/test_crm_hubspot.py::test_archive_is_counted_as_an_archive_not_as_a_read
+PASSED tests/test_crm_hubspot.py::test_one_request_is_bounded_as_a_whole_even_when_the_status_line_trickles_in
+PASSED tests/test_crm_hubspot.py::test_settings_do_not_print_the_key_file_path
+56 passed in 28.55s
+rc=0 wall=29s

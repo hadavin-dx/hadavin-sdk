@@ -1,0 +1,1718 @@
+FFFFFF..FFF.......FFFFFFFFFF.....FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF........ [ 55%]
+......................................................F.F                [100%]
+=================================== FAILURES ===================================
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_a_stdi0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e577a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e556a0>
+piped = 'y\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n] _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_a_stdi1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e69b20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e55790>
+piped = 'yes\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_a_stdi2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e68a70>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e6b0e0>
+piped = 'n\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[] ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_a_stdi3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e69ca0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e694c0>
+piped = ''
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___ test_real_check_refuses_a_stdin_that_is_not_a_terminal[api.hubapi.com\n] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_a_stdi4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e6a930>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e69e80>
+piped = 'api.hubapi.com\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal ______
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec2270>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec3500>
+
+    def test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe("y\n"))
+>       assert rrc.main(["--dry-fakes"]) == rrc.EXIT_REFUSED  # DryFakes is not even constructed (it raises)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:842: in _run
+    fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/real-dry-8yrriciy'), None, 'ok')
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+________ test_a_terminal_reaches_the_question_and_a_wrong_answer_stops _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_a_terminal_reaches_the_qu0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec26f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec3380>
+
+    def test_a_terminal_reaches_the_question_and_a_wrong_answer_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, "n")
+        assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_STOPPED
+        assert "stopped, nothing was called" in capsys.readouterr().out
+>       assert shown == [f"To start, type the HubSpot host ({CRM_HOST}) and press Enter; anything else stops: "]
+E       AssertionError: assert ['Start? [y/N] '] == ['To start, t...else stops: ']
+E         
+E         At index 0 diff: 'Start? [y/N] ' != 'To start, type the HubSpot host (api.hubapi.com) and press Enter; anything else stops: '
+E         Use -v to get more diff
+
+tests/test_start_prompt_hardening.py:154: AssertionError
+______ test_only_the_destination_host_starts_the_real_check_never_a_y[y] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_only_the_destination_host0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e6af30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e69340>
+typed = 'y'
+
+    @pytest.mark.parametrize("typed", ["y", "Y", "yes", "", " ", "n", "yes\ty", CRM_HOST + ".evil.test", "x." + CRM_HOST])
+    def test_only_the_destination_host_starts_the_real_check_never_a_y(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, typed)
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_STOPPED  # Desk raises if a run were started
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:947: in _run
+    d1 = Desk(child_env, run_dir, port, "1")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = ({'TMPDIR': '/home/user/build/rr6/tree-B2/.tmp-run', 'HOME': '/', 'PATH': '/nix/var/nix/profiles/default/bin:/root/.lo...th('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_only_the_destination_host0/run'), 8765, '1')
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+______ test_only_the_destination_host_starts_the_real_check_never_a_y[Y] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_only_the_destination_host1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e6b080>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e6bc50>
+typed = 'Y'
+
+    @pytest.mark.parametrize("typed", ["y", "Y", "yes", "", " ", "n", "yes\ty", CRM_HOST + ".evil.test", "x." + CRM_HOST])
+    def test_only_the_destination_host_starts_the_real_check_never_a_y(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, typed)
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_STOPPED  # Desk raises if a run were started
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:947: in _run
+    d1 = Desk(child_env, run_dir, port, "1")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = ({'TMPDIR': '/home/user/build/rr6/tree-B2/.tmp-run', 'HOME': '/', 'PATH': '/nix/var/nix/profiles/default/bin:/root/.lo...th('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_only_the_destination_host1/run'), 8765, '1')
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_______ test_typing_the_destination_host_starts_the_run[api.hubapi.com] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_typing_the_destination_ho0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec20f0>
+typed = 'api.hubapi.com'
+
+    @pytest.mark.parametrize("typed", [CRM_HOST, "  " + CRM_HOST.upper() + " "])
+    def test_typing_the_destination_host_starts_the_run(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, typed)
+>       with pytest.raises(Reached):  # past the question, on to the (blocked) start of the first desk
+E       Failed: DID NOT RAISE Reached
+
+tests/test_start_prompt_hardening.py:173: Failed
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+______ test_typing_the_destination_host_starts_the_run[  API.HUBAPI.COM ] ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_typing_the_destination_ho1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec3500>
+typed = '  API.HUBAPI.COM '
+
+    @pytest.mark.parametrize("typed", [CRM_HOST, "  " + CRM_HOST.upper() + " "])
+    def test_typing_the_destination_host_starts_the_run(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, typed)
+>       with pytest.raises(Reached):  # past the question, on to the (blocked) start of the first desk
+E       Failed: DID NOT RAISE Reached
+
+tests/test_start_prompt_hardening.py:173: Failed
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+________ test_the_banner_shows_where_each_key_goes_before_the_question _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_the_banner_shows_where_ea0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec2150>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec0500>
+
+    def test_the_banner_shows_where_each_key_goes_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+>       assert rrc.host_of(HUBSPOT_BASE_URL) == CRM_HOST
+               ^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'host_of'
+
+tests/test_start_prompt_hardening.py:180: AttributeError
+___________ test_the_banner_shows_the_model_host_with_the_live_model ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_the_banner_shows_the_mode0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea9640>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec2de0>
+
+    def test_the_banner_shows_the_model_host_with_the_live_model(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        live = {
+            "DESK_LIVE_MODEL": "m",
+            "DESK_LIVE_KEY_FILE": FILLER_KEY_FILE,
+            "DESK_LIVE_PRICE_DATE": "2026-01-01",
+            "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
+            "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
+            "DESK_LIVE_CAP_RUN_USD": "1.25",
+            "DESK_LIVE_CAP_TOTAL_USD": "3",
+            "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger"),
+            "DESK_LIVE_RUN_ID": "r1",
+            "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL,
+        }
+        _answer(monkeypatch, "")
+        assert rrc.main(["--config", str(_config(tmp_path, **live)), "--live-model"]) == rrc.EXIT_STOPPED
+>       assert f"model key           -> {rrc.host_of(LIVE_DEFAULT_BASE_URL)}" in capsys.readouterr().out
+                                         ^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'host_of'
+
+tests/test_start_prompt_hardening.py:216: AttributeError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0719 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+stopped, nothing was called
+____ test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_an_unreplaced_or_odd_mail0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80eaa090>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80eab2c0>
+
+    def test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        for bad in ("<IMAP_HOST>", "mail host", "mail.example.test/x", "-mail.example.test", "mail@example.test", "é.test"):
+>           assert rrc.main(["--config", str(_config(tmp_path, REAL_IMAP_2_HOST=bad))]) == rrc.EXIT_REFUSED, bad
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_____________ test_stdin_is_a_terminal_only_when_it_says_so[None] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea9c40>
+stdin = None
+
+    @pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
+    def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
+        monkeypatch.setattr(sys, "stdin", stdin)
+>       assert tg.stdin_is_terminal() is False and rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+
+tests/test_start_prompt_hardening.py:245: AttributeError
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin1] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec2ed0>
+stdin = <object object at 0x7eff829218e0>
+
+    @pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
+    def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
+        monkeypatch.setattr(sys, "stdin", stdin)
+>       assert tg.stdin_is_terminal() is False and rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+
+tests/test_start_prompt_hardening.py:245: AttributeError
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin2] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec0500>
+stdin = <test_start_prompt_hardening._Odd object at 0x7eff80df07d0>
+
+    @pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
+    def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
+        monkeypatch.setattr(sys, "stdin", stdin)
+>       assert tg.stdin_is_terminal() is False and rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+
+tests/test_start_prompt_hardening.py:245: AttributeError
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin3] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec0c50>
+stdin = <test_start_prompt_hardening._Odd object at 0x7eff80df07a0>
+
+    @pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
+    def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
+        monkeypatch.setattr(sys, "stdin", stdin)
+>       assert tg.stdin_is_terminal() is False and rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+
+tests/test_start_prompt_hardening.py:245: AttributeError
+____________ test_stdin_is_a_terminal_only_when_it_says_so[stdin4] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e6af30>
+stdin = <test_start_prompt_hardening._Pipe object at 0x7eff811871c0>
+
+    @pytest.mark.parametrize("stdin", [None, object(), _Odd(ValueError), _Odd(OSError), _Pipe("y\n")])
+    def test_stdin_is_a_terminal_only_when_it_says_so(monkeypatch: pytest.MonkeyPatch, stdin: object) -> None:
+        monkeypatch.setattr(sys, "stdin", stdin)
+>       assert tg.stdin_is_terminal() is False and rrc.stdin_is_terminal() is False and rlc.stdin_is_terminal() is False
+                                                   ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'stdin_is_terminal'
+
+tests/test_start_prompt_hardening.py:245: AttributeError
+_________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_refuses_a_stdi0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea8110>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80eaaa50>
+piped = 'y\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", "127.0.0.1\n"])
+    def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n] _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_refuses_a_stdi1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea8290>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea85c0>
+piped = 'yes\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", "127.0.0.1\n"])
+    def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+_________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_refuses_a_stdi2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80eaae10>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea9580>
+piped = 'n\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", "127.0.0.1\n"])
+    def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+___________ test_live_check_refuses_a_stdin_that_is_not_a_terminal[] ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_refuses_a_stdi3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea4c20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea4620>
+piped = ''
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", "127.0.0.1\n"])
+    def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+_____ test_live_check_refuses_a_stdin_that_is_not_a_terminal[127.0.0.1\n] ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_refuses_a_stdi4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea9250>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80eab830>
+piped = '127.0.0.1\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", "127.0.0.1\n"])
+    def test_live_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == rlc.EXIT_REFUSED == 2
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+__________ test_live_check_assume_yes_is_for_a_loopback_address_only ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_is_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea91c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea96d0>
+
+    def test_live_check_assume_yes_is_for_a_loopback_address_only(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+        for bad in (
+            LIVE_DEFAULT_BASE_URL,
+            "https://" + "model-host" + ".example.test",
+            "http://[::1",
+            "http://" + "10.0.0." + "5:9",
+        ):
+>           assert rlc.main(_live_args(tmp_path, "--base-url", bad, "--assume-yes")) == rlc.EXIT_REFUSED
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:360: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:118: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/argparse.py:1911: in parse_args
+    self.error(msg % ' '.join(argv))
+/usr/lib/python3.12/argparse.py:2677: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description="Check runner: asks a live model for a label on ~12 made-up...xample.com).", formatter_class=<class 'argparse.RawDescriptionHelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: unrecognized arguments: --assume-yes\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.12/argparse.py:2664: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --key-file KEY_FILE [--base-url BASE_URL] --ledger
+                   LEDGER --cap-run CAP_RUN --cap-total CAP_TOTAL --price-date
+                   PRICE_DATE --model MODEL [--max-tokens MAX_TOKENS]
+                   [--effort EFFORT] [--timeout TIMEOUT] [--leads LEADS]
+                   [--runs RUNS]
+__main__.py: error: unrecognized arguments: --assume-yes
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e6bc80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e689e0>
+lookalike = 'http://127.0.0.1.evil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.evil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff8111b800>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8111a360>
+lookalike = 'http://localhost.evil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1@evil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff8115c110>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115f8f0>
+lookalike = 'http://127.0.0.1@evil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://[::1]@evil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff8115f200>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115eff0>
+lookalike = 'http://[::1]@evil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+___ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://0.0.0.0] ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec2d20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115eea0>
+lookalike = 'http://0.0.0.0'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+____ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.1] _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref5')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec3830>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec0b90>
+lookalike = 'http://127.1'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+__ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://2130706433] __
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref6')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea4b30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec3c20>
+lookalike = 'http://2130706433'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+__ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.] __
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref7')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea7320>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea62a0>
+lookalike = 'http://localhost.'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1%2eevil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_assume_yes_ref8')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ec13a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ec1970>
+lookalike = 'http://127.0.0.1%2eevil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+               ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_live_check' has no attribute '_loopback_url'
+
+tests/test_start_prompt_hardening.py:386: AttributeError
+____________________ test_live_check_has_no_default_address ____________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_has_no_default0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff8115cfe0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115cec0>
+
+    def test_live_check_has_no_default_address(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+>       assert rlc.main(_live_args(tmp_path)) == rlc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:395: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+_________ test_live_check_a_closed_terminal_is_a_stop_not_a_traceback __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_closed_termi0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80e683b0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115db20>
+
+    def test_live_check_a_closed_terminal_is_a_stop_not_a_traceback(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def closed(prompt: str = "") -> str:
+            raise EOFError
+    
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        monkeypatch.setattr("builtins.input", closed)
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://127.0.0.1:9")) == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:408: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:153: in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'Start? [y/N] '
+
+    def closed(prompt: str = "") -> str:
+>       raise EOFError
+E       EOFError
+
+tests/test_start_prompt_hardening.py:404: EOFError
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+_________________ test_live_check_a_y_or_a_wrong_host_stops[y] _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_y_or_a_wrong0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80eab140>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80e682c0>
+typed = 'y'
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:418: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:159: in main
+    r = run_model(s, leads, a.runs, ledger)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (LiveSettings(model='m', price_in_per_mtok=Decimal('1'), price_out_per_mtok=Decimal('2'), price_date='2026-01-01', cap...=False), [('L000000000001', 'made.up.1@example.com')], 1, <lead_desk.live_claude.SpendLedger object at 0x7eff80ea5790>)
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+________________ test_live_check_a_y_or_a_wrong_host_stops[yes] ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_y_or_a_wrong1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea4530>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea5b80>
+typed = 'yes'
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+        assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+        out = capsys.readouterr().out
+>       assert "the key goes to: localhost" in out and "stopped, nothing was called" in out
+E       AssertionError: assert ('the key goes to: localhost' in 'models: 1, calls per model: 1, prices dated 2026-01-01\nexpected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)\nstopped, nothing was called\n')
+
+tests/test_start_prompt_hardening.py:420: AssertionError
+_________________ test_live_check_a_y_or_a_wrong_host_stops[] __________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_y_or_a_wrong2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea5d30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea6000>
+typed = ''
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+        assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+        out = capsys.readouterr().out
+>       assert "the key goes to: localhost" in out and "stopped, nothing was called" in out
+E       AssertionError: assert ('the key goes to: localhost' in 'models: 1, calls per model: 1, prices dated 2026-01-01\nexpected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)\nstopped, nothing was called\n')
+
+tests/test_start_prompt_hardening.py:420: AssertionError
+_________________ test_live_check_a_y_or_a_wrong_host_stops[n] _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_y_or_a_wrong3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea77a0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea5ca0>
+typed = 'n'
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+        assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+        out = capsys.readouterr().out
+>       assert "the key goes to: localhost" in out and "stopped, nothing was called" in out
+E       AssertionError: assert ('the key goes to: localhost' in 'models: 1, calls per model: 1, prices dated 2026-01-01\nexpected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)\nstopped, nothing was called\n')
+
+tests/test_start_prompt_hardening.py:420: AssertionError
+________ test_live_check_a_y_or_a_wrong_host_stops[localhost.evil.test] ________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_a_y_or_a_wrong4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff804a7170>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff804a5790>
+typed = 'localhost.evil.test'
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+        assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+        out = capsys.readouterr().out
+>       assert "the key goes to: localhost" in out and "stopped, nothing was called" in out
+E       AssertionError: assert ('the key goes to: localhost' in 'models: 1, calls per model: 1, prices dated 2026-01-01\nexpected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)\nstopped, nothing was called\n')
+
+tests/test_start_prompt_hardening.py:420: AssertionError
+________________ test_live_check_typing_the_host_starts_the_run ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_live_check_typing_the_hos0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff804a66f0>
+
+    def test_live_check_typing_the_host_starts_the_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, "LOCALHOST")
+>       with pytest.raises(Reached):  # past the question, on to the (blocked) first call
+E       Failed: DID NOT RAISE Reached
+
+tests/test_start_prompt_hardening.py:427: Failed
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+stopped, nothing was called
+_ test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea5ca0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea6900>
+name = 'DESK_HUBSPOT_BASE_URL', how = 'absent'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80ea4650>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea4410>
+name = 'REAL_IMAP_1_HOST', how = 'absent'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add2')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff8115f680>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff80ea4470>
+name = 'REAL_IMAP_2_HOST', how = 'absent'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add3')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff804a4b60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff8115d100>
+name = 'DESK_HUBSPOT_BASE_URL', how = 'blank'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert out.startswith(f"refused: {name}: not named in the settings") and "To start" not in out
+E       AssertionError: assert (False)
+E        +  where False = <built-in method startswith of str object at 0x7eff80edd7d0>('refused: DESK_HUBSPOT_BASE_URL: not named in the settings')
+E        +    where <built-in method startswith of str object at 0x7eff80edd7d0> = 'refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an http(s) address with a host and no path\n'.startswith
+
+tests/test_start_prompt_hardening.py:441: AssertionError
+_ test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add4')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff804a49e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff804a6c90>
+name = 'REAL_IMAP_1_HOST', how = 'blank'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+_ test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_refuses_an_add5')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff804a7710>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff804a5e80>
+name = 'REAL_IMAP_2_HOST', how = 'blank'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+>       assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:439: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:920: in _run
+    answer = input("Start? [y/N] ").strip().lower()
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+___________ test_real_check_the_live_model_address_must_be_named_too ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-10/test_real_check_the_live_model0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff80404140>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff804a4740>
+
+    def test_real_check_the_live_model_address_must_be_named_too(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        assert rrc.main(["--config", str(_config(tmp_path)), "--live-model"]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out.startswith("refused: DESK_LIVE_BASE_URL: not named in the settings")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x7eff811703b0>('refused: DESK_LIVE_BASE_URL: not named in the settings')
+E        +    where <built-in method startswith of str object at 0x7eff811703b0> = 'refused: SettingRefused: DESK_LIVE_MODEL is required for the live model\n'.startswith
+E        +      where 'refused: SettingRefused: DESK_LIVE_MODEL is required for the live model\n' = CaptureResult(out='refused: SettingRefused: DESK_LIVE_MODEL is required for the live model\n', err='').out
+E        +        where CaptureResult(out='refused: SettingRefused: DESK_LIVE_MODEL is required for the live model\n', err='') = readouterr()
+E        +          where readouterr = <_pytest.capture.CaptureFixture object at 0x7eff80404140>.readouterr
+
+tests/test_start_prompt_hardening.py:449: AssertionError
+_______________________ test_unnamed_remote_default_unit _______________________
+
+    def test_unnamed_remote_default_unit() -> None:
+        named = {
+            "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,  # the vendor's own address, named on purpose: allowed
+            "REAL_IMAP_1_USER": "u",
+            "REAL_IMAP_1_HOST": MAIL_IMAP_DEFAULT_HOST,
+            "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL,
+        }
+>       assert rrc.unnamed_remote_default(named, True) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'unnamed_remote_default'
+
+tests/test_start_prompt_hardening.py:459: AttributeError
+_____ test_only_the_terminal_guard_reads_a_person_in_the_whole_repository ______
+
+    def test_only_the_terminal_guard_reads_a_person_in_the_whole_repository() -> None:
+        """Every Python file outside tests/ (scripts, load_tools, tools, src, demo_only and anything else, root files
+        included): the only one that may read a person is scripts/terminal_guard.py, whose question refuses a stdin that
+        is not a terminal. A new question anywhere else fails here: route it through ask_to_start. A module or code
+        chosen at run time cannot be checked: only src/lead_desk/loader.py does that (its names are fixed in the code:
+        the kind modules and demo_only.*, never a setting)."""
+        asking: dict[str, list[str]] = {}
+        dynamic: set[str] = set()
+        for path in _repo_files(".py"):
+            found = reads_a_person(path.read_text(encoding="utf-8"))
+            name = path.relative_to(REPO).as_posix()
+            if any("chosen at run time" in why for why in found):
+                dynamic.add(name)
+            if any("chosen at run time" not in why for why in found):
+                asking[name] = found
+>       assert set(asking) == {"scripts/terminal_guard.py"}, asking
+E       AssertionError: {'scripts/run_live_check.py': ['the name input (a call, an alias or a callback)'], 'scripts/run_real_check.py': ['the ... alias or a callback)'], 'scripts/terminal_guard.py': ['sys.stdin', 'the name input (a call, an alias or a callback)']}
+E       assert {'scripts/run...nal_guard.py'} == {'scripts/terminal_guard.py'}
+E         
+E         Extra items in the left set:
+E         'scripts/run_real_check.py'
+E         'scripts/run_live_check.py'
+E         Use -v to get more diff
+
+tests/test_start_prompt_hardening.py:705: AssertionError
+__ test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too ___
+
+    def test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too() -> None:
+        for name in ("scripts/run_real_check.py", "scripts/run_live_check.py"):
+            tree = ast.parse((REPO / name).read_text(encoding="utf-8"))
+            asks, checks = _call_lines(tree, "ask_to_start"), _call_lines(tree, "stdin_is_terminal")
+>           assert asks and checks and checks[0] < asks[0], name  # the early refusal comes before the question
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: scripts/run_real_check.py
+E           assert ([])
+
+tests/test_start_prompt_hardening.py:720: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_start_prompt_hardening.py::test_real_check_assume_yes_with_dry_fakes_is_the_one_scripted_use
+PASSED tests/test_start_prompt_hardening.py::test_real_check_a_real_run_never_takes_assume_yes
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[yes]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[ ]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[n]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[yes\ty]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[api.hubapi.com.evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[x.api.hubapi.com]
+PASSED tests/test_start_prompt_hardening.py::test_real_streams_that_are_not_terminals
+PASSED tests/test_start_prompt_hardening.py::test_a_real_pseudo_terminal_is_a_terminal_on_linux
+PASSED tests/test_start_prompt_hardening.py::test_windows_needs_a_console_not_just_isatty
+PASSED tests/test_start_prompt_hardening.py::test_a_failing_console_probe_is_not_a_terminal
+PASSED tests/test_start_prompt_hardening.py::test_ask_to_start_never_reads_what_is_not_a_terminal_and_never_takes_y
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[__import__]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[alias of input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[breakpoint]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[builtins.input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[click.confirm]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[eval]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[fileinput]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[for line in sys.stdin]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from builtins import input as i]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from getpass import getpass as g]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from msvcrt import getwch]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from sys import stdin]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[getattr]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[getpass.getpass]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[import getpass as gp]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[import sys as s]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[importlib]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[input as a callback]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[io.open(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[msvcrt.getch]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open CONIN$]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open('/dev/stdin')]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[os.fdopen(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[os.read(0, n)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[pdb]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[rich prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[shell read in a string]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.__stdin__]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.buffer.read]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.read]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.readline]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[typer.prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a child's pipe]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a descriptor in a variable]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a word]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[an attribute named input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[an option name]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[isatty only]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[msvcrt locking]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[no stdin for the child]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[select on sockets]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[stdout and stderr]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[/dev/tty]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Console.ReadLine]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Get-Credential]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Host.UI.Prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Read-Host]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[pause]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -p]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -p with a quoted prompt and no option]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -r in a loop]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read after a semicolon]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read after then]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read in a pipe]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[select]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[set /p]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a comment]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a path]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a word in a message]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[readonly]
+PASSED tests/test_start_prompt_hardening.py::test_no_shell_script_asks_a_question
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[api.hubapi.com\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+FAILED tests/test_start_prompt_hardening.py::test_a_terminal_reaches_the_question_and_a_wrong_answer_stops
+FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[y]
+FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[Y]
+FAILED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[api.hubapi.com]
+FAILED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[  API.HUBAPI.COM ]
+FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question
+FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_the_model_host_with_the_live_model
+FAILED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[None]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin1]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin2]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin3]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin4]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[127.0.0.1\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_is_for_a_loopback_address_only
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1@evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://[::1]@evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://0.0.0.0]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.1]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://2130706433]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1%2eevil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_closed_terminal_is_a_stop_not_a_traceback
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[y]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[yes]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[localhost.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_typing_the_host_starts_the_run
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_the_live_model_address_must_be_named_too
+FAILED tests/test_start_prompt_hardening.py::test_unnamed_remote_default_unit
+FAILED tests/test_start_prompt_hardening.py::test_only_the_terminal_guard_reads_a_person_in_the_whole_repository
+FAILED tests/test_start_prompt_hardening.py::test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too
+52 failed, 77 passed in 2.20s
+rc=1 wall=3s

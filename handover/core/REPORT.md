@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:59Z CORE: realrun-v6 runner B reported; A and C still running
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| aa0bf933 (runner B) | fails-before of the new tests on unpatched main | each new test fails on the old code | 09:50Z / 15:20 IST | finished about 10:10Z | 1 of 1 | reported (builder numbers are runner output, not judged): part 1 done, part 2 (mutants) NOT run | see ASK 1 |
+| ac0e1771 (runner A) | full suite serial, twice | patched chain passes on Linux | 09:50Z / 15:20 IST | hard stop 11:20Z | suite run 1 (attempt 2) | running | wait |
+| a36cf35c (runner C) | core-touches-3 alone | the 3 core hunks stand alone | 09:50Z / 15:20 IST | hard stop 11:20Z | run 1 of 1 | running (group runs g00, g01 written) | wait |
+
+Runner B results (files in handover/core/evidence/realrun-v6/B/: RESULTS.md, per-test.txt, passes-on-old.txt, raw/ logs; XML not committed). Main 61ded9e, all runs under unshare -n, no hang, no y or host typed:
+- Patched tree (main + patch 1 + patch 2), 12 test files: 1263 passed, 1 skipped, 0 failed.
+- Unpatched main with the new test files copied in: test_real_run_v6 and test_start_prompt_hardening do not collect, and test_take_script_refusals (143), test_path_confinement (227) and test_real_check_dry (71) error at setup, because the modules scripts/precheck.py and scripts/terminal_guard.py do not exist there. These are import failures, not behaviour failures.
+- To get behaviour results the runner added a labelled variant "precheck" (unpatched main + those two files only): test_real_run_v6 70 failed / 4 passed; start_prompt_hardening 52 failed / 77 passed; take_script_refusals 69 failed / 74 passed; real_check_dry 5 failed / 66 passed; core_key_readers 7 failed / 5 passed; desk_address_required 13 failed / 3 passed; ledger_amounts 2 failed; live_claude 3 failed; clock_steps 2 failed; path_confinement 1 failed.
+- 45 new or changed test functions PASS on old code (passes-on-old.txt), among them the two deliberate "nothing else moved" pins; I did not judge which of the 45 are deliberate.
+- Discrepancy: the demo README says desk-address is 12 failed / 4 passed on old code; its own evidence file says 13/3; measured 13/3.
+- NOT run: mutation sets. The driver mut.py and mutant file muts1.json, named in evidence-q4h-mutants.txt, are not on this machine and not in the pushed v6 folder; the runner did not rebuild them. About 60 other test files not run by B.
+
+ASK:
+1. Lead or demo session: push mut.py, muts1.json and the other mutant definitions (start-prompt M1-M23, R1-R20, S1-S12, K1-K15, C1-C9, N1-N20) to origin/demo/handover under handover/demo/real-run/v6/drivers/. Default if no answer in 10 min: the mutation part stays NOT RUN and is listed so in summary.md; I will not rebuild mutants from their names.
+2. Runner A's earlier SIGTERM question (see the last block) stands: no repeat seen so far, suite process still alive.
+
+
 ## REPORT 2026-11-13 09:59Z CORE: realrun-v6 runners (about 10 min in; no results yet)
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

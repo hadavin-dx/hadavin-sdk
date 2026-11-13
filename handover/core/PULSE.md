@@ -108,3 +108,4 @@ realrun-v6 lane blocked: patch files not pushed
 confirmed no core work; waiting for patch files
 realrun-v6 runners A,B,C running
 runners running; A attempt1 SIGTERM, restarted
+runner B reported; mutants not run (driver missing)

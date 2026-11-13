@@ -1,0 +1,117 @@
+FF...........................                                            [100%]
+=================================== FAILURES ===================================
+_______________ test_dry_run_survives_a_wall_clock_step[-120.0] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f95891abc50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9588fee1b0>
+delta = -120.0
+
+    @pytest.mark.usefixtures("own_tempdir")
+    @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+    def test_dry_run_survives_a_wall_clock_step(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], delta: float
+    ) -> None:
+        _step_clock(monkeypatch, delta, after=0.5)
+>       code = rrc.main(["--dry-fakes", "--keep", "--assume-yes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_clock_steps.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:827: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/argparse.py:1911: in parse_args
+    self.error(msg % ' '.join(argv))
+/usr/lib/python3.12/argparse.py:2677: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description="Real services run: the desk with a REAL CRM (HubSpot free ...nd asks y/N.", formatter_class=<class 'argparse.RawDescriptionHelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2, message = '__main__.py: error: unrecognized arguments: --keep\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.12/argparse.py:2664: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] [--config CONFIG] [--dry-fakes] [--live-model]
+                   [--cleanup] [--assume-yes] [--dry-port-base DRY_PORT_BASE]
+                   [--dry-smtp-script DRY_SMTP_SCRIPT]
+__main__.py: error: unrecognized arguments: --keep
+_______________ test_dry_run_survives_a_wall_clock_step[3600.0] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f95891abd70>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9588fefd70>
+delta = 3600.0
+
+    @pytest.mark.usefixtures("own_tempdir")
+    @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+    def test_dry_run_survives_a_wall_clock_step(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], delta: float
+    ) -> None:
+        _step_clock(monkeypatch, delta, after=0.5)
+>       code = rrc.main(["--dry-fakes", "--keep", "--assume-yes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_clock_steps.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:827: in main
+    a = ap.parse_args(argv)
+        ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/argparse.py:1911: in parse_args
+    self.error(msg % ' '.join(argv))
+/usr/lib/python3.12/argparse.py:2677: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description="Real services run: the desk with a REAL CRM (HubSpot free ...nd asks y/N.", formatter_class=<class 'argparse.RawDescriptionHelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2, message = '__main__.py: error: unrecognized arguments: --keep\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.12/argparse.py:2664: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] [--config CONFIG] [--dry-fakes] [--live-model]
+                   [--cleanup] [--assume-yes] [--dry-port-base DRY_PORT_BASE]
+                   [--dry-smtp-script DRY_SMTP_SCRIPT]
+__main__.py: error: unrecognized arguments: --keep
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_clock_steps.py::test_retry_deadline_and_latency_ignore_a_wall_clock_step[-120.0]
+PASSED tests/test_clock_steps.py::test_retry_deadline_and_latency_ignore_a_wall_clock_step[3600.0]
+PASSED tests/test_clock_steps.py::test_wall_clock_is_only_used_for_calendar_stamps
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[x = time.time()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[f = time.time]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[from time import sleep, time]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = datetime.now()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = datetime.datetime.utcnow()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = date.today()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[n = os.stat(p).st_mtime]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[n = os.path.getmtime(p)]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[s = time.gmtime()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[m['Date'] = formatdate()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import time as wall]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import datetime as dt]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[from datetime import date, datetime as D]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[t = time.monotonic()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[time.sleep(1)]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[from time import sleep]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[x = runtime]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[from datetime import timedelta]
+PASSED tests/test_clock_steps.py::test_a_wall_clock_step_does_not_move_the_load_schedule
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[forward-keyed]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[forward-blind]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[backward-keyed]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[backward-blind]
+PASSED tests/test_clock_steps.py::test_the_logged_lag_ignores_a_wall_clock_step
+FAILED tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[-120.0]
+FAILED tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[3600.0]
+2 failed, 27 passed in 0.66s
+rc=1 wall=1s
