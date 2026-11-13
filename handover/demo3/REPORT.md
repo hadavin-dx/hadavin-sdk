@@ -1,5 +1,14 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:53Z / 17:23 IST  HEARTBEAT 25 (I progress)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| I | Evidence runner: full suite once with -v on STACK (f3c39cf8 + rebased claims patch) and on BASE (f3c39cf8 unpatched), same time | shows whether the stack changes any test result | 11:37Z / 17:07 | at 11:51Z: STACK 2663 passed, 0 FAILED, 137 skipped, 0 ERROR (about 72 percent of 3883); BASE 2663 passed, 0 FAILED, 146 skipped, 0 ERROR (about 72 percent); both end about 12:00Z / 17:30; hard stop 12:35Z (cap 12:40Z) | first try, run 1 of 1 per head | running | report both final numbers when they end |
+| H, J, G, F, E, D, C2, A, B | earlier agents | - | - | - | - | closed | none |
+
+ASK: heartbeat 22 asks 1-3 still open, defaults stand (no ruff/gitleaks; docs/tests.md report only; claims truth beyond J's list not checked).
+RAW (no verdict): equal pass counts so far on both heads (2663 each) and no FAILED or ERROR line on either. The skip counts differ at the same point (STACK 137, BASE 146), probably because the two runs are not at exactly the same test; I will compare the final skip counts when both end.
+
 ## 2026-11-13 11:46Z / 17:16 IST  HEARTBEAT 24 (I progress)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
