@@ -112,3 +112,5 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B6 | BUILDER lane3-fix-6 docs from Q6b+Q3c | 13:38Z | ~14:15Z; stop 14:30Z | running |
 | B7 | BUILDER lane3-fix-7 tests that kill Q8b survivors | 13:38Z | ~14:15Z; stop 14:30Z | running |
 | Q8b | closed 13:31Z, report mutation-identity-claims.md | | | closed |
+| E4b | closed 13:41Z, evidence/lane3-fix-3-r2-evidence.md (r2+r3 same: new file alone 15 passed 1 skipped; old+new 393 passed 2 skipped; 5 q8 survivors killed by new file; hand mutant d killed by old file) | | | closed |
+| REV-3c | fresh egm-codebase-details on lane3-fix-3-r3 | 13:42Z | ~14:00Z | running |
