@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:35Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- My own slip (fixed): I cut two snapshots (Part 2 and Part 6) with a two-dot diff, so main's newer CI hardening and pytest-xdist showed up as "reverts". Part 2 round 12 reviewer finding B1 came from that and is contested in the resolve report. All snapshots are now cut against the merge base (`origin/main...HEAD`). The 05:14Z block above carried a wrong time (written 05:10Z).
+- Part 2 head 54c3d8a2 is NOT clean: round 12 = 0 real Blocker, 2 Major. (1) Replacing a whole container (registry, limits, audit, evidence) is not detected. (2) Plain values (text, numbers, true/false, none) in an entered stand-in are accepted whatever they hold, so limits and redaction settings could change silently. Both are FIX items in batch 13. Evidence runner a555e712 has not reported; nothing about Part 2 is verified yet.
+- Part 6 head 63996217 is NOT clean (round 13: 0B/3M). Batch 14 is building; nothing new verified.
+- SONAR-PATH: no claim that any SonarCloud finding is cleared.
+
+**LEAD ACTIONS:** none new. Your 05:30Z order is applied to Part 6 (S603 ruling, R13B2 hidden-side case, "hides more than the core" wording, builder-claimed vs runner numbers).
+
+**LIVE ITEMS:** a7978edf Part 6 batch 14; a805b93d Part 2 batch 13 (resumed 05:33Z); a555e712 Part 2 evidence runner; ac09a2ce SONAR-PATH batch 5 (box ends about 05:53Z). Closed this window: a34f80e2, a5558782, ad1b705a, a0a57402, a9b53625.
+
+**ROUNDS (WHY):** Part 2 round 12 resolved (report committed), round 13 required because batch 13 changes code on a security path. Part 6 round 14 follows batch 14.
+
+**FINISHED SINCE LAST BLOCK:** Part 2 round 12 design and codebase reviews, resolve report, ledger rows PDBIND-r12-1..6 (6 = follow-up for the 4 broad catches on main).
+
+**EGM STEP PER PACKAGE:** Part 2: round 12 resolved, batch 13 build. Part 6: round 13 resolved, batch 14 build, runner a34f80e2 done. SONAR-PATH: batch 5 build.
+
+**LANE SONAR-PATH:** batch 5 building on wip/cloud-sonar-path2 (head abb3e90a); round 5 next; no PR READY yet.
+
+**RUN ON LAPTOP:** none yet (no fresh round with 0 Blocker and 0 Major).
+
 ## 05:25Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
