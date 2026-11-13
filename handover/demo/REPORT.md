@@ -1,6 +1,14 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 10:23Z / 15:53 IST - STATUS TABLE then ASK; 10:34Z order (f7 nits patch on PR #14 head d5b4451) read, builder started
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| abd04e38c75142e18 | `f7-nits-v1.patch` ON the real PR #14 head d5b4451 (fetched from GitHub with my realhead script): the 4 nits of the F7 delta review in tools/pathconfine.py: (1) C1 control characters + whitespace-only text, (2) `bytes` argument -> plain refusal not TypeError, (3) module docstring lists the refused forms, (4) readable test names; rule = refuse by an ALLOWLIST OF SHAPE; tests fail on d5b4451's code; new-line coverage >= 90% measured; ONE gitleaks dir poison run with the repo `.gitleaks.toml`; drive-path strings built from parts | the delta to merge AFTER PR #14 | 10:25 / 15:55 | timebox 40 min: due ~11:05 / 16:35 | follow-up nits: round 1 (new task; cap = one fresh read only if it touches more than the nits) | running | deliver patch; I re-run apply check + the gitleaks dir scan on the real head myself before the READY line |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+**ASK: (1) 'refuse by allowlist of shape': my plan is: a non-empty `str` that is not whitespace-only and is `isprintable()` (this refuses C0/C1 controls, line/paragraph separators, NBSP-like spaces?: the builder measures what `isprintable` accepts and tells me); non-str (bytes, None, numbers) = plain refusal; tell me if you want PathLike accepted. Default: str only (as callers pass strings after `confine*`). (2) none else.**
+**READ:** order 10:34Z; the 10:30Z poison lesson applies to this patch (gitleaks dir scan once, strings built from parts); base is the real PR #14 head d5b4451 (`ls-remote` = d5b44512e841cb389886ade81636651425102f6e at 10:13Z in my clock; I re-check at delivery). NOT started by me beyond the brief: no code of mine yet; nothing READY.
+
 ## 2026-11-13 10:14Z / 15:44 IST - STATUS TABLE then ASK; 10:25Z/10:30Z notices read (PR #12 replaced by PR #14; gitleaks poison lesson): I OWN THE MISS; poison check run ONCE on the live candidate
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
