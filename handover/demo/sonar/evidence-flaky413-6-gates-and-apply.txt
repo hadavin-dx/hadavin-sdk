@@ -1,0 +1,18 @@
+== 6. GATES on the fixed tree (db54e13 + flaky413-fix.patch), venv from requirements-dev.txt versions (/tmp/work/venv-p3) ==
+ruff check .                -> All checks passed!
+ruff format --check .       -> 146 files already formatted
+mypy --platform linux       -> Success: no issues found in 26 source files
+mypy --platform win32       -> Success: no issues found in 26 source files
+bandit -ll -r src tools scripts -c pyproject.toml -> No issues identified
+git add -A; DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1 (/tmp/work/gl): pytest tests/test_later_approval.py tests/test_mutants_more.py tests/test_hygiene.py -> 95 passed in 63.03s
+(the full suite was not run, by instruction)
+
+== APPLY MATRIX (git apply --check of flaky413-fix.patch after applying series patches from /tmp/demo-lead/handover/demo/sonar, in each order) ==
+alone on db54e13: OK
+p1(v3.2) p2(v2.1) p3(v3) nodemo-fix-v2 : fix applies OK
+p3 p2 p1 nodemo-fix-v3                 : fix applies OK
+nodemo-fix-v3 p1 p3 p2                 : fix applies OK
+p2 nodemo-fix-v2 p3 p1                 : fix applies OK
+nodemo-fix-v2 p3 p2 p1                 : fix applies OK
+p1 nodemo-fix-v3 p2 p3                 : fix applies OK
+(every series patch applied in every order; none of the five touches tests/test_later_approval.py: grep count 0)

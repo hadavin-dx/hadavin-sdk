@@ -1,0 +1,58 @@
+== 2. DETERMINISTIC REPRODUCER on db54e13 (UNFIXED test): a pytest plugin adds a 0.25 s pause right after the half-close (server thread), nothing else ==
+import time
+from lead_desk import server
+_o = server._Handler._flush_and_half_close
+def _p(self):
+    _o(self); time.sleep(0.25)
+server._Handler._flush_and_half_close = _p
+
+-- run 1
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 2
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 3
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 4
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 5
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 6
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 7
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 8
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 9
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+-- run 10
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff

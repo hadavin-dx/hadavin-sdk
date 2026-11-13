@@ -1,0 +1,50 @@
+== 4. SIBLING SWEEP: 30 runs of one pytest process holding every test that sends an oversize/late body or checks the drain (run on a copy of the fixed tree) ==
+tests/test_server_hardening.py::test_huge_content_length_is_413_without_waiting
+tests/test_http.py::test_review_and_envelope_errors
+tests/test_lead_step_route.py::test_step_route_check_order_and_gate
+tests/test_input_edge_cases.py::test_head_options_and_malformed_requests_get_json
+tests/test_portal_api.py::test_demo_extension_gets_capped_body
+tests/test_portal_api.py::test_headers_and_no_cors_on_error_replies
+tests/test_portal_api.py::test_trickle_is_cut_at_drain_deadline
+tests/test_later_approval.py::test_oversize_decision_body_is_413_before_any_body_byte_is_read
+tests/test_later_approval.py::test_resolve_413_drains_the_unread_body_like_post_leads
+tests/test_fakes_body_before_answer.py
+tests/test_stall_eviction.py::test_refusals_are_not_paced_by_the_drain
+tests/test_stall_eviction.py::test_refuse_busy_drains_arrived_bytes
+tests/test_stall_eviction.py::test_handler_cap_503_is_complete
+tests/test_stall_eviction.py::test_late_request_does_not_reset_the_refusal
+tests/test_stall_eviction.py::test_reply_to_a_non_reader_ends_in_time
+tests/test_slow_sender.py::test_drain_expiry_is_not_a_408_later
+tests/test_slow_sender.py::test_drain_phase_expiry_is_quiet
+
+run1 36 passed in 35.32s
+run2 36 passed in 35.64s
+run3 36 passed in 35.41s
+run4 36 passed in 35.17s
+run5 36 passed in 35.48s
+run6 36 passed in 35.53s
+run7 36 passed in 35.53s
+run8 36 passed in 34.96s
+run9 36 passed in 35.60s
+run10 36 passed in 36.22s
+run11 36 passed in 36.67s
+run12 36 passed in 36.64s
+run13 36 passed in 36.47s
+run14 36 passed in 36.83s
+run15 36 passed in 36.46s
+run16 36 passed in 36.14s
+run17 36 passed in 39.01s
+run18 36 passed in 37.53s
+run19 36 passed in 35.56s
+run20 36 passed in 35.43s
+run21 36 passed in 35.99s
+run22 36 passed in 37.14s
+run23 36 passed in 36.39s
+run24 36 passed in 35.80s
+run25 36 passed in 35.50s
+run26 36 passed in 35.68s
+run27 36 passed in 35.72s
+run28 36 passed in 35.72s
+run29 36 passed in 35.29s
+run30 36 passed in 35.44s
+runs with 36 passed: 30/30

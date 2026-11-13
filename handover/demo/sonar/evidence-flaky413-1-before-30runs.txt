@@ -1,0 +1,83 @@
+== 1. BEFORE: plain db54e13, the test alone, 30 separate processes (python -u -m pytest -p no:cacheprovider; pytest-randomly is not installed) ==
+run1: FAILED
+run2: passed
+run3: FAILED
+run4: passed
+run5: passed
+run6: FAILED
+run7: passed
+run8: passed
+run9: passed
+run10: FAILED
+run11: passed
+run12: FAILED
+run13: FAILED
+run14: passed
+run15: passed
+run16: FAILED
+run17: FAILED
+run18: passed
+run19: passed
+run20: passed
+run21: FAILED
+run22: passed
+run23: passed
+run24: FAILED
+run25: passed
+run26: passed
+run27: passed
+run28: FAILED
+run29: FAILED
+run30: passed
+failing runs: 12/30
+
+-- the assertion line of every failing run (identical in all):
+     12 E         
+     12 E         Right contains one more item: 70000
+     12 E         Use -v to get more diff
+     12 E       assert [] == [70000]
+
+-- one full failing run:
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_resolve_413_drains_the_unread_body_like_post_leads ____________
+
+env = <conftest.Env object at 0x7f5f1e0ea660>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5f1df8ce90>
+
+    def test_resolve_413_drains_the_unread_body_like_post_leads(env, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Class: sibling routes answer an oversize body the same way. /leads sends the 413, half-closes and drains n bytes
+        (so the close does not reset the connection under the reply); the resolve route must do the same."""
+        from test_portal_api import raw
+    
+        from lead_desk import server
+    
+        drained: list[int] = []
+        real = server._Handler._drain
+    
+        def spy(self: Any, remaining: int) -> None:
+            drained.append(remaining)
+            real(self, remaining)
+    
+        monkeypatch.setattr(server._Handler, "_drain", spy)
+        rig = approval_rig(env)
+        rid = make_later(rig)
+        base, port = _http(env, rig)
+        got = raw(
+            base,
+            f"POST /review/D{rid}/resolve HTTP/1.1",
+            f"Host: 127.0.0.1:{port}",
+            "Content-Length: 70000",
+            body=_padded_decision(70000),
+        )
+        assert got == (413, {"error": "too_large"})
+>       assert drained == [70000]
+E       assert [] == [70000]
+E         
+E         Right contains one more item: 70000
+E         Use -v to get more diff
+
+tests/test_later_approval.py:603: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_later_approval.py::test_resolve_413_drains_the_unread_body_like_post_leads
+1 failed in 0.69s

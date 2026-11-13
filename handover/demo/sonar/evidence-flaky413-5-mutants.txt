@@ -1,0 +1,9 @@
+== 5. MUTANTS of the fix (copy of the tree, each mutation applied to tests/test_later_approval.py, test run alone) ==
+M1 drop the wait (assert drained at once) -> KILLED 1 failed in 0.64s
+M2 wait result ignored (no assert; equivalent, see notes) -> SURVIVED 1 passed in 0.63s
+M3 wait bound 0 -> KILLED 1 failed in 0.64s
+M4 spy never sets the event -> KILLED 1 failed in 5.67s
+M6 assert on wrong size -> KILLED 1 failed in 0.64s
+S1 server resolve 413 without drain (test_mutants_more, runs the fixed test against the mutated server) -> 1 passed in 5.17s
+
+S1: the existing test_mutant_resolve_413_no_drain passes only if the fixed test FAILS against a server whose resolve 413 does not drain (passed = killed).

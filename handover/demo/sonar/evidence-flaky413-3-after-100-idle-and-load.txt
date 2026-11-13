@@ -1,0 +1,5 @@
+== 3. AFTER (flaky413-fix.patch): the test alone, 100 processes idle, then 100 with two busy loops (box load average was ~15 from other jobs) ==
+after-idle fails=0/100
+after-load fails=0/100
+after-idle: passed runs 100/100
+after-load: passed runs 100/100
