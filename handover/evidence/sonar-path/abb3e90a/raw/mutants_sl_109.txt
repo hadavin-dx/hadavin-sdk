@@ -1,0 +1,1 @@
+ok  KILLED       X12 the file is not flushed to disk before the rename  [test_atomic_write_flushes_the_file_to_disk_before_the_rename]

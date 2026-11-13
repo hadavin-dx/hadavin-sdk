@@ -3,3 +3,4 @@ ok  CRASH        X7 a folder is replaced, not refused  [test_atomic_write_onto_a
 ok  CRASH        X8 a taken temp name raises the raw OS error  [test_atomic_write_with_a_taken_temp_name_leaves_the_existing]
 ok  KILLED       X9 the temp path is not checked  [test_atomic_write_checks_the_temp_path_length_not_only_the_f]
 ok  KILLED       X10 the temp file stays when fdopen is interrupted  [test_atomic_write_removes_its_temp_file_when_fdopen_is_inter]
+ok  KILLED       X11 the temp file stays when the rename is interrupted  [test_atomic_write_removes_its_temp_file_when_the_rename_is_i]
