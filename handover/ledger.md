@@ -3324,3 +3324,4 @@
 | PDBANNER-r11-7 | minor | PD-banner | Three-shapes test cannot fail; _Given not an identity token (state what is guaranteed) | OPEN | handover/reviews/PD-banner/goldfish_review_report-r11.md |  | 2026-11-13 |
 | PDBANNER-r11-8 | minor | PD-banner | CHANGELOG truth: derived listing count, once per process and error type, deepcopy behaviour change, 3.14 formula-only, URL not address | OPEN | handover/reviews/PD-banner/goldfish_review_report-r11.md |  | 2026-11-13 |
 | PDBANNER-r11-9 | minor | PD-banner | Long lines, _connected_parts docstring, _paint tests without @needs_node | OPEN | handover/reviews/PD-banner/goldfish_review_report-r11.md |  | 2026-11-13 |
+| PDBIND-r11-0 | major | PD-bind | Suppressions: diff vs main of 82dd69c1 adds 244 lines with noqa/type: ignore/fmt: skip/pragma (lead grep; not yet split by type; rule is no suppressions) | OPEN | handover/reviews/PD-bind/ (round 11 reports pending) |  | 2026-11-13 |
