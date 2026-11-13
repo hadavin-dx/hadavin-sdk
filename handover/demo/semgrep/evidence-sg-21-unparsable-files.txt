@@ -1,0 +1,185 @@
+$ semgrep scan --config rule.yml --error d3 (version 1.185.0, local rule, no registry)
+exit 0
+  Scanning 1 file tracked by git with 2 Code rules:
+  Scanning 1 file.
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 1 file: 0 findings.
+
+$ semgrep scan --config rule.yml --error d1 (version 1.185.0, local rule, no registry)
+exit 0
+  Scanning 2 files.
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 2
+ • Parsed lines: ~75.0%
+ • No ignore information available
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 1 rule on 2 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error --strict d1 (version 1.185.0, local rule, no registry)
+exit 3
+  Scanning 2 files.
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 2
+ • Parsed lines: ~75.0%
+ • No ignore information available
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 1 rule on 2 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error --strict --severity ERROR d1 (version 1.185.0, local rule, no registry)
+exit 3
+  Scanning 2 files.
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 2
+ • Parsed lines: ~75.0%
+ • No ignore information available
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 1 rule on 2 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error d2 (version 1.185.0, local rule, no registry)
+exit 0
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 3
+ • Parsed lines: ~83.3%
+ • No ignore information available
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 2 rules on 3 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error --strict --severity ERROR d2 (version 1.185.0, local rule, no registry)
+exit 3
+                                                                                                                        
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 3
+ • Parsed lines: ~83.3%
+ • No ignore information available
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 2 rules on 3 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error d4 (version 1.185.0, local rule, no registry)
+exit 1
+            1┆ print("hit")
+
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 1 (1 blocking)
+ • Rules run: 1
+ • Targets scanned: 3
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 3 files: 1 finding.
+
+$ semgrep scan --config rule.yml --error --strict --severity ERROR d4 (version 1.185.0, local rule, no registry)
+exit 1
+            1┆ print("hit")
+
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 1 (1 blocking)
+ • Rules run: 1
+ • Targets scanned: 3
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 3 files: 1 finding.
+
+$ semgrep scan --config rule.yml --error d5 (version 1.185.0, local rule, no registry)
+exit 0
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 2
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 2 rules on 2 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error --strict d5 (version 1.185.0, local rule, no registry)
+exit 3
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 2
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 2 rules on 2 files: 0 findings.
+
+$ semgrep scan --config rule.yml --error --strict d6 (version 1.185.0, local rule, no registry)
+exit 3
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 1
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 1 rule on 1 file: 0 findings.
+
+$ semgrep ... --error --strict --verbose d1 | grep (version 1.185.0)
+[WARN] Syntax error at line d1/broken.py:2:
+  Partially analyzed due to parsing or internal Semgrep errors
+SUMMARY of the runs above: broken .py or .js: exit 0 without --strict (parsed lines ~75 percent, skipped-lines note), exit 3 with --strict, with or without --severity ERROR; a real finding in the same folder: exit 1 both ways.

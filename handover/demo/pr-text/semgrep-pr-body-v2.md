@@ -4,7 +4,7 @@
 
 **Code touched:** this PR changes no code under `src/` and no core module. It adds or changes 9 files: `.codeant/configuration.json`, `.github/workflows/semgrep.yml`, `.gitleaks.toml`, `docs/tests.md`, `exceptions.txt`, `requirements-semgrep.in`, `requirements-semgrep.txt`, `tests/test_gitleaks_semgrep_lock.py`, `tests/test_nosemgrep_form.py`.
 
-The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 [V3-SHA256]).
+The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 `fdd2393c677aa112a286079185951dad9728d86376b7a2e83677c49d2bfd062c`).
 
 ## What the job checks
 
@@ -28,7 +28,7 @@ The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 [V3-SHA256]).
 
 ## Scan result, exactly as measured
 
-- **ERROR-level clean on the stack head at 0841f36 as of the lead's run.** In plain words: the project lead scanned the tip of the branch this PR is stacked on (commit 0841f36), and Semgrep reported no finding at level ERROR.
+- **ERROR-level clean on the stack head at 0841f36 as of the lead's run.** The stack head is the tip of the branch this PR is stacked on. The project lead ran that scan, and Semgrep reported no finding at level ERROR.
 - That run used Semgrep 1.185.0 (container image `semgrep/semgrep:1.185.0`), the packs `p/python` and `p/javascript`, severity ERROR, and the same five folders. It ended with exit code 0 and no finding.
 - That run differs from the workflow in three ways. It did not use `--strict` or `--disable-version-check`, and it put the `--config` options in another order. It also used `--quiet`, so its output does not show that both packs were really downloaded.
 - This PR applies on a later commit of that branch, `2db3926`. Since 0841f36, 13 files in the scanned folders changed (405 lines added, 60 removed). **The scan was not repeated on 2db3926.**
@@ -38,7 +38,7 @@ The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 [V3-SHA256]).
 ## Licence of the rules
 
 - The Semgrep program is open source (LGPL-2.1). The registry rules have a separate licence, the Semgrep Rules License v1.0.
-- The repository owner has said yes to using `p/python` and `p/javascript`, for this repository only. No other pack is covered.
+- The repository owner has said yes to using `p/python` and `p/javascript`, for this repository only. No other pack is covered. This yes is also written in the "Semgrep" section of `docs/tests.md` in this PR.
 - This repository is public, so the job log is public. The log prints the rule id and rule message of every finding. That is accepted under the owner's yes.
 - No copy of any rule is stored in this repository. The licence text itself was not downloaded or read for this PR.
 
@@ -81,20 +81,21 @@ The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 [V3-SHA256]).
 
 ## Tests run for this PR
 
-- Focused tests on a 2db3926 tree with an earlier version (v2) of this patch: **125 passed**, with the real gitleaks.
+All on a clean copy of commit `2db3926` with v3 of the patch, unless a line says otherwise.
+
+- Focused tests, 125 in total (run with the real gitleaks and with the setting that makes the hygiene test fail instead of skip when gitleaks is missing, as reported by the builder; the saved output itself does not show these settings): `tests/test_hygiene.py` 15 passed, `tests/test_nosemgrep_form.py` 63 passed, `tests/test_gitleaks_semgrep_lock.py` 3 passed, `tests/test_gitleaks_exceptions.py` 44 passed.
 - Deliberate breakages of the real workflow file (mutants): `cancel-in-progress: true` made 1 test fail (62 passed). A constant `group: semgrep` made 1 test fail (62 passed).
-- Deliberate breakages of the gitleaks exceptions (left anchor removed, line rule widened, path widened, file-name rule widened): each made the lock test fail. These ran on an earlier version of the patch; the lock test file has not changed since.
-- The old suppression test, run against the new refused spellings, missed 23 of 24 of them. The new test refuses them.
-- `git apply --check` on a clean copy of `2db3926`: OK for v2 and for v3 of the patch.
-- gitleaks scans of the files and of the history: no leaks (v2 of the patch).
-- v3 of the patch: ruff check and ruff format clean; mypy for Linux and for Windows: no issues in 26 source files.
-- Semgrep exit codes 0, 1, 2 and 7 were seen locally with the pinned version on a made-up rule.
+- Deliberate breakages of the gitleaks exceptions (left anchor removed, line rule widened, path widened, file-name rule widened): each made the lock test fail. These ran on an earlier version of the patch; the lock test itself has not changed in substance since (v3 changed one comment in it).
+- The old suppression test, run against the new refused spellings, missed 23 of 24 of them (earlier version of the patch). The new test refuses them.
+- `git apply --check` on a clean copy of `2db3926`: OK.
+- gitleaks on a clean copy with v3 committed: no leaks, both in the files and in the history. (A first scan of the files in the working folder, before that, reported 31 leaks; the evidence does not say what they were. The clean-copy result is the one that counts, but that first result is not explained.)
+- ruff check and ruff format: clean. mypy for Linux and for Windows: no issues in 26 source files.
+- bandit (`-ll`, medium and high severity) on `src`, `tools`, `scripts`, `load_tools`: exit 0, no issue printed.
+- Semgrep exit codes 0, 1, 2 and 7 were seen locally with the pinned version on a made-up rule (earlier tree).
 
 ## Tests NOT run
 
 - The full test suite on this PR at 2db3926. (An earlier version of this patch, on 0841f36, ran the full suite: 2426 passed, 115 skipped.)
-- bandit: not run on this patch version (the tool was not installed where the checks ran).
-- The tests and the gitleaks scans on v3 of the patch: their results were not yet saved when this text was written. The 125 above is for v2. v3 changes only comments and wording against v2.
 - Any real GitHub CI run of this workflow.
 - Windows and PowerShell.
 - Python 3.13: only the lock regeneration ran on 3.13, not the tests.

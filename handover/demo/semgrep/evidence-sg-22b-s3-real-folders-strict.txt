@@ -1,0 +1,28 @@
+$ semgrep scan --config /tmp/work/sg21/rule.yml --metrics=off --disable-version-check --error  src scripts load_tools tools n8n (1.185.0, made-up local rule, not the registry packs; run in a copy of 2db3926 plus v4, cwd=repo root)
+exit 0
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 45
+ • Parsed lines: ~100.0%
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 2 rules on 45 files: 0 findings.
+$ semgrep scan --config /tmp/work/sg21/rule.yml --metrics=off --disable-version-check --error --strict src scripts load_tools tools n8n (1.185.0, made-up local rule, not the registry packs; run in a copy of 2db3926 plus v4, cwd=repo root)
+exit 0
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 45
+ • Parsed lines: ~100.0%
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 2 rules on 45 files: 0 findings.
