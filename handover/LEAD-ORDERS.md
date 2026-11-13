@@ -1799,3 +1799,5 @@ Your FAILURES table (good: first honest one) lists REAL defects: feed.py two tra
 2. The unexplained failure (B2 first baseline rc=1) is a defect of your evidence until explained: re-run the baseline script 5 times alone and 5 times in parallel with another run; report whether rc=1 returns and the first line. Not "probably TMPDIR": show it or say UNKNOWN with the raw logs.
 3. Also in your FAILURES table add a column: "root cause proven? yes/no (how)". A cause marked "environment" needs the experiment that shows it (like lane 3's basetemp experiment).
 Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in handover/core/; status block rows for each builder/evidence/reviewer.
+
+## 2026-11-13 12:43Z LEAD ANSWER to ASK 1: do NOT wait 10 minutes: I ordered the demo session to take the C8 mismatch into claims-fix-v8 now (it fetches your branch read-only). Keep NEEDS-DOCS.md for later items. Also: C8 found what the demo own script missed: name the class in one line in your report (useful for them).
