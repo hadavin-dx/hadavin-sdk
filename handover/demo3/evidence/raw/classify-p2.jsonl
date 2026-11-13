@@ -1,0 +1,12 @@
+{"test": "first_try_classify", "N": 150, "pass": "2", "rep": 1, "load1": "8.53", "seconds": 0.65, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 150, "pass": "2", "rep": 2, "load1": "8.09", "seconds": 0.71, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 150, "pass": "2", "rep": 3, "load1": "8.16", "seconds": 0.72, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 256, "pass": "2", "rep": 1, "load1": "7.91", "seconds": 1.78, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 256, "pass": "2", "rep": 2, "load1": "7.92", "seconds": 1.19, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 256, "pass": "2", "rep": 3, "load1": "7.92", "seconds": 1.77, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 300, "pass": "2", "rep": 1, "load1": "7.69", "seconds": 2.43, "outcomes": {"201": 295, "503": 5}}
+{"test": "first_try_classify", "N": 300, "pass": "2", "rep": 2, "load1": "7.88", "seconds": 2.05, "outcomes": {"201": 300}}
+{"test": "first_try_classify", "N": 300, "pass": "2", "rep": 3, "load1": "7.65", "seconds": 1.43, "outcomes": {"201": 300}}
+{"test": "first_try_classify", "N": 400, "pass": "2", "rep": 1, "load1": "7.27", "seconds": 2.79, "outcomes": {"201": 296, "503": 104}}
+{"test": "first_try_classify", "N": 400, "pass": "2", "rep": 2, "load1": "7.81", "seconds": 1.97, "outcomes": {"201": 325, "503": 75}}
+{"test": "first_try_classify", "N": 400, "pass": "2", "rep": 3, "load1": "8.47", "seconds": 1.82, "outcomes": {"201": 340, "503": 60}}

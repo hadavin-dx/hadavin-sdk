@@ -1,2 +1,4 @@
 start Fri Nov 13 13:04:08 UTC 2026 IST Fri Nov 13 18:34:08 IST 2026
 runs begin Fri Nov 13 13:04:58 UTC 2026 IST Fri Nov 13 18:34:58 IST 2026 hogPID=27139
+hog1 ended by its timeout 13:15Z; hog2 PID 17877 started Fri Nov 13 13:15:34 UTC 2026
+end Fri Nov 13 13:17:09 UTC 2026 IST Fri Nov 13 18:47:09 IST 2026; hog 17877 killed, hog 27139 expired

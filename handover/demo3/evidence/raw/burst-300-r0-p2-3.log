@@ -1,0 +1,76 @@
+pass=2 run=3 N=300 retry=0 load_before=8.84 7.88 6.62 3/251 6909 NOISY start=13:00:18
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/q4-base
+configfile: pyproject.toml
+collected 25 items / 24 deselected / 1 selected
+
+tests/test_server_hardening.py F
+
+=================================== FAILURES ===================================
+______________________________ test_measure_burst ______________________________
+
+env = <conftest.Env object at 0x7f62d7b56e40>
+
+    @pytest.mark.skipif(not os.environ.get("LEAD_DESK_LOAD_N"), reason="measurement run: set LEAD_DESK_LOAD_N")
+    def test_measure_burst(env) -> None:
+        n = int(os.environ["LEAD_DESK_LOAD_N"])
+>       refused, results = _burst(env, n, retry=os.environ.get("LEAD_DESK_LOAD_RETRY") == "1")
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_server_hardening.py:227: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = <conftest.Env object at 0x7f62d7b56e40>, n = 300, retry = False
+reaper = True
+
+    def _burst(env, n: int, retry: bool, reaper: bool = True) -> tuple[int, list[object]]:
+        """n connections at the same moment, each a different person (own e-mail address and request id). Returns
+        (clients whose first try was not answered with a stored result, (status, reply) per client). With retry, a 503
+        or a dropped connection is tried again with the SAME request id (safe: the desk treats it as a replay) until it
+        is answered. Then what the clients were told is compared with what the desk stored: every client has exactly one
+        lead, every 201 names a stored lead once, and one e-mail was sent per lead.
+    
+        The desk runs as it does in production: with the reaper and a clock that moves. At most 4 AI calls run at once
+        (the model cap) while up to 8 follow-up drives do (DRIVE_MAX), so under a burst a drive can be turned away
+        (`model_busy`, the try given back). Only the reaper takes such a row again; a desk without it (reaper=False)
+        leaves it `pending` for ever, and on a frozen clock the reaper would never find it due."""
+        rig = env.rig(clock=LiveClock() if reaper else None)
+        if reaper:
+            rig.desk.start_background(0.2)
+            env.stop_on_close(rig.desk.stop_background)
+        base = env.serve(rig)
+        first_try_failed = [0]
+        lock = threading.Lock()
+    
+        def one(i: int):  # type: ignore[no-untyped-def]
+            def go():  # type: ignore[no-untyped-def]
+                body = {"source": "form", "source_ref": f"b{i}", "payload": lead(email=f"burst{i}@example.test")}
+                for attempt in range(40 if retry else 1):
+                    try:
+                        answer = call(base, "POST", "/leads", body=body, timeout=60)
+                    except OSError:  # refused or dropped before an answer
+                        answer = (None, None)
+                    if answer[0] is not None and answer[0] != 503:
+                        return answer
+                    if attempt == 0:
+                        with lock:
+                            first_try_failed[0] += 1
+                    time.sleep(min(0.05 * (attempt + 1), 0.5))
+                raise AssertionError(f"b{i} got no stored answer")
+    
+            return go
+    
+        results = run_threads([one(i) for i in range(n)])
+        errors = [r for r in results if isinstance(r, BaseException) or r is None]
+>       assert not errors, (
+            f"{len(errors)} of {n} got no answer; first try not answered {first_try_failed[0]}: {errors[:1]!r}"
+        )
+E       AssertionError: 19 of 300 got no answer; first try not answered 19: [AssertionError('b16 got no stored answer')]
+E       assert not [AssertionError('b16 got no stored answer'), AssertionError('b22 got no stored answer'), AssertionError('b49 got no st...64 got no stored answer'), AssertionError('b69 got no stored answer'), AssertionError('b85 got no stored answer'), ...]
+
+tests/test_server_hardening.py:188: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_server_hardening.py::test_measure_burst - AssertionError: 1...
+======================= 1 failed, 24 deselected in 1.59s =======================
+rc=1 load_after=8.84 7.88 6.62 5/239 7921 end=13:00:20

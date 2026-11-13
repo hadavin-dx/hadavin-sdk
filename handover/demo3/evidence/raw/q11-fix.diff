@@ -1,0 +1,13 @@
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index c8e07bd..070bb22 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -31,7 +31,7 @@ for name in desk fakes; do
+     pid="$(cat "$pidfile")"
+     # only stop a process that still is the desk or the demo server (a pid can be reused by another program);
+     # a process that has ended but is not yet collected (state Z) shows no program name, so it counts as gone
+-    what="$(ps -p "$pid" -o args= 2>/dev/null || true)"
++    what="$(ps -ww -p "$pid" -o args= 2>/dev/null || true)"
+     if [[ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" == "Z" ]]; then what=""; fi
+     case "$what" in
+       *lead_desk.server*|*demo_only.fakes_server*)

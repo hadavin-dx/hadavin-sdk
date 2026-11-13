@@ -1,0 +1,15 @@
+rootdir: /home/user/work/e3-stack
+configfile: pyproject.toml
+collecting ... collected 9 items
+
+tests/test_docs_claims_lane3.py::test_exit_code_1_uses_the_words_the_desk_prints PASSED [ 11%]
+tests/test_docs_claims_lane3.py::test_burst_counts_are_stated_for_a_fresh_desk_only PASSED [ 22%]
+tests/test_docs_claims_lane3.py::test_the_workflow_files_carry_the_default_ports PASSED [ 33%]
+tests/test_docs_claims_lane3.py::test_the_recipe_says_the_ports_are_written_into_the_workflow_files PASSED [ 44%]
+tests/test_docs_claims_lane3.py::test_the_recipe_example_lead_is_the_readme_demo_lead_so_it_says_to_reset_first PASSED [ 55%]
+tests/test_docs_claims_lane3.py::test_the_recipe_names_the_key_file_setting_and_says_how_to_delete_a_workflow PASSED [ 66%]
+tests/test_docs_claims_lane3.py::test_readme_lists_curl_because_the_linux_lines_use_it_and_shows_a_port_check PASSED [ 77%]
+tests/test_docs_claims_lane3.py::test_readme_says_the_duplicate_door_answers_200_and_why_receipt_ids_skip PASSED [ 88%]
+tests/test_docs_claims_lane3.py::test_readme_counts_check_names_the_counts_that_are_zero PASSED [100%]
+
+============================== 9 passed in 0.39s ===============================

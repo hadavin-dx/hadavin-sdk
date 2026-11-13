@@ -92,3 +92,14 @@ REV-2b | agent aebdf3..: egm:egm-design on lane3-fix-2 | 13:10Z | ~13:30Z | runn
 B4 | agent a52889..: lane3-fix-4 identity case docs + casefold analysis | 13:11Z | ~13:45Z stop 14:10Z | running
 Q1 | reported 13:11Z closed: xdist -n 3 same node ids, 2 xdist-only failures (reset.sh exit 6)
 Q11 | agent ae29d7..: root cause of the 2 xdist-only failures | 13:11Z | ~13:40Z stop 14:10Z | running
+Q4 | reported 13:13Z closed: F1/F2 doc mismatches (measure_burst fails at N=300 without retry; Linux answers 503 not OS refusals); NOISY
+E3 | reported 13:14Z closed: lane3-fix-1 r1: 3692 passed 0 failed both trees; hygiene did not scan the untracked file
+B1b | reported 13:14Z closed: lane3-fix-1-r2.patch
+B4 | reported 13:14Z closed: lane3-fix-4.patch (conflicts after the claims stack)
+Q11 | reported 13:15Z closed: xdist failures proven: COLUMNS=80 truncates ps in reset.sh
+egm-resolve fix-2 | done 13:30Z: evidence/resolve-round1-lane3-fix-2.md
+B2b | agent a643db..: lane3-fix-2 round 2 | 13:15Z | ~14:00Z stop 14:15Z | running
+B5 | agent (lane3-fix-5 builder) | 13:16Z | ~13:45Z | running
+E3b | agent a16b68..: lane3-fix-1 r2 suites | 13:22Z | ~14:15Z | running
+REV-1c | agent a90a66..: fresh codebase-details on fix-1-r2 | 13:21Z | ~13:40Z | running
+REV-1d | agent a7c172..: fresh comprehension on fix-1-r2 | 13:21Z | ~13:40Z | running

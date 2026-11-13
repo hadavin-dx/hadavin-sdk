@@ -60,7 +60,7 @@ index b249bba..31c85a8 100644
  * Two limits apply. (1) At most `MAX_CONNECTIONS` (256) connections can be in their reading phase (request line, headers, body) at one time; a connection stops counting when the desk starts writing its reply, so a thread that is still finishing a follow-up does not count here. (2) At most `MAX_HANDLER_THREADS` (1024) handler threads exist in total: a thread counts from the moment it gets a connection until it ends, so the reply write, the draining and the follow-up count too. When either limit is reached and nothing can be closed to make room, the new connection gets 503 `busy` and nothing is stored.
  * Idle connections: a client that opens connections and sends nothing holds a place until the header deadline (10 s), then gets 408 and is closed (`test_idle_sockets_closed_at_deadline`). While they hold the 256 places, a valid request gets 503 `busy` (that is the backpressure; send it again).
 diff --git a/docs/n8n-recipe.md b/docs/n8n-recipe.md
-index 80de269..cf6ffe2 100644
+index 80de269..a180a99 100644
 --- a/docs/n8n-recipe.md
 +++ b/docs/n8n-recipe.md
 @@ -8,12 +8,21 @@ Who this is for: someone who has used n8n a little and wants to read what the wo
@@ -78,7 +78,7 @@ index 80de269..cf6ffe2 100644
 +
 +1. In your own n8n, create an API key (a long password that lets a program use n8n). It is made on a settings page of n8n; the exact menu names were not checked here.
 +2. Save the key alone, as one word on one line, in a text file of your own. Never put this file into the repository.
-+3. Tell the script where that file is, with the environment variable (a named value you set in your terminal) `N8N_API_KEY_FILE`. Linux: `export N8N_API_KEY_FILE=/path/to/keyfile`. Windows PowerShell: `$env:N8N_API_KEY_FILE = 'C:\path\keyfile'`.
++3. Tell the script where that file is, with the environment variable (a named value you set in your terminal) `N8N_API_KEY_FILE`. Linux: `export N8N_API_KEY_FILE=/path/to/keyfile`. Windows PowerShell: `$env:N8N_API_KEY_FILE = '.\n8n-key.txt'`.
 +4. From the repository folder run `python scripts/n8n_api.py import n8n/desk-form.json`.
 +
 +The script has no command to delete a workflow: delete one on the n8n screen (not tried here). `import` always adds a new workflow, so importing the same file twice leaves two workflows with the same name, and `activate <name>` then stops with a message that two workflows have that name. The script's `list` command shows only the first 250 workflows.
@@ -113,7 +113,7 @@ index 80de269..cf6ffe2 100644
  
 diff --git a/tests/test_docs_claims_lane3.py b/tests/test_docs_claims_lane3.py
 new file mode 100644
-index 0000000..0bd99bd
+index 0000000..a2ca1f6
 --- /dev/null
 +++ b/tests/test_docs_claims_lane3.py
 @@ -0,0 +1,279 @@
@@ -309,7 +309,7 @@ index 0000000..0bd99bd
 +def _ports_in(path: Path) -> set[int]:
 +    text = path.read_text(encoding="utf-8")
 +    json.loads(text)  # the file must still be a workflow
-+    return {int(n) for n in re.findall(r"http://127\.0\.0\.1:(\d+)/", text)}
++    return {int(n) for n in re.findall(rf"http://{re.escape(HOST)}:(\d+)/", text)}
 +
 +
 +def test_premise_workflow_files_carry_the_default_ports_each() -> None:
@@ -317,7 +317,7 @@ index 0000000..0bd99bd
 +    from lead_desk.config import Config
 +
 +    config = Config.from_env({})
-+    n8n_default = int(re.search(r"http://127\.0\.0\.1:(\d+)", _read("scripts/n8n_api.py")).group(1))  # type: ignore[union-attr]
++    n8n_default = int(re.search(rf"http://{re.escape(HOST)}:(\d+)", _read("scripts/n8n_api.py")).group(1))  # type: ignore[union-attr]
 +    assert _ports_in(REPO / "n8n" / "desk-form.json") == {config.port}, "premise: form file needs only the desk"
 +    assert _ports_in(REPO / "n8n" / "desk-webhook.json") == {config.port}, "premise: webhook file needs only the desk"
 +    assert _ports_in(REPO / "n8n" / "proof.json") == {config.port, config.fakes_port, n8n_default}, (

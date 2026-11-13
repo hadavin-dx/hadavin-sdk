@@ -1,0 +1,12 @@
+main lockstep b1 s1 rc=0 dur=23.429986485 17 passed in 22.69s
+main lockstep b1 s3 rc=0 dur=23.752847171 17 passed in 22.90s
+main lockstep b1 s2 rc=0 dur=23.837946286 17 passed in 22.83s
+main lockstep b2 s2 rc=0 dur=23.001098366 17 passed in 22.63s
+main lockstep b2 s1 rc=0 dur=23.310308643 17 passed in 22.71s
+main lockstep b2 s3 rc=0 dur=23.374238091 17 passed in 22.66s
+main lockstep b3 s3 rc=0 dur=23.209993035 17 passed in 22.69s
+main lockstep b3 s2 rc=0 dur=23.330997349 17 passed in 22.74s
+main lockstep b3 s1 rc=0 dur=23.459052069 17 passed in 23.03s
+main lockstep b4 s2 rc=0 dur=23.131376295 17 passed in 22.67s
+main lockstep b4 s3 rc=0 dur=23.180905298 17 passed in 22.63s
+main lockstep b4 s1 rc=0 dur=23.238087154 17 passed in 22.69s

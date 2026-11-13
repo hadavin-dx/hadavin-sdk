@@ -1,0 +1,7 @@
+desk listening on http://127.0.0.1:19330
+sending row not refreshed: database stayed locked
+follow-up failed before the send: _GateBusy
+claim gave up: database stayed locked
+record_send_result: database stayed locked; the row stays as it was and shows as stalled
+claim gave up: database stayed locked
+claim gave up: database stayed locked

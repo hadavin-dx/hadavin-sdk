@@ -1,0 +1,97 @@
+diff --git a/README.md b/README.md
+index b907165..f799ac6 100644
+--- a/README.md
++++ b/README.md
+@@ -25,7 +25,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ 
+ ## Words used here
+ 
+-* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of spaces and lower-cased, nothing more.
++* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of spaces and lower-cased, nothing more. Lower-casing is Python's `lower()`, not full case folding: an address with `ß` (sharp s) or `ı` (dotless i) written in capitals (`STRASSE`, `ISTANBUL`) is a different lead from the lower-case one (`straße`, `ıstanbul`), and both would be sent a follow-up (a few rarer letters, such as the long s `ſ`, behave the same way); ordinary letters (a-z, accented letters such as é) are not affected.
+ * **Follow-up**: the one email sent for a new lead, plus the CRM row that goes with it.
+ * **CRM**: the customer-record system where a lead is stored as a row.
+ * **Demo stand-ins**: small programs in this repository (`demo_only/`) that play the CRM, the mail system and the AI step and only count what they receive. Some of their web addresses and settings still contain the word `fake`.
+@@ -103,7 +103,7 @@ Not claimed:
+ 
+ * Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
+ * Production fitness, a legal opinion, a guarantee of any kind.
+-* The same person with two email addresses is two leads; two people sharing one address are one lead.
++* The same person with two email addresses is two leads; two people sharing one address are one lead. One more case: the same address in capitals is one lead, except for `ß` and `ı` (see the definition of **Same lead** above: `lower()`, not full case folding).
+ * The desk is for one computer and one process, has no login, and listens on this computer only unless you change that. No penetration test was done.
+ * Masking in the portal is on screen only: lead names, email addresses and phone numbers are hidden on the page by default (the switch "Hide names and email addresses"; its state lasts for the browser tab's session), the search does not look in names or email addresses while they are hidden, and the answer the page reads from the desk still carries every value, names included (see `docs/portal.md`).
+ * Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped.
+diff --git a/docs/limits.md b/docs/limits.md
+index b249bba..d5da7a9 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -23,6 +23,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   The licence text has not been reviewed by a lawyer.
+ * The same person with two email addresses is two leads: `ada+sales@example.com` and `a.da@example.com` are different leads.
+   Two people sharing one address are one lead.
++* Lower-casing is Python's `lower()`, not full case folding: an address with `ß` (sharp s) or `ı` (dotless i) written in capitals (`STRASSE`, `ISTANBUL`) is a different lead from the lower-case one (`straße`, `ıstanbul`), and both would be sent a follow-up (a few rarer letters, such as the long s `ſ`, behave the same way); ordinary letters (a-z, accented letters such as é) are not affected.
+ * A real mail system or CRM was not tested (except by the one probe in `docs/hubspot-probe.md`). The keyed mail system is a simulation; a real provider may remember a send key for a
+   shorter or longer time. The AI step is a set of pre-written replies; nothing is said about real AI behaviour.
+ * **Live model step.** The desk can ask a real AI model for a label, but only when you set `DESK_QUALIFIER=live_claude`, name a key file
+diff --git a/tests/test_email_case_rule.py b/tests/test_email_case_rule.py
+new file mode 100644
+index 0000000..4957566
+--- /dev/null
++++ b/tests/test_email_case_rule.py
+@@ -0,0 +1,57 @@
++"""The email key lower-cases with Python's `lower()`, not full case folding. Two letters differ, and the documents
++must say so. If the code ever changes to case folding, this file fails until the documents are changed too.
++Made-up data only (example.com)."""
++
++from __future__ import annotations
++
++import pytest
++from support import REPO, call, lead, post_lead
++
++from lead_desk.identity import check_payload, normalise_email
++
++SHARP_S = "straße@example.com"  # straße
++SHARP_S_UPPER = "STRASSE@example.com"
++DOTLESS_I = "ıstanbul@example.com"  # ıstanbul
++DOTLESS_I_UPPER = "ISTANBUL@example.com"
++LONG_S = "\u017fam@example.com"  # ſam (long s, a rare letter)
++LONG_S_UPPER = "SAM@example.com"
++SAME_AFTER_CASE = [  # upper case and lower case give one key
++    ("émile@example.com", "ÉMILE@example.com"),  # é
++    ("müller@example.com", "MÜLLER@example.com"),  # ü
++    ("özil@example.com", "ÖZIL@example.com"),  # ö
++    ("françois@example.com", "FRANÇOIS@example.com"),  # ç
++    ("ada@example.com", "ADA@Example.COM"),
++]
++DOCS = ("README.md", "docs/limits.md")
++
++
++@pytest.mark.parametrize(("lower", "upper"), [(SHARP_S, SHARP_S_UPPER), (DOTLESS_I, DOTLESS_I_UPPER), (LONG_S, LONG_S_UPPER)])
++def test_sharp_s_and_dotless_i_in_capitals_are_other_keys(lower: str, upper: str) -> None:
++    assert normalise_email(lower) != normalise_email(upper)
++    for e in (lower, upper):  # both are accepted as valid addresses, so each one becomes a lead
++        assert check_payload({"name": "Ada", "email": e}).kind == "ok"
++
++
++@pytest.mark.parametrize(("lower", "upper"), SAME_AFTER_CASE)
++def test_ordinary_and_accented_letters_give_one_key(lower: str, upper: str) -> None:
++    assert normalise_email(lower) == normalise_email(upper)
++
++
++@pytest.mark.parametrize(("lower", "upper"), [(SHARP_S, SHARP_S_UPPER), (DOTLESS_I, DOTLESS_I_UPPER)])
++def test_real_desk_round_makes_two_leads(env, lower: str, upper: str) -> None:
++    """The cost of the rule, shown on the real desk: two `new` verdicts, two leads."""
++    rig = env.rig()
++    base = env.serve(rig)
++    one = post_lead(base, "form", "r1", lead(email=lower))
++    two = post_lead(base, "form", "r2", lead(email=upper))
++    assert (one[0], one[1]["verdict"]) == (201, "new")
++    assert (two[0], two[1]["verdict"]) == (201, "new")
++    assert rig.leads() == 2
++    assert call(base, "GET", "/counts")[0] == 200
++
++
++@pytest.mark.parametrize("doc", DOCS)
++def test_documents_say_lower_is_python_lower_and_name_the_two_letters(doc: str) -> None:
++    text = (REPO / doc).read_text(encoding="utf-8")
++    for fact in ("lower()", "ß", "ı", "STRASSE", "ISTANBUL"):
++        assert fact in text, f"{doc} must mention {fact!r}: the code lower-cases with Python's lower()"

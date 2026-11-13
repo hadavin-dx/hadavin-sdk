@@ -1,0 +1,278 @@
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 37070)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 320, in do_POST
+    if not self._gate():
+           ^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 243, in _gate
+    self._send(401, {"status": "error", "message": "bad key", "category": "INVALID_AUTHENTICATION"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 54662)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 320, in do_POST
+    if not self._gate():
+           ^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 243, in _gate
+    self._send(401, {"status": "error", "message": "bad key", "category": "INVALID_AUTHENTICATION"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 37500)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 285, in do_PATCH
+    if not self._gate():
+           ^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 243, in _gate
+    self._send(401, {"status": "error", "message": "bad key", "category": "INVALID_AUTHENTICATION"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52948)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 272, in do_DELETE
+    if not self._gate():
+           ^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 243, in _gate
+    self._send(401, {"status": "error", "message": "bad key", "category": "INVALID_AUTHENTICATION"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 41726)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 327, in do_POST
+    self._send(404, {"status": "error"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 50252)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 290, in do_PATCH
+    self._send(400, {"status": "error", "message": "idProperty=email is required"})
+  File "/home/user/work/q10-main/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.....----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59904)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 99, in do_POST
+    return self._outbox(obj)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 184, in _outbox
+    return self._reply(HTTP_BAD_REQUEST, {"error": "bad_body"})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 58, in _reply
+    self.wfile.write(body)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 40762)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 101, in do_POST
+    return self._crm(obj)
+           ^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 139, in _crm
+    return self._reply(HTTP_BAD_REQUEST, {"error": "bad_body"})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 58, in _reply
+    self.wfile.write(body)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57476)
+.Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 105, in do_POST
+    return self._control(obj)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 124, in _control
+    return self._reply(HTTP_BAD_REQUEST, {"error": "bad_control"})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 58, in _reply
+    self.wfile.write(body)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52548)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 109, in do_POST
+    self._reply(HTTP_NOT_FOUND, {"error": "not_found"})
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 58, in _reply
+    self.wfile.write(body)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 34332)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 108, in do_POST
+    return self._reply(HTTP_OK, {"status": "reset"})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/q10-main/demo_only/fakes_server.py", line 58, in _reply
+    self.wfile.write(body)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+..
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/contacts-Bearer wrong]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/contacts/search-Bearer wrong]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[PATCH /crm/v3/objects/contacts/a@example.test?idProperty=email-Bearer wrong]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[DELETE /crm/v3/objects/contacts/1000-Bearer wrong]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[POST /crm/v3/objects/nothing-Bearer keeeeeeeeeeeeeee-for-tests-0002]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_hubspot_takes_the_body_in_before_it_closes[PATCH /crm/v3/objects/contacts/a@example.test-Bearer keeeeeeeeeeeeeee-for-tests-0002]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_model_server_takes_the_body_in_before_it_answers[POST /v1/messages-more0]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_model_server_takes_the_body_in_before_it_answers[POST /v1/messages-more1]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_model_server_takes_the_body_in_before_it_answers[POST /control-more2]
+PASSED tests/test_fakes_body_before_answer.py::test_fake_model_server_takes_the_body_in_before_it_answers[POST /nothing-more3]
+PASSED tests/test_fakes_body_before_answer.py::test_fakes_server_takes_the_body_in_before_it_answers[POST /fake/outbox-[1]]
+PASSED tests/test_fakes_body_before_answer.py::test_fakes_server_takes_the_body_in_before_it_answers[POST /fake/crm-not json]
+PASSED tests/test_fakes_body_before_answer.py::test_fakes_server_takes_the_body_in_before_it_answers[POST /fake/control-{"fail_next":"nothing"}]
+PASSED tests/test_fakes_body_before_answer.py::test_fakes_server_takes_the_body_in_before_it_answers[POST /fake/nothing-{}]
+PASSED tests/test_fakes_body_before_answer.py::test_fakes_server_takes_the_body_in_before_it_answers[POST /fake/reset-{}]
+PASSED tests/test_fakes_body_before_answer.py::test_the_desks_early_replies_leave_no_reset_under_a_late_body
+PASSED tests/test_fakes_body_before_answer.py::test_the_desks_busy_reply_leaves_no_reset_under_a_late_body
+17 passed in 22.63s
+rc=0
