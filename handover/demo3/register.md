@@ -17,3 +17,6 @@ G | NOT STARTED (ORDER 7), waits for F | c14a514 path tests only | - | waiting
 F | reported 11:28Z closed: 6b1fe49 3683 passed 0 failed 200 skipped
 G | agent a5f7fd..: c14a514 path tests + F7 cases | 11:31Z / 17:01 | ~11:42Z | 11:31Z | running | check 11:38Z
 G | reported 11:35Z closed: c14a514 path tests 378 passed 0 failed 1 skipped
+H | agent a9451e..: rebase claims stack v1-v2b onto f3c39cf8 | 11:36Z / 17:06 | ~12:10Z, hard stop 12:20Z | 11:38Z | running | check 11:50Z
+J | agent acac22..: stale sentences after PR 14 (read-only) | 11:36Z / 17:06 | ~12:00Z, hard stop 12:15Z | 11:38Z | running | check 11:50Z
+I | NOT STARTED, waits for H and for lead answer on ruff/gitleaks | - | - | - | waiting | start at H report

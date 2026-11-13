@@ -1,5 +1,19 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:38Z / 17:08 IST  HEARTBEAT 21 (ORDER 8: H and J started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| H | Agent: apply the claims patch stack (v1, code-fix-v1, v1b, v2, v2b, in that order; v3 ignored until told) to a clean copy of public main f3c39cf8; for every hunk that no longer applies keep PR #14 behaviour plus the new text; write ONE patch `claims-stack-on-f3c39cf8.patch` and `claims-stack-rebase-notes.md` (conflict list); no push | gives a stack that applies to the merged main; unblocks agent I | 11:36Z / 17:06 | about 25-40 min; hard stop 12:20Z | first try | running | check progress-H.txt at 11:50Z |
+| I | NOT STARTED: ruff, format check, gitleaks, hygiene test, FULL suite once -v on the rebased stack | proves the rebased stack is green | starts after H | about 30 min after H | round 0 | waiting for H | start when H reports |
+| J | Agent (read-only): which sentences added by patches v1-v3 mention things PR #14 changed, and are they now stale (path confinement, read-only URI, refusals, option names, counts, the 3683 count) | tells what text must change after PR #14 | 11:36Z / 17:06 | about 20-35 min; hard stop 12:15Z | first try | running | check progress-J.txt at 11:50Z |
+| G, F, E, D, C2, A, B | earlier agents | - | - | - | - | closed | none |
+
+ASK:
+1. Conflict between orders: the owner's rule in ORDER 1 says CI-class checks (ruff, mypy, bandit, gitleaks, CodeQL, Sonar, hygiene scans) run ONLY on GitHub CI and this lane runs only product tests. ORDER 8 asks agent I for ruff check, ruff format --check and gitleaks. Please confirm that ORDER 8 overrides the owner's rule for this one job. Default if no answer in 10 min: agent I runs ONLY the hygiene test and the full suite (product tests), and I do not run ruff or gitleaks.
+2. Patch v3 (claims-fix-v3.patch) already exists on demo/handover (2b8f365); order 8 lists v1-v2b and says v3 follows later. Default: H ignores v3; J includes v3 as a sixth source for the stale list.
+3. Disk: this container holds many old worktrees and venvs. I will remove the ones of closed agents only (not my logs) if disk runs low. Default: keep until needed.
+FACTS: public main f3c39cf8 read; the five patches copied read-only to /home/user/work/claims-in/ from branch demo/handover (2b8f365); no push anywhere.
+
 ## 2026-11-13 11:36Z / 17:06 IST  HEARTBEAT 20 (G reported; all agents closed)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
