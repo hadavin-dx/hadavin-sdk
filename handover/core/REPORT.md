@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:12Z (07:42 IST) / no change since 02:08Z: three agents running
+
+**FAILED / UNCERTAIN FIRST**
+- Nothing new reported. Disk still 96 percent full (1.8 GB free); the old-environment cleanup waits for the lead or owner (see 02:08Z block). Q8c-1 runner a7e31a96 has run 24 min (above the 8-minute rule, let to finish); no proof on a5908c0b yet. Part 6 batch 8 builder 32 min in. Part 2 and Part 6 not clean; Q8c-1 not ready. No lead block newer than 02:12Z.
+
+**LEAD ACTIONS**: disk cleanup approval (names in 02:08Z block).
+
+**LIVE ITEMS** (3): a509d177 Part 6 batch 8 builder; a7e31a96 Q8c-1 runner; a37e6e83 Part 2 batch 9 builder (4 min in). Heads unchanged: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: unchanged.
+
+**FINISHED SINCE LAST BLOCK (02:08Z)**: nothing.
+
 ## 02:08Z (07:38 IST) / Part 2 batch 8 evidence green but round 8 NOT clean; batch 9 builder started; lead 02:12Z order (cloud limits, restart cause)
 
 **FAILED / UNCERTAIN FIRST**
