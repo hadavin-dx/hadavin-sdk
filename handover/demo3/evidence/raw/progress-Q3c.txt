@@ -2,3 +2,6 @@ Q3c soak start UTC 2026-11-13T13:05:59Z IST 2026-11-13T18:35:59+0530 rounds=30 m
 UTC 2026-11-13T13:07:45Z IST 2026-11-13T18:37:45+0530 rounds_done=25 (last 25) violations=2 hangs=0
 Q3c soak end UTC 2026-11-13T13:07:56Z IST 2026-11-13T18:37:56+0530 rounds_done=30 violations=3 hangs=0
 Q3c soak start UTC 2026-11-13T13:08:16Z IST 2026-11-13T18:38:16+0530 rounds=30 master_seed=7 outbox=blind legacy=True
+UTC 2026-11-13T13:09:53Z IST 2026-11-13T18:39:53+0530 rounds_done=25 (last 25) violations=0 hangs=0
+Q3c soak end UTC 2026-11-13T13:10:08Z IST 2026-11-13T18:40:08+0530 rounds_done=30 violations=0 hangs=0
+Q3c soak start UTC 2026-11-13T13:10:13Z IST 2026-11-13T18:40:13+0530 rounds=300 master_seed=20261115 outbox=blind legacy=False
