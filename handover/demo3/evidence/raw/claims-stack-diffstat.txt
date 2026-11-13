@@ -1,0 +1,17 @@
+ .github/workflows/lint.yml     |  7 ++++---
+ .github/workflows/semgrep.yml  |  2 +-
+ .github/workflows/sonar.yml    |  2 +-
+ README.md                      | 12 ++++++------
+ SECURITY.md                    |  2 +-
+ contract.md                    | 18 +++++++++---------
+ docs/limits.md                 |  4 ++--
+ docs/portal.md                 |  2 +-
+ docs/settings.md               | 10 +++++-----
+ docs/tests.md                  | 10 +++++-----
+ docs/why-this-code.md          |  4 ++--
+ scripts/hubspot_probe.py       |  3 ++-
+ scripts/start_all.ps1          |  2 +-
+ src/lead_desk/loader.py        |  5 +++--
+ tests/test_input_edge_cases.py |  7 ++++---
+ versions.md                    | 36 +++++++++++++++++++-----------------
+ 16 files changed, 66 insertions(+), 60 deletions(-)
