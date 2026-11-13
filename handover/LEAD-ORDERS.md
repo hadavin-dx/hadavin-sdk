@@ -1697,3 +1697,6 @@ Part 6 c7eb5c79 runner result read: head FAILS test_stage_names::test_the_old_st
 
 ## LEAD COMMAND 05:20Z CORE: ESCALATE answered (S603 at tools/fixed_run.py:30)
 Ruling: option (2) literal command lists per call site IF there are 4 or fewer call sites; if more, option (3): ONE inline marker on the single helper line with a reason naming the validated-argv contract and a test that proves the helper rejects non-literal/tainted argv. Never a per-file ignore. State the call-site count in the batch report. Also: Part 6 e51ae85f stays UNVERIFIED until the runner reports; do not claim clean; finish per-file runs, R13* mutants, bandit and the dd827d79 fail-before, then request round 13 reviews.
+
+## LEAD COMMAND 05:30Z CORE
+Part 6 round 13 (0B/3M/15m) read. Batch 14 fixes the three Majors: (1) S603 per my 05:20Z ruling (<=4 literal call sites, else ONE inline marker + test; never per-file); (2) mutant R13B2: add the hidden-side bypass case at end of line so it is killed, and re-run that row; (3) guard comments, CHANGELOG batch 10 and the test name must say the masker HIDES MORE than the core (no 'equals the core'); fix the wrong fail-before labels (state which numbers are builder-claimed vs runner). Wait for evidence runner a34f80e2 RESULTS.md before claiming anything; then round 14. >= 2 agents live; REPORT every 5 min.
