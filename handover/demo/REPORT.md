@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 00:55Z / 06:25 IST - UN-CHUNKED FULL RUN ON 2db3926: ATTEMPT 1 KILLED BY A CONTAINER RESTART AT 1909 PASSED / 0 FAILED; ATTEMPT 2 STARTED 00:52:56Z; Semgrep patch for 2db3926 ready
+FAILED / UNCERTAIN first:
+1. **No verdict on 2db3926 yet.** Un-chunked full run (fresh clone /tmp/work/h3 of pr-3-tests 2db3926 verified, no git operations in it; `python -u -m pytest tests -v -o faulthandler_timeout=300 -rs`; GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1; Node 22 + Playwright 1.63.0 + chromium 1243): ATTEMPT 1 started 00:42:37Z; **killed by a container restart (the 4th) at ~00:51:22Z after 1909 tests: 1909 PASSED, 0 FAILED, 0 ERROR** (no hang; the saved partial output is /tmp/work/full2db-attempt1-killed.txt). ATTEMPT 2 started 00:52:56Z from the start (as you said: rerun if a restart kills it); ETA about 01:16Z. Restarts have hit at 23:05, 23:58, ~00:05 and ~00:51: if it dies again I will rerun immediately and tell you.
+2. After it: lints (ruff, format, mypy linux+win32, bandit, schema), the restart test x5 alone, the Node-off pass of the browser files, hygiene with gitleaks, gitleaks dir/git: all on the same tree, one after the other. Not run anywhere: PowerShell/Windows, real GitHub CI (I cannot see it), a real n8n, Python 3.13, Windows lock install.
+3. Semgrep for the new head: semgrep/semgrep-on-2db3926.patch (sha256 0964d5cdbc9e...): `git apply --check` OK on a fresh 2db3926 clone (builder S3 and me). I diffed it against the reviewed semgrep-on-head.patch: same 9 files; the ONLY differences: the workflow `concurrency` (group `semgrep-${{ github.ref }}`, `cancel-in-progress: ${{ github.event_name == 'pull_request' }}`: a push to main is never cancelled, as you decided), a +22-line test `test_semgrep_workflow_never_cancels_a_push_to_main` (mutant `true` fails it), and blob indexes. 125 related tests pass (with gitleaks); ruff/mypy/bandit clean; gitleaks dir/git 0. That test delta has no fresh reviewer: say if you want one. `sonar.yml` still has an unconditional `cancel-in-progress: true` (your decision covered Semgrep only). The anchored lock path `^requirements-semgrep\.txt$` is consistent with the existing root-anchored browser line, but S3 could not see your tightened browser line: please confirm.
+4. Checklist answers for #2-#4: unchanged from the 00:41Z block (workflow files only: lint/CodeQL trigger only on pull requests INTO main; Sonar on every PR; the local red of #2/#3 is local): I leave 'which checks appear on GitHub' to you as you said.
+READY TO APPLY NOW: Semgrep patch (own PR after #2-#4; per your 00:50Z answer: yes). Everything else is applied (batch 3).
+NEEDS FROM LEAD: (1) confirm the browser-lock anchor line vs the semgrep anchor; (2) a fresh reviewer for the +22-line Semgrep test delta, yes/no.
+
+TABLE 1 - LIVE ITEMS (load ~1)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| full run attempt 2 (nohup) | un-chunked full suite on pr-3-tests 2db3926 | 00:52:56 | 2 min | 01:16 | running; output mtime fresh | /tmp/work/full2db.txt (+ .exit) -> integration/INT-3-2db3926.md + evidence | early tests (clock-step tests are slow) |
+Totals: agents 0, shells 1, containers 0, heavy pytest 1, load ~1.
+Flags: attempt 1 died to a container restart; attempt 2 is the same command from the start.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| batch 3 on the head (runtime set + hang guard + merge-ready v3) | gate = full run on 2db3926 | C2 chunked green (3094 passed); lead's Windows run 252 passed / 29 skipped | - | the un-chunked run is the final gate | no | green full run + lints |
+| Semgrep for 2db3926 | done (delta checked by me) | R1-R4 clean; delta: workflow + 22-line test | - | optional fresh review of the delta | YES unless you want one | apply as its own PR |
+Waste check: none; the repeated container restarts are the only risk to the run.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (00:41Z)
+| item | result |
+|---|---|
+| S3 build (Semgrep on 2db3926) | patch re-cut, concurrency decision applied, delta diffed (c8a980ae) |
+| full run attempt 1 | killed at 1909 passed / 0 failed by the restart (partial evidence kept) |
+| full run attempt 2 | started 00:52:56Z |
+
 ## 2026-11-13 00:41Z / 06:11 IST - RUNTIME SET (8 patches) AND MERGE-READINESS PATCH v3 ARE READY TO APPLY; C2 GREEN IN CHUNKS (3094 passed, 0 failed); nothing running that can fail
 FAILED / UNCERTAIN first:
 - Correction to my 00:24Z block: I wrote that test_claim_checks_and_crm_mode and test_later_approval were in chunks 1-3; they are in chunks 0 and 3 (both PASSED). No other change.
