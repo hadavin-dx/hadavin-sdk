@@ -1951,3 +1951,17 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     walk_spec.loader.exec_module(nr)
     monkeypatch.setattr(nr, "ROOT", repo)
     assert from_guard <= set(nr._tracked()), "the folder walk misses a tracked file"
+
+
+def test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
+    # proof (fails on old code: the whole first line of git was shown as it came)
+    line = (
+        "fatal: bypass=true bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
+        "Authorization: Bearer zzz9 plain Bearer yyy8"
+    )
+    shown = g._git_failure("git ls-files failed", line.encode(), Path("/nowhere"))
+    for secret in ("abc123", "def456", "user:pw", "zzz9"):
+        assert secret not in shown, f"a secret value was shown: {secret}"
+    assert "bypass=true" in shown, f"a bare word was hidden: {shown}"
+    assert "bypass_key=<hidden>" in shown and "bypass_token=<hidden>" in shown, shown
+    assert "Bearer yyy8" in shown, f"a bare scheme word was changed: {shown}"

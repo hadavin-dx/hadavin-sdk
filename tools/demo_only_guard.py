@@ -245,12 +245,31 @@ def _git_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
 
 
+# What is hidden in git's own line: the value of a `name=value` pair whose NAME holds key, token, secret or password (so
+# `bypass_key=x` and `bypass_token=x` are hidden and a bare `bypass=true` is shown), the user and password part of a URL, and
+# whatever follows an `Authorization:` header name. A bare scheme word with a token and no header name (`Bearer abc`) is
+# not hidden: with no name in front of it the line cannot be told from plain words.
+_SECRET_PAIR = re.compile(r"(?i)\b([\w.-]*(?:key|token|secret|password)[\w.-]*)=[^\s&'\"]+")
+_URL_USER = re.compile(r"://[^/\s@]+@")
+_AUTH_HEADER = re.compile(r"(?i)(authorization:\s*)\S+(?:[ \t]+\S+)?")
+
+
+def _hide_secrets(line: str) -> str:
+    line = _SECRET_PAIR.sub(r"\1=<hidden>", line)
+    line = _URL_USER.sub("://<hidden>@", line)
+    return _AUTH_HEADER.sub(r"\1<hidden>", line)
+
+
 def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
     """The message of a failed git call: what failed, then the FIRST line of git's own error (so "dubious ownership" is
     not hidden behind a generic message). The line is made safe to print (`printable`), the repository path in it is
     replaced by "<repo>" and it is cut at 200 characters; nothing else of git's output is shown."""
     first = stderr.decode("utf-8", errors="replace").strip().splitlines()[:1]
-    shown = printable(first[0].replace(str(repo), "<repo>"))[:200] if first else "no message"
+    shown = (
+        printable(_hide_secrets(first[0].replace(str(repo), "<repo>")))[:200]
+        if first
+        else "no message"
+    )
     return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"
 
 

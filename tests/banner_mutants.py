@@ -1799,6 +1799,20 @@ M = [
         "test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked",
         "the repository path was not masked",
     ),
+    gd(
+        "R7F1 a key= or token= value in git's message is shown",
+        '    line = _SECRET_PAIR.sub(r"\\1=<hidden>", line)\n',
+        "",
+        "test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
+        "a secret value was shown: abc123",
+    ),
+    gd(
+        "R7F2 every name=value pair in git's message is hidden, a bare bypass=true too",
+        "(?:key|token|secret|password)[\\w.-]*)=",
+        "(?:key|token|secret|password)?[\\w.-]*)=",
+        "test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
+        "a bare word was hidden",
+    ),
 ]
 
 
