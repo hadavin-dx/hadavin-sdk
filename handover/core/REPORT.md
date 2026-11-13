@@ -1,5 +1,31 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:20Z block (lead core session)
+
+**FAILED/UNCERTAIN FIRST**
+- No builder has pushed yet (heads unchanged: Part 2 83cdb7a2, Part 6 dd827d79, SONAR-PATH e29cc269). All three heads are known not final. Nothing is READY.
+- SONAR-PATH runner facts (ledger SONARPATH-r2-9..11): fail-before not reproduced (26 of 49 added tests fail on the old source), raw IsADirectoryError/FileExistsError with paths from atomic_write, mid-run link swap writes outside before PathRefused, two unguarded file operations (hashing.py hash_files, actions/secrets_file.py). Sent to the batch 3 builder.
+- SonarCloud not seen clean (needs the draft PR). Laptop Linux run for Q8c-1 dcf64b36 and Part 6 dd827d79 is the lead's; no result seen yet.
+
+**LEAD ACTIONS**
+Addenda delivered to all three builders. No new lead orders since 03:08Z (read 03:20Z).
+
+**LIVE ITEMS (agents by id)**
+aa234f9b Part 2 b10 builder (since 03:08Z); ab741cc2 Part 6 b10 builder (since 03:10Z); a73b09c1 SONAR-PATH b3 builder (since 03:11Z). No runners or reviewers running; they start the moment a batch is pushed (one reviewer pair and one runner per package-round).
+
+**ROUNDS (WHY)**
+Part 2 and Part 6 round 10, SONAR-PATH round 3: each previous round had Blocker or Major findings on a money, mode-safety or security path (no cap).
+
+**FINISHED SINCE LAST BLOCK**
+SONAR-PATH runner results saved and ledgered; all three runners and all reviewers of this wave are closed.
+
+**EGM STEP PER PACKAGE**
+Part 2, Part 6, SONAR-PATH: build (batch 10, 10, 3). Q8c-1: waiting for laptop.
+**LANE SONAR-PATH:** agent a73b09c1; EGM step = build; A, B, C done, D branch not pushed.
+
+RUN ON LAPTOP: hadavin-sdk dcf64b36b094c153bf4f865b1fcba5971f4cf9fb FIRST; dd827d79e00bea6da81e757e0fa0746bbbd3449d SECOND (superseded once Part 6 batch 10 lands). None for Part 2 or SONAR-PATH yet.
+
+
 ## 03:15Z block (lead core session)
 
 **FAILED/UNCERTAIN FIRST**
