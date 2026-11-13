@@ -1,3 +1,11 @@
+## HEARTBEAT 69 (15:41Z / 21:11 IST) - B5e RESULT IN; FROZEN except B5e's closing report
+
+B5e (fix-5 r5) valid full serial suite, run alone, on the final tree: 3780 passed, 206 skipped, 0 failed, EXIT_CODE=0, 1273 s (raw/b5e-full.log). This replaces the invalid 57-failed run 1 (kept as raw/b5e-full-invalid-run1-basetemp-outside-TMPDIR.log). NOT verified by me: 206 skipped is 6 more than the 200 baseline and I have not reconciled the 6; the xdist log on disk (raw/b5e-xdist.log, 15:03Z) is from an EARLIER tree and does not count for the final tree; B5e's notes file and its own report are not in yet, so the REV-5c major fix (reset.ps1) is claimed only in its patch, not reviewed (freeze) and not run on Windows.
+Still running: B5e (closing: xdist on the final tree, notes). Everything else is closed.
+
+FROZEN: no new agents, no new reviews. The one-page freeze report (merged-ready vs not) follows after B5e's report.
+Load: idle CPU about 96 percent, free RAM 14.7 GB (last measured 15:34Z).
+
 ## HEARTBEAT 68 (15:34Z / 21:04 IST) - NOT YET FROZEN: 1 agent running
 
 B5e (fix-5 r5): valid full serial suite, run alone, started 15:19Z, now at 72 percent at 15:34Z with no F or E mark in any progress line so far (read from raw/b5e-full.log; not a result until the summary line). ETA about 15:41Z (21:11 IST). Then its 20 xdist runs (about 6 minutes), then its notes. FROZEN is written after B5e reports.
