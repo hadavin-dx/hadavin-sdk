@@ -7,3 +7,5 @@ tests/test_pathguard_sites.py rc=2 1 error in 0.14s
 tests/test_pathguard_tripwire.py rc=1 2 failed, 78 passed in 0.99s
 tests/test_changelog_claims.py rc=2 1 error in 0.19s
 tests/test_k1b_cli.py rc=1 1 failed, 20 passed in 5.42s
+tests/test_k1b_replay.py rc=0 ...........
+DONE

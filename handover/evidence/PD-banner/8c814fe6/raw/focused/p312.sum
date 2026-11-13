@@ -29,3 +29,4 @@ tests/test_k5_fixes4.py :: rc=0 :: 10 passed in 8.78s
 tests/test_k5_fixes7.py :: rc=0 :: 533 passed in 9.02s
 tests/test_k5_fixes6.py :: rc=0 :: 22 passed in 13.14s
 tests/test_k5_fixes8.py :: rc=0 :: 58 passed in 1.26s
+tests/test_k5_fixes9.py :: rc=0 :: ..............................

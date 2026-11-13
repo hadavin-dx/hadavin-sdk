@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         X6 config.confined loses its pinned word escapes  [test_control_confined_keeps_its_pinned_wording_for_a_dotdot_] t=9s
+ok  KILLED         R12 a Windows-invalid character in a name is accepted  [test_pin_windows_invalid_characters_are_refused_in_a_name_r1] t=10s
+ok  KILLED         R4c join does not check a control character in the base  [test_pin_a_control_character_in_the_base_is_refused_not_only] t=12s
+ok  KILLED         R4d inside does not check a control character in the base  [test_pin_inside_checks_the_base_text_too] t=14s
+ok  KILLED         R4f the explicit control check does not rely on resolve (3.13)  [test_pin_the_nul_is_refused_even_when_resolve_would_not_rais] t=15s
+ok  KILLED         R4g the C1 and invisible characters are not in the control set  [test_pin_every_public_function_refuses_a_control_character_e] t=16s
+ok  KILLED         R-pickle PathRefused loses its rule through pickle  [test_pin_pathrefused_keeps_its_rule_through_copy_and_pickle] t=16s
+ok  KILLED         G atomic_write replaces an existing symlink as the final name  [test_atomic_write_refuses_a_symlink_name_even_when_its_targe] t=18s
+ok  KILLED         G2 atomic_write uses its own limit, not the shared one  [test_atomic_write_refuses_the_longest_name_plus_one] t=20s
+ok  KILLED         S-bundle the case-id length is not checked at load  [test_site_bundle_load_bundle_refuses_a_long_case_id_at_load] t=21s
+SLICE 20:30 10 of 10 good; problems: []; elapsed 22s

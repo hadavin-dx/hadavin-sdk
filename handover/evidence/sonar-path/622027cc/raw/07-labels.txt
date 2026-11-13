@@ -1,0 +1,57 @@
+per file: items by NAME class | header claim | on (a) [origin/main src + head pathguard.py]: control pass/fail, pin pass/fail, other pass/fail | on (c) abb3e90a src
+tests/test_pathguard.py: items=49 byname={'control': 3, 'pin': 31, 'other': 15} header=('3', '31', '15') | (a) {'control': '3p/0f', 'pin': '31p/0f', 'other': '0p/15f'} | (c) {'control': '3p/0f', 'pin': '31p/0f', 'other': '15p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_pathguard_batch3.py: items=98 byname={'control': 12, 'pin': 42, 'other': 44} header=('12', '42', '44') | (a) {'control': '12p/0f', 'pin': '42p/0f', 'other': '0p/44f'} | (c) {'control': '12p/0f', 'pin': '42p/0f', 'other': '44p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_pathguard_batch4.py: items=32 byname={'control': 6, 'pin': 0, 'other': 26} header=('6', '0', '26') | (a) {'control': '6p/0f', 'pin': '0p/0f', 'other': '0p/26f'} | (c) {'control': '5p/1f', 'pin': '0p/0f', 'other': '19p/7f'}
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_pathguard_batch5.py: items=27 byname={'control': 1, 'pin': 6, 'other': 20} header=('1', '9', '12') | (a) {'control': '1p/0f', 'pin': '6p/0f', 'other': '3p/17f'} | (c) {'control': '1p/0f', 'pin': '3p/3f', 'other': '11p/9f'}
+   MISMATCH header vs by-name item count: (1, 9, 12) vs (1, 6, 20)
+   (a) rule violations (control/pin must pass, other must fail): 3
+      test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[250] pass
+      test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[254] pass
+      test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[255] pass
+tests/test_pathguard_callers.py: items=5 byname={'control': 3, 'pin': 0, 'other': 2} header=('3', '0', '2') | (a) {'control': '3p/0f', 'pin': '0p/0f', 'other': '0p/2f'} | (c) {'control': '3p/0f', 'pin': '0p/0f', 'other': '2p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_pathguard_sites.py: items=33 byname={'control': 3, 'pin': 11, 'other': 19} header=('3', '11', '19') | (a) {'control': '3p/0f', 'pin': '11p/0f', 'other': '0p/19f'} | (c) {'control': '3p/0f', 'pin': '11p/0f', 'other': '19p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_pathguard_tripwire.py: items=80 byname={'control': 78, 'pin': 0, 'other': 2} header=('19', '0', '2') | (a) {'control': '78p/0f', 'pin': '0p/0f', 'other': '0p/2f'} | (c) {'control': '78p/0f', 'pin': '0p/0f', 'other': '0p/2f'}
+   MISMATCH header vs by-name item count: (19, 0, 2) vs (78, 0, 2)
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_changelog_claims.py: items=1 byname={'control': 0, 'pin': 0, 'other': 1} header=('23', '11', '30') | (a) {'control': '0p/0f', 'pin': '0p/0f', 'other': '0p/1f'} | (c) {'control': '22p/1f', 'pin': '5p/6f', 'other': '15p/16f'}
+   MISMATCH header vs by-name item count: (23, 11, 30) vs (0, 0, 1)
+   (a) rule violations (control/pin must pass, other must fail): 0
+tests/test_k1b_cli.py: items=21 byname={'control': 0, 'pin': 0, 'other': 21} header=None | (a) {'control': '0p/0f', 'pin': '0p/0f', 'other': '20p/1f'} | (c) {'control': '0p/0f', 'pin': '0p/0f', 'other': '21p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 20
+      test_end_to_end_replay_then_score pass
+      test_score_again_is_refused_because_the_report_folder_is_not_empty pass
+      test_poisoned_bundle_is_refused_with_nothing_written pass
+      test_replay_into_a_non_empty_folder_is_refused pass
+      test_usd_cap_exits_1_and_report_shows_capped_cases pass
+      test_k2_runs pass
+tests/test_k1b_replay.py: items=49 byname={'control': 0, 'pin': 0, 'other': 49} header=None | (a) {'control': '0p/0f', 'pin': '0p/0f', 'other': '49p/0f'} | (c) {'control': '0p/0f', 'pin': '0p/0f', 'other': '49p/0f'}
+   (a) rule violations (control/pin must pass, other must fail): 49
+      test_happy_path_outputs_and_audit pass
+      test_k2_writes_two_run_folders pass
+      test_uncited_conversion_and_hard_check_b pass
+      test_nonexistent_id_is_converted_too pass
+      test_text_fallback_and_unreadable pass
+      test_raw_is_capped_at_2000_characters pass
+
+== on (c)=abb3e90a: control-named failing, pin-named failing
+test_pathguard_batch4 test_control_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry
+test_pathguard_batch5 test_pin_the_error_of_the_operating_system_is_never_chained_or_quoted
+test_pathguard_batch5 test_pin_every_short_mix_of_long_names_dots_links_and_loops_is_a_refusal_or_a_result
+test_pathguard_batch5 test_pin_an_error_while_asking_if_a_path_is_a_file_is_a_refusal
+test_changelog_claims test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R3-a:b]
+test_changelog_claims test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x.]
+test_changelog_claims test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x ]
+test_changelog_claims test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R7-con]
+test_changelog_claims test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R12-a?b]
+test_changelog_claims test_pin_an_error_from_the_operating_system_is_a_fixed_refusal
+test_changelog_claims test_control_every_bullet_of_the_entry_is_named_by_a_claim_test
+
+== batch5 'other'-named items that PASS on (a)
+test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[250]
+test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[254]
+test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[255]

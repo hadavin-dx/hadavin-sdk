@@ -4,3 +4,9 @@ ok  KILLED         R9 a rooted or UNC backslash name is accepted  [test_pin_r9_a
 ok  KILLED         R10 a NUL in a path is not turned into a refusal  [test_pin_r10_a_value_error_from_resolve_is_refused_as_r10] t=11s
 ok  KILLED         R11a a folder named as a file is accepted  [test_pin_r11_the_wrong_type_is_refused] t=12s
 ok  KILLED         R11b a file named as a folder is accepted  [test_pin_r11_the_wrong_type_is_refused] t=13s
+ok  KILLED         X1 the temp file is not created exclusively (O_EXCL)  [test_atomic_write_creates_its_temp_file_exclusively] t=16s
+ok  KILLED         X2 the temp file is not removed after a failed rename  [test_atomic_write_removes_its_temp_file_when_the_rename_fail] t=27s
+ok  KILLED         X3 join does not check each name (the component call)  [test_pin_join_applies_component_to_every_name] t=32s
+ok  KILLED         X4 the temp name loses its .tmp suffix  [test_atomic_write_temp_name_keeps_the_tmp_suffix] t=33s
+ok  KILLED         X5 the temp name is the same every time  [test_atomic_write_temp_name_is_random_and_not_chosen_by_the_] t=35s
+SLICE 10:20 10 of 10 good; problems: []; elapsed 36s
