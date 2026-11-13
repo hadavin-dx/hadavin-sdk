@@ -80,3 +80,6 @@ Also list: every agent that crashed, timed out, or was restarted; every command 
 
 
 ## 2026-11-13 13:37Z LEAD ANSWER Q-19: NOT default. Fix, do not defer: an address whose domain starts with a dot or has two dots in a row is not a valid mailbox; treat it like the trailing-dot case (goes to review, never its own lead, never a mail). One builder: change at the single place the trailing-dot rule lives (class-level: sweep every domain-shape check for the same hole, incl. leading/trailing hyphen label, empty label), tests that FAIL on the old code (show output), full-suite + mutation on the touched module, update any doc sentence that promises the old behaviour. Branch it as its own fix (lane3-fix-8), own evidence run, own fresh reviewer; it must not touch take/real-run files. Report when frozen.
+
+
+## 2026-11-13 15:05Z LEAD ORDER (lane3), from the owner's over-build audit: NO new fuzz or identity builders. Finish ONLY: fix-8 (dotted-domain addresses to review, Q-19) and the full run already running (E9), then FREEZE and report once with a one-page list: what is merged-ready, what is not. Unicode-form identity cases (ss, dotless i, NFKC) stay "docs only, default kept". No further round counters, no new reviewers. Keep the register honest. After the report: idle is OK.
