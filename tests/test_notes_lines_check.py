@@ -1244,6 +1244,77 @@ def test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_cou
     assert got == ["test_dyn", "test_other"], f"an unreadable name: a changed module listed {got}"
 
 
+def test_an_unreadable_run_time_import_name_is_a_reason_and_is_never_stored_as_an_empty_text():
+    """Batch 18 (D17-1): `_dynamic_files` reaches nothing for an empty text, because an unreadable name is one reason
+    (`unresolved_edge`) and one reason lists every test. Nothing else enforced that pairing, so this test does: for
+    every way to write a name the check cannot read, the module holds a reason and no empty text; for a name that
+    starts with a readable text the module holds that text and no reason."""
+    unreadable = (
+        "",  # no name at all
+        "**kw",  # no name that can be read
+        "name",  # a value
+        'f"{a}.b"',  # starts with a value
+        'f".{x}"',  # a relative name built from parts
+        '".a" + x',
+        'name + "x"',
+    )
+    for expr in unreadable:
+        src = f"import importlib\nimportlib.import_module({expr})\n"
+        m = nlc._Module("tests/test_a.py", src)
+        assert m.unresolved, f"an unreadable name {expr!r} listed no reason: {m.unresolved}"
+        assert "" not in m.dynamic_prefixes, (
+            f"an unreadable name {expr!r} stored an empty text: {m.dynamic_prefixes}"
+        )
+    handed = nlc._Module("tests/test_a.py", "import importlib\nmap(importlib.import_module, n)\n")
+    assert handed.unresolved and "" not in handed.dynamic_prefixes, (
+        f"a loader handed on as a value stored an empty text: {handed.dynamic_prefixes}"
+    )
+    for expr, text in (('f"tests.{x}"', "tests."), ('"t" + x', "t")):
+        m = nlc._Module("tests/test_a.py", f"import importlib\nimportlib.import_module({expr})\n")
+        assert m.dynamic_prefixes == [text] and not m.unresolved, (
+            f"a readable start {expr!r} gave {m.dynamic_prefixes} and {m.unresolved}"
+        )
+
+
+def test_a_run_time_import_in_a_python_file_outside_tests_that_a_prefix_reaches_is_a_reason():
+    """Batch 18 (C17-1): the text `"t"` reaches `tools/helper.py` (`tools.helper` starts with `t`). The reasons of the tree
+    are collected over every file a file of `tests` can reach at run time, not only over `tests/`: a run-time import
+    inside `tools/helper.py` is a reason, and its text (a comment too) is part of the digest that changes every unit."""
+    test = (
+        "import importlib\n\n\ndef test_one(n=1):\n"
+        '    assert importlib.import_module("t" + str(n))\n\n\ndef test_two():\n    assert 1\n'
+    )
+    helper = "import importlib\n# note {}\nLIMIT = 1\n\n\ndef load(name):\n    return importlib.import_module(name)\n"
+    before = _Tree({"tests/test_a.py": test, "tools/helper.py": helper.format(1)})
+    after = _Tree({"tests/test_a.py": test, "tools/helper.py": helper.format(2)})
+    got = _changed(test, test, "tests/test_a.py", before, after)
+    assert got == ["test_one", "test_two"], (
+        f"a changed file with a reason, reached by a prefix, listed {got}"
+    )
+    # (the reasons are read after a file was parsed, as `check` does)
+    reasons = nlc._tree_reasons(before)
+    assert any("tools/helper.py" in r for r in reasons), (
+        f"a run-time import in a file outside tests listed no reason: {reasons}"
+    )
+    # two steps: `te` reaches `terraform/gen.py`, whose own `"t" + n` reaches `tools/helper.py` (the reach is followed again)
+    hop_test = test.replace('"t" + str(n)', '"te" + str(n)')
+    gen = 'import importlib\n\n\ndef gen(n):\n    return importlib.import_module("t" + n)\n'
+    hop = _Tree(
+        {"tests/test_a.py": hop_test, "terraform/gen.py": gen, "tools/helper.py": helper.format(1)}
+    )
+    hop2 = _Tree(
+        {"tests/test_a.py": hop_test, "terraform/gen.py": gen, "tools/helper.py": helper.format(2)}
+    )
+    got = _changed(hop_test, hop_test, "tests/test_a.py", hop, hop2)
+    assert got == ["test_one", "test_two"], (
+        f"a file reached through a file reached at run time listed {got}"
+    )
+    # a file the prefix does not reach is no part of the tree state
+    far = _Tree({"tests/test_a.py": test, "docs/helper.py": helper.format(1)})
+    _changed(test, test, "tests/test_a.py", far, far)
+    assert nlc._tree_reasons(far) == [], "a file no prefix reaches gave a reason"
+
+
 def test_a_star_import_of_a_test_module_makes_every_name_of_it_part_of_the_file():
     test = "from tests.helpers import *\n\n\ndef test_a():\n    assert LIMIT\n"
     helper = "LIMIT = {}\n"

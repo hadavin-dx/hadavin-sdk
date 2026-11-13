@@ -79,8 +79,9 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
     "test_a_junction_in_the_folder_part_of_an_extra_file_is_refused",
+    "test_only_the_path_of_an_extra_file_that_exists_is_looked_at_for_a_junction",
 )
-EXPECTED_MUTANTS = 67
+EXPECTED_MUTANTS = 69
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 

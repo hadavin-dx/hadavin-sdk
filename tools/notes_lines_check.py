@@ -766,7 +766,6 @@ class _Module:
                 first = n.args[0] if n.args else (named[0] if named else None)
                 if first is None:
                     unresolved_edge(self.unresolved, f"{rel}: an import call with no module name")
-                    self.dynamic_prefixes.append("")
                     continue
                 prefix = _literal_start(first)
                 package = _package_name_prefix(first)
@@ -786,13 +785,11 @@ class _Module:
                     unresolved_edge(
                         self.unresolved, f"{rel}: a module name that starts with a value"
                     )
-                    self.dynamic_prefixes.append(prefix)
                 elif prefix.startswith("."):
                     unresolved_edge(
                         self.unresolved,
                         f"{rel}: a relative module name built from parts (starts with a dot)",
                     )
-                    self.dynamic_prefixes.append("")
                 elif "tests".startswith(prefix) or prefix.startswith("tests"):
                     self.dynamic_prefixes.append(prefix)
             # (a name that is the target of `imp = ...` hands nothing on: its context is Store)
@@ -806,7 +803,6 @@ class _Module:
                 # we cannot see, with names we cannot read
                 self.dynamic = True
                 unresolved_edge(self.unresolved, f"{rel}: a loader is handed on as a value")
-                self.dynamic_prefixes.append("")
 
     def _path_loader(self, call: ast.Call, callee: list[str]) -> None:
         """`spec_from_file_location(name, path)` and `runpy.run_path(path)`: the path expression is kept; the tree
@@ -1085,6 +1081,23 @@ class _Signatures:
                 out.append(mod)
         return out
 
+    def _with_run_time_reach(self, paths: list[str]) -> list[str]:
+        """`paths` and every file a file of them can reach by a name worked out at run time, again for each file added
+        (batch 18: a prefix such as `"t"` reaches `tools/helper.py`, and a run-time import inside that file is a reason
+        and its text is part of the digest, just like a file of `tests/`)."""
+        seen = list(paths)
+        todo = list(paths)
+        while todo:
+            rel = todo.pop()
+            m = self.module(rel) if rel.endswith(".py") else None
+            if m is None or not m.dynamic:
+                continue
+            for reached in self._dynamic_files(m):
+                if reached not in seen:
+                    seen.append(reached)
+                    todo.append(reached)
+        return seen
+
     def tree_state(self, mod: _Module) -> tuple[list[str], str]:
         """(the reasons the check cannot read the tests tree, a digest of every file that can act on a test). With
         the paths of the state (`files`) the whole tree is read; without them only the file itself and what it reaches
@@ -1099,6 +1112,7 @@ class _Signatures:
             *(c.rel for c in self.conftests(mod.rel)),
             *(i.rel for i in self.inits(mod.rel)),
         ]
+        paths = self._with_run_time_reach(paths)
         reasons: list[str] = list(self.syntax_errors)
         for rel in sorted(paths):
             if rel.endswith(".py"):
@@ -1232,17 +1246,16 @@ class _Signatures:
                 f for f in self.files if f == folder or f.startswith(folder.rstrip("/") + "/")
             }
         for prefix in m.dynamic_prefixes:
-            # an empty prefix (a name that cannot be read) reaches nothing here: every place that adds one also calls
-            # `unresolved_edge`, and one reason lists every test whenever a file under `tests/` changes (`closure`),
-            # so a branch that listed every Python file here would repeat that rule (batch 17: it was an equivalent
-            # mutant, no test could tell it from the rule)
-            if prefix:
-                found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
-                found |= {
-                    f
-                    for f in self.files
-                    if f.endswith("/__init__.py") and f"{_dotted_path(f)}.".startswith(prefix)
-                }
+            # `dynamic_prefixes` holds only a readable start of a name, never an empty text: a name that cannot be read
+            # is one `unresolved_edge` reason, and one reason lists every test whenever a file under `tests/` changes
+            # (`closure`, `tree_state`). A test pins both halves (batch 18: nothing enforced the pairing before); an
+            # empty text stored here would be every file, which is the safe side
+            found |= {f for f in self.files if _dotted_path(f).startswith(prefix)}
+            found |= {
+                f
+                for f in self.files
+                if f.endswith("/__init__.py") and f"{_dotted_path(f)}.".startswith(prefix)
+            }
         found.discard(m.rel)
         return sorted(found)
 
