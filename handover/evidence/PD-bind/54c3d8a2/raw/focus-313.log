@@ -1,0 +1,59 @@
+== tests/test_bindguard.py
+rc=0 360 passed, 1 skipped in 33.23s
+== tests/test_netguard.py
+rc=0 10 passed in 0.34s
+== tests/test_loopback_sites.py
+rc=0 67 passed in 0.32s
+== tests/test_s6_approvals.py
+rc=0 12 passed in 0.44s
+== tests/test_mutation_runner.py
+rc=0 59 passed in 22.99s
+== tests/test_mutation_runner_helpers.py
+rc=0 11 passed in 0.20s
+== tests/test_mutation_runner_meta.py
+rc=0 6 passed in 1.40s
+== tests/test_stage_names.py
+rc=0 97 passed in 3.48s
+== tests/test_k1b_redaction.py
+rc=0 11 passed in 0.83s
+== tests/test_k3_pilot.py
+rc=0 48 passed in 2.42s
+== tests/test_k5_round10_postgres.py
+rc=0 8 skipped in 0.09s
+== tests/test_k5_round12_fuzz.py
+rc=0 5 passed in 20.80s
+== tests/test_k5_round5.py
+rc=0 78 passed in 3.58s
+== tests/test_k5_round8.py
+rc=0 69 passed in 5.66s
+== tests/test_k5_round9.py
+rc=0 82 passed in 6.38s
+== tests/test_k5_tools.py
+rc=0 91 passed in 7.20s
+== tests/test_lockin_guard.py
+rc=0 56 passed in 0.89s
+== tests/test_p2_postgres.py
+rc=0 11 passed, 5 skipped in 0.74s
+== tests/test_p5_llm.py
+rc=0 37 passed in 1.71s
+== tests/test_p6_detectors.py
+rc=0 32 passed in 1.93s
+== tests/test_p7_store.py
+rc=0 17 passed, 4 skipped in 0.41s
+== tests/test_p7_tick.py
+rc=0 41 passed in 20.76s
+== tests/test_review_fixes.py
+rc=0 33 passed in 2.00s
+== tests/test_review_pr3_round2.py
+rc=0 37 passed in 8.53s
+== tests/contracts/test_capabilities.py
+rc=0 39 passed, 2 skipped in 1.95s
+== tests/contracts/test_llm.py
+rc=0 53 passed, 1 skipped in 2.97s
+== tests/warden_port/test_audit_chain.py
+rc=0 42 passed, 3 skipped in 1.61s
+== tests/warden_port/test_bedrock_provider_r16.py
+rc=0 14 passed in 0.58s
+== tests/warden_port/test_providers.py
+rc=0 26 passed in 1.20s
+DONE
