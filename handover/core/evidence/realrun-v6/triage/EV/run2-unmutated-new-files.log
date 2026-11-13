@@ -1,0 +1,7 @@
+...                                                                      [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_survivor_r20_config_read.py::test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line
+PASSED tests/test_survivor_keep_scan.py::test_a_flag_that_only_the_format_fold_can_read_is_found
+PASSED tests/test_survivor_keep_scan.py::test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces
+3 passed in 0.34s

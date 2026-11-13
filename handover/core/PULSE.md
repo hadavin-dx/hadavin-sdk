@@ -128,3 +128,4 @@ T3 done: P2 P4 P10 equivalent (verified by me)
 T1 done: R20 real gap (test), N20 killed by full file
 T2 done; combined patch built; EV runner started
 11:52Z EV runner running step 6
+11:58Z triage done: summary + patch pushed

@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:58Z (17:28 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-EV (agent a6acf359) | evidence runner for survivor-tests-v1.patch | LEAD order | 11:48Z / 17:18 | DONE 11:53Z | 1 of 1 | reported (runner output): patch applies; unmutated 3 passed; R20, K6, K10 each: 1 failed, 2 passed (the one new test of that mutant fails); K6+K10: 2 failed, 1 passed; existing files with the patch present: take_script_refusals 143 passed, real_check_dry 71, real_run_v6 74, core_key_readers 12, 0 failed; 3 new tests collected by default; 0 lines over 100 columns; mutated files restored (hash equal). Deviation: its runs 2-5 used a temp folder inside the tree (tiny runs, no repo-folder scan) | pushed to triage/EV |
+| TRI summary | triage/SUMMARY.md with the 8-row verdict table | LEAD order | 11:55Z / 17:25 | DONE | | pushed: handover/core/evidence/realrun-v6/triage/SUMMARY.md; patch at realrun-v6/survivor-tests-v1.patch (not applied anywhere) | LEAD review |
+| TRI-T1, T2, T3 | builders | | | DONE | | all reported and closed | none |
+| agents / shells | | | | | | 0 agents and 0 test processes of mine running (runner reports 0; builders finished) | none |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdicts (8): R20 REAL GAP, test written, killed yes; K6 REAL GAP, test written, killed yes; K10 REAL GAP, test written, killed yes; K6+K10 pair killed (existing cases); N20 covered by the full refusals file; C9, P2, P4, P10 EQUIVALENT (code reading; I verified P2/P4/P10, not C9). R20 cause: demo first pass ran before sonar-p3-final (inference).
+
+ASK:
+1. Who applies survivor-tests-v1.patch to the demo repo? Default: unapplied; lead hands it to the demo session.
+2. Anything next for this lane? Default: idle, no core work.
+
+
 ## REPORT 11:52Z (17:22 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |

@@ -1,0 +1,17 @@
+.F.                                                                      [100%]
+=================================== FAILURES ===================================
+___________ test_a_flag_that_only_the_format_fold_can_read_is_found ____________
+
+    def test_a_flag_that_only_the_format_fold_can_read_is_found() -> None:
+        """`"{1}{0}".format("keep", "--")` is the keep flag; the pieces glued in source order give
+        `keep--`, which holds no flag. Only the fold of the `.format` call finds it (mutant K6)."""
+>       assert keep_self_tests_that_leak(_SOURCES["fold"]) == (["test_a"], 1)
+E       AssertionError: assert ([], 0) == (['test_a'], 1)
+E         
+E         At index 0 diff: [] != ['test_a']
+E         Use -v to get more diff
+
+tests/test_survivor_keep_scan.py:27: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_survivor_keep_scan.py::test_a_flag_that_only_the_format_fold_can_read_is_found
+1 failed, 2 passed in 0.14s
