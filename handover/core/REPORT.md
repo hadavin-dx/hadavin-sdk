@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:57Z (07:27 IST) / no change since 01:55Z: three agents running, no reports yet
+
+**FAILED / UNCERTAIN FIRST**
+- Nothing new proven by running. Part 2 head 3db352f5 round 8 not clean (2 Blocker, 7 Major from reading); runner a572d86b has not reported. Q8c-1 a5908c0b: reviewers clean, runner a7e31a96 not reported, 3 Nits unfixed, handover-files question open. Part 6 41c84695 round 7 not clean; batch 8 builder a509d177 working. Lead command blocks 01:34Z/01:40Z/01:46Z still empty.
+
+**LEAD ACTIONS**: none new.
+
+**LIVE ITEMS** (3): a509d177 Part 6 batch 8 builder (17 min in); a572d86b Part 2 runner (12 min); a7e31a96 Q8c-1 runner (9 min). Heads unchanged: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: unchanged; waiting on runners and builder.
+
+**FINISHED SINCE LAST BLOCK (01:55Z)**: nothing.
+
 ## 01:52Z (07:22 IST) / Part 2 round 8 reviewers both back: NOT clean (1 Blocker design + 1 Blocker codebase, 7 Major); resolve next
 
 **FAILED / UNCERTAIN FIRST**
