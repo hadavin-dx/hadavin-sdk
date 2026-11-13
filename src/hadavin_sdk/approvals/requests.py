@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import weakref
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from types import FunctionType, MappingProxyType
@@ -52,28 +53,96 @@ _RUNTIME_SERVICES = (
     "store",
     "llm",
     "detector",
-)  # the attributes of a core ``Runtime`` that reach a service
+)  # the attributes of a core ``Runtime`` that reach a service: each must be one of the core's own stand-ins
+
+# The other members ``Runtime.__init__`` writes, each believed only while it is the very object ``build()`` put there
+# (identity, taken at the end of ``build()`` by ``seal_runtime``). One line each: a member that is not listed is not
+# compared, so every row of ``tests/bind_mutants.py`` that drops one line is killed by a test that replaces that member.
+_RUNTIME_SEALED = (
+    "registry",
+    "audit",
+    "limits",
+    "agents",
+    "hooks",
+)
+
+# runtime -> (instance keys, {member: object}, agents as a frozenset, the hooks' own (name, value) pairs, the hooks
+# class). Weak: a runtime that is gone leaves nothing. Written by ``seal_runtime`` (``build()``) only.
+_RUNTIME_SEALS: weakref.WeakKeyDictionary[object, tuple] = weakref.WeakKeyDictionary()
 
 
-def _runtime_ok(runtime: object) -> bool:
-    """True only for a runtime the core made: an instance of exactly the core's ``Runtime`` class, unchanged since it
-    was pinned (``standins.is_pinned_instance``, pinned when its module is loaded), whose ``store``, ``llm`` and
+def seal_runtime(runtime: object) -> None:
+    """Record what ``build()`` made a ``Runtime`` hold: the names its ``__init__`` wrote (its instance dictionary keys),
+    the identity of every member in ``_RUNTIME_SEALED`` and of every field of its ``hooks``, and its agents. A runtime
+    that is not sealed (made by hand) is never believed (``_runtime_ok``). Called by ``app.build`` once the runtime
+    is complete."""
+    own = object.__getattribute__(runtime, "__dict__")
+    hooks = dict.get(own, "hooks")
+    _RUNTIME_SEALS[runtime] = (
+        frozenset(dict.keys(own)),
+        {name: dict.get(own, name) for name in _RUNTIME_SEALED},
+        frozenset(set.__iter__(dict.get(own, "agents"))),
+        tuple(dict.items(object.__getattribute__(hooks, "__dict__"))),
+        type(hooks),
+    )
+
+
+def _hooks_unchanged(hooks: object, sealed: tuple) -> bool:
+    """The hooks are the very object ``build()`` made: exact class (pinned), the same fields holding the same objects
+    (identity), so a ``hold_run_ids``, ``execute`` or ``post_card`` put in later is not the wiring ``build()`` made."""
+    if type(hooks) is not sealed[4] or not standins.is_pinned_instance(hooks, standins.HOOKS):
+        return False
+    fields = object.__getattribute__(hooks, "__dict__")
+    if type(fields) is not dict:
+        return False
+    now = tuple(dict.items(fields))
+    if len(now) != len(sealed[3]):
+        return False
+    return all(
+        type(k) is str and k == name and v is was
+        for (k, v), (name, was) in zip(now, sealed[3], strict=True)
+    )
+
+
+def _runtime_ok(runtime: object, scan: standins.Scan | None = None) -> bool:
+    """True only for a runtime ``build()`` made and sealed: an instance of exactly the core's ``Runtime`` class,
+    unchanged since it was pinned (``standins.is_pinned_instance``, pinned when its module is loaded), whose instance
+    dictionary holds exactly the names ``__init__`` wrote (an ``rt.on_decided = f`` or ``rt.tick = f`` on the instance
+    would shadow the pinned class method: such a key, or a missing one, is refused), whose ``registry``, ``audit``,
+    ``limits``, ``agents`` and ``hooks`` are the objects ``build()`` put there, and whose ``store``, ``llm`` and
     ``detector`` are each one of the core's own stand-ins (a runtime made by hand with a real store or model is real).
-    Its ``hooks`` are the wiring ``build()`` made (every real object they reach was given to ``build()`` and is named
-    in ``overrides``, or comes from the config, which is counted); an ``Approvals`` made by hand does not get this
-    belief at all (see ``_holder_ok``)."""
+    ``scan`` is the request's one scan (see ``standins.Scan``). An ``Approvals`` made by hand does not get this belief
+    at all (see ``_holder_ok``)."""
     try:
         if not standins.is_pinned_instance(runtime, standins.RUNTIME):
             return False
         own = object.__getattribute__(runtime, "__dict__")
-        if type(own) is not dict:
+        sealed = _RUNTIME_SEALS.get(runtime)
+        if type(own) is not dict or sealed is None:
             return False
-        return all(standins.is_stand_in(dict.get(own, name)) for name in _RUNTIME_SERVICES)
+        keys = tuple(dict.keys(own))
+        methods = vars(type(runtime))
+        if (
+            not all(type(k) is str and k not in methods for k in keys)
+            or frozenset(keys) != sealed[0]
+        ):
+            return False
+        members = sealed[1]
+        if not all(dict.get(own, name) is members[name] for name in _RUNTIME_SEALED):
+            return False
+        agents = dict.get(own, "agents")
+        if type(agents) is not set or not all(type(a) is str for a in set.__iter__(agents)):
+            return False
+        if frozenset(set.__iter__(agents)) != sealed[2]:
+            return False
+        if not _hooks_unchanged(dict.get(own, "hooks"), sealed):
+            return False
+        return all(standins.is_stand_in(dict.get(own, name), scan) for name in _RUNTIME_SERVICES)
     except Exception:  # noqa: BLE001 - anything unreadable is not the core's runtime
         return False
 
 
-def _holder_ok(holder: object, built: bool) -> bool:
+def _holder_ok(holder: object, built: bool, scan: standins.Scan | None = None) -> bool:
     """True only for a plain ``dict`` that is empty, or (only when the ``Approvals`` was made by ``build()``) whose one
     entry under ``rt`` is a runtime the core made (``_runtime_ok``). The one key is read with the builtin dict
     methods and compared as an exact ``str`` by identity of its type, never with ``==`` (a key that is a ``str``
@@ -89,7 +158,7 @@ def _holder_ok(holder: object, built: bool) -> bool:
     # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one
     if type(key) is not str or key != "rt":
         return False
-    return _runtime_ok(dict.__getitem__(holder, key))
+    return _runtime_ok(dict.__getitem__(holder, key), scan)
 
 
 _NONE = object()  # the marker ``_one_cell`` answers when the function is not made from the code
@@ -109,11 +178,11 @@ def _one_cell(func: object, code: object) -> object:
         return _NONE
 
 
-def _is_core_on_decided(func: object, built: bool) -> bool:
+def _is_core_on_decided(func: object, built: bool, scan: standins.Scan | None = None) -> bool:
     """True only for a function made by ``make_on_decided`` (identity of its code) whose holder is judged by
     ``_holder_ok`` (``built``: the ``Approvals`` was made by ``build()``)."""
     cell = _one_cell(func, _ON_DECIDED_CODE)
-    return cell is not _NONE and _holder_ok(cell, built)
+    return cell is not _NONE and _holder_ok(cell, built, scan)
 
 
 def fixed_clock(moment: datetime) -> Callable[[], datetime]:
@@ -131,6 +200,11 @@ _FIXED_CLOCK_CODE = fixed_clock(datetime.min.replace(tzinfo=UTC)).__code__
 _NOW_CODE = (
     now.__code__
 )  # ``models.now`` is the same function object after ``now.__code__ = ...``: its code is pinned
+# the two names ``models.now`` reads from its module (``datetime.now(UTC)``): pinned by identity too, so a replaced
+# ``models.datetime`` or ``models.UTC`` (foreign code run before the signature is checked) is seen. Read from the
+# function's own globals dictionary with the builtin ``dict.get``.
+_NOW_DATETIME = dict.get(now.__globals__, "datetime")
+_NOW_UTC = dict.get(now.__globals__, "UTC")
 
 
 def _is_core_clock(func: object) -> bool:
@@ -140,7 +214,12 @@ def _is_core_clock(func: object) -> bool:
     its own code is not believed). Any other callable is run before the signature is checked and can hold anything,
     so it is counted."""
     if func is now:
-        return now.__code__ is _NOW_CODE
+        names = now.__globals__
+        return (
+            now.__code__ is _NOW_CODE
+            and dict.get(names, "datetime") is _NOW_DATETIME
+            and dict.get(names, "UTC") is _NOW_UTC
+        )
     moment = _one_cell(func, _FIXED_CLOCK_CODE)
     return moment is not _NONE and standins.plain_datetime(moment)
 
@@ -305,14 +384,15 @@ class Approvals:
         """The objects ``build()`` was handed in place of configured ones (read-only)."""
         return self._overrides
 
-    def held_services(self) -> dict[str, object]:
+    def held_services(self, scan: standins.Scan | None = None) -> dict[str, object]:
         """What these approvals really hold that can reach a service, read when asked: the build overrides, and the
         channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
         counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
         also name their audit sink and registry: nothing says those are stand-ins. ``on_decided`` is named unless it
         is the function ``make_on_decided`` builds with an empty holder or (approvals made by ``build()`` only) the core
         runtime in it (``_runtime_ok``), and ``clock`` is named unless it is ``models.now`` or a ``fixed_clock`` of a
-        plain ``datetime`` (``standins.plain_datetime``)."""
+        plain ``datetime`` (``standins.plain_datetime``). ``scan``: the one scan of a request (``real_now`` makes it), shared
+        with ``bindguard.held_services_found`` so the store the runtime holds and the store named here are read once."""
         # read through the same accessors the runtime uses (``self.channel`` and so on), never through the private
         # slots: a replaced accessor and the slot behind it cannot give two answers
         held: dict[str, object] = dict(self.overrides)
@@ -325,7 +405,7 @@ class Approvals:
         if self._hand_built:
             held["audit"], held["registry"] = self.audit, self.registry
         if not _is_core_on_decided(
-            self.on_decided, not self._hand_built
+            self.on_decided, not self._hand_built, scan
         ):  # a callable run after a valid signature can hold anything
             held["on_decided"] = self.on_decided
         if not _is_core_clock(self.clock):  # ``receive`` runs it before the signature is checked
@@ -336,7 +416,10 @@ class Approvals:
         """What these approvals reach that is real, now: the facts of the config frozen at construction, and the held
         objects as they are at this moment. The receiver asks this at every request on a bind other computers can
         reach with no reason given (called as ``Approvals.real_now(a)``, so a subclass cannot answer for itself)."""
-        return self.config_facts + held_services_found(Approvals.held_services(self))
+        scan = (
+            standins.Scan()
+        )  # ONE budget for the whole request, and an object looked at twice is read once
+        return self.config_facts + held_services_found(Approvals.held_services(self, scan), scan)
 
     def __deepcopy__(self, memo: object) -> object:
         raise TypeError("an Approvals cannot be copied: it holds set-once objects and frozen facts")

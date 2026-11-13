@@ -21,7 +21,7 @@ from hadavin_sdk.actions.executor import Executor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.approvals import Approvals, Channel
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.requests import _BUILD_TOKEN, make_on_decided, summary
+from hadavin_sdk.approvals.requests import _BUILD_TOKEN, make_on_decided, seal_runtime, summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
@@ -87,6 +87,8 @@ def build(
             ("llm", llm),
             ("tools", dict(tools) if tools is not None else None),
             ("sources", dict(sources) if sources is not None else None),
+            # a callable the purge tick runs: foreign code with the runtime's reach, so it is named like the others
+            ("hold_run_ids", hold_run_ids),
         )
         if obj is not None
     }  # tools and sources are copied: the caller keeps its own mapping and may empty it later
@@ -253,6 +255,9 @@ def build(
         hooks,
     )
     holder["rt"] = runtime
+    seal_runtime(
+        runtime
+    )  # what the guard may believe about this runtime: the objects it holds right now
     return App(
         cfg,
         reg,

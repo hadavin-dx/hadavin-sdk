@@ -15,7 +15,8 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
   class that fakes ``==`` or ``hash`` are not). Every allowlist below is judged the same way, by IDENTITY over a
   tuple of classes (``_is_one_of``: ``kind is t``, never ``kind in`` a set or a tuple, which would run the
   ``__hash__`` and ``__eq__`` of a metaclass that the held value controls). A class whose module is not imported (yet) never matches;
-* the first time a class is found live, a pin is taken: its metaclass, its ``__mro__`` and the ``vars()`` of every
+* a pin is taken of each listed class when its module is loaded (see below; the first question pins only a class whose
+  module never asked): its metaclass, its ``__mro__`` and the ``vars()`` of every
   class in the ``__mro__`` except ``object`` (name and object, in order, compared by identity). At each later
   question the class must still match the pin: a replaced or added method, a changed base class or a rebinding of
   the module name reads as real. A missing or cleared pin of a class that was seen before reads as real (fail
@@ -70,7 +71,7 @@ that a function was put inside a held container, which costs what the scan costs
 ``serve()`` is refused at the start, until the store is smaller).
 
 Fragile on purpose: touching ``cls.__annotations__`` adds an empty entry to the class dictionary on Python 3.12 and
-3.13, so the pin touches it at pin time and at every comparison; a class whose dictionary changes in any other way
+3.13, and ``copy.copy`` of an instance adds ``__slotnames__``, so the pin touches both at pin time and at every comparison; a class whose dictionary changes in any other way
 (for example ``importlib.reload``) reads as real (fail closed).
 
 Not promised: code that runs in the same process and rewrites this module, ``sys.modules`` or the guard itself is
@@ -81,6 +82,7 @@ puts in the strings."""
 from __future__ import annotations
 
 import contextlib
+import copyreg
 import sys
 import threading
 from collections import Counter, defaultdict, deque
@@ -116,6 +118,8 @@ APPROVALS = ("hadavin_sdk.approvals.requests", "Approvals")
 # the core runtime an ``on_decided`` hands a decision to (pinned when its own module is loaded: the last line of
 # ``runtime/agent_loop.py`` calls ``pin_module``, because the approvals side does not import that module)
 RUNTIME = ("hadavin_sdk.runtime.agent_loop", "Runtime")
+# the hooks of that runtime (the wiring ``build()`` made): pinned with it, so a class-level ``execute = property(...)`` is seen
+HOOKS = ("hadavin_sdk.runtime.agent_loop", "Hooks")
 
 # The plain-data types the five stand-ins really hold (found by reading their class bodies and by scanning every
 # stand-in the test suite makes; each is judged by exact type and its own attributes are entered). Reason per
@@ -153,6 +157,7 @@ _PINNED_KEYS = (
     APPROVALS,
     *_DATA_CLASSES,
     *_LEAF_CLASSES,
+    HOOKS,
     RUNTIME,
 )
 
@@ -189,8 +194,8 @@ def _own_enum_member_keys() -> frozenset[str]:
 _ENUM_MEMBER_KEYS: frozenset[str] = _own_enum_member_keys()
 _DEFAULT_FACTORIES: tuple[object, ...] = (list, dict, set, int, float, Decimal)
 
-# (module, name) -> pin taken at the first question; _SEEN names the keys that were pinned (a key that was seen
-# and has no pin any more reads as real)
+# (module, name) -> the pin (taken when the module is loaded: ``pin_all`` and ``pin_module``; the first question is
+# only the fallback); _SEEN names the keys that were pinned (a key that was seen and has no pin any more reads as real)
 _PINNED: dict[tuple[str, str], tuple[object, ...]] = {}
 _SEEN: frozenset[tuple[str, str]] = frozenset()
 _PIN_LOCK = threading.Lock()
@@ -215,9 +220,14 @@ _CLASS_ANNOTATIONS = vars(type)[
 
 def _touch_annotations(cls: type) -> None:
     """Python 3.12 and 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
-    3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it."""
+    3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it. The same
+    for ``__slotnames__`` (see below)."""
     with contextlib.suppress(Exception):  # a class without one (3.14 reads it differently) is fine
         _CLASS_ANNOTATIONS.__get__(cls)
+    # ``copy.copy`` and ``pickle`` of an instance write ``__slotnames__`` (a list of text) into the class dictionary the
+    # first time: a harmless entry the standard library adds, so it is written now and the pin includes it
+    with contextlib.suppress(Exception):
+        copyreg._slotnames(cls)  # type: ignore[attr-defined]
 
 
 def _shape(cls: type) -> tuple[object, ...]:
@@ -483,6 +493,20 @@ def _enum_member_ok(value: object, cls: type) -> bool:
     return type(dict.get(own, "_value_")) is str and dict.get(own, "__objclass__", cls) is cls
 
 
+def _atom_plain(value: object, kind: type) -> bool:
+    """True when ``value`` is a plain atom, given that its exact type ``kind`` is one of ``_ATOM_TYPES`` (the caller
+    judged that by identity, ``_is_one_of``): a ``datetime`` has a ``tzinfo`` that ``plain_datetime`` accepts (it is an
+    object that can hold code), a ``Path`` has only plain slots (``_path_slots_plain``), and the atom carries no
+    instance state (``_no_instance_state``). The ONE judge of an atom's state: ``_entered`` (every level that is
+    entered) and the last level of ``_holds_real`` (which is looked at, not entered) both call it, so the two cannot
+    drift apart."""
+    if kind is datetime:  # its tzinfo is an object that can hold code: see ``plain_datetime``
+        return plain_datetime(value)
+    if kind is _PATH_TYPE and not _path_slots_plain(value, kind):
+        return False
+    return _no_instance_state(value, kind)
+
+
 def _entered(
     value: object,
     data: tuple[tuple[tuple[str, str], type], ...],
@@ -495,11 +519,7 @@ def _entered(
     ``STAND_IN_WEIGHT`` nodes (its class is compared against its pin, once per question)."""
     kind = type(value)
     if _is_one_of(kind, _ATOM_TYPES):
-        if kind is datetime:  # its tzinfo is an object that can hold code: see ``plain_datetime``
-            return () if plain_datetime(value) else None
-        if kind is _PATH_TYPE and not _path_slots_plain(value, kind):
-            return None
-        return () if _no_instance_state(value, kind) else None
+        return () if _atom_plain(value, kind) else None
     for key, cls in leaf:
         if kind is cls:
             return () if budget.class_ok(key) and _enum_member_ok(value, kind) else None
@@ -573,8 +593,14 @@ def _holds_real(own: object, budget: _Budget) -> bool:
                 if inner:
                     nxt.append(inner)
         level = nxt
-    # fail closed: what is still unexplored after the last level may only be plain atoms (which cannot hide anything)
-    return any(not _is_one_of(type(v), _ATOM_TYPES) for values in level for v in values)
+    # fail closed: what is still unexplored after the last level may only be plain atoms (which cannot hide anything),
+    # each judged by the same atom judge as every entered level (a datetime with a foreign ``tzinfo`` and a ``Path``
+    # with a real object in a slot are not plain at the last level either)
+    return any(
+        not (_is_one_of(type(v), _ATOM_TYPES) and _atom_plain(v, type(v)))
+        for values in level
+        for v in values
+    )
 
 
 def _instance_ok(obj: object, budget: _Budget) -> bool:
@@ -602,10 +628,37 @@ def _check(obj: object, depth: int, seen: frozenset[int], budget: _Budget) -> bo
     return all(_check(m, depth + 1, inner, budget) for m in tuple.__iter__(members))
 
 
-def verdict(obj: object) -> str:
-    """``VERDICT_STAND_IN``, ``VERDICT_REAL`` or ``VERDICT_OVER_BUDGET`` (the structure is bigger than
-    ``SCAN_NODES``: read as real, and named apart so a person sees the outage is size, not a service). Never raises."""
-    budget = _Budget()
+class Scan:
+    """The scan of ONE request: ONE budget (``SCAN_NODES``) for every object asked about, and the answer for an object
+    already asked about is reused (by identity), so an object that two parts of the guard both look at (the store a
+    held map names and the store of the runtime in ``on_decided``) is read once. The pre-authentication work of one
+    request is therefore bounded by one budget, not by one budget for each object and each asker. The objects are
+    kept (``_kept``) so that an identity cannot be reused by another object while the scan lives. Make a new ``Scan``
+    for every request: an answer is never kept between requests."""
+
+    __slots__ = ("_answers", "_budget", "_kept")
+
+    def __init__(self) -> None:
+        self._budget = _Budget()
+        self._answers: dict[int, str] = {}
+        self._kept: list[object] = []
+
+    def verdict(self, obj: object) -> str:
+        """``verdict`` for ``obj`` against what is left of this scan's budget."""
+        got = self._answers.get(id(obj))
+        if got is not None:
+            return got
+        budget = self._budget
+        budget.over = budget.real_seen = (
+            False  # the labels belong to one object; the nodes left are shared
+        )
+        answer = _answer(obj, budget)
+        self._kept.append(obj)
+        self._answers[id(obj)] = answer
+        return answer
+
+
+def _answer(obj: object, budget: _Budget) -> str:
     try:
         if _check(obj, 0, frozenset(), budget):
             return VERDICT_STAND_IN
@@ -614,10 +667,18 @@ def verdict(obj: object) -> str:
     return VERDICT_OVER_BUDGET if budget.over and not budget.real_seen else VERDICT_REAL
 
 
-def is_stand_in(obj: object) -> bool:
+def verdict(obj: object, scan: Scan | None = None) -> str:
+    """``VERDICT_STAND_IN``, ``VERDICT_REAL`` or ``VERDICT_OVER_BUDGET`` (the structure is bigger than
+    ``SCAN_NODES``: read as real, and named apart so a person sees the outage is size, not a service). ``scan``: the
+    one scan of a request, shared by every object the request asks about (see ``Scan``); without one the object gets a
+    budget of its own. Never raises."""
+    return (scan if scan is not None else Scan()).verdict(obj)
+
+
+def is_stand_in(obj: object, scan: Scan | None = None) -> bool:
     """True only for an instance of one of the core's own stand-in classes, or of a detector list (``AnyOf``)
     whose members all are (see the module text for everything that is checked). Never raises."""
-    return verdict(obj) == VERDICT_STAND_IN
+    return verdict(obj, scan) == VERDICT_STAND_IN
 
 
 def registered() -> frozenset[type]:

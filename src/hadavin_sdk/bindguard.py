@@ -45,7 +45,7 @@ from hadavin_sdk.netguard import (
     is_loopback_literal,
     parse_ip_literal,
 )
-from hadavin_sdk.standins import VERDICT_OVER_BUDGET, VERDICT_STAND_IN, verdict
+from hadavin_sdk.standins import VERDICT_OVER_BUDGET, VERDICT_STAND_IN, Scan, verdict
 
 _LOG = logging.getLogger("hadavin_sdk.bindguard")
 
@@ -120,12 +120,15 @@ def _is_empty_mapping(obj: object) -> bool:
     return type(obj) is dict and not dict.__len__(obj)
 
 
-def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
+def held_services_found(
+    held: Mapping[str, object] | None, scan: Scan | None = None
+) -> tuple[str, ...]:
     """The held objects that count (``held <name>: <class>``): every one unless its exact class is one of the
     core's own stand-ins (``is_stand_in_object``); a held ``tools`` or ``sources`` mapping counts (``held tools``)
     unless it is a plain empty dict; nothing held (``None``) counts for nothing. A held mapping, a key or an object
     that raises or cannot be read while it is looked at counts (fail closed): the error is not passed on, whatever
-    the object is."""
+    the object is. ``scan``: the one scan of a request (see ``standins.Scan``), so that an object already looked at
+    by the same request is not read again and the whole request is bounded by one budget."""
     try:
         items = sorted(
             (held or {}).items(), key=lambda item: item[0] if type(item[0]) is str else "\uffff"
@@ -150,7 +153,7 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
             if counted_if_not_empty:
                 counts = not _is_empty_mapping(obj)
             else:
-                answer = verdict(obj)
+                answer = verdict(obj, scan)
                 counts = answer != VERDICT_STAND_IN
                 if (
                     answer == VERDICT_OVER_BUDGET
@@ -222,7 +225,7 @@ def _is_plain_name(text: object) -> bool:
     (no space, colon or other punctuation, so a name cannot imitate the structure of the line)."""
     if not (type(text) is str and text.isascii() and 0 < len(text) <= defaults.BIND_WORD_MAX_CHARS):
         return False
-    # ``isdecimal`` (not ``isdigit``: a superscript digit is a digit but not a number) on ASCII text only
+    # the text is ASCII (checked above), so a digit part is only 0-9 (a superscript or Arabic-Indic digit is refused by ``isascii``)
     parts = text.replace("-", ".").split(".")
     return all(part.isidentifier() or part.isdecimal() for part in parts)
 
@@ -236,7 +239,9 @@ def reason_problem(reason: object) -> str | None:
     after trimming, printable, at most ``BIND_REASON_MAX_CHARS``); otherwise the sentence that says why not. The
     reason is written to the log at WARNING; it is not an audit record."""
     limit = defaults.BIND_REASON_MAX_CHARS
-    if not isinstance(reason, str):
+    if (
+        type(reason) is not str
+    ):  # exact type: a ``str`` subclass would run its own ``strip`` and ``isprintable``
         return "allow_public_bind_reason must be text"
     text = reason.strip()
     if len(text) < defaults.BIND_REASON_MIN_CHARS:
