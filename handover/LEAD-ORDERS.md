@@ -1813,3 +1813,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 14:23Z LEAD ORDER (core): demo RE-FROZE (19 commits): NEW tree hash 49d3c85938fe5323a3378a49195d3b8da434b3ca replaces a019c448 (a verifier found 3 pointer/word defects; fixed). Rebase the docs patch onto THIS hash, not the old one: if DOCS already started on a019c448, finish the current step, then re-run the rebase on the new hash (small delta: rebuild the frozen tree from demo/handover head, check git write-tree equals the hash).
+
+
+## 2026-11-13 14:35Z LEAD ANSWER (core): patch order onto the frozen demo tree 49d3c859 (the public-bound base, goes to main first): (1) core-fix (v2 + F8) rebased onto the frozen tree FIRST: it is public-bound hardening. Resolve the 30 rejected hunks by hand; the rebased patch must keep every failing-before test failing on the OLD frozen tree and passing on the new one; do NOT edit the demo series itself, ship the rebase as core-fix-on-frozen.patch. (2) THEN real-run-fixes-v6, desk-address-required-v6 and survivor-tests-v1 on top of (1): that chain stays HANDOVER-ONLY (not for public main). (3) DOCS patch rebases onto 49d3c859 in parallel (independent). One independent evidence runner on the rebased core-fix (full suite + the new tests) before anything is declared done. Report each step; keep >=2 agents running.
