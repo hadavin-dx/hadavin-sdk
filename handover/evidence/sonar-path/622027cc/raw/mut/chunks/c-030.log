@@ -5,3 +5,8 @@ ok  CRASH          S-score _check_layout does not re-check its folder  [test_sit
 ok  KILLED         S-causelist folder is not guarded  [test_site_causelist_folder_nul_gives_the_one_wording] t=16s
 ok  CRASH          S-replay outputs_files folder is not guarded  [test_site_replay_output_folder_nul_is_refused] t=19s
 ok  KILLED         S-replay FAILED.txt is not written after output exists  [test_a_path_refusal_after_output_exists_still_leaves_failed_] t=21s
+ok  KILLED         S-replay the output-created flag is never set  [test_a_path_refusal_after_output_exists_still_leaves_failed_] t=31s
+ok  CRASH          S-signer private key file is not guarded  [test_site_signer_key_file_nul_and_missing] t=33s
+ok  CRASH          S-signer public key file is not guarded  [test_site_signer_key_file_nul_and_missing] t=34s
+ok  KILLED         S-local_dir root is not guarded  [test_site_local_dir_root_nul_and_event_id] t=36s
+SLICE 30:40 10 of 10 good; problems: []; elapsed 38s
