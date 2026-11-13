@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 16:38Z: UNTESTED STEPS TESTED (no harness needed); still waiting for the harness branch (ETA ~16:55Z)
+- LOAD: no agent, no job; dockerd stopped, scratch deleted, disk 4.2G free.
+- RESULTS: (1) clone of public main, depth 1, over the web: works, 2 s, 5.0 MB, no login. (2) venv + pytest 9.2.0 + a no-secret repo test file: 5 passed in 8 s. (3) docker rm -fv by label: removed exactly the 2 labelled containers, kept the unlabelled one. (4) digest pull worked first try (the 429 was not hit this time). (5) dockerd TERM: 0 processes, ports free.
+- Runbook updated: those lines now say TESTED. Still UNTESTED: clone of the harness branch, npm ci in the harness folder, harness tests, smoke, --min-idle, full run.
+- ASK: none. QUEUE DONE, idle by order.
+
 ## REPORT 16:3xZ: HEARTBEAT: waiting for harness branch (ETA ~16:55Z). Idle; testing UNTESTED runbook steps that need no harness (clone, venv+pytest, label cleanup). Result block follows.
 
 ## REPORT 16:20Z: RERUN-RUNBOOK DONE (handover/demo/RERUN-RUNBOOK.md)

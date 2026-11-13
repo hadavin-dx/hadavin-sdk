@@ -24,7 +24,7 @@ node --version          # must print v24.22.2
 ```
 Why: n8n 2.46.6 needs Node 24 or newer; the machine's Node 22 makes n8n print "not supported" and exit. The export must be in EVERY shell, tmux window and nohup that runs npm or n8n (put it in `/tmp/rerun/env.sh` and `. /tmp/rerun/env.sh`; the file may hold the PATH line only, no secret).
 
-## 3. Fetch the harness branch (UNTESTED; name comes from the lead)
+## 3. Fetch the harness branch (clone of the public main TESTED, 2 s; the harness branch name and access UNTESTED)
 ```
 mkdir -p /tmp/rerun && cd /tmp/rerun
 git clone --branch <harness branch> --single-branch --depth 1 <repository address the lead gives> repo
@@ -96,7 +96,7 @@ With no tmux use: `setsid nohup <same command> > /tmp/rerun/run.log 2>&1 &` and 
 Stop safely: send TERM to the whole process GROUP, never `pkill -f`: `kill -TERM -- -<pgid>`; wait 10 s; look at the log for the harness's own "stopped" line (UNTESTED; ask the lead what it writes); only then `kill -KILL -- -<pgid>`. The probe did exactly this for n8n alone: TERM, 6 s, KILL, then 0 processes left and both ports free.
 Machine restart warning: the probe machine restarted once (processes died, files stayed). After a restart, the run is not resumable unless the harness says so (UNTESTED): start clean from step 12 cleanup.
 
-## 12. Cleanup (docker part and kill TESTED by hand; "by label" UNTESTED)
+## 12. Cleanup (docker part, kill and "by label" TESTED; the harness's label name UNTESTED)
 ```
 export DOCKER_HOST=unix:///tmp/rerun/docker.sock
 docker ps -aq --filter label=<harness label> | xargs -r docker rm -fv      # label name comes with the branch
@@ -112,4 +112,5 @@ Only the harness RESULT folder (result json files, logs, vmstat.txt, the run.log
 
 ## 14. Short list of what the probe proved and what it did not
 - PROVED: Node 24.22.2 from npm; plain install of the pinned n8n; the crash when built under Node 22; the rebuild fix; n8n readiness 200 within 8 s after the four fixes (listen address, broker port, runners, Node 24); the two ports free after killing the group; dockerd start; digest pull with retry; Postgres container on 127.0.0.1:55432 with pg_isready over TCP; venv plus pytest 9.2.0; tmux, setsid, nohup present; vmstat idle 90 percent.
+- PROVED LATER (16:35Z, no harness needed): a clone of the public repo main with depth 1 over the web works (2 s, 5.0 MB, no login; head f3c39cf); venv plus pytest 9.2.0 runs a repo test file with no secrets (tests/test_input_edge_cases.py: 5 passed in 8 s); `docker ps -aq --filter label=<name> | xargs -r docker rm -fv` removed exactly the 2 labelled containers and left an unlabelled one (then removed by name); pull by digest worked on the first try this time; dockerd killed, 0 processes, ports free; scratch deleted.
 - NOT PROVED (UNTESTED): npm ci in the harness folder; the harness tests, smoke, run_all, its flags (`--smoke`, `--min-idle`), its result file names, its labels and ports; the clone of the branch; running n8n AND Postgres together under load; time of a full run; behaviour after a restart.
