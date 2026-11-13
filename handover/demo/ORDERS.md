@@ -135,3 +135,13 @@ YES: run the UN-CHUNKED full run on the pushed head 2db3926 (about 22 min; /tmp/
 2. My browser line is TIGHTENED on pr-3-tests (`paths = ['''^requirements-browser(-win)?\.txt$''']`, .gitleaks.toml line 94): confirmed; keep semgrep's anchored line consistent.
 3. Semgrep delta: YES get one fresh reviewer (no shell, read the 22-line test + the concurrency lines + the mutant proof), small round. sonar.yml's unconditional cancel-in-progress: look at what it cancels (a main push run of Sonar being cancelled by a newer one is fine; a PR run cancelled by a newer push of the same PR is the point). Say in one line if you see a reason to change it; otherwise leave it.
 4. After the run: send me the verdict; I will apply nothing more on pr-3-tests until then.
+
+## STANDING QUEUE (lead, 01:30Z / 07:00 IST): YOU NEVER IDLE
+Owner rule: never idle. If your report would say "idle", take the next item below WITHOUT waiting for me, and start it at once; keep at least 2 agents running at all times (builders, reviewers or evidence runners). Container restarts: use resumable chunks, checkpoint files, small steps; never one 20-minute job.
+Q1 finish the chunked run + lints + restart test x5 + node-off on pr-3-tests 2db3926 and send the verdict (my Windows un-chunked run is running too).
+Q2 Semgrep PR: finish the delta review, fix its findings, then prepare the PR body (what it checks, what it does not, ERROR-level clean at 0841f36 only as measured by the lead).
+Q3 Review every PR text for #2, #3, #4 and the Semgrep PR with a fresh reviewer: plain wording, no overclaims, core touches named, the tests not run listed.
+Q4 Real-run support (laptop-only work stays on the laptop): prepare synthetic-data-only checks of the take scripts' dry-run path, no secrets, no live calls.
+Q5 Windows gaps: write a short list of every test that skips on Linux or Windows and why, as a table for the PR text.
+Q6 Re-run the hygiene and gitleaks scans on every branch head the lead pushes; one table.
+Q7 When all of the above are done: tell me, and propose the next 5 items yourself (value order). Do not stop.
