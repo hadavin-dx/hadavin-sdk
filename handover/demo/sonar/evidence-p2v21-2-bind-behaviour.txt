@@ -1,0 +1,19 @@
+## D. Nit4: behaviour of _Server, v2 (ThreadingHTTPServer listed in _Server bases) vs v2.1 (one indirect base); probe /tmp/work/bindprobe.py (stand-in handler, made-up)
+--- v2:
+MRO ['_Server', '_ExclusiveBind', 'ThreadingHTTPServer', 'ThreadingMixIn', 'HTTPServer', 'TCPServer', 'BaseServer', 'object']
+attrs True 1024 True True
+second bind errno True 98
+server_name/port localhost True
+status 204
+request answered ok
+rebind ok True
+win32 calls [('setsockopt', True, 1), ('setsockopt', False, 1), ('bind',)]
+--- v2.1:
+MRO ['_Server', '_ExclusiveHTTPServer', '_ExclusiveBind', 'ThreadingHTTPServer', 'ThreadingMixIn', 'HTTPServer', 'TCPServer', 'BaseServer', 'object']
+attrs True 1024 True True
+second bind errno True 98
+server_name/port localhost True
+status 204
+request answered ok
+rebind ok True
+win32 calls [('setsockopt', True, 1), ('setsockopt', False, 1), ('bind',)]
