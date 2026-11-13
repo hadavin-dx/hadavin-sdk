@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:31Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run full suite, patched tree | before/after counts | 12:05Z container | about 12:35Z | run 1 of 1 | RUNNING at [ 88%] | push counts |
+| C1 | cold reader on v6 docs, scripts --help and errors, dry only | unclear steps, no next-step messages, tracebacks | 12:31Z | 60 min | 1 | STARTED (agent a69eadd7) | read RESULTS.md |
+| C2 | 100 hostile inputs on take and check scripts, seed 1 | traceback / leak table | 12:31Z | 60 min | seed 1 | STARTED (af4a9893) | repeat with new seeds when done |
+| C3 | doc vs code mismatch table | wrong numbers, names, codes | 12:31Z | 60 min | 1 | STARTED (a883c862) | read RESULTS.md |
+| C4 | survivor tests review (right reason, 20 runs, TMPDIR, Windows) | test quality | 12:31Z | 60 min | 1 | STARTED (adb85aa9) | read RESULTS.md |
+| MD-2 | closing run: 3 test-side mutation files + K6+K10 | order step 2 | after AF | about 12:45Z | 1 | WAITING for AF | start when AF ends |
+
+ASK: none. Cap 14:30Z lead clock. Four agents plus AF share 4 cores; if AF timing looks skewed I say so.
+
+
 ## REPORT (container clock 12:24Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |

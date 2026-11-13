@@ -136,3 +136,4 @@ BR done: 241 browser tests pass; after-run started
 12:40Z MD-1 inventory done, AF running
 status block, AF running
 status block, AF running
+C1-C4 started, AF running
