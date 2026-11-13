@@ -1,0 +1,16 @@
+All checks passed!
+148 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+ M scripts/feed.py
+ M src/lead_desk/config.py
+ M src/lead_desk/desk.py
+ M src/lead_desk/identity.py
+ M src/lead_desk/server.py
+?? src/lead_desk/urls.py
+?? tests/test_sonar_p2_choke_points.py

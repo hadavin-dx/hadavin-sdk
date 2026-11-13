@@ -1,0 +1,11 @@
+== NEW TESTS ON OLD CODE (db54e13 + urls.py only) ==
+FAILED tests/test_sonar_p2_choke_points.py::test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank
+FAILED tests/test_sonar_p2_choke_points.py::test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end
+FAILED tests/test_sonar_p2_choke_points.py::test_no_source_file_writes_a_clear_text_address_with_a_host_in_braces
+FAILED tests/test_sonar_p2_choke_points.py::test_the_windows_exclusive_bind_is_set_before_the_http_server_binds
+FAILED tests/test_sonar_p2_choke_points.py::test_a_move_seen_by_a_try_that_did_not_commit_is_not_reported
+FAILED tests/test_sonar_p2_regex_optional.py::test_run_real_check_address_pattern_is_linear_on_a_long_run_without_an_at_sign
+FAILED tests/test_sonar_p2_feed_optional.py::test_feed_has_no_option_to_send_the_request_elsewhere
+FAILED tests/test_sonar_p2_feed_optional.py::test_feed_main_takes_no_address_from_its_arguments
+8 failed, 14 passed in 24.35s
+(passing on old code = pins/equality by design: the scrub MAIL timing test, the equality tests, the _ADDRESS/feed behaviour pins, stage pins)

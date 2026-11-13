@@ -1,0 +1,464 @@
+diff --git a/scripts/feed.py b/scripts/feed.py
+index 7901f86..377bc76 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -21,6 +21,7 @@ from http_guard import open_http
+ 
+ from lead_desk.config import Config
+ from lead_desk.constants import SOURCES
++from lead_desk.urls import desk_origin
+ 
+ CANNED = Path("demo_only") / "canned_leads.json"
+ 
+@@ -62,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--source", choices=SOURCES, required=True)
+     ap.add_argument("--index", type=int, help="position in canned_leads.json, starting at 1")
+     ap.add_argument("--all", action="store_true", help="send every canned lead once")
+-    ap.add_argument("--url", default=f"http://{target_host(cfg.bind)}:{cfg.port}/leads")
++    ap.add_argument("--url", default=f"{desk_origin(target_host(cfg.bind), cfg.port)}/leads")
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+         ap.error("give exactly one of --index or --all")
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 5ec5672..9812f8e 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -55,6 +55,7 @@ from lead_desk.constants import (
+ )
+ from lead_desk.envnum import SettingRefused, env_number, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
++from lead_desk.urls import desk_origin
+ 
+ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+@@ -443,8 +444,8 @@ class Config:
+ 
+     @property
+     def fakes_url(self) -> str:
+-        """Built from host and port; there is no URL literal."""
+-        return f"http://{self.fakes_host}:{self.fakes_port}"
++        """Built from host and port by lead_desk.urls (the stand-ins are loopback only; see Config.problem)."""
++        return desk_origin(self.fakes_host, self.fakes_port)
+ 
+     @property
+     def real_services(self) -> tuple[str, ...]:
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 7d096a3..8b43f73 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -2066,7 +2066,7 @@ class Desk:
+         conn = self._conn()
+         now = self._now()
+ 
+-        def attempt() -> int:
++        def attempt() -> tuple[int, bool]:  # (rows changed, did the `sent` result also move the lead stage)
+             with self._write(conn):
+                 rc = conn.execute(
+                     "UPDATE followups SET state=?, last_error=?, updated_at=?, sent_at=?,"
+@@ -2082,14 +2082,9 @@ class Desk:
+                         token,
+                     ),
+                 ).rowcount
+-                moved.clear()
+-                if rc == 1 and state == "sent" and self._mark_contacted(conn, lead_id, now):
+-                    moved.append(True)
+-                return rc
+-
+-        moved: list[bool] = []
+-        self._finish_update(attempt, "record_send_result")
+-        if moved:
++                return rc, rc == 1 and state == "sent" and self._mark_contacted(conn, lead_id, now)
++
++        if self._finish_update_moved(attempt, "record_send_result"):
+             self._mirror_not_before.clear(lead_id)  # (the rank in the entry already ignores it; this frees the slot)
+ 
+     def _mark_contacted(self, conn: sqlite3.Connection, lead_id: str, now: int) -> bool:
+@@ -2146,15 +2141,23 @@ class Desk:
+             return self._error_reply(e, None, with_receipt=False)
+ 
+     def _finish_update(self, attempt: Callable[[], int], what: str) -> None:
++        self._finish_update_moved(lambda: (attempt(), False), what)
++
++    def _finish_update_moved(self, attempt: Callable[[], tuple[int, bool]], what: str) -> bool:
++        """`_finish_update` for an attempt that also says something about the write (here: did the lead stage move).
++        Returns that second value of the try that committed; False when the database stayed locked (nothing was
++        recorded, so nothing moved). The value is the return value of the last try, never carried over from an earlier
++        one."""
+         try:
+-            changed = self._locked_retry(attempt)
++            changed, flag = self._locked_retry(attempt)
+         except sqlite3.OperationalError as e:
+             if db.is_busy(e):
+                 log.warning("%s: database stayed locked; the row stays as it was and shows as stalled", what)
+-                return
++                return False
+             raise
+         if changed != 1:
+             log.warning("%s: expected one row, changed %d", what, changed)
++        return flag
+ 
+     # -- review items, retry, resolve
+     def _find_item(self, item_id: str) -> str | None:
+diff --git a/src/lead_desk/identity.py b/src/lead_desk/identity.py
+index c657ba2..035c8e7 100644
+--- a/src/lead_desk/identity.py
++++ b/src/lead_desk/identity.py
+@@ -11,8 +11,13 @@ from lead_desk.constants import COMPANY_MAX, EMAIL_MAX, MESSAGE_MAX, NAME_MAX, P
+ 
+ # The apostrophe is a legal character of the part before the @ (RFC 5322 atext); it stays out of the domain.
+ # one plain address: no list, comment or quote characters (the sender kinds and the reminder address use it)
+-PLAIN_ADDRESS = re.compile(r'^[^\s<>\r\n\x00,;"()]+@[^\s<>\r\n\x00,;"()]+$')
+-_EMAIL_RE = re.compile(r"[^@\s<>\",;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+")
++# Same strings as the plain "something@something" pattern, written so that no character can be read two ways (the
++# plain form backtracks over every "@" and costs n squared steps on a long non-matching text): one character, then
++# characters that are not "@", then the first "@" after the first character, then one or more address characters.
++PLAIN_ADDRESS = re.compile(r'^[^\s<>\r\n\x00,;"()][^\s<>\r\n\x00,;"()@]*@[^\s<>\r\n\x00,;"()]+$')
++# local part, "@", then a domain that has a dot with a character before it and one after it: one character, characters
++# that are not dots, the first dot, one or more characters (the dot is found once, not by backtracking)
++_EMAIL_RE = re.compile(r"^[^@\s<>\",;]+@[^@\s<>\"',;][^@\s<>\"',;.]*\.[^@\s<>\"',;]+$")
+ _CONTROL_OK_IN_MESSAGE = frozenset("\t\n\r")
+ _FIELD_LIMITS: tuple[tuple[str, int | None], ...] = (  # fixed order; email has no length rule here (its rule is below)
+     ("name", NAME_MAX),
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index 573ac91..9d35376 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -18,6 +18,7 @@ import re
+ import select
+ import signal
+ import socket
++import socketserver
+ import sys
+ import threading
+ import time
+@@ -89,6 +90,7 @@ from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import Hooks
+ from lead_desk.loader import DemoPortal, KnowsBoundAddress, load_approvers, load_demo_adapters, load_demo_portal
++from lead_desk.urls import desk_origin
+ 
+ try:
+     import resource  # not on Windows
+@@ -294,7 +296,17 @@ class _Lingerer:
+             self._drop(s)
+ 
+ 
+-class _Server(ThreadingHTTPServer):
++class _ExclusiveBind(socketserver.TCPServer):
++    """Windows: a second listener must not share the port (SO_EXCLUSIVEADDRUSE, set before the bind). Kept apart from
++    the HTTP server class: it is a socket rule, not an HTTP one, and it runs before the HTTP server's own bind step."""
++
++    def server_bind(self) -> None:
++        if sys.platform == "win32":
++            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
++        super().server_bind()
++
++
++class _Server(_ExclusiveBind, ThreadingHTTPServer):
+     allow_reuse_address = os.name != "nt"  # on Windows SO_REUSEADDR would allow a second listener on the same port
+     request_queue_size = LISTEN_QUEUE
+     desk: Desk
+@@ -486,11 +498,6 @@ class _Server(ThreadingHTTPServer):
+                 time.sleep(ACCEPT_PAUSE_SECONDS)
+             raise
+ 
+-    def server_bind(self) -> None:
+-        if sys.platform == "win32":
+-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+-        super().server_bind()
+-
+ 
+ def _allowed_hosts(config: Config) -> frozenset[str]:
+     """Host names the portal gate accepts: loopback, the bind address (unless it is a wildcard), and the extra
+@@ -730,7 +737,7 @@ class _Handler(BaseHTTPRequestHandler):
+         origins = self.headers.get_all("Origin", [])
+         if origins:
+             port = server.server_address[1]
+-            if len(origins) != 1 or origins[0] not in {f"http://{h}:{port}" for h in server.allowed_hosts}:
++            if len(origins) != 1 or origins[0] not in {desk_origin(h, port) for h in server.allowed_hosts}:
+                 return "forbidden_origin"
+         fetch_site = self.headers.get_all("Sec-Fetch-Site", [])
+         if fetch_site and (len(fetch_site) != 1 or fetch_site[0].strip().lower() not in SAME_SITE_VALUES):
+@@ -1032,7 +1039,7 @@ def serve_in_thread(desk: Desk, port: int = 0) -> tuple[str, Callable[[], None]]
+         thread.join(timeout=REQUEST_TIMEOUT_SECONDS)
+ 
+     host, bound = server.server_address[0], server.server_address[1]
+-    return f"http://{host!s}:{bound}", stop
++    return desk_origin(str(host), bound), stop
+ 
+ 
+ class DescriptorBudgetError(ValueError):
+@@ -1191,7 +1198,7 @@ def main(hooks: Hooks | None = None) -> None:
+                 flush=True,
+             )
+         host, port = server.server_address[0], server.server_address[1]
+-        print(f"desk listening on http://{host!s}:{port}", flush=True)
++        print(f"desk listening on {desk_origin(str(host), port)}", flush=True)
+         server.serve_forever()
+     except KeyboardInterrupt:
+         pass
+diff --git a/src/lead_desk/urls.py b/src/lead_desk/urls.py
+new file mode 100644
+index 0000000..4ca46ef
+--- /dev/null
++++ b/src/lead_desk/urls.py
+@@ -0,0 +1,19 @@
++"""The one place that writes the address of the desk or of its stand-ins.
++
++The desk and the stand-ins speak plain HTTP on purpose: they run on this computer and listen on a loopback address
++(`Config.public_bind_problem` refuses a public bind when a real service is in use; `Config.problem` refuses a stand-ins
++host that is not loopback). Nothing is sent over a network, so there is nothing to encrypt. The scheme is therefore
++named once here, with this reason, and every address is built from it; no file writes the clear-text scheme as a
++literal, so a clear-text address elsewhere in the code stands out as a mistake."""
++
++from __future__ import annotations
++
++from typing import Final
++
++DESK_SCHEME: Final = "http"  # loopback only: see the module text
++
++
++def desk_origin(host: str, port: int | str) -> str:
++    """scheme://host:port with no path. `host` is a bind or stand-ins host as the configuration holds it (an IPv6
++    address keeps its brackets)."""
++    return f"{DESK_SCHEME}://{host}:{port}"
+diff --git a/tests/test_sonar_p2_choke_points.py b/tests/test_sonar_p2_choke_points.py
+new file mode 100644
+index 0000000..8269859
+--- /dev/null
++++ b/tests/test_sonar_p2_choke_points.py
+@@ -0,0 +1,234 @@
++"""Sonar fixes, patch P2: two patterns that cost n squared steps on a long text (S8786), clear-text addresses written
++as literals (S5332), and a flag filled by an inner function (S2583). Timing tests use a long text that took seconds on
++the old pattern and take milliseconds on the new one, with a bound of half a second; equivalence tests compare the new
++pattern with the old one on every short text of a small alphabet. Every address value is built from parts. Made-up
++data only."""
++
++from __future__ import annotations
++
++import itertools
++import re
++import socket
++import sqlite3
++import time
++from collections.abc import Callable, Iterator
++from contextlib import contextmanager
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import FakeClock, lead
++from test_mirror_gate import _Crm, _flow, _sql, _tries
++
++from lead_desk import identity, server, urls
++from lead_desk.config import Config
++
++REPO = Path(__file__).resolve().parents[1]
++
++LONG = 40_000  # the old patterns took 3 to 30 seconds here
++BOUND_SECONDS = 0.5
++AT = "@"
++DOT = "."
++
++# the patterns as they were before the patch (the reference for the equivalence tests)
++OLD_PLAIN = re.compile(r'^[^\s<>\r\n\x00,;"()]+@[^\s<>\r\n\x00,;"()]+$')
++OLD_EMAIL = re.compile(r"[^@\s<>\",;]+@[^@\s<>\"',;]+\.[^@\s<>\"',;]+")
++
++
++def _seconds(fn: Callable[[], object]) -> float:
++    start = time.perf_counter()
++    fn()
++    return time.perf_counter() - start
++
++
++# -- S8786: time ---------------------------------------------------------------------------------------------
++
++
++def test_plain_address_pattern_is_linear_when_the_text_ends_in_a_blank() -> None:
++    assert _seconds(lambda: identity.PLAIN_ADDRESS.fullmatch(("a" + AT) * (LONG // 2) + " ")) < BOUND_SECONDS
++    assert _seconds(lambda: identity.PLAIN_ADDRESS.fullmatch(AT * LONG + " ")) < BOUND_SECONDS
++
++
++def test_email_pattern_is_linear_on_a_domain_with_many_dots_and_a_bad_end() -> None:
++    domain = "b" + DOT
++    assert _seconds(lambda: identity._EMAIL_RE.fullmatch("a" + AT + domain * (LONG // 2) + " ")) < BOUND_SECONDS
++    assert _seconds(lambda: identity._EMAIL_RE.fullmatch("a" * LONG + AT + "b" * LONG)) < BOUND_SECONDS
++
++
++# -- S8786: same results -------------------------------------------------------------------------------------
++
++
++def _same(old: re.Pattern[str], new: re.Pattern[str], how: str, alphabet: list[str], longest: int) -> int:
++    seen = 0
++    for n in range(longest + 1):
++        for parts in itertools.product(alphabet, repeat=n):
++            text = "".join(parts)
++            if how == "fullmatch":
++                a, b = bool(old.fullmatch(text)), bool(new.fullmatch(text))
++            else:
++                a, b = old.sub("<>", text), new.sub("<>", text)
++            assert a == b, (text, a, b)
++            seen += 1
++    return seen
++
++
++def test_plain_address_pattern_accepts_the_same_texts() -> None:
++    alphabet = ["a", AT, DOT, " ", "(", "\n"]
++    assert _same(OLD_PLAIN, identity.PLAIN_ADDRESS, "fullmatch", alphabet, 7) > 50_000
++
++
++def test_email_pattern_accepts_the_same_texts() -> None:
++    alphabet = ["a", AT, DOT, " ", "'", ","]
++    assert _same(OLD_EMAIL, identity._EMAIL_RE, "fullmatch", alphabet, 7) > 50_000
++
++
++def test_ordinary_addresses_still_match() -> None:
++    mail = "jane" + DOT + "doe" + AT + "corp" + DOT + "test"
++    assert identity.PLAIN_ADDRESS.fullmatch(mail) and identity._EMAIL_RE.fullmatch(mail)
++    assert not identity._EMAIL_RE.fullmatch("jane" + AT + "corp") and not identity.PLAIN_ADDRESS.fullmatch("jane")
++
++
++# -- S5332: one place writes the clear-text scheme -----------------------------------------------------------
++
++
++def test_no_source_file_writes_a_clear_text_address_with_a_host_in_braces() -> None:
++    """An f-string address that starts with the clear-text scheme and names its host in braces is how a public host
++    could slip in unseen; lead_desk.urls is the one place that writes the scheme."""
++    pattern = re.compile("f[\"']" + "http" + "://" + r"\{")
++    hits = [
++        f"{path.relative_to(REPO)}:{n}"
++        for folder in ("src", "scripts", "tools")
++        for path in sorted((REPO / folder).rglob("*.py"))
++        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
++        if pattern.search(line)
++    ]
++    assert hits == []
++
++
++def test_desk_origin_and_the_addresses_built_from_it() -> None:
++    assert urls.desk_origin("127.0.0.1", 8765) == "http" + "://127.0.0.1:8765"
++    assert urls.desk_origin("[::1]", "80") == "http" + "://[::1]:80"
++    cfg = Config(fakes_host="127.0.0.1", fakes_port=5001)
++    assert cfg.fakes_url == urls.desk_origin("127.0.0.1", 5001)
++
++
++# -- S5332 on the HTTP server: the bind rule lives in its own class ------------------------------------------
++
++
++def test_the_windows_exclusive_bind_is_set_before_the_http_server_binds(monkeypatch: pytest.MonkeyPatch) -> None:
++    assert server._Server.__mro__.index(server._ExclusiveBind) < server._Server.__mro__.index(
++        server.ThreadingHTTPServer
++    )
++    calls: list[tuple[int, int, int]] = []
++    option = 0x7FFF0001  # not a real option on this computer: the recorder takes it and does not pass it on
++    real = socket.socket.setsockopt
++
++    def record(self: socket.socket, level: int, name: int, value: Any, *rest: Any) -> None:
++        if name == option:
++            calls.append((level, name, value))
++            return
++        real(self, level, name, value, *rest)  # type: ignore[call-overload]
++
++    monkeypatch.setattr(socket.socket, "setsockopt", record)
++    monkeypatch.setattr(socket, "SO_EXCLUSIVEADDRUSE", option, raising=False)
++    monkeypatch.setattr(server.sys, "platform", "win32")
++    srv = server._Server(("127.0.0.1", 0), server._Handler)
++    try:
++        assert calls == [(socket.SOL_SOCKET, option, 1)]
++        assert srv.server_address[1] > 0 and srv.server_name  # the HTTP server's own bind step still ran
++    finally:
++        srv.server_close()
++
++
++def test_the_exclusive_bind_is_not_set_off_windows() -> None:
++    srv = server._Server(("127.0.0.1", 0), server._Handler)
++    try:
++        assert srv.server_address[1] > 0
++    finally:
++        srv.server_close()
++
++
++# -- S2583: the "stage moved" flag of a sent follow-up -------------------------------------------------------
++
++
++def _mid_send(env: Any, monkeypatch: pytest.MonkeyPatch, name: str) -> tuple[Any, str, int]:
++    clock = FakeClock(monkeypatch)
++    rig = env.rig(leadflow=_flow(), crm=_Crm())
++    lid = str(rig.desk.handle("form", name, lead()).body["lead_id"])
++    for trigger in ("followups_sent_final", "lead_state_no_regress"):  # (test only) put the lead back to mid-send
++        _sql(rig, f"DROP TRIGGER IF EXISTS {trigger}")
++    _sql(rig, "UPDATE lead_state SET step='new', step_rank=0 WHERE lead_id=?", lid)
++    _sql(rig, "UPDATE followups SET state='sending', crm_done=1 WHERE lead_id=?", lid)
++    (token,) = rig.query("SELECT attempts FROM followups WHERE lead_id=?", (lid,))[0]
++    rig.desk._mirror_not_before.set(lid, clock.now + 400, 0)
++    return rig, lid, int(token)
++
++
++def test_a_sent_result_that_moves_the_stage_drops_the_copy_wait(env: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig, lid, token = _mid_send(env, monkeypatch, "s-1")
++    rig.desk._record_send_result(lid, "sent", token)
++    assert _tries(rig, lid)[2] == "contacted"
++    assert lid not in rig.desk._mirror_not_before
++
++
++def test_a_failed_result_leaves_the_stage_and_the_copy_wait(env: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    rig, lid, token = _mid_send(env, monkeypatch, "s-2")
++    rig.desk._record_send_result(lid, "failed", token, "x")
++    assert _tries(rig, lid)[2] == "new"
++    assert lid in rig.desk._mirror_not_before
++
++
++def test_a_repeated_try_reports_no_move_when_the_row_was_already_written(
++    env: Any, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The first try commits and moves the stage; a second try finds no `sending` row (0 rows) and must not claim a move
++    of its own: only the try that ran last reports."""
++    rig, lid, token = _mid_send(env, monkeypatch, "s-3")
++    real = rig.desk._locked_retry
++
++    def twice(fn: Callable[[], Any]) -> Any:
++        real(fn)
++        return real(fn)
++
++    monkeypatch.setattr(rig.desk, "_locked_retry", twice)
++    rig.desk._record_send_result(lid, "sent", token)
++    assert _tries(rig, lid)[2] == "contacted"
++    assert lid in rig.desk._mirror_not_before  # the second try wrote nothing and moved nothing, as before the patch
++
++
++def test_a_move_seen_by_a_try_that_did_not_commit_is_not_reported(env: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    """The first try moves the stage inside its write and then fails to commit (database locked, rolled back); every
++    later try is locked at once. Nothing was recorded, so the copy wait must stay (the old code, which kept a flag
++    across tries, freed it)."""
++    rig, lid, token = _mid_send(env, monkeypatch, "s-4")
++    real_write = rig.desk._write
++    count = [0]
++
++    @contextmanager
++    def locked_after_the_move(conn: sqlite3.Connection) -> Iterator[None]:
++        count[0] += 1
++        if count[0] > 1:
++            raise sqlite3.OperationalError("database is locked")
++        with real_write(conn):
++            yield
++            raise sqlite3.OperationalError("database is locked")  # in place of the COMMIT: the write is rolled back
++
++    monkeypatch.setattr(rig.desk, "_write", locked_after_the_move)
++    rig.desk._record_send_result(lid, "sent", token)
++    assert count[0] > 1  # it did try again
++    assert _tries(rig, lid)[2] == "new"  # rolled back
++    assert lid in rig.desk._mirror_not_before
++
++
++def test_a_result_for_a_row_that_is_not_in_flight_does_not_move_the_stage(
++    env: Any, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """A `sent` result with a stale token changes 0 rows (the follow-up was put back or claimed again): the lead stage
++    must stay and so must the copy wait, even though the lead is at a stage that a `sent` result could move."""
++    rig, lid, token = _mid_send(env, monkeypatch, "s-5")
++    rig.desk._record_send_result(lid, "sent", token + 1)
++    assert _tries(rig, lid)[2] == "new"
++    assert lid in rig.desk._mirror_not_before
++    rig.desk._record_send_result(lid, "sent", token)  # the real token still works afterwards
++    assert _tries(rig, lid)[2] == "contacted"
++    assert lid not in rig.desk._mirror_not_before

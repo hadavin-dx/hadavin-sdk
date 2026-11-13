@@ -1,0 +1,3 @@
+gitleaks 8.30.1 (/tmp/work/gl/gitleaks), DPLD_REQUIRE_SCAN=1, GITLEAKS_BIN set
+all five patches (P1v2, main, P3, both optionals): tests/test_hygiene.py + tests/test_codeant_hygiene.py: 45 passed
+main alone: tests/test_hygiene.py: 15 passed (scan not skipped: DPLD_REQUIRE_SCAN makes a missing program fail)

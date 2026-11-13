@@ -1,0 +1,7 @@
+drop rc == 1 -> 1 failed, 4 passed, 9 deselected in 1.08s
+drop state == sent -> 1 failed, 4 passed, 9 deselected in 0.86s
+never moved -> 3 failed, 2 passed, 9 deselected in 0.77s
+busy path reports move -> 1 failed, 4 passed, 9 deselected in 0.77s
+always report move -> 3 failed, 2 passed, 9 deselected in 0.89s
+ignore _mark_contacted -> 3 failed, 2 passed, 9 deselected in 0.77s
+_ADDRESS mutants (measured earlier on the full tree, same pattern text as regex-optional): no look-behind -> killed; "@" allowed in the first-char-less class -> killed; "@" back into the repeated class -> SURVIVES (same matches, same speed; differs only for the static analyser, so no runtime test can kill it).

@@ -1,0 +1,26 @@
+main alone: OK
+main + P1 v2 + P3, order 1 M 3: OK
+main + P1 v2 + P3, order 1 3 M: OK
+main + P1 v2 + P3, order M 1 3: OK
+main + P1 v2 + P3, order M 3 1: OK
+main + P1 v2 + P3, order 3 1 M: OK
+main + P1 v2 + P3, order 3 M 1: OK
+order M A (A=regex optional, B=feed optional): OK
+order M B (A=regex optional, B=feed optional): OK
+order M A B (A=regex optional, B=feed optional): OK
+order M B A (A=regex optional, B=feed optional): OK
+order 1 M 3 A B (A=regex optional, B=feed optional): OK
+error: patch failed: scripts/feed.py:63
+error: scripts/feed.py: patch does not apply
+order B A M 1 3 (A=regex optional, B=feed optional): FAIL at B
+order 3 M B 1 A (A=regex optional, B=feed optional): OK
+--- all five applied: gates
+All checks passed!
+152 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
