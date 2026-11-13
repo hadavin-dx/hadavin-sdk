@@ -27,3 +27,4 @@
 01:16Z no head moved; plants past estimate; batches in gates
 01:24Z plants 5 passed; slots 3/3 busy, 1 waiting; batches 7 and 8 not reported
 01:31Z part 6 batch 7 landed 41c84695; round 7 starting; cadence breach admitted
+01:35Z part 6 r7 design review: 0 Blocker 3 Major; codebase review and runner running

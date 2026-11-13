@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:35Z (07:05 IST) / Part 6 round 7: design reviewer back (0 Blocker, 3 Major); codebase reviewer and runner still running
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 round 7 is NOT clean so far: design reviewer (code read only, nothing run) found 3 Major: (1) the banner fails open when the app is built directly or changed with replace (the "overridden" default means "none" instead of "unknown"); (2) hold_run_ids is not in the recorded overrides and a new build parameter would be silently missed; (3) mutant table still has rows expecting Python's own crash text (B13, B54), J23 not split, six shared-assertion groups. Minors: chained tracked symlinks can leave the copy (guard), seven tests pass on old code, stale wording. Saved: handover/reviews/PD-banner/pdbanner-41c84695-design-r7.md.
+- The codebase reviewer and the runner have not reported. Ledger rows follow after the codebase report. Part 2 batch 8 and Q8c-1 builder not reported; Q8c-1 full suite still queued. No lane head moved (pd-bind 07de0091, q8c1-b16 37cd5157; pd-banner 41c84695).
+
+**LEAD ACTIONS**: none.
+
+**LIVE ITEMS** (5 agents: abb52410 Part 2 batch 8; a35e15e9 Q8c-1; a389dd75 Part 6 runner; a7507175 Part 6 codebase reviewer; design reviewer closed)
+- Part 6 round 7: runner on 41c84695 waits for heavy slots (all 3 were busy at 01:24Z).
+- Part 2 batch 8 box to about 01:49Z.
+
+**ROUNDS (WHY)**: Part 6 round 7 (mode-safety, no cap) not clean, round 8 needed after batch 8. Part 2 round 8 waits for batch 8. Q8c-1 round 17 waits for the push.
+
+**FINISHED SINCE LAST BLOCK (01:31Z)**: Part 6 round 7 design review report saved.
+
 ## 01:31Z (07:01 IST) / Part 6 batch 7 landed (head 41c84695); runner and 2 reviewers starting; my 01:24Z block was 7 min old (cadence breach, admitted)
 
 **FAILED / UNCERTAIN FIRST**
