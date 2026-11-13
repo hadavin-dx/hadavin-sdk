@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:18Z / 17:48 IST  HEARTBEAT 33 (N and O at about 62 percent)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| N | Evidence runner: full suite once -v, Python 3.13.18, BASE f3c39cf8 | cross-version result | 12:10Z / 17:40 | at 12:18Z: 2396 passed, 0 failed, 39 skipped, 0 errors (about 62 percent of 3883); ends about 12:26Z (about 8 min left); hard stop 12:55Z (cap 13:00Z) | first try | running | on its report: start P |
+| O | Evidence runner: same on STACK (f3c39cf8 + claims patch) | cross-version result for the stack | 12:10Z / 17:40 | at 12:18Z: 2401 passed, 0 failed, 39 skipped, 0 errors (about 62 percent); ends about 12:26Z | first try | running | on its report: start P |
+| P | NOT STARTED: read-only 3.12 vs 3.13 per-test diff | which tests behave differently | when N and O end | about 10 min | round 0 | waiting for N and O | start at their reports |
+| others | all earlier agents | - | - | - | - | closed | none |
+
+ASK: heartbeat 31 asks 1-3 stand, defaults unchanged.
+RAW: no failure or error on either so far; the skip counts (39 each) are as expected at this point of the run.
+
 ## 2026-11-13 12:12Z / 17:42 IST  HEARTBEAT 32 (N and O progress)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
