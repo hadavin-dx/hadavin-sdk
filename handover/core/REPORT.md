@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+19:54Z. R6 builder a92ad324: no hand-back yet, NO RESULTS.md yet; newest checkpoint note is still no. 2 (18:18 builder clock, about 35 min old, so it missed the 30-minute rule): I have messaged it now to write a checkpoint with the current failing tests and their causes, and to write RESULTS.md even if time runs out. Latest files in out/R6: the three r6 patches, batch3.log, failbefore1/2.log (details in my 19:48Z block); batch3 end result not seen. Running agents: 1. Next: on hand-back, read RESULTS.md and the raw logs, then ONE EV6 evidence runner alone on the machine, then fresh reviewer and a complete mail-path pass. ASK: none.
+
+## STATUS (core lead)
 19:48Z. R6 builder a92ad324 is near its end: the three R6 patches already exist in out/R6 (r6, r6-lf, r5-to-r6 delta; RESULTS.md not yet seen) and it is on its 2nd fail-before run. Raw logs I read (builder-run): batch3 was still in progress at about 50 percent with 3 F marks (not finished when I looked); failbefore1 (new tests on r5 code): 25 failed, 159 passed (so some new tests are regression pins that pass on old code; list pending in RESULTS); failbefore2 finished: 2 failed, 349 passed in 108 s: failed tests/test_load_tools.py::test_driver_failure_still_writes_a_log_line and tests/test_r5_refusals.py::test_a_reply_is_read_up_to_the_limit_and_one_byte_more_is_refused, but I cannot tell which log is which run from the file names alone, so I read neither as a final verdict. No result is mine to claim until EV6. Running agents: 1. ASK: none.
 
 ## STATUS (core lead)
