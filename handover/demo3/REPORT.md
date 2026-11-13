@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:25Z / 16:55 IST  HEARTBEAT 18
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| F | Evidence runner: PR #14 head 6b1fe49 full suite once -v + F7/new cases (job 2 done 11:09Z) | evidence for the previous head | 11:09Z / 16:39 | at 11:24Z: 2736 passed, 0 FAILED, 184 skipped (about 79 percent); ends about 11:31Z / 17:01 (the 170-second test file is running now); hard stop 11:50Z | run 1 of 1 | running (pytest alive, 946 s elapsed) | on F's report: start G at once, then send you the F numbers |
+| G | NOT STARTED: path tests only on c14a514 | second review-fix delta | starts when F ends | about 5-10 min | round 0 | waiting for F | start at F's report |
+| others | A, B, C2, D, E | closed | - | - | - | closed | none |
+
+ASK: none.
+Still no failure in F's log (same pace and counts as E's run at the same point).
+
 ## 2026-11-13 11:20Z / 16:50 IST  HEARTBEAT 17
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
