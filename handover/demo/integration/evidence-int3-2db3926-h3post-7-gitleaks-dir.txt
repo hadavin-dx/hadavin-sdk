@@ -1,0 +1,4 @@
+# bash -c rm -rf /tmp/work/h3arch && mkdir /tmp/work/h3arch && git -C /tmp/work/h3 archive HEAD | tar -x -C /tmp/work/h3arch && cd /tmp/work/h3arch && /tmp/work/gl/gitleaks dir . --no-banner 2>&1 | tail -5
+2026-11-13T01:41:26Z
+[90m1:41AM[0m [32mINF[0m [1mscanned ~2969154 bytes (2.97 MB) in 288ms[0m
+[90m1:41AM[0m [32mINF[0m [1mno leaks found[0m

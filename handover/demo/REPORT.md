@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:42Z / 07:12 IST - Q1 VERDICT: pr-3-tests 2db3926 = GREEN IN CHUNKS (3138 passed, 3 skipped, 0 failed) + lints/scans/restart x5 all clean (node-off pass finishing); PR-TEXT FINDINGS FOR THE LEAD (more core code changed than the approval lists; #4 has 142 files); Semgrep v4 + body v5 in progress
+FAILED / UNCERTAIN first:
+1. **PR TEXTS #2-#4 (verifier D-PR, evidence VERIFY.md 61 rows): things only the LEAD can decide.** (a) MORE CORE CODE CHANGED than your approval lists cover: batch 1 (2ce1f98) changed src config.py, crm_hubspot.py, live_claude.py, portal_api.py, smtp_outbox.py, smtp_provider.py, desk.py (functools.partial), and portal.js, overview.js, log.js; batch 3's desk.py also adds a longer CRM-copy wait (, ) and log.js changed again: none of these is on the approved lists (ORDERS ~L100/L110/L117/L120): the proposed #4 text lists them as '[UNVERIFIED: approval]': approve (name them) or tell me to remove them from the text; (b)  is NOT behaviour-free: make_server now passes the real address to a demo extension that has  (only demo_only/portal_demo.py has it); (c) file counts: #2 86, #3 39, #4 142 files (93 under tests/): the current texts say each PR has 100 files or fewer: FALSE for #4 (whether the review tool still reviews all 142 files: [UNVERIFIED]); the PRs were opened at 17:36-17:37Z (20:16Z is when #2/#3 were last updated); (d) the final tree differs from #1 (initial-code 43110e7, closed without merging) in 95 files (9 settings files from main + the batches): the current texts' 'final tree is identical to #1' is FALSE (all three texts). The proposed replacement descriptions are in pr-text/proposed/ (pushed 6cc39278): a second fresh reviewer (comprehension) is checking them against the real diff now.
+2. Q1 chunked run is COMPLETE: all 10 chunks exit 0: **3138 passed, 3 skipped, 0 failed, 0 errors** on pr-3-tests 2db3926 (INT-3-2db3926.md + 10 evidence files, pushed). The 3 skips are expected (n8n file-permission test as root; load-measurement test; Windows-only stall test). CAVEAT: chunked (separate pytest processes; cross-file process-wide state not exercised); both un-chunked attempts (1909 and 322 tests) were killed by container restarts with 0 failures: there is no un-chunked pass of 2db3926. Post-chunk checks on the same tree: ruff check clean; ruff format clean; mypy linux and win32: no issues in 26 files; bandit -ll exit 0; hygiene + test_gitleaks_exceptions with gitleaks and the scan required: 59 passed; gitleaks dir (clean ) no leaks; gitleaks git no leaks; restart test x5 alone: 5 x 1 passed in about 2.6 s each (the poll fix of the hang guard makes it faster than the old ~10.7 s); node-off pass of the 8 browser files: finishing now.
+3. Semgrep PR: patch v4 (semgrep-on-2db3926-v4.patch, sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9) corrects a FALSE sentence of v3: with --strict a Python/JS file with a syntax error gives exit 3 and the job goes RED (exit 3 = tool error, not retried); without --strict exit 0. On today's folders (45 files) a made-up local rule ran exit 0 with and without --strict, ~100% parsed (not a registry-pack result). PR body v4: confirming review: 0 Blocker, 1 Major (a sha typo in a claims row), nits: the drafter is writing v5. Also the lead's own scan on 0841f36 had no --strict.
+4. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13.
+READY TO APPLY NOW: Semgrep patch v4 (own PR; sha above). Nothing else pending on pr-3-tests.
+NEEDS FROM LEAD: (1) approve or remove the extra core changes listed in 1(a) for the PR #4 text; (2) tell me if the un-chunked 22-minute pass is still wanted (restarts killed it twice) or chunked is the final gate; (3) the 'stack head at 0841f36' wording in the Semgrep docs/workflow comment (reword for readers of main?).
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| Q1 post-step shell | node-off pass (last step) | 01:41 | finishing | h3post-10 |
+| D-SG (opus) | Semgrep PR body v5 | 01:42 | running | semgrep-pr-body-v5.md |
+| rev PRtext2 (sonnet) | second review of the proposed #2-#4 descriptions vs the real diff | 01:42 | running | report |
+| Q4 builder | dry-run checks of the real-run scripts | 01:27 | running | real-run/DRY-RUN-CHECKS.md |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 3, shells 2, containers 0, heavy pytest 1, load ~1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 on 2db3926 | gate Q1 | chunked 3138 passed, 0 failed, post checks clean | none | YES (chunked) unless the lead wants un-chunked | verdict sent |
+| Semgrep PR text | body v5 | R3: 0B/1M(typo)/nits | typo + nits | no | one more fresh read if the lead wants |
+| PR #2-#4 texts | proposed -> review 2 | 3 Blockers in the current texts | replace after the lead's approvals | no | lead pastes |
+TABLE 3 - FINISHED SINCE LAST BLOCK (01:36Z)
+| item | result |
+|---|---|
+| Q1 chunked run + post checks | green (see 2) |
+| D-PR verified descriptions | done: pr2/pr3/pr4-user-description.md + VERIFY.md (needs the lead's approvals) |
+| Semgrep v4 patch + body v4 + review | v4 verified by me (diff vs v3 = 2 hunks; apply OK); body review 0B/1M/nits |
+| evidence-sg-22 (my real-folders --strict run) | exit 0, 45 files, ~100% parsed (local rule) |
+
 ## 2026-11-13 01:40Z / 07:10 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0

@@ -1,0 +1,4 @@
+# /tmp/work/int2-venv/bin/python -u -m pytest -q -p no:cacheprovider -rs tests/test_hygiene.py tests/test_gitleaks_exceptions.py
+2026-11-13T01:41:00Z
+...........................................................              [100%]
+59 passed in 26.24s

@@ -1,0 +1,5 @@
+# bash -c cd /tmp/work/h3 && /tmp/work/gl/gitleaks git . --no-banner 2>&1 | tail -5
+2026-11-13T01:41:27Z
+[90m1:41AM[0m [32mINF[0m [1m20 commits scanned.[0m
+[90m1:41AM[0m [32mINF[0m [1mscanned ~5668933 bytes (5.67 MB) in 729ms[0m
+[90m1:41AM[0m [32mINF[0m [1mno leaks found[0m

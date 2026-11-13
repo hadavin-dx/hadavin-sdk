@@ -1,0 +1,3 @@
+# env PATH=/usr/bin:/bin /tmp/work/int2-venv/bin/python -u -m pytest -q -p no:cacheprovider -rs tests/test_mode_safety.py tests/test_portal_browser.py tests/test_portal_lead_pages.py tests/test_portal_mode.py tests/test_portal_wording_and_masking.py tests/test_portal_layout.py tests/test_portal_look.py tests/test_stage_confirm_browser.py
+2026-11-13T01:41:43Z
+..............s....................................

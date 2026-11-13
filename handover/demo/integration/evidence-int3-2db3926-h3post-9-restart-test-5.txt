@@ -1,0 +1,9 @@
+# /tmp/work/int2-venv/bin/python -u -m pytest -q -p no:cacheprovider --durations=3 tests/test_portal_api.py::test_restart_same_port_portal_open
+2026-11-13T01:41:40Z
+.                                                                        [100%]
+============================= slowest 3 durations ==============================
+2.19s call     tests/test_portal_api.py::test_restart_same_port_portal_open
+0.34s teardown tests/test_portal_api.py::test_restart_same_port_portal_open
+
+(1 durations < 0.005s hidden.  Use -vv to show these durations.)
+1 passed in 2.58s
