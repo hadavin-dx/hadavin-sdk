@@ -1,0 +1,30 @@
+# the chmod-000 pid file test run as user 65534 (not root), copy of the r5 tree, then the same copy with the r4 reset.sh
+Fri Nov 13 14:53:26 UTC 2026
+## r5 reset.sh sha256 00e9c1a6c166f1bc
+.                                                                        [100%]
+1 passed, 68 deselected in 1.24s
+EXIT_CODE=0
+## r4 reset.sh sha256 197af0d38645fd12
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_pid_file_without_read_permission_is_stale_and_does_not_stop_the_reset _
+
+book = PosixPath('/home/user/work/priv/b5e-tmp/nb/data/reset-guard-bdqs2zzx/desk.sqlite3')
+
+    @pytest.mark.skipif(os.geteuid() == 0, reason="the super-user can read any file; a normal user runs this")
+    def test_a_pid_file_without_read_permission_is_stale_and_does_not_stop_the_reset(book: Path) -> None:
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text("123", encoding="utf-8")
+        pidfile.chmod(0)
+        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+>       assert done.returncode == 0 and not pidfile.exists(), (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (1, '', 'cat: /home/user/work/priv/b5e-tmp/nb/data/reset-guard-bdqs2zzx/desk.pid: Permission denied
+E         ')
+E       assert (1 == 0)
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/priv/b5e-tmp/nb/scripts/reset.sh'], returncode=1, stdout='', stderr='cat: /home/user/work/priv/b5e-tmp/nb/data/reset-guard-bdqs2zzx/desk.pid: Permission denied\n').returncode
+
+tests/test_reset_ps_width.py:424: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_without_read_permission_is_stale_and_does_not_stop_the_reset
+1 failed, 68 deselected in 0.17s
+EXIT_CODE=1

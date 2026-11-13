@@ -1,2 +1,4 @@
 start 2026-11-13T14:35:23Z
 14:44:44 serial at ~53%
+14:54:26 serial at ~78%
+14:56:31 serial done rc0; xdist start

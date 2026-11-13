@@ -1,0 +1,42 @@
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words8]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words9]
+FAILED tests/test_reset_ps_width.py::test_a_shell_that_has_the_marker_in_a_quoted_string_is_not_stopped
+FAILED tests/test_reset_ps_width.py::test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[desk.pid]
+FAILED tests/test_reset_ps_width.py::test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[fakes.pid]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[python-tools/bin/less -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_real_desk_and_demo_server_command_lines_are_still_stopped[desk.pid-lead_desk.server-words3-Python]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[my python/bin/less -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[bash -c python -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[my tools/venv/bin/python3.12 -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Program Files\\Python312\\python.exe" -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\Program Files\\Python312\\python.exe -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\venv\\python.exe -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[PYTHON.EXE -m LEAD_DESK.SERVER-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[notepad lead_desk.server.py-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server.py-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.serverx-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m xlead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -mlead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\python-tools\\less.exe -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[cmd /c echo python -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[powershell -Command "python -m demo_only.fakes_server.py"-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[1-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[007-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[0-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[abc-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12 34-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12\n34-False]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[named-pipe]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[socket-file]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_folder_is_refused_with_exit_7_and_nothing_is_deleted
+FAILED tests/test_port_helpers.py::test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest
+FAILED tests/test_port_helpers.py::test_free_port_never_returns_a_number_that_held_port_holds
+FAILED tests/test_port_helpers.py::test_held_port_never_returns_a_number_that_free_port_gave_away
+FAILED tests/test_port_helpers.py::test_free_port_stops_with_a_clear_error_when_every_answer_is_held

@@ -3,3 +3,9 @@ B5e 14:45 base applied, designing
 B5e 14:41Z reset.sh/ps1/support/conftest edited; rewriting tests
 B5e 14:48Z full serial started in bg (b5e-full.log); building r4 tree for fails-before
 B5e 14:51Z full serial RE-started (tree changed: new test_port_helpers.py); fails-before rerun next
+B5e 14:53Z fails-before logs done; xdist 20 runs started; full serial running
+B5e 14:53Z README exit 7 documented; full + xdist RESTARTED on final tree; do not edit tree
+B5e 14:54Z README fixed to a new paragraph (applies on claims stack); full + xdist RESTARTED on FINAL tree 13da38faed04d21d58af2e9eccc655509d8317bc
+B5e 14:55Z FINAL tree ff57d806a5ab7fc48b513ac4a3e02aa6b19cfd87: full + xdist started (restart #3 after bash-wrapper test fix); fails-before logs redone on final tests
+B5e 14:56Z FINAL tree ede143b58e41528384386efb9867a88c4901dd82: full + xdist started (restart #4, README wrapped)
+B5e checkpoint: code and tests done; waiting on full serial (b5e-full.log) and 20x xdist (b5e-xdist.log); notes to write after results

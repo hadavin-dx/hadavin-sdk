@@ -2,4 +2,289 @@
 # expected: all 8 fail (the original script stops or refuses wrongly)
 sha256 reset.sh: a22341d86fd7ce7776fa7891f2571b416b0e829854384548d5ab306a82bdfe2b  base: a22341d86fd7ce7776fa7891f2571b416b0e829854384548d5ab306a82bdfe2b
 Fri Nov 13 14:52:58 UTC 2026
-FFFF
+FFFFFFFF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words0] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-1q79z1cv/desk.sqlite3')
+pid_file = 'desk.pid', words = ['vim', 'lead_desk.server.py']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words1] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-3_qyk5ts/desk.sqlite3')
+pid_file = 'desk.pid', words = ['-m', 'lead_desk.server.py']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words2] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-idff6ly7/desk.sqlite3')
+pid_file = 'desk.pid', words = ['-m', 'lead_desk.serverx']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words3] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-8nfj0is0/desk.sqlite3')
+pid_file = 'desk.pid', words = ['-m', 'xlead_desk.server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words4] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-bu92x40g/desk.sqlite3')
+pid_file = 'desk.pid', words = ['--x=lead_desk.server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words5] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-7tcmew7q/desk.sqlite3')
+pid_file = 'desk.pid', words = ['lead_desk.server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[fakes.pid-words6] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-11f6zze1/desk.sqlite3')
+pid_file = 'fakes.pid', words = ['demo_only.fakes_server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[fakes.pid-words7] _
+
+book = PosixPath('/home/user/work/b5e-old3/data/reset-guard-vw1lg4z1/desk.sqlite3')
+pid_file = 'fakes.pid'
+words = ['-m', 'lead_desk.server.py', 'demo_only.fakes_server.py']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-m", "xlead_desk.server"]),
+            ("desk.pid", ["--x=lead_desk.server"]),
+            ("desk.pid", ["lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["demo_only.fakes_server"]),
+            ("fakes.pid", ["-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        child = _ready_sleeper(book.parent / "ready", *words)
+        pidfile = book.parent / pid_file
+        try:
+            pidfile.write_text(str(child.pid), encoding="utf-8")
+            done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
+            still_running = child.poll() is None
+        finally:
+            _end(child)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:261: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words0]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words1]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words2]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words3]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words4]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words5]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[fakes.pid-words6]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[fakes.pid-words7]
+8 failed in 10.21s
+EXIT_CODE=1

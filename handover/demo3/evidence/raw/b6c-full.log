@@ -81,4 +81,7 @@ BrokenPipeError: [Errno 32] Broken pipe
 ........................................................................ [ 64%]
 .ssssssssssssssss....................................................... [ 66%]
 ........................................................................ [ 68%]
-..ssssssssssssssssssss..........ss
+..ssssssssssssssssssss..........sssssssssssssssssssssss......sssssss.sss [ 70%]
+ssssssssss..sss........................................................s [ 71%]
+sssssssssssssssssssssssss........................................sssssss [ 73%]
+ssssssssssssssssssssssssss..........ss..s......................
