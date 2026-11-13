@@ -1,0 +1,5 @@
+ok  KILLED       B12 the lists get a default again (nothing real unless said)  [test_pin_the_lists_are_required_so_an_unchecked_call_cannot_]
+ok  KILLED       R12B1 the seal does not compare the stage text  [test_a_stage_changed_after_build_reads_unconfirmed]
+ok  KILLED       R12C1 a toolbox without an attribute dictionary is read as empty  [test_a_toolbox_without_an_attribute_dictionary_is_an_error_t]
+ok  KILLED       R12C2 the tool entry of an agent is not required to be a mapping  [test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_erro]
+4 of 4 good; problems: []

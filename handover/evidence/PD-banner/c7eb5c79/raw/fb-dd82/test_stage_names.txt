@@ -1,0 +1,11 @@
+...................................F.................................... [ 74%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the old stage word is still used as a stage:
+      tests/test_mode_banner.py:3597 [value after a stage name] app = _sealed_app(tmp_path, f"stage-{stage}")
+      tests/test_mode_banner.py:3598 [value after a stage name] object.__setattr__(app.config, "environment", stage)
+    assert not ['tests/test_mode_banner.py:3597 [value after a stage name] app = _sealed_app(tmp_path, f"stage-{stage}")', 'tests/test_mode_banner.py:3598 [value after a stage name] object.__setattr__(app.config, "environment", stage)']
+/home/user/build/ER-pdbanner12-dd82/tests/test_stage_names.py:545: AssertionError: the old stage word is still used as a stage:
+=========================== short test summary info ============================
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+1 failed, 96 passed in 3.63s

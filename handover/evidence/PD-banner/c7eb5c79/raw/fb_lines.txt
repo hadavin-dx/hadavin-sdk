@@ -1,0 +1,58 @@
+=== 06ed first failing lines
+/home/user/build/ER-pdbanner12-06ed/tests/test_banner_mutant_table.py:16: AssertionError: assert [('B25 a sour...und 0 times')] == []
+/home/user/build/ER-pdbanner12-06ed/tests/test_banner_mutant_table.py:299: AssertionError: the CHANGELOG does not say that the table has 320 rows
+/home/user/build/ER-pdbanner12-06ed/tests/test_changelog_numbers.py:72: AssertionError: the decision text is not in the CHANGELOG
+/home/user/build/ER-pdbanner12-06ed/tests/test_changelog_numbers.py:87: AssertionError: assert None
+/home/user/build/ER-pdbanner12-06ed/tests/test_mode_banner.py:3600: AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+/home/user/build/ER-pdbanner12-06ed/tests/test_stage_names.py:545: AssertionError: the old stage word is still used as a stage:
+=== dd82 first failing lines
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:16: AssertionError: assert [('J1b an unc... times'), ...] == []
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:299: AssertionError: the CHANGELOG does not say that the table has 320 rows
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:452: AssertionError: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: '                or sealed is _UNREADABLE\n'
+/home/user/build/ER-pdbanner12-dd82/tests/test_changelog_numbers.py:32: AssertionError: the CHANGELOG does not state a number of masker passes
+/home/user/build/ER-pdbanner12-dd82/tests/test_changelog_numbers.py:45: AssertionError: assert None
+/home/user/build/ER-pdbanner12-dd82/tests/test_changelog_numbers.py:62: AssertionError: the CHANGELOG does not say 'Three listings of the tracked files'
+/home/user/build/ER-pdbanner12-dd82/tests/test_changelog_numbers.py:87: AssertionError: assert None
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2234: AssertionError: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1'
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2234: AssertionError: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2269: AssertionError: a 12 character token stayed
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2277: AssertionError: assert 'fatal: autho...1a1a1a1a1a1a1' == 'fatal: autho...den> <hidden>'
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2416: AssertionError: a bare OSError came out of the copy: OSError(22, 'Invalid argument')
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2436: AssertionError: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root', 'src/pkg/loader.py: symlink-in-product-root
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2449: AssertionError: an exempt file behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root']
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2461: AssertionError: the marker behind a link was read through it: []
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2480: AssertionError: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links cannot be followed)', 'docs/link41: symlink-loop (a loop of links cannot be follo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2211: AssertionError: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text': 'Every record here is made-up demo data.', 'standins': '', 'real': [], 'stand_ins'
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2468: AssertionError: painted a forged text 'The mode of this system could not be confirmed. Treat everything here as real. Every record here is made-up demo data.': [{'cls': 'mode-banner__tag', 'te
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2729: AssertionError: Regex pattern did not match.
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2748: AssertionError: an app of plain parts was deep-copied
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2828: AssertionError: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2907: AssertionError: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be conf
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3006: AssertionError: a deleted tool spec left a made-up banner
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3017: AssertionError: a deleted tool spec was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3031: AssertionError: a host added after build left a made-up banner
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3046: AssertionError: cleared sources left a made-up banner
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3059: AssertionError: a replaced config source was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3081: AssertionError: a function replaced: the banner stayed made-up
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3092: AssertionError: a replaced contract was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3127: AssertionError: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3154: AssertionError: the outer catch-all did not warn: ['mode banner: the app could not be read']
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:444: AssertionError: painted demo with overridden missing
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3226: AssertionError: the page painted demo with overridden missing
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3265: AssertionError: config.systems['fixture-records'] is not among the connected parts
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3288: AssertionError: config.systems was missing and the parts were read all the same
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3311: AssertionError: assert 'demo' == 'unconfirmed'
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3328: AssertionError: () was accepted as the names of the overrides
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3353: AssertionError: assert 'demo' == 'unconfirmed'
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3471: AssertionError: a tool spec without hosts: nothing was logged at warning level
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3515: AssertionError: the error was logged 2 times for two banners (one expected)
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3535: AssertionError: a replaced agent was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3547: AssertionError: a replaced principal was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3559: AssertionError: a replaced chain was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3571: AssertionError: a replaced system was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3586: AssertionError: a replaced manifest of an agent was not seen
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3600: AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+/home/user/build/ER-pdbanner12-dd82/tests/refusal.py:22: AssertionError: a toolbox without an attribute dictionary was not refused
+/home/user/build/ER-pdbanner12-dd82/tests/refusal.py:22: AssertionError: a per-agent tool entry that is a list was not refused
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3657: AttributeError: module 'hadavin_sdk.app' has no attribute '_UNREADABLE'
+/home/user/build/ER-pdbanner12-dd82/tests/test_stage_names.py:545: AssertionError: the old stage word is still used as a stage:

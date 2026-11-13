@@ -1,0 +1,2 @@
+(text: 'str', *, mapping: 'dict[str, str] | None' = None, near: 'tuple[str, ...]' = (), _sweep_copies: 'bool' = True, _cache: 'dict | None' = None) -> 'RedactionResult'
+<class 'hadavin_sdk.guard.redact.RedactionResult'> RedactionResult(text='fatal: token=<SECRET_1> <BEARER_1>', mapping={'<BEARER_1>': 'a1a1a1a1a1a1a1a1a1a1', '<SECRET_1>': 'Bearer'})

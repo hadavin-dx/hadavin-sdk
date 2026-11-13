@@ -1,0 +1,59 @@
+........................................................................ [ 48%]
+.........................................................FF.FF........FF [ 97%]
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1'
+    assert 'a1a1a1a1a1a1a1a1a1a1' not in 'fatal: auth...a1a1a1a1a1a1'
+      
+      'a1a1a1a1a1a1a1a1a1a1' is contained here:
+        fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1
+      ?                               ++++++++++++++++++++
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2234: AssertionError: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1'
+E   AssertionError: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
+    assert 'b2b2b2b2b2b2' not in 'fatal: auth...b2b2b2b2b2b2'
+      
+      'b2b2b2b2b2b2' is contained here:
+        fatal: authorization=<hidden> b2b2b2b2b2b2
+      ?                               ++++++++++++
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2234: AssertionError: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
+E   AssertionError: a 12 character token stayed
+    assert 'c3c3c3c3c3c3' not in 'fatal: toke...c3c3c3c3c3c3'
+      
+      'c3c3c3c3c3c3' is contained here:
+        fatal: token=<hidden> c3c3c3c3c3c3
+      ?                       ++++++++++++
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2269: AssertionError: a 12 character token stayed
+E   AssertionError: assert 'fatal: autho...1a1a1a1a1a1a1' == 'fatal: autho...den> <hidden>'
+      
+      - fatal: authorization=<hidden> <hidden>
+      + fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2277: AssertionError: assert 'fatal: autho...1a1a1a1a1a1a1' == 'fatal: autho...den> <hidden>'
+E   AssertionError: a bare OSError came out of the copy: OSError(22, 'Invalid argument')
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2416: AssertionError: a bare OSError came out of the copy: OSError(22, 'Invalid argument')
+E   AssertionError: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root', 'src/pkg/loader.py: symlink-in-product-root']
+    assert False
+     +  where False = any(<generator object test_a_loader_behind_a_folder_that_became_a_link_is_a_hit.<locals>.<genexpr> at 0x7ff700620380>)
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2436: AssertionError: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root', 'src/pkg/loader.py: symlink-in-product-root']
+E   AssertionError: an exempt file behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root']
+    assert False
+     +  where False = any(<generator object test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit.<locals>.<genexpr> at 0x7ff700620ba0>)
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2449: AssertionError: an exempt file behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root']
+E   AssertionError: the marker behind a link was read through it: []
+    assert False
+     +  where False = any(<generator object test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit.<locals>.<genexpr> at 0x7ff7006202b0>)
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2461: AssertionError: the marker behind a link was read through it: []
+E   AssertionError: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links cannot be followed)', 'docs/link41: symlink-loop (a loop of links cannot be followed)', 'docs/link42: symlink-loop (a loop of links cannot be followed)', 'docs/link43: symlink-loop (a loop of links cannot be followed)', 'docs/link44: symlink-loop (a loop of links cannot be followed)']
+    assert False
+     +  where False = any(<generator object test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes.<locals>.<genexpr> at 0x7ff7006218a0>)
+/home/user/build/ER-pdbanner12-dd82/tests/test_demo_only_guard.py:2480: AssertionError: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links cannot be followed)', 'docs/link41: symlink-loop (a loop of links cannot be followed)', 'docs/link42: symlink-loop (a loop of links cannot be followed)', 'docs/link43: symlink-loop (a loop of links cannot be followed)', 'docs/link44: symlink-loop (a loop of links cannot be followed)']
+=========================== short test summary info ============================
+FAILED tests/test_demo_only_guard.py::test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+FAILED tests/test_demo_only_guard.py::test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+FAILED tests/test_demo_only_guard.py::test_a_bearer_token_of_11_characters_stays_visible_as_on_main
+FAILED tests/test_demo_only_guard.py::test_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line
+FAILED tests/test_demo_only_guard.py::test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback
+FAILED tests/test_demo_only_guard.py::test_a_loader_behind_a_folder_that_became_a_link_is_a_hit
+FAILED tests/test_demo_only_guard.py::test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit
+FAILED tests/test_demo_only_guard.py::test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit
+FAILED tests/test_demo_only_guard.py::test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes
+9 failed, 138 passed in 11.60s

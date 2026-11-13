@@ -1,0 +1,20 @@
+F.............F...F.                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert [('J1b an unc... times'), ...] == []
+      
+      Left contains 49 more items, first extra item: ('J1b an unconfirmed banner is painted as given even when its words are not the not-confirmed words', 'search text found 0 times')
+      Use -v to get more diff
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:16: AssertionError: assert [('J1b an unc... times'), ...] == []
+E   AssertionError: the CHANGELOG does not say that the table has 320 rows
+    assert 'the table has 320 rows' in '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Breaking: the first stage is now called `demo`; `environment: ...495991b7852b855`\n  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`\n'
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:299: AssertionError: the CHANGELOG does not say that the table has 320 rows
+E   AssertionError: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: '                or sealed is _UNREADABLE\n'
+    assert 0 == 1
+     +  where 0 = <built-in method count of str object at 0x9efbd30>('                or sealed is _UNREADABLE\n')
+     +    where <built-in method count of str object at 0x9efbd30> = '"""App wiring: builds every module from one client config and connects runtime, approvals and executor.\n\nThis is th...hed_off(disabled_sources, source_hosts or {}),\n        ssl_context_for=lambda spec: contexts.get(spec.name),\n    )\n'.count
+/home/user/build/ER-pdbanner12-dd82/tests/test_banner_mutant_table.py:452: AssertionError: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: '                or sealed is _UNREADABLE\n'
+=========================== short test summary info ============================
+FAILED tests/test_banner_mutant_table.py::test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once
+FAILED tests/test_banner_mutant_table.py::test_the_changelog_states_the_row_count_of_the_table
+FAILED tests/test_banner_mutant_table.py::test_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file
+3 failed, 17 passed in 5.02s
