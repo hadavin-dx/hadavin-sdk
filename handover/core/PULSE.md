@@ -44,3 +44,4 @@
 02:22Z Part 6 batch 8 07bfda12 pushed; reviewers+runner started; RUN ON LAPTOP line
 02:30Z Part6 r8 resolved, batch9 next; agents a7e31a96 ad39b1c1 a37e6e83 a773a83b; disk 83%
 02:31Z runner a773a83b closed (07bfda12 focused 475 passed, 247/247 rows, stage 37/37); addendum sent to batch 9 builder a69287e2
+02:33Z Q8c-1 nits builder ad39b1c1 closed (head c5aa1c26 on wip/cloud-q8c1-b16; focused 536 passed, 6/6 + 7/7 mutant rows); code-only branch builder launched; SONAR-PATH lane started: fix builder a51ea641 (classes A-H of r2)
