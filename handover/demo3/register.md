@@ -103,3 +103,4 @@ B5 | agent (lane3-fix-5 builder) | 13:16Z | ~13:45Z | running
 E3b | agent a16b68..: lane3-fix-1 r2 suites | 13:22Z | ~14:15Z | running
 REV-1c | agent a90a66..: fresh codebase-details on fix-1-r2 | 13:21Z | ~13:40Z | running
 REV-1d | agent a7c172..: fresh comprehension on fix-1-r2 | 13:21Z | ~13:40Z | running
+Q10 | reported 13:17Z closed: 72 runs on main 0 errors; PR12 tree never started

@@ -1,5 +1,44 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:20Z / 18:50 IST  HEARTBEAT 54 (fresh STATUS TABLE as ordered; Q10 reported)
+**Idle (`vmstat`, 13:17Z): user 63, system 16, IDLE 8, IO-wait 11; 18 pytest processes** (two of them are Q6b's literal run of the documented coverage and no-coverage full suites, started 12:58:26Z, `timeout 1700`: expected to end about 13:25Z). No new agents.
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry (why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| Q2b | fuzz new seeds 7001-7005 + 7 extra generators | more identity evidence | 12:49Z / 19:19 | ~14:00Z | seed 5 of 5 (campaign a running) | running | report |
+| Q3c | blind-mail crash soak, 300 rounds, seed 20261115 | does blind mode break a documented promise? (class A/B/C) | 13:03Z | ~14:00Z | 125 of 300 rounds, 0 violations, 0 hangs so far | running | report; builder patch the same hour if a document is contradicted |
+| Q6b | cold reader: docs/tests.md, real-services, hubspot-probe | doc truth | 12:37Z | ~13:30Z | part A: the two documented full-suite commands running since 12:58:26Z | running | report |
+| Q8b | mutation check identity.py + claim logic (40 mutants) | does the test suite protect the duplicate logic | 12:49Z | ~13:35Z | 30 of 40 mutants done, last C10 KILLED | running | report; survivors go to a builder |
+| E4b | EVIDENCE RUNNER independent proof of lane3-fix-3 r2, then r3 | proves the security-path tests | 13:01Z | ~13:40Z | r3 started 13:15:17Z (r2 done in the same file) | running | report |
+| B2b | BUILDER lane3-fix-2 ROUND 2 (product code, start-up validation) | the settings fixes | 13:15Z | ~14:00Z; stop 14:15Z | round 2 of the pipeline (round 1: 2 reviewers, 8 MAJOR, resolved) | running | report, then E5 + fresh reviewers |
+| B5 | BUILDER lane3-fix-5: reset.sh `ps` truncation | the proven script defect | 13:16Z | ~13:45Z; stop 14:00Z | first build | running | report, then evidence + reviewers |
+| E3b | EVIDENCE RUNNER lane3-fix-1 round 2 (files `git add`ed): new test, hygiene, full suites on 2 trees one after the other | evidence for the docs patch | 13:16Z | ~14:15Z; stop 14:30Z | round 2 | running | report |
+| REV-1c | FRESH `egm:egm-codebase-details` on lane3-fix-1-r2 | independent review round 2 of cap 2 | 13:21Z | ~13:40Z | round 2 | running | save report, resolve if majors |
+| REV-1d | FRESH `egm:egm-comprehension` on lane3-fix-1-r2 | independent review round 2 of cap 2 | 13:21Z | ~13:40Z | round 2 | running | save report, resolve if majors |
+| Q10 | flake chase: tests/test_fakes_body_before_answer.py | the 2 unexplained `E` marks | 13:04Z | ended 13:17Z (stopped early on my order) | one batch | **reported** (below) | closed |
+| closed | Q1, Q2, Q3, Q3b, Q4, Q5, Q5b, Q6, Q7, Q8, Q9, Q11, R1, B1, B1b, B2, B3, B3b, B3c, B4, E3, E4, REV-1a/1b/2a/2b/3/3b | - | - | - | - | closed | - |
+**Q10 RESULT (flake chase; evidence/flake-chase-fakes.md; stopped early by my order so INCOMPLETE):** main tree f3c39cf8: **72 runs of tests/test_fakes_body_before_answer.py, all exit 0 ("17 passed"), no ERROR or FAILED mark** (60 staggered + 12 lockstep; the brief asked for 20 lockstep); durations 23.0 / 23.4 / 24.5 s (min / median / max); the PR #12 head (8d655773) was NEVER STARTED (cut short), so the question "does it happen on PR #12" is NOT answered; the "Exception occurred during processing of request" lines (825 over all 72 logs, 11 or 12 per run, the same count every run) are all `BrokenPipeError` at demo_only/fake_hubspot.py:224 and do not depend on load; the only code path that could raise an ERROR in this file is the autouse teardown `ServerDidNotStop` (tests/conftest.py:84-93), which affects only the 2 desk tests; not reproduced. **So the 2 error marks of the invalid PR #12 run 2 remain UNEXPLAINED (not reproduced in 72 + earlier ~12 full runs on other heads).**
+### FAILURES AND RETRIES (all rows, from the real logs; column "root cause proven")
+| id | test or step | result | first line | cause | root cause proven? | retries | what I did |
+|---|---|---|---|---|---|---|---|
+| A (4 early runs) | `-q`, basetemp outside TMPDIR | 56 / 57 failed (+2 `E` marks in PR #12 run 2) | `PathRefused ... path is outside the allowed folders` | harness error of mine | yes for the 56/57 (same ids pass inside TMPDIR); **NO for the 2 `E` marks** | 2 per head | invalid, replaced by valid runs |
+| A / D / C2 logs | files cut or orphaned | - | log ends mid-run + `EXIT_CODE` | my git operations replaced files pytest wrote | yes (git history sizes, `(deleted)` fds) | - | rule: logs outside git |
+| C first hang try | `test_burst_run_logs_every_request` x10 | 10 failed | same PathRefused | harness | yes | rerun passed 10/10 | closed |
+| E4 first run | combined test files, TMPDIR inside worktree | 11 failed | - | harness (TMPDIR inside the worktree) | yes (outside: 386 passed) | 1 | rule in all briefs |
+| Q1 xdist | `-n 3` full suite x2 | 2 failed each | exit 6 where 5 and 0 expected | **scripts/reset.sh:34 `ps` truncation when COLUMNS is set (script defect)** | yes (Q11) | 2 | lane3-fix-5 (B5) |
+| E3 round 1 | hygiene scan | green but did not scan the untracked test file | - | runner staging | yes (B1b) | - | E3b stages with git add |
+| Q4 F1/F2 | docs/limits.md:92-93 vs Linux | doc mismatch | measure_burst failed 3 of 3 at N=300 without retry; Linux answers 503 not OS refusals | doc written for Windows | partly (machine NOISY) | 2 passes | quiet re-measurement + builder B6 queued |
+| Q2 finding | identity key `str.lower()` | `ß` and `ı` capitals = another identity (861 and 867 variants per round) | - | documented behaviour not stated plainly | yes (B4 reproduced with real desk helpers: 2 leads) | - | lane3-fix-4 (docs + pinning test) |
+| lane3-fix-2 findings | settings validation | `DESK_DB_PATH` = existing folder: **exit 1 traceback on base AND patched** (I ran it); builder's "exit 2 unchanged" was false | `sqlite3.OperationalError: unable to open database file` | missing refusal at the choke point | yes (my experiment, base + patched) | - | B2b |
+| Q10 | PR #12 `E` marks | not reproduced (72 runs main) | - | unknown | **no** | 72 runs | stays open (low value: PR closed) |
+| Q3 / Q3b / Q2 fuzz / Q8 | soaks and fuzz | 0 violations (300 + 300 rounds; 0 rule violations in 800,000 pairs) | - | - | - | - | - |
+**TOTALS since session start:** 69 test failures counted over all runs (56 + 1 PR #12 + 10 + 2 xdist) + 11 (E4 setup slip) = **80**: **harness errors 67 (proven), real defects 2 (the xdist pair: reset.sh), E4 setup slip 11 (proven), unexplained 2 error marks**. Real defects found by agents or checks (not only tests): 5 (reset.sh `ps` truncation; the `ß`/`ı` case rule not stated; the settings validation gaps incl. the DB-folder traceback; doc mismatches F1/F2 on limits; the doc false sentences of lane3-fix-1 round 1 caught by reviewers). Flakes 0.
+**Lessons rows (my own slips so far, all in the files):** git replacing live log files (fixed: logs outside git); basetemp/TMPDIR placement (written into every brief); builders running ruff/bandit (B1, B3, B2; now forbidden in every brief); D's early counts quoted from a cut log (corrected); E3's hygiene blind spot (E3b fixed).
+
+ASK:
+1. The `ß`/`ı` decision (owner level): default patch A only (docs + pinning test), no code change; B4 says `casefold()` fixes `ß` but not `ı`. Please confirm or order a code design.
+2. Quiet re-measurement of the load claims at the end (every other agent stopped about 10 minutes, around 14:15Z). Default: yes.
+3. Q10 never reached the PR #12 tree: do you still want the 2 unexplained `E` marks chased there? PR #12 is closed; default: no, they stay listed as unexplained.
+
 ## 2026-11-13 13:24Z / 18:54 IST  HEARTBEAT 53 (Q4, E3, B1b, B4, Q11 reported; egm-resolve for lane3-fix-2 done; B2b, B5, E3b and two fresh reviewers started)
 **Idle (`vmstat`, 13:16Z): user 38, system 17, idle 29, IO-wait 15, free RAM about 8 GB.** At the line (30): the agents started now are fix builders (B2b, B5), one evidence runner (E3b) and two read-only reviewers; Q10 was told to stop its CPU hog.
 | id | what it does | since | expected end | real progress now | state |
