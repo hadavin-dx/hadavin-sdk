@@ -512,3 +512,159 @@ def test_the_page_script_has_no_way_to_parse_html_or_load_anything() -> None:
     ):
         assert banned not in text, banned
     assert "textContent" in text  # the check is not vacuous
+
+
+# --- round 3: the made-up sentence is checked against every field that can name an endpoint -----------------------------
+
+
+def _with_endpoints(**fields: object) -> SimpleNamespace:
+    """A demo config of pretend services only, plus the given endpoint fields (systems, egress_hosts, sources)."""
+    cfg = _fake_config("demo", [("llm", "fake"), ("store", "memory")])
+    for name, value in fields.items():
+        setattr(cfg, name, value)
+    return cfg
+
+
+def _system(url: str | None) -> SimpleNamespace:
+    return SimpleNamespace(base_url=url)
+
+
+def _source(url: str) -> SimpleNamespace:
+    return SimpleNamespace(kind="kubernetes", settings={"api_url": url, "namespaces": ["x"]})
+
+
+LEAVES = [
+    ("systems", {"crm": _system("https://crm.example.test")}, mb.EXTERNAL_SYSTEMS),
+    (
+        "systems",
+        {"a": _system("http://127.0.0.1"), "b": _system("https://crm.example.test")},
+        mb.EXTERNAL_SYSTEMS,
+    ),
+    (
+        "systems",
+        {"crm": _system("http://localhost.example.test")},
+        mb.EXTERNAL_SYSTEMS,
+    ),  # not localhost
+    ("systems", {"crm": _system("not a url")}, mb.EXTERNAL_SYSTEMS),  # unreadable: shown as real
+    ("systems", {"crm": _system(None)}, mb.EXTERNAL_SYSTEMS),  # not text at all: shown as real
+    ("egress_hosts", frozenset({"api.example.test"}), mb.EGRESS_HOSTS),
+    ("egress_hosts", frozenset({"127.0.0.1", "10.0.0.5"}), mb.EGRESS_HOSTS),
+    ("egress_hosts", frozenset({""}), mb.EGRESS_HOSTS),
+    ("sources", {"k": _source("https://k8s.example.test")}, mb.READ_SOURCES),
+    ("sources", {"k": SimpleNamespace(kind="unknown-kind", settings={})}, mb.READ_SOURCES),
+]
+THIS_MACHINE = [
+    ("systems", {"crm": _system("http://127.0.0.1:8080")}),
+    ("systems", {"crm": _system("http://localhost:8080")}),
+    ("systems", {"crm": _system("http://[::1]:8080")}),
+    ("egress_hosts", frozenset({"127.0.0.1", "localhost", "::1"})),
+    ("sources", {"k": _source("http://127.0.0.1:6443")}),
+    ("systems", {}),
+    ("egress_hosts", frozenset()),
+    ("sources", {}),
+]
+
+
+def test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up() -> None:
+    for field, value, key in LEAVES:
+        cfg = _with_endpoints(**{field: value})
+        real, _ = mb._services_in(cfg)
+        assert real == (key,), (field, value)
+        b = mb.banner_from_config(cfg)
+        assert b.tone == "real" and b.real == (f"component {key}",), (field, value)
+        shown = (b.text + b.standins).lower()
+        assert "made-up" not in shown and "nothing here is sent" not in shown, (field, value)
+
+
+@pytest.mark.parametrize(("field", "value"), THIS_MACHINE)
+def test_endpoints_on_this_machine_keep_the_demo_banner(field, value) -> None:
+    b = mb.banner_from_config(_with_endpoints(**{field: value}))
+    assert (b.tone, b.real) == ("demo", ())
+
+
+def test_a_real_loaded_demo_config_with_an_outside_system_gets_the_real_banner(
+    tmp_path: Path,
+) -> None:
+    import yaml
+
+    d = make_cfg(tmp_path)
+    path = d / "config.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["systems"]["fixture-records"]["base_url"] = "https://records.example.test"
+    data["allow_insecure_loopback"] = False
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    b = mb.banner_from_config(load_config(d), names={mb.EXTERNAL_SYSTEMS: "Records system"})
+    assert b.tone == "real" and b.real == ("Records system",) and "Records system" in b.text
+
+
+def test_property_any_outside_endpoint_in_any_stage_never_gets_the_made_up_sentence() -> None:
+    rng = random.Random(20261113)  # noqa: S311 - a seeded test generator, not a secret
+    for _ in range(300):
+        fields: dict[str, object] = {}
+        outside = False
+        if rng.random() < 0.5:
+            urls = [
+                rng.choice(["http://127.0.0.1", "http://localhost", "https://x.example.test"])
+                for _ in range(rng.randint(1, 3))
+            ]
+            fields["systems"] = {f"s{i}": _system(u) for i, u in enumerate(urls)}
+            outside |= any("example" in u for u in urls)
+        if rng.random() < 0.5:
+            hosts = frozenset(rng.sample(["127.0.0.1", "::1", "h.example.test"], rng.randint(1, 3)))
+            fields["egress_hosts"] = hosts
+            outside |= "h.example.test" in hosts
+        cfg = _with_endpoints(**fields)
+        cfg.environment = rng.choice(STAGES)
+        b = mb.banner_from_config(cfg)
+        assert (b.tone == "real") == outside
+        if outside:
+            assert "made-up" not in (b.text + b.standins).lower()
+
+
+def test_a_banner_is_checked_against_what_it_claims_before_it_leaves() -> None:
+    claim = mb.DEFAULT_WORDS
+    tags = {"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"}
+    # a reworded text that forgets to name the real services is refused, not shown
+    forgetful = mb.BannerWords(tag_by_mode=tags, real_connected="Real services are connected.")
+    with pytest.raises(ValueError, match="does not name every real service"):
+        mb.banner_from_config(_fake_config("pilot", [("llm", "bedrock")]), words=forgetful)
+    # a reworded real note that repeats the made-up sentence is refused in a real and in a quiet banner
+    boastful = mb.BannerWords(tag_by_mode=tags, real_data_note=claim.made_up)
+    with pytest.raises(ValueError, match="claims made-up data"):
+        mb.banner_from_config(_fake_config("pilot", [("llm", "bedrock")]), words=boastful)
+    quiet_boast = mb.BannerWords(tag_by_mode=tags, none_real=claim.made_up)
+    with pytest.raises(ValueError, match="claims made-up data"):
+        mb.banner_from_config(_fake_config("prod", []), words=quiet_boast)
+    # a demo banner that names a real service is refused (built by hand: banner_from_config never makes one)
+    hand_made = mb.ModeBanner(
+        "demo", "demo", "DEMO", claim.made_up + " " + claim.nothing_sent, "", ("record",), ()
+    )
+    with pytest.raises(ValueError, match="demo banner must name no real service"):
+        mb._check_what_is_claimed(hand_made, claim)
+
+
+@needs_node
+def test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page() -> None:
+    assert _paint(None)["frozen"] == [True] * 6
+
+
+@needs_node
+def test_a_failed_last_resort_write_never_leaves_the_banner_hidden() -> None:
+    seen = _paint(GOOD_DEMO, "failing-all-writes")  # appending and then the text write both throw
+    assert seen["threw"] == "" and seen["hidden"] is False
+
+
+@needs_node
+def test_a_real_name_is_matched_as_a_whole_word_only() -> None:
+    real = {
+        "mode": "pilot",
+        "tone": "real",
+        "tag": "PILOT",
+        "text": "Real services are connected: CRMS. Data this system handles may be sent to them.",
+        "standins": "",
+        "real": ["CRM"],
+        "stand_ins": [],
+    }
+    _unconfirmed(_paint(real))  # "CRM" is only part of the word "CRMS": not named
+    fine = {**real, "text": real["text"].replace("CRMS", "CRM")}
+    assert _paint(fine)["tone"] == "real"

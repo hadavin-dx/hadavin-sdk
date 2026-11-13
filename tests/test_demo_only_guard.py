@@ -538,3 +538,47 @@ def test_the_copy_run_fails_when_the_package_comes_from_somewhere_else(
 def test_the_copy_run_without_a_package_to_check_is_refused(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="product_packages"):
         g.run_without_folder(_mini(tmp_path / "r"), _cfg(product_packages=()), [])
+
+
+# -- round 3 ---------------------------------------------------------------------------------------------------------
+def test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash(tmp_path: Path) -> None:
+    cfg = _cfg(allowed_phrases=("DEMO_ONLY",))
+    for i, line in enumerate(["DEMO_ONLY-x", "x-DEMO_ONLY", "demo_only", "Demo_Only", "DEMO-ONLY"]):
+        bad = _repo(tmp_path / f"p{i}", {**CLEAN, "src/pkg/c.py": f"V = DEMO_ONLY\nW = '{line}'\n"})
+        assert g.scan(bad, cfg) == ["src/pkg/c.py:2: names-demo-only-folder"], line
+
+
+def test_a_text_file_renamed_to_a_binary_ending_is_read_but_a_real_binary_is_skipped(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path, {**CLEAN, "src/pkg/notes.png": f"see {FOLDER}\n"})
+    assert g.scan(repo, _cfg()) == ["src/pkg/notes.png:1: names-demo-only-folder"]
+    real = _repo(tmp_path / "real", CLEAN)
+    (real / "src/pkg/logo.png").write_bytes(
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + FOLDER.encode()
+    )
+    assert g.scan(real, _cfg()) == []  # a NUL byte near the start: a real binary, skipped
+    zeroes = _repo(
+        tmp_path / "late", CLEAN
+    )  # a NUL only after the first 8192 bytes does not make it binary
+    (zeroes / "src/pkg/late.png").write_bytes(b"a" * 9000 + b"\x00" + FOLDER.encode())
+    assert g.scan(zeroes, _cfg()) == ["src/pkg/late.png:1: names-demo-only-folder"]
+
+
+def _gitlink(repo: Path, rel: str) -> None:
+    """Add a git link (what a submodule is) at `rel`: the index holds mode 160000 and the path is a folder on disk."""
+    (repo / rel).mkdir(parents=True)
+    sha = "1" * 40
+    subprocess.run(  # noqa: S603
+        ["git", "-C", str(repo), "update-index", "--add", "--cacheinfo", f"160000,{sha},{rel}"],  # noqa: S607
+        check=True,
+    )
+
+
+def test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not(tmp_path: Path) -> None:
+    repo = _repo(tmp_path, CLEAN)
+    _gitlink(repo, "src/vendored")
+    _gitlink(repo, "elsewhere/vendored")
+    assert g.scan(repo, _cfg()) == [
+        "src/vendored: submodule-in-product-root (its files cannot be scanned)"
+    ]

@@ -7,7 +7,7 @@ function el(tag, opts) {
   const o = { tag, cls: '', attrs: {}, children: [], hidden: true, text: '' };
   o.appendChild = (k) => { if (opts && opts.failAppend) throw new Error('append failed'); o.children.push(k); return k; };
   o.setAttribute = (k, v) => { o.attrs[k] = String(v); };
-  Object.defineProperty(o, 'textContent', { get() { return o.text; }, set(v) { o.text = v; o.children = []; } });
+  Object.defineProperty(o, 'textContent', { get() { return o.text; }, set(v) { if (opts && opts.failText && v !== '') throw new Error('text write failed'); o.text = v; o.children = []; } });
   Object.defineProperty(o, 'className', { get() { return o.cls; }, set(v) { o.cls = v; } });
   for (const k of ['innerHTML', 'outerHTML']) {
     Object.defineProperty(o, k, { get() { return ''; }, set(v) { htmlWrites.push(k); } });
@@ -26,7 +26,7 @@ if (scenario === 'throwing-getter') input = { get tone() { return boom(); }, tag
 if (scenario === 'proxy') input = new Proxy({}, { get: boom, has: boom, ownKeys: boom, getPrototypeOf: boom });
 if (scenario === 'throwing-list') input = { ...input, real: new Proxy([], { get: boom }) };
 if (scenario === 'throwing-doc') doc = { createElement: () => { throw new Error('doc broken'); } };
-let target = el('div', scenario === 'failing-append' ? { failAppend: true } : null);
+let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true } : null);
 if (scenario === 'null-el') target = null;
 let threw = '';
 let usableThrew = '';
@@ -38,4 +38,5 @@ console.log(JSON.stringify({
   lines, tone: target ? target.attrs['data-tone'] : null, mode: target ? target.attrs['data-mode'] : null,
   hidden: target ? target.hidden : null, text: target ? target.text : null, notConfirmed: api.NOT_CONFIRMED,
   shownTone: shown ? shown.tone : null, modes: api.MODES, tones: api.TONES, maxText: api.MAX_TEXT, htmlWrites, threw, usableThrew,
+  frozen: [api, api.NOT_CONFIRMED, api.NOT_CONFIRMED.real, api.NOT_CONFIRMED.stand_ins, api.TONES, api.MODES].map(Object.isFrozen),
 }));
