@@ -1,5 +1,18 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 26 (I reported; all agents closed)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| I | Evidence runner: STACK and BASE full suites + hygiene tests | proves the rebased claims stack changes no test result | 11:37Z / 17:07 | ended 11:58Z | run 1 of 1 per head | reported, closed | none |
+| H, J, G, F, E, D, C2, A, B | earlier agents | - | - | - | - | all closed | none |
+Nothing is running (agents 0, test processes 0, copy loops 0). Cap 12:40Z not needed.
+
+ASK:
+1. Do you want ruff check, ruff format --check and gitleaks on the stack anyway (ORDER 8 listed them; the owner rule says GitHub CI only)? About 2 minutes. Default: not run, unless you say yes.
+2. v3 (claims-fix-v3.patch, 247 lines) is not in the rebased stack. Default: when you tell me it is final I rebase it the same way (H, 1 minute) and rerun the suite (I, 20 minutes).
+**I RESULT: the rebased stack changes no test result.** Full suite STACK (f3c39cf8 + patch) and BASE (f3c39cf8): both 3683 passed, 0 failed, 200 skipped, 0 errors, exit 0 (1192 s and 1189 s); hygiene tests identical on both (test_hygiene.py 20 passed 4 skipped; test_codeant_hygiene.py 7 passed). I read the summary lines in both raw logs myself. The skips are the same 200 on both heads (Playwright not installed, gitleaks not on PATH, Windows-only and opt-in tests). The patch adds no tests, as expected for text-only changes.
+Summary of ORDER 8: H: no conflicts, patch applies cleanly (verified by me); J: 2 stale sentences (3726 -> 3883 collected tests, 91 -> 92 test files; both in the v1 patch's versions.md) and 4 numbers that cannot be checked; I: green. Files: evidence/claims-stack-on-f3c39cf8.patch, claims-stack-rebase-notes.md, claims-stale-after-pr14.md, claims-stack-tests.md, summary.md.
+
 ## 2026-11-13 11:53Z / 17:23 IST  HEARTBEAT 25 (I progress)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

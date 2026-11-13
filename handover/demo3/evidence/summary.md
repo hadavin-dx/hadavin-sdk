@@ -1,3 +1,14 @@
+# LATEST (12:00Z / 17:30 IST): rebased claims stack on public main f3c39cf8 (agent I; counts checked by me in the raw logs)
+
+| head | scope | passed | failed | skipped | errors | wall time | exit |
+|---|---|---|---|---|---|---|---|
+| **STACK** = f3c39cf8 + claims-stack-on-f3c39cf8.patch (sha256 7138e884...89194c) | full suite -v, basetemp inside TMPDIR | **3683** | **0** | **200** | 0 | 1192 s | 0 |
+| **BASE** = f3c39cf8 unpatched | full suite -v | **3683** | **0** | **200** | 0 | 1189 s | 0 |
+| STACK / BASE | tests/test_hygiene.py | 20 / 20 | 0 / 0 | 4 / 4 | 0 / 0 | 34.6 s / 33.1 s | 0 / 0 |
+| STACK / BASE | tests/test_codeant_hygiene.py | 7 / 7 | 0 / 0 | 0 / 0 | 0 / 0 | 0.5 s / 0.3 s | 0 / 0 |
+
+Not run (owner rule: GitHub CI only; no lead exception received): ruff check, ruff format --check, gitleaks, mypy, bandit. Skips (200, same on both): Playwright not installed, gitleaks not on PATH, Windows-only and opt-in tests. One run per head, so no flake data. Python 3.12.3.
+
 # CURRENT HEAD c14a514: path tests only (agent G), last full suite: 6b1fe49 (below)
 
 | head | scope | passed | failed | skipped | errors | wall time | note |

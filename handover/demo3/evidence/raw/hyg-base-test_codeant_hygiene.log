@@ -1,0 +1,15 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/final-venv/bin/python
+rootdir: /home/user/work/i-base
+configfile: pyproject.toml
+collecting ... collected 7 items
+
+tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: pull_request_target] PASSED [ 14%]
+tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: [push, pull_request_target]] PASSED [ 28%]
+tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on: { pull_request_target: { types: [opened] } }] PASSED [ 42%]
+tests/test_codeant_hygiene.py::test_a_trigger_that_hands_secrets_to_pull_request_code_is_found_in_every_yaml_shape[on:\n  workflow_run:\n    workflows: [x]] PASSED [ 57%]
+tests/test_codeant_hygiene.py::test_a_commented_or_harmless_line_is_not_a_forbidden_trigger PASSED [ 71%]
+tests/test_codeant_hygiene.py::test_a_missing_import_inside_demo_only_is_an_error_not_a_skip PASSED [ 85%]
+tests/test_codeant_hygiene.py::test_a_desk_setting_in_the_shell_does_not_reach_a_test PASSED [100%]
+
+============================== 7 passed in 0.34s ===============================
