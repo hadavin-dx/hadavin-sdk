@@ -1,0 +1,212 @@
+diff --git a/docs/settings.md b/docs/settings.md
+index 88a5b83..5e3de1c 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -122,5 +122,5 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+-* `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list; not `<(command)`, not `/dev/stdin` from a pipe), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
++* `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). A tool started in `/` or in your home folder does not allow that folder (it would be the whole disk or all your files): start it in a project folder or name the folder here. Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list; not `<(command)`, not `/dev/stdin` from a pipe), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
+diff --git a/load_tools/README.md b/load_tools/README.md
+index 7acc23a..ccb1ad6 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -3,7 +3,7 @@
+ Everything here uses made-up data and loopback addresses only. No real model, mail or CRM service is ever called.
+ Run every tool from the repository root with `PYTHONPATH=src:.` (on Windows use `;` between the entries: `src;.`), as in the other run commands in contract.md.
+ 
+-Every file path you give a tool on its command line (`--log`, `--facts`, `--requests`, `--book`, `--catcher`, `--crm`, `--model-log`, `--drain`, `--json`, `--out`, `--control`) must lie inside the folder you started it in, the repository folder, or the system temporary folder; a path that leaves them (`..`, an absolute path elsewhere, a link that points out) is refused with a message that names the option, and nothing is read or written. To use another folder, name it in the environment variable `LEAD_DESK_PATH_ROOTS` (several folders separated by `:`, or `;` on Windows). A NEW output file may only use letters, digits, `.`, `_` and `-` in its name (a file that already exists may have any name except one with a control character; a new name that ends with a dot or is a Windows device name such as `nul`, `aux`, `con`, `prn`, `com1` or `lpt1`, with or without an extension, is refused on every system, so the file also opens on Windows). A file that is read and does not exist is reported as "no such file". A name with accented letters is found also when it is written in the other Unicode form (macOS stores `é` as two characters, other systems as one), below the allowed folder (upper and lower case must match on macOS, and the allowed folder itself must be written the way the system reports it). The same rule applies to `scripts/n8n_api.py import FILE` and `tools/scrub_n8n_export.py` (an n8n export kept in another folder, for example Downloads, is read after you copy it into the repository folder or list its folder in `LEAD_DESK_PATH_ROOTS`).
++Every file path you give a tool on its command line (`--log`, `--facts`, `--requests`, `--book`, `--catcher`, `--crm`, `--model-log`, `--drain`, `--json`, `--out`, `--control`) must lie inside the folder you started it in, the repository folder, or the system temporary folder; a path that leaves them (`..`, an absolute path elsewhere, a link that points out) is refused with a message that names the option, and nothing is read or written. To use another folder, name it in the environment variable `LEAD_DESK_PATH_ROOTS` (several folders separated by `:`, or `;` on Windows). A NEW output file may only use letters, digits, `.`, `_` and `-` in its name (a file that already exists may have any name except one with a control character; a new name that ends with a dot or is a Windows device name such as `nul`, `aux`, `con`, `prn`, `com1` or `lpt1`, with or without an extension, is refused on every system, so the file also opens on Windows). A file that is read and does not exist is reported as "no such file". A name with accented letters is found also when it is written in the other Unicode form (macOS stores `é` as two characters, other systems as one), below the allowed folder (upper and lower case must match on macOS, and the allowed folder itself must be written the way the system reports it). That looser match is for files that are READ: a file that is WRITTEN (`--log`, `--facts`, `--json`, `--out`, `--control`, `out.json`) must be named exactly as the file system lists it, so a new name typed in one Unicode form never overwrites a file stored in another Unicode form (on Linux the two are different files); if only such a file exists the path is refused and the message says why. The folder you started the tool in counts as an allowed folder only when it is not the top of a file system (started in `/`) and not your home folder, because either would allow the whole disk or all of your files; start the tool in a project folder, or name the folder in `LEAD_DESK_PATH_ROOTS` (a folder named there is taken as written). The same rule applies to `scripts/n8n_api.py import FILE` and `tools/scrub_n8n_export.py` (an n8n export kept in another folder, for example Downloads, is read after you copy it into the repository folder or list its folder in `LEAD_DESK_PATH_ROOTS`).
+ 
+ Not covered, on purpose: `scripts/run_real_check.py` reads its config from any folder (the documentation tells you to keep it outside the repository) and uses the paths named inside it as written, and `scripts/run_live_check.py` takes its key file and its spend ledger from any folder for the same reason (`docs/real-services.md`). The config of `run_real_check.py` is found by looking the name up in the folder listings from the top of the file system, so it must be a file in a folder you can list: a config below a folder that you can enter but not list (mode 0711 owned by another user), or one handed over as `--config <(command)`, `/dev/fd/N` or `/dev/stdin` when it is a pipe (`/dev/stdin` redirected from a file works), is refused with a message; copy it to a normal file first. On macOS (upper and lower case are the same on disk) every folder of the config path must be typed in the case the file system reports, or the config is refused as "no such file". What this check is: a fence against a WRONG argument (a faulty script, a copied path). It is not a defence against an agent or a person who controls the shell: they can start the tool in another folder or set `LEAD_DESK_PATH_ROOTS`. The allowed folders are wide, and a file that already exists in one of them (the repository, the shared system temporary folder) can be overwritten by an output option that names it: the check does not know which files in them matter. It does not stop another process that swaps a folder for a link between the check and the open. The tools also start directly (`python load_tools/load_driver.py --help`, `python tools/scrub_n8n_export.py in.json out.json`) without setting `PYTHONPATH`.
+ 
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index 3d7616e..4687aba 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -357,10 +357,62 @@ def test_v4_confine_finds_a_file_and_a_folder_typed_in_the_other_unicode_form(ja
+     if not stored_as_typed:
+         pytest.skip("this file system folds the two Unicode forms itself")
+     typed = unicodedata.normalize("NFC", "dossié") + "/" + unicodedata.normalize("NFC", "café.json")
+-    got = pc.confine(typed, what="--requests")
++    got = pc.confine_existing(typed, what="--requests")  # a file that is READ is found in the other form
+     assert got == inside.resolve() / nfd_dir / nfd_file and got.read_text(encoding="utf-8") == "{}"
+ 
+ 
++def _fake_listing(monkeypatch: pytest.MonkeyPatch, entries: list[Any]) -> None:
++    """Make ``os.scandir`` (as the helper sees it) return these entries, as a context manager like the real one."""
++
++    class Listing:
++        def __enter__(self) -> list[Any]:
++            return entries
++
++        def __exit__(self, *exc: object) -> None:
++            return None
++
++    monkeypatch.setattr(pc.os, "scandir", lambda path=".": Listing())
++
++
++def test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_nfd_file(
++    jail: tuple[Path, Path],
++) -> None:
++    """Decision (rv34 NIT-6): on Linux the NFC and the NFD spelling are two different files; a NEW name typed in one
++    form must not write into the file stored in the other. A written file must be named as the listing shows it."""
++    inside, _ = jail
++    nfd = unicodedata.normalize("NFD", "café.json")
++    nfc = unicodedata.normalize("NFC", "café.json")
++    try:
++        (inside / nfd).write_text("keep me", encoding="utf-8")
++        folds = (inside / nfc).exists()
++    except OSError:
++        pytest.skip("this file system cannot store these names")
++    if folds:
++        pytest.skip("this file system folds the two Unicode forms itself")
++    with pytest.raises(pc.PathRefused, match="differs only in Unicode form or case"):
++        pc.confine(inside / nfc, what="--facts")
++    assert pc.confine(inside / nfd, what="--facts") == inside.resolve() / nfd  # the exact name still works
++    assert (inside / nfd).read_text(encoding="utf-8") == "keep me" and not (inside / nfc).exists()
++    assert pc.confine_existing(inside / nfc, what="--facts") == inside.resolve() / nfd  # a read finds it
++    nfd_dir = unicodedata.normalize("NFD", "dossié")
++    (inside / nfd_dir).mkdir()  # a FOLDER on the way is still found loosely: nothing is overwritten by that
++    typed_dir = unicodedata.normalize("NFC", "dossié")
++    assert pc.confine(inside / typed_dir / "new.json", what="--facts") == inside.resolve() / nfd_dir / "new.json"
++
++
++def test_a_written_file_whose_only_match_is_loose_is_refused_with_a_fake_listing(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    nfd = unicodedata.normalize("NFD", "café.json")
++    nfc = unicodedata.normalize("NFC", "café.json")
++    _fake_listing(monkeypatch, [_entry(nfd, "/x/" + nfd)])
++    with pytest.raises(pc.PathRefused, match="differs only"):
++        pc._locate("/x", [nfc], "f")
++    assert pc._locate_existing("/x", [nfc], "f") == "/x/" + nfd
++    _fake_listing(monkeypatch, [_entry(nfd, "/x/" + nfd), _entry(nfc, "/x/" + nfc)])
++    assert pc._locate("/x", [nfc], "f") == "/x/" + nfc  # the exact name exists too: it wins and is accepted
++
++
+ def test_v5_inside_compares_whole_folders_not_text_prefixes() -> None:
+     root = os.path.realpath(os.sep + "base" + os.sep + "in")
+     sibling = os.path.realpath(os.sep + "base" + os.sep + "in-evil" + os.sep + "x")
+@@ -397,7 +449,9 @@ def test_v5_the_listing_match_ignores_case_where_the_system_does(
+     (inside / "sub").mkdir()
+     (inside / "sub" / "f.json").write_text("{}", encoding="utf-8")
+     monkeypatch.setattr(pc.os.path, "normcase", str.lower)  # what ntpath.normcase does on Windows
+-    assert pc.confine("Sub/F.JSON", what="f") == inside.resolve() / "sub" / "f.json"
++    assert pc.confine_existing("Sub/F.JSON", what="f") == inside.resolve() / "sub" / "f.json"
++    with pytest.raises(pc.PathRefused, match="differs only"):  # a written file: its name must be the listed one
++        pc.confine("sub/F.JSON", what="f")
+     monkeypatch.setattr(pc.os.path, "normcase", lambda s: s)  # what posixpath does: case matters
+     with pytest.raises(pc.PathRefused, match="does not exist"):
+         pc.confine("Sub/f.json", what="f")
+@@ -1055,6 +1109,44 @@ def test_the_readme_says_what_the_wide_folders_allow() -> None:
+     assert "<(command)" in text and "mode 0711" in text  # the cost of the listing lookup for --config is said
+ 
+ 
++def test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """rv34 NIT-6: started in ``/`` the allowed folder would be the whole disk: it fences nothing, so it is left out."""
++    inside, outside = jail
++    (outside / "f.json").write_text("{}", encoding="utf-8")
++    monkeypatch.chdir(os.path.abspath(os.sep))
++    roots = pc.allowed_roots()
++    assert os.path.abspath(os.sep) not in roots and str(inside.resolve()) in roots  # repository and temp still count
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine_existing(outside / "f.json", what="f")
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine(Path(os.path.abspath(os.sep)) / "etc" / "x.json", what="f")
++    monkeypatch.setenv(pc.ROOTS_ENV, str(outside))  # a folder the person names is their own choice
++    assert pc.confine_existing(outside / "f.json", what="f") == outside.resolve() / "f.json"
++
++
++def test_a_working_folder_that_is_the_home_folder_is_not_allowed_unless_it_is_the_repository(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    home, repo = tmp_path / "home", tmp_path / "repo"
++    (home / "work").mkdir(parents=True)
++    repo.mkdir()
++    monkeypatch.setenv("HOME", str(home))
++    monkeypatch.setenv("USERPROFILE", str(home))
++    monkeypatch.setattr(pc, "REPO_ROOT", repo)
++    monkeypatch.chdir(home)
++    assert str(home.resolve()) not in pc.allowed_roots()  # all of a person's files: not a folder to use
++    (home / "log.jsonl").write_text("{}", encoding="utf-8")
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine_existing("log.jsonl", what="--log")
++    monkeypatch.chdir(home / "work")  # a folder below the home folder is fine
++    assert str((home / "work").resolve()) in pc.allowed_roots()
++    monkeypatch.setattr(pc, "REPO_ROOT", home)  # the home folder that IS the repository is allowed (as the repository)
++    monkeypatch.chdir(home)
++    assert str(home.resolve()) in pc.allowed_roots()
++
++
+ def test_read_book_does_not_echo_a_terminal_escape_from_the_file_name(jail: tuple[Path, Path]) -> None:
+     """rv34 NIT-4: the old message put the raw base name first; ESC, CSI and the like reached the terminal."""
+     inside, _ = jail
+diff --git a/tools/pathconfine.py b/tools/pathconfine.py
+index 5029f51..d2c3672 100644
+--- a/tools/pathconfine.py
++++ b/tools/pathconfine.py
+@@ -15,15 +15,20 @@ How the returned path is made: after the check, the file is looked up BY NAME in
+ at a time, starting at the allowed folder (which comes from this module, not from the argument). The returned text is
+ the listing's own entry. So the text that gets opened is never the argument's text, only something the file system
+ itself reported. A name is matched as written, then, if that fails, in its Unicode normal form (NFC) and with
+-``os.path.normcase`` (so a name typed as NFC finds the file stored as NFD, as on macOS, and Windows ignores case). A
+-name that is not in the listing is, for a file that is read, a refusal ("no such file"); for a written file
++``os.path.normcase`` (so a name typed as NFC finds the file stored as NFD, as on macOS, and Windows ignores case). That
++looser match serves a file that is READ and the folders on the way. A file that is WRITTEN (``confine``) must be named
++exactly as the listing shows it: if only a looser match exists (the same name in another Unicode form or case, which
++on Linux is a different file) the path is refused, so a new name typed in one form never overwrites a file stored in
++another. A name that is not in the listing is, for a file that is read, a refusal ("no such file"); for a written file
+ (``confine``) it is a new name, rebuilt character by character from a table of allowed characters (letters, digits,
+ ``.``, ``_``, ``-``). A new name is refused when it uses any other character, ends with a dot, or is a Windows device
+ name (``nul``, ``aux``, ``con``, ``prn``, ``com0`` to ``com9``, ``lpt0`` to ``lpt9``, with or without an extension),
+ on every operating system, like the core ``pathguard`` (R6, R7), so that a file made here also opens on Windows. An
+ EXISTING file may have any name except one with a control character (refused always, see below).
+ 
+-Allowed folders (the same words everywhere): the folder the tool was started in, the repository folder, and the
++Allowed folders (the same words everywhere): the folder the tool was started in (not when it is the top of a file
++system, started in ``/``, or the home folder: that would allow the whole disk or all of a person's files), the
++repository folder, and the
+ operating system's temporary folder (so a test or a scratch run works). A person who keeps logs elsewhere lists the
+ extra folders in ``LEAD_DESK_PATH_ROOTS`` (folders separated by ``os.pathsep``). The list is read on every call. The
+ three folders are wide: inside them an existing file (source code, a workflow file, another person's file in the
+@@ -87,13 +92,22 @@ class PathRefused(ValueError):
+     """A path argument was refused. The text names the argument and the rule, never the value."""
+ 
+ 
++def _is_wide(real: str) -> bool:
++    """True for a folder that holds the whole disk or all of a person's files: the top of a file system (``/``,
++    ``C:\\``, a share) or the home folder. Such a working folder is not allowed as a folder to use."""
++    if not os.path.splitroot(real)[2]:
++        return True
++    return os.path.normcase(real) == os.path.normcase(os.path.realpath(os.path.expanduser("~")))
++
++
+ def allowed_roots() -> tuple[str, ...]:
+-    """The real locations of the allowed folders: current folder (left out when it was deleted), repository,
+-    temporary folder, and the extra folders in ``LEAD_DESK_PATH_ROOTS``. A listed folder that is empty text is
+-    ignored."""
++    """The real locations of the allowed folders: current folder (left out when it was deleted, or when it is the top
++    of a file system or the home folder: it would allow the whole disk or all of a person's files), repository,
++    temporary folder, and the extra folders in ``LEAD_DESK_PATH_ROOTS`` (taken as written: a person's own choice). A
++    listed folder that is empty text is ignored."""
+     extra = [p for p in os.environ.get(ROOTS_ENV, "").split(os.pathsep) if p]
+     try:
+-        here = [os.getcwd()]
++        here = [r for r in [os.path.realpath(os.getcwd())] if not _is_wide(r)]
+     except OSError:  # the folder the tool was started in no longer exists
+         here = []
+     candidates = [*here, str(REPO_ROOT), tempfile.gettempdir(), *extra]
+@@ -168,6 +182,8 @@ def _locate(root: str, parts: list[str], what: str) -> str:
+             if not last:
+                 raise PathRefused(f"{what}: a folder on the path does not exist")
+             return os.path.join(current, _new_name(part, what))
++        if last and entry.name != part:  # a WRITTEN file is never found by its loose name (see the module text)
++            raise PathRefused(f"{what}: a file whose name differs only in Unicode form or case already exists")
+         current = _step(entry, last, what)
+     return current
+ 

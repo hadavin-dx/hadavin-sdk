@@ -1,0 +1,12 @@
+ALONE on b573c41
+   sonar-p2-regex-optional.patch OK
+   sonar-p2-feed-optional.patch OK
+   nodemo-ci-job-v4.patch OK
+   nodemo-optional-hygiene-repo-v4.patch FAIL(alone)
+   sonar-yaml-test-trimmed-v2.patch OK
+   semgrep-on-db54e13-v5.1.patch OK
+   minors OK
+   risky FAIL(alone)
+ordered pairs checked: 55
+random orders checked: 600 seed 20261113
+attributable failures: 0

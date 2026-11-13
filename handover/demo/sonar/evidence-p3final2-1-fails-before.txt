@@ -1,0 +1,13 @@
+# (A) the MINORS test file against the f3d9dca code (no minors source change):
+FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside
+FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name
+FAILED tests/test_path_confinement.py::test_the_docs_name_two_more_refused_configs_and_the_macos_case_rule
+3 failed, 241 passed in 10.46s
+
+# (B) the RISKY test file against f3d9dca + minors (no pathconfine change):
+FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_nfd_file
+FAILED tests/test_path_confinement.py::test_a_written_file_whose_only_match_is_loose_is_refused_with_a_fake_listing
+FAILED tests/test_path_confinement.py::test_v5_the_listing_match_ignores_case_where_the_system_does
+FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder
+FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_home_folder_is_not_allowed_unless_it_is_the_repository
+5 failed, 243 passed in 8.48s

@@ -1,0 +1,6 @@
+# real-run tests under unshare -rn + lo_up + connect blocker (b573c41 + minors)
+..                                                                       [100%]
+2 passed, 242 deselected in 6.72s
+     32 connect allow
+     32 getaddrinfo allow
+BLOCK: 0

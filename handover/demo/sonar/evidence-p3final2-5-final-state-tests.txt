@@ -1,0 +1,16 @@
+# REBASED on b573c41 (the lead's new head). git add -A done, DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1
+# tests: tests/test_path_confinement.py tests/test_hygiene.py tests/test_gitleaks_exceptions.py tests/test_codeant_hygiene.py tests/test_load_tools.py tests/test_scrub_n8n_export.py tests/test_n8n_api_url.py tests/test_real_check_dry.py tests/test_env_numbers.py tests/test_no_placeholders.py tests/test_later_approval.py tests/test_sonar_p2_gaps.py tests/test_shell_single_bracket.py tests/test_raw_bidi_chars.py tests/test_workflow_run_flags.py
+## c3: b573c41 + minors
+All checks passed!
+154 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+......................................................                   [100%]
+1421 passed, 1 skipped in 199.45s (0:03:19)
+## c4: b573c41 + minors + risky
+All checks passed!
+154 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+..........................................................               [100%]
+1425 passed, 1 skipped in 141.32s (0:02:21)

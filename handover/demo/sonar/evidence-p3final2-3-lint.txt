@@ -1,0 +1,20 @@
+# gates on f3d9dca + sonar-p3-final-v2-minors (git add -A done)
+All checks passed!
+153 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+	No issues identified.
+		Medium: 0
+		High: 0
+		Medium: 0
+		High: 9
+# gates on f3d9dca + minors + RISKY (git add -A done)
+All checks passed!
+153 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+	No issues identified.
+		Medium: 0
+		High: 0
+		Medium: 0
+		High: 9
