@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+18:56Z. EV5 runner a6d8392f: group B still running (no final line in full-B.log yet; its checkpoint file last updated 18:49Z, nothing newer, so about 7 min silent; I will ask for a checkpoint if still silent at 19:05Z). The re-run alone of the 4 group A failures has NOT started (the runner re-runs after both groups end, per my brief), so their cause is still UNKNOWN. Mail pass aee26a5b: running, no report. R6 builder: not started, waiting for EV5 and the mail pass so that one brief holds every finding. Nothing new has failed beyond what the 18:50Z block states. ASK: none.
+
+## STATUS (core lead)
 18:50Z. EV5 runner a6d8392f: group A finished rc=1: 4 failed, 2942 passed, 5 skipped (runner-measured, from the raw log). Failed: 3 x tests/test_scrub_n8n_export.py linear-time scan of 1 MB (patterns URL, _LOCAL_BROKEN, _clean; timing tests, ran while group B and hostile runs shared the machine) and 1 x tests/test_sonar_p2_feed_optional.py::test_feed_calls_the_configured_desk_address (cause UNKNOWN). I do NOT call any of them a flake: the runner must re-run them alone; if they fail alone they are defects. Group B not finished yet (earlier log showed 1 F); fail-before runs started. Mail pass aee26a5b: still running, no report. Reviewer a31190d2 done (7 Majors). R6 builder NOT started yet by choice: I batch all findings (reviewer, EV5, mail pass) into one brief; start as soon as the mail pass and EV5 report (expected within about 20-30 min). ASK: none.
 
 ## STATUS (core lead)
