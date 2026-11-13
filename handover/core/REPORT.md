@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R5 builder a6c708de latest checkpoint: Done: stale-test fixes (load_driver loopback text, catcher host text, 256 MiB cap, whitespace number, n8n cut-off, no-terminal key file, burst cut-off, path-confinement _main, reset.sh [[ ]], hygiene wording); R4-08 guard lists extended with ports + 40 planted shapes (guard test passes); new tests: tests/test_r5_refusals.py, additions to test_reset_scripts.py and test_live_claude.py. | Batches b1/b2/b3 earlier: b2 all passed; b1/b3 failures listed above, now fixed or timing flakes (crm_hubspot 429 x2, shell_single_bracket linear-time) - rerun running (c2). | In progress: c1 (new tests) and c2 (re-run) running. Next: fail-before runs, lint/bandit, patches, RESULTS.md. . Nothing failed that I can verify; only agent running. ASK: none.
+
+## STATUS (core lead)
 R5 builder a6c708de latest checkpoint: Done: stale-test fixes (load_driver loopback text, catcher host text, 256 MiB cap, whitespace number, n8n cut-off, no-terminal key file, burst cut-off, path-confinement _main, reset.sh [[ ]], hygiene wording); R4-08 guard lists extended with ports + 40 planted shapes (guard test passes); new tests: tests/test_r5_refusals.py, additions to test_reset_scripts.py and test_live_claude.py. | Batches b1/b2/b3 earlier: b2 all passed; b1/b3 failures listed above, now fixed or timing flakes (crm_hubspot 429 x2, shell_single_bracket linear-time) - rerun running (c2). | In progress: c1 (new tests) and c2 (re-run) running. Next: fail-before runs, lint/bandit, patches, RESULTS.md. . Nothing failed; only agent running. ASK: none.
 
 ## STATUS (core lead)
