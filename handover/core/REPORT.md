@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:50Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 batch 10 landed: head 304c3bd3 (fast-forward from 83cdb7a2). Everything below is the builder's own report; nothing independent yet.
+- Builder says NOT done: no Python 3.14 run (no interpreter; row B158 skipped there by design, so 244 rows, 243 on 3.14); no full 244-row mutant run and no 60-row sample (time box); seven rows were first BAD (B249, B250, B215, B239, B57, B165, B256) and were fixed and re-run alone.
+- Builder slips: its first "one budget per request" test had an empty holder so the runtime was never read and row B249 survived; row B253 (CHANGELOG pin count) cannot run in the mutation runner (temp copy has no CHANGELOG), removed and proved by hand; B153 now ends as CRASH (accepted kind).
+- New find by the builder in its own change: copy.copy(hooks) wrote __slotnames__ into the newly pinned Hooks class and made every later question read as real (now pinned, test, row B256).
+- Builder fail-before: new test file on 83cdb7a2 gives 12 failed, 289 passed, 1 skipped; 7 new tests pass on old and are labelled PIN. Unverified until the runner re-measures (the Part 6 builder's count was wrong by 3x, so I do not trust this one yet).
+- Per request before authentication (builder, other jobs running): 1,000 rows about 40 ms, 2,400 about 95 ms, worst case about 61 ms.
+
+**LEAD ACTIONS:** snapshot /home/user/build/snap/pdbind-304c3bd3/ (models.py and runtime/tick.py now included). Launched round 10 for Part 2: runner a1b9b30a223decddb (cloud-limited), reviewers egm-design a365cea3f3e0072d5 and egm-codebase-details a3654df8dc2bb917f. Part 6 batch 11 builder ab741cc2 working.
+**LIVE ITEMS:** a1b9b30a (runner P2), a365cea3 and a3654df8 (reviewers P2), ab741cc2 (P6 batch 11), a73b09c1 (SONAR-PATH batch 3). aa234f9b finished.
+**ROUNDS (WHY):** Part 2 round 10 reviews now; Part 6 round 11 builder; SONAR-PATH round 3 builder.
+**FINISHED SINCE LAST BLOCK:** Part 2 batch 10 pushed.
+**EGM STEP PER PACKAGE:** P2: runner and reviewers (steps 3-4). P6: builder batch 11. SONAR-PATH: builder.
+**LANE SONAR-PATH:** a73b09c1; builder; A done, B running.
+**RUN ON LAPTOP:** none (no package final).
+
+
 ## 03:48Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
