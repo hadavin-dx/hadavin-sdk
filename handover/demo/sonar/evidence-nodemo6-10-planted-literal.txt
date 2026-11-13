@@ -1,0 +1,11 @@
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+E         scripts/planted_probe.py:1:http://169.254.169.254/latest/meta-data
+--- C no-.git, DPLD_REQUIRE_SCAN=1:
+E           Failed: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in 
+1 failed, 20 deselected in 0.83s
+--- C no-.git, no env:
+SKIPPED [1] tests/test_hygiene.py:142: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git
+1 skipped, 20 deselected in 0.50s

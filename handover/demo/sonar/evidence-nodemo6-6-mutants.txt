@@ -1,0 +1,22 @@
+BASELINE B {'DPLD_REQUIRE_SCAN': '1'} -> 252 passed, 10 deselected in 82.35s (0:01:22)
+BASELINE C {} -> 244 passed, 8 skipped, 10 deselected in 14.65s
+BASELINE C {'DPLD_REQUIRE_SCAN': '1'} -> 8 failed, 244 passed, 10 deselected in 11.19s
+KILLED   M1 gap never reported | B+req: 2 failed, 250 passed, 10 deselected in 57.40s | C: 9 failed, 242 passed, 1 skipped, 10 deselected in 8.34s | C+req: 9 failed, 242 passed, 1 skipped, 10 deselected in 8.82s
+KILLED   M2 .git presence only | B+req: 1 failed, 251 passed, 10 deselected in 59.53s | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 12.69s | C+req: 9 failed, 243 passed, 10 deselected in 12.61s
+KILLED   M3 scan_required always false | B+req: 1 failed, 250 passed, 1 skipped, 10 deselected in 70.33s (0:01:10) | C: 1 failed, 242 passed, 9 skipped, 10 deselected in 16.17s | C+req: 1 failed, 242 passed, 9 skipped, 10 deselected in 13.81s
+KILLED   M4 scan_required always true | B+req: 2 failed, 250 passed, 10 deselected in 73.21s (0:01:13) | C: 10 failed, 242 passed, 10 deselected in 8.86s | C+req: 10 failed, 242 passed, 10 deselected in 9.42s
+KILLED   M5 no skip mark | B+req: 1 failed, 251 passed, 10 deselected in 74.92s (0:01:14) | C: 7 failed, 243 passed, 2 skipped, 10 deselected in 11.36s | C+req: 9 failed, 243 passed, 10 deselected in 8.98s
+KILLED   M6 no failure under CI setting | B+req: 1 failed, 251 passed, 10 deselected in 64.07s (0:01:04) | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 9.85s | C+req: 8 failed, 243 passed, 1 skipped, 10 deselected in 9.90s
+KILLED   M7 REPO from cwd | B+req: 1 failed, 251 passed, 10 deselected in 63.73s (0:01:03) | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 10.85s | C+req: 9 failed, 243 passed, 10 deselected in 10.22s
+KILLED   M8 scan guard before the canaries | B+req: 1 failed, 251 passed, 10 deselected in 76.07s (0:01:16) | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 10.36s | C+req: 9 failed, 243 passed, 10 deselected in 9.54s
+KILLED   M9 leftover support import in test_no_placeholders (P9) | B+req: 1 failed, 249 passed, 1 skipped, 10 deselected in 80.97s (0:01:20) | C: 1 failed, 242 passed, 8 skipped, 10 deselected in 14.36s | C+req: 8 failed, 242 passed, 1 skipped, 10 deselected in 10.33s
+KILLED   M10 support import with a rig in test_hygiene (P10) | B+req: 215 passed, 2 skipped in 8.40s | C: 211 passed, 6 skipped in 6.47s | C+req: 4 failed, 211 passed, 2 skipped in 6.76s
+KILLED   M11 _needs_demo always true | B+req: 7 skipped in 0.09s | C: 7 skipped in 0.09s | C+req: 7 skipped in 0.09s
+KILLED   M12 _needs_demo always false | B+req: 1 failed, 251 passed, 10 deselected in 59.95s | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 10.55s | C+req: 9 failed, 243 passed, 10 deselected in 14.67s
+KILLED   M13 DEMO_BOUND_NAMES empty | B+req: 1 failed, 251 passed, 10 deselected in 56.96s | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 10.76s | C+req: 9 failed, 243 passed, 10 deselected in 10.46s
+KILLED   M14 support imports demo_only at the top | B+req: NO RESULT | C: NO RESULT | C+req: NO RESULT
+KILLED   M15 registry drops raw_bidi | B+req: 1 failed, 251 passed, 10 deselected in 52.82s | C: 2 failed, 243 passed, 7 skipped, 10 deselected in 9.14s | C+req: 9 failed, 243 passed, 10 deselected in 9.43s
+KILLED   M16 marker check removed (any listing passes) | B+req: 1 failed, 251 passed, 10 deselected in 59.88s | C: 1 failed, 243 passed, 8 skipped, 10 deselected in 12.37s | C+req: 9 failed, 243 passed, 10 deselected in 11.84s
+KILLED   M17 skip and fail swapped | B+req: 1 failed, 251 passed, 10 deselected in 64.54s (0:01:04) | C: 2 failed, 243 passed, 7 skipped, 10 deselected in 9.94s | C+req: 8 failed, 243 passed, 1 skipped, 10 deselected in 10.34s
+KILLED   M18 import inside function counts | B+req: 2 failed, 250 passed, 10 deselected in 58.96s | C: 2 failed, 242 passed, 8 skipped, 10 deselected in 11.87s | C+req: 10 failed, 242 passed, 10 deselected in 11.76s
+EXIT

@@ -1,6 +1,43 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 11:59Z / 17:29 IST - STATUS TABLE then ASK; **READY: `claims-fix-v4b.patch` (review fixes of v4 + AST/YAML proof); recount patch starting now**
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| (me) | `claims-fix-v4b.patch` (M1, M2, N4, N5 fixed; N3 no change) + AST/YAML proof + contradiction scan | your 11:54Z/11:57Z order | 11:50 / 17:20 | done | review round 1 | done | you apply |
+| (next) | `claims-fix-recount.patch`: recount of test/line COUNTS with `python -m pytest --collect-only -q` on public main f3c39cf8 + the 9-patch stack, using lane-3's list | your 11:47Z order | starting now | ~25 min | recount round 1 | starting | fetch lane-3 list, collect |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+No agents running. **ASK: none.**
+**READY: `handover/demo/claims-fix/claims-fix-v4b.patch` sha256 `99f018ed7c0e4c4fecac425f35b234817cbb582185e0ebb9dc437a5ef8e86205`: 2 files, +4/-4 (`contract.md` 3 lines, `docs/hubspot-probe.md` 1 line).** Apply order: v1, v1b, code-fix-v1, v2, v2b, v3, v3b, v4, v4b. All 9 apply in order on c30c373 AND on public main f3c39cf8 (fetched from the GitHub origin with my script: HEAD f3c39cf8 = ls-remote main). The two trees match.
+**WHAT EACH FIX SAYS (each read in the code/tests first):** (M1) contract.md "Portal routes": the "(tests/test_portal_api.py checks it)" claim is gone. Now: the extension is loaded before the socket is bound (read in `src/lead_desk/server.py`: `load_demo_portal` runs before the server object is made); "this order is not tested end to end"; `tests/test_portal_api.py` tests only that the loader itself raises for a broken extension (grep of tests/: other uses are monkeypatches). (M2) the replay sentence now names `test_replay_same_source_ref` in `tests/test_flow.py` and says what it asserts: a replay drives a pending follow-up once (outbox count 1 after the drive) and a sent one not at all (no drive id; a second drive changes nothing); I read the test fully, the assertions are there, so no softening was needed. (N3) NO CHANGE: `test_two_drives_one_email` in `tests/test_input_edge_cases.py` asserts `rig.qualifier.calls == 1` (that is code-fix-v1, which is in the stack), so both tests count AI calls; note this holds only with code-fix-v1 applied. (N4) `portal_api.py` read in full: one `sqlite3.connect`, in `connect_readonly`, which `_snapshot` uses for each of the five snapshot reads; the other two sources are in memory. The sentence now says so ("read here"). (N5) hubspot-probe.md: the tests check the call budget and the token masking against a local stand-in; `CALL_BUDGET` in the script is 8; the tests read that constant and do not pin the number.
+**PROOF OF TEXT-ONLY (run on the 9-patch tree vs c30c373; ast.dump after removing docstring Expr nodes; comments never appear in an AST; yaml.safe_load for workflows):**
+| .py file | identical (docstrings and comments ignored) |
+|---|---|
+| load_tools/catcher.py | yes |
+| scripts/check_schema.py | yes |
+| scripts/hubspot_probe.py | yes |
+| src/lead_desk/constants.py | yes |
+| src/lead_desk/db.py | yes |
+| src/lead_desk/desk.py | yes |
+| src/lead_desk/gate.py | yes |
+| src/lead_desk/imap_count.py | yes |
+| src/lead_desk/live_claude.py | yes |
+| src/lead_desk/loader.py | yes |
+| src/lead_desk/run_stats.py | yes |
+| src/lead_desk/trace.py | yes |
+| tests/test_input_edge_cases.py | **NO, on purpose**: code-fix-v1 changes one assertion; a second check showed the file differs ONLY by `assert rig.qualifier.calls in (1, 2)` becoming `== 1` |
+
+| .yml file | safe_load equal |
+|---|---|
+| .github/workflows/codeql.yml | yes |
+| .github/workflows/lint.yml | yes |
+| .github/workflows/semgrep.yml | yes |
+| .github/workflows/sonar.yml | yes |
+
+Other non-md file changed: `scripts/start_all.ps1` (code-fix-v1, on purpose; CRLF kept: 25 CRLF, 0 LF-only). Tables also in `handover/demo/claims-fix/claims-fix-v4b-proof-tables.md`.
+**CONTRADICTION CHECK (v4 sentences vs v1..v3b), method stated: I grepped every file the stack touches for each shared fact (reaper 10 s / 55 s, SMTP and send timeouts 5.0 / 9 s / 600, exit codes 1-5, TIME_WAIT, 5 automatic tries and the 1-2-4-8 s waits, Semgrep 47 files and "no log is shipped", test counts, 16 min 33 s, hs_lead_status) and read the hits side by side; I did NOT re-read every sentence of the stack. Found NO same-fact-two-ways. Notes: (a) versions.md "3726" and "91 lines" are stale against main f3c39cf8 (about 3883): that is the recount patch, not a contradiction; (b) limits.md waits 10, 60, 180, 420 s (about 11 min) are the model-step stage retries, contract.md 1, 2, 4, 8 s are the follow-up reaper: different mechanisms, each labelled; (c) `test_except_clause_hierarchy.py` 49 (dated) and 52 (this commit) are labelled history vs current, both in docs/tests.md; (d) lint.yml and sonar.yml carry the identical timeout comment.**
+**CHECKS on v4b (stack of 9 on c30c373):** `ruff check .` all passed; `ruff format --check .` 158 files already formatted; `gitleaks dir` with the repo `.gitleaks.toml` on a clean tree: no leaks (the one finding on the first scan was `.ruff_cache/CACHEDIR.TAG`, a cache ruff itself made; gone after deleting the cache); ONE run of `tests/test_hygiene.py` + `tests/test_portal_wording_and_masking.py` + `tests/test_hubspot_probe.py` under `unshare -n` with loopback: all passed. Nothing pushed public.
+
 ## 2026-11-13 11:48Z / 17:18 IST - STATUS TABLE then ASK; **READY: `claims-fix-v4.patch` (stage 4: parts 5a, 5b, 6, 7) applied in order on public main f3c39cf8 too; recount patch next**
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

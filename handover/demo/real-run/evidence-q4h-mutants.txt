@@ -1,0 +1,119 @@
+# MUTANTS on the v6 tree (a copy), one at a time, each against the tests named; killed = the tests fail
+# harness: mut.py (scratchpad), tests run under unshare -rn + connect blocker. After the first pass four mutants survived: see the notes at the end
+
+## start-prompt 23 (muts from b12-harness/muts1.json; M12 pattern adapted to the merged text), tests/test_start_prompt_hardening.py
+M1 stdin_is_terminal always True	killed	1 failed in 0.39s
+M2 isatty only (no console test)	killed	1 failed, 31 passed in 0.20s
+M3 windows probe ignored	killed	1 failed, 30 passed in 0.21s
+M4 windows probe fails open	killed	1 failed, 30 passed in 0.56s
+M5 ask_to_start takes y	killed	1 failed, 9 passed in 0.16s
+M6 ask_to_start reads a non-terminal	killed	1 failed, 32 passed in 0.20s
+M7 ask_to_start takes y as the word	killed	1 failed, 32 passed in 0.21s
+M8 real early check removed	killed	1 failed, 5 passed, 1 warning in 0.21s
+M9 live early check removed	killed	1 failed, 33 passed in 0.25s
+M10 real: any answer starts	killed	1 failed, 8 passed in 0.17s
+M11 live: any answer starts	killed	1 failed, 50 passed in 0.34s
+M12 real early refusal exit 1	killed	1 failed in 0.13s
+M13 banner without mailbox lines	killed	1 failed, 20 passed in 0.20s
+M14 banner not printed	killed	1 failed, 20 passed in 0.26s
+M15 imap host shape unchecked	killed	1 failed, 22 passed in 0.31s
+M16 imap falls back to default	killed	1 failed, 22 passed in 0.23s
+M17 unnamed check off	killed	1 failed, 56 passed in 0.47s
+M18 loopback by substring	killed	1 failed, 39 passed in 0.57s
+M19 live no-base-url refusal off	killed	1 failed, 48 passed in 1.96s
+M20 guard ignores the name input	killed	1 failed, 65 passed in 0.87s
+M21 guard ignores sys.stdin attribute	killed	1 failed, 71 passed in 0.56s
+M22 guard ignores getpass import	killed	1 failed, 73 passed in 0.51s
+M23 repo walk skips scripts	killed	1 failed, 126 passed in 1.59s
+
+## v5 R1-R20 (patterns of the v5 builder), tests/test_take_script_refusals.py
+R1 result check off	killed	1 failed, 124 passed in 83.01s (0:01:23)
+R2 folder test off	killed	1 failed, 124 passed in 62.08s (0:01:02)
+R3 parent test off	killed	1 failed, 125 passed in 118.50s (0:01:58)
+R4 parent exists() not is_dir()	killed	1 failed, 126 passed in 147.27s (0:02:27)
+R5 check writes the file	killed	1 failed, 125 passed in 81.45s (0:01:21)
+R6 write_result raises	killed	1 failed, 128 passed in 50.88s
+R7 write_result prints the path	killed	1 failed, 128 passed in 120.02s (0:02:00)
+R8 real script takes the lock	killed	1 failed, 131 passed in 87.48s (0:01:27)
+R9 live script takes the lock	killed	1 failed, 123 passed in 122.01s (0:02:02)
+R10 core read_totals takes the lock	killed	1 failed, 123 passed in 110.52s (0:01:50)
+R11 core read_totals makes the folder	killed	1 failed, 123 passed in 84.38s (0:01:24)
+R12 core check_readable back	killed	1 failed, 130 passed in 112.13s (0:01:52)
+R13 certificate wording changed	killed	1 failed, 134 passed in 83.04s (0:01:23)
+R14 bind name repeated	killed	1 failed, 133 passed in 80.81s (0:01:20)
+R15 old db-path wording	killed	1 failed, 132 passed in 122.91s (0:02:02)
+R16 generic handler prints type	killed	1 failed, 139 passed in 146.04s (0:02:26)
+R17 missing names old wording	killed	1 failed, 132 passed in 83.51s (0:01:23)
+R18 persons old wording	killed	1 failed, 132 passed in 113.73s (0:01:53)
+R19 mailbox order old	killed	1 failed, 132 passed in 83.96s (0:01:23)
+R20 config unreadable old	killed	1 failed, 132 passed in 87.12s (0:01:27)
+
+## v5 S1-S12 (the scan mutants; S1 S2 S3 S4 S5 S10 re-written for the new scan code, same idea), tests/test_take_script_refusals.py -k scan/keep/sample
+S1 scan ignores bytes	killed	1 failed, 13 passed, 70 deselected in 41.56s
+S2 scan no glued join	SURVIVED	72 passed, 70 deselected in 43.03s
+S3 scan skips class attrs	killed	1 failed, 14 passed, 70 deselected in 39.54s
+S4 scan decorator any constant	killed	1 failed, 24 passed, 70 deselected in 51.27s
+S5 scan setattr None ok	killed	1 failed, 54 passed, 70 deselected in 43.95s
+S6 scan setattr anywhere	killed	1 failed, 34 passed, 70 deselected in 48.25s
+S7 scan child check off	killed	1 failed, 36 passed, 70 deselected in 48.32s
+S8 scan default param ok	killed	1 failed, 26 passed, 70 deselected in 41.16s
+S9 scan async not handled	killed	1 failed, 20 passed, 70 deselected in 44.78s
+S10 scan rebind check off	killed	1 failed, 33 passed, 70 deselected in 50.31s
+S11 scan keep-alone helper off	killed	1 failed, 19 passed, 70 deselected in 56.21s
+S12 scan docstrings counted	killed	1 failed, 40 passed, 70 deselected in 56.40s
+
+## new: scan K1-K15
+K1 pieces unsorted	killed	1 failed, 66 passed, 70 deselected in 47.69s
+K2 any usefixtures	killed	1 failed, 24 passed, 70 deselected in 45.51s
+K3 monkeypatch param not required	killed	1 failed, 63 passed, 70 deselected in 45.31s
+K4 any non-None tempdir	killed	1 failed, 54 passed, 70 deselected in 49.91s
+K5 patch order ignored	killed	1 failed, 52 passed, 70 deselected in 52.37s
+K6 fold: format dropped	SURVIVED	72 passed, 70 deselected in 46.22s
+K7 fold: percent dropped	killed	1 failed, 45 passed, 70 deselected in 44.12s
+K8 fold: names unresolved	killed	1 failed, 46 passed, 70 deselected in 43.22s
+K9 fold: attributes unresolved	killed	1 failed, 48 passed, 70 deselected in 43.46s
+K10 placeholders not stripped	SURVIVED	72 passed, 70 deselected in 43.99s
+K11 monkeypatch rebind unchecked	killed	1 failed, 64 passed, 70 deselected in 43.01s
+K12 run line is the dry flag	killed	1 failed, 2 passed, 70 deselected in 43.99s
+K13 scan ignores bytes	killed	1 failed, 13 passed, 70 deselected in 44.58s
+K14 usefixtures param default accepted	killed	1 failed, 26 passed, 70 deselected in 41.87s
+K15 tmp folder names not derived	killed	1 failed, 56 passed, 70 deselected in 42.38s
+
+## new: core C1-C9 and scripts N1-N20, tests/test_real_run_v6.py + tests/test_core_key_readers.py
+C1 live multi-line check removed	killed	1 failed, 75 passed in 6.18s
+C2 hubspot short key says 'no key' again	killed	1 failed, 76 passed in 8.32s
+C3 hubspot accepts blanks	killed	1 failed, 73 passed in 1.17s
+C4 hubspot min length off by one	killed	1 failed, 73 passed in 0.53s
+C5 smtp ascii check off	killed	1 failed, 74 passed in 2.06s
+C6 smtp message holds the secret	killed	1 failed, 77 passed in 2.45s
+C7 live message holds the path	killed	1 failed, 78 passed in 3.83s
+C8 hubspot message holds the key	killed	1 failed, 76 passed in 2.16s
+C9 live empty and multi order swapped	SURVIVED	85 passed in 4.50s
+N1 db folder check off	killed	1 failed, 3 passed in 0.42s
+N2 special file check off (real)	killed	1 failed, 14 passed in 15.83s
+N3 config pipe check off	killed	1 failed, 23 passed in 15.51s
+N4 blank result check off	killed	1 failed, 7 passed in 0.14s
+N5 same-file check off	killed	1 failed, 9 passed in 0.18s
+N6 result pipe check off	killed	1 failed, 13 passed in 0.31s
+N7 live key pipe check off	killed	1 failed, 24 passed in 15.21s
+N8 live ledger pipe check off	killed	1 failed, 24 passed in 20.19s
+N9 leads cap off	killed	1 failed, 54 passed in 3.07s
+N10 runs cap off	killed	1 failed, 58 passed in 0.46s
+N11 parser echoes argparse text	killed	1 failed, 63 passed in 0.30s
+N12 setting names not translated	SURVIVED	85 passed in 4.02s
+N13 no-terminal text without slot	killed	1 failed, 69 passed in 0.46s
+N14 type text echoes the value	SURVIVED	85 passed in 13.79s
+N15 is_special_file always false	killed	1 failed in 0.18s
+N16 folder_part always false	killed	1 failed, 1 passed in 0.11s
+N17 same_file no realpath fallback	killed	1 failed, 2 passed in 0.12s
+N18 named files omit the config	killed	1 failed, 9 passed in 0.28s
+N19 named files only _FILE	killed	1 failed, 9 passed in 0.31s
+N20 result checked after question order (dir test off)	SURVIVED	85 passed in 6.46s
+
+## survivors of the first pass and what was done
+C9 live empty/multi order swapped: SURVIVED, EQUIVALENT (a key that is empty after strip() holds no line break, so the order of the two checks cannot change any result).
+N12 setting names not translated: SURVIVED -> test added (no output of the live script holds "DESK_"); re-run: killed (1 failed, 26 passed).
+N14 type text echoes the value: SURVIVED (the parser's mapping hid it) -> test added (exact texts of the argument types); re-run: killed.
+N20 result-is-a-folder check off: SURVIVED in this test selection only: the folder case is tested in tests/test_take_script_refusals.py and is killed there by R2 (above).
+K6 fold: format dropped, K10 placeholders not stripped, S2 no glued join: SURVIVED singly, because two paths find the same spelling (the fold and the glue). K6 + K10 together: killed. S2: a 64th sample (flags in two lists added together) was added, which only the glue finds; re-run: killed.
+Totals after the re-runs: start-prompt 23/23 killed, R 20/20 killed (R16 survived in v5; killed now), S 12/12 (after the 64th sample), K 13/15 singly and 15/15 counting K6 + K10 together (two paths find the same spelling), C 8/9 (+ 1 equivalent), N 20/20 (N12 and N14 after added tests; N20 killed by R2 in the other file). No mutant of the three core hunks survived except the equivalent C9.

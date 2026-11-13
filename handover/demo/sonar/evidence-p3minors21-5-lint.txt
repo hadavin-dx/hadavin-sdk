@@ -1,0 +1,19 @@
+## tree = head 3598120 + minors + risky + both v21 deltas
+## ruff check
+All checks passed!
+## ruff format --check
+156 files already formatted
+## mypy linux
+Success: no issues found in 28 source files
+## mypy win32
+Success: no issues found in 28 source files
+## bandit -ll (medium and high issues)
+	No issues identified.
+		Medium: 0
+		High: 0
+		Medium: 0
+		High: 9
+## minors-only state (head+minors+md)
+All checks passed!
+156 files already formatted
+Success: no issues found in 28 source files

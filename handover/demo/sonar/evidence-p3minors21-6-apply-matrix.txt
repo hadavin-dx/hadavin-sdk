@@ -1,0 +1,16 @@
+ALONE on 3598120
+  minors.patch                             OK
+  risky.patch                              fails alone
+  minors-v21-delta.patch                   fails alone
+  risky-v21-delta.patch                    fails alone
+  nodemo-ci-job-v4.patch                   OK
+  sonar-p2-optional-gaps-delta.patch       OK
+  sonar-p2-feed-constants-delta.patch      OK
+  sonar-yaml-test-trimmed-v2.patch         OK
+  semgrep-on-db54e13-v5.1.patch            OK
+  sonar-p2-regex-optional.patch            fails alone
+  sonar-p2-feed-optional.patch             fails alone
+  nodemo-optional-hygiene-repo-v4.patch    fails alone
+ordered pairs checked: 72
+random orders: 600 seed 20261113 | orders checked in total: 677 | orders where all four of ours applied: 605
+attributable failures: 0

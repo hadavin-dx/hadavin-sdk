@@ -1,0 +1,933 @@
+diff --git a/load_tools/check_invariants.py b/load_tools/check_invariants.py
+index 4e68026..d399898 100644
+--- a/load_tools/check_invariants.py
++++ b/load_tools/check_invariants.py
+@@ -59,6 +59,12 @@ CHECK_NAMES = {
+ }
+ 
+ 
++def _shown_name(name: str) -> str:
++    """A file name as it is printed: a name with a character a terminal could act on (a control character, a
++    right-to-left override, a zero-width or byte-order character) is replaced by a placeholder."""
++    return name if name.isprintable() else "(a name with a special character)"
++
++
+ class InputError(Exception):
+     """An input file is missing or not in the documented format."""
+ 
+@@ -82,16 +88,16 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
+     try:
+         text = path.read_text(encoding="utf-8")
+     except OSError as e:
+-        raise InputError(f"cannot read {path.name}: {type(e).__name__}") from e
++        raise InputError(f"cannot read {_shown_name(path.name)}: {type(e).__name__}") from e
+     for n, line in enumerate(text.splitlines(), 1):
+         if not line.strip():
+             continue
+         try:
+             obj = json.loads(line)
+         except ValueError as e:
+-            raise InputError(f"{path.name} line {n}: not JSON") from e
++            raise InputError(f"{_shown_name(path.name)} line {n}: not JSON") from e
+         if not isinstance(obj, dict):
+-            raise InputError(f"{path.name} line {n}: not a JSON object")
++            raise InputError(f"{_shown_name(path.name)} line {n}: not a JSON object")
+         rows.append(obj)
+     return rows
+ 
+@@ -105,10 +111,12 @@ def read_crm(path: Path) -> list[dict[str, Any]]:
+     try:
+         obj = json.loads(path.read_text(encoding="utf-8"))
+     except (OSError, ValueError) as e:
+-        raise InputError(f"cannot read CRM dump {path.name}: {type(e).__name__}") from e
++        raise InputError(f"cannot read CRM dump {_shown_name(path.name)}: {type(e).__name__}") from e
+     rows = obj.get("rows") if isinstance(obj, dict) else obj
+     if not isinstance(rows, list) or not all(isinstance(r, dict) and "lead_id" in r for r in rows):
+-        raise InputError(f"{path.name}: expected a list of rows or an object with a rows list; each row needs lead_id")
++        raise InputError(
++            f"{_shown_name(path.name)}: expected a list of rows or an object with a rows list; each row needs lead_id"
++        )
+     return rows
+ 
+ 
+@@ -116,16 +124,16 @@ def read_book(path: Path, *, anywhere: bool = False) -> dict[str, Any]:
+     """Read-only look at the desk's SQLite book. The path must lie in an allowed folder (tools/pathconfine.py);
+     ``anywhere=True`` is for scripts/run_real_check.py, which reads the book that its own settings file names, kept
+     outside the repository on purpose (docs/real-services.md)."""
+-    name = path.name if path.name.isprintable() else "(a name with a control character)"  # never echo an escape
++    shown = _shown_name(path.name)  # never echo an escape
+     try:
+         if anywhere:
+-            path = confine_anywhere(path, what=f"book {name}")
++            path = confine_anywhere(path, what=f"book {shown}")
+         else:
+-            path = confine_existing(path, what=f"book {name}")
++            path = confine_existing(path, what=f"book {shown}")
+     except PathRefused as e:
+         raise InputError(str(e)) from e
+     if not path.is_file():
+-        raise InputError(f"no such book: {path.name}")
++        raise InputError(f"no such book: {_shown_name(path.name)}")
+     try:
+         conn = sqlite3.connect(readonly_sqlite_uri(path), uri=True)
+         try:
+@@ -146,7 +154,7 @@ def read_book(path: Path, *, anywhere: bool = False) -> dict[str, Any]:
+         finally:
+             conn.close()
+     except sqlite3.Error as e:
+-        raise InputError(f"cannot read book {path.name}: {type(e).__name__}") from e
++        raise InputError(f"cannot read book {_shown_name(path.name)}: {type(e).__name__}") from e
+     return {
+         "receipts": receipts,
+         "outcomes": outcomes,
+@@ -634,7 +642,9 @@ def _intended(path: Path) -> int:
+     try:
+         return int(json.loads(path.read_text(encoding="utf-8"))["intended_requests"])
+     except (OSError, ValueError, KeyError, TypeError) as e:
+-        raise InputError(f"cannot read the driver facts {path.name} (intended_requests): {type(e).__name__}") from e
++        raise InputError(
++            f"cannot read the driver facts {_shown_name(path.name)} (intended_requests): {type(e).__name__}"
++        ) from e
+ 
+ 
+ def _facts_say_live(path: Path) -> bool:
+@@ -660,7 +670,7 @@ def _drain_marker(path: Path | None) -> float | None:
+         obj = json.loads(path.read_text(encoding="utf-8"))
+         value = obj.get("drained_ts")
+     except (OSError, ValueError, AttributeError) as e:
+-        raise InputError(f"cannot read drain marker {path.name}: {type(e).__name__}") from e
++        raise InputError(f"cannot read drain marker {_shown_name(path.name)}: {type(e).__name__}") from e
+     return None if value is None else float(value)
+ 
+ 
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index c7bb00f..a887d9a 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -202,7 +202,8 @@ def main(a: list[str]) -> int:
+             raise SystemExit(f"cannot read a workflow: {e}. {FOLDERS_HINT}") from None
+         except (OSError, ValueError, KeyError, AttributeError, RuntimeError) as e:  # no file, not JSON (or nested too
+             # deeply: RecursionError), not an object, no name
+-            raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
++            shown_arg = a[2] if a[2].isprintable() else "(a name with a special character)"  # never echo an escape
++            raise SystemExit(f"cannot read a workflow from {shown_arg} ({type(e).__name__})") from None
+         code, res = call("POST", "/workflows", {k: wf[k] for k in KEEP if k in wf})
+         say(wf["name"], code, "" if code == HTTPStatus.OK else res)
+         return 0 if code == HTTPStatus.OK else 1
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index 3d7616e..b505dc0 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -1058,13 +1058,13 @@ def test_the_readme_says_what_the_wide_folders_allow() -> None:
+ def test_read_book_does_not_echo_a_terminal_escape_from_the_file_name(jail: tuple[Path, Path]) -> None:
+     """rv34 NIT-4: the old message put the raw base name first; ESC, CSI and the like reached the terminal."""
+     inside, _ = jail
+-    for name in ("a\x1b[31mred.db", "x\x9bz.db", "tab\there.db", "nl\nx.db"):
++    for name in ("a\x1b[31mred.db", "x\x9bz.db", "tab\there.db", "nl\nx.db", *_FORMAT_NAMES):
+         for anywhere in (False, True):
+             with pytest.raises(ci.InputError) as err:
+                 ci.read_book(inside / name, anywhere=anywhere)
+             text = str(err.value)
+             assert text.isprintable() and "red" not in text and "here" not in text, repr(text)
+-            assert text.startswith("book (a name with a control character):")
++            assert text.startswith("book (a name with a special character):")
+     with pytest.raises(ci.InputError, match="book plain.db: no such file"):  # a printable name is still named
+         ci.read_book(inside / "plain.db")
+ 
+@@ -1363,3 +1363,796 @@ def test_the_dominance_check_sees_a_guard_that_is_missing_late_or_conditional(
+ ) -> None:
+     count, bad = _undominated_sinks(_function(source, "f"), {"confine", "confine_existing"})
+     assert count >= 1 and len(bad) == expected, (name, bad)
++
++
++# ---------- the call sites: the file operation must USE the helper's RESULT (by AST, flow-sensitive) ----------
++# Dominance (above) proves a helper call ran before the operation. It does not prove the operation uses what the helper
++# returned: ``confine_existing(src)`` as a bare statement followed by ``Path(src).read_text()`` is dominated and still
++# hands the raw argument to the open. This walk follows, statement by statement, which names certainly hold a value that
++# came out of a helper call (or was derived from one: a method, an attribute, a ``/`` join, ``Path(str(x))``), and
++# requires the operation's receiver (or its first argument, for ``open(...)`` and ``connect(...)``) to be rooted in
++# such a name, or in a helper call written inside the operation itself, on EVERY path to it.
++# Limits, on purpose: a call of any other function is read as "derived from its first argument or its receiver"; the
++# right operand of ``/`` is not checked; a name captured by a nested function is read at the definition.
++
++_State = frozenset[str] | None  # None: the point cannot be reached (after a return or a raise)
++
++
++def _join(a: _State, b: _State) -> _State:
++    return b if a is None else a if b is None else a & b
++
++
++def _is_clean(e: ast.AST | None, state: frozenset[str], helpers: set[str]) -> bool:
++    """True when the value of ``e`` is the result of a helper call or is derived from one held in ``state``."""
++    if e is None:
++        return False
++    if isinstance(e, ast.Name):
++        return e.id in state
++    if isinstance(e, (ast.Attribute, ast.Subscript, ast.Starred)):
++        return _is_clean(e.value, state, helpers)
++    if isinstance(e, ast.NamedExpr):
++        return _is_clean(e.value, state, helpers)
++    if isinstance(e, ast.BinOp):
++        return _is_clean(e.left, state, helpers)
++    if isinstance(e, ast.IfExp):
++        return _is_clean(e.body, state, helpers) and _is_clean(e.orelse, state, helpers)
++    if isinstance(e, ast.BoolOp):
++        return all(_is_clean(v, state, helpers) for v in e.values)
++    if isinstance(e, (ast.List, ast.Tuple, ast.Set)):
++        return bool(e.elts) and all(_is_clean(x, state, helpers) for x in e.elts)
++    if isinstance(e, (ast.ListComp, ast.SetComp, ast.GeneratorExp)):
++        inner = set(state)
++        for gen in e.generators:
++            _bind_names(gen.target, _is_clean(gen.iter, frozenset(inner), helpers), inner)
++        return _is_clean(e.elt, frozenset(inner), helpers)
++    if isinstance(e, ast.Call):
++        if isinstance(e.func, ast.Name) and e.func.id in helpers:
++            return True
++        if isinstance(e.func, ast.Attribute) and _is_clean(e.func.value, state, helpers):
++            return True  # a method of a clean path: with_name, resolve, glob, ...
++        return bool(e.args) and _is_clean(e.args[0], state, helpers)  # Path(x), str(x), readonly_sqlite_uri(x)
++    return False
++
++
++def _names_of(target: ast.AST) -> list[str]:
++    if isinstance(target, ast.Name):
++        return [target.id]
++    if isinstance(target, (ast.Tuple, ast.List)):
++        return [n for t in target.elts for n in _names_of(t)]
++    if isinstance(target, ast.Starred):
++        return _names_of(target.value)
++    return []
++
++
++def _bind(target: ast.AST, value: ast.AST | None, state: set[str], helpers: set[str]) -> None:
++    """Record, in ``state``, which names ``target`` now holds clean values for after ``target = value``."""
++    if isinstance(target, (ast.Tuple, ast.List)) and isinstance(value, (ast.Tuple, ast.List)):
++        plain = len(target.elts) == len(value.elts) and not any(
++            isinstance(x, ast.Starred) for x in (*target.elts, *value.elts)
++        )
++        if plain:
++            parts = [(t, v) for t, v in zip(target.elts, value.elts, strict=True)]
++            clean_now = {id(t): _is_clean(v, frozenset(state), helpers) for t, v in parts}  # all read BEFORE any write
++            for t, _ in parts:
++                _bind_names(t, clean_now[id(t)], state)
++            return
++    _bind_names(target, _is_clean(value, frozenset(state), helpers), state)
++
++
++def _bind_names(target: ast.AST, clean: bool, state: set[str]) -> None:
++    for name in _names_of(target):
++        (state.add if clean else state.discard)(name)
++
++
++_SUPPRESSORS = frozenset({"suppress"})  # contextlib.suppress: the body may stop half way and the code after it runs
++
++
++def _is_sink(n: ast.AST) -> ast.AST | None:
++    """The expression that names the file in a file operation ``n`` (receiver or first argument), else None."""
++    if not isinstance(n, ast.Call):
++        return None
++    if isinstance(n.func, ast.Name) and n.func.id == "open":
++        return n.args[0] if n.args else n
++    if isinstance(n.func, ast.Attribute) and n.func.attr in _SINK_ATTRS:
++        return n.args[0] if n.func.attr == "connect" and n.args else n.func.value
++    return None
++
++
++def _is_exit_call(stmt: ast.stmt) -> bool:
++    """``sys.exit(...)`` as a statement: the code after it does not run."""
++    return (
++        isinstance(stmt, ast.Expr)
++        and isinstance(stmt.value, ast.Call)
++        and isinstance(stmt.value.func, ast.Attribute)
++        and stmt.value.func.attr == "exit"
++    )
++
++
++class _UseWalk:
++    """Walks one function, keeping the set of names that certainly hold a helper result, and collects the file
++    operations whose path expression is not rooted in one."""
++
++    def __init__(self, helpers: set[str]) -> None:
++        self.helpers = helpers
++        self.count = 0
++        self.bad: list[int] = []
++
++    def expr(self, node: ast.AST | None, state: set[str], *, certain: bool = True) -> None:
++        """Visit in evaluation order: bind walrus names (only when certain to run) and check file operations."""
++        if node is None:
++            return
++        if isinstance(node, ast.IfExp):
++            self.expr(node.test, state, certain=certain)
++            self.expr(node.body, set(state), certain=False)
++            self.expr(node.orelse, set(state), certain=False)
++            return
++        if isinstance(node, ast.BoolOp):
++            self.expr(node.values[0], state, certain=certain)
++            for v in node.values[1:]:
++                self.expr(v, set(state), certain=False)
++            return
++        if isinstance(node, ast.Lambda):
++            inner = set(state) - {a.arg for a in ast.walk(node.args) if isinstance(a, ast.arg)}
++            self.expr(node.body, inner, certain=False)
++            return
++        if isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
++            inner = set(state)
++            for i, gen in enumerate(node.generators):
++                self.expr(gen.iter, state if i == 0 and certain else inner, certain=certain and i == 0)
++                _bind_names(gen.target, _is_clean(gen.iter, frozenset(inner), self.helpers), inner)
++                for cond in gen.ifs:
++                    self.expr(cond, inner, certain=False)
++            parts = [node.key, node.value] if isinstance(node, ast.DictComp) else [node.elt]
++            for p in parts:
++                self.expr(p, inner, certain=False)
++            return
++        for child in ast.iter_child_nodes(node):
++            self.expr(child, state, certain=certain)
++        if isinstance(node, ast.NamedExpr) and certain:
++            _bind(node.target, node.value, state, self.helpers)
++        sink = _is_sink(node)
++        if sink is not None:
++            self.count += 1
++            if not _is_clean(sink, frozenset(state), self.helpers):
++                self.bad.append(getattr(node, "lineno", 0))
++
++    def block(self, body: list[ast.stmt], state: _State) -> _State:
++        for stmt in body:
++            if state is None:
++                return None  # the rest cannot run
++            state = self.stmt(stmt, state)
++        return state
++
++    def loop(self, stmt: ast.For | ast.AsyncFor | ast.While, state: frozenset[str]) -> _State:
++        if isinstance(stmt, ast.While):
++            self.expr(stmt.test, set(state), certain=True)
++        else:
++            self.expr(stmt.iter, set(state), certain=True)
++        entry: _State = state
++        for _ in range(2):  # the second pass sees what the first pass left for the next round
++            start = set(entry) if entry is not None else set()
++            if not isinstance(stmt, ast.While):
++                _bind_names(stmt.target, _is_clean(stmt.iter, frozenset(start), self.helpers), start)
++            out = self.block(stmt.body, frozenset(start))
++            entry = _join(state, out)
++        after = _join(state, entry)  # the body may not run at all
++        if stmt.orelse and after is not None:
++            after = _join(after, self.block(stmt.orelse, after))
++        return after
++
++    def stmt(self, stmt: ast.stmt, state: frozenset[str]) -> _State:
++        s = set(state)
++        if isinstance(stmt, ast.Assign):
++            self.expr(stmt.value, s)
++            for t in stmt.targets:
++                self.expr(t, s)
++                _bind(t, stmt.value, s, self.helpers)
++            return frozenset(s)
++        if isinstance(stmt, ast.AnnAssign):
++            self.expr(stmt.value, s)
++            if stmt.value is not None:
++                _bind(stmt.target, stmt.value, s, self.helpers)
++            return frozenset(s)
++        if isinstance(stmt, ast.AugAssign):
++            self.expr(stmt.value, s)
++            _bind_names(stmt.target, _is_clean(stmt.target, frozenset(s), self.helpers), s)  # p /= "x" stays derived
++            return frozenset(s)
++        if isinstance(stmt, (ast.Return, ast.Raise)):
++            for child in ast.iter_child_nodes(stmt):
++                self.expr(child, s)
++            return None
++        if isinstance(stmt, ast.If):
++            self.expr(stmt.test, s)
++            a = self.block(stmt.body, frozenset(s))
++            b = self.block(stmt.orelse, frozenset(s))
++            return _join(a, b)
++        if isinstance(stmt, (ast.For, ast.AsyncFor, ast.While)):
++            return self.loop(stmt, state)
++        if isinstance(stmt, (ast.With, ast.AsyncWith)):
++            for item in stmt.items:
++                self.expr(item.context_expr, s)
++                if item.optional_vars is not None:
++                    _bind(item.optional_vars, item.context_expr, s, self.helpers)
++            out = self.block(stmt.body, frozenset(s))
++            swallows = any(
++                isinstance(i.context_expr, ast.Call)
++                and (
++                    (isinstance(i.context_expr.func, ast.Name) and i.context_expr.func.id in _SUPPRESSORS)
++                    or (isinstance(i.context_expr.func, ast.Attribute) and i.context_expr.func.attr in _SUPPRESSORS)
++                )
++                for i in stmt.items
++            )
++            return _join(frozenset(s), out) if swallows else out
++        if isinstance(stmt, ast.Try):
++            body = self.block(stmt.body, state)
++            after = self.block(stmt.orelse, body) if body is not None else None
++            for h in stmt.handlers:  # a handler may start after any part of the body: only what held on entry counts
++                after = _join(after, self.block(h.body, state))
++            if (
++                stmt.finalbody
++            ):  # runs after a normal end and after a raise: only what held on entry counts for the latter
++                fin = self.block(stmt.finalbody, _join(after, state) if after is not None else state)
++                return None if after is None else _join(after, fin)
++            return after
++        if isinstance(stmt, ast.Match):
++            self.expr(stmt.subject, s)
++            out: _State = frozenset(s)  # no case may match
++            for case in stmt.cases:
++                out = _join(out, self.block(case.body, frozenset(s)))
++            return out
++        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
++            inner = set(state) - {a.arg for a in ast.walk(stmt.args) if isinstance(a, ast.arg)}
++            self.block(stmt.body, frozenset(inner))
++            _bind_names(ast.Name(id=stmt.name), False, s)
++            return frozenset(s)
++        if isinstance(stmt, ast.ClassDef):
++            return state
++        if isinstance(stmt, ast.Assert):
++            self.expr(stmt.test, s, certain=False)  # python -O strips it: nothing it binds can be relied on
++            return state
++        for child in ast.iter_child_nodes(stmt):  # Expr, Delete, Global, Import, Pass, ...
++            if isinstance(child, ast.expr):
++                self.expr(child, s)
++        if _is_exit_call(stmt):
++            return None
++        return frozenset(s)
++
++
++def _unused_result_sinks(func: ast.FunctionDef, helpers: set[str]) -> tuple[int, list[int]]:
++    """(number of file operations in ``func``, the line numbers of those whose path is NOT rooted in a helper result
++    on every path to them). Parameters start unclean."""
++    walk = _UseWalk(helpers)
++    walk.block(func.body, frozenset())
++    return walk.count, walk.bad
++
++
++@pytest.mark.parametrize(("rel", "func", "helpers"), SITES)
++def test_each_flagged_function_opens_the_value_the_helper_returned(rel: str, func: str, helpers: set[str]) -> None:
++    node = _function((REPO / rel).read_text(encoding="utf-8"), func)
++    count, bad = _unused_result_sinks(node, helpers)
++    assert count > 0, (rel, func, "no file operation found: the test would check nothing")
++    assert not bad, (rel, func, "file operation at these lines does not use a helper result on every path", bad)
++
++
++# (name, source, expected number of file operations whose path is not rooted in a helper result)
++_USE_CASES = [
++    # --- fine: the operation uses what the helper returned ---
++    (
++        "result assigned back and used",
++        textwrap.dedent("""
++def f(p):
++    p = confine(p)
++    return p.read_text()
++"""),
++        0,
++    ),
++    (
++        "result in a new name, used",
++        textwrap.dedent("""
++def f(p):
++    q = confine(p)
++    return q.read_text()
++"""),
++        0,
++    ),
++    (
++        "helper inside the operation",
++        textwrap.dedent("""
++def f(p):
++    return confine(p).read_text()
++"""),
++        0,
++    ),
++    (
++        "FINE: Path(str(result)) uses the result",
++        textwrap.dedent("""
++def f(src):
++    r = confine(src)
++    return Path(str(r)).read_text()
++"""),
++        0,
++    ),
++    (
++        "both branches assign a helper result",
++        textwrap.dedent("""
++def f(p, a):
++    if a:
++        p = confine(p)
++    else:
++        p = confine_existing(p)
++    return p.read_text()
++"""),
++        0,
++    ),
++    (
++        "a handler that raises",
++        textwrap.dedent("""
++def f(p):
++    try:
++        p = confine(p)
++    except E:
++        raise X
++    return p.read_text()
++"""),
++        0,
++    ),
++    (
++        "a handler that exits",
++        textwrap.dedent("""
++def f(p):
++    try:
++        p = confine(p)
++    except E:
++        sys.exit(2)
++    return p.touch()
++"""),
++        0,
++    ),
++    (
++        "a name derived from the result (with_name, /)",
++        textwrap.dedent("""
++def f(p):
++    p = confine(p)
++    q = p.with_name(p.name + '.x')
++    r = q / 'y'
++    return r.write_text('')
++"""),
++        0,
++    ),
++    (
++        "open(result)",
++        textwrap.dedent("""
++def f(p):
++    r = confine(p)
++    return open(r)
++"""),
++        0,
++    ),
++    (
++        "connect(uri(result))",
++        textwrap.dedent("""
++def f(p):
++    p = confine(p)
++    return sqlite3.connect(uri(p), uri=True)
++"""),
++        0,
++    ),
++    (
++        "parts derived from the result, looped over",
++        textwrap.dedent("""
++def f(p, n):
++    p = confine(p)
++    parts = [p.with_name(str(k)) for k in range(n)]
++    for q in parts:
++        q.unlink()
++"""),
++        0,
++    ),
++    (
++        "tuple unpack that keeps the result for the opened name",
++        textwrap.dedent("""
++def f(src):
++    a, b = confine(src), 1
++    return a.read_text()
++"""),
++        0,
++    ),
++    # --- not fine: the helper ran (dominance may even hold) but the operation does not use its result ---
++    (
++        "E9: result discarded, raw name used",
++        textwrap.dedent("""
++def f(p):
++    confine(p)
++    return Path(p).read_text()
++"""),
++        1,
++    ),
++    (
++        "result discarded (bare expression)",
++        textwrap.dedent("""
++def f(src):
++    confine_existing(src)
++    return Path(src).read_text()
++"""),
++        1,
++    ),
++    (
++        "result assigned, a different variable used",
++        textwrap.dedent("""
++def f(p):
++    q = confine(p)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "result used on one branch only",
++        textwrap.dedent("""
++def f(p, a):
++    if a:
++        p = confine(p)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "helper called on a copy of the path",
++        textwrap.dedent("""
++def f(p):
++    c = p
++    c = confine(c)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "variable reassigned after the helper",
++        textwrap.dedent("""
++def f(p, src):
++    p = confine(p)
++    p = Path(src)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "sink on the original argument via a tuple unpack",
++        textwrap.dedent("""
++def f(src):
++    a, b = confine(src), src
++    return b.read_text()
++"""),
++        1,
++    ),
++    (
++        "tuple unpack, sides swapped",
++        textwrap.dedent("""
++def f(src):
++    a, b = src, confine(src)
++    return a.read_text()
++"""),
++        1,
++    ),
++    (
++        "result tuple holds the raw name next to it",
++        textwrap.dedent("""
++def f(src):
++    return (confine(src), Path(src))[1].read_text()
++"""),
++        1,
++    ),
++    (
++        "helper only under an if-expression",
++        textwrap.dedent("""
++def f(p, a):
++    q = confine(p) if a else p
++    return q.read_text()
++"""),
++        1,
++    ),
++    (
++        "helper after an and",
++        textwrap.dedent("""
++def f(p, a):
++    ok = a and confine(p)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "walrus only under an and",
++        textwrap.dedent("""
++def f(p, a):
++    ok = a and (q := confine(p))
++    return q.read_text()
++"""),
++        1,
++    ),
++    (
++        "helper in a loop that may not run",
++        textwrap.dedent("""
++def f(p, xs):
++    for x in xs:
++        p = confine(p)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "loop body replaces the clean name for the next round",
++        textwrap.dedent("""
++def f(p, xs):
++    p = confine(p)
++    for x in xs:
++        p.read_text()
++        p = Path(x)
++"""),
++        1,
++    ),
++    (
++        "handler falls through without the result",
++        textwrap.dedent("""
++def f(p):
++    try:
++        p = confine(p)
++    except E:
++        pass
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "contextlib.suppress around the helper",
++        textwrap.dedent("""
++def f(p):
++    with suppress(E):
++        p = confine(p)
++    return p.read_text()
++"""),
++        1,
++    ),
++    (
++        "assert is stripped by python -O",
++        textwrap.dedent("""
++def f(p):
++    assert (q := confine(p))
++    return q.read_text()
++"""),
++        1,
++    ),
++    (
++        "operation before the helper",
++        textwrap.dedent("""
++def f(p):
++    x = p.read_text()
++    p = confine(p)
++    return x
++"""),
++        1,
++    ),
++    (
++        "an unrelated name from the parameters",
++        textwrap.dedent("""
++def f(p, other):
++    p = confine(p)
++    return other.read_text()
++"""),
++        1,
++    ),
++]
++
++
++@pytest.mark.parametrize(("name", "source", "expected"), _USE_CASES, ids=[c[0] for c in _USE_CASES])
++def test_the_result_used_check_sees_a_helper_whose_result_is_not_the_one_opened(
++    name: str, source: str, expected: int
++) -> None:
++    count, bad = _unused_result_sinks(_function(source, "f"), {"confine", "confine_existing"})
++    assert count >= 1 and len(bad) == expected, (name, bad)
++
++
++# the real sites, each changed into the shape that re-opens a taint site: (file, function, helpers, text, replacement,
++# which occurrence of the text). The text is asserted to be present, so a refactor makes this test say so.
++_REAL_MUTANTS = [
++    (
++        "tools/scrub_n8n_export.py",
++        "main",
++        {"confine", "confine_existing"},
++        'src_path = confine_existing(src, what="in.json")',
++        'confine_existing(src, what="in.json"); src_path = Path(src)',
++        0,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "read_jsonl",
++        {"confine_existing"},
++        'path = confine_existing(path, what="log file")',
++        'confine_existing(path, what="log file")',
++        0,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "read_crm",
++        {"confine_existing"},
++        'path = confine_existing(path, what="CRM dump")',
++        'q = confine_existing(path, what="CRM dump")',
++        0,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "read_book",
++        {"confine_existing", "confine_anywhere"},
++        'path = confine_existing(path, what=f"book {shown}")',
++        'confine_existing(path, what=f"book {shown}")',
++        0,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "_intended",
++        {"confine_existing"},
++        'path = confine_existing(path, what="--facts")',
++        'confine_existing(path, what="--facts")',
++        0,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "_facts_say_live",
++        {"confine_existing"},
++        'path = confine_existing(path, what="--facts")',
++        'confine_existing(path, what="--facts")',
++        1,
++    ),
++    (
++        "load_tools/check_invariants.py",
++        "_drain_marker",
++        {"confine_existing"},
++        'path = confine_existing(path, what="--drain")',
++        'confine_existing(path, what="--drain")',
++        0,
++    ),
++    (
++        "load_tools/load_driver.py",
++        "run",
++        {"confine"},
++        'log = confine(log, what="--log")',
++        'confine(log, what="--log")',
++        0,
++    ),
++    (
++        "load_tools/load_driver.py",
++        "run",
++        {"confine"},
++        'facts_path = confine(facts_path, what="--facts")',
++        'confine(facts_path, what="--facts")',
++        0,
++    ),
++    (
++        "scripts/n8n_api.py",
++        "main",
++        {"confine_existing"},
++        'confine_existing(a[2], what="FILE").read_text(',
++        '(confine_existing(a[2], what="FILE"), Path(a[2]))[1].read_text(',
++        0,
++    ),
++    (
++        "scripts/run_real_check.py",
++        "load_env",
++        {"confine_anywhere"},
++        'config = confine_anywhere(path, what="--config")',
++        'confine_anywhere(path, what="--config"); config = path',
++        0,
++    ),
++    (
++        "load_tools/catcher.py",
++        "main",
++        {"confine"},
++        'out = confine(args.out, what="--out")',
++        'confine(args.out, what="--out"); out = args.out',
++        0,
++    ),
++]
++
++
++def _replace_nth(text: str, old: str, new: str, nth: int) -> str:
++    pieces = text.split(old)
++    assert len(pieces) > nth + 1, (old, "not found in the source: update this mutant table")
++    return old.join(pieces[: nth + 1]) + new + old.join(pieces[nth + 1 :])
++
++
++@pytest.mark.parametrize(
++    ("rel", "func", "helpers", "old", "new", "nth"),
++    _REAL_MUTANTS,
++    ids=[f"{m[0]}:{m[1]}:{m[3][:24]}" for m in _REAL_MUTANTS],
++)
++def test_the_real_sites_changed_to_drop_or_discard_the_helper_result_are_caught(
++    rel: str, func: str, helpers: set[str], old: str, new: str, nth: int
++) -> None:
++    source = (REPO / rel).read_text(encoding="utf-8")
++    assert _unused_result_sinks(_function(source, func), helpers)[1] == [], "the real code must pass first"
++    mutated = _replace_nth(source, old, new, nth)
++    assert mutated != source
++    _, bad = _unused_result_sinks(_function(mutated, func), helpers)
++    assert bad, (rel, func, "a file operation that does not use the helper result went unnoticed")
++
++
++_FORMAT_NAMES = ("rtl\u202eover.db", "zero\u200bwidth.db", "bom\ufeffhere.db", "sep\u2028line.db")
++_PLACEHOLDER = "(a name with a special character)"
++
++
++def test_a_file_that_passed_the_helper_is_never_named_with_a_special_character(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The helper refuses control characters in a file that is read only; a right-to-left override, a zero-width or a
++    byte-order character passes it, so every message that echoes the base name of a file that exists goes through the
++    same printable check. One case per message."""
++    inside, _ = jail
++    real_read_text = Path.read_text
++
++    def unreadable(self: Path, *args: Any, **kwargs: Any) -> str:
++        if self.name.endswith("unreadable.dat"):
++            raise PermissionError("made up")
++        return real_read_text(self, *args, **kwargs)
++
++    monkeypatch.setattr(Path, "read_text", unreadable)
++    for name in ("rtl\u202eover", "zero\u200bwidth", "bom\ufeffhere"):
++        cases: list[tuple[str, str, Any]] = [  # (file name, content, the call)
++            ("json.dat", "not json\n", ci.read_jsonl),  # "<name> line 1: not JSON"
++            ("object.dat", "[1]\n", ci.read_jsonl),  # "<name> line 1: not a JSON object"
++            ("unreadable.dat", "x", ci.read_jsonl),  # "cannot read <name>: PermissionError"
++            ("crm-bad.dat", "{", ci.read_crm),  # "cannot read CRM dump <name>"
++            ("crm-shape.dat", "5", ci.read_crm),  # "<name>: expected a list of rows ..."
++            ("book.dat", "not a database", ci.read_book),  # "cannot read book <name>"
++            ("facts.dat", "not json", ci._intended),  # "cannot read the driver facts <name>"
++            ("drain.dat", "not json", ci._drain_marker),  # "cannot read drain marker <name>"
++        ]
++        for suffix, content, call in cases:
++            target = inside / f"{name}-{suffix}"
++            try:
++                target.write_text(content, encoding="utf-8")
++            except OSError:  # a file system that cannot hold this name: nothing to check there
++                break
++            with pytest.raises(ci.InputError) as err:
++                call(target)
++            text = str(err.value)
++            assert text.isprintable() and not {"\u202e", "\u200b", "\ufeff"} & set(text), (suffix, repr(text))
++            assert _PLACEHOLDER in text, (suffix, repr(text))
++        if hasattr(os, "mkfifo"):  # a name that exists but is not a file: "no such book: <name>"
++            fifo = inside / f"{name}-pipe.dat"
++            os.mkfifo(fifo)
++            with pytest.raises(ci.InputError, match="no such book") as err:
++                ci.read_book(fifo)
++            assert _PLACEHOLDER in str(err.value) and str(err.value).isprintable(), repr(str(err.value))
++    for target, call, words in (  # a printable name, accents included, is still named
++        (inside / "plain.dat", ci.read_jsonl, "plain.dat line 1: not JSON"),
++        (inside / "caf\u00e9.dat", ci.read_jsonl, "caf\u00e9.dat line 1: not JSON"),
++    ):
++        target.write_text("not json\n", encoding="utf-8")
++        with pytest.raises(ci.InputError, match=words):
++            call(target)
++
++
++def test_n8n_api_does_not_echo_a_special_character_from_the_workflow_file_name(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    inside, _ = jail
++    (inside / "key.txt").write_text("made-up-key-for-the-test\n", encoding="utf-8")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(inside / "key.txt"))
++    monkeypatch.setenv("N8N_URL", "http://127.0.0.1:1")
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    mod = importlib.import_module("n8n_api")
++    monkeypatch.setattr(mod, "call", lambda *a, **k: (200, {}))
++    bad = inside / "wf\u202eevil.json"
++    try:
++        bad.write_text("not json", encoding="utf-8")
++    except OSError:
++        pytest.skip("this file system cannot hold the name")
++    with pytest.raises(SystemExit, match="cannot read a workflow from") as err:
++        mod.main(["n8n_api.py", "import", str(bad)])  # passes the helper, then fails to parse
++    text = str(err.value)
++    assert "\u202e" not in text and _PLACEHOLDER in text and "(JSONDecodeError)" in text, repr(text)
++    (inside / "wf.json").write_text("not json", encoding="utf-8")
++    with pytest.raises(SystemExit, match="cannot read a workflow from .*wf.json"):  # a plain path is still shown
++        mod.main(["n8n_api.py", "import", str(inside / "wf.json")])
++    (inside / "wf\u00e9.json").write_text("not json", encoding="utf-8")
++    with pytest.raises(SystemExit, match="cannot read a workflow from .*wf\u00e9.json"):  # accents are printable
++        mod.main(["n8n_api.py", "import", str(inside / "wf\u00e9.json")])

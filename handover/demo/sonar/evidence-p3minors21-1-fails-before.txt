@@ -1,0 +1,35 @@
+# fails-before: v21 tests on head+minors production code (4 fail; the result-used test passes on real code by design, it fails on mutants: see 2-mutants)
+>       assert "\u202e" not in text and _PLACEHOLDER in text and "(JSONDecodeError)" in text, repr(text)
+E       AssertionError: 'cannot read a workflow from /tmp/pytest-of-root/pytest-7908/test_n8n_api_does_not_echo_a_s0/inside/wf\u202eevil.json (JSONDecodeError)'
+E       assert ('\u202e' not in 'cannot read...DecodeError)'
+E         
+E         '\u202e' is contained here:
+E           /inside/wf‮evil.json (JSONDecodeError)
+E         ?           +)
+
+/tmp/work/sn-v21/fb/tests/test_path_confinement.py:2152: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name
+FAILED tests/test_path_confinement.py::test_the_real_sites_changed_to_drop_or_discard_the_helper_result_are_caught[load_tools/check_invariants.py:read_book:path = confine_existing(]
+FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character
+FAILED tests/test_path_confinement.py::test_n8n_api_does_not_echo_a_special_character_from_the_workflow_file_name
+4 failed, 53 passed, 243 deselected in 0.76s
+net: 
+
+# risky pins on head+minors+risky: the docs sentence test fails before the docs change; the R6/R7/R9 pins pass on correct code and die on the mutants (see 3-mutants-risky)
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))
+        monkeypatch.chdir(home.parent)
+        assert str(home.parent.resolve()) in pc.allowed_roots()
+        for text in (
+            (REPO / "docs" / "settings.md").read_text(encoding="utf-8"),
+            (REPO / "load_tools" / "README.md").read_text(encoding="utf-8"),
+        ):
+>           assert "Only these two count as wide" in text and "`/home`" in text
+E           AssertionError: assert ('Only these two count as wide' in '# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ...he run look green). Without it a missing folder skips each such test file as one item and the other files still run.\n')
+
+/tmp/work/sn-v21/rk0/tests/test_path_confinement.py:1164: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_path_confinement.py::test_only_the_top_of_a_file_system_and_the_home_folder_are_wide
+1 failed, 8 passed, 243 deselected in 0.29s
+net: 

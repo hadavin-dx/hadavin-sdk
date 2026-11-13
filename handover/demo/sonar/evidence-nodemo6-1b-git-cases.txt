@@ -1,0 +1,9 @@
+# git cases measured (3 ways to decide 'git works')
+a_clone_committed | .git exists: yes | rev-parse toplevel==REPO: yes | ls-files pyproject.toml: 'pyproject.toml' | planted literal found by git grep: yes
+b_init_no_add | .git exists: yes | rev-parse toplevel==REPO: yes | ls-files pyproject.toml: '' | planted literal found by git grep: NO
+c_no_git | .git exists: no | rev-parse toplevel==REPO: no | ls-files pyproject.toml: 'fatal: not a git rep' | planted literal found by git grep: NO
+parent_untracked/client_copy | .git exists: no | rev-parse toplevel==REPO: no | ls-files pyproject.toml: '' | planted literal found by git grep: NO
+parent_tracked/client_copy | .git exists: no | rev-parse toplevel==REPO: no | ls-files pyproject.toml: 'pyproject.toml' | planted literal found by git grep: yes
+parent_ignored/client_copy | .git exists: no | rev-parse toplevel==REPO: no | ls-files pyproject.toml: '' | planted literal found by git grep: NO
+d_worktree | .git exists: yes | rev-parse toplevel==REPO: yes | ls-files pyproject.toml: 'pyproject.toml' | planted literal found by git grep: yes
+sub_main/e_sub | .git exists: yes | rev-parse toplevel==REPO: yes | ls-files pyproject.toml: 'pyproject.toml' | planted literal found by git grep: yes

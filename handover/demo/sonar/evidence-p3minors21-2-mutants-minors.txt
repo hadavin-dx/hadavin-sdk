@@ -1,0 +1,193 @@
+##### mut-new.txt
+(first run of group 'new', whole file, before the echo test was extended: its UNEXPECTED rows X5 X6 X10 X11 X13 were the echo-test gaps, fixed and re-run in mut-new-X.txt; V8 row: killed only by the mutant-table test whose text V8 removes: the check on V8 is mut-new-V8.txt; W12: see mut-new-W12.txt)
+KILLED V1 result discarded (`_ =`), raw name used | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V2 result assigned, a different variable used | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V3 helper result used only on one branch | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V4 helper called on a copy of the path | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V5 bare expression statement then raw name | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V6 variable reassigned after the helper | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V7 sink on the original via a tuple unpack | FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out 
+KILLED V8 FINE: Path(str(result)) (must NOT be killed) | FAILED tests/test_path_confinement.py::test_the_real_sites_changed_to_drop_or_discard_the_helper_result_are_caught[tools/scrub_n8n    <== UNEXPECTED (expected SURVIVES)
+KILLED W1 read_jsonl result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W2 read_crm result in another name | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W3 read_book else-branch result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W4 _intended result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W5 _drain_marker result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W6 load_driver --log result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/load_driver.py-ru 
+KILLED W7 load_driver --facts result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/load_driver.py-ru 
+KILLED W8 scrub dst result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED W9 n8n_api inline helper replaced by tuple pick | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[scripts/n8n_api.py-main-help 
+KILLED W10 load_env result discarded | FAILED tests/test_path_confinement.py::test_load_env_resolves_its_own_path_from_the_top_of_the_file_system 
+KILLED W11 catcher --out result discarded | FAILED tests/test_path_confinement.py::test_catcher_refuses_out_and_control_outside_and_creates_nothing 
+SURVIVES W12 catcher --control result discarded | 299 passed, 1 deselected in 5.71s    <== UNEXPECTED (expected KILLED)
+KILLED X1 _shown_name returns the raw name | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED X2 _shown_name: isascii instead of isprintable | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED X3 read_jsonl 'not JSON' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X4 read_crm 'cannot read' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+SURVIVES X5 read_crm 'expected a list' echoes the raw name | 299 passed, 1 deselected in 5.88s    <== UNEXPECTED (expected KILLED)
+SURVIVES X6 read_book 'no such book' echoes the raw name | 299 passed, 1 deselected in 7.94s    <== UNEXPECTED (expected KILLED)
+KILLED X7 read_book 'cannot read book' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X8 driver facts message echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X9 drain marker message echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+SURVIVES X10 read_jsonl 'cannot read' echoes the raw name | 299 passed, 1 deselected in 6.30s    <== UNEXPECTED (expected KILLED)
+SURVIVES X11 read_jsonl 'not a JSON object' echoes the raw name | 299 passed, 1 deselected in 6.11s    <== UNEXPECTED (expected KILLED)
+KILLED X12 n8n_api generic branch echoes the raw argument | FAILED tests/test_path_confinement.py::test_n8n_api_does_not_echo_a_special_character_from_the_workflow_file_name 
+SURVIVES X13 n8n_api shown_arg: isascii | 299 passed, 1 deselected in 8.24s    <== UNEXPECTED (expected KILLED)
+KILLED X14 placeholder wording back to 'control character' | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+group new mutants run: 34 unexpected: ['V8 FINE: Path(str(result)) (must NOT be killed)', 'W12 catcher --control result discarded', "X5 read_crm 'expected a list' echoes the raw name", "X6 read_book 'no such book' echoes the raw name", "X10 read_jsonl 'cannot read' echoes the raw name", "X11 read_jsonl 'not a JSON object' echoes the raw name", 'X13 n8n_api shown_arg: isascii']
+##### mut-new-X.txt
+KILLED X1 _shown_name returns the raw name | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED X2 _shown_name: isascii instead of isprintable | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED X3 read_jsonl 'not JSON' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X4 read_crm 'cannot read' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X5 read_crm 'expected a list' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X6 read_book 'no such book' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X7 read_book 'cannot read book' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X8 driver facts message echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X9 drain marker message echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X10 read_jsonl 'cannot read' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X11 read_jsonl 'not a JSON object' echoes the raw name | FAILED tests/test_path_confinement.py::test_a_file_that_passed_the_helper_is_never_named_with_a_special_character 
+KILLED X12 n8n_api generic branch echoes the raw argument | FAILED tests/test_path_confinement.py::test_n8n_api_does_not_echo_a_special_character_from_the_workflow_file_name 
+KILLED X13 n8n_api shown_arg: isascii | FAILED tests/test_path_confinement.py::test_n8n_api_does_not_echo_a_special_character_from_the_workflow_file_name 
+KILLED X14 placeholder wording back to 'control character' | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+group new mutants run: subset unexpected: []
+##### mut-new-newtestonly.txt
+(only result-used tests selected; V8 row killed by the table test, see mut-new-V8.txt for the accept check)
+KILLED V1 result discarded (`_ =`), raw name used | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V2 result assigned, a different variable used | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V3 helper result used only on one branch | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V4 helper called on a copy of the path | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V5 bare expression statement then raw name | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V6 variable reassigned after the helper | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V7 sink on the original via a tuple unpack | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED V8 FINE: Path(str(result)) (must NOT be killed) | FAILED tests/test_path_confinement.py::test_the_real_sites_changed_to_drop_or_discard_the_helper_result_are_caught[tools/scrub_n8n    <== UNEXPECTED (expected SURVIVES)
+KILLED W1 read_jsonl result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W2 read_crm result in another name | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W3 read_book else-branch result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W4 _intended result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W5 _drain_marker result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/check_invariants. 
+KILLED W6 load_driver --log result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/load_driver.py-ru 
+KILLED W7 load_driver --facts result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/load_driver.py-ru 
+KILLED W8 scrub dst result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED W9 n8n_api inline helper replaced by tuple pick | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[scripts/n8n_api.py-main-help 
+KILLED W10 load_env result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[scripts/run_real_check.py-lo 
+KILLED W11 catcher --out result discarded | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[load_tools/catcher.py-main-h 
+SURVIVES W12 catcher --control result discarded (not opened in this function: the AST test has no sink to see) | 54 passed, 246 deselected in 0.38s 
+group new mutants run: subset unexpected: ['V8 FINE: Path(str(result)) (must NOT be killed)']
+##### mut-new-V8.txt
+SURVIVES V8 FINE: Path(str(result)) (must NOT be killed) | 42 passed, 258 deselected in 0.24s 
+group new mutants run: subset unexpected: []
+##### mut-new-oldtestsonly.txt
+(everything EXCEPT the new result-used tests: rows marked UNEXPECTED here are the proof that the old suite lets those mutants survive)
+SURVIVES V1 result discarded (`_ =`), raw name used | 245 passed, 55 deselected in 6.13s    <== UNEXPECTED (expected KILLED)
+SURVIVES V2 result assigned, a different variable used | 245 passed, 55 deselected in 5.61s    <== UNEXPECTED (expected KILLED)
+SURVIVES V3 helper result used only on one branch | 245 passed, 55 deselected in 5.67s    <== UNEXPECTED (expected KILLED)
+SURVIVES V4 helper called on a copy of the path | 245 passed, 55 deselected in 8.29s    <== UNEXPECTED (expected KILLED)
+SURVIVES V5 bare expression statement then raw name | 245 passed, 55 deselected in 7.47s    <== UNEXPECTED (expected KILLED)
+SURVIVES V6 variable reassigned after the helper | 245 passed, 55 deselected in 6.44s    <== UNEXPECTED (expected KILLED)
+KILLED V7 sink on the original via a tuple unpack | FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out 
+SURVIVES V8 FINE: Path(str(result)) (must NOT be killed) | 245 passed, 55 deselected in 38.32s 
+SURVIVES W1 read_jsonl result discarded | 245 passed, 55 deselected in 7.48s    <== UNEXPECTED (expected KILLED)
+SURVIVES W2 read_crm result in another name | 245 passed, 55 deselected in 5.60s    <== UNEXPECTED (expected KILLED)
+SURVIVES W3 read_book else-branch result discarded | 245 passed, 55 deselected in 5.39s    <== UNEXPECTED (expected KILLED)
+SURVIVES W4 _intended result discarded | 245 passed, 55 deselected in 8.21s    <== UNEXPECTED (expected KILLED)
+SURVIVES W5 _drain_marker result discarded | 245 passed, 55 deselected in 7.73s    <== UNEXPECTED (expected KILLED)
+SURVIVES W6 load_driver --log result discarded | 245 passed, 55 deselected in 7.56s    <== UNEXPECTED (expected KILLED)
+SURVIVES W7 load_driver --facts result discarded | 245 passed, 55 deselected in 6.88s    <== UNEXPECTED (expected KILLED)
+SURVIVES W8 scrub dst result discarded | 245 passed, 55 deselected in 5.77s    <== UNEXPECTED (expected KILLED)
+SURVIVES W9 n8n_api inline helper replaced by tuple pick | 245 passed, 55 deselected in 5.49s    <== UNEXPECTED (expected KILLED)
+KILLED W10 load_env result discarded | FAILED tests/test_path_confinement.py::test_load_env_resolves_its_own_path_from_the_top_of_the_file_system 
+KILLED W11 catcher --out result discarded | FAILED tests/test_path_confinement.py::test_catcher_refuses_out_and_control_outside_and_creates_nothing 
+SURVIVES W12 catcher --control result discarded (not opened in this function: the AST test has no sink to see) | 245 passed, 55 deselected in 5.53s 
+group new mutants run: subset unexpected: ['V1 result discarded (`_ =`), raw name used', 'V2 result assigned, a different variable used', 'V3 helper result used only on one branch', 'V4 helper called on a copy of the path', 'V5 bare expression statement then raw name', 'V6 variable reassigned after the helper', 'W1 read_jsonl result discarded', 'W2 read_crm result in another name', 'W3 read_book else-branch result discarded', 'W4 _intended result discarded', 'W5 _drain_marker result discarded', 'W6 load_driver --log result discarded', 'W7 load_driver --facts result discarded', 'W8 scrub dst result discarded', 'W9 n8n_api inline helper replaced by tuple pick']
+##### mut-new-W12.txt
+SURVIVES W12 catcher --control result discarded (not opened in this function: the AST test has no sink to see) | 299 passed, 1 deselected in 5.67s 
+group new mutants run: subset unexpected: []
+##### mut-dom.txt
+KILLED D01 read_jsonl guard under conditional expr | FAILED tests/test_path_confinement.py::test_each_flagged_function_calls_the_helper_before_every_file_operation_and_never_an_inline 
+KILLED D02 _drain_marker handler falls through | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_drain_marke 
+KILLED D03 load_env guard in branch | FAILED tests/test_path_confinement.py::test_load_env_resolves_its_own_path_from_the_top_of_the_file_system 
+KILLED E1 helper call AFTER the sink (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E2 helper only in unreachable if False/else (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E3 helper in nested function never called (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E4 early return before helper (_intended) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_intended] 
+KILLED E5 try/except that skips it (_intended) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_intended] 
+KILLED E6 for loop zero iterations (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E6b while zero iterations (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E7 conditional expression (read_jsonl) | FAILED tests/test_path_confinement.py::test_each_flagged_function_calls_the_helper_before_every_file_operation_and_never_an_inline 
+KILLED E8 walrus under and (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E8b walrus certain but result unused (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E9 result discarded (scrub src) | FAILED tests/test_path_confinement.py::test_each_flagged_function_opens_the_value_the_helper_returned[tools/scrub_n8n_export.py-ma 
+KILLED E10 contextlib.suppress around helper (read_crm) | FAILED tests/test_path_confinement.py::test_check_invariants_main_reads_and_writes_inside 
+KILLED E11 assert guard (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E12 match/case guard (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E13 helper in try-else/finally only (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED E14 compare chain (read_crm) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+group dom mutants run: 19 unexpected: []
+##### mut-old.txt
+KILLED M01 _inside: startswith instead of commonpath | FAILED tests/test_path_confinement.py::test_v5_inside_compares_whole_folders_not_text_prefixes 
+KILLED M02 _inside: always true | FAILED tests/test_path_confinement.py::test_dot_dot_escape_is_refused - Asser... 
+KILLED M03 no path-length check | FAILED tests/test_path_confinement.py::test_v5_the_path_length_limit_is_checked_before_resolving 
+KILLED M04 non-folder in the middle accepted | FAILED tests/test_path_confinement.py::test_v5_a_file_in_the_middle_of_the_path_is_refused_as_not_a_folder[confine] 
+KILLED M05 a folder as the last name accepted | FAILED tests/test_path_confinement.py::test_load_env_resolves_its_own_path_from_the_top_of_the_file_system 
+KILLED M06 no normcase in the listing match | FAILED tests/test_path_confinement.py::test_v5_the_listing_match_ignores_case_where_the_system_does 
+KILLED M07 no NFC in the listing match | FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form 
+KILLED M08 loose match wins over exact | FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form 
+KILLED M09 no device-name check | FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-con] 
+KILLED M10 device check only without extension | FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-con] 
+KILLED M11 no trailing-dot check | FAILED tests/test_path_confinement.py::test_v3_a_new_name_that_ends_with_a_dot_is_refused[new.] 
+KILLED M12 com0/lpt0 not devices | FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com0] 
+KILLED M13 device check case-sensitive | FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-con] 
+KILLED M14 no containment refusal | FAILED tests/test_path_confinement.py::test_dot_dot_escape_is_refused - Asser... 
+KILLED M15 C1 controls allowed | FAILED tests/test_path_confinement.py::test_c0_del_and_c1_controls_are_refused_by_every_function[\x80-confine] 
+KILLED M16 DEL allowed | FAILED tests/test_path_confinement.py::test_c0_del_and_c1_controls_are_refused_by_every_function[\x7f-confine] 
+KILLED M17 system temp folder not a root | FAILED tests/test_path_confinement.py::test_the_system_temporary_folder_is_an_allowed_folder 
+KILLED M18 explicit roots= not resolved | FAILED tests/test_path_confinement.py::test_explicit_roots_are_resolved_so_a_link_as_a_root_works 
+KILLED M19 path equal to an allowed root accepted | FAILED tests/test_path_confinement.py::test_a_path_that_names_an_allowed_folder_itself_is_refused_as_a_folder[confine] 
+KILLED M20 anywhere: the top itself accepted | FAILED tests/test_path_confinement.py::test_the_top_of_the_file_system_is_refused_as_a_folder_in_anywhere_mode 
+KILLED M21 deleted working folder: traceback | FAILED tests/test_path_confinement.py::test_a_deleted_working_folder_is_not_a_traceback 
+KILLED M22 repository folder not a root | FAILED tests/test_path_confinement.py::test_the_repository_and_the_working_folder_are_allowed_folders 
+KILLED M23 working folder not a root | FAILED tests/test_path_confinement.py::test_the_repository_and_the_working_folder_are_allowed_folders 
+KILLED M24 LEAD_DESK_PATH_ROOTS ignored | FAILED tests/test_path_confinement.py::test_extra_folder_from_the_environment 
+KILLED M25 new name copied from the argument | FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[my log.jsonl] 
+KILLED M26 no 255-character limit on a new name | FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[name3] 
+KILLED M27 a listing failure is not a refusal | FAILED tests/test_path_confinement.py::test_v1_anywhere_refuses_a_file_below_a_folder_that_cannot_be_listed_and_says_so 
+KILLED M28 links not followed (abspath for realpath) | FAILED tests/test_path_confinement.py::test_the_returned_path_is_the_resolved_target_of_an_inside_link 
+KILLED M29 no link-loop check | FAILED tests/test_path_confinement.py::test_a_link_loop_is_refused_and_not_a_traceback 
+KILLED M30 SQLite option mode=rw | FAILED tests/test_path_confinement.py::test_sqlite_uri_encodes_query_and_fragment_characters 
+KILLED M31 SQLite path not percent-encoded | FAILED tests/test_path_confinement.py::test_sqlite_uri_encodes_query_and_fragment_characters 
+KILLED M32 confine_existing accepts a missing file | FAILED tests/test_path_confinement.py::test_inside_path_is_accepted_and_returned_resolved 
+KILLED M33 confine_anywhere accepts a new name | FAILED tests/test_path_confinement.py::test_inside_path_is_accepted_and_returned_resolved 
+KILLED M34 empty text accepted | FAILED tests/test_path_confinement.py::test_empty_or_blank_text_is_refused_as_empty_by_every_function[-confine] 
+KILLED M35 non-path types accepted | FAILED tests/test_path_confinement.py::test_not_a_path_is_refused - TypeError... 
+KILLED M36 split_root drops the drive/share | FAILED tests/test_path_confinement.py::test_split_root_gives_the_top_of_each_kind_of_path 
+KILLED M37 anywhere walk falls back to the raw argument | FAILED tests/test_path_confinement.py::test_v1_anywhere_refuses_a_file_below_a_folder_that_cannot_be_listed_and_says_so 
+KILLED M38 anywhere also applies containment | FAILED tests/test_path_confinement.py::test_v1_anywhere_refuses_a_file_below_a_folder_that_cannot_be_listed_and_says_so 
+KILLED M39 tail match picks the loose entry only | FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form 
+KILLED M40 realpath errors escape (no PathRefused) | FAILED tests/test_path_confinement.py::test_a_deleted_working_folder_is_not_a_traceback 
+KILLED S01 site read_jsonl | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_jsonl] 
+KILLED S02 site read_crm | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[read_crm] 
+KILLED S03 site read_book (normal) | FAILED tests/test_path_confinement.py::test_read_book_checks_its_own_path_and_has_an_explicit_anywhere_mode 
+KILLED S04 site read_book (anywhere) | FAILED tests/test_path_confinement.py::test_read_book_checks_its_own_path_and_has_an_explicit_anywhere_mode 
+KILLED S05 site _intended | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_intended] 
+KILLED S06 site _facts_say_live | FAILED tests/test_path_confinement.py::test_the_readers_still_read_inside_and_in_an_env_folder 
+KILLED S07 site _drain_marker | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_drain_marke 
+KILLED S08 site load_driver.run --log | FAILED tests/test_path_confinement.py::test_load_driver_run_refuses_log_and_facts_outside 
+KILLED S09 site load_driver.run --facts | FAILED tests/test_path_confinement.py::test_load_driver_run_refuses_log_and_facts_outside 
+KILLED S10 site scrub read | FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out 
+KILLED S11 site scrub write | FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out 
+KILLED S12 site n8n_api import | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED S13 site run_real_check.load_env | FAILED tests/test_path_confinement.py::test_run_real_check_reads_a_config_outside_the_allowed_folders 
+KILLED S14 site catcher --out | FAILED tests/test_path_confinement.py::test_catcher_refuses_out_and_control_outside_and_creates_nothing 
+KILLED S15 site catcher --control | FAILED tests/test_path_confinement.py::test_catcher_refuses_out_and_control_outside_and_creates_nothing 
+KILLED S16 site check_invariants.main pre-check --requests | FAILED tests/test_path_confinement.py::test_v2_check_invariants_names_the_missing_reader_file 
+KILLED S17 site check_invariants.main pre-check --json | FAILED tests/test_path_confinement.py::test_v3_a_device_named_output_is_refused_before_anything_is_created 
+KILLED S18 site run_real_check sending_rows book anywhere | FAILED tests/test_path_confinement.py::test_a_real_run_with_config_and_book_outside_reaches_the_y_n_question_and_the_book 
+KILLED S19 site run_real_check end-of-run book anywhere | FAILED tests/test_path_confinement.py::test_a_real_run_with_every_path_outside_the_allowed_folders_runs_to_the_end 
+KILLED N14 read_book echoes the raw base name again | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED N15 n8n_api import: refusal does not name LEAD_DESK_PATH_ROOTS | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED N16 n8n_api import: no PathRefused branch (old generic message) | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED D01 read_jsonl: guard under a conditional (AST test only) | FAILED tests/test_path_confinement.py::test_each_flagged_function_calls_the_helper_before_every_file_operation_and_never_an_inline 
+KILLED D02 _drain_marker: handler falls through (AST test only) | FAILED tests/test_path_confinement.py::test_each_check_invariants_reader_refuses_an_outside_path_when_called_directly[_drain_marke 
+KILLED D03 load_env: guard in a branch (AST test only) | FAILED tests/test_path_confinement.py::test_load_env_resolves_its_own_path_from_the_top_of_the_file_system 
+group old mutants run: 65 unexpected: []

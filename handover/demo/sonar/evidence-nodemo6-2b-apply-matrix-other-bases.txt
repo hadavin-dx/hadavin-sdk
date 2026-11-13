@@ -1,0 +1,8 @@
+base 9c53207 others 10 | v5 alone: True
+ordered pairs with v5 where v5 breaks a patch that applies alone: 0
+crlf-v7.1 then v5: [True, True] | v5 then crlf-v7.1: [True, True]
+random orders 100 v5 applied 100 diffs (others' results differ from the same order without v5): 0
+base db54e13 others 10 | v5 alone: True
+ordered pairs with v5 where v5 breaks a patch that applies alone: 0
+crlf-v7.1 then v5: [True, True] | v5 then crlf-v7.1: [True, True]
+random orders 100 v5 applied 100 diffs (others' results differ from the same order without v5): 0

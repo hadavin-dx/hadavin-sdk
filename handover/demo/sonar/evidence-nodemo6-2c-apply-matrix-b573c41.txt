@@ -1,0 +1,8 @@
+base b573c41 others 5 | v5 alone: True
+ordered pairs with v5 where v5 breaks a patch that applies alone: 0
+last then v5: [True, True] | v5 then last: [True, True]
+random orders 1000 v5 applied 1000 diffs (others' results differ from the same order without v5): 0
+base f3d9dca others 10 | v5 alone: True
+ordered pairs with v5 where v5 breaks a patch that applies alone: 0
+last then v5: [True, True] | v5 then last: [True, True]
+random orders 1000 v5 applied 1000 diffs (others' results differ from the same order without v5): 0

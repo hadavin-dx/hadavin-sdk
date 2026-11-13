@@ -1,0 +1,32 @@
+## with the pins (tree head+minors+risky+risky-v21-delta)
+KILLED N14 read_book echoes raw name | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED N14b isprintable -> isascii | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED N14c name check only in confine_existing branch | FAILED tests/test_path_confinement.py::test_read_book_does_not_echo_a_terminal_escape_from_the_file_name 
+KILLED N15 n8n: PathRefused not caught | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED N16 n8n no roots hint | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED N17 n8n echoes the path | FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside 
+KILLED R1 no loose-name refusal | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+KILLED R2 refusal for every part (folders too) | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+KILLED R3 refusal only NFC-different, not case | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+KILLED R4 wide check: root not refused | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder 
+KILLED R5 wide check: home not refused | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_home_folder_is_not_allowed_unless_it_is_the_repository 
+KILLED R6 wide check uses unresolved home | FAILED tests/test_path_confinement.py::test_a_home_folder_that_is_a_link_is_compared_by_its_real_location 
+KILLED R7 cwd not realpathed | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_a_link_to_the_home_folder_is_compared_by_its_real_location 
+KILLED R8 wide check removed | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder 
+KILLED R9 wide also drops extra | FAILED tests/test_path_confinement.py::test_a_wide_folder_named_in_the_roots_variable_is_taken_as_written 
+KILLED R10 wide drops repo when wide | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_home_folder_is_not_allowed_unless_it_is_the_repository 
+KILLED R11 refusal message lacks cause | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+KILLED R12 wide: only exact root with trailing sep | FAILED tests/test_path_confinement.py::test_the_repository_and_the_working_folder_are_allowed_folders 
+KILLED R13 loose refusal applies to confine_existing | FAILED tests/test_path_confinement.py::test_inside_path_is_accepted_and_returned_resolved 
+KILLED R01 a working folder that is a file-system top is allowed | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder 
+KILLED R02 a working folder that is the home folder is allowed | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_home_folder_is_not_allowed_unless_it_is_the_repository 
+KILLED R03 working folder wide check dropped | FAILED tests/test_path_confinement.py::test_a_working_folder_that_is_the_top_of_the_file_system_is_not_an_allowed_folder 
+KILLED R04 a written file is found by its loose name | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+KILLED R05 folders on the way compared exactly on a write | FAILED tests/test_path_confinement.py::test_a_written_file_is_never_found_by_its_loose_name_so_a_new_nfc_name_cannot_overwrite_an_ 
+group risky mutants run: 24 unexpected: []
+
+## without the pins (tree head+minors+risky): R6 R7 R9 survive (rows marked UNEXPECTED are the baseline)
+SURVIVES R6 wide check uses unresolved home | 247 passed, 1 deselected in 5.64s    <== UNEXPECTED (expected KILLED)
+SURVIVES R7 cwd not realpathed | 247 passed, 1 deselected in 6.58s    <== UNEXPECTED (expected KILLED)
+SURVIVES R9 wide also drops extra | 247 passed, 1 deselected in 6.37s    <== UNEXPECTED (expected KILLED)
+group risky mutants run: subset unexpected: ['R6 wide check uses unresolved home', 'R7 cwd not realpathed', 'R9 wide also drops extra']

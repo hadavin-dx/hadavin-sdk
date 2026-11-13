@@ -1,0 +1,20 @@
+1777 tests collected in 1.93s
+== chunk 0: 11 files
+rc=0 117 passed, 9 skipped in 2.12s
+== chunk 1: 11 files
+rc=0 327 passed, 7 skipped in 86.05s (0:01:26)
+== chunk 2: 10 files
+rc=0 10 skipped in 0.54s
+== chunk 3: 10 files
+rc=0 189 passed, 7 skipped in 41.10s
+== chunk 4: 10 files
+rc=0 90 passed, 10 skipped in 14.54s
+== chunk 5: 10 files
+rc=0 171 passed, 7 skipped in 7.26s
+== chunk 6: 10 files
+rc=0 71 passed, 7 skipped in 2.17s
+== chunk 7: 10 files
+rc=0 638 passed, 7 skipped in 9.86s
+== chunk 8: 10 files
+rc=0 97 passed, 13 skipped in 17.66s
+CHUNKS-DONE

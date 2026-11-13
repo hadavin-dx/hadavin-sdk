@@ -1,0 +1,6 @@
+# v6 tree (db54e13 + real-run-fixes-v6), under unshare -rn + connect blocker, loopback only; NOT the whole suite
+# files: test_take_script_refusals test_real_run_v6 test_core_key_readers test_start_prompt_hardening test_real_check_dry test_ledger_amounts test_live_claude test_clock_steps test_env_numbers test_portal_wording_and_masking test_crm_hubspot test_smtp_provider
+1097 passed in 475.93s (0:07:55)
+# blocker log lines:
+12494
+0

@@ -1,0 +1,5 @@
+base f3d9dca others 10 | v5 alone: True
+alone: {'sonar-p1-quickwins-v3.2.1-delta.patch': True, 'sonar-p1-quickwins-v3.2.2-delta.patch': True, 'sonar-p2-regex-http-bug-v2.2-delta.patch': True, 'sonar-p2-regex-http-bug-v2.3-delta.patch': False, 'sonar-p2-regex-optional.patch': True, 'sonar-p2-feed-optional.patch': True, 'sonar-yaml-test-tri
+ordered pairs with v5 where v5 breaks a patch that applies alone: 0
+crlf-v7.1 then v5: [True, True] | v5 then crlf-v7.1: [True, True]
+random orders 1000 v5 applied 1000 diffs (others' results differ from the same order without v5): 0

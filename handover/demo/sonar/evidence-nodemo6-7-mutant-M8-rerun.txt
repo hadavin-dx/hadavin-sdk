@@ -1,0 +1,5 @@
+BASELINE B {'DPLD_REQUIRE_SCAN': '1'} -> 249 passed, 9 deselected in 51.17s
+BASELINE C {} -> 241 passed, 8 skipped, 9 deselected in 9.26s
+BASELINE C {'DPLD_REQUIRE_SCAN': '1'} -> 8 failed, 241 passed, 9 deselected in 9.11s
+KILLED   M8 scan guard before the canaries | B+req: 1 failed, 248 passed, 9 deselected in 58.83s | C: 1 failed, 240 passed, 8 skipped, 9 deselected in 9.81s | C+req: 9 failed, 240 passed, 9 deselected in 9.15s
+EXIT

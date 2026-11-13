@@ -1,0 +1,42 @@
+........................................................s............... [  4%]
+........................................................................ [  8%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+........................................................................ [ 22%]
+................................................................ss...... [ 26%]
+......ss................ss.............................................. [ 31%]
+..........................................................ssss.......... [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 44%]
+........................................................................ [ 48%]
+...................s........................s.s......................... [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 62%]
+.................................s.............s...s..............ss.... [ 66%]
+..................................s.s...........s....................... [ 70%]
+........................................................................ [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 84%]
+........................................................................ [ 88%]
+........................................................................ [ 93%]
+................................................s....................... [ 97%]
+.........................................                                [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_portal_demo.py:53: demo_only is not there: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:173: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:173: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:179: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:179: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:219: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:219: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [3] tests/test_hygiene.py: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+SKIPPED [1] tests/test_hygiene.py:142: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+SKIPPED [1] tests/test_no_placeholders.py: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+SKIPPED [1] tests/test_nosemgrep_form.py: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+SKIPPED [1] tests/test_path_confinement.py:0: needs the demo_only folder, which is not here
+SKIPPED [1] tests/test_raw_bidi_chars.py: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+SKIPPED [6] tests/test_real_check_dry.py:0: needs the demo_only folder, which is not here
+SKIPPED [1] tests/test_shell_single_bracket.py: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+1602 passed, 23 skipped in 109.46s (0:01:49)
+EXIT 0

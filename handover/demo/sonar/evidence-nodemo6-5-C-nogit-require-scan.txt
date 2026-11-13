@@ -1,0 +1,80 @@
+.........................................................s.............. [  4%]
+........................................................................ [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 20%]
+.................................................................ss..... [ 25%]
+.......ss................ss............................................. [ 29%]
+...........................................................FFFF......... [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 46%]
+.......................s........................F.F..................... [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+.......................................................s................ [ 62%]
+.......................................................F...s............ [ 67%]
+..ss......................................s.s...........s............... [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+........................................................................ [ 88%]
+........................................................................ [ 92%]
+........................................................F............... [ 96%]
+.....................s......................................             [100%]
+=================================== FAILURES ===================================
+____________________ test_no_control_characters_in_markdown ____________________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6971/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        if gap := repo_scan_gap():  # the canaries above need no repository; the scan of this tree does
+>           (pytest.fail if scan_required() else pytest.skip)(gap)
+E           Failed: the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+
+tests/test_hygiene.py:146: Failed
+_____________________________ test_sh_blobs_no_cr ______________________________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+______________ test_the_secret_scan_files_have_no_carriage_return ______________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+________________________ test_no_placeholder_text_ships ________________________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+________________________ test_no_bare_nosemgrep_comment ________________________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+_________ test_no_tracked_file_holds_a_raw_direction_control_character _________
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+___ test_no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test ___
+the scan of this repository's tracked files was NOT run: this folder is not a git work tree (a source archive or a copy without .git). A client copy without .git cannot run it. To run it: use a git clone, or run `git init && git add -A` in /tmp/work/sn-v5/C. With DPLD_REQUIRE_SCAN=1 (as CI sets it) this is a failure, not a skip.
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_no_control_characters_in_markdown - Failed...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - Failed: the scan of ...
+FAILED tests/test_hygiene.py::test_sh_blobs_no_cr - Failed: the scan of this ...
+FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+FAILED tests/test_no_placeholders.py::test_no_placeholder_text_ships - Failed...
+FAILED tests/test_nosemgrep_form.py::test_no_bare_nosemgrep_comment - Failed:...
+FAILED tests/test_raw_bidi_chars.py::test_no_tracked_file_holds_a_raw_direction_control_character
+FAILED tests/test_shell_single_bracket.py::test_no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test
+8 failed, 1692 passed, 16 skipped in 124.41s (0:02:04)
+EXIT

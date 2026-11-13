@@ -1,0 +1,660 @@
+diff --git a/tests/_plain.py b/tests/_plain.py
+new file mode 100644
+index 0000000..446de39
+--- /dev/null
++++ b/tests/_plain.py
+@@ -0,0 +1,28 @@
++"""Test helpers that need neither the demo_only folder nor a desk: the settings of `server.main()` and a stop at the
++adapter load. They live here (and not in test_mode_safety.py, which needs the demo) so that the tests of who may reach
++the desk (tests/test_bind_refusals.py) run in a client copy too. Made-up data only."""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++from lead_desk import server
++
++
++def _main_env(monkeypatch: Any, tmp_path: Path, bind: str, **settings: str) -> None:
++    for name in ("DESK_CRM", "DESK_OUTBOX", "DESK_QUALIFIER"):
++        monkeypatch.delenv(name, raising=False)  # one case must not leak its kinds into the next
++    for k, v in {"DESK_DB_PATH": str(tmp_path / "m3.sqlite3"), "DESK_PORT": "0", "DESK_BIND": bind, **settings}.items():
++        monkeypatch.setenv(k, v)
++
++
++class _Reached(Exception):
++    pass
++
++
++def _stop_at_adapters(monkeypatch: Any) -> None:
++    def adapters(cfg: Any) -> Any:
++        raise _Reached
++
++    monkeypatch.setattr(server, "load_demo_adapters", adapters)
+diff --git a/tests/_repo_root.py b/tests/_repo_root.py
+new file mode 100644
+index 0000000..b69e83f
+--- /dev/null
++++ b/tests/_repo_root.py
+@@ -0,0 +1,73 @@
++"""The repository folder, found from this file, and the check the repository scans share. Needs no demo_only folder.
++
++Many test files only need the repository folder (the Trojan-Source scan, the shell and Semgrep form checks, the
++gitleaks tests); they must run in a client copy, where demo_only/ is deleted, so they take it from here and not from a
++file that imports the demo. A client copy may also come without `.git` (a source archive): the tests that list this
++repository's tracked files with git then cannot scan anything. That is a lost check, not a pass: it is a skip that says
++so and how to run the scan, and with DPLD_REQUIRE_SCAN=1 (the setting CI uses) it is a failure."""
++
++from __future__ import annotations
++
++import os
++import subprocess
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parent.parent
++REQUIRE_SCAN_ENV = "DPLD_REQUIRE_SCAN"  # the same variable as tests/test_hygiene.py: set (CI) = a lost scan fails
++MARKER = "pyproject.toml"  # a file every copy of this repository tracks: if git does not list it, git lists nothing
++
++
++def _scan_gap(repo: Path) -> str | None:
++    try:
++        p = subprocess.run(  # noqa: S603 (git, fixed arguments)
++            ["git", "ls-files", "--", MARKER],  # noqa: S607
++            cwd=repo,
++            capture_output=True,
++            text=True,
++            timeout=60,
++            check=False,
++        )
++    except (OSError, subprocess.SubprocessError) as e:
++        return f"git cannot be run here ({type(e).__name__})"
++    if p.returncode != 0:
++        return "this folder is not a git work tree (a source archive or a copy without .git)"
++    if p.stdout.strip() != MARKER:
++        return f"git lists no tracked {MARKER} here (no .git of its own, or `git add` was never run)"
++    return None
++
++
++def repo_scan_gap(repo: Path | None = None) -> str | None:
++    """None when git lists this repository's tracked files (a clone, a linked worktree, a submodule, a sub-folder
++    that its parent repository tracks); else the lost-scan message: what is wrong, what was lost, how to run it.
++    This asks git, not `.git`: a `git init` with nothing added has a `.git` and lists nothing, so a scan would pass
++    on no files (measured, a planted address literal is not found there)."""
++    why = _scan_gap(repo or REPO)
++    if why is None:
++        return None
++    return (
++        f"the scan of this repository's tracked files was NOT run: {why}. A client copy without .git cannot run it. "
++        f"To run it: use a git clone, or run `git init && git add -A` in {repo or REPO}. "
++        f"With {REQUIRE_SCAN_ENV}=1 (as CI sets it) this is a failure, not a skip."
++    )
++
++
++def scan_required() -> bool:
++    """True when DPLD_REQUIRE_SCAN is set (not empty): a lost scan must fail, as tests/test_hygiene.py does for a
++    missing gitleaks program."""
++    return bool(os.environ.get(REQUIRE_SCAN_ENV))
++
++
++# The tests that list this repository's tracked files with git. tests/conftest.py ends each of them as a skip that
++# says the scan was lost (or, with DPLD_REQUIRE_SCAN set, as a failure) when git lists nothing; one place, so a test
++# file that another patch adds needs no edit. (tests/test_client_copy.py checks every name here is a real test.)
++SCAN_TESTS = frozenset(
++    {
++        ("test_hygiene.py", "test_no_control_characters_in_markdown"),
++        ("test_hygiene.py", "test_sh_blobs_no_cr"),
++        ("test_hygiene.py", "test_the_secret_scan_files_have_no_carriage_return"),
++        ("test_no_placeholders.py", "test_no_placeholder_text_ships"),
++        ("test_no" + "semgrep_form.py", "test_no_bare_no" + "semgrep_comment"),
++        ("test_raw_bidi_chars.py", "test_no_tracked_file_holds_a_raw_direction_control_character"),
++        ("test_shell_single_bracket.py", "test_no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test"),
++    }
++)
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 81b0e27..d5ccd21 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -2,6 +2,8 @@
+ 
+ from __future__ import annotations
+ 
++import ast
++import functools
+ import importlib.util
+ import os
+ import re
+@@ -10,14 +12,15 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
++from _repo_root import SCAN_TESTS, repo_scan_gap, scan_required
++from support import DEMO_BOUND_NAMES, Rig, ServerDidNotStop, build_rig, stop_within
+ 
+ from lead_desk.constants import REQUEST_TIMEOUT_SECONDS
+ from lead_desk.server import serve_in_thread
+ 
+ # The demo folder is removable (deleting it leaves the desk and its tests intact). Without it a test FILE that needs the
+-# demo's fakes is reported as one skipped item (the whole file, not test by test), and the files that never touch it
+-# still run. In CI the folder must be there: with DPLD_REQUIRE_DEMO=1 a missing folder stops the run instead of skipping
+-# nearly everything green.
++# demo is reported as one skipped item (the whole file, not test by test), and every other file runs. In CI the folder
++# must be there: with DPLD_REQUIRE_DEMO=1 a missing folder stops the run instead of skipping nearly everything green.
+ DEMO_PRESENT = importlib.util.find_spec("demo_only") is not None
+ REQUIRE_DEMO_ENV = "DPLD_REQUIRE_DEMO"
+ 
+@@ -30,14 +33,53 @@ def pytest_sessionstart(session: pytest.Session) -> None:
+ 
+ 
+ if DEMO_PRESENT:
+-    from support import Rig, ServerDidNotStop, build_rig, stop_within
+-
+     from demo_only.fakes_server import FakesServer, serve_fakes_in_thread, stop_fakes
+ 
+-_NEEDS_DEMO = re.compile(
+-    r"^\s*(?:from|import)\s+(?:demo_only|support|edge_case_helpers|test_\w+)\b|^(?:async )?def test_\w+\([^)]*\benv\b",
+-    re.MULTILINE,
+-)
++_TESTS = Path(__file__).resolve().parent
++_DEMO_MODULES = frozenset({"demo_only", "edge_case_helpers"})  # edge_case_helpers imports demo_only at its top
++_ENV_NEEDING_DEMO = re.compile(r"\benv\.(?:rig|fakes|serve)\b")  # the Env methods that build on the demo's fakes
++
++
++@functools.cache
++def _needs_demo(path: Path) -> bool:
++    """Whether a test file needs the demo_only folder. It does when it imports demo_only or edge_case_helpers, names
++    something support.py can only build with the demo (DEMO_BOUND_NAMES: build_rig, DEMO_LEADFLOW), calls an `env`
++    method that builds a rig or the fakes, or imports a test file that needs it (that is followed, file by file); an
++    import inside a test function does not count (a missing demo there is a skip of that test, see the hook below).
++    A file that only reaches the repository folder (support.REPO), plain helpers (free_port, start_serving, wait_until,
++    lead ...) or the product code needs no demo and runs in a client copy. Decided by reading the file, not by importing
++    it: it must work when the import would fail."""
++    text = path.read_text(encoding="utf-8")
++    if _ENV_NEEDING_DEMO.search(text):
++        return True
++    tree = ast.parse(text)
++    inner = {  # an import inside a function only runs in that test: the run-time skip below handles a missing demo
++        id(n)
++        for f in ast.walk(tree)
++        if isinstance(f, ast.FunctionDef | ast.AsyncFunctionDef)
++        for n in ast.walk(f)
++        if isinstance(n, ast.Import | ast.ImportFrom)
++    }
++    for node in ast.walk(tree):
++        if id(node) in inner:
++            continue
++        modules: list[str] = []  # the modules this statement imports
++        names: list[str] = []  # every name it mentions
++        if isinstance(node, ast.ImportFrom):
++            modules, names = [node.module or ""], [a.name for a in node.names]
++        elif isinstance(node, ast.Import):
++            modules = [a.name for a in node.names]
++        elif isinstance(node, ast.Name):
++            names = [node.id]
++        elif isinstance(node, ast.Attribute):
++            names = [node.attr]
++        if any(m.split(".")[0] in _DEMO_MODULES for m in modules) or any(n in DEMO_BOUND_NAMES for n in names):
++            return True
++        for m in modules:  # a test file imported by this one: it needs the demo if that one does
++            other = _TESTS / (m.split(".")[0] + ".py")
++            if other.name.startswith("test_") and other != path and other.is_file() and _needs_demo(other):
++                return True
++    return False
+ 
+ 
+ class _NeedsDemoItem(pytest.Item):
+@@ -57,17 +99,25 @@ if not DEMO_PRESENT:
+ 
+     @pytest.hookimpl(tryfirst=True)
+     def pytest_pycollect_makemodule(module_path: Path, parent: Any) -> Any:
+-        if _NEEDS_DEMO.search(module_path.read_text(encoding="utf-8")):
++        if module_path.parent == _TESTS and _needs_demo(module_path):
+             return _NeedsDemoModule.from_parent(parent, path=module_path)
+         return None
+ 
++    def _is_missing_demo_error(err: BaseException | None) -> bool:
++        """The demo module is not there, or a file under demo_only/ is not (a script that reads the demo's data)."""
++        if isinstance(err, ModuleNotFoundError):
++            return str(err.name or "").split(".")[0] == "demo_only"
++        if isinstance(err, FileNotFoundError):
++            return "demo_only" in Path(str(err.filename or "")).parts
++        return False
++
+     @pytest.hookimpl(hookwrapper=True)
+     def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[Any]) -> Iterator[None]:
+-        """A test that reaches the missing folder at run time (for example the dry run of the real-services check) is
+-        skipped, not failed; any other error stays a failure."""
++        """A test that reaches the missing folder at run time (for example the dry run of the real-services check, or
++        a script that reads demo_only/canned_leads.json) is skipped, not failed; any other error stays a failure."""
+         outcome = yield
+         err = call.excinfo.value if call.excinfo is not None else None
+-        if isinstance(err, ModuleNotFoundError) and str(err.name or "").split(".")[0] == "demo_only":
++        if _is_missing_demo_error(err):
+             rep = outcome.get_result()
+             rep.outcome = "skipped"
+             rep.longrepr = (str(item.path), 0, "Skipped: needs the demo_only folder, which is not here")
+@@ -159,3 +209,24 @@ def env(tmp_path: Path) -> Iterator[Env]:
+         yield e
+     finally:
+         e.close()
++
++
++def _is_scan_test(item: pytest.Item) -> bool:
++    return item.path.parent == _TESTS and (item.path.name, getattr(item, "originalname", item.name)) in SCAN_TESTS
++
++
++def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
++    """A test that scans the repository's tracked files cannot do it where git lists none (a client copy without
++    .git): with the CI setting (DPLD_REQUIRE_SCAN) it fails when it is run (below); otherwise it is a skip that says
++    the scan was lost and how to run it. A skip mark shows the test's own file and line in `-rs`."""
++    scan = [i for i in items if _is_scan_test(i)]
++    gap = repo_scan_gap() if scan else None
++    if gap and not scan_required():
++        for item in scan:
++            item.add_marker(pytest.mark.skip(reason=gap))
++
++
++@pytest.hookimpl(tryfirst=True)
++def pytest_runtest_call(item: pytest.Item) -> None:
++    if scan_required() and _is_scan_test(item) and (gap := repo_scan_gap()):
++        pytest.fail(gap, pytrace=False)
+diff --git a/tests/support.py b/tests/support.py
+index 353043b..de4028b 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -21,20 +21,32 @@ from contextlib import contextmanager
+ from dataclasses import dataclass, field
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+-from typing import Any, Final, cast
++from typing import TYPE_CHECKING, Any, Final, cast
++
++from _repo_root import REPO
+ 
+-from demo_only.fakes import BlindOutbox, FakeCrm, KeyedOutbox, RecordedQualifier
+ from lead_desk.adapters import CrmNothingStored
+ from lead_desk.config import Config, read_leadflow
+ from lead_desk.contract import SimulatedCrash
+ from lead_desk.desk import Desk
+ from lead_desk.hooks import Hooks
+ 
+-REPO = Path(__file__).resolve().parents[1]
++if TYPE_CHECKING:
++    from demo_only.fakes import RecordedQualifier
++
++# This module can be imported WITHOUT the demo_only folder (a client copy): only what builds a desk on the demo's fakes
++# (build_rig) and DEMO_LEADFLOW need the folder. tests/conftest.py (`_needs_demo`) names those and skips, by file, the
++# test files that use them; every other helper here is plain and a test file that uses only those runs in a client copy.
++DEMO_BOUND_NAMES: Final = frozenset({"DEMO_LEADFLOW", "build_rig"})
+ WAIT_SECONDS = 15.0
+ HOST = Config().bind  # the one source of the loopback host for tests
+-# the demo lead owner list, steps and reminder wait, read once; a test changes a copy.deepcopy, never this original
+-DEMO_LEADFLOW: Final[dict[str, Any]] = json.loads((REPO / "demo_only" / "leadflow.json").read_text(encoding="utf-8"))
++# the demo lead owner list, steps and reminder wait, read once; a test changes a copy.deepcopy, never this original.
++# Empty when the demo folder is not here (conftest skips every test file that names it, so nothing reads the empty one).
++DEMO_LEADFLOW: Final[dict[str, Any]] = (
++    json.loads((REPO / "demo_only" / "leadflow.json").read_text(encoding="utf-8"))
++    if (REPO / "demo_only" / "leadflow.json").is_file()
++    else {}
++)
+ 
+ 
+ def lead_ids_containing(monkeypatch: Any, fragment: str) -> None:
+@@ -295,6 +307,8 @@ def build_rig(
+     leadflow file, for example a deepcopy of DEMO_LEADFLOW) turns the lead owner, lead stage and reminder feature
+     on: it is written to tmp_path and read back by the real parser, so a test can never build a Leadflow the desk
+     would refuse. None (the default) leaves the feature off."""
++    from demo_only.fakes import BlindOutbox, FakeCrm, KeyedOutbox, RecordedQualifier  # the demo folder, only here
++
+     if outbox_kind is not None:  # the sender KIND the Config names (`outbox` is the sender object)
+         config_over["outbox"] = outbox_kind
+     if crm_kind is not None:  # the CRM KIND the Config names (`crm` is the CRM object)
+diff --git a/tests/test_bind_refusals.py b/tests/test_bind_refusals.py
+index b883ed9..2a9a28e 100644
+--- a/tests/test_bind_refusals.py
++++ b/tests/test_bind_refusals.py
+@@ -8,7 +8,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from test_mode_safety import _main_env, _stop_at_adapters
++from _plain import _main_env, _stop_at_adapters
+ 
+ from lead_desk import server
+ from lead_desk.config import Config, SettingRefused, is_loopback_host
+diff --git a/tests/test_client_copy.py b/tests/test_client_copy.py
+new file mode 100644
+index 0000000..6f3f3f3
+--- /dev/null
++++ b/tests/test_client_copy.py
+@@ -0,0 +1,230 @@
++"""A client copy (demo_only/ deleted, maybe .git too) must run every test that does not need the demo, and must say so
++when a check cannot run. Pins: which files conftest keeps, the lost-scan skip or failure, and that nothing else is lost
++with it. Needs no demo_only folder. Made-up data only."""
++
++from __future__ import annotations
++
++import ast
++import os
++import shutil
++import subprocess
++import sys
++from pathlib import Path
++
++import _repo_root
++import conftest
++import pytest
++import test_hygiene
++
++TESTS = Path(__file__).resolve().parent
++REPO = TESTS.parent
++
++# Files that need only the repository folder or plain helpers: they must stay runnable in a client copy. If one of them
++# gains an import of demo_only or a use of the demo's rig, move that part out (tests/_plain.py, tests/_repo_root.py)
++# instead of letting the whole file fall back to the one placeholder skip.
++PLAIN_FILES = [
++    "test_hygiene.py",
++    "test_no_placeholders.py",
++    "test_raw_bidi_chars.py",
++    "test_shell_single_bracket.py",
++    "test_bind_refusals.py",
++    "test_codeant_hygiene.py",
++    "test_gitleaks_exceptions.py",
++    "test_hubspot_probe.py",
++    "test_n8n_api_url.py",
++    "test_reset_scripts.py",
++    "test_server_stop_guard.py",
++    "test_client_copy.py",
++]
++OPTIONAL_HERE = [  # files another patch of the series adds or rewrites
++    "test_no" + "semgrep_form.py",
++    "test_gitleaks_semgrep_lock.py",
++    "test_path_confinement.py",
++]
++
++
++@pytest.mark.parametrize("name", PLAIN_FILES + [n for n in OPTIONAL_HERE if (TESTS / n).is_file()])
++def test_a_file_that_needs_no_demo_is_not_replaced_by_the_placeholder_skip(name: str) -> None:
++    assert not conftest._needs_demo(TESTS / name), f"{name} would be one skipped item in a client copy"
++
++
++def test_needs_demo_reads_what_a_file_really_needs(tmp_path: Path) -> None:
++    def needs(text: str) -> bool:
++        path = tmp_path / "test_probe.py"
++        path.write_text(text, encoding="utf-8")
++        conftest._needs_demo.cache_clear()
++        return conftest._needs_demo(path)
++
++    assert not needs("from support import REPO, lead, free_port\n")
++    assert not needs("from _repo_root import REPO\nfrom test_hygiene import GITLEAKS_ENV\n")
++    assert not needs("def test_a(env):\n    env.stop_on_close(print)\n")
++    assert not needs("def test_a():\n    import demo_only.fakes  # a missing demo is a skip of this one test\n")
++    assert needs("from demo_only.fakes import FakeCrm\n")
++    assert needs("from edge_case_helpers import mk_desk\n")
++    assert needs("from support import build_rig\n")
++    assert needs("from support import DEMO_LEADFLOW\n")
++    assert needs("def test_a(env):\n    env." + "rig()\n")
++    assert needs("def test_a(env):\n    env." + "fakes()\n")
++    assert needs("from test_flow import retry_twice_body\n")  # test_flow needs the demo: so does this file
++    conftest._needs_demo.cache_clear()
++
++
++def test_support_can_be_read_without_the_demo_folder() -> None:
++    """tests/support.py is imported by a client copy: it must not import demo_only at its top level."""
++    tree = ast.parse((TESTS / "support.py").read_text(encoding="utf-8"))
++    for node in tree.body:
++        if isinstance(node, ast.ImportFrom | ast.Import):
++            mods = [node.module or ""] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names]
++            assert not any(m.split(".")[0] == "demo_only" for m in mods), ast.dump(node)
++
++
++def test_the_repository_folder_comes_from_the_file_not_from_the_current_folder(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.chdir(tmp_path)
++    assert _repo_root.REPO == REPO
++    assert (_repo_root.REPO / "tests" / "_repo_root.py").is_file()
++
++
++def _bare_git(folder: Path, *args: str) -> None:
++    ident = ["-c", "user.name=t", "-c", "user.email=t@example.test"]
++    subprocess.run(["git", *ident, *args], cwd=folder, check=True, capture_output=True)  # noqa: S603, S607
++
++
++def test_the_scan_gap_asks_git_what_it_lists_not_whether_dot_git_exists(tmp_path: Path) -> None:
++    """Measured: a folder with no .git, a `git init` with nothing added (it has a .git, lists nothing, and a scan would
++    pass on no files) and a sub-folder its parent repository does not track all lose the scan; a clone, a linked
++    worktree (its .git is a FILE) and a sub-folder its parent repository tracks keep it."""
++
++    def folder(name: str, parent: Path = tmp_path) -> Path:
++        path = parent / name
++        path.mkdir()
++        (path / _repo_root.MARKER).write_text("x\n", encoding="utf-8")
++        return path
++
++    gap = _repo_root.repo_scan_gap
++    assert gap(folder("archive")), "no .git at all"
++    initial = folder("init_only")
++    _bare_git(initial, "init", "-q")
++    assert (initial / ".git").is_dir()
++    assert gap(initial), "a .git with an empty index lists nothing"
++    _bare_git(initial, "add", "-A")
++    _bare_git(initial, "commit", "-q", "-m", "m")
++    assert gap(initial) is None, "a clone"
++    linked = tmp_path / "linked"
++    _bare_git(initial, "worktree", "add", "-q", str(linked))
++    assert (linked / ".git").is_file()
++    assert gap(linked) is None, ".git as a file is a work tree"
++    parent = tmp_path / "parent"
++    parent.mkdir()
++    _bare_git(parent, "init", "-q")
++    inner = folder("inner", parent)
++    assert gap(inner), "inside another repository that does not track it"
++    _bare_git(parent, "add", "-A")
++    assert gap(inner) is None, "inside another repository that tracks it"
++    text = gap(folder("archive2")) or ""
++    for must in ("NOT run", "git add -A", _repo_root.REQUIRE_SCAN_ENV, "failure"):
++        assert must in text, (must, text)  # what was lost, how to run it, and that CI fails instead
++    assert _repo_root.REQUIRE_SCAN_ENV == test_hygiene.REQUIRE_SCAN_ENV
++
++
++ADDED_BY_OTHER_PATCHES = {"test_sh_blobs_no_cr", "test_the_secret_scan_files_have_no_carriage_return"}  # crlf-guard
++
++
++def test_every_registered_scan_test_exists() -> None:
++    for fname, test in _repo_root.SCAN_TESTS:
++        path = TESTS / fname
++        if not path.is_file() or test in ADDED_BY_OTHER_PATCHES:
++            continue
++        defs = {n.name for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))) if isinstance(n, ast.FunctionDef)}
++        assert test in defs, f"{fname}::{test} is registered as a repository scan but is not a test there"
++
++
++def test_the_canary_checks_still_run_where_only_the_repository_scan_is_lost(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    """test_hygiene_scan_public checks its canaries before it reads the repository: with git out of reach it must get
++    that far (a canary that no rule matches fails it) and only then end as a skip, or as a failure in CI."""
++    gap = "GAP-TEXT: the scan was NOT run"
++    monkeypatch.setattr(test_hygiene, "repo_scan_gap", lambda *_: gap)
++    monkeypatch.delenv(test_hygiene.REQUIRE_SCAN_ENV, raising=False)
++    with pytest.raises(pytest.skip.Exception, match="GAP-TEXT"):
++        test_hygiene.test_hygiene_scan_public(_fresh(tmp_path, "a"))
++    monkeypatch.setenv(test_hygiene.REQUIRE_SCAN_ENV, "1")
++    with pytest.raises(pytest.fail.Exception, match="GAP-TEXT"):
++        test_hygiene.test_hygiene_scan_public(_fresh(tmp_path, "b"))
++    # a rule that stopped matching its canary is still found before the skip
++    monkeypatch.delenv(test_hygiene.REQUIRE_SCAN_ENV)
++    monkeypatch.setitem(test_hygiene.hygiene.CANARIES, "never matched", "zz-no-rule-matches-this-zz")
++    try:
++        with pytest.raises(AssertionError, match="canary not found"):
++            test_hygiene.test_hygiene_scan_public(_fresh(tmp_path, "c"))
++    except pytest.skip.Exception:
++        pytest.fail("the test ended as a skip before its canary checks ran")
++
++
++def _fresh(base: Path, name: str) -> Path:
++    (base / name).mkdir()
++    return base / name
++
++
++CLIENT_FILES = ["tests/conftest.py", "tests/support.py", "tests/_repo_root.py", "tests/_plain.py"]
++
++
++def _client_copy(dest: Path) -> Path:
++    """A minimal copy of this repository without demo_only and without .git, with the tests that scan it."""
++    for sub in ("src", "tools"):
++        shutil.copytree(REPO / sub, dest / sub, ignore=shutil.ignore_patterns("__pycache__"))
++    (dest / "tests").mkdir()
++    for rel in [*CLIENT_FILES, "tests/test_raw_bidi_chars.py", "pyproject.toml"]:
++        shutil.copy(REPO / rel, dest / rel)
++    return dest
++
++
++def _pytest_in(
++    copy: Path, cwd: Path, test: str = "test_raw_bidi_chars.py", **env: str
++) -> subprocess.CompletedProcess[str]:
++    base = {k: v for k, v in os.environ.items() if not k.startswith(("DPLD_", "DESK_", "PYTEST_"))}
++    return subprocess.run(  # noqa: S603 (our own interpreter, a copy made here)
++        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-rsf", "--rootdir", str(copy),
++         "-c", str(copy / "pyproject.toml"), str(copy / "tests" / test)],
++        cwd=cwd, env={**base, **env}, capture_output=True, text=True, check=False, timeout=300,
++    )  # fmt: skip
++
++
++def test_a_client_copy_without_git_skips_a_lost_scan_loudly_and_fails_it_under_the_ci_setting(tmp_path: Path) -> None:
++    """End to end, from ANOTHER current folder: the real conftest in a copy with no demo_only and no .git."""
++    copy = _client_copy(tmp_path / "client")
++    elsewhere = tmp_path / "elsewhere"
++    elsewhere.mkdir()
++    skipped = _pytest_in(copy, elsewhere)
++    assert skipped.returncode == 0, skipped.stdout + skipped.stderr
++    assert "NOT run" in skipped.stdout and "git add -A" in skipped.stdout, skipped.stdout
++    assert "test_raw_bidi_chars.py:" in skipped.stdout, "the skip names the test file, not a helper"
++    assert "_repo_root.py:" not in skipped.stdout
++    failed = _pytest_in(copy, elsewhere, DPLD_REQUIRE_SCAN="1")
++    assert failed.returncode == 1, failed.stdout + failed.stderr
++    assert "NOT run" in failed.stdout and "1 failed" in failed.stdout, failed.stdout
++    _bare_git(copy, "init", "-q")
++    _bare_git(copy, "add", "-A")
++    scanned = _pytest_in(copy, elsewhere, DPLD_REQUIRE_SCAN="1")
++    assert scanned.returncode == 0 and "NOT run" not in scanned.stdout, scanned.stdout
++    (copy / "src" / "planted.txt").write_text("a" + chr(0x202E) + "b\n", encoding="utf-8")
++    _bare_git(copy, "add", "-A")
++    planted = _pytest_in(copy, elsewhere, DPLD_REQUIRE_SCAN="1")
++    assert planted.returncode == 1 and "planted.txt" in planted.stdout, planted.stdout
++
++
++def test_a_test_that_reads_a_file_of_the_missing_demo_folder_is_a_skip_not_a_failure(tmp_path: Path) -> None:
++    """A test file with no import of the demo can still reach it at run time (a script reading its data file)."""
++    copy = _client_copy(tmp_path / "client")
++    (copy / "tests" / "test_reads_demo_file.py").write_text(
++        "from pathlib import Path\n\n\ndef test_reads_it():\n"
++        '    Path("demo_only/canned_leads.json").read_text(encoding="utf-8")\n\n\n'
++        "def test_other_error_still_fails():\n"
++        '    Path("nowhere/else.json").read_text(encoding="utf-8")\n',
++        encoding="utf-8",
++    )
++    done = _pytest_in(copy, copy, "test_reads_demo_file.py")
++    assert "1 failed, 1 skipped" in done.stdout, done.stdout
++    assert "test_other_error_still_fails" in done.stdout and "test_reads_it" not in done.stdout.split("short test")[-1]
+diff --git a/tests/test_codeant_desk.py b/tests/test_codeant_desk.py
+index 80b2e8c..2c04869 100644
+--- a/tests/test_codeant_desk.py
++++ b/tests/test_codeant_desk.py
+@@ -12,10 +12,10 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import Clock, CountingCrm, KeyedOutbox, RecordedQualifier, lead
++from support import Clock, CountingCrm, lead
+ from test_lead_crm_copy import _flow, _pass
+ 
+-from demo_only.fakes import FakeCrm
++from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+ from lead_desk import server
+ from lead_desk.config import Config
+ from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
+diff --git a/tests/test_demo_folder_guard.py b/tests/test_demo_folder_guard.py
+index cdf1c85..e588e74 100644
+--- a/tests/test_demo_folder_guard.py
++++ b/tests/test_demo_folder_guard.py
+@@ -18,7 +18,12 @@ NEEDS_NOTHING = "def test_runs_without_the_demo_folder():\n    assert 1 == 1\n"
+ 
+ 
+ def _run(tmp_path: Path, **extra: str) -> subprocess.CompletedProcess[str]:
+-    shutil.copy(REPO / "tests" / "conftest.py", tmp_path / "conftest.py")
++    for name in (
++        "conftest.py",
++        "support.py",
++        "_repo_root.py",
++    ):  # conftest imports the two helpers (neither needs the demo)
++        shutil.copy(REPO / "tests" / name, tmp_path / name)
+     (tmp_path / "test_plain.py").write_text(NEEDS_NOTHING, encoding="utf-8")
+     env = {k: v for k, v in os.environ.items() if not k.startswith("DPLD_")}
+     env.update(PYTHONPATH=str(REPO / "src"), **extra)
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index e072229..4a1d4d2 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -15,7 +15,7 @@ import warnings
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from _repo_root import REPO, repo_scan_gap, scan_required
+ 
+ from tools import hygiene
+ 
+@@ -136,6 +136,8 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+         assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+     # 2. the real tree
++    if gap := repo_scan_gap():  # the canaries above need no repository; the scan of this tree does
++        (pytest.fail if scan_required() else pytest.skip)(gap)
+     left = hygiene.pipeline(REPO, patterns, exceptions)
+     assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+     # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+diff --git a/tests/test_mode_safety.py b/tests/test_mode_safety.py
+index d53f9c8..7ac7f31 100644
+--- a/tests/test_mode_safety.py
++++ b/tests/test_mode_safety.py
+@@ -16,10 +16,12 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import DEMO_LEADFLOW, REPO, KeyedOutbox, build_rig, call, lead, stop_within
++from _plain import _main_env, _Reached, _stop_at_adapters
++from support import DEMO_LEADFLOW, REPO, build_rig, call, lead, stop_within
+ from test_portal_api import fresh, get
+ 
+ from demo_only import fake_hubspot as fh
++from demo_only.fakes import KeyedOutbox
+ from lead_desk import server
+ from lead_desk.config import Config, LiveSettings, SettingRefused
+ from lead_desk.constants import EXIT_DESK_SETTING_REFUSED, FOLLOWUP_BODY_TEMPLATE
+@@ -200,24 +202,6 @@ def test_demo_controls_stay_with_the_stand_ins(env: Any) -> None:
+ 
+ 
+ # -- a real service and a public bind do not start together (the desk has no sign-in)
+-def _main_env(monkeypatch: Any, tmp_path: Path, bind: str, **settings: str) -> None:
+-    for name in ("DESK_CRM", "DESK_OUTBOX", "DESK_QUALIFIER"):
+-        monkeypatch.delenv(name, raising=False)  # one case must not leak its kinds into the next
+-    for k, v in {"DESK_DB_PATH": str(tmp_path / "m3.sqlite3"), "DESK_PORT": "0", "DESK_BIND": bind, **settings}.items():
+-        monkeypatch.setenv(k, v)
+-
+-
+-class _Reached(Exception):
+-    pass
+-
+-
+-def _stop_at_adapters(monkeypatch: Any) -> None:
+-    def adapters(cfg: Any) -> Any:
+-        raise _Reached
+-
+-    monkeypatch.setattr(server, "load_demo_adapters", adapters)
+-
+-
+ @pytest.mark.parametrize(
+     ("setting", "kind"), [({"DESK_CRM": "hubspot"}, "crm"), ({"DESK_OUTBOX": "smtp_provider"}, "mail")]
+ )
