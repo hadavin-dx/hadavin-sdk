@@ -72,3 +72,4 @@
 04:13Z P6 batch 11 = 06ed4b4c (not final): round 11 reviewers+runner started; no laptop retarget yet; P2/SONAR builders working
 04:22Z P6 r11 resolved (0B/4M); batch 12 builder a7978edf live; no laptop run yet
 04:27Z P2 batch 11 landed 82dd69c1; r11 reviewers+runner live; P2 diff has 244 suppression lines
+04:28Z P2 r11 design 0B/3M (possible fail-open limits.store); codebase review + runner live

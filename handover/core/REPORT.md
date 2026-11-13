@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:28Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 82dd69c1 (batch 11, pushed by the builder): design review r11 is NOT clean: 0 Blocker, 3 Major. M1 possible FAIL-OPEN: limits/audit/registry/_evidence are sealed by identity only, so replacing rt.limits.store may keep the seal (reviewer did not trace it to a request path; unverified). M2 CHANGELOG "exact list" of in-process limits is not exact. M3 suppressions on added lines (reviewer count: noqa 31, type: ignore 212 of which about 192 in tests, pragma 1; includes marker text inside mutant strings; my own grep of the diff gave 244 lines). Codebase reviewer a909... (aac377ea) and runner (a909a11d) have not reported.
+- Part 6 06ed4b4c: still round 11 resolved; batch 12 builder running. Runner a2432ae7 not reported. Your 04:25Z item: B12 survived on dd827d79 in your laptop run; I will make batch 12 prove B12 is killed on the new head (addendum sent now).
+- Builder reports (Part 2) are unverified until the runner finishes. SONAR-PATH batch 4: nothing pushed.
+
+**LEAD ACTIONS:** read 04:25Z: acknowledged; suppression count vs main now in every runner brief. Q8c-1 needs stage mutants, perf, bandit and demo-only guard on the laptop? Tell me (the runner only ran the steps given). Decision still open for you: how to treat unavoidable broad except sites in Part 6 (recommend named tuple plus surprise-error test).
+**LIVE ITEMS (6):** a7978edf P6 batch 12 builder; a2432ae7 P6 runner; a982868e SONAR-PATH builder; aac377ea P2 codebase reviewer; a909a11d P2 runner. Closed: a6fe5106 (P2 design reviewer), aa049db0.
+**ROUNDS (WHY):** P2 round 11 (fail-open candidate, no cap); P6 round 12 after batch 12; SONAR-PATH round 4 after batch 4.
+**FINISHED SINCE LAST BLOCK:** P2 batch 11 build and snapshot /home/user/build/snap/pdbind-82dd69c1/; P2 design review condensed; ledger PDBIND-r11-0..3.
+**EGM STEP PER PACKAGE:** P2 result review (round 11 reviewers + runner live); P6 build batch 12; SONAR-PATH build batch 4.
+**LANE SONAR-PATH:** a982868e building; EGM step build; A-D not complete.
+**RUN ON LAPTOP:** none (no clean final head).
+
 ## 04:22Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
