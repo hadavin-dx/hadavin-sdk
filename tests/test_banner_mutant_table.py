@@ -180,3 +180,57 @@ def test_planted_shapes_are_each_reported() -> None:
     assert shape_problems(rows=rows[8:], same={"Z9 Z10": " "}) == [
         ("Z9 Z10", "rows share one killer and one expect without a same-assert reason")
     ], "a same-assert entry with a blank reason was accepted"
+
+
+INTERPRETER_TEXT = re.compile(
+    r"(AttributeError|TypeError|KeyError|NameError|IndexError)\b|has no attribute|object of type|is not subscriptable|"
+    r"unexpected keyword|validation errors? for|object is not"
+)
+
+
+def interpreter_text_problems(rows=None, pinned=None) -> list[tuple[str, str]]:
+    """Rows whose `expect` is the interpreter's or a library's own error text, unless the row is on the pinned crash list:
+    only a row that crashes on purpose may be expected to show that text; any other row must show a message of its test."""
+    pinned = bm.CRASH_ROWS if pinned is None else pinned
+    problems = []
+    for m in bm.M if rows is None else rows:
+        label = m.name.split(" ", 1)[0]
+        if INTERPRETER_TEXT.search(m.expect) and label not in pinned:
+            problems.append(
+                (label, "expect is an interpreter message and the row is not a pinned crash row")
+            )
+    return problems
+
+
+def test_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_interpreter_message() -> (
+    None
+):
+    declared = {m.name.split(" ", 1)[0] for m in bm.M if m.allow_crash}
+    assert declared == set(bm.CRASH_ROWS), (
+        f"crash rows not pinned: {sorted(declared - set(bm.CRASH_ROWS))}; pinned but not crash rows: "
+        f"{sorted(set(bm.CRASH_ROWS) - declared)}"
+    )
+    assert len(bm.CRASH_ROWS) == 10, (
+        "the pinned crash set changed size: update the CHANGELOG figure with it"
+    )
+    assert interpreter_text_problems() == []
+
+
+def test_a_planted_interpreter_message_outside_the_pinned_set_is_reported() -> None:
+    rows = [
+        bm.mutant(
+            "Z1 on",
+            "x.py",
+            "a",
+            "b",
+            "t.py",
+            "k",
+            "AttributeError: 'list' has no x",
+            crash="AttributeError",
+        ),
+        bm.mutant("Z2 off", "x.py", "a", "b", "t.py", "k", "'list' object has no attribute 'get'"),
+        bm.mutant("Z3 fine", "x.py", "a", "b", "t.py", "k", "the names were not shown once"),
+    ]
+    assert interpreter_text_problems(rows=rows, pinned={"Z1"}) == [
+        ("Z2", "expect is an interpreter message and the row is not a pinned crash row")
+    ]

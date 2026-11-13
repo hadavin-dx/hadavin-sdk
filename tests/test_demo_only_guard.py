@@ -796,6 +796,9 @@ MAGIC = {
     "xz": b"\xfd7zXZ\x00" + b"\x00" * 20,
     "tar": b"a" * 257 + b"ustar" + b"\x00" * 20,
     "compiled Python": (3531).to_bytes(2, "little") + b"\r\n" + b"\x00" * 20,
+    "fat Mach-O or Java class file": b"\xca\xfe\xba\xbe\x00\x00\x00\x02" + b"\x00" * 20,
+    "RAR": b"Rar!\x1a\x07\x00" + b"\x00" * 20,
+    "DOS or Windows program": b"MZ\x00\x00" + b"\x00" * 20,
 }
 
 
@@ -806,6 +809,17 @@ def test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_en
     variants += [
         ("zip", b"PK\x05\x06" + b"\x00" * 20),
         ("zip", b"PK\x07\x08" + b"\x00" * 20),
+        (
+            "fat Mach-O or Java class file",
+            b"\xbe\xba\xfe\xca" + b"\x00" * 20,
+        ),  # the other byte order
+        (
+            "fat Mach-O or Java class file",
+            b"\xca\xfe\xba\xbe\x00\x00\x00\x34",
+        ),  # a Java class file header
+        ("bzip2", b"BZh1" + b"\x17rE8P\x90" + b"\x00" * 20),  # an empty stream (end-of-stream mark)
+        ("bzip2", b"BZh1" + b"1AY&SY" + b"\x00" * 20),  # the lowest level
+        ("RAR", b"Rar!\x1a\x07\x01" + b"\x00" * 20),  # the newer format
     ]  # empty, spanned
     for low_or_high in (
         3000,
@@ -821,7 +835,9 @@ def test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_en
             (repo / f"src/pkg/blob{ending}").write_bytes(raw)
             assert g.scan(repo, _cfg()) == [
                 f"src/pkg/blob{ending}: binary-in-product-root (the file is {kind}, whatever its ending says)"
-            ], (kind, raw[:4].hex(), ending)
+            ], (
+                f"first bytes of {kind} ({raw[:4].hex()}) in a file ending {ending!r} were not refused as that kind"
+            )
     for number in (2999, 4000):  # just outside the range: not read as compiled Python
         outside = _repo(tmp_path / f"out{number}", CLEAN)
         (outside / "src/pkg/blob.dat").write_bytes(
@@ -1070,7 +1086,6 @@ REAL_SAMPLES = {  # the first bytes of a real file of each kind the settings all
 FOREIGN_HEADERS = {  # real file marks of kinds the guard has no special rule for
     "zstd": b"\x28\xb5\x2f\xfd\x04\x00",
     "7z": b"7z\xbc\xaf\x27\x1c\x00\x04",
-    "rar": b"Rar!\x1a\x07\x01\x00",
     "lz4": b"\x04\x22\x4d\x18\x64\x40",
     "a short MZ header (cannot be called a PE file)": b"MZ\x90\x00\x03\x00\x00\x00",
     "wav (a RIFF file that is not webp)": b"RIFF\x24\x00\x00\x00WAVEfmt ",
@@ -1299,6 +1314,9 @@ KIND_SAMPLES: dict[str, bytes] = {
     "tar": b"x" * 257 + b"ustar" + b"\x0000",
     "compiled Python": (3495).to_bytes(2, "little") + b"\r\n" + b"\x00\x00\x00\x00rest",
     "Mach-O": b"\xcf\xfa\xed\xfe\x07\x00\x00\x01",
+    "fat Mach-O or Java class file": b"\xca\xfe\xba\xbe\x00\x00\x00\x02",
+    "RAR": b"Rar!\x1a\x07\x00rest",
+    "DOS or Windows program": b"MZ" + b"\x00" * 30,
     "PE": _pe_blob(),
 }
 MACHO_MAGICS = (b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe")
@@ -1662,3 +1680,276 @@ def test_a_file_the_person_running_the_guard_ignores_for_themselves_is_still_sca
     assert "src/pkg/secret_a.py" in got and "src/pkg/xdg_b.py" in got, (
         f"the scan did not reach the hidden files: {got}"
     )
+
+
+# -- batch 8: the copy run and the scan decide paths from the file system, not from text (class E) ------------------------
+def test_two_chained_links_cannot_lead_the_copy_run_out_of_the_copy(tmp_path: Path) -> None:
+    # proof (fails on old code: each target was worked out by text, so `k -> ..` then `l -> k/../../outside` passed)
+    cases = {
+        "k-then-l": {"docs/k": "..", "docs/l": "k/../../outside"},
+        "nested": {"a/b/link1": "../..", "a/link2": "b/link1/../.."},
+    }
+    for label, links in cases.items():
+        repo = _tracked_repo(tmp_path / label, {"docs/readme.txt": "x\n", "a/b/f.txt": "x\n"})
+        for rel, target in links.items():
+            os.symlink(target, repo / rel)
+        _track(repo)
+        with pytest.raises(SystemExit, match="symlink"):
+            g.copy_without_folder(repo, _cfg(), tmp_path / f"copy-{label}")
+            raise AssertionError(f"{label}: two chained links were copied")
+
+
+def test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_copied(
+    tmp_path: Path,
+) -> None:
+    # proof (fails on old code: the text check passed `a -> b`, `b -> a`)
+    repo = _tracked_repo(tmp_path / "loop", {"docs/readme.txt": "x\n"})
+    os.symlink("b", repo / "docs" / "a")
+    os.symlink("a", repo / "docs" / "b")
+    _track(repo)
+    with pytest.raises(SystemExit, match="loop"):
+        g.copy_without_folder(repo, _cfg(), tmp_path / "copy-loop")
+        raise AssertionError("a loop of links was copied")
+    fine = _tracked_repo(tmp_path / "fine", {"docs/readme.txt": "x\n"})
+    os.symlink("readme.txt", fine / "docs" / "ok")
+    _track(fine)
+    g.copy_without_folder(fine, _cfg(), tmp_path / "copy-fine")
+    assert (tmp_path / "copy-fine" / "docs" / "ok").read_text(encoding="utf-8") == "x\n"
+
+
+def test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on old code: O_NOFOLLOW guarded the last component only, so a swapped parent was read through)
+    repo = _tracked_repo(tmp_path / "r", {"docs/a.txt": "plain\n"})
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "a.txt").write_text("outside content\n", encoding="utf-8")
+    real = g._stat_kind
+
+    def swapped(path: Path) -> str:
+        kind = real(path)
+        if str(path).endswith("docs/a.txt") and (repo / "docs").is_dir():
+            (repo / "docs").rename(tmp_path / "docs-moved")
+            os.symlink(outside, repo / "docs")
+        return kind
+
+    monkeypatch.setattr(g, "_stat_kind", swapped)
+    with pytest.raises(SystemExit, match="plain file"):
+        g.copy_without_folder(repo, _cfg(), tmp_path / "copy")
+        raise AssertionError("a swapped parent folder was copied through")
+    assert not (tmp_path / "copy" / "docs" / "a.txt").exists() or (
+        (tmp_path / "copy" / "docs" / "a.txt").read_text(encoding="utf-8") != "outside content\n"
+    ), "the content behind the swapped parent reached the copy"
+
+
+def test_without_the_walk_flags_a_link_anywhere_on_the_path_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # pin of the Windows branch (it runs here by switching `_CAN_WALK` off): a link on a parent folder is refused
+    repo = _tracked_repo(tmp_path / "r", {"docs/a.txt": "plain\n"})
+    monkeypatch.setattr(g, "_CAN_WALK", False)
+    g._copy_regular(repo, "docs/a.txt", tmp_path / "plain-copy")
+    assert (tmp_path / "plain-copy").read_text(encoding="utf-8") == "plain\n"
+    (tmp_path / "real").mkdir()
+    (tmp_path / "real" / "a.txt").write_text("x\n", encoding="utf-8")
+    os.symlink(tmp_path / "real", repo / "linked")
+    with pytest.raises(SystemExit, match="plain file"):
+        g._copy_regular(repo, "linked/a.txt", tmp_path / "never")
+        raise AssertionError("a link on the path was followed")
+
+
+def test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on old code: with `Path.resolve` raising RuntimeError, as Python 3.12 does on a loop, the scan died with a
+    # traceback; on 3.13 a link outside the product folders that loops was no hit at all)
+    repo = _tracked_repo(tmp_path / "r", {"docs/readme.txt": "x\n"})
+    os.symlink("loop", repo / "docs" / "loop")
+    _track(repo)
+    plain = g.scan(repo, _cfg())
+    assert any(h.startswith("docs/loop: symlink-loop") for h in plain), (
+        f"no symlink-loop hit for a tracked loop in {plain}"
+    )
+
+    def raising(self: Path, strict: bool = False) -> Path:
+        raise RuntimeError("Symlink loop from " + str(self))
+
+    monkeypatch.setattr(Path, "resolve", raising)
+    assert any(h.startswith("docs/loop: symlink-loop") for h in g.scan(repo, _cfg())), (
+        "a Python whose Path.resolve raises on a loop gave a traceback or no hit"
+    )
+    monkeypatch.undo()
+    loop_folder = _repo(tmp_path / "f", {"src/pkg/__init__.py": "X = 1\n", MARKER: ""})
+    os.symlink(FOLDER, loop_folder / FOLDER)  # the demo-only folder is a loop of links
+    _track(loop_folder)
+    cfg_file = _toml(tmp_path)
+    assert _main(loop_folder, cfg_file) == 1, (
+        "a loop as the demo-only folder was not a hit (exit 1)"
+    )
+
+
+def test_a_file_that_vanishes_at_any_point_of_the_scan_is_never_a_traceback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on old code: a second `os.lstat` after `_stat_kind` raised FileNotFoundError for an exempt file)
+    files = {"src/pkg/ex.txt": f"names {FOLDER} on purpose\n"}
+
+    def calls_for(vanish_after: int | None) -> int:
+        repo = _repo(tmp_path / f"v{vanish_after}", {**CLEAN, **files})
+        target = repo / "src/pkg/ex.txt"
+        count = [0]
+        real = os.lstat
+
+        def counting(path, *a, **k):
+            if str(path) == str(target):
+                count[0] += 1
+                if vanish_after is not None and count[0] == vanish_after + 1 and target.exists():
+                    target.unlink()
+            return real(path, *a, **k)
+
+        monkeypatch.setattr(os, "lstat", counting)
+        g.scan(repo, _cfg(exempt_files=("src/pkg/ex.txt",)))
+        monkeypatch.undo()
+        return count[0]
+
+    total = calls_for(None)
+    assert total >= 1
+    for k in range(total + 1):
+        calls_for(k)  # must not raise
+
+
+def test_a_file_in_a_product_folder_is_looked_at_with_one_lstat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on old code: the size came from a second `stat` call on the same file)
+    repo = _repo(tmp_path / "r", {**CLEAN, "src/pkg/b.py": "Y = 2\n"})
+    seen: dict[str, int] = {}
+    real_lstat, real_stat = os.lstat, os.stat
+
+    def count(kind: str, real):
+        def inner(path, *a, **k):
+            if str(path).endswith("src/pkg/b.py"):
+                seen[kind] = seen.get(kind, 0) + 1
+            return real(path, *a, **k)
+
+        return inner
+
+    monkeypatch.setattr(os, "lstat", count("lstat", real_lstat))
+    monkeypatch.setattr(os, "stat", count("stat", real_stat))
+    assert g.scan(repo, _cfg()) == []
+    assert seen == {"lstat": 1}, f"calls for one product file: {seen}"
+
+
+def test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # proof (fails on old code: the message was only "git ls-files failed")
+    repo = _repo(tmp_path / "r", CLEAN)
+    fake = tmp_path / "bin"
+    fake.mkdir()
+    script = fake / "git"
+    script.write_text(
+        "#!/bin/sh\n"
+        f"printf 'fatal: detected dubious ownership in repository at %s\\n\\033[31mhint\\n' '{repo}' >&2\n"
+        "exit 128\n",
+        encoding="utf-8",
+    )
+    script.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake}{os.pathsep}{os.environ['PATH']}")
+    for call in (g.tracked_paths, g._gitlinks):
+        with pytest.raises(SystemExit) as raised:
+            call(repo)
+        text = str(raised.value)
+        assert "detected dubious ownership" in text, f"git's own first line is missing from: {text}"
+        assert str(repo) not in text and "<repo>" in text, (
+            f"the repository path was not masked: {text}"
+        )
+        assert "\x1b" not in text and "hint" not in text, (
+            f"more than the first line, or a raw escape: {text!r}"
+        )
+
+
+def test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not(
+    tmp_path: Path,
+) -> None:
+    # proof (fails on old code: both marks are valid UTF-8, so such a file was read as text and passed)
+    for label, raw, kind in (
+        ("mz", b"MZ" + b"\x00" * 30, "DOS or Windows program"),
+        ("rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR"),
+    ):
+        repo = _repo(tmp_path / label, CLEAN)
+        (repo / "src/pkg/blob").write_bytes(raw)
+        assert g.scan(repo, _cfg()) == [
+            f"src/pkg/blob: binary-in-product-root (the file is {kind}, whatever its ending says)"
+        ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
+    text = _repo(tmp_path / "text", {**CLEAN, "src/pkg/a.txt": "MZ is fine as text, so is Rar!\n"})
+    assert g.scan(text, _cfg()) == [], "plain text that starts like a mark was refused"
+    utf16 = _repo(tmp_path / "u16", CLEAN)
+    (utf16 / "src/pkg/clean.txt").write_bytes("hello\n".encode("utf-16-le"))
+    assert g.scan(utf16, _cfg()) == [], (
+        "clean UTF-16 text was refused: a NUL byte alone is not a hit"
+    )
+
+
+def test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark(tmp_path: Path) -> None:
+    # proof (fails on old code: the level byte was not looked at)
+    cases = [
+        (b"BZh1" + b"1AY&SY", True),
+        (b"BZh9" + b"\x17rE8P\x90", True),
+        (b"BZh0" + b"1AY&SY", False),
+        (b"BZh:" + b"1AY&SY", False),
+        (b"BZha" + b"1AY&SY", False),
+        (b"BZh9" + b"XXXXXX", False),
+        (b"BZh", False),
+    ]
+    for head, is_bzip2 in cases:
+        got = g._magic_kind(head + b"rest")
+        assert (got == "bzip2") == is_bzip2, f"bzip2 check: {head!r} was read as {got!r}"
+    assert g._magic_kind(b"BZh") == ""
+
+
+def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file_and_an_unusual_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Decision (also in the CHANGELOG): core has no shared helper, so the guard, `tools/scan_repo.py` and
+    # `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED files (exact names, `-z`), and they must give one answer;
+    # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a reference file counts too), so it
+    # must hold at least every tracked file. Proof (fails on old code: test_repo_rules listed without -z and quoted the name).
+    import importlib.util
+
+    from tests.test_repo_rules import tracked_files
+
+    spec = importlib.util.spec_from_file_location(
+        "_scan_repo_listing", ROOT / "tools" / "scan_repo.py"
+    )
+    assert spec is not None and spec.loader is not None
+    scan_repo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(scan_repo)
+
+    home = tmp_path / "home"
+    (home / ".config" / "git").mkdir(parents=True)
+    (home / ".config" / "git" / "ignore").write_text("*.secretnote\n", encoding="utf-8")
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(home / ".config"))
+    repo = _repo(tmp_path / "r", {**CLEAN, "docs/café.txt": "x\n", "docs/b.secretnote": "x\n"})
+    _track(repo)
+    (repo / "docs" / "new-not-added.txt").write_text("x\n", encoding="utf-8")
+
+    from_guard = set(g.tracked_paths(repo, include_new=False))
+    from_scan = scan_repo.tracked_paths(repo)
+    from_rules = set(tracked_files(repo))
+    assert from_guard == from_scan == from_rules, (from_guard, from_scan, from_rules)
+    assert "docs/café.txt" in from_guard and "docs/new-not-added.txt" not in from_guard
+    # the guard's default listing adds files not yet added, and still lists one a user-level ignore file hides
+    assert "docs/new-not-added.txt" in g.tracked_paths(repo)
+    assert "docs/b.secretnote" in g.tracked_paths(repo) and "docs/b.secretnote" not in from_guard
+
+    walk_spec = importlib.util.spec_from_file_location(
+        "_no_ref_listing", ROOT / "tests" / "test_no_reference_material.py"
+    )
+    assert walk_spec is not None and walk_spec.loader is not None
+    nr = importlib.util.module_from_spec(walk_spec)
+    walk_spec.loader.exec_module(nr)
+    monkeypatch.setattr(nr, "ROOT", repo)
+    assert from_guard <= set(nr._tracked()), "the folder walk misses a tracked file"

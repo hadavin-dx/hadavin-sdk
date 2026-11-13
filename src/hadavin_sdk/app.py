@@ -9,7 +9,7 @@ import logging
 import re
 import ssl
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -65,25 +65,55 @@ class App:
     purge_store: Store | None = None
     # The `build` overrides that were given (names only, in the fixed order of `mode_banner.OVERRIDES`): objects the caller
     # made replace what the config names, and the mode banner cannot judge them (it says so and claims nothing made-up).
-    overridden: tuple[str, ...] = ()
+    # None means "not recorded" (an App made by hand, not by `build`): the banner is then the unconfirmed one.
+    overridden: tuple[str, ...] | None = None
+    # What `build` saw when it recorded `overridden` (`_connected_parts`). An App that was copied with `dataclasses.replace`
+    # (this field is not copied: it is not an init argument) or had a part replaced after it was built no longer matches,
+    # and its banner is the unconfirmed one. Chosen over a frozen App because callers set fields (tests, the tick) and a
+    # frozen App would break them; the fingerprint is the smaller change.
+    _sealed: tuple | None = field(default=None, init=False, repr=False, compare=False)
+
+    def _connected_parts(self) -> tuple:
+        """The identity of every part that can connect the app to something: each field except the two records here and
+        the sources that the tick may switch off, the contents of `sources`, the llm, detector and tool callables of the
+        runtime, and the names of any attribute set on the object that is not a field."""
+        own = {f.name for f in fields(self)}
+        parts = tuple(
+            (f.name, id(getattr(self, f.name)))
+            for f in fields(self)
+            if f.name not in ("overridden", "_sealed", "disabled_sources", "sources")
+        )
+        rt = self.runtime
+        return (
+            parts,
+            tuple(sorted((k, id(v)) for k, v in self.sources.items())),
+            tuple((n, id(getattr(rt, n, None))) for n in ("llm", "detector", "limits")),
+            tuple(sorted((k, id(v)) for k, v in dict(rt.hooks.tools).items())),
+            tuple(sorted(set(vars(self)) - own)),
+        )
+
+    def seal(self, overridden: tuple[str, ...]) -> None:
+        """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end."""
+        self.overridden = overridden
+        self._sealed = self._connected_parts()
 
     def mode_banner(
         self, names: Mapping[str, str] | None = None, words: BannerWords = DEFAULT_WORDS
     ) -> dict:
-        """The banner for a screen: `mode_banner.banner_or_unconfirmed` for this app's config, tool manifests and overrides."""
+        """The banner for a screen (the supported call): `mode_banner.banner_or_unconfirmed` for this app's config, tool
+        manifests and overrides. An app that `build` did not record, or whose parts changed since, gets the unconfirmed
+        banner (`overridden=None`)."""
+        known = self.overridden if self._sealed == self._connected_parts() else None
         return banner_or_unconfirmed(
-            self.config,
-            names,
-            words,
-            tool_specs=self.registry.tools,
-            overridden=self.overridden,
+            self.config, names, words, tool_specs=self.registry.tools, overridden=known
         )
 
 
 def _given_overrides(**given: object) -> tuple[str, ...]:
     """The names of the `build` overrides that replace something: an object handed in (not None), or a mapping that holds
-    at least one entry (an empty `tools={}` or `sources={}` replaces nothing). Names only, in the order of `OVERRIDES`; a
-    name `OVERRIDES` does not list is a ValueError, so a new override cannot be added without teaching the banner."""
+    at least one entry (an empty `tools={}` or `sources={}` replaces nothing). Names only, in the order of `OVERRIDES`. A
+    name `OVERRIDES` does not list is a ValueError here, but this only fires for names passed in: that every `build`
+    parameter is either an override or on `NOT_CONNECTIVITY` is checked by a test that reads the signature of `build`."""
     if unknown := sorted(set(given) - set(OVERRIDES)):
         raise ValueError(f"build override not known to the mode banner: {unknown[0]}")
     return tuple(
@@ -111,7 +141,13 @@ def build(
     replace one configured backend (tests); `secrets` replaces the configured provider for both the executor
     and the backends' own secrets. Missing or shared secret names fail here, before the first run."""
     overridden = _given_overrides(
-        tools=tools, sources=sources, channel=channel, llm=llm, detector=detector, secrets=secrets
+        tools=tools,
+        sources=sources,
+        channel=channel,
+        llm=llm,
+        detector=detector,
+        secrets=secrets,
+        hold_run_ids=hold_run_ids,
     )  # before the names below are reassigned
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
@@ -273,7 +309,7 @@ def build(
         hooks,
     )
     holder["rt"] = runtime
-    return App(
+    app = App(
         cfg,
         reg,
         store,
@@ -285,8 +321,9 @@ def build(
         sources={**built_sources, **(sources or {})},
         disabled_sources=disabled_sources,
         purge_store=purge_store,
-        overridden=overridden,
     )
+    app.seal(overridden)
+    return app
 
 
 def _own_secrets(secrets: SecretProvider, spec: tools_mod.ToolSpec) -> Callable[[str], str]:

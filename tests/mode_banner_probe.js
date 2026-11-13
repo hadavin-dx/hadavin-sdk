@@ -25,6 +25,7 @@ const boom = () => { throw new Error('boom'); };
 if (scenario === 'throwing-getter') input = { get tone() { return boom(); }, tag: 'T', text: 'x', real: [], stand_ins: [], mode: 'demo' };
 if (scenario === 'proxy') input = new Proxy({}, { get: boom, has: boom, ownKeys: boom, getPrototypeOf: boom });
 if (scenario === 'throwing-list') input = { ...input, real: new Proxy([], { get: boom }) };
+if (scenario === 'huge-text') input = { ...input, text: '\u{1F600}'.repeat(5000000) };
 if (scenario === 'throwing-doc') doc = { createElement: () => { throw new Error('doc broken'); } };
 let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-every-attribute' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-tone-attr' ? { failAttr: 'data-tone', text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-text-over-old-claim' ? { failAppend: true, failText: true, text: 'DEMO Every record here is made-up demo data.', attrs: { 'data-tone': 'demo', 'data-mode': 'demo' } } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
 if (scenario === 'null-el') target = null;
@@ -32,11 +33,12 @@ let threw = '';
 let usableThrew = '';
 try { api.usable(input); } catch (e) { usableThrew = String(e.message); }
 let shown = null;
+const t0 = Date.now();
 try { shown = api.paint(target, input, doc); } catch (e) { threw = String(e.message); }
 const lines = target ? target.children.map((c) => ({ cls: c.cls, text: c.text })) : [];
 console.log(JSON.stringify({
   lines, tone: target ? target.attrs['data-tone'] : null, mode: target ? target.attrs['data-mode'] : null,
   hidden: target ? target.hidden : null, text: target ? target.text : null, notConfirmed: api.NOT_CONFIRMED,
-  shownTone: shown ? shown.tone : null, modes: api.MODES, tones: api.TONES, maxText: api.MAX_TEXT, htmlWrites, threw, usableThrew,
+  shownTone: shown ? shown.tone : null, modes: api.MODES, tones: api.TONES, maxText: api.MAX_TEXT, htmlWrites, threw, usableThrew, ms: Date.now() - t0,
   frozen: [api, api.NOT_CONFIRMED, api.NOT_CONFIRMED.real, api.NOT_CONFIRMED.stand_ins, api.TONES, api.MODES].map(Object.isFrozen),
 }));

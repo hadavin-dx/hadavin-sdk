@@ -2,11 +2,16 @@
 
 A reader of a demo screen must never mistake pretend services for real ones, and a reader of a real screen must never
 be told its data is made up. This module is the only place the words live. A screen (web page, console, report)
-receives the finished banner from `banner_or_unconfirmed(config, tool_specs=registry.tools)` and only paints it; the ready-made painter for
-a web page is `templates/mode-banner/mode_banner.js`.
+receives the finished banner from `App.mode_banner()` (the supported call: it knows the config, the tool manifests and
+the parts handed to `app.build`) and only paints it; the ready-made painter for a web page is
+`templates/mode-banner/mode_banner.js`. The lower-level `banner_or_unconfirmed(config, tool_specs=..., overridden=...)`
+needs the caller to say which `app.build` parts were handed in: a caller that cannot say passes `overridden=None`, and the
+banner is then the "unconfirmed" one, never the made-up one. An `App` that was not made by `app.build`, or whose parts
+were replaced after it was built, also gives the unconfirmed banner (so the public demo, which builds with fakes handed in
+as objects, shows the unconfirmed banner and not the made-up one, until the stand-in check of Part 2 can judge them).
 
 The stage and both lists of services (the real ones and the pretend ones, called stand-ins) are read from the loaded
-config in one place, `banner_from_config(config, names, words, tool_specs=...)` (a screen calls `banner_or_unconfirmed`, which
+config in one place, `banner_from_config(config, names, words, tool_specs=..., overridden=...)` (a screen calls `banner_or_unconfirmed`, which
 calls it and never raises), so a caller cannot forget to name a real service and so get the made-up
 sentence by accident. `_banner_for` is the private lower-level function they use: its lists are required keyword arguments with
 no defaults, because an empty default would answer "nothing real is connected" when nobody had checked.
@@ -24,6 +29,8 @@ Rules the tests pin:
     banner never holds the made-up sentences, and that a demo banner names no real service;
   * every real service that is connected is named in the text, in the order given, once;
   * the stand-ins are listed in every stage (loudly in the demo stage), so a pilot or live system never hides them;
+  * the `overridden` argument has no default: "no part was handed in" is `()`, and "not known" is `None` (the unconfirmed
+    banner), so a missing answer can never read as "none";
   * there is no "hidden" state: `banner_or_unconfirmed` always gives a finished banner (the "not confirmed" one when
     the real banner cannot be built), so a missing banner can never be read as "all is real". `banner_from_config`
     itself RAISES when it cannot say (a missing config field, a name that is not plain words): a screen that calls it
@@ -41,7 +48,7 @@ names a host for it (no manifest read for that module, or only manifests with an
 nothing but declares no host therefore also reads as real, which is the safe mistake. (3) The banner is worked out when `banner_from_config` is called; a caller that
 keeps it, a page cache, or a config whose fields are changed or reloaded afterwards, can show an out-of-date banner: call it
 again when the config is loaded again. (4) `localhost` is trusted to resolve to the loopback address on this machine. (5) The
-settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build` (`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`) replace what the config names, so the config cannot say what they connect to: `App.overridden` lists the ones given and `App.mode_banner()` then shows the "unconfirmed" banner with their names, never the made-up sentence (a banner worked out from a bare config with no `overridden` list cannot know about them, so the caller must pass the names); a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. The check of what such an override really connects to waits for the stand-in labelling of those parts (Part 2). (7) The page script paints the
+settings of a stand-in kind are never inspected: the banner reads the kind name only. (6) The overrides handed to `app.build` (`tools=` callables, `sources=`, `channel=`, `llm=`, `detector=`, `secrets=`) replace what the config names, so the config cannot say what they connect to: `App.overridden` lists the ones given (`hold_run_ids=` too: caller code that decides which runs are held can query any store) and `App.mode_banner()` then shows the "unconfirmed" banner with their names in its separate `overridden` list, never the made-up sentence (a banner worked out from a bare config cannot know about them, so the caller must pass the names or `None`); a callable handed to `app.build(tools=...)` has no manifest, so its hosts are not counted. The check of what such an override really connects to waits for the stand-in labelling of those parts (Part 2). (7) The page script paints the
 `tone` it is given and checks it against the mode, the real list and the names; the made-up sentences themselves are checked here,
 in Python, before a banner leaves (`_check_what_is_claimed`), not again in the page. (8) "This machine" is decided for a bare host and
 for a url by one function (`_is_this_machine`): a host with a space, a control character, a non-ASCII character or padding is NOT
@@ -70,11 +77,13 @@ _LOG = logging.getLogger(__name__)
 
 # A screen calls `banner_or_unconfirmed`; `banner_from_config` is the same decision but raises when it cannot say.
 __all__ = [
+    "BLANK_RANGES",
     "DEFAULT_WORDS",
     "EGRESS_HOSTS",
     "EXTERNAL_SYSTEMS",
     "MAX_TEXT_LENGTH",
     "NOTHING_CONNECTED",
+    "NOT_CONNECTIVITY",
     "OVERRIDES",
     "READ_SOURCES",
     "TONES",
@@ -108,12 +117,39 @@ _NAME_MAX = 40
 # so a reworded banner (another language) protects its own claim sentences and key words too.
 _RESERVED_WORDS = r"made[ _.-]?up|demo|real|stand[ _.-]?ins?|nothing is"
 _BOUNDARY = r"(?<![A-Za-z0-9])(?:{})(?![A-Za-z0-9])"
+# What counts as "nothing visible" in a banner text: ONE list of code points, here (`BLANK_RANGES`, inclusive ranges) and in the
+# page script (`BLANK` in templates/mode-banner/mode_banner.js); a test parses the page's literal and compares both. It is the union of
+# what Python's `str.strip` and JavaScript's `String.prototype.trim` call white space (they differ on U+0085, U+001C to U+001F
+# and U+FEFF), so a text is blank for both or for neither.
+BLANK_RANGES: tuple[tuple[int, int], ...] = (
+    (0x09, 0x0D),
+    (0x1C, 0x20),
+    (0x85, 0x85),
+    (0xA0, 0xA0),
+    (0x1680, 0x1680),
+    (0x2000, 0x200A),
+    (0x2028, 0x2029),
+    (0x202F, 0x202F),
+    (0x205F, 0x205F),
+    (0x3000, 0x3000),
+    (0xFEFF, 0xFEFF),
+)
+
+
+def _visible(text: object) -> bool:
+    """True for a text with at least one character that is not in `BLANK_RANGES` (the page script's rule, see above)."""
+    return isinstance(text, str) and any(
+        not any(lo <= ord(c) <= hi for lo, hi in BLANK_RANGES) for c in text
+    )
+
+
 # The page script refuses a text longer than this (templates/mode-banner/mode_banner.js); a test pins both numbers.
 MAX_TEXT_LENGTH = 600
 TONES = ("demo", "real", "quiet", "unconfirmed")
 # The (component, kind) pairs that connect to nothing outside the process. They are neither a real service nor a
-# stand-in, so the banner does not list them. This is an explicit allow-list, not derived from any other table (the table the
-# prod gate reads, `backends.table.NOT_PROD`, is about what is allowed in prod and can grow for other reasons): every OTHER
+# stand-in, so the banner does not list them. This is an explicit allow-list; it is not derived from the table the prod
+# gate reads (`backends.table.NOT_PROD`, which is about what is allowed in prod and can grow for other reasons); only the
+# name of the built-in detector kind is read from `backends.table.DEFAULTS`: every OTHER
 # kind outside the DEMO_ONLY table counts as real, so a kind this file does not know, or a kind added to another table
 # later, is never hidden: naming too much is the safe mistake. A test pins the exact content.
 #   ("signer", "none")   no signing at all: nothing is called.
@@ -167,7 +203,9 @@ DEFAULT_WORDS = BannerWords(tag_by_mode={"demo": "DEMO", "pilot": "PILOT", "prod
 @dataclass(frozen=True)
 class ModeBanner:
     """The finished banner. `tone` is "demo" (pretend services only), "real" (at least one real service), "quiet"
-    (a pilot or live system with nothing real connected) or "unconfirmed" (only from `not_confirmed`). `standins` is a second, loud line, or "" when not needed."""
+    (a pilot or live system with nothing real connected) or "unconfirmed" (from `not_confirmed`, from the not-known
+    `overridden=None`, or when parts were handed to `app.build`: then `overridden` names them and `text` is exactly the
+    not-confirmed words, which the page completes with its own note). `standins` is a second, loud line, or "" when not needed."""
 
     mode: str
     tone: str
@@ -176,12 +214,14 @@ class ModeBanner:
     standins: str
     real: tuple[str, ...]
     stand_ins: tuple[str, ...]
+    overridden: tuple[str, ...] = ()
 
     def as_dict(self) -> dict[str, Any]:
         """Plain data for JSON: what a screen receives."""
         d = asdict(self)
         d["real"] = list(self.real)
         d["stand_ins"] = list(self.stand_ins)
+        d["overridden"] = list(self.overridden)
         return d
 
 
@@ -195,18 +235,22 @@ _READERS: tuple[tuple[type, Any], ...] = (
 )
 
 
-def _collection(value: object, what: str, *, ordered: bool = False) -> tuple[Any, ...]:
+def _collection(
+    value: object, what: str, *, ordered: bool = False, say: str | None = None
+) -> tuple[Any, ...]:
     """The entries of an argument the banner reads, copied ONCE into a tuple. Only a `list`, a `tuple`, a `set`, a
     `frozenset` or the keys view of a dict is accepted (with `ordered=True` only a list or a tuple: a set has no order to
     keep), and it is read with the builtin reader of that type, so a subclass that overrides `__iter__` is never asked.
     Anything else raises TypeError: a one-shot iterator or generator (a config whose property hands back the same used up
     object would give a full answer the first time and an empty one the second, which reads as "nothing real"), a
-    `bytearray`, a `memoryview`, a bare text, a mapping, and any object that merely has `__iter__`."""
+    `bytearray`, a `memoryview`, a bare text, a mapping, and any object that merely has `__iter__`. `say` is the whole
+    message of that TypeError when a caller wants its own words (the one place a refusal is worded)."""
     for kind, reader in _READERS[:2] if ordered else _READERS:
         if isinstance(value, kind):
             return tuple(reader(value))
     raise TypeError(
-        f"{what} must be a list, tuple, set, frozenset or dict keys view, not {type(value).__name__}"
+        say
+        or f"{what} must be a list, tuple, set, frozenset or dict keys view, not {type(value).__name__}"
     )
 
 
@@ -229,12 +273,12 @@ def _clean_names(
     "component <key>"), checked, de-duplicated in order. A name is plain ASCII words only (see `_NAME_OK`)."""
     reserved = _reserved_for(words)
     # a bare string would be read letter by letter; a dict or set has no order to keep; a generator is read once
-    try:
-        entries = _collection(keys, kind, ordered=True)
-    except TypeError:
-        raise TypeError(
-            f"{kind} must be a list of service names, not {type(keys).__name__}"
-        ) from None
+    entries = _collection(
+        keys,
+        kind,
+        ordered=True,
+        say=f"{kind} must be a list of service names, not {type(keys).__name__}",
+    )
     out: dict[str, None] = {}
     for key in entries:
         if not isinstance(key, str) or not key:
@@ -297,26 +341,27 @@ def _banner_for(
         extra = words.standins_still.format(names=", ".join(pretend)) if pretend else ""
         banner = ModeBanner(mode, "quiet", tag, words.none_real, extra, real, pretend)
     if given := _override_names(overridden):
-        note = words.overridden_note.format(names=", ".join(given))
         if banner.tone == "real":
+            note = words.overridden_note.format(names=", ".join(given))
             banner = ModeBanner(
-                mode, "real", tag, banner.text + " " + note, banner.standins, real, pretend
+                mode, "real", tag, banner.text + " " + note, banner.standins, real, pretend, given
             )
         else:  # the made-up claim and "no real service" both rest on the config alone: neither can be said
             banner = ModeBanner(
                 mode,
                 "unconfirmed",
                 words.not_confirmed_tag,
-                words.not_confirmed + " " + note,
+                words.not_confirmed,  # exactly these words: the page adds its own note from `overridden`
                 "",
                 (),
                 (),
+                given,
             )
     _check_what_is_claimed(banner, words)
     if (
-        not banner.tag.strip()
-        or not banner.text.strip()
-        or (banner.standins and not banner.standins.strip())
+        not _visible(banner.tag)
+        or not _visible(banner.text)
+        or (banner.standins and not _visible(banner.standins))
     ):
         raise ValueError(
             "the banner tag, text or second line is blank: a banner is never painted blank"
@@ -427,8 +472,18 @@ class ConfigLike(Protocol):
 
 # The keyword arguments of `app.build` that replace what the config names with an object the caller made. The banner is built
 # from the config and cannot judge such an object, so `app.build` records which were given and the banner says so.
-OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets")
-
+# `hold_run_ids` is caller code that decides which runs are held and can query any store, so it is one of them.
+OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")
+# Every other parameter of `app.build`, each with the reason it cannot connect the system to anything: a test requires that
+# every parameter of `build` is in exactly one of the two lists, so a new parameter cannot be left unrecorded by mistake.
+# Limit: a `clock` callable returns a time and is trusted to do nothing else; it could in theory do other work (the trigger
+# to revisit this is the merge of Part 2, which judges callables).
+NOT_CONNECTIVITY: dict[str, str] = {
+    "config_dir": "a folder that is read for the config; the config is what the banner reads",
+    "agents": "the names of the agents to start; they connect nothing by themselves",
+    "clock": "returns the current time only; it holds no records and reaches no service",
+    "timeout_s": "a number of seconds",
+}
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"
 EGRESS_HOSTS = "egress-hosts"
@@ -511,13 +566,13 @@ def _config_collection(config: object, name: str, *, ordered: bool = False) -> t
     """A field of the config that is a list of texts, copied once (see `_collection`). Missing or None is a ValueError, any
     other value that is not a list-like one (an iterator or generator included) a TypeError naming the field."""
     value = _field(config, name, object)
-    try:
-        return _collection(value, name, ordered=ordered)
-    except TypeError:
-        raise TypeError(
-            f"the config's {name} is a {type(value).__name__}, not a usable value (a list, tuple, set, frozenset or dict keys "
-            "view is needed: an iterator is read once and could be used up)"
-        ) from None
+    return _collection(
+        value,
+        name,
+        ordered=ordered,
+        say=f"the config's {name} is a {type(value).__name__}, not a usable value (a list, tuple, set, frozenset or dict keys "
+        "view is needed: an iterator is read once and could be used up)",
+    )
 
 
 def _tool_hosts_leave(
@@ -624,7 +679,7 @@ def banner_from_config(
     words: BannerWords = DEFAULT_WORDS,
     *,
     tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,
-    overridden: Sequence[str] = (),
+    overridden: Sequence[str] | None,
 ) -> ModeBanner:
     """The banner of a loaded `Config`: the stage is `config.environment`, and the real services and stand-ins come
     from `config.backends.entries()`, the endpoint fields and `tool_specs` (see `_services_in`). `tool_specs` has no
@@ -632,8 +687,13 @@ def banner_from_config(
     tool name -> spec), or None when you cannot (a configured tool module then counts as one real service). A spec
     without a `hosts` list raises `TypeError`; so does an agent entry that is not a mapping. This is the one place the
     decision is made. `overridden` names the `app.build` overrides that were given (`App.overridden`); any of them
-    makes the banner say so and drop the made-up claim (see `_banner_for`). It RAISES when it cannot say: a screen
+    makes the banner say so and drop the made-up claim (see `_banner_for`). `overridden` is required: `()` means "checked, none
+    were handed in", `None` means "not known" and raises (a missing answer is never read as "none"). It RAISES when it cannot say: a screen
     should call `banner_or_unconfirmed`."""
+    if overridden is None:
+        raise ValueError(
+            "overridden is not known (None): the banner cannot say whether parts were handed to app.build"
+        )
     real, stand_ins = _services_in(config, tool_specs)
     return _banner_for(
         config.environment,
@@ -651,12 +711,13 @@ def banner_or_unconfirmed(
     words: BannerWords = DEFAULT_WORDS,
     *,
     tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,
-    overridden: Sequence[str] = (),
+    overridden: Sequence[str] | None,
 ) -> dict[str, Any]:
     """What a screen should call: the finished banner as plain data (`banner_from_config(...).as_dict()`), or, when the
     banner cannot be built for any reason (a missing config field, a name that is not plain words, a spec without
     hosts), `not_confirmed(words)`. One log line names the kind of error and nothing from the config (no value, no host,
-    no name). `tool_specs` is still required, so forgetting it is a TypeError at the call, before this function runs."""
+    no name). `tool_specs` and `overridden` are required, so forgetting either is a TypeError at the call, before this function runs;
+    `overridden=None` (not known) gives the not-confirmed banner. The supported call for an app is `App.mode_banner()`."""
     try:
         return banner_from_config(
             config, names, words, tool_specs=tool_specs, overridden=overridden
@@ -676,7 +737,7 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
     try:
         tag = words.not_confirmed_tag  # type: ignore[attr-defined]
         text = words.not_confirmed  # type: ignore[attr-defined]
-        if all(isinstance(s, str) and s.strip() and len(s) <= MAX_TEXT_LENGTH for s in (tag, text)):
+        if all(_visible(s) and len(s) <= MAX_TEXT_LENGTH for s in (tag, text)):
             return {
                 "mode": "",
                 "tone": "unconfirmed",
@@ -685,6 +746,7 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
                 "standins": "",
                 "real": [],
                 "stand_ins": [],
+                "overridden": [],
             }
     except Exception:  # noqa: BLE001, S110 - malformed words: fall through to the fixed defaults
         pass
@@ -702,4 +764,5 @@ def not_confirmed(words: BannerWords = DEFAULT_WORDS) -> dict[str, Any]:
         "standins": "",
         "real": [],
         "stand_ins": [],
+        "overridden": [],
     }

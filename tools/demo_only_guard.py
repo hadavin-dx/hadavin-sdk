@@ -62,6 +62,7 @@ skip in the copy.
 from __future__ import annotations
 
 import argparse
+import errno
 import os
 import re
 import shutil
@@ -106,7 +107,6 @@ DEFAULT_SKIP_SUFFIXES = tuple(ENDING_MARKS)
 # Endings that are never accepted in a product folder: an importable or loadable file that cannot be read (a sourceless
 # .pyc, a compiled .so) or a packed archive (.zip, .whl, .gz, .tgz, .tar, .bz2, .xz) that hides what is inside.
 REFUSED_SUFFIXES = (".pyc", ".so", ".zip", ".whl", ".gz", ".tgz", ".tar", ".bz2", ".xz")
-# The same files by their first bytes, whatever the ending (a zip renamed to .png is still a zip); see `_magic_kind`.
 MAX_FILE_BYTES = 8 * 1024 * 1024  # the default cap on one file (the settings file may change it)
 # The only environment variable names the copy run's child process receives (no token, no key, no connection string).
 DEFAULT_CHILD_ENV = (
@@ -245,6 +245,15 @@ def _git_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
 
 
+def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
+    """The message of a failed git call: what failed, then the FIRST line of git's own error (so "dubious ownership" is
+    not hidden behind a generic message). The line is made safe to print (`printable`), the repository path in it is
+    replaced by "<repo>" and it is cut at 200 characters; nothing else of git's output is shown."""
+    first = stderr.decode("utf-8", errors="replace").strip().splitlines()[:1]
+    shown = printable(first[0].replace(str(repo), "<repo>"))[:200] if first else "no message"
+    return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"
+
+
 def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
     """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
     unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
@@ -262,9 +271,7 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
         env=_git_env(),
     )
     if done.returncode != 0:
-        raise SystemExit(
-            "demo_only_guard: git ls-files failed; refusing to scan with an unknown file list"
-        )
+        raise SystemExit(_git_failure("git ls-files failed", done.stderr, repo))
     text = done.stdout.decode("utf-8", errors="surrogateescape")
     return sorted({p for p in text.split("\0") if p})
 
@@ -278,9 +285,7 @@ def _gitlinks(repo: Path) -> set[str]:
         env=_git_env(),
     )
     if done.returncode != 0:
-        raise SystemExit(
-            "demo_only_guard: git ls-files -s failed; refusing to scan with an unknown file list"
-        )
+        raise SystemExit(_git_failure("git ls-files -s failed", done.stderr, repo))
     out = set()
     for entry in done.stdout.decode("utf-8", errors="surrogateescape").split("\0"):
         info, _, path = entry.partition("\t")
@@ -301,12 +306,20 @@ def _is_pe(data: bytes) -> bool:
 
 # (kind, does the head say so): ONE table; `MAGIC_KINDS` and `_magic_kind` both come from it, and the CHANGELOG sentence
 # about first bytes is checked against it by a test. A compiled Python file has a 2-byte version number (little-endian,
-# 3000 to 3999) and "\r\n"; Mach-O is the four 32- and 64-bit magic values in both byte orders.
+# 3000 to 3999) and "\r\n"; Mach-O is the four 32- and 64-bit magic values in both byte orders; bzip2 needs a level 1 to 9 and then a block or end-of-stream mark.
 _MAGIC_CHECKS: tuple[tuple[str, Callable[[bytes], bool]], ...] = (
     ("zip", lambda d: d[:4] in (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")),
     ("ELF", lambda d: d[:4] == b"\x7fELF"),
     ("gzip", lambda d: d[:2] == b"\x1f\x8b"),
-    ("bzip2", lambda d: d[:3] == b"BZh" and d[4:10] == b"1AY&SY"),
+    (
+        "bzip2",
+        lambda d: (
+            d[:3] == b"BZh"
+            and len(d) > 3
+            and 0x31 <= d[3] <= 0x39
+            and d[4:10] in (b"1AY&SY", b"\x17rE8P\x90")
+        ),
+    ),
     ("xz", lambda d: d[:6] == b"\xfd7zXZ\x00"),
     ("tar", lambda d: len(d) > 262 and d[257:262] == b"ustar"),
     (
@@ -320,7 +333,18 @@ _MAGIC_CHECKS: tuple[tuple[str, Callable[[bytes], bool]], ...] = (
             in (b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe")
         ),
     ),
+    # the fat (universal) Mach-O and the Java class file share the first four bytes (CAFEBABE, either byte order): both are
+    # compiled code that has no place in a product folder, so they are ONE kind and one hit, with no byte-count rule
+    (
+        "fat Mach-O or Java class file",
+        lambda d: d[:4] in (b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca"),
+    ),
     ("PE", _is_pe),
+    # two marks that are valid UTF-8 text, so a file that holds only them (and NUL bytes) would be read as text and pass: a
+    # RAR archive, and a DOS or Windows program header ("MZ" followed only by NUL bytes up to byte 64; a program that is not
+    # a PE file has no PE header to check). A NUL byte alone is NOT a hit: text in UTF-16 or UTF-32 holds them and is searched.
+    ("RAR", lambda d: d[:6] == b"Rar!\x1a\x07" and d[6:7] in (b"\x00", b"\x01")),
+    ("DOS or Windows program", lambda d: d[:2] == b"MZ" and len(d) > 2 and not any(d[2:64])),
 )
 MAGIC_KINDS: tuple[str, ...] = tuple(kind for kind, _ in _MAGIC_CHECKS)
 
@@ -366,25 +390,47 @@ def _under(rel: str, roots: tuple[str, ...]) -> str | None:
     return None
 
 
-def _stat_kind(full: Path) -> str:
-    """What the entry at `full` is, decided by ONE call that does not swallow errors (`os.lstat`, which never follows a link):
-    "gone" only when the system says there is no such file (FileNotFoundError); "link", "folder" or "file" for those kinds;
-    "unreadable" for everything else (a pipe, a socket, a device, and any other OSError such as a permission error, a parent
-    that is not a folder, a loop of links). `Path.is_symlink`, `is_dir` and `is_file` answer False for some errors on some
-    Python versions, which would read an entry that cannot be inspected as gone."""
+def _stat_info(full: Path | str) -> tuple[str, int]:
+    """(kind, size) of the entry at `full`, decided by ONE call that does not swallow errors (`os.lstat`, which never follows
+    a link): kind "gone" only when the system says there is no such file (FileNotFoundError); "link", "folder" or "file"
+    for those kinds; "unreadable" for everything else (a pipe, a socket, a device, and any other OSError such as a
+    permission error, a parent that is not a folder, a loop of links). The size is of the same call (0 when not a file), so
+    a file that is deleted between two calls cannot raise here. `Path.is_symlink`, `is_dir` and `is_file` answer False for
+    some errors on some Python versions, which would read an entry that cannot be inspected as gone."""
     try:
-        mode = os.lstat(full).st_mode
+        info = os.lstat(full)
     except FileNotFoundError:
-        return "gone"
+        return "gone", 0
     except OSError:
-        return "unreadable"
+        return "unreadable", 0
+    mode = info.st_mode
     if stat.S_ISLNK(mode):
-        return "link"
+        return "link", 0
     if stat.S_ISDIR(mode):
-        return "folder"
+        return "folder", 0
     if stat.S_ISREG(mode):
-        return "file"
-    return "unreadable"
+        return "file", info.st_size
+    return "unreadable", 0
+
+
+def _stat_kind(full: Path | str) -> str:
+    """What the entry at `full` is: the kind of `_stat_info`."""
+    return _stat_info(full)[0]
+
+
+def _link_rule(full: Path, folder_target: Path) -> str:
+    """The rule a tracked link outside the product folders breaks, or "": a loop of links is a hit (it cannot be followed);
+    a link whose place, worked out by the file system (`os.path.realpath`, which never raises on a loop), is the
+    demo-only folder or inside it is a hit. No `Path.resolve()`: it raises RuntimeError on a loop on Python 3.12, and a
+    traceback is never an answer here."""
+    try:
+        os.stat(full)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            return "symlink-loop (a loop of links cannot be followed)"
+    if Path(os.path.realpath(full)).is_relative_to(folder_target):
+        return "symlink-to-demo-only-folder"
+    return ""
 
 
 def _folder_present(repo: Path, cfg: GuardConfig) -> bool:
@@ -399,8 +445,8 @@ def _shape_hits(repo: Path, cfg: GuardConfig, gitlinks: set[str]) -> list[str]:
     folder name on purpose), but their shape is."""
     hits: list[str] = []
     marker = cfg.copy_run_marker
-    kind = _stat_kind(repo / marker)
-    if kind == "file" and os.lstat(repo / marker).st_size != 0:
+    kind, size = _stat_info(repo / marker)
+    if kind == "file" and size != 0:
         hits.append(
             f"{marker}: copy-run-marker-not-empty (the marker must be an empty regular file)"
         )
@@ -409,12 +455,12 @@ def _shape_hits(repo: Path, cfg: GuardConfig, gitlinks: set[str]) -> list[str]:
     for rel in sorted(set(cfg.exempt_files)):
         if rel in gitlinks:
             continue
-        kind = _stat_kind(repo / rel)
+        kind, size = _stat_info(repo / rel)
         if kind == "link":
             hits.append(f"{rel}: symlink-exempt-file (an exempt file must be a regular file)")
         elif kind == "unreadable":
             hits.append(f"{rel}: unreadable-file (the entry cannot be inspected)")
-        elif kind == "file" and os.lstat(repo / rel).st_size > cfg.max_file_bytes:
+        elif kind == "file" and size > cfg.max_file_bytes:
             hits.append(f"{rel}: file-too-large (over {cfg.max_file_bytes} bytes; it is not read)")
         elif kind == "file":
             try:
@@ -485,7 +531,7 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
             f"{cfg.copy_run_marker}: copy-run-not-wired (the folder exists, so CI must run the copy run "
             "and the marker file must say so)"
         )
-    folder_target = (repo / cfg.folder).resolve()
+    folder_target = Path(os.path.realpath(repo / cfg.folder))
     roots = tuple(r.strip("/") for r in cfg.product_roots)
     seen_dirs: set[str] = set()
     for rel in listed:
@@ -497,7 +543,7 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
                 hits.append(f"{rel}: submodule-in-product-root (its files cannot be scanned)")
             continue
         root = _under(rel, roots)
-        kind = _stat_kind(full)
+        kind, size = _stat_info(full)
         if kind == "gone":
             continue  # listed by git but gone from the disk (the system says: no such file)
         if kind == "unreadable":
@@ -516,8 +562,8 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
             continue
         if root is None:
             # outside the product folders: only a link that points into the demo-only folder matters
-            if is_link and full.resolve().is_relative_to(folder_target):
-                hits.append(f"{rel}: symlink-to-demo-only-folder")
+            if is_link and (rule := _link_rule(full, folder_target)):
+                hits.append(f"{rel}: {rule}")
             continue
         if rel in exempt:
             continue
@@ -539,7 +585,7 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
             hits.append(f"{d}: {same}")
         if rel not in loaders and name.search(_nfkc(parts[-1])):
             hits.append(f"{rel}: path-names-demo-only-folder")
-        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, byte_names)
+        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, byte_names, size)
     hits += [
         f"tools/demo_only_guard.toml: stale-allowed-phrase ({p})"
         for p in cfg.allowed_phrases
@@ -583,21 +629,21 @@ def _scan_file(
     used: set[str],
     is_loader: bool,
     byte_names: dict[str, re.Pattern[bytes]],
+    size: int,
 ) -> list[str]:
-    """The hits of one file in a product folder. The file is read once, and never when it is over `max_file_bytes`."""
+    """The hits of one file in a product folder. `size` is from the one `lstat` of this file (`_stat_info`); the file is read
+    once, and never when it is over `max_file_bytes`."""
     suffix = path.suffix.lower()
     if suffix in REFUSED_SUFFIXES:
         return [
             f"{rel}: binary-in-product-root (a {suffix} file cannot be read or hides what it packs)"
         ]
     try:
-        size = path.stat().st_size
         if size > cfg.max_file_bytes:
             return [f"{rel}: file-too-large (over {cfg.max_file_bytes} bytes; it is not read)"]
+        # the read is bounded, and a file that is gone or swapped since the lstat is an unreadable-file hit, not an exception
         with path.open("rb") as handle:
-            data = handle.read(
-                cfg.max_file_bytes + 1
-            )  # a file that grew since the size check is still bounded
+            data = handle.read(cfg.max_file_bytes + 1)
     except OSError:
         return [f"{rel}: unreadable-file (it cannot be read)"]
     if len(data) > cfg.max_file_bytes:
@@ -642,34 +688,95 @@ def _scan_file(
     return hits
 
 
-def _link_stays_in_copy(source: Path, rel: str, root: Path, folder: str) -> bool:
-    """True when the tracked symlink at `rel` points to a place inside the copy that is not the demo-only folder, written as
-    a relative path. An absolute target is refused (it would point at the original checkout, so the copy run would prove
-    nothing for that path), and so is any target that leaves the copy or lands in the folder. The target is worked out
-    by text (`os.path.normpath`), not followed: a swapped or looping path cannot lead the check elsewhere."""
-    target = os.readlink(source)
+def _dotdot_after_link(dest: Path, rel: str, target: str) -> bool:
+    """True when the link target walks "..", after a component that is itself a link of the copy: text cannot say where
+    that leads (`dir/k -> ..` then `dir/l -> k/../../outside`), so it is refused."""
+    cur = dest / rel
+    cur = cur.parent
+    seen_link = False
+    for part in target.split("/"):
+        if part in ("", "."):
+            continue
+        if part == "..":
+            if seen_link:
+                return True
+            cur = cur.parent
+            continue
+        cur = cur / part
+        if os.path.islink(cur):
+            seen_link = True
+    return False
+
+
+def _link_problem(dest: Path, rel: str, root: Path, folder: str) -> str:
+    """Why the copied link at `rel` is not allowed ("" when it is): checked AFTER every file is copied, against the copy with
+    its links in place, never by text alone. Refused: an absolute target (it would point at the original checkout), a
+    ".." after another link component, a loop of links, and a target that the file system (`os.path.realpath` of the copy)
+    places outside the copy or inside the demo-only folder."""
+    link = dest / rel
+    target = os.readlink(link)
     if os.path.isabs(target):
-        return False
-    placed = Path(os.path.normpath(root / rel / ".." / target))
-    return placed.is_relative_to(root) and not placed.is_relative_to(root / folder)
-
-
-def _copy_regular(source: Path, target: Path) -> None:
-    """Copy one regular file without ever following a link: the file is opened with O_NOFOLLOW (and without blocking) and
-    checked to be a regular file on the open handle, so a path swapped for a link or a pipe after the earlier check is
-    refused, never copied through."""
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        return "is absolute"
+    if _dotdot_after_link(dest, rel, target):
+        return "walks '..' after another link"
     try:
-        fd = os.open(source, flags)
+        os.stat(link)
+    except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            return "is part of a loop of links"
+    placed = Path(os.path.realpath(link))
+    if not placed.is_relative_to(root):
+        return "leads out of the copy"
+    if placed.is_relative_to(root / folder):
+        return "leads into the folder"
+    return ""
+
+
+_CAN_WALK = (
+    hasattr(os, "O_NOFOLLOW") and hasattr(os, "O_DIRECTORY") and os.open in os.supports_dir_fd
+)  # a platform without these (Windows) cannot open a file component by component: `_copy_regular` then refuses any link
+
+
+def _copy_regular(repo: Path, rel: str, target: Path) -> None:
+    """Copy the regular file `rel` of `repo` without ever following a link. Where `os.open` takes `dir_fd` and the system has
+    O_NOFOLLOW and O_DIRECTORY (Linux, macOS), the path is walked one component at a time from the repository folder, every
+    parent opened with O_DIRECTORY|O_NOFOLLOW and the file with O_NOFOLLOW (and without blocking), then checked to be a
+    regular file on the open handle: a parent folder or the file swapped for a link or a pipe after an earlier check is
+    refused, never copied through. Where it does not (Windows), a link on any component of the path is refused (checked
+    with `os.lstat` just before the open: there a swap in that gap is not caught, which is why Linux CI is the check)."""
+    parts = rel.split("/")
+    opened: list[int] = []
+    try:
+        if _CAN_WALK:
+            fd = os.open(repo, os.O_RDONLY | os.O_DIRECTORY)
+            opened.append(fd)
+            for part in parts[:-1]:
+                fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+                opened.append(fd)
+            fd = os.open(
+                parts[-1],
+                os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0),
+                dir_fd=fd,
+            )
+        else:
+            walked = repo
+            for part in parts:
+                walked = walked / part
+                if _stat_kind(walked) == "link":
+                    raise OSError("a link on the path")
+            fd = os.open(repo / rel, os.O_RDONLY | getattr(os, "O_BINARY", 0))
     except OSError as exc:
         raise SystemExit(
-            f"demo_only_guard: {source.name} could not be opened as a plain file; refusing"
+            f"demo_only_guard: {parts[-1]} could not be opened as a plain file; refusing"
         ) from exc
+    finally:
+        for o in opened:
+            os.close(o)
     with os.fdopen(fd, "rb") as src:
         info = os.fstat(src.fileno())
         if not stat.S_ISREG(info.st_mode):
             raise SystemExit(
-                f"demo_only_guard: {source.name} is not a regular file any more; refusing"
+                f"demo_only_guard: {parts[-1]} is not a regular file any more; refusing"
             )
         with target.open("wb") as out:
             shutil.copyfileobj(src, out)
@@ -682,11 +789,13 @@ def copy_without_folder(repo: Path, cfg: GuardConfig, dest: Path) -> None:
     second rule of names): no version history, no cache, no virtual environment, no file git does not track, and without
     the demo-only folder and the copy-run marker. Copied file by file, so a tracked folder is copied whatever its name, and
     an untracked key file, an ignored build folder or a `.pgpass` in the working folder never reaches the copy. A tracked
-    symlink is copied only when it is a relative one that stays inside the copy and avoids the folder; any other
-    (absolute, leading out of the copy, into the folder) stops the run, as the scan refuses links in a product folder."""
+    symlink is copied as a link, and after ALL files are copied each link is checked against the copy with its links in
+    place (`_link_problem`): an absolute one, one that leads out of the copy or into the folder, one with ".." after another
+    link, or a loop stops the run, as the scan refuses links in a product folder."""
     folder = cfg.folder.strip("/")
     marker = cfg.copy_run_marker
-    root = dest.resolve()
+    root = Path(os.path.realpath(dest))
+    links: list[str] = []
     for rel in tracked_paths(repo, include_new=False):
         if rel == marker or rel == folder or rel.startswith(folder + "/"):
             continue
@@ -695,7 +804,7 @@ def copy_without_folder(repo: Path, cfg: GuardConfig, dest: Path) -> None:
         if kind in ("gone", "folder"):
             continue  # deleted since the last commit; a submodule folder is not copied (the scan reports it)
         target = dest / rel
-        if not target.resolve().parent.is_relative_to(root):
+        if not Path(os.path.realpath(target.parent)).is_relative_to(root):
             raise SystemExit(
                 "demo_only_guard: a tracked path leads out of the copy; refusing to copy"
             )
@@ -705,14 +814,15 @@ def copy_without_folder(repo: Path, cfg: GuardConfig, dest: Path) -> None:
             )
         target.parent.mkdir(parents=True, exist_ok=True)
         if kind == "link":
-            if not _link_stays_in_copy(source, rel, root, folder):
-                raise SystemExit(
-                    f"demo_only_guard: the symlink {printable(rel)} is absolute or leads out of the copy or into the "
-                    "folder; the copy run would prove nothing for it, refusing"
-                )
             os.symlink(os.readlink(source), target)
+            links.append(rel)
         else:
-            _copy_regular(source, target)
+            _copy_regular(repo, rel, target)
+    for rel in links:
+        if problem := _link_problem(dest, rel, root, folder):
+            raise SystemExit(
+                f"demo_only_guard: the symlink {printable(rel)} {problem}; the copy run would prove nothing for it, refusing"
+            )
 
 
 _IMPORT_CHECK = (
@@ -800,7 +910,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(
             "pytest arguments are accepted only with --without-folder or --without-folder-if-present"
         )
-    repo = Path(a.root).resolve()
+    repo = Path(os.path.realpath(a.root))
     cfg = load_config(Path(a.config))
     if a.without_folder_if_present and not _folder_present(repo, cfg):
         return 0

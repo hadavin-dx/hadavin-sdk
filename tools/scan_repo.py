@@ -68,12 +68,17 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
     return out, problems
 
 
+def tracked_paths(repo: Path) -> set[str]:
+    """The files git tracks (`git ls-files -z`: exact names, no quoting of unusual ones; ignore files do not matter)."""
+    cmd = ["git", "-C", str(repo), "ls-files", "-z"]
+    listing = subprocess.run(cmd, capture_output=True, check=True).stdout  # noqa: S603
+    return {rel for rel in listing.decode("utf-8").split("\0") if rel}
+
+
 def scan(repo: Path, allowlist: Path, extra: Path, banned_src: Path) -> list[str]:
     banned = _banned(banned_src, extra)
     allowed, hits = _allowed(allowlist)
-    cmd = ["git", "-C", str(repo), "ls-files", "-z"]
-    listing = subprocess.run(cmd, capture_output=True, check=True).stdout  # noqa: S603
-    tracked = {rel for rel in listing.decode("utf-8").split("\0") if rel}
+    tracked = tracked_paths(repo)
     hits += [
         f"{allowlist.name}: stale entry, {rel} is not tracked"
         for rel in sorted(set(allowed) - tracked)

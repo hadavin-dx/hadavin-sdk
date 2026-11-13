@@ -11,11 +11,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_ci_runs_the_scan_in_the_main_check_job_with_read_only_permissions() -> None:
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    assert "run: python tools/demo_only_guard.py" in ci
     head = ci.split("\njobs:\n", 1)[0]
     assert re.search(r"^permissions:\n  contents: read\n", head, re.MULTILINE)  # no new rights
     check_job = ci.split("\n  check:\n", 1)[1].split("\n  tests-py312:\n", 1)[0]
-    assert "run: python tools/demo_only_guard.py" in check_job
+    # one step of the check job whose own `run:` line starts the guard (not a word in a comment or in another job)
+    assert re.search(r"(?m)^\s+run: python tools/demo_only_guard\.py(\s|$)", check_job)
+    assert not re.search(
+        r"(?m)^\s+run: python tools/demo_only_guard\.py", ci.replace(check_job, "")
+    )
 
 
 def _steps(ci: str) -> list[str]:
@@ -40,13 +43,7 @@ def test_ci_runs_the_copy_run_the_banner_mutants_and_checks_node_is_there() -> N
     assert copy_run in runs  # the copy run takes the same test selection as the main tests step
     assert "python tests/banner_mutants.py" in runs
     assert "node --version" in runs
-    # the node check comes before the tests that need node (checked on the parsed workflow below)
-    assert runs.index("node --version") < runs.index('pytest -q -m "not live and not perf" -rs')
-    assert 'HADAVIN_REQUIRE_NODE: "1"' in _step_block(
-        check_job, 'pytest -q -m "not live and not perf" -rs'
-    )
-    # the copy run's own step sets it as well, or its banner tests would skip without node
-    assert 'HADAVIN_REQUIRE_NODE: "1"' in _step_block(check_job, copy_run)
+    # the order of the node check and the node env of both steps are pinned on the parsed workflow below
 
 
 def test_ci_requires_node_in_the_python_312_test_job_too() -> None:
@@ -136,7 +133,7 @@ def test_the_changelog_names_exactly_the_first_byte_kinds_the_guard_lists_and_st
     assert found, (
         "the CHANGELOG has no sentence 'first bytes are those of: ... (whatever its ending)'"
     )
-    named = re.split(r", | or ", found.group(1))
+    named = found.group(1).split(", ")
     assert sorted(named) == sorted(guard.MAGIC_KINDS), (
         f"the CHANGELOG names {sorted(named)} but the guard lists {sorted(guard.MAGIC_KINDS)}"
     )
@@ -148,3 +145,26 @@ def test_the_changelog_names_exactly_the_first_byte_kinds_the_guard_lists_and_st
         "the tone `unconfirmed`",
     ):
         assert phrase in log, f"the CHANGELOG no longer says: {phrase}"
+
+
+def test_the_changelog_list_of_endings_that_may_skip_the_text_read_is_the_marks_table() -> None:
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(
+        "_guard_endings", ROOT / "tools" / "demo_only_guard.py"
+    )
+    assert spec is not None and spec.loader is not None
+    guard = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = guard
+    try:
+        spec.loader.exec_module(guard)
+    finally:
+        sys.modules.pop(spec.name, None)
+    log = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    entry = log.split("**Demo-only folder guard (promoted from a public demo).**", 1)[1].split(
+        "\n- **", 1
+    )[0]
+    sentence = entry.split("may allow only the endings", 1)[1].split("to skip the text read", 1)[0]
+    listed = set(re.findall(r"`(\.[a-z0-9]+)`", sentence))
+    assert listed == set(guard.ENDING_MARKS), sorted(listed ^ set(guard.ENDING_MARKS))

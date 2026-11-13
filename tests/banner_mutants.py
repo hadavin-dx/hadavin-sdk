@@ -67,7 +67,7 @@ M = [
     ),
     mb(
         "B2 a bare string is read letter by letter",
-        '    raise TypeError(\n        f"{what} must be a list, tuple, set, frozenset or dict keys view, not {type(value).__name__}"\n    )',
+        '    raise TypeError(\n        say\n        or f"{what} must be a list, tuple, set, frozenset or dict keys view, not {type(value).__name__}"\n    )',
         "    return tuple(value)",
         "test_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident",
         "str 'crm' as real_services was not refused",
@@ -281,8 +281,8 @@ M = [
     ),
     js(
         "J1b an unconfirmed banner is painted as given even when its words are not the not-confirmed words",
-        "if (tone === 'unconfirmed' && (tag !== NOT_CONFIRMED.tag ||",
-        "if (false && (tag !== NOT_CONFIRMED.tag ||",
+        "if (tag !== NOT_CONFIRMED.tag || text !== NOT_CONFIRMED.text || real.length !== 0 || standins !== '') return NOT_CONFIRMED;",
+        "if (false) return NOT_CONFIRMED;",
         "test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed",
         "changes {'tone': 'unconfirmed'}",
     ),
@@ -534,7 +534,7 @@ M = [
     ),
     gd(
         "G13b a link outside the product folders into the folder is not a hit",
-        "if is_link and full.resolve().is_relative_to(folder_target):",
+        "if is_link and (rule := _link_rule(full, folder_target)):",
         "if False:",
         "test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit",
         "a_link_outside_the_product_folders_that_points_into_the_fold: check 1",
@@ -760,8 +760,8 @@ M = [
     # -- round 4: tool hosts, the page fallback, guard rules, URL parity, name parity --------------------------------------
     mb(
         "B30 tool_specs gets a default",
-        "    tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,\n    overridden: Sequence[str] = (),\n) -> ModeBanner:",
-        "    tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None = {},\n    overridden: Sequence[str] = (),\n) -> ModeBanner:",
+        "    tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,\n    overridden: Sequence[str] | None,\n) -> ModeBanner:",
+        "    tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None = {},\n    overridden: Sequence[str] | None,\n) -> ModeBanner:",
         "test_tool_specs_has_no_default_so_forgetting_it_is_an_error",
         "banner_from_config called without tool_specs was not refused",
     ),
@@ -1111,8 +1111,8 @@ M = [
     ),
     gd(
         "G41 a pipe that git lists is skipped",
-        '    if stat.S_ISREG(mode):\n        return "file"\n    return "unreadable"',
-        '    if stat.S_ISREG(mode):\n        return "file"\n    return "gone"',
+        '    if stat.S_ISREG(mode):\n        return "file", info.st_size\n    return "unreadable", 0',
+        '    if stat.S_ISREG(mode):\n        return "file", info.st_size\n    return "gone", 0',
         "test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip",
         "a pipe that git lists was not a hit",
     ),
@@ -1146,7 +1146,7 @@ M = [
     ),
     gd(
         "G46 a bzip2 file is not recognised",
-        '    ("bzip2", lambda d: d[:3] == b"BZh" and d[4:10] == b"1AY&SY"),\n',
+        '    (\n        "bzip2",\n        lambda d: (\n            d[:3] == b"BZh"\n            and len(d) > 3\n            and 0x31 <= d[3] <= 0x39\n            and d[4:10] in (b"1AY&SY", b"\\x17rE8P\\x90")\n        ),\n    ),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
         "('bzip2', '425a6839', '.png')",
@@ -1321,8 +1321,8 @@ M = [
     ),
     gd(
         "G71 the byte patterns are built again for each file",
-        "        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, byte_names)",
-        "        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, _byte_patterns(cfg.folder))",
+        "        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, byte_names, size)",
+        "        hits += _scan_file(full, rel, cfg, name, phrases, used, rel in loaders, _byte_patterns(cfg.folder), size)",
         "test_the_byte_patterns_are_built_once_for_a_whole_scan",
         "the_byte_patterns_are_built_once_for_a_whole_scan: check 2",
     ),
@@ -1371,7 +1371,7 @@ M = [
     ),
     mb(
         "B84 the not-confirmed words are not checked for length and emptiness",
-        "all(isinstance(s, str) and s.strip() and len(s) <= MAX_TEXT_LENGTH for s in (tag, text))",
+        "all(_visible(s) and len(s) <= MAX_TEXT_LENGTH for s in (tag, text))",
         "all(isinstance(s, str) for s in (tag, text))",
         "test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed",
         "did not give the default not-confirmed banner",
@@ -1384,16 +1384,23 @@ M = [
         "one empty spec of a module was hidden by another",
     ),
     js(
-        "J23 the page accepts a tag or text that is not plain text",
+        "J23a the page does not check the tag is plain text",
         "      if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;\n",
-        "",
-        "test_a_tag_or_text_that_is_not_plain_text_is_not_painted_as_given",
-        "tag = ",
+        "      if (!isText(text)) return NOT_CONFIRMED;\n",
+        "test_a_tag_that_is_not_plain_text_is_not_painted_as_given",
+        "tag check: tag = ",
+    ),
+    js(
+        "J23b the page does not check the text is plain text",
+        "      if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;\n",
+        "      if (!isText(tag)) return NOT_CONFIRMED;\n",
+        "test_a_text_that_is_not_plain_text_is_not_painted_as_given",
+        "text check: text = ",
     ),
     gd(
         "G80 an entry the system refuses to inspect is read as gone",
-        '    except OSError:\n        return "unreadable"\n    if stat.S_ISLNK',
-        '    except OSError:\n        return "gone"\n    if stat.S_ISLNK',
+        '    except OSError:\n        return "unreadable", 0\n    mode = info.st_mode',
+        '    except OSError:\n        return "gone", 0\n    mode = info.st_mode',
         "test_an_entry_is_gone_only_when_the_system_says_no_such_file",
         "an lstat that fails with PermissionError gave hits",
     ),
@@ -1413,7 +1420,7 @@ M = [
     ),
     gd(
         "G83 the marker may hold content",
-        '    if kind == "file" and os.lstat(repo / marker).st_size != 0:',
+        '    if kind == "file" and size != 0:',
         "    if False:",
         "test_the_marker_must_be_an_empty_regular_file",
         "a marker with content was not a hit",
@@ -1434,7 +1441,7 @@ M = [
     ),
     gd(
         "G86 an exempt file has no size cap",
-        '        elif kind == "file" and os.lstat(repo / rel).st_size > cfg.max_file_bytes:',
+        '        elif kind == "file" and size > cfg.max_file_bytes:',
         "        elif False:",
         "test_an_exempt_file_must_not_be_a_link_and_the_size_cap_still_applies",
         "cfg/x.toml: file-too-large",
@@ -1491,8 +1498,8 @@ M = [
     ),
     mb(
         "N4 a list of service names is read without the collection check",
-        "        entries = _collection(keys, kind, ordered=True)",
-        "        entries = tuple(keys)",
+        '    entries = _collection(\n        keys,\n        kind,\n        ordered=True,\n        say=f"{kind} must be a list of service names, not {type(keys).__name__}",\n    )',
+        "    entries = tuple(keys)",
         "test_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused",
         "real_services as a generator was read",
     ),
@@ -1505,19 +1512,17 @@ M = [
     ),
     mb(
         "N6 a demo or quiet banner with an override stays demo or quiet",
-        '        if banner.tone == "real":\n            banner = ModeBanner(\n                mode, "real", tag, banner.text + " " + note',
-        '        if True:\n            banner = ModeBanner(\n                mode, "real", tag, banner.text + " " + note',
+        '        if banner.tone == "real":\n            note = words.overridden_note',
+        "        if True:\n            note = words.overridden_note",
         "test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim",
         "a banner with a real service, or a pilot or live one, claims made-up data",
-        crash="ValueError",
     ),
     mb(
         "N7 the detector override is not a known override",
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets")',
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "secrets")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "secrets", "hold_run_ids")',
         "test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so",
         "build override not known to the mode banner: detector",
-        crash="ValueError",
     ),
     mutant(
         "N8 an empty mapping counts as an override",
@@ -1530,20 +1535,20 @@ M = [
     ),
     mb(
         "N9 a banner with a blank tag or text may leave",
-        "        or (banner.standins and not banner.standins.strip())",
+        "        or (banner.standins and not _visible(banner.standins))",
         "        or False",
         "test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too",
         "a blank second line in Python was not refused",
     ),
     mb(
         "N10 the not-confirmed words may be blank",
-        "isinstance(s, str) and s.strip() and len(s) <= MAX_TEXT_LENGTH",
+        "_visible(s) and len(s) <= MAX_TEXT_LENGTH",
         "isinstance(s, str) and len(s) <= MAX_TEXT_LENGTH",
         "test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too",
         "a not-confirmed tag of only white space was used",
     ),
     gd(
-        "G91 only one byte order of Mach-O is recognised",
+        "G91 only the feedface magic is recognised, the other three Mach-O magic values are not",
         'd[:4]\n            in (b"\\xfe\\xed\\xfa\\xce", b"\\xfe\\xed\\xfa\\xcf", b"\\xce\\xfa\\xed\\xfe", b"\\xcf\\xfa\\xed\\xfe")',
         'd[:4] in (b"\\xfe\\xed\\xfa\\xce",)',
         "test_all_four_mach_o_magic_values_are_hits",
@@ -1571,7 +1576,7 @@ M = [
         "a ttf that starts with 'true' was refused",
     ),
     gd(
-        "G95 an otf file has no mark",
+        "G95 a second accepted mark is added for .otf",
         '    ".otf": (b"OTTO",),',
         '    ".otf": (b"OTTO", b"NOTM"),',
         "test_webp_ttf_and_otf_with_wrong_first_bytes_are_hits_and_with_the_right_ones_pass",
@@ -1593,15 +1598,15 @@ M = [
     ),
     gd(
         "G98 a symlink that leaves the copy is copied",
-        "            if not _link_stays_in_copy(source, rel, root, folder):",
-        "            if False:",
+        "        if problem := _link_problem(dest, rel, root, folder):",
+        "        if False:",
         "test_the_copy_run_refuses_a_tracked_symlink_that_is_absolute_or_leaves_the_copy_or_enters_the_folder",
         "a tracked symlink that is absolute was copied",
     ),
     gd(
         "G99 the copy follows a link swapped in after the check",
-        'flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)',
-        'flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)',
+        '                os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_NONBLOCK", 0),',
+        '                os.O_RDONLY | getattr(os, "O_NONBLOCK", 0),',
         "test_a_path_swapped_for_a_link_after_the_check_is_refused_not_copied_through",
         "a path swapped for a link was copied through",
     ),
@@ -1635,7 +1640,7 @@ M = [
     ),
     js(
         "J25 the page paints a tag or text of only white space",
-        "v.trim().length > 0 && ",
+        "!BLANK.test(v) && ",
         "",
         "test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too",
         "the page painted a blank tag",
@@ -1649,25 +1654,170 @@ M = [
     ),
     js(
         "J27 the page paints an unconfirmed banner whose text is not the own words",
-        "text.indexOf(NOT_CONFIRMED.text) !== 0 ||",
+        "text !== NOT_CONFIRMED.text ||",
         "false ||",
         "test_the_page_paints_an_unconfirmed_banner_only_when_it_is_the_own_not_confirmed_words_plus_a_note",
         "painted odd unconfirmed",
     ),
+    # -- batch 8 (r7 fixes): unknown differs from none, the build list, the page and the guard -----------------------------
+    mutant(
+        "R7A1 an App made by hand records no overrides, as if build had been given none",
+        "src/hadavin_sdk/app.py",
+        "    overridden: tuple[str, ...] | None = None",
+        "    overridden: tuple[str, ...] | None = ()",
+        T_MB,
+        "test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one",
+        "a hand-made App recorded",
+    ),
+    mutant(
+        "R7A2 the fingerprint of the connected parts is not compared",
+        "src/hadavin_sdk/app.py",
+        "known = self.overridden if self._sealed == self._connected_parts() else None",
+        "known = self.overridden",
+        T_MB,
+        "test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner",
+        "the banner was",
+    ),
+    mb(
+        "R7A3 overridden has a default again in banner_from_config",
+        "    overridden: Sequence[str] | None,\n) -> ModeBanner:",
+        "    overridden: Sequence[str] | None = (),\n) -> ModeBanner:",
+        "test_overridden_is_a_required_keyword_and_none_means_not_known",
+        "banner_from_config without overridden was accepted",
+    ),
+    mb(
+        "R7A4 overridden=None is read as none",
+        "overridden is not known (None)",
+        "overridden is known (None)",
+        "test_overridden_is_a_required_keyword_and_none_means_not_known",
+        "overridden=None did not say it is not known",
+    ),
+    mb(
+        "R7B1 hold_run_ids is not an override",
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets")',
+        "test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason",
+        "parameters of build on neither list or on both: ['hold_run_ids']",
+    ),
+    mb(
+        "R7B2 a build parameter is dropped from the not-connectivity list",
+        '    "clock": "returns the current time only; it holds no records and reaches no service",\n',
+        "",
+        "test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason",
+        "parameters of build on neither list or on both: ['clock']",
+    ),
+    js(
+        "R7D1 the page paints an unconfirmed text that only starts with the own words",
+        "text !== NOT_CONFIRMED.text ||",
+        "text.indexOf(NOT_CONFIRMED.text) !== 0 ||",
+        "test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page",
+        "painted a forged text",
+    ),
+    js(
+        "R7D2 the page blank set lacks one code point (U+FEFF)",
+        "\\u3000\\ufeff]",
+        "\\u3000]",
+        "test_a_tag_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted",
+        "painted tag '\\ufeff'",
+    ),
+    js(
+        "R7D3 the page counts code points before it checks the length",
+        "v.length <= 2 * MAX_TEXT && ",
+        "",
+        "test_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once",
+        "took",
+    ),
+    gd(
+        "R7E1 the fat Mach-O and Java class mark is recognised in one byte order only",
+        'd[:4] in (b"\\xca\\xfe\\xba\\xbe", b"\\xbe\\xba\\xfe\\xca")',
+        'd[:4] in (b"\\xca\\xfe\\xba\\xbe",)',
+        "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
+        "first bytes of fat Mach-O or Java class file (bebafeca)",
+    ),
+    gd(
+        "R7E2 bzip2 is recognised without a level",
+        "            and 0x31 <= d[3] <= 0x39\n",
+        "",
+        "test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark",
+        "bzip2 check: b'BZh0",
+    ),
+    gd(
+        "R7E3 bzip2 is recognised without a block or end-of-stream mark",
+        '            and d[4:10] in (b"1AY&SY", b"\\x17rE8P\\x90")\n',
+        "",
+        "test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark",
+        "bzip2 check: b'BZh9XXXXXX",
+    ),
+    gd(
+        "R7E4 a file of only the MZ mark and NUL bytes is not a program kind",
+        'd[:2] == b"MZ" and len(d) > 2 and not any(d[2:64])',
+        "False",
+        "test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not",
+        "mz: a file of only the mark and NUL bytes was not refused",
+    ),
+    gd(
+        "R7E5 a file of only the RAR mark and NUL bytes is not a RAR kind",
+        'd[:6] == b"Rar!\\x1a\\x07" and d[6:7] in (b"\\x00", b"\\x01")',
+        "False",
+        "test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not",
+        "rar: a file of only the mark and NUL bytes was not refused",
+    ),
+    gd(
+        "R7E6 a parent folder is opened by following links",
+        "os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd",
+        "os.O_RDONLY | os.O_DIRECTORY, dir_fd=fd",
+        "test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_refused",
+        "a swapped parent folder was copied through",
+    ),
+    gd(
+        "R7E7 a loop of links in the scan is not a hit",
+        '        if exc.errno == errno.ELOOP:\n            return "symlink-loop (a loop of links cannot be followed)"',
+        '        if False:\n            return "symlink-loop (a loop of links cannot be followed)"',
+        "test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises",
+        "no symlink-loop hit for a tracked loop",
+    ),
+    gd(
+        "R7E8 a loop of links in the copy is not refused",
+        '        if exc.errno == errno.ELOOP:\n            return "is part of a loop of links"',
+        '        if False:\n            return "is part of a loop of links"',
+        "test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_copied",
+        "a loop of links was copied",
+    ),
+    gd(
+        "R7E9 the first line of git's own message is not shown",
+        'return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"',
+        'return f"demo_only_guard: {what}; refusing to scan with an unknown file list."',
+        "test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked",
+        "git's own first line is missing",
+    ),
+    gd(
+        "R7E10 the repository path is not masked in git's message",
+        'first[0].replace(str(repo), "<repo>")',
+        "first[0]",
+        "test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked",
+        "the repository path was not masked",
+    ),
 ]
 
 
-# Rows that share one killer AND one expectation on purpose: the killer holds ONE assertion that each of the rows breaks.
-# The label of the FIRST row of a group is the key; the reason says why the assertion cannot tell the rows apart. A new
-# pair needs its own entry here or its own message in the killer (`shared_assert_problems`).
+# Rows that share one killer AND one expectation on purpose: the killer holds ONE assertion (or a first assertion that fails
+# before any later one runs) that each of the rows breaks. The key is the space-joined labels of the rows in table order,
+# as `shape_problems` (tests/test_banner_mutant_table.py) builds it from the rows; the reason says, from the killer's own
+# text, why its assertion cannot tell the rows apart. A new pair needs its own entry here or its own message in the killer.
 SAME_ASSERT = {
-    "B3f B8 B9": "the killer compares the whole list of shown names once; the three mutations each change that list",
-    "G9b G14c": "the killer has one check on the skipped files; both mutations change the same list of hits",
-    "G13 G23": "the killer has one check that every symlink is a hit; both mutations let a symlink through",
-    "J10 J19": "the killer has one check on what a page can change of the exports; both mutations make one of them changeable",
-    "B31 B35": "the killer has one check that a tool host leaving this machine is real; both mutations drop it",
-    "G38 G72": "the killer has one check that an exempt submodule is not a second hit; both mutations make it one",
+    "B3f B8 B9": "the killer makes ONE call and compares the shown names (a tuple) once with ('Beta', 'Alpha'); a repeat shown twice, a sorted order and the key instead of the given name each change that tuple",
+    "G9b G14c": "the killer has ONE assertion that the scan of a repo holding an ignored file and two png files (one named LOGO.PNG) gives no hit; G9b makes the ignored file a hit and G14c makes LOGO.PNG one",
+    "G13 G23": "the killer has two checks (the sorted hit list of five links, then an exit code per link) and both rows fail the first one, so the second never runs: G13 drops every link hit, G23 drops the link named like a cache folder",
+    "J10 J19": "the killer has ONE assertion that six frozen flags are all True; J10 unfreezes the fallback and J19 the exports, each turns one flag False",
+    "B31 B35": "the killer's first assertion is that the real services of a demo config with a tool host leaving this machine are exactly the tool-hosts entry; B31 drops the entry and B35 ignores the tool specs, so both give no entry",
+    "G38 G72": "the killer's first check is that a clean exempt submodule gives no hit; G38 reports it as a submodule and G72 reports it as stale, so both fail that first check",
 }
+
+# The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an assertion of the killer),
+# so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row
+# that crashes on purpose must be listed, and the table test refuses a row outside this set whose `expect` reads like an
+# interpreter message. The set is derived in the test from the rows that declare `crash=`; both must be this set.
+CRASH_ROWS = frozenset({"B5", "B7", "B13", "B34", "B43", "B44", "B52", "B53", "B54", "B62"})
 
 
 def non_unique_rows(root=ROOT, rows=None):

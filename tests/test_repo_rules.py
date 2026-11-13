@@ -20,13 +20,13 @@ LICENCE_TEXT = (
 
 def tracked_files(root: Path) -> list[str]:
     out = subprocess.run(
-        ["git", "ls-files"],  # noqa: S607 - git from PATH, fixed argv
+        ["git", "ls-files", "-z"],  # noqa: S607 - git from PATH, fixed argv; -z: exact names, no quoting
         cwd=root,
         capture_output=True,
         text=True,
         check=True,
     )
-    return out.stdout.splitlines()
+    return [p for p in out.stdout.split("\0") if p]
 
 
 def licence_problems(root: Path, files: list[str]) -> list[str]:
