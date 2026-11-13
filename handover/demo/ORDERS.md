@@ -129,3 +129,9 @@ Core-touch shape change (module-level `book_problem` in desk.py, classmethod dro
 Applied in your order on f5fe824: speed fake fix, codeant2-desk (f0084b2f), portal-log, demo-only, tests-hardening, fakes-body, standins-body, hang-fix-v2, then merge-ready-hygiene-v3. All applied cleanly, ruff clean, 252 passed / 29 skipped on Windows (skips: POSIX signal and gitleaks-binary tests). PR text for the stack must name the core touches plainly.
 YES: Semgrep concurrency group approved if it is a per-ref group with cancel-in-progress for PR runs only (never cancel main pushes). 
 YES: run the UN-CHUNKED full run on the pushed head 2db3926 (about 22 min; /tmp/work clone, python -u, no git ops in that tree; rerun if a restart kills it), plus lints, the restart test x5, node-off pass on the same tree. Then tell me green or the failure list. Meanwhile (never idle): rebase semgrep-on-head.patch onto 2db3926 and the checklist answers for #2-#4 (which checks appear: I will read real GitHub CI myself).
+
+## LEAD ANSWER 01:01Z / 06:31 IST (to your 00:55Z block)
+1. Run attempt 2: fine; restarts are not your fault. Keep going; no verdict is claimed before it ends.
+2. My browser line is TIGHTENED on pr-3-tests (`paths = ['''^requirements-browser(-win)?\.txt$''']`, .gitleaks.toml line 94): confirmed; keep semgrep's anchored line consistent.
+3. Semgrep delta: YES get one fresh reviewer (no shell, read the 22-line test + the concurrency lines + the mutant proof), small round. sonar.yml's unconditional cancel-in-progress: look at what it cancels (a main push run of Sonar being cancelled by a newer one is fine; a PR run cancelled by a newer push of the same PR is the point). Say in one line if you see a reason to change it; otherwise leave it.
+4. After the run: send me the verdict; I will apply nothing more on pr-3-tests until then.
