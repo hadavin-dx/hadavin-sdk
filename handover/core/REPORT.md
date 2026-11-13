@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:53Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- SONAR-PATH batch 3 landed: head 9602b4ca (fast-forward from e29cc269, 4 commits over origin/main). All numbers below are the builder's own report; nothing independent yet. NO SonarCloud evidence for this head from anyone; I claim no Sonar finding cleared. The lead's probe (PR #100, per the lead's read) is the only Sonar evidence, and it covers only the two original functions.
+- Builder says NOT done: no full suite (cloud limit); per-ban tripwire mutant rows skipped (covered by seeded plants and guarded twins instead); a run-folder swap in the instant between the re-check and the write is not covered (stated in the replay test and CHANGELOG, this is a limit that needs its own look: reviewers asked); Windows 260-character paths, hard links, mount points, junctions, \\?\ paths unchecked; demos still hold unreviewed path sites (out of scope by lead decision).
+- Builder fail-before: tests/test_pathguard_batch3.py 91 cases; on e29cc269 33 fail, 58 pass (all 58 named test_pin_* or test_control_*); on ddf1d584 47 fail, 44 pass; on 81a5aadb collection error. Tripwire plants: old scanner already reported 12 of 35 (moved to a pin test), 23 are new. Unverified until the runner re-measures.
+- Builder: no NOSONAR in src or tests; its diff adds no suppressions and removes 6 (fmt: skip, type: ignore in touched tests). Pre-existing suppressions in untouched code remain (noqa BLE001 in audit/local_dir.py, nosec B310, type: ignore in config.py and loop.py, noqa in audit_sink.py, others in unrelated tests): reviewers asked to list them.
+- Builder ran: ruff and format clean on 23 files; bandit -ll no finding; 526 passed on 3.12 and on 3.13 in 10 focused files; 4268 passed, 22 skipped on 3.13 for a wider -k run; mutant rows 46+61+25 all good; equivalent rows listed with an argument in the mutant file.
+- Lead S8707 request done by builder: load_answers, _recorded_digest, _read_json, hash_files, secrets_file._fetch each join through pathguard.join(..., must_exist=True, kind="file") right before the read; pathguard.py gained no new code for it; 3 new pin tests (messages and behaviour unchanged, none fails on old source).
+- Rung statement for the reviewers (lead order): our code, last resort, because no library confines a path for Sonar's taint analysis; asked whether pathguard.py is as small as correctness allows.
+
+**LEAD ACTIONS:** collected builder a73b09c1; snapshot /home/user/build/snap/sonarpath-9602b4ca/; launched round 3: runner a5cd050d382a1e6a3 (one heavy process at a time), egm-design a08b59d20301194cf, egm-codebase-details a0dc00200aa736b8f. Part 2 r10 reviews and runner are also in flight.
+**LIVE ITEMS (8):** P2 r10: a1b9b30a (runner), a365cea3, a3654df8 (reviewers); SONAR-PATH r3: a5cd050d (runner), a08b59d2, a0dc0020 (reviewers); P6 batch 11 builder ab741cc2. Each has a purpose and an expected end within about 10 minutes; heavy processes limited to one per runner.
+**ROUNDS (WHY):** SONAR-PATH round 3 results review (security, no cap); Part 2 round 10; Part 6 round 11 builder.
+**FINISHED SINCE LAST BLOCK:** SONAR-PATH batch 3 pushed (9602b4ca).
+**EGM STEP PER PACKAGE:** SONAR-PATH: runner and reviewers (steps 3-4). P2: same. P6: builder batch 11.
+**LANE SONAR-PATH:** a5cd050d, a08b59d2, a0dc0020; EGM step 3-4; A done, B done at 9602b4ca (unreviewed), C (code-only PR branch from origin/main) not started, D (draft PR and Sonar gate) not started.
+**RUN ON LAPTOP:** none yet.
+
+
 ## 03:50Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
