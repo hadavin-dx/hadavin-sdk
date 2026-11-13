@@ -16,3 +16,4 @@ F | agent a48ec4..: 6b1fe49 full suite once + F7/new cases | 11:09Z / 16:39 | ~1
 G | NOT STARTED (ORDER 7), waits for F | c14a514 path tests only | - | waiting
 F | reported 11:28Z closed: 6b1fe49 3683 passed 0 failed 200 skipped
 G | agent a5f7fd..: c14a514 path tests + F7 cases | 11:31Z / 17:01 | ~11:42Z | 11:31Z | running | check 11:38Z
+G | reported 11:35Z closed: c14a514 path tests 378 passed 0 failed 1 skipped

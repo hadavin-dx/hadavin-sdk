@@ -1,5 +1,19 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:36Z / 17:06 IST  HEARTBEAT 20 (G reported; all agents closed)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| G | Evidence runner: head c14a514 path tests + 46 hostile inputs | evidence for the newest head | 11:31Z / 17:01 | ended 11:35Z | run 1 of 1 | reported, closed | none |
+| F, E, D, C2, A, B | earlier agents | - | - | - | - | all closed | none |
+Nothing is running (agents 0, shells 0, copy loops 0). Cap 11:55Z not needed.
+
+ASK:
+1. Do you want the full suite on c14a514 anyway? Order 7 said no (the delta is 2 files, last full suite is on 6b1fe49: 3683 passed). It would take about 20 minutes and end near 11:57Z. Default: no, unless you say so.
+**G RESULT (head c14a514): tests/test_path_confinement.py: 378 passed, 0 failed, 1 skipped, 0 errors, 67.56 s, exit 0.** Same file on 6b1fe49: 378 passed, 0 failed, 1 skipped, 36.69 s. The skip is a test that needs Python 3.13 (the machine has 3.12.3); Windows not run (ntpath stands in). The delta's only test file is this one.
+F7 and new cases: 46 inputs (31 earlier + 15 new); the 31 earlier inputs give the same result on both heads; 3 rows changed, all of them new str-subclass cases (evidence/hostile-f7-rerun-c14a514.md marks them).
+Raw observations, nothing fixed: (a) a path object whose `__fspath__` returns an int or None makes all four functions raise TypeError, not PathRefused (bytes gives PathRefused), on both heads; (b) wall time 67.6 s vs 36.7 s, cause not investigated.
+Files: evidence/path-tests-c14a514.md, evidence/hostile-f7-rerun-c14a514.md, evidence/summary.md.
+
 ## 2026-11-13 11:31Z / 17:01 IST  HEARTBEAT 19 (F reported; G started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

@@ -1,4 +1,9 @@
-# CURRENT HEAD c14a514: path tests only (agent G, running); last full suite: 6b1fe49 (below)
+# CURRENT HEAD c14a514: path tests only (agent G), last full suite: 6b1fe49 (below)
+
+| head | scope | passed | failed | skipped | errors | wall time | note |
+|---|---|---|---|---|---|---|---|
+| **c14a514** (current) | tests/test_path_confinement.py alone | **378** | **0** | **1** (isreserved needs Python 3.13; machine has 3.12.3) | 0 | 67.56 s | exit 0; the delta's only test file; no full suite on this head (order 7) |
+| 6b1fe49 | same file, side by side | 378 | 0 | 1 | 0 | 36.69 s | exit 0; the wall time difference is not investigated (machine load not measured) |
 
 # NUMBERS (valid rows first; updated 10:46Z / 16:16 IST). head | passed | failed | skipped | wall time | hang yes/no
 
