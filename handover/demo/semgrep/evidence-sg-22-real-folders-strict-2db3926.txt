@@ -1,0 +1,37 @@
+# evidence (session lead, 2026-11-13T01:36:56Z): REAL Semgrep 1.185.0 with a MADE-UP LOCAL rule (python + javascript, never matches; NOT the registry packs) on the scanned folders of pr-3-tests 2db3926 (git archive, 45 target files): does --strict turn a partial parse into exit 3 on the real tree?
+# rule.yml:
+rules:
+  - id: demo.never-matches-py
+    languages: [python]
+    message: made-up rule that never matches
+    severity: ERROR
+    pattern: zzz_never_present_zzz($X)
+  - id: demo.never-matches-js
+    languages: [javascript]
+    message: made-up rule that never matches
+    severity: ERROR
+    pattern: zzz_never_present_zzz($X)
+
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error src scripts load_tools tools n8n   (cwd: archive of 2db3926)
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 45
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 2 rules on 45 files: 0 findings.
+
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict src scripts load_tools tools n8n   (cwd: archive of 2db3926)
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 45
+ • Parsed lines: ~100.0%
+ • No ignore information available
+Ran 2 rules on 45 files: 0 findings.
+
+RESULT: exit 0 both with and without --strict; Targets scanned 45; Parsed lines ~100.0% (so no partial-parse exit 3 on this tree with these two languages). LIMITS: a made-up rule, not p/python or p/javascript; the registry packs may also include other languages/file types (yaml, json, generic) that change the target list; the exit code can change when the files in these folders change. The earlier lead scan on 0841f36 had no --strict.
