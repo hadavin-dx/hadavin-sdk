@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:22Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- SONAR-PATH batch 6 pushed as 4398e3bd (builder-claimed, unverified): 185 of 185 mutant rows good on 3.13; 8520 passed on a 74-file focused run on both 3.13 and 3.12; ruff, format and bandit clean; 0 suppressions on added lines. The builder's own first mutant run had 3 survivors (fixed with 2 killer tests). Open: pathguard.py is 234 lines against the old 220 limit (builder claims no new limit; lead ruling needed); the 3.12 mutant table was not run; account-number and ARN-style test ids were not renamed; Q-R5-1 still open. Not clean until the round 6 runner and reviewers report.
+- Class fix from the 06:15Z ruling is in that head: explicit ids= on the planted-value test and two private-key-block tests, and a new check that no collected test name carries a key-shaped string (fails on the old files with 6 hits per the builder; runner will re-check). Its recogniser covers AKIA/ASIA, sk-, ghp_, xox, BEGIN KEY blocks and long mixed runs only.
+- Part 6 (20c369f0), Part 2 (e75037b6), Q8c-1 (dcf64b36): no clean head; B17 and B12 unproven killed.
+
+**LEAD ACTIONS:** (1) ruling on pathguard.py size 234 vs 220. (2) Q-R5-1. (3) laptop tool list from 05:52Z.
+
+**LIVE ITEMS:** SONAR round 6: runner a4ec29ae, reviewers a32f547b (design) and af1b0cc1 (codebase). Part 6: a7978edf builder, a3ea530e runner. Q8c-1: a592bb13. Part 2: adecceff finisher. 7 running.
+
+**ROUNDS (WHY):** SONAR round 6 required (path-safety, code changed in batch 6).
+
+**FINISHED SINCE LAST BLOCK:** SONAR batch 6 pushed (builder final report received).
+
+**EGM STEP PER PACKAGE:** SONAR-PATH: result review round 6 (runner + 2 reviewers). Others: build.
+
+**LANE SONAR-PATH:** not READY; waiting for round 6.
+
+**RUN ON LAPTOP:** none yet.
+
 ## 06:17Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

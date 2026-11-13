@@ -95,3 +95,4 @@
 06:07Z CORE: no clean head; Part6 batch15 at 40b83a31; 5 agents live
 06:13Z CORE: gitleaks ruling applied (no raw junit/logs pushed, ids= fix sent); Part6 at 20c369f0; 5 agents live
 06:17Z CORE: no head change; 5 agents live
+06:22Z CORE: SONAR batch6 4398e3bd pushed, round 6 started (runner + 2 reviewers); 7 agents live
