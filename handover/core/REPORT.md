@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:00Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| E1 | evidence: B2 rc=1 re-runs, TMPDIR A/B | proof | 12:42Z | done 13:00Z | 1 | DONE (runner's raw numbers, handover/core/evidence/realrun-v6/E1/RESULTS.md): B2 baseline rc=1 did NOT return: 21 of 21 runs rc=0 (73 passed, 70 deselected): 5 solo, 5 shared-TMPDIR pairs, 3 separate-TMPDIR pairs. The first rc=1 therefore stays UNKNOWN (its log was overwritten; I will not call it a flake). TMPDIR inside the tree: test_demo_folder_guard.py::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci FAILS (inner pytest rc 4, ModuleNotFoundError: No module named 'support' in conftest.py:33), passes with TMPDIR outside: cause shown by A/B in 4 runs. CORRECTION of my earlier claim: test_no_placeholders.py::test_no_placeholder_text_ships PASSED in all 4 runs including inside-TMPDIR, so it is NOT shown to be an environment failure of that kind; it stays UNEXPLAINED | next: rerun test_no_placeholders inside TMPDIR 3x in a clean tree (E2) |
+| E2 | clean-tree rerun of test_no_placeholders with in-tree TMPDIR | settle the open one | 13:00Z | 15 min | 1 | TO START (E1's tree-E1b was not clean main: 7 modified test files; E1 flagged it) | launch |
+| R4 | review of F4 | independent read | 13:09Z | 13:30Z | round 1 of 2 | RUNNING | read |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| D1, C6 | full suite + docs patch; flakiness | proof | 12:33-12:38Z | 13:10-13:30Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: | id | test | result | first line | cause | retries | what I did | root cause proven? |
+| B2-first | baseline run | rc=1, log overwritten | unknown | UNKNOWN | 21 re-runs all rc=0 | reported UNKNOWN | no |
+| T1 | test_demo_folder_guard (in-tree TMPDIR) | 4 of 4 failed in-tree, 4 of 4 passed outside | ModuleNotFoundError: No module named 'support' | environment (TMPDIR inside tree) | A/B x4 | recipe uses outside TMPDIR | yes (A/B) |
+| T2 | test_no_placeholders | passed in all 4 runs | none | earlier failure UNEXPLAINED | 4 | E2 queued | no |
+Totals today: real test failures with a cause shown 1 (T1 environment); unexplained 2 (B2-first, T2 earlier); no new real defects.
+ASK: none (the fallback-reviewer question above stands).
+
+
 ## REPORT (container clock 12:59Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
