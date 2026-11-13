@@ -3711,10 +3711,6 @@ M: list[Mutant] = [
                 T_VERIFY_PG,
                 "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[25P04-False]",
             ),
-            k(
-                T_VERIFY_PG,
-                "test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is_refused_with_exit_2",
-            ),
         ),
     ),
     Mutant(
@@ -4045,8 +4041,8 @@ M: list[Mutant] = [
         "V120",
         "Issue 4 of batch 6: the sign-in branch of IAM adds a connection option",
         "src/hadavin_sdk/store/postgres.py",
-        '            extra["password"] = password(',
-        '            extra["options"] = "-c statement_timeout=0"\n            extra["password"] = password(',
+        '            extra["password"] = password_source(',
+        '            extra["options"] = "-c statement_timeout=0"\n            extra["password"] = password_source(',
         k(
             T_VERIFY,
             "test_connect_with_the_iam_sign_in_runs_one_statement_and_adds_only_the_password",
@@ -4067,7 +4063,7 @@ M: list[Mutant] = [
         "V116",
         "Issue 3 of batch 6: an error while the connection of the run is made is not turned into the refusal (exit 3 again)",
         MIG,
-        '        raise _driver_error_before_commit(e, "connecting to the database") from e',
+        "        raise _driver_error_before_commit(e, _CONNECTING) from e",
         "        raise",
         k(
             T_VERIFY_PG,
@@ -4078,8 +4074,8 @@ M: list[Mutant] = [
         "V117",
         "Issue 3 of batch 6: a connection whose setup statement failed is left open",
         "src/hadavin_sdk/store/postgres.py",
-        "        conn.close()  # a connection that failed its one setup statement is not handed out and not left open",
-        "        pass",
+        "        with suppress(psycopg.Error):\n            conn.close()\n",
+        "        pass\n",
         k(
             T_VERIFY_PG,
             "test_a_setup_statement_that_fails_on_the_first_connection_is_refused_with_exit_2_and_closed",
@@ -4116,6 +4112,107 @@ M: list[Mutant] = [
         k(
             T_MX,
             "test_c13_a_sequence_or_function_moved_out_of_the_map_is_judged_like_one_outside_the_map[O11-everyone-setval-no-roles]",
+        ),
+    ),
+    Mutant(
+        "V122",
+        "Round 17 group 3: the refusal for a failed cloud sign-in prints the SDK's own words",
+        "src/hadavin_sdk/store/auth_aws.py",
+        '        f"the sign-in for the database connection failed ({type(exc).__name__}); "',
+        '        f"the sign-in for the database connection failed ({exc}); "',
+        (
+            k(
+                T_VERIFY,
+                "test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_words[no-credentials]",
+            ),
+            k(
+                T_VERIFY,
+                "test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_words[refused-request]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_nothing",
+            ),
+        ),
+    ),
+    Mutant(
+        "V123",
+        "Round 17 group 3: a refused connection is worded as a rollback (the sentence for the connection step is dropped)",
+        MIG,
+        "    if step == _CONNECTING:\n        # r17 group 3 (c)",
+        "    if False:\n        # r17 group 3 (c)",
+        k(
+            T_VERIFY_PG,
+            "test_an_address_that_cannot_be_reached_is_refused_with_exit_2_with_a_real_driver_error",
+        ),
+    ),
+    Mutant(
+        "V124",
+        "Round 17 group 4: the refusal prints the class name of the driver error instead of its SQLSTATE",
+        MIG,
+        '    code = getattr(e, "sqlstate", None) or type(e).__name__\n    if step == _CONNECTING:',
+        "    code = type(e).__name__\n    if step == _CONNECTING:",
+        (
+            k(T_VERIFY_PG, "test_the_refusal_names_the_sqlstate_of_a_session_ending_error[25P03]"),
+            k(T_VERIFY_PG, "test_the_refusal_names_the_sqlstate_of_a_session_ending_error[25P04]"),
+        ),
+    ),
+    Mutant(
+        "V125",
+        "Round 17 group 6: a failing close of the half-made connection hides the first error",
+        "src/hadavin_sdk/store/postgres.py",
+        "        with suppress(psycopg.Error):\n            conn.close()\n",
+        "        conn.close()\n",
+        k(
+            T_VERIFY,
+            "test_a_close_that_fails_after_a_failed_setup_statement_does_not_hide_the_first_error",
+        ),
+    ),
+    Mutant(
+        "V126",
+        "Round 17 group 5: the window of the PostgreSQL 17 wording check is cut to nothing",
+        T_RULES,
+        '    rf"{_PG17_RESULT}\\b[^.;]{{0,40}}?{_PG17_VERSION_RX}|{_PG17_VERSION_RX}[^.;]{{0,40}}?\\b{_PG17_RESULT}\\b",',
+        '    rf"{_PG17_RESULT}\\b[^.;]{{0,0}}?{_PG17_VERSION_RX}|{_PG17_VERSION_RX}[^.;]{{0,0}}?\\b{_PG17_RESULT}\\b",',
+        (
+            k(
+                T_RULES,
+                "test_the_postgresql_17_wording_check_finds_each_new_form_of_a_result_claim[The suite is green on 17.10.]",
+            ),
+            k(
+                T_RULES,
+                "test_the_postgresql_17_wording_check_finds_each_new_form_of_a_result_claim[The case was seen passing on 17.10.]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V127",
+        "Round 17 group 1: the reason of an empty pair is built with another SQLSTATE than its probe's",
+        T_MX,
+        '    return f"measured on PostgreSQL {MEASURED_ON}: ERROR {probe.state} {probe.shown}"',
+        '    return f"measured on PostgreSQL {MEASURED_ON}: ERROR 42000 {probe.shown}"',
+        k(
+            T_MX,
+            "test_every_empty_pair_has_a_probe_and_its_reason_carries_the_state_text_and_version_of_it",
+        ),
+    ),
+    Mutant(
+        "V128",
+        "Round 17 group 1: the SQLSTATE of the probe for the map objects is edited to a wrong fact",
+        T_MX,
+        '_NO_REL = ("42P01", "does not exist",',
+        '_NO_REL = ("42P05", "does not exist",',
+        k(T_MX, "test_every_empty_reason_is_the_answer_of_a_real_server"),
+    ),
+    Mutant(
+        "V129",
+        "Round 17 group 5: the old O8 wording condition (the change-of-owner half alone) is accepted again",
+        T_RULES,
+        "    return _O8_SWITCH in sentence\n",
+        '    return _O8_SWITCH in sentence or ("must not change owner" in sentence and "during the run" in sentence)\n',
+        k(
+            T_RULES,
+            "test_the_o8_wording_check_finds_each_sentence_that_keeps_only_part_of_the_condition[The schema must be owned by a family role at the start and must not change owner during the run.]",
         ),
     ),
 ]
