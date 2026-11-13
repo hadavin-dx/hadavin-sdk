@@ -1,5 +1,23 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:07Z / 16:37 IST  HEARTBEAT 14 (E reported; cap reached; all agents closed)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| E | Evidence runner: PR #14 edadd00 full suite once -v + F7/C1/whitespace/bytes | evidence for the current head | 10:44Z / 16:14 | ended 11:04Z / 16:34 | run 1 of 1 | reported, closed | none |
+| C2 | hang hunt on main | clean main run | 10:25Z | ended 11:02Z | done | closed | none |
+| D | PR #14 d5b4451 (stale) | stale head | 10:25Z | ended 10:57Z | 1 of 1 | closed | none |
+| A, B | earlier agents | - | - | - | - | A INVALID, B reported | none |
+| R1 | my log copy loops | - | - | ended | - | stopped | none |
+Nothing is running (agents 0, shells 0, my copy loops 0).
+
+ASK: none (cap reached; I start nothing new until your next order).
+RESULTS (raw, no verdict):
+- **PR #14 edadd00 (current head): 3681 passed, 0 failed, 200 skipped, 0 errors, 1215 s, exit 0, no hang.** Counts from pytest's own summary line. One run only (no flake data). Skips: Playwright missing, no gitleaks, Windows-only, root-user and env-gated tests. The lock file of edadd00 has no diff against d5b4451.
+- **F7 and new cases on edadd00 (23 inputs, text level, ntpath and os.path):** the NT object path, empty, NUL, C1 characters (U+0080-U+009F) and whitespace-only text are refused; bytes, bytearray and non-UTF-8 bytes are refused ("not a path"). On d5b4451 the C1 text, a single space and a non-breaking space were accepted and bytes raised a TypeError. A space or non-breaking space inside, leading or trailing in a file name is still accepted (same as before). Table: evidence/hostile-f7-rerun-edadd00.md.
+- main 61ded9e, valid full run: 3407 passed, 0 failed, 198 skipped, exit 0, 1067 s, no hang. Hang hunt: 25 of 25 passes, no hang (hog window only ~20 s).
+- Invalid evidence marked: the four earlier A runs (basetemp outside TMPDIR; logs cut by my git slip). See evidence/failures.md and evidence/summary.md.
+- Files: evidence/summary.md (numbers table), suite-pr14-edadd00.md, hostile-f7-rerun-edadd00.md, hang-hunt.md, failures.md, hostile.md; raw logs under evidence/raw/.
+
 ## 2026-11-13 11:05Z / 16:35 IST  HEARTBEAT 13 (C2 reported)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
