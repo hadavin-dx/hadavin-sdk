@@ -29,3 +29,5 @@ Base f3c39cf89ec989f032ea48a23cfd824b88da9c68; started from lane3-fix-4-r2.patch
 * Hygiene + new file + test_portal_wording_and_masking: 66 passed, 7 skipped [exit 0] (b4c-hygiene.log).
 * Comment checks: 0 added `noqa`, 0 `type: ignore`.
 * `git apply --check` (plain on base, for-stack on the stack tree): both rc 0 (b4c-apply-check.txt).
+* ONE full suite on the final plain tree (log written outside the repo while running): 3708 passed, 200 skipped in 1234 s [exit 0], EXIT_CODE=0, WALL_SECONDS=1235 (b4c-full-suite.log). The 200 skips are the existing ones (playwright absent, Windows-only, measurement runs).
+* Stack tree (claims stack + for-stack r3): see b4c-stack-tree.log (new file + hygiene + input edge cases).
