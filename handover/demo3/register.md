@@ -207,3 +207,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B4d partial | 14:58Z fix-4 r4 builder full serial suite: 3711 passed, 200 skipped, rc 0, 1229 s (raw/b4d-full.log); builder report not yet in | | | running |
 | B2d partial | 14:59Z fix-2 r4 builder full serial suite: 3809 passed, 237 skipped (37 MORE than the 200 baseline: reason being read), 0 failed, rc 0, 1132 s (raw/b2d-full.log); builder report not yet in | | | running |
 | B2d note | skip reasons in raw/b2d-full.log include 'node is not installed' (21+3+2 tests) which the 200-skip baseline does not list; so the 237 differs from 200 by environment (node missing in that shell), not by a failure; exact split of the 37 not reconciled | | | |
+| B1f partial | 15:00Z fix-1 r6 builder full serial suite: 3716 passed, 200 skipped, 0 failed, rc 0, 1203 s (raw/b1f-full.log); builder report not yet in | | | running |
