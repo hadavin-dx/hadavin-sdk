@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:47Z (07:17 IST) / Part 2 round 8 design review: NOT clean (1 Blocker, 2 Major); Q8c-1 batch 17 landed (a5908c0b), round 17 started
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 round 8, design reviewer (code read only, nothing run): 1 BLOCKER: a clock holding a datetime with a hostile tzinfo runs foreign code (a real client) before the signature check, and the guard still reports stand-in only (same class as round 7: object believed by type, state not judged; hits fixed_clock, build(clock=...) and datetime atoms in stand-ins). 2 Major: the core Runtime in a holder is believed by class identity only; pre-authentication scan cost up to 100000 nodes per POST, not measured, and a store of more than 2000 data rows is over budget (503 forever). Nits: Path slots, stale module text. Saved: handover/reviews/PD-bind/pdbind-3db352f5-design-r8.md. Codebase reviewer and runner not back yet.
+- Q8c-1: builder (a35e15e9) pushed a5908c0b to wip/cloud-q8c1-b16 (fast-forward from 37cd5157). Its claims (NOT verified by me): policy mutants 466 of 466, plants 5 passed (54m55s), full pytest 11032 passed 13 skipped (real-Vault, impossible here), gates green. It judged one survivor mutant equivalent and removed a dead branch and the mutant. Round 17 reviewers must test that equivalence; runner running delta mutants. Plants not repeated by the runner.
+- Q8c-1 lane problem (for you): check-no-handover-files.sh REFUSES wip/cloud-q8c1-b16: 138 files under handover/ since main (older batches, pre-ORDER 266) and the b17 commits add handover/evidence/Q8c-1/b17/*. The PR branch must be built from code commits only (I made the snapshot without handover/). Tell me if you want me to build that branch (new branch from main with the code changes, no force on existing refs) after round 17 is clean.
+- Part 6 batch 8 builder (a509d177) working (box to about 02:40Z). Slots: Q8c-1 runner now priority 1.
+
+**LEAD ACTIONS**: lane handover files (above); slot question from 01:39Z.
+
+**LIVE ITEMS** (7 agents): a509d177 Part 6 batch 8 builder; a572d86b Part 2 round 8 runner; a5053e2b Part 2 codebase reviewer; a7e31a96 Q8c-1 round 17 runner; a350ce95 Q8c-1 design reviewer; ac50dfa3 Q8c-1 codebase reviewer. Heads: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Part 2 round 8 (security, no cap) not clean so far, round 9 after the next batch. Q8c-1 round 17 (security, no cap). Part 6 round 8 after batch 8.
+
+**FINISHED SINCE LAST BLOCK (01:44Z)**: Part 2 round 8 design review saved; Q8c-1 builder a35e15e9 closed; Q8c-1 snapshot (/home/user/build/snap/q8c1b17-a5908c0b).
+
 ## 01:44Z (07:14 IST) / Part 2 batch 8 landed (3db352f5); round 8 runner and 2 reviewers started; Part 6 batch 8 and Q8c-1 running
 
 **FAILED / UNCERTAIN FIRST**
