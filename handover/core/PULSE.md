@@ -171,3 +171,4 @@ F1b done; waiting for F6 to combine
 F1b stopped after report; 4 agents running
 V4c done
 13:45Z core: V2 done (1 real defect, F2b fix), F4d done, V4d+F6 running
+13:55Z core: F6 done (hygiene defect), V6+COMBINE+V4d running

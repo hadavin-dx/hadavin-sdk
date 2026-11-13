@@ -1,4 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 13:55Z (core lead)
+| row | what | state |
+|---|---|---|
+| F6 | writer-side opens + DESK_* wrappers | DONE by builder, NOT clean: tests/test_hygiene.py::test_hygiene_scan_public fails (also on baseline; F3 test lines 156-194 hold literal http addresses = real defect in my F3 patch). .ps1 wrappers never run. Builder claims: 54 failed/8 passed before; 31-file run 1838 passed/13 skipped/1 failed. Patch fix/F6-fix.patch, notes fix/F6-RESULTS.md |
+| V6 | independent evidence on F6 | RUNNING (ac5e8e218b86693bc, since ~13:50Z, ends by 14:35Z) |
+| COMBINE | F1+F1b+F3+F2(+F2b)+F6 -> core-fix-v1.patch, also fixes the F3 hygiene defect | RUNNING (adf3d950396c0b38a, since ~13:50Z, 60 min box) |
+| V4d | evidence on F4d docs | RUNNING (a00c629d38900f1fc, since 13:41Z) |
+| docs rebase | waits for the demo session's frozen hash (lead forwards) | WAITING |
+| next | combined evidence (full suite, 100 MB key-file proof) then independent review | after COMBINE |
+FAILURES (new): F6-1 test_hygiene_scan_public: fails on baseline too, cause = literal addresses in F3 test, root cause proven yes (lines listed by the scan, builder checked its own files absent); fix assigned to COMBINE. Totals: unexplained still 2 (B2-first, T2-earlier). Crashed agents 0.
+LOAD: 3 agents running; load avg low; heavy slots 0 of 3.
+ASK: none new (earlier defaults stand).
+
 ## STATUS 13:45Z (core lead; container clock ~13:41Z)
 | row | what | state |
 |---|---|---|
