@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:17Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| V4b | independent evidence for F4b | proof | 13:11Z | done 13:17Z | 1 | DONE (runner's numbers, handover/core/fix/V4b-evidence.md): fails-before 5 failed / 6 passed; after 11 passed (switch set and unset); 20 doc-reading files 1558 passed, 0 failed, 33 skipped (gitleaks, playwright, root, py3.13); mutants 8 of 9 killed, ONE SURVIVED (M7a: the prose sentence about waiting 20 s for each server in load_tools/README.md is not pinned); load_tools recipe re-run by the runner: 30 requests, 24 request ids, 21 leads, 21 mails, ALL 7 CHECKS HOLD, rc 0; both workflow files parse, DPLD_REQUIRE_COUNT set at lint.yml:100 and sonar.yml:52. Runner's note: ruff at line length 100 gives 40 E501 (33 in the new test, 8 in crash_desk.py), at the repo's 120 it passes: the repo setting is 120. One kernel memory kill about 2 min before its first run, cause unproven (probably another runner) | F4c |
+| F4c | builder round 3 (small): contract.md:303 follow-up wording on every page about a repeated request + pin the unpinned prose number against the recipe | close V4b survivor + R4 leftover | 13:17Z | 14:00Z | round 3 (docs) | RUNNING | V4c + round-2 review of the whole docs patch (F4+F4b+F4c) |
+| F6 | builder: writer-side FIFO/special-file opens (lockfile.py:51, live_claude.py:162/:291, trace.py:57) + wrappers reset.sh/start_all.sh/.ps1 traceback | classes the F1 and F3 builders left open | 13:18Z | 14:20Z | build 1 | RUNNING | V6 |
+| V1 | evidence for F1 | proof | 12:58Z | 13:45Z | 1 | RUNNING (neighbour comparison last step) | read |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 14:10Z | 1 | RUNNING (full suite and mutation detached) | read |
+| V3 | evidence for F3 | proof | 13:03Z | 13:50Z | 1 | RUNNING (fails-before, 3x after, 8 mutants, hostile inputs done; per-file neighbour runs 34/71) | read |
+| F1, F2, F3, F4, F4b, D1, E1, E2, C6, R4 | | | | | | DONE (earlier blocks) | |
+
+FAILURES AND RETRIES: V4b mutant M7a survived (test gap, test bug, root cause proven: yes, the mutant run). Kernel memory kill seen by 2 runners (F2 builder, V4b): environment suspected (4 cores 16 GB, several pytest at once), NOT proven; I will count out-of-memory notices in dmesg at the end. Totals: failures with proven cause 1 (T1) plus 1 test gap (M7a); unexplained 2 (B2-first, T2-earlier); flakes 0; agents crashed 0.
+LOAD: 5 agents (V1, V2, V3, F4c, F6), load about 2.7 before F6 and F4c started.
+ASK: none new (earlier asks with their defaults stand; ruff line length: the runner confirms 120 is the repo setting, so I follow the repo).
+
+
 ## REPORT (container clock 13:11Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
