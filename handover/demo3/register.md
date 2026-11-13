@@ -33,3 +33,4 @@ K | reported 12:07Z closed: browser tests all pass BASE and STACK (241 per head)
 N | agent ae964c..: py3.13 full suite BASE | 12:12Z | ~12:35Z, stop 12:55Z | now | running | check 5 min
 O | agent ab5cea..: py3.13 full suite STACK | 12:12Z | ~12:35Z, stop 12:55Z | now | running | check 5 min
 P | NOT STARTED: 3.12 vs 3.13 per-test diff, read-only | after N and O | - | waiting
+N, O | reported 12:25Z closed: 3.13.18 BASE and STACK 3684 passed 0 failed 199 skipped; P done by me (1 test differs)

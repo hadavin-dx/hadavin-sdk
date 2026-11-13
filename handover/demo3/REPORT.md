@@ -1,5 +1,20 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:30Z / 18:00 IST  HEARTBEAT 35 (ORDER 10 done: N and O reported; P done by me)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| N | Evidence runner: Python 3.13.18 full suite on BASE | cross-version result | 12:10Z / 17:40 | ended 12:25Z | first try | reported, closed | none |
+| O | Evidence runner: same on STACK | cross-version result for the stack | 12:10Z / 17:40 | ended 12:25Z | first try | reported, closed | none |
+| P | per-test 3.12 vs 3.13 comparison (read-only) | which tests differ | 12:26Z / 17:56 | done 12:30Z | first try | done by me as a mechanical diff of the four -v logs (no agent needed): evidence/py313-vs-py312.md | none |
+| all earlier agents | K, L, M, I, H, J, G, F, E, D, C2, A, B | - | - | - | - | closed | none |
+Nothing is running (agents 0, pytest 0). Cap 13:00Z not needed.
+
+ASK:
+1. Do you want the browser and gitleaks tests (196 tests) run under Python 3.13 too? It needs Playwright (hash-locked browser lock, the same Chromium) and the pinned gitleaks in the 3.13 venv; about 6 minutes. Default: not run.
+2. Do you want Python 3.13.3 exactly (the laptop's version)? This image has 3.13.18; 3.13.3 would need a download from python.org or uv, which I did not do (no pinned source named). Default: no.
+3. Heartbeat 31 ask 1 (is the image's Python 3.13.18 a trusted source?) is still open; default yes.
+**RESULT (I read both summary lines):** Python 3.13.18, hash-locked venv from requirements-dev.txt (pip rc=0): BASE f3c39cf8 **3684 passed, 0 failed, 199 skipped, 0 errors, 899 s, exit 0**; STACK **3684 passed, 0 failed, 199 skipped, 0 errors, 893 s, exit 0**. On 3.12 both were 3683 passed, 200 skipped (1189 s and 1192 s). **Exactly one test differs between the versions** (same on BASE and STACK): `test_v3_our_device_list_covers_what_python_says_windows_reserves` (tests/test_path_confinement.py) skipped on 3.12, passes on 3.13, because `ntpath.isreserved` exists only on 3.13. Every other test has the same status on both versions; the other 199 skips are unchanged (Playwright and gitleaks not installed in this venv). 3.13 was about 25 percent faster (cause not investigated). Not checked: exactly 3.13.3, Windows, ruff/mypy/bandit. Files: evidence/py313-vs-py312.md, py313-base.md, py313-stack.md, summary.md.
+
 ## 2026-11-13 12:24Z / 17:54 IST  HEARTBEAT 34 (N and O at about 92 to 93 percent)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

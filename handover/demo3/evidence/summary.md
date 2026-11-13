@@ -1,3 +1,14 @@
+# PYTHON 3.13 CROSS-VERSION RESULT (ORDER 10, 12:30Z / 18:00 IST): public main f3c39cf8 and the claims STACK
+
+| head | python | passed | failed | skipped | wall |
+|---|---|---|---|---|---|
+| BASE f3c39cf8 | 3.12.3 | 3683 | 0 | 200 | 1189 s |
+| BASE f3c39cf8 | **3.13.18** | **3684** | **0** | **199** | **899 s** |
+| STACK (f3c39cf8 + claims patch) | 3.12.3 | 3683 | 0 | 200 | 1192 s |
+| STACK | **3.13.18** | **3684** | **0** | **199** | **893 s** |
+
+Exactly one test differs between the versions (same on BASE and STACK): `tests/test_path_confinement.py::test_v3_our_device_list_covers_what_python_says_windows_reserves`, SKIPPED on 3.12 (needs `ntpath.isreserved`, new in 3.13) and PASSED on 3.13. No failure or error on any of the four runs; exit 0 on all. Python 3.13.18 is the image's own interpreter, hash-locked venv from requirements-dev.txt (pip rc=0), Playwright and gitleaks not installed in it (the other 199 skips are the same as on 3.12). Details: evidence/py313-vs-py312.md.
+
 # UNSKIP RESULT (ORDER 9, 12:10Z / 17:40 IST): the 200 skipped tests on public main f3c39cf8 (agents K, L, M; counts checked by me in the raw logs)
 
 | group | head | tests run | passed | failed | skipped | wall time |
