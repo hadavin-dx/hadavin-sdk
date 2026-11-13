@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R5 builder a6c708de: ALIVE and working (its checkpoint file was written at 17:55Z container clock; I also asked it for a fresh one). It has its work tree tree-R5 with edits in about 20 files (burst, fake servers, catcher, check_invariants, load_driver, n8n_api, run_live_check, run_real_check, reset.sh/ps1, docs) and test logs a1/a2 at 17:58Z. Checkpoint text: # R5 checkpoint 1 (started 17:47 UTC, written 18:05 UTC) | Done (code, not yet tested): R4-01..15 + F1,F2,F4,F5 source edits in tree-R5 (shared: envnum.read_number, regfile.read_secret_line, refusing_args.http_address/loopback_host, http_guard.read_reply, check_invariants.check_fields). | Next: run existing tests of touched modules; guard test R4-08; new tests; fail-before logs; patches. | Blockers: none. Not yet run anything. . Nothing failed that I can see; no pytest running at this second. ASK: none.
+
+## STATUS (core lead)
 R5 builder a6c708de latest checkpoint: tail: cannot open '/home/user/build/rr6/out/R5/checkpoint.md' for reading: No such file or directory . Only agent running; nothing failed. No answer yet to my ask (stop at r4 or continue): I continue. ASK: none new.
 
 ## STATUS (core lead)
