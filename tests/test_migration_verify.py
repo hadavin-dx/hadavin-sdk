@@ -685,3 +685,110 @@ def test_commit_outcome_classes_unknown_without_a_code_a_closed_connection_or_a_
         assert (
             mig._commit_outcome(_FakeCommitError("23503"), _fake_db(status=status)) == "unknown"
         ), status
+
+
+# --- every catalog read that `migrate` can reach is pinned ---------------------------------------------------------------
+
+# Runs once at the start, before any file and before a single statement of the run could have changed the session; when
+# it fails it only asks the server who holds the lock. A catalog name here is found in `pg_catalog` first.
+_UNPINNED_BEFORE_ANY_FILE = frozenset({"_take_the_lock"})
+_UNQUALIFIED_CATALOG = re.compile(r"(?<![\w.\"])pg_(?!catalog\.|temp\b)\w+")
+
+
+def _is_pinned_with(node: ast.AST) -> bool:
+    return isinstance(node, ast.With) and any(
+        isinstance(i.context_expr, ast.Call)
+        and isinstance(i.context_expr.func, ast.Name)
+        and i.context_expr.func.id == "pinned_read"
+        for i in node.items
+    )
+
+
+def _calls_with_pinning(function: ast.FunctionDef):
+    """Every `ast.Call` of the function, with whether a `with pinned_read(...)` block is around it."""
+
+    def walk(node: ast.AST, pinned: bool):
+        for child in ast.iter_child_nodes(node):
+            inside = pinned or (_is_pinned_with(node) and child in node.body)
+            if isinstance(child, ast.Call):
+                yield child, inside
+            yield from walk(child, inside)
+
+    yield from walk(function, False)
+
+
+def test_every_runner_catalog_read_is_pinned():
+    """Every statement that `migrate()` can reach and that names a catalog object without `pg_catalog.` runs inside
+    `with pinned_read(...)` (a temporary table or a function a file made cannot answer in its place), either in the
+    function itself or because every call of the function is itself inside such a block. A statement with no unqualified
+    catalog name (every name qualified, or only keywords) needs no block. Killed by: a call site of the read-backs, the
+    role questions, the ownership read or the step-4 read that is moved out of `pinned_read`."""
+    from hadavin_sdk.store import migrate as mig
+
+    tree = ast.parse(Path(mig.__file__).read_text(encoding="utf-8"))
+    functions = {f.name: f for f in tree.body if isinstance(f, ast.FunctionDef)}
+    constants = {n: getattr(mig, n) for n in dir(mig) if isinstance(getattr(mig, n), str)}
+    # which functions `migrate` can reach, and every call site of each (function, pinned or not)
+    reached, queue, sites = set(), ["migrate"], {}
+    while queue:
+        name = queue.pop()
+        if name in reached:
+            continue
+        reached.add(name)
+        for call, pinned in _calls_with_pinning(functions[name]):
+            target = call.func.id if isinstance(call.func, ast.Name) else None
+            if target in functions:
+                sites.setdefault(target, []).append((name, pinned))
+                queue.append(target)
+    assert {
+        "_read_back",
+        "_refuse_privileged_role",
+        "_recheck_roles",
+        "_revoke_default_execute",
+    } <= reached
+    # a function is "pinned by its callers" when every call of it is inside a block or inside another such function
+    by_callers: set[str] = set()
+    changed = True
+    while changed:
+        changed = False
+        for target, calls in sites.items():
+            if target not in by_callers and all(p or caller in by_callers for caller, p in calls):
+                by_callers.add(target)
+                changed = True
+    loose = []
+    for name in sorted(reached):
+        if name in _UNPINNED_BEFORE_ANY_FILE or name in by_callers:
+            continue
+        for call, pinned in _calls_with_pinning(functions[name]):
+            if not (
+                isinstance(call.func, ast.Attribute) and call.func.attr == "execute" and call.args
+            ):
+                continue
+            first = call.args[0]
+            text = (
+                constants.get(first.id, "") if isinstance(first, ast.Name) else ast.unparse(first)
+            )
+            if _UNQUALIFIED_CATALOG.search(text) and not pinned:
+                loose.append(f"{name} line {call.lineno}: {text[:60]!r}")
+    assert loose == [], "a catalog read outside `pinned_read`: " + "; ".join(loose)
+    # the reads that must be pinned are really there to be found (the test is not vacuous)
+    assert "_check_read_back" in reached
+    assert {"_refuse_privileged_role", "_refuse_foreign_owned", "_recheck_roles"} <= by_callers
+
+
+def test_the_pinned_read_check_finds_a_read_that_is_not_pinned():
+    """The check above sees the difference between a pinned and a loose read (a self-test of the helpers)."""
+    source = (
+        "def f(db):\n    db.execute('SELECT 1 FROM pg_roles')\n"
+        "def g(db):\n    with pinned_read(db, ()):\n        db.execute('SELECT 1 FROM pg_roles')\n"
+    )
+    tree = ast.parse(source)
+    flat = [
+        (c.func.attr, p) for c, p in _calls_with_pinning(tree.body[0]) if hasattr(c.func, "attr")
+    ]
+    pinned = [
+        (c.func.attr, p) for c, p in _calls_with_pinning(tree.body[1]) if hasattr(c.func, "attr")
+    ]
+    assert flat == [("execute", False)] and pinned == [("execute", True)]
+    assert _UNQUALIFIED_CATALOG.search("SELECT 1 FROM pg_roles")
+    assert not _UNQUALIFIED_CATALOG.search("SELECT 1 FROM pg_catalog.pg_roles")

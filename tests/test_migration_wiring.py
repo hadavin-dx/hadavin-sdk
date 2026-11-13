@@ -18,6 +18,8 @@ from tests.fixtures.dsn_skip import require_module
 # store.migrate imports psycopg (the pg extra); with the DSN set a missing driver FAILS (never a skip)
 require_module("psycopg")
 
+import psycopg
+
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migrate as mig
 from hadavin_sdk.store import migration_numbers as mn
@@ -60,6 +62,20 @@ def _values(**changes):
     return tuple(row)
 
 
+@pytest.fixture(autouse=True)
+def _clean_state(monkeypatch):
+    """These tests are about what `migrate` reads and refuses around each file; `verify` itself is tested in
+    `test_migration_verify*.py`. Here the state of the database always reads as clean, and each call is recorded."""
+    calls: list[dict] = []
+
+    def clean(db, **kw):
+        calls.append(kw)
+        return []
+
+    monkeypatch.setattr(mig, "_state_problems", clean)
+    return calls
+
+
 class _Result:
     def __init__(self, rows):
         self.rows = rows
@@ -74,6 +90,9 @@ class _Result:
 class _Db:
     """A connection that answers the read-back queries from canned lists (next answer per call) and records every
     statement."""
+
+    # a connection inside the transaction of the run (a file that ended it is made by a test of its own)
+    info = types.SimpleNamespace(transaction_status=psycopg.pq.TransactionStatus.INTRANS)
 
     def __init__(
         self,
@@ -96,6 +115,11 @@ class _Db:
         self.members = (
             None if members is None else list(members)
         )  # one answer per read; None = never any member
+        # Step 6 of `migrate` reads everything once more after the last file and the grants (the final read-back). A
+        # test scripts the answers up to the last file; the final read gets the last scripted answer again.
+        for script in (self.values, self.triggers, self.settings, self.members):
+            if script:
+                script.append(script[-1])
         self.applied = list(applied)
         self.log: list[str] = []
         self.params: list[tuple] = []  # (statement, parameters) of every statement, in order
@@ -106,8 +130,13 @@ class _Db:
     def __exit__(self, *exc):
         return False
 
+    @contextlib.contextmanager
     def transaction(self):
-        return contextlib.nullcontext()
+        """Like psycopg's savepoint: `psycopg.Rollback` leaves the block quietly (which is how `pinned_read` ends)."""
+        try:
+            yield
+        except psycopg.Rollback:
+            pass
 
     @staticmethod
     def _next(script: list, what: str):
@@ -144,6 +173,12 @@ class _Db:
             )
         if text == "SELECT current_schema()":
             return _Result([("s",)])
+        if text == mig.V2_SQL:
+            return _Result([(160015,)])
+        if text == mig._SCHEMA_OWNER_SQL:
+            return _Result([("mig",)])
+        if text == mig._RUN_IDENTITY_SQL:
+            return _Result([("s", "mig", "mig")])
         if text.startswith("SELECT pg_has_role("):  # no named role is a member of another
             return _Result([(False,)])
         if text.startswith("SELECT version FROM schema_migrations"):
@@ -792,10 +827,12 @@ def test_the_membership_is_read_after_every_file_and_before_its_ledger_row(monke
     err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
     assert err is None
     log = db.log
-    assert log.count(mig._READBACK_MEMBERS_SQL) == 3  # the start and one per file
+    assert (
+        log.count(mig._READBACK_MEMBERS_SQL) == 4
+    )  # the start, one per file, and the final read (step 6)
     inserts = [i for i, s in enumerate(log) if s.startswith("INSERT INTO schema_migrations")]
     reads = [i for i, s in enumerate(log) if s == mig._READBACK_MEMBERS_SQL]
-    assert reads[1] < inserts[0] < reads[2] < inserts[1]
+    assert reads[1] < inserts[0] < reads[2] < inserts[1] < reads[3]
 
 
 def test_the_membership_query_reads_names_and_every_other_column():
@@ -1004,7 +1041,8 @@ def test_the_membership_message_says_it_may_be_another_session(monkeypatch, tmp_
 
 def test_the_named_roles_reach_the_two_scoped_read_back_queries(monkeypatch, tmp_path):
     """The names of the runtime, portal and purge roles are the one parameter of the members query and of the settings
-    query, at the start and after each file. Killed by: mutants SC5 (the names are not passed) and SC3."""
+    query, at the start, after each file and at the final read (step 6). Killed by: mutants SC5 (the names are not
+    passed) and SC3."""
     err, db, _ = _run(
         monkeypatch,
         tmp_path,
@@ -1013,11 +1051,10 @@ def test_the_named_roles_reach_the_two_scoped_read_back_queries(monkeypatch, tmp
         runtime_role="rt_role",
         portal_role="pt_role",
     )
-    # the run ends at the grant checks (the stub has no such roles); the read-backs came before that
-    assert err is not None and "does not exist" in str(err), err
+    assert err is None, err
     for query in (mig._READBACK_MEMBERS_SQL, mig._READBACK_SETTINGS_SQL):
         given = [p for t, p in db.params if t == query]
-        assert given == [(["rt_role", "pt_role"],)] * 3, given
+        assert given == [(["rt_role", "pt_role"],)] * 4, given
 
 
 def test_the_ownership_query_gets_the_managed_names(monkeypatch, tmp_path):
