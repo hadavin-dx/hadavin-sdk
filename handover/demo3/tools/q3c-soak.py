@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Q3 crash soak: real desk process + demo fakes (loopback only), killed at documented crash points or at random times.
+"""Q3c (copy of Q3 soak, BLIND mail mode default, classification A/B/C, reachable crash points). Q3 crash soak: real desk process + demo fakes (loopback only), killed at documented crash points or at random times.
 
 Usage: q3-soak.py run --base DIR --python PY --logs DIR --evidence-raw DIR --rounds 300 --master-seed 20261113
                       [--deadline-utc HH:MM] [--start-round 1]
@@ -79,9 +79,11 @@ class Round:
         shutil.rmtree(self.dir, ignore_errors=True)
         self.dir.mkdir(parents=True)
         off = n % 400
-        while not (free_port(18100 + off) and free_port(18600 + off)):
+        while not (free_port(27000 + off) and free_port(27500 + off)):
             off = (off + 1) % 400
-        self.desk_port, self.fakes_port = 18100 + off, 18600 + off
+        self.desk_port, self.fakes_port = 27000 + off, 27500 + off
+        self.rng2 = random.Random(self.seed + "-x")  # extra draws, so the legacy draw order of self.rng is unchanged
+        self.extra_n = 0
         self.book = self.dir / "data" / "desk.sqlite3"
         self.flag = self.book.parent / "crash.flag"
         self.book.parent.mkdir()
@@ -294,32 +296,55 @@ class Round:
                 order = plan[:]
                 r.shuffle(order)
                 kinfo = {"kill": ki + 1, "type": kind, "point": point, "delay_s": round(delay, 3) if delay else None}
-                if point:
-                    self.flag.write_text(point, encoding="utf-8")
-                killer = None
-                if kind == "time":
-                    desk = self.desk
+                attempts_info: list[dict] = []
+                max_att = 1 if self.a.legacy else 3
+                for att in range(max_att):
+                    extras: list[tuple[str, str, dict]] = []
+                    if not self.a.legacy:
+                        # fresh leads in every kill phase: A/A2/B need a NEW request id, L/C0/C1/D* need new follow-up work
+                        for _ in range(self.rng2.randint(3, 8)):
+                            self.extra_n += 1
+                            j = self.extra_n
+                            pl = {
+                                "name": f"Person{self.n}y{j}",
+                                "email": f"p{self.n}y{j}@example.com",
+                                "company": f"Co y{j}",
+                                "message": f"made-up extra message {j}",
+                            }
+                            persons.append({"rid": f"r{self.n}-y{j}", "payload": pl})
+                            extras.append((self.rng2.choice(["form", "webhook"]), f"r{self.n}-y{j}", pl))
+                        plan.extend(extras)
+                    if point:
+                        self.flag.write_text(point, encoding="utf-8")
+                    killer = None
+                    if kind == "time" and att == 0:
+                        desk = self.desk
 
-                    def late(d=desk, s=delay) -> None:
-                        time.sleep(s)
-                        self.kill9(d)
+                        def late(d=desk, s=delay) -> None:
+                            time.sleep(s)
+                            self.kill9(d)
 
-                    killer = threading.Thread(target=late, daemon=True)
-                    killer.start()
-                kinfo["sends_made"] = self.send_all(order, retry=False, stop_when_dead=True)
-                # wait for the desk to be gone (a point kill may come from background follow-up work)
-                for _ in range(80):
-                    if self.desk.poll() is not None:
+                        killer = threading.Thread(target=late, daemon=True)
+                        killer.start()
+                    batch = extras + (order if att == 0 else [])
+                    sends = self.send_all(batch, retry=False, stop_when_dead=True)
+                    kinfo["sends_made"] = kinfo.get("sends_made", 0) + sends
+                    for _ in range(80 if self.a.legacy else 50):
+                        if self.desk.poll() is not None:
+                            break
+                        time.sleep(0.1)
+                    attempts_info.append({"attempt": att + 1, "point": point, "extras": len(extras), "ended": self.desk.poll() is not None})
+                    if killer:
+                        killer.join(timeout=5)
+                    if self.desk.poll() is not None or kind != "point":
                         break
-                    time.sleep(0.1)
+                kinfo["attempts"] = attempts_info
                 if self.desk.poll() is None:
                     kinfo["outcome"] = "not-fired-then-sigkill" if kind == "point" else "late-sigkill"
                     self.kill9(self.desk)
                 else:
                     kinfo["outcome"] = "fired" if self.desk.returncode in (137, -9) else f"exit-{self.desk.returncode}"
                 kinfo["exit_code"] = self.desk.returncode
-                if killer:
-                    killer.join(timeout=5)
                 try:
                     self.flag.unlink()
                 except FileNotFoundError:
@@ -334,6 +359,7 @@ class Round:
             self.send_all(order, retry=True, stop_when_dead=False)
             idle = self.wait_idle()
             rec["idle"] = idle
+            self.collect_desk_views()
         except Exception as e:  # noqa: BLE001
             rec["harness_error"] = f"{type(e).__name__}: {e}"
         finally:
@@ -384,6 +410,14 @@ class Round:
             time.sleep(0.3)
         return {"idle": False, "counts": None}
 
+    def collect_desk_views(self) -> None:
+        self.review, self.ui_review = None, None
+        try:
+            self.review = http_json(self.desk_port, "GET", "/review", timeout=10)[1]
+            self.ui_review = http_json(self.desk_port, "GET", "/api/ui/review", timeout=10)[1]
+        except Exception as e:  # noqa: BLE001
+            self.review = {"error": str(e)}
+
     def collect_fakes(self) -> None:
         try:
             self.outbox = http_json(self.fakes_port, "GET", "/fake/outbox", timeout=5)[1]
@@ -410,7 +444,9 @@ class Round:
             rec["assert"] = None
             return
         rec["assert"] = self.assert_all(rec, persons)
+        rec["classes"] = self.classify(rec, persons)
         rec["checker"] = self.run_checker()
+        rec["checker_allow_unknown"] = self.run_checker(extra=["--max-unknown", "100000"], tag="allow")
 
     def assert_all(self, rec: dict, persons: list[dict]) -> dict:
         res: dict = {"a1_no_double": None, "a2_mail_le_1": None, "a3_no_lost": None, "notes": []}
@@ -486,7 +522,53 @@ class Round:
             res["notes"].append("desk never became idle inside the round budget")
         return res
 
-    def run_checker(self) -> dict:
+    def classify(self, rec: dict, persons: list[dict]) -> dict:
+        """A = promise of the documents broken, B = documented non-guarantee of blind mode, C = undocumented."""
+        out: dict = {"A": [], "B": [], "C": [], "unknown_n": 0, "unknown_visible": 0, "mails_per_lead": {}}
+        try:
+            conn = sqlite3.connect(f"file:{self.book}?mode=ro", uri=True)
+            leads = conn.execute("SELECT lead_id, email_key FROM leads").fetchall()
+            fus = {lid: (st, err) for lid, st, err in conn.execute("SELECT lead_id, state, last_error FROM followups")}
+            conn.close()
+        except sqlite3.Error as e:
+            out["A"].append(f"book unreadable: {e}")
+            return out
+        email_of = dict(leads)
+        mails = Counter(m["to"].strip().lower() for m in self.outbox.get("messages", []))
+        shown = set()
+        for it in (self.review if isinstance(self.review, list) else []):
+            if it.get("kind") == "unknown":
+                shown.add(str(it.get("lead_id")))
+        ui_txt = json.dumps(self.ui_review) if self.ui_review is not None else ""
+        if not isinstance(self.review, list):
+            out["A"].append(f"/review not readable: {str(self.review)[:200]}")
+        out["mails_per_lead"] = dict(Counter(mails.get(e, 0) for e in email_of.values()))
+        for lid, em in email_of.items():
+            st, err = fus.get(lid, (None, None))
+            m = mails.get(em, 0)
+            if m > 1:
+                out["A"].append(f"{lid} ({em}): {m} mails from the desk alone (state {st}/{err})")
+            if st == "unknown":
+                out["unknown_n"] += 1
+                vis = lid in shown
+                vis_ui = lid in ui_txt
+                out["unknown_visible"] += 1 if vis else 0
+                if not vis:
+                    out["A"].append(f"{lid}: unknown follow-up NOT listed in GET /review (ui lists it: {vis_ui})")
+                if err in ("ambiguous_prior", "ambiguous") and m <= 1:
+                    out["B"].append(f"{lid}: unknown/{err}, {m} mail(s)")
+                else:
+                    out["C"].append(f"{lid}: unknown/{err}, {m} mail(s)")
+            elif st == "sent":
+                if m == 0:
+                    out["A"].append(f"{lid}: state sent but 0 mails in the fake outbox")
+            elif st == "failed":
+                out["C"].append(f"{lid}: failed/{err}, {m} mail(s)")
+            else:
+                out["A"].append(f"{lid}: follow-up ended {st} ({err}) after idle; {m} mail(s)")
+        return out
+
+    def run_checker(self, extra: list[str] | None = None, tag: str = "main") -> dict:
         d = self.dir
         env = {k: v for k, v in os.environ.items() if k in ("PATH", "HOME", "LANG")}
         env["PYTHONPATH"] = "src:."
@@ -506,16 +588,17 @@ class Round:
             str(d / "model.jsonl"),
             "--no-require-comparable",
             "--json",
-            str(d / "checker.json"),
+            str(d / ("checker.json" if tag == "main" else f"checker-{tag}.json")),
+            *(extra or []),
         ]
         try:
             p = subprocess.run(cmd, cwd=self.a.base, env=env, capture_output=True, text=True, timeout=60)  # noqa: S603
         except subprocess.TimeoutExpired:
             return {"exit": "timeout"}
-        (d / "checker.txt").write_text(p.stdout + "\n--stderr--\n" + p.stderr)
+        (d / ("checker.txt" if tag == "main" else f"checker-{tag}.txt")).write_text(p.stdout + "\n--stderr--\n" + p.stderr)
         failed: list[str] = []
         try:
-            js = json.loads((d / "checker.json").read_text())
+            js = json.loads((d / ("checker.json" if tag == "main" else f"checker-{tag}.json")).read_text())
             failed = [f"{c['id']}:{c['name']} -> {c['detail']} :: {c['offenders']}" for c in js["checks"] if not c["ok"]]
         except (OSError, ValueError, KeyError):
             pass
@@ -529,8 +612,9 @@ def run(a: argparse.Namespace) -> None:
     raw = Path(a.evidence_raw)
     raw.mkdir(parents=True, exist_ok=True)
     PID_FILE = logs / "pids.txt"
+    tag = "q3c" + ("-legacy" if a.legacy else "")
     out = logs / "rounds.jsonl"
-    progress = raw / "progress-Q3.txt"
+    progress = raw / "progress-Q3c.txt"
     deadline = None
     if a.deadline_utc:
         hh, mm = map(int, a.deadline_utc.split(":"))
@@ -538,7 +622,7 @@ def run(a: argparse.Namespace) -> None:
     viol = hangs = done = 0
     last_snap = time.monotonic()
     with open(progress, "a") as f:
-        f.write(f"Q3 soak start UTC {now_utc()} IST {now_ist()} rounds={a.rounds} master_seed={a.master_seed}\n")
+        f.write(f"Q3c soak start UTC {now_utc()} IST {now_ist()} rounds={a.rounds} master_seed={a.master_seed} outbox={a.outbox} legacy={a.legacy}\n")
     for n in range(a.start_round, a.start_round + a.rounds):
         if deadline and dt.datetime.now(dt.timezone.utc) >= deadline:
             with open(progress, "a") as f:
@@ -551,10 +635,10 @@ def run(a: argparse.Namespace) -> None:
             rec = {"round": n, "seed": rnd.seed, "harness_error": f"{type(e).__name__}: {e}"}
             rnd.stop_all()
         asr = rec.get("assert") or {}
-        bad = (
-            asr
-            and not (asr.get("a1_no_double") and asr.get("a2_mail_le_1") and asr.get("a3_no_lost"))
-        ) or (rec.get("checker", {}).get("exit") not in (0, None))
+        cl = rec.get("classes") or {}
+        bad = bool(cl.get("A") or cl.get("C")) or (
+            asr and not (asr.get("a1_no_double") and asr.get("a2_mail_le_1") and asr.get("a3_no_lost"))
+        ) or (rec.get("checker_allow_unknown", {}).get("exit") not in (0, None))
         rec["violation"] = bool(bad)
         rec["end_utc"] = now_utc()
         with open(out, "a") as f:
@@ -568,11 +652,11 @@ def run(a: argparse.Namespace) -> None:
             with open(progress, "a") as f:
                 f.write(f"UTC {now_utc()} IST {now_ist()} rounds_done={done} (last {n}) violations={viol} hangs={hangs}\n")
         if time.monotonic() - last_snap >= 600:
-            shutil.copy(out, raw / f"q3-rounds-partial-{dt.datetime.now(dt.timezone.utc):%H%M}.jsonl")
+            shutil.copy(out, raw / f"q3c-{tag}-rounds-partial-{dt.datetime.now(dt.timezone.utc):%H%M}.jsonl")
             last_snap = time.monotonic()
-    shutil.copy(out, raw / "q3-rounds.jsonl")
+    shutil.copy(out, raw / f"{tag}-rounds.jsonl")
     with open(progress, "a") as f:
-        f.write(f"Q3 soak end UTC {now_utc()} IST {now_ist()} rounds_done={done} violations={viol} hangs={hangs}\n")
+        f.write(f"Q3c soak end UTC {now_utc()} IST {now_ist()} rounds_done={done} violations={viol} hangs={hangs}\n")
 
 
 def report(a: argparse.Namespace) -> None:
@@ -599,9 +683,10 @@ if __name__ == "__main__":
     r.add_argument("--evidence-raw", required=True)
     r.add_argument("--rounds", type=int, default=300)
     r.add_argument("--start-round", type=int, default=1)
-    r.add_argument("--master-seed", type=int, default=20261113)
+    r.add_argument("--master-seed", type=int, default=20261115)
     r.add_argument("--deadline-utc", default=None)
-    r.add_argument("--outbox", choices=["keyed", "blind"], default="keyed")
+    r.add_argument("--outbox", choices=["keyed", "blind"], default="blind")
+    r.add_argument("--legacy", action="store_true", help="Q3 kill plan: no extra leads, no re-arm (same seeds as Q3)")
     p = sub.add_parser("report")
     p.add_argument("--logs", required=True)
     p.add_argument("--out", required=True)

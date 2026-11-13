@@ -1,0 +1,39 @@
+{
+ "rows": {
+  "leads": 20000,
+  "receipts": 20000,
+  "followups": 20000,
+  "distinct_email_keys": 20000,
+  "expected_unique": 20000
+ },
+ "campaign": "c",
+ "seed": 1303,
+ "replays": 20000,
+ "first_sends": 20000,
+ "wall_s": 73.6,
+ "violations": 0,
+ "counterexamples_total": 0,
+ "counterexamples_listed": 0,
+ "label_counts": {},
+ "counterexamples": [],
+ "kinds": {
+  "same-object": 7964,
+  "reordered-json-process": 6096,
+  "same-id-other-body": 1920,
+  "http-reordered-ws": 4020
+ },
+ "tally": {
+  "same-object": {
+   "ok": 7964
+  },
+  "http-reordered-ws": {
+   "ok": 4020
+  },
+  "reordered-json-process": {
+   "ok": 6096
+  },
+  "same-id-other-body": {
+   "ok": 1920
+  }
+ }
+}

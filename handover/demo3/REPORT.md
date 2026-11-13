@@ -1,5 +1,24 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:12Z / 18:42 IST  HEARTBEAT 50 (B3c reported; CPU idle 0 percent: nothing new)
+**Idle (`vmstat`, 13:07Z): 0 percent** (the machine is saturated by Q1's xdist run, E3, E4b, B1b, B2, Q3c, Q10, Q2b, Q8b, Q6b). Throttle rule: I start no new agents. To get the r3 proof without a new agent I asked the running evidence runner E4b to run its proof on the r3 patch as well after r2.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof | 12:31Z | ~13:25Z | xdist run 2 running | running |
+| Q2b | fuzz new seeds | 12:49Z | ~14:00Z | running | running |
+| Q6b | cold reader tests/real-services docs | 12:37Z | ~13:25Z | running | running |
+| Q8b | mutation check identity + claim logic | 12:49Z | ~13:50Z | running | running |
+| Q3c | blind-mail soak | 13:03Z | ~14:00Z | setting up | running |
+| Q10 | flake chase (PR #12 `E` marks) | 13:04Z | ~13:40Z | running | running |
+| B2 | BUILDER lane3-fix-2 | 12:43Z | ~13:30Z | patched family run | running |
+| B1b | BUILDER lane3-fix-1 round 2 | 12:58Z | ~13:35Z | patch and notes written; final report pending | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 round-1 suites | 12:52Z | ~13:25Z | running | running |
+| E4b | EVIDENCE RUNNER independent proof of lane3-fix-3 r2, then r3 | 13:01Z | ~13:35Z | running | running |
+| B3c | BUILDER lane3-fix-3 r3 (the 4 minors) | 13:06Z | done 13:10Z | **reported** | closed |
+**B3c RESULT (lane3-fix-3 r3, tests only; evidence/lane3-fix-3-r3-notes.md; patch evidence/lane3-fix-3-r3.patch, sha256 b272b9a88b6daa96dc76cc7ed150552c1d16ee26b8aee051ed374db88db4d4ed):** no failures; all four MINOR findings of the fresh review applied: name limit now tested through `_new_name` directly (with an "é" case that also kills a byte-count mutant), docstring lists every mutant id and says B1 and B2 are the author's own, skips use `sys.platform == "win32"`, patched-commonpath test described as the second route. New file alone 15 passed, 1 skipped; with tests/test_path_confinement.py 393 passed, 2 skipped (same as r2). Mutants M03, M08, M11, M15, M20, B1 and B2 each FAIL the new file alone and were restored. Neighbour (a), `_roots` realpath -> abspath: the OLD test `test_explicit_roots_are_resolved_so_a_link_as_a_root_works` already kills it, so nothing added; neighbour (b) (normcase, Windows only) not added. `git apply --check` passes on a fresh f3c39cf8, after the claims stack and after lane3-fix-1. The agent re-made the mutants as one-line edits because Q8's mutant files were not scripted (so E4b's independent re-proof of r3 matters).
+
+ASK: none new (heartbeat 49 asks stand).
+
 ## 2026-11-13 13:10Z / 18:40 IST  HEARTBEAT 49 (Q3b final; REV-3b round 2 saved; B3c, Q3c, Q10 started)
 **Idle (`vmstat`, 13:04Z): user 21, system 13, idle 47, IO-wait 19, free RAM about 9 GB** (it swings between 3 and 55 percent as runs start and end; I start agents only when a measurement shows above 30 percent).
 | id | what it does | since | expected end | real progress now | state |

@@ -1,0 +1,905 @@
+{
+ "db_leads": 13755,
+ "db_receipts": 108000,
+ "campaign": "a",
+ "seed": 2101,
+ "bases": 2400,
+ "variants_sent": 105600,
+ "requests_sent": 108000,
+ "wall_s": 119.1,
+ "violations": 0,
+ "counterexamples_total": 867,
+ "counterexamples_listed": 50,
+ "label_counts": {
+  "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 867
+ },
+ "counterexamples": [
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:upper",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'ISTANBUL29741X27@A1.EXAMPLE.COM'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:capitalize",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'Istanbul29741x27@a1.example.com'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:swapcase",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'ISTANBUL29741X27@A1.EXAMPLE.COM'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:title",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'Istanbul29741X27@A1.Example.Com'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'IStaNBuL29741X27@a1.exAMpLe.COM'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'\\u2009\\u1680\\u3000ISTAnbUL29741X27@A1.ExAmple.cOm\\u202f\\u2003\\xa0'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'\\xa0IStANBuL29741X27@A1.EXaMplE.coM\\u1680\\u1680'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'IstanBul29741X27@A1.EXAmPle.COm\\u2029\\u1680\\u202f'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'IsTAnBuL29741X27@a1.EXAmPLE.coM\\u2003'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul29741x27@a1.example.com'",
+   "variant": "'\\u2028\\u202f\\u1680ISTAnBul29741X27@a1.EXAmPlE.cOm\\u2029 \\u1680'",
+   "variant_key": "'istanbul29741x27@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L0075d09e4bfc",
+   "base_lead_id": "L917de15cce83"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:upper",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'ISTA.NBUL31609X89@CORP-X.EXAMPLE.TEST'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:capitalize",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'Ista.nbul31609x89@corp-x.example.test'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:swapcase",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'ISTA.NBUL31609X89@CORP-X.EXAMPLE.TEST'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:title",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'Ista.Nbul31609X89@Corp-X.Example.Test'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'Ista.NBuL31609X89@CorP-x.ExAMplE.teSt'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'IsTa.NBul31609X89@COrP-x.EXAmpLe.test'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'Ista.NbuL31609X89@corp-x.ExAmPle.TeSt\\u2029\\u202f\\xa0'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'\\u1680 \\u2003IsTa.nBUL31609X89@CoRp-x.exaMPlE.teST \\xa0 '",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'\\u2003\\u2003\\u2009IstA.NbuL31609x89@coRP-X.exaMplE.TEsT'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'\\u1680\\u2009 IStA.NBuL31609x89@Corp-x.ExAMPLe.tESt\\u2009'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'ISta.NbuL31609x89@coRp-x.EXAmpLE.teST\\xa0\\u2029'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'\\u2003IStA.NBuL31609X89@cOrp-X.eXamplE.test\\u3000'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131sta.nbul31609x89@corp-x.example.test'",
+   "variant": "'ISTa.nBul31609X89@COrp-X.EXaMPlE.tesT'",
+   "variant_key": "'ista.nbul31609x89@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L8929d12f0c01",
+   "base_lead_id": "Lae4879b193b8"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:upper",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'STRASSE37630X93@EXAMPLE.TEST'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:swapcase",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'STRASSE37630X93@EXAMPLE.TEST'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'stRASSe37630x93@EXAMPlE.test'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'StraSSE37630X93@EXAMPLe.tEST'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'stRASSE37630X93@exaMpLe.TeSt'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'\\u1680\\u2009sTRaSSe37630x93@eXAmPLe.teST '",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'\\u3000stRASSe37630x93@exAMPLe.TESt'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'\\u3000stRaSSE37630X93@eXAmPle.test'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'\\u202f\\u3000stRASSE37630x93@EXaMPLE.tesT\\xa0\\u3000 '",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'stra\\xdfe37630x93@example.test'",
+   "variant": "'\\u3000\\u202f\\u2028strASSE37630x93@exAmpLE.tesT\\u202f\\u202f\\u2003'",
+   "variant_key": "'strasse37630x93@example.test'",
+   "outcome": "different-identity",
+   "lead_id": "L896560b3c38b",
+   "base_lead_id": "L1fd3de635764"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:upper",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'ISTANBUL66596X96@CORP-X.EXAMPLE.TEST'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:capitalize",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'Istanbul66596x96@corp-x.example.test'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:swapcase",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'ISTANBUL66596X96@CORP-X.EXAMPLE.TEST'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:title",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'Istanbul66596X96@Corp-X.Example.Test'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'ISTaNbUL66596X96@corP-x.examPlE.test'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'IsTANbuL66596X96@Corp-x.examPle.TeSt\\u3000\\xa0\\xa0'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'\\u1680\\u1680IsTAnbul66596X96@CoRp-x.eXAmPlE.teST'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'\\u2029IsTaNBUl66596x96@corP-x.EXAMPLe.TesT\\u2028\\u2028'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'\\u0131stanbul66596x96@corp-x.example.test'",
+   "variant": "'\\u3000ISTanBUl66596x96@cORp-X.EXaMplE.TeSt\\u202f\\u2029\\u2029'",
+   "variant_key": "'istanbul66596x96@corp-x.example.test'",
+   "outcome": "different-identity",
+   "lead_id": "Ld76819584ce7",
+   "base_lead_id": "L0e5c4e5cdc62"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:upper",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'STR.ASSE45515X141@A1.EXAMPLE.COM'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:swapcase",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'STR.ASSE45515X141@A1.EXAMPLE.COM'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'sTr.ASSe45515x141@A1.eXAMpLe.CoM'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'sTR.ASSe45515x141@a1.EXAmple.COm'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case:random",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'STR.ASSe45515x141@a1.exAmPle.COM'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'STR.ASSE45515X141@A1.eXaMPLE.Com\\u2028\\u202f\\u1680'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'STR.ASSe45515x141@A1.eXAmPle.COM \\u2028'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  },
+  {
+   "label": "UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)",
+   "class": "case+pad",
+   "base": "'str.a\\xdfe45515x141@a1.example.com'",
+   "variant": "'\\u2009\\xa0\\u202fsTR.aSSe45515X141@a1.ExampLe.com\\u3000'",
+   "variant_key": "'str.asse45515x141@a1.example.com'",
+   "outcome": "different-identity",
+   "lead_id": "L37f116e694e7",
+   "base_lead_id": "L8bfd14f26f31"
+  }
+ ],
+ "tally": {
+  "case:upper": {
+   "same-identity": 2317,
+   "different-identity": 83
+  },
+  "case:capitalize": {
+   "same-identity": 2359,
+   "different-identity": 41
+  },
+  "case:swapcase": {
+   "same-identity": 2317,
+   "different-identity": 83
+  },
+  "case:title": {
+   "same-identity": 2359,
+   "different-identity": 41
+  },
+  "case:random": {
+   "same-identity": 7077,
+   "different-identity": 123
+  },
+  "case:domain-upper": {
+   "same-identity": 2400
+  },
+  "pad:ascii-space": {
+   "same-identity": 7200
+  },
+  "pad:unicode-space": {
+   "same-identity": 12000
+  },
+  "case+pad": {
+   "same-identity": 28304,
+   "different-identity": 496
+  },
+  "unicode:NFC": {
+   "same-identity": 2400
+  },
+  "unicode:NFD": {
+   "different-identity": 731,
+   "same-identity": 1669
+  },
+  "unicode:NFKC": {
+   "same-identity": 2364,
+   "different-identity": 36
+  },
+  "unicode:NFKD": {
+   "different-identity": 767,
+   "same-identity": 1633
+  },
+  "unicode:NFD+upper": {
+   "different-identity": 814,
+   "same-identity": 1586
+  },
+  "fullwidth": {
+   "different-identity": 2400
+  },
+  "zero-width": {
+   "review": 4800
+  },
+  "plus:add/replace": {
+   "different-identity": 2400
+  },
+  "plus:remove": {
+   "same-identity": 2039,
+   "different-identity": 361
+  },
+  "dot:insert": {
+   "different-identity": 2400
+  },
+  "dot:remove": {
+   "different-identity": 608,
+   "same-identity": 1792
+  },
+  "inner-space": {
+   "review": 2400
+  },
+  "space-around-at": {
+   "review": 2400
+  },
+  "homoglyph": {
+   "different-identity": 2320,
+   "same-identity": 80
+  },
+  "pad:tab-newline": {
+   "review": 2400
+  }
+ },
+ "doc_samples": {
+  "unicode:NFD": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'a\\u030as.elu84854x0@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'a\\u030as.elu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'nu\\u0301n\\u0303ezlu83318x1@example.com'",
+    "outcome": "different-identity",
+    "key": "'nu\\u0301n\\u0303ezlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'bj\\xf6rnmi67799x6@mail.example.test'",
+    "variant": "'bjo\\u0308rnmi67799x6@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'bjo\\u0308rnmi67799x6@mail.example.test'"
+   }
+  ],
+  "unicode:NFKD": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'a\\u030as.elu84854x0@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'a\\u030as.elu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'nu\\u0301n\\u0303ezlu83318x1@example.com'",
+    "outcome": "different-identity",
+    "key": "'nu\\u0301n\\u0303ezlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'bj\\xf6rnmi67799x6@mail.example.test'",
+    "variant": "'bjo\\u0308rnmi67799x6@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'bjo\\u0308rnmi67799x6@mail.example.test'"
+   }
+  ],
+  "unicode:NFD+upper": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'A\\u030aS.ELU84854X0@CORP-X.EXAMPLE.TEST'",
+    "outcome": "different-identity",
+    "key": "'a\\u030as.elu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'NU\\u0301N\\u0303EZLU83318X1@EXAMPLE.COM'",
+    "outcome": "different-identity",
+    "key": "'nu\\u0301n\\u0303ezlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'bj\\xf6rnmi67799x6@mail.example.test'",
+    "variant": "'BJO\\u0308RNMI67799X6@MAIL.EXAMPLE.TEST'",
+    "outcome": "different-identity",
+    "key": "'bjo\\u0308rnmi67799x6@mail.example.test'"
+   }
+  ],
+  "fullwidth": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5\\uff53.\\uff45\\uff4c\\uff55\\uff18\\uff14\\uff18\\uff15\\uff14\\uff58\\uff10@\\uff43\\uff4f\\uff52\\uff50-\\uff58.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff54\\uff45\\uff53\\uff54'",
+    "outcome": "different-identity",
+    "key": "'\\xe5\\uff53.\\uff45\\uff4c\\uff55\\uff18\\uff14\\uff18\\uff15\\uff14\\uff58\\uff10@\\uff43\\uff4f\\uff52\\uff50-\\uff58.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff54\\uff45\\uff53\\uff54'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'\\uff4e\\xfa\\xf1\\uff45\\uff5a\\uff4c\\uff55\\uff18\\uff13\\uff13\\uff11\\uff18\\uff58\\uff11@\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'",
+    "outcome": "different-identity",
+    "key": "'\\uff4e\\xfa\\xf1\\uff45\\uff5a\\uff4c\\uff55\\uff18\\uff13\\uff13\\uff11\\uff18\\uff58\\uff11@\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff43\\uff4f\\uff4d'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'\\uff52\\uff4f\\uff4c\\uff55\\uff4c\\uff55\\uff4d\\uff49\\uff17\\uff19\\uff13\\uff17\\uff14\\uff58\\uff12@\\uff4d\\uff41\\uff49\\uff4c.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff54\\uff45\\uff53\\uff54'",
+    "outcome": "different-identity",
+    "key": "'\\uff52\\uff4f\\uff4c\\uff55\\uff4c\\uff55\\uff4d\\uff49\\uff17\\uff19\\uff13\\uff17\\uff14\\uff58\\uff12@\\uff4d\\uff41\\uff49\\uff4c.\\uff45\\uff58\\uff41\\uff4d\\uff50\\uff4c\\uff45.\\uff54\\uff45\\uff53\\uff54'"
+   }
+  ],
+  "zero-width": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.elu84854x0\\u2060@corp-x.example.test'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.elu8485\\u200c4x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa\\xf1ezlu83318x\\u200c1@example.com'"
+   }
+  ],
+  "plus:add/replace": [
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.elu84854x0+b@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'\\xe5s.elu84854x0+b@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa\\xf1ezlu83318x1+c@example.com'",
+    "outcome": "different-identity",
+    "key": "'n\\xfa\\xf1ezlu83318x1+c@example.com'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'rolulumi79374x2+c@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'rolulumi79374x2+c@mail.example.test'"
+   }
+  ],
+  "dot:insert": [
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s..elu84854x0@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'\\xe5s..elu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa.\\xf1ezlu83318x1@example.com'",
+    "outcome": "different-identity",
+    "key": "'n\\xfa.\\xf1ezlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'rolu.lumi79374x2@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'rolu.lumi79374x2@mail.example.test'"
+   }
+  ],
+  "dot:remove": [
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5selu84854x0@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'\\xe5selu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'lu.po+tag28886x12@corp-x.example.test'",
+    "variant": "'lupo+tag28886x12@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'lupo+tag28886x12@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'n\\xfa\\xf1.ezbe73556x14@example.test'",
+    "variant": "'n\\xfa\\xf1ezbe73556x14@example.test'",
+    "outcome": "different-identity",
+    "key": "'n\\xfa\\xf1ezbe73556x14@example.test'"
+   }
+  ],
+  "inner-space": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.elu8 4854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa\\xf1e zlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'rolulumi79 374x2@mail.example.test'"
+   }
+  ],
+  "space-around-at": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.elu84854x0 @ corp-x.example.test'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa\\xf1ezlu83318x1 @ example.com'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'rolulumi79374x2 @ mail.example.test'"
+   }
+  ],
+  "homoglyph": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\xe5s.\\u0435lu84854x0@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'\\xe5s.\\u0435lu84854x0@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'n\\xfa\\xf1\\u0435zlu83318x1@example.com'",
+    "outcome": "different-identity",
+    "key": "'n\\xfa\\xf1\\u0435zlu83318x1@example.com'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'r\\u043elulumi79374x2@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'r\\u043elulumi79374x2@mail.example.test'"
+   }
+  ],
+  "pad:tab-newline": [
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'\\xe5s.elu84854x0@corp-x.example.test'",
+    "variant": "'\\t\\xe5s.elu84854x0@corp-x.example.test\\n'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'n\\xfa\\xf1ezlu83318x1@example.com'",
+    "variant": "'\\tn\\xfa\\xf1ezlu83318x1@example.com\\n'"
+   },
+   {
+    "label": "documented as rejected at identity.py:97 (any Unicode C* character in the email) / identity.py:115-116 (control char) / identity.py:20 (no whitespace inside)",
+    "base": "'rolulumi79374x2@mail.example.test'",
+    "variant": "'\\trolulumi79374x2@mail.example.test\\n'"
+   }
+  ],
+  "plus:remove": [
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'podozire+x120467x5@corp-x.example.test'",
+    "variant": "'podozire@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'podozire@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'lu.po+tag28886x12@corp-x.example.test'",
+    "variant": "'lu.po@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'lu.po@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28",
+    "base": "'roro+x156753x15@mail.example.test'",
+    "variant": "'roro@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'roro@mail.example.test'"
+   }
+  ],
+  "unicode:NFKC": [
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\u01c6ana+sales36536x17@mail.example.test'",
+    "variant": "'d\\u017eana+sales36536x17@mail.example.test'",
+    "outcome": "different-identity",
+    "key": "'d\\u017eana+sales36536x17@mail.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\u01c6ana+tag7683x22@corp-x.example.test'",
+    "variant": "'d\\u017eana+tag7683x22@corp-x.example.test'",
+    "outcome": "different-identity",
+    "key": "'d\\u017eana+tag7683x22@corp-x.example.test'"
+   },
+   {
+    "label": "documented as different at README.md:28 + identity.py:44-46 (trim, lower-case, nothing more)",
+    "base": "'\\u01c6ana+news60788x90@sub.example.com'",
+    "variant": "'d\\u017eana+news60788x90@sub.example.com'",
+    "outcome": "different-identity",
+    "key": "'d\\u017eana+news60788x90@sub.example.com'"
+   }
+  ]
+ }
+}

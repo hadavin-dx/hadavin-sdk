@@ -84,3 +84,4 @@ REV-3b | reported 13:08Z closed: 0 blocker 0 major 4 minor (saved review-lane3-f
 B3c | agent a7bcc5..: lane3-fix-3 r3 minors | 13:06Z | ~13:30Z stop 13:50Z | running
 Q3c | agent ab9f5d..: blind-mail soak | 13:03Z | ~14:00Z stop 14:20Z | running
 Q10 | agent a38c40..: flake chase PR12 E marks | 13:04Z | ~13:40Z stop 14:00Z | running
+B3c | reported 13:10Z closed: lane3-fix-3-r3.patch sha b272b9a8
