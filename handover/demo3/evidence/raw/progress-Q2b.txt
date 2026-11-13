@@ -42,3 +42,7 @@
 2026-11-13 13:16:18Z UTC / 18:46:18 IST  seed 7005 campaign a START n=2400
 2026-11-13 13:18:11Z UTC / 18:48:11 IST  seed 7005 campaign a END rc=0 {"campaign": "a", "seed": 7005, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 112.4, "violations": 0, "counterexamples_total": 675, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 675}} 
 2026-11-13 13:18:11Z UTC / 18:48:11 IST  seed 7005 campaign b START n=40000
+2026-11-13 13:19:33Z UTC / 18:49:33 IST  seed 7005 campaign b END rc=0 {"campaign": "b", "seed": 7005, "pairs": 40000, "requests_sent": 80000, "wall_s": 82.4, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
+2026-11-13 13:19:33Z UTC / 18:49:33 IST  seed 7005 campaign c START n=5000
+2026-11-13 13:19:51Z UTC / 18:49:51 IST  seed 7005 campaign c END rc=0 {"campaign": "c", "seed": 7005, "replays": 5000, "wall_s": 17.4, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
+2026-11-13 13:19:51Z UTC / 18:49:51 IST  seed 7005 campaign d START n=1200
