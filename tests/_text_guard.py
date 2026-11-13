@@ -1,3 +1,6 @@
+# The mutants in tests/stage_mutants.py quote this file text exactly, so the file keeps its layout (a formatter would
+# break every quoted line). The check of the layout is the mutant list itself: a quoted line that no longer matches fails.
+# fmt: off
 """The message-site guard of Q8a-1 (round 12, Issue 2): a value that a person or a log can read must be PROVEN to be
 written in the code, or the site must be in the allowance table with a true reason.
 
@@ -6,7 +9,8 @@ Before round 12 the guard was a list of spellings that mean "text from a configu
 message text it asks "is every inserted value proven code-owned?". A value is code-owned when it is
 
 * a literal (text, number, bytes), or an UPPER_CASE constant, or a class name (`type(x).__name__`);
-* a number: `len(x)`, `int(x)`, arithmetic, a loop counter (`range`, the first part of `enumerate`), a name or an
+* a number: `len(x)`, arithmetic, `int(x)` or `float(x)` (only when `x` is itself a number or a written value: `int` is a
+  pass-through, not a proof, so `int(text_from_a_file)` is a finding), a loop counter (`range`, the first part of `enumerate`), a name or an
   attribute that is annotated `int`, `float`, `bool` or `Literal[...]`;
 * the result of a filter that hides the text (`shown_name`, `_named`, `error_where` ...);
 * a name or attribute that is only ever bound to code-owned values (checked over the whole scanned tree: every
@@ -40,6 +44,7 @@ FILTERS = frozenset(
         "shown_name", "_named", "shown_names", "digest_prefix", "error_where", "word_like", "is_digest", "status_text", "shown_id",
     }
 )  # fmt: skip
+FILTER_MODULE = "errors.py"  # the module that defines the package's text filters (Round 16, Issue 3c)
 LITERAL_BUILDERS = frozenset(
     {"frozenset", "tuple", "set", "list", "dict", "sorted", "str", "int", "float", "bytes", "len", "compile",
      "MappingProxyType", "Template", "Literal", "Decimal", "re", "escape", "range", "max", "min", "sum"}
@@ -56,7 +61,9 @@ ERROR_SUFFIXES = (
     "StaleState",
 )
 # `.exception(...)`, `traceback.print_exc()` and `exc_info=True` print the whole chain, including the library text
-CHAIN_PRINTERS = frozenset({"print_exc", "format_exc", "print_exception", "format_exception"})
+CHAIN_PRINTERS = frozenset(
+    {"print_exc", "format_exc", "print_exception", "format_exception", "format_exception_only", "TracebackException", "from_exception", "print_last"}
+)
 MUTATORS = frozenset(
     {"update", "append", "extend", "add", "insert", "pop", "popitem", "clear", "remove", "discard", "setdefault", "sort", "reverse"}
 )  # fmt: skip
@@ -198,6 +205,9 @@ class Analysis:
         self.attr_unsafe: set[str] = set()
         self.attr_number: set[str] = set()
         self.attr_safe: set[str] = set()
+        self._with_cache: dict = {}
+        self.cls_attrs: dict[str, set[str]] = {}  # class name -> attribute names it assigns or declares
+        self.cls_bases: dict[str, list[str]] = {}  # class name -> names of its bases
         self._envs: dict[int, frozenset[str]] = {}
         self.changed_in_function: set[str] = (
             set()
@@ -223,7 +233,9 @@ class Analysis:
             self._read_imports(module, tree)
         names = {d["name"] for d in self.defs}
         classes = {d["cls"] for d in self.defs if d["cls"]}
-        for tree in self.trees.values():
+        for module, tree in self.trees.items():
+            if module.startswith("~callers/"):
+                continue
             for n in ast.walk(tree):
                 # a function used as a value (a callback, a decorator argument) has callers we cannot see
                 if (
@@ -304,6 +316,8 @@ class Analysis:
         binds a written value, nothing changes it (`NAME[k] = v`, `NAME.update(...)`, `NAME += ...`, `global NAME`), and
         it is not imported from outside the tree. `_LOADED = {}` filled at run time, and `_LOADED.get(k)`, are not."""
         for module, tree in self.trees.items():
+            if module.startswith("~callers/"):
+                continue
             for n in ast.walk(tree):
                 self._note_changed(n)
                 if (
@@ -403,6 +417,92 @@ class Analysis:
         ):
             self.changed_in_function.add(root.id)
 
+    def _note_class_attr(self, node, scope, attr):
+        """`self.attr = value` inside a method of class C (or a class-body assignment) makes `attr` an attribute of C."""
+        cls = node.name if isinstance(node, ast.ClassDef) else None
+        if cls is None:
+            fn = scope
+            while fn is not None and not isinstance(fn, ast.Module):
+                if isinstance(fn, FUNCS):
+                    d = next((x for x in self.defs if x["node"] is fn), None)
+                    if d and d["cls"]:
+                        cls = d["cls"]
+                        break
+                fn = self.scope_of.get(id(fn))
+        if cls:
+            self.cls_attrs.setdefault(cls, set()).add(attr)
+
+    def _enclosing_def(self, node):
+        fn = self.scope_of.get(id(node))
+        while fn is not None and not isinstance(fn, ast.Module):
+            if isinstance(fn, FUNCS):
+                return fn
+            fn = self.scope_of.get(id(fn))
+        return None
+
+    def _enclosing_class(self, node):
+        fn = self.scope_of.get(id(node))
+        while fn is not None and not isinstance(fn, ast.Module):
+            if isinstance(fn, FUNCS):
+                d = next((x for x in self.defs if x["node"] is fn), None)
+                if d and d["cls"]:
+                    return d["cls"]
+            fn = self.scope_of.get(id(fn))
+        return None
+
+    def _class_has_attr(self, cls, attr, seen=None) -> bool:
+        seen = seen or set()
+        if cls in seen:
+            return False
+        seen.add(cls)
+        return attr in self.cls_attrs.get(cls, ()) or any(
+            self._class_has_attr(b, attr, seen) for b in self.cls_bases.get(cls, ())
+        )
+
+    def _library_receiver(self, e) -> bool:
+        """Round 16 (Issue 3a): the receiver of an attribute is the error object of an `except`, text made from one, a
+        name bound by `with`, or an imported name: an object of a library, whose attributes the package does not write."""
+        root = e.value
+        while isinstance(root, (ast.Attribute, ast.Subscript, ast.Call)):
+            root = root.func if isinstance(root, ast.Call) else root.value
+        if not isinstance(root, ast.Name):
+            return False
+        scope = self.scope_of.get(id(e))
+        if root.id in self.taint_of(scope if scope is not None else next(iter(self.trees.values()))):
+            return True
+        module = self.module_of.get(id(e))
+        if root.id in self.imports.get(module, {}):
+            return True
+        return self._bound_by_with(scope, root.id)
+
+    def _bound_by_with(self, scope, name) -> bool:
+        key = ("with", id(scope))
+        if key not in self._with_cache:
+            names: set[str] = set()
+            if scope is not None:
+                for n in _own(scope):
+                    if isinstance(n, (ast.With, ast.AsyncWith)):
+                        for it in n.items:
+                            if it.optional_vars is not None:
+                                names.update(nm.id for nm in _targets(it.optional_vars))
+            self._with_cache[key] = names
+        return name in self._with_cache[key]
+
+    def _attr_read_ok(self, e) -> bool:
+        """An attribute is code-owned when the package writes it only with code-owned values (`attr_safe`) or declares
+        it a number, the receiver is not an object of a library, and a read through `self` is of an attribute that the
+        class (or a base of it in the package) writes: the class's own `self.msg` is not proven by another class's
+        `self.msg = "literal"` (Round 16, Issue 3a)."""
+        a = e.attr
+        if not (a in self.attr_safe or (a in self.attr_number and a not in self.attr_unsafe)):
+            return False
+        if self._library_receiver(e):
+            return False
+        if isinstance(e.value, ast.Name) and e.value.id in {"self", "cls"}:
+            cls = self._enclosing_class(e)
+            return cls is not None and self._class_has_attr(cls, a)
+        return True
+
     def _upper_ok(self, name, node) -> bool:
         """An UPPER_CASE name that is bound only to written values in the tree (see `_scan_upper`)."""
         module = self.module_of.get(id(node))
@@ -415,6 +515,12 @@ class Analysis:
             self.parent[id(ch)] = node
             self.scope_of[id(ch)] = scope
             self.module_of[id(ch)] = module
+            if module.startswith("~callers/"):
+                # a module outside the package (a demo): only its calls are read, to see what it passes to a parameter
+                if isinstance(ch, ast.Call):
+                    self.calls.append((module, ch, scope))
+                self._walk(module, ch, ch if isinstance(ch, (*FUNCS, ast.ClassDef)) else scope, None)
+                continue
             if isinstance(ch, FUNCS):
                 params = [a.arg for a in [*ch.args.posonlyargs, *ch.args.args]]
                 is_method = isinstance(node, ast.ClassDef) and params[:1] in (["self"], ["cls"])
@@ -429,6 +535,11 @@ class Analysis:
                 )
                 self._walk(module, ch, ch, None)
             elif isinstance(ch, ast.ClassDef):
+                self.cls_bases.setdefault(ch.name, []).extend(
+                    b.id if isinstance(b, ast.Name) else b.attr
+                    for b in ch.bases
+                    if isinstance(b, (ast.Name, ast.Attribute))
+                )
                 self._walk(module, ch, ch, ch.name)
             else:
                 if isinstance(ch, ast.Call):
@@ -437,6 +548,7 @@ class Analysis:
                     for t in ch.targets:
                         for a in self._attr_targets(t):
                             self.attr_assigns.setdefault(a, []).append((ch.value, scope))
+                            self._note_class_attr(node, scope, a)
                 elif (
                     isinstance(ch, ast.AugAssign)
                     and isinstance(ch.target, ast.Attribute)
@@ -444,10 +556,12 @@ class Analysis:
                     and isinstance(ch.target, ast.Attribute)
                 ):
                     self.attr_assigns.setdefault(ch.target.attr, []).append((ch.value, scope))
+                    self._note_class_attr(node, scope, ch.target.attr)
                 elif isinstance(ch, ast.AnnAssign) and isinstance(ch.target, ast.Name):
                     if isinstance(
                         node, ast.ClassDef
                     ):  # a class field: filled from outside unless a number
+                        self.cls_attrs.setdefault(node.name, set()).add(ch.target.id)
                         if _is_number_annotation(ch.annotation):
                             self.attr_number.add(ch.target.id)
                         else:
@@ -456,6 +570,7 @@ class Analysis:
                     for t in ch.targets:
                         for nm in _targets(t):
                             self.attr_assigns.setdefault(nm.id, []).append((ch.value, scope))
+                            self.cls_attrs.setdefault(node.name, set()).add(nm.id)
                 if isinstance(ch, ast.Call) and _adds_to(ch):
                     root = _root(ch.func.value)
                     if isinstance(root, ast.Attribute):
@@ -749,8 +864,12 @@ class Analysis:
             for arg in [*a.posonlyargs, *a.args, *a.kwonlyargs, a.vararg, a.kwarg]:
                 if arg is None:
                     continue
-                if _is_number_annotation(arg.annotation) or (
-                    idx is not None and (idx, arg.arg) in self.psafe
+                # Round 16 (Issue 2, 3): a parameter annotated as a number is trusted only when every caller in the
+                # scanned tree passes a number (or a proven value); with no caller in the tree the annotation is all
+                # there is to read (an entry point called from outside)
+                if (idx is not None and (idx, arg.arg) in self.psafe) or (
+                    _is_number_annotation(arg.annotation)
+                    and (idx is None or self._callers_pass_numbers(idx, arg.arg))
                 ):
                     bindings.setdefault(arg.arg, [])
                 else:
@@ -779,8 +898,11 @@ class Analysis:
                     if isinstance(t, ast.Subscript) and isinstance(_root(t), ast.Name):
                         bindings.setdefault(_root(t).id, []).append(("assign", n.value))
             elif isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
-                if _is_number_annotation(n.annotation):
+                if _is_number_annotation(n.annotation) and n.value is None:
                     bindings.setdefault(n.target.id, [])
+                elif _is_number_annotation(n.annotation):
+                    # the annotation alone proves nothing: the value must be a number (round 16)
+                    bindings.setdefault(n.target.id, []).append(("number", n.value))
                 elif n.value is not None:
                     bindings.setdefault(n.target.id, []).append(("assign", n.value))
                 else:
@@ -823,6 +945,8 @@ class Analysis:
                 for kind, val in bindings[name]:
                     if kind == "for":
                         ok = self._for_binds(val, name, frozenset(env))
+                    elif kind == "number":
+                        ok = self.number_valued(val, frozenset(env))
                     else:
                         ok = self.safe(val, frozenset(env))
                     if not ok:
@@ -831,6 +955,75 @@ class Analysis:
                     env.discard(name)
                     changed = True
         return frozenset(env)
+
+    # ---- Round 16: values that are numbers by their form ----------------------------------------------------------
+    _NUMBER_METHODS = frozenset({"find", "rfind", "index", "rindex", "count", "total_seconds"})
+    _NUMBER_CALLS = frozenset({"len", "abs", "round", "ord", "hash", "id", "min", "max", "sum", "int", "float", "divmod"})
+
+    def number_valued(self, e, env) -> bool:
+        """True when the expression is a number whatever its operands hold: a number literal, a name proven code-owned or
+        annotated as a number, `len(x)`, arithmetic of numbers, `min`/`max`/`sum`/`abs`/`round`/`int`/`float` of numbers,
+        a call of a method that gives a position or a count (`find`, `index`, `count`)."""
+        if isinstance(e, ast.Constant):
+            return not isinstance(e.value, (str, bytes))
+        if isinstance(e, ast.Name):
+            return e.id in env
+        if isinstance(e, ast.Attribute):
+            return (
+                e.attr in self.attr_number
+                and e.attr not in self.attr_unsafe
+                and not self._library_receiver(e)
+            ) or self.safe(e, env)
+        if isinstance(e, ast.UnaryOp):
+            return self.number_valued(e.operand, env)
+        if isinstance(e, ast.BinOp) and not isinstance(e.op, ast.Mod):
+            return self.number_valued(e.left, env) and self.number_valued(e.right, env)
+        if isinstance(e, ast.BinOp):
+            return self.number_valued(e.left, env)
+        if isinstance(e, ast.IfExp):
+            return self.number_valued(e.body, env) and self.number_valued(e.orelse, env)
+        if isinstance(e, ast.BoolOp):
+            return all(self.number_valued(v, env) for v in e.values)
+        if isinstance(e, ast.Call):
+            f = e.func
+            if isinstance(f, ast.Name) and f.id == "len":
+                return True
+            if isinstance(f, ast.Name) and f.id in self._NUMBER_CALLS:
+                args = [*e.args, *(k.value for k in e.keywords)]
+                return bool(args) and all(
+                    self.number_valued(a, env)
+                    or (
+                        isinstance(a, (ast.GeneratorExp, ast.ListComp))
+                        and self.number_valued(a.elt, env)
+                    )
+                    for a in args
+                )
+            if isinstance(f, ast.Attribute) and f.attr in self._NUMBER_METHODS:
+                return True
+        return self.safe(e, env) and not self._is_texty(e)
+
+    def _callers_pass_numbers(self, i, p) -> bool:
+        """Every caller in the scanned tree gives the parameter a number (or a proven value). No caller: True."""
+        d = self.defs[i]
+        fn = d["node"]
+        pos = d["params"].index(p) if p in d["params"] else None
+        is_method = len(d["params"]) < len([*fn.args.posonlyargs, *fn.args.args])
+        for call, scope in getattr(self, "callers", {}).get(i, []):
+            if any(isinstance(a, ast.Starred) for a in call.args) or any(k.arg is None for k in call.keywords):
+                return False
+            arg = (
+                call.args[pos]
+                if pos is not None and pos < len(call.args)
+                else next((k.value for k in call.keywords if k.arg == p), None)
+            )
+            if arg is None:
+                dflt = self._default(fn, p, is_method)
+                if dflt is not None and not self.number_valued(dflt, frozenset()):
+                    return False
+                continue
+            if not self.number_valued(arg, self.env_of(scope)):
+                return False
+        return True
 
     def _for_binds(self, forn, name, env) -> bool:
         """Does this `for` loop bind `name` to a code-owned value: a counter, or an item of a code-owned collection."""
@@ -875,9 +1068,7 @@ class Analysis:
                 return True
             if UPPER.match(e.attr):
                 return e.attr not in self.upper_bad
-            return e.attr in self.attr_safe or (
-                e.attr in self.attr_number and e.attr not in self.attr_unsafe
-            )
+            return self._attr_read_ok(e)
         if isinstance(e, ast.Call):
             return self._call_safe(e, env)
         if isinstance(e, ast.BinOp):
@@ -894,9 +1085,9 @@ class Analysis:
                     ast.RShift,
                 ),
             ):
-                return (
-                    True  # these cannot make text (`/` is left out: a path `root / name` is text)
-                )
+                # Round 16 (Issue 3b): these make no text, but `set(names) - ALLOWED` and `a | b` of sets make a collection
+                # that a message can show: safe only when both operands are proven or are numbers
+                return all(self.safe(x, env) or self.number_valued(x, env) for x in (e.left, e.right))
             if isinstance(e.op, ast.Add) and (_is_number(e.left) or _is_number(e.right)):
                 return True  # `name + 1` is a number sum
             if isinstance(e.op, ast.Mod) and _is_number(e.left):
@@ -964,10 +1155,31 @@ class Analysis:
         if self._shadowed(call, name):
             return False
         module = self.module_of.get(id(call))
-        for key, _orig in self.imports.get(module, {}).get(name, ()):
-            if key is None:
-                return False
-        return True
+        # Round 16 (Issue 3c): the filter is the function defined in `FILTER_MODULE` (errors.py), by module and name, not
+        # any function of the tree that has the name; its body is read by the guard (`return x` in it is a site)
+        mine = [d for d in self.defs if d["name"] == name and not d["cls"]]
+        if not mine:
+            return False
+        if all(d["module"] == FILTER_MODULE for d in mine):
+            if module == FILTER_MODULE:
+                return True
+            found = self.imports.get(module, {}).get(name, ())
+            return bool(found) and all(key == FILTER_MODULE for key, _orig in found)
+        # a wrapper of one line in another module: `def _named(x): return shown_name(x)`
+        return all(self._is_wrapper(d) for d in mine) and all(d["module"] == module for d in mine)
+
+    def _is_wrapper(self, d, depth=0) -> bool:
+        body = [b for b in d["node"].body if not (isinstance(b, ast.Expr) and isinstance(b.value, ast.Constant))]
+        if depth > 2 or len(body) != 1 or not isinstance(body[0], ast.Return):
+            return False
+        v = body[0].value
+        return (
+            isinstance(v, ast.Call)
+            and isinstance(v.func, ast.Name)
+            and v.func.id in FILTERS
+            and v.func.id != d["name"]
+            and self._filter_is_ours(v)
+        )
 
     def _resolved_safe(self, call) -> bool:
         """Every definition the call can reach (by module and class, see `resolve`) returns code-owned text."""
@@ -1056,6 +1268,8 @@ class Analysis:
                     or fa == "write"
                     and _recv(f.value) in {"stderr", "stdout"}
                 ):
+                    if fa in LOG_METHODS:
+                        args = self._without_number_directives(node, args)
                     hit = bare_unsafe(args, env)
                 elif fa in {"dumps", "dump"} and _recv(f.value) == "json":
                     hit = any(not safe(a, env) for a in args)
@@ -1080,19 +1294,49 @@ class Analysis:
                     hit = bare_unsafe(
                         args, env
                     )  # an error object built outside a `raise` (Issue 1b)
+                tn = self.taint_of(self.scope_of.get(id(node), tree))
                 if not hit:
-                    # a keyword that carries made-up text: `Result(error_code=str(exc))` (Issue 1a)
+                    # a keyword that carries text of an error or made on the spot: `Result(error_code=str(exc))`, or
+                    # through a local name bound to it (Round 16, Issue 2)
                     hit = any(
-                        self._is_conversion(k.value) and not safe(k.value, env)
-                        for k in node.keywords
-                        if k.arg not in _PRINT_HOW
+                        self._tainted(k.value, tn, env) for k in node.keywords if k.arg not in _PRINT_HOW
                     )
-            elif isinstance(node, ast.Assign) and any(
-                isinstance(t, ast.Attribute) for t in node.targets
+                if not hit and fn is not None and fn[:1].isupper() and not isinstance(self.parent.get(id(node)), ast.Raise):
+                    # a positional argument of a class of the package: `Result(str(exc))` (Round 16, Issue 2)
+                    hit = any(self._tainted(a, tn, env) for a in node.args)
+                if not hit and fa in COLLECTORS:
+                    hit = any(self._tainted(a, tn, env) for a in args)
+                if not hit and self._is_conversion(node):
+                    # `str(x)`, `repr(x)`, `format(x)`, `ascii(x)` of a value not proven code-owned makes text on the spot
+                    hit = any(not safe(a, env) for a in node.args)
+                if not hit and self._raising_helper_in_handler(node):
+                    hit = True  # a helper that raises, called inside an `except`: the library error is its `__context__`
+            elif isinstance(node, (ast.Assign, ast.AnnAssign)) and any(
+                isinstance(t, (ast.Attribute, ast.Subscript))
+                for t in (node.targets if isinstance(node, ast.Assign) else [node.target])
             ):
-                # an attribute set to text made on the spot: `self.error_code = str(exc)` (Issue 1a)
-                hit = self._is_conversion(node.value) and not safe(node.value, env)
+                # an attribute or an item set to text of an error or made on the spot: `self.error_code = str(exc)`,
+                # `rec["error"] = text` with `text = str(exc)` (Round 16, Issue 2)
+                hit = node.value is not None and self._tainted(
+                    node.value, self.taint_of(self.scope_of.get(id(node), tree)), env
+                )
                 site = node
+            elif isinstance(node, ast.Dict):
+                tn = self.taint_of(self.scope_of.get(id(node), tree))
+                for v in node.values:  # the value is the site, not the whole dict
+                    if v is not None and self._tainted(v, tn, env):
+                        out.append((v, "message"))
+            elif isinstance(node, (ast.Return, ast.Yield, ast.YieldFrom)) and node.value is not None:
+                hit = self._tainted(
+                    node.value, self.taint_of(self.scope_of.get(id(node), tree)), env
+                )
+                if not hit and module == FILTER_MODULE and isinstance(node, ast.Return):
+                    # the body of a text filter is read like any other code: it returns text that is not proven code-owned
+                    # when `return x` gives back its argument (`def shown_name(x): return x`)
+                    fn_def = self._enclosing_def(node)
+                    hit = fn_def is not None and fn_def.name in FILTERS and not safe(node.value, env)
+                    if hit:
+                        site = node.value  # the value is the site: the one row of a filter body names the value
             elif isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
                 args = [*node.exc.args, *(k.value for k in node.exc.keywords)]
                 hit = bare_unsafe(args, env)
@@ -1117,18 +1361,131 @@ class Analysis:
                 out.append((node, "context"))
         return out
 
-    def _builds_error(self, name: str) -> bool:
-        """A call of a class whose name says it is an error. A class of the scanned tree that has no base class at all
-        (the context manager `Failed`) is not an error object, whatever its name says."""
-        if not name.endswith(ERROR_SUFFIXES):
+    # ---- Round 16 (Issue 2): taint ------------------------------------------------------------------------------
+    def taint_of(self, scope) -> frozenset[str]:
+        """The names of one scope that hold the error object of an `except ... as name`, or text made from one or from a
+        value not proven code-owned (`text = str(exc)`, `first = exc.args[0]`), followed through further assignments."""
+        key = ("taint", id(scope))
+        if key in self._envs:
+            return self._envs[key]
+        env = self.env_of(scope)
+        tainted: set[str] = set()
+        nodes = list(_own(scope))
+        for n in nodes:
+            if isinstance(n, ast.ExceptHandler) and n.name:
+                tainted.add(n.name)
+        changed = True
+        while changed:
+            changed = False
+            for n in nodes:
+                pairs = []
+                if isinstance(n, ast.Assign):
+                    pairs = [(nm.id, n.value) for t in n.targets for nm in _targets(t)]
+                elif ((isinstance(n, ast.AnnAssign) and n.value) or isinstance(n, ast.NamedExpr)) and isinstance(n.target, ast.Name):
+                    pairs = [(n.target.id, n.value)]
+                for name, val in pairs:
+                    if name not in tainted and self._tainted(val, frozenset(tainted), env):
+                        tainted.add(name)
+                        changed = True
+        self._envs[key] = frozenset(tainted)
+        return self._envs[key]
+
+    def _tainted(self, e, tainted, env) -> bool:
+        """Is the expression the error object, a part of it, or text made on the spot from a value not proven code-owned."""
+        if isinstance(e, ast.Name):
+            return e.id in tainted
+        if isinstance(e, (ast.Attribute, ast.Subscript)):
+            root = _root(e.value) if isinstance(e, ast.Attribute) else _root(e)
+            while isinstance(root, ast.Attribute):
+                root = root.value
+            return isinstance(root, ast.Name) and root.id in tainted
+        if isinstance(e, ast.Call):
+            if self._is_conversion(e):
+                return any(self._tainted(a, tainted, env) or not self.safe(a, env) for a in e.args)
+            f = e.func
+            if isinstance(f, ast.Attribute) and f.attr in TEXT_METHODS:
+                return self._tainted(f.value, tainted, env)
             return False
-        defined = [
-            n
-            for t in self.trees.values()
-            for n in ast.walk(t)
-            if isinstance(n, ast.ClassDef) and n.name == name
-        ]
-        return not (defined and all(not d.bases for d in defined))
+        if isinstance(e, ast.IfExp):
+            return self._tainted(e.body, tainted, env) or self._tainted(e.orelse, tainted, env)
+        if isinstance(e, ast.BoolOp):
+            return any(self._tainted(v, tainted, env) for v in e.values)
+        return False
+
+    def _raising_helper_in_handler(self, call) -> bool:
+        """A call, inside an `except` block, of a function of the package that raises with no `from None`: the library
+        error stays as its `__context__` and a printed traceback shows its text (Round 16, Issue 2)."""
+        if not self._in_handler(call) or isinstance(self.parent.get(id(call)), ast.Raise):
+            return False
+        found = self.resolve(call)
+        if not found:
+            return False
+        for i in found:
+            for r in _own(self.defs[i]["node"]):
+                if isinstance(r, ast.Raise) and isinstance(r.exc, ast.Call) and not (
+                    isinstance(r.cause, ast.Constant) and r.cause.value is None
+                ):
+                    return True
+        return False
+
+    _DIRECTIVE = re.compile(r"%(?:\([^)]*\))?[#0\- +]*(?:\*|\d+)?(?:\.(?:\*|\d+))?[hlL]?([a-zA-Z%])")
+
+    def _without_number_directives(self, call, args):
+        """A logging call `log.error("seq %d", seq)`: an argument that meets a number directive (`%d`, `%i`, `%f`...) is
+        shown as a number or the call fails with the class of the error, never with the value (Round 16)."""
+        pos = [a for a in call.args]
+        for k, a in enumerate(pos):
+            if isinstance(a, ast.Constant) and isinstance(a.value, str):
+                kinds = [m for m in self._DIRECTIVE.findall(a.value) if m != "%"]
+                rest = pos[k + 1 :]
+                drop = {id(rest[j]) for j, c in enumerate(kinds) if j < len(rest) and c in "dixXofeEgG"}
+                return [x for x in args if id(x) not in drop]
+        return args
+
+    def _error_classes(self) -> frozenset[str]:
+        """Round 16 (Issue 2): the classes of the scanned tree that are errors: a class whose base is a built-in
+        exception, a name that ends in a library error suffix, or another class found here. Derived from the bases, not from
+        the spelling of the class's own name (`DuplicateEvent` and `Unqualified` end in no suffix)."""
+        if self._errs is not None:
+            return self._errs
+        bases: dict[str, list[str]] = {}
+        for t in self.trees.values():
+            for n in ast.walk(t):
+                if isinstance(n, ast.ClassDef):
+                    names = [b.id if isinstance(b, ast.Name) else b.attr for b in n.bases if isinstance(b, (ast.Name, ast.Attribute))]
+                    bases.setdefault(n.name, []).extend(names)
+        errs: set[str] = set()
+        changed = True
+        while changed:
+            changed = False
+            for cls, bs in bases.items():
+                if cls in errs:
+                    continue
+                if any(
+                    b in errs
+                    or (isinstance(getattr(builtins, b, None), type) and issubclass(getattr(builtins, b), BaseException))
+                    or (b not in bases and b.endswith(ERROR_SUFFIXES))
+                    for b in bs
+                ):
+                    errs.add(cls)
+                    changed = True
+        self._errs = frozenset(errs)
+        return self._errs
+
+    def _builds_error(self, name: str) -> bool:
+        """A call of a class that is an error: a class of the scanned tree that derives from an exception, or a name
+        outside the tree that ends in a library error suffix. A class of the tree that derives from none (the context
+        manager `Failed`) is not an error object, whatever its name says."""
+        if name in self._error_classes():
+            return True
+        if self._defined is None:
+            self._defined = frozenset(
+                n.name for t in self.trees.values() for n in ast.walk(t) if isinstance(n, ast.ClassDef)
+            )
+        return name not in self._defined and name.endswith(ERROR_SUFFIXES)
+
+    _errs: frozenset[str] | None = None
+    _defined: frozenset[str] | None = None
 
     def _in_handler(self, node) -> bool:
         p = self.parent.get(id(node))
@@ -1247,12 +1604,14 @@ class Analysis:
         )
 
 
-def violations(sources, allowed, exempt):
+def violations(sources, allowed, exempt, callers=None):
     """(found, stale): sites not in `allowed` (keyed by (module, site text); a `cause` site by its whole raise
     statement), and allowance entries that match no site."""
     every = set(sources)
     sources = {m: t for m, t in sources.items() if not any(m.startswith(e) for e in exempt)}
-    an = Analysis(sources)
+    # Round 16 (Issue 2): `callers` are modules outside the package (the demos) that call the package's functions: they
+    # are read for what they pass to a parameter, but no site is looked for in them
+    an = Analysis({**sources, **{f"~callers/{m}": t for m, t in (callers or {}).items()}})
     found, matched = [], set()
     for module in sources:
         for node, kind in an.sites(module):

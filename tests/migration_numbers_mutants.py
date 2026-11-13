@@ -178,8 +178,8 @@ M = [
     ),
     mutant(
         "lexer: CRLF counts as two lines",
-        'return 1 + head.count("\\n") + head.count("\\r") - head.count("\\r\\n")',
-        'return 1 + head.count("\\n") + head.count("\\r")',
+        'return 1 + len(re.findall(r"\\r\\n|\\r|\\n", head))',
+        'return 1 + len(re.findall(r"\\r|\\n", head))',
         T1,
         "test_crlf_counts_as_one_line",
         "assert",

@@ -3481,13 +3481,27 @@ def _src_sources() -> dict[str, str]:
     }
 
 
-def _guard_violations(sources=None, allowed=None, exempt=None):
+def _caller_sources() -> dict[str, str]:
+    """The demos call the package's functions: what they pass to a parameter counts as much as what the package passes."""
+    base = ROOT / "demos"
+    return {
+        p.relative_to(base).as_posix(): p.read_text(encoding="utf-8")
+        for p in sorted(base.rglob("*.py"))
+    }
+
+
+def _guard_violations(sources=None, allowed=None, exempt=None, callers=None):
     """(violations, stale): a message site that prints a value not proven code-owned and is not allowed, and an
     allowed entry that no longer matches any site. `sources` is {module path: source text}."""
     sources = _src_sources() if sources is None else sources
     allowed = ALL_ALLOWED if allowed is None else allowed
     exempt = GUARD_EXEMPT_MODULES if exempt is None else exempt
-    return _text_guard.violations(sources, allowed, exempt)
+    return _text_guard.violations(
+        sources,
+        allowed,
+        exempt,
+        _caller_sources() if callers is None and sources is None else (callers or {}),
+    )
 
 
 def test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter():
@@ -3518,6 +3532,8 @@ def test_the_guard_finds_each_way_of_printing_a_configured_name_and_a_stale_allo
 # One planted fault per row: a synthetic module with ONE shape of "a value that is not proven code-owned reaches a text a
 # person or a log can read". Round 12: the 25 shapes of the evidence probe 7 (F1-F10, X1-X15) and the extras that the two
 # reviewers named. Each must give exactly the number of sites in the second place (a site inside a site is part of it).
+_ERRORS_STUB = "def shown_name(x):\n    return 'fixed'\ndef status_text(x):\n    return 'fixed'\n"
+
 _PLANTED_FAULTS = {
     "R13a print of a name with file=": (
         "import sys\ndef f(self, name):\n    print(name, file=sys.stderr)",
@@ -3597,7 +3613,7 @@ _PLANTED_FAULTS = {
     ),
     "X11 the text of an exception kept in a variable": (
         "def f(self, fn):\n    try:\n        fn()\n    except OSError as exc:\n        m = str(exc)\n        raise A(m) from None",
-        1,
+        2,
     ),
     "X12 format_map": ("def f(self, name):\n    raise A('bad {n}'.format_map({'n': name}))", 1),
     "X13 an f-string of a variable with any name": (
@@ -3701,16 +3717,16 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R15b a keyword made from the text of an error": (
-        "def f(exc):\n    return Result(error_code=str(exc))",
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(error_code=exc)",
         1,
     ),
     "R15c an attribute set to the text of an error": (
-        "def f(self, exc):\n    self.error_code = str(exc)",
+        "def f(self, g):\n    try:\n        g()\n    except OSError as exc:\n        self.error_code = exc",
         1,
     ),
     "R15d an out-parameter list filled by a helper and joined by the caller": (
         (
-            "def _put(problems, exc):\n    problems.append(str(exc))\n"
+            "def _put(problems, detail):\n    problems.append(detail)\n"
             "def f(exc):\n    problems = []\n    _put(problems, exc)\n    raise A('; '.join(problems))"
         ),
         1,
@@ -3730,11 +3746,17 @@ _PLANTED_FAULTS = {
     "R15h sys.exit with a name": ("import sys\ndef f(name):\n    sys.exit(name)", 1),
     "R15i a path join handed to an error": ("def f(root, name):\n    raise A(root / name)", 1),
     "R15j a parameter that is called shown_name": (
-        "def f(shown_name, name):\n    raise A(shown_name(name))",
+        {
+            "errors.py": _ERRORS_STUB,
+            "m.py": "from hadavin_sdk.errors import shown_name\ndef f(shown_name, name):\n    raise A(shown_name(name))",
+        },
         1,
     ),
     "R15k a status_text imported from a library": (
-        "from lib import status_text\ndef f(x):\n    raise A(status_text(x))",
+        {
+            "errors.py": _ERRORS_STUB,
+            "m.py": "from lib import status_text\ndef f(x):\n    raise A(status_text(x))",
+        },
         1,
     ),
     "R15l an UPPER_CASE table filled at run time": (
@@ -3749,17 +3771,83 @@ _PLANTED_FAULTS = {
         "def f(status):\n    raise A(f'answered {int(status)}')",
         1,
     ),
+    # ---- round 16 (Issues 2 and 3): sinks and proofs the round-15 reviewers named ----
+    "R16a a local text of an error set on an attribute": (
+        "def f(self, exc):\n    text = str(exc)\n    self.error_code = text",
+        2,
+    ),
+    "R16b a positional argument of a class": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(exc)",
+        1,
+    ),
+    "R16c a dict value made from an error": ("def f(exc):\n    return {'error': str(exc)}", 2),
+    "R16d a helper returns the text of an error": (
+        "def why(g):\n    try:\n        g()\n    except OSError as exc:\n        return exc\ndef f(g):\n    raise A(why(g))",
+        2,
+    ),
+    "R16e repr of an unproven value": ("def f(name):\n    return repr(name)", 1),
+    "R16f a helper that raises, called in an except": (
+        "def bad(x):\n    raise A('fixed')\ndef f(g):\n    try:\n        g()\n    except OSError:\n        bad(1)",
+        1,
+    ),
+    "R16g format_exception_only": (
+        "import traceback\ndef f(exc):\n    return traceback.format_exception_only(exc)",
+        1,
+    ),
+    "R16h TracebackException.from_exception": (
+        "import traceback\ndef f(exc):\n    return traceback.TracebackException.from_exception(exc)",
+        1,
+    ),
+    "R16i an error class derived from ValueError": (
+        "class DuplicateEvent(Exception):\n    pass\ndef f(name):\n    raise DuplicateEvent(name)",
+        1,
+    ),
+    "R16j a derived error built outside a raise": (
+        "class Unqualified(KeyboardInterrupt):\n    pass\ndef f(name):\n    err = Unqualified(name)\n    raise err",
+        1,
+    ),
+    "R16k an attribute of a library result": (
+        "import lib\nclass K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(x):\n    raise A(lib.thing(x).name)",
+        1,
+    ),
+    "R16p a self attribute that only another class writes": (
+        "class K:\n    def __init__(self):\n        self.msg = 'fixed'\nclass L:\n    def f(self):\n        raise A(self.msg)",
+        1,
+    ),
+    "R16l a set difference in a message": (
+        "def f(done, files):\n    raise A(f'gone {sorted(done - files)}')",
+        1,
+    ),
+    "R16m a text filter that returns its argument": (
+        {"errors.py": "def shown_name(x):\n    return x\n"},
+        1,
+    ),
+    "R16n a number annotation on a text": (
+        "def f(exc):\n    x: int = str(exc)\n    raise A(f'{x}')",
+        2,
+    ),
+    "R16o a log call with a text directive": (
+        "def f(log, name):\n    log.warning('bad %s', name)",
+        1,
+    ),
 }
+
 _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be found
     "R15 int() of a value that is a written number": "def f():\n    raise A(f'port {int(8080)}')",
-    "R13e a status through status_text": "def f(status):\n    raise A(f'answered {status_text(status)}')",
+    "R13e a status through status_text": {
+        "errors.py": _ERRORS_STUB,
+        "m.py": "from hadavin_sdk.errors import status_text\ndef f(status):\n    raise A(f'answered {status_text(status)}')",
+    },
     "R13a print of a constant sentence with file=": "import sys\nprint('a sentence', file=sys.stderr, flush=True)",
     "R13c a comprehension variable over a tuple of words": "def f():\n    return [f'bad {x}' for x in ('a', 'b')]",
     "R13d a comprehension counter by enumerate": "def f(items):\n    return [f'entry {i}' for i, _ in enumerate(items, start=1)]",
     "I5f the parameter of the class-name lambda of call_class_only": 'def f(c):\n    call_class_only(c, lambda cls: A(f"{cls}"))',
     "I5d an inner function reads a variable bound to a written word in the outer function": 'def f():\n    other = "x"\n    def g():\n        raise A(f"{other}")\n    g()',
     "I5e a name plus a number is a number": 'def f(name):\n    raise A(f"{name + 1}")',
-    "shown_name in a loop": 'def f(options):\n    for entry in options:\n        raise A(f"source {shown_name(entry)}")',
+    "shown_name in a loop": {
+        "errors.py": _ERRORS_STUB,
+        "m.py": 'from hadavin_sdk.errors import shown_name\ndef f(options):\n    for entry in options:\n        raise A(f"source {shown_name(entry)}")',
+    },
     "a position counted by enumerate": 'def f(options):\n    for i, entry in enumerate(options, start=1):\n        raise A(f"entry {i}")',
     "a range counter": 'for i in range(3):\n    raise A(f"try {i}")',
     "a number with a number format": 'def f(n: int):\n    raise A(f"{n:04d} is missing")',
@@ -3779,9 +3867,10 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "round 14: only code-owned values are appended": (
         "def f(self):\n    alts = []\n    alts.append('x')\n    raise A(alts[0])"
     ),
-    "R15 the package's own shown_name": (
-        "def shown_name(x):\n    return 'fixed'\ndef f(x):\n    raise A(f'{shown_name(x)}')"
-    ),
+    "R15 the package's own shown_name": {
+        "errors.py": _ERRORS_STUB,
+        "m.py": "from hadavin_sdk.errors import shown_name\ndef f(x):\n    raise A(f'{shown_name(x)}')",
+    },
     "R15 a raise after the except block": (
         "def f(fn):\n    failed = False\n    try:\n        fn()\n    except OSError:\n        failed = True\n    if failed:\n        raise A('fixed')"
     ),
@@ -3797,6 +3886,28 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
     "R15 a class tuple handed to a function": (
         "def f(c):\n    raise A(f'{(ValueError, KeyError)}')"
     ),
+    "R16a a written text set on an attribute": "def f(self):\n    text = 'fixed'\n    self.error_code = text",
+    "R16b a class given a written text": "def f():\n    return Result('fixed')",
+    "R16c a dict value that is the class name of an error": "def f(exc):\n    return {'error': type(exc).__name__}",
+    "R16d a helper returns the class name of an error": (
+        "def why(exc):\n    return type(exc).__name__\ndef f(exc):\n    raise A(why(exc))"
+    ),
+    "R16e repr of a counter": "def f(n: int):\n    return repr(n)",
+    "R16f a helper that raises, called outside an except": (
+        "def bad(x):\n    raise A('fixed')\ndef f(g):\n    g()\n    bad(1)"
+    ),
+    "R16i a derived error class given a written text": (
+        "class DuplicateEvent(Exception):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
+    ),
+    "R16k an attribute of an object of the package": (
+        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(k):\n    raise A(k.name)"
+    ),
+    "R16p a self attribute that the class writes": (
+        "class K:\n    def __init__(self):\n        self.msg = 'fixed'\n    def f(self):\n        raise A(self.msg)"
+    ),
+    "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
+    "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
+    "R16o a log call with a number directive": "def f(log, n):\n    log.warning('bad %d', n)",
 }
 
 
@@ -3805,13 +3916,17 @@ def test_the_guard_finds_each_planted_fault_alone(shape):
     """One planted fault per shape (the 25 of the evidence probe 7 and the reviewers' extras): the guard reports exactly
     the stated number of sites, so a guard that lost a shape fails here by the shape's name."""
     code, count = _PLANTED_FAULTS[shape]
-    found, _ = _guard_violations({"m.py": code}, allowed={}, exempt={})
+    found, _ = _guard_violations(
+        code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={}
+    )
     assert len(found) == count, (shape, found)
 
 
 @pytest.mark.parametrize("form", sorted(_CLEAN_FORMS))
 def test_the_guard_passes_the_filtered_and_code_owned_forms(form):
-    found, _ = _guard_violations({"m.py": _CLEAN_FORMS[form]}, allowed={}, exempt={})
+    code = _CLEAN_FORMS[form]
+    sources = code if isinstance(code, dict) else {"m.py": code}
+    found, _ = _guard_violations(sources, allowed={}, exempt={})
     assert found == [], (form, found)
 
 
