@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:37Z (07:07 IST) / Part 6 round 7: both reviewers back, NOT clean (0 Blocker, 6 Major distinct); resolve next; runner still waiting for evidence
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 round 7 not clean. Both reviewers read code only (no run). Distinct Majors: banner fails open for a directly built or replaced app (None versus empty); hold_run_ids/new build keyword not recorded and the docstring claim is false (no signature test); J23 not split and B13/B54 expect Python crash text; CHANGELOG headline still names the call that cannot see overrides; page paints any text that starts with the not-confirmed words; fat Mach-O not detected. Nits include a chain of tracked symlinks that can leave the copy, Path.resolve loop error on Python 3.12, crash rows 12 not 11. Saved: handover/reviews/PD-banner/pdbanner-41c84695-codebase-r7.md (and the design file).
+- Not yet: runner evidence for 41c84695 (waits for heavy slots); ledger rows; resolve report. Part 2 batch 8 and Q8c-1 builder have not reported; Q8c-1 full suite queued.
+- Builder admission still open: 7 tests pass on old code.
+
+**LEAD ACTIONS**: none.
+
+**LIVE ITEMS** (3 agents: abb52410 Part 2 batch 8; a35e15e9 Q8c-1; a389dd75 Part 6 runner)
+- Part 6: resolve (Opus skill) starting now, then a batch 8 builder; runner continues on 41c84695 for evidence.
+- Heads: pd-bind 07de0091, pd-banner 41c84695, q8c1-b16 37cd5157.
+
+**ROUNDS (WHY)**: Part 6 round 7 done not clean (mode-safety, no cap) so round 8 after the next batch; Part 2 round 8 waits for batch 8; Q8c-1 round 17 waits for the push.
+
+**FINISHED SINCE LAST BLOCK (01:35Z)**: Part 6 round 7 codebase review report saved; both reviewers closed.
+
 ## 01:35Z (07:05 IST) / Part 6 round 7: design reviewer back (0 Blocker, 3 Major); codebase reviewer and runner still running
 
 **FAILED / UNCERTAIN FIRST**
