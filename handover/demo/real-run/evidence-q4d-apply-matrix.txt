@@ -1,0 +1,76 @@
+# apply matrix for real-run-fixes-v4.patch (git apply --check then apply, in order). Patch folders: /tmp/demo-lead/handover/demo/{merge-ready,semgrep,skips,sonar}
+
+## A. alone and every ordered pair of the 7 patches (v4, vm=versions-md-allowance, sg4=semgrep-on-2db3926-v4, crlf3=crlf-guard-v3, p1/p2/p3=sonar)
+    git switch -c <new-branch-name>
+    git switch -
+  base 2db3926
+  alone v4 OK
+  alone vm OK
+  alone sg4 OK
+  alone crlf3 OK
+  alone p1 ('FAIL', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+  alone p2 OK
+  alone p3 OK
+  pairs failing: 14
+    ('v4', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('v4', 'p3', ('p3', ['error: patch failed: scripts/run_real_check.py:91', 'error: scripts/run_real_check.py: patch does not apply']))
+    ('vm', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('sg4', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('crlf3', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'v4', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'vm', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'sg4', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'crlf3', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'p2', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p1', 'p3', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p2', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+    ('p3', 'v4', ('v4', ['error: patch failed: scripts/run_real_check.py:87', 'error: scripts/run_real_check.py: patch does not apply']))
+    ('p3', 'p1', ('p1', ['error: tests/test_workflow_files_parse.py: No such file or directory']))
+
+    git switch -c <new-branch-name>
+    git switch -
+  base db54e13
+  alone v4 OK
+  alone vm ('FAIL', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+  alone sg4 OK
+  alone crlf3 OK
+  alone p1 OK
+  alone p2 OK
+  alone p3 OK
+  pairs failing: 14
+    ('v4', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('v4', 'p3', ('p3', ['error: patch failed: scripts/run_real_check.py:91', 'error: scripts/run_real_check.py: patch does not apply']))
+    ('vm', 'v4', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('vm', 'sg4', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('vm', 'crlf3', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('vm', 'p1', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('vm', 'p2', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('vm', 'p3', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('sg4', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('crlf3', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('p1', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('p2', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+    ('p3', 'v4', ('v4', ['error: patch failed: scripts/run_real_check.py:87', 'error: scripts/run_real_check.py: patch does not apply']))
+    ('p3', 'vm', ('vm', ['error: patch failed: versions.md:56', 'error: versions.md: patch does not apply']))
+
+## B. all 120 orders of v4 + sg4 + crlf3 + p2 + (vm on 2db3926 | p1 on db54e13)
+2db3926 set ['v4', 'sg4', 'crlf3', 'p2', 'vm'] orders ok 120 failed 0
+db54e13 set ['v4', 'sg4', 'crlf3', 'p2', 'p1'] orders ok 120 failed 0
+
+## C. v4 rebased after sonar-p3 (real-run-fixes-v4-after-sonar-p3.patch = v4 text resolved against p3 in load_env; apply p3 first, then this one)
+db54e13 p3:ok v4p3:ok
+db54e13 p3:ok v4p3:ok sg4:ok
+db54e13 p3:ok v4p3:ok crlf3:ok
+db54e13 p3:ok v4p3:ok p2:ok
+db54e13 p3:ok v4p3:ok p1:ok
+db54e13 p3:ok v4p3:ok vm:FAIL(error: patch failed: versions.md:56)
+db54e13 p3:ok v4p3:ok sg4:ok crlf3:ok p2:ok
+db54e13 p3:ok v4p3:ok p2:ok sg4:ok crlf3:ok p1:ok vm:FAIL(error: patch failed: versions.md:56)
+2db3926 p3:ok v4p3:ok
+2db3926 p3:ok v4p3:ok sg4:ok
+2db3926 p3:ok v4p3:ok crlf3:ok
+2db3926 p3:ok v4p3:ok p2:ok
+2db3926 p3:ok v4p3:ok p1:FAIL(error: tests/test_workflow_files_parse.py: No such file or directory)
+2db3926 p3:ok v4p3:ok vm:ok
+2db3926 p3:ok v4p3:ok sg4:ok crlf3:ok p2:ok
+2db3926 p3:ok v4p3:ok p2:ok sg4:ok crlf3:ok p1:FAIL(error: tests/test_workflow_files_parse.py: No such file or directory)

@@ -1,0 +1,6 @@
+$ gitleaks dir . (clean patched tree db54e13+v4)
+3:23AM INF scanned ~3012506 bytes (3.01 MB) in 361ms
+3:23AM INF no leaks found
+$ gitleaks git . (history + v4 commit)
+3:23AM INF scanned ~3057730 bytes (3.06 MB) in 662ms
+3:23AM INF no leaks found

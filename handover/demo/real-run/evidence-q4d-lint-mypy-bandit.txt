@@ -1,0 +1,37 @@
+# v4 gates on db54e13 + v4 patch
+$ ruff check
+All checks passed!
+$ ruff format --check
+148 files already formatted
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ git diff --check
+clean
+$ bandit -ll -r src scripts
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+Run started:2026-11-13 03:15:34.101385+00:00
+
+Test results:
+	No issues identified.
+
+Code scanned:
+	Total lines of code: 10382
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 1
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 4
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 4
+Files skipped (0):
