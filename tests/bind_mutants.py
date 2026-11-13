@@ -519,10 +519,13 @@ M = [
         "a subclass of a stand-in was read as a stand-in",
     ),
     mutant(
-        "B52 a detector list with a real entry is read as a stand-in",
+        "B52 a detector list is judged by its pin alone (no member check; the scan of its entries is also off)",
         SI,
+        "    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):\n        return False\n"
+        '    members = dict.get(object.__getattribute__(obj, "__dict__"), "detectors")\n'
+        "    if type(members) is not tuple:\n        return False\n"
         "    return all(_check(m, depth + 1, seen | {id(obj)}) for m in tuple.__iter__(members))\n",
-        "    return True\n",
+        "    if not _class_ok(_DETECTOR_LIST):\n        return False\n    return True\n",
         T_BG,
         "test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not",
         "a detector list with a real entry was read as a stand-in",
@@ -923,7 +926,7 @@ M = [
         '        if False:\n            return ("the approvals object',
         T_BG,
         "test_a_class_swapped_with_the_object_level_write_is_answered_503",
-        "whose class was swapped was served",
+        "did not say that the object is no longer an exact Approvals",
     ),
     mutant(
         "B88 a private slot can be written again",
@@ -1054,7 +1057,7 @@ M = [
     mutant(
         "B116 a detector list is no longer pinned",
         SI,
-        "    if not (_class_ok(_DETECTOR_LIST, kind) and _instance_ok(obj)):\n",
+        "    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):\n",
         "    if not _instance_ok(obj):\n",
         T_BG,
         "test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container_reads_as_real",
@@ -1063,8 +1066,8 @@ M = [
     mutant(
         "B117 a detector list's own attributes are not scanned",
         SI,
-        "    if not (_class_ok(_DETECTOR_LIST, kind) and _instance_ok(obj)):\n",
-        "    if not _class_ok(_DETECTOR_LIST, kind):\n",
+        "    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):\n",
+        "    if not _class_ok(_DETECTOR_LIST):\n",
         T_BG,
         "test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container_reads_as_real",
         "a function put on the detector list was not noticed",
@@ -1079,10 +1082,11 @@ M = [
         "a list of detectors was read as a tuple",
     ),
     mutant(
-        "B119 nesting of detector lists has no depth limit",
+        "B119 nesting of detector lists has no depth limit (the scan of its entries is also off)",
         SI,
-        "depth >= SCAN_DEPTH or id(obj) in seen",
-        "depth >= 100 or id(obj) in seen",
+        "    if depth >= SCAN_DEPTH or id(obj) in seen:\n        return False\n"
+        "    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):\n",
+        "    if not _class_ok(_DETECTOR_LIST):\n",
         T_BG,
         "test_a_detector_list_nested_or_cyclic_is_read_without_recursion_errors",
         "past the depth limit was trusted",
@@ -1103,7 +1107,7 @@ M = [
         "    for _ in range(1):\n",
         T_BG,
         "test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit",
-        "was not noticed",
+        "at the depth limit was refused",
     ),
     mutant(
         "B122 the scan has no node budget",
@@ -1299,7 +1303,7 @@ M = [
     mutant(
         "B143 a nested stand-in is not judged by its pin",
         SI,
-        "    if key is not None and _class_ok(key, kind):",
+        "    if key is not None and _class_ok(key):",
         "    if key is not None:",
         T_BG,
         "test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn",
@@ -1308,8 +1312,8 @@ M = [
     mutant(
         "B144 the attributes of a nested stand-in are not scanned",
         SI,
-        '    if key is not None and _class_ok(key, kind):\n        return _values(object.__getattribute__(value, "__dict__"))\n',
-        "    if key is not None and _class_ok(key, kind):\n        return ()\n",
+        '    if key is not None and _class_ok(key):\n        return _values(object.__getattribute__(value, "__dict__"))\n',
+        "    if key is not None and _class_ok(key):\n        return ()\n",
         T_BG,
         "test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn",
         "held by a nested stand-in was not seen",

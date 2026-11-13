@@ -1644,7 +1644,16 @@ def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
     def go(self: object) -> int:
         return 1
 
-    namespace = {"go": go, "__slots__": (), "__module__": "tests_clone", "__doc__": None}
+    shared: dict[
+        str, object
+    ] = {}  # one annotations dictionary for both, so only the mro tells them apart
+    namespace = {
+        "go": go,
+        "__slots__": (),
+        "__module__": "tests_clone",
+        "__doc__": None,
+        "__annotations__": shared,
+    }
     base, clone = type("Base", (), dict(namespace)), type("Base", (), dict(namespace))
 
     class Child(base):  # type: ignore[valid-type,misc]
@@ -2240,7 +2249,9 @@ def test_a_class_swapped_with_the_object_level_write_is_answered_503(
             assert _post(server) == 503, "an Approvals whose class was swapped was served"
     finally:
         object.__setattr__(a, "__class__", Approvals)
-    assert any("no longer an exact Approvals" in r.getMessage() for r in caplog.records)
+    assert any("no longer an exact Approvals" in r.getMessage() for r in caplog.records), (
+        "the refusal did not say that the object is no longer an exact Approvals"
+    )
 
 
 # class 4: the guard never raises on a hostile input
@@ -2638,7 +2649,9 @@ def test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped(
         try:
             status = _post(server, close=False)
         except Exception as exc:  # noqa: BLE001 - a dropped connection shows as an http.client error
-            pytest.fail(f"a missing slot dropped the connection instead of a 503: {exc!r}")
+            raise AssertionError(
+                f"a missing slot dropped the connection instead of a 503: {exc!r}"
+            ) from None
         assert status == 503, "a missing slot gave no 503"
     finally:
         object.__setattr__(a, "_channel", saved)

@@ -180,9 +180,13 @@ def _same_shape(cls: type, pin: tuple[object, ...]) -> bool:
     return True
 
 
-def _class_ok(key: tuple[str, str], cls: type) -> bool:
-    """The class has not changed since it was pinned (it is pinned now when first seen)."""
+def _class_ok(key: tuple[str, str]) -> bool:
+    """The listed class (as found now under ``key``) has not changed since it was pinned (it is pinned now when
+    first seen). That ``kind`` IS this class is decided by the caller, by identity, in ``_stand_in_key``."""
     global _SEEN
+    cls = _live_class(key)
+    if cls is None:
+        return False
     pin = _PINNED.get(key)
     if pin is None:
         with _PIN_LOCK:
@@ -214,7 +218,7 @@ def pin_all() -> None:
         with contextlib.suppress(Exception):  # the lazy path pins it at the first question
             cls = _live_class(key)
             if cls is not None:
-                _class_ok(key, cls)
+                _class_ok(key)
 
 
 def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
@@ -222,7 +226,7 @@ def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
     it was pinned. Never raises."""
     try:
         cls = _live_class(key)
-        return cls is not None and type(obj) is cls and _class_ok(key, cls)
+        return cls is not None and type(obj) is cls and _class_ok(key)
     except Exception:  # noqa: BLE001 - anything unreadable is not the pinned class
         return False
 
@@ -269,7 +273,7 @@ def _entered(
     if kind in data:
         return _values(object.__getattribute__(value, "__dict__"))
     key = _stand_in_key(kind)
-    if key is not None and _class_ok(key, kind):
+    if key is not None and _class_ok(key):
         return _values(object.__getattribute__(value, "__dict__"))
     return None
 
@@ -314,10 +318,10 @@ def _check(obj: object, depth: int, seen: frozenset[int]) -> bool:
     if key is None:
         return False
     if key != _DETECTOR_LIST:
-        return _class_ok(key, kind) and _instance_ok(obj)
+        return _class_ok(key) and _instance_ok(obj)
     if depth >= SCAN_DEPTH or id(obj) in seen:
         return False
-    if not (_class_ok(_DETECTOR_LIST, kind) and _instance_ok(obj)):
+    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):
         return False
     members = dict.get(object.__getattribute__(obj, "__dict__"), "detectors")
     if type(members) is not tuple:
