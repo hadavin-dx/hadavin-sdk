@@ -1,5 +1,14 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 15:2xZ: PAPER ITEMS DONE (WATCH-CHECKLIST.md, FAILED-TAKE-NOTE.md)
+- LOAD: no agents running, no suite running.
+- STATUS: both one-page notes written in handover/demo/. No new code, no review rounds. PR stays DRAFT TEXT.
+- ASK 1 (default: left as UNVERIFIED lines): end.flag, retire check, 5-take limit and "credits end 23 Nov" are in NO readable repo text, only in the order. Send the take doc path or text if one exists.
+- ASK 2 (default: as written): checklist lines marked SUGGESTION are my advice, not repo facts.
+- FAILURES: none new. Numbers changed: none.
+- Totals: 2 files, about 1100 words.
+- QUEUE DONE, idle by order.
+
 
 ## 2026-11-13 15:07Z - SUITE DONE on frozen tree 49d3c859: 12 of 12 chunks exit 0, 3879 passed, 4 skipped, 0 failed; PR-body suite line FILLED; QUEUE DONE, idle by order
 **RESULT:** `tools-claims/c19/` holds the 12 chunk logs and the 12 `.done` files (each holds the pytest exit code, all 0); the 92 test files appear once each; sum 3879 passed, 4 skipped, 0 failed, 0 errors. Run on 3.12 in `/tmp/e19-312` (mode 755 copy of the git am result), loopback only, gpgsign off, `DPLD_REQUIRE_SCAN=1`. Earlier first-am-tree run: 3878 passed, 4 skipped (the +1 is the test count difference of the earlier tree; numbers are not claimed beyond the logs). 3.13 was not re-run on the final tree (one full run per release head, 15:07Z order).
