@@ -1,1 +1,5 @@
 sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         S-score the layout check joins without pathguard  [test_score_check_layout_refuses_a_run_folder_that_is_a_link_] t=16s
+ok  KILLED         S-replay the marker folder is not checked  [test_replay_mark_failed_writes_nothing_into_a_folder_with_a_] t=18s
+ok  KILLED         S-replay an interrupt while marking is not named  [test_replay_keeps_the_first_error_and_names_it_when_marking_] t=21s
+ok  KILLED         S-replay a marking failure is not turned into a note  [test_replay_marking_failure_leaves_the_first_error_with_a_no] t=22s
