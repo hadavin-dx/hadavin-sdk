@@ -1,0 +1,138 @@
+diff --git a/tests/test_workflow_files_parse.py b/tests/test_workflow_files_parse.py
+index 50513ea..d990dc2 100644
+--- a/tests/test_workflow_files_parse.py
++++ b/tests/test_workflow_files_parse.py
+@@ -3,15 +3,74 @@
+ Why: a plain `run:` value that contains a colon followed by a space (for example `--only-binary=:all: -r`) is NOT
+ valid YAML. GitHub then shows the run as failed with no jobs, and a check can stay "queued" for ever. No other test
+ parsed the files. PyYAML is in the development lock (requirements-dev.txt), so the check needs no new dependency.
++
++What is checked (structure only): valid YAML; a top-level `on` (PyYAML 6 reads the bare word `on` as the boolean
++True, so both spellings are accepted); jobs that each have `runs-on` (or `uses`, for a reusable workflow call, which
++needs no steps); steps that each have exactly one of `run` or `uses` and only these keys: name, id, if, uses, run, with,
++env, shell, working-directory, continue-on-error, timeout-minutes (the step keys of the GitHub workflow syntax).
++
++What is NOT checked, and cannot be with a YAML parser: the text of an `if:` expression (for example `=` instead of
++`==`) and the names inside `${{ }}` (for example a typo such as `runnr.os`). Those mistakes are found only by
++`actionlint`, which is not run by this test (measured: actionlint 1.7.12 reports both, this test does not). If those
++mistakes matter, add actionlint as a separate CI step.
+ """
+ 
+ from pathlib import Path
++from typing import Any
+ 
+ import pytest
+ import yaml
+ 
+ REPO = Path(__file__).resolve().parent.parent
+ WORKFLOWS = sorted((REPO / ".github" / "workflows").glob("*.yml"))
++STEP_KEYS = {
++    "name",
++    "id",
++    "if",
++    "uses",
++    "run",
++    "with",
++    "env",
++    "shell",
++    "working-directory",
++    "continue-on-error",
++    "timeout-minutes",
++}
++
++
++def problems(doc: Any) -> list[str]:
++    """What is wrong with a parsed workflow document, as plain sentences; an empty list means the shape is fine."""
++    if not isinstance(doc, dict):
++        return ["the top level must be a mapping"]
++    out = []
++    if "on" not in doc and True not in doc:  # PyYAML (YAML 1.1) turns the key `on` into True
++        out.append("no top-level `on` (nothing would trigger this workflow)")
++    jobs = doc.get("jobs")
++    if not isinstance(jobs, dict) or not jobs:
++        return [*out, "no jobs"]
++    for name, job in jobs.items():
++        if not isinstance(job, dict):
++            out.append(f"job {name} is not a mapping")
++            continue
++        if "uses" in job:  # a reusable workflow call: it has no steps of its own
++            continue
++        if "runs-on" not in job:
++            out.append(f"job {name} has no `runs-on` (and no `uses`)")
++        steps = job.get("steps")
++        if not isinstance(steps, list) or not steps:
++            out.append(f"job {name} has no steps")
++            continue
++        for i, step in enumerate(steps, start=1):
++            where = f"job {name}, step {i}"
++            if not isinstance(step, dict):
++                out.append(f"{where} is not a mapping")
++                continue
++            if ("run" in step) == ("uses" in step):
++                out.append(f"{where} must have exactly one of `run` or `uses`")
++            unknown = sorted(str(k) for k in step if k not in STEP_KEYS)
++            if unknown:
++                out.append(f"{where} has unknown keys {unknown}")
++    return out
+ 
+ 
+ def test_the_workflow_folder_is_not_empty() -> None:
+@@ -25,14 +84,47 @@ def test_a_workflow_file_is_valid_yaml_with_jobs_and_steps(path: Path) -> None:
+         doc = yaml.safe_load(text)
+     except yaml.YAMLError as e:
+         pytest.fail(f"{path.name} is not valid YAML, so GitHub cannot start it: {e}")
+-    assert isinstance(doc, dict), f"{path.name}: the top level must be a mapping"
+-    jobs = doc.get("jobs")
+-    assert isinstance(jobs, dict) and jobs, f"{path.name}: no jobs"
+-    for name, job in jobs.items():
+-        assert isinstance(job, dict), f"{path.name}: job {name} is not a mapping"
+-        steps = job.get("steps")
+-        assert isinstance(steps, list) and steps, f"{path.name}: job {name} has no steps"
+-        for i, step in enumerate(steps):
+-            assert isinstance(step, dict) and ("run" in step or "uses" in step), (
+-                f"{path.name}: job {name}, step {i + 1} has neither run nor uses"
+-            )
++    found = problems(doc)
++    assert not found, f"{path.name}: " + "; ".join(found)
++
++
++GOOD = """
++name: x
++on: [push]
++jobs:
++  a:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v4
++      - name: s
++        run: echo hi
++        shell: bash
++  b:
++    uses: ./.github/workflows/other.yml
++"""
++
++
++def _mutated(old: str, new: str) -> Any:
++    assert old in GOOD
++    return yaml.safe_load(GOOD.replace(old, new, 1))
++
++
++def test_the_shape_check_accepts_a_good_file_and_a_reusable_workflow_job() -> None:
++    assert problems(yaml.safe_load(GOOD)) == []
++
++
++@pytest.mark.parametrize(
++    ("old", "new", "expect"),
++    [
++        ("runs-on: ubuntu-latest", "run-on: ubuntu-latest", "no `runs-on`"),
++        ("uses: actions/checkout@v4", "use: actions/checkout@v4", "exactly one of"),
++        ("on: [push]", "no: [push]", "no top-level `on`"),
++        ("run: echo hi", "run: echo hi\n        usess: x", "unknown keys ['usess']"),
++        ("shell: bash", "shel: bash", "unknown keys ['shel']"),
++        ("run: echo hi", "run: echo hi\n        uses: x/y@v1", "exactly one of"),
++    ],
++    ids=["runs-on-typo", "uses-typo", "no-on", "extra-step-key", "shell-typo", "run-and-uses"],
++)
++def test_the_shape_check_rejects_each_typo(old: str, new: str, expect: str) -> None:
++    found = problems(_mutated(old, new))
++    assert any(expect in f for f in found), found
