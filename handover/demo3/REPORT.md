@@ -1,5 +1,29 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:32Z / 18:02 IST  LOAD TABLE + HEARTBEAT 36 (ORDER 11 standing queue started; load order answered)
+**(1) Running agents (6 of 6 queue agents, all started 12:31Z / 18:01 IST, seconds ago, so progress is "setting up")**
+| id | task | since | expected end | real progress |
+|---|---|---|---|---|
+| Q1 | xdist proof: full suite serial, then `-p xdist -n 3` (throwaway venv for pytest-xdist; waits for Q4's END line, max 40 min), diff of node ids and outcomes | 12:31Z | serial ~12:55Z; xdist ~13:50Z; hard stop 14:20Z | setting up worktree and venv |
+| Q2 | fuzz campaign on identity.py: same person many forms -> one identity (100k variants), no false merge (200k pairs), replay never a second row (20k); stdlib random, fixed seeds | 12:31Z | first pass ~13:30Z; repeat with new seeds until 14:20Z | reading identity rules |
+| Q3 | crash soak: 300 rounds of real desk + demo fakes, SIGKILL at a crash point, restart, resend; assert no double, no extra mail, nothing lost | 12:31Z | ~13:30Z | reading the crash scene docs |
+| Q4 | load numbers vs docs claims (limits, 503 busy, body caps), repo's load_tools, 3 runs each; writes END to progress-Q4.txt when the first pass is done | 12:31Z | first pass ~13:30Z | extracting claims from docs |
+| Q5 | cold reader: README quick start on a clean clone, literally | 12:31Z | ~13:15Z | cloning |
+| Q6 | cold reader: docs/n8n-recipe.md + every runnable claim in docs/limits.md | 12:31Z | ~13:20Z | cloning |
+**(2) Shells, background jobs, containers:** none of mine besides the agents' own (agents report their shells in their progress files). Measured now with `ps`: 0 pytest processes running, 0 load-test processes, the only busy process is one `git checkout` of Q6 (1 second old). No containers (no Docker used).
+**(3) Heavy slots in use: 0 of 3** at 12:32Z (the agents are still setting up); expected 2-3 within 5 minutes (Q1 serial suite, Q3 desk soak, Q4 load driver; Q2 one core of fuzz; Q5 and Q6 light).
+**(4) Free capacity:** `uptime`/loadavg `0.50 0.26 0.50 2/126 9567` (1, 5, 15 minutes); 4 cores, all idle right now (0-1 percent); RAM 16086 MB total, 714 MB used, 15141 MB free; disk 27 GB free. So capacity is free for about 3 more cores of work for the next minutes; it will fill as the six agents ramp up.
+**Filling free capacity (your order):** I start Q7 now (below) and queue Q8 for the first slot that frees.
+| id | task | why | since | expected end | state |
+|---|---|---|---|---|---|
+| Q7 | the 196 browser and gitleaks tests under Python 3.13 (ASK 1 of heartbeat 35): Playwright hash-locked browser lock + the pinned gitleaks in the 3.13 venv, BASE and STACK | closes the 3.13 gap | 12:32Z | ~13:00Z (6-10 min of CPU) | starting |
+| Q8 | QUEUED: mutation check on the files PR #14 touched (tools/pathconfine.py): plant 30 small mutants one at a time, run tests/test_path_confinement.py, count killed vs survived | shows if the path tests would catch a regression | when a slot frees | ~40 min | queued |
+
+ASK:
+1. Q4 needs a quiet machine and the queue starts everything at once: its numbers will be marked NOISY (loadavg recorded with each). Do you want Q4 first and quiet (others delayed) or all at once? Default: all at once (no idle), NOISY marks on Q4.
+2. Q1 needs pytest-xdist, which is in no hash-locked file; I allowed a throwaway venv install (test tooling only, nothing enters the repo). OK? Default: yes.
+3. Q2 uses stdlib `random` with fixed seeds because hypothesis is in no lock file (your order said so).
+
 ## 2026-11-13 12:30Z / 18:00 IST  HEARTBEAT 35 (ORDER 10 done: N and O reported; P done by me)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
