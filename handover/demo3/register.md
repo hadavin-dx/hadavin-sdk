@@ -46,3 +46,6 @@ Q5 | reported 12:34Z closed (no failure; unclear points listed)
 Q5b | agent a77adc..: cold reader settings/portal/why-this-code/contract/SECURITY | 12:34Z | ~13:25Z | running
 Q7 | agent aa5a44..: 196 tests under 3.13 | 12:32Z | ~13:00Z | running
 Q8 | agent a101c8..: mutation on pathconfine | 12:34Z | ~13:35Z | running
+Q6 | reported 12:36Z closed (4 fails, n8n not installable here)
+Q6b | agent a0a58e..: cold reader tests/real-services/hubspot-probe docs, dry mode only | 12:37Z | ~13:25Z | running
+Q9 | agent ab82f8..: cross-check demo numbers script | 12:37Z | ~13:20Z | running

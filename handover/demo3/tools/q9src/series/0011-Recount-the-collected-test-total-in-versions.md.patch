@@ -1,0 +1,28 @@
+From ab16792fcfc901c0a131e9bc2b664a095cdb1963 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 12:26:31 +0000
+Subject: [PATCH 11/13] Recount the collected test total in versions.md
+
+Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ versions.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/versions.md b/versions.md
+index efc850f..cba5a0d 100644
+--- a/versions.md
++++ b/versions.md
+@@ -6,7 +6,7 @@ The versions the demo was run with, on a Windows computer (Python and the Window
+ | Item | Value | How read |
+ |---|---|---|
+ | Python used on the Windows computer | 3.13.3 (MSC v.1943, 64 bit) | `python --version`, run by the author; no log is shipped |
+-| Python required | 3.12 or newer (`requires-python`). 3.12 is the lowest version the package allows; the full test suite was run on 2026-11-12 on earlier commits of this repository (not on the commit that holds this file): Windows with Python 3.13 reported 2449 passed, 15 skipped; Linux with Python 3.12 (a container) reported 2462 passed, 2 skipped; no test failed on either. These are run results of those earlier commits; no log of either run is shipped and they were not repeated on this commit. The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits were made after those runs, including a Semgrep workflow, a lock file and test files, and these counts do not cover them. The one measured fact for this commit: `python -m pytest --collect-only -q` (collection only, no test run; Linux, Python 3.12.3, no network) prints one line per test file, in the form `tests/test_workflow_run_flags.py: 10` (that is its last line), 91 lines in all, and the counts on them add up to 3726 (added up by hand from those lines; the command prints no total). This is a count of listed tests, not a run result. | pyproject.toml |
++| Python required | 3.12 or newer (`requires-python`). 3.12 is the lowest version the package allows; the full test suite was run on 2026-11-12 on earlier commits of this repository (not on the commit that holds this file): Windows with Python 3.13 reported 2449 passed, 15 skipped; Linux with Python 3.12 (a container) reported 2462 passed, 2 skipped; no test failed on either. These are run results of those earlier commits; no log of either run is shipped and they were not repeated on this commit. The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits were made after those runs, including a Semgrep workflow, a lock file and test files, and these counts do not cover them. The one measured fact for this commit: `python -m pytest --collect-only -q` (collection only, no test run; Linux, Python 3.12.3, no network) prints one line per test file, in the form `tests/test_workflow_run_flags.py: 10` (that is its last line), 92 lines in all, and the counts on them add up to 3883 (the per-file counts added up from those lines; the command prints no total; counted on 2026-11-13 on the tree of public main f3c39cf8 with the documentation changes applied, which add no test file and no test). This is a count of listed tests, not a run result. | pyproject.toml |
+ | SQLite library | 3.49.1 in the author's run (no log is shipped). The desk's SQL uses `ON CONFLICT ... DO UPDATE` (in `src/lead_desk/desk.py`), which SQLite supports from version 3.24; the code does not check the version | `sqlite3.sqlite_version` |
+ | Runtime dependencies | none (Python standard library only) | pyproject.toml |
+ 
+-- 
+2.43.0
+

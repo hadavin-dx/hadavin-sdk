@@ -1,5 +1,26 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:38Z / 18:08 IST  HEARTBEAT 38 (Q6 reported; Q6b and Q9 started; 9 agents running)
+**Load now (measured):** loadavg 4.16 / 2.51 / 1.39, 4 cores, 8 pytest processes, 9 agents running, RAM free about 15 GB. Heavy slots 3 of 3 in use (Q1 serial suite, Q7 browser tests, Q3 desk soak); one core each for Q2, Q4, Q8.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof: serial suite, then -n 3 | 12:31Z | serial ~12:55Z; xdist ~13:50Z; stop 14:20Z | serial run running since 12:31:56Z | running |
+| Q2 | identity fuzz, fixed seeds | 12:31Z | ~13:30Z, then new seeds | campaign a started 12:36:22Z (seed 1101) | running |
+| Q3 | crash soak, 300 rounds | 12:31Z | ~13:30Z | soak started 12:36:21Z, master seed 20261113 | running |
+| Q4 | load numbers vs docs claims | 12:31Z | pass 1 ~13:30Z | burst measurement running (NOISY) | running |
+| Q5b | cold reader: settings, portal, why-this-code, contract, SECURITY | 12:34Z | ~13:25Z | part A (settings trials) running, part B started 12:36Z | running |
+| Q6b | cold reader: docs/tests.md, docs/real-services.md, docs/hubspot-probe.md (dry or fake mode only; no real service) | 12:38Z | ~13:25Z; stop 14:20Z | starting | running |
+| Q7 | the 196 formerly skipped tests under Python 3.13 | 12:32Z | ~13:00Z | running | running |
+| Q8 | mutation check, 30 mutants of tools/pathconfine.py | 12:34Z | ~13:35Z | starting | running |
+| Q9 | cross-check of the demo session's numbers-names script and 13-commit claims series against f3c39cf8 and my measured numbers (3883 collected, 92 test files, 3683/200 on 3.12, 3684/199 on 3.13) | 12:38Z | ~13:20Z; stop 14:00Z | starting | running |
+| Q5, Q6 | cold readers | - | - | reported, closed | closed |
+**Q6 RESULT (cold reader on docs/n8n-recipe.md and docs/limits.md; full report evidence/cold-reader-n8n-limits.md):** FAILS: (1) n8n is not installed, there is no Docker daemon and no downloads are allowed, so no workflow was imported or run in n8n and the recipe's "checked" lines (steps 1-7, proof workflow) cannot be verified on this machine; (2) the recipe says the workflow ports come from settings.md, but the three workflow JSON files hardcode 8765, 8766 and 5679, so another port means editing the files, which the Licence line forbids, and the recipe does not say so; (3) limits.md exit code 1 says "the sender cannot be reached" but the real message is "cannot reach the demo servers"; (4) limits.md line 91 says the lead count and the follow-up count should each be 1, true only on a fresh desk (2 on a used one). Matched: exit codes 2/3/4/5, the 408/400/413 deadlines, the counters, the 4192 open-file arithmetic, and 39 cited tests (all passed). Unclear: how to create the API key, how to delete a workflow, that you must reset the desk before the recipe's example call returns "new".
+
+ASK:
+1. Q6 point 1: n8n cannot be tested here. Do you want an n8n run? It needs the n8n program (not in any lock file) or a container image; default: not possible without a new download, so not done.
+2. Q6b is told to run the real-services script and the HubSpot probe only in dry/fake mode on loopback: no real account, no key. OK (default yes).
+3. Q9 reads the demo session's branch only (no write to it).
+
 ## 2026-11-13 12:33Z / 18:03 IST  HEARTBEAT 37 (standing rule read; 8 agents running; Q5 reported; Q5b and Q8 started)
 **Load now (measured):** loadavg 5.03 1.49 0.90 (1, 5, 15 min; it was 0.0 at 12:31Z, so the queue is ramping up), 4 cores, 6 pytest processes, 8 agents running. Heavy slots: 3 of 3 expected in use within minutes (Q1 serial suite, Q3 desk soak, Q7 browser tests; Q4 load driver and Q2 fuzz are one core each). Free RAM about 15 GB.
 | id | what it does | since | expected end | real progress now | state |
