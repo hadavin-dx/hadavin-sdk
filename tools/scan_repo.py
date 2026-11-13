@@ -16,7 +16,8 @@ from pathlib import Path
 
 
 def _load_fixed_run():
-    """The program starter next to this file, read by its file path: never an installed or foreign `tools` package, and
+    """The program starter next to this file, read by its file path: never an installed or foreign
+    `tools` package, and
     it works when the file is run alone with `-I` (the script folder is not on the path then)."""
     from importlib import util
 

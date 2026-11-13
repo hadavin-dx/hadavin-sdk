@@ -612,3 +612,15 @@ def test_pin_three_loose_expectations_and_a_short_one_are_each_reported(tmp_path
     ]
     reported = {label for label, _ in expectation_nowhere_in_killer(rows=rows, root=tmp_path)}
     assert reported == {"Z5", "Z6", "Z7", "Z8", "Z9"}, reported
+
+
+def test_a_focused_run_names_a_word_that_matches_nothing_and_a_row_outside_the_list() -> None:
+    names = ["R1A one", "R2B two"]
+    assert bm.focus_problems(["R1A"], ["R1A one"], names) == []
+    assert bm.focus_problems(["R9Z"], [], names) == ["focus word matches no row: R9Z"], (
+        "a typo ran nothing quietly"
+    )
+    assert bm.focus_problems(["R1A"], ["R1A one", "R2B two"], names) == [
+        "row run but not in the focus list: R2B two"
+    ], "a row outside the focus list was run"
+    assert bm.focus_problems([], ["R2B two"], names) == [], "a full run has no focus list"

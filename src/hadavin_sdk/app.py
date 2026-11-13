@@ -302,14 +302,16 @@ class App:
     def mode_banner(
         self, names: Mapping[str, str] | None = None, words: BannerWords = DEFAULT_WORDS
     ) -> dict:
-        """The banner for a screen (the supported call): `mode_banner.banner_or_unconfirmed` for this app's config,
-        tool manifests and overrides. An app that `build` did not record, or whose connected parts changed since
-        (see `_connected_parts`), gets the unconfirmed banner (`overridden=None`). Raises only an error outside
-        `READ_ERRORS` (a bug): then no banner is returned at all, never a made-up or a quiet one.
+        """The banner for a screen (the supported call): `mode_banner.banner_or_unconfirmed` for
+        this app's config, tool manifests and overrides. An app that `build` did not record, or
+        whose connected parts changed since (see `_connected_parts`), gets the unconfirmed banner
+        (`overridden=None`). Raises only an error outside `READ_ERRORS` (a bug): then no banner is
+        returned at all, never a made-up or a quiet one.
 
-        Log rule per path: `_warn_once` (one warning per reason and error type in the process) covers only the
-        sealing in `build`, the read of the connected parts and the read of `registry.tools` here.
-        `banner_or_unconfirmed`, which this method calls, logs one warning on every call that cannot build the
+        Log rule per path: `_warn_once` (one warning per reason and error type in the process)
+        covers only the sealing in `build`, the read of the connected parts and the read of
+        `registry.tools` here. `banner_or_unconfirmed`, which this method calls, logs one warning on
+        every call that cannot build the
         banner, so that path is logged on every call, not once."""
         try:
             known = self._known_overrides()

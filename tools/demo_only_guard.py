@@ -80,7 +80,8 @@ from pathlib import Path
 
 
 def _load_fixed_run():
-    """The program starter next to this file, read by its file path: never an installed or foreign `tools` package, and
+    """The program starter next to this file, read by its file path: never an installed or foreign
+    `tools` package, and
     it works when the file is run alone with `-I` (the script folder is not on the path then)."""
     from importlib import util
 
@@ -278,32 +279,38 @@ def _git_env() -> dict[str, str]:
 # What is hidden in git's own line (`_hide_secrets`), in this order:
 #  1. everything after a literal `Authorization:` header name, to the end of the line, whatever the scheme (Basic, Bearer,
 #     Digest ...). This is WIDER than the core redactor on purpose: a header name was given, so everything after it is a credential;
-#  2. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`): first the two rules of `hadavin_sdk.guard.redact`
-#     (BEARER: token of 12 or more characters; BASIC: 8 or more; the same patterns, copied here because the guard runs
-#     without importing the product package; a test compares the pattern text with the core and runs both on a table of
-#     inputs), then TWO EXTRA rules that hide more than the core: a token (letters, digits and `. _ ~ + / - < >`, then `=`
-#     padding) that is 16 or more characters long, or that holds both a letter and a digit, is hidden at any length. The
-#     guard therefore hides, for a bare scheme word and its token, everything the core hides and some more. These run BEFORE the
-#     pairs below: in `authorization=Bearer <token>` the pair value stops at the first white space, so a pair step that ran
-#     first would hide only the word `Bearer` and leave the token in clear;
+#  2. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`): first the two rules of
+#  `hadavin_sdk.guard.redact`
+#     (BEARER: token of 12 or more characters; BASIC: 8 or more; the same patterns, copied here
+#     because the guard runs without importing the product package; a test compares the pattern text
+#     with the core and runs both on a table of inputs), then TWO EXTRA rules that hide more than
+#     the core: a token (letters, digits and `. _ ~ + / - < >`, then `=` padding) that is 16 or more
+#     characters long, or that holds both a letter and a digit, is hidden at any length. The guard
+#     therefore hides, for a bare scheme word and its token, everything the core hides and some
+#     more. These run BEFORE the pairs below: in `authorization=Bearer <token>` the pair value stops
+#     at the first white space, so a pair step that ran first would hide only the word `Bearer` and
+#     leave the token in clear;
 #  3. the user and password part of a URL: everything between `://` and the LAST `@` before the next white space (a password
 #     that holds `@` or `/` is hidden whole; a path that holds an `@` is over-hidden, the safe side);
 #  4. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
 #     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
 #     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
-#     `bypass=true` at the END of the line is shown. A bare name `bypass` is hidden unless its value is exactly true, false,
-#     yes, no, on, off, 0 or 1 (any case) and nothing but white space follows it on the line. After a name that holds `auth`
-#     and a value that is a scheme word (Bearer, Basic, Digest) the pair also takes the token after it, at any length, and a
-#     value that starts with a quote runs to the matching quote (`authorization=Bearer "a b"` is hidden whole).
+#     `bypass=true` at the END of the line is shown. A bare name `bypass` is hidden unless its value
+#     is exactly true, false, yes, no, on, off, 0 or 1 (any case) and nothing but white space
+#     follows it on the line. After a name that holds `auth` and a value that is a scheme word
+#     (Bearer, Basic, Digest) the pair also takes the token after it, at any length, and a value
+#     that starts with a quote runs to the matching quote (`authorization=Bearer "a b"` is hidden
+#     whole).
 # Stated limits: only the `name=value` form is read, so the colon form (`password: x`, `"token": "x"`, `--password x`) is NOT
 # hidden here (git's own first error line does not use it; the core redactor is the place for such text). A pair name is
 # looked for to the left of the `=` only.
-# Stated limit of the bare scheme word rules: a token after `Bearer` stays visible only when the core shows it too (11
-# characters or fewer, or a character the core pattern does not accept such as `Basic abc-defghijk`) AND it holds no digit
-# AND it is under 16 characters; `token=Bearer` + 11 letters is shown, as on main. A test pins the 11/12 border and the rows
-# that differ from the core (the two extra rules).
-# Five passes over the line (header, bearer, basic, URL, pairs), each with no nested repetition, so a very long line costs
-# time in proportion to its length (a test counts the reads).
+# Stated limit of the bare scheme word rules: a token after `Bearer` stays visible only when the
+# core shows it too (11 characters or fewer, or a character the core pattern does not accept such as
+# `Basic abc-defghijk`) AND it holds no digit AND it is under 16 characters; `token=Bearer` + 11
+# letters is shown, as on main. A test pins the 11/12 border and the rows that differ from the core
+# (the two extra rules). Five passes over the line (header, bearer, basic, URL, pairs), each with
+# no nested repetition, so a very long line costs time in proportion to its length (a test counts
+# the reads).
 _BEARER = re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")
 _BASIC = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
 _AUTH_HEADER = re.compile(r"(?i)(authorization:)[^\n]*")
@@ -361,7 +368,8 @@ def _hide_shaped_scheme_token(line: str) -> str:
 
 
 def _value_end(line: str, start: int) -> int:
-    """Where the value that begins at `start` ends: a value that starts with a quote runs to the matching quote (a backslash
+    """Where the value that begins at `start` ends: a value that starts with a quote runs to the
+    matching quote (a backslash
     escapes), any other value runs to white space."""
     n = len(line)
     end = start
@@ -380,7 +388,8 @@ def _hide_pairs(line: str) -> str:
     out: list[str] = []
     pos = 0
     n = len(line)
-    # a plain on/off value of the bare word is shown only when nothing but white space follows it on the line
+    # a plain on/off value of the bare word is shown only when nothing but white space follows it on
+    # the line
     last_text = len(line.rstrip())
     at = line.find("=")
     while at >= 0:

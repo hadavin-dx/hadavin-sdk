@@ -1584,7 +1584,7 @@ def test_a_kind_added_to_the_prod_gate_table_later_still_reads_as_a_real_service
     other_only = (
         "secrets",
         "made_up_dev_vault",
-    )  # a kind someone later refuses in prod for being dev-only
+    )  # a kind someone later refuses in prod for being demo-only
     fresh = _fresh_module_with(monkeypatch, {other_only})
     cfg = _fake_config("demo", [other_only, ("llm", "fake")])
     real, _ = fresh._services_in(cfg, {})

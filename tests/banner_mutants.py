@@ -1960,14 +1960,14 @@ M = [
         "R9D4 a bare bearer scheme word is not hidden",
         "    return _hide_shaped_scheme_token(_hide_group(_BEARER, line))\n",
         "    return line\n",
-        "test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table",
+        "test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
         "Bearer 12: the guard and the core disagree",
     ),
     gd(
         "R9D5 a bare basic scheme word is not hidden",
         "    return _hide_group(_BASIC, line)\n",
         "    return line\n",
-        "test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table",
+        "test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
         "basic 8: the guard and the core disagree",
     ),
     gd(
@@ -2488,6 +2488,27 @@ M = [
         "a program was started with {'shell'",
     ),
     gd(
+        "R14A1 a quoted token after a scheme word in an authorization pair ends at the first space",
+        "                stop = _value_end(line, tail)\n",
+        "                stop = tail + len(line[tail:].split(None, 1)[0]) if line[tail:].strip() else tail\n",
+        "test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole",
+        "the quoted authorization value was not hidden whole",
+    ),
+    gd(
+        "R14A2 a token with a dash after a bare scheme word ends at the dash",
+        'r"(?i)\\b(?:bearer|basic)\\s+([a-z0-9._~+/\\-<>_]+={0,2})"',
+        'r"(?i)\\b(?:bearer|basic)\\s+([a-z0-9._~+/<>_]+={0,2})"',
+        "test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_shows_it",
+        "a 17 character Basic token with a dash stayed visible",
+    ),
+    gd(
+        "R14A3 a token of 12 characters after a bare scheme word is hidden",
+        "return len(body) >= 16 or",
+        "return len(body) >= 12 or",
+        "test_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core",
+        "a 12 character Basic token with a dash was hidden",
+    ),
+    gd(
         "R13B1 the token after a scheme word in an authorization pair is not hidden",
         "                if stop > tail and line[tail:stop] != _HIDDEN:\n",
         "                if False:\n",
@@ -2495,18 +2516,11 @@ M = [
         "Bearer 8 characters stayed visible",
     ),
     gd(
-        "R13B2 a bare word bypass is shown with any value",
+        "R13B2 a bare word bypass with any value is shown when nothing follows it",
         "            if not named_secret and value.lower() in _PLAIN_FLAGS and end >= last_text:\n",
         "            if not named_secret and end >= last_text:\n",
         "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
-        "a hidden-side value stayed visible",
-    ),
-    gd(
-        "R13B4 a plain flag is shown although more text follows it on the line",
-        "value.lower() in _PLAIN_FLAGS and end >= last_text:\n",
-        "value.lower() in _PLAIN_FLAGS:\n",
-        "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
-        "a flag with a word after it was shown",
+        "a hidden-side value at the end of the line stayed visible",
     ),
     gd(
         "R13B3 a token that mixes letters and digits is not hidden after a bare scheme word",
@@ -2514,6 +2528,13 @@ M = [
         "False",
         "test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits",
         "Bearer 11 mixed characters stayed",
+    ),
+    gd(
+        "R13B4 a plain flag is shown although more text follows it on the line",
+        "value.lower() in _PLAIN_FLAGS and end >= last_text:\n",
+        "value.lower() in _PLAIN_FLAGS:\n",
+        "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
+        "a flag with a word after it was shown",
     ),
 ]
 
@@ -2595,6 +2616,19 @@ def shared_first_lines(first_lines):
     return [labels for labels in by_line.values() if len(labels) > 1]
 
 
+def focus_problems(only: list[str], ran: list[str], names: list[str] | None = None) -> list[str]:
+    """For a focused run (names given on the command line): every focus word must match a row of the table, and every
+    row that was run must contain one of the focus words, so a typo cannot run nothing and a run cannot widen itself."""
+    names = [m.name for m in M] if names is None else names
+    out = [f"focus word matches no row: {o}" for o in only if not any(o in n for n in names)]
+    out += [
+        f"row run but not in the focus list: {n}"
+        for n in ran
+        if only and not any(o in n for o in only)
+    ]
+    return out
+
+
 if __name__ == "__main__":
     only = sys.argv[1:]
     if only and not any(o in m.name for m in M for o in only):
@@ -2621,6 +2655,7 @@ if __name__ == "__main__":
         first_lines=first_lines,
     )
     bad = [n for n, _, _, g in res if not g]
+    bad += focus_problems(only, [n for n, _, _, _ in res])
     shared = shared_first_lines(first_lines)
     if shared:
         print(f"rows killed by the very same first failing line: {shared}", file=sys.stderr)

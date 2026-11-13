@@ -24,6 +24,7 @@ from typing import Any
 
 import pytest
 from tools import demo_only_guard as g
+from tools import fixed_run
 
 from tests.fixed_run import run as run_fixed
 from tests.refusal import refused
@@ -1586,9 +1587,7 @@ def test_the_copy_run_does_not_start_when_the_scan_has_a_hit(
             called.append(" ".join(map(str, argv)))
         return real_run(argv, **kw)
 
-    import tools.fixed_run as fixed_run_mod
-
-    monkeypatch.setattr(fixed_run_mod.subprocess, "run", watch)
+    monkeypatch.setattr(fixed_run.subprocess, "run", watch)
     rc = g.run_without_folder(repo, _cfg(), [])
     out = capsys.readouterr().out
     assert rc == 1 and "names-demo-only-folder" in out and "copy run is not started" in out, (
@@ -2049,8 +2048,8 @@ def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> 
     )
 
 
-def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -> None:
-    # what it shows (a bare scheme word was never hidden)
+def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> None:
+    # letters only: the guard and the core agree (the rows where the guard hides more are in the next test)
     for scheme, core, low in (
         ("Bearer", "BEARER", 12),
         ("basic", "BASIC", 8),
@@ -2070,6 +2069,61 @@ def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -
             assert (token in hidden) == (n < low), (
                 f"{scheme} {n} characters: visible or hidden wrongly: {hidden!r}"
             )
+
+
+def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_stated_ones() -> (
+    None
+):
+    # (line, what the guard shows, whether the core hides a token in it). Intended differences: the guard hides more.
+    rows = (
+        (
+            "x Bearer a1b2c3 y",
+            "x Bearer <hidden> y",
+            False,
+        ),  # mixed letters and digits, 6 characters
+        ("x Basic a1b2 y", "x Basic <hidden> y", False),  # mixed, 4 characters
+        (
+            "x Basic abc-defghijk y",
+            "x Basic abc-defghijk y",
+            False,
+        ),  # 12 with a dash: shown, as the core
+        (
+            "x Basic abc-defghijklmnop y",
+            "x Basic <hidden> y",
+            False,
+        ),  # 17 with a dash: hidden, the core shows it
+        ('authorization=Bearer "abc def" tail', "authorization=<hidden> tail", False),
+        ("authorization=Bearer abcdefgh x", "authorization=<hidden> x", False),
+    )
+    for line, guard_shows, core_hides in rows:
+        core_does = any(_core(name).search(line) for name in ("BEARER", "BASIC"))
+        assert core_does == core_hides, (
+            f"the row says the core hides {line!r}: {core_hides}, it does: {core_does}"
+        )
+        shown = g._hide_secrets(line)
+        assert shown == guard_shows, f"a stated row differs: {line!r} gave {shown!r}"
+
+
+def test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_shows_it() -> None:
+    line = "x Basic abc-defghijklmnop y"
+    assert _core("BASIC").search(line) is None, (
+        "the core hides it: this is not a difference any more"
+    )
+    assert g._hide_secrets(line) == "x Basic <hidden> y", (
+        "a 17 character Basic token with a dash stayed visible"
+    )
+
+
+def test_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core() -> None:
+    line = "x Basic abc-defghijk y"
+    assert g._hide_secrets(line) == line, "a 12 character Basic token with a dash was hidden"
+
+
+def test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole() -> None:
+    shown = g._hide_secrets('authorization=Bearer "abc def" tail')
+    assert shown == "authorization=<hidden> tail", (
+        "the quoted authorization value was not hidden whole"
+    )
 
 
 def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
@@ -2127,6 +2181,18 @@ def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() 
             assert shown == f"{name}=<hidden> tail", (
                 f"a hidden-side value stayed visible, {name}={value}: {shown!r}"
             )
+    # nothing after the value (the end of the line): only a plain on/off word is shown
+    for line in (
+        "bypass=abc123",
+        "bypass=truex",
+        "bypass=2",
+        "x bypass=yes!",
+        "bypass=true,abc123",
+    ):
+        shown = g._hide_secrets(line)
+        assert "<hidden>" in shown, (
+            f"a hidden-side value at the end of the line stayed visible: {line!r}"
+        )
     # a plain word followed by anything else on the line is hidden (only the end of the line may follow it)
     assert g._hide_secrets("bypass=true x") == "bypass=<hidden> x", (
         "a flag with a word after it was shown"
@@ -2554,7 +2620,6 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
 def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
     None
 ):
-    from tools.fixed_run import ALLOWED_KEYWORDS, run_fixed
 
     for kwargs in (
         {"shell": True},
@@ -2564,14 +2629,14 @@ def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it
         {"stdin": None},
     ):
         try:
-            run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
+            fixed_run.run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
         except ValueError as refusal:
             assert next(iter(kwargs)) in str(refusal), (
                 f"the refused keyword is not named: {refusal}"
             )
             continue
         raise AssertionError(f"a program was started with {kwargs}")
-    assert not ({"shell", "executable", "preexec_fn", "stdin"} & ALLOWED_KEYWORDS), (
+    assert not ({"shell", "executable", "preexec_fn", "stdin"} & fixed_run.ALLOWED_KEYWORDS), (
         "a risky keyword is allowed"
     )
 
@@ -2579,7 +2644,6 @@ def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it
 def test_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text() -> (
     None
 ):
-    from tools.fixed_run import run_fixed
 
     for bad in (
         "echo hello",
@@ -2591,26 +2655,25 @@ def test_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elemen
         [sys.executable, None],
     ):
         try:
-            run_fixed(bad, check=True)
+            fixed_run.run_fixed(bad, check=True)
         except TypeError:
             continue
         raise AssertionError(f"a command that is not a list of texts was run: {bad!r}")
     for bad in ([sys.executable, "-c", "pass\0x"], ["git\0", "status"]):
         try:
-            run_fixed(bad, check=True)
+            fixed_run.run_fixed(bad, check=True)
         except TypeError:
             continue
         raise AssertionError(f"a text with a NUL character was run: {bad!r}")
 
 
 def test_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
-    from tools.fixed_run import run_fixed
 
-    done = run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
+    done = fixed_run.run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
     assert done.stdout.strip() == b"7", f"the program did not run: {done.stdout!r}"
     missing = "no-such-program-" + "x" * 8
     try:
-        run_fixed([missing], check=True)
+        fixed_run.run_fixed([missing], check=True)
     except SystemExit as stop:
         assert missing in str(stop), f"the missing program is not named: {stop}"
     else:
