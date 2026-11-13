@@ -13,22 +13,30 @@ under the product folders listed in the settings file (a symlink pointing into t
   * a submodule (a git link) under a product folder, even when its folder is missing: its files cannot be scanned;
   * a file ending in .pyc, .so, .zip, .whl, .gz, .tgz, .tar, .bz2 or .xz under a product folder, and a file of ANY ending whose
     first bytes are the mark of a zip, an ELF program, a gzip, bzip2 or xz file, a tar archive or compiled Python (it cannot
-    be read, or it packs what it holds; renaming it to .png does not help);
-  * a file or folder entry git lists that cannot be read (a permission error, a pipe, a socket): it is a hit, never a skip;
-  * a file larger than `max_file_bytes` in the settings (it is not read; a hit says so);
+    be read, or it packs what it holds);
+  * a file with a picture, font or PDF ending (`ENDING_MARKS`: .png .jpg .jpeg .gif .ico .pdf .woff .woff2) whose first bytes
+    are not the mark of that kind: the content decides what a file is, not its name (zstd, 7z, rar, lz4, Windows or Mac programs
+    and the like named logo.png are hits);
+  * a file or folder entry git lists that cannot be inspected or read (a permission error, a pipe, a socket, a parent folder
+    that cannot be entered): it is a hit, never a skip; only "no such file" means the entry is gone (see `_stat_kind`);
+  * a file larger than `max_file_bytes` in the settings (it is not read; a hit says so), including a file on the exempt list;
   * a file that is not text and is not on the skip list of known binary endings (it cannot be read, so it is refused);
   * a loader file (the one place that may pick the folder by configuration) that names it more often than the cap;
-  * the folder being present while the copy run is not wired (see the marker file in the settings).
-Every other file type is read, including files without an ending. A file with another known binary
-ending is not read as text when its first 8192 bytes hold a NUL byte or it is not valid text; its bytes are searched for the
-name instead (as UTF-8, UTF-16 and UTF-32 text, little- and big-endian, no byte-order mark). A text file renamed to a picture ending is read like
-any other. Every line and every path part is normalised (NFKC) before it is compared, so a full-width spelling of the name,
+  * the folder being present while the copy run is not wired (see the marker file in the settings): the marker must be a
+    regular file of size 0, not a link or a folder, and an exempt file must not be a link.
+Every other file type is read, including files without an ending. A file with a known picture, font or PDF ending that has the
+right first bytes is not read as text when its first 8192 bytes hold a NUL byte or it is not valid text; its bytes are searched for the
+name instead (as UTF-8, UTF-16 and UTF-32 text, little- and big-endian, no byte-order mark). Every line and every path part is
+normalised (NFKC) before it is compared, so a full-width spelling of the name,
 which Python reads as the same identifier, is a hit. A file that holds NUL bytes is also searched for the name written as
 UTF-16 or UTF-32 without a byte-order mark. Output per hit: path:line: rule (the matched text is
-never printed; a path is printed with control characters escaped as \\xNN, and a path that starts with "::" starts with
+never printed; a path is printed with control characters escaped as \\xNN, \\uNNNN or \\UNNNNNNNN, and a path that starts with "::" starts with
 \\x3a: instead, so a hit can never be read as a CI workflow command or hide a line). Limits: the byte search of a binary file looks for the name as written (it is not normalised with NFKC, because a binary has
 no text to normalise), a name the compiler assembles from pieces at build time is not found, and the made-up record id patterns are
-not run on binary files (only on text). Only files git lists are read, so a file the repository ignores (.gitignore) is not checked, and
+not run on binary files (only on text). Paths are matched as git lists them; on a case-insensitive file system a
+differently-cased spelling of a product folder is not matched (the scan runs on git's own path list, on Linux in CI). A file
+that names the folder only inside a quoted string `"DEMO_ONLY"` is still a hit: over-detection is the safe side, and a product
+file that must name the folder for a real reason goes on the exempt list with its reason. Only files git lists are read, so a file the repository ignores (.gitignore) is not checked, and
 only the product folders in the settings are scanned, so the packaging files at the repository root (for example
 pyproject.toml) are not; a folder the packaging config adds to the product from outside the listed folders is the
 copy run's job. A name built from pieces at run time (for example "demo" + "_only") cannot be found by any text scan;
@@ -38,18 +46,24 @@ Usage:
   python tools/demo_only_guard.py                       scan: exit 1 on any hit
   python tools/demo_only_guard.py --require             also exit 2 if the folder is missing (CI of a demo repo)
   python tools/demo_only_guard.py --without-folder [-- PYTEST ARGS...]
-                                                        copy the repository without the folder and run pytest there
+                                                        copy the files git tracks, without the folder, and run pytest there
   python tools/demo_only_guard.py --without-folder-if-present [-- PYTEST ARGS...]
                                                         the same, but exit 0 at once when the repository has no folder
+`--require`, `--without-folder` and `--without-folder-if-present` exclude each other (exit 2), and pytest arguments are
+accepted only with a copy-run flag (exit 2). The copy holds exactly the files `git ls-files --cached` names (what git
+tracks), minus the folder and the marker; a file that is only new (not added) or ignored is not copied. Its child process
+sees only the environment variables listed in `child_env_allowed` (HOME and PATH among them): that limits the environment,
+not the files the child can reach. The variables of the database and Vault tests are left out on purpose, so those tests
+skip in the copy.
 """
 
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -59,31 +73,26 @@ from dataclasses import dataclass
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SKIP_DIRS = {  # left out of the copy (copy run) only
-    ".git",
-    "__pycache__",
-    ".venv",
-    "node_modules",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".mypy_cache",
+# The first bytes a file with each of the endings that may hold a non-text file must start with. The content decides: a
+# file with one of these endings that does not start with the mark of its kind is a hit.
+ENDING_MARKS: dict[str, tuple[bytes, ...]] = {
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    ".ico": (b"\x00\x00\x01\x00",),
+    ".pdf": (b"%PDF-",),
+    ".woff": (b"wOFF",),
+    ".woff2": (b"wOF2",),
 }
-# Endings of files that are known not to be text; every other file is read.
-DEFAULT_SKIP_SUFFIXES = (
-    ".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".gz", ".whl",
-    ".woff", ".woff2", ".pyc", ".so",
-)  # fmt: skip
+# Endings of files that are known not to be text; every other file is read. Every one needs a row in ENDING_MARKS.
+DEFAULT_SKIP_SUFFIXES = tuple(ENDING_MARKS)
 # Endings that are never accepted in a product folder: an importable or loadable file that cannot be read (a sourceless
 # .pyc, a compiled .so) or a packed archive (.zip, .whl, .gz, .tgz, .tar, .bz2, .xz) that hides what is inside.
 REFUSED_SUFFIXES = (".pyc", ".so", ".zip", ".whl", ".gz", ".tgz", ".tar", ".bz2", ".xz")
 # The same files by their first bytes, whatever the ending (a zip renamed to .png is still a zip); see `_magic_kind`.
 MAX_FILE_BYTES = 8 * 1024 * 1024  # the default cap on one file (the settings file may change it)
-# Names the copy run never copies when git does not track them (secrets that sit in a working folder), matched on the name.
-DEFAULT_COPY_EXCLUDE = (
-    ".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", ".netrc", ".npmrc", ".pypirc",
-    "id_rsa*", "id_ed25519*", "id_ecdsa*", "*.kdbx", "credentials*",
-)  # fmt: skip
-# The only environment names the copy run's child process receives (no token, no key, no connection string).
+# The only environment variable names the copy run's child process receives (no token, no key, no connection string).
 DEFAULT_CHILD_ENV = (
     "PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "TERM",
     "VIRTUAL_ENV", "HADAVIN_REQUIRE_NODE",
@@ -101,7 +110,7 @@ class GuardConfig:
     skip_suffixes: tuple[str, ...] = DEFAULT_SKIP_SUFFIXES
     exempt_files: tuple[
         str, ...
-    ] = ()  # files that must hold the name (the guard's own settings); skipped whole
+    ] = ()  # files that must hold the name (the guard's own settings); their content is not searched
     allowed_phrases: tuple[
         str, ...
     ] = ()  # exact phrases that are not the folder (for example a constant's name)
@@ -109,7 +118,6 @@ class GuardConfig:
     loader_max_lines: int = 1
     copy_run_marker: str = DEFAULT_MARKER
     max_file_bytes: int = MAX_FILE_BYTES
-    copy_exclude: tuple[str, ...] = DEFAULT_COPY_EXCLUDE
     child_env_allowed: tuple[str, ...] = DEFAULT_CHILD_ENV
 
 
@@ -148,6 +156,11 @@ def load_config(path: Path) -> GuardConfig:
         raise SystemExit(
             f"demo_only_guard: every 'skip_suffixes' entry in {path.name} starts with a dot"
         )
+    if unknown := [s for s in skip if s.lower() not in ENDING_MARKS]:
+        raise SystemExit(
+            f"demo_only_guard: 'skip_suffixes' in {path.name} names an ending with no known first bytes ({unknown[0]}); "
+            f"allowed: {', '.join(ENDING_MARKS)}"
+        )
     cap = raw.get("loader_max_lines", 1)
     if not isinstance(cap, int) or isinstance(cap, bool) or cap < 1:
         raise SystemExit(
@@ -161,7 +174,10 @@ def load_config(path: Path) -> GuardConfig:
         raise SystemExit(
             f"demo_only_guard: 'max_file_bytes' in {path.name} must be a whole number of 1 or more"
         )
-    copy_exclude = _list_of_text(raw, "copy_exclude", path, default=list(DEFAULT_COPY_EXCLUDE))
+    if "copy_exclude" in raw:
+        raise SystemExit(
+            f"demo_only_guard: 'copy_exclude' in {path.name} is gone: the copy holds exactly the files git tracks"
+        )
     child_env = _list_of_text(raw, "child_env_allowed", path, default=list(DEFAULT_CHILD_ENV))
     try:
         patterns = tuple(re.compile(p) for p in ids)
@@ -185,7 +201,6 @@ def load_config(path: Path) -> GuardConfig:
         cap,
         marker,
         max_bytes,
-        tuple(copy_exclude),
         tuple(child_env),
     )
 
@@ -202,18 +217,27 @@ def _phrase_patterns(phrases: tuple[str, ...]) -> dict[str, re.Pattern[str]]:
     return {p: re.compile(r"(?<![\w/\\-])" + re.escape(p) + r"(?![\w/\\-])") for p in phrases}
 
 
-def tracked_paths(repo: Path) -> list[str]:
-    """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus
-    files not yet added and not ignored), as repository-relative paths with "/". Directories are not listed by git, and
-    a symlink is one entry that is never followed. Not a git checkout, or git failing, stops the guard: it does not guess."""
+def _git_env() -> dict[str, str]:
+    """The environment of every git call: the caller's, without any `GIT_*` variable (GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE
+    and the like would make `git -C <repo>` list another tree than the one asked for)."""
+    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+
+
+def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
+    """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
+    unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
+    Directories are not listed by git, and a symlink is one entry that is never followed. Not a git checkout, or git
+    failing, stops the guard: it does not guess. The copy run asks for the tracked files only (`include_new=False`)."""
     if not (repo / ".git").exists():
         raise SystemExit(
             f"demo_only_guard: {repo} is not a git checkout; the scan lists files with git and will not guess"
         )
+    flags = ["--cached", "--others", "--exclude-standard"] if include_new else ["--cached"]
     done = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
-        ["git", "-C", str(repo), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],  # noqa: S607
+        ["git", "-C", str(repo), "ls-files", "-z", *flags],  # noqa: S607
         capture_output=True,
         check=False,
+        env=_git_env(),
     )
     if done.returncode != 0:
         raise SystemExit(
@@ -229,6 +253,7 @@ def _gitlinks(repo: Path) -> set[str]:
         ["git", "-C", str(repo), "ls-files", "-s", "-z", "--cached"],  # noqa: S607
         capture_output=True,
         check=False,
+        env=_git_env(),
     )
     if done.returncode != 0:
         raise SystemExit(
@@ -281,21 +306,6 @@ def printable(line: str) -> str:
     return "\\x3a:" + text[2:] if text.startswith("::") else text
 
 
-def _cached_paths(repo: Path) -> set[str]:
-    """The paths git tracks (in its index). No git checkout, or git failing, gives the empty set: then nothing counts as
-    tracked and every secret-shaped file is left out of a copy (the safe direction)."""
-    if not (repo / ".git").exists():
-        return set()
-    done = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
-        ["git", "-C", str(repo), "ls-files", "-z", "--cached"],  # noqa: S607
-        capture_output=True,
-        check=False,
-    )
-    if done.returncode != 0:
-        return set()
-    return {p for p in done.stdout.decode("utf-8", errors="surrogateescape").split("\0") if p}
-
-
 def _nfkc(text: str) -> str:
     """The text as Python reads an identifier: NFKC (full-width letters become plain ones)."""
     return unicodedata.normalize("NFKC", text)
@@ -307,6 +317,53 @@ def _under(rel: str, roots: tuple[str, ...]) -> str | None:
         if rel == r or rel.startswith(r + "/"):
             return r
     return None
+
+
+def _stat_kind(full: Path) -> str:
+    """What the entry at `full` is, decided by ONE call that does not swallow errors (`os.lstat`, which never follows a link):
+    "gone" only when the system says there is no such file (FileNotFoundError); "link", "folder" or "file" for those kinds;
+    "unreadable" for everything else (a pipe, a socket, a device, and any other OSError such as a permission error, a parent
+    that is not a folder, a loop of links). `Path.is_symlink`, `is_dir` and `is_file` answer False for some errors on some
+    Python versions, which would read an entry that cannot be inspected as gone."""
+    try:
+        mode = os.lstat(full).st_mode
+    except FileNotFoundError:
+        return "gone"
+    except OSError:
+        return "unreadable"
+    if stat.S_ISLNK(mode):
+        return "link"
+    if stat.S_ISDIR(mode):
+        return "folder"
+    if stat.S_ISREG(mode):
+        return "file"
+    return "unreadable"
+
+
+def _shape_hits(repo: Path, cfg: GuardConfig, gitlinks: set[str]) -> list[str]:
+    """The hits of the special files: the copy-run marker must be a regular file of size 0, and an exempt file must be a
+    regular file (not a link, not unreadable) no larger than `max_file_bytes`. Their content is not searched (they hold the
+    folder name on purpose), but their shape is."""
+    hits: list[str] = []
+    marker = cfg.copy_run_marker
+    kind = _stat_kind(repo / marker)
+    if kind == "file" and os.lstat(repo / marker).st_size != 0:
+        hits.append(
+            f"{marker}: copy-run-marker-not-empty (the marker must be an empty regular file)"
+        )
+    elif kind in ("link", "folder", "unreadable"):
+        hits.append(f"{marker}: copy-run-marker-not-a-regular-file (a {kind} cannot be the marker)")
+    for rel in sorted(set(cfg.exempt_files)):
+        if rel in gitlinks:
+            continue
+        kind = _stat_kind(repo / rel)
+        if kind == "link":
+            hits.append(f"{rel}: symlink-exempt-file (an exempt file must be a regular file)")
+        elif kind == "unreadable":
+            hits.append(f"{rel}: unreadable-file (the entry cannot be inspected)")
+        elif kind == "file" and os.lstat(repo / rel).st_size > cfg.max_file_bytes:
+            hits.append(f"{rel}: file-too-large (over {cfg.max_file_bytes} bytes; it is not read)")
+    return hits
 
 
 def scan(repo: Path, cfg: GuardConfig) -> list[str]:
@@ -340,7 +397,8 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
     for rel in sorted(set(cfg.exempt_files)):
         if not (repo / rel).is_file() and rel not in gitlinks:
             hits.append(f"{rel}: stale-exempt-entry (neither a file nor a git link that exists)")
-    if (repo / cfg.folder).is_dir() and not (repo / cfg.copy_run_marker).is_file():
+    hits += _shape_hits(repo, cfg, gitlinks)
+    if (repo / cfg.folder).is_dir() and _stat_kind(repo / cfg.copy_run_marker) != "file":
         hits.append(
             f"{cfg.copy_run_marker}: copy-run-not-wired (the folder exists, so CI must run the copy run "
             "and the marker file must say so)"
@@ -357,19 +415,19 @@ def scan(repo: Path, cfg: GuardConfig) -> list[str]:
                 hits.append(f"{rel}: submodule-in-product-root (its files cannot be scanned)")
             continue
         root = _under(rel, roots)
-        try:
-            is_link = full.is_symlink()
-            # git lists a submodule (a git link) as a folder
-            is_folder = not is_link and full.is_dir()
-            is_file = not is_link and not is_folder and full.is_file()
-            if not is_link and not is_folder and not is_file:
-                if not os.path.lexists(full):
-                    continue  # listed by git but gone from the disk
-                raise OSError("not a regular file, folder or link (a pipe or socket)")
-        except OSError:
-            if root is not None and rel not in exempt:
+        kind = _stat_kind(full)
+        if kind == "gone":
+            continue  # listed by git but gone from the disk (the system says: no such file)
+        if kind == "unreadable":
+            if (
+                root is not None and rel not in exempt
+            ):  # an exempt file's shape is checked by `_shape_hits`
                 hits.append(f"{rel}: unreadable-file (the entry cannot be inspected)")
             continue
+        is_link, is_folder = (
+            kind == "link",
+            kind == "folder",
+        )  # git lists a submodule (a git link) as a folder
         if is_folder:
             if root is not None and rel not in exempt:
                 hits.append(f"{rel}: submodule-in-product-root (its files cannot be scanned)")
@@ -464,14 +522,22 @@ def _scan_file(
         return [f"{rel}: file-too-large (over {cfg.max_file_bytes} bytes; it is not read)"]
     if kind := _magic_kind(data):
         return [f"{rel}: binary-in-product-root (the file is {kind}, whatever its ending says)"]
+    hits: list[str] = []
+    if suffix in cfg.skip_suffixes and not data.startswith(ENDING_MARKS[suffix]):
+        hits.append(
+            f"{rel}: ending-does-not-match-content (a {suffix} file must start with the mark of its kind)"
+        )
     if suffix in cfg.skip_suffixes and _looks_binary(data):
-        hit = any(rx.search(data) for rx in byte_names.values())
-        return [f"{rel}: names-demo-only-folder (inside a binary file)"] if hit else []
+        if any(rx.search(data) for rx in byte_names.values()):
+            hits.append(f"{rel}: names-demo-only-folder (inside a binary file)")
+        return hits
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError:
-        return [f"{rel}: unreadable-file (not text and not on the list of known binary endings)"]
-    hits: list[str] = []
+        return [
+            *hits,
+            f"{rel}: unreadable-file (not text and not on the list of known binary endings)",
+        ]
     loader_lines = 0
     for n, raw in enumerate(text.splitlines(), 1):
         line = _nfkc(raw)
@@ -495,26 +561,34 @@ def _scan_file(
 
 
 def copy_without_folder(repo: Path, cfg: GuardConfig, dest: Path) -> None:
-    """A copy of the repository (no version history, no caches, no virtual environment) without the demo-only folder. A
-    file whose name looks like a secret (`copy_exclude` in the settings: `.env`, keys, certificates) is not copied unless
-    git tracks it, so an untracked key file that sits in the working folder never reaches the copy."""
-    tracked = _cached_paths(repo)
-
-    def ignore(directory: str, names: list[str]) -> set[str]:
-        skip = {n for n in names if n in SKIP_DIRS}
-        here = Path(directory).resolve()
-        if here == repo.resolve():
-            skip.add(cfg.folder)
-        base = here.relative_to(repo.resolve()).as_posix()
-        for n in names:
-            rel = n if base == "." else f"{base}/{n}"
-            if rel not in tracked and any(
-                fnmatch.fnmatchcase(n.lower(), pat.lower()) for pat in cfg.copy_exclude
-            ):
-                skip.add(n)
-        return skip
-
-    shutil.copytree(repo, dest, ignore=ignore, symlinks=True, dirs_exist_ok=True)
+    """A copy of the files git tracks (`tracked_paths(repo, include_new=False)`, the same list the scan reads, with no
+    second rule of names): no version history, no cache, no virtual environment, no file git does not track, and without
+    the demo-only folder and the copy-run marker. Copied file by file, so a tracked folder is copied whatever its name, and
+    an untracked key file, an ignored build folder or a `.pgpass` in the working folder never reaches the copy."""
+    folder = cfg.folder.strip("/")
+    marker = cfg.copy_run_marker
+    root = dest.resolve()
+    for rel in tracked_paths(repo, include_new=False):
+        if rel == marker or rel == folder or rel.startswith(folder + "/"):
+            continue
+        source = repo / rel
+        kind = _stat_kind(source)
+        if kind in ("gone", "folder"):
+            continue  # deleted since the last commit; a submodule folder is not copied (the scan reports it)
+        target = dest / rel
+        if not target.resolve().parent.is_relative_to(root):
+            raise SystemExit(
+                "demo_only_guard: a tracked path leads out of the copy; refusing to copy"
+            )
+        if kind == "unreadable":
+            raise SystemExit(
+                f"demo_only_guard: {rel} cannot be copied (not a file or a link); refusing"
+            )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if kind == "link":
+            os.symlink(os.readlink(source), target)
+        else:
+            shutil.copy2(source, target)
 
 
 _IMPORT_CHECK = (
@@ -532,6 +606,12 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
     if not cfg.product_packages:
         raise SystemExit(
             "demo_only_guard: 'product_packages' is empty; without a package to check the copy run could test the original"
+        )
+    if new := sorted(set(tracked_paths(repo)) - set(tracked_paths(repo, include_new=False))):
+        print(
+            f"demo_only_guard: {len(new)} file(s) are not added to git and are not in the copy (git add them to test them): "
+            + ", ".join(printable(n) for n in new[:5])
+            + (" ..." if len(new) > 5 else "")
         )
     with tempfile.TemporaryDirectory(prefix="demo-only-guard-") as tmp:
         dest = Path(tmp) / "copy"
@@ -569,13 +649,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument("--root", default=str(HERE.parent), help="the repository root")
     ap.add_argument("--config", default=str(HERE / "demo_only_guard.toml"))
-    ap.add_argument(
+    mode = (
+        ap.add_mutually_exclusive_group()
+    )  # one mode at a time: argparse exits 2 with a message otherwise
+    mode.add_argument(
         "--require", action="store_true", help="exit 2 if the demo-only folder is missing"
     )
-    ap.add_argument(
+    mode.add_argument(
         "--without-folder", action="store_true", help="run pytest in a copy without the folder"
     )
-    ap.add_argument(
+    mode.add_argument(
         "--without-folder-if-present",
         action="store_true",
         help="like --without-folder, but exit 0 at once when there is no folder",
@@ -584,6 +667,10 @@ def main(argv: list[str] | None = None) -> int:
         "pytest_args", nargs="*", help="after --: arguments for pytest (with --without-folder)"
     )
     a = ap.parse_args(argv)
+    if a.pytest_args and not (a.without_folder or a.without_folder_if_present):
+        ap.error(
+            "pytest arguments are accepted only with --without-folder or --without-folder-if-present"
+        )
     repo = Path(a.root).resolve()
     cfg = load_config(Path(a.config))
     if a.without_folder_if_present and not (repo / cfg.folder).is_dir():

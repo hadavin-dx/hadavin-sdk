@@ -34,3 +34,54 @@ def test_a_planted_duplicate_or_missing_search_text_or_repeated_label_is_reporte
         ("Z3 never", "search text found 0 times"),
         ("Z1", "label used twice"),
     ]
+
+
+GENERIC_EXPECTATIONS = ("AssertionError", "did not match", "boom", "assert", "Exception", "Error")
+
+
+def weak_expectations(rows=None) -> list[tuple[str, str]]:
+    """Rows whose `expect` would also fit an unrelated failure: a bare exception word, pytest's own "did not match"
+    line, a bare tuple repr, or a short bare comparison of two values. Every row names a fragment of its own message
+    instead (the message of the assert, or the name of the rule it expects)."""
+    weak: list[tuple[str, str]] = []
+    for m in bm.M if rows is None else rows:
+        e = m.expect.strip()
+        generic = (
+            e in GENERIC_EXPECTATIONS
+            or "did not match" in e
+            or e.startswith("AssertionError: (")
+            or (e.startswith("assert ") and len(e) < 30)  # a bare comparison of two short values
+            or (e.startswith("AssertionError: ") and len(e) < 24)
+        )
+        if generic:
+            weak.append((m.name, e))
+    return weak
+
+
+def test_no_row_has_a_generic_or_shortened_expectation() -> None:
+    assert weak_expectations() == []
+
+
+def test_no_row_changes_nothing() -> None:
+    assert [m.name for m in bm.M if m.old == m.new] == []
+
+
+def test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported() -> None:
+    good = bm.mutant("Z1 ok", "x.py", "a", "b", "t.py", "test_k", "wrong value written")
+    rows = [
+        good,
+        bm.mutant("Z2 bare", "x.py", "a", "b", "t.py", "test_k", "AssertionError"),
+        bm.mutant("Z3 nomatch", "x.py", "a", "b", "t.py", "test_k", "Regex pattern did not match"),
+        bm.mutant("Z4 boom", "x.py", "a", "b", "t.py", "test_k", "boom"),
+        bm.mutant("Z5 cut", "x.py", "a", "b", "t.py", "test_k", "assert 0 == 2"),
+        bm.mutant("Z6 tuple", "x.py", "a", "b", "t.py", "test_k", "AssertionError: ('x',)"),
+    ]
+    assert [name for name, _ in weak_expectations(rows)] == [
+        "Z2 bare",
+        "Z3 nomatch",
+        "Z4 boom",
+        "Z5 cut",
+        "Z6 tuple",
+    ]
+    same = bm.mutant("Z7 same", "x.py", "a", "a", "t.py", "test_k", "wrong value written")
+    assert [m.name for m in [good, same] if m.old == m.new] == ["Z7 same"]

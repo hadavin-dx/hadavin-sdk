@@ -86,8 +86,10 @@
   }
   function fill(el, b, nodes) {
     // The tone goes in first, then the words as plain text, then the element is cleared and filled. Any failure is
-    // caught by paint, which writes the "not confirmed" tone and then its text; if even those writes fail, the previous
-    // text stays, under the "not confirmed" tone when that attribute could be written (the safe direction).
+    // caught by paint, which writes the "not confirmed" tone and then its text. Two cases when even those writes fail:
+    // (a) the tone write works but the text write fails: the previous text stays under the "not confirmed" tone (the
+    // safe direction), and data-mode is not cleared; (b) the tone write itself fails: nothing else is written, so the
+    // previous tone, text and data-mode all stay together (data-mode is never cleared in that case either).
     el.setAttribute('data-tone', b.tone);
     el.textContent = b.tag + ' ' + b.text;
     el.textContent = '';

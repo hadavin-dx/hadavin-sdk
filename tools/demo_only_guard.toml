@@ -19,7 +19,8 @@ loader_max_lines = 1
 # Empty in core: core ships no fake records. A demo repository lists its own ids here.
 fake_id_patterns = []
 
-# files that must hold the folder name because they are the guard itself; they are skipped whole. A test pins this list.
+# files that must hold the folder name because they are the guard itself; their content is not searched, but each must be
+# a regular file (not a link) within `max_file_bytes`. A test pins this list.
 exempt_files = ["tools/demo_only_guard.py", "tools/demo_only_guard.toml"]
 
 # exact phrases that look like the folder name but are not it: the name of core's table of demo-only kinds, and
@@ -33,14 +34,13 @@ product_packages = ["hadavin_sdk"]
 copy_run_marker = "tools/demo_only_guard.copy_run"
 
 # endings of files that are known not to be text; every other file is read, and a file that is neither text nor on
-# this list is refused
-skip_suffixes = [".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".gz", ".whl", ".woff", ".woff2", ".pyc", ".so"]
+# this list is refused. A file with one of these endings must start with the mark of its kind (png, jpeg, gif, ico, pdf, woff,
+# woff2: see ENDING_MARKS in the guard), and an ending with no known mark cannot be listed here.
+skip_suffixes = [".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".woff", ".woff2"]
 
 # a file bigger than this many bytes is not read; it is a hit (a very large file cannot be searched in memory)
 max_file_bytes = 8388608
 
-# the copy run (--without-folder) does not copy a file with one of these names unless git tracks it (case-insensitive)
-copy_exclude = [".env", ".env.*", "*.pem", "*.key", "*.p12", "*.pfx", ".netrc", ".npmrc", ".pypirc", "id_rsa*", "id_ed25519*", "id_ecdsa*", "*.kdbx", "credentials*"]
-
-# the only environment variables the copy run's pytest child receives; a demo repository adds the plain, non-secret names its tests need
+# the only environment variables the copy run's pytest child receives; a demo repository adds the plain, non-secret names its tests need.
+# The database and Vault variables (HADAVIN_TEST_PG_DSN, HADAVIN_TEST_VAULT_ADDR) are left out on purpose: those tests skip in the copy.
 child_env_allowed = ["PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "TERM", "VIRTUAL_ENV", "HADAVIN_REQUIRE_NODE"]

@@ -84,8 +84,10 @@ jobs:
         run: python tools/scan_repo.py
       - name: Demo-only folder guard (product code names neither the demo-only folder nor a fake record id)
         run: python tools/demo_only_guard.py
-      - name: Demo-only folder copy run (only when the repository has the folder; tests must pass without it)
-        run: python tools/demo_only_guard.py --without-folder-if-present
+      - name: Demo-only folder copy run (only when the repository has the folder; the tests must pass without it)
+        env:
+          HADAVIN_REQUIRE_NODE: "1"  # the copy run's tests include the mode-banner page tests; no node must fail, not skip
+        run: python tools/demo_only_guard.py --without-folder-if-present -- -m "not live and not perf"
       - name: The node program the mode-banner page tests run in is present (else they would skip silently)
         run: node --version
       - name: The postgres client the database tests shell out to is present (else they would skip silently)

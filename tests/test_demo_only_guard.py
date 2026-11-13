@@ -50,10 +50,17 @@ def _repo(tmp_path: Path, files: dict[str, str]) -> Path:
     return tmp_path
 
 
+def _track(repo: Path) -> Path:
+    """Add every file that is not ignored to git's index: the copy run copies the files git tracks (and only those)."""
+    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)  # noqa: S603, S607
+    return repo
+
+
 # the mutation runner copies the sources without .git: the two tests on this very repository then have nothing to scan
 needs_git = pytest.mark.skipif(not (ROOT / ".git").exists(), reason="this copy has no .git")
 
 
+PNG = b"\x89PNG\r\n\x1a\n"  # the first bytes of every real picture of this kind
 MARKER = "tools/demo_only_guard.copy_run"
 CLEAN = {
     "src/pkg/__init__.py": "X = 1\n",
@@ -176,8 +183,8 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     repo = _repo(
         tmp_path, {**CLEAN, "src/pkg/__pycache__/x.py": FOLDER, ".gitignore": "__pycache__/\n"}
     )
-    (repo / "src/pkg/logo.png").write_bytes(b"\xff\xfe" + b"pixels")
-    (repo / "src/pkg/LOGO.PNG").write_bytes(b"\x89PNG\x00\x00 pixels")
+    (repo / "src/pkg/logo.png").write_bytes(PNG + b"\xff\xfe" + b"pixels")
+    (repo / "src/pkg/LOGO.PNG").write_bytes(PNG + b"\x00\x00 pixels")
     assert g.scan(repo, _cfg()) == []
 
 
@@ -327,6 +334,7 @@ def test_the_copy_run_if_present_does_nothing_without_a_folder_and_runs_with_one
     repo = _mini(tmp_path / "r")
     assert _main(repo, cfg, "--without-folder-if-present", "--", "tests/test_plain.py") == 0
     (repo / "tests" / "test_needs.py").write_text(NEEDS_FOLDER_TEST, encoding="utf-8")
+    _track(repo)
     assert _main(repo, cfg, "--without-folder-if-present", "--", "tests/test_needs.py") != 0
 
 
@@ -424,7 +432,9 @@ def test_exit_codes_clean_dirty_and_required_folder_missing(
     assert (
         _main(no_folder, cfg) == 0
     )  # a core-style repository has no such folder: fine unless required
-    assert _main(no_folder, cfg, "--require") == 2
+    assert _main(no_folder, cfg, "--require") == 2, (
+        "a required folder that is missing did not stop the run"
+    )
     assert "is missing but is required" in capsys.readouterr().out
     dirty = _repo(tmp_path / "dirty", {**CLEAN, "src/pkg/a.py": f"# {FOLDER}\n"})
     assert (
@@ -451,14 +461,16 @@ NEEDS_FOLDER_TEST = "def test_needs_folder():\n    import demo_only.fakes  # noq
 
 
 def _mini(tmp_path: Path, product: str = PRODUCT) -> Path:
-    return _repo(
-        tmp_path,
-        {
-            "src/pkg/__init__.py": product,
-            "tests/test_plain.py": PLAIN_TEST,
-            f"{FOLDER}/__init__.py": "",
-            f"{FOLDER}/fakes.py": "RECORD = 'x'\n",
-        },
+    return _track(
+        _repo(
+            tmp_path,
+            {
+                "src/pkg/__init__.py": product,
+                "tests/test_plain.py": PLAIN_TEST,
+                f"{FOLDER}/__init__.py": "",
+                f"{FOLDER}/fakes.py": "RECORD = 'x'\n",
+            },
+        )
     )
 
 
@@ -484,6 +496,7 @@ def test_a_product_that_reaches_into_the_folder_fails_in_the_copy(tmp_path: Path
 def test_the_copy_run_really_has_no_folder(tmp_path: Path) -> None:
     repo = _mini(tmp_path / "r")
     (repo / "tests" / "test_needs.py").write_text(NEEDS_FOLDER_TEST, encoding="utf-8")
+    _track(repo)
     assert g.run_without_folder(repo, _cfg(), ["tests/test_needs.py"]) != 0, (
         "a test that needs the folder passed in the copy"
     )  # proves the folder is gone from the copy
@@ -493,8 +506,11 @@ def test_the_copy_run_really_has_no_folder(tmp_path: Path) -> None:
 # -- one list of files: git's ---------------------------------------------------------------------------------------
 def test_the_scan_refuses_a_folder_that_is_not_a_git_checkout(tmp_path: Path) -> None:
     (tmp_path / "src").mkdir()
-    with pytest.raises(SystemExit, match="not a git checkout"):
+    with pytest.raises(SystemExit) as stop:
         g.scan(tmp_path, _cfg())
+    assert "not a git checkout" in str(stop.value), (
+        f"the scan of a folder that is not a git checkout was not refused as such: {stop.value}"
+    )
 
 
 def test_a_file_is_scanned_whether_it_is_added_to_git_or_not(tmp_path: Path) -> None:
@@ -529,7 +545,9 @@ def test_the_copy_run_imports_the_copy_even_if_the_original_is_on_the_import_pat
     monkeypatch.setenv(
         "PYTHONPATH", str(repo / "src")
     )  # an inherited path to the ORIGINAL checkout
-    assert g.run_without_folder(repo, _cfg(), []) == 0  # the child replaces it with the copy's src
+    assert g.run_without_folder(repo, _cfg(), []) == 0, (
+        "the copy run kept the inherited import path"
+    )  # the child replaces it with the copy's src
     assert g.run_without_folder(repo, _cfg(product_packages=("pkg_missing",)), []) != 0
 
 
@@ -538,7 +556,9 @@ def test_the_copy_run_fails_when_the_package_comes_from_somewhere_else(
 ) -> None:
     repo = _mini(tmp_path / "r")
     # "json" is real and importable but is not in the copy: the check must refuse to call that a pass
-    assert g.run_without_folder(repo, _cfg(product_packages=("json",)), []) == 3
+    assert g.run_without_folder(repo, _cfg(product_packages=("json",)), []) == 3, (
+        "a package that does not come from the copy was accepted"
+    )
     assert "not imported from the copy" in capsys.readouterr().out
 
 
@@ -559,7 +579,13 @@ def test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_sea
     tmp_path: Path,
 ) -> None:
     repo = _repo(tmp_path, {**CLEAN, "src/pkg/notes.png": f"see {FOLDER}\n"})
-    assert g.scan(repo, _cfg()) == ["src/pkg/notes.png:1: names-demo-only-folder"]
+    assert (
+        [h.split(" (")[0] for h in g.scan(repo, _cfg())]
+        == [
+            "src/pkg/notes.png: ending-does-not-match-content",  # the content decides: this is no picture
+            "src/pkg/notes.png:1: names-demo-only-folder",  # and it is still read as text
+        ]
+    ), "a text file renamed to a picture ending was not read as text"
     real = _repo(tmp_path / "real", CLEAN)
     (real / "src/pkg/logo.png").write_bytes(
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + FOLDER.encode()
@@ -575,7 +601,10 @@ def test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_sea
         tmp_path / "late", CLEAN
     )  # a NUL only after the first 8192 bytes does not make it binary
     (zeroes / "src/pkg/late.png").write_bytes(b"a" * 9000 + b"\x00" + FOLDER.encode())
-    assert g.scan(zeroes, _cfg()) == ["src/pkg/late.png:1: names-demo-only-folder"]
+    assert [h.split(" (")[0] for h in g.scan(zeroes, _cfg())] == [
+        "src/pkg/late.png: ending-does-not-match-content",
+        "src/pkg/late.png:1: names-demo-only-folder",
+    ], "a NUL byte after the first 8192 bytes made the file binary"
 
 
 def _gitlink(repo: Path, rel: str) -> None:
@@ -616,7 +645,7 @@ def test_a_compiled_or_packed_file_in_a_product_folder_is_refused(tmp_path: Path
         (repo / f"src/pkg/m{suffix}").write_bytes(b"\x00\x01 no name in here")
         assert g.scan(repo, _cfg()) == [
             f"src/pkg/m{suffix}: binary-in-product-root (a {suffix.lower()} file cannot be read or hides what it packs)"
-        ]
+        ], f"a {suffix} file in a product folder was not refused"
 
 
 def test_a_binary_is_searched_as_bytes_in_utf8_and_both_utf16_orders(tmp_path: Path) -> None:
@@ -631,7 +660,7 @@ def test_a_binary_is_searched_as_bytes_in_utf8_and_both_utf16_orders(tmp_path: P
         (repo / "src/pkg/blob.gif").write_bytes(b"GIF89a\x00\x01" + raw + b"\x00\x00")
         assert g.scan(repo, _cfg()) == [
             "src/pkg/blob.gif: names-demo-only-folder (inside a binary file)"
-        ], key
+        ], f"the name in the {key} spelling was not found in the binary"
 
 
 def test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending(tmp_path: Path) -> None:
@@ -648,8 +677,8 @@ def test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped(
     repo = _repo(
         tmp_path, CLEAN
     )  # no NUL anywhere: only the "not valid UTF-8" rule marks it as binary
-    (repo / "src/pkg/a.png").write_bytes(b"\xff\xfe" + FOLDER.encode())
-    (repo / "src/pkg/b.png").write_bytes(b"\xff\xfe pixels only")
+    (repo / "src/pkg/a.png").write_bytes(PNG + b"\xff\xfe" + FOLDER.encode())
+    (repo / "src/pkg/b.png").write_bytes(PNG + b"\xff\xfe pixels only")
     assert g.scan(repo, _cfg()) == ["src/pkg/a.png: names-demo-only-folder (inside a binary file)"]
 
 
@@ -828,7 +857,7 @@ def test_the_settings_file_checks_the_size_cap_the_copy_exclusions_and_the_child
     cfg = g.load_config(ROOT / "tools" / "demo_only_guard.toml")
     assert (
         cfg.max_file_bytes == 8388608
-        and ".env" in cfg.copy_exclude
+        and not hasattr(cfg, "copy_exclude")
         and "PATH" in cfg.child_env_allowed
     )
     for line, message in (
@@ -885,6 +914,7 @@ def test_the_copy_run_child_gets_only_the_allowed_environment_names(
     )
     repo = _mini(tmp_path / "r")
     (repo / "tests" / "test_env.py").write_text(check, encoding="utf-8")
+    _track(repo)
     assert g.run_without_folder(repo, _cfg(), ["tests/test_env.py"]) == 0, (
         "the caller's environment reached the copy run child"
     )
@@ -894,24 +924,53 @@ def test_the_copy_run_child_gets_only_the_allowed_environment_names(
     )  # a listed name does pass through
 
 
-def test_the_copy_does_not_take_untracked_secret_files_but_keeps_tracked_ones(
-    tmp_path: Path,
+def test_the_copy_holds_exactly_the_tracked_files_whatever_their_names(tmp_path: Path) -> None:
+    repo = _mini(tmp_path / "r")
+    for rel in ("src/pkg/credentials/__init__.py", ".env.d/a.cfg", ".env.example"):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text("x\n", encoding="utf-8")
+    _track(repo)  # tracked: part of the product, whatever the folder or file is called
+    for rel in (".env", ".pgpass", "src/pkg/key.pem", "build/out.txt", "src/pkg/new_untracked.py"):
+        (repo / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / rel).write_text("x\n", encoding="utf-8")
+    (repo / ".gitignore").write_text(
+        "build/\n", encoding="utf-8"
+    )  # build/ is ignored, the rest is only new
+    dest = tmp_path / "copy"
+    g.copy_without_folder(repo, _cfg(), dest)
+    for rel in (
+        "src/pkg/credentials/__init__.py",
+        ".env.d/a.cfg",
+        ".env.example",
+        "src/pkg/__init__.py",
+    ):
+        assert (dest / rel).is_file(), f"a tracked file was left out of the copy: {rel}"
+    for rel in (
+        ".env",
+        ".pgpass",
+        "src/pkg/key.pem",
+        "build/out.txt",
+        "src/pkg/new_untracked.py",
+        ".gitignore",
+    ):
+        assert not (dest / rel).exists(), f"a file git does not track reached the copy: {rel}"
+    assert not (dest / FOLDER).exists() and not (dest / MARKER).exists()
+
+
+def test_the_copy_does_not_depend_on_the_git_variables_of_the_caller(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     repo = _mini(tmp_path / "r")
-    for rel in (".env", "src/pkg/key.pem", "src/pkg/Credentials.json", ".env.example"):
-        (repo / rel).write_text("x\n", encoding="utf-8")
-    subprocess.run(["git", "-C", str(repo), "add", ".env.example"], check=True)  # noqa: S603, S607
+    other = _track(_repo(tmp_path / "other", {"elsewhere.txt": "x\n"}))
+    monkeypatch.setenv("GIT_DIR", str(other / ".git"))
+    monkeypatch.setenv("GIT_WORK_TREE", str(other))
+    monkeypatch.setenv("GIT_INDEX_FILE", str(other / ".git" / "index"))
+    assert "src/pkg/__init__.py" in g.tracked_paths(repo), "GIT_DIR made git list another tree"
+    assert "elsewhere.txt" not in g.tracked_paths(repo)
     dest = tmp_path / "copy"
-    g.copy_without_folder(repo, _cfg(copy_exclude=g.DEFAULT_COPY_EXCLUDE), dest)
-    assert not (dest / ".env").exists(), "an untracked .env was copied"
-    assert not (dest / "src/pkg/key.pem").exists(), "an untracked key file was copied"
-    assert not (dest / "src/pkg/Credentials.json").exists(), (
-        "an untracked credentials file was copied"
-    )
-    assert (dest / ".env.example").is_file(), (
-        "a tracked file was left out of the copy"
-    )  # tracked: it is part of the product
-    assert (dest / "src/pkg/__init__.py").is_file()
+    g.copy_without_folder(repo, _cfg(), dest)
+    assert (dest / "src/pkg/__init__.py").is_file() and not (dest / "elsewhere.txt").exists()
+    assert not any("elsewhere" in h for h in g.scan(repo, _cfg())), "the scan read the other tree"
 
 
 def test_a_folder_that_a_loader_entry_names_is_still_a_folder_hit(tmp_path: Path) -> None:
@@ -939,3 +998,214 @@ def test_a_full_width_product_root_that_is_the_folder_is_a_hit(tmp_path: Path) -
     repo = _repo(tmp_path, {**CLEAN, f"{wide}/x.py": "X = 1\n"})
     hits = g.scan(repo, _cfg(product_roots=("src", wide)))
     assert f"{wide}: folder-inside-product-root (it would be packaged with the product)" in hits
+
+
+# -- batch 6, class B: the content decides, an entry that cannot be inspected is a hit, special files keep their shape ---
+REAL_SAMPLES = {  # the first bytes of a real file of each kind the settings allow without reading it as text
+    ".png": PNG + b"\x00\x00",
+    ".jpg": b"\xff\xd8\xff\xe0\x00\x10JFIF\x00",
+    ".jpeg": b"\xff\xd8\xff\xdb\x00",
+    ".gif": b"GIF89a\x01\x00\x01\x00\x00",
+    ".ico": b"\x00\x00\x01\x00\x01\x00",
+    ".pdf": b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n",
+    ".woff": b"wOFF\x00\x01\x00\x00",
+    ".woff2": b"wOF2\x00\x01\x00\x00",
+}
+FOREIGN_HEADERS = {  # real file marks of kinds the guard has no special rule for
+    "zstd": b"\x28\xb5\x2f\xfd\x04\x00",
+    "7z": b"7z\xbc\xaf\x27\x1c\x00\x04",
+    "rar": b"Rar!\x1a\x07\x01\x00",
+    "lz4": b"\x04\x22\x4d\x18\x64\x40",
+    "PE": b"MZ\x90\x00\x03\x00\x00\x00",
+    "Mach-O": b"\xcf\xfa\xed\xfe\x07\x00\x00\x01",
+    "compressed json": b"\x78\x9c\xab\x56\x4a\xce\xcf",
+}
+
+
+def test_the_marks_table_covers_every_default_ending_and_each_real_sample_passes(
+    tmp_path: Path,
+) -> None:
+    assert set(g.DEFAULT_SKIP_SUFFIXES) == set(g.ENDING_MARKS) == set(REAL_SAMPLES)
+    for ending, sample in REAL_SAMPLES.items():
+        repo = _repo(tmp_path / ending.strip("."), CLEAN)
+        (repo / f"src/pkg/art{ending}").write_bytes(sample)
+        assert g.scan(repo, _cfg()) == [], f"a real {ending} sample was refused"
+
+
+def test_a_foreign_file_with_a_picture_font_or_pdf_ending_is_a_hit_for_every_ending(
+    tmp_path: Path,
+) -> None:
+    for ending in REAL_SAMPLES:
+        for kind, header in FOREIGN_HEADERS.items():
+            repo = _repo(tmp_path / f"{ending.strip('.')}-{kind.replace(' ', '')}", CLEAN)
+            (repo / f"src/pkg/art{ending}").write_bytes(header + b"payload")
+            hits = [h.split(" (")[0] for h in g.scan(repo, _cfg())]
+            assert hits == [f"src/pkg/art{ending}: ending-does-not-match-content"], (
+                f"{kind} named {ending}: {hits}"
+            )
+    empty = _repo(tmp_path / "empty", CLEAN)
+    (empty / "src/pkg/e.png").write_bytes(b"")
+    assert [h.split(" (")[0] for h in g.scan(empty, _cfg())] == [
+        "src/pkg/e.png: ending-does-not-match-content"
+    ]
+
+
+def test_an_ending_with_no_known_mark_cannot_be_listed_in_the_settings(tmp_path: Path) -> None:
+    base = (ROOT / "tools" / "demo_only_guard.toml").read_text(encoding="utf-8")
+    kept = [ln for ln in base.splitlines() if not ln.startswith("skip_suffixes ")]
+    bad = tmp_path / "bad.toml"
+    bad.write_text("\n".join([*kept, 'skip_suffixes = [".png", ".bmp"]']) + "\n", encoding="utf-8")
+    with pytest.raises(SystemExit, match="no known first bytes"):
+        g.load_config(bad)
+
+
+def test_an_entry_is_gone_only_when_the_system_says_no_such_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import errno
+
+    repo = _repo(tmp_path, {**CLEAN, "src/pkg/a.py": "A = 1\n"})
+    real = os.lstat
+
+    def fails_with(error: BaseException):
+        def lstat(path, *a, **kw):
+            if str(path).endswith("src/pkg/a.py"):
+                raise error
+            return real(path, *a, **kw)
+
+        return lstat
+
+    for error, expected in (
+        (PermissionError(errno.EACCES, "denied"), ["src/pkg/a.py: unreadable-file"]),
+        (OSError(errno.ELOOP, "loop"), ["src/pkg/a.py: unreadable-file"]),
+        (NotADirectoryError(errno.ENOTDIR, "not a folder"), ["src/pkg/a.py: unreadable-file"]),
+        (FileNotFoundError(errno.ENOENT, "gone"), []),
+    ):
+        with monkeypatch.context() as m:
+            m.setattr(os, "lstat", fails_with(error))
+            got = [h.split(" (")[0] for h in g.scan(repo, _cfg())]
+        assert got == expected, f"{type(error).__name__}: {got}"
+    assert g._stat_kind(tmp_path / "no" / "such") == "gone"
+    assert g._stat_kind(repo / "src/pkg/a.py") == "file" and g._stat_kind(repo / "src") == "folder"
+
+
+def test_a_tracked_file_in_a_folder_that_cannot_be_entered_is_a_hit_not_a_skip(
+    tmp_path: Path,
+) -> None:
+    """Run as a user that is not root (root can enter any folder): a tracked file under a folder of mode 000."""
+    import shutil
+    import tempfile
+
+    base = Path(tempfile.mkdtemp(prefix="guard-locked-"))
+    try:
+        base.chmod(0o755)
+        repo = _track(_repo(base / "r", {**CLEAN, "src/pkg/locked/x.py": "X = 1\n"}))
+        script = base / "demo_only_guard.py"
+        shutil.copy(ROOT / "tools" / "demo_only_guard.py", script)
+        settings = base / "s.toml"
+        settings.write_text(
+            f'folder = "{FOLDER}"\nproduct_roots = ["src"]\nproduct_packages = ["pkg"]\n',
+            encoding="utf-8",
+        )
+        (repo / "src/pkg/locked").chmod(0o000)
+        command = [
+            sys.executable,
+            "-I",
+            str(script),
+            "--root",
+            str(repo),
+            "--config",
+            str(settings),
+        ]
+        if os.geteuid() == 0:
+            setpriv = shutil.which("setpriv")
+            if setpriv is None:
+                pytest.skip("running as root and no setpriv to drop to another user")
+            subprocess.run(["chown", "-R", "65534:65534", str(base)], check=True)  # noqa: S603, S607
+            command = [setpriv, "--reuid=65534", "--regid=65534", "--clear-groups", *command]
+        done = subprocess.run(  # noqa: S603
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            env={"PATH": os.environ["PATH"], "HOME": str(base)},
+        )
+        assert done.returncode == 1, done.stdout + done.stderr
+        assert "src/pkg/locked/x.py: unreadable-file" in done.stdout, done.stdout + done.stderr
+    finally:
+        subprocess.run(["chmod", "-R", "u+rwx", str(base)], check=False)  # noqa: S603, S607
+        shutil.rmtree(base, ignore_errors=True)
+
+
+def test_the_marker_must_be_an_empty_regular_file(tmp_path: Path) -> None:
+    full = _repo(tmp_path / "ok", CLEAN)
+    assert g.scan(full, _cfg()) == []
+    content = _repo(tmp_path / "content", {**CLEAN, MARKER: "something\n"})
+    assert [h.split(" (")[0] for h in g.scan(content, _cfg())] == [
+        f"{MARKER}: copy-run-marker-not-empty"
+    ], "a marker with content was not a hit (copy-run-marker-not-empty)"
+    link = _repo(tmp_path / "link", {k: v for k, v in CLEAN.items() if k != MARKER})
+    (link / MARKER).parent.mkdir(parents=True, exist_ok=True)
+    (link / MARKER).symlink_to(link / FOLDER / "data.json")  # a link into the folder
+    hits = [h.split(" (")[0] for h in g.scan(link, _cfg())]
+    assert (
+        f"{MARKER}: copy-run-marker-not-a-regular-file" in hits
+        and f"{MARKER}: copy-run-not-wired" in hits
+    ), f"a marker that is a link was not a hit (copy-run-marker-not-a-regular-file): {hits}"
+    as_folder = _repo(tmp_path / "dir", {k: v for k, v in CLEAN.items() if k != MARKER})
+    (as_folder / MARKER).mkdir(parents=True)
+    assert f"{MARKER}: copy-run-marker-not-a-regular-file" in [
+        h.split(" (")[0] for h in g.scan(as_folder, _cfg())
+    ]
+
+
+def test_an_exempt_file_must_not_be_a_link_and_the_size_cap_still_applies(tmp_path: Path) -> None:
+    repo = _repo(
+        tmp_path, {**CLEAN, "src/pkg/own.py": f"# {FOLDER}\n", "cfg/x.toml": f"{FOLDER}\n"}
+    )
+    cfg = _cfg(exempt_files=("src/pkg/own.py", "cfg/x.toml"))
+    assert g.scan(repo, cfg) == [], "an exempt regular file is not searched"
+    big = g.scan(repo, _cfg(exempt_files=("src/pkg/own.py", "cfg/x.toml"), max_file_bytes=5))
+    too_large = [h.split(" (")[0] for h in big if "file-too-large" in h]
+    assert "cfg/x.toml: file-too-large" in too_large
+    assert "src/pkg/own.py: file-too-large" in too_large
+    (repo / "src/pkg/own.py").unlink()
+    (repo / "src/pkg/own.py").symlink_to(repo / FOLDER / "data.json")
+    hits = [h.split(" (")[0] for h in g.scan(repo, cfg)]
+    assert "src/pkg/own.py: symlink-exempt-file" in hits, (
+        f"an exempt link was not a hit (symlink-exempt-file): {hits}"
+    )
+    (repo / "cfg/x.toml").unlink()
+    (repo / "cfg/x.toml").symlink_to(repo / FOLDER / "data.json")
+    assert "cfg/x.toml: symlink-exempt-file" in [h.split(" (")[0] for h in g.scan(repo, cfg)]
+
+
+def test_the_modes_exclude_each_other_and_pytest_arguments_need_a_copy_run_flag(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    cfg = _toml(tmp_path)
+    repo = _repo(tmp_path / "r", CLEAN)
+    combos = [
+        ("--require", "--without-folder"),
+        ("--require", "--without-folder-if-present"),
+        ("--without-folder", "--without-folder-if-present"),
+    ]
+    for combo in combos:
+        with pytest.raises(SystemExit) as stop:
+            _main(repo, cfg, *combo)
+        assert stop.value.code == 2, f"the modes {combo} were not refused with exit 2"
+        assert "not allowed with" in capsys.readouterr().err, f"no refusal text for {combo}"
+    for flags in ((), ("--require",)):
+        with pytest.raises(SystemExit) as stop:
+            _main(repo, cfg, *flags, "--", "tests/test_x.py")
+        assert stop.value.code == 2, flags
+        assert "pytest arguments are accepted only with" in capsys.readouterr().err, flags
+
+
+def test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_them(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo = _mini(tmp_path / "r")
+    (repo / "src/pkg/new.py").write_text("N = 1\n", encoding="utf-8")
+    assert g.run_without_folder(repo, _cfg(), ["tests/test_plain.py"]) == 0
+    assert "1 file(s) are not added to git" in capsys.readouterr().out

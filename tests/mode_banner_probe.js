@@ -26,7 +26,7 @@ if (scenario === 'throwing-getter') input = { get tone() { return boom(); }, tag
 if (scenario === 'proxy') input = new Proxy({}, { get: boom, has: boom, ownKeys: boom, getPrototypeOf: boom });
 if (scenario === 'throwing-list') input = { ...input, real: new Proxy([], { get: boom }) };
 if (scenario === 'throwing-doc') doc = { createElement: () => { throw new Error('doc broken'); } };
-let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-tone-attr' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
+let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-every-attribute' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-tone-attr' ? { failAttr: 'data-tone', text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
 if (scenario === 'null-el') target = null;
 let threw = '';
 let usableThrew = '';
