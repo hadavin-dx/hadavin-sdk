@@ -1,5 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:16Z (06:46 IST) / no head moved; Q8c-1 plants run past its estimate; both batches still in their gates
+FAILED / UNCERTAIN FIRST: (1) Q8c-1 plants run did NOT end at about 01:12Z as I estimated: its log still shows only dots at 01:16Z; it shares heavy slots with the builders' gate runs, which is the likely cause but I have not measured it. I will not claim a result before the log ends; if it is not done by 01:35Z I will report the slot situation to you. (2) Part 2 batch 8 (box to 01:49Z) and Part 6 batch 7 (box to 01:42Z) have not reported; last checkpoints: batch 8 source and 24 new rows written, fail-before logs and gates still to do; batch 7 fail-before log saved, gates next. No claim about either until they report. (3) Part 2 still has no full 174-row run at 07de0091 (batch 8 does it at its head).
+LEAD ACTIONS: none new.
+
+LIVE ITEMS (3): abb52410 Part 2 batch 8 builder; a075c8b2 Part 6 batch 7 builder; a35e15e9 Q8c-1 (plants, heavy slot, priority 1). Heavy slots: probably full (two gate runs plus the plants run); wait time not measured.
+ROUNDS: Part 2 round 7 done not clean (security, no cap), round 8 after batch 8. Part 6 round 6 done not clean (mode-safety, no cap), round 7 after batch 7. Q8c-1 round 17 pending.
+FINISHED SINCE LAST BLOCK: nothing new finished.
+
 ## 01:07Z (06:37 IST) / Part 2 batch 8 and Part 6 batch 7 both near their gates; Q8c-1 plants about 5 minutes left
 FAILED / UNCERTAIN FIRST: (1) Nothing of Part 2 or Part 6 is clean yet: Part 2 round 7 and Part 6 round 6 both failed; batch 8 (builder checkpoint: source for all six classes, 24 new mutant rows B182-B205, CHANGELOG written; fail-before logs, new-row run and final gates still to do) and batch 7 (guard code, tests and fail-before log done; gates next, its Postgres is up on port 55437) have reported nothing final, so no claim about either. (2) The Part 2 builder's full 174-row run at 07de0091 is still outstanding (batch 8 does it at its head). (3) Q8c-1: plants run is at its last dots; full suite and bandit still not run on a5908c0b. (4) PR 98 CI result: merged by the lead, nothing left for me.
 LEAD ACTIONS: none new.
