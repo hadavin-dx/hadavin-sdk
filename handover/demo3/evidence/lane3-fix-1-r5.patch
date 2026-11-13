@@ -1,0 +1,1160 @@
+diff --git a/README.md b/README.md
+index b907165..7284fb6 100644
+--- a/README.md
++++ b/README.md
+@@ -31,10 +31,11 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Demo stand-ins**: small programs in this repository (`demo_only/`) that play the CRM, the mail system and the AI step and only count what they receive. Some of their web addresses and settings still contain the word `fake`.
+ * **The desk**: the program in `src/lead_desk`. **Desk's records**: its SQLite database file.
+ * **n8n**: a workflow tool where steps are drawn as boxes joined by lines. n8n is not part of this repository.
+-* **Request id**: a label the sender puts on each submission. The same label twice means "this is a repeat". The portal calls it "Request number".
+-* **Receipt**: the desk's first note about a request, written before anything else happens.
+-* **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (seen before under another request number) or `review` (incomplete, a person must look).
+-* **Replayed**: the same request number came again, so the desk gave back its stored answer and changed nothing.
++* **Request id**: a label the sender puts on each submission. The portal calls it "Request number"; in the desk's own records it is `source_ref`.
++* **Receipt**: the desk's first note about a request (one row in the desk's records), written before anything else happens. One stored receipt per request id and door. The reply carries the number of that row as `receipt_id`.
++* **receipt_id**: the number the desk's database gives to each stored receipt, counting up from 1. It is not the request id the sender puts on a request.
++* **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (this email was seen before in another request: a different request id, or the same id on the other door) or `review` (incomplete, a person must look).
++* **Repeat** (the reply says `"replayed": true`): the same request id came again on the same door, so the desk gave back its stored answer and changed nothing.
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: a keyed mail system recognises a repeat of the same send key and sends only once; a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left. It does not guess and does not resend; a person must check.
+@@ -44,27 +45,40 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ 
+ ## Try it
+ 
+-You need Linux or Windows (macOS was not tried), Python 3.12 or newer and git, and ports 8765 and 8766 on your computer must be free. The desk needs no extra packages.
++You need Linux or Windows (macOS was not tried), Python 3.12 or newer, git and, on Linux, `curl` (a small program that fetches a web address; the Linux lines below use it). The desk needs no extra packages. Ports 8765 and 8766 on your computer must be free. Step 3 below checks this.
+ 
+ 1. On this repository's GitHub page press the green Code button and copy the address it shows.
+ 2. Run `git clone <that address>`, then `cd` into the new folder.
+-3. Open ONE terminal there and run the lines of your system below, in order, in that same terminal (the first lines make a private Python folder, `.venv`, and switch it on for this terminal only; the scripts call `python`). If you open a new terminal later, switch `.venv` on again.
+-4. On Debian or Ubuntu you may first need `sudo apt install python3-venv`.
+-5. The start script starts the two demo servers and the desk as background programs and returns at once; they keep running until you run the reset script (last line of each block), which stops them.
++3. Check that ports 8765 and 8766 are free (the check needs `curl` on Linux):
++   * Linux: run `curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/`, then the same with 8766. `--max-time 5` makes curl give up after 5 seconds. `http_code` makes curl print only the three-digit answer code of the web server.
++   * `000` usually means nothing is listening there, so the port is free (curl then also ends with exit code 7). curl also prints `000` for a program that does not speak web, and usually when no answer comes within the 5 seconds.
++   * A number such as 404 means a program already answers on that port. If you started the desk earlier in this guide, that is the desk: it answers 404 for `/`, and so do the demo servers on 8766 (both codes were read on 2026-11-13 from a real desk and a real demo server on Linux; not on Windows). Then run `bash scripts/reset.sh` here, in the project folder (you are in it after step 2) and in a terminal where `.venv` is switched on (step 4 makes it; an earlier run of this guide already made it); it stops what an earlier `scripts/start_all.sh` started. Otherwise stop that program: if it holds port 8765 the desk cannot take it (exit code 5, see "Exit codes" in `docs/limits.md`). If nothing uses the two ports, both checks print `000`.
++   * Windows: no tested check. Two ideas, also not tried: `Get-NetTCPConnection -LocalPort 8765` in PowerShell lists the program that holds the port, or close the program that uses it.
++4. Open ONE terminal there and run the lines of your system below, in order, in that same terminal (the first lines make a private Python folder, `.venv`, and switch it on for this terminal only; the scripts call `python`). If you open a new terminal later, switch `.venv` on again.
++5. On Debian or Ubuntu you may first need `sudo apt install python3-venv`.
++6. The start script starts the two demo servers and the desk as background programs and returns at once; they keep running until you run the reset script (last line of each block), which stops them.
+ 
+ **Linux**
+ 
+     python3 -m venv .venv && . .venv/bin/activate
+     export PYTHONPATH=src                      # tells Python where the code is
+     bash scripts/start_all.sh keyed            # starts the demo servers and the desk in the background
+-    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
++    for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200 (what the numbers mean: list below the block). If after 10 seconds there is no such line (curl prints `curl: (7)` or nothing), read `data/desk.log`
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+     python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, nothing changes
+-    python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate"
+-    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the repeated request number is answered from the stored answer, not counted again)
++    python scripts/feed.py --source webhook --index 1    # same person through the other door: HTTP 200 (not 201) and "verdict": "duplicate"; its `receipt_id` is 3, not 2 (explained below the block)
++    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the repeat is answered from the stored answer and not counted again)
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+ 
++What the first counts reply shows on a fresh desk:
++
++* `received`, `new`, `duplicate`, `review` and `open` are 0. So are the other counts (for example `rejected_envelopes`, `failed_followups` and the four numbers inside `hung_workers`: one for each kind of background call that can get stuck, namely model, crm, send and refresh; `docs/limits.md` explains them).
++* `reaper_running` is `true` (the Reaper, see the word list above, is running). If it says `false` and still does after 10 seconds, read `data/desk.log`.
++* `last_reaper_pass_at` is not a count: it is the time of the Reaper's last pass in seconds since 1970 (a large number), or `null` (nothing) if it has not passed yet. `expected_match` and `ok` are `null`.
++
++About the receipt number of the webhook line: its `receipt_id` is 3, not 2. The database hands out receipt numbers by counting up from 1. The repeat was not stored again: the desk found the first receipt, raised the number of times it was seen (the `attempts` column of that row in the desk's records) from 1 to 2, and answered from the stored reply, which shows the first receipt's number, 1. During the insert that turned out to be a repeat, the database had already used up the number 2 (no receipt with number 2 was stored), so the next new receipt (the webhook lead's) gets 3. A skipped number is not a lost request. In the counts, `received` is the number of stored receipts, which is why it says 2 and not 3. `scripts/feed.py` gives both doors the same request id, `canned-1` (it builds the id from the lead's place in `demo_only/canned_leads.json`, so the form lines and the webhook line all use `canned-1`). The desk keeps one receipt per door and request id, so the webhook line is not a repeat: it is the same person under the same id on the other door, which is a duplicate.
++
+ Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh scripts/start_all.sh` and `sh scripts/reset.sh` stop with "run this script with bash" (exit 2) in any shell where `[[` does not run, for example where `sh` is dash (Debian and Ubuntu). A shell that does run `[[` (busybox sh, zsh) goes on.
+ 
+ **Windows PowerShell**
+@@ -74,11 +88,11 @@ Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh sc
+     .venv\Scripts\Activate.ps1
+     $env:PYTHONPATH = "src"                    # tells Python where the code is
+     .\scripts\start_all.ps1 keyed    # prints "started: ..." with two process ids
+-    Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers (all 0)
++    Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers: the five counts `received`, `new`, `duplicate`, `review` and `open` are 0, the other number fields are 0 too (`hung_workers` is four numbers, one for each kind of background call that can get stuck: model, crm, send, refresh), except `last_reaper_pass_at` (a time, not a count) and `expected_match` and `ok` (`null`); `reaper_running` is `true`; see the list under the Linux block
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+     python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, nothing changes
+-    python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate"
+-    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed id is not counted again)
++    python scripts\feed.py --source webhook --index 1    # same person, other door: HTTP 200 (not 201) and "verdict": "duplicate"; its `receipt_id` is 3, not 2 (same reason as under the Linux block above)
++    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the repeat is not counted again)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1
+     .\scripts\reset.ps1        # stops what start_all started and DELETES the desk's records and the logs
+ 
+@@ -93,8 +107,8 @@ The reset script refuses, with one line of reason and nothing deleted, in these
+ 
+ Claimed, for this demo setup only:
+ 
+-* The same request number sent again gets the stored answer and changes nothing.
+-* The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
++* The same request id sent again on the same door gets the stored answer and changes nothing.
++* The same email under a different request id is a duplicate: no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. Of the ten, nine are simulated by an exception inside the program; only one (D2) is a real process kill. The tests assert at most one lead, one CRM row and one email. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+ * The desk does not send a follow-up twice by itself. An unconfirmed send is listed for a person. A person who answers "not sent" wrongly on a blind mail system can cause a second email.
+diff --git a/docs/limits.md b/docs/limits.md
+index b249bba..ff53685 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -88,11 +88,21 @@ Rules of the desk's records (the database refuses these, for a database created
+ 
+ ## Load and limits
+ 
+-* Burst test: many connections open at the same moment, all for the same lead (the same email under different request numbers). To repeat a small one, start the demo (README, "Try it") and run `python -m demo_only.burst --url http://127.0.0.1:8765/leads --n 100 --email ada@example.com --ref-prefix run1 --source form` (with `PYTHONPATH=src:.`). The script prints `SENT`, `STATUS` (for one lead sent many times expect `201=1` and `200=` all the others), `RETRIES` and `RESULT`; it does not print the lead count. Read the counts from `http://127.0.0.1:8765/counts` (or the portal Overview): for one lead sent many times, the lead count and the follow-up count should each be 1 (`tests/test_http.py::test_ten_parallel` checks this for 10). Right after a burst one follow-up can show as pending for about 3 seconds before it settles to 0.
++* Burst test: many connections open at the same moment, all for the same lead (the same email under different request ids). To repeat a small one, follow these steps in order:
++  1. Make a fresh desk. A fresh desk is a desk whose records were just deleted. Do it in the terminal where `.venv` is switched on and `PYTHONPATH=src` is set (README, "Try it", first lines). Do not run the `scripts/feed.py` lines of the README: they would put leads on the desk. Then do the line for your system:
++     * Linux: run `bash scripts/reset.sh`, then `bash scripts/start_all.sh keyed`, then wait until `http://127.0.0.1:8765/counts` answers 200: the wait-loop line of the README's Linux block (the line that starts `for i in 1 2 3`) does that.
++     * Windows (not tried for this burst): run `.\scripts\reset.ps1`, then `.\scripts\start_all.ps1 keyed`, then the line of the README's Windows block that starts `Start-Sleep 3; Invoke-WebRequest` (after setting `PYTHONPATH` as in that block; the burst needs `src;.`, see step 2).
++  2. Run this as ONE line (it sets `PYTHONPATH` to `src:.` for this one command only; the dot adds the project folder, where `demo_only/` lives): `PYTHONPATH=src:. python -m demo_only.burst --url http://127.0.0.1:8765/leads --n 100 --email ada@example.com --ref-prefix run1 --source form`. On Windows PowerShell first write `$env:PYTHONPATH = "src;."` (this stays set in that window) and then the same command without the `PYTHONPATH=src:.` part (not tried). `--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-100.
++  3. The script prints four lines, and it does not print the lead count. `SENT` says how many requests it sends. `STATUS` says how many answers of each HTTP status code (the three-digit number of a web reply) came back. `RETRIES` counts every time the script got a 503 `busy` answer (`busy503`) or a refused connection (`refused`) and sent the request again, and also the last such answer of a request, after which the script gave up; it has nothing to do with `"replayed": true`. `RESULT` says `sent=100 expected=100` when all 100 requests were answered with 200, 201 or 202 (`sent` there is the number of answers 200, 201 or 202; a request that got another answer or none is not in it; 202 is the answer for a `review` verdict, an incomplete request; every send here has an email address, so 202 does not occur); otherwise the line says `MISMATCH`. On a fresh desk, one lead sent 100 times shows `STATUS 201=1 200=99`: one answer 201 for the new lead and 99 answers 200 for duplicates (run on a Linux computer with 100 sends, most recently on 2026-11-13; logs not shipped).
++  4. Wait about 3 seconds: right after a burst one follow-up can still show as pending before it settles to 0. Then read the counts from `http://127.0.0.1:8765/counts` (or the portal Overview): `new` is 1. The demo mail system (`http://127.0.0.1:8766/fake/outbox`) shows `"count": 1`, one email.
++  5. Run the same command again on the same desk with the SAME `--ref-prefix`: the same request ids are repeats, so the desk gives back the stored answers (`STATUS 201=1 200=99` again) and `new` stays 1.
++  6. Run it with a DIFFERENT `--ref-prefix` (for example `run2`) on a desk that already holds that email address: every answer is `200` (`STATUS 200=100`) and `new` does not grow.
++
++  With `--n 10` the numbers are `201=1 200=9`, `201=1 200=9` and `200=10` (checked by `tests/test_http.py::test_ten_parallel` for the fresh-desk case, and by `tests/test_docs_claims_lane3.py` for all three cases): with n sends the fresh-desk answer is `201=1` and `200=` n minus 1. If you see a different split, something is wrong or the desk was not fresh: start again at step 1 before you look for another cause.
+ * Larger bursts: one measurement test is shipped, `LEAD_DESK_LOAD_N=300 python -m pytest tests/test_server_hardening.py -k measure_burst -s -p no:cacheprovider` (add `LEAD_DESK_LOAD_RETRY=1` to let the sender retry a refused connection). It prints how many connections the operating system refused and the status counts. On the Windows computer of the author, 150 simultaneous connections were all answered (tried once by the author, logs not shipped); from about 300 upward the operating system refused part of the connections before the desk saw them (a plain stand-alone web server on the same laptop did the same), and the counts varied from run to run. The waiting line is 1024 connections (`LISTEN_QUEUE` in `src/lead_desk/constants.py`) and the operating system may allow fewer. These counts depend on the computer and its operating system; they are not claimed for any other machine, and the author's raw logs are not part of this repository.
+   * So beyond about 150 simultaneous connections on that computer a sender that cannot retry may see "connection refused" for part of the burst, and nothing in the desk records it, because the desk never saw it.
+ * **Retry rule of the senders in this repository.** The burst script, the portal demo's burst and the load driver (`load_tools/load_driver.py`) retry a refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_BACKOFF_MAX_SECONDS`, `BURST_RETRY_DEADLINE_SECONDS` in `constants.py`; tests in `tests/test_burst_retry.py`). `max_retries=0` in the burst script means no retry at all.
+-* Of the connections the desk did receive in the larger bursts, some were answered 503 `busy` (database lock wait over). A 503 from a lock wait may have left an open receipt; a 503 from the connection limit never does. In both cases send the same request number again. The desk answered every received connection with JSON, and the burst command and `tests/test_http.py::test_ten_parallel` check that only one email is sent for the lead.
++* Of the connections the desk did receive in the larger bursts, some were answered 503 `busy` (database lock wait over). A 503 from a lock wait may have left an open receipt; a 503 from the connection limit never does. In both cases send the same request id again. The desk answered every received connection with JSON, and the burst command and `tests/test_http.py::test_ten_parallel` check that only one email is sent for the lead.
+ * The demo HubSpot stand-in (`demo_only/fake_hubspot.py`, made-up data) reads a request body before it answers, so a late body is not reset on Windows. The exception is a Content-Length that is negative, not a plain number, longer than 7 digits or above 1 MiB: it answers 400 at once WITHOUT reading the body (reading would mean reading until the client stops); a client that really sends 1 MiB or more may therefore see a connection reset instead of the 400. A 5000-digit Content-Length is such a 400 (a digit string that long cannot be turned into a number by Python). Tests: `tests/test_codeant_fakes.py`.
+ * A request body shorter than the Content-Length it announced: the desk answers 408 `request_timeout` when the body has not fully arrived 10 seconds after the headers ended (`BODY_READ_DEADLINE_SECONDS`) if the sender keeps the connection open, or 400 if the sender closes it; the 408 and the 400 are both counted in `rejected_envelopes` when the stall or close happens in the body of `POST /leads`; a stall while the headers are still arriving gets 408 but is not counted. A Content-Length over the size cap, however long the number, is answered 413 straight away; this holds for the decision body of `POST /review/<id>/resolve` too (after the Host and Origin check). Two different Content-Length values in one request are answered 400. A request target that cannot be parsed is answered 400.
+ * **Known gaps in these figures.** The larger bursts depend on the machine and were not repeated for every version of the desk or with every sender retry rule; treat them as indications for the machine they ran on.
+@@ -103,26 +113,31 @@ Rules of the desk's records (the database refuses these, for a database created
+ 
+ * Portal: `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "Requests turned away before they were stored" on the Overview page (`refused_at_door`: requests refused as a bad envelope, too large, a body that timed out or a bad request reference, counted as `rejected_envelopes`; a 403 from the Host and Origin check is not counted; not the same as the source of a lead, `form` or `webhook`, called `door` in the data) is kept in memory and starts again at 0 when the desk restarts.
+ * The portal cannot tell a stopped desk from a lost network connection between the browser and the desk: both show the notice "The desk is offline" with the last values and paused buttons. Check that the desk process runs before you look at the network.
+-* **Later messages.** The lead panel lists the later messages of a lead: requests with a new request number and an email address the desk already has. It compares each one with the first record only, field by field (name, phone, company, message), and lists a field when the new value is not empty and differs. Not claimed:
++* **Later messages.** The lead panel lists the later messages of a lead: requests with a new request id and an email address the desk already has. It compares each one with the first record only, field by field (name, phone, company, message), and lists a field when the new value is not empty and differs. Not claimed:
+   * A later message that went to "Request to check" (for example an invalid email address or a field that is not text) has no lead and never appears under "Later messages"; it is on Needs a person.
+   * An empty field cannot clear a value. A change made only of extra space characters between words is not listed (runs of the space character count as one); a change of upper or lower case is listed. Other fields a sender adds are stored with the request but not listed.
+   * A later message that repeats a value an earlier later message already sent is listed again.
+-  * The same request number sent again with different data is not a later message: the first answer stands, the new data is not stored, and it stays on Needs a person as "Same request number, different data".
++  * The same request id sent again with different data is not a later message: the first answer stands, the new data is not stored, and it stays on Needs a person as "Same request number, different data".
+   * Only the newest 50 later messages of a lead are shown, with the total; older ones stay stored but the panel does not show them. The list part of the panel's answer is at most 3,132,800 bytes (50 later messages, every field at its longest in the characters that take the most bytes); the whole answer also carries the lead and its open items.
+   * Times are the desk's clock at arrival in whole seconds, not the sender's time. A later message whose request reached the desk before the first record was written (two requests at almost the same moment) is shown as "Arrived before the first record was written". When the desk clock gives a later message an earlier time than the first message, no gap is shown. Durations are rounded down to whole seconds, minutes, hours or days; the exact seconds are in the tooltip.
+   * Approval mode (`DESK_LATER_MODE=approval`, off by default) records one person's choice about a later message and nothing else: the approver is a name picked from the list and is not verified, and nothing is executed by the choice. The desk does not accept, dismiss or answer a later message on its own, sends no notification and no second reply, and handles no later message automatically or with an AI step; suggested replies are not built. Nothing from a later message reaches the CRM or the follow-up email.
+-  * Email addresses, phone numbers, messages, lead names and request numbers are masked on screen by default (each with its own eye button; a request number is data the sender chose, so it is treated as personal until shown on purpose; companies, lead owners and approver names are shown as they are). A company name can itself be a person's name (a sole trader), and it is shown and searched while names are hidden: that is a written rule with a known residual risk, and a sender who must not be recognisable should not put a name in the company field; the "Hide names and email addresses" switch, when off, shows them and allows searching by name and by email address (while they are masked the search matches only the company and the lead number, so nobody can probe whether a name exists, not even through a request number). A small eye button beside a masked value shows that one value only: it is kept in memory (never stored), hides again after 30 seconds, on Escape, when the panel closes or the page changes, and when the switch is turned on, and it does not turn on searching by name or address. On the demo controls page the lead pick list shows "Lead 1", "Lead 2" and so on while masking is on. The switch choice is kept for the browser tab's session only (session storage, not local storage), so a new session starts masked and a shown state cannot be left behind; a browser that blocks site storage starts masked and keeps a choice only for that visit. An empty phone or message shows as "empty" also when masked, so a viewer can see whether one was given. A masked email address shows as "•••@•••••" (no character of it is kept).
++  * Email addresses, phone numbers, messages, lead names and request ids (the portal's "Request number") are masked on screen by default (each with its own eye button; a request id is data the sender chose, so it is treated as personal until shown on purpose; companies, lead owners and approver names are shown as they are). A company name can itself be a person's name (a sole trader), and it is shown and searched while names are hidden: that is a written rule with a known residual risk, and a sender who must not be recognisable should not put a name in the company field; the "Hide names and email addresses" switch, when off, shows them and allows searching by name and by email address (while they are masked the search matches only the company and the lead number, so nobody can probe whether a name exists, not even through a request id). A small eye button beside a masked value shows that one value only: it is kept in memory (never stored), hides again after 30 seconds, on Escape, when the panel closes or the page changes, and when the switch is turned on, and it does not turn on searching by name or address. On the demo controls page the lead pick list shows "Lead 1", "Lead 2" and so on while masking is on. The switch choice is kept for the browser tab's session only (session storage, not local storage), so a new session starts masked and a shown state cannot be left behind; a browser that blocks site storage starts masked and keeps a choice only for that visit. An empty phone or message shows as "empty" also when masked, so a viewer can see whether one was given. A masked email address shows as "•••@•••••" (no character of it is kept).
+   * Masking is on screen only. The answer the page reads still carries every value, lead names included (the browser's developer tools show it; checked in tests/test_portal_lead_pages.py), and anyone who can reach the desk can call `/api/ui/leads?by_email=1` and search by name or email address: the switch decides only what the pages ask for and show. The desk's own log lines print no email address, phone number or message (every log call is checked by a test); text that the Python runtime itself writes to the error output when a thread fails unexpectedly is covered only on the paths the tests run. Tests: `test_later_values_word_for_word`, `test_later_lower_receipt_number`, `test_later_review_verdict_not_listed`, `test_later_repeat_still_listed`, `test_later_reply_size_is_bounded`, `test_leads_email_search_needs_reveal`, `test_personal_hidden_rule`, `test_reveal_one_value_rules`, `test_log_calls_carry_no_values`, `test_later_messages_log_no_values`.
+ * Names, email addresses, phone numbers and messages are masked on screen by default; switch the masking off in the Leads page ("Hide names and email addresses") to see them and to search by name or address. The masking is a display choice of that browser: the JSON replies of the desk still carry the values (browser developer tools show them), and the desk's logs never hold them (one test sends canary values and searches the log output).
+ * Threads: the desk serves each connection on its own thread. Writing a reply has a total limit of `REPLY_WRITE_TIMEOUT_SECONDS` (5 s): a client that does not read its reply loses the thread after that.
+ * Open files: at start-up the desk checks that the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 96 for everything else; contract.md lists what the 4 and the 96 are made of). With the default 1024 threads that is 4192 open files. A computer whose hard limit is lower than that makes the desk exit with code 3; 4096 is a common default inside containers, so there raise the open-file limit of the operating system (for example `ulimit -n 8192`, or the container's own open-file setting).
+   * The count is arithmetic, checked by measuring a database connection and the portal's connections; DNS lookups and the temporary files SQLite makes are covered by the 96 only roughly (not measured, not itemised). It raises the soft limit to exactly what is needed when the hard limit is unlimited or at least that, and otherwise refuses to start (exit code 3). The message names the open-file limit in force and what the desk needs.
+-* Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file; 3 the open-file limit is too low; 4 the desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, or an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).
++* Exit codes of the desk:
++  * Exit code 1: the demo servers cannot be reached (the desk prints "cannot reach the demo servers"), or a Python traceback (a long error text; it means a program fault, or that someone edited a fixed value in `src/lead_desk/constants.py` to a number that does not fit, because the program checks those values when it loads; it is never caused by a `DESK_*` setting, because a bad `DESK_*` value gives exit code 4). "Cannot reach the demo servers" is the message for the demo servers only. What the desk prints when a real CRM or a real mail sender cannot be reached is not described here.
++  * Exit code 2: another desk holds the lock file.
++  * Exit code 3: the open-file limit is too low.
++  * Exit code 4: the desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, or an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is not a refused setting never gets code 4).
++  * Exit code 5: the port could not be bound within `BIND_RETRY_SECONDS` (see above).
+ * Stopping: Ctrl+C or SIGTERM stop the background job first and then give the lock file back. A second signal while that runs is ignored on purpose, so it cannot cut a step short. If the desk is still there after about 10 seconds, end it with SIGKILL (on Windows, end the process); the lock is dropped and the next start puts every unfinished follow-up back.
+ * Two limits apply. (1) At most `MAX_CONNECTIONS` (256) connections can be in their reading phase (request line, headers, body) at one time; a connection stops counting when the desk starts writing its reply, so a thread that is still finishing a follow-up does not count here. (2) At most `MAX_HANDLER_THREADS` (1024) handler threads exist in total: a thread counts from the moment it gets a connection until it ends, so the reply write, the draining and the follow-up count too. When either limit is reached and nothing can be closed to make room, the new connection gets 503 `busy` and nothing is stored.
+ * Idle connections: a client that opens connections and sends nothing holds a place until the header deadline (10 s), then gets 408 and is closed (`test_idle_sockets_closed_at_deadline`). While they hold the 256 places, a valid request gets 503 `busy` (that is the backpressure; send it again).
+-* Deadlines: request line plus headers must arrive within `HEADER_READ_DEADLINE_SECONDS` and the body within `BODY_READ_DEADLINE_SECONDS` (10 s each, measured in real time from the start of that phase, however slowly the bytes trickle in); a stalled sender gets 408 `{"error":"request_timeout","receipt_id":null}`, and nothing was stored, so the same request number can be sent again.
+-* Making room: when 256 connections are being read, the oldest one that is still being read (headers or body) and has sent no byte for `EVICT_MIN_IDLE_SECONDS` (2 s) is closed with no reply (its sender sees a dropped connection, nothing was stored, and it must send the request again; the same request number is safe). A connection that keeps sending is never closed this way.
++* Deadlines: request line plus headers must arrive within `HEADER_READ_DEADLINE_SECONDS` and the body within `BODY_READ_DEADLINE_SECONDS` (10 s each, measured in real time from the start of that phase, however slowly the bytes trickle in); a stalled sender gets 408 `{"error":"request_timeout","receipt_id":null}`, and nothing was stored, so the same request id can be sent again.
++* Making room: when 256 connections are being read, the oldest one that is still being read (headers or body) and has sent no byte for `EVICT_MIN_IDLE_SECONDS` (2 s) is closed with no reply (its sender sees a dropped connection, nothing was stored, and it must send the request again; the same request id is safe). A connection that keeps sending is never closed this way.
+   * A connection is also safe from the moment its whole request has been read, parsed and checked (JSON and envelope) and the desk starts acting on it. When none can be closed, the new connection gets 503 `{"error":"busy","reason":"busy"}` with `Retry-After: 1`. That 503 is written before any receipt exists, and it is a different 503 from the ones for a database lock (`/leads`) and for more than 8 portal requests at once (`/api/ui`, body `{"error":"busy"}`).
+ * Keep the desk off networks you do not trust. A bind written as a short all-zeros form (for example the single digit 0) is treated as a wildcard. Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
+ 
+diff --git a/docs/n8n-recipe.md b/docs/n8n-recipe.md
+index 80de269..3ae6416 100644
+--- a/docs/n8n-recipe.md
++++ b/docs/n8n-recipe.md
+@@ -8,40 +8,68 @@ Who this is for: someone who has used n8n a little and wants to read what the wo
+ **Licence.** The workflows in `n8n/` may be imported unmodified into your own n8n to evaluate them. Anything else (editing them, building variants, sharing or publishing exports) needs the licence holder's written permission (see `LICENSE`; it covers the documents, workflows and scripts too).
+ 
+ Made-up data and demo servers only. Use no real credentials, no n8n licence key and no real e-mail address in n8n. **Checked (n8n version in `versions.md`, 2026-11-09; tried once by the author, logs not shipped):** the placeholder node ids (`node-1`, `node-2`, ...)
+-are accepted on import (`scripts/n8n_api.py import <file>` does the import; it needs an n8n API key in a file you name, see the top of that script); n8n creates its own web-address id for each webhook node when you import or activate, and the webhook keeps the same address
++are accepted on import (the script `scripts/n8n_api.py` does the import; the lettered steps are further down); n8n creates its own web-address id for each webhook node when you import or activate, and the webhook keeps the same address
+ (`/webhook/desk-form`), because the path is kept in the file (it is a plain word, not an id). The files contain no credentials, so there was nothing to attach.
+ After the import you only have to switch the workflow on (the file's `"active"` flag is ignored by the import call; `scripts/n8n_api.py activate <name>` does it).
+ The `proof` workflow has a manual start and a web-call start; the web-call start is there so it can be run without the screen
+ (`POST /webhook/proof-run`).
+ 
+-## 0. Before you start
++## Before you start
+ 
+ * n8n version used: see `versions.md` (section "n8n (demo only)"); regular mode (no queue), one process,
+   SQLite inside n8n. Not checked: that the workflows work on any other version.
+-* n8n needs an owner account on first start. Use your own business e-mail in YOUR n8n only. The runs used its free community licence; whether the workflows here also run
+-  without it is not checked (they use only the Webhook, Edit Fields, HTTP Request, Code and Manual Trigger nodes).
+-  Never commit the e-mail, the password or the key anywhere.
+-* Start the demo servers and the desk first (README, "Try it"). From the same computer, n8n reaches them at the host and
+-  ports from the settings table in `docs/settings.md`. **If n8n runs in Docker, `localhost` inside the container is the container, not
+-  your computer.** The desk listens on this computer only (`DESK_BIND`). The desk answers 403 `forbidden_host` to any `Host` name it does not know (anything but `127.0.0.1`, `localhost`, `[::1]`): if n8n reaches the desk under another name, list that name in `DESK_ALLOWED_HOSTS` (`docs/settings.md`). Checked: n8n run directly with Node reached the desk and the demo servers on `127.0.0.1`. Not tried: n8n in Docker.
+-* **n8n's port.** The demo ran n8n on port 5679 (n8n's own default is 5678). `scripts/n8n_api.py` (setting `N8N_URL`, default `http://127.0.0.1:5679`) and the sending box of the `proof` workflow (its URL is `http://127.0.0.1:5679/webhook/desk-form`) expect that port, so start n8n with `N8N_PORT=5679` to evaluate the workflows.
++* The runs used n8n's free community licence; whether the workflows here also run without it is not checked (they use only the Webhook, Edit Fields, HTTP Request, Code and Manual Trigger nodes). Enter no licence key (Step A).
++* Start the demo servers and the desk first (README, "Try it"). Which ports each workflow file needs:
++  * `desk-form.json` and `desk-webhook.json` need only the desk on 127.0.0.1:8765.
++  * `proof.json` also needs the demo servers on 127.0.0.1:8766 and n8n itself on port 5679, and the workflow "Lead Desk: Web Form Intake" (`desk-form.json`) imported and switched on, because its sending box posts to `http://127.0.0.1:5679/webhook/desk-form`.
++  * The ports 8765 and 8766 are the defaults of `docs/settings.md`; 5679 is the default of `scripts/n8n_api.py` (setting `N8N_URL`), not of n8n. The files carry these addresses and do not read the settings; changing one means editing the file, which needs the licence holder's written permission (see "Licence").
++  * The easiest way is therefore to keep the default ports: desk 8765, demo servers 8766, n8n 5679 (start n8n with `N8N_PORT=5679`, Step A).
++* **n8n in Docker.** Not tried here. On the default Docker network, `127.0.0.1` inside the container is the container itself, so the address `127.0.0.1` in the workflow files does not reach the desk; and a desk that listens only on `127.0.0.1` of this computer (the default) cannot be reached from a container at all, even with edited files. Editing the files needs the licence holder's written permission (see "Licence"). The desk setting `DESK_ALLOWED_HOSTS` only lists extra names the desk accepts in the `Host` header (`docs/settings.md`); it changes neither the files nor the address the desk listens on. Checked: n8n run directly with Node reached the desk and the demo servers on `127.0.0.1`.
++* **n8n's port.** The demo ran n8n on port 5679 (n8n's own default is 5678). `scripts/n8n_api.py` and the sending box of the `proof` workflow (its URL is `http://127.0.0.1:5679/webhook/desk-form`) expect that port, so start n8n with `N8N_PORT=5679` to evaluate the workflows.
++
++## Import the workflows with the script (Step A to Step F)
++
++To import a workflow with the script, do Step A to Step F in order, after you have read "Before you start" above. Each step says whether it was run: "not tried here" means it was not run when this text was last checked; "run once" means the author ran it once in a real n8n (logs not shipped). The menu names in n8n were not compared with the screen. Run the commands in a terminal in the project folder (the folder you got from `git clone`) where `.venv` is switched on (README, "Try it").
++
++**Step A.** Install n8n as the n8n documentation says (https://docs.n8n.io/). Open a terminal window of its own for n8n and, in that window, set n8n's own port variable `N8N_PORT` to 5679 (Linux: `export N8N_PORT=5679`; Windows PowerShell: `$env:N8N_PORT = "5679"`). Then start n8n in that window as the documentation says. Leave that window open and use a second window for the other steps. The demo ran n8n on 5679 (n8n's own default is 5678), and `scripts/n8n_api.py` expects 5679 unless you set `N8N_URL` (Step D). When n8n runs, open http://127.0.0.1:5679 in a browser: n8n answers there. On its first start n8n asks you to make an owner account: use your own business e-mail in YOUR n8n only, and never commit the e-mail or the password anywhere. n8n also offers a licence key (a code for a paid plan): do not enter one. Not tried here (n8n is not installed on the computer where this text was checked).
++
++**Step B.** In your own n8n, create an API key (a long password that lets a program use n8n). It is made on a settings page of n8n; the exact menu names were not checked. Never commit the key. Not tried here.
++
++**Step C.** Save the key alone, as one word on one line, in a text file of your own OUTSIDE the project folder. Never put this file into the repository. Linux: `printf '%s\n' 'PASTE-THE-KEY-HERE' > "$HOME/n8n-key.txt"` and then `chmod 600 "$HOME/n8n-key.txt"` (these two Linux lines were run on the computer where this text was checked, and the script read the file; the PowerShell line was not tried). Windows PowerShell: `Set-Content -NoNewline -Encoding ascii -Path "$HOME\n8n-key.txt" -Value 'PASTE-THE-KEY-HERE'` (not tried). The script first removes spaces and line breaks at the start and at the end of the file's text, so a line break after the key is fine (the `printf` line above adds one). It refuses the file, with a message that does not show the key, when what is left is empty, longer than 4096 characters, has a space or a second line of text inside it, has a control character, has any character that is not printable ASCII, or starts with a byte-order mark (a hidden first character that some editors add, which is not removed). The script refuses a file that is not text at all with a different message ("cannot read the n8n API key file"); also check that the file name is exactly `n8n-key.txt` (a hidden second `.txt` is a common slip on Windows; not tried).
++
++**Step D.** Tell the script where that file is, with the environment variable (a named value you set in your terminal) `N8N_API_KEY_FILE`. Linux: `export N8N_API_KEY_FILE="$HOME/n8n-key.txt"`. Windows PowerShell: `$env:N8N_API_KEY_FILE = "$HOME\n8n-key.txt"`. Use the same file name you chose in Step C. The value lasts only in this terminal window; in a new window set it again. If your n8n does not listen on port 5679, also set `N8N_URL` to its address in the same way (the script's default is `http://127.0.0.1:5679`). Another port works only for `desk-form` and `desk-webhook`: the `proof` workflow has the address `http://127.0.0.1:5679/webhook/desk-form` written into its file and does not read `N8N_URL`. The PowerShell line was not tried.
++
++**Step E.** Import each workflow: `python scripts/n8n_api.py import n8n/desk-form.json`, then the same with `n8n/desk-webhook.json` and `n8n/proof.json`. The author ran this once with a real n8n (logs not shipped); not tried here.
++
++**Step F.** Switch each workflow on, using its exact name (the `name` field inside the file): `python scripts/n8n_api.py activate "Lead Desk: Web Form Intake"`, `python scripts/n8n_api.py activate "Lead Desk: Email Intake"` and `python scripts/n8n_api.py activate "Lead Desk: Duplicate Test (10 at once)"`. The earlier real run used the same script and commands; this exact form was not run again, so it is not tried here.
++
++The script has no command to delete a workflow: delete one on the n8n screen (not tried here). `import` always adds a new workflow, so importing the same file twice leaves two workflows with the same name, and `activate <name>` then stops with a message that two workflows have that name. The script's `list` command shows only the first 250 workflows.
+ 
+ ## 1. The desk workflows (n8n in front of the desk)
+ 
+ Goal: a web form submission and an email-style message, both arriving at n8n, both end up as one request to the desk.
+ n8n adds nothing clever. The desk decides what is new.
+ 
+-**Request id** ("Request number" on the portal screens). Checked: the id inside the request body (`submission_id`, `message_id`) works, and a replay of the same id was recognised (`"replayed": true`). n8n's own execution id was not tried. The desk needs one id per
++**Request id** (the portal screens call it "Request number"; `source_ref` in the desk's records and in the workflows). Checked: the id inside the request body (`submission_id`, `message_id`) works, and a replay of the same id was recognised (`"replayed": true`). n8n's own execution id was not tried. The desk needs one id per
+ submission that stays the same when n8n re-sends it. Candidates: the form's own submission id, the email's message id, or n8n's
+ execution id (the execution id changes on a re-run, so it is the wrong choice for a retry). The workflows carry the id inside the
+ request body (`submission_id`, `message_id`), which is the stable choice.
+ 
++Before you try the example inputs, make a fresh desk. In the project folder with `.venv` switched on, run `bash scripts/reset.sh` (Windows: `.\scripts\reset.ps1`); this deletes the desk's records and logs. Then start the demo servers and the desk again (`bash scripts/start_all.sh keyed`; Windows `.\scripts\start_all.ps1 keyed`). The reason: the replies named below (`new`, `duplicate`) hold only on a desk with no leads yet, and the lead in the form example is the same person (Ada Example, the same email address) as the one `scripts/feed.py` sends in the README demo and as the one the burst test of `docs/limits.md` sends, so after that demo or after the burst test the form call answers `duplicate`.
++
+ Example inputs (made-up):
+ 
+     form:    {"submission_id":"sub-0001","name":"Ada Example","email":"Ada@example.com","phone":"555 0100","company":"Example Ltd","message":"Please call me."}
+     webhook: {"message_id":"msg-0001","from_name":"Ada Example","from_email":"ada@example.com","subject":"Quote","body":"Please call me."}
+ 
+-The **web form source** workflow ("Lead Desk: Web Form Intake") has three nodes: a Webhook node that receives the form (path `desk-form`; no authentication, local demo only), an Edit Fields node that sets `source` to `form`, takes `source_ref` from `submission_id` and copies `name`, `email`, `phone`, `company` and `message` into `payload`, and an HTTP Request node that posts `source`, `source_ref` and `payload` to the desk's `/leads` address (host and port from `docs/settings.md`). Its timeout is well above the desk's default send timeout of 5 seconds, so a slow answer ends the call in n8n later than in the desk, and a 400 or a 413 shows red in n8n.
++The form example is the first canned lead of `demo_only/canned_leads.json`, the lead that `scripts/feed.py --index 1` sends in the README demo (the first lead gets the request id `canned-1` there; here the request id is `sub-0001`). To send the two examples to n8n (Step F done: all three workflows are switched on and n8n answers on port 5679), run these two lines on Linux, the form line first:
++
++    curl -i -X POST -H 'Content-Type: application/json' -d '{"submission_id":"sub-0001","name":"Ada Example","email":"Ada@example.com","phone":"555 0100","company":"Example Ltd","message":"Please call me."}' http://127.0.0.1:5679/webhook/desk-form
++    curl -i -X POST -H 'Content-Type: application/json' -d '{"message_id":"msg-0001","from_name":"Ada Example","from_email":"ada@example.com","subject":"Quote","body":"Please call me."}' http://127.0.0.1:5679/webhook/desk-webhook
++
++`curl -i` also prints the HTTP status line. Expected, by the checks listed below: the form line answers `"verdict":"new"` and the email line, which is the same person, answers `"verdict":"duplicate"`; n8n gives HTTP 200 for both (see the next paragraphs). These two lines were not run as written here, because n8n is not installed on the computer where this text was checked (the checks below were run through n8n's REST interface by the author). Windows: no tested line; PowerShell needs other quoting.
++
++The **web form source** workflow ("Lead Desk: Web Form Intake") has three nodes: a Webhook node that receives the form (path `desk-form`; no authentication, local demo only), an Edit Fields node that sets `source` to `form`, takes `source_ref` from `submission_id` and copies `name`, `email`, `phone`, `company` and `message` into `payload`, and an HTTP Request node that posts `source`, `source_ref` and `payload` to the desk's `/leads` address (`http://127.0.0.1:8765/leads`, written into the file; the desk's port setting is in `docs/settings.md`). Its timeout is well above the desk's default send timeout of 5 seconds, so a slow answer ends the call in n8n later than in the desk, and a 400 or a 413 shows red in n8n.
+ 
+ The Webhook node returns the desk's reply (verdict `new`, `duplicate` or `review`). Checked: the reply body passes through unchanged, but **the HTTP status does not**: the caller always gets 200 when the desk answered, even where the desk said 201 or 202 (the verdict is in the body). A 400 or 413 from the desk, or a desk that cannot be reached, makes the caller get n8n's `500 {"message":"Error in workflow"}`.
+ 
+@@ -67,7 +95,7 @@ These workflows are not shipped and no result about them is claimed here; this s
+ Purpose: people trust what they see in n8n, so the counts are shown on an n8n screen. The counts come from the demo servers' own counters, never from n8n's
+ own "success" mark: in the one try, n8n's executions list showed success for a duplicate caller that was answered with an error, so that list is not proof of "no double email". No n8n-only result is claimed.
+ 
+-The workflow "proof" (manual start, or a web call to `/webhook/proof-run`) sends ten requests for the same lead with different request numbers at once, waits a few seconds, reads the desk's counts and the demo CRM's and demo mail system's counters, and shows the result on screen, for example "emails: 1, CRM rows: 1, expected 1". **Checked: all ten requests were sent together.** The desk stored all ten within the same second (the stored time has a resolution of one second, so this shows "together", not milliseconds), and the result was 1 new lead and 9 duplicates, 1 CRM row, 1 e-mail (on the first import and again after a clean re-import, 2026-11-09). The same holds when the ten calls go through the n8n web address of the web form source. The burst script (`demo_only/burst.py`, see `contract.md`) fires the same burst without n8n. **Changed after that run, and not run in n8n:** the line `result` of the `proof` workflow used to say PASS when the demo mail system and the demo CRM each counted 1. It now says PASS only when, in addition, the desk answered all ten requests with exactly one `new` and nine `duplicate` (nine requests that got no answer with a verdict, for example a refusal or a "busy" answer, used to be able to print PASS). That new rule was checked only by running its text in node with made-up values (`tests/test_n8n_proof_result.py`); n8n itself was not started for it. What is not proven: that n8n's own expression engine accepts the text, and that it finds the output of the step "Wait for the desk to finish" from the last step. What the owner should run once: first remove the old copy of the workflow, because `scripts/n8n_api.py` has no delete command and an import only adds a second workflow with the same name (and `activate` refuses when two workflows share a name): open the n8n screen (not tried here, and its menu names were not compared with the screen), find the workflow "Lead Desk: Duplicate Test (10 at once)" in the workflow list and delete it. Then import `n8n/proof.json` again with `python scripts/n8n_api.py import n8n/proof.json`, start it by hand, and check that the screen shows `PASS` with emails 1 and CRM rows 1. If n8n shows an error on the `result` field instead, the fault is in this expression, not in the desk. A MISMATCH is not always a fault of the duplicate protection: if the desk is busy and answers one of the ten with 503 "busy" (it can, under ten at once), that request has no verdict and the line says MISMATCH; start the workflow again.
++The workflow "proof" (manual start, or a web call to `/webhook/proof-run`) sends ten requests for the same lead with different request ids at once, waits a few seconds, reads the desk's counts and the demo CRM's and demo mail system's counters, and shows the result on screen, for example "emails: 1, CRM rows: 1, expected 1". **Checked: all ten requests were sent together.** The desk stored all ten within the same second (the stored time has a resolution of one second, so this shows "together", not milliseconds), and the result was 1 new lead and 9 duplicates, 1 CRM row, 1 e-mail (on the first import and again after a clean re-import, 2026-11-09). The same holds when the ten calls go through the n8n web address of the web form source. The burst script (`demo_only/burst.py`, see `contract.md`) fires the same burst without n8n. **Changed after that run, and not run in n8n:** the line `result` of the `proof` workflow used to say PASS when the demo mail system and the demo CRM each counted 1. It now says PASS only when, in addition, the desk answered all ten requests with exactly one `new` and nine `duplicate` (nine requests that got no answer with a verdict, for example a refusal or a "busy" answer, used to be able to print PASS). That new rule was checked only by running its text in node with made-up values (`tests/test_n8n_proof_result.py`); n8n itself was not started for it. What is not proven: that n8n's own expression engine accepts the text, and that it finds the output of the step "Wait for the desk to finish" from the last step. What the owner should run once: first remove the old copy of the workflow, because `scripts/n8n_api.py` has no delete command and an import only adds a second workflow with the same name (and `activate` refuses when two workflows share a name): open the n8n screen (not tried here, and its menu names were not compared with the screen), find the workflow "Lead Desk: Duplicate Test (10 at once)" in the workflow list and delete it. Then import `n8n/proof.json` again with `python scripts/n8n_api.py import n8n/proof.json`, start it by hand, and check that the screen shows `PASS` with emails 1 and CRM rows 1. If n8n shows an error on the `result` field instead, the fault is in this expression, not in the desk. A MISMATCH is not always a fault of the duplicate protection: if the desk is busy and answers one of the ten with 503 "busy" (it can, under ten at once), that request has no verdict and the line says MISMATCH; start the workflow again.
+ 
+ ## 4. What happened with the desk behind n8n
+ 
+diff --git a/docs/tests.md b/docs/tests.md
+index 16bac04..8c71462 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -117,11 +117,11 @@ The table below says which tests show each promise. "Tests named" means the test
+ 
+ | # | Promise, in plain words | Tests that show it |
+ |---|---|---|
+-| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed` and changes nothing. | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
++| P1 | (a) A second submission with a different request id and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request id sent again gets the original answer marked `replayed` and changes nothing. | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
+ | P2 | A duplicate never reaches the AI step: the demo AI's call counter does not go up for it. | `test_dedupe_before_ai` |
+ | P3 | A submission with no name, no email, an invalid email or a wrongly typed field goes to the review list with a reason and gets no follow-up. | `test_incomplete_to_review` |
+ | P4 | Stopped at each crash point and restarted: in these tests no run produced more than one lead, more than one CRM row or more than one email (see the crash-point table for what a blind CRM or mail system does). A wrong "not sent" answer by a person can cause a second email on a blind mail system. | `test_crash_resume_each_point` and `test_crash_resume_after_*` in `tests/test_flow.py`: together they stop the desk at each of the ten crash points, with keyed and with blind mail systems (C0 and C1 also with keyed and blind CRMs); real kills: `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind, demo mail over HTTP), `test_crash_d2_subprocess_with_*` in `tests/test_http.py` (real mail catcher) |
+-| P5 | Ten requests with different request numbers and the same email, fired at once straight at the desk by a script: one new lead, nine duplicates, one email; the counts match the number the script says it sent. Larger bursts are reported separately in `docs/limits.md` (measurements, not part of the test run). | `tests/test_http.py::test_ten_parallel`, `test_reconcile_counts` |
++| P5 | Ten requests with different request ids and the same email, fired at once straight at the desk by a script: one new lead, nine duplicates, one email; the counts match the number the script says it sent. Larger bursts are reported separately in `docs/limits.md` (measurements, not part of the test run). | `tests/test_http.py::test_ten_parallel`, `test_reconcile_counts` |
+ | P6 | On a blind mail system, a send that may or may not have happened is marked UNKNOWN, listed for a person and never resent by the desk; Retry is refused for it. Retry pressed twice at once on a failed follow-up gives one email, also on a blind system. | `test_unknown_blind`, `test_failed_retry`, `test_retry_twice_concurrent` |
+ | P7 | A later message never changes the first record: the lead's first details stay exactly as they arrived, however many later messages come and whatever they say. | `test_later_first_record_untouched`, `test_dupe_diff_first_untouched`, `test_write_once_triggers` |
+ | P8 | The lead panel lists the later messages from the same email address, newest first (the newest 50; the total is always shown): when each arrived, how long after the first message, and each field that is new or different, with the text exactly as it was sent except white space at the very start and end (spaces, tabs, line breaks and other Unicode white space), which is removed by the same rule as for the first record. | `test_later_values_word_for_word`, `test_later_seconds_after_first`, `test_later_lower_receipt_number`, `test_later_order_by_receipt_number`, `test_later_burst_ten_each_own_values`, `test_lead_detail_lists_at_most_the_cap`, `test_later_reply_size_is_bounded`, `test_time_after_first_words` |
+diff --git a/docs/why-this-code.md b/docs/why-this-code.md
+index c7330c8..2b7a7f9 100644
+--- a/docs/why-this-code.md
++++ b/docs/why-this-code.md
+@@ -17,7 +17,7 @@ Only n8n was compared for the main question (the first row); no other tool was e
+ | Phone matching | (not done) | Not tried | Nothing: phone numbers are not used to decide "same lead" | Left out on purpose |
+ | Demo CRM, demo mail systems, pre-written AI replies (`demo_only/`) | Stand-ins so the demo runs on one computer | Not checked | Two kinds of mail system (one that recognises a repeated send key, one that does not) are the point of the test | Own code, test doubles only |
+ | Real adapters: HubSpot, SMTP mail, IMAP counting, live model (`src/lead_desk/crm_hubspot.py`, `smtp_provider.py`, `imap_count.py`, `live_claude.py`) | Talk to real services in a bounded way | The vendors' own client libraries were not tried; the standard library (`urllib`, `smtplib`, `imaplib`) is used | Call caps, a deadline on every call, "ask a system that cannot recognise a repeat only once", masked errors | Own code over the standard library. They were built and tested against local stand-in servers; only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped), and the desk's HubSpot adapter itself never did; they are kept so the checks of the guarantee could be repeated with real services later (`scripts/run_real_check.py`) |
+-| Load driver (`load_tools/load_driver.py`) | Fire planned bursts and log every request | Ready-made load tools (for example k6, vegeta, hey) cover firing requests; not checked against this log format | Planned send times fixed before the run, a log line per request number, retries by time, the log the seven checks read | Own code (small); another tool could replace it if it writes the log format in `load_tools/README.md` |
++| Load driver (`load_tools/load_driver.py`) | Fire planned bursts and log every request | Ready-made load tools (for example k6, vegeta, hey) cover firing requests; not checked against this log format | Planned send times fixed before the run, a log line per request id, retries by time, the log the seven checks read | Own code (small); another tool could replace it if it writes the log format in `load_tools/README.md` |
+ | Seven checks after a load run (`load_tools/check_invariants.py`) | Count what really happened in the desk's records, the mail catcher and the CRM dump | No ready-made tool known for these counts | The comparison of the desk's own book with the mail and CRM counts | Own code; it is an audit, not part of the desk |
+ | Portal demo burst (`demo_only/portal_demo.py`, `demo_only/burst.py`) | Let a viewer fire a burst from the page | Not checked | The same retry rule as the load driver: two copies of it exist (`demo_only/burst.py`, which `demo_only/portal_demo.py` reuses, and `load_tools/load_driver.py`), kept in step by a test | Own code, demo only |
+ | Secret scan | Keep secrets out of the repository | gitleaks | Nothing | Ready-made tool, run in the checks |
+diff --git a/tests/test_docs_claims_lane3.py b/tests/test_docs_claims_lane3.py
+new file mode 100644
+index 0000000..2a4d55c
+--- /dev/null
++++ b/tests/test_docs_claims_lane3.py
+@@ -0,0 +1,870 @@
++"""Facts in README.md, docs/limits.md and docs/n8n-recipe.md that earlier review readers found wrong or missing.
++
++How the tests work. Where a fact can be read from the code, the workflow files or a real desk, the test reads it there
++and then checks that the text states it. The text checks pin FACTS (numbers, field names, command names, file names)
++by regular expression, not the exact wording, so a rewrite in better words does not fail them but a wrong number does.
++Every assert on document text carries a message that starts with "this sentence protects:" and says which fact to keep
++if you reword the sentence. Asserts on code or files (tests named `premise_` and asserts whose message starts with
++"premise:") check that a file still has the shape the text relies on; they read files, not the text.
++No demo servers and no n8n are needed: the real desk is started as a child program against an in-process stand-in
++for the demo servers, on a free port, with made-up data only."""
++
++from __future__ import annotations
++
++import importlib
++import json
++import os
++import re
++import sqlite3
++import sys
++from pathlib import Path
++from typing import cast
++
++import pytest
++from conftest import Env
++from support import HOST, call, child_env, free_port, post_lead, start_proc, stop_proc, wait_until
++
++from demo_only import burst
++
++REPO = Path(__file__).resolve().parents[1]
++FIVE = ("received", "new", "duplicate", "review", "open")
++FIVE_NAMED = r"`received`, `new`, `duplicate`, `review` and `open`"
++
++
++def _p(what: str) -> str:
++    return f"this sentence protects: {what} (if you reword the sentence, keep this fact)"
++
++
++def _read(rel: str) -> str:
++    return (REPO / rel).read_text(encoding="utf-8")
++
++
++def _line_with(text: str, start: str) -> str:
++    lines = [ln for ln in text.splitlines() if ln.lstrip().startswith(start)]
++    assert len(lines) == 1, f"premise: exactly one line starts with {start!r}, found {len(lines)}"
++    return lines[0]
++
++
++def _flat(text: str) -> str:
++    return " ".join(text.split())
++
++
++def _search(pattern: str, text: str) -> re.Match[str]:
++    """re.search that must find something (so the result can be used without a type escape)."""
++    found = re.search(pattern, text)
++    assert found, f"premise: the pattern {pattern!r} must occur in the text"
++    return found
++
++
++def _between(text: str, start: str, end: str) -> str:
++    """The part of `text` from the line starting with `start` up to (not including) the line starting with `end`."""
++    lines = text.splitlines()
++    first = next(i for i, ln in enumerate(lines) if ln.lstrip().startswith(start))
++    last = next(i for i, ln in enumerate(lines) if i > first and ln.lstrip().startswith(end))
++    return _flat("\n".join(lines[first:last]))
++
++
++# ---- limits.md: exit code 1 names what the desk really prints ----
++
++
++def test_exit_code_1_uses_the_words_the_desk_prints(tmp_path: Path) -> None:
++    env = {k: v for k, v in child_env().items() if not k.startswith("DESK_")}  # nothing of the tester's own settings
++    env.update(
++        DESK_PORT=str(free_port()),
++        DESK_FAKES_PORT=str(free_port()),  # nothing listens here: the demo servers are "not running"
++        DESK_DB_PATH=str(tmp_path / "data" / "desk.db"),
++    )
++    proc = start_proc(["-m", "lead_desk.server"], env)
++    try:
++        code = proc.wait(timeout=60)
++    finally:
++        output = stop_proc(proc).decode("utf-8", errors="replace")
++    if code == 3:  # the desk checks the open-file limit first (containers often allow only 4096)
++        pytest.skip(f"this computer's open-file limit is too low for the desk (exit 3): {output.strip()[-200:]}")
++    lines = output.strip().splitlines()
++    assert lines, f"premise: the desk printed nothing (exit {code})"
++    assert code == 1, f"premise: exit code 1 means the demo servers cannot be reached: {code}: {output[-200:]!r}"
++    printed = next((ln for ln in lines if ln.startswith("cannot reach the demo servers")), "")
++    assert printed, f"premise: the desk prints a line that starts with the words below: {lines[-3:]}"
++    phrase = printed.split(" (")[0]  # "cannot reach the demo servers"
++    bullet = _between(_read("docs/limits.md"), "* Exit codes of the desk:", "* Stopping:")
++    assert phrase in bullet, _p("limits.md quotes the words the desk prints for exit code 1")
++    assert "the sender cannot be reached" not in bullet, _p("the old word 'sender' for the demo servers is gone")
++    assert re.search(r"traceback.*program fault, or that someone edited a fixed value", bullet), _p(
++        "a traceback is a program fault OR an edited fixed value"
++    )
++    assert re.search(r"never caused by a `DESK_\*` setting[^;]*exit code 4", bullet), _p(
++        "a traceback is never caused by a DESK_* setting: a bad DESK_* value gives exit code 4"
++    )
++    assert "src/lead_desk/constants.py" in bullet and (REPO / "src/lead_desk/constants.py").exists(), _p(
++        "the edited fixed value lives in src/lead_desk/constants.py"
++    )
++    assert re.search(r"real CRM or a real mail sender[^.]*not described here", bullet), _p(
++        "what the desk prints for an unreachable real CRM or mail sender is not described (not claimed)"
++    )
++    for code, words in (
++        (2, "another desk holds the lock file"),
++        (3, "the open-file limit is too low"),
++        (4, "the desk refuses a setting"),
++        (5, "the port could not be bound within `BIND_RETRY_SECONDS`"),
++    ):
++        assert re.search(rf"\* Exit code {code}: {re.escape(words)}", bullet), _p(
++            f"exit code {code} is its own sub-bullet ('Exit code {code}: ...'), not part of the sentence of code 1"
++        )
++    assert re.search(r"\* Exit code 1: the demo servers cannot be reached", bullet), _p("exit code 1 is a sub-bullet")
++    assert "constant that is out of range" not in bullet, _p("no unexplained 'constant that is out of range'")
++
++
++# ---- one real desk: the facts of the README demo and of the burst steps ----
++
++
++def _start_real_desk(env: Env, tmp_path: Path) -> tuple[str, str]:
++    """The README desk as a child program, with the demo servers stood in for by the tests' own server.
++    Returns the desk's address and the address of that stand-in server."""
++    _, fakes_url = env.fakes("keyed")
++    port = free_port()
++    env_vars = child_env(
++        DESK_DB_PATH=str(tmp_path / "desk.sqlite3"), DESK_BIND=HOST, DESK_PORT=str(port), DESK_FAKES_URL=fakes_url
++    )
++    proc = start_proc(["-m", "lead_desk.server"], env_vars)
++    env.stop_on_close(lambda: stop_proc(proc))
++    base = f"http://{HOST}:{port}"
++    wait_until(lambda: proc.poll() is not None or call(base, "GET", "/counts")[0] == 200, what="desk ready")
++    assert proc.poll() is None, "premise: the README desk starts with the demo settings"
++    return base, fakes_url
++
++
++def test_the_fresh_desk_counts_are_what_the_readme_says(env: Env, tmp_path: Path) -> None:
++    base, _ = _start_real_desk(env, tmp_path)
++    status, reply = call(base, "GET", "/counts")
++    assert status == 200, "premise: the counts check answers HTTP 200"
++    for name in FIVE:
++        assert reply[name] == 0, f"premise: the five counts are 0 on a fresh desk: {name}"
++    time_field = "last_reaper_pass_at"
++    others = [
++        key
++        for key, value in reply.items()
++        if isinstance(value, int) and not isinstance(value, bool) and key not in FIVE and key != time_field
++    ]
++    assert others, "premise: there are other counts besides the five counts"
++    for name in others:
++        assert reply[name] == 0, f"premise: every other count is 0 on a fresh desk: {name}"
++    assert all(v == 0 for v in reply["hung_workers"].values()), "premise: the numbers inside hung_workers are 0"
++    assert len(reply["hung_workers"]) == 4, "premise: hung_workers holds four numbers"
++    server_text = _read("src/lead_desk/server.py")
++    assert server_text.index("desk.start_background()") < server_text.index("server.serve_forever()"), (
++        "premise: the Reaper is started before the desk serves its first request"
++    )
++    wait_until(lambda: call(base, "GET", "/counts")[1]["reaper_running"] is True, what="reaper running")
++    reply = call(base, "GET", "/counts")[1]
++    assert reply[time_field] is None or isinstance(reply[time_field], int), "premise: a time in seconds, or null"
++    assert reply["expected_match"] is None and reply["ok"] is None, "premise: expected_match and ok are null"
++
++    readme = _read("README.md")
++    linux = _between(readme, "**Linux**", "**Windows PowerShell**")
++    assert FIVE_NAMED in linux and re.search(r"are 0\. So are the other counts", linux), _p(
++        "the five counts are named and the other counts are 0 too"
++    )
++    for name in ("rejected_envelopes", "failed_followups", "hung_workers"):
++        assert name in linux and name in reply, _p(f"the Linux text names the real field {name}")
++    for key in reply["hung_workers"]:
++        assert re.search(rf"\b{key}\b", linux.split("hung_workers")[1][:200]), _p(f"hung_workers names its kind {key}")
++    assert re.search(r"`reaper_running` is `true`", linux), _p("`reaper_running` is stated as true")
++    assert re.search(r"^\* \*\*Reaper\*\*: ", readme, re.M), _p("the word list defines the Reaper")
++    assert re.search(r"says `false` and still does after 10 seconds, read `data/desk.log`", linux), _p(
++        "a reaper_running that is false is waited for 10 seconds, then data/desk.log is read"
++    )
++    assert "It can take a second after the first answer" not in linux, _p(
++        "the unfounded 'it can take a second' is gone (the Reaper starts before the desk listens)"
++    )
++    assert re.search(r"no such line \(curl prints `curl: \(7\)` or nothing\), read `data/desk.log`", linux), _p(
++        "when the wait loop ends without a 200, curl prints curl: (7) or nothing: read data/desk.log"
++    )
++    assert re.search(rf"`{time_field}` is not a count[^.]*\(a large number\), or `null`", linux), _p(
++        f"{time_field} is a time, not a count, and can be null"
++    )
++    assert "`expected_match` and `ok` are `null`" in linux, _p("expected_match and ok are null")
++    assert not re.search(r"\bnot 0\b", linux) and "are not counts of leads" not in linux, _p(
++        "the old false 'not 0' claim is gone"
++    )
++    windows = _flat(_line_with(readme, "Start-Sleep 3; Invoke-WebRequest"))
++    assert FIVE_NAMED in windows and re.search(r"the other number fields are 0 too", windows), _p(
++        "the Windows line names the five counts and says the other number fields are 0 too"
++    )
++    for name in (time_field, "expected_match", "ok", "hung_workers", "reaper_running"):
++        assert name in windows, _p(f"the Windows line names {name}")
++    assert re.search(r"model, crm, send, refresh", windows), _p("the Windows line names the four hung_workers kinds")
++    assert re.search(r"except `last_reaper_pass_at` \(a time, not a count\)", windows), _p(
++        "the Windows line excepts last_reaper_pass_at"
++    )
++
++
++def test_the_second_feed_and_the_receipt_number_match_the_real_desk(env: Env, tmp_path: Path) -> None:
++    base, _ = _start_real_desk(env, tmp_path)
++    one = {"name": "Ada Example", "email": "ada@example.test", "phone": "555 0100", "company": "Example Ltd"}
++    first = post_lead(base, "form", "canned-1", one)  # feed.py: the request id is canned-<index> on both doors
++    again = post_lead(base, "form", "canned-1", one)  # the same request id: a replay
++    other_door = post_lead(base, "webhook", "canned-1", one)  # same person, same id, the other door
++    assert first[0] == 201 and first[1]["verdict"] == "new", "premise: a new lead answers 201 new"
++    assert again[0] == 201 and again[1].get("replayed") is True, "premise: a replay of a `new` answers 201 replayed"
++    assert again[1]["receipt_id"] == first[1]["receipt_id"] == 1, "premise: the replay shows the FIRST receipt's number"
++    assert other_door[0] == 200 and other_door[1]["verdict"] == "duplicate", "premise: a duplicate answers 200"
++    counts = call(base, "GET", "/counts")[1]
++    assert (counts["received"], counts["new"], counts["duplicate"]) == (2, 1, 1), _p(
++        "README: received 2, new 1, duplicate 1 (a replay is not counted again)"
++    )
++    receipt = other_door[1]["receipt_id"]
++    assert receipt == 3, _p("README: the other door's receipt_id is 3, not 2 (the repeat used up the number 2)")
++    with sqlite3.connect(tmp_path / "desk.sqlite3") as db:
++        rows = db.execute("SELECT receipt_id, attempts FROM receipts ORDER BY receipt_id").fetchall()
++    assert rows == [(1, 2), (3, 1)], (
++        f"premise: the repeat updated receipt 1 (attempts 2), number 2 was never stored, the webhook lead is 3: {rows}"
++    )
++    assert "ON CONFLICT(source, source_ref) DO UPDATE SET attempts = attempts + 1" in _read("src/lead_desk/desk.py"), (
++        "premise: a repeat updates the first row instead of inserting (reads desk.py, not the text)"
++    )
++    assert "(SELECT count(*) FROM receipts)," in _read("src/lead_desk/desk.py"), (
++        "premise: `received` is the number of stored receipts"
++    )
++    assert "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT" in _read("src/lead_desk/schema.sql"), (
++        "premise: receipt numbers only go up (reads the schema file, not the text)"
++    )
++
++    readme = _read("README.md")
++    webhook_lines = (
++        ("Linux", "python scripts/feed.py --source webhook"),
++        ("Windows", r"python scripts\feed.py --source webhook"),
++    )
++    for label, start in webhook_lines:
++        line = _flat(_line_with(readme, start))
++        assert "HTTP 200 (not 201)" in line, _p(f"{label} webhook line: the duplicate answers HTTP 200, not 201")
++        assert re.search(rf"`receipt_id` is {receipt}, not {receipt - 1}\b", line), _p(
++            f"{label} webhook line: receipt_id is {receipt}, not {receipt - 1}"
++        )
++
++
++def test_the_receipt_explanation_is_true_and_the_word_is_defined() -> None:
++    flat = _flat(_read("README.md"))
++    word = re.search(r"\* \*\*receipt_id\*\*: ([^*]*?)(?= \* \*\*)", flat)
++    assert word and "counting up from 1" in word.group(1) and "not the request id" in word.group(1), _p(
++        "the word list defines receipt_id as the desk's own number counting up from 1, not the request id"
++    )
++    para = flat.split("About the receipt number of the webhook line:")[1].split("Run both scripts")[0]
++    assert re.search(r"repeat was not stored again", para), _p("the repeat was not stored again")
++    assert re.search(
++        r"raised the number of times it was seen \(the `attempts` column of that row in the desk's records\) "
++        r"from 1 to 2",
++        para,
++    ), _p("the repeat only raised the first row's attempts column, from 1 to 2, and the column is explained")
++    assert "raised its `attempts` count" not in para, _p("the unexplained word 'attempts' alone is gone")
++    assert re.search(r"`scripts/feed\.py` gives both doors the same request id, `canned-1`", para), _p(
++        "feed.py gives the form lines and the webhook line the same request id, canned-1"
++    )
++    assert re.search(r"one receipt per door and request id[^.]*not a repeat[^.]*same id on the other door", para), _p(
++        "the webhook line is not a repeat: same person, same id, other door, so a duplicate"
++    )
++    assert re.search(r"the repeat is not counted again", flat) and "replayed id" not in flat, _p(
++        "the counts comment says 'the repeat is not counted again' (one word for one meaning; no 'replayed id')"
++    )
++    feed = _read("scripts/feed.py")
++    assert 'f"canned-{index}"' in feed and "source_ref" in feed, "premise: feed.py builds the id canned-<index>"
++    assert re.search(r"first receipt's number, 1\b", para), _p(
++        "the repeat's own reply shows the first receipt's number, 1"
++    )
++    assert re.search(r"already used up the number 2 \(no receipt with number 2 was stored\)", para), _p(
++        "the database used up number 2 during the insert that turned out to be a repeat; no receipt 2 exists"
++    )
++    assert re.search(r"next new receipt[^.]*gets 3\b", para), _p("the webhook lead gets 3")
++    assert re.search(r"A skipped number is not a lost request", para), _p("a skipped number is not a lost request")
++    assert re.search(r"`received` is the number of stored receipts[^.]*2 and not 3", para), _p(
++        "received is the number of stored receipts: 2, not 3"
++    )
++    assert "no receipt was stored" not in para and "dropped that row" not in para, _p(
++        "the words 'no receipt was stored' (row 1 exists) and 'dropped that row' are not used"
++    )
++
++
++def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
++    flat = _flat(_read("README.md"))
++    assert re.search(
++        r"\*\*Repeat\*\* \(the reply says `\"replayed\": true`\): the "
++        r"same request id came again on the same door",
++        flat,
++    ), _p(
++        "a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)"
++    )
++    assert "UNIQUE (source, source_ref)" in _read("src/lead_desk/schema.sql"), (
++        "premise: one receipt per door and request id"
++    )
++    assert re.search(
++        r"`duplicate` \(this email was seen before in another request: a "
++        r"different request id, or the same id on the other door\)",
++        flat,
++    ), _p(
++        "a duplicate is the same email in another request (other id, or same id on the other door)"
++    )
++    assert len(re.findall(r"(?i)request number", flat)) == 1 and 'The portal calls it "Request number"' in flat, _p(
++        "the words 'request number' appear in the README only where the portal's name is given"
++    )
++    assert re.search(r"in the desk's own records it is `source_ref`", flat), _p("the request id is source_ref inside")
++    assert "source_ref" in _read("src/lead_desk/schema.sql"), "premise: the records have a source_ref column"
++    assert re.search(
++        r"\*\*Receipt\*\*: [^*]*one row in the desk's records[^*]*carries the number of that row as `receipt_id`", flat
++    ), _p(
++        "a receipt is a row; the reply carries its number as receipt_id"
++    )
++
++
++def test_prose_says_request_id_and_keeps_request_number_only_as_the_portals_label() -> None:
++    """Every document: 'request number' only as a quoted portal label, or on the two portal-screen pages."""
++    portal_js = _read("src/lead_desk/portal/portal.js") + _read("src/lead_desk/portal/pages/log.js")
++    assert "'Same request number, different data'" in portal_js, "premise: the portal shows this label"
++    assert "label: 'Request number'" in portal_js, "premise: the portal shows a column called Request number"
++    labels = ('"Request number"', '"Same request number, different data"')
++    for name in ("README.md", "docs/limits.md", "docs/n8n-recipe.md", "docs/why-this-code.md"):
++        text = _read(name)
++        for label in labels:
++            text = text.replace(label, "")
++        assert not re.search(r"(?i)request numbers?", text), _p(
++            f"{name}: prose says 'request id'; 'Request number' only as the portal's quoted label"
++        )
++    tests_md = _read("docs/tests.md")
++    for row in ("P1", "P5"):
++        line = _line_with(tests_md, f"| {row} |")
++        assert not re.search(r"(?i)request numbers?", line), _p(f"tests.md row {row}: prose says 'request id'")
++    limits = _flat(_read("docs/limits.md"))
++    assert 'stays on Needs a person as "Same request number, different data"' in limits, _p(
++        "the quoted label of the portal is kept as the portal shows it"
++    )
++    assert re.search(r"the same email under different request ids\)", limits), _p(
++        "the burst sends different request ids"
++    )
++
++
++def test_the_burst_numbers_in_limits_are_what_a_real_desk_answers(env: Env, tmp_path: Path) -> None:
++    base, _ = _start_real_desk(env, tmp_path)
++    url = base + "/leads"
++    email = "ada@example.test"
++    n = 10
++    first = burst.fire(url, n, email, "p1", "form")
++    same = burst.fire(url, n, email, "p1", "form")
++    other = burst.fire(url, n, email, "p2", "form")
++
++    def shown(result: dict[str, object]) -> dict[object, int]:
++        out: dict[object, int] = {}
++        for status in cast("list[int | str]", result["final"]):
++            out[status] = out.get(status, 0) + 1
++        return out
++
++    assert shown(first) == {201: 1, 200: n - 1}, "premise: a fresh desk answers 201 once and 200 for the other n - 1"
++    assert shown(same) == {201: 1, 200: n - 1}, "premise: the same prefix again gives the stored answers"
++    assert shown(other) == {200: n}, "premise: another prefix on a desk that holds the address answers 200 n times"
++    wait_until(lambda: call(base, "GET", "/counts")[1]["pending_followups"] == 0, what="follow-ups finished")
++    assert call(base, "GET", "/counts")[1]["new"] == 1, "premise: new stays 1 through all three runs"
++
++    steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
++    sends = int(_search(r"--n (\d+)", steps).group(1))
++    assert re.search(rf"STATUS 201=1 200={sends - 1}\b", steps), _p(
++        "a fresh desk: 201=1 and 200 for the other n - 1 sends"
++    )
++    same_text = steps.split("SAME `--ref-prefix`")[1].split("DIFFERENT")[0]
++    assert re.search(rf"201=1 200={sends - 1}\b", same_text) and "`new` stays 1" in same_text, _p(
++        "the same prefix again: the stored answers come back and `new` stays 1"
++    )
++    diff_text = steps.split("DIFFERENT `--ref-prefix`")[1]
++    assert re.search(rf"STATUS 200={sends}\b", diff_text) and "does not grow" in diff_text, _p(
++        "a different prefix on a desk that holds the address: every answer is 200"
++    )
++    ten = rf"With `--n {n}` the numbers are `201=1 200={n - 1}`, `201=1 200={n - 1}` and `200={n}`"
++    assert re.search(ten, steps), _p(
++        f"the ten-send numbers 201=1 200={n - 1} / 200={n}"
++    )
++
++
++def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
++    steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
++    sends = int(_search(r"--n (\d+)", steps).group(1))
++    numbering = rf"`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-{sends}"
++    assert re.search(numbering, steps), _p(
++        "burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them"
++    )
++    assert 'f"{ref_prefix}-{i}"' in _read("demo_only/burst.py") and "range(1, n + 1)" in _read("demo_only/burst.py"), (
++        "premise: burst.py numbers its requests from 1"
++    )
++    for word, verb in (("SENT", "says"), ("STATUS", "says"), ("RETRIES", "counts"), ("RESULT", "says")):
++        assert re.search(rf"`{word}` {verb}", steps), _p(f"the printed line {word} is explained")
++    assert re.search(
++        r"`RETRIES` counts every time the script got a 503 `busy` answer \(`busy503`\) or a refused connection "
++        r"\(`refused`\) and sent the request again, and also the last such answer of a request[^;]*; "
++        r"it has nothing to do with `\"replayed\": true`",
++        steps,
++    ), _p("RETRIES counts every 503 busy answer or refused connection, the last one of a request too, not repeats")
++    assert "how many answers of each HTTP status code" in steps and "HTTP number" not in steps, _p(
++        "STATUS counts answers per HTTP status code (the old words 'HTTP number' are gone)"
++    )
++    assert re.search(
++        r"`sent` there is the number of answers 200, 201 or 202; "
++        r"a request that got another answer or none is not in it",
++        steps,
++    ), _p("RESULT sent= counts only the answers 200, 201 and 202")
++    assert re.search(r"(?m)^     \* Linux: run `bash scripts/reset\.sh`", _read("docs/limits.md")) and re.search(
++        r"(?m)^     \* Windows \(not tried for this burst\): run", _read("docs/limits.md")
++    ), _p("burst step 1 has one line for Linux and one line for Windows")
++    burst_text = _read("demo_only/burst.py")
++    assert 'stats["busy503" if res == HTTP_BUSY else "refused"] += 1' in burst_text, (
++        "premise: busy503 and refused count every 503 or refused answer handed to on_retryable"
++    )
++    assert "on_retryable(res)" in burst_text and "the last too" in burst_text, (
++        "premise: on_retryable is called for every 503 or refused answer, the last too (even when no try follows)"
++    )
++    assert 'print(f"RESULT sent={ok_count} expected={expected}")' in burst_text and (
++        "if k in (HTTP_OK, HTTP_CREATED, HTTP_ACCEPTED)" in burst_text
++    ), "premise: sent= in RESULT counts the answers 200, 201 and 202 only"
++    assert re.search(r"202 is the answer for a `review` verdict[^)]*so 202 does not occur", steps), _p(
++        "202 is a review verdict and does not occur in this test because every send has an email address"
++    )
++    assert "HTTP_ACCEPTED" in _read("demo_only/burst.py") and '"email": email' in _read("demo_only/burst.py"), (
++        "premise: burst.py counts 202 as success and puts an email into every body"
++    )
++    counts_url = re.escape(f"http://{HOST}:8765/counts")
++    assert re.search(rf"wait until `{counts_url}` answers 200", steps), _p(
++        "step 1 names the check: wait until the counts address answers 200"
++    )
++    assert re.search(r"Do not run the `scripts/feed\.py` lines", steps), _p("step 1 says not to run the feed lines")
++    assert re.search(r"for i in 1 2 3", steps) and "Start-Sleep 3; Invoke-WebRequest" in steps, _p(
++        "step 1 names the Linux wait-loop line and the Windows line"
++    )
++    one_command = re.escape("sets `PYTHONPATH` to `" + "src" + ":" + ".` for this one command only")
++    assert re.search(one_command, steps), _p(
++        "the one-line command sets PYTHONPATH for that command only"
++    )
++    assert re.search(
++        r"If you see a different split, something is wrong or the desk was not fresh: start again at step 1", steps
++    ), _p(
++        "a different split means something is wrong: first check that the desk was fresh"
++    )
++    assert re.search(r"`MISMATCH`", steps) and "does not print the lead count" in steps, _p(
++        "RESULT/MISMATCH, no lead count"
++    )
++    assert "scripts/reset.sh" in steps and "scripts/start_all.sh keyed" in steps, _p(
++        "the fresh-desk steps name both scripts"
++    )
++    assert r".\scripts\reset.ps1" in steps and r".\scripts\start_all.ps1 keyed" in steps, _p(
++        "the Windows scripts are named"
++    )
++    assert (REPO / "scripts" / "reset.ps1").exists() and (REPO / "scripts" / "start_all.ps1").exists(), (
++        "premise: the Windows scripts exist"
++    )
++    where = r'`\.venv` is switched on and `PYTHONPATH=src` is set \(README, "Try it", first lines\)'
++    assert re.search(where, steps), _p(
++        "the steps say where to run them: .venv on and PYTHONPATH=src set"
++    )
++    assert r'$env:PYTHONPATH = "src;."' in steps and "PYTHONPATH=src:. python -m demo_only.burst" in steps, _p(
++        "the one-line burst command is given for Linux and Windows"
++    )
++    assert len(re.findall(r"not tried", steps)) >= 2, _p("the Windows steps are marked 'not tried'")
++    assert "just started" not in steps and "lead count and the follow-up count" not in steps, _p("old wording is gone")
++    assert steps.index("3 seconds") < steps.index('"count": 1'), _p("the 3-second wait comes BEFORE the outbox check")
++    assert "fake/outbox" in steps, _p("the outbox address is named")
++    assert re.search(
++        r"run on a Linux computer with \d+ sends, most recently on 2026-11-13; logs not shipped", steps
++    ), _p(
++        "the 100-send figure was run on a Linux computer (last on 2026-11-13), logs not shipped"
++    )
++    assert "this was seen on a real run" not in steps, _p("the vague 'seen on a real run' is gone")
++    assert len(re.findall(r"(?:^|\s)\d\. ", steps)) >= 6, _p("the burst is a numbered list of steps")
++
++
++# ---- n8n-recipe.md: ports, key file, delete, reset ----
++
++
++def _ports_in(path: Path) -> set[int]:
++    text = path.read_text(encoding="utf-8")
++    json.loads(text)  # the file must still be a workflow
++    return {int(n) for n in re.findall(rf"http://{re.escape(HOST)}:(\d+)/", text)}
++
++
++def test_premise_workflow_files_carry_the_default_ports_each() -> None:
++    """Reads the files (not the recipe text): which port each workflow file has written into its web addresses."""
++    from lead_desk.config import Config
++
++    config = Config.from_env({})
++    found = re.search(rf"http://{re.escape(HOST)}:(\d+)", _read("scripts/n8n_api.py"))
++    assert found, "premise: scripts/n8n_api.py has a default n8n address"
++    n8n_default = int(found.group(1))
++    assert _ports_in(REPO / "n8n" / "desk-form.json") == {config.port}, "premise: form file needs only the desk"
++    assert _ports_in(REPO / "n8n" / "desk-webhook.json") == {config.port}, "premise: webhook file needs only the desk"
++    assert _ports_in(REPO / "n8n" / "proof.json") == {config.port, config.fakes_port, n8n_default}, (
++        "premise: the proof file needs the desk, the demo servers and n8n"
++    )
++
++
++def test_the_recipe_names_the_ports_each_workflow_file_needs() -> None:
++    flat = _flat(_read("docs/n8n-recipe.md"))
++    assert re.search(r"`desk-form\.json` and `desk-webhook\.json` need only the desk on 127\.0\.0\.1:8765", flat), _p(
++        "the form and webhook files need only the desk port"
++    )
++    assert re.search(
++        r"`proof\.json` also needs the demo servers on 127\.0\.0\.1:8766 and n8n itself on port 5679", flat
++    ), _p("the proof file also needs the demo servers and n8n")
++    assert re.search(r"files[^.]*do not read the settings", flat), _p("the files do not follow docs/settings.md")
++    assert "(host and port from `docs/settings.md`)" not in flat, _p(
++        "the old sentence implying the files follow settings"
++    )
++    assert "The three workflow files" not in flat, _p("not all three files need all three ports")
++    assert re.search(r"editing the file[^.]*written permission", flat), _p("editing a workflow file needs permission")
++    assert re.search(r"keep the default ports: desk 8765, demo servers 8766, n8n 5679", flat), _p(
++        "'the easiest way' names what to keep: the default ports"
++    )
++    assert re.search(
++        r"8765 and 8766 are the defaults of `docs/settings\.md`; 5679 is the default of `scripts/n8n_api\.py`", flat
++    ), _p(
++        "8765 and 8766 come from docs/settings.md, 5679 from scripts/n8n_api.py"
++    )
++    assert re.search(r"`proof\.json` also needs[^*]*`desk-form\.json`\) imported and switched on", flat), _p(
++        "the proof workflow also needs the web form workflow imported and on "
++        "(its sending box posts to /webhook/desk-form)"
++    )
++    assert "/webhook/desk-form" in _read("n8n/proof.json"), "premise: proof.json posts to the desk-form webhook"
++
++
++def test_the_recipe_tells_one_true_story_about_docker() -> None:
++    flat = _flat(_read("docs/n8n-recipe.md"))
++    docker = flat.split("**n8n in Docker.**")[1].split("* **n8n's port.**")[0]
++    assert docker.startswith(" Not tried here."), _p("the Docker paragraph says first that it was not tried")
++    assert re.search(
++        r"On the default Docker network, `127\.0\.0\.1` inside the container is the container itself", docker
++    ), _p(
++        "on the default Docker network the address 127.0.0.1 inside the container is the container, not this computer"
++    )
++    assert re.search(
++        r"desk that listens only on `127\.0\.0\.1`[^)]*\)[^.]*cannot be "
++        r"reached from a container[^.]*even with edited files",
++        docker,
++    ), _p(
++        "a desk that listens only on 127.0.0.1 cannot be reached from a container, even with edited files"
++    )
++    assert re.search(r"Editing the files needs the licence holder's written permission", docker), _p(
++        "editing the files needs the licence holder's permission"
++    )
++    assert re.search(r"`DESK_ALLOWED_HOSTS` only lists extra names[^.]*`Host` header", docker), _p(
++        "DESK_ALLOWED_HOSTS only lists extra Host names the desk accepts"
++    )
++    assert re.search(r"changes neither the files nor the address the desk listens on", docker), _p(
++        "DESK_ALLOWED_HOSTS changes neither the files nor the listening address"
++    )
++    assert "list that name in `DESK_ALLOWED_HOSTS`" not in flat, _p("the opposite advice (change the setting) is gone")
++    assert 'bind: str = "127.0.0.1"' in _read("src/lead_desk/config.py"), (
++        "premise: the desk listens on 127.0.0.1 unless told otherwise"
++    )
++    assert "DESK_ALLOWED_HOSTS" in _read("docs/settings.md"), "premise: the setting exists in settings.md"
++
++
++def test_premise_example_lead_matches_readme_demo_lead() -> None:
++    """Reads files (not the text): the recipe's form example is the same person as the README demo's first lead."""
++    canned = REPO / "demo_only" / "canned_leads.json"
++    if not canned.exists():
++        pytest.skip("demo_only folder removed")
++    first = json.loads(canned.read_text(encoding="utf-8"))[0]
++    form_line = _line_with(_read("docs/n8n-recipe.md"), "form:")
++    example = json.loads(form_line.split("form:", 1)[1])
++    assert example["email"].lower() == first["email"].lower(), "premise: same person, so a used desk answers duplicate"
++
++
++def test_the_recipe_says_to_reset_and_start_everything_again() -> None:
++    flat = _flat(_read("docs/n8n-recipe.md"))
++    intro = flat.split("Before you try the example inputs")[1].split("Example inputs (made-up):")[0]
++    assert "make a fresh desk" in intro, _p("the reset comes first")
++    assert "scripts/reset.sh" in intro and r"scripts\reset.ps1" in intro and "no leads yet" in intro, _p(
++        "the reset is named for Linux and Windows"
++    )
++    assert re.search(r"project folder with `\.venv` switched on", intro), _p("the reset says where to run it")
++    assert re.search(r"start the demo servers and the desk again", intro), _p(
++        "start BOTH the demo servers and the desk"
++    )
++    assert "scripts/start_all.sh keyed" in intro and r"scripts\start_all.ps1 keyed" in intro, _p(
++        "the start command is named for Linux and Windows"
++    )
++    assert "deletes the desk's records and logs" in intro, _p("the reset says what it deletes")
++    assert re.search(r"after that demo or after the burst test the form call answers `duplicate`", intro), _p(
++        "the form example also answers duplicate after the burst test (same email address)"
++    )
++    burst_email = _search(r"--email (\S+)", _read("docs/limits.md")).group(1)
++    form_email = json.loads(_line_with(_read("docs/n8n-recipe.md"), "form:").split("form:", 1)[1])["email"]
++    assert burst_email.lower() == form_email.lower(), "premise: the burst test and the form example use one address"
++    assert flat.index("Before you try the example inputs") < flat.index("Example inputs (made-up):"), _p(
++        "the reset sentence comes before the example inputs"
++    )
++
++
++def _recipe_steps() -> str:
++    flat = _flat(_read("docs/n8n-recipe.md"))
++    return flat.split("To import a workflow with the script")[1].split("The script has no command")[0]
++
++
++def test_the_recipe_import_steps_match_the_script() -> None:
++    recipe = _read("docs/n8n-recipe.md")
++    script = _read("scripts/n8n_api.py")
++    steps = _recipe_steps()
++    assert "N8N_API_KEY_FILE" in script and "N8N_URL" in script, "premise: the script reads both variables"
++    assert re.search(r"environment variable[^.]*`N8N_API_KEY_FILE`", steps), _p(
++        "the key file is an environment variable"
++    )
++    assert 'export N8N_API_KEY_FILE="$HOME/n8n-key.txt"' in recipe, _p("the Linux way, a file outside the folder")
++    assert '$env:N8N_API_KEY_FILE = "$HOME\\n8n-key.txt"' in recipe, _p("the Windows way, the same file name")
++    assert "/path/to/keyfile" not in recipe and ".\\n8n-key.txt" not in recipe, _p(
++        "no key file path inside the project"
++    )
++    assert re.search(r"lasts only in this terminal window", steps), _p("the variable lasts only in that terminal")
++    assert "`N8N_URL`" in steps, _p("N8N_URL is mentioned in the steps")
++    assert re.search(r"create an API key", steps) and "one word on one line" in steps, _p("the key is made in n8n")
++    assert re.search(r"OUTSIDE the project folder", steps), _p("the key file lives outside the project folder")
++    assert "python scripts/n8n_api.py import n8n/desk-form.json" in steps, _p("the import command")
++    docs_link = re.escape("(" + "https://" + "docs.n8n.io/" + ")")
++    assert re.search(rf"\*\*Step A\.\*\* Install n8n as the n8n documentation says {docs_link}", steps), _p(
++        "Step A: install n8n as the n8n documentation says, with its link"
++    )
++    assert re.search(r"Then start n8n in that window as the documentation says\. Leave that window open", steps), _p(
++        "n8n is started in a terminal window of its own and that window stays open"
++    )
++    port_then_start = r"set n8n's own port variable `N8N_PORT` to 5679.*Then start n8n in that window"
++    assert re.search(port_then_start, steps), _p(
++        "n8n's own variable N8N_PORT is set to 5679 BEFORE n8n is started"
++    )
++    assert "export N8N_PORT=5679" in steps and '$env:N8N_PORT = "5679"' in steps, _p(
++        "N8N_PORT for Linux and PowerShell"
++    )
++    browser = re.escape(f"open http://{HOST}:5679 in a browser")
++    assert re.search(browser, steps), _p("how to see that n8n answers")
++    default_url = re.search(r'N8N_URL", "([^"]*)"', script)
++    assert default_url and "5679" in default_url.group(1), "premise: the script's n8n port default is 5679"
++    assert re.search(r"\*\*Step F\.\*\* Switch each workflow on", steps), _p("switching on is the last lettered step")
++    raw_steps = recipe.split("To import a workflow with the script")[1].split("The script has no command")[0]
++    letters = re.findall(r"^\*\*Step ([A-Z])\.\*\* ", raw_steps, re.M)
++    assert letters == list("ABCDEF"), _p(f"the import steps are lettered A to F in order, found {letters}")
++    assert re.search(r'do Step A to Step F in order, after you have read "Before you start" above\.', steps), _p(
++        "the steps are called Step A to Step F and point up to the section 'Before you start'"
++    )
++    assert "## Before you start" in recipe and "## 0." not in recipe, _p(
++        "the preparation section is called 'Before you start' and has no number"
++    )
++    assert recipe.index("## Before you start") < recipe.index("**Step A.**"), _p(
++        "'Before you start' stands ABOVE the steps, so it is read first"
++    )
++    assert not re.search(r"(?i)\bstep [0-9]", recipe), _p(
++        "no 'Step <digit>': the steps have letters, the sections have numbers, so the two cannot be mixed up"
++    )
++    assert re.search(r"(?m)^## 1\. The desk workflows", recipe), "premise: the numbered sections are still there"
++    assert steps.index("owner account") < steps.index("create an API key"), _p(
++        "the owner account (made when n8n first starts) comes before the step that creates the API key"
++    )
++    assert re.search(r"licence key \(a code for a paid plan\): do not enter one", steps), _p(
++        "an n8n licence key is a paid-plan code: enter none (it is not the API key)"
++    )
++    assert "printf '%s\\n' 'PASTE-THE-KEY-HERE'" in recipe and 'chmod 600 "$HOME/n8n-key.txt"' in recipe, _p(
++        "the Linux key file commands"
++    )
++    assert "Set-Content -NoNewline -Encoding ascii" in steps, _p("the PowerShell key file command, ASCII, no new line")
++    assert re.search(r"starts with a byte-order mark \(a hidden first character[^)]*\)", steps), _p(
++        "a file that starts with a byte-order mark is refused by the script"
++    )
++    assert "one word of printable ASCII" in script, "premise: the script refuses anything but printable ASCII"
++    for letter in "ABCDEF":  # every step says whether it was run
++        part = steps.split(f"**Step {letter}.**")[1].split("**Step ")[0]
++        assert re.search(r"(?i)not tried|run once|ran this once", part), _p(f"Step {letter} says whether it was run")
++    assert re.search(r"`\.venv` is switched on", steps), _p("the steps say where to run them")
++    usage = 'USAGE = "usage: python scripts/n8n_api.py import FILE | activate NAME | deactivate NAME | list"'
++    assert usage in script, (
++        "premise: the script has no delete command"
++    )
++    flat = _flat(recipe)
++    assert re.search(r"no command to delete a workflow[^.]*n8n screen", flat), _p("deleting is done on the n8n screen")
++    assert re.search(r"two workflows with the same name", flat), _p("importing twice makes two workflows")
++    assert "workflows?limit=250" in script and re.search(r"`list`[^.]*first 250 workflows", flat), _p(
++        "the script's list shows only the first 250 workflows"
++    )
++
++
++def _key_file_result(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, data: bytes) -> str:
++    """What scripts/n8n_api.py `_read_key` does with a key file holding `data`: the key it reads, or the refusal."""
++    path = tmp_path / "key-file.txt"
++    path.write_bytes(data)
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(path))
++    monkeypatch.delenv("N8N_URL", raising=False)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    try:
++        module = importlib.import_module("n8n_api")
++    except SystemExit as refused:
++        return f"refused: {refused}"
++    finally:
++        sys.modules.pop("n8n_api", None)
++    return f"key: {module.KEY}"
++
++
++KEY_FILE_CASES = {
++    "plain": (b"abc123KEYtext", "key: abc123KEYtext"),
++    "line break at the end": (b"abc123KEYtext\n", "key: abc123KEYtext"),
++    "spaces and line breaks around it": (b"  abc123KEYtext \r\n\n", "key: abc123KEYtext"),
++    "space inside": (b"abc 123", "refused"),
++    "second line of text": (b"abc123\nsecond", "refused"),
++    "control character": (b"abc\x00123", "refused"),
++    "letter that is not ASCII": ("abc\u00e9123".encode(), "refused"),
++    "byte-order mark first": (b"\xef\xbb\xbfabc123", "refused"),
++    "empty": (b"\n", "refused"),
++    "longer than 4096": (b"k" * 4097, "refused"),
++}
++
++
++@pytest.mark.parametrize("case", list(KEY_FILE_CASES))
++def test_the_key_file_rules_in_the_recipe_are_what_the_script_does(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, case: str
++) -> None:
++    data, expected = KEY_FILE_CASES[case]
++    result = _key_file_result(monkeypatch, tmp_path, data)
++    if expected.startswith("key: "):
++        assert result == expected, f"premise: the script accepts the key file `{case}`: {result}"
++    else:
++        assert result.startswith("refused: ") and "n8n API key file" in result, f"premise: refused `{case}`: {result}"
++        assert "abc" not in result and "kkkk" not in result, "premise: the refusal does not show the key"
++
++
++def test_the_key_file_sentence_says_what_the_script_does() -> None:
++    steps = _recipe_steps()
++    part = steps.split("**Step C.**")[1].split("**Step D.**")[0]
++    assert re.search(
++        r"removes spaces and line breaks at the start and at the end of the file's text, so a line break after the "
++        r"key is fine \(the `printf` line above adds one\)",
++        part,
++    ), _p("spaces and line breaks at the start or end are removed first, so a line break after the key is fine")
++    assert re.search(
++        r"refuses the file[^.]*empty[^.]*longer than 4096 characters[^.]*a space or a second line of text inside it"
++        r"[^.]*control character[^.]*not printable ASCII[^.]*starts with a byte-order mark",
++        part,
++    ), _p("the refused files: empty, over 4096, space or second line inside, control character, not ASCII, BOM")
++    assert "a space or a second line is refused" not in part, _p("the old claim that a space at the end is refused")
++    assert "MAX_KEY = 4096" in _read("scripts/n8n_api.py") and ".strip()" in _read("scripts/n8n_api.py"), (
++        "premise: the script strips the text first and has a limit of 4096 characters"
++    )
++    assert "Use the same file name you chose in Step C." in steps and "(Step D)" in steps, _p(
++        "the pointers use the step letters (file name: Step C; N8N_URL: Step D)"
++    )
++
++
++def test_the_recipe_says_the_proof_workflow_ignores_n8n_url() -> None:
++    steps = _recipe_steps()
++    part = steps.split("**Step D.**")[1].split("**Step E.**")[0]
++    address = re.escape(f"http://{HOST}:5679/webhook/desk-form")
++    assert re.search(
++        r"Another port works only for `desk-form` and `desk-webhook`: the `proof` workflow has the address "
++        rf"`{address}` written into its file and does not read `N8N_URL`",
++        part,
++    ), _p("another n8n port works only for desk-form and desk-webhook; proof.json has port 5679 written in")
++    proof = _read("n8n/proof.json")
++    assert f"http://{HOST}:5679/webhook/desk-form" in proof and "N8N_URL" not in proof, (
++        "premise: proof.json holds the address with port 5679 and has no N8N_URL"
++    )
++    for name in ("desk-form", "desk-webhook"):
++        assert "5679" not in _read(f"n8n/{name}.json"), f"premise: {name}.json does not name the n8n port"
++
++
++def test_the_recipe_curl_lines_send_the_two_example_inputs() -> None:
++    recipe = _read("docs/n8n-recipe.md")
++    flat = _flat(recipe)
++    form = json.loads(_line_with(recipe, "form:").split("form:", 1)[1])
++    hook = json.loads(_line_with(recipe, "webhook:").split("webhook:", 1)[1])
++    sent: dict[str, object] = {}
++    curls = [ln.strip() for ln in recipe.splitlines() if ln.strip().startswith("curl -i -X POST")]
++    assert len(curls) == 2, _p(f"two curl lines, one for each example, found {len(curls)}")
++    for line in curls:
++        found = _search(r"^curl -i -X POST -H 'Content-Type: application/json' -d '(\{.*\})' (\S+)$", line)
++        sent[found.group(2)] = json.loads(found.group(1))
++    base = f"http://{HOST}:5679/webhook/"
++    assert sent == {base + "desk-form": form, base + "desk-webhook": hook}, _p(
++        "the curl lines send exactly the two example inputs to the two webhook addresses (form first)"
++    )
++    assert curls[0].endswith("/webhook/desk-form") and curls[1].endswith("/webhook/desk-webhook"), _p("form first")
++    for name in ("desk-form", "desk-webhook"):
++        flow = json.loads(_read(f"n8n/{name}.json"))
++        assert any(node.get("parameters", {}).get("path") == name for node in flow["nodes"]), (
++            f"premise: {name}.json has a Webhook node with the path {name}"
++        )
++    canned = json.loads(_read("demo_only/canned_leads.json"))[0] if (REPO / "demo_only").exists() else None
++    if canned is not None:
++        assert {k: form[k] for k in ("name", "email", "phone", "company", "message")} == canned, (
++            "premise: the form example is the first canned lead"
++        )
++    assert re.search(r"form example is the first canned lead of `demo_only/canned_leads\.json`", flat), _p(
++        "the form example is the first canned lead, the one feed.py --index 1 sends"
++    )
++    assert re.search(r"these two lines were not run as written here", flat, re.I), _p(
++        "the curl lines are marked as not run here (n8n is not installed on the checking computer)"
++    )
++    assert re.search(r"Windows: no tested line", flat), _p("Windows has no tested line")
++
++
++def test_the_recipe_activates_each_workflow_by_its_real_name() -> None:
++    steps = _recipe_steps()
++    names = [json.loads(p.read_text(encoding="utf-8"))["name"] for p in sorted((REPO / "n8n").glob("*.json"))]
++    assert len(names) == 3, f"premise: three workflow files, found {names}"
++    for name in names:
++        assert f'python scripts/n8n_api.py activate "{name}"' in steps, _p(
++            f"the activate step names the workflow {name!r}"
++        )
++
++
++# ---- README.md: port check and tools ----
++
++
++def test_readme_port_check_explains_000_and_404() -> None:
++    readme = _read("README.md")
++    linux = readme.split("**Linux**")[1].split("**Windows PowerShell**")[0]
++    assert "curl " in linux, "premise: the Linux block uses curl (reads the block, not the 'You need' sentence)"
++    lines = readme.splitlines()
++    first = next(i for i, ln in enumerate(lines) if ln.startswith("You need Linux or Windows"))
++    clone = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("2. Run `git clone"))
++    check = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("3. Check that ports 8765 and 8766"))
++    last = next(i for i, ln in enumerate(lines) if i > check and ln.startswith("4. Open ONE terminal"))
++    assert first < clone < check < last, _p("the port check is step 3, AFTER the clone step (the folder exists then)")
++    chunk = lines[first : first + 1] + lines[check:last]
++    need = _flat("\n".join(chunk))
++    bullets = [ln for ln in chunk if ln.startswith("   * ")]
++    assert "Step 3 below checks this" in need, _p("the requirements sentence points to step 3 for the check")
++    assert len(bullets) >= 4, _p("the port check is a bullet list (Linux, 000, other number, Windows)")
++    assert "`curl`" in need, _p("curl is listed as needed on Linux")
++    assert "8765" in need and "http_code" in need, _p("the port check command is shown")
++    assert re.search(r"curl -s --max-time 5 -o /dev/null -w", need), _p("the port check has a time limit of 5 seconds")
++    assert re.search(r"`000` usually means nothing is listening", need), _p("000 usually means nothing is listening")
++    assert re.search(r"usually when no answer comes within the 5 seconds", need), _p(
++        "000 usually (not always: exit 28 was not reproduced) also means no answer in time"
++    )
++    assert re.search(r"does not speak web", need), _p("000 can also mean a program that does not speak web")
++    assert re.search(
++        r"it answers 404 for `/`, and so do the demo servers on 8766 \(both codes were read on 2026-11-13", need
++    ), _p(
++        "the 404 claim names its source: read from a real desk and a real demo server, on Linux, not on Windows"
++    )
++    assert re.search(r"404 means a program already answers", need) and "bash scripts/reset.sh" in need, _p(
++        "404 means a program answers; the earlier desk is that program; otherwise stop it or reset"
++    )
++    assert re.search(r"reset\.sh` here, in the project folder \(you are in it after step 2\)", need), _p(
++        "the reset remedy is run in the project folder, which exists after the clone step"
++    )
++    assert re.search(r"If nothing uses the two ports, both checks print `000`", need), _p(
++        "on a first run, with nothing on the ports, both checks print 000"
++    )
++    assert re.search(r"Windows: no tested check", need), _p("Windows has no tested check (stated plainly)")
++    assert "how to check was not tried" not in need, _p("the old wording is gone")
++    assert "Get-NetTCPConnection -LocalPort 8765" in need, _p(
++        "the Windows port check is an idea, marked not tried"
++    )
++    assert re.search(r"makes curl print only the three-digit", need), _p("http_code is explained")
++
++
++def test_the_readme_404_claim_for_the_root_address_holds_on_a_real_desk_and_a_real_demo_server(
++    env: Env, tmp_path: Path
++) -> None:
++    """The README says the desk and the demo servers answer 404 for `/`: a real GET on each, not a reading of code."""
++    base, fakes_url = _start_real_desk(env, tmp_path)
++    codes = {name: call(address, "GET", "/")[0] for name, address in (("desk", base), ("demo server", fakes_url))}
++    assert codes == {"desk": 404, "demo server": 404}, _p("the desk and the demo servers answer 404 for `/`")

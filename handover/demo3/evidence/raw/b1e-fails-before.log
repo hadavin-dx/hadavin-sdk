@@ -1,0 +1,199 @@
+F..F.F.F.....F..........FFF.F.                                           [100%]
+=================================== FAILURES ===================================
+_______________ test_exit_code_1_uses_the_words_the_desk_prints ________________
+
+tmp_path = PosixPath('/home/user/work/priv/b1e-tmp/bo2/test_exit_code_1_uses_the_word0')
+
+    def test_exit_code_1_uses_the_words_the_desk_prints(tmp_path: Path) -> None:
+        env = {k: v for k, v in child_env().items() if not k.startswith("DESK_")}  # nothing of the tester's own settings
+        env.update(
+            DESK_PORT=str(free_port()),
+            DESK_FAKES_PORT=str(free_port()),  # nothing listens here: the demo servers are "not running"
+            DESK_DB_PATH=str(tmp_path / "data" / "desk.db"),
+        )
+        proc = start_proc(["-m", "lead_desk.server"], env)
+        try:
+            code = proc.wait(timeout=60)
+        finally:
+            output = stop_proc(proc).decode("utf-8", errors="replace")
+        if code == 3:  # the desk checks the open-file limit first (containers often allow only 4096)
+            pytest.skip(f"this computer's open-file limit is too low for the desk (exit 3): {output.strip()[-200:]}")
+        lines = output.strip().splitlines()
+        assert lines, f"premise: the desk printed nothing (exit {code})"
+        assert code == 1, f"premise: exit code 1 means the demo servers cannot be reached: {code}: {output[-200:]!r}"
+        printed = next((ln for ln in lines if ln.startswith("cannot reach the demo servers")), "")
+        assert printed, f"premise: the desk prints a line that starts with the words below: {lines[-3:]}"
+        phrase = printed.split(" (")[0]  # "cannot reach the demo servers"
+>       bullet = _between(_read("docs/limits.md"), "* Exit codes of the desk:", "* Stopping:")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_claims_lane3.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = '# Limits and details\n\nThis page holds the detail behind the short "What is not claimed" list in the README. Skip th...one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.\n'
+start = '* Exit codes of the desk:', end = '* Stopping:'
+
+    def _between(text: str, start: str, end: str) -> str:
+        """The part of `text` from the line starting with `start` up to (not including) the line starting with `end`."""
+        lines = text.splitlines()
+>       first = next(i for i, ln in enumerate(lines) if ln.lstrip().startswith(start))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests/test_docs_claims_lane3.py:62: StopIteration
+_________ test_the_receipt_explanation_is_true_and_the_word_is_defined _________
+
+    def test_the_receipt_explanation_is_true_and_the_word_is_defined() -> None:
+        flat = _flat(_read("README.md"))
+        word = re.search(r"\* \*\*receipt_id\*\*: ([^*]*?)(?= \* \*\*)", flat)
+        assert word and "counting up from 1" in word.group(1) and "not the request id" in word.group(1), _p(
+            "the word list defines receipt_id as the desk's own number counting up from 1, not the request id"
+        )
+        para = flat.split("About the receipt number of the webhook line:")[1].split("Run both scripts")[0]
+        assert re.search(r"repeat was not stored again", para), _p("the repeat was not stored again")
+>       assert re.search(
+            r"raised the number of times it was seen \(the `attempts` column of that row in the desk's records\) "
+            r"from 1 to 2",
+            para,
+        ), _p("the repeat only raised the first row's attempts column, from 1 to 2, and the column is explained")
+E       AssertionError: this sentence protects: the repeat only raised the first row's attempts column, from 1 to 2, and the column is explained (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7f73aa6a5300>("raised the number of times it was seen \\(the `attempts` column of that row in the desk's records\\) from 1 to 2", ' its `receipt_id` is 3, not 2. The database hands out receipt numbers by counting up from 1. The repeat was not store... is not a lost request. In the counts, `received` is the number of stored receipts, which is why it says 2 and not 3. ')
+E        +    where <function search at 0x7f73aa6a5300> = re.search
+
+tests/test_docs_claims_lane3.py:254: AssertionError
+_ test_prose_says_request_id_and_keeps_request_number_only_as_the_portals_label _
+
+    def test_prose_says_request_id_and_keeps_request_number_only_as_the_portals_label() -> None:
+        """Every document: 'request number' only as a quoted portal label, or on the two portal-screen pages."""
+        portal_js = _read("src/lead_desk/portal/portal.js") + _read("src/lead_desk/portal/pages/log.js")
+        assert "'Same request number, different data'" in portal_js, "premise: the portal shows this label"
+        assert "label: 'Request number'" in portal_js, "premise: the portal shows a column called Request number"
+        labels = ('"Request number"', '"Same request number, different data"')
+        for name in ("README.md", "docs/limits.md", "docs/n8n-recipe.md", "docs/why-this-code.md"):
+            text = _read(name)
+            for label in labels:
+                text = text.replace(label, "")
+>           assert not re.search(r"(?i)request numbers?", text), _p(
+                f"{name}: prose says 'request id'; 'Request number' only as the portal's quoted label"
+            )
+E           AssertionError: this sentence protects: docs/limits.md: prose says 'request id'; 'Request number' only as the portal's quoted label (if you reword the sentence, keep this fact)
+E           assert not <re.Match object; span=(16359, 16374), match='request numbers'>
+E            +  where <re.Match object; span=(16359, 16374), match='request numbers'> = <function search at 0x7f73aa6a5300>('(?i)request numbers?', '# Limits and details\n\nThis page holds the detail behind the short "What is not claimed" list in the README. Skip th...one write (`OPEN`) accepted; the full list of default options and the write against our own portal are not verified.\n')
+E            +    where <function search at 0x7f73aa6a5300> = re.search
+
+tests/test_docs_claims_lane3.py:328: AssertionError
+___________ test_the_burst_steps_explain_each_term_and_both_systems ____________
+
+    def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+        steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
+        sends = int(_search(r"--n (\d+)", steps).group(1))
+        numbering = rf"`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-{sends}"
+        assert re.search(numbering, steps), _p(
+            "burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them"
+        )
+        assert 'f"{ref_prefix}-{i}"' in _read("demo_only/burst.py") and "range(1, n + 1)" in _read("demo_only/burst.py"), (
+            "premise: burst.py numbers its requests from 1"
+        )
+        for word, verb in (("SENT", "says"), ("STATUS", "says"), ("RETRIES", "counts"), ("RESULT", "says")):
+            assert re.search(rf"`{word}` {verb}", steps), _p(f"the printed line {word} is explained")
+>       assert re.search(
+            r"`RETRIES` counts every time the script got a 503 `busy` answer \(`busy503`\) or a refused connection "
+            r"\(`refused`\) and sent the request again, and also the last such answer of a request[^;]*; "
+            r"it has nothing to do with `\"replayed\": true`",
+            steps,
+        ), _p("RETRIES counts every 503 busy answer or refused connection, the last one of a request too, not repeats")
+E       AssertionError: this sentence protects: RETRIES counts every 503 busy answer or refused connection, the last one of a request too, not repeats (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7f73aa6a5300>('`RETRIES` counts every time the script got a 503 `busy` answer \\(`busy503`\\) or a refused connection \\(`refused`\\...t the request again, and also the last such answer of a request[^;]*; it has nothing to do with `\\"replayed\\": true`', '* Burst test: many connections open at the same moment, all for the same lead (the same email under different request...ifferent split, something is wrong or the desk was not fresh: start again at step 1 before you look for another cause.')
+E        +    where <function search at 0x7f73aa6a5300> = re.search
+
+tests/test_docs_claims_lane3.py:396: AssertionError
+________________ test_the_recipe_import_steps_match_the_script _________________
+
+    def test_the_recipe_import_steps_match_the_script() -> None:
+        recipe = _read("docs/n8n-recipe.md")
+        script = _read("scripts/n8n_api.py")
+        steps = _recipe_steps()
+        assert "N8N_API_KEY_FILE" in script and "N8N_URL" in script, "premise: the script reads both variables"
+        assert re.search(r"environment variable[^.]*`N8N_API_KEY_FILE`", steps), _p(
+            "the key file is an environment variable"
+        )
+        assert 'export N8N_API_KEY_FILE="$HOME/n8n-key.txt"' in recipe, _p("the Linux way, a file outside the folder")
+        assert '$env:N8N_API_KEY_FILE = "$HOME\\n8n-key.txt"' in recipe, _p("the Windows way, the same file name")
+        assert "/path/to/keyfile" not in recipe and ".\\n8n-key.txt" not in recipe, _p(
+            "no key file path inside the project"
+        )
+        assert re.search(r"lasts only in this terminal window", steps), _p("the variable lasts only in that terminal")
+        assert "`N8N_URL`" in steps, _p("N8N_URL is mentioned in the steps")
+        assert re.search(r"create an API key", steps) and "one word on one line" in steps, _p("the key is made in n8n")
+        assert re.search(r"OUTSIDE the project folder", steps), _p("the key file lives outside the project folder")
+        assert "python scripts/n8n_api.py import n8n/desk-form.json" in steps, _p("the import command")
+        docs_link = re.escape("(" + "https://" + "docs.n8n.io/" + ")")
+>       assert re.search(rf"\*\*Step A\.\*\* Install n8n as the n8n documentation says {docs_link}", steps), _p(
+            "Step A: install n8n as the n8n documentation says, with its link"
+        )
+E       AssertionError: this sentence protects: Step A: install n8n as the n8n documentation says, with its link (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7f73aa6a5300>('\\*\\*Step A\\.\\*\\* Install n8n as the n8n documentation says \\(https://docs\\.n8n\\.io/\\)', ', do Step 1 to Step 6 in order. First read "Before you start" (the next section). Each step says whether it was run: .... The earlier real run used the same script and commands; this exact form was not run again, so it is not tried here. ')
+E        +    where <function search at 0x7f73aa6a5300> = re.search
+
+tests/test_docs_claims_lane3.py:624: AssertionError
+_____________ test_the_key_file_sentence_says_what_the_script_does _____________
+
+    def test_the_key_file_sentence_says_what_the_script_does() -> None:
+        steps = _recipe_steps()
+>       part = steps.split("**Step C.**")[1].split("**Step D.**")[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:734: IndexError
+___________ test_the_recipe_says_the_proof_workflow_ignores_n8n_url ____________
+
+    def test_the_recipe_says_the_proof_workflow_ignores_n8n_url() -> None:
+        steps = _recipe_steps()
+>       part = steps.split("**Step D.**")[1].split("**Step E.**")[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:756: IndexError
+____________ test_the_recipe_curl_lines_send_the_two_example_inputs ____________
+
+    def test_the_recipe_curl_lines_send_the_two_example_inputs() -> None:
+        recipe = _read("docs/n8n-recipe.md")
+        flat = _flat(recipe)
+        form = json.loads(_line_with(recipe, "form:").split("form:", 1)[1])
+        hook = json.loads(_line_with(recipe, "webhook:").split("webhook:", 1)[1])
+        sent: dict[str, object] = {}
+        curls = [ln.strip() for ln in recipe.splitlines() if ln.strip().startswith("curl -i -X POST")]
+>       assert len(curls) == 2, _p(f"two curl lines, one for each example, found {len(curls)}")
+E       AssertionError: this sentence protects: two curl lines, one for each example, found 0 (if you reword the sentence, keep this fact)
+E       assert 0 == 2
+E        +  where 0 = len([])
+
+tests/test_docs_claims_lane3.py:778: AssertionError
+_________________ test_readme_port_check_explains_000_and_404 __________________
+
+    def test_readme_port_check_explains_000_and_404() -> None:
+        readme = _read("README.md")
+        linux = readme.split("**Linux**")[1].split("**Windows PowerShell**")[0]
+        assert "curl " in linux, "premise: the Linux block uses curl (reads the block, not the 'You need' sentence)"
+        lines = readme.splitlines()
+        first = next(i for i, ln in enumerate(lines) if ln.startswith("You need Linux or Windows"))
+        clone = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("2. Run `git clone"))
+>       check = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("3. Check that ports 8765 and 8766"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+tests/test_docs_claims_lane3.py:826: StopIteration
+=========================== short test summary info ============================
+FAILED tests/test_docs_claims_lane3.py::test_exit_code_1_uses_the_words_the_desk_prints
+FAILED tests/test_docs_claims_lane3.py::test_the_receipt_explanation_is_true_and_the_word_is_defined
+FAILED tests/test_docs_claims_lane3.py::test_prose_says_request_id_and_keeps_request_number_only_as_the_portals_label
+FAILED tests/test_docs_claims_lane3.py::test_the_burst_steps_explain_each_term_and_both_systems
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_import_steps_match_the_script
+FAILED tests/test_docs_claims_lane3.py::test_the_key_file_sentence_says_what_the_script_does
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_says_the_proof_workflow_ignores_n8n_url
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_curl_lines_send_the_two_example_inputs
+FAILED tests/test_docs_claims_lane3.py::test_readme_port_check_explains_000_and_404
+9 failed, 21 passed in 4.50s

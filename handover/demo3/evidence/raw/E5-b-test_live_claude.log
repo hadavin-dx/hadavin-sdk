@@ -1,0 +1,32 @@
+...............F................................                         [100%]
+=================================== FAILURES ===================================
+______________ test_the_environment_opt_out_is_the_word_yes_only _______________
+
+    def test_the_environment_opt_out_is_the_word_yes_only() -> None:
+        stranger = "https://" + "model-host" + ".example.test"
+        env = {
+            "DESK_QUALIFIER": "live_claude",
+            "DESK_LIVE_MODEL": "m",
+            "DESK_LIVE_KEY_FILE": "k",
+            "DESK_LIVE_PRICE_DATE": "d",
+            "DESK_LIVE_LEDGER_PATH": "l",
+            "DESK_LIVE_RUN_ID": "r",
+            "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
+            "DESK_LIVE_PRICE_OUT_PER_MTOK": "1",
+            "DESK_LIVE_CAP_RUN_USD": "1",
+            "DESK_LIVE_CAP_TOTAL_USD": "2",
+            "DESK_LIVE_BASE_URL": stranger,
+        }
+        for word in (None, "no"):  # nothing and `no` keep the check
+            with pytest.raises(ValueError, match="not the provider's own address"):
+                Config.from_env(env | ({} if word is None else {"DESK_LIVE_ALLOW_ANY_BASE_URL": word}))
+        for word in ("true", "1"):  # any other word is refused at the start (it is never read as `yes`, nor silently as `no`)
+>           with pytest.raises(ValueError, match="DESK_LIVE_ALLOW_ANY_BASE_URL must be yes or no"):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'DESK_LIVE_ALLOW_ANY_BASE_URL must be yes or no'
+E             Actual message: "DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)"
+
+tests/test_live_claude.py:256: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_live_claude.py::test_the_environment_opt_out_is_the_word_yes_only
+1 failed, 47 passed in 17.33s

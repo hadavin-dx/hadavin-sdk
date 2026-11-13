@@ -1,0 +1,8 @@
+B1e real check, 2026-11-13 13:58Z (about 19:28 IST), Linux, worktree b1e-base (f3c39cf8 + r4 + r5 changes).
+Started by me: python -m demo_only.fakes_server --outbox keyed --port 47269 and python -m lead_desk.server (DESK_PORT 51561, DESK_FAKES_PORT 47269, DB in a temp folder), made-up data only.
+Commands and answers (curl -s --max-time 5 -o /dev/null -w '%{http_code}'):
+  GET http://127.0.0.1:51561/        -> 404   (desk root)
+  GET http://127.0.0.1:47269/        -> 404   (demo server root)
+  GET http://127.0.0.1:51561/counts  -> 200   (control)
+Both processes were stopped with kill and waited for; afterwards ps showed none of them (two other lead_desk.server processes seen belonged to other builders, cwd /home/user/work/e7-base; not touched).
+The same two 404s are checked again inside the test test_the_readme_404_claim_for_the_root_address_holds_on_a_real_desk_and_a_real_demo_server (desk as child program; the demo server is the tests' in-process server of the same demo_only class).

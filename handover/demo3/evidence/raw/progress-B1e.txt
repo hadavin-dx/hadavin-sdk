@@ -1,3 +1,5 @@
 13:56Z start B1e worktree+r4 applied (IST +5:30)
 14:00Z docs edited (items 1-5,7-12,14); now tests (items 6,7,15 + pins)
 14:01Z tests 30 pass; next: lengths, fails-before, hygiene, full suite
+14:05Z full suite started (pid 26309, log priv/b1e-full.log); IST +5:30
+14:06Z patch r5 written, apply checks ok, fails-before 9; waiting on full suite; writing notes (IST +5:30)

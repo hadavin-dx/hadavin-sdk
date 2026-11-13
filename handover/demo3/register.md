@@ -162,3 +162,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-6a | closed 14:07Z: 0 blocker, 2 major (false ModuleNotFoundError sentence; contract.md:68 sibling), 4 minor, 3 nit; saved evidence/review-lane3-fix-6-r1-technical.md | | | closed; resolve next |
 | E6 | closed 14:09Z: fix-5 r2 full serial 1 failed 3693 passed 200 skipped (noqa comment contains "our" -> first-person test); xdist 10/10 passed, flake NOT reproduced (not a root cause); raw/e6/ | | | closed |
 | RES-6a4c | egm-resolve fix-6 r1 (28 accepted) + fix-4 r2 (9 accepted); saved evidence/resolve-lane3-fix-6-r1-and-fix-4-r3.md | | | closed; B6b, B4c next |
+| B6 | (duplicate hand-back relayed 14:12Z; adds: first full run on final tree was 1 failed 3689 passed 199 skipped; already closed) | | | closed |
+| B6b | BUILDER lane3-fix-6 round 2 (A1-A13 of RES-6a4c) + lane3-fix-6b | 14:12Z | stop 14:55Z | running |
+| B4c | BUILDER lane3-fix-4 round 3 (B1-B9 of RES-6a4c) | 14:12Z | stop 14:55Z | running |
