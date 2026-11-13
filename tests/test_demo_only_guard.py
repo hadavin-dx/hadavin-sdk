@@ -2011,16 +2011,15 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
+def test_pin_git_message_hides_names_with_key_or_token() -> None:
     # What it guards against (a fault of the code before batch 8): the whole first line of git was shown as it came)
     line = (
-        "fatal: bypass=true bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
+        "fatal: bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
         "plain Bearer yyyy Authorization: Bearer zzz9"
     )
     shown = g._git_failure("git ls-files failed", line.encode(), Path("/nowhere"))
     for secret in ("abc123", "def456", "user:pw", "zzz9"):
         assert secret not in shown, f"a secret value was shown: {secret}"
-    assert "bypass=true" in shown, f"a bare word was hidden: {shown}"
     assert "bypass_key=<hidden>" in shown and "bypass_token=<hidden>" in shown, shown
     assert "Bearer yyyy" in shown, f"a bare scheme word was changed: {shown}"
 
@@ -2118,7 +2117,7 @@ def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() 
         "bypass=ON",
         "bypass=off",
         "bypass=0",
-        "bypass=1 x",
+        "bypass=1  ",
     ):
         assert g._hide_secrets(line) == line, f"a plain flag was hidden: {line!r}"
     # hidden side: any other value, a flag with more stuck to it, case does not matter
@@ -2128,6 +2127,12 @@ def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() 
             assert shown == f"{name}=<hidden> tail", (
                 f"a hidden-side value stayed visible, {name}={value}: {shown!r}"
             )
+    # a plain word followed by anything else on the line is hidden (only the end of the line may follow it)
+    assert g._hide_secrets("bypass=true x") == "bypass=<hidden> x", (
+        "a flag with a word after it was shown"
+    )
+    assert g._hide_secrets("a=b bypass=Off y=1") == "a=b bypass=<hidden> y=1"
+    assert g._hide_secrets("bypass=true") == "bypass=true"
     assert g._hide_secrets("bypass_ke" + "y=true") == "bypass_ke" + "y=<hidden>"
     assert g._hide_secrets("bypass_" + TOK + "=true") == "bypass_" + TOK + "=<hidden>"
 
@@ -2178,7 +2183,9 @@ def test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list()
         for quoted in ('"ab cd\'ef"', "'ab cd\"ef'", '"ab \\" cd"'):
             shown = g._hide_secrets(f"fatal: {name}={quoted} tail")
             assert shown == f"fatal: {name}=<hidden> tail", f"quoted {name}={quoted}: {shown!r}"
-    assert g._hide_secrets("a=b bypass=true x=y") == "a=b bypass=true x=y", "a bare word was hidden"
+    assert g._hide_secrets("a=b bypass=true") == "a=b bypass=true", (
+        "a plain flag at the end was hidden"
+    )
     assert g._hide_secrets("bypass_ke" + "y=1") == "bypass_ke" + "y=<hidden>", (
         "bypass_key was shown"
     )

@@ -289,7 +289,7 @@ def _git_env() -> dict[str, str]:
 #  4. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
 #     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
 #     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
-#     `bypass=true` is shown.
+#     `bypass=true` at the END of the line is shown (a bare `bypass` is hidden unless its value is exactly true, false, yes, no, on, off, 0 or 1 and nothing but white space follows it).
 # Stated limits: only the `name=value` form is read, so the colon form (`password: x`, `"token": "x"`, `--password x`) is NOT
 # hidden here (git's own first error line does not use it; the core redactor is the place for such text). A pair name is
 # looked for to the left of the `=` only.
@@ -357,6 +357,9 @@ def _hide_pairs(line: str) -> str:
     out: list[str] = []
     pos = 0
     n = len(line)
+    last_text = len(
+        line.rstrip()
+    )  # a plain flag is shown only when nothing but white space follows it
     at = line.find("=")
     while at >= 0:
         start = at
@@ -376,7 +379,7 @@ def _hide_pairs(line: str) -> str:
                 while end < n and not line[end].isspace():
                     end += 1
             value = line[at + 1 : end]
-            if not named_secret and value.lower() in _PLAIN_FLAGS:
+            if not named_secret and value.lower() in _PLAIN_FLAGS and end >= last_text:
                 at = line.find("=", at + 1)  # a bare flag word with a plain on/off value is shown
                 continue
             if (

@@ -1925,15 +1925,15 @@ M = [
         "R7F1 a key= or token= value in git's message is shown",
         "    _hide_urls,\n    _hide_pairs,\n)\n",
         "    _hide_urls,\n)\n",
-        "test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
+        "test_pin_git_message_hides_names_with_key_or_token",
         "a secret value was shown: abc123",
     ),
     gd(
         "R7F2 every name=value pair in git's message is hidden, a bare bypass=true too",
         '_SECRET_NAME = re.compile(r"(?i)key|token',
         '_SECRET_NAME = re.compile(r"(?i)|key|token',
-        "test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
-        "a bare word was hidden",
+        "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
+        "a plain flag was hidden",
     ),
     gd(
         "R9D1 a bearer token of 11 characters is hidden",
@@ -2489,10 +2489,17 @@ M = [
     ),
     gd(
         "R13B2 a bare word bypass is shown with any value",
-        "            if not named_secret and value.lower() in _PLAIN_FLAGS:\n",
-        "            if not named_secret:\n",
+        "            if not named_secret and value.lower() in _PLAIN_FLAGS and end >= last_text:\n",
+        "            if not named_secret and end >= last_text:\n",
         "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
         "a hidden-side value stayed visible",
+    ),
+    gd(
+        "R13B4 a plain flag is shown although more text follows it on the line",
+        "value.lower() in _PLAIN_FLAGS and end >= last_text:\n",
+        "value.lower() in _PLAIN_FLAGS:\n",
+        "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
+        "a flag with a word after it was shown",
     ),
     gd(
         "R13B3 a token that mixes letters and digits is not hidden after a bare scheme word",
@@ -2518,7 +2525,7 @@ EQUIVALENT = {
 
 # The number of rows in `M` (the CHANGELOG states it; a table test compares this constant with the rows it parses out of
 # the text of this file, so it cannot drift from the table).
-ROW_COUNT: int = 332
+ROW_COUNT: int = 333
 
 # Rows that share one killer AND one expectation on purpose: one is left (batch 13). Each of the six groups that used to
 # share one assertion now has an assertion message that shows the observed value, and each row expects the fragment of
