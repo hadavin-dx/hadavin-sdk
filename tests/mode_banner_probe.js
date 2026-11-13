@@ -4,7 +4,7 @@
 const api = require(process.argv[2]);
 const htmlWrites = []; // every write that would make a page parse HTML; the tests demand none
 function el(tag, opts) {
-  const o = { tag, cls: '', attrs: {}, children: [], hidden: true, text: (opts && opts.text) || '' };
+  const o = { tag, cls: '', attrs: Object.assign({}, (opts && opts.attrs) || {}), children: [], hidden: true, text: (opts && opts.text) || '' };
   o.appendChild = (k) => { if (opts && opts.failAppend) throw new Error('append failed'); o.children.push(k); return k; };
   o.setAttribute = (k, v) => { if (opts && (opts.failAttr === true || opts.failAttr === k)) throw new Error('attribute write failed'); o.attrs[k] = String(v); };
   Object.defineProperty(o, 'textContent', { get() { return o.text; }, set(v) { if (opts && opts.failText && v !== '') throw new Error('text write failed'); o.text = v; o.children = []; } });
@@ -26,7 +26,7 @@ if (scenario === 'throwing-getter') input = { get tone() { return boom(); }, tag
 if (scenario === 'proxy') input = new Proxy({}, { get: boom, has: boom, ownKeys: boom, getPrototypeOf: boom });
 if (scenario === 'throwing-list') input = { ...input, real: new Proxy([], { get: boom }) };
 if (scenario === 'throwing-doc') doc = { createElement: () => { throw new Error('doc broken'); } };
-let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-every-attribute' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-tone-attr' ? { failAttr: 'data-tone', text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
+let target = el('div', scenario === 'failing-append' ? { failAppend: true } : scenario === 'failing-every-attribute' ? { failAttr: true, text: 'previous banner text' } : scenario === 'failing-tone-attr' ? { failAttr: 'data-tone', text: 'previous banner text' } : scenario === 'failing-mode-attr' ? { failAttr: 'data-mode' } : scenario === 'failing-text-over-old-claim' ? { failAppend: true, failText: true, text: 'DEMO Every record here is made-up demo data.', attrs: { 'data-tone': 'demo', 'data-mode': 'demo' } } : scenario === 'failing-all-writes' ? { failAppend: true, failText: true, text: 'previous banner text' } : null);
 if (scenario === 'null-el') target = null;
 let threw = '';
 let usableThrew = '';

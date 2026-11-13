@@ -29,6 +29,7 @@ from hadavin_sdk.config import load_config
 from hadavin_sdk.stages import STAGES
 from hadavin_sdk.tools import ToolSpec
 from tests.conftest import make_cfg
+from tests.refusal import refused
 
 # The old first stage name, built from parts so the stage-name class test (test_stage_names) finds no stage position
 # for it in this file. It is used only as a value that must be refused.
@@ -142,24 +143,24 @@ def test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen() -
 
 def test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refused() -> None:
     assert set(mb.DEFAULT_WORDS.tag_by_mode) == set(STAGES)
-    with pytest.raises(ValueError, match="no tag for the stage"):
+    with refused(ValueError, "a tag table without pilot and prod", match="no tag for the stage"):
         mb.BannerWords(tag_by_mode={"demo": "D"})
 
 
 def test_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real() -> None:
-    for call in (
-        lambda: mb._banner_for("demo"),  # type: ignore[call-arg]
-        lambda: mb._banner_for("demo", real_services=[]),  # type: ignore[call-arg]
-        lambda: mb._banner_for("demo", stand_ins=[]),  # type: ignore[call-arg]
-        lambda: mb._banner_for("demo", [], []),  # type: ignore[misc]
+    for label, call in (
+        ("no lists at all", lambda: mb._banner_for("demo")),  # type: ignore[call-arg]
+        ("real_services only", lambda: mb._banner_for("demo", real_services=[])),  # type: ignore[call-arg]
+        ("stand_ins only", lambda: mb._banner_for("demo", stand_ins=[])),  # type: ignore[call-arg]
+        ("both lists given by position", lambda: mb._banner_for("demo", [], [])),  # type: ignore[misc]
     ):
-        with pytest.raises(TypeError):
+        with refused(TypeError, f"the call with {label}"):
             call()
 
 
 def test_an_unknown_stage_is_refused() -> None:
     for mode in ["", "DEMO", "Demo", "canary", "live", "test", None, 3]:
-        with pytest.raises(ValueError, match="is not one of demo, pilot, prod"):
+        with refused(ValueError, f"stage {mode!r}", match="is not one of demo, pilot, prod"):
             _b(mode)  # type: ignore[arg-type]
 
 
@@ -169,7 +170,11 @@ def test_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident() ->
             {"real_services": bad, "stand_ins": []},
             {"real_services": [], "stand_ins": bad},
         ):
-            with pytest.raises(TypeError, match="must be a list of service names"):
+            with refused(
+                TypeError,
+                f"{type(bad).__name__} {bad!r} as {'real_services' if 'real_services' in kwargs and kwargs['real_services'] is bad else 'stand_ins'}",
+                match="must be a list of service names",
+            ):
                 mb._banner_for("demo", **kwargs)  # type: ignore[arg-type]
 
 
@@ -207,11 +212,23 @@ HOSTILE_NAMES = [
 
 def test_a_name_that_could_change_the_sentence_is_refused() -> None:
     for name in HOSTILE_NAMES:
-        with pytest.raises(ValueError, match="plain words|non-empty"):
+        with refused(
+            ValueError,
+            f"hostile name {name!r} given as a shown name",
+            match="plain words|non-empty",
+        ):
             _b("pilot", ["k"], names={"k": name})
-        with pytest.raises(ValueError, match="plain words|non-empty"):
+        with refused(
+            ValueError,
+            f"hostile name {name!r} given as a real service key",
+            match="plain words|non-empty",
+        ):
             _b("pilot", [name])
-        with pytest.raises(ValueError, match="plain words|non-empty"):
+        with refused(
+            ValueError,
+            f"hostile name {name!r} given as a stand-in key",
+            match="plain words|non-empty",
+        ):
             _b("demo", [], [name])
 
 
@@ -221,20 +238,20 @@ def test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_charac
     assert _b("pilot", ["k"], names={"k": "x" * 40}).real == ("x" * 40,)
     for ok in ("Mail 2", "a-b", "x.y", "z_9", "Mail.com", "AI step"):
         assert _b("pilot", ["k"], names={"k": ok}).real == (ok,)
-    with pytest.raises(ValueError, match="plain words"):
+    with refused(ValueError, "a name of 41 characters", match="plain words"):
         _b("pilot", ["k"], names={"k": "x" * 41})
 
 
 def test_a_service_key_that_is_not_text_is_refused() -> None:
-    with pytest.raises(ValueError, match="non-empty text"):
+    with refused(ValueError, "the service key 3 (a number)", match="non-empty text"):
         _b("demo", [3])  # type: ignore[list-item]
 
 
 def test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python() -> None:
     long_names = {f"k{i}": f"{chr(65 + i)}" * 40 for i in range(20)}
-    with pytest.raises(ValueError, match="too many services"):
+    with refused(ValueError, "twenty long real service names", match="too many services"):
         _b("pilot", list(long_names), names=long_names)
-    with pytest.raises(ValueError, match="too many services"):
+    with refused(ValueError, "twenty long stand-in names", match="too many services"):
         _b("pilot", [], list(long_names), names=long_names)
     ok = {f"k{i}": f"{chr(65 + i)}" * 20 for i in range(10)}
     assert len(_b("pilot", list(ok), names=ok).text) <= mb.MAX_TEXT_LENGTH
@@ -349,9 +366,9 @@ def test_property_every_config_entry_lands_in_exactly_one_group() -> None:
 
 def test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list() -> None:
     for bad_kind in (None, "", 3):
-        with pytest.raises(ValueError, match="cannot be placed in the banner"):
+        with refused(ValueError, f"the kind {bad_kind!r}", match="cannot be placed in the banner"):
             _banner(_fake_config("demo", [("llm", bad_kind)]))
-    with pytest.raises(ValueError, match="cannot be placed in the banner"):
+    with refused(ValueError, "an entry with an empty name", match="cannot be placed in the banner"):
         _banner(_fake_config("demo", [("", "fake")]))
 
 
@@ -753,24 +770,35 @@ def test_a_banner_is_checked_against_what_it_claims_before_it_leaves() -> None:
     tags = {"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"}
     # a reworded text that forgets to name the real services is refused, not shown
     forgetful = mb.BannerWords(tag_by_mode=tags, real_connected="Real services are connected.")
-    with pytest.raises(ValueError, match="does not name every real service"):
+    with refused(
+        ValueError, "a real note that names no service", match="does not name every real service"
+    ):
         _banner(_fake_config("pilot", [("llm", "bedrock")]), words=forgetful)
     # a reworded real note that repeats the made-up sentence is refused in a real and in a quiet banner
     boastful = mb.BannerWords(tag_by_mode=tags, real_data_note=claim.made_up)
-    with pytest.raises(ValueError, match="claims made-up data"):
+    with refused(
+        ValueError,
+        "a real note that repeats the made-up sentence (real banner)",
+        match="claims made-up data",
+    ):
         _banner(_fake_config("pilot", [("llm", "bedrock")]), words=boastful)
     quiet_boast = mb.BannerWords(tag_by_mode=tags, none_real=claim.made_up)
-    with pytest.raises(ValueError, match="claims made-up data"):
+    with refused(
+        ValueError,
+        "a quiet note that repeats the made-up sentence (quiet banner)",
+        match="claims made-up data",
+    ):
         _banner(_fake_config("prod", []), words=quiet_boast)
     # a demo banner that names a real service is refused (built by hand: banner_from_config never makes one)
     hand_made = mb.ModeBanner(
         "demo", "demo", "DEMO", claim.made_up + " " + claim.nothing_sent, "", ("record",), ()
     )
-    with pytest.raises(ValueError) as refused:
+    with refused(
+        ValueError,
+        "a demo banner that names a real service",
+        match="demo banner must name no real service",
+    ):
         mb._check_what_is_claimed(hand_made, claim)
-    assert "demo banner must name no real service" in str(refused.value), (
-        f"a demo banner that names a real service was not refused by its own check: {refused.value}"
-    )
 
 
 @needs_node
@@ -785,9 +813,9 @@ def test_a_failed_last_resort_write_never_leaves_the_banner_hidden() -> None:
     seen = _paint(GOOD_DEMO, "failing-all-writes")  # appending and then the text write both throw
     assert seen["threw"] == "", "the painter threw"
     assert seen["hidden"] is False, "the last-resort write left the element hidden"
-    assert (
-        seen["text"] == "previous banner text"
-    )  # nothing was cleared before the failing write: the old words stay
+    assert seen["text"] == "", (
+        f"the old words stayed on screen after the text write failed: {seen['text']!r}"
+    )  # emptied first: nothing is shown, never the old claim
 
 
 @needs_node
@@ -840,9 +868,9 @@ def test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error() -> No
 
 def test_tool_specs_has_no_default_so_forgetting_it_is_an_error() -> None:
     cfg = _fake_config("demo", [("llm", "fake")])
-    with pytest.raises(TypeError):
+    with refused(TypeError, "banner_from_config called without tool_specs"):
         mb.banner_from_config(cfg)  # type: ignore[call-arg]
-    with pytest.raises(TypeError):
+    with refused(TypeError, "_services_in called without tool_specs"):
         mb._services_in(cfg)  # type: ignore[call-arg]
 
 
@@ -1031,7 +1059,7 @@ def test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check() -> Non
     tags = {"demo": "DEMO", "pilot": "PILOT", "prod": "LIVE"}
     for field in ("made_up", "nothing_sent"):
         words = mb.BannerWords(tag_by_mode=tags, **{field: "  "})
-        with pytest.raises(ValueError, match="must not be empty"):
+        with refused(ValueError, f"a blank {field} sentence", match="must not be empty"):
             _banner(_fake_config("demo", [("llm", "fake")]), words=words)
 
 
@@ -1252,16 +1280,24 @@ def test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one(
     secret_looking = "internal-host-" + "x" * 5
     bad_name = {"llm": f"{secret_looking}\n<script>"}
     real = _fake_config("pilot", [("llm", "bedrock")])
+    named_tool = {
+        "a": {secret_looking: SimpleNamespace()}
+    }  # its error text names the tool: the log must not copy it
+    with pytest.raises(TypeError) as caught:
+        mb.banner_from_config(good, tool_specs=named_tool)
+    assert secret_looking in str(caught.value), (
+        "the error text no longer holds the name, so this test proves nothing"
+    )
     for call in (
+        lambda: mb.banner_or_unconfirmed(
+            good, tool_specs=named_tool
+        ),  # a spec without hosts, whose error text holds the tool name
         lambda: mb.banner_or_unconfirmed(
             real, bad_name, tool_specs={}
         ),  # a name that is not plain words
         lambda: mb.banner_or_unconfirmed(
             SimpleNamespace(environment="demo"), tool_specs={}
         ),  # lost fields
-        lambda: mb.banner_or_unconfirmed(
-            good, tool_specs={"a": {"t": SimpleNamespace()}}
-        ),  # a spec without hosts
     ):
         caplog.clear()
         with caplog.at_level("WARNING", logger=mb.__name__):
@@ -1270,10 +1306,10 @@ def test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one(
             )
         assert len(caplog.records) == 1, "exactly one log line"
         line = caplog.records[0].getMessage()
-        assert (
-            "internal-host" not in line and "<script>" not in line and "SimpleNamespace" not in line
-        )
-        assert "not-confirmed banner" in line
+        assert "internal-host" not in line, f"the log line holds a name from the config: {line!r}"
+        assert "<script>" not in line, f"the log line holds markup from the config: {line!r}"
+        assert "SimpleNamespace" not in line, f"the log line holds an object text: {line!r}"
+        assert "not-confirmed banner" in line, f"the log line does not say what was shown: {line!r}"
     with pytest.raises(TypeError):
         mb.banner_or_unconfirmed(good)  # type: ignore[call-arg]
     # the claim: banner_from_config itself raises, banner_or_unconfirmed does not
@@ -1359,32 +1395,32 @@ def test_the_names_are_checked_in_the_formatted_names_part_of_the_text_only() ->
 
 
 @needs_node
-def test_a_failing_attribute_write_never_shows_new_words_under_an_old_tone() -> None:
+def test_a_failing_attribute_write_never_leaves_the_old_words_on_screen() -> None:
     seen = _paint(
         GOOD_DEMO, "failing-every-attribute"
     )  # every setAttribute throws; the element held an earlier banner
     assert seen["threw"] == "" and seen["hidden"] is False, (
         "element left hidden or the painter threw"
     )
-    assert seen["text"] == "previous banner text", (
-        f"new words were written although the tone could not be: {seen['text'][:20]!r}"
+    assert seen["text"] == mb.not_confirmed()["tag"] + " " + mb.not_confirmed()["text"], (
+        f"the old words were not replaced by the not-confirmed words: {seen['text'][:30]!r}"
     )
     assert seen.get("tone") is None, "a tone was recorded although the attribute write throws"
 
 
 @needs_node
-def test_a_failing_tone_attribute_alone_leaves_the_old_text_and_the_old_mode_together() -> None:
+def test_a_failing_tone_attribute_alone_still_replaces_the_old_words_and_clears_the_mode() -> None:
     seen = _paint(
         GOOD_DEMO, "failing-tone-attr"
     )  # only data-tone throws; the element held an earlier banner
     assert seen["threw"] == "" and seen["hidden"] is False, (
         "element left hidden or the painter threw"
     )
-    assert seen["text"] == "previous banner text", (
-        "new words were written although the tone could not be"
+    assert seen["text"] == mb.not_confirmed()["tag"] + " " + mb.not_confirmed()["text"], (
+        "the old words stayed although only the tone write failed"
     )
-    assert seen.get("tone") is None and seen.get("mode") is None, (
-        "the tone write failed, so neither a new tone nor a new mode may have been written"
+    assert seen.get("tone") is None and seen.get("mode") == "", (
+        f"expected no new tone and a cleared mode, got tone {seen.get('tone')!r} mode {seen.get('mode')!r}"
     )
 
 
@@ -1438,6 +1474,12 @@ NAME_TABLE.extend(NAME_TABLE_5)
 
 # -- batch 6, class A: "connects to nothing" is an explicit list; modules and hosts are compared, not assumed ----------
 def test_the_nothing_connected_list_is_pinned_by_content() -> None:
+    assert ("signer", "ed25519_local") not in mb.NOTHING_CONNECTED, (
+        "the ed25519_local signer is listed as connecting to nothing: it reads a key, so it is shown as real"
+    )
+    assert ("detector", "regex") in mb.NOTHING_CONNECTED, (
+        "the built-in regex detector is missing from the kinds that connect to nothing"
+    )
     assert mb.NOTHING_CONNECTED == frozenset(
         {("signer", "none"), ("anchor", "none"), ("detector", "regex")}
     ), "the list of kinds that connect to nothing changed: each pair needs a written reason"
@@ -1592,19 +1634,34 @@ def test_the_banner_is_never_more_lenient_than_the_tool_client_on_40_urls_and_20
 
 # -- batch 6, class E: small defects and sibling gaps -------------------------------------------------------------------
 def test_the_words_of_a_name_check_are_required_not_defaulted() -> None:
-    with pytest.raises(TypeError):
+    with refused(TypeError, "_clean_names called without the words"):
         mb._clean_names("real_services", ["a"], {})  # type: ignore[call-arg]
 
 
-def test_egress_hosts_may_be_a_generator_and_a_bare_text_is_refused() -> None:
+def test_egress_hosts_may_be_any_list_like_collection_and_a_bare_text_is_refused() -> None:
+    # was: a generator of hosts was read (once); a generator is now refused, see the read-once tests at the end of this file
     cfg = _fake_config("demo", [("llm", "fake")])
-    cfg.egress_hosts = (h for h in ("localhost", "api.example.test"))
-    assert _services(cfg)[0] == (mb.EGRESS_HOSTS,), "a generator of hosts was not read"
-    cfg.egress_hosts = (h for h in ("localhost", "127.0.0.1"))
-    assert _services(cfg)[0] == (), "a generator of loopback hosts was read as leaving"
+    for leaving in (
+        ["localhost", "api.example.test"],
+        ("localhost", "api.example.test"),
+        {"api.example.test"},
+    ):
+        cfg.egress_hosts = leaving
+        assert _services(cfg)[0] == (mb.EGRESS_HOSTS,), f"hosts {leaving!r} were not read"
+    for this_machine in (
+        ["localhost", "127.0.0.1"],
+        frozenset({"localhost"}),
+        {"localhost": 1}.keys(),
+    ):
+        cfg.egress_hosts = this_machine
+        assert _services(cfg)[0] == (), f"loopback hosts {this_machine!r} were read as leaving"
     for odd in ("localhost", b"localhost", {"localhost": 1}):
         cfg.egress_hosts = odd
-        with pytest.raises(TypeError, match="not a list of hosts"):
+        with refused(
+            TypeError,
+            f"egress_hosts given as {type(odd).__name__} {odd!r}",
+            match="not a usable value",
+        ):
             _services(cfg)
 
 
@@ -1612,7 +1669,7 @@ def test_a_tag_longer_than_the_page_script_shows_is_refused_in_python() -> None:
     long_tag = mb.BannerWords(
         tag_by_mode={"demo": "D" * (mb.MAX_TEXT_LENGTH + 1), "pilot": "P", "prod": "L"}
     )
-    with pytest.raises(ValueError, match="text or tag is longer"):
+    with refused(ValueError, "a tag one character too long", match="text or tag is longer"):
         _b("demo", [], [], words=long_tag)
     ok = mb.BannerWords(tag_by_mode={"demo": "D" * mb.MAX_TEXT_LENGTH, "pilot": "P", "prod": "L"})
     assert len(_b("demo", [], [], words=ok).tag) == mb.MAX_TEXT_LENGTH
@@ -1658,13 +1715,358 @@ def test_the_key_words_of_another_language_are_reserved_in_names() -> None:
         reserved_words=("inventados", "simulado"),
     )
     for name in ("Datos inventados", "modo simulado", "x Inventados y"):
-        with pytest.raises(ValueError, match="plain words"):
+        with refused(ValueError, f"the reserved word name {name!r}", match="plain words"):
             _b("demo", ["a"], [], names={"a": name}, words=spanish)
     assert _b("demo", ["a"], [], names={"a": "Facturas"}, words=spanish).real == ("Facturas",)
     # the English key words of the default are reserved even when the words in use name others
-    with pytest.raises(ValueError, match="plain words"):
+    with refused(
+        ValueError, "the English reserved name made-up under Spanish words", match="plain words"
+    ):
         _b("demo", ["a"], [], names={"a": "made-up"}, words=spanish)
-    with pytest.raises(ValueError, match="reserved_words"):
+    with refused(ValueError, "a reserved_words entry that is empty", match="reserved_words"):
         mb.BannerWords(tag_by_mode=dict(mb.DEFAULT_WORDS.tag_by_mode), reserved_words=("ok", ""))
-    with pytest.raises(ValueError, match="reserved_words"):
+    with refused(ValueError, "reserved_words given as a list", match="reserved_words"):
         mb.BannerWords(tag_by_mode=dict(mb.DEFAULT_WORDS.tag_by_mode), reserved_words=["x"])  # type: ignore[arg-type]
+
+
+# -- batch 7, class: an input that can be read only once, and objects the caller handed in --------------------------------
+# "Fails on old code" is stated per test (old code = 88e79c25).
+class _SameUsedUpGenerator:
+    """A config whose property hands back the SAME generator every time: the first reading uses it up."""
+
+    def __init__(self, items: tuple[str, ...]) -> None:
+        self._gen = (i for i in items)
+
+    def __call__(self):
+        return self._gen
+
+
+def _config_with_one_shot(field: str, value: object) -> SimpleNamespace:
+    cfg = _fake_config("demo", [("llm", "fake")])
+    setattr(cfg, field, value)
+    return cfg
+
+
+def test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times() -> (
+    None
+):
+    # fails on old code: the generator was accepted (tone real once, then tone demo over the same real host)
+    cfg = _config_with_one_shot("egress_hosts", (h for h in ("api.example.test",)))
+    for attempt in (1, 2):
+        shown = mb.banner_or_unconfirmed(cfg, tool_specs={})
+        assert shown["tone"] == "unconfirmed", (
+            f"egress hosts as a generator: attempt {attempt} gave tone {shown['tone']!r}, not unconfirmed"
+        )
+        assert "made-up" not in shown["text"], (
+            f"egress hosts as a generator: attempt {attempt} claimed made-up"
+        )
+    with pytest.raises(TypeError, match="egress_hosts"):
+        mb.banner_from_config(cfg, tool_specs={})
+        raise AssertionError("egress_hosts as a generator was read")
+
+
+def test_a_generator_for_tool_modules_is_refused_like_egress_hosts() -> None:
+    # fails on old code: no, tool_modules already refused a generator (pins the sweep result); the entry point has a mutant
+    cfg = _config_with_one_shot("tool_modules", (m for m in ("mod",)))
+    with pytest.raises(TypeError, match="tool_modules"):
+        mb.banner_from_config(cfg, tool_specs={})
+        raise AssertionError("tool_modules as a generator was read")
+    assert mb.banner_or_unconfirmed(cfg, tool_specs={})["tone"] == "unconfirmed", (
+        "tool_modules as a generator: the screen did not get the unconfirmed banner"
+    )
+
+
+def test_a_generator_for_the_backend_entries_is_refused() -> None:
+    # fails on old code: the generator was accepted
+    cfg = _fake_config("demo", [])
+    cfg.backends = SimpleNamespace(
+        entries=_SameUsedUpGenerator((("llm", SimpleNamespace(kind="fake")),))
+    )
+    for attempt in (1, 2):
+        shown = mb.banner_or_unconfirmed(cfg, tool_specs={})
+        assert shown["tone"] == "unconfirmed", (
+            f"backend entries as a generator: attempt {attempt} gave tone {shown['tone']!r}, not unconfirmed"
+        )
+
+
+def test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_refused() -> None:
+    # fails on old code: a spec whose hosts were a generator was refused already; a by-name mapping that is a generator was refused too
+    # (pins the sweep result, so the helper at this entry point has a mutant)
+    spec = _spec("api.example.test")
+    for hosts in ((h for h in ("api.example.test",)), iter(["api.example.test"])):
+        object.__setattr__(spec, "hosts", hosts)
+        with pytest.raises(TypeError, match="has no `hosts` list of text"):
+            mb._tool_hosts_leave({"agent": {"t": spec}})
+            raise AssertionError("the hosts of a tool spec as a generator were read")
+    with pytest.raises(TypeError, match="must be a mapping of tool name to spec"):
+        mb._tool_hosts_leave({"agent": (x for x in ())})  # type: ignore[dict-item]
+        raise AssertionError("the tools of an agent as a generator were read")
+
+
+def test_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused() -> None:
+    # fails on old code: the service lists as generators were read; names and reserved_words were refused already
+    with pytest.raises(TypeError, match="real_services must be a list of service names"):
+        mb._banner_for("demo", real_services=(r for r in ("crm",)), stand_ins=[])  # type: ignore[arg-type]
+        raise AssertionError("real_services as a generator was read")
+    with pytest.raises(TypeError, match="stand_ins must be a list of service names"):
+        mb._banner_for("demo", real_services=[], stand_ins=(r for r in ("crm",)))  # type: ignore[arg-type]
+        raise AssertionError("stand_ins as a generator was read")
+    with pytest.raises(TypeError, match="names must be a mapping"):
+        mb._banner_for("demo", real_services=[], stand_ins=[], names=(n for n in ()))  # type: ignore[arg-type]
+        raise AssertionError("names as a generator was read")
+    with pytest.raises(ValueError, match="reserved_words must be a tuple"):
+        mb.BannerWords(
+            tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"}, reserved_words=(w for w in ("x",))
+        )  # type: ignore[arg-type]
+        raise AssertionError("reserved_words as a generator was read")
+
+
+def test_a_bytearray_a_memoryview_and_a_subclass_with_its_own_iteration_are_not_read_by_accident() -> (
+    None
+):
+    # fails on old code: a bytearray of egress hosts was read as numbers
+    cfg = _fake_config("demo", [("llm", "fake")])
+    for odd in (bytearray(b"localhost"), memoryview(b"localhost")):
+        cfg.egress_hosts = odd
+        with pytest.raises(TypeError, match="egress_hosts"):
+            mb.banner_from_config(cfg, tool_specs={})
+            raise AssertionError(f"egress hosts as a {type(odd).__name__} were read")
+
+    class Quiet(list):
+        def __iter__(self):  # an override that would hide every entry
+            return iter(())
+
+    cfg.egress_hosts = Quiet(["api.example.test"])
+    assert mb._services_in(cfg, {})[0] == (mb.EGRESS_HOSTS,), (
+        "a list subclass whose own iteration is empty hid a real host: the builtin reader must be used"
+    )
+
+
+def _demo_config() -> SimpleNamespace:
+    return _fake_config("demo", [("llm", "fake"), ("channel", "fake")])
+
+
+def test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim() -> None:
+    # fails on old code: the keyword `overridden` did not exist
+    sentence = "These parts were supplied by code and are not checked here: {}."
+    for name in mb.OVERRIDES:
+        shown = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=(name,))
+        assert shown.tone == "unconfirmed", f"override {name}: tone {shown.tone!r}, not unconfirmed"
+        assert sentence.format(name) in shown.text, (
+            f"override {name}: its name is not listed in {shown.text!r}"
+        )
+        assert "made-up" not in shown.text and "made-up" not in shown.standins, (
+            f"override {name}: claims made-up"
+        )
+        others = [o for o in mb.OVERRIDES if o != name and o in shown.text.split("here:", 1)[1]]
+        assert others == [], f"override {name}: lists other names {others}"
+
+
+def test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_order() -> None:
+    # fails on old code: the keyword `overridden` did not exist
+    plain = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=())
+    assert plain.tone == "demo" and "made-up demo data" in plain.text, (
+        "no override changed the demo banner"
+    )
+    both = mb.banner_from_config(
+        _demo_config(), tool_specs={}, overridden=("secrets", "tools", "tools")
+    )
+    assert both.text.endswith("not checked here: tools, secrets."), (
+        f"order or repeat wrong: {both.text!r}"
+    )
+
+
+def test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner_it_is_added() -> (
+    None
+):
+    # fails on old code: the keyword `overridden` did not exist
+    quiet = _fake_config("pilot", [("signer", "none")])
+    shown = mb.banner_from_config(quiet, tool_specs={}, overridden=("detector",))
+    assert shown.tone == "unconfirmed", (
+        f"pilot with an override read {shown.tone!r}, not unconfirmed"
+    )
+    real = _fake_config("prod", [("store", "postgres")])
+    shown = mb.banner_from_config(real, tool_specs={}, overridden=("llm",))
+    assert shown.tone == "real" and shown.text.endswith("not checked here: llm."), (
+        f"real banner: {shown.text!r}"
+    )
+
+
+def test_an_unknown_or_oddly_typed_override_list_is_refused() -> None:
+    # fails on old code: the keyword `overridden` did not exist
+    for odd in (("clock",), "tools", (t for t in ("tools",)), [1]):
+        with pytest.raises((TypeError, ValueError), match="overridden"):
+            mb.banner_from_config(_demo_config(), tool_specs={}, overridden=odd)  # type: ignore[arg-type]
+            raise AssertionError(f"overridden={odd!r} was accepted")
+    shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=("clock",))
+    assert shown["tone"] == "unconfirmed", (
+        "an unknown override name did not give the unconfirmed banner"
+    )
+
+
+def test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so(
+    tmp_path: Path,
+) -> None:
+    # fails on old code: App had no `overridden` and no `mode_banner`
+    from hadavin_sdk import app as app_mod
+    from hadavin_sdk.approvals.channel import FakeChannel
+    from hadavin_sdk.registry import load_registry
+    from tests.conftest import qualify
+    from tests.test_k3_pilot import SECRETS
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    app = app_mod.build(cfg_dir, ["test-agent"], channel=FakeChannel(), secrets=SECRETS)
+    assert app.overridden == ("channel", "secrets"), f"recorded {app.overridden!r}"
+    shown = app.mode_banner()
+    assert (
+        shown["tone"] == "unconfirmed" and "not checked here: channel, secrets." in shown["text"]
+    ), shown["text"]
+    assert "made-up" not in shown["text"], "an app with handed-in objects claimed made-up data"
+
+
+def test_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one() -> None:
+    # fails on old code: no such function
+    from hadavin_sdk import app as app_mod
+
+    assert app_mod._given_overrides(tools={}, sources={}, llm=None) == (), (
+        "an empty mapping or None was counted as an override"
+    )
+    assert app_mod._given_overrides(
+        tools={"t": lambda d: ""}, sources={"s": object()}, llm=object()
+    ) == (
+        "tools",
+        "sources",
+        "llm",
+    )
+    with pytest.raises(ValueError, match="not known to the mode banner"):
+        app_mod._given_overrides(clock=object())
+    assert set(mb.OVERRIDES) == {"tools", "sources", "channel", "llm", "detector", "secrets"}
+
+
+def test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_sentence() -> None:
+    # fails on old code: no `overridden`, so a banner built from the stand-in-only config said made-up
+    shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=("sources",))
+    assert shown["tone"] != "demo" and "made-up" not in shown["text"], (
+        f"a source object given to build still gave the made-up sentence: {shown['text']!r}"
+    )
+
+
+@needs_node
+def test_a_failed_text_write_never_leaves_the_old_made_up_claim_or_a_stale_mode() -> None:
+    # fails on old code: the old words stayed under the new tone and data-mode stayed "demo"
+    seen = _paint(GOOD_DEMO, "failing-text-over-old-claim")
+    assert seen["threw"] == "" and seen["hidden"] is False, (
+        "the painter threw or left the element hidden"
+    )
+    assert "made-up" not in (seen["text"] or ""), f"the old made-up claim stayed: {seen['text']!r}"
+    assert seen["mode"] == "", f"data-mode stayed {seen['mode']!r} after the failed write"
+    assert seen["tone"] == "unconfirmed", f"the tone is {seen['tone']!r}, not unconfirmed"
+
+
+def _page_banner(**over: object) -> dict:
+    return {**GOOD_DEMO, **over}
+
+
+@needs_node
+def test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too() -> (
+    None
+):
+    # fails on old code: both accepted a blank tag or text
+    for field in ("tag", "text"):
+        for blank in (" ", "\t\n", "\u00a0\u2003"):
+            seen = _paint(_page_banner(**{field: blank}))
+            assert seen["shownTone"] == "unconfirmed", f"the page painted a blank {field} {blank!r}"
+    words = mb.BannerWords(tag_by_mode={"demo": "   ", "pilot": "P", "prod": "L"})
+    with refused(ValueError, "a blank tag in Python", match="blank"):
+        _b("demo", [], [], words=words)
+    with refused(ValueError, "a blank made-up text in Python", match="must not be empty"):
+        _b(
+            "demo",
+            [],
+            [],
+            words=mb.BannerWords(tag_by_mode=words.tag_by_mode | {"demo": "D"}, made_up=" \u00a0 "),
+        )
+    blank_second = mb.BannerWords(
+        tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"}, standins_loud=" "
+    )
+    with refused(ValueError, "a blank second line in Python", match="blank"):
+        _b("demo", [], ["crm"], words=blank_second)
+    blank_words = mb.BannerWords(
+        tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"}, not_confirmed_tag="  "
+    )
+    assert (
+        mb.banner_or_unconfirmed(
+            SimpleNamespace(environment="demo"), words=blank_words, tool_specs={}
+        )
+        == mb.not_confirmed()
+    ), "a not-confirmed tag of only white space was used instead of the default words"
+
+
+@needs_node
+def test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_and_601() -> None:
+    # fails on old code: the page counted UTF-16 units, so 600 emoji (1200 units) were refused there but allowed in Python
+    for unit in ("a", "\U0001f600"):
+        at = _page_banner(text=unit * mb.MAX_TEXT_LENGTH)
+        over = _page_banner(text=unit * (mb.MAX_TEXT_LENGTH + 1))
+        assert _paint(at)["shownTone"] == "demo", (
+            f"the page refused {mb.MAX_TEXT_LENGTH} x {unit!r}"
+        )
+        assert _paint(over)["shownTone"] == "unconfirmed", f"the page accepted 601 x {unit!r}"
+    words = mb.BannerWords(
+        tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"},
+        made_up="x" * (mb.MAX_TEXT_LENGTH - 20),
+        nothing_sent="y" * 10,
+    )
+    with pytest.raises(ValueError, match="longer than"):
+        _b(
+            "demo",
+            [],
+            [],
+            words=mb.BannerWords(
+                tag_by_mode={
+                    "demo": "\U0001f600" * (mb.MAX_TEXT_LENGTH + 1),
+                    "pilot": "P",
+                    "prod": "L",
+                }
+            ),
+        )
+        raise AssertionError("601 code points were accepted by Python")
+    assert (
+        len(
+            _b(
+                "demo",
+                [],
+                [],
+                words=mb.BannerWords(
+                    tag_by_mode={
+                        "demo": "\U0001f600" * mb.MAX_TEXT_LENGTH,
+                        "pilot": "P",
+                        "prod": "L",
+                    }
+                ),
+            ).tag
+        )
+        == mb.MAX_TEXT_LENGTH
+    )
+    assert words.made_up  # (kept: the words object is only a size reference)
+
+
+@needs_node
+def test_the_page_paints_an_unconfirmed_banner_only_when_it_is_the_own_not_confirmed_words_plus_a_note() -> (
+    None
+):
+    # fails on old code: any unconfirmed banner was replaced by the fixed one, so the names of the overrides were lost
+    shown = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=("llm",)).as_dict()
+    seen = _paint(shown)
+    assert (
+        seen["shownTone"] == "unconfirmed" and "not checked here: llm." in seen["lines"][1]["text"]
+    ), f"painted {seen['lines']!r}"
+    for bad in (
+        {**shown, "text": "Every record here is made-up demo data."},
+        {**shown, "tag": "DEMO"},
+        {**shown, "real": ["crm"]},
+        {**shown, "standins": "MADE-UP STAND-INS IN USE: x."},
+    ):
+        seen = _paint(bad)
+        _unconfirmed(seen, f"painted odd unconfirmed {bad!r}")
