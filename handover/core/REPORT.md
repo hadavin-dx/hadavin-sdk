@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:52Z (07:22 IST) / Part 2 round 8 reviewers both back: NOT clean (1 Blocker design + 1 Blocker codebase, 7 Major); resolve next
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 head 3db352f5 round 8 is NOT clean (security path, no cap). Design reviewer: Blocker (clock datetime with hostile tzinfo), 2 Major (Runtime by class identity; pre-auth scan cost). Codebase reviewer (read only, nothing run): Blocker B1 (CHANGELOG says classes pinned at import, code pins lazily; RunState and Runtime never shape-pinned), Majors M1 clock tzinfo (same as design), M2 Runtime holder, M3 CHANGELOG budget figure wrong by two orders and real stores may be over budget, M4 mutants B161-B163 revert several guards, M5 B137 killed by a control message. Ledger PDBIND-r8-4..10. Saved handover/reviews/PD-bind/pdbind-3db352f5-codebase-r8.md.
+- Part 2 runner a572d86b has not reported: no proof by running yet. Q8c-1 runner a7e31a96 not reported. Part 6 batch 8 builder not reported. Q8c-1 lane still carries handover files (question open to the lead); lead command blocks 01:34Z/01:40Z/01:46Z are empty headers.
+
+**LEAD ACTIONS**: none new.
+
+**LIVE ITEMS** (3 agents): a509d177 Part 6 builder; a572d86b Part 2 runner; a7e31a96 Q8c-1 runner. Heads: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Part 2 r8 not clean so egm-resolve then batch 9 (waiting for the runner findings to join the same brief to avoid a second pass). Q8c-1 r17 clean, runner pending. Part 6 r7 not clean, batch 8 in progress.
+
+**FINISHED SINCE LAST BLOCK (01:51Z)**: Part 2 codebase reviewer a5053e2b closed; report saved; ledger rows added.
+
 ## 01:49Z (07:19 IST) / Q8c-1 round 17: BOTH reviewers back, 0 Blocker, 0 Major, 3 Nits; runner pending; Part 2 codebase reviewer and runner pending
 
 **FAILED / UNCERTAIN FIRST**
