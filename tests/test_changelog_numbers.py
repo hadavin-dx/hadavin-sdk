@@ -11,6 +11,8 @@ from pathlib import Path
 
 from tools import demo_only_guard as g
 
+from tests.test_demo_only_guard import LISTING_FILES, SUPERSET_FILE
+
 ROOT = Path(__file__).resolve().parents[1]
 CHANGELOG = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
@@ -24,7 +26,7 @@ def count_of(phrase_after: str) -> list[int]:
     return [inverse[w.lower()] for w in found]
 
 
-# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it FAILS. It is proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not state a number of masker passes
 def test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists() -> None:
     said = count_of(r"passes\b")
     assert said, "the CHANGELOG does not state a number of masker passes"
@@ -33,7 +35,7 @@ def test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists() ->
     )
 
 
-# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it FAILS. It is proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert None
 def test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_their_patterns() -> (
     None
 ):
@@ -53,31 +55,39 @@ def test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_t
     assert token + "a" not in g._hide_secrets(f"x Bearer {token}a")
 
 
-# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it FAILS. It is proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not say 'Three listings of the tracked files'
 def test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changelog_names() -> None:
-    assert re.search(r"\bThree listings of the tracked files\b", CHANGELOG)
-    assert re.search(r"\bthe fourth place\b", CHANGELOG)
-    for name in ("tools/demo_only_guard.py", "tools/scan_repo.py", "tests/test_repo_rules.py"):
-        assert (ROOT / name).is_file(), (
-            f"{name} is named as one of the three listings and is not a file"
-        )
-        assert name in CHANGELOG or Path(name).name in CHANGELOG, (
-            f"{name} is not named in the CHANGELOG"
-        )
-    assert (ROOT / "tests/test_no_reference_material.py").is_file()
-    assert "tests/test_no_reference_material.py" in CHANGELOG
+    # the number is the length of the table that the listing test compares, not a literal typed here
+    count = WORD[len(LISTING_FILES)].capitalize()
+    assert re.search(rf"\b{count} listings of the tracked files\b", CHANGELOG), (
+        f"the CHANGELOG does not say '{count} listings of the tracked files'"
+    )
+    assert re.search(r"\bthe fourth place\b", CHANGELOG) and len(LISTING_FILES) + 1 == 4
+    for name in LISTING_FILES:
+        assert (ROOT / name).is_file(), f"{name} is named as one of the listings and is not a file"
+        assert name in CHANGELOG, f"{name} is not named in the CHANGELOG"
+    assert (ROOT / SUPERSET_FILE).is_file()
+    assert SUPERSET_FILE in CHANGELOG
+    # the decision text of the listing test is in the CHANGELOG too
+    assert "core has no shared helper" in CHANGELOG, "the decision text is not in the CHANGELOG"
+    assert "is only checked to hold every tracked file" in CHANGELOG
 
 
-# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it FAILS. It is proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert None
 def test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its_two_interpreters() -> (
     None
 ):
     def top(magic: int) -> int:
         return min(8191, max(3999, magic + 1000))
 
-    # the magic numbers of the final releases (3.12: 3531, 3.14: 3627), by the same rule as `_PYC_MAGIC_MAX`
+    # the magic numbers of the final releases (3.12: 3531, 3.14: 3627) are typed here from the interpreters' own tables, and the
+    # figures are worked out by the same rule as `_PYC_MAGIC_MAX`: they are "from the formula", not measured on 3.14 (CI runs
+    # 3.12 and 3.13; only the interpreter running this test is checked against the code, below)
     assert (top(3531), top(3627)) == (4531, 4627)
-    assert re.search(r"\b4531 on Python 3\.12, 4627 on Python 3\.14\b", CHANGELOG)
+    assert re.search(
+        r"\b4531 on Python 3\.12, 4627 on Python 3\.14 \(from the formula; CI runs 3\.12 and 3\.13\)",
+        CHANGELOG,
+    )
     assert re.search(r"\bat least 3999, never above 8191\b", CHANGELOG)
     assert re.search(r"\bfrom 3000 up to a limit\b", CHANGELOG)
     running = int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little")
@@ -89,7 +99,7 @@ def test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its
         assert g._PYC_MAGIC_MAX == table[sys.version_info[:2]]
 
 
-# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code() -> None:
     assert g.MAX_FILE_BYTES == 8 * 1024 * 1024
     assert re.search(r"\b8 MiB\b", CHANGELOG)
@@ -100,7 +110,7 @@ def test_pin_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code(
     assert g._magic_kind(b"\x00" * 512 + b"PK\x03\x04") == ""
 
 
-# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_changelog_names_four_product_folders_and_the_settings_list_them() -> None:
     assert re.search(
         r"\bover four product folders \(`src`, `templates`, `tools`, `demos`\)", CHANGELOG

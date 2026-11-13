@@ -121,29 +121,39 @@ class App:
     # made replace what the config names, and the mode banner cannot judge them (it says so and claims nothing made-up).
     # None means "not recorded" (an App made by hand, not by `build`): the banner is then the unconfirmed one.
     overridden: tuple[str, ...] | None = None
-    # What `build` saw when it recorded `overridden` (`_connected_parts`): the names, the REFERENCES of the connected parts
-    # (compared with `is`, never by `id()`, so a freed object whose number is reused cannot pass as the old one: the sealed
-    # tuple keeps every part alive, so no part can be freed and its number reused while the seal exists) and the lists of
-    # services the banner reads from the config and the tool manifests (`_services_in`, compared by value: it is the very
-    # value the banner is made from). An App that was copied with `dataclasses.replace` (this field is not an init argument)
-    # or had a connected part replaced after it was built, or had an entry of the config, the registry or the toolbox removed
-    # or swapped, no longer matches, and its banner is the unconfirmed one. A `copy.copy` of an App keeps the same parts, so
-    # it stays known (it connects to exactly what the original connects to). A `copy.deepcopy` of an App is REFUSED
-    # (`__deepcopy__`): a built App holds locks and connections that cannot be copied (the standard library raises there
-    # already), and a refusal that holds for every App is one rule, not a result that depends on what the copy happens to
-    # hold. Chosen over a frozen App because callers set fields (tests, the tick) and a frozen App would break them; the
-    # fingerprint is the smaller change. If `build` could not read the app, the field holds `_UNREADABLE` (the banner is
-    # then the unconfirmed one and `build` still returns the app).
+    # What `build` saw when it recorded `overridden` (`_connected_parts`): the names, the REFERENCES
+    # of the connected parts (compared with `is`, never by `id()`, so a freed object whose number is
+    # reused cannot pass as the old one: the sealed tuple keeps every part alive, so no part can be
+    # freed and its number reused while the seal exists), the lists of services the banner reads
+    # from the config and the tool manifests (`_services_in`, compared by value: it is the very
+    # value the banner is made from) and the stage text `config.environment` (compared by value). An
+    # App that was copied with `dataclasses.replace` (this field is not an init argument) or had a
+    # connected part replaced after it was built, or had an entry of the config, the registry or the
+    # toolbox removed or swapped, no longer matches, and its banner is the unconfirmed one. A
+    # `copy.copy` of an App keeps the same parts, so it stays known (it connects to exactly what the
+    # original connects to). A `copy.deepcopy` of an App is REFUSED (`__deepcopy__`): a built App
+    # holds locks and connections that cannot be copied (the standard library raises there already),
+    # and a refusal that holds for every App is one rule, not a result that depends on what the copy
+    # happens to hold. Chosen over a frozen App because callers set fields (tests, the tick) and a
+    # frozen App would break them; the fingerprint is the smaller change. If `build` could not read
+    # the app, the field holds `_UNREADABLE` (the banner is then the unconfirmed one and `build`
+    # still returns the app).
     _sealed: tuple | None = field(default=None, init=False, repr=False, compare=False)
 
     def _connected_parts(self) -> tuple:
-        """The references of every part that can connect the app to something, as (label, reference) pairs. Read by the core:
-        every field of the App except the four names skipped below (`overridden` and `_sealed` are the record itself,
-        `disabled_sources` is a set the tick fills, `sources` is a dict listed entry by entry); every field of the hooks (`Hooks`, each callable and each entry of its
-        `tools`); the runtime's registry, store, audit, llm, detector and limits; the channel of the approvals; and for each of
-        those parts and each source its `__dict__`: the NAMES of its attributes, and the reference of each attribute value that
-        is not plain data (text, numbers, lists, dicts, times: a counter that changes during a run must not read as a new
-        part). Nothing deeper is read, except the entries of the containers named at the end of the method. Any error here propagates: `_seal` seals the app as unreadable and `mode_banner` turns it into the unconfirmed banner."""
+        """The references of every part that can connect the app to something, as (label, reference)
+        pairs. Read by the core: every field of the App except the four names skipped below
+        (`overridden` and `_sealed` are the record itself, `disabled_sources` is a set the tick
+        fills, `sources` is a dict listed entry by entry); every field of the hooks (`Hooks`, each
+        callable and each entry of its `tools`); the runtime's registry, store, audit, llm, detector
+        and limits; the channel of the approvals; and for each of those parts and each source its
+        `__dict__`: the NAMES of its attributes, and the reference of each attribute value that is
+        not plain data (text, numbers, lists, dicts, times: a counter that changes during a run must
+        not read as a new part). Nothing deeper is read, except the entries of the containers named
+        at the end of the method. Any error here propagates (a `TypeError` that names the container
+        when a named container is missing or is not a mapping, or when the toolbox has no attribute
+        dictionary): `_seal` seals the app as unreadable and `mode_banner` turns it into the
+        unconfirmed banner."""
         out: list[tuple[str, object]] = []
 
         def add(label: str, obj: object) -> None:
@@ -223,6 +233,16 @@ class App:
         (an error there is caught by `_known_overrides`: the unconfirmed banner)."""
         return _services_in(self.config, self.registry.tools)
 
+    def _stage(self) -> str:
+        """The stage the banner reads (`config.environment`, a plain text value). The seal keeps its
+        VALUE, not a reference: a text has no identity worth keeping, and a stage changed after
+        `build` (a forced `object.__setattr__` on the config) would otherwise leave a made-up banner
+        beside real services."""
+        stage = getattr(self.config, "environment", None)
+        if not isinstance(stage, str):
+            raise TypeError("the config of this app has no stage text to read")
+        return stage
+
     def __deepcopy__(self, memo: dict) -> App:
         """A deep copy of an App is refused (see the comment on `_sealed`)."""
         raise TypeError(
@@ -238,7 +258,12 @@ class App:
             raise TypeError("an app is sealed only with the names that build worked out")
         self.overridden = tuple(overridden)
         try:
-            self._sealed = (self.overridden, self._connected_parts(), self._banner_services())
+            self._sealed = (
+                self.overridden,
+                self._connected_parts(),
+                self._banner_services(),
+                self._stage(),
+            )
         except _SEAL_ERRORS as exc:
             _warn_once("the app could not be read when it was built", exc)
             self._sealed = _UNREADABLE
@@ -264,8 +289,10 @@ class App:
                 return None
             if self._banner_services() != sealed[2]:
                 return None
+            if self._stage() != sealed[3]:
+                return None
             return sealed[0]
-        except Exception as exc:  # noqa: BLE001 - a tampered or hand-made app: the unconfirmed banner, not a crash
+        except Exception as exc:
             _warn_once("the connected parts of the app could not be read", exc)
             return None
 
@@ -282,7 +309,8 @@ class App:
             return banner_or_unconfirmed(
                 self.config, names, words, tool_specs=self.registry.tools, overridden=known
             )
-        except Exception as exc:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something
+        except Exception as exc:
+            # whatever is wrong with the app, the screen must still say something
             _warn_once("the app could not be read", exc)
             return not_confirmed_banner(words)
 
@@ -440,7 +468,7 @@ def build(
             return Delivery(ok=False, reason="card_too_long")
         try:
             return channel.post_card(card)
-        except Exception as exc:  # noqa: BLE001 - a broken channel is an undelivered card, never a crash
+        except Exception as exc:  # a broken channel is an undelivered card, never a crash
             return Delivery(ok=False, reason=type(exc).__name__)
 
     def request_approval(plan, decision, requested_by) -> Delivery:

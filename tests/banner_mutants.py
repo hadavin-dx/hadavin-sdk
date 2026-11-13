@@ -665,8 +665,8 @@ M = [
     ),
     mb(
         "B25 a source whose endpoint cannot be worked out is read as this machine",
-        "and unknown is shown as real\n        return True",
-        "and unknown is shown as real\n        return False",
+        "    except _READ_ERRORS:\n        return True",
+        "    except _READ_ERRORS:\n        return False",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
         "unknown-kind",
     ),
@@ -856,8 +856,8 @@ M = [
     ),
     mb(
         "B43 a source that does not build is read as this machine",
-        '    except Exception:  # noqa: BLE001 - any failure means "unknown", and unknown is shown as real',
-        '    except KeyError:  # noqa: BLE001 - any failure means "unknown", and unknown is shown as real',
+        "    except _READ_ERRORS:\n        return True  # any failure to read",
+        "    except KeyError:\n        return True  # any failure to read",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
         "2 validation errors for KubernetesSettings",
         crash="ValidationError",
@@ -1072,8 +1072,8 @@ M = [
     ),
     mb(
         "B62 banner_or_unconfirmed lets the error out",
-        "    except Exception as exc:  # noqa: BLE001 - whatever went wrong, the screen must still say something",
-        "    except ZeroDivisionError as exc:  # noqa: BLE001",
+        "    except Exception as exc:  # whatever went wrong, the screen must still say something",
+        "    except ZeroDivisionError as exc:  # narrowed",
         "test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one",
         "TypeError: tool 'internal-host-xxxxx' of agent 'a' has no `hosts` list of text",
         crash="TypeError",
@@ -1681,7 +1681,7 @@ M = [
         "la != lb or a is not b\n                for (la, a), (lb, b) in zip(now_parts, sealed[1], strict=True)",
         "False\n                for (la, a), (lb, b) in zip(now_parts, sealed[1], strict=True)",
         T_MB,
-        "test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner",
+        "test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner",
         "the config replaced by an equal copy: the banner was 'demo'",
     ),
     mb(
@@ -1819,7 +1819,7 @@ M = [
         "        if is_dataclass(hooks):",
         "        if False:",
         T_MB,
-        "test_every_replaced_connected_part_reads_unconfirmed",
+        "test_pin_every_replaced_connected_part_reads_unconfirmed",
         "a tool entry replaced: the banner stayed made-up",
     ),
     ap(
@@ -1828,16 +1828,16 @@ M = [
         "or tuple(self.overridden) != sealed[0]\n",
         "or False\n",
         T_MB,
-        "test_the_recorded_names_cannot_be_laundered",
+        "test_pin_the_recorded_names_cannot_be_laundered",
         "a changed list of recorded names was trusted",
     ),
     ap(
         "R9A4 mode_banner has no catch-all for a tampered app",
         "src/hadavin_sdk/app.py",
-        "        except Exception as exc:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something",
-        "        except KeyError as exc:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something",
+        "        except Exception as exc:\n            # whatever is wrong with the app",
+        "        except KeyError as exc:\n            # whatever is wrong with the app",
         T_MB,
-        "test_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises",
+        "test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises",
         "object has no attribute 'tools'",
         crash="AttributeError",
     ),
@@ -1847,7 +1847,7 @@ M = [
         "    def _known_overrides(self)",
         "    seal = _seal\n\n    def _known_overrides(self)",
         T_MB,
-        "test_the_recorded_names_cannot_be_laundered",
+        "test_pin_the_recorded_names_cannot_be_laundered",
         "the public `seal` is back",
     ),
     ap(
@@ -1865,7 +1865,7 @@ M = [
         '(f"{label}.{key}", _PLAIN if isinstance(value, _PLAIN_DATA) else value)',
         '(f"{label}.{key}", value)',
         T_MB,
-        "test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
+        "test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
         "a changing counter read as a new part",
     ),
     ap(
@@ -1874,7 +1874,7 @@ M = [
         "            if isinstance(attrs, dict):\n                for key, value in list(attrs.items()):",
         "            if False:\n                for key, value in list(attrs.items()):",
         T_MB,
-        "test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
+        "test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
         "a new attribute of a source was not seen",
     ),
     # class 2: the page and the words
@@ -2061,7 +2061,7 @@ M = [
         '            if hasattr(os, "fchmod"):  # absent on Windows before Python 3.13',
         "            if True:",
         T_G,
-        "test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod",
+        "test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod",
         "module 'os' has no attribute 'fchmod'",
         crash="AttributeError",
     ),
@@ -2093,10 +2093,10 @@ M = [
     ap(
         "R10A1 the sealed value drops the references of its parts",
         "src/hadavin_sdk/app.py",
-        "            self._sealed = (self.overridden, self._connected_parts(), self._banner_services())",
-        "            self._sealed = (self.overridden, tuple((lb, None) for lb, _ in self._connected_parts()), self._banner_services())",
+        "                self._connected_parts(),\n",
+        "                tuple((lb, None) for lb, _ in self._connected_parts()),\n",
         T_MB,
-        "test_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused",
+        "test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused",
         "the seal did not keep the sealed object alive",
     ),
     ap(
@@ -2251,7 +2251,7 @@ M = [
         "R10F2 the copy sets the file mode to nothing (chmod)",
         "                os.chmod(target, stat.S_IMODE(info.st_mode))",
         "                os.chmod(target, 0)",
-        "test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod",
+        "test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod",
         "the mode was not copied without fchmod",
     ),
     gd(
@@ -2286,7 +2286,7 @@ M = [
         "R10F7 a chain of links that is too long is called only a loop",
         '            return "symlink-loop (a loop of links, or a chain too long to follow)"',
         '            return "symlink-loop (a loop of links cannot be followed)"',
-        "test_pin_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes",
+        "test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes",
         "was not named as a chain",
     ),
     # -- batch 11 (r10 fixes): every named container is read or the build says so; only build can seal; the masker --------
@@ -2375,15 +2375,54 @@ M = [
         "R11C1 the name before an equals sign is looked for from the start of the line",
         "_SECRET_NAME.search(line[start:at])",
         "_SECRET_NAME.search(line[:at])",
-        "test_pin_the_masker_reads_each_character_a_bounded_number_of_times_whatever_the_line",
+        "test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line",
         "reads for a line of",
     ),
+    ap(
+        "R12B1 the seal does not compare the stage text",
+        "src/hadavin_sdk/app.py",
+        "            if self._stage() != sealed[3]:\n                return None\n",
+        "",
+        T_MB,
+        "test_a_stage_changed_after_build_reads_unconfirmed",
+        "a stage changed after build",
+    ),
+    ap(
+        "R12C1 a toolbox without an attribute dictionary is read as empty",
+        "src/hadavin_sdk/app.py",
+        '                raise TypeError("the toolbox of the hooks has no attribute dictionary to read")\n',
+        "                attrs = {}\n",
+        T_MB,
+        "test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it",
+        "a toolbox without an attribute dictionary: refused, but with another text",
+    ),
+    ap(
+        "R12C2 the tool entry of an agent is not required to be a mapping",
+        "src/hadavin_sdk/app.py",
+        '            members(f"registry.tools[{agent!r}]", per_agent)\n',
+        "            continue\n",
+        T_MB,
+        "test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it",
+        "a per-agent tool entry that is a list was not refused",
+    ),
 ]
+
+# Mutations that cannot change what the code does, with the reason (a test checks that each has one and that its text is
+# still in the file, so the note cannot drift away from the line it is about). Not rows of the table: no test could kill them.
+EQUIVALENT = {
+    (
+        "src/hadavin_sdk/app.py",
+        "                or sealed is _UNREADABLE\n",
+    ): (
+        "`_UNREADABLE` holds one text, so `sealed[0]` is a text and `tuple(self.overridden) != sealed[0]` is already true "
+        "for every recorded list: dropping the check returns None by the next comparison"
+    ),
+}
 
 
 # The number of rows in `M` (the CHANGELOG states it; a table test compares this constant with the rows it parses out of
 # the text of this file, so it cannot drift from the table).
-ROW_COUNT: int = 317
+ROW_COUNT: int = 320
 
 # Rows that share one killer AND one expectation on purpose: none are left (batch 8). Each of the six groups that used to
 # share one assertion now has an assertion message that shows the observed value, and each row expects the fragment of

@@ -78,6 +78,7 @@ import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 # The first bytes a file with each of the endings that may hold a non-text file must start with. The content decides: a
@@ -113,9 +114,19 @@ REFUSED_SUFFIXES = (".pyc", ".so", ".zip", ".whl", ".gz", ".tgz", ".tar", ".bz2"
 MAX_FILE_BYTES = 8 * 1024 * 1024  # the default cap on one file (the settings file may change it)
 # The only environment variable names the copy run's child process receives (no token, no key, no connection string).
 DEFAULT_CHILD_ENV = (
-    "PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TEMP", "TMP", "SYSTEMROOT", "TERM",
-    "VIRTUAL_ENV", "HADAVIN_REQUIRE_NODE",
-)  # fmt: skip
+    "PATH",
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TMPDIR",
+    "TEMP",
+    "TMP",
+    "SYSTEMROOT",
+    "TERM",
+    "VIRTUAL_ENV",
+    "HADAVIN_REQUIRE_NODE",
+)
 DEFAULT_MARKER = "tools/demo_only_guard.copy_run"
 _SEP = r"[ _-]+"
 
@@ -378,6 +389,17 @@ def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
     return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"
 
 
+def _run(argv: list[str], *, check: bool, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+    """The ONE place the guard starts a program: a fixed list of arguments (never a shell string), the program found on the
+    PATH and run by its full path (this interpreter is already one). A missing program stops the guard with its name."""
+    exe = argv[0] if os.path.isabs(argv[0]) else shutil.which(argv[0])
+    if exe is None:
+        raise SystemExit(
+            f"demo_only_guard: {argv[0]} was not found on the PATH; the guard does not guess"
+        )
+    return subprocess.run([exe, *argv[1:]], check=check, **kwargs)
+
+
 def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
     """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
     unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
@@ -388,8 +410,8 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
             f"demo_only_guard: {repo} is not a git checkout; the scan lists files with git and will not guess"
         )
     flags = ["--cached", "--others", "--exclude-standard"] if include_new else ["--cached"]
-    done = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
-        ["git", "-C", str(repo), *GIT_NO_USER_EXCLUDES, "ls-files", "-z", *flags],  # noqa: S607
+    done = _run(
+        ["git", "-C", str(repo), *GIT_NO_USER_EXCLUDES, "ls-files", "-z", *flags],
         capture_output=True,
         check=False,
         env=_git_env(),
@@ -402,8 +424,8 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
 
 def _gitlinks(repo: Path) -> set[str]:
     """The paths git holds as git links (a submodule: mode 160000), whether or not their folder is on the disk."""
-    done = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
-        ["git", "-C", str(repo), "ls-files", "-s", "-z", "--cached"],  # noqa: S607
+    done = _run(
+        ["git", "-C", str(repo), "ls-files", "-s", "-z", "--cached"],
         capture_output=True,
         check=False,
         env=_git_env(),
@@ -1051,7 +1073,7 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
         env = {k: v for k, v in os.environ.items() if k in cfg.child_env_allowed}
         env["PYTHONPATH"] = str(dest / "src")
         for package in cfg.product_packages:
-            checked = subprocess.run(  # noqa: S603 (our own interpreter; arguments are a list, no shell)
+            checked = _run(
                 [sys.executable, "-c", _IMPORT_CHECK, package, str(dest)],
                 cwd=dest,
                 env=env,
@@ -1062,7 +1084,7 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
                     f"demo_only_guard: package {package} is not imported from the copy: no pass reported"
                 )
                 return checked.returncode or 3
-        return subprocess.run(  # noqa: S603 (our own interpreter; arguments are a list, no shell)
+        return _run(
             [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *pytest_args],
             cwd=dest,
             env=env,

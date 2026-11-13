@@ -11,6 +11,7 @@ from pathlib import Path
 from tests import banner_mutants as bm
 
 
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert [('J1b an unc... times'), ...] == []
 def test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once() -> None:
     assert bm.non_unique_rows() == []
 
@@ -236,6 +237,7 @@ def test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported() 
 # PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
 
 
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported() -> None:
     from collections import Counter
 
@@ -251,6 +253,7 @@ def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_report
 # PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
 
 
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file() -> None:
     """A renamed or removed killer left its row naming a test that is not there (R9A4 did, found by running it); the run
     then reports an error for the row only when someone runs that row. Checked here for every row, with no run."""
@@ -281,7 +284,8 @@ def _rows_in_the_text_of_the_table() -> list[str]:
     raise AssertionError("the list M was not found in the table file")
 
 
-def test_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table() -> None:
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table() -> None:
     labels = [name.split(" ", 1)[0] for name in _rows_in_the_text_of_the_table()]
     assert len(labels) == len(set(labels)), "a label is used twice"
     assert bm.ROW_COUNT == len(labels) == len(bm.M), (
@@ -289,6 +293,7 @@ def test_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table()
     )
 
 
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not say that the table has 320 rows
 def test_the_changelog_states_the_row_count_of_the_table() -> None:
     text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"the table has {bm.ROW_COUNT} rows" in text, (
@@ -296,54 +301,86 @@ def test_the_changelog_states_the_row_count_of_the_table() -> None:
     )
 
 
-def _prints_a_value(tree, name: str) -> bool:
-    """True when the function `name` (or a function of the file it calls) has an f-string that formats a value: its message
-    is then made at run time, so an `expect` may hold a value (a suffix, a host, a test input) that is in no string."""
+def _text_pieces(tree, name: str) -> list[tuple[bool, str]]:
+    """The strings a killer can print, as (is a literal part of an f-string, text): every string constant in the function
+    `name` of a parsed test file and in the functions of that file it calls by name DIRECTLY (its helpers; the helpers of the
+    helpers are not read) and in the module-level tables those read by name. Nothing else counts: not the rest of the file."""
     import ast
 
-    funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-    todo, seen = [name], set()
-    while todo:
-        cur = todo.pop()
-        node = funcs.get(cur)
-        if node is None or cur in seen:
-            continue
-        seen.add(cur)
-        for sub in ast.walk(node):
-            if isinstance(sub, ast.FormattedValue):
-                return True
-            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
-                todo.append(sub.func.id)
-    return False
-
-
-def _text_pieces(tree, name: str, seen: set[str] | None = None) -> list[str]:
-    """Every string constant (and every literal part of an f-string) in the function `name` of a parsed test file, and in the
-    functions of that file it calls by name (one chain, each once): the places where a killer's message can come from."""
-    import ast
-
-    seen = set() if seen is None else seen
-    if name in seen:
-        return []
-    seen.add(name)
     funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
     node = funcs.get(name)
     if node is None:
         return []
-    pieces: list[str] = []
+    scopes = [node]
     for sub in ast.walk(node):
-        if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-            pieces.append(sub.value)
-        elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
-            pieces += _text_pieces(tree, sub.func.id, seen)
+        if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id in funcs:
+            scopes.append(funcs[sub.func.id])
+    # module-level data the scopes read by name (a table of cases the killer loops over)
+    tables = {
+        t.id: stmt
+        for stmt in tree.body
+        if isinstance(stmt, ast.Assign)
+        for t in stmt.targets
+        if isinstance(t, ast.Name)
+    }
+    read = {
+        sub.id
+        for scope in scopes
+        for sub in ast.walk(scope)
+        if isinstance(sub, ast.Name) and sub.id in tables
+    }
+    scopes += [tables[name] for name in sorted(read)]
+    pieces: list[tuple[bool, str]] = []
+    for scope in scopes:
+        in_fstring = {
+            id(part)
+            for sub in ast.walk(scope)
+            if isinstance(sub, ast.JoinedStr)
+            for part in sub.values
+            if isinstance(part, ast.Constant)
+        }
+        for sub in ast.walk(scope):
+            if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+                pieces.append((id(sub) in in_fstring, sub.value))
     return pieces
 
 
-def expectation_nowhere_in_killer(rows=None, root=None) -> list[tuple[str, str]]:
-    """Rows whose `expect` shares no text with the killer's own strings. `expect` is a fragment of the killer's assertion
-    message AS PRINTED, so a literal part of the message must lie inside it (or it inside a literal): a fragment that none
-    of the strings of the killer can have made is never seen in a failure of the killer. Crash rows (the pinned set) expect
-    the text of the interpreter or of the changed code and are left out."""
+# Rows whose `expect` holds text that is made at run time and is in no string of the killer or of its direct helpers: a value
+# of a loop or of a data table built by a helper of a helper, the text of the page script's probe, or the text of the checked
+# code itself. The static check cannot see these; the mutation run can (the expectation must appear in the first failing line
+# of the killer, or the row is not good). Each entry says where its text comes from; `test_every_computed_expectation_has_
+# a_reason_and_is_not_seen_by_the_static_check` keeps the list honest (a row that the static check accepts must leave it).
+COMPUTED_EXPECT = {
+    "B2": "the killer loops over inputs and the message holds the repr of one input (str 'crm')",
+    "B2b": "the killer loops over inputs and the message holds the repr of one input (set {'crm'})",
+    "J3": "the word is from the page script's own probe output (the write that was made), not from the killer",
+    "B21": "the message holds the repr of the config under test, made by the checked code",
+    "B22": "the message holds the repr of the config under test, made by the checked code",
+    "B24": "the message holds the repr of the settings under test, made by the checked code",
+    "B38": "an odd url from a data list in a helper of a helper (a back slash written with escapes)",
+    "B59": "an odd url from a data list in a helper of a helper",
+    "B60": "the refusal text of the checked code, which the message repeats",
+    "G30": "a full-width spelling made by a helper of a helper from a code point table",
+    "G38": "a path of the made-up repository the killer builds, printed in the failure",
+    "G51": "the archive ending is the loop variable of the killer",
+    "G52": "the archive ending is the loop variable of the killer",
+    "G53": "the archive ending is the loop variable of the killer",
+    "G54": "the archive ending is the loop variable of the killer",
+    "G55": "the archive ending is the loop variable of the killer",
+    "R7E4": "the case label is the loop variable of a helper of a helper",
+    "R7E5": "the case label is the loop variable of a helper of a helper",
+    "R9D4": "the case label is the loop variable of a helper of a helper",
+    "R9D5": "the case label is the loop variable of a helper of a helper",
+}
+
+
+def expectation_nowhere_in_killer(rows=None, root=None, strict=False) -> list[tuple[str, str]]:
+    """Rows whose `expect` cannot come from the killer's own text. `expect` is a fragment of the killer's assertion message
+    AS PRINTED. It is accepted when it lies inside one string of the killer or of its direct helpers, or, where the message
+    formats a value (an f-string), when it holds a literal part of that f-string of at least 5 characters (the fragment then
+    also holds the value, which no string does). Not accepted: a fragment found only elsewhere in the test file, or an
+    f-string of another function. Crash rows (the pinned set) expect the text of the interpreter or of the changed code and
+    are left out."""
     import ast
 
     base = Path(bm.ROOT if root is None else root)
@@ -351,27 +388,31 @@ def expectation_nowhere_in_killer(rows=None, root=None) -> list[tuple[str, str]]
     nowhere = []
     for m in bm.M if rows is None else rows:
         label = m.name.split(" ", 1)[0]
-        if label in bm.CRASH_ROWS:
+        if label in bm.CRASH_ROWS or (label in COMPUTED_EXPECT and not strict):
             continue
         if m.test_file not in trees:
             trees[m.test_file] = ast.parse((base / m.test_file).read_text(encoding="utf-8"))
-        pieces = [p.strip() for p in _text_pieces(trees[m.test_file], m.only_test)]
-        if any(len(p) >= 6 and (p in m.expect or m.expect in p) for p in pieces):
+        pieces = [(f, p.strip()) for f, p in _text_pieces(trees[m.test_file], m.only_test)]
+        if any(m.expect in p or (f and len(p) >= 5 and p in m.expect) for f, p in pieces):
             continue
-        # stated limit: where the message formats a value (an f-string), the fragment may hold that value, which no string
-        # holds; it is then accepted when the fragment is in the test file (data the killer reads) or the killer formats a value
-        text = (base / m.test_file).read_text(encoding="utf-8")
-        if m.expect in text or _prints_a_value(trees[m.test_file], m.only_test):
+        # the shared `refused` helper (tests/refusal.py) prints "<what> was not refused" or "<what>: refused, but with
+        # another text": `what` is the killer's own text (a string, or the start of an f-string with a value after it)
+        what = re.split(r" was not refused|: refused, but with another text", m.expect)[0]
+        if what != m.expect and any(
+            what in p or (f and len(p) >= 4 and what.startswith(p)) for f, p in pieces
+        ):
             continue
         nowhere.append((label, m.expect))
     return nowhere
 
 
-def test_every_expectation_of_a_row_is_made_of_text_its_killer_can_print() -> None:
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_every_expectation_of_a_row_is_made_of_text_its_killer_can_print() -> None:
     assert expectation_nowhere_in_killer() == []
 
 
-def test_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported(
+# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported(
     tmp_path: Path,
 ) -> None:
     (tmp_path / "t.py").write_text(
@@ -384,4 +425,46 @@ def test_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reporte
     bad = bm.mutant("Z3 c", "x.py", "a", "b", "t.py", "test_plain", "a message nobody wrote")
     assert expectation_nowhere_in_killer(rows=[good, plain_good, bad], root=tmp_path) == [
         ("Z3", "a message nobody wrote")
+    ]
+
+
+# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both, because the code it checks is the checker in this same new test file. A pin, not proof of a fix.
+def test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_static_check() -> None:
+    labels = {m.name.split(" ", 1)[0] for m in bm.M}
+    assert set(COMPUTED_EXPECT) <= labels, sorted(set(COMPUTED_EXPECT) - labels)
+    assert all(len(why.split()) >= 5 for why in COMPUTED_EXPECT.values()), (
+        "an entry without a reason"
+    )
+    seen_statically = {
+        m.name.split(" ", 1)[0]
+        for m in bm.M
+        if m.name.split(" ", 1)[0] in COMPUTED_EXPECT
+        and not expectation_nowhere_in_killer(rows=[m], strict=True)
+    }
+    assert not seen_statically, f"these rows no longer need an entry: {sorted(seen_statically)}"
+
+
+# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: ' or sealed is _UNREADABLE\n'
+def test_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file() -> None:
+    assert bm.EQUIVALENT, "the list of equivalent mutations is empty"
+    for (path, text), why in bm.EQUIVALENT.items():
+        source = (Path(bm.ROOT) / path).read_text(encoding="utf-8")
+        assert source.count(text) == 1, (
+            f"{path}: the line of an equivalent mutation is not there once: {text!r}"
+        )
+        assert len(why.split()) >= 10, f"{path}: {text!r} has no reason"
+
+
+# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both, because the code it checks is the checker in this same new test file. A pin, not proof of a fix.
+def test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_reported(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "t.py").write_text(
+        "def test_k():\n    assert False, 'the message of the killer'\n"
+        "def test_other():\n    assert False, 'a sentence of another test'\n",
+        encoding="utf-8",
+    )
+    elsewhere = bm.mutant("Z4 d", "x.py", "a", "b", "t.py", "test_k", "a sentence of another test")
+    assert expectation_nowhere_in_killer(rows=[elsewhere], root=tmp_path) == [
+        ("Z4", "a sentence of another test")
     ]

@@ -1,12 +1,13 @@
 """Repository rules: proprietary licence everywhere, and the core never depends on a demo."""
 
 import ast
-import subprocess
 import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
+
+from tests.fixed_run import run as run_fixed
 
 ROOT = Path(__file__).resolve().parents[1]
 LICENCE_TEXT = (
@@ -19,8 +20,8 @@ LICENCE_TEXT = (
 
 
 def tracked_files(root: Path) -> list[str]:
-    out = subprocess.run(
-        ["git", "ls-files", "-z"],  # noqa: S607 - git from PATH, fixed argv; -z: exact names, no quoting
+    out = run_fixed(
+        ["git", "ls-files", "-z"],
         cwd=root,
         capture_output=True,
         text=True,

@@ -61,7 +61,7 @@ import logging
 import re
 from collections.abc import Collection, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 from urllib.parse import urlsplit
 
 from hadavin_sdk.backends.table import DEFAULTS, DEMO_ONLY
@@ -98,13 +98,12 @@ __all__ = [
     "not_confirmed_banner",
 ]
 
-_DEMO_STAGE = "demo"  # the stage whose banner may say "made-up"; it is checked against STAGES below, not its position
-if (
-    _DEMO_STAGE not in STAGES
-):  # pragma: no cover - a stage rename must show up here, loudly, at import
-    raise RuntimeError(
-        f"mode_banner: the demo stage {_DEMO_STAGE!r} is not in stages.STAGES {STAGES}"
-    )
+# The stage whose banner may say "made-up". A test (`test_the_demo_stage_is_one_of_the_stages`) fails if a stage rename
+# leaves it out of `stages.STAGES`; it is the name that counts, not the position.
+_DEMO_STAGE = "demo"
+# The errors that reading a source for its endpoint can raise: a kind this file does not know (LookupError), settings that do
+# not build (ValueError, which includes a validation error), a missing attribute or a wrong type.
+_READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
 
 # What a service name may look like when it is shown to a person: words made of letters, digits and . _ - joined by
 # SINGLE spaces; a word never ends with "." (so a name cannot hold a sentence break) and the whole name is at most 40
@@ -551,8 +550,8 @@ def _source_leaves_this_machine(source: object) -> bool:
     worked out (a kind this file does not know, settings that do not build)."""
     try:
         return _url_leaves_this_machine(source_endpoint(source))
-    except Exception:  # noqa: BLE001 - any failure means "unknown", and unknown is shown as real
-        return True
+    except _READ_ERRORS:
+        return True  # any failure to read the source means "unknown", and unknown is shown as real
 
 
 def _field(config: object, name: str, kind: type | tuple[type, ...]) -> Any:
@@ -729,7 +728,7 @@ def banner_or_unconfirmed(
         return banner_from_config(
             config, names, words, tool_specs=tool_specs, overridden=overridden
         ).as_dict()
-    except Exception as exc:  # noqa: BLE001 - whatever went wrong, the screen must still say something
+    except Exception as exc:  # whatever went wrong, the screen must still say something
         _LOG.warning(
             "mode banner could not be built (%s): showing the not-confirmed banner",
             type(exc).__name__,
@@ -741,11 +740,13 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
     """`not_confirmed(words)`, but built so that it cannot raise: the tag and the text of `words` are used only when both are
     non-empty texts the page script will show; otherwise (malformed `words`, a missing field, a getter that raises) the
     default words are used. The screen always gets a finished banner."""
+    shown: dict[str, Any] | None = None
     try:
-        tag = words.not_confirmed_tag  # type: ignore[attr-defined]
-        text = words.not_confirmed  # type: ignore[attr-defined]
+        given = cast(BannerWords, words)
+        tag = given.not_confirmed_tag
+        text = given.not_confirmed
         if all(_visible(s) and len(s) <= MAX_TEXT_LENGTH for s in (tag, text)):
-            return {
+            shown = {
                 "mode": "",
                 "tone": "unconfirmed",
                 "tag": tag,
@@ -755,9 +756,9 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
                 "stand_ins": [],
                 "overridden": [],
             }
-    except Exception:  # noqa: BLE001, S110 - malformed words: fall through to the fixed defaults
-        pass
-    return not_confirmed(DEFAULT_WORDS)
+    except Exception as exc:  # malformed words (a missing field, a getter that raises anything): the fixed defaults
+        _LOG.debug("mode banner: malformed words (%s): using the default words", type(exc).__name__)
+    return shown if shown is not None else not_confirmed(DEFAULT_WORDS)
 
 
 def not_confirmed_banner(words: object = DEFAULT_WORDS) -> dict[str, Any]:
