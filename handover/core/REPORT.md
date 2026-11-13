@@ -1,4 +1,10 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead) R3 BUILDER DONE; final evidence run and fresh reviewer STARTED (parallel)
+R3 builder a804cecf reported (builder-claimed, saved handover/core/fix/R3-RESULTS.md plus core-fix-on-frozen-r3.patch, -r3-lf.patch, delta). Not run by builder: full suite, mutation, ~100 of 120 test files; Py3.13, Windows; some files ran on an earlier head (listed in R3-RESULTS.md); delta patch not apply-tested. Builder-claimed: R2-01..10 fixed, 56 changed py files lint/format clean, bandit -ll 0 Medium/High in src (2 Medium B604 in tests/test_reset_scripts.py, already in R2), last batch 14 files 938 passed, fail-before logs per finding (e.g. number limits 89 failed, ca_file_reads 9, real_check_dry 6, guard 1). Extras done: --leads capped 1..1000, --runs 1..100; run_live_check checks for no terminal before cost lines; found and fixed EBADF traceback on closed descriptor (only run_live_check has a test; run_real_check same fix untested).
+Deviations (I accept unless you say otherwise): REAL_RESULT_FILE refusal exits 2 (matches DESK_DB_PATH refusal) not 4; DESK_PORT spaces stay accepted (pinned by tests/test_env_numbers.py, Windows cmd.exe 'set X=8765 ') and DESK_LIVE_EFFORT now strips the same; db-path refuses a folder/pipe (exit 4).
+Builder-admitted still open (go to the reviewer, then ONE fix batch R4 if confirmed): catcher/fake_model_server/fakes_server traceback for a bad --host or a port in use; check_invariants and n8n_api echo an existing file's base name.
+Running now: EVIDENCE RUNNER a0fe0c8c (EV3: full suite in git tree, fail-before, hostile incl. new cases, lint; 75 min box, ends ~20:25Z lead clock) and fresh FALLBACK reviewer aa2f22e6 (not given any verdict). No other agents. ASK: none. LOAD: 2 agents (runner uses 2 heavy).
+
 ## STATUS (core lead, one line)
 R3 builder a804cecf running; latest checkpoint: Fri Nov 13 16:22:33 UTC 2026 tests written for R2-01..10; next: run all affected existing test files, fail-before, patches, RESULTS . Nothing failed. ASK: none.
 
