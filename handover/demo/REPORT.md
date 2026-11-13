@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:53Z / 07:23 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
+FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
+Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
+Machine facts (read now): Q1 post-chunk steps finished: 1-ruff-check:exit=0, 10-nodeoff:exit=0, 2-ruff-format:exit=0, 3-mypy-linux:exit=0, 4-mypy-win32:exit=0, 5-bandit:exit=0, 6-hygiene-gitleaks:exit=0, 7-gitleaks-dir:exit=0, 8-gitleaks-git:exit=0, 9-restart-test-1:exit=0, 9-restart-test-2:exit=0, 9-restart-test-3:exit=0, 9-restart-test-4:exit=0, 9-restart-test-5:exit=0
+Recent pushes (last 20 min): 8222440a demo: review map of PR #4, versions.md fix patch (stale 'interim' allowance paragraph), Q4 files so f | 990f1f6a demo: report block 01:49 Z; PR descriptions v4; Semgrep body files | a4ef8f15 demo: proposed PR #2-#4 descriptions v3 (merge-order options A/B), questions file (unreviewed) | 643e55d2 Lead command 01:46Z | a2b4d172 demo: report block 01:45 Z (single-process run in progress) | a7c850a6 demo: proposed PR #2-#4 descriptions v2 + questions for the lead (unreviewed) | 7a1e7ac6 demo: Semgrep PR body v5 and claims table (round-3 fixes) | 6a667cd6 demo: report block (Q1 verdict) rewritten: the first push lost words inside backticks (shell expansio
+TABLE 1 - LIVE ITEMS: see the last hand-written block below (agents: PR-text verifier D-PR, Semgrep patch v3 builder S3, Semgrep PR body drafter D-SG, skips table Q5, dry-run checks Q4; shell: chunked run + post-chunk checks).
+TABLE 2 - ROUNDS: unchanged since the last hand-written block.
+TABLE 3 - FINISHED SINCE LAST BLOCK: see "Recent pushes" above.
+
 ## 2026-11-13 01:49Z / 07:19 IST - SINGLE-PROCESS RUN: 1313 PASSED, 0 FAILED (about 45%); PR #2-#4 DESCRIPTIONS v4 DONE (3 review rounds; ready for the lead's answers); Q4 dry-run checks nearly done; review map of PR #4 started (Q7 item)
 FAILED / UNCERTAIN first:
 1. The single-process run (what you require for the final claim) is NOT finished: started 01:42:49Z, 1313 passed, 0 failed at 01:49Z (about 45%); no restart since about 01:10Z; ETA about 02:05Z.
