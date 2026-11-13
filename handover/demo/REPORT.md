@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:11Z / 09:41 IST - 04:02/04:08 commands read: breach-response patch lane started; nodemo v2 + CI job built (no-demo chunked stack run: 0 failed, 938 passed, 80 skipped); P3 v3 built; first push batch NOT clean yet (P1 v3.1, nodemo v2 review, P2 v2.1 still open); 8 agents
+FAILED / UNCERTAIN first:
+1. **Your 04:02Z item 4 (proxy-line evidence): I CANNOT show it.** The sandbox proxy exposes no request log (only counters at $HTTPS_PROXY/__agentproxy/status; no per-request lines; /root/.ccr has CA files only). What exists: the reviewer's own report (real-run/REVIEW-v4-fresh.md, slip 1): made-up key, `created 0`, requests toward the vendor's default address through the proxy; its scratch /tmp/work/rv11-1 (cases.sh etc.) holds its harness but no proxy capture. So: 'made-up key' and 'nothing sent to a mail server' are the reviewer's statements, NOT verified by a proxy log; the key was built from parts by the test harness (hygiene scan clean), and the session environment secrets were not in the desk's environment (cases ran under `env -i`), which I can confirm only from its report. To verify for real the owner would need the vendor-side/proxy-side logs. No mail: the SMTP host was loopback in those configs per its report (unverified).
+2. **Your 04:02Z item 2 patch (refuse non-interactive stdin; refuse non-loopback base URLs unless explicitly set; sibling sweep of every y/N prompt): builder started (04:12)**: it must FIRST report whether (a) already exists and how the reviewer got around it, then write real-run/start-prompt-hardening.patch with fails-before tests and the sibling sweep. The hard rule line (never answer y/yes; loopback only and say which; a prompt means stop and report) is now in my brief template (sonar-common.txt) and every reviewer/builder brief from now on.
+3. **nodemo v2 stack (builder report, fresh review running a1: ae8bce55f3b3082f4)**: nodemo-fix-v2 (narrow guard: 49 row ids identical; demo present 49 passed; demo deleted 43 passed 6 skipped; product-row typo FAILS with and without demo; one demo file removed while the folder exists FAILS); nodemo-optional-hygiene-repo-v2 (no-.git client copy: 0 failed; planted 169.254.169.254 literal caught in a git copy; needs P1 v3 first: both edit the import lines of tests/test_hygiene.py); nodemo-ruff-isort (+4 lines: 27 I001 -> clean with demo deleted AND present); nodemo-ci-job (OPTIONAL new .github/workflows/nodemo.yml: git rm demo_only, ruff, 9 chunked pytest steps, gate 0 failed and passed >= 800: local results: final stack exit 0 / 938 passed; product-row typo exit 1; conftest skipping everything exit 1 'only 0 passed, the floor is 800'; without isort exit 1; without nodemo-fix-v2 exit 1). NOT measured: the CI job on a GitHub runner (each run block ran locally under bash -e -o pipefail on py3.13 with an offline gitleaks; the download+checksum step not run; actionlint not installed). Required check name `no-demo` NOT wired: your decision.
+   **RUN ON LAPTOP (no-demo), from the builder: `demo_only/ deleted (git rm), chunked 9 x pytest, python -u, P1v3+P2v2+P3v2+nodemo-fix-v2+optional-v2+isort+ci-job on db54e13: 0 failed, 938 passed, 80 skipped; ruff check clean (141 files formatted)`** : autocrlf setting of that evidence: Linux, no CRLF conversion (core.autocrlf unset/false). Not applicable to your Windows autocrlf=true laptop until you run it there.
+4. **crlf v5 (04:08 item 1)**: builder aa25bbd93a8dd5a23 running; planted repos get `* text eol=lf`, test matrix sets core.autocrlf explicitly (true AND false) in the planted repo, not the machine; its RUN ON LAPTOP line will state which setting the evidence covers. **yaml trimmed-v2** (item 2): same builder: the reviewer's 81-line test, applies in all orders with P1 v3; the PR text will say it no longer catches `timeout-minute`/`usess` typos (actionlint in CI is the control).
+5. **P1 v3.1 (scanner Major, test-only): builder a0b62ed1f6ca160f5 running**: it goes FIRST in the series as ordered.
+6. **READY TO PUSH: NOTHING YET.** Needs a clean fresh read: P1 v3.1 (building), nodemo v2 (review running), P2 v2.1 (building). I send `READY TO PUSH: <ordered list with sha256>` the moment each is clean; first batch P1 + nodemo + P2 as you said. P3 v3: fresh security review running (a84e0e6c98c92b97e); probe-ab-v2 and real-run v5 building.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a0b62ed1f6ca160f5 | P1 v3.1 builder | 04:00 | running | patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| ae8bce55f3b3082f4 | fresh reviewer nodemo v2 + CI job | 04:11 | running | report |
+| a84e0e6c98c92b97e | fresh security reviewer P3 v3 | 04:06 | running | report |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a7d18e4fa0b28d940 | probe-ab v2 builder | 03:52 | running | patch |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| (new) | start-prompt hardening builder (breach response) | 04:12 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 8.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| nodemo | review 2 | v1: 2 Major (closed in v2) | fresh read of v2 + CI job | no | clean |
+| P3 | review 3 | pending | security | no | clean + probe |
+| start-prompt | build 1 | - | new (breach class) | no | review (safety path) |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| nodemo v2 patches (4) | built, pushed, chunked stack run 0 failed |
+| P3 v3 | built, pushed |
+
 ## 2026-11-13 04:00Z / 09:30 IST - P1 v3: the bash guard HELD in 11 shells; its hygiene SCANNER has a Major (test-only: v3.1 building): P1 v3 is SAFE TO APPLY NOW for the scripts; crlf-guard-v4 FAILS ON WINDOWS autocrlf=true; 8 agents
 FAILED / UNCERTAIN first:
 1. **crlf-guard-v4 would have gone RED on your Windows full run** (fresh review sonar skips/REVIEW-crlf-v4-yaml-delta-fresh.md): `test_every_cure_in_the_message_works[crlf]` fails under core.autocrlf=true (Git for Windows default): the planted repo has no .gitattributes so git sees the CRLF file as clean and `git checkout -- file` does nothing; measured 1 failed / 30 passed; with `* text eol=lf` in the planted tree it passes under autocrlf true and false. The guard itself does NOT misfire in a real autocrlf clone (only *.ps1 and icon.png hold CR). Also 17 of 26 reviewer mutants survive (hint wording, lone CR as last byte, first-bad-file-only message, scan args --redact/--ignore-gitleaks-allow, editorconfig, marker registration). DO NOT APPLY crlf v4. v5 building (aa25bbd93a8dd5a23).
