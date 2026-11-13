@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 14:44Z - STATUS: chunked suite 3 of 12 chunks done, 0 failures so far; README-commands run started (1 agent); 15:07Z order followed (no third freeze, no more sweeps); PR DRAFT TEXT
+**LOAD:** 1 agent (a1a0efb30830657d9: RUNS each Linux README command as written in a scratch copy, records receipt ids and counts; report only, edits nothing); 1 shell (chunked suite `/tmp/work/run19c.sh`); heavy slots 2 of 3. Short of 2 agents by one: after the 15:07Z order there is no further task that is not a repeat; idle is allowed by the lead.
+| id | what | state | next |
+|---|---|---|---|
+| chunked v2 suite | tree 49d3c859, 8 test files per chunk | chunk 00: 112 passed (76.7 s); chunk 01: 624 passed (171 s); chunk 02: 239 passed (71 s); chunk 03 running; 3 of 12 done | counts summed at ALL.done; PR body line filled once, pushed |
+| README commands run | quick-start, replay (receipt ids), crash command, counts comment | running | fix ONLY a command that fails (order 15:07Z); else report |
+| guard-file diff (lead 14:36Z) | `git diff --stat f3c39cf8 -- .github .gitleaks.toml .gitleaksignore`: 4 workflow files, 30 insertions, 26 deletions, comment-only; .gitleaks.toml and .gitleaksignore unchanged | done | in PR notes |
+**FAILURES AND RETRIES:** none new. Restarts F69, F70 stay explained. **Totals: 0 failed tests in the frozen-tree runs so far (chunks 00-02: 975 passed, 0 failed); earlier F55 and F61 environmental, F62 real (fixed), F63 checker blind spot, F65 text (fixed), F67 tool 503, F68 explained, F69 and F70 restarts, 0 flakes, F45 unexplained, semgrep blocked (F48).**
+
 ## 2026-11-13 14:30Z - STATUS: v2 suite did NOT finish (second machine restart); now a RESUMABLE chunked run; second narrow agent result is in; nothing blocking; PR still DRAFT TEXT
 **LOAD:** machine up 0 min at 14:30Z = a SECOND restart (first about 14:14Z); each restart kills all processes and agents; /tmp files survive. Now: 1 agent (a1aa371f73c441e5c, mutation check of the weak test `test_deeply_nested_json_is_bad_envelope` on a scratch copy, so the PR body sentence about it can be proved or corrected), 1 shell (chunked suite, see below); heavy slots 2 of 3. A single 26-minute run cannot survive restarts every 15 minutes, so the runner now has 12 chunks of 8 test files each, one result file per chunk, and is relaunched where it stopped.
 | id | what | state | next |
