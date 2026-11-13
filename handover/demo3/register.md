@@ -201,3 +201,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B5e | builder fix-5 r5 (M1 + m1-m6 + raw files asked by reviewer) | 14:42Z | 15:15Z | launching |
 | CLOCK NOTE | REV-5c/B5e rows above say 14:41/14:42Z; real clock was 14:38Z (guessed again). B5e stop 15:15Z stays. | | | |
 | FREEZE | 14:45Z lead order (dated 15:05Z): no new agents, no new review rounds; finish fix-8 + E9; one report | | | |
+| B8 | closed 14:5xZ: fix-8 done: 40 new tests, 24 fail on old code; full suite final tree 3723 passed 200 skipped 0 failed rc 0 (raw/b8-full-suite.log, 1204 s, one earlier hygiene failure fixed); mutation 11 of 12 killed (survivor cannot change behaviour); apply checks A-D rc 0; NO independent review (freeze order); not fixed: label >63, dots before @, IP literal | | | closed |
