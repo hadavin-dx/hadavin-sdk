@@ -199,3 +199,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B4d | builder fix-4 r4 (major + minors m1-m4 + apply order with fix-8) | 14:36Z | 15:10Z | launching |
 | REV-5c | closed 14:41Z: fix-5 r4: 0 blocker, 1 major (reset.ps1 sibling: bare-substring match + no pid-shape rule), 6 minors (sh glob matches wrappers, case, hardcoded host, fixture scope, free_port residual flake, pre-existing cat); evidence/review-lane3-fix-5-r4-technical.md | | | closed |
 | B5e | builder fix-5 r5 (M1 + m1-m6 + raw files asked by reviewer) | 14:42Z | 15:15Z | launching |
+| CLOCK NOTE | REV-5c/B5e rows above say 14:41/14:42Z; real clock was 14:38Z (guessed again). B5e stop 15:15Z stays. | | | |
