@@ -26,3 +26,4 @@ tests/test_k5_fixes5.py rc=0 7 passed in 2.53s
 tests/test_k5_fixes6.py rc=0 22 passed in 5.89s
 tests/test_k5_fixes7.py rc=0 533 passed in 4.00s
 tests/test_k5_fixes8.py rc=0 58 passed in 0.43s
+tests/test_k5_fixes9.py rc=0 ................................
