@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:00Z / 07:30 IST - REPLAY BLOCK ACTED ON, ITEM BY ITEM (below); single-process run 2527 passed / 0 failed
+FAILED / UNCERTAIN first: the single-process run of 2db3926 is not finished (2527 passed, 0 failed so far; ETA about 02:05Z): [FILL] in #4 stays until it ends. D1 may need a core change: the lead decided SCRIPT-level fixes (so none expected). The A/B paper's evidence (CodeAnt findings per PR, the file-count limit) comes from the public GitHub API: not yet read.
+ITEMS (one line each):
+1 (PR stack A/B paper): STARTED: drafter P-AB (opus) writes pr-stack/AB-PAPER.md (one page + evidence appendix): evidence of what A shows (diff stat main...pr-3-tests, workflows that would trigger), WHAT A LOSES (review threads and bot findings on #2/#3/#4 counted from the public API) and HOW to carry them over (pr-stack/CARRY-OVER-CHECKLIST.md: each open comment with file:line and whether the final tree still has that line), what B costs, whether CI should install Playwright/gitleaks, and a recommendation table that tests your lean A against the evidence. I do not touch the PRs.
+2 (verified drafter rule): APPLIED: the drafter is writing v5 of the three descriptions: every remaining [UNVERIFIED] measured or removed; nothing is pasted by me.
+3 (Semgrep v3/v4 gate evidence + licence line): v4 (sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9) has fresh gate evidence (evidence-sg-20: mypy linux+win32, ruff, bandit, gitleaks dir/git, 15+63+3+44 = 125 tests with gitleaks, both mutants; sg-21 unparsable files; sg-22/22b real folders --strict). The licence line in the patch docs says 'the repository owner has said yes to p/python and p/javascript for this repository only; no other pack is covered'; the body v5 says the same: I did not write 'memory semgrep-rules-licence-yes-2026-11-12' (a private note): confirm the wording.
+4 (your Windows full run): USED as the Windows column of the skip table (skips/SKIP-TABLE.md, pushed): 3096 passed, 45 skipped, 0 failed, 22:30; 24+4+3+10+4 = 45 adds up. I treat the 252/29 figure as replaced. The 'CI hides coverage' finding goes into the A/B paper (whether CI should install Playwright and gitleaks).
+5 (answers to QUESTIONS-FOR-LEAD): APPLIED in v5 by the drafter: 1a-e core touches approved, named as plain facts (exclusive = stage-copy call only); 2 CodeAnt/142 files: no claim; 3 branch protection: only 'none seen via the GitHub API (rulesets not checked)', no retarget speculation; 4 Sonar split: one line; 5 Windows figure: your numbers verbatim; 6 [FILL] stays until my run ends (the drafter may fill it only from /tmp/work/full2db-b.exit); 7/8 noted; 9 pull --rebase: done each time (the heartbeat loop pushes concurrently: I rebuild my block on the latest origin when a push is rejected).
+(a) versions-md-allowance.patch IN THE STACK: apply order recorded: after merge-ready-hygiene-v3 (already in the head), before Semgrep v4: I verified Semgrep v4 applies after it (apply check) and test_hygiene passes (15) with it.
+(b) Q4 D1-D6: the fix builder (Q4b) got your decisions (D1 script checks the key file at start and refuses before y/N; D2 refuse :memory: with exit 4 and no log; D3 neither value nor position; D4 clean message; D5 non-zero exit when every call failed; D6 clean up): fail-before tests for each; patch + evidence ONLY in handover/demo/real-run/, NOT public until you say so.
+(c) xdist: not duplicated (I touch nothing of it).
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| single-process run (shell) | whole suite of 2db3926 in one pytest process | 01:42:49 | running | /tmp/work/full2db-b.txt |
+| P-AB (opus) | A/B PR stack paper + carry-over checklist | 02:01 | running | pr-stack/AB-PAPER.md |
+| D-PR (opus) | descriptions v5 + the A-variant description | 02:01 | running | pr-text/proposed/*-v5.md + pr4-A |
+| Q4b builder (sonnet) | D1-D6 fixes (handover only) | 01:54 | running | real-run/real-run-fixes.patch |
+| C1 builder (sonnet) | CRLF guard patch | 01:59 | running | skips/crlf-guard.patch |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 4, shells 2, containers 0, heavy pytest 1, load about 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | single-process run | chunked 3138 / Windows 3096 passed, 0 failed | the lead requires one Linux process | no | run ends |
+| PR stack decision | paper 1 | - | the lead decides A or B | no | the lead decides |
+| descriptions | v5 | v4 clean after 4 rounds | the lead's answers + measured-only rule | no | fresh read of v5 |
+| real-run fixes | Q4b | 6 findings | fix + review before public | no | reviewed |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| CRLF emulation | done (skips/CRLF-EMULATION.md) |
+| Windows column in the skip table | added (your measured numbers) |
+
 ## 2026-11-13 01:59Z / 07:29 IST - SINGLE-PROCESS RUN 2390 PASSED / 0 FAILED (about 80%); CRLF (Windows checkout) emulation DONE: one real risk, fixed by .gitattributes; two builders running (D1-D6 fixes, CRLF guard patch)
 FAILED / UNCERTAIN first:
 1. Single-process run of 2db3926 (the final claim you require): NOT finished: 2390 passed, 0 failed at 01:58Z; no restart since about 01:10Z; ETA about 02:05Z. Until it ends: chunked green only.
