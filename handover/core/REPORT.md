@@ -1,4 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:55Z (core lead; freeze order stands; lead answer 15:16Z read)
+F8 REPORTED (builder numbers; the v2-based patch f8-on-v2.patch: new file 118 cases, 103 failed / 15 passed on old code; full evidence set 2220 passed / 6 skipped, rc 0; ruff, format, bandit clean). FAILED / OPEN (first):
+1. f8-on-frozen.patch (F8 rebased on the frozen-tree rebase) is INCOMPLETE by the builder's own words: 3 tests fail in 8 touched files (471 passed, 5 skipped): test_every_reader_refuses_a_pipe_at_once[run_real_check._ca_context], test_the_model_stand_in_refuses_a_pipe_or_a_bad_file_as_key_file, test_the_scrub_tool_writes_through_the_checked_helper. Causes not looked at; no fail-before run. Builder hit its 60-minute box. Per the freeze order I start NO new builder: f8-on-frozen.patch ships marked INCOMPLETE; f8-on-v2.patch is complete only on the v2 base (handover chain).
+2. Also from F8: 4 V6 tests were already failing on v2 (found on an untouched baseline; I earlier took v2 as passing from the builder run, VC only ran v1); one allow-list line added to exceptions.txt (owner accept/reject); crash_desk now makes the book folder before it prints the path; an empty data/ folder appears in full runs, source unfound; DESK_FAKES_HOST/PORT probe unexplained; n8n_api exits 1 for every refusal (owner-only).
+EVIDENCE RUNNER EVF (a03120e2cb9cd5dde) started on core-fix-on-frozen.patch (REB only, as the 15:16Z answer says): clean copy, full suite, fail-before, hostile inputs. Then ONE fresh reviewer, then README + FROZEN.
+Running: EVF (1 agent; the freeze order lifts the 2-agent minimum once only the final run is left).
+LOAD: low until EVF starts its suite.
+
 ## STATUS 16:42Z (core lead; freeze order stands)
 CODE-REBASE REPORTED (builder numbers, NOT independently run yet): core-fix-on-frozen.patch (3698 lines, 49 files, sha256 a29c7f83...) applies on frozen 49d3c859, fresh-apply result identical to its tree. Fail-before on the OLD frozen tree: 259 failed / 22 passed of 281 new tests (22 pass on old code: 9 probe cases, 2 reader cases, 3 over-refusal controls, 8 writer cases that frozen already refused). Touched-module run 2 failed / 3718 passed / 8 skipped; the 2 were test_ledger_amounts tests (argparse text is now one 'refused:' line on stdout, leads/runs 0 now EXIT_REFUSED); builder adapted them; rerun 275 passed. Ruff, format, bandit clean.
 FAILED / OPEN (read first):
