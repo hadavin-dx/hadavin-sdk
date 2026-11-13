@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:23Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| V2 | evidence for F2 (full suite in the AF environment) | proof | 13:11Z | about 13:55Z | 1 | RUNNING: runner's own checkpoint: fails-before, 3x after, ruff, mutants (8 of 8 reported done) and 25 hostile inputs done; full suite at about 56% | read; I verify numbers from its logs |
+| V3 | evidence for F3 | proof | 13:03Z | 13:45Z (late) | 1 | RUNNING: fails-before 39 failed / 3 passed, 3x after 42 passed, ruff+bandit and 8 mutants (all killed) done; per-file neighbour runs 34 of 71 | read |
+| F1b | builder round 2 of the F1 fix (traceback on deep JSON, two FIFO hangs, two test survivors) | resolve | 13:19Z | 14:20Z | round 2 of 2 | RUNNING | V1b |
+| F4c | builder docs round 3 | close V4b survivor | 13:19Z | 14:00Z | round 3 | RUNNING | V4c + round-2 review |
+| F6 | builder writer-side opens + wrappers | open classes | 13:18Z | 14:20Z | 1 | RUNNING | V6 |
+| F1 F2 F3 F4 F4b | builders | | | | | DONE (builder claims; patches in handover/core/fix/) | evidence + review as above |
+| D1 E1 E2 C6 V1 V4 V4b R4 | | | | | | DONE | |
+
+FAILURES AND RETRIES: no new failures since the 13:2xZ block. dmesg shows 1 "out of memory" line in total on this machine (the kernel kill noticed by two runners); cause: 4 cores 16 GB with several pytest at once, not proven. Totals: failures with proven cause 1 (T1 in-tree TMPDIR); unexplained 2 (B2-first, T2-earlier); flakes 0; agents crashed 0; real defects found by agents are in lanes F1-F6.
+LOAD: 5 agents running, load average about 2.3 on 4 cores.
+ASK: none new (earlier asks with their defaults stand).
+
+
 ## REPORT (container clock 13:17Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |

@@ -163,3 +163,4 @@ F4b done; V4b started
 D1 done 3950 passed; F2 done; V2 started
 V4b done; F4c and F6 started
 V1 done: 1 traceback 2 hangs 2 survivors; F1b started
+status 5 agents running
