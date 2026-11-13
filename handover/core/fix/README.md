@@ -1,4 +1,4 @@
-# Core fix patches: what each one fixes and whether it applies (freeze README, DRAFT until the final evidence and review are in)
+# Core fix patches: what each one fixes and whether it applies (freeze README, FROZEN 2026-11-13)
 
 Written by the core lead session, 2026-11-13. All numbers marked "builder" were claimed by the agent that built the patch; numbers marked "runner" were measured by a separate agent. Nothing here is applied to any repository; nothing is pushed to the public demo repo. Made-up data only, no live service, no spend.
 
@@ -26,4 +26,7 @@ Scripts and readers in the demo (hadavin-dx/duplicate-proof-lead-desk-n8n) showe
 7. The reviewer on core-fix-v2 was a general-purpose agent reading the persona file (the `egm:*` agent types are not registered here), labelled FALLBACK.
 
 ## Final head evidence and review
-FINAL_EVIDENCE_AND_REVIEW
+Evidence: `EVF-EVIDENCE.md` (independent runner plus lead follow-up runs). Review: `../review/core-fix-on-frozen-review-r1.md` (round 1, fallback reviewer): 0 Blockers, 4 Majors, none fixed (freeze order).
+Open defects in `core-fix-on-frozen.patch` itself, with the exact fix in the review file: F1 FIFO as SMTP CA file hangs (mail path, guarantee-class); F2 EOFError traceback in `run_live_check` with closed stdin; F5 more readers outside `regfile` (load_tools, fake_model_server, fakes, portal_demo); F6 limits not all in constants.
+Apply note: on a CRLF checkout use `git apply --ignore-whitespace` and then rewrite `scripts/reset.ps1` and `scripts/start_all.ps1` to all-CRLF (the patch is LF); a plain `git apply` fails on those two files.
+Full suite on the patched tree: group A 1899 passed, 5 skipped; group B 2253 passed, 7 failed because the runner's tree had no `.git` (same 4 test files: 287 passed in a git copy). Fail-before: 109 failed, 304 passed, 4 collection errors on the 12 changed test files against the unpatched tree.

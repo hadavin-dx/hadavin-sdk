@@ -1,4 +1,15 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 17:30Z (core lead): FROZEN. QUEUE DONE except the open defects below; idle by order after this block
+FINAL on core-fix-on-frozen.patch (sha256 a29c7f83..., tree 49d3c859): evidence in handover/core/fix/EVF-EVIDENCE.md, review in handover/core/review/core-fix-on-frozen-review-r1.md, README in handover/core/fix/README.md.
+FAILED / OPEN (first):
+1. Fresh review round 1 (fallback reviewer): 0 Blockers, 4 MAJORS NOT FIXED (freeze order): F1 FIFO as SMTP CA file hangs (mail path, guarantee-class, I proved it: rc 124 at 5 s, same as old code); F2 run_live_check EOFError traceback with closed stdin; F5 more readers outside regfile (check_invariants, catcher, load_driver, fake_model_server, fakes, portal_demo; read from code, not run); F6 limits/vendor facts not all in constants. Two Minors (uncapped crash-flag read, missing O_NOCTTY). Guarantee-class F1 needs a second independent pass after a fix: not done.
+2. Plain git apply FAILS on 2 .ps1 files of a CRLF checkout (patch is LF); command and fix in README.
+3. Independent suite: group A 1899 passed 5 skipped; group B 7 failed = no .git in the runner's tree (proven: same 4 files 287 passed in a git copy). So full suite 0 real failures, but with gitleaks missing and 99 files, no mutation run, no Windows.
+4. Fail-before (lead run, 12 changed test files on the unpatched tree): 109 failed, 304 passed, 4 collection errors (shows need of the patch; builder number 259/22 not comparable).
+5. f8-on-frozen.patch INCOMPLETE (3 failing tests); real-run collision unreconciled; 5 doc sentences untested: all listed OPEN in the README. B2 rc=1 UNKNOWN, T2 UNEXPLAINED.
+ASK: fix F1 and F2 (small, about 30 min, one builder, then one fresh pass) before this patch goes to public main, or ship as is with the OPEN list? My recommendation: fix F1 and F2 first (mail path hang, traceback); freeze order says no.
+Numbers: agents started this segment 4 (F8, REB, EVF, reviewer); all finished; processes left 0 (ps checked); scratch trees remain in /home/user/build/rr6 (outside repo).
+
 ## STATUS 17:10Z (core lead; lead answer read: F8 stays incomplete and handover-only, listed OPEN)
 EVF (evidence runner, INTERIM, runner numbers): patch sha256 a29c7f83... as given; frozen tree write-tree 49d3c859 as given. ruff check and format clean (line 120), bandit -ll 0 issues. Suppressions vs frozen: 19 noqa added (E402, S603, S404 in tests), 0 nosec. 100 MB NUL key file: OLD accepted 104857600 bytes (223 MB peak), NEW refused in 0.00 s (23 MB). FIFO as key file: OLD hung (timeout rc 124), NEW refused 0.12 s. Full suite: two runs (groups A, B) still going, about 30% and 9% at last read, 0 failures so far (partial, not a result). Fail-before on the old tree NOT yet run by an independent runner (builder: 259 failed / 22 passed).
 FAILED / OPEN (read first):
