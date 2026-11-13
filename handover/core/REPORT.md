@@ -1,5 +1,40 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:08Z block (lead core session, hadavin-sdk-da)
+
+**FAILED/UNCERTAIN FIRST**
+- Part 2 r9 NOT clean (design 0B/3M, codebase 1B/5M): head 83cdb7a2 is not final. Resolve done (reviews/PD-bind/goldfish_review_report-r9.md, 14 issues, round 10 required). No laptop run for Part 2 until batch 10 is final.
+- Part 6 r9 NOT clean: design 3M, codebase 1B/6M/12N (a91e4eee). Round 10 required. Resolve not yet written. dd827d79 stays laptop-Linux SECOND in the queue but is superseded once batch 10 pushes.
+- SONAR-PATH r2 design (a4e6c725): 0B/3M/9N (tripwire granularity, exceptions origin words, PR-TABLE not the origin table). Codebase reviewer aa1d7d31 and runner a4ffc3a3 still running. SonarCloud has NOT been seen clean (needs the draft PR, only the lead opens it).
+- Q8c-1 runner a7e31a96 was silent 70+ min: STOPPED (killed by timeout, rerun not started). Its remaining three items go to the laptop Linux run. No RESULTS file was written.
+- gitleaks FACT (lead command 03:08Z item 3): with .gitleaks.toml, history of origin/main alone: 0 findings, exit 0. With all remote branches (--log-opts=--all): 2046 findings, 86 outside handover/ (all in wip branches, not main): 80+ generic-api-key in tests/fixtures/textnorm_golden.json, tests/test_textnorm_differential.py, tests/test_inbound_ledger.py, tests/test_mutation_runner_keywords.py, tests/test_c1a_redactor.py, tests/test_c18a_hardening.py, tests/test_redact_fold.py (+1 private-key in test_redact_fold.py, commit b12b7dd7); commits 2a7e169a 188c5c24 1d6574c1 69930a58 a4fe48bb 7e5b537a 103686d8 67d727b6 edd7caba a2ca4024 222e82cb c3ddb553 dbae20c9 386875c4 c9fa644d 54ee4ac6 5693d79b c05ba585 b12b7dd7 68efd66d 37b9ca6c 498eb122 4df0ccd3 5a1dadc1 c440e295 c7916928 e9bd1d10. Not inspected beyond rule id, file, commit (redacted). My 1920/19 figure earlier used a different set of refs; this run is the exact figure. CI scans the PR branch history (fetch-depth 0) with the same config, so a PR branch that contains those commits would fail it: the code-only branches I push are squashed on main 81a5aadb and do not. Whether they are real leaks or made-up fixtures is NOT verified; owner-only decision if any are real (.gitleaksignore / config are owner-only).
+
+**LEAD ACTIONS**
+- Q8c-1 runner stopped (order 02:48Z/03:08Z). Venv hazard rule written: handover/core/VENV-HAZARD-RULE.md and put in the batch 10 brief.
+- Part 2 batch 10 builder launched (aa234f9b): all classes A-H from the r9 fix brief.
+
+**LIVE ITEMS (agents by id)**
+- aa234f9b Part 2 batch 10 builder (wt/pdbind-b8, started 03:08Z, expected end 60 min).
+- abd6af72 Part 2 runner on 83cdb7a2 (results become an addendum).
+- ab8e69ea Part 6 runner on dd827d79.
+- aa1d7d31 SONAR-PATH r2 codebase reviewer; a4ffc3a3 SONAR-PATH r2 runner.
+- a4e6c725 and a91e4eee finished (saved). a7e31a96 stopped.
+
+**ROUNDS (WHY)**
+Part 2: round 9 not clean (fail-open atom at depth 9, instance shadow of Runtime methods, double pre-auth scan); money path, no cap. Part 6: round 9 not clean (1B/6M/3M). SONAR-PATH: round 2 not clean (3 Major in the assurance text and tripwire; no escape found).
+
+**FINISHED SINCE LAST BLOCK**
+Part 2 r9 resolve pushed. Part 6 r9 codebase and SONAR-PATH r2 design saved with ledger rows (PDBANNER-r9-5..9, SONARPATH-r2-1..4). gitleaks fact above.
+
+**EGM STEP PER PACKAGE**
+Part 2: resolve done, batch 10 build. Part 6: result review done (design + codebase), resolve next. Q8c-1: code-only dcf64b36, laptop Linux queued FIRST. SONAR-PATH: result review round 2 in progress.
+**LANE SONAR-PATH:** agents a4e6c725 (done), aa1d7d31, a4ffc3a3; EGM step = result review round 2; A, B, C done, D branch built (core/k1b-path-confinement not pushed, wip/cloud-sonar-path2 e29cc269).
+
+RUN ON LAPTOP: hadavin-sdk dcf64b36b094c153bf4f865b1fcba5971f4cf9fb pytest -q full + complete mutant tables (policy_mutants, mutation_runner_mutants) + all five tests/test_policy_changelog.py plant tests (Linux Docker)
+RUN ON LAPTOP: hadavin-sdk dd827d79e00bea6da81e757e0fa0746bbbd3449d pytest -q full + banner_mutants complete (Linux Docker; likely superseded by batch 10)
+RUN ON LAPTOP: Part 2 and SONAR-PATH: not final, none yet.
+
+
 ## 02:57Z / Part 6 batch 9 PUSHED (dd827d79); Part 2 r9 design review in (0 Blocker, 3 Major); Q8c-1 code-only branch pushed
 
 **FAILED / UNCERTAIN FIRST**
