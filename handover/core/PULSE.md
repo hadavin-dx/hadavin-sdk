@@ -187,3 +187,4 @@ core: freeze order read; F8, REB, V4e running
 core: 16:05Z block, 3 agents running
 core: V4e done, 5 untested doc sentences (ASK), F8+REB running
 16:20Z core lead: F8 + CODE-REBASE running, block pushed
+16:27Z core lead: F8 final run ~51%, REB run ~67%, block pushed

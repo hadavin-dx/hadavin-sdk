@@ -1,4 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:27Z (core lead; freeze order stands)
+| agent | state (builder words, unverified) |
+|---|---|
+| F8 (a6ec82da18b2d7413) | RESULTS.md draft written 14:56 (not final: final-run cell still a placeholder); final full run (full2.log) about 51% done; builder says 4 tests already failed on v2 (V6 book-path tests expected exit 2, v2 gives exit 4; builder followed v2) and it added one allow-list line in exceptions.txt: both need the reviewer's eye. No patch file yet. |
+| CODE-REBASE (a998283da1fe67742) | touched-module run about 67% done (14:55Z checkpoint: fail-before 259 failed / 22 passed on the old frozen tree). No RESULTS yet. |
+FAILURES AND RETRIES: v2 left 4 V6 tests failing (found by F8 on the baseline; I had told the lead v2 passed on the builder run only, VC ran v1) so root cause proven? yes (F8 ran the untouched baseline); F8 first run had 11 failures from its own edits, fixed. Rebase run 'F' marks still unexplained. Open: 5 untested doc sentences, B2 UNKNOWN, T2 UNEXPLAINED.
+LOAD: 2 agents. ASK: none new.
+NEXT: both reports, apply F8 on the rebase, one evidence run, one review, README, freeze.
+
 ## STATUS 16:20Z (core lead; freeze order stands; orders file bottom block read: newest order is 15:06Z freeze, no new one)
 | agent | state (builder words, unverified) |
 |---|---|
