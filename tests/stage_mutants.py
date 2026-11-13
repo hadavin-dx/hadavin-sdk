@@ -1,4 +1,4 @@
-"""The mutants of the stage rename (named M1 to M10 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
+"""The mutants of the stage rename (named M1 to M13 with letter variants; there is no M7 or M11), run by the P1m runner (``tools/mutation_runner.py``).
 
 They are NOT in ``tests/mutation_runner_mutants.py``: the meta-tests of that file pin its own mutants (the runner's and the
 judge's) by count and by target file. Same runner, same judge, a separate list. Each mutant reverts ONE guard in a temp copy
@@ -27,6 +27,7 @@ TBL = "src/hadavin_sdk/backends/table.py"
 DEFERRED = "src/hadavin_sdk/deferred.py"
 REGISTRY = "src/hadavin_sdk/registry.py"
 APP = "src/hadavin_sdk/app.py"
+TICK = "src/hadavin_sdk/runtime/tick.py"
 REDACT = "src/hadavin_sdk/guard/redact.py"
 OLD = "d" + "ev"  # built from parts: this file is scanned by the class test it helps to check
 RAISE = (
@@ -40,6 +41,31 @@ RAISE = (
 def mutant(name, file, old, new, killer, expect):
     return Mutant(
         name, file, old, new, expect, test_file=TEST, only_test=killer, pinned=PIN + killer
+    )
+
+
+OBJECT = "test_pilot_and_prod_refuse_a_test_object_handed_to_build"
+VAULT = "test_pilot_and_prod_refuse_a_static_vault_token"
+TICK_TEST = "test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick"
+STEPS_TEST = "test_pilot_and_prod_refuse_a_tick_whose_step_list_lacks_a_built_in_step"
+TIMEOUT_TEST = "test_demo_refuses_a_timeout_that_is_out_of_range"
+RAISE_VAULT = (
+    "    if live and (static := _static_vault_tokens(b)):\n"
+    "        # Before any backend is built: the token is never read from the environment of this process.\n"
+    "        raise ConfigError(f\"environment {cfg.environment}: refused: {', '.join(static)}\")\n"
+)
+MAKE_SECRETS = '    if secrets is None:\n        secrets = make("secrets", b.secrets)\n'
+VAULT_FIRST, SECRETS_FIRST = RAISE_VAULT + MAKE_SECRETS, MAKE_SECRETS + RAISE_VAULT
+
+
+def dropped(name, expect):
+    return mutant(
+        f"M12d {name} dropped from the six keywords (app.py)",
+        APP,
+        f'            ("{name}", {name}),\n',
+        "",
+        OBJECT,
+        expect,
     )
 
 
@@ -123,6 +149,152 @@ M = [
     mutant("M9c app.py goes back to an allowlist of live stages", APP, "live = is_live(cfg.environment)",
         'live = cfg.environment in ("pilot", "prod")',
         "test_a_value_that_is_not_a_stage_is_live_for_every_guard", "app treated"),
+    mutant("M12a a live build takes a test object (app.py: the refusal of the six keywords is switched off)", APP, "if live and given:", "if False:",
+        OBJECT, "a live build took a test object"),
+    mutant("M12b a static Vault token is allowed in pilot and prod (app.py: the check never matches)", APP,
+        'isinstance(s, VaultConnection) and s.auth == "token"', "False",
+        VAULT, "a static Vault token was accepted"),
+    mutant("M12c the six keywords are tested for truth, not for being given (app.py)", APP, "if value is not None\n", "if value\n",
+        OBJECT, "a live build took a falsy test object"),
+    dropped("secrets", "a live build took the keyword secrets="), dropped("channel", "a live build took a test object"),
+    dropped("detector", "a live build took the keyword detector="), dropped("llm", "a live build took the keyword llm="),
+    dropped("clock", "a live build took the keyword clock="), dropped("timeout_s", "a live build took the keyword timeout_s="),
+    mutant("M12f the Vault check is narrowed to the secrets kind (app.py)", APP,
+        "isinstance(s, VaultConnection) and", 'type(s).__name__ == "VaultSettings" and',
+        VAULT, "a static Vault token was accepted for signer"),
+    mutant("M12g the Vault check runs in prod only (app.py)", APP, "if live and (static := _static_vault_tokens(b)):",
+        'if cfg.environment == "prod" and (static := _static_vault_tokens(b)):',
+        VAULT, "a static Vault token was accepted for secrets (pilot"),
+    mutant("M12h the Vault check goes back to the two kind names (app.py)", APP,
+        "isinstance(s, VaultConnection)", 's.kind in ("vault", "vault_transit")',
+        VAULT, "a static Vault token was accepted for a new kind built on the Vault settings"),
+    mutant("M12i the Vault check is widened to every sign-in but kubernetes (app.py)", APP,
+        's.auth == "token"', 's.auth != "kubernetes"',
+        VAULT, "a Vault sign-in that is not a static token was refused (approle)"),
+    mutant("M12j the Vault check runs after the secrets backend is made (app.py)", APP, VAULT_FIRST, SECRETS_FIRST,
+        VAULT, "a backend was made before the Vault refusal"),
+    mutant("M12k sources= is tested for truth, not for being given (app.py)", APP, "if sources is not None and live:", "if sources and live:",
+        "test_pilot_and_prod_refuse_sources_and_tools_handed_to_build", "a live build took sources= ('pilot', _FalsyDict"),
+    mutant("M12l tools= is tested for truth, not for being given (app.py)", APP, "if tools is not None and live:", "if tools and live:",
+        "test_pilot_and_prod_refuse_sources_and_tools_handed_to_build", "a live build took tools= ('pilot', _FalsyDict"),
+    mutant("M12m the timeout_s= keyword is not checked against the timeout rule (app.py)", APP,
+        "if timeout_s is not None and not executor_timeout_ok(timeout_s):", "if False:",
+        TIMEOUT_TEST, "demo took timeout_s=0"),
+    mutant("M12n the executor timeout has no upper bound (config.py)", CFG,
+        "return defaults.EXECUTOR_TIMEOUT_MIN_S <= value <= defaults.EXECUTOR_TIMEOUT_MAX_S", "return defaults.EXECUTOR_TIMEOUT_MIN_S <= value",
+        TIMEOUT_TEST, "demo took timeout_s=inf"),
+    mutant("M12o True and False count as an executor timeout (config.py)", CFG,
+        "if isinstance(value, bool) or not isinstance(value, int | float):", "if not isinstance(value, int | float):",
+        TIMEOUT_TEST, "demo took timeout_s=True"),
+    mutant("M12p the config field of the executor timeout is not checked against the rule (config.py)", CFG,
+        "if not executor_timeout_ok(value):", "if False:",
+        TIMEOUT_TEST, "the config took executor_timeout_s: 3600.1"),
+    mutant("M12r the executor timeout has no lower bound above 0 (config.py)", CFG,
+        "return defaults.EXECUTOR_TIMEOUT_MIN_S <= value <= defaults.EXECUTOR_TIMEOUT_MAX_S", "return 0 < value <= defaults.EXECUTOR_TIMEOUT_MAX_S",
+        TIMEOUT_TEST, "demo took timeout_s=1e-09"),
+    mutant("M13a run_tick's own refusal is switched off: a step list is taken, a time is still refused by the context (tick.py)", TICK,
+        "if given and live:", "if False:",
+        TICK_TEST, "a live tick took a time handed to it"),
+    mutant("M13b the tick refuses a handed time in demo too (tick.py)", TICK,
+        "if given and live:", "if given:",
+        TICK_TEST, "demo refused a time handed to the tick"),
+    mutant("M13c steps dropped from the two keywords of the tick (tick.py)", TICK,
+        '(("now", now), ("steps", steps))', '(("now", now),)',
+        TICK_TEST, "a live tick took a step list handed to it"),
+    mutant("M13d the two keywords of the tick are tested for truth (tick.py)", TICK,
+        '(("now", now), ("steps", steps)) if value is not None', '(("now", now), ("steps", steps)) if value',
+        TICK_TEST, "a live tick took an empty step list"),
+    mutant("M13e a live tick runs without a built-in step (tick.py: the check is switched off)", TICK,
+        "if live and (missing := _missing_built_in_steps(own_steps)):", "if False:",
+        STEPS_TEST, "a live tick ran without a built-in step"),
+    mutant("M13f the built-in step check runs in demo too (tick.py)", TICK,
+        "if live and (missing := _missing_built_in_steps(own_steps)):", "if missing := _missing_built_in_steps(own_steps):",
+        STEPS_TEST, "demo did not run the list as it is"),
+    mutant("M13g the built-in step check compares the count, not the names (tick.py)", TICK,
+        "return [name for name in _BUILT_IN if name not in present]", "return [] if present else list(_BUILT_IN)",
+        STEPS_TEST, "a live tick ran without a built-in step"),
+    mutant("M13h a live tick context takes a time handed to it (tick.py)", TICK,
+        "elif is_live(self.app.config.environment):", "elif False:",
+        TICK_TEST, "a live tick step took a time handed to its context"),
+    mutant("M13i a live tick step takes a stand-in context with a time (tick.py)", TICK,
+        "if type(ctx) is not TickContext and is_live(ctx.app.config.environment):", "if False:",
+        TICK_TEST, "a live tick step took a stand-in context with a time"),
+    mutant("M13k a live tick step takes any object that says it is a TickContext (tick.py: isinstance again)", TICK,
+        "if type(ctx) is not TickContext and is_live(ctx.app.config.environment):",
+        "if not isinstance(ctx, TickContext) and is_live(ctx.app.config.environment):",
+        TICK_TEST, "a live tick step took a Mock(spec=TickContext)"),
+    mutant("M13l TickContext can be subclassed again (tick.py)", TICK,
+        '        raise TypeError(\n            "TickContext cannot be subclassed', '        return print(\n            "TickContext cannot be subclassed',
+        TICK_TEST, "a subclass of TickContext was allowed"),
+    mutant("M13m a live tick runs a step list with a name used twice (tick.py: the check is switched off)", TICK,
+        "if live and (repeated := _repeated_step_names(own_steps)):", "if False:",
+        STEPS_TEST, "a live tick ran a step list with a name used twice"),
+    mutant("M13n the repeated-name check finds nothing (tick.py)", TICK,
+        "        if step.name in seen and step.name not in repeated:", "        if False:",
+        STEPS_TEST, "a live tick ran a step list with a name used twice"),
+    mutant("M13j the tick context refuses a handed time in demo too (tick.py)", TICK,
+        "elif is_live(self.app.config.environment):", "else:",
+        TICK_TEST, "demo refused a time handed to the tick"),
+    mutant("M9e the tick context goes back to an allowlist of live stages (tick.py)", TICK,
+        "is_live(self.app.config.environment)", 'self.app.config.environment in ("pilot", "prod")',
+        TICK_TEST, "the tick context treated"),
+    mutant("M9f the tick step's stand-in check goes back to an allowlist of live stages (tick.py)", TICK,
+        "is_live(ctx.app.config.environment)", 'ctx.app.config.environment in ("pilot", "prod")',
+        TICK_TEST, "the tick step treated"),
+    mutant("M9d tick.py goes back to an allowlist of live stages", TICK, "is_live(app.config.environment)",
+        'app.config.environment in ("pilot", "prod")',
+        TICK_TEST, "the tick treated"),
+    mutant("M14a the tick loop reads STEPS again, not the copy its checks saw (tick.py)", TICK,
+        "    for step in own_steps if steps is None else steps:", "    for step in STEPS if steps is None else steps:",
+        "test_a_live_tick_runs_the_step_list_its_checks_saw_even_if_the_list_is_edited_in_place", "the tick ran a list other than"),
+    mutant("M14b a context copied by replace() is no longer refused with the copy sentence (tick.py)", TICK,
+        "            raise ConfigError(NO_GIVEN_TIME_COPY)", "            raise ConfigError(NO_GIVEN_TIME)",
+        TICK_TEST, "a live tick step took a time handed to its context"),
+    mutant("M15a a login in base_url is no longer refused as a login (config.py)", CFG,
+        'if url_has_login(system.base_url):', 'if False:',
+        "test_a_login_inside_a_system_base_url_is_refused_without_showing_the_url", "DID NOT RAISE"),
+    mutant("M15b the https refusal of base_url shows the URL again (config.py)", CFG,
+        '"(http only for loopback with allow_insecure_loopback)"', 'f"(http only for loopback with allow_insecure_loopback): {system.base_url}"',
+        "test_a_system_base_url_that_is_not_https_is_refused_without_showing_the_url", "the error shows the refused value"),
+    mutant("M15c a validation error is shown with pydantic's own text (config.py: _validation_text)", CFG,
+        '    if not renamed:\n        return _value_free_text(exc)', '    if not renamed:\n        return str(exc)',
+        "test_an_unknown_source_kind_or_route_is_not_echoed", "validation error for Config"),
+    mutant("M15d config_error_text shows a validation error as pydantic prints it (config.py)", CFG,
+        '    if isinstance(exc, ValidationError):\n        return _value_free_text(exc)', '    if isinstance(exc, ValidationError):\n        return str(exc)',
+        "test_a_registry_validation_error_does_not_echo_the_value", "errors.pydantic.dev"),
+    mutant("M15e a YAML error is shown with its own text, which quotes the line (config.py)", CFG,
+        '        return f"not valid YAML (line {mark.line + 1}, column {mark.column + 1})"', '        return str(exc)',
+        "test_a_line_of_broken_yaml_is_not_quoted_in_the_error", "while scanning"),
+    mutant("M15f any other error is shown with its own text (config.py)", CFG,
+        '    return f"a value was refused ({type(exc).__name__})"', '    return str(exc)',
+        "test_any_other_error_while_loading_is_reduced_to_its_type", "a value was"),
+    mutant("M15g the cause of the last-resort error is attached again (config.py)", CFG,
+        '        raise ConfigError(config_error_text(exc)) from None', '        raise ConfigError(config_error_text(exc)) from exc',
+        "test_any_other_error_while_loading_is_reduced_to_its_type", "the error shows the refused value"),
+    mutant("M15h the cause of a backend settings error is attached again (config.py)", CFG,
+        '{config_error_text(exc)}") from None', '{config_error_text(exc)}") from exc',
+        "test_a_backend_settings_error_does_not_echo_the_value_or_keep_the_cause", "the cause"),
+    mutant("M15i a duplicate key is shown again (config.py)", CFG,
+        'raise ConfigError(f"duplicate key (line {key_node.start_mark.line + 1})")', 'raise ConfigError(f"duplicate key {key!r} (line {key_node.start_mark.line + 1})")',
+        "test_a_duplicate_key_is_reported_by_line_only", "duplicate key"),
+    mutant("M15j a duplicate id is shown again (registry.py)", REGISTRY,
+        'raise ConfigError(f"{where}: duplicate id in entry {number}")', 'raise ConfigError(f"{where}: duplicate id {obj.id}")',
+        "test_a_duplicate_id_in_a_registry_file_is_reported_by_entry_number_only", "duplicate id"),
+    mutant("M15k the cause of a registry error is attached again (registry.py)", REGISTRY,
+        '    except (ValidationError, ValueError, TypeError, yaml.YAMLError) as exc:\n        raise ConfigError(config_error_text(exc)) from None', '    except (ValidationError, ValueError, TypeError, yaml.YAMLError) as exc:\n        raise ConfigError(config_error_text(exc)) from exc',
+        "test_a_registry_validation_error_does_not_echo_the_value", "the error shows the refused value"),
+    mutant("M15l a path that leaves its folder is shown again (config.py)", CFG,
+        'raise ConfigError("path escapes its folder")', 'raise ConfigError(f"path escapes its folder: {relative}")',
+        "test_a_path_that_leaves_its_folder_is_refused_without_the_path", "path escapes its folder"),
+    mutant("M15m an unknown kind is shown again (config.py)", CFG,
+        'raise ConfigError(f"backend {cap}: unknown kind; known: {\', \'.join(sorted(kinds))}")', 'raise ConfigError(f"backend {cap}: unknown kind {kind!r}; known: {\', \'.join(sorted(kinds))}")',
+        "test_an_unknown_kind_or_capability_is_not_echoed", "unknown kind"),
+    mutant("M15n an unknown route is shown again (config.py)", CFG,
+        'raise ValueError(f"backends.detector {d.kind}: its route is not in routes")', 'raise ValueError(f"backends.detector {d.kind}: unknown route {d.route!r}")',
+        "test_an_unknown_source_kind_or_route_is_not_echoed", "validation error for Config"),
+    mutant("M15o a refused list entry of the evidence settings is shown again (config.py)", CFG,
+        'f"evidence.stored_kinds: {len(unknown)} entries cannot be stored', 'f"evidence.stored_kinds: {unknown} entries cannot be stored',
+        "test_a_refused_stored_kind_is_counted_not_shown", "validation error for Config"),
     mutant("M10a pilot dropped from the redactor's common words", REDACT, '        "pilot",\n', "",
         "test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_and_other_names", "pilot is swept"),
     mutant("M10b demo dropped from the redactor's common words", REDACT, '        "demo",\n', "",

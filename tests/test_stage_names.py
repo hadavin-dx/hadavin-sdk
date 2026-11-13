@@ -13,6 +13,7 @@ import typing
 import unicodedata
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -22,11 +23,13 @@ from hadavin_sdk import config as config_mod
 from hadavin_sdk import deferred
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.app import build
+from hadavin_sdk.approvals.channel import FakeChannel
 from hadavin_sdk.backends import table
 from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_config, parse_backends
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests.conftest import make_cfg, qualify
+from tests.test_k3_pilot_env import pilot_cfg
 
 # The old word is built from parts in this file: the class test never scans this file, but a grep for it should find
 # only the places that matter.
@@ -328,6 +331,399 @@ def test_a_value_that_is_not_a_stage_is_live_for_every_guard(tmp_path):
         got = _live_by_site(tmp_path / str(n), bad)
         for site, live in got.items():
             assert live, f"{site} treated {bad!r} as not live (an allowlist of live stages)"
+
+
+def _build_refusal(tmp_path, stage, edit=None, made=None, plant=None, **given):
+    """What `app.build` says when a config whose stage is `stage` (the pilot config, real kinds only, changed by
+    `edit`; for a stage other than pilot an unvalidated copy with the stage changed) is built with the keyword
+    arguments `given`. '' when it builds. (Past the refusals this config stops at the empty secrets folder, also a
+    ConfigError.) `made` collects the capabilities the build asked the factory for. `plant` is one extra kind for
+    the table: (capability, kind, entry).
+
+    No real Vault credential can be read or sent from here: the two environment variables a Vault sign-in reads are
+    removed, and a backend whose settings are a Vault sign-in is never built (an empty test provider stands in)."""
+    root = pilot_cfg(tmp_path)
+    # the mounted-file secrets kind reads nothing until a secret is asked for
+    (root / "secrets").mkdir()
+    if edit:
+        _edit(root, edit)
+    with pytest.MonkeyPatch.context() as mp:
+        mp.delenv("VAULT_TOKEN", raising=False)
+        mp.delenv("VAULT_SECRET_ID", raising=False)
+        if plant:
+            mp.setitem(table.TABLE[plant[0]], plant[1], plant[2])
+        cfg = load_config(root)
+        reg = load_registry(cfg)
+        copy = cfg.model_copy(update={"environment": stage})
+        real_make = app_mod.make
+
+        def recording(capability, settings, *args, **kwargs):
+            if made is not None:
+                made.append(capability)
+            if hasattr(settings, "token_env"):
+                return FakeSecretProvider({})
+            return real_make(capability, settings, *args, **kwargs)
+
+        mp.setattr(app_mod, "make", recording)
+        mp.setattr(app_mod, "load_config", lambda _d: copy)
+        mp.setattr(app_mod, "load_registry", lambda _c: reg)
+        try:
+            app_mod.build(root, ["ito-agent"], **given)
+        except ConfigError as exc:
+            return str(exc)
+    return ""
+
+
+class _FalsyChannel(FakeChannel):
+    def __bool__(self) -> bool:
+        return False
+
+
+class _FalsyDict(dict):
+    def __bool__(self) -> bool:
+        return False
+
+
+def _fixed_clock():
+    return None
+
+
+def _echo(_args):
+    return "x"
+
+
+def test_pilot_and_prod_refuse_a_test_object_handed_to_build(tmp_path):
+    """`secrets=`, `channel=`, `detector=`, `llm=`, `clock=` and `timeout_s=` hand `build` an object in place of a
+    configured part. That is for tests: only exactly demo accepts it, and an object that is falsy counts as given.
+    Each keyword and each stage has its own test in tests/test_q8a_live_overrides.py; this one needs no database and
+    no conftest fixture."""
+    backend = "{0}= is for tests; configure backends.{0} in pilot and prod"
+    other = "{0}= is for tests; it is refused in pilot and prod"
+    for n, stage in enumerate(["pilot", "prod", "stag" + "ing", "Demo", "", None]):
+        got = _build_refusal(tmp_path / str(n), stage, channel=FakeChannel())
+        assert got == backend.format("channel"), (
+            f"a live build took a test object ({stage!r}): {got[:80]!r}"
+        )
+    six = {
+        "secrets": (FakeSecretProvider({}), backend),
+        "channel": (FakeChannel(), backend),
+        "detector": (object(), backend),
+        "llm": (object(), backend),
+        "clock": (_fixed_clock, other),
+        "timeout_s": (2.5, other),
+    }
+    for name, (value, text) in six.items():
+        got = _build_refusal(tmp_path / name, "pilot", **{name: value})
+        assert got == text.format(name), f"a live build took the keyword {name}=: {got[:80]!r}"
+    falsy = _FalsyChannel()
+    got = _build_refusal(tmp_path / "falsy", "pilot", channel=falsy)
+    assert not falsy and got == backend.format("channel"), (
+        f"a live build took a falsy test object: {got[:80]!r}"
+    )
+
+
+def test_pilot_and_prod_refuse_sources_and_tools_handed_to_build(tmp_path):
+    """`sources=` and `tools=` hand `build` objects that no config names. They count as given when they are not None:
+    a mapping that is falsy, and an empty mapping, are refused like any other."""
+    cases = {
+        "sources": ("sources= is for tests", {"s": object()}),
+        "tools": ("tools= (plain callables) is for replay and tests", {"echo": _echo}),
+    }
+    n = 0
+    for stage in ("pilot", "prod", "stag" + "ing"):
+        for name, (want, entries) in cases.items():
+            for value in (entries, _FalsyDict(entries), {}):
+                n += 1
+                got = _build_refusal(tmp_path / str(n), stage, **{name: value})
+                assert got.startswith(want), (
+                    f"a live build took {name}= ({stage!r}, {type(value).__name__} of "
+                    f"{len(value)}): {got[:80]!r}"
+                )
+
+
+def test_demo_refuses_a_timeout_that_is_out_of_range(tmp_path):
+    """The demo executor's timeout has ONE rule on both routes, the `timeout_s=` keyword of `build` (demo only: pilot
+    and prod refuse the keyword itself) and the config field `executor_timeout_s`: an int or float, not True or False,
+    from one millisecond to one hour."""
+    least, most = 0.001, 3600
+    rule = "must be an int or float between 0.001 and 3600"
+    cfg_dir = make_cfg(tmp_path / "keyword")
+    qualify(load_registry(load_config(cfg_dir)))
+    secrets = FakeSecretProvider({"fixture-token": "tok" + "-timeout"})
+    for value in (0, -1, float("inf"), most + 1, True, 1e-9):
+        try:
+            build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=value)
+            got = ""
+        except ConfigError as exc:
+            got = str(exc)
+        assert got == "timeout_s= " + rule, f"demo took timeout_s={value!r}: {got[:80]!r}"
+    for value in (least, most):
+        app = build(cfg_dir, ["test-agent"], secrets=secrets, timeout_s=value)
+        assert app.executor.timeout_s == value
+    # the same rule in the config file, written as a config file holds the value
+    for n, text in enumerate([f"{most}.1", ".inf", "0", "true", "'5'", "1.0e-9"]):
+        in_file = make_cfg(tmp_path / f"file{n}")
+        path = in_file / "config.yaml"
+        path.write_text(
+            path.read_text(encoding="utf-8") + f"\nexecutor_timeout_s: {text}\n", encoding="utf-8"
+        )
+        try:
+            got = f"loaded as {load_config(in_file).executor_timeout_s}"
+        except ConfigError as exc:
+            got = str(exc)
+        assert "executor_timeout_s" in got and rule in got, (
+            f"the config took executor_timeout_s: {text} ({got[:60]!r})"
+        )
+    from hadavin_sdk import defaults
+
+    assert (defaults.EXECUTOR_TIMEOUT_MIN_S, defaults.EXECUTOR_TIMEOUT_MAX_S) == (least, most), (
+        "a bound changed: the rule sentence above and the CHANGELOG name them"
+    )
+
+
+VAULT_KINDS = {
+    "secrets": {"kind": "vault", "address": "https://vault.example"},
+    "signer": {
+        "kind": "vault_transit",
+        "address": "https://vault.example",
+        "key_name": "k",
+        "key_version": 1,
+    },
+}
+VAULT_FIX = "(the default; set auth: kubernetes (recommended) or auth: approle)"
+
+
+def _never_built(settings, deps):
+    raise AssertionError("the planted kind must be refused before it is built")
+
+
+def test_pilot_and_prod_refuse_a_static_vault_token(tmp_path):
+    """The Vault kinds sign in with a static token unless the config says otherwise (`auth: token` is the default).
+    A pilot or prod BUILD refuses that, written or left out, before any backend is made, for the two kinds and for
+    any new kind built on the same settings class; the other sign-ins are not refused. The config itself loads (the
+    one-off commands that only load it, such as the kill switch, keep working), and demo keeps the token."""
+    n = 0
+    for stage in ("pilot", "prod", "stag" + "ing"):
+        for cap, settings in VAULT_KINDS.items():
+            for extra in ({}, {"auth": "token"}):
+                n += 1
+
+                def use(data, cap=cap, settings=settings, extra=extra):
+                    data["backends"][cap] = settings | extra
+
+                want = f"environment {stage}: refused: {cap}: {settings['kind']} auth token {VAULT_FIX}"
+                made: list[str] = []
+                # _build_refusal loads the config first: a loader that refuses the token fails there
+                got = _build_refusal(tmp_path / str(n), stage, use, made)
+                assert got == want, (
+                    f"a static Vault token was accepted for {cap} ({stage}, {extra}): {got[:80]!r}"
+                )
+                assert made == [], f"a backend was made before the Vault refusal: {made}"
+
+    # a third kind built on the shared settings class, under a name the check has never seen
+    class ThirdKind(table.VaultConnection):
+        kind: str = "third_vault_kind"
+
+    entry = table.Entry(ThirdKind, f"{__name__}:_never_built")
+    third = {"kind": "third_vault_kind", "address": "https://vault.example"}
+    got = _build_refusal(
+        tmp_path / "third",
+        "pilot",
+        lambda d: d["backends"].update(channel=third),
+        plant=("channel", "third_vault_kind", entry),
+    )
+    assert got == f"environment pilot: refused: channel: third_vault_kind auth token {VAULT_FIX}", (
+        f"a static Vault token was accepted for a new kind built on the Vault settings: {got[:80]!r}"
+    )
+    # the other two sign-ins are not a static token
+    for extra in ({"auth": "kubernetes", "role": "r"}, {"auth": "approle", "role_id": "r-1"}):
+        got = _build_refusal(
+            tmp_path / extra["auth"],
+            "pilot",
+            lambda d, extra=extra: d["backends"].update(secrets=VAULT_KINDS["secrets"] | extra),
+        )
+        assert "auth token" not in got, (
+            f"a Vault sign-in that is not a static token was refused ({extra['auth']}): {got[:80]!r}"
+        )
+    demo = make_cfg(tmp_path / "demo")
+    _edit(demo, lambda d: d["backends"].update(secrets=VAULT_KINDS["secrets"]))
+    assert load_config(demo).backends.secrets.auth == "token", "demo refused a static Vault token"
+
+
+def test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick(tmp_path):
+    """`run_tick(app, now=...)` sets the time of the approval sweep, the stuck-run check and the evidence purge;
+    `run_tick(app, steps=...)` replaces the steps, so a tick could return 0 with no sweep and no purge. Both are for
+    tests: only exactly demo accepts them, and an empty step list counts as given."""
+    from hadavin_sdk.runtime.tick import STEPS, TickStep, run_tick
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    app = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-tick"})
+    )
+    at = app.approvals.clock()
+    ran: list[str] = []
+    step = TickStep("recorded", 0, lambda _ctx: ran.append("recorded"))
+
+    def refusal(**given) -> str:
+        try:
+            run_tick(app, **given)
+        except ConfigError as exc:
+            return str(exc)
+        return ""
+
+    assert refusal(now=at) == "", "demo refused a time handed to the tick"
+    assert refusal(steps=[step]) == "" and ran == ["recorded"], (
+        "demo refused a step list handed to the tick"
+    )
+    ran.clear()
+    no_time = "now= is for tests; it is refused in pilot and prod"
+    no_steps = "steps= is for tests; it is refused in pilot and prod"
+    for stage in ("pilot", "prod"):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = refusal(now=at)
+        assert got == no_time, f"a live tick took a time handed to it ({stage!r}): {got[:80]!r}"
+        got = refusal(steps=[step])
+        assert got == no_steps and ran == [], (
+            f"a live tick took a step list handed to it ({stage!r}): {got[:80]!r}, ran {ran}"
+        )
+        got = refusal(steps=[])
+        assert got == no_steps, f"a live tick took an empty step list ({stage!r}): {got[:80]!r}"
+        assert refusal(now=at, steps=[]) == no_time, "with both given, now= is the one named"
+    for stage in ("stag" + "ing", "Demo", "", None):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = [refusal(now=at), refusal(steps=[step])]
+        assert got == [no_time, no_steps] and ran == [], (
+            f"the tick treated {stage!r} as not live (an allowlist of live stages): {got}"
+        )
+    # one level down: the context that carries the time into the steps, and a stand-in object in its place
+    from datetime import timedelta
+
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    ahead = at + timedelta(days=500)
+    purged: list[str] = []
+    real_purge = app.store.purge_tool_calls
+    app.store.purge_tool_calls = lambda *a, **k: purged.append("tool calls") or real_purge(*a, **k)
+
+    def by_hand(ctx_of) -> str:
+        try:
+            tick_mod.purge_evidence(ctx_of())
+        except ConfigError as exc:
+            return str(exc)
+        return ""
+
+    app.config = app.config.model_copy(update={"environment": "demo"})
+    assert by_hand(lambda: tick_mod.TickContext(app, at)) == "" and purged, (
+        "demo refused a tick context with a time handed to it"
+    )
+    purged.clear()
+    for stage in ("pilot", "prod"):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = by_hand(lambda: tick_mod.TickContext(app, ahead))
+        assert got == tick_mod.NO_GIVEN_TIME_COPY and got.startswith(no_time) and purged == [], (
+            f"a live tick step took a time handed to its context ({stage!r}): {got[:60]!r}, {purged}"
+        )
+        got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
+        assert got == no_time and purged == [], (
+            f"a live tick step took a stand-in context with a time ({stage!r}): {got[:60]!r}, {purged}"
+        )
+
+        def spec_mock():
+            mock = MagicMock(spec=tick_mod.TickContext)
+            mock.app, mock.now = app, ahead
+            return mock
+
+        got = by_hand(spec_mock)
+        assert got == no_time and purged == [], (
+            f"a live tick step took a Mock(spec=TickContext) with a time ({stage!r}): {got[:60]!r}, {purged}"
+        )
+    with pytest.raises(TypeError, match="cannot be subclassed"):
+
+        class _Sub(
+            tick_mod.TickContext
+        ):  # a subclass could skip the refusal in its own __post_init__
+            def __post_init__(self) -> None:
+                pass
+
+        raise AssertionError("a subclass of TickContext was allowed")
+    for stage in ("stag" + "ing", "Demo", "", None):
+        app.config = app.config.model_copy(update={"environment": stage})
+        got = by_hand(lambda: tick_mod.TickContext(app, ahead))
+        assert got == tick_mod.NO_GIVEN_TIME_COPY and got.startswith(no_time) and purged == [], (
+            f"the tick context treated {stage!r} as not live (an allowlist of live stages): {got[:60]!r}"
+        )
+        got = by_hand(lambda: SimpleNamespace(app=app, now=ahead, results={}))
+        assert got == no_time and purged == [], (
+            f"the tick step treated {stage!r} as not live for a stand-in context: {got[:60]!r}"
+        )
+    app.config = app.config.model_copy(update={"environment": "pilot"})
+    assert by_hand(lambda: tick_mod.TickContext(app)) == "" and purged, (
+        "a live tick context with no time handed to it (the app's clock) must work"
+    )
+    # a tick with nothing handed to it runs every step of STEPS: asked of a fresh app, so each step must be new
+    fresh = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-tick"})
+    )
+    fresh.config = fresh.config.model_copy(update={"environment": "pilot"})
+    assert not any(fresh.store.get_tick_state(s.name) for s in STEPS)
+    assert run_tick(fresh) == 0, "a live tick with nothing handed to it must run"
+    not_run = [s.name for s in STEPS if fresh.store.get_tick_state(s.name) is None]
+    assert not_run == [], f"a live tick did not run these steps of STEPS: {not_run}"
+
+
+def test_pilot_and_prod_refuse_a_tick_whose_step_list_lacks_a_built_in_step(tmp_path):
+    """`runtime.tick.STEPS` is the list a deployment appends a step to. Outside demo a tick refuses to run when a
+    built-in step is no longer in it (a cut or emptied list would return 0 with no sweep and no purge); an appended
+    step runs; demo runs the list as it is."""
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    built_in = list(tick_mod.STEPS)
+
+    def tick_with(steps, stage):
+        """(what the tick said or returned, the built-in steps that ran) for a fresh app whose stage is `stage`."""
+        app = build(
+            cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-steps"})
+        )
+        app.config = app.config.model_copy(update={"environment": stage})
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(tick_mod, "STEPS", steps)
+            try:
+                said = tick_mod.run_tick(app)
+            except ConfigError as exc:
+                said = str(exc)
+        return said, [s.name for s in built_in if app.store.get_tick_state(s.name) is not None]
+
+    without_purge = [s for s in built_in if s.name != "purge_evidence"]
+    for stage in ("pilot", "prod", "stag" + "ing", None):
+        got = tick_with(without_purge, stage)
+        assert got == ("a built-in tick step is missing: purge_evidence", []), (
+            f"a live tick ran without a built-in step ({stage!r}): {got}"
+        )
+        got = tick_with([], stage)
+        assert got[0].startswith("a built-in tick step is missing: sweep, ") and got[1] == [], (
+            f"a live tick ran an emptied step list ({stage!r}): {got}"
+        )
+    ran: list[str] = []
+    extra = tick_mod.TickStep("extra_step", 0, lambda _ctx: ran.append("extra_step"))
+    got = tick_with([*built_in, extra], "pilot")
+    assert got == (0, [s.name for s in built_in]) and ran == ["extra_step"], (
+        f"a live tick did not run an appended step with every built-in step: {got}, {ran}"
+    )
+    got = tick_with(without_purge, "demo")
+    assert got == (0, [s.name for s in without_purge]), f"demo did not run the list as it is: {got}"
+    # A second step with a built-in name would overwrite the built-in step's outcome (results and the tick_state
+    # row are kept by name), so a failed built-in step would be recorded as ok.
+    twice = tick_mod.TickStep("purge_evidence", 0, lambda _ctx: None)
+    for stage in ("pilot", "prod", "stag" + "ing", None):
+        got = tick_with([*built_in, twice], stage)
+        assert got == ("a tick step name is used twice: purge_evidence", []), (
+            f"a live tick ran a step list with a name used twice ({stage!r}): {got}"
+        )
+    got = tick_with([*built_in, twice], "demo")
+    assert got[0] == 0, f"demo did not run the list as it is: {got}"
 
 
 ANCHOR = {"kind": "s3_object_lock", "bucket": "b", "region": "r"}
@@ -689,3 +1085,218 @@ def test_the_redactor_does_not_sweep_the_stage_words_but_still_sweeps_secrets_an
     assert _sweep("<SECRET_1>", "demo") is not None, (
         "a secret that reads 'demo' must still be swept"
     )
+
+
+# --- a configuration error never shows the value that was refused (Q8a-1 fix batch 5, item 1) ------------------------
+# The class: error text built from a refused value (a login inside base_url, a line of YAML, a duplicate key, the text
+# of a wrapped exception, the cause printed under the error). The shared choke point is `config.config_error_text`
+# plus `from None` at every site that wraps. Made-up credentials are built from parts.
+PW = "Zq" + "9x" + "-pw-" + "4417"
+USER = "svc" + "-user"
+LOGIN_URL = "https://" + USER + ":" + PW + "@records.example.invalid/api"
+
+
+def _everything_shown(exc: BaseException) -> str:
+    """All the text a person could see for this error: its message, its repr, the cause and the whole traceback
+    text with the chain (what the command line prints)."""
+    import traceback
+
+    return "\n".join(
+        [
+            str(exc),
+            repr(exc),
+            str(exc.__cause__),
+            "".join(traceback.format_exception(exc)),
+        ]
+    )
+
+
+def _refused(cfg_dir, *, edit=None, text=None, extra_file=None):
+    """Load the config (and the registry) and return the ConfigError it raises."""
+    if edit is not None:
+        _edit(cfg_dir, edit)
+    if text is not None:
+        path = cfg_dir / "config.yaml"
+        path.write_text(path.read_text(encoding="utf-8") + text, encoding="utf-8")
+    if extra_file is not None:
+        name, content = extra_file
+        (cfg_dir / name).write_text(content, encoding="utf-8")
+    with pytest.raises(ConfigError) as err:
+        load_registry(load_config(cfg_dir))
+    return err.value
+
+
+def _assert_value_free(exc: ConfigError, *secrets: str) -> None:
+    shown = _everything_shown(exc)
+    for secret in secrets:
+        assert secret not in shown, f"the error shows the refused value: {shown[:300]!r}"
+    assert exc.__cause__ is None, "the cause (whose text may hold the value) is still attached"
+    assert "errors.pydantic.dev" not in shown and "input_value" not in shown, shown[:300]
+
+
+def test_a_login_inside_a_system_base_url_is_refused_without_showing_the_url(cfg_dir):
+    exc = _refused(
+        cfg_dir, edit=lambda d: d["systems"]["fixture-records"].update(base_url=LOGIN_URL)
+    )
+    assert "base_url must not contain a login" in str(exc)
+    _assert_value_free(exc, PW, USER, LOGIN_URL, "records.example.invalid")
+
+
+def test_a_system_base_url_that_is_not_https_is_refused_without_showing_the_url(cfg_dir):
+    url = "http://" + USER + ":" + PW + "@10.1.2.3/api"
+    exc = _refused(cfg_dir, edit=lambda d: d["systems"]["fixture-records"].update(base_url=url))
+    _assert_value_free(exc, PW, USER, "10.1.2.3")
+    plain = (
+        "http://" + "host-" + PW + ".example.invalid/api"
+    )  # no login: the https rule, still without the URL
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+    exc = _refused(cfg2, edit=lambda d: d["systems"]["fixture-records"].update(base_url=plain))
+    assert "base_url must be https" in str(exc)
+    _assert_value_free(exc, PW, "host-")
+
+
+def test_a_line_of_broken_yaml_is_not_quoted_in_the_error(cfg_dir):
+    exc = _refused(cfg_dir, text='\nnote: "' + PW + " and no closing quote\nother: 1\n")
+    assert re.search(r"not valid YAML \(line \d+, column \d+\)", str(exc)), str(exc)
+    _assert_value_free(exc, PW, "no closing quote")
+
+
+def test_a_line_of_broken_yaml_in_a_registry_file_is_not_quoted_in_the_error(cfg_dir):
+    exc = _refused(cfg_dir, extra_file=("agents.yaml", "- id: [" + PW + "\n  status: {\n"))
+    assert "not valid YAML" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_duplicate_key_is_reported_by_line_only(cfg_dir):
+    exc = _refused(cfg_dir, text="\n" + PW + ": 1\n" + PW + ": 2\n")
+    assert re.fullmatch(r"duplicate key \(line \d+\)", str(exc)), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_duplicate_id_in_a_registry_file_is_reported_by_entry_number_only(cfg_dir):
+    ident = "person-" + PW + "@example.invalid"  # a personal e-mail address as an id
+    content = f"- id: {ident}\n  kind: person\n- id: {ident}\n  kind: person\n"
+    exc = _refused(cfg_dir, extra_file=("principals.yaml", content))
+    assert "principals.yaml: duplicate id in entry 2" in str(exc), str(exc)
+    _assert_value_free(exc, PW, "example.invalid")
+
+
+def test_a_registry_validation_error_does_not_echo_the_value(cfg_dir):
+    """`principals.yaml` models do not hide their input: pydantic's own text would print `input_value='...'`."""
+    content = "- id: user:z\n  kind: " + PW + "\n"
+    exc = _refused(cfg_dir, extra_file=("principals.yaml", content))
+    assert "validation error" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_a_backend_settings_error_does_not_echo_the_value_or_keep_the_cause(cfg_dir):
+    exc = _refused(
+        cfg_dir, edit=lambda d: d["backends"].update(detector=[{"kind": "regex", "threshold": PW}])
+    )
+    assert "backends.detector (regex)" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_an_unknown_kind_or_capability_is_not_echoed(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d["backends"].update(channel={"kind": PW}))
+    assert "unknown kind; known:" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+    exc = _refused(cfg2, edit=lambda d: d["backends"].update({PW: "fake"}))
+    assert "1 unknown capability name(s); known:" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+def test_an_unknown_source_kind_or_route_is_not_echoed(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(sources={"s": {"kind": PW, "settings": {}}}))
+    assert "source kind is unknown" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+    cfg2 = make_cfg(cfg_dir.parent / "second")
+
+    def judge(d):
+        d["routes"]["screen"] = dict(d["routes"]["default"], max_tokens=64)
+        d["backends"]["detector"] = [{"kind": "regex"}, {"kind": "llm_judge", "route": PW}]
+
+    exc = _refused(cfg2, edit=judge)
+    assert "its route is not in routes" in str(exc), str(exc)
+    _assert_value_free(exc, PW)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("case_insensitive_targets", ["Bad " + PW]),
+        ("stored_kinds", [PW]),
+        ("cluster_suffixes", ["." + PW]),
+        ("https_ports", [70000 + 4417]),
+    ],
+)
+def test_a_refused_list_entry_in_the_evidence_settings_is_counted_not_shown(cfg_dir, field, value):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(evidence={field: value}))
+    assert f"evidence.{field}: 1 entries" in str(exc), str(exc)
+    _assert_value_free(exc, PW, "74417")
+
+
+def test_a_path_that_leaves_its_folder_is_refused_without_the_path(tmp_path):
+    with pytest.raises(ConfigError) as err:
+        config_mod.confined(tmp_path, "../" + PW)
+    assert str(err.value) == "path escapes its folder"
+    _assert_value_free(err.value, PW)
+
+
+def test_any_other_error_while_loading_is_reduced_to_its_type(cfg_dir, monkeypatch):
+    """The last-resort branch (`except (ValueError, TypeError, ...)` in load_config) never prints `str(exc)`."""
+
+    def boom(*_a, **_k):
+        raise ValueError("secret value " + PW)
+
+    monkeypatch.setattr(config_mod, "parse_backends", boom)
+    with pytest.raises(ConfigError) as err:
+        load_config(cfg_dir)
+    assert str(err.value) == "a value was refused (ValueError)"
+    _assert_value_free(err.value, PW)
+
+
+def test_the_error_text_function_keeps_a_yaml_position_and_drops_the_rest():
+    with pytest.raises(yaml.YAMLError) as err:
+        yaml.safe_load("a: '" + PW + "\nb: 1\n")
+    assert PW in str(err.value), "the premise of the test: the YAML error itself quotes the value"
+    text = config_mod.config_error_text(err.value)
+    assert PW not in text and text.startswith("not valid YAML")
+
+
+def test_a_live_tick_runs_the_step_list_its_checks_saw_even_if_the_list_is_edited_in_place(
+    tmp_path,
+):
+    """One copy of `STEPS` is taken at the start of `run_tick` and serves the checks and the loop: a list cut in place
+    after the checks (here by the first read of the store) must not change what runs."""
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    app = build(
+        cfg_dir, ["test-agent"], secrets=FakeSecretProvider({"fixture-token": "tok" + "-copy"})
+    )
+    app.config = app.config.model_copy(update={"environment": "pilot"})
+    ran: list[str] = []
+    steps = [
+        tick_mod.TickStep(s.name, 0, lambda _c, n=s.name: ran.append(n)) for s in tick_mod.STEPS
+    ]
+    names = [s.name for s in steps]
+    original = app.store.get_tick_state
+
+    def cut_after_the_checks(name):
+        steps[:] = steps[:1]
+        return original(name)
+
+    app.store.get_tick_state = cut_after_the_checks
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(tick_mod, "STEPS", steps)
+        assert tick_mod.run_tick(app) == 0
+    assert ran == names, f"the tick ran a list other than the one its checks saw: {ran}"
+
+
+def test_a_refused_stored_kind_is_counted_not_shown(cfg_dir):
+    exc = _refused(cfg_dir, edit=lambda d: d.update(evidence={"stored_kinds": [PW]}))
+    assert "evidence.stored_kinds: 1 entries cannot be stored" in str(exc), str(exc)
+    _assert_value_free(exc, PW)

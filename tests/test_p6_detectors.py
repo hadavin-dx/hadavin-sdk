@@ -103,7 +103,7 @@ def test_a_detector_list_is_built_as_one_detector(cfg_dir):
 
 def test_a_judge_on_an_unknown_route_is_refused(cfg_dir):
     _edit(cfg_dir, lambda d: _with_judge(d, route="nope"))
-    with pytest.raises(ConfigError, match="unknown route 'nope'"):
+    with pytest.raises(ConfigError, match="its route is not in routes"):
         load_config(cfg_dir)
 
 
