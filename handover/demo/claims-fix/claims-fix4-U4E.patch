@@ -1,0 +1,182 @@
+diff --git a/load_tools/catcher.py b/load_tools/catcher.py
+index d08801a..9d90962 100644
+--- a/load_tools/catcher.py
++++ b/load_tools/catcher.py
+@@ -17,8 +17,8 @@ needs no restart. A missing or empty file means `ok`.
+   reject           answer 550 to RCPT TO; nothing is recorded.
+   down             close every new connection at once, without a greeting (to simulate a mail server that is
+                    up but refusing; to simulate a closed port, stop the catcher).
+-An unknown word is treated as `ok` and noted on stderr once per change. Handles hundreds of connections at once
+-(asyncio, listen backlog 1024).
++An unknown word is treated as `ok` and noted on stderr once per change. Serves connections
++with asyncio (listen backlog 1024; no test opens hundreds at once).
+ """
+ 
+ from __future__ import annotations
+diff --git a/scripts/check_schema.py b/scripts/check_schema.py
+index 65b3d2a..74a15ad 100644
+--- a/scripts/check_schema.py
++++ b/scripts/check_schema.py
+@@ -1,4 +1,5 @@
+-"""Self-check: load schema.sql into sqlite3 (stdlib) and fire every trigger and constraint once.
++"""Self-check: load schema.sql into sqlite3 (stdlib) and fire the triggers and constraints it
++lists (no CI log is shipped).
+ 
+ Run: python scripts/check_schema.py   (prints one line per check, exits 1 if any check fails)
+ Made-up data only. Not a test suite; the tests are in tests/.
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index ad79be1..3801bc3 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -223,7 +223,7 @@ REPLY_WRITE_TIMEOUT_SECONDS: Final = (
+ # connection, so it is counted in the reserve below too.
+ FDS_PER_HANDLER_THREAD: Final = 4
+ ACCEPT_PAUSE_SECONDS: Final = 0.05  # the accept loop waits this long after "no file handle left", so it cannot spin
+-PORTAL_MAX_INFLIGHT: Final = 8  # portal JSON requests answered at once; more get 503 busy
++PORTAL_MAX_INFLIGHT: Final = 8  # portal JSON requests answered at once; more get 503 busy (tests/test_portal_api.py)
+ FDS_PER_THREAD_MINIMUM: Final = 4  # a handler thread holds at least this many (see above); FDS_PER_HANDLER_THREAD >= it
+ FD_PORTAL_ITEM: Final = "portal read-only database connections"
+ # Open files for everything that is not a handler thread, item by item (the sum must not exceed FD_RESERVE; checked at
+@@ -251,7 +251,7 @@ BUSY_RETRY_AFTER_SECONDS: Final = 1  # Retry-After header of that 503, in whole
+ QUIET_DRAIN_SECONDS: Final = 0.05  # how long a finished connection waits for request bytes still on their way
+ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one connection, however slowly bytes arrive
+ DRAIN_MAX_BYTES: Final = (
+-    1_048_576  # unread request bytes read and dropped after an early reply, so the reply is not lost to a reset
++    1_048_576  # unread request bytes read and dropped after an early reply (a constant; no test of its value)
+ )
+ EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the sender (/fake/info)
+ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a number; longer is over every limit
+@@ -266,7 +266,7 @@ SEARCH_MAX: Final = 100  # longest `q` of /api/ui/leads, in characters
+ OFFSET_MAX: Final = 100_000
+ LEADS_LIMIT_MAX: Final = 100
+ LEADS_LIMIT_DEFAULT: Final = 50
+-DUPLICATES_MAX: Final = 50  # repeats listed for one lead (the total is always given)
++DUPLICATES_MAX: Final = 50  # repeats listed for one lead (the total is given; tests/test_portal_api.py)
+ FEED_ITEMS: Final = 12  # newest events in the Overview feed
+ LOG_LIMIT_DEFAULT: Final = 100  # rows of /api/ui/log when `limit` is not given
+ LOG_LIMIT_MAX: Final = 200  # most rows one /api/ui/log page may ask for
+diff --git a/src/lead_desk/db.py b/src/lead_desk/db.py
+index 7b0962b..2b7f59a 100644
+--- a/src/lead_desk/db.py
++++ b/src/lead_desk/db.py
+@@ -133,7 +133,8 @@ def _book_current(conn: sqlite3.Connection) -> bool:
+ def _migrate(conn: sqlite3.Connection) -> None:
+     """Bring a user_version 1 book up to date in ONE transaction: the missing columns (and their backfills), then
+     schema.sql again (every statement of it is IF NOT EXISTS, and the view is dropped and made again). A crash or an
+-    error anywhere rolls the whole thing back, so the book is never left with columns but no view. A book that has the
++    error anywhere rolls the whole thing back (the test in tests/test_desk_http_edge_cases.py for a failed migration
++    checks this), so the book is not left with columns but no view. A book that has the
+     columns but lost the view or an index (a partly applied upgrade) is repaired the same way. If another process
+     adds a column between the check and the lock, the script fails on the duplicate and is tried again."""
+     for attempt in range(_MIGRATE_TRIES):
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index bbb2ca8..f94864d 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -122,8 +122,9 @@ validate_worker_caps(DRIVE_MAX, ADAPTER_WORKER_CAPS)
+ class _MirrorWait:
+     """The wait before a failed CRM copy is tried again, per lead: (monotonic time, stage rank it was set for). It is
+     in memory only (a restart starts the waits afresh; the tries in the database still cap them). A request thread
+-    and the reaper both touch it, so every touch holds one small lock; the lock is never held across a database
+-    write or a CRM call. An entry counts only while the lead is still at that stage rank."""
++    and the reaper both touch it, so every touch holds one small lock; the lock only guards the small dictionary
++    operations of this class (the four methods below): no database write or CRM call runs inside it. An entry counts
++    only while the lead is still at that stage rank."""
+ 
+     def __init__(self) -> None:
+         self._lock = threading.Lock()
+@@ -881,9 +882,9 @@ class Desk:
+ 
+     def _nudge_pass(self, done: dict[str, int]) -> None:
+         """Send the one reminder of a lead nobody has replied to (own clock, own error guard). First the restamp
+-        (clock set back) and the stuck sweep, then at most NUDGES_PER_PASS claims inside NUDGE_PASS_SECONDS. The part
+-        stops after a give-back (the given-back row is still the oldest eligible one) and makes no claim while the
+-        give-back pause runs."""
++        (clock set back) and the stuck sweep, then at most NUDGES_PER_PASS claims inside NUDGE_PASS_SECONDS (constants;
++        no test of their values). The part stops after a give-back (the given-back row is still the oldest eligible
++        one) and makes no claim while the give-back pause runs."""
+         flow = self.config.leadflow
+         if flow is None or flow.nudge_after_seconds is None:
+             return
+@@ -2201,7 +2202,8 @@ class Desk:
+         """Check order: item id grammar and existence (404), then the 409 rows (see contract.md). Reads no state
+         first. For an F item it makes its OWN claim `self._claim(None, lead_id)` (state IN
+         ('pending','failed')), and if that returns True it runs `_after_claim` (steps 1-2, then the send). It answers
+-        409 in_progress, never 200, when the row is still `sending` afterwards. It does NOT call
++        409 in_progress, not 200, when the row is still `sending` afterwards (tests/test_desk_edge_cases.py and
++        tests/test_desk_http_edge_cases.py check this). It does NOT call
+         run_followup and run_followup does not call it. If the claim returns False it re-reads the state to
+         choose the 409 code. An exception in steps 1-2 after the claim goes through `_abort_unsent`: the claim
+         started the automatic count at 1, so the row is `pending` with `internal:<class>` and a backoff (not
+diff --git a/src/lead_desk/gate.py b/src/lead_desk/gate.py
+index a1259a1..2210b53 100644
+--- a/src/lead_desk/gate.py
++++ b/src/lead_desk/gate.py
+@@ -3,8 +3,8 @@
+ Why: SQLite's own busy wait is not fair (a waiting writer sleeps and polls, so a late writer can win again and again).
+ With many simultaneous requests some writers can starve until the 5 s wait runs out. The gate puts every writer of
+ this process in one first-come-first-served line BEFORE it asks SQLite for the write lock, so inside one desk process
+-SQLite itself is never contended. Another process (a second desk is refused by the lock file; a tool holding the file)
+-still gets the ordinary SQLite busy wait."""
++SQLite itself should not be contended (no test proves that for every path). Another process (a second desk is
++refused by the lock file; a tool holding the file) still gets the ordinary SQLite busy wait."""
+ 
+ from __future__ import annotations
+ 
+diff --git a/src/lead_desk/imap_count.py b/src/lead_desk/imap_count.py
+index fef8ae9..dec72d9 100644
+--- a/src/lead_desk/imap_count.py
++++ b/src/lead_desk/imap_count.py
+@@ -15,8 +15,8 @@ The scan runs only when a key EXPECTED in this mailbox (`expected`, default: eve
+ with two mailboxes, a key that belongs to the other mailbox is never a reason to scan.
+ One call is bounded as a whole: `total_seconds`, counted from before the connection is opened (checked between the
+ steps; one single step can still last up to `timeout_seconds` more). After the deadline the connection is closed without
+-a LOGOUT exchange (that would add two more waits). The connection ALWAYS checks the certificate chain and the host name:
+-no settings value can switch that off."""
++a LOGOUT exchange (that would add two more waits). The connection checks the certificate chain and the host name:
++no value in a settings file can switch that off (code that builds ImapSettings itself may pass its own ssl_context)."""
+ 
+ from __future__ import annotations
+ 
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 177c552..2beeff3 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -20,7 +20,8 @@ Rules:
+   tokens) is reserved in a locked ledger file; the call is refused when the per-run or the plan total cap would be
+   passed. After the call the reserve is replaced by the cost the model reports. A call that fails or crashes keeps its
+   worst-case reserve (the provider may have charged it). This includes a 429 or a 5xx answer: the worst-case reserve
+-  stays, because the provider does not say whether it charged. The ledger survives restarts.
++  stays, because the provider does not say whether it charged (by the code path; the test for a crash checks the
++  reserve, no test reads the ledger after a 429 or 5xx answer). The ledger survives restarts.
+ * if the cost cannot be recorded after a paid answer (ledger locked, or token counts that make no sense), the answer
+   is still returned and the worst-case reserve stays as the recorded cost.
+ The base address and every price come from settings; there is no price or model name in this file."""
+diff --git a/src/lead_desk/run_stats.py b/src/lead_desk/run_stats.py
+index a7526e3..4f3567f 100644
+--- a/src/lead_desk/run_stats.py
++++ b/src/lead_desk/run_stats.py
+@@ -1,5 +1,6 @@
+-"""Optional counters file: an adapter that is given a path writes its counters there after every change (an atomic
+-replace), so a run script can read what the adapter really did even when the desk process was stopped hard.
++"""Optional counters file: an adapter that is given a path writes its counters there after every change (a temporary
++file, then os.replace; no test checks atomicity), so a run script can read what the adapter really did even when the
++desk process was stopped hard.
+ Counts only: no address, no key, no text."""
+ 
+ from __future__ import annotations
+diff --git a/src/lead_desk/trace.py b/src/lead_desk/trace.py
+index 48eb438..262d344 100644
+--- a/src/lead_desk/trace.py
++++ b/src/lead_desk/trace.py
+@@ -14,8 +14,8 @@
+     send_before    before Outbox.send is called (a second window next to hook D1)
+     send_after     after Outbox.send returned, before the desk records it (next to D2)
+   The flag file holds one window name; the first thread that deletes it ends the process.
+-A trace line that cannot be written is counted (`Tracer.write_failures`) and dropped; it never changes the result of
+-the traced call.
++A trace line that cannot be written is counted (`Tracer.write_failures`) and dropped; it does not change the result of
++the traced call (the test for a trace write failure in tests/test_live_claude.py checks this for the CRM wrapper).
+ Not covered: a crash inside the model call, inside the mail protocol exchange, or in the database write itself."""
+ 
+ from __future__ import annotations

@@ -1,0 +1,116 @@
+diff --git a/docs/hubspot-probe.md b/docs/hubspot-probe.md
+index b4ffaa7..a59c5a6 100644
+--- a/docs/hubspot-probe.md
++++ b/docs/hubspot-probe.md
+@@ -1,11 +1,11 @@
+ # HubSpot free-account probe
+ 
+ A one-shot script that answers one question: does a free HubSpot account accept the API writes the desk needs
+-(set the owner and the lead status on a contact, then delete it)? Result: the only real-service try, run by the author on one free HubSpot account, logs not shipped. In the first run create, lead-status write, read-back and permanent delete passed, and the owner list was refused (403 `MISSING_SCOPES`) until the token also had the owners read scope; after that a second run passed every step, and a third run, after a second user was added, listed two owners and passed again. Each run used 6 or 7 of the 8 calls and left no contact behind.
++(set the owner and the lead status on a contact, then delete it)? Result: the only real-service try, run by the author on one free HubSpot account, logs not shipped. In the first run create, lead-status write, read-back and permanent delete passed, and the owner list was refused (403 `MISSING_SCOPES`) until the token also had the owners read scope; after that a second run passed every step, and a third run, after a second user was added, listed two owners and passed again. Each run used 6 or 7 of the 8 calls and left no contact behind (the author's count from the script's own printout; no log is shipped). The tests in `tests/test_hubspot_probe.py` check the budget of 8 calls and the masking of the token against a local stand-in, not against HubSpot.
+ 
+ Run it on the free demo account only, never on an account that holds real contacts. Creating or assigning a contact can
+-trigger things on the account side that the script cannot see: an owner assignment can send that user a notification
+-email, and any workflow or sequence on the account that reacts to a new contact or a new owner can fire. A fresh demo
++trigger things on the account side that the script cannot see: an owner assignment might send that user a notification
++email (not confirmed, see below), and any workflow or sequence on the account that reacts to a new contact or a new owner can fire. A fresh demo
+ account with no workflows and a throw-away owner is the safe place.
+ 
+ What it does, in order (7 calls on the normal path, never more than 8 including retries):
+@@ -55,7 +55,7 @@ only); the tests do this. If the delete step prints a WARNING, delete the named
+ 
+ ## What was checked against HubSpot's current documentation (read on 2026-11-11)
+ 
+-Confirmed from HubSpot's developer pages and changelog on that date: create is `POST /crm/v3/objects/contacts` with
++Confirmed by the author from HubSpot's developer pages and changelog on that date (no copy of the pages is shipped): create is `POST /crm/v3/objects/contacts` with
+ `{"properties": {...}}`; update by email is `PATCH /crm/v3/objects/contacts/{email}?idProperty=email`; read by email is
+ `GET` on the same path with `idProperty=email` and a comma-separated `properties`; normal delete is
+ `DELETE /crm/v3/objects/contacts/{id}` (recycling bin); the owners list is `GET /crm/v3/owners` and its entries carry a
+@@ -63,13 +63,13 @@ string `id` to use when assigning an owner; the permanent delete is `POST /crm/v
+ when a contact is identified by email the body must be `{"objectId": "<email>", "idProperty": "email"}` (HubSpot
+ changelog entry on the contact GDPR deletion endpoints).
+ 
+-Answered by the runs: a free account accepted the owner write and the `hs_lead_status` write; an address ending in
++Answered by the author's own runs (no log is shipped): a free account accepted the owner write and the `hs_lead_status` write; an address ending in
+ `.test` was refused with a 400 on create (the message was not printed in that run) while `example.com` addresses were
+ accepted, so made-up addresses that go to HubSpot must end in a real domain such as `example.com`.
+ 
+ UNVERIFIED (could not be confirmed from the documentation or by the runs): the exact scope names; whether the owner
+ assignment sends a notification email; and what HubSpot does with an email that gdpr-delete cannot find (a third-party
+-page says it may be added to a block list, which is harmless for a random address). The runs showed that `OPEN` was
++page says it may be added to a block list, which is harmless for a random address). The author's runs showed that `OPEN` was
+ accepted as a lead status on that account and that the permanent delete answered 204.
+ 
+ Sources (names only): HubSpot developers site, CRM API contacts page; HubSpot developers site, CRM API owners page;
+diff --git a/docs/n8n-recipe.md b/docs/n8n-recipe.md
+index 80de269..2bc7c0a 100644
+--- a/docs/n8n-recipe.md
++++ b/docs/n8n-recipe.md
+@@ -23,7 +23,7 @@ The `proof` workflow has a manual start and a web-call start; the web-call start
+   Never commit the e-mail, the password or the key anywhere.
+ * Start the demo servers and the desk first (README, "Try it"). From the same computer, n8n reaches them at the host and
+   ports from the settings table in `docs/settings.md`. **If n8n runs in Docker, `localhost` inside the container is the container, not
+-  your computer.** The desk listens on this computer only (`DESK_BIND`). The desk answers 403 `forbidden_host` to any `Host` name it does not know (anything but `127.0.0.1`, `localhost`, `[::1]`): if n8n reaches the desk under another name, list that name in `DESK_ALLOWED_HOSTS` (`docs/settings.md`). Checked: n8n run directly with Node reached the desk and the demo servers on `127.0.0.1`. Not tried: n8n in Docker.
++  your computer.** The desk listens on this computer only (`DESK_BIND`). The desk answers 403 `forbidden_host` to any `Host` name it does not know (anything but `127.0.0.1`, `localhost`, `[::1]`): if n8n reaches the desk under another name, list that name in `DESK_ALLOWED_HOSTS` (`docs/settings.md`). Checked (from the author's own run; no log is shipped): n8n run directly with Node reached the desk and the demo servers on `127.0.0.1`. Not tried: n8n in Docker.
+ * **n8n's port.** The demo ran n8n on port 5679 (n8n's own default is 5678). `scripts/n8n_api.py` (setting `N8N_URL`, default `http://127.0.0.1:5679`) and the sending box of the `proof` workflow (its URL is `http://127.0.0.1:5679/webhook/desk-form`) expect that port, so start n8n with `N8N_PORT=5679` to evaluate the workflows.
+ 
+ ## 1. The desk workflows (n8n in front of the desk)
+@@ -31,9 +31,9 @@ The `proof` workflow has a manual start and a web-call start; the web-call start
+ Goal: a web form submission and an email-style message, both arriving at n8n, both end up as one request to the desk.
+ n8n adds nothing clever. The desk decides what is new.
+ 
+-**Request id** ("Request number" on the portal screens). Checked: the id inside the request body (`submission_id`, `message_id`) works, and a replay of the same id was recognised (`"replayed": true`). n8n's own execution id was not tried. The desk needs one id per
++**Request id** ("Request number" on the portal screens). Checked (from the author's own run; no log is shipped): the id inside the request body (`submission_id`, `message_id`) works, and a replay of the same id was recognised (`"replayed": true`). n8n's own execution id was not tried. The desk needs one id per
+ submission that stays the same when n8n re-sends it. Candidates: the form's own submission id, the email's message id, or n8n's
+-execution id (the execution id changes on a re-run, so it is the wrong choice for a retry). The workflows carry the id inside the
++execution id (n8n's execution id was not tried here; it is expected to change on a re-run, which was not checked, so it is not used). The workflows carry the id inside the
+ request body (`submission_id`, `message_id`), which is the stable choice.
+ 
+ Example inputs (made-up):
+@@ -41,17 +41,17 @@ Example inputs (made-up):
+     form:    {"submission_id":"sub-0001","name":"Ada Example","email":"Ada@example.com","phone":"555 0100","company":"Example Ltd","message":"Please call me."}
+     webhook: {"message_id":"msg-0001","from_name":"Ada Example","from_email":"ada@example.com","subject":"Quote","body":"Please call me."}
+ 
+-The **web form source** workflow ("Lead Desk: Web Form Intake") has three nodes: a Webhook node that receives the form (path `desk-form`; no authentication, local demo only), an Edit Fields node that sets `source` to `form`, takes `source_ref` from `submission_id` and copies `name`, `email`, `phone`, `company` and `message` into `payload`, and an HTTP Request node that posts `source`, `source_ref` and `payload` to the desk's `/leads` address (host and port from `docs/settings.md`). Its timeout is well above the desk's default send timeout of 5 seconds, so a slow answer ends the call in n8n later than in the desk, and a 400 or a 413 shows red in n8n.
++The **web form source** workflow ("Lead Desk: Web Form Intake") has three nodes: a Webhook node that receives the form (path `desk-form`; no authentication, local demo only), an Edit Fields node that sets `source` to `form`, takes `source_ref` from `submission_id` and copies `name`, `email`, `phone`, `company` and `message` into `payload`, and an HTTP Request node that posts `source`, `source_ref` and `payload` to the desk's `/leads` address (host and port from `docs/settings.md`). Its timeout is well above the desk's default send timeout of 5 seconds, so a slow answer ends the call in n8n later than in the desk, and a 400 or a 413 showed red in n8n (from the author's own run; no log is shipped).
+ 
+-The Webhook node returns the desk's reply (verdict `new`, `duplicate` or `review`). Checked: the reply body passes through unchanged, but **the HTTP status does not**: the caller always gets 200 when the desk answered, even where the desk said 201 or 202 (the verdict is in the body). A 400 or 413 from the desk, or a desk that cannot be reached, makes the caller get n8n's `500 {"message":"Error in workflow"}`.
++The Webhook node returns the desk's reply (verdict `new`, `duplicate` or `review`). Checked (from the author's own run; no log is shipped): the reply body passed through unchanged, but **the HTTP status did not**: the caller got 200 when the desk answered, even where the desk said 201 or 202 (the verdict is in the body). A 400 or 413 from the desk, or a desk that could not be reached, made the caller get n8n's `500 {"message":"Error in workflow"}`. Other n8n versions or settings were not tried.
+ 
+ The **email source** (the `webhook` source) workflow ("Lead Desk: Email Intake") has the same three nodes with the Webhook path `desk-webhook`; it sets `source` to `webhook` and takes `source_ref` from `message_id`, `payload.name` from `from_name`, `payload.email` from `from_email` and `payload.message` from `body` (`subject` is ignored by the desk).
+ 
+-What was checked after importing, in this order:
++What was checked after importing, in this order (from the author's own run; no log is shipped; numbers and timings below are the author's reading of that run):
+ 1. Import works. 2. The form call reaches the desk (desk answers 201, verdict `new`). 3. The email call reaches the desk
+ (same lead: 200, verdict `duplicate`). 4. The id is stable (the same submission twice: second reply carries `"replayed": true`).
+ 5. A request with no email shows 202 `review` and gets no follow-up. 6. A body that is not valid JSON, or one over the size cap, shows red (400, 413).
+-7. n8n's automatic re-send against a desk stopped halfway: the "Send to the desk" node has "Retry On Fail" on, 3 tries, 1 second apart. With the desk stopped and started again about one second after the call, the call succeeded on the second try (about one second after the call), one lead, one CRM row, one e-mail. With the desk down for a few seconds the call failed once all three tries were used up (within about 2 seconds). The retry also repeats a 400 or 413 (3 tries each): the desk counts each rejected call 3 times. n8n's "Retry On Fail" cannot skip retries for 4xx replies, and the node's other option ("Never Error") would hide the red mark, so the 3-fold counting is an effect of this setting.
++7. n8n's automatic re-send against a desk stopped halfway: the "Send to the desk" node has "Retry On Fail" on, 3 tries, 1 second apart. With the desk stopped and started again about one second after the call, the call succeeded on the second try (about one second after the call), one lead, one CRM row, one e-mail. With the desk down for a few seconds the call failed once all three tries were used up (within about 2 seconds). The retry also repeats a 400 or 413 (3 tries each): the desk counts each rejected call 3 times. In that run the setting did not skip retries for 4xx replies (no n8n documentation was checked for this), and the node's other option ("Never Error") would hide the red mark, so the 3-fold counting is an effect of this setting.
+ 
+ ## 2. The n8n-only patterns (n8n without the desk), described only
+ 
+@@ -65,18 +65,18 @@ These workflows are not shipped and no result about them is claimed here; this s
+ ## 3. The "Proof" workflow (the check inside n8n)
+ 
+ Purpose: people trust what they see in n8n, so the counts are shown on an n8n screen. The counts come from the demo servers' own counters, never from n8n's
+-own "success" mark: in the one try, n8n's executions list showed success for a duplicate caller that was answered with an error, so that list is not proof of "no double email". No n8n-only result is claimed.
++own "success" mark: in the one try (from the author's own run; no log is shipped), n8n's executions list showed success for a duplicate caller that was answered with an error, so that list is not proof of "no double email". No n8n-only result is claimed.
+ 
+-The workflow "proof" (manual start, or a web call to `/webhook/proof-run`) sends ten requests for the same lead with different request numbers at once, waits a few seconds, reads the desk's counts and the demo CRM's and demo mail system's counters, and shows the result on screen, for example "emails: 1, CRM rows: 1, expected 1". **Checked: all ten requests were sent together.** The desk stored all ten within the same second (the stored time has a resolution of one second, so this shows "together", not milliseconds), and the result was 1 new lead and 9 duplicates, 1 CRM row, 1 e-mail (on the first import and again after a clean re-import, 2026-11-09). The same holds when the ten calls go through the n8n web address of the web form source. The burst script (`demo_only/burst.py`, see `contract.md`) fires the same burst without n8n. **Changed after that run, and not run in n8n:** the line `result` of the `proof` workflow used to say PASS when the demo mail system and the demo CRM each counted 1. It now says PASS only when, in addition, the desk answered all ten requests with exactly one `new` and nine `duplicate` (nine requests that got no answer with a verdict, for example a refusal or a "busy" answer, used to be able to print PASS). That new rule was checked only by running its text in node with made-up values (`tests/test_n8n_proof_result.py`); n8n itself was not started for it. What is not proven: that n8n's own expression engine accepts the text, and that it finds the output of the step "Wait for the desk to finish" from the last step. What the owner should run once: first remove the old copy of the workflow, because `scripts/n8n_api.py` has no delete command and an import only adds a second workflow with the same name (and `activate` refuses when two workflows share a name): open the n8n screen (not tried here, and its menu names were not compared with the screen), find the workflow "Lead Desk: Duplicate Test (10 at once)" in the workflow list and delete it. Then import `n8n/proof.json` again with `python scripts/n8n_api.py import n8n/proof.json`, start it by hand, and check that the screen shows `PASS` with emails 1 and CRM rows 1. If n8n shows an error on the `result` field instead, the fault is in this expression, not in the desk. A MISMATCH is not always a fault of the duplicate protection: if the desk is busy and answers one of the ten with 503 "busy" (it can, under ten at once), that request has no verdict and the line says MISMATCH; start the workflow again.
++The workflow "proof" (manual start, or a web call to `/webhook/proof-run`) sends ten requests for the same lead with different request numbers at once, waits a few seconds, reads the desk's counts and the demo CRM's and demo mail system's counters, and shows the result on screen, for example "emails: 1, CRM rows: 1, expected 1". **Checked (from the author's own run; no log is shipped): all ten requests were sent together.** The desk stored all ten within the same second (the stored time has a resolution of one second, so this shows "together", not milliseconds), and the result was 1 new lead and 9 duplicates, 1 CRM row, 1 e-mail (on the first import and again after a clean re-import, 2026-11-09). The author reports the same when the ten calls go through the n8n web address of the web form source. The burst script (`demo_only/burst.py`, see `contract.md`) fires the same burst without n8n. **Changed after that run, and not run in n8n:** the line `result` of the `proof` workflow used to say PASS when the demo mail system and the demo CRM each counted 1. It now says PASS only when, in addition, the desk answered all ten requests with exactly one `new` and nine `duplicate` (nine requests that got no answer with a verdict, for example a refusal or a "busy" answer, used to be able to print PASS). That new rule was checked only by running its text in node with made-up values (`tests/test_n8n_proof_result.py`); n8n itself was not started for it. What is not proven: that n8n's own expression engine accepts the text, and that it finds the output of the step "Wait for the desk to finish" from the last step. What the owner should run once: first remove the old copy of the workflow, because `scripts/n8n_api.py` has no delete command and an import only adds a second workflow with the same name (and `activate` refuses when two workflows share a name): open the n8n screen (not tried here, and its menu names were not compared with the screen), find the workflow "Lead Desk: Duplicate Test (10 at once)" in the workflow list and delete it. Then import `n8n/proof.json` again with `python scripts/n8n_api.py import n8n/proof.json`, start it by hand, and check that the screen shows `PASS` with emails 1 and CRM rows 1. If n8n shows an error on the `result` field instead, the fault is in this expression, not in the desk. A MISMATCH is not always a fault of the duplicate protection: if the desk is busy and answers one of the ten with 503 "busy" (the desk has such an answer, see `src/lead_desk/server.py`; whether ten at once triggers it was not measured), that request has no verdict and the line says MISMATCH; start the workflow again.
+ 
+ ## 4. What happened with the desk behind n8n
+ 
+-The three workflows in `n8n/` ("Lead Desk: Web Form Intake", "Lead Desk: Email Intake", "Lead Desk: Duplicate Test (10 at once)"; files `desk-form.json`, `desk-webhook.json`, `proof.json`) were built in the n8n version of `versions.md` through n8n's REST interface and run against the desk and the demo servers. `docs/n8n-recipe.md` describes them (see "Licence" for what you may do with them). Findings, in plain words:
++The three workflows in `n8n/` ("Lead Desk: Web Form Intake", "Lead Desk: Email Intake", "Lead Desk: Duplicate Test (10 at once)"; files `desk-form.json`, `desk-webhook.json`, `proof.json`) were built in the n8n version of `versions.md` through n8n's REST interface and run against the desk and the demo servers. `docs/n8n-recipe.md` describes them (see "Licence" for what you may do with them). Findings, in plain words (all from the author's own run on 2026-11-09; no log is shipped):
+ 
+-* **n8n answers 200 whenever the desk answered**, even when the desk said 201 (new) or 202 (review). The verdict (`new`, `duplicate`, `review`) is only in the reply body, so a caller must read the body, not the status number.
++* **In that run n8n answered 200 whenever the desk answered**, even when the desk said 201 (new) or 202 (review). The verdict (`new`, `duplicate`, `review`) is only in the reply body, so a caller must read the body, not the status number.
+ * **A desk refusal shows as an n8n error.** If the desk answers 400 (bad request) or 413 (too large), the caller gets HTTP 500 from n8n (`Error in workflow`). Because the sending box has Retry On Fail on (3 tries, 1 second apart; see `n8n/desk-form.json`), n8n repeats such a refused request 3 times, so the desk counts each refused call 3 times.
+-* **Restart tolerance is short.** With the desk restarted at once, the second try succeeded (the answer came after about one second). With the desk down for a few seconds, all three tries were used up and the call failed with 500. For longer outages raise the number of tries or the wait.
++* **Restart tolerance is short.** With the desk restarted at once, the second try succeeded (the answer came after about one second, as the author timed it). With the desk down for a few seconds, all three tries were used up and the call failed with 500 (within about 2 seconds). For longer outages raise the number of tries or the wait.
+ * **Ten at once through the `proof` workflow:** 1 email and 1 CRM row in the runs made (first import, and again after a clean re-import); the desk stored all ten requests within the same second (the stored time has a resolution of one second, so this shows "together", not milliseconds). These runs used the earlier result rule (one email and one CRM row); see section 3 for what changed afterwards and what was not run in n8n.
+-* The workflows import with placeholder node ids and must be switched on by hand (the import call ignores the `active` flag).
++* The workflows import with placeholder node ids and must be switched on by hand (in the author's run the import call ignored the `active` flag).
+ * **The desk refuses a caller that uses a real host name.** It accepts `Host: 127.0.0.1`, `localhost` and `[::1]`. If n8n (or anything else) reaches the desk under another name, for example a container name or a machine name, every request gets 403 `forbidden_host` until that name is listed in `DESK_ALLOWED_HOSTS` (see `docs/settings.md`).
+ * **Not checked here:** importing through the n8n screen ("Import from file"); running the workflows without a free registered n8n community licence; n8n in Docker; keyed mail mode with n8n; other n8n versions; millisecond overlap of the ten requests; the new result rule of the `proof` workflow (exactly one `new` and nine `duplicate`) in a real n8n, including how n8n finds the output of the step "Wait for the desk to finish" from the last step.

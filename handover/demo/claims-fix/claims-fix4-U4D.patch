@@ -1,0 +1,162 @@
+diff --git a/.github/workflows/codeql.yml b/.github/workflows/codeql.yml
+index 97598c6..0220936 100644
+--- a/.github/workflows/codeql.yml
++++ b/.github/workflows/codeql.yml
+@@ -1,6 +1,6 @@
+ # CodeQL code scanning, "advanced setup" (this file). Do NOT also enable GitHub's default setup.
+-# Actions are pinned to full commit SHAs (looked up 2026-11-09, re-checked 2026-11-12: still the newest releases).
+-# Languages (ids checked against GitHub's CodeQL documentation on 2026-11-12): python, actions, and javascript-typescript
++# Actions are pinned to full commit SHAs (looked up 2026-11-09, re-checked 2026-11-12 by the author; "newest" is not checked again here).
++# Languages (ids read by the author in GitHub's CodeQL documentation on 2026-11-12; no copy is kept here): python, actions, and javascript-typescript
+ # (the portal pages in src/lead_desk/portal and the demo portal scripts are JavaScript). No result of this scan is claimed here.
+ # limit: if the first run refuses one of the languages, remove it.
+ name: codeql
+@@ -22,7 +22,7 @@ jobs:
+     timeout-minutes: 30
+     permissions:
+       contents: read
+-      security-events: write # GitHub's codeql-action README: every advanced-setup workflow must have it (read 2026-11-12), it uploads the results
++      security-events: write # GitHub's codeql-action README: every advanced-setup workflow must have it (read by the author on 2026-11-12; no copy is kept here), it uploads the results
+     strategy:
+       fail-fast: false
+       matrix:
+diff --git a/.github/workflows/lint.yml b/.github/workflows/lint.yml
+index 185a973..d8dde19 100644
+--- a/.github/workflows/lint.yml
++++ b/.github/workflows/lint.yml
+@@ -20,8 +20,9 @@ jobs:
+     timeout-minutes: 60  # 60 minutes on purpose: the run time on a hosted runner is not measured yet; after real runs, set it to 1.6 times the longest observed run
+     env:
+       GITLEAKS_VERSION: "8.30.1"
+-      # SHA-256 of gitleaks_8.30.1_linux_x64.tar.gz, copied from the release's published checksums file
+-      # (gitleaks_8.30.1_checksums.txt) and from the release asset digest on 2026-11-09.
++      # SHA-256 of the gitleaks 8.30.1 linux x64 tarball. The author's note: copied from the release's published
++      # checksums file and asset digest on 2026-11-09; this repository holds no copy of those to compare. The step
++      # below checks the download against this value.
+       GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+@@ -43,7 +44,7 @@ jobs:
+           rm gitleaks.tar.gz
+ 
+       - name: Gitleaks on the tree and on the history (matches are redacted, no report file is written)
+-        # --redact hides the matched value in the output; --ignore-gitleaks-allow makes inline allow comments count for nothing.
++        # --redact hides the matched value in the output; --ignore-gitleaks-allow is meant to make inline allow comments count for nothing (per gitleaks' own documentation; not tested here).
+         run: |
+           "${RUNNER_TEMP}/gitleaks/gitleaks" dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+           "${RUNNER_TEMP}/gitleaks/gitleaks" git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+diff --git a/.github/workflows/semgrep.yml b/.github/workflows/semgrep.yml
+index 6623649..6497685 100644
+--- a/.github/workflows/semgrep.yml
++++ b/.github/workflows/semgrep.yml
+@@ -23,7 +23,7 @@ concurrency:
+ jobs:
+   semgrep:
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 20  # a ceiling, not a measurement: the run time of the live run was not read for this comment; the install took 17 s on a fast link in one test
++    timeout-minutes: 20  # a ceiling, not a measurement: the run time of the live run was not read for this comment; the install took 17 s on a fast link in one test, from the author's own run; no log is shipped
+     steps:
+       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+         with:
+@@ -49,16 +49,16 @@ jobs:
+         # The rules are fetched live from the public registry at every run and cannot be pinned (there is no versioned pack,
+         # and copying the rules into this repository may not be allowed by their licence: the licence text was not read, see the first lines of this file). So this check can turn red or lose
+         # coverage with no change in this repository when the registry changes. Keep it OUT of the required checks.
+-        # Exit codes (seen with this pinned Semgrep 1.185.0 on a made-up local rule, and with the registry blocked): 0 clean,
++        # Exit codes (from the author's own runs with this pinned Semgrep 1.185.0 on a made-up local rule, and with the registry blocked; no log is shipped): 0 clean,
+         # 1 findings (--error), 2 registry or network failure or a scan path that does not exist, 7 a rule file that cannot be read.
+         # Status: first live run on GitHub (read from the job log by the project lead, not by the author of this comment):
+-        # run 43403502735, 2026-11-13, head 15b8b15e: "Scanning 64 files tracked by git with 79 Code rules", "Ran 77 rules on 47 files: 0 findings", exit 0.
++        # run 43403502735, 2026-11-13, head 15b8b15e: "Scanning 64 files tracked by git with 79 Code rules", "Ran 77 rules on 47 files: 0 findings", exit 0. The job log is not stored in this repository; docs/tests.md repeats the same text only.
+         # A green job alone does NOT prove that rules ran: the log line "Ran N rules on M files" is the proof (docs/tests.md, "Semgrep"). tests/ and demo_only/ are not scanned.
+         # Network use: PyPI file hosts (lock file, hash-checked), the CPython download of setup-python (GitHub-hosted Python builds), and the Semgrep rule download service (host name ends in .dev) for the two packs.
+         # Only exit 2 is retried (3 tries); findings are never retried. If all 3 tries end in 2, the job fails: re-run it later,
+         # or check that src scripts load_tools tools n8n all exist (the message names the possible causes).
+         # --metrics=off: no usage data is sent. --disable-version-check: no call to the Semgrep website for a newer version.
+-        # --strict: rule problems stop the run instead of being skipped; with --strict some files that cannot be parsed (for example one with an unclosed call bracket) end the run with exit 3, and without it the same files give exit 0 (made-up local test, 1.185.0); not every syntax error does this, for example `def f(:` alone gave exit 0 even with --strict.
++        # --strict: rule problems stop the run instead of being skipped; with --strict some files that cannot be parsed (for example one with an unclosed call bracket) end the run with exit 3, and without it the same files give exit 0 (from the author's own local test, 1.185.0; no log is shipped); not every syntax error does this, for example `def f(:` alone gave exit 0 even with --strict.
+         # Findings print to the job log. To suppress one: docs/tests.md, "Semgrep".
+         env:
+           RETRY_PAUSE_SECONDS: "20"
+diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
+index ac24b7d..4ff0003 100644
+--- a/.github/workflows/sonar.yml
++++ b/.github/workflows/sonar.yml
+@@ -1,7 +1,7 @@
+ # SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-24.04, the same runner image as lint.yml) only: the analysis reads source files and needs no Windows.
+ # One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
+-# otherwise the scan stops with "You are running CI analysis while Automatic Analysis is enabled".
+-# The token is the repository secret SONAR_TOKEN (owner-created, read-only to this file; never printed).
++# otherwise the scan is expected to stop with "You are running CI analysis while Automatic Analysis is enabled" (message as quoted by the author; not checked here).
++# The token is the repository secret SONAR_TOKEN (owner-created; this file only passes it to the scan step and prints nothing from it; GitHub also hides secret values in logs).
+ # Coverage: the job runs the Python test suite once (serial, as in docs/tests.md) with pytest-cov and hands coverage.xml to the
+ # scan. The Playwright tests skip here, as in lint.yml.
+ # What is and is not isolated: the SONAR_TOKEN secret is NOT in the environment of the install and test steps (it is set only on
+@@ -39,7 +39,7 @@ jobs:
+         with:
+           python-version: "3.12"
+       - name: Install the pinned dev tools and the coverage tools (hashes are checked)
+-        # ONE pip call with both locks: pip refuses to run when a package is pinned to two versions (tested, pip 24.0);
++        # ONE pip call with both locks: pip refuses to run when a package is pinned to two versions (the author's own local test, pip 24.0; no log is shipped);
+         # two separate calls would silently let the second lock replace the first one's pin. --only-binary: wheels only, so no
+         # package build script runs before the test step.
+         run: |
+diff --git a/docs/real-services.md b/docs/real-services.md
+index f324dfe..2e33faf 100644
+--- a/docs/real-services.md
++++ b/docs/real-services.md
+@@ -4,19 +4,19 @@
+ This section is for someone who wants to try the desk against their own free HubSpot account and their own mailboxes.
+ This script is an untested reference: it was exercised only against the demo stand-ins (`--dry-fakes`), so what follows describes a script, not a result.
+ 
+-This script has not been run against a real HubSpot account or a real Gmail mailbox. The only real-service try so far is the separate, small script `scripts/hubspot_probe.py` (`docs/hubspot-probe.md`): tried by the author on a free HubSpot account, logs not shipped. Everything else in this repository ran against demo stand-ins. The script described here is the way to try the rest; until a run is recorded in this file, treat the real-service behaviour as untested, including what the code assumes about HubSpot (for example that it refuses a second create of the same email with a message naming the existing contact).
++This script has not been run against a real HubSpot account or a real Gmail mailbox. The only real-service try so far is the separate, small script `scripts/hubspot_probe.py` (`docs/hubspot-probe.md`): tried by the author on a free HubSpot account, logs not shipped. Apart from that probe, this repository's tests and scripts use demo stand-ins; no log of any real-service run is shipped. The script described here is the way to try the rest; until a run is recorded in this file, treat the real-service behaviour as untested, including what the code assumes about HubSpot (for example that it refuses a second create of the same email with a message naming the existing contact).
+ 
+-`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people at the address ending `example.com` (the reserved example domain; a real CRM may refuse `.test` addresses); nobody outside your own inboxes receives anything. You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.
++`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people at the address ending `example.com` (the reserved example domain; a real CRM may refuse `.test` addresses); the mail kind used here picks the receiving address only from your configured inbox list, never from a lead's address (`tests/test_smtp_provider.py`, test of the recipient choice). You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start when a required cap or setting is missing (`tests/test_real_check_dry.py`, test of a missing required name).
+ 
+ 1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in. Each name is explained inside the file. Secrets are never in that file, only the paths of one-line key files (a CRM service key with contacts read and write only; a mail app password).
+ 1a. **Before turning lead stages on in any real HubSpot account (required):** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off; test on one made-up contact first. The desk writes the lead status field and cannot see those automations (`docs/limits.md`, section "Which CRM stage things the desk touches").
+-2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program never creates properties.
++2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program's HubSpot code uses only the contacts endpoints and creates no property (`src/lead_desk/crm_hubspot.py`, top comment; not tested).
+ 3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids).
+ 
+-It sends new people, repeats through the same door and the other door, one person with two different addresses (a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the result says so), stops the desk hard once after the load started, restarts it, and re-sends. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (for example one Gmail and one Google Workspace mailbox; one block per mailbox in the config) by the header `X-Send-Key` (no body or address is read) and prints only counts and a pass/fail table of the checks, plus a per-lead table. The same goes into a JSON file.
++It sends new people, repeats through the same door and the other door, one person with two different addresses (a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the check list names them as "two-leads": `tests/test_load_tools.py` tests that name), stops the desk hard once after the load started, restarts it, and re-sends. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (for example one Gmail and one Google Workspace mailbox; one block per mailbox in the config) by the header `X-Send-Key` (the code in `src/lead_desk/imap_count.py` fetches only that one header; no test shows that nothing else is read) and prints only counts and a pass/fail table of the checks, plus a per-lead table. The same goes into a JSON file.
+ 
+ What it would show: the number of CRM contacts per lead id, the desk's own count of calls and creates, and the number of mails that reached your mailboxes per lead, after a crash and with repeats through both doors. What it would NOT show: that mail would reach a stranger's inbox (no spam-folder, SPF or DKIM claim: it counts what arrived in your two mailboxes and their spam folders; one message per lead is allowed across both mailboxes together), that the CRM's own e-mail de-duplication did not hide something (the evidence would be the desk's own counts plus the different-address case), or anything about volumes beyond the free plan's limits. After a hard crash a mail that was in flight is recorded `unknown` on purpose: the table shows how many of those arrived.
+ 
+-Exit code 0 only when every check in its table passes: the book holds all the leads, the follow-ups that were not in flight at the crash ended `sent`, the mailboxes hold a mail for every `sent` follow-up, the CRM holds a contact for every lead marked done, and the first desk process really stopped at the crash point. Failure tables print no address and no setting value. The CRM key is sent only to the CRM vendor's own API host names (any other host needs a setting that says so). The full list of checks is in the script's own help text; its exit codes and settings names are in `docs/settings.md`.
++Exit code 0 only when every check in its table passes: the book holds all the leads, the follow-ups that were not in flight at the crash ended `sent`, the mailboxes hold a mail for every `sent` follow-up, the CRM holds a contact for every lead marked done, and the first desk process really stopped at the crash point. Failure tables mask e-mail addresses (`tests/test_real_check_dry.py` tests the masking); a refusal does not repeat a setting value (same file); no test covers every line of a failure table. The CRM settings refuse a base address outside the vendor's own domains unless a setting allows it (`tests/test_crm_hubspot.py` tests this refusal); no test follows the key on the wire. The full list of checks is in the script's own help text; its exit codes and settings names are in `docs/settings.md`.
+ 
+-**Where the files may be.** The config file, and the folders that the config names (`DESK_DB_PATH` and so the run folder, `REAL_RESULT_FILE`, the key and password files), can be anywhere on the computer, also outside the repository: the script reads the config you name with `--config` and uses the paths in it as written. The folder checks of `load_tools/README.md` (`LEAD_DESK_PATH_ROOTS`) do not apply to them, because they come from your own files and not from a command line that a faulty script might have filled in. Only the config path itself is checked (no control characters, links are followed, the file must exist), and it is found by looking the name up in the folder listings from the top of the disk (or the network share), so it must be a file in a folder you can list: a config below a folder that you can enter but not list, or one handed over as `--config <(command)`, is refused with a message (copy it to a normal file).
++**Where the files may be.** The config file, and the folders that the config names (`DESK_DB_PATH` and so the run folder, `REAL_RESULT_FILE`, the key and password files), can be anywhere on the computer, also outside the repository (`tests/test_path_confinement.py` tests the lookup of a config outside the allowed folders): the script reads the config you name with `--config` and uses the paths in it as written. The folder checks of `load_tools/README.md` (`LEAD_DESK_PATH_ROOTS`) do not apply to them, because they come from your own files and not from a command line that a faulty script might have filled in. Only the config path itself is checked (no control characters, links are followed, the file must exist), and it is found by looking the name up in the folder listings from the top of the disk (or the network share), so it must be a file in a folder you can list: a config below a folder that you can enter but not list, is refused with a message (copy it to a normal file); a config handed over as `--config <(command)` is expected to be refused the same way, but no test covers that.
+diff --git a/docs/why-this-code.md b/docs/why-this-code.md
+index efaad41..0392c94 100644
+--- a/docs/why-this-code.md
++++ b/docs/why-this-code.md
+@@ -10,14 +10,14 @@ Only n8n was compared for the main question (the first row); no other tool was e
+ 
+ | Part | What it has to do | Tried first | What only own code gives | Result |
+ |---|---|---|---|---|
+-| Decide "new lead or duplicate" and remember it | One decision per email address, even when ten requests arrive at once, and a way back after a crash | n8n alone, four patterns, tried once on one computer (the workflows and logs are not in this repository, see the README). Only n8n was tried: no idempotency or outbox library, queue or other tool was compared | No n8n-only result is stated here (tried once by the author, logs not shipped, see the README); the desk writes each step down first and either finishes it or marks it UNKNOWN for a person, so a crash between the CRM step and the email step is covered by tests in this repository | Own code (`src/lead_desk/desk.py`, `gate.py`, `db.py`); this is the part the demo is about (the other parts of the desk are listed in the rows below) |
++| Decide "new lead or duplicate" and remember it | One decision per email address, even when ten requests arrive at once, and a way back after a crash | n8n alone, four patterns, tried once on one computer (the workflows and logs are not in this repository, see the README). Only n8n was tried: no idempotency or outbox library, queue or other tool was compared | No n8n-only result is stated here (tried once by the author, logs not shipped, see the README); the desk writes each step down first and either finishes it or marks it UNKNOWN for a person, so a crash at each named point of the desk is tested in `tests/test_crash_points.py` (the test does not name the CRM-then-email gap as a case of its own) | Own code (`src/lead_desk/desk.py`, `gate.py`, `db.py`); this is the part the demo is about (the other parts of the desk are listed in the rows below) |
+ | Desk's records | A unique key, one atomic insert, survives a restart | Python's `sqlite3` (standard library) | The rules listed in `docs/limits.md` under "Rules of the desk's records", enforced by the database | Standard library plus a few rules |
+ | HTTP endpoint | Receive requests, bound the load, refuse bad input | Python's `http.server` (standard library) | Limits, deadlines, the Host and Origin check | Standard library plus own limits |
+ | Email normalisation | The same address written two ways is one lead | Standard library string functions | A few lines: trim, lower case, a shape check | A few lines |
+ | Phone matching | (not done) | Not tried | Nothing: phone numbers are not used to decide "same lead" | Left out on purpose |
+ | Demo CRM, demo mail systems, pre-written AI replies (`demo_only/`) | Stand-ins so the demo runs on one computer | Not checked | Two kinds of mail system (one that recognises a repeated send key, one that does not) are the point of the test | Own code, test doubles only |
+-| Real adapters: HubSpot, SMTP mail, IMAP counting, live model (`src/lead_desk/crm_hubspot.py`, `smtp_provider.py`, `imap_count.py`, `live_claude.py`) | Talk to real services in a bounded way | The vendors' own client libraries were not tried; the standard library (`urllib`, `smtplib`, `imaplib`) is used | Call caps, a deadline on every call, "ask a system that cannot recognise a repeat only once", masked errors | Own code over the standard library. They were built and tested against local stand-in servers; only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped), and the desk's HubSpot adapter itself never did; they are kept so the checks of the guarantee could be repeated with real services later (`scripts/run_real_check.py`) |
+-| Load driver (`load_tools/load_driver.py`) | Fire planned bursts and log every request | Ready-made load tools (for example k6, vegeta, hey) cover firing requests; not checked against this log format | Planned send times fixed before the run, a log line per request number, retries by time, the log the seven checks read | Own code (small); another tool could replace it if it writes the log format in `load_tools/README.md` |
++| Real adapters: HubSpot, SMTP mail, IMAP counting, live model (`src/lead_desk/crm_hubspot.py`, `smtp_provider.py`, `imap_count.py`, `live_claude.py`) | Talk to real services in a bounded way | The vendors' own client libraries were not tried; the standard library (`urllib`, `smtplib`, `imaplib`) is used | Call caps, a deadline on every call, "ask a system that cannot recognise a repeat only once", masked errors | Own code over the standard library. They were built and tested against local stand-in servers; only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped), and the desk's HubSpot adapter itself was, as far as the author knows, not run against one (no log either way is shipped); they are kept so the checks of the guarantee could be repeated with real services later (`scripts/run_real_check.py`) |
++| Load driver (`load_tools/load_driver.py`) | Fire planned bursts and log every request | Ready-made load tools (for example k6, vegeta, hey) exist for firing requests (named from general knowledge, not tried here); not checked against this log format | Planned send times fixed before the run, a log line per request number, retries by time, the log the seven checks read | Own code (small); another tool could replace it if it writes the log format in `load_tools/README.md` |
+ | Seven checks after a load run (`load_tools/check_invariants.py`) | Count what really happened in the desk's records, the mail catcher and the CRM dump | No ready-made tool known for these counts | The comparison of the desk's own book with the mail and CRM counts | Own code; it is an audit, not part of the desk |
+ | Portal demo burst (`demo_only/portal_demo.py`, `demo_only/burst.py`) | Let a viewer fire a burst from the page | Not checked | The same retry rule as the load driver: two copies of it exist (`demo_only/burst.py`, which `demo_only/portal_demo.py` reuses, and `load_tools/load_driver.py`), kept in step by a test | Own code, demo only |
+ | Secret scan | Keep secrets out of the repository | gitleaks | Nothing | Ready-made tool, run in the checks |
+@@ -25,5 +25,5 @@ Only n8n was compared for the main question (the first row); no other tool was e
+ 
+ ## Where another service plugs in
+ 
+-The desk talks to three things through three interfaces in `src/lead_desk/contract.py`: `Crm` (the customer database), `Outbox` (the mail sender) and `Qualifier` (the AI step). Each has a stand-in in `demo_only/` and the kinds that can be selected are closed lists in `src/lead_desk/constants.py`: `CRM_CHOICES` (`fake`, `hubspot`), `OUTBOX_CHOICES` (`http`, `smtp`, `smtp_provider`) and `QUALIFIER_CHOICES` (`recorded`, `live_claude`). `src/lead_desk/loader.py` turns the chosen kind into an object. To use another CRM, mail service or AI service, do all of these (one test, the one in `tests/test_mode_safety.py` that checks every kind is listed in the places that describe it, checks only that the kind lists in `constants.py`, `CRM_FIELDS_SENT` and `real_services` agree; it does not check that your module, your `loader.py` branch or your adapter exist or work, so go through all the steps yourself): (1) write a module that implements the interface (see `src/lead_desk/crm_hubspot.py` and `src/lead_desk/smtp_provider.py` as examples); (2) add its name to the tuple in `constants.py` (and, for a mail kind that stays on this computer, to `OUTBOX_STAND_INS`); (3) add one branch for it in `loader.py`; (4) make sure `Config.real_services` in `config.py` counts it as a real service, so the banner, the demo-tools gate and the loopback-only bind rule apply; (5) for a CRM kind, add its entry to `CRM_FIELDS_SENT` in `portal_api.py`, which says which lead fields it is sent and drives the data page; (6) the interface adapters that talk to the stand-ins live in `src/lead_desk/adapters.py` and the stand-ins themselves in `demo_only/`; a real kind goes in its own module under `src/lead_desk/` and must not import from `demo_only/`. This demo ships exactly one real CRM kind (HubSpot) and one real AI kind (`live_claude`, which calls one vendor's API); mail has the vendor-neutral `smtp_provider` kind. The tests run these kinds against stand-ins (the only real-service try is described in `docs/hubspot-probe.md`); no second CRM or AI service is built here.
++The desk talks to three things through three interfaces in `src/lead_desk/contract.py`: `Crm` (the customer database), `Outbox` (the mail sender) and `Qualifier` (the AI step). Each has a stand-in in `demo_only/` and the kinds that can be selected are closed lists in `src/lead_desk/constants.py`: `CRM_CHOICES` (`fake`, `hubspot`), `OUTBOX_CHOICES` (`http`, `smtp`, `smtp_provider`) and `QUALIFIER_CHOICES` (`recorded`, `live_claude`). `src/lead_desk/loader.py` turns the chosen kind into an object. To use another CRM, mail service or AI service, do all of these (one test, the one in `tests/test_mode_safety.py` that checks every kind is listed in the places that describe it, checks only that the kind lists in `constants.py`, `CRM_FIELDS_SENT` and `real_services` agree; it does not check that your module, your `loader.py` branch or your adapter exist or work, so go through all the steps yourself): (1) write a module that implements the interface (see `src/lead_desk/crm_hubspot.py` and `src/lead_desk/smtp_provider.py` as examples); (2) add its name to the tuple in `constants.py` (and, for a mail kind that stays on this computer, to `OUTBOX_STAND_INS`); (3) add one branch for it in `loader.py`; (4) make sure `Config.real_services` in `config.py` counts it as a real service, so the banner, the demo-tools gate and the loopback-only bind rule apply; (5) for a CRM kind, add its entry to `CRM_FIELDS_SENT` in `portal_api.py`, which says which lead fields it is sent and drives the data page; (6) the interface adapters that talk to the stand-ins live in `src/lead_desk/adapters.py` and the stand-ins themselves in `demo_only/`; a real kind goes in its own module under `src/lead_desk/` and should not import from `demo_only/` (no test enforces this; a search of the four real adapter modules found no such import). This demo ships exactly one real CRM kind (HubSpot) and one real AI kind (`live_claude`, which calls one vendor's API); mail has the vendor-neutral `smtp_provider` kind. The tests run these kinds against stand-ins (the only real-service try is described in `docs/hubspot-probe.md`); no second CRM or AI service is built here.
+ 
