@@ -1,0 +1,69 @@
+diff --git a/README.md b/README.md
+index b907165..6114f69 100644
+--- a/README.md
++++ b/README.md
+@@ -123,7 +123,7 @@ They are off in the desk itself; the demo start scripts switch on the lead flow.
+ 
+ ## About n8n
+ 
+-The first question of the project was whether n8n on its own handles duplicates and a crash between the CRM step and the email step. A few n8n-only patterns were tried once, by the author, on one computer with one n8n version (`versions.md`), against the demo stand-ins; only the simplest patterns were tested and no other tool was compared. The workflows and logs of those tries are not in this repository, so no result is stated here and none can be reproduced from it. What is shipped: three n8n workflows that put the desk behind n8n (`n8n/`), described in `docs/n8n-recipe.md`, which you can import into your own n8n unmodified to evaluate them. n8n has its own licence; read it before you use n8n.
++The first question of the project was whether n8n on its own handles duplicates and a crash between the CRM step and the email step. A few n8n-only patterns were tried once, by the author, on one computer with one n8n version (`versions.md`), against the demo stand-ins; only the simplest patterns were tested and no other tool was compared. The workflows and logs of those tries are not in this repository, so no result is stated here and none can be reproduced from it. How the counts of those tries were checked a second time, which of them came out the same and which moved, is on `docs/n8n-rerun.md` (the counts only; the tables and the report of the second run are not in this repository). What is shipped: three n8n workflows that put the desk behind n8n (`n8n/`), described in `docs/n8n-recipe.md`, which you can import into your own n8n unmodified to evaluate them. n8n has its own licence; read it before you use n8n.
+ 
+ ## Tests and more commands
+ 
+@@ -138,6 +138,7 @@ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` ins
+ * `docs/limits.md`: what is not claimed in full, load figures, counters, exit codes.
+ * `docs/settings.md`: every setting.
+ * `docs/n8n-recipe.md`: the n8n workflows.
++* `docs/n8n-rerun.md`: how the counts of the n8n comparison were checked a second time, and what that check does not show.
+ * `docs/real-services.md`: an optional script to try the desk against a free HubSpot account and two mailboxes (this script was not run against real services: only `scripts/hubspot_probe.py` touched a real service, on one free HubSpot account, logs not shipped).
+ * `docs/why-this-code.md`: why each part is own code, and where another CRM, mail service or AI service plugs in. `contract.md`: the exact replies the code and tests agree on. `versions.md`: the versions needed to run.
+ 
+diff --git a/docs/n8n-rerun.md b/docs/n8n-rerun.md
+new file mode 100644
+index 0000000..cdbed4c
+--- /dev/null
++++ b/docs/n8n-rerun.md
+@@ -0,0 +1,42 @@
++# How we checked it: the n8n comparison counts
++
++This page says how the counts of the n8n comparison were checked a second time, and which of them can be repeated. It is about the counts only: it is not a result about n8n, and it does not say anything about any other tool.
++
++## What was done
++
++The n8n-only patterns of the first tries (see "About n8n" in the README) were run again on 2026-11-13 in an independent rerun, on one laptop that was quiet when the run started (the processor was at 8 to 9 percent; one reading in the middle of the run showed 100 percent). The 56 files of the rerun were hashed so that the files used can be named. The counts of the rerun were put next to the counts of the tables the author published earlier. Those tables and the report of the rerun are not part of this repository.
++
++## What came out the same
++
++These counts were the same in the published tables and in the rerun:
++
++* Ten requests at once: 18 of 20 for variant a, and 20 of 20 for each of the other three variants.
++* Replay: 0 of 20 added posts, for every variant.
++* Kill runs of variants b, c and d: identical results, with the crashed entry visible in 5 of 5 runs.
++* Variant e: 2 or more emails in 10 of 10 runs; status "not sent" in 0 of 15 runs; in the K1 crash, 5 of 5 runs with the counts (1,1).
++* Kills followed by a reset: a reset was seen in 0 of 15 runs, for each variant.
++
++The letters and names used for the variants and crash cases (a to e, K1, K3) are those of the report of the rerun; they are not explained in this repository, so this page does not say what each variant is.
++
++## What came out different
++
++Counts move with timing on a computer, so a count of one run is not a promise for the next run. These differed between the published tables and the rerun:
++
++* One bad run of ten requests at once gave (2,2) in the rerun and (3,3) in the tables; both are 1 of 20.
++* In the K1 crash the crashed entry was visible in 4 of 5 runs in the rerun and in 5 of 5 in the tables.
++* In one K3 run the rerun ended with (10,0).
++* Variant e, the second CRM row: 2 of 10 in the rerun, 4 of 10 in the tables.
++* The gaps between re-sends under one second: [48,56] in the rerun, [52,55,63,63] in the tables.
++
++An earlier run on a computer that was busy with other work gave 10 of 20 for variant a and the K1 crashed entry visible in 1 of 5 runs. The rerun on the quiet computer did not repeat that. The cause was taken to be the load, as had been suspected before the rerun; this page does not show that separately.
++
++## How these counts may be used
++
++Only a count that appears both in the published tables and in the rerun is stated as one number (for example 18 of 20 for variant a, or 0 of 20 added posts on replay). A count that moved is stated as a range or with "about", or the number of the rerun is used and named as such. The count of second CRM rows is not stated as one number.
++
++## What this check does not show
++
++* It does not show the counts on any other computer, with any other version of n8n or of the demo, or under any other load than the quiet laptop above.
++* It does not show anything about a real CRM, a real mail system or a real AI model; the runs used the demo stand-ins and made-up data (see "What is claimed, and what is not" in the README).
++* It does not compare n8n with any other tool, and it does not show how n8n behaves with other patterns than the simple ones that were tried.
++* The files of the rerun were hashed, but the tables and the report are not in this repository, so nobody can repeat the comparison from this repository alone.
