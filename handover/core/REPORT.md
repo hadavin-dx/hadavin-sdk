@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead, one line)
+R3 builder a804cecf running; latest checkpoint: Fri Nov 13 16:22:33 UTC 2026 tests written for R2-01..10; next: run all affected existing test files, fail-before, patches, RESULTS . Nothing failed. ASK: none.
+
+## STATUS (core lead, one line)
 R3 builder a804cecf running; latest checkpoint: Fri Nov 13 16:18:29 UTC 2026 AST guard R2-08 written and passing (14 tests); next: new tests for R2-01..07,09,10, then failbefore | Fri Nov 13 16:22:33 UTC 2026 tests written for R2-01..10; next: run all affected existing test files, fail-before, patches, RESULTS . Lead additions (--leads cap, DESK_PORT whitespace, closed-stdin one line) sent. Nothing failed. ASK: none.
 
 ## STATUS (core lead) EVIDENCE RUNNER on r2 patch DONE (saved: handover/core/fix/EV2-EVIDENCE-r2.md, EV2-hostile-table.txt)
