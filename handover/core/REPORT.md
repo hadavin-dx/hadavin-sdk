@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 06:35Z (core lead)
+**FAILED/UNCERTAIN FIRST**
+- Part 2 builder a805b93d is INCOMPLETE at e75037b6 (about 65 mutant rows with no result, old-tree runs, cost, format/bandit/suppression count, 3.12 not done). Finisher adecceff is running. No claim of done.
+- SONAR-PATH round 6 (4398e3bd) is NOT clean: 0 Blocker, 3 Major (vault path text, tools total length, boundary off by one), 18 nit items. Round 7 required. Cloud runner a4ec29ae stopped on purpose (lead: runner on the final head only, on the laptop).
+- Part 6 round 15 (20c369f0): design review 0B/4M; codebase reviewer and runner still running. Round 16 will be required.
+- All fail-before numbers are builder-claimed until a runner file exists.
+**LEAD ACTIONS**
+1. Confirm bypass wording: builder says the core hides `bypass=true`, the masker also hides `bypass=0`/`bypass=1`; I read your 05:58Z text as "core shows"; please confirm which is true on origin/main.
+2. pathguard.py 234 vs 220: batch 7 splits the text rules into a second module; if not clean the builder reports two options.
+3. Q-R5-1: recommendation is keep refusing operator-typed links that leave their own folder; 3 lines are coming in the batch 7 report.
+4. handover/evidence branches are never merged to main. .gitleaksignore stays owner-only; no change made.
+5. RUN ON LAPTOP (Q8c-1, after the fix push): hadavin-sdk 7712c26e-successor: `HADAVIN_POLICY_FULL_RENEWAL_RUN=1 pytest tests/test_policy_changelog.py -k plant` plus `python tests/policy_mutants.py "the files that do not parse are merged"`; and notes_lines_check, trivy, semgrep, pip-audit, zizmor, stale-ignore, demo_only_guard (not run here).
+**LIVE ITEMS**: ac09a2ce SONAR batch 7 (just briefed); adecceff Part 2 finisher; a592bb13 Q8c-1 fix push (7712c26e reviewed 0B/0M, nits only); af6574fd runner and a969e991 codebase reviewer for Part 6 r15.
+**ROUNDS (WHY)**: SONAR r6 security path uncapped; Part 6 r15 mode-safety uncapped; Q8c-1 one fix push (ORDER 256).
+**FINISHED SINCE LAST BLOCK**: SONAR r6 design and codebase reviews saved; resolve report goldfish_review_report-r6.md written; Q8c-1 review 0B/0M.
+**EGM STEP PER PACKAGE**: SONAR: resolve done, batch 7 sent. Part 6: awaiting codebase review and runner, then resolve. Part 2: build (finisher). Q8c-1: fix push.
+**LANE SONAR-PATH**: head 4398e3bd, no `PR READY` yet.
+**RUN ON LAPTOP**: see lead action 5; final-head SONAR and Part 6 runs only after a fresh round shows 0 Blocker and 0 Major.
+
 ## 06:23Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
