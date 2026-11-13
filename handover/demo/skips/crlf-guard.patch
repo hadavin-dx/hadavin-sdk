@@ -1,0 +1,133 @@
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..f1bada1
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,8 @@
++# Line endings match .gitattributes: LF for everything, CRLF only for PowerShell scripts.
++root = true
++
++[*]
++end_of_line = lf
++
++[*.ps1]
++end_of_line = crlf
+diff --git a/docs/tests.md b/docs/tests.md
+index 7c39ffa..52db06b 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -71,7 +71,7 @@ When a check fails: read the last lines of its output first; they name the file
+ 
+ What the two secret checks reported, measured on 2026-11-13 with gitleaks 8.30.1 and this repository's `.gitleaks.toml`. The test values were made up and put after the prefix `hadavin-dx_` in lines that start with `sonar.projectKey=` or `x_api_key=`, in files named `cfg.txt`, `notes.properties` and `x_api_key.txt`. Gitleaks (rule `generic-api-key`) reported values of 20, 30, 40, 50 and 60 random lowercase letters and digits. It did not report values of letters only, of words joined by hyphens, or of one repeated letter, at any of those lengths. One digit added to the hyphenated words made gitleaks report them; one digit added to the repeated letter did not. So the cause looks like "no digit" or "too little variety" in the value, not the prefix; the rule inside gitleaks was not read. The real project key holds a digit and was reported once its allowlist was removed. A prefix inside a line of ordinary text was not reported by gitleaks at any length.
+ 
+-The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports an unbroken run of 40 or more of those characters. The prefix and a key name before `=` count towards the 40; a dot, a space or a quote ends the run. It reported every `key=value` line above, so a letters-only second project key in `sonar-project.properties` is seen by that scan alone. The exception for the real key (last line of `exceptions.txt`, the `sonar.projectKey` allowlist in `.gitleaks.toml`) therefore has to stay exact. `tests/test_gitleaks_exceptions.py` plants near-misses in a temporary copy and fails if either exception is widened. To add a second key of this shape, add its exact text, never a wider pattern or a whole file, and keep that test passing. `.gitattributes` forces LF endings; the real line with CRLF endings is reported by gitleaks, not by the repository scan.
++The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports an unbroken run of 40 or more of those characters. The prefix and a key name before `=` count towards the 40; a dot, a space or a quote ends the run. It reported every `key=value` line above, so a letters-only second project key in `sonar-project.properties` is seen by that scan alone. The exception for the real key (last line of `exceptions.txt`, the `sonar.projectKey` allowlist in `.gitleaks.toml`) therefore has to stay exact. `tests/test_gitleaks_exceptions.py` plants near-misses in a temporary copy and fails if either exception is widened. To add a second key of this shape, add its exact text, never a wider pattern or a whole file, and keep that test passing. `.gitattributes` forces LF endings; the real line with CRLF endings is reported by gitleaks, not by the repository scan. If a file was saved with CRLF, the failure now says so (`tests/test_hygiene.py` checks the scan files for a carriage return); fix it with `git add --renormalize .` or save the file with LF (`.editorconfig` asks editors to do this).
+ 
+ ## What each promise rests on
+ 
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index e072229..669b81d 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -4,6 +4,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import fnmatch
+ import json
+ import os
+ import re
+@@ -54,6 +55,43 @@ def _git(cwd: Path, *args: str) -> str:
+     return p.stdout
+ 
+ 
++CRLF_HINT = (
++    "this file has Windows line endings (CRLF); the repository stores LF (.gitattributes); "
++    "run: git add --renormalize . or save the file with LF"
++)
++CRLF_BY_DESIGN = (".ps1", ".bat", ".cmd")  # Windows scripts keep CRLF on purpose (.gitattributes)
++# The files whose exact text the secret-scan exceptions name (sonar-project.properties key line) or that hold the scan
++# rules and lock files: a CR in any of them makes `gitleaks dir` report the key line, with no word about line endings.
++LF_ONLY_FILES = ("sonar-project.properties", ".gitleaks.toml", "exceptions.txt", "patterns.txt", "requirements-*.txt")
++
++
++def _files_with_cr(root: Path, names: list[str]) -> list[str]:
++    """The names (relative to root) whose file holds a carriage return; Windows scripts are skipped by design."""
++    out = []
++    for n in names:
++        f = root / n
++        if n.lower().endswith(CRLF_BY_DESIGN) or not f.is_file():
++            continue
++        if b"\r" in f.read_bytes():
++            out.append(n)
++    return out
++
++
++def _crlf_note(root: Path, names: list[str]) -> str:
++    """A plain hint for a failure message: empty when none of the named files holds a carriage return."""
++    bad = _files_with_cr(root, names)
++    return f"\n{', '.join(bad)}: {CRLF_HINT}" if bad else ""
++
++
++def _flagged_files(report: Path) -> list[str]:
++    """File names from a gitleaks JSON report (values are redacted, the names are not secret)."""
++    try:
++        rows = json.loads(report.read_text(encoding="utf-8") or "[]")
++    except (OSError, ValueError):
++        return []
++    return sorted({str(x.get("File", "")).replace(chr(92), "/").removeprefix("./") for x in rows if x.get("File")})
++
++
+ def test_no_demo_only_outside_loader() -> None:
+     """src/ may name demo_only only in loader.py; tests/, scripts/, conftest.py, README and docs may."""
+     offenders = [
+@@ -191,8 +229,13 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+         warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+     for sub, target in scans:  # from the root of the scanned folder with ".", exactly like lint.yml: the path rules in
+         # .gitleaks.toml start with ^ and need paths relative to the root (an absolute temp path would never match them)
+-        p = subprocess.run([exe, sub, *common, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False)  # noqa: S603
+-        assert p.returncode == 0, f"gitleaks {sub} reported findings (values are redacted)"
++        p = subprocess.run(  # noqa: S603
++            [exe, sub, *common, *fmt, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False
++        )
++        flagged = _flagged_files(report) if p.returncode else []
++        assert p.returncode == 0, (
++            f"gitleaks {sub} reported findings (values are redacted); files: {flagged}" + _crlf_note(target, flagged)
++        )
+ 
+ 
+ def test_sh_blobs_no_cr() -> None:
+@@ -204,6 +247,33 @@ def test_sh_blobs_no_cr() -> None:
+         assert 13 not in blob, f"{n} contains a carriage return in the index"
+ 
+ 
++def test_the_secret_scan_files_have_no_carriage_return() -> None:
++    """A CR in a file the scan exceptions name makes `gitleaks dir` report it; fail early and say why."""
++    names = [n for n in _git(REPO, "ls-files").splitlines() if any(fnmatch.fnmatch(n, g) for g in LF_ONLY_FILES)]
++    assert "sonar-project.properties" in names, "the list of files to check is empty: the test would prove nothing"
++    bad = _files_with_cr(REPO, names)
++    assert not bad, f"{', '.join(bad)}: {CRLF_HINT}"
++
++
++def test_the_carriage_return_check_flags_crlf_and_skips_windows_scripts(tmp_path: Path) -> None:
++    (tmp_path / "a.txt").write_bytes(b"x=1" + bytes([13, 10]))
++    (tmp_path / "b.txt").write_bytes(b"x=1" + bytes([10]))
++    (tmp_path / "c.ps1").write_bytes(b"x" + bytes([13, 10]))
++    assert _files_with_cr(tmp_path, ["a.txt", "b.txt", "c.ps1", "missing.txt"]) == ["a.txt"]
++    assert CRLF_HINT in _crlf_note(tmp_path, ["a.txt"])
++    assert _crlf_note(tmp_path, ["b.txt", "c.ps1"]) == ""
++
++
++def test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix(tmp_path: Path) -> None:
++    (tmp_path / "sonar-project.properties").write_bytes(b"k=v" + bytes([13, 10]))
++    report = tmp_path / "r.json"
++    report.write_text(json.dumps([{"File": "./sonar-project.properties", "RuleID": "x"}]), encoding="utf-8")
++    flagged = _flagged_files(report)
++    assert flagged == ["sonar-project.properties"]
++    assert CRLF_HINT in _crlf_note(tmp_path, flagged)
++    assert _flagged_files(tmp_path / "missing.json") == []
++
++
+ def test_exceptions_narrow(tmp_path: Path) -> None:
+     """Each exception covers only its own file kind and length: the same value elsewhere must still be reported."""
+     h40, h64 = "a1b2c3d4e5" * 4, "a1b2c3d4e5f6a7b8" * 4

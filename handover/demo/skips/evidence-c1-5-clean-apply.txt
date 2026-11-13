@@ -1,0 +1,16 @@
+apply --check 2db3926: OK
+[90m2:00AM[0m [32mINF[0m [1mscanned ~2972898 bytes (2.97 MB) in 279ms[0m
+[90m2:00AM[0m [32mINF[0m [1mno leaks found[0m
+dir rc=0
+[90m2:00AM[0m [32mINF[0m [1mscanned ~3010540 bytes (3.01 MB) in 551ms[0m
+[90m2:00AM[0m [32mINF[0m [1mno leaks found[0m
+semgrep/semgrep-on-2db3926-v4.patch alone OK
+semgrep/semgrep-on-2db3926-v4.patch then guard OK
+error: .github/workflows/semgrep.yml: already exists in working directory
+error: requirements-semgrep.in: already exists in working directory
+error: requirements-semgrep.txt: already exists in working directory
+error: tests/test_gitleaks_semgrep_lock.py: already exists in working directory
+error: tests/test_nosemgrep_form.py: already exists in working directory
+merge-ready/versions-md-allowance.patch MISSING
+real-run/real-run-fixes.patch MISSING
+guard then semgrep v4: OK
