@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:22Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 06ed4b4c round 11: 0 Blocker, 4 Major (pin/proof labels meaningless because the test helper imports a new name; config.environment not sealed; weak mutant-table check plus 3 unrowed branches; SUPPRESSIONS: the diff adds about 70 noqa / type: ignore / fmt: skip / pragma lines, which earlier rounds never counted against main: my miss, now a Major). Not clean. No laptop run yet.
+- Evidence runner a2432ae7 on 06ed4b4c has NOT reported; its result is unverified and will go to the batch 12 builder as an addendum.
+- Part 2 batch 11 (aa049db0) and SONAR-PATH batch 4 (a982868e) have pushed nothing yet.
+
+**LEAD ACTIONS (decision needed, issue 4):** the mode-safety design uses broad `except Exception` so that any failure shows the unconfirmed banner. The builder will list exact sites (expected mode_banner.py about 4, app.py 2) and narrow every one it can. For any it cannot narrow, tell me: (a) module-level ruff rule with the reason in pyproject, or (b) named tuple plus a test that a surprise error still gives the unconfirmed banner. I recommend (b). Retarget of the laptop runner: still NOT yet; the new Part 6 head will be the batch 12 head after a clean round 12.
+**LIVE ITEMS (4):** a7978edf Part 6 batch 12 builder (started 04:21Z, expected end 05:21Z, stop at 60 min); a2432ae7 Part 6 runner; aa049db0 Part 2 batch 11 builder; a982868e SONAR-PATH batch 4 builder.
+**ROUNDS (WHY):** P6 round 12 next (mode-safety, no cap). P2 round 11 and SONAR-PATH round 4 next.
+**FINISHED SINCE LAST BLOCK:** P6 round 11 resolve (goldfish_review_report-r11.md, Status resolved, 7 fixes, 1 decline N7, 1 escalate); ledger PDBANNER-r11-1..9.
+**EGM STEP PER PACKAGE:** Part 6: resolve done, build (batch 12) running. Part 2: build (batch 11). SONAR-PATH: build (batch 4).
+**LANE SONAR-PATH:** agent a982868e building batch 4; EGM step build; chain A-D not complete; no PR claim.
+**RUN ON LAPTOP:** none requested (no final head).
+
 ## 04:13Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
