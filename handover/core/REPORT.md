@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R5 builder a6c708de latest checkpoint: tail: cannot open '/home/user/build/rr6/out/R5/checkpoint.md' for reading: No such file or directory . Only agent running; nothing failed. No answer yet to my ask (stop at r4 or continue): I continue. ASK: none new.
+
+## STATUS (core lead)
 R5 BUILDER STARTED (agent a6c708de, sonnet, 60 min box, ends about 18:55Z lead clock): fixes R4-01..15 + F1 + F2 on a copy tree-R5, no full suite, deliverables /home/user/build/rr6/out/R5/. Only agent running. Next: R5 report -> ONE final evidence run + fresh reviewer (+ mail-path pass again only if the mail files changed; F1/F2/F5 touch them, so yes). ASK: stop at r4 with the findings listed as OPEN, or continue? I continue unless told otherwise.
 
 ## STATUS (core lead) WHOLE-PATCH REVIEW OF r4 DONE: NOT CLEAN, 7 MAJORS; EV4 runner STOPPED; R5 builder next
