@@ -1243,6 +1243,8 @@ class _Signatures:
                     for f in self.files
                     if f.endswith("/__init__.py") and f"{_dotted_path(f)}.".startswith(prefix)
                 }
+            else:
+                found |= set()
         found.discard(m.rel)
         return sorted(found)
 
