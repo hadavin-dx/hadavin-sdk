@@ -4,6 +4,23 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| V1 | independent evidence for F1 | proof | 12:58Z | done 13:17Z | 1 | DONE (runner's numbers; handover/core/fix/V1-evidence.md): fails-before 32 failed / 0 passed (without the new constants file: import error); after 32 passed x3; neighbours 28 files: 2245 passed 0 failed vs 2213 on the old tree, delta exactly +32, same 109 skips; mutants 10 of 12 killed, 2 SURVIVED: (3c) refusing the last valid --index, (6) exit code 3 -> 1 inside scripts/refusals.py (test imports the same constant); 38 hostile inputs: 1 TRACEBACK (#17: feed.py with a 100000-deep nested canned file, RecursionError, exit 1), 2 HANGS (#14 feed.py with a FIFO as canned file; #28 scrub_n8n_export.py with a FIFO as in.json), typed text echoed only by stock argparse (3 cases, F2's lane). ruff: line length 100 fails (153), repo's 120 passes | F1b |
+| F1b | builder round 2 (F1 fix): all three hostile findings through one reader (uses F3's open_regular), the two survivors get boundary + literal-exit-code tests | resolve | 13:17Z | 14:20Z | round 2 of 2 | RUNNING | V1b |
+| F4c | builder docs round 3 | close V4b survivor | 13:26Z | 14:00Z | round 3 | RUNNING | V4c, round-2 review |
+| F6 | builder writer-side opens + wrappers | open classes | 13:18Z | 14:20Z | 1 | RUNNING | V6 |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 14:10Z | 1 | RUNNING | read |
+| V3 | evidence for F3 | proof | 13:03Z | 13:50Z | 1 | RUNNING | read |
+| others | F1 F2 F3 F4 F4b D1 E1 E2 C6 R4 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: findings against F1 (my builder output): 1 Traceback, 2 hangs, 2 test survivors: all real defects in the new F1 patch's own area, round 2 of 2 in F1b. Root cause proven: yes for each (runner's logs). Totals today: real defects found by runners/agents so far 9 classes (argparse echo, feed tracebacks, OverflowError, model option validation, FIFO readers, FIFO as output, wrappers, doc claims, FIFO in feed/scrub): all assigned to F-lanes; failures with proven cause 1 (T1); unexplained 2 (B2-first, T2-earlier); flakes 0; agents crashed 0.
+LOAD: 5 agents running.
+ASK: none new.
+
+
+## REPORT (container clock 13:17Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | V4b | independent evidence for F4b | proof | 13:11Z | done 13:17Z | 1 | DONE (runner's numbers, handover/core/fix/V4b-evidence.md): fails-before 5 failed / 6 passed; after 11 passed (switch set and unset); 20 doc-reading files 1558 passed, 0 failed, 33 skipped (gitleaks, playwright, root, py3.13); mutants 8 of 9 killed, ONE SURVIVED (M7a: the prose sentence about waiting 20 s for each server in load_tools/README.md is not pinned); load_tools recipe re-run by the runner: 30 requests, 24 request ids, 21 leads, 21 mails, ALL 7 CHECKS HOLD, rc 0; both workflow files parse, DPLD_REQUIRE_COUNT set at lint.yml:100 and sonar.yml:52. Runner's note: ruff at line length 100 gives 40 E501 (33 in the new test, 8 in crash_desk.py), at the repo's 120 it passes: the repo setting is 120. One kernel memory kill about 2 min before its first run, cause unproven (probably another runner) | F4c |
 | F4c | builder round 3 (small): contract.md:303 follow-up wording on every page about a repeated request + pin the unpinned prose number against the recipe | close V4b survivor + R4 leftover | 13:17Z | 14:00Z | round 3 (docs) | RUNNING | V4c + round-2 review of the whole docs patch (F4+F4b+F4c) |
 | F6 | builder: writer-side FIFO/special-file opens (lockfile.py:51, live_claude.py:162/:291, trace.py:57) + wrappers reset.sh/start_all.sh/.ps1 traceback | classes the F1 and F3 builders left open | 13:18Z | 14:20Z | build 1 | RUNNING | V6 |
