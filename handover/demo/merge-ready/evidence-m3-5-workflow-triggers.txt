@@ -1,0 +1,88 @@
+# evidence (session lead, 2026-11-13 00:50Z): workflow triggers read with git show on the three PR heads (public repo, fetched)
+## pr-1-code
+-- lint.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+-- codeql.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1" # weekly, Monday. limit: scheduled runs may pause after inactivity
+
+permissions:
+-- sonar.yml (trigger block)
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+## pr-2-demo-folder
+-- lint.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+-- codeql.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1" # weekly, Monday. limit: scheduled runs may pause after inactivity
+
+permissions:
+-- sonar.yml (trigger block)
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+## pr-3-tests
+-- lint.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+-- codeql.yml (trigger block)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1" # weekly, Monday. limit: scheduled runs may pause after inactivity
+
+permissions:
+-- sonar.yml (trigger block)
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+## comparison
+lint.yml identical on pr-1-code, pr-2-demo-folder and pr-3-tests
+codeql.yml identical on pr-1-code, pr-2-demo-folder and pr-3-tests
+sonar.yml: the trigger blocks are the same on all three (push to main; pull_request types opened/synchronize/reopened, no base-branch filter); the files DIFFER elsewhere (pr-3-tests runs the tests with coverage; ubuntu-24.04)
+pull_request_target / workflow_run: 0 files contain them
+sonar.yml concurrency: group sonar-${{ github.ref }} cancel-in-progress: true (per PR head ref)
