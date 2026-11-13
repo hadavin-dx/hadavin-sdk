@@ -174,3 +174,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-6c | egm-codebase-details fix-6 r2 (round 2 of cap 2) | 14:24Z | | running |
 | REV-6d | egm-comprehension fix-6 r2 (round 2 of cap 2) | 14:24Z | | running |
 | E9 | evidence runner fix-6 r2 full suite | 14:26Z | 15:16Z | running |
+| REV-6d | closed 14:3xZ: fix-6 r2 comprehension: 0 blocker, 6 major (M1 window 3/crash arming, M2 one vs two demo servers, M3 macOS 'not tried' contradiction, M4 3883 count vs patch tests + 'this patch'/'lane3' jargon, M5 ten vs eight browser files + 22/113 double meaning, M6 'only D2 is a real kill' vs soak/137) + minors; saved evidence/review-lane3-fix-6-r2-comprehension.md. Waiting for REV-6c, then one B6c batch fix | | | closed |
