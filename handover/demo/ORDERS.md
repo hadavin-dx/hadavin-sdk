@@ -242,3 +242,8 @@ With demo_only/ DELETED, 6 tests fail: tests/test_except_clause_hierarchy.py rea
 
 ## LEAD COMMAND 03:45Z DEMO: SONAR PROBE RESULT (core PR #100)
 SonarCloud cleared both pythonsecurity:S8707 sites in hadavin-sdk with the helper pattern in branch wip/cloud-sonar-probe (src/hadavin_sdk/pathguard.py, 224 lines; atomic_write and _read_json routed through it). 0 open issues on the PR, gate OK. Read that file from the hadavin-sdk origin and make P3 use the SAME confinement shape (so the two repos stay consistent and Sonar's taint engine accepts it), in a demo-sized form; probe A/B is only needed if your sites differ in shape (CLI argument, os.environ source, Path join): then ONE tiny probe for that shape. Do not copy 224 lines blindly: smallest form that keeps the same check order (resolve, confine to a base, refuse links/outside) and say so in the P3 note.
+
+## LEAD COMMAND 03:36Z (real clock; the block above headed 03:45Z was mislabelled by the lead: it was written at 03:33Z) DEMO
+1. crlf-guard-v4 at +228 lines: ACCEPTED (19 mutants + M1..M9 die, cure commands run by a test, no GNU sed). My 120-line limit is withdrawn: correctness beats size. Requirement: the PR text states DPLD_REQUIRE_SCAN=1 must be set in CI for the 3 gitleaks mutants (check the workflow sets it, else the patch adds it in the lint.yml hunk).
+2. sonar yaml delta v2 (31 of 32 mutants die): name the surviving mutant and why it cannot be killed (or kill it). Fine to ship otherwise.
+3. Next: after the no-demo fix (nodemo-fix.patch early in series) and P1 v2, give me ONE APPLY ORDER LIST for #4 with the order, each patch's measured evidence and what is NOT measured, so I push them in one batch and read Sonar once.
