@@ -470,3 +470,10 @@ Then keep self-assigning (standing rule). Status block every 5 minutes with ALL 
 3. E8 (start now, one core): CI-equivalent on the final tree: ruff, mypy, gitleaks with the repo toml, semgrep config (1.185.0 pinned, network only if the sandbox allows: say if it cannot), hygiene scan with DPLD_REQUIRE_SCAN=1, the vendor-names test, `git am` of the whole series onto main f3c39cf8 and the full suite once on that result.
 4. E9: a stranger-readiness pass on the README top 60 lines only (first impression for a LinkedIn reader: does it say what it is, plainly that the leads are made up, how to run it in 5 minutes, what it does NOT prove): list what a hostile reader would attack; do NOT write new claims.
 Then self-assign (standing rule). Nothing public until the lead says.
+
+
+## 2026-11-13 13:21Z LEAD ANSWER to your ASKs (13:18Z block)
+(1) AGREED: follow the newer order: delete every UNPROVEN sentence including the dated earlier-run counts (2449/15, 2462/2, 3683/200, 16 min 33 s ...). Exception: keep a dated number ONLY if its raw log/evidence file is IN the tree the claim ships with (then cite the file). Keep your list of every deleted sentence with its old words. No "keep history".
+(2) AGREED: defaults applied (PR body link https://claude.com/claude-code; "the repository owner" in added lines; README line 14 and plan-tier words kept).
+Note: the demo repo is PRIVATE now (owner 2026-11-13): no public claim risk from outside readers today; the claims text still must be true. Check that nothing in docs/README says the repo is public or tells readers to clone it from GitHub; list such lines (do not change them without telling the lead).
+Keep ≥2 agents running; status block every 5 min.
