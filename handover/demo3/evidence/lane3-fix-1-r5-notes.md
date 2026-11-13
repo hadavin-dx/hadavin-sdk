@@ -60,7 +60,7 @@ The 21 that pass on the old text are tests of the program or of unchanged text (
 | command (run in /home/user/work/b1e-base unless noted; TMPDIR=/home/user/work/priv/b1e-tmp, --basetemp inside it; python /home/user/work/final-venv/bin/python) | exit | result |
 |---|---|---|
 | `git add -A; pytest tests/test_docs_claims_lane3.py -p no:cacheprovider --basetemp ... -q` (first full pass of the new file) | 0 | 30 passed |
-| `pytest tests/test_hygiene.py tests/test_portal_wording_and_masking.py tests/test_clock_steps.py tests/test_vendor_hosts.py ...` (raw/b1e-hyg... see priv log) | 1 | 1 failed (test_hygiene_scan_public: the two `http://` literals above), 69 passed, 6 skipped. Fixed |
+| `pytest tests/test_hygiene.py tests/test_portal_wording_and_masking.py tests/test_clock_steps.py tests/test_vendor_hosts.py ...` (raw/b1e-hygiene-first-run-failed.log) | 1 | 1 failed (test_hygiene_scan_public: the two `http://` literals above), 69 passed, 6 skipped. Fixed |
 | `pytest tests/test_docs_claims_lane3.py tests/test_hygiene.py ...` after the fix (raw/b1e-new-tests-and-hygiene.log) | 0 | 50 passed, 4 skipped (the 4 are the gitleaks tests) |
 | same two files in /home/user/work/b1e-chk = f3c39cf8 + claims-stack + fix-1-r5 + fix-3-r5 + fix-5-r3 (raw/b1e-stack-tests.log) | 0 | 50 passed, 4 skipped |
 | on /home/user/work/b1e-old (f3c39cf8 + r4, new test file copied) `pytest tests/test_docs_claims_lane3.py -rf` (raw/b1e-fails-before.log) | 1 | 9 failed, 21 passed (list above) |
@@ -78,7 +78,7 @@ The other test files that mention the three documents were run in the first hygi
 | other order: claims-stack, then fix-1-r5, then fix-3-r5, then fix-5-r3 (each `--check` then apply) | all four | 0, 0, 0, 0 |
 
 ## sha256
-lane3-fix-1-r5.patch: SEE the bottom line (written after the last change).
+lane3-fix-1-r5.patch: f7e9c78b629b8983d3305f70edc85ac60c119cd17a32d4e88cde57ad85f12857 (1160 lines; computed after the last change; the full suite ran on the same tree)
 
 ## Full suite
 (filled in below)

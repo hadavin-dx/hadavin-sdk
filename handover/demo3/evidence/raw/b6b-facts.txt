@@ -1,0 +1,10 @@
+# b6b facts, 14:09Z, tree b6b-base f3c39cf8+lane3-fix-6.patch, python Python 3.12.3, node v22.23.4
+## E1 desk with PYTHONPATH=src only, demo servers DOWN (ports 18765/18766 private)
+cannot reach the demo servers (are they running? see scripts/start_all)
+exit=1
+## E2 fakes_server with PYTHONPATH=src only
+fakes server keyed on port 18766
+exit=124
+## E3 start fakes with src:. (background, mine), then desk with src only
+fakes pid 4983
+desk listening on http://127.0.0.1:18765
