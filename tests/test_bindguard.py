@@ -2777,9 +2777,7 @@ def test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped(
     try:
         try:
             status = _post(server, close=False)
-        except (
-            standins.SURPRISE_ERRORS
-        ) as exc:  # a dropped connection shows as an http.client error
+        except standins.READ_ERRORS as exc:  # a dropped connection shows as an http.client error
             raise AssertionError(
                 f"a missing slot dropped the connection instead of a 503: {exc!r}"
             ) from None
@@ -5211,7 +5209,7 @@ def test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unse
             assert _runtime_counted(app, rt), f"{label} was not counted"
         finally:
             if had:
-                target[key] = was
+                target[key] = cast(Any, was)
             else:
                 del target[key]
         assert not _runtime_counted(app, rt), f"control: {label} was undone and still counted"
@@ -5375,11 +5373,38 @@ def test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it(
     scan = standins.Scan()
     lines = bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
     assert lines == (
-        "held b_channel: not read in full, another object (MemoryStore) used most of the budget",
+        "held b_channel: not read in full, another held object used most of the budget",
     ), f"the lines were {lines}"
     assert scan.heaviest is store, "the scan did not record the object that used the most budget"
     alone = bindguard.held_services_found({"b_channel": channel}, standins.Scan())
     assert alone == (), "control: the channel alone was counted"
+
+
+def test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class: HOSTILE-TEXT (round 11, issue 8): the line is fixed text. The class name of the object that used the
+    budget is never read, so a class whose ``__name__`` runs code or raises changes nothing."""
+    from hadavin_sdk import standins
+
+    calls: list[str] = []
+
+    def read_name(cls: object) -> str:
+        calls.append("name read")
+        return "x" * 40 + "\n<script>"
+
+    Meta = type("Meta", (type,), {"__name__": property(read_name)})
+    heavy = Meta("Heavy", (), {})()
+    monkeypatch.setattr(standins, "SCAN_NODES", 90)
+    store, channel = MemoryStore(), FakeChannel("sig" + "-b12-test")
+    scan = standins.Scan()
+    bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
+    scan.heaviest = heavy
+    lines = bindguard.held_services_found({"b_channel": channel}, scan)
+    assert lines == (
+        "held b_channel: not read in full, another held object used most of the budget",
+    ), lines
+    assert calls == [], "the class name of the heavy object was read"
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -5589,7 +5614,7 @@ def test_the_seal_refuses_an_object_that_is_not_a_core_runtime() -> None:
     class Imposter:
         pass
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="only a core Runtime"):
         R._seal_runtime(Imposter())
 
 
@@ -5662,3 +5687,399 @@ def test_a_hook_function_with_an_empty_closure_cell_filled_later_is_counted(tmp_
     assert not _runtime_counted(app, rt), "control: sealed with an empty cell"
     cell.cell_contents = None
     assert _runtime_counted(app, rt), "an empty cell filled with None was not counted"
+
+
+# ---- Batch 12: one named tuple of read errors; an unnamed error type is loud, never swallowed ----
+
+
+class _Unnamed(Exception):
+    """An error type that is in no list the guard names: it must come out of the guard, not be eaten."""
+
+
+def _raiser(error: type[Exception]) -> Any:
+    def raise_it(*_args: object, **_kwargs: object) -> Any:
+        raise error("hostile")
+
+    return raise_it
+
+
+def test_the_read_errors_are_exactly_these_named_types() -> None:
+    """Class: BROAD-EXCEPT (round 11, issue 5): the tuple is a fixed list, never ``Exception`` itself."""
+    assert standins.READ_ERRORS == (
+        AttributeError,
+        TypeError,
+        ValueError,
+        LookupError,
+        ArithmeticError,
+        RuntimeError,
+        OSError,
+    )
+    assert Exception not in standins.READ_ERRORS and BaseException not in standins.READ_ERRORS
+
+
+@pytest.mark.parametrize(
+    "error",
+    [AttributeError, TypeError, ValueError, LookupError, ArithmeticError, RuntimeError, OSError],
+)
+def test_each_named_read_error_reads_as_not_a_stand_in(error: type[Exception]) -> None:
+    """Class: BROAD-EXCEPT: every named type is still answered "real", at the one scan choke point."""
+    obj = type("Hostile", (), {"__dict__": property(_raiser(error))})()
+    assert standins.is_stand_in(obj) is False
+
+
+def test_an_unnamed_error_type_comes_out_of_the_scan(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Class: BROAD-EXCEPT, site ``standins._answer``: an unnamed type propagates (loud), it is not "real"."""
+    monkeypatch.setattr(standins, "_check", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        standins.is_stand_in(object())
+
+
+def test_an_unnamed_error_type_comes_out_of_the_pinned_class_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class: BROAD-EXCEPT, site ``standins.is_pinned_instance``."""
+    monkeypatch.setattr(standins, "live_class", _raiser(RuntimeError))
+    assert standins.is_pinned_instance(object()) is False
+    monkeypatch.setattr(standins, "live_class", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        standins.is_pinned_instance(object())
+
+
+def test_an_unnamed_error_type_comes_out_of_the_held_mapping_read() -> None:
+    """Class: BROAD-EXCEPT, site ``bindguard.held_services_found`` (the mapping)."""
+
+    class Mapping(dict):
+        error: type[Exception] = RuntimeError
+
+        def items(self) -> Any:
+            raise self.error("hostile")
+
+    named = Mapping(a=1)
+    assert bindguard.held_services_found(named) == ("held (unreadable)",)
+    unnamed = Mapping(a=1)
+    unnamed.error = _Unnamed
+    with pytest.raises(_Unnamed):
+        bindguard.held_services_found(unnamed)
+
+
+def test_an_unnamed_error_type_comes_out_of_the_held_object_read(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class: BROAD-EXCEPT, site ``bindguard.held_services_found`` (one object)."""
+    monkeypatch.setattr(bindguard, "verdict", _raiser(RuntimeError))
+    assert bindguard.held_services_found({"x": object()}) == ("held (unreadable)",)
+    monkeypatch.setattr(bindguard, "verdict", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        bindguard.held_services_found({"x": object()})
+
+
+def test_an_unnamed_error_type_comes_out_of_the_runtime_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: BROAD-EXCEPT, site ``requests._runtime_ok``: a named type counts the runtime, an unnamed one is loud."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    assert not _runtime_counted(app, rt), "control: the runtime is believed"
+    monkeypatch.setattr(standins, "is_stand_in", _raiser(RuntimeError))
+    assert _runtime_counted(app, rt)
+    monkeypatch.setattr(standins, "is_stand_in", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        _runtime_counted(app, rt)
+
+
+def test_an_unnamed_error_type_comes_out_of_the_over_budget_walk(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: BROAD-EXCEPT, site ``requests._seal_over_budget``."""
+    from hadavin_sdk.approvals import requests as R
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    _fields(rt)["extra_name"] = (
+        1  # a name added after the seal: the seal check fails and the walk is asked
+    )
+    monkeypatch.setattr(R, "_members_walk", _raiser(RuntimeError))
+    assert _runtime_counted(app, rt)
+    monkeypatch.setattr(R, "_members_walk", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        _runtime_counted(app, rt)
+
+
+def test_an_empty_closure_cell_is_the_one_error_the_cell_read_answers() -> None:
+    """Class: BROAD-EXCEPT, site ``requests._one_cell``: only an empty cell (a ``ValueError``) is answered."""
+    from hadavin_sdk.approvals import requests as R
+
+    def outer() -> object:
+        held = None
+
+        def inner() -> object:
+            return held
+
+        return inner
+
+    code = cast(Any, outer()).__code__
+    empty = types.FunctionType(code, {}, "late", None, (types.CellType(),))
+    assert R._one_cell(empty, code) is R._NONE
+    full = types.FunctionType(code, {}, "late", None, (types.CellType(5),))
+    assert R._one_cell(full, code) == 5
+
+
+def test_an_unnamed_error_type_comes_out_of_the_receiver_recheck(
+    stand_in_config: Config, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: BROAD-EXCEPT, sites ``receiver._recheck`` and ``receiver.serve``."""
+    from hadavin_sdk.approvals import receiver
+
+    cfg = stand_in_config
+    approvals = _Approvals(cfg)
+    monkeypatch.setattr(standins, "is_pinned_instance", _raiser(RuntimeError))
+    assert receiver._recheck(approvals) == (
+        "the approvals object could not be read (a slot is missing)",
+    )
+    with pytest.raises(BindRefused, match="could not read"):
+        serve(approvals, config=cfg, host=ALL_ZEROS, port=0)
+    monkeypatch.setattr(standins, "is_pinned_instance", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        receiver._recheck(approvals)
+    with pytest.raises(_Unnamed):
+        serve(approvals, config=cfg, host=ALL_ZEROS, port=0)
+
+
+def test_an_unnamed_error_type_comes_out_of_the_refusal_log(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class: BROAD-EXCEPT, site ``receiver._refused``: an OSError of the log is hidden, an unnamed type is not."""
+    from hadavin_sdk.approvals import receiver
+
+    monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+    monkeypatch.setattr(receiver._LOG, "warning", _raiser(OSError))
+    receiver._refused(("held x: A",))
+    monkeypatch.setattr(receiver._LOG, "warning", _raiser(_Unnamed))
+    with pytest.raises(_Unnamed):
+        receiver._refused(("held y: B",))
+
+
+# ---- Batch 12: what the seal walk reaches (each closed item), and what it still does not see (each kept limit) ----
+
+
+def _sealed_tool(tmp_path: Path, tool: object) -> tuple[Any, Any]:
+    """A built runtime with one more tool put in and sealed again: returns (app, runtime); control: believed."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    _fields(rt.hooks)["tools"]["extra"] = tool
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: the sealed runtime was counted"
+    return app, rt
+
+
+def test_a_tool_with_its_defaults_replaced_after_the_seal_is_counted(tmp_path: Path) -> None:
+    """Class: WALK-REACH, closed item ``__defaults__``. A default value is code that runs when the tool is called."""
+    first, second = object(), object()
+
+    def tool(arg: object = first) -> object:
+        return arg
+
+    app, rt = _sealed_tool(tmp_path, tool)
+    tool.__defaults__ = (second,)
+    assert _runtime_counted(app, rt), "a replaced default was not counted"
+
+
+def test_a_tool_with_a_keyword_default_replaced_after_the_seal_is_counted(tmp_path: Path) -> None:
+    """Class: WALK-REACH, closed item ``__kwdefaults__``."""
+
+    def tool(*, key: object = None) -> object:
+        return key
+
+    cast(Any, tool).__kwdefaults__ = {"key": object()}
+    app, rt = _sealed_tool(tmp_path, tool)
+    cast(Any, tool).__kwdefaults__["key"] = object()
+    assert _runtime_counted(app, rt), "a replaced keyword default was not counted"
+
+
+def test_a_tool_with_its_wrapped_function_replaced_after_the_seal_is_counted(
+    tmp_path: Path,
+) -> None:
+    """Class: WALK-REACH, closed item the function's own dictionary (``__wrapped__`` lives there)."""
+
+    def inner() -> None:
+        return None
+
+    def tool() -> None:
+        return None
+
+    cast(Any, tool).__wrapped__ = inner
+    app, rt = _sealed_tool(tmp_path, tool)
+    cast(Any, tool).__wrapped__ = lambda: None
+    assert _runtime_counted(app, rt), "a replaced __wrapped__ was not counted"
+
+
+def test_the_code_of_the_function_of_a_bound_method_replaced_after_the_seal_is_counted(
+    tmp_path: Path,
+) -> None:
+    """Class: WALK-REACH, closed item ``__func__`` of a method: the method object stays the same, its function changes."""
+
+    class Tool:
+        def run(self) -> int:
+            return 1
+
+    def other(self: object) -> int:
+        return 2
+
+    method = Tool().run
+    app, rt = _sealed_tool(tmp_path, method)
+    Tool.run.__code__ = other.__code__
+    assert _runtime_counted(app, rt), "a rewritten method function was not counted"
+
+
+def test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal(tmp_path: Path) -> None:
+    """Class: KEPT-LIMIT (CHANGELOG, WALK-DEPTH): the walk enters four levels below a hook field. A default that is a
+    list of a list of a list is held by identity at the fourth level; a change INSIDE the innermost list is not seen.
+    This is a pin of the limit, not a wish: raising the depth would make the cost of a request grow."""
+    innermost: list[object] = [1]
+    deep = [[innermost]]
+
+    def tool(arg: object = deep) -> object:
+        return arg
+
+    app, rt = _sealed_tool(tmp_path, tool)
+    innermost.append(2)
+    assert not _runtime_counted(app, rt), (
+        "a change below the walk depth was seen: the CHANGELOG limit is out of date"
+    )
+
+
+def test_a_field_removed_at_the_very_end_of_the_walk_is_counted(tmp_path: Path) -> None:
+    """Class: WALK-REACH, the final length check (``Walk.done``): the walk ends early, so nothing after it mismatches
+    and only the count of what was met tells."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    fields = _fields(rt._evidence)
+    assert fields, "control: the evidence settings have no field"
+    del fields[next(reversed(fields))]
+    assert _runtime_counted(app, rt), "a name removed at the end of the walk was not counted"
+
+
+def test_a_value_that_moves_in_use_on_a_hook_object_is_not_a_change(tmp_path: Path) -> None:
+    """Class: WALK-REACH, atom/state skip: text, numbers, sets and deques on an entered object (a counter a tool keeps)
+    change in use; they are a slot, not an identity."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+
+    class Tool:
+        def __init__(self) -> None:
+            self.calls = 0
+            self.seen: set[str] = set()
+
+        def run(self) -> None:
+            self.calls += 1
+            self.seen.add(str(self.calls))
+
+    tool = Tool()
+    _fields(rt.hooks)["tools"]["counter"] = tool.run
+    _seal(rt)
+    for _ in range(3):
+        tool.run()
+    assert not _runtime_counted(app, rt), "a counter that moved in use made the runtime counted"
+
+
+def test_a_global_name_a_hook_function_reads_is_not_seen_to_change(tmp_path: Path) -> None:
+    """Class: KEPT-LIMIT (CHANGELOG item 4): the walk reads a function's code, defaults and closure cells, not its
+    ``__globals__``; a global name rebound after the seal is outside the model."""
+    scope: dict[str, object] = {"name": 1}
+    source = types.FunctionType((lambda: None).__code__, scope, "reads_global")
+    app, rt = _sealed_tool(tmp_path, source)
+    scope["name"] = object()
+    assert not _runtime_counted(app, rt), (
+        "a global rebound was seen: the CHANGELOG limit is out of date"
+    )
+
+
+def test_the_own_state_of_an_object_held_in_a_closure_cell_is_not_seen_to_change(
+    tmp_path: Path,
+) -> None:
+    """Class: KEPT-LIMIT (CHANGELOG item 5): an object a closure cell holds is written down by identity only; its own
+    fields are judged where it is held (the channel is judged as a held channel)."""
+
+    class Holder:
+        value: object = None
+
+    held = Holder()
+
+    def tool() -> object:
+        return held
+
+    app, rt = _sealed_tool(tmp_path, tool)
+    held.value = object()
+    assert not _runtime_counted(app, rt), (
+        "the state of a cell object was seen: the CHANGELOG limit is out of date"
+    )
+
+
+def _flatten(value: object) -> list[object]:
+    """Every value inside nested tuples, lists, sets and dicts of a seal (no object is entered, only containers)."""
+    found: list[object] = []
+    stack = [value]
+    while stack:
+        item = stack.pop()
+        found.append(item)
+        if isinstance(item, tuple | list | set | frozenset):
+            stack.extend(item)
+        elif isinstance(item, dict):
+            stack.extend(item.keys())
+            stack.extend(item.values())
+    return found
+
+
+def test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries(tmp_path: Path) -> None:
+    """Class: HARDENING (round 11, issue 7): a ``bytes`` or text value a hook carries (a key) is written down as a keyed
+    digest, so the seal table is not a second place that holds the key. Fails on 82dd69c1 (the bytes were stored)."""
+    from hadavin_sdk.approvals import requests as R
+
+    key = b"restored" + b"-key-" + b"b12"
+    text = "text-" + "secret-" + "b12"
+
+    def tool(a: object = key, b: object = text) -> object:
+        return a, b
+
+    app, rt = _sealed_tool(tmp_path, tool)
+    inside = _flatten(R._RUNTIME_SEALS[rt])
+    assert not any(v == key or v == text for v in inside if isinstance(v, bytes | str)), (
+        "a secret value is in the seal"
+    )
+    tool.__defaults__ = (key + b"x", text)
+    assert _runtime_counted(app, rt), "control: a changed key was not counted"
+
+
+def test_a_dead_weak_mark_is_not_matched_by_none(tmp_path: Path) -> None:
+    """Class: HARDENING (round 11, issue 7): the seal holds a weak reference; when the object it named is gone the
+    reference answers ``None``, and a field now holding ``None`` must not read as "the same object"."""
+    import gc
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    tools = _fields(rt.hooks)["tools"]
+    tools["extra"] = lambda: None
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: sealed"
+    tools["extra"] = None
+    gc.collect()
+    assert _runtime_counted(app, rt), "None was taken for the dead object the seal named"
+
+
+def test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: API (round 11, issue 3), the ``type(hooks)`` check: a copy of the ``Hooks`` class with the same attributes
+    passes the class pin, so when the module name is rebound to the copy AND the hooks object is moved to the copy
+    (``__class__`` assigned), only the class the seal recorded tells it from the real one."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    module = sys.modules["hadavin_sdk.runtime.agent_loop"]
+    original = standins.live_class(standins.HOOKS)
+    assert original is not None
+    body = {k: v for k, v in vars(original).items() if k not in ("__dict__", "__weakref__")}
+    copy_class = types.new_class("Hooks", original.__bases__, {}, lambda ns: ns.update(body))
+    assert not _runtime_counted(app, rt), "control: believed"
+    monkeypatch.setitem(vars(module), "Hooks", copy_class)
+    object.__setattr__(rt.hooks, "__class__", copy_class)
+    assert _runtime_counted(app, rt), "hooks of a copied class were believed"

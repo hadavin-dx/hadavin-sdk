@@ -92,13 +92,23 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any, cast
 
-# What the guard catches when it reads an object it does not trust: a hostile object can raise any ``Exception``
-# (its own class, from a property, ``__getattr__``, ``__eq__`` and so on), and every such error must read as "counted /
-# refused", never as served and never as a crash that drops the connection. A named tuple, not a bare ``except
-# Exception`` and not an inline suppression: one place states the reason, and a test (``test_a_surprise_error_...``)
-# shows a surprise error still gives the refusal at each site. ``BaseException`` (``KeyboardInterrupt``, ``SystemExit``)
-# is NOT caught: the process must still stop.
-SURPRISE_ERRORS: tuple[type[BaseException], ...] = (Exception,)
+# What the guard catches when it reads an object it does not trust. A hostile object can make a read raise: its own
+# property, ``__getattr__``, ``__eq__`` or ``__hash__`` may raise. These are the error types such a read can honestly
+# raise from the built-in machinery or from plain test or attack code (a missing name, a wrong type, a bad value, a
+# missing key or index, arithmetic, a runtime or recursion error, an operating-system error). They read as "counted /
+# refused". Any OTHER error type (a class nobody named, ``MemoryError``, ``KeyboardInterrupt``, ``SystemExit``) is NOT
+# caught: it propagates, so it is loud (the request fails or the start is refused; nothing is served). One tuple for
+# every site (a named tuple, not a bare ``except Exception``, not an inline suppression); a test per site shows an
+# unnamed error type propagates.
+READ_ERRORS: tuple[type[Exception], ...] = (
+    AttributeError,
+    TypeError,
+    ValueError,
+    LookupError,
+    ArithmeticError,
+    RuntimeError,
+    OSError,
+)
 
 SCAN_DEPTH = 4  # nesting of detector lists
 # container levels entered below a held instance's own dict (a ninth reads as real)
@@ -231,11 +241,13 @@ def _touch_annotations(cls: type) -> None:
     """Python 3.12 and 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
     3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it. The same
     for ``__slotnames__`` (see below)."""
-    with contextlib.suppress(Exception):  # a class without one (3.14 reads it differently) is fine
+    with contextlib.suppress(
+        *READ_ERRORS
+    ):  # a class without one (3.14 reads it differently) is fine
         _CLASS_ANNOTATIONS.__get__(cls)
     # ``copy.copy`` and ``pickle`` of an instance write ``__slotnames__`` (a list of text) into the class dictionary the
     # first time: a harmless entry the standard library adds, so it is written now and the pin includes it
-    with contextlib.suppress(Exception):
+    with contextlib.suppress(*READ_ERRORS):
         cast(Any, copyreg)._slotnames(cls)
 
 
@@ -292,7 +304,7 @@ def pin_module(module: str) -> None:
     that the approvals side must not import (``hadavin_sdk.actions.secrets``). Never raises."""
     for key in _PINNED_KEYS:
         if key[0] == module:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(*READ_ERRORS):
                 if live_class(key) is not None:
                     _class_ok(key)
 
@@ -322,7 +334,7 @@ def pin_all() -> None:
         cards,
     )  # imported so that their classes exist to be pinned
     for key in _PINNED_KEYS:
-        with contextlib.suppress(Exception):  # the lazy path pins it at the first question
+        with contextlib.suppress(*READ_ERRORS):  # the lazy path pins it at the first question
             cls = live_class(key)
             if cls is not None:
                 _class_ok(key)
@@ -334,7 +346,7 @@ def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
     try:
         cls = live_class(key)
         return cls is not None and type(obj) is cls and _class_ok(key)
-    except SURPRISE_ERRORS:  # anything unreadable is not the pinned class
+    except READ_ERRORS:  # anything unreadable is not the pinned class
         return False
 
 
@@ -681,7 +693,7 @@ def _answer(obj: object, budget: _Budget) -> str:
     try:
         if _check(obj, 0, frozenset(), budget):
             return VERDICT_STAND_IN
-    except SURPRISE_ERRORS:  # anything unreadable is not a stand-in (fail closed)
+    except READ_ERRORS:  # anything unreadable is not a stand-in (fail closed)
         return VERDICT_REAL
     return VERDICT_OVER_BUDGET if budget.over and not budget.real_seen else VERDICT_REAL
 

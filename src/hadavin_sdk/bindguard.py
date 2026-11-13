@@ -47,7 +47,7 @@ from hadavin_sdk.netguard import (
     parse_ip_literal,
 )
 from hadavin_sdk.standins import (
-    SURPRISE_ERRORS,
+    READ_ERRORS,
     VERDICT_OVER_BUDGET,
     VERDICT_STAND_IN,
     Scan,
@@ -140,7 +140,7 @@ def held_services_found(
         items = sorted(
             (held or {}).items(), key=lambda item: item[0] if type(item[0]) is str else "\uffff"
         )
-    except SURPRISE_ERRORS:  # a mapping that cannot be read is not nothing
+    except READ_ERRORS:  # a mapping that cannot be read is not nothing
         return ("held (unreadable)",)
     found: list[str] = []
     for name, obj in items:
@@ -169,9 +169,9 @@ def held_services_found(
                     label = (
                         f"held {name}: over budget (too many values to check)"
                         if crossed is None or crossed is obj
-                        else f"held {name}: not read in full, another object ({_word_or_unreadable(type(crossed).__name__)}) used most of the budget"
+                        else f"held {name}: not read in full, another held object used most of the budget"
                     )
-        except SURPRISE_ERRORS:  # an object or a key that cannot be read is not a stand-in
+        except READ_ERRORS:  # an object or a key that cannot be read is not a stand-in
             label, counts = "held (unreadable)", True  # a fixed label: the object is hostile
         if counts:
             found.append(label)

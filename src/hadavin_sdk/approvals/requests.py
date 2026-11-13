@@ -437,9 +437,8 @@ def _runtime_ok(runtime: object, scan: standins.Scan | None = None) -> bool:
         if not _hooks_unchanged(dict.get(own, "hooks"), sealed):
             return False
         return all(standins.is_stand_in(dict.get(own, name), scan) for name in _RUNTIME_SERVICES)
-    except (
-        standins.SURPRISE_ERRORS
-    ):  # anything unreadable is not the core's runtime (a hostile object may raise anything)
+    # anything unreadable is not the core's runtime (a hostile object may raise anything)
+    except standins.READ_ERRORS:
         return False
 
 
@@ -475,9 +474,8 @@ def _one_cell(func: object, code: object) -> object:
         if cells is None or len(cells) != 1:
             return _NONE
         return cells[0].cell_contents
-    except (
-        standins.SURPRISE_ERRORS
-    ):  # anything unreadable is not the core's function (an empty cell is a ValueError)
+    # the one error this read can raise from an exact function: an empty cell is a ValueError
+    except ValueError:
         return _NONE
 
 
@@ -510,9 +508,8 @@ def _seal_over_budget(func: object, built: bool) -> bool:
                 return True
             except _Changed:
                 continue
-    except (
-        standins.SURPRISE_ERRORS
-    ):  # an unreadable runtime is not "over budget"; it stays counted as held
+    # an unreadable runtime is not "over budget"; it stays counted as held
+    except standins.READ_ERRORS:
         return False
     return False
 

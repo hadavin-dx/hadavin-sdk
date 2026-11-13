@@ -149,7 +149,7 @@ class _Stream:
         low, high = (0, start) if stop is None else (start, stop)
         return low + self._next() % (high - low)
 
-    def choice(self, items: list) -> object:
+    def choice[T](self, items: list[T]) -> T:
         return items[self.randrange(len(items))]
 
     def random(self) -> float:

@@ -58,9 +58,8 @@ def _recheck(approvals: object) -> tuple[str, ...]:
         for slot in Approvals.__slots__:
             object.__getattribute__(approvals, slot)
         return Approvals.real_now(approvals)
-    except (
-        standins.SURPRISE_ERRORS
-    ):  # a deleted slot or any unreadable state is refused, never dropped
+    # a deleted slot or any unreadable state is refused, never dropped
+    except standins.READ_ERRORS:
         return ("the approvals object could not be read (a slot is missing)",)
 
 
@@ -72,7 +71,8 @@ def _refused(now_real: tuple[str, ...]) -> None:
     """One WARNING line for a refused request, at most one per ``BIND_REFUSAL_LOG_INTERVAL_S`` seconds for each
     set of services named (a client that keeps calling cannot fill the log). The clock is ``time.monotonic``.
     Every call moves its set to the end of the memory (the one forgotten first is the one used longest ago), under
-    a lock; nothing raised here can stop the 503 from being written."""
+    a lock; a logging failure of a named kind (``standins.READ_ERRORS``) cannot stop the 503 from being written, and any
+    other kind of error is raised, not hidden."""
     try:
         key = ", ".join(now_real)
         now = time.monotonic()
@@ -86,9 +86,8 @@ def _refused(now_real: tuple[str, ...]) -> None:
             _LOG.warning(
                 "request refused: a real service is held on a public bind with no reason (%s)", key
             )
-    except (
-        standins.SURPRISE_ERRORS
-    ):  # a log failure must not turn the 503 into a dropped connection
+    # a log failure must not turn the 503 into a dropped connection
+    except standins.READ_ERRORS:
         return
 
 
@@ -145,7 +144,7 @@ def serve(
         approvals_config = approvals.config
         held = Approvals.held_services(approvals)
         frozen = approvals.config_facts
-    except standins.SURPRISE_ERRORS:  # any error while reading is a refusal of the one type
+    except standins.READ_ERRORS:  # any error while reading is a refusal of the one type
         raise BindRefused(
             "serve could not read what the approvals hold (a slot is missing or an object raised): "
             "nothing is served"
