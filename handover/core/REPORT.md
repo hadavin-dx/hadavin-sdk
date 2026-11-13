@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:2xZ (container clock 12:18Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run: full suite on patched tree (tree-AF) | before/after counts (before 3781 passed, 0 failed, 198 skipped) | 12:05Z / 17:35 | about 12:35Z container clock | run 1 of 1 | RUNNING (watcher armed) | read last line, push gates/AF |
+| MD-1 | mutation-driver inventory | close "mutants outside JSON files" | 12:10Z | done | n/a | DONE, pushed (drivers-inventory/INVENTORY.md): nothing outside B2's sets | none |
+| MD-2 | closing run: 3 test-side mutation files + K6+K10 pair on final patched tree | order step 2 | after AF | about 12:45Z | 1 of 1 | WAITING for AF | start when AF ends |
+
+ASK: none (default from 12:40Z block stands: no builders for an empty list).
+
+
 ## REPORT 12:40Z (container clock 12:15Z; my clock about 15 min behind the lead's) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
