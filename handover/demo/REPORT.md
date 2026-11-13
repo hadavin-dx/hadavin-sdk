@@ -1,6 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 12:01Z / 17:31 IST - STATUS TABLE then ASK; **READY: `claims-fix-recount.patch` (last patch of the claims series)**
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| (me) | `claims-fix-recount.patch`: recount of every test/line COUNT in the docs on public main f3c39cf8 + the 9-patch stack | your 11:47Z order | 11:58 / 17:28 | done | recount round 1 | done | you apply (last in the stack) |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+No agents running, nothing else queued. **ASK: 1) anything more for the claims series? Default: I wait for your next order and keep the 5-minute blocks.**
+**READY: `handover/demo/claims-fix/claims-fix-recount.patch` sha256 `b7c9fa159e0a0741cf81707fc09ebe95cfb609b98396833d63e05f3cc149b963`: 1 file, +1/-1 (`versions.md`).** Order: v1, v1b, code-fix-v1, v2, v2b, v3, v3b, v4, v4b, recount; all ten apply in order on public main f3c39cf8 (fresh clone via my fetch script, HEAD f3c39cf8 = ls-remote main).
+**WHAT I MEASURED:** `python -m pytest --collect-only -q` (Python 3.12.3, no network, under `unshare -n`) on public main f3c39cf8 with the 9 patches applied: 92 per-file lines, per-file counts add up to **3883** (matches lane 3's 3883 = 3683 passed + 200 skipped, and 92 test files). The full list is in `handover/demo/claims-fix/recount-collect-main-f3c39cf8-plus-stack.txt`. The claims patches add no test file and no test (code-fix-v1 only changes one assertion).
+**WHAT CHANGED:** `versions.md` only: "91 lines in all ... add up to 3726 (added up by hand ...)" now reads "92 lines in all ... add up to 3883 (the per-file counts added up from those lines; the command prints no total; counted on 2026-11-13 on the tree of public main f3c39cf8 with the documentation changes applied ...)". The command is stated in the text (it already was).
+**CHECKED AND LEFT AS THEY ARE (grep of README, versions.md, contract.md, SECURITY.md and docs/*.md for counts):** the dated earlier-run counts (2449/15, 2462/2, 2349/116, 2513/3, 993 s and 16 min 33 s, 114/113/92/135, 2516 against 2465) stay as labelled history, each already says it was not repeated on this commit; the "52" for `tests/test_except_clause_hierarchy.py` in docs/tests.md IS current (collect shows 52); `docs/why-this-code.md` "About 200 lines" for the scrub tool: file has 205 lines, still true; the Semgrep "64 files ... 47 files" is a quoted dated log, scope unchanged per lane 3. The 49 for that file is labelled as the number at that earlier commit. No other current-tree count was found in the docs (lane 3's other CANNOT TELL rows are dated runs or logs that cannot be recounted).
+**CHECKS:** `gitleaks dir` with the repo config on the clean tree (main + 10 patches): no leaks; ONE `tests/test_hygiene.py` run (`DPLD_REQUIRE_SCAN=1`, under `unshare -n`): all passed. ruff n/a (docs only). Nothing pushed public.
+
 ## 2026-11-13 11:59Z / 17:29 IST - STATUS TABLE then ASK; **READY: `claims-fix-v4b.patch` (review fixes of v4 + AST/YAML proof); recount patch starting now**
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
