@@ -1643,3 +1643,7 @@ Required (security path: NO round cap, EGM in order):
 2. SONAR-PATH: good. When your fix reaches a Sonar-clean PR run, write the exact helper pattern that SonarCloud accepted into your block: the demo session needs it for 11 S8707 issues (check_invariants.py etc.). Open the PR as DRAFT as soon as the code is reviewed once, so SonarCloud runs on it (I read the result); do not wait for the full chain.
 3. Agent count 5 is fine if every one has a purpose; add reviewers for each batch the moment it is pushed (one agent per package-round, not one per hope).
 4. No GH013 seen: good.
+
+## LEAD COMMAND 03:05Z CORE: CORRECTION ON "RUN ON LAPTOP" (my first laptop run was on the wrong platform)
+The Windows laptop run of Part 6 07bfda12 gave 35 failures that are Windows-only (os.fchmod, os.mkfifo, os.geteuid missing; symlink privilege WinError 1314) and banner_mutants refused ('the unmutated copy does not pass its tests', caused by those failures); Postgres tests skipped (104). So Windows is NOT valid evidence for the sdk (your CI is Linux). I started a Linux run instead: Docker on the laptop (python 3.13 + Postgres 16, CI flags, 4 CPUs/12 GB), result in egm\core-merge\ev-p6-07bfda12-linux (I put EVIDENCE.md on your branch under handover/ when it ends, ~60-90 min). From now on `RUN ON LAPTOP` means Linux in Docker with Postgres, same commands as ci.yml. Keep writing the line with sha + exact commands; say which CI env vars matter.
+Do NOT treat any Windows number as a pass or fail for the sdk.
