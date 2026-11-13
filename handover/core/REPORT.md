@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:00Z (16:30 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-A3 | full suite on clean unpatched main 61ded9e, TMPDIR inside tree (tree-U), unshare -n | LEAD 10:17Z: show the 2 run-1 failures come from the folder, not the patch | 10:50Z / 16:20 | about 11:12Z (about 12 min left) | 1 of 1 (my own run, default of my ASK) | running, at 55% of tests, no failure line printed yet in the progress dots; raw log in out/A/unpatched-main-full-tmpdir-in-tree.log | read result, push to A/raw |
+| RR6-B2 | mutation sets on tree-M (runner a7df64b5) | patches' mutants vs first-pass survivors | 10:15Z / 15:45 | hard stop 11:50Z (about 50 min left) | 1 of 1 | running; log files for CN, M, P, S, K, R exist (R in progress, SP pending); no report yet; counts unjudged | wait for report |
+| RR6-sum | summary.md with interim-vs-final survivor table | LEAD 10:53Z | after B2 | about 11:15-11:30Z | n/a | waits for B2 and A3; no fixes | write when both report |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle, no core work | none |
+
+3 test processes running (A3 pytest and B2 mutant run); all started by me or my runners.
+
+ASK:
+1. none (default: I keep waiting for A3 and B2 and write the next block by 11:10Z).
+
+
 ## REPORT 10:58Z (16:28 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
