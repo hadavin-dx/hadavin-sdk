@@ -173,3 +173,4 @@ V4c done
 13:45Z core: V2 done (1 real defect, F2b fix), F4d done, V4d+F6 running
 13:55Z core: F6 done (hygiene defect), V6+COMBINE+V4d running
 14:02Z core: V4d done, 3 docs mutants survive (settings.md), V6+COMBINE running
+14:12Z core: COMBINE done, VC + V6 running
