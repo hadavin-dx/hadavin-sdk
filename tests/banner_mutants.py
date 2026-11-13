@@ -44,6 +44,10 @@ def mb(name, old, new, killer, expect, crash=""):
     return mutant(name, MB, old, new, T_MB, killer, expect, crash)
 
 
+def ap(name, file, old, new, test_file, killer, expect, crash=""):
+    return mutant(name, file, old, new, test_file, killer, expect, crash)
+
+
 def js(name, old, new, killer, expect):
     return mutant(name, JS, old, new, T_MB, killer, expect)
 
@@ -269,7 +273,7 @@ M = [
         "def not_confirmed(",
         "banner_for = _banner_for\n\n\ndef not_confirmed(",
         "test_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry",
-        "banner_for",
+        "the old public name 'banner_for' is still in the module",
     ),
     # -- the page script (templates/mode-banner/mode_banner.js) -------------------------------------------------------
     js(
@@ -439,7 +443,7 @@ M = [
         'for depth in range(len(root.split("/")) + 1, len(parts)):',
         "for depth in range(0):",
         "test_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling",
-        "Demo_Only",
+        "a deep folder spelled 'Demo_Only' was not the one hit",
     ),
     gd(
         "G5b a file name that holds the folder name is not a hit",
@@ -453,14 +457,14 @@ M = [
         "    return re.compile(_SEP.join(re.escape(p) for p in parts), re.IGNORECASE)",
         "    return re.compile(_SEP.join(re.escape(p) for p in parts), 0)",
         "test_a_line_that_names_the_folder_in_another_spelling_is_a_hit",
-        "Demo_Only",
+        "a line that names the folder as 'Demo_Only' was not the one hit",
     ),
     gd(
         "G5d only the underscore spelling is matched",
         '_SEP = r"[ _-]+"',
         '_SEP = r"_"',
         "test_a_line_that_names_the_folder_in_another_spelling_is_a_hit",
-        "demo-only",
+        "a line that names the folder as 'demo-only' was not the one hit",
     ),
     gd(
         "G6 a missing product root is not a hit",
@@ -544,7 +548,7 @@ M = [
         "if suffix in cfg.skip_suffixes and _looks_binary(data):",
         'if suffix not in (".py", ".md", ".json"):',
         "test_every_file_type_is_read_not_only_a_list_of_endings",
-        "a.cfg",
+        "the file 'a.cfg' was not read for the folder name",
     ),
     gd(
         "G14b a file that is not text passes",
@@ -629,7 +633,7 @@ M = [
         "        found.append(EXTERNAL_SYSTEMS)",
         "        pass",
         "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "systems=",
+        "systems={'crm': namespace(base_url='https://crm.example.test')}: a configured address that leaves this machine was not counted as real",
     ),
     mb(
         "B21 an egress host that is not this machine is not counted as real",
@@ -649,8 +653,8 @@ M = [
         "B23 every address counts as this machine",
         "    return normalise_host(host) in LOOPBACK",
         "    return True",
-        "test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up",
-        "was not counted as real",
+        "test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine",
+        "bare host 'localhost\\x00' read as this machine",
     ),
     mb(
         "B24 a value that is not text is read as this machine",
@@ -878,14 +882,14 @@ M = [
         'rf"(?<![{word}])(?<![A-Za-z0-9]\\.)"',
         'rf"(?<![A-Za-z0-9]\\.)"',
         "test_names_in_follows_the_table",
-        "xCRM",
+        "names_in('connected: xCRM.', 'CRM') was not False",
     ),
     mb(
         "B47 a name followed by a dot and a letter is matched",
         'rf"(?![{word}])(?!\\.[A-Za-z0-9])"',
         'rf"(?![{word}])"',
         "test_names_in_follows_the_table",
-        "CRM.v2",
+        "names_in('connected: CRM.v2 ', 'CRM') was not False",
     ),
     js(
         "J16 the fallback writes empty text",
@@ -899,7 +903,7 @@ M = [
         "    var joinedBefore = isWordPart(before) ||",
         "    var joinedBefore = false ||",
         "test_the_page_and_python_agree_on_every_row_of_the_name_table",
-        "xCRM",
+        "the page read 'CRM' in 'connected: xCRM.' as named",
     ),
     js(
         "J18 the page stops at the first partial match",
@@ -1167,14 +1171,14 @@ M = [
     ),
     gd(
         "G49 compiled Python from version 3000 is not recognised",
-        '3000 <= int.from_bytes(d[:2], "little") < 4000',
-        '3001 <= int.from_bytes(d[:2], "little") < 4000',
+        '3000 <= int.from_bytes(d[:2], "little") <= _PYC_MAGIC_MAX',
+        '3001 <= int.from_bytes(d[:2], "little") <= _PYC_MAGIC_MAX',
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
         "first bytes of compiled Python (b80b0d0a) in a file ending '.png'",
     ),
     gd(
         "G50 compiled Python up to version 3999 is not recognised",
-        '3000 <= int.from_bytes(d[:2], "little") < 4000',
+        '3000 <= int.from_bytes(d[:2], "little") <= _PYC_MAGIC_MAX',
         '3000 <= int.from_bytes(d[:2], "little") < 3999',
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
         "first bytes of compiled Python (9f0f0d0a) in a file ending '.png'",
@@ -1520,8 +1524,8 @@ M = [
     ),
     mb(
         "N7 the detector override is not a known override",
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")',
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "secrets", "hold_run_ids")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids", "clock")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "secrets", "hold_run_ids", "clock")',
         "test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so",
         "build override not known to the mode banner: detector",
         crash="ValueError",
@@ -1658,7 +1662,7 @@ M = [
         "J27 the page paints an unconfirmed banner whose text is not the own words",
         "text !== NOT_CONFIRMED.text ||",
         "false ||",
-        "test_the_page_paints_an_unconfirmed_banner_only_when_it_is_the_own_not_confirmed_words_plus_a_note",
+        "test_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted",
         "painted odd unconfirmed",
     ),
     # -- batch 8 (r7 fixes): unknown differs from none, the build list, the page and the guard -----------------------------
@@ -1674,39 +1678,47 @@ M = [
     mutant(
         "R7A2 the fingerprint of the connected parts is not compared",
         "src/hadavin_sdk/app.py",
-        "known = self.overridden if self._sealed == self._connected_parts() else None",
-        "known = self.overridden",
+        "la != lb or a is not b\n                for (la, a), (lb, b) in zip(now_parts, sealed[1], strict=True)",
+        "False\n                for (la, a), (lb, b) in zip(now_parts, sealed[1], strict=True)",
         T_MB,
         "test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner",
-        "the banner was",
+        "the config replaced by an equal copy: the banner was 'demo'",
     ),
     mb(
         "R7A3 overridden has a default again in banner_from_config",
         "    overridden: Sequence[str] | None,\n) -> ModeBanner:",
         "    overridden: Sequence[str] | None = (),\n) -> ModeBanner:",
-        "test_overridden_is_a_required_keyword_and_none_means_not_known",
+        "test_banner_from_config_has_no_default_for_overridden",
         "banner_from_config without overridden was accepted",
     ),
     mb(
-        "R7A4 overridden=None is read as none",
+        "R7A4 the not-known message of overridden=None names something else",
         "overridden is not known (None)",
         "overridden is known (None)",
-        "test_overridden_is_a_required_keyword_and_none_means_not_known",
+        "test_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner",
         "overridden=None did not say it is not known",
     ),
     mb(
-        "R7B1 hold_run_ids is not an override",
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")',
-        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets")',
-        "test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason",
-        "parameters of build on neither list or on both: ['hold_run_ids']",
+        "R7A4b overridden=None is no longer refused in banner_from_config",
+        '    if overridden is None:\n        raise ValueError(\n            "overridden is not known (None)',
+        '    if False:\n        raise ValueError(\n            "overridden is not known (None)',
+        "test_overridden_none_raises_a_value_error_in_banner_from_config",
+        "overridden must be a list",
+        crash="TypeError",
     ),
     mb(
-        "R7B2 a build parameter is dropped from the not-connectivity list",
-        '    "clock": "returns the current time only; it holds no records and reaches no service",\n',
+        "R7B1 hold_run_ids is not an override",
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids", "clock")',
+        'OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "clock")',
+        "test_the_overrides_are_exactly_the_objects_and_callables_handed_to_build",
+        "the override list is ('tools', 'sources', 'channel', 'llm', 'detector', 'secrets', 'clock')",
+    ),
+    mb(
+        "R7B2 the timeout parameter is dropped from the not-connectivity list",
+        '    "timeout_s": "a number of seconds handed to the executor; checked: it is not called, only compared",\n',
         "",
-        "test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason",
-        "parameters of build on neither list or on both: ['clock']",
+        "test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_no_object",
+        "the not-connectivity list is ['agents', 'config_dir']",
     ),
     js(
         "R7D1 the page paints an unconfirmed text that only starts with the own words",
@@ -1727,12 +1739,12 @@ M = [
         "v.length <= 2 * MAX_TEXT && ",
         "",
         "test_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once",
-        "took",
+        "the page walked a string of 10000000 units with Array.from",
     ),
     gd(
         "R7E1 the fat Mach-O and Java class mark is recognised in one byte order only",
-        'd[:4] in (b"\\xca\\xfe\\xba\\xbe", b"\\xbe\\xba\\xfe\\xca")',
-        'd[:4] in (b"\\xca\\xfe\\xba\\xbe",)',
+        '            b"\\xbe\\xba\\xfe\\xca",\n',
+        "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
         "first bytes of fat Mach-O or Java class file (bebafeca)",
     ),
@@ -1740,28 +1752,28 @@ M = [
         "R7E2 bzip2 is recognised without a level",
         "            and 0x31 <= d[3] <= 0x39\n",
         "",
-        "test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark",
-        "bzip2 check: b'BZh0",
+        "test_bzip2_needs_a_level_from_1_to_9",
+        "bzip2 level check: b'BZh0",
     ),
     gd(
         "R7E3 bzip2 is recognised without a block or end-of-stream mark",
         '            and d[4:10] in (b"1AY&SY", b"\\x17rE8P\\x90")\n',
         "",
-        "test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark",
-        "bzip2 check: b'BZh9XXXXXX",
+        "test_bzip2_needs_a_block_or_end_of_stream_mark",
+        "bzip2 mark check: b'BZh9XXXXXX",
     ),
     gd(
         "R7E4 a file of only the MZ mark and NUL bytes is not a program kind",
         'd[:2] == b"MZ" and len(d) > 2 and not any(d[2:64])',
         "False",
-        "test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not",
+        "test_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit",
         "mz: a file of only the mark and NUL bytes was not refused",
     ),
     gd(
         "R7E5 a file of only the RAR mark and NUL bytes is not a RAR kind",
         'd[:6] == b"Rar!\\x1a\\x07" and d[6:7] in (b"\\x00", b"\\x01")',
         "False",
-        "test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not",
+        "test_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit",
         "rar: a file of only the mark and NUL bytes was not refused",
     ),
     gd(
@@ -1780,8 +1792,8 @@ M = [
     ),
     gd(
         "R7E8 a loop of links in the copy is not refused",
-        '        if exc.errno == errno.ELOOP:\n            return "is part of a loop of links"',
-        '        if False:\n            return "is part of a loop of links"',
+        '        if exc.errno == errno.ELOOP:\n            return "is a link chain that is too long or loops"',
+        '        if False:\n            return "is a link chain that is too long or loops"',
         "test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_copied",
         "a loop of links was copied",
     ),
@@ -1799,19 +1811,289 @@ M = [
         "test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked",
         "the repository path was not masked",
     ),
+    # -- batch 9 (r8 fixes) -----------------------------------------------------------------------------------------------
+    # class 1: the seal holds references
+    ap(
+        "R9A1 the sealed value holds the number of each part, not the part",
+        "src/hadavin_sdk/app.py",
+        "        self._sealed = (tuple(overridden), self._connected_parts())",
+        "        self._sealed = (tuple(overridden), tuple((lb, id(o)) for lb, o in self._connected_parts()))",
+        T_MB,
+        "test_a_normal_production_tick_keeps_its_banner",
+        "an untouched sealed app lost its banner",
+    ),
+    ap(
+        "R9A2 the fields and the tools of the hooks are not read for the fingerprint",
+        "src/hadavin_sdk/app.py",
+        "        if is_dataclass(hooks):",
+        "        if False:",
+        T_MB,
+        "test_every_replaced_connected_part_reads_unconfirmed",
+        "a tool entry replaced: the banner stayed made-up",
+    ),
+    ap(
+        "R9A3 the recorded names are left out of the sealed comparison",
+        "src/hadavin_sdk/app.py",
+        "or tuple(self.overridden) != sealed[0]:",
+        "or False:",
+        T_MB,
+        "test_the_recorded_names_cannot_be_laundered",
+        "a changed list of recorded names was trusted",
+    ),
+    ap(
+        "R9A4 mode_banner has no catch-all for a tampered app",
+        "src/hadavin_sdk/app.py",
+        "        except Exception:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something",
+        "        except KeyError:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something",
+        T_MB,
+        "test_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises_or_warns",
+        "object has no attribute 'tools'",
+        crash="AttributeError",
+    ),
+    ap(
+        "R9A5 the seal method is public again",
+        "src/hadavin_sdk/app.py",
+        "    def _known_overrides(self)",
+        "    seal = _seal\n\n    def _known_overrides(self)",
+        T_MB,
+        "test_the_recorded_names_cannot_be_laundered",
+        "the public `seal` is back",
+    ),
+    ap(
+        "R9A6 the clock handed to build is not recorded as an override",
+        "src/hadavin_sdk/app.py",
+        "        clock=None if clock is now else clock,",
+        "        clock=None,",
+        T_MB,
+        "test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default",
+        "build did not record a clock that was handed in",
+    ),
+    ap(
+        "R9A7 a plain-data attribute counts as a part (a counter reads as a new part)",
+        "src/hadavin_sdk/app.py",
+        '(f"{label}.{key}", _PLAIN if isinstance(value, _PLAIN_DATA) else value)',
+        '(f"{label}.{key}", value)',
+        T_MB,
+        "test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
+        "a changing counter read as a new part",
+    ),
+    ap(
+        "R9A8 the attributes of a part are not read",
+        "src/hadavin_sdk/app.py",
+        "            if isinstance(attrs, dict):\n                for key, value in list(attrs.items()):",
+        "            if False:\n                for key, value in list(attrs.items()):",
+        T_MB,
+        "test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed",
+        "a new attribute of a source was not seen",
+    ),
+    # class 2: the page and the words
+    js(
+        "R9B1 the page paints a demo or quiet banner that lists overridden parts",
+        "      if ((tone === 'demo' || tone === 'quiet') && overridden.length !== 0) return NOT_CONFIRMED;\n",
+        "",
+        "test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order",
+        "painted demo with ['llm']",
+    ),
+    js(
+        "R9B2 the page accepts a duplicate in the override list",
+        "      if (at <= last) return false; // unknown (-1), a duplicate or out of order",
+        "      if (at < last || at < 0) return false;",
+        "test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order",
+        "painted overridden=['tools', 'tools']",
+    ),
+    js(
+        "R9B3 the page accepts the override list in any order",
+        "      if (at <= last) return false; // unknown (-1), a duplicate or out of order",
+        "      if (at < 0 || at === last) return false;",
+        "test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order",
+        "painted overridden=['llm', 'tools']",
+    ),
+    mb(
+        "R9B4 _banner_for has a default for overridden again",
+        "    words: BannerWords = DEFAULT_WORDS,\n    overridden: Sequence[str],\n) -> ModeBanner:",
+        "    words: BannerWords = DEFAULT_WORDS,\n    overridden: Sequence[str] = (),\n) -> ModeBanner:",
+        "test_banner_for_has_no_default_for_overridden",
+        "_banner_for without overridden was accepted",
+    ),
+    mb(
+        "R9B5 the not-known answer of banner_or_unconfirmed is logged as a warning",
+        '        _LOG.debug("mode banner: overridden is not known: showing the not-confirmed banner")',
+        '        _LOG.warning("mode banner: overridden is not known: showing the not-confirmed banner")',
+        "test_banner_or_unconfirmed_with_none_logs_no_warning",
+        "the not-known answer logged a warning",
+    ),
+    gd(
+        "R9C1 the guard docstring leaves a first-byte kind out",
+        "class file, PE, RAR, DOS or Windows program",
+        "class file, PE, DOS or Windows program",
+        "test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table",
+        "the docstring lists",
+    ),
+    # class 4: the git-message masker
     gd(
         "R7F1 a key= or token= value in git's message is shown",
-        '    line = _SECRET_PAIR.sub(r"\\1=<hidden>", line)\n',
+        "    line = _hide_pairs(line)\n",
         "",
         "test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
         "a secret value was shown: abc123",
     ),
     gd(
         "R7F2 every name=value pair in git's message is hidden, a bare bypass=true too",
-        "(?:key|token|secret|password)[\\w.-]*)=",
-        "(?:key|token|secret|password)?[\\w.-]*)=",
+        '_SECRET_NAME = re.compile(r"(?i)key|token',
+        '_SECRET_NAME = re.compile(r"(?i)|key|token',
         "test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass",
         "a bare word was hidden",
+    ),
+    gd(
+        "R9D1 a bearer token of 11 characters is hidden",
+        "{12,}=*)",
+        "{11,}=*)",
+        "test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible",
+        "a bearer token of 11 characters was hidden",
+    ),
+    gd(
+        "R9D2 a basic token of 7 characters is hidden",
+        "{8,}={0,2})",
+        "{7,}={0,2})",
+        "test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible",
+        "a basic token of 7 characters was hidden",
+    ),
+    gd(
+        "R9D3 the bearer token class is wider than the core's",
+        r"[a-z0-9._~+/\-<>]{12,}",
+        r"[a-z0-9._~+/\-<>!]{12,}",
+        "test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones",
+        "the guard BEARER pattern differs from the core one",
+    ),
+    gd(
+        "R9D4 a bare bearer scheme word is not hidden",
+        "    line = _hide_group(_BEARER, line)\n",
+        "",
+        "test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table",
+        "Bearer 12: the guard and the core disagree",
+    ),
+    gd(
+        "R9D5 a bare basic scheme word is not hidden",
+        "    return _hide_group(_BASIC, line)\n",
+        "    return line\n",
+        "test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table",
+        "basic 8: the guard and the core disagree",
+    ),
+    gd(
+        "R9D6 after an Authorization header name only the next word is hidden",
+        r'(authorization:)[^\n]*"',
+        r'(authorization:)\S+"',
+        "test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden",
+        "header scheme 'Digest'",
+    ),
+    gd(
+        "R9D7 a quoted value is read as an unquoted one",
+        '            if end < n and line[end] in "\'\\"":',
+        "            if False:",
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        'quoted password="ab cd\'ef"',
+    ),
+    gd(
+        "R9D8 an inner quote or ampersand ends an unquoted value",
+        "                while end < n and not line[end].isspace():\n                    end += 1\n            out.append(line[pos : at + 1]",
+        '                while end < n and not line[end].isspace() and line[end] not in "\'\\"&":\n                    end += 1\n            out.append(line[pos : at + 1]',
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        'unquoted password="ab\'cd"',
+    ),
+    gd(
+        "R9D9 the name pwd is not a secret name",
+        "|pwd|auth|credential",
+        "|auth|credential",
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        "unquoted pwd='abc123'",
+    ),
+    gd(
+        "R9D10 the name auth is not a secret name",
+        "|pwd|auth|credential",
+        "|pwd|credential",
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        "unquoted auth='abc123'",
+    ),
+    gd(
+        "R9D11 the name credential is not a secret name",
+        "|pwd|auth|credential",
+        "|pwd|auth",
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        "unquoted credential='abc123'",
+    ),
+    gd(
+        "R9D12 the name passwd is not a secret name",
+        "passw(?:or)?d",
+        "password",
+        "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
+        "unquoted passwd='abc123'",
+    ),
+    gd(
+        "R9D13 a url password is hidden only up to the first at sign",
+        '        last = line.rfind("@", start, end)',
+        '        last = line.find("@", start, end)',
+        "test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold",
+        "url credentials 'user:p@ss'",
+    ),
+    gd(
+        "R9D14 the name check reads the whole line for every equals sign",
+        "_SECRET_NAME.search(line[start:at])",
+        "_SECRET_NAME.search(line)",
+        "test_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line",
+        "the name check read",
+    ),
+    # class 5: guard minors
+    gd(
+        "R9E1 the fat Mach-O 64-bit mark is recognised in one byte order only",
+        '            b"\\xbf\\xba\\xfe\\xca",\n',
+        "",
+        "test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders",
+        "fat Mach-O 64 mark bfbafeca was not a hit",
+    ),
+    gd(
+        "R9E2 the fat Mach-O 64-bit mark is not recognised",
+        '            b"\\xca\\xfe\\xba\\xbf",  # fat Mach-O with 64-bit offsets, either byte order\n',
+        "",
+        "test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders",
+        "fat Mach-O 64 mark cafebabf was not a hit",
+    ),
+    gd(
+        "R9E3 the compiled Python upper end ignores the running interpreter",
+        'max(3999, int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little") + 1000)',
+        "3999",
+        "test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_is_not_read",
+        "the upper end is not derived from the running interpreter",
+    ),
+    ap(
+        "R9E4 the copy calls fchmod without checking that it exists",
+        GD,
+        '            if hasattr(os, "fchmod"):  # absent on Windows before Python 3.13',
+        "            if True:",
+        T_G,
+        "test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod",
+        "module 'os' has no attribute 'fchmod'",
+        crash="AttributeError",
+    ),
+    gd(
+        "R9E5 a link swapped for a file is not refused in words",
+        '        return "changed while it was being checked"',
+        '        return ""',
+        "test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_words",
+        "a swapped link was not refused: plain.txt",
+    ),
+    gd(
+        "R9E6 a link chain that is too long is called a loop",
+        '            return "is a link chain that is too long or loops"',
+        '            return "is part of a loop of links"',
+        "test_the_link_chain_message_says_too_long_or_looped",
+        "the link chain wording is wrong",
+    ),
+    gd(
+        "R9E7 a folder swapped for a link on the way to a listed file is read through",
+        '        if kind != "gone" and _parent_is_link(repo, rel):',
+        "        if False:",
+        "test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit",
+        "a file behind a swapped folder was read through it",
     ),
 ]
 
@@ -1827,7 +2109,23 @@ SAME_ASSERT: dict[str, str] = {}
 # that crashes on purpose must be listed, and the table test refuses a row outside this set whose `expect` reads like an
 # interpreter message. The set is derived in the test from the rows that declare `crash=`; both must be this set.
 CRASH_ROWS = frozenset(
-    {"B5", "B7", "B13", "B34", "B43", "B44", "B52", "B53", "B54", "B62", "N6", "N7"}
+    {
+        "B5",
+        "B7",
+        "B13",
+        "B34",
+        "B43",
+        "B44",
+        "B52",
+        "B53",
+        "B54",
+        "B62",
+        "N6",
+        "N7",
+        "R7A4b",
+        "R9A4",
+        "R9E4",
+    }
 )
 
 
@@ -1848,6 +2146,18 @@ def non_unique_rows(root=ROOT, rows=None):
         if count != 1:
             problems.append((m.name, f"search text found {count} times"))
     return problems
+
+
+def shared_first_lines(first_lines):
+    """Rows (of those run) whose killer stopped at the very same first failing line:
+    they would be killed by one assertion and say nothing about their own mutation. Returns the groups as
+    lists of labels; ``[]`` is clean. `first_lines` maps a row name to the first failing line of its killer."""
+    by_line = {}
+    for m in M:
+        line = first_lines.get(m.name)
+        if line:
+            by_line.setdefault((m.only_test, line), []).append(m.name.split(" ", 1)[0])
+    return [labels for labels in by_line.values() if len(labels) > 1]
 
 
 if __name__ == "__main__":
@@ -1876,5 +2186,9 @@ if __name__ == "__main__":
         first_lines=first_lines,
     )
     bad = [n for n, _, _, g in res if not g]
+    shared = shared_first_lines(first_lines)
+    if shared:
+        print(f"rows killed by the very same first failing line: {shared}", file=sys.stderr)
+        bad += [f"shared:{'+'.join(g)}" for g in shared]
     print(f"{len(res) - len(bad)} of {len(res)} good; problems: {bad}")
     sys.exit(1 if bad else 0)

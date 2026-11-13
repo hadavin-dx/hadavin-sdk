@@ -12,7 +12,7 @@
   var TONES = Object.freeze(['demo', 'real', 'quiet', 'unconfirmed']);
   var MODES = Object.freeze(['demo', 'pilot', 'prod']); // the stages; a test pins this list to hadavin_sdk.stages.STAGES
   // The parts of `app.build` that a caller may hand in; a test pins this list to hadavin_sdk.mode_banner.OVERRIDES.
-  var OVERRIDES = Object.freeze(['tools', 'sources', 'channel', 'llm', 'detector', 'secrets', 'hold_run_ids']);
+  var OVERRIDES = Object.freeze(['tools', 'sources', 'channel', 'llm', 'detector', 'secrets', 'hold_run_ids', 'clock']);
   // The words of the note that names those parts; a test pins them to hadavin_sdk.mode_banner.DEFAULT_WORDS.overridden_note.
   // The page builds the note itself from the `overridden` list: it never paints a note that the system wrote.
   var OVERRIDDEN_NOTE = 'These parts were supplied by code and are not checked here: {names}.';
@@ -57,9 +57,15 @@
     return false;
   }
   // The names of the handed-in parts: a list of known names only (any other entry makes the banner unusable).
+  // The same rule as Python applies (`_override_names`): known names only, no duplicates, in the order of OVERRIDES.
   function isOverrideList(v) {
     if (!Array.isArray(v) || v.length > OVERRIDES.length) return false;
-    for (var i = 0; i < v.length; i++) if (OVERRIDES.indexOf(v[i]) < 0) return false;
+    var last = -1;
+    for (var i = 0; i < v.length; i++) {
+      var at = OVERRIDES.indexOf(v[i]);
+      if (at <= last) return false; // unknown (-1), a duplicate or out of order
+      last = at;
+    }
     return true;
   }
   // The banner to paint: a plain copy of the given one when it is complete and consistent, else the fallback (never
@@ -88,6 +94,8 @@
         if (tag !== NOT_CONFIRMED.tag || text !== NOT_CONFIRMED.text || real.length !== 0 || standins !== '') return NOT_CONFIRMED;
         if (overridden.length > 0) text = NOT_CONFIRMED.text + ' ' + OVERRIDDEN_NOTE.replace('{names}', overridden.join(', '));
       }
+      // a demo or quiet banner says "nothing real, made up" from the config alone: with any handed-in part it cannot stand
+      if ((tone === 'demo' || tone === 'quiet') && overridden.length !== 0) return NOT_CONFIRMED;
       if (tone === 'demo' && (mode !== 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'quiet' && (mode === 'demo' || real.length !== 0)) return NOT_CONFIRMED;
       if (tone === 'real') {

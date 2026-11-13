@@ -6,14 +6,16 @@ client; deleting the folder must leave a build whose tests still pass. The folde
 
 The scan works from one list, `git ls-files` (see `tracked_paths`), and fails (exit 1) for each of these, in every file
 under the product folders listed in the settings file (a symlink pointing into the folder from anywhere else fails too):
-  * a symlink of any kind (it could point into the folder, out of the repository, or nowhere);
+  * a symlink of any kind (it could point into the folder, out of the repository, or nowhere), including a folder on the way to a
+    listed file that has been swapped for a link since git listed the file (each parent is looked at with `os.lstat`);
   * the folder inside a product folder, at any depth, or any file or folder name that holds the folder name;
   * a line that names the folder (upper or lower case; "-", "_" and a space count as the same separator);
   * a made-up record id (the patterns are listed in the settings file);
   * a submodule (a git link) under a product folder, even when its folder is missing: its files cannot be scanned;
   * a file ending in .pyc, .so, .zip, .whl, .gz, .tgz, .tar, .bz2 or .xz under a product folder, and a file of ANY ending whose
-    first bytes are the mark of one of `MAGIC_KINDS` (zip, ELF, gzip, bzip2, xz, tar, compiled Python, Mach-O, PE: it cannot
-    be read, or it packs what it holds); the first 512 bytes decide (the PE header offset may reach further), data appended
+    first bytes are the mark of one of `MAGIC_KINDS` (zip, ELF, gzip, bzip2, xz, tar, compiled Python, Mach-O, fat Mach-O or Java
+    class file, PE, RAR, DOS or Windows program: it cannot be read, or it packs what it holds; bzip2 needs a level 1 to 9 and a
+    valid block or end-of-stream mark, so a file that has only the three letters or a level 0 is not one: on purpose, it is not valid bzip2); the first 512 bytes decide (the PE header offset may reach further), data appended
     after a valid mark is not looked at, and an exempt file gets the same check;
   * a file with a picture, font or PDF ending (`ENDING_MARKS`: .png .jpg .jpeg .gif .ico .pdf .woff .woff2 .webp .ttf .otf)
     whose first bytes are not the mark of that kind: the content decides what a file is, not its name (zstd, 7z, rar, lz4 and
@@ -63,6 +65,7 @@ from __future__ import annotations
 
 import argparse
 import errno
+import importlib.util
 import os
 import re
 import shutil
@@ -245,19 +248,92 @@ def _git_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
 
 
-# What is hidden in git's own line: the value of a `name=value` pair whose NAME holds key, token, secret or password (so
-# `bypass_key=x` and `bypass_token=x` are hidden and a bare `bypass=true` is shown), the user and password part of a URL, and
-# whatever follows an `Authorization:` header name. A bare scheme word with a token and no header name (`Bearer abc`) is
-# not hidden: with no name in front of it the line cannot be told from plain words.
-_SECRET_PAIR = re.compile(r"(?i)\b([\w.-]*(?:key|token|secret|password)[\w.-]*)=[^\s&'\"]+")
-_URL_USER = re.compile(r"://[^/\s@]+@")
-_AUTH_HEADER = re.compile(r"(?i)(authorization:\s*)\S+(?:[ \t]+\S+)?")
+# What is hidden in git's own line (`_hide_secrets`), in this order:
+#  1. everything after a literal `Authorization:` header name, to the end of the line, whatever the scheme (Basic, Bearer,
+#     Digest ...). This is WIDER than the core redactor on purpose: a header name was given, so everything after it is a credential;
+#  2. the user and password part of a URL: everything between `://` and the LAST `@` before the next white space (a password
+#     that holds `@` or `/` is hidden whole; a path that holds an `@` is over-hidden, the safe side);
+#  3. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
+#     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
+#     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
+#     `bypass=true` is shown;
+#  4. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`) by EXACTLY the two rules of `hadavin_sdk.guard.redact`
+#     (BEARER: token of 12 or more characters; BASIC: 8 or more): the same patterns, copied here because the guard runs
+#     without importing the product package; a test compares the pattern text with the core and runs both on a table of inputs.
+#     Shorter tokens stay visible, as in the core.
+# Every step is one pass over the line with no nested repetition, so a very long line costs time in proportion to its length.
+_BEARER = re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")
+_BASIC = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
+_AUTH_HEADER = re.compile(r"(?i)(authorization:)[^\n]*")
+_SECRET_NAME = re.compile(r"(?i)key|token|secret|passw(?:or)?d|pwd|auth|credential")
+_HIDDEN = "<hidden>"
+
+
+def _is_name_char(c: str) -> bool:
+    return c.isalnum() or c in "_.-"
+
+
+def _hide_urls(line: str) -> str:
+    out: list[str] = []
+    pos = 0
+    while (at := line.find("://", pos)) >= 0:
+        start = at + 3
+        end = start
+        while end < len(line) and not line[end].isspace():
+            end += 1
+        last = line.rfind("@", start, end)
+        if last >= 0:
+            out.append(line[pos:start] + _HIDDEN)
+            pos = last  # the `@` and the host stay
+        else:
+            out.append(line[pos:end])
+            pos = end
+            continue
+        out.append(line[pos:end])
+        pos = end
+    out.append(line[pos:])
+    return "".join(out)
+
+
+def _hide_pairs(line: str) -> str:
+    out: list[str] = []
+    pos = 0
+    n = len(line)
+    at = line.find("=")
+    while at >= 0:
+        start = at
+        while start > pos and _is_name_char(line[start - 1]):
+            start -= 1
+        if start < at and _SECRET_NAME.search(line[start:at]):
+            end = at + 1
+            if end < n and line[end] in "'\"":
+                quote = line[end]
+                end += 1
+                while end < n and line[end] != quote:
+                    end += 2 if line[end] == "\\" else 1
+                end = min(end + 1, n)
+            else:
+                while end < n and not line[end].isspace():
+                    end += 1
+            out.append(line[pos : at + 1] + _HIDDEN)
+            pos = end
+            at = line.find("=", pos)
+        else:
+            at = line.find("=", at + 1)
+    out.append(line[pos:])
+    return "".join(out)
+
+
+def _hide_group(pattern: re.Pattern[str], line: str) -> str:
+    return pattern.sub(lambda m: m.group(0).replace(m.group(1), _HIDDEN, 1), line)
 
 
 def _hide_secrets(line: str) -> str:
-    line = _SECRET_PAIR.sub(r"\1=<hidden>", line)
-    line = _URL_USER.sub("://<hidden>@", line)
-    return _AUTH_HEADER.sub(r"\1<hidden>", line)
+    line = _AUTH_HEADER.sub(lambda m: m.group(1) + " " + _HIDDEN, line)
+    line = _hide_urls(line)
+    line = _hide_pairs(line)
+    line = _hide_group(_BEARER, line)
+    return _hide_group(_BASIC, line)
 
 
 def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
@@ -323,6 +399,14 @@ def _is_pe(data: bytes) -> bool:
     return at + 4 <= len(data) and data[at : at + 4] == b"PE\x00\x00"
 
 
+# A compiled Python file starts with a 2-byte version number (little-endian) and "\r\n". Python 3 numbers start at 3000; the upper
+# end is the running interpreter's own number (`importlib.util.MAGIC_NUMBER`) plus 1000, at least 3999, and never above 8191
+# (the second byte of such a number is a control character, so no text file starts with one). Python 2 files (numbers from
+# 20121) are NOT covered: their first two bytes are ordinary letters and the check would hit text.
+_PYC_MAGIC_MAX = min(
+    8191, max(3999, int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little") + 1000)
+)
+
 # (kind, does the head say so): ONE table; `MAGIC_KINDS` and `_magic_kind` both come from it, and the CHANGELOG sentence
 # about first bytes is checked against it by a test. A compiled Python file has a 2-byte version number (little-endian,
 # 3000 to 3999) and "\r\n"; Mach-O is the four 32- and 64-bit magic values in both byte orders; bzip2 needs a level 1 to 9 and then a block or end-of-stream mark.
@@ -343,7 +427,7 @@ _MAGIC_CHECKS: tuple[tuple[str, Callable[[bytes], bool]], ...] = (
     ("tar", lambda d: len(d) > 262 and d[257:262] == b"ustar"),
     (
         "compiled Python",
-        lambda d: d[2:4] == b"\r\n" and 3000 <= int.from_bytes(d[:2], "little") < 4000,
+        lambda d: d[2:4] == b"\r\n" and 3000 <= int.from_bytes(d[:2], "little") <= _PYC_MAGIC_MAX,
     ),
     (
         "Mach-O",
@@ -356,7 +440,15 @@ _MAGIC_CHECKS: tuple[tuple[str, Callable[[bytes], bool]], ...] = (
     # compiled code that has no place in a product folder, so they are ONE kind and one hit, with no byte-count rule
     (
         "fat Mach-O or Java class file",
-        lambda d: d[:4] in (b"\xca\xfe\xba\xbe", b"\xbe\xba\xfe\xca"),
+        lambda d: (
+            d[:4]
+            in (
+                b"\xca\xfe\xba\xbe",  # fat Mach-O 32-bit offsets and Java class, either byte order
+                b"\xbe\xba\xfe\xca",
+                b"\xca\xfe\xba\xbf",  # fat Mach-O with 64-bit offsets, either byte order
+                b"\xbf\xba\xfe\xca",
+            )
+        ),
     ),
     ("PE", _is_pe),
     # two marks that are valid UTF-8 text, so a file that holds only them (and NUL bytes) would be read as text and pass: a
@@ -430,6 +522,17 @@ def _stat_info(full: Path | str) -> tuple[str, int]:
     if stat.S_ISREG(mode):
         return "file", info.st_size
     return "unreadable", 0
+
+
+def _parent_is_link(repo: Path, rel: str) -> bool:
+    """True when a folder on the way to `rel` (below `repo`) is a link, or cannot be inspected: `os.lstat` of the entry alone
+    reads through such a folder. Each component is looked at with `os.lstat`; it stops at the first one that is not a plain folder."""
+    walked = repo
+    for part in rel.split("/")[:-1]:
+        walked = walked / part
+        if _stat_kind(walked) in ("link", "unreadable"):
+            return True
+    return False
 
 
 def _stat_kind(full: Path | str) -> str:
@@ -563,6 +666,11 @@ def scan(repo: Path, cfg: GuardConfig, *, running_copy_run: bool = False) -> lis
             continue
         root = _under(rel, roots)
         kind, size = _stat_info(full)
+        if kind != "gone" and _parent_is_link(repo, rel):
+            kind, size = (
+                "link",
+                0,
+            )  # a folder on the way was swapped for a link: the entry is read through it, so it is a link hit
         if kind == "gone":
             continue  # listed by git but gone from the disk (the system says: no such file)
         if kind == "unreadable":
@@ -733,7 +841,12 @@ def _link_problem(dest: Path, rel: str, root: Path, folder: str) -> str:
     ".." after another link component, a loop of links, and a target that the file system (`os.path.realpath` of the copy)
     places outside the copy or inside the demo-only folder."""
     link = dest / rel
-    target = os.readlink(link)
+    try:
+        target = os.readlink(link)
+    except (
+        OSError
+    ):  # the link was swapped for a file or removed after it was copied: refuse, never a traceback
+        return "changed while it was being checked"
     if os.path.isabs(target):
         return "is absolute"
     if _dotdot_after_link(dest, rel, target):
@@ -742,7 +855,7 @@ def _link_problem(dest: Path, rel: str, root: Path, folder: str) -> str:
         os.stat(link)
     except OSError as exc:
         if exc.errno == errno.ELOOP:
-            return "is part of a loop of links"
+            return "is a link chain that is too long or loops"
     placed = Path(os.path.realpath(link))
     if not placed.is_relative_to(root):
         return "leads out of the copy"
@@ -799,7 +912,10 @@ def _copy_regular(repo: Path, rel: str, target: Path) -> None:
             )
         with target.open("wb") as out:
             shutil.copyfileobj(src, out)
-            os.fchmod(out.fileno(), stat.S_IMODE(info.st_mode))
+            if hasattr(os, "fchmod"):  # absent on Windows before Python 3.13
+                os.fchmod(out.fileno(), stat.S_IMODE(info.st_mode))
+            else:
+                os.chmod(target, stat.S_IMODE(info.st_mode))
     os.utime(target, ns=(info.st_atime_ns, info.st_mtime_ns))
 
 

@@ -48,6 +48,7 @@ needs_node = pytest.mark.skipif(
 
 # -- the words and the choice between them ---------------------------------------------------------------------------
 def _b(mode: str, real: list[str] | None = None, pretend: list[str] | None = None, **kw: object):
+    kw.setdefault("overridden", ())  # `_banner_for` has no default for it
     return mb._banner_for(mode, real_services=real or [], stand_ins=pretend or [], **kw)  # type: ignore[arg-type]
 
 
@@ -173,7 +174,7 @@ def test_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident() ->
                 f"{type(bad).__name__} {bad!r} as {'real_services' if 'real_services' in kwargs and kwargs['real_services'] is bad else 'stand_ins'}",
                 match="must be a list of service names",
             ):
-                mb._banner_for("demo", **kwargs)  # type: ignore[arg-type]
+                mb._banner_for("demo", overridden=(), **kwargs)  # type: ignore[arg-type]
 
 
 def test_names_that_are_not_a_mapping_are_refused_with_a_type_error() -> None:
@@ -270,7 +271,9 @@ def test_property_the_made_up_claim_never_appears_next_to_a_real_service() -> No
         pretend = [pick() for _ in range(rng.randint(0, 3))]
         names = {pick(): pick() for _ in range(rng.randint(0, 2))}
         try:
-            b = mb._banner_for(mode, real_services=real, stand_ins=pretend, names=names)
+            b = mb._banner_for(
+                mode, real_services=real, stand_ins=pretend, names=names, overridden=()
+            )
         except (ValueError, TypeError):
             refused += 1
             continue
@@ -378,8 +381,8 @@ def test_the_stage_of_the_config_is_checked_like_any_other_stage() -> None:
 
 def test_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry() -> None:
     for old in ("banner_for", "services_in", "stand_ins_in"):
-        assert not hasattr(mb, old), old
-        assert old not in mb.__all__
+        assert not hasattr(mb, old), f"the old public name {old!r} is still in the module"
+        assert old not in mb.__all__, f"the old public name {old!r} is still in __all__"
     assert [n for n in mb.__all__ if n.startswith("banner")] == [
         "banner_from_config",
         "banner_or_unconfirmed",
@@ -1092,7 +1095,9 @@ NAME_TABLE = [
 
 def test_names_in_follows_the_table() -> None:
     for text, name, expected in NAME_TABLE:
-        assert mb.names_in(text, name) is expected, (text, name)
+        assert mb.names_in(text, name) is expected, (
+            f"names_in({text!r}, {name!r}) was not {expected}"
+        )
     assert mb.names_in("anything", "") is False
 
 
@@ -1104,7 +1109,9 @@ def test_the_page_and_python_agree_on_every_row_of_the_name_table() -> None:
             "real": [name], "stand_ins": [],
         }  # fmt: skip
         page_says_named = _paint(banner)["tone"] == "real"
-        assert page_says_named is expected is mb.names_in(text, name), (text, name)
+        assert page_says_named is expected is mb.names_in(text, name), (
+            f"the page read {name!r} in {text!r} as {'named' if page_says_named else 'not named'}, python as {mb.names_in(text, name)}"
+        )
 
 
 # --- round 5 ----------------------------------------------------------------------------------------------------------
@@ -1768,7 +1775,7 @@ def _config_with_one_shot(field: str, value: object) -> SimpleNamespace:
 def test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times() -> (
     None
 ):
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the generator was accepted (tone real once, then tone demo over the same real host)
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the generator was accepted (tone real once, then tone demo over the same real host)
     cfg = _config_with_one_shot("egress_hosts", (h for h in ("api.example.test",)))
     for attempt in (1, 2):
         shown = mb.banner_or_unconfirmed(cfg, tool_specs={}, overridden=())
@@ -1795,7 +1802,7 @@ def test_a_generator_for_tool_modules_is_refused_like_egress_hosts() -> None:
 
 
 def test_a_generator_for_the_backend_entries_is_refused() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the generator was accepted
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the generator was accepted
     cfg = _fake_config("demo", [])
     cfg.backends = SimpleNamespace(
         entries=_SameUsedUpGenerator((("llm", SimpleNamespace(kind="fake")),))
@@ -1824,13 +1831,13 @@ def test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_r
 def test_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused() -> None:
     # partly a pin: the service lists as generators were read on the older code (that part is a proof); names and reserved_words were refused already (those parts only pin)
     with pytest.raises(TypeError, match="real_services must be a list of service names"):
-        mb._banner_for("demo", real_services=(r for r in ("crm",)), stand_ins=[])  # type: ignore[arg-type]
+        mb._banner_for("demo", real_services=(r for r in ("crm",)), stand_ins=[], overridden=())  # type: ignore[arg-type]
         raise AssertionError("real_services as a generator was read")
     with pytest.raises(TypeError, match="stand_ins must be a list of service names"):
-        mb._banner_for("demo", real_services=[], stand_ins=(r for r in ("crm",)))  # type: ignore[arg-type]
+        mb._banner_for("demo", real_services=[], stand_ins=(r for r in ("crm",)), overridden=())  # type: ignore[arg-type]
         raise AssertionError("stand_ins as a generator was read")
     with pytest.raises(TypeError, match="names must be a mapping"):
-        mb._banner_for("demo", real_services=[], stand_ins=[], names=(n for n in ()))  # type: ignore[arg-type]
+        mb._banner_for("demo", real_services=[], stand_ins=[], names=(n for n in ()), overridden=())  # type: ignore[arg-type]
         raise AssertionError("names as a generator was read")
     with pytest.raises(ValueError, match="reserved_words must be a tuple"):
         mb.BannerWords(
@@ -1842,7 +1849,7 @@ def test_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_ref
 def test_a_bytearray_a_memoryview_and_a_subclass_with_its_own_iteration_are_not_read_by_accident() -> (
     None
 ):
-    # written with the fix of an earlier round (not re-run against older code in batch 8): a bytearray of egress hosts was read as numbers
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): a bytearray of egress hosts was read as numbers
     cfg = _fake_config("demo", [("llm", "fake")])
     for odd in (bytearray(b"localhost"), memoryview(b"localhost")):
         cfg.egress_hosts = odd
@@ -1865,7 +1872,7 @@ def _demo_config() -> SimpleNamespace:
 
 
 def test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the keyword `overridden` did not exist
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the keyword `overridden` did not exist
     sentence = "These parts were supplied by code and are not checked here: {}."
     for name in mb.OVERRIDES:
         shown = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=(name,))
@@ -1880,7 +1887,7 @@ def test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_clai
 
 
 def test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_order() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the keyword `overridden` did not exist
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the keyword `overridden` did not exist
     plain = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=())
     assert plain.tone == "demo" and "made-up demo data" in plain.text, (
         "no override changed the demo banner"
@@ -1894,7 +1901,7 @@ def test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_ord
 def test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner_it_is_added() -> (
     None
 ):
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the keyword `overridden` did not exist
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the keyword `overridden` did not exist
     quiet = _fake_config("pilot", [("signer", "none")])
     shown = mb.banner_from_config(quiet, tool_specs={}, overridden=("detector",))
     assert shown.tone == "unconfirmed", (
@@ -1908,8 +1915,8 @@ def test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner
 
 
 def test_an_unknown_or_oddly_typed_override_list_is_refused() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the keyword `overridden` did not exist
-    for odd in (("clock",), "tools", (t for t in ("tools",)), [1]):
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the keyword `overridden` did not exist
+    for odd in (("timeout_s",), "tools", (t for t in ("tools",)), [1]):
         with pytest.raises((TypeError, ValueError), match="overridden"):
             mb.banner_from_config(_demo_config(), tool_specs={}, overridden=odd)  # type: ignore[arg-type]
             raise AssertionError(f"overridden={odd!r} was accepted")
@@ -1922,7 +1929,7 @@ def test_an_unknown_or_oddly_typed_override_list_is_refused() -> None:
 def test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so(
     tmp_path: Path,
 ) -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): App had no `overridden` and no `mode_banner`
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): App had no `overridden` and no `mode_banner`
     from hadavin_sdk import app as app_mod
     from hadavin_sdk.actions.secrets import FakeSecretProvider
     from hadavin_sdk.approvals.channel import FakeChannel
@@ -1940,7 +1947,7 @@ def test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so(
 
 
 def test_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): no such function
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): no such function
     from hadavin_sdk import app as app_mod
 
     assert app_mod._given_overrides(tools={}, sources={}, llm=None) == (), (
@@ -1954,14 +1961,14 @@ def test_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_
         "llm",
     )
     with pytest.raises(ValueError, match="not known to the mode banner"):
-        app_mod._given_overrides(clock=object())
+        app_mod._given_overrides(timeout_s=object())
     assert app_mod._given_overrides(hold_run_ids=lambda: set()) == ("hold_run_ids",), (
         "a hold_run_ids callable was not recorded as an override"
     )
 
 
 def test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_sentence() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): no `overridden`, so a banner built from the stand-in-only config said made-up
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): no `overridden`, so a banner built from the stand-in-only config said made-up
     shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=("sources",))
     assert shown["tone"] != "demo" and "made-up" not in shown["text"], (
         f"a source object given to build still gave the made-up sentence: {shown['text']!r}"
@@ -1970,7 +1977,7 @@ def test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_s
 
 @needs_node
 def test_a_failed_text_write_never_leaves_the_old_made_up_claim_or_a_stale_mode() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the old words stayed under the new tone and data-mode stayed "demo"
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the old words stayed under the new tone and data-mode stayed "demo"
     seen = _paint(GOOD_DEMO, "failing-text-over-old-claim")
     assert seen["threw"] == "" and seen["hidden"] is False, (
         "the painter threw or left the element hidden"
@@ -1988,7 +1995,7 @@ def _page_banner(**over: object) -> dict:
 def test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too() -> (
     None
 ):
-    # written with the fix of an earlier round (not re-run against older code in batch 8): both accepted a blank tag or text
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): both accepted a blank tag or text
     for field in ("tag", "text"):
         for blank in (" ", "\t\n", "\u00a0\u2003"):
             seen = _paint(_page_banner(**{field: blank}))
@@ -2021,7 +2028,7 @@ def test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python
 
 @needs_node
 def test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_and_601() -> None:
-    # written with the fix of an earlier round (not re-run against older code in batch 8): the page counted UTF-16 units, so 600 emoji (1200 units) were refused there but allowed in Python
+    # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8; it was not run against the code before batch 8): the page counted UTF-16 units, so 600 emoji (1200 units) were refused there but allowed in Python
     for unit in ("a", "\U0001f600"):
         at = _page_banner(text=unit * mb.MAX_TEXT_LENGTH)
         over = _page_banner(text=unit * (mb.MAX_TEXT_LENGTH + 1))
@@ -2076,10 +2083,10 @@ def test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_an
 
 
 @needs_node
-def test_the_page_paints_an_unconfirmed_banner_only_when_it_is_the_own_not_confirmed_words_plus_a_note() -> (
+def test_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted() -> (
     None
 ):
-    # written with the fix of an earlier round (not re-run against older code in batch 8): any unconfirmed banner was replaced by the fixed one, so the names of the overrides were lost
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: any unconfirmed banner was replaced by the fixed one, so the names of the overrides were lost)
     shown = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=("llm",)).as_dict()
     seen = _paint(shown)
     assert (
@@ -2147,7 +2154,7 @@ def test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner(tmp_p
     import dataclasses
 
     app = _built_app(tmp_path)
-    app.seal(
+    app._seal(
         ()
     )  # as if build had been given nothing: the banner is the made-up one while the app is untouched
     assert app.mode_banner()["tone"] == "demo", "an untouched sealed app lost its banner"
@@ -2160,31 +2167,51 @@ def test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner(tmp_p
         ("a source added after build", lambda a: a.sources.update(k=object()) or a),
         ("the runtime llm replaced", lambda a: setattr(a.runtime, "llm", object()) or a),
         ("the store replaced", lambda a: setattr(a, "store", object()) or a),
+        # same number of parts and same names: only the comparison of each part by identity sees it
+        (
+            "the config replaced by an equal copy",
+            lambda a: setattr(a, "config", __import__("copy").copy(a.config)) or a,
+        ),
     ):
         fresh = _built_app(tmp_path / label.replace(" ", "_"))
-        fresh.seal(())
+        fresh._seal(())
         changed = change(fresh)
         assert changed.mode_banner()["tone"] == "unconfirmed", (
             f"{label}: the banner was {changed.mode_banner()['tone']!r}"
         )
 
 
-def test_overridden_is_a_required_keyword_and_none_means_not_known() -> None:
-    # proof (fails on old code: the keyword had the default `()`)
-    cfg = _demo_config()
+def test_banner_from_config_has_no_default_for_overridden() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the keyword had the default `()`)
     with pytest.raises(TypeError, match="overridden"):
-        mb.banner_from_config(cfg, tool_specs={})  # type: ignore[call-arg]
+        mb.banner_from_config(_demo_config(), tool_specs={})  # type: ignore[call-arg]
         raise AssertionError("banner_from_config without overridden was accepted")
+
+
+def test_banner_or_unconfirmed_has_no_default_for_overridden() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the keyword had the default `()`)
     with pytest.raises(TypeError, match="overridden"):
-        mb.banner_or_unconfirmed(cfg, tool_specs={})  # type: ignore[call-arg]
+        mb.banner_or_unconfirmed(_demo_config(), tool_specs={})  # type: ignore[call-arg]
         raise AssertionError("banner_or_unconfirmed without overridden was accepted")
-    with pytest.raises(ValueError) as raised:
-        mb.banner_from_config(cfg, tool_specs={}, overridden=None)
+
+
+def test_overridden_none_raises_a_value_error_in_banner_from_config() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: None was read as none): the rule itself
+    with pytest.raises(ValueError, match="overridden") as raised:
+        mb.banner_from_config(_demo_config(), tool_specs={}, overridden=None)
         raise AssertionError("overridden=None was read as none")
+    assert raised.type is ValueError
+
+
+def test_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: None was read as none): the words, and the screen call
+    with pytest.raises(ValueError) as raised:
+        mb.banner_from_config(_demo_config(), tool_specs={}, overridden=None)
+        raise AssertionError("overridden=None was read as none (words)")
     assert "overridden is not known" in str(raised.value), (
         f"overridden=None did not say it is not known: {raised.value}"
     )
-    shown = mb.banner_or_unconfirmed(cfg, tool_specs={}, overridden=None)
+    shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=None)
     assert shown["tone"] == "unconfirmed" and "made-up" not in shown["text"], shown
 
 
@@ -2222,8 +2249,8 @@ def test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_wi
     )
 
 
-def test_pin_the_page_lists_and_the_python_lists_of_overrides_agree() -> None:
-    # pin (passes on old code that had the same six names in both places; the page list is new)
+def test_the_page_lists_of_overrides_and_the_note_words_agree_with_python() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): a pin (passes on 07bfda12) (fails only on the code before batch 8: the page had no such lists)
     js = JS.read_text(encoding="utf-8")
     found = re.search(r"var OVERRIDES = Object.freeze\(\[(.*?)\]\);", js)
     assert found, "the page has no OVERRIDES list"
@@ -2262,8 +2289,8 @@ def _blank_set_of_python() -> set[int]:
     return {cp for lo, hi in mb.BLANK_RANGES for cp in range(lo, hi + 1)}
 
 
-def test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set() -> None:
-    # pin (the sets did not exist as lists on old code)
+def test_the_blank_set_of_python_and_of_the_page_literal_is_one_set() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): a pin (passes on 07bfda12) (fails only on the code before batch 8: the sets did not exist as lists)
     assert _blank_set_of_js_literal() == _blank_set_of_python(), (
         f"blank sets differ at code points {sorted(_blank_set_of_js_literal() ^ _blank_set_of_python())}"
     )
@@ -2354,10 +2381,12 @@ def test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagree
 def test_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once() -> (
     None
 ):
-    # proof (fails on old code: Array.from ran over the whole string first; the time bound pins that it does not)
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: Array.from ran over the whole string first; counted work, not a clock: no string longer than twice the limit may reach Array.from)
     seen = _paint(_page_banner(), "huge-text")
     assert seen["shownTone"] == "unconfirmed", "ten million characters were painted"
-    assert seen["ms"] < 200, f"refusing a ten million character text took {seen['ms']} ms"
+    assert seen["arrayFromLongest"] <= 2 * mb.MAX_TEXT_LENGTH, (
+        f"the page walked a string of {seen['arrayFromLongest']} units with Array.from before refusing the ten million character text"
+    )
     for unit in ("a", "\U0001f600"):
         assert _paint(_page_banner(text=unit * 600))["shownTone"] == "demo", (
             f"600 x {unit!r} refused"
@@ -2369,3 +2398,359 @@ def test_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characte
         words = mb.BannerWords(tag_by_mode={"demo": unit * 601, "pilot": "P", "prod": "L"})
         with refused(ValueError, f"601 x {unit!r} in Python", match="longer than"):
             _b("demo", [], [], words=words)
+
+
+# -- batch 9: the seal holds references (class 1), the page and the words (class 2) --------------------------------------
+def _sealed_app(tmp_path: Path, name: str = "app"):
+    """A built app sealed as if `build` had been given nothing: its banner is the made-up one while it is untouched."""
+    app = _built_app(tmp_path / name)
+    app._seal(())
+    assert app.mode_banner()["tone"] == "demo", "an untouched sealed app lost its banner"
+    return app
+
+
+def _replace_hook(member: str):
+    def change(a) -> None:
+        setattr(a.runtime.hooks, member, (lambda *x, **k: None))
+
+    return change
+
+
+HOOK_MEMBERS = (
+    "request_approval",
+    "execute",
+    "verify",
+    "rollback",
+    "post_card",
+    "level_override",
+    "toolbox",
+    "validate_proposal",
+    "hold_run_ids",
+    "restored_key",
+)
+
+
+def _each_replaced_part() -> list:
+    import dataclasses
+
+    cases: list = [(f"hooks.{m}", _replace_hook(m)) for m in HOOK_MEMBERS]
+    cases += [
+        (
+            "a new Hooks with the same tools dict",
+            lambda a: setattr(a.runtime, "hooks", dataclasses.replace(a.runtime.hooks)),
+        ),
+        ("a tool entry replaced", lambda a: a.runtime.hooks.tools.update(t=lambda d: "") or None),
+        ("app.store", lambda a: setattr(a, "store", object())),
+        ("app.audit", lambda a: setattr(a, "audit", object())),
+        ("app.executor", lambda a: setattr(a, "executor", object())),
+        ("app.limits", lambda a: setattr(a, "limits", object())),
+        ("app.registry", lambda a: setattr(a, "registry", object())),
+        ("app.config", lambda a: setattr(a, "config", object())),
+        ("app.approvals", lambda a: setattr(a, "approvals", object())),
+        ("runtime.store", lambda a: setattr(a.runtime, "store", object())),
+        ("runtime.audit", lambda a: setattr(a.runtime, "audit", object())),
+        ("runtime.registry", lambda a: setattr(a.runtime, "registry", object())),
+        ("runtime.llm", lambda a: setattr(a.runtime, "llm", object())),
+        ("runtime.detector", lambda a: setattr(a.runtime, "detector", object())),
+        ("runtime.limits", lambda a: setattr(a.runtime, "limits", object())),
+        ("the channel of the approvals", lambda a: setattr(a.approvals, "channel", object())),
+        ("a source added", lambda a: a.sources.update(k=object())),
+        (
+            "a field of the store replaced by a new object",
+            lambda a: setattr(a.store, "added_client", object()),
+        ),
+    ]
+    return cases
+
+
+def test_every_replaced_connected_part_reads_unconfirmed(tmp_path: Path) -> None:
+    # new feature (fails on old code for the cases the fingerprint did not hold: hooks other than the tools dict, the store of
+    # the runtime, the channel, a new Hooks; the cases the old fingerprint held (the app's own fields) are pins)
+    for i, (label, change) in enumerate(_each_replaced_part()):
+        app = _sealed_app(tmp_path, f"c{i}")
+        change(app)
+        assert app.mode_banner()["tone"] == "unconfirmed", f"{label}: the banner stayed made-up"
+
+
+def test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed(tmp_path: Path) -> None:
+    # new feature (fails on old code: a source's own attributes and a replaced entry with a reused id were not seen)
+    from types import SimpleNamespace
+
+    app = _built_app(tmp_path / "s")
+    source = SimpleNamespace(endpoint=None)
+    app.sources["k"] = source
+    app._seal(())
+    assert app.mode_banner()["tone"] == "demo"
+    source.client = object()  # a new attribute in place
+    assert app.mode_banner()["tone"] == "unconfirmed", "a new attribute of a source was not seen"
+    app2 = _built_app(tmp_path / "s2")
+    inner = SimpleNamespace(session=object())
+    app2.sources["k"] = inner
+    app2._seal(())
+    inner.session = object()  # an attribute value replaced in place
+    assert app2.mode_banner()["tone"] == "unconfirmed", (
+        "a replaced attribute value of a source was not seen"
+    )
+    app3 = _built_app(tmp_path / "s3")
+    app3.sources["k"] = SimpleNamespace(count=1)
+    app3._seal(())
+    app3.sources["k"].count = 2  # plain data changes during a run: no new part
+    assert app3.mode_banner()["tone"] == "demo", "a changing counter read as a new part"
+
+
+def test_a_freed_object_whose_number_is_reused_does_not_pass_as_the_old_part(
+    tmp_path: Path,
+) -> None:
+    # new feature (fails on old code: the fingerprint held `id()`, so an object that took the freed number looked unchanged)
+    import gc
+    from types import SimpleNamespace
+
+    app = _built_app(tmp_path / "r")
+    original = SimpleNamespace()
+    app.sources["k"] = original
+    app._seal(())
+    old_id = id(original)
+    app.sources["k"] = SimpleNamespace()
+    del original
+    gc.collect()
+    keep: list = []
+    for _ in range(5000):
+        candidate = SimpleNamespace()
+        if id(candidate) == old_id:
+            break
+        keep.append(candidate)
+    app.sources["k"] = candidate
+    assert app.mode_banner()["tone"] == "unconfirmed", (
+        f"a new object (same number as the old one: {id(candidate) == old_id}) passed as the old part"
+    )
+
+
+def test_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises_or_warns(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # new feature (fails on old code: these raised out of `mode_banner`, and the hand-made state logged a WARNING per call)
+    import logging
+
+    tamper = (
+        ("runtime is a bare object", lambda a: setattr(a, "runtime", object())),
+        ("sources is None", lambda a: setattr(a, "sources", None)),
+        ("sources is a list", lambda a: setattr(a, "sources", [1, 2])),
+        ("mixed int and str source keys", lambda a: a.sources.update({1: object(), "a": object()})),
+        ("hooks.tools is not a mapping", lambda a: setattr(a.runtime.hooks, "tools", 5)),
+        ("hooks is None", lambda a: setattr(a.runtime, "hooks", None)),
+        ("registry has no tools", lambda a: setattr(a, "registry", SimpleNamespace())),
+        ("config is None", lambda a: setattr(a, "config", None)),
+    )
+    for i, (label, change) in enumerate(tamper):
+        app = _sealed_app(tmp_path, f"t{i}")
+        change(app)
+        with caplog.at_level(logging.DEBUG):
+            shown = app.mode_banner()
+        assert shown["tone"] == "unconfirmed" and shown["overridden"] == [], f"{label}: {shown!r}"
+    from hadavin_sdk.app import App
+
+    # the parts are unchanged (the check says known) but reading what the banner needs still fails: the outer catch-all
+    stub = _sealed_app(tmp_path, "t-outer")
+    stub.registry = SimpleNamespace()
+    monkeypatch.setattr(App, "_known_overrides", lambda self: ())
+    shown = stub.mode_banner()
+    assert shown["tone"] == "unconfirmed", f"a registry without tools gave {shown!r}"
+    monkeypatch.undo()
+
+    built = _built_app(tmp_path / "h")
+    by_hand = App(
+        **{
+            f.name: getattr(built, f.name)
+            for f in __import__("dataclasses").fields(built)
+            if f.init and f.name != "overridden"
+        }
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        by_hand.mode_banner()
+        by_hand.mode_banner()
+    assert [r for r in caplog.records if r.levelno >= logging.WARNING] == [], (
+        "a hand-made app logged a warning"
+    )
+
+
+def test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not(
+    tmp_path: Path,
+) -> None:
+    # new feature (fails on old code for deepcopy only if its copied parts had equal ids, which they do not: the old fingerprint
+    # held ids; the copy.copy and dataclasses.replace cases are pins of the decision)
+    import copy
+    import dataclasses
+
+    app = _sealed_app(tmp_path, "cp")
+    assert copy.copy(app).mode_banner()["tone"] == "demo", (
+        "a shallow copy shares every part with the original: it stays known"
+    )
+    assert dataclasses.replace(app).mode_banner()["tone"] == "unconfirmed"
+    try:
+        deep = copy.deepcopy(app)
+    except Exception:  # noqa: BLE001 - an app that cannot be copied cannot be mistaken for a built one
+        return
+    assert deep.mode_banner()["tone"] == "unconfirmed", (
+        "a deep copy has new parts and must not stay known"
+    )
+
+
+def test_the_recorded_names_cannot_be_laundered(tmp_path: Path) -> None:
+    # new feature (fails on old code: `overridden` was not part of the sealed value and `seal` was public)
+    from hadavin_sdk.app import App
+
+    app = _built_app(tmp_path / "l")  # build was given a channel and secrets: not made-up
+    assert app.overridden == ("channel", "secrets") and app.mode_banner()["tone"] == "unconfirmed"
+    app.overridden = ()
+    assert app.mode_banner()["tone"] == "unconfirmed", "app.overridden = () laundered a banner"
+    plain = _sealed_app(tmp_path, "l2")  # sealed with no overrides: made-up
+    assert plain.mode_banner()["tone"] == "demo"
+    plain.overridden = ("llm",)  # the recorded names no longer say what build sealed
+    assert plain.mode_banner()["tone"] == "unconfirmed", (
+        "a changed list of recorded names was trusted"
+    )
+    assert not hasattr(App, "seal") and not hasattr(app, "seal"), "the public `seal` is back"
+
+
+def test_a_normal_production_tick_keeps_its_banner(tmp_path: Path) -> None:
+    # new feature (no false unconfirmed: the banner of a sealed app survives two ticks)
+    from hadavin_sdk.models import now
+    from hadavin_sdk.runtime import tick as tick_mod
+
+    app = _sealed_app(tmp_path, "tk")
+    before = app.mode_banner()
+    t0 = now()
+    tick_mod.run_tick(app, now=t0)
+    tick_mod.run_tick(app, now=t0 + __import__("datetime").timedelta(minutes=11))
+    assert app.mode_banner() == before, "the banner changed after two ticks"
+
+
+def test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default(tmp_path: Path) -> None:
+    # new feature (fails on old code: clock was on the not-connectivity list)
+    from hadavin_sdk import app as app_mod
+
+    assert "clock" in mb.OVERRIDES and "clock" not in mb.NOT_CONNECTIVITY
+    assert app_mod._given_overrides(clock=lambda: None) == ("clock",)
+    assert app_mod._given_overrides(clock=None) == ()
+    from hadavin_sdk.actions.secrets import FakeSecretProvider
+    from hadavin_sdk.approvals.channel import FakeChannel
+    from hadavin_sdk.models import now
+    from hadavin_sdk.registry import load_registry
+    from tests.conftest import qualify
+
+    cfg_dir = make_cfg(tmp_path)
+    qualify(load_registry(load_config(cfg_dir)))
+    given = {"channel": FakeChannel(), "secrets": FakeSecretProvider({"fixture-token": "t" * 8})}
+    with_clock = app_mod.build(cfg_dir, ["test-agent"], clock=lambda: now(), **given)
+    assert "clock" in with_clock.overridden, "build did not record a clock that was handed in"
+    default = app_mod.build(cfg_dir, ["test-agent"], **given)
+    assert "clock" not in default.overridden, "build recorded the default clock as an override"
+
+
+def test_the_not_connectivity_reasons_say_what_was_checked() -> None:
+    # new feature (fails on old code: the reasons were plain claims)
+    assert all("checked" in r or "reads" in r for r in mb.NOT_CONNECTIVITY.values()), (
+        mb.NOT_CONNECTIVITY
+    )
+
+
+def test_banner_for_has_no_default_for_overridden() -> None:
+    # new feature (fails on old code: `overridden` defaulted to `()`)
+    with pytest.raises(TypeError, match="overridden"):
+        mb._banner_for("demo", real_services=[], stand_ins=[])  # type: ignore[call-arg]
+        raise AssertionError("_banner_for without overridden was accepted")
+
+
+def test_banner_or_unconfirmed_with_none_logs_no_warning(caplog: pytest.LogCaptureFixture) -> None:
+    # new feature (fails on old code: the not-known answer was raised and caught, with a WARNING per call)
+    import logging
+
+    with caplog.at_level(logging.DEBUG):
+        shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=None)
+    assert shown["tone"] == "unconfirmed"
+    warned = [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
+    assert warned == [], f"the not-known answer logged a warning: {warned}"
+
+
+@needs_node
+def test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order() -> (
+    None
+):
+    # new feature (fails on old code: tone demo with a non-empty list was painted; duplicates and any order were accepted)
+    for tone_banner in (
+        GOOD_DEMO,
+        {
+            **GOOD_DEMO,
+            "mode": "pilot",
+            "tone": "quiet",
+            "tag": "PILOT",
+            "text": "No real service is connected.",
+            "standins": "",
+        },
+    ):
+        for names in (["llm"], ["tools", "llm"], list(mb.OVERRIDES)):
+            _unconfirmed(
+                _paint({**tone_banner, "overridden": names}),
+                f"painted {tone_banner['tone']} with {names!r}",
+            )
+    base = mb.banner_from_config(
+        _demo_config(), tool_specs={}, overridden=("tools", "llm")
+    ).as_dict()
+    assert (
+        _paint(base)["shownTone"] == "unconfirmed"
+        and "tools, llm" in _paint(base)["lines"][1]["text"]
+    )
+    for bad in (["llm", "tools"], ["tools", "tools"], ["llm", "llm"], ["clock", "tools"]):
+        _unconfirmed(_paint({**base, "overridden": bad}), f"painted overridden={bad!r}")
+
+
+@needs_node
+def test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names() -> (
+    None
+):
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): stated limit of the ready-made page, pinned (fails only on the code before batch 8: there was no `overridden_note` pin of this behaviour)
+    words = mb.BannerWords(
+        tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"},
+        not_confirmed="Another sentence, not the default.",
+    )
+    shown = mb.banner_from_config(
+        _demo_config(), tool_specs={}, overridden=("llm",), words=words
+    ).as_dict()
+    assert shown["text"] == "Another sentence, not the default."
+    seen = _paint(shown)
+    _unconfirmed(
+        {**seen, "lines": [seen["lines"][0], {"text": " " + mb.not_confirmed()["text"]}]},
+        "not the English fallback",
+    )
+    assert seen["shownTone"] == "unconfirmed" and "Another sentence" not in str(seen["lines"])
+
+
+def test_the_guard_and_the_banner_modules_say_what_they_compare_in_their_docstrings() -> None:
+    # the unconfirmed words rule is in the docstring of `_banner_for` (a reader looks there)
+    doc = " ".join((mb._banner_for.__doc__ or "").split())
+    assert (
+        "exactly `words.not_confirmed`" in doc.replace("EXACTLY", "exactly")
+        and "English fallback" in doc
+    )
+
+
+def test_the_overrides_are_exactly_the_objects_and_callables_handed_to_build() -> None:
+    # new feature, explicit list (fails on old code: hold_run_ids and clock were not overrides)
+    assert mb.OVERRIDES == (
+        "tools",
+        "sources",
+        "channel",
+        "llm",
+        "detector",
+        "secrets",
+        "hold_run_ids",
+        "clock",
+    ), f"the override list is {mb.OVERRIDES!r}"
+
+
+def test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_no_object() -> None:
+    # new feature, explicit list (fails on old code: clock was on it and there was no such list before)
+    assert set(mb.NOT_CONNECTIVITY) == {"config_dir", "agents", "timeout_s"}, (
+        f"the not-connectivity list is {sorted(mb.NOT_CONNECTIVITY)!r}"
+    )

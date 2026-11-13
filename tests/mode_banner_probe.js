@@ -33,12 +33,19 @@ let threw = '';
 let usableThrew = '';
 try { api.usable(input); } catch (e) { usableThrew = String(e.message); }
 let shown = null;
+// counted work instead of a clock: how many times the page asked Array.from to walk a string while it painted
+let arrayFromCalls = 0;
+let arrayFromLongest = 0; // the longest string (in UTF-16 units) the page asked Array.from to walk
+const realArrayFrom = Array.from;
+Array.from = function (...args) { arrayFromCalls++; if (typeof args[0] === 'string') arrayFromLongest = Math.max(arrayFromLongest, args[0].length); return realArrayFrom.apply(this, args); };
 const t0 = Date.now();
 try { shown = api.paint(target, input, doc); } catch (e) { threw = String(e.message); }
+const arrayFromSeen = arrayFromCalls;
+Array.from = realArrayFrom;
 const lines = target ? target.children.map((c) => ({ cls: c.cls, text: c.text })) : [];
 console.log(JSON.stringify({
   lines, tone: target ? target.attrs['data-tone'] : null, mode: target ? target.attrs['data-mode'] : null,
   hidden: target ? target.hidden : null, text: target ? target.text : null, notConfirmed: api.NOT_CONFIRMED,
-  shownTone: shown ? shown.tone : null, modes: api.MODES, tones: api.TONES, maxText: api.MAX_TEXT, htmlWrites, threw, usableThrew, ms: Date.now() - t0,
+  shownTone: shown ? shown.tone : null, modes: api.MODES, tones: api.TONES, maxText: api.MAX_TEXT, htmlWrites, threw, usableThrew, ms: Date.now() - t0, arrayFromCalls: arrayFromSeen, arrayFromLongest,
   frozen: [api, api.NOT_CONFIRMED, api.NOT_CONFIRMED.real, api.NOT_CONFIRMED.stand_ins, api.TONES, api.MODES].map(Object.isFrozen),
 }));

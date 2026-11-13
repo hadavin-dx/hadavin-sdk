@@ -5,12 +5,16 @@ This is the only place that hands the secret provider to the executor; runtime g
 
 from __future__ import annotations
 
+import enum
 import logging
+import numbers
 import re
 import ssl
+import uuid
+from collections import deque
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field, fields
-from datetime import datetime
+from dataclasses import dataclass, field, fields, is_dataclass
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -34,6 +38,7 @@ from hadavin_sdk.mode_banner import (
     OVERRIDES,
     BannerWords,
     banner_or_unconfirmed,
+    not_confirmed_banner,
 )
 from hadavin_sdk.models import now
 from hadavin_sdk.registry import Registry, load_registry
@@ -46,6 +51,27 @@ from hadavin_sdk.store import Store
 from hadavin_sdk.store.protocol import missing_methods
 
 _LOG = logging.getLogger("hadavin_sdk.app")
+
+# Attribute values that are data, not a connection: a change of one (a counter, a time, a list refilled in place) is not a new
+# part (see `App._connected_parts`). A client, a session, a callable or any other object is not data.
+_PLAIN_DATA = (
+    str,
+    bytes,
+    bytearray,
+    numbers.Number,
+    type(None),
+    list,
+    dict,
+    set,
+    frozenset,
+    tuple,
+    deque,
+    date,
+    timedelta,
+    uuid.UUID,
+    enum.Enum,
+)
+_PLAIN = object()  # stands for "plain data" in the list of references
 
 
 @dataclass
@@ -67,46 +93,104 @@ class App:
     # made replace what the config names, and the mode banner cannot judge them (it says so and claims nothing made-up).
     # None means "not recorded" (an App made by hand, not by `build`): the banner is then the unconfirmed one.
     overridden: tuple[str, ...] | None = None
-    # What `build` saw when it recorded `overridden` (`_connected_parts`). An App that was copied with `dataclasses.replace`
-    # (this field is not copied: it is not an init argument) or had a part replaced after it was built no longer matches,
-    # and its banner is the unconfirmed one. Chosen over a frozen App because callers set fields (tests, the tick) and a
-    # frozen App would break them; the fingerprint is the smaller change.
+    # What `build` saw when it recorded `overridden` (`_connected_parts`): the REFERENCES of the connected parts (compared with
+    # `is`, never by `id()`, so a freed object whose number is reused cannot pass as the old one). An App that was copied with
+    # `dataclasses.replace` (this field is not an init argument) or `copy.deepcopy`, or had a connected part replaced after it
+    # was built, no longer matches, and its banner is the unconfirmed one. A `copy.copy` of an App keeps the same parts, so it
+    # stays known (it connects to exactly what the original connects to). Chosen over a frozen App because callers set fields
+    # (tests, the tick) and a frozen App would break them; the fingerprint is the smaller change.
     _sealed: tuple | None = field(default=None, init=False, repr=False, compare=False)
 
     def _connected_parts(self) -> tuple:
-        """The identity of every part that can connect the app to something: each field except the two records here and
-        the sources that the tick may switch off, the contents of `sources`, the llm, detector and tool callables of the
-        runtime, and the names of any attribute set on the object that is not a field."""
-        own = {f.name for f in fields(self)}
-        parts = tuple(
-            (f.name, id(getattr(self, f.name)))
-            for f in fields(self)
-            if f.name not in ("overridden", "_sealed", "disabled_sources", "sources")
-        )
-        rt = self.runtime
-        return (
-            parts,
-            tuple(sorted((k, id(v)) for k, v in self.sources.items())),
-            tuple((n, id(getattr(rt, n, None))) for n in ("llm", "detector", "limits")),
-            tuple(sorted((k, id(v)) for k, v in dict(rt.hooks.tools).items())),
-            tuple(sorted(set(vars(self)) - own)),
-        )
+        """The references of every part that can connect the app to something, as (label, reference) pairs. Read by the core:
+        every field of the App except the three records here and the two sets the tick changes (`disabled_sources` is a set the
+        tick fills; `sources` is listed entry by entry); every field of the hooks (`Hooks`, each callable and each entry of its
+        `tools`); the runtime's registry, store, audit, llm, detector and limits; the channel of the approvals; and for each of
+        those parts and each source its `__dict__`: the NAMES of its attributes, and the reference of each attribute value that
+        is not plain data (text, numbers, lists, dicts, times: a counter that changes during a run must not read as a new
+        part). Nothing deeper is read. Any error here propagates: `mode_banner` turns it into the unconfirmed banner."""
+        out: list[tuple[str, object]] = []
 
-    def seal(self, overridden: tuple[str, ...]) -> None:
-        """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end."""
+        def add(label: str, obj: object) -> None:
+            out.append((label, obj))
+            attrs = getattr(obj, "__dict__", None)
+            if isinstance(attrs, dict):
+                for key, value in list(attrs.items()):
+                    out.append(
+                        (f"{label}.{key}", _PLAIN if isinstance(value, _PLAIN_DATA) else value)
+                    )
+
+        for f in fields(self):
+            if f.name in ("overridden", "_sealed", "disabled_sources", "sources"):
+                continue
+            add(f.name, getattr(self, f.name, None))
+        own = {f.name for f in fields(self)}
+        for key, value in list(
+            vars(self).items()
+        ):  # an attribute set on the object that is not a field
+            if key not in own:
+                add(f"extra.{key}", value)
+        for key, source in list(dict(self.sources).items()):
+            add(f"sources[{key!r}]", source)
+        rt = self.runtime
+        for name in ("registry", "store", "audit", "llm", "detector", "limits"):
+            add(f"runtime.{name}", getattr(rt, name, None))
+        hooks = getattr(rt, "hooks", None)
+        add("runtime.hooks", hooks)
+        if is_dataclass(hooks):
+            for f in fields(hooks):
+                value = getattr(hooks, f.name, None)
+                if f.name == "tools":
+                    out.append(
+                        ("runtime.hooks.tools", _PLAIN)
+                    )  # the dict itself: its entries are listed next
+                    for key, tool in list(dict(value).items()):
+                        add(f"runtime.hooks.tools[{key!r}]", tool)
+                else:
+                    add(f"runtime.hooks.{f.name}", value)
+        add("approvals.channel", getattr(getattr(self, "approvals", None), "channel", None))
+        return tuple(out)
+
+    def _seal(self, overridden: tuple[str, ...]) -> None:
+        """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end. Private: a
+        caller that could seal an app with an answer of its own could launder a banner."""
         self.overridden = overridden
-        self._sealed = self._connected_parts()
+        self._sealed = (tuple(overridden), self._connected_parts())
+
+    def _known_overrides(self) -> tuple[str, ...] | None:
+        """`overridden` when this app is exactly what `build` sealed (the recorded names equal the sealed names and every
+        connected part is the same object as then), else None. Never raises: any failure to read the parts is None."""
+        try:
+            sealed = self._sealed
+            if sealed is None or self.overridden is None or tuple(self.overridden) != sealed[0]:
+                return None
+            now_parts = self._connected_parts()
+            if len(now_parts) != len(sealed[1]) or any(
+                la != lb or a is not b
+                for (la, a), (lb, b) in zip(now_parts, sealed[1], strict=True)
+            ):
+                return None
+            return sealed[0]
+        except Exception:  # noqa: BLE001 - a tampered or hand-made app: the unconfirmed banner, not a crash
+            _LOG.debug("mode banner: the connected parts of the app could not be read")
+            return None
 
     def mode_banner(
         self, names: Mapping[str, str] | None = None, words: BannerWords = DEFAULT_WORDS
     ) -> dict:
         """The banner for a screen (the supported call): `mode_banner.banner_or_unconfirmed` for this app's config, tool
-        manifests and overrides. An app that `build` did not record, or whose parts changed since, gets the unconfirmed
-        banner (`overridden=None`)."""
-        known = self.overridden if self._sealed == self._connected_parts() else None
-        return banner_or_unconfirmed(
-            self.config, names, words, tool_specs=self.registry.tools, overridden=known
-        )
+        manifests and overrides. An app that `build` did not record, or whose connected parts changed since (see
+        `_connected_parts`), gets the unconfirmed banner (`overridden=None`). Never raises."""
+        try:
+            known = self._known_overrides()
+            if known is None:
+                return not_confirmed_banner(words)
+            return banner_or_unconfirmed(
+                self.config, names, words, tool_specs=self.registry.tools, overridden=known
+            )
+        except Exception:  # noqa: BLE001 - whatever is wrong with the app, the screen must still say something
+            _LOG.debug("mode banner: the app could not be read")
+            return not_confirmed_banner(words)
 
 
 def _given_overrides(**given: object) -> tuple[str, ...]:
@@ -148,6 +232,7 @@ def build(
         detector=detector,
         secrets=secrets,
         hold_run_ids=hold_run_ids,
+        clock=None if clock is now else clock,
     )  # before the names below are reassigned
     cfg = load_config(config_dir)
     reg = load_registry(cfg)
@@ -322,7 +407,7 @@ def build(
         disabled_sources=disabled_sources,
         purge_store=purge_store,
     )
-    app.seal(overridden)
+    app._seal(overridden)
     return app
 
 

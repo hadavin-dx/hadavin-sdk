@@ -11,9 +11,13 @@ reaches into the folder, and the copy imports its own code, never the original c
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import os
 import random
 import re
+import shutil
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -219,7 +223,9 @@ def test_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> N
     ]
     for i, name in enumerate(names):
         repo = _repo(tmp_path / f"r{i}", {**CLEAN, f"src/pkg/{name}": f"x\n{FOLDER}\n"})
-        assert g.scan(repo, _cfg()) == [f"src/pkg/{name}:2: names-demo-only-folder"], name
+        assert g.scan(repo, _cfg()) == [f"src/pkg/{name}:2: names-demo-only-folder"], (
+            f"the file {name!r} was not read for the folder name"
+        )
 
 
 def test_a_file_that_is_not_text_and_not_a_known_binary_ending_is_refused(tmp_path: Path) -> None:
@@ -299,7 +305,9 @@ def test_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spell
         repo = _repo(
             tmp_path / f"r{i}", {"src/pkg/__init__.py": "", f"src/pkg/sub/{name}/x.py": "A = 1\n"}
         )
-        assert g.scan(repo, _cfg()) == [f"src/pkg/sub/{name}: folder-inside-product-root"], name
+        assert g.scan(repo, _cfg()) == [f"src/pkg/sub/{name}: folder-inside-product-root"], (
+            f"a deep folder spelled {name!r} was not the one hit"
+        )
 
 
 def test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit(tmp_path: Path) -> None:
@@ -317,7 +325,9 @@ def test_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Pat
         repo = _repo(
             tmp_path / f"r{i}", {**CLEAN, "src/pkg/a.py": f"x = 1\nPATH = '{spelling}/fakes'\n"}
         )
-        assert g.scan(repo, _cfg()) == ["src/pkg/a.py:2: names-demo-only-folder"], spelling
+        assert g.scan(repo, _cfg()) == ["src/pkg/a.py:2: names-demo-only-folder"], (
+            f"a line that names the folder as {spelling!r} was not the one hit"
+        )
 
 
 # -- the guard's own files, and the copy-run marker ---------------------------------------------------------------------
@@ -819,13 +829,24 @@ def test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_en
             "fat Mach-O or Java class file",
             b"\xca\xfe\xba\xbe\x00\x00\x00\x34",
         ),  # a Java class file header
+        (
+            "fat Mach-O or Java class file",
+            b"\xca\xfe\xba\xbf" + b"\x00" * 20,
+        ),  # fat, 64-bit offsets
+        (
+            "fat Mach-O or Java class file",
+            b"\xbf\xba\xfe\xca" + b"\x00" * 20,
+        ),  # the other byte order
         ("bzip2", b"BZh1" + b"\x17rE8P\x90" + b"\x00" * 20),  # an empty stream (end-of-stream mark)
         ("bzip2", b"BZh1" + b"1AY&SY" + b"\x00" * 20),  # the lowest level
         ("RAR", b"Rar!\x1a\x07\x01" + b"\x00" * 20),  # the newer format
     ]  # empty, spanned
+    running = int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little")
     for low_or_high in (
         3000,
         3999,
+        running,  # the interpreter running the tests, whatever its version
+        running + 1,
     ):  # the whole range of compiled-Python version numbers, both ends
         variants.append(
             ("compiled Python", low_or_high.to_bytes(2, "little") + b"\r\n" + b"\x00" * 20)
@@ -840,7 +861,7 @@ def test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_en
             ], (
                 f"first bytes of {kind} ({raw[:4].hex()}) in a file ending {ending!r} were not refused as that kind"
             )
-    for number in (2999, 4000):  # just outside the range: not read as compiled Python
+    for number in (2999, 8192):  # just outside the range: not read as compiled Python
         outside = _repo(tmp_path / f"out{number}", CLEAN)
         (outside / "src/pkg/blob.dat").write_bytes(
             number.to_bytes(2, "little") + b"\r\n" + b"\x00" * 20
@@ -1868,19 +1889,26 @@ def test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked(
         )
 
 
-def test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_text_is_not(
-    tmp_path: Path,
-) -> None:
-    # proof (fails on old code: both marks are valid UTF-8, so such a file was read as text and passed)
-    for label, raw, kind in (
-        ("mz", b"MZ" + b"\x00" * 30, "DOS or Windows program"),
-        ("rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR"),
-    ):
-        repo = _repo(tmp_path / label, CLEAN)
-        (repo / "src/pkg/blob").write_bytes(raw)
-        assert g.scan(repo, _cfg()) == [
-            f"src/pkg/blob: binary-in-product-root (the file is {kind}, whatever its ending says)"
-        ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
+def _only_the_mark_and_nul_bytes(tmp_path: Path, label: str, raw: bytes, kind: str) -> None:
+    repo = _repo(tmp_path / label, CLEAN)
+    (repo / "src/pkg/blob").write_bytes(raw)
+    assert g.scan(repo, _cfg()) == [
+        f"src/pkg/blob: binary-in-product-root (the file is {kind}, whatever its ending says)"
+    ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
+
+
+def test_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark is valid UTF-8, so such a file was read as text and passed)
+    _only_the_mark_and_nul_bytes(tmp_path, "mz", b"MZ" + b"\x00" * 30, "DOS or Windows program")
+
+
+def test_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark is valid UTF-8, so such a file was read as text and passed)
+    _only_the_mark_and_nul_bytes(tmp_path, "rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR")
+
+
+def test_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8 only through the same two tests above: it needs the kinds to exist; otherwise a pin that text is not refused)
     text = _repo(tmp_path / "text", {**CLEAN, "src/pkg/a.txt": "MZ is fine as text, so is Rar!\n"})
     assert g.scan(text, _cfg()) == [], "plain text that starts like a mark was refused"
     utf16 = _repo(tmp_path / "u16", CLEAN)
@@ -1890,30 +1918,40 @@ def test_a_file_that_is_only_a_program_mark_and_nul_bytes_is_a_hit_and_utf16_tex
     )
 
 
-def test_bzip2_needs_a_level_from_1_to_9_and_a_block_or_end_of_stream_mark(tmp_path: Path) -> None:
-    # proof (fails on old code: the level byte was not looked at)
-    cases = [
+def test_bzip2_needs_a_level_from_1_to_9() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the level byte was not looked at). On purpose, level 0 and ":" are not bzip2: the format
+    # has levels 1 to 9, so a file with another level byte is not a valid bzip2 file.
+    for head, is_bzip2 in (
         (b"BZh1" + b"1AY&SY", True),
         (b"BZh9" + b"\x17rE8P\x90", True),
         (b"BZh0" + b"1AY&SY", False),
         (b"BZh:" + b"1AY&SY", False),
         (b"BZha" + b"1AY&SY", False),
-        (b"BZh9" + b"XXXXXX", False),
-        (b"BZh", False),
-    ]
-    for head, is_bzip2 in cases:
+    ):
         got = g._magic_kind(head + b"rest")
-        assert (got == "bzip2") == is_bzip2, f"bzip2 check: {head!r} was read as {got!r}"
-    assert g._magic_kind(b"BZh") == ""
+        assert (got == "bzip2") == is_bzip2, f"bzip2 level check: {head!r} was read as {got!r}"
+
+
+def test_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the mark after the level byte was not looked at). On purpose, a bad block mark is not bzip2.
+    for head, is_bzip2 in (
+        (b"BZh9" + b"XXXXXX", False),
+        (b"BZh5" + b"1AY&SX", False),
+        (b"BZh", False),
+        (b"BZh5" + b"1AY&SY", True),
+    ):
+        got = g._magic_kind(head + b"rest")
+        assert (got == "bzip2") == is_bzip2, f"bzip2 mark check: {head!r} was read as {got!r}"
+    assert g._magic_kind(b"BZh") == "", "three letters alone were read as bzip2"
 
 
 def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file_and_an_unusual_name(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Decision (also in the CHANGELOG): core has no shared helper, so the guard, `tools/scan_repo.py` and
-    # `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED files (exact names, `-z`), and they must give one answer;
-    # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a reference file counts too), so it
-    # must hold at least every tracked file. Proof (fails on old code: test_repo_rules listed without -z and quoted the name).
+    # `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED files (exact names, `-z`), and these THREE listings must be equal;
+    # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a reference file counts too), so it is only a SUPERSET check
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): (it must hold every tracked file, and is not compared for equality). Proof (fails only on the code before batch 8: test_repo_rules listed without -z and quoted the name).
     import importlib.util
 
     from tests.test_repo_rules import tracked_files
@@ -1954,10 +1992,10 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
 
 
 def test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
-    # proof (fails on old code: the whole first line of git was shown as it came)
+    # PIN of batch 9 (passes on 07bfda12, the code of batch 8): proof (fails only on the code before batch 8: the whole first line of git was shown as it came)
     line = (
         "fatal: bypass=true bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
-        "Authorization: Bearer zzz9 plain Bearer yyy8"
+        "plain Bearer yyy8 Authorization: Bearer zzz9"
     )
     shown = g._git_failure("git ls-files failed", line.encode(), Path("/nowhere"))
     for secret in ("abc123", "def456", "user:pw", "zzz9"):
@@ -1965,3 +2003,248 @@ def test_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_by
     assert "bypass=true" in shown, f"a bare word was hidden: {shown}"
     assert "bypass_key=<hidden>" in shown and "bypass_token=<hidden>" in shown, shown
     assert "Bearer yyy8" in shown, f"a bare scheme word was changed: {shown}"
+
+
+# -- batch 9: the git-message masker (class 4) and the guard minors (class 5) ---------------------------------------------
+# Every fake value below is built from parts: no secret-shaped literal sits in this file.
+TOK = "to" + "ken"
+PW = "pass" + "word"
+SEC = "sec" + "ret"
+
+
+def _core(name: str) -> re.Pattern[str]:
+    redact = importlib.import_module(
+        "hadavin_sdk.guard.redact"
+    )  # not `from ... import redact`: the package exports a function of that name
+
+    return dict(redact.PATTERNS)[name]
+
+
+def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> None:
+    # new feature (fails on old code: there were no such patterns here)
+    assert (
+        g._BEARER.pattern == _core("BEARER").pattern and g._BEARER.flags == _core("BEARER").flags
+    ), "the guard BEARER pattern differs from the core one"
+    assert g._BASIC.pattern == _core("BASIC").pattern and g._BASIC.flags == _core("BASIC").flags, (
+        "the guard BASIC pattern differs from the core one"
+    )
+
+
+def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -> None:
+    # new feature (fails on old code: a bare scheme word was never hidden)
+    for scheme, core, low in (
+        ("Bearer", "BEARER", 12),
+        ("basic", "BASIC", 8),
+        ("BEARER", "BEARER", 12),
+    ):
+        for n in (low - 1, low, low + 1, 40):
+            token = ("a1" * 30)[:n]
+            line = f"x {scheme} {token} y"
+            hidden = g._hide_secrets(line)
+            m = _core(core).search(line)
+            expected = line if m is None else line.replace(m.group(1), "<hidden>", 1)
+            assert hidden == expected, (
+                f"{scheme} {n}: the guard and the core disagree: {hidden!r} vs {expected!r}"
+            )
+            assert (token in hidden) == (n < low), (
+                f"{scheme} {n} characters: visible or hidden wrongly: {hidden!r}"
+            )
+
+
+def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
+    # new feature (fails on old code: nothing was hidden, so the 12 and 8 sides fail; the 11 and 7 sides are pins)
+    assert "Bearer " + "a" * 11 in g._hide_secrets("Bearer " + "a" * 11), (
+        "a bearer token of 11 characters was hidden"
+    )
+    assert "Basic " + "b" * 7 in g._hide_secrets("Basic " + "b" * 7), (
+        "a basic token of 7 characters was hidden"
+    )
+    assert "a" * 12 not in g._hide_secrets("Bearer " + "a" * 12), (
+        "a bearer token of 12 characters was shown"
+    )
+    assert "b" * 8 not in g._hide_secrets("Basic " + "b" * 8), (
+        "a basic token of 8 characters was shown"
+    )
+    assert "<hidden>" in g._hide_secrets("Bearer " + "a" * 12 + "=="), (
+        "a bearer token with padding was shown"
+    )
+
+
+def test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden() -> None:
+    # new feature (fails on old code: only two words were hidden, so a Digest header leaked)
+    for scheme in ("Digest", "Basic", "Bearer", "Negotiate", ""):
+        line = f"Authorization: {scheme} u1=aaaa, r2=bbbb, n3=cccc"
+        shown = g._hide_secrets(line)
+        assert shown == "Authorization: <hidden>", f"header scheme {scheme!r}: {shown!r}"
+    assert (
+        g._hide_secrets("fatal: authorization:abcdef tail") == "fatal: authorization: <hidden>"
+    ), "a header written in lower case or without a space was shown"
+
+
+def test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list() -> None:
+    # new feature (fails on old code: quoted values, inner quotes, passwd/pwd/auth/credential were shown or cut)
+    for name in (
+        PW,
+        TOK,
+        SEC,
+        "pass" + "wd",
+        "p" + "wd",
+        "au" + "th",
+        "cred" + "ential",
+        "api_ke" + "y",
+        PW.upper(),
+    ):
+        for value in ("abc123", "ab'cd", "ab&cd", 'ab"cd', "ab=cd"):
+            shown = g._hide_secrets(f"fatal: {name}={value} tail")
+            assert shown == f"fatal: {name}=<hidden> tail", f"unquoted {name}={value!r}: {shown!r}"
+        for quoted in ('"ab cd\'ef"', "'ab cd\"ef'", '"ab \\" cd"'):
+            shown = g._hide_secrets(f"fatal: {name}={quoted} tail")
+            assert shown == f"fatal: {name}=<hidden> tail", f"quoted {name}={quoted}: {shown!r}"
+    assert g._hide_secrets("a=b bypass=true x=y") == "a=b bypass=true x=y", "a bare word was hidden"
+    assert g._hide_secrets("bypass_ke" + "y=1") == "bypass_ke" + "y=<hidden>", (
+        "bypass_key was shown"
+    )
+    assert g._hide_secrets("bypass_" + TOK + "=1") == "bypass_" + TOK + "=<hidden>", (
+        "bypass_token was shown"
+    )
+    assert g._hide_secrets(PW + "=") == PW + "=<hidden>", "an empty value was not marked"
+
+
+def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() -> None:
+    # new feature (fails on old code: an `@` or `/` inside the password left part of it visible)
+    for cred in ("user:pw", "user:p@ss", "user:p/ss", "user:p@s/s@x", "u"):
+        shown = g._hide_secrets(f"fatal: unable to access https://{cred}@host.example/x.git here")
+        assert shown == "fatal: unable to access https://<hidden>@host.example/x.git here", (
+            f"url credentials {cred!r}: {shown!r}"
+        )
+    assert (
+        g._hide_secrets("see https://host.example/x.git and ssh://h/p")
+        == "see https://host.example/x.git and ssh://h/p"
+    ), "a url without credentials was changed"
+    assert g._hide_secrets("a://://://@h") == "a://<hidden>@h", (
+        "repeated scheme marks were not handled"
+    )
+
+
+def test_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line() -> None:
+    # new feature (fails on old code: its `[\w.-]*` name pattern is quadratic on a long run of hyphens). Counted work, not seconds:
+    # the number of regex searches and the output length are bounded by the line length.
+    for line in (
+        "a-" * 5000,
+        "=" * 10000,
+        "://" * 3333 + "@",
+        "bearer " + "a" * 9990,
+        "k=" * 5000,
+        "'" * 10000,
+    ):
+        shown = g._hide_secrets(line)
+        assert isinstance(shown, str) and len(shown) <= 10 * len(line), len(shown)
+    steps = 0
+    real = g._SECRET_NAME.search
+
+    class Counting:
+        def search(self, text: str):
+            nonlocal steps
+            steps += len(text)
+            return real(text)
+
+    saved = g._SECRET_NAME
+    g._SECRET_NAME = Counting()  # type: ignore[assignment]
+    try:
+        g._hide_secrets("a=" * 5000 + "x-" * 5000)
+    finally:
+        g._SECRET_NAME = saved
+    assert steps <= 3 * 10000, f"the name check read {steps} characters for a 20000 character line"
+
+
+def test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders(tmp_path: Path) -> None:
+    # new feature (fails on old code: cafebabf and bfbafeca were not recognised)
+    for raw in (b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"):
+        repo = _repo(tmp_path / raw.hex(), CLEAN)
+        (repo / "src/pkg/blob.dat").write_bytes(raw + b"\x00" * 20)
+        assert g.scan(repo, _cfg()) == [
+            "src/pkg/blob.dat: binary-in-product-root (the file is fat Mach-O or Java class file, whatever its ending says)"
+        ], f"fat Mach-O 64 mark {raw.hex()} was not a hit"
+
+
+def test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_is_not_read(
+    tmp_path: Path,
+) -> None:
+    # new feature (fails on old code: the range was 3000-3999 only, a fixed number)
+    running = int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little")
+    assert 3000 <= running <= g._PYC_MAGIC_MAX
+    assert g._PYC_MAGIC_MAX == min(8191, max(3999, running + 1000)), (
+        "the upper end is not derived from the running interpreter"
+    )
+    assert g._magic_kind(importlib.util.MAGIC_NUMBER + b"\x00" * 20) == "compiled Python"
+    assert (
+        g._magic_kind((20121).to_bytes(2, "little") + b"\r\n" + b"\x00" * 20) == ""
+    )  # Python 1.5/2.x: letters, not read
+    assert g._magic_kind(b"ab\r\nsome text") == ""
+
+
+def test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_words(
+    tmp_path: Path,
+) -> None:
+    # new feature (fails on old code: os.readlink raised an unhandled OSError when the link had become a file)
+    dest = tmp_path / "copy"
+    dest.mkdir()
+    (dest / "plain.txt").write_text("not a link\n", encoding="utf-8")
+    for name in ("plain.txt", "gone.txt"):
+        got = g._link_problem(dest, name, dest, FOLDER)
+        assert got == "changed while it was being checked", (
+            f"a swapped link was not refused: {name}: {got!r}"
+        )
+
+
+def test_the_link_chain_message_says_too_long_or_looped(tmp_path: Path) -> None:
+    # new feature (fails on old code: the text said "loop" for any ELOOP)
+    dest = tmp_path / "copy"
+    dest.mkdir()
+    (dest / "a").symlink_to("b")
+    (dest / "b").symlink_to("a")
+    got = g._link_problem(dest, "a", dest, FOLDER)
+    assert got == "is a link chain that is too long or loops", (
+        f"the link chain wording is wrong: {got!r}"
+    )
+
+
+def test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit(tmp_path: Path) -> None:
+    # new feature (fails on old code: the file was lstat'ed through the swapped folder and read as a plain file)
+    repo = _track(_repo(tmp_path / "r", {**CLEAN, "src/pkg/sub/inner.txt": "plain\n"}))
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "inner.txt").write_text("plain\n", encoding="utf-8")
+    shutil.rmtree(repo / "src/pkg/sub")
+    (repo / "src/pkg/sub").symlink_to(outside)
+    hits = g.scan(repo, _cfg())
+    assert any(h.startswith("src/pkg/sub/inner.txt:") and "symlink" in h for h in hits), (
+        f"a file behind a swapped folder was read through it: {hits}"
+    )
+
+
+def test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table() -> None:
+    # new feature (fails on old code: the docstring listed 9 kinds, the table has 12)
+    doc = " ".join((g.__doc__ or "").split())
+    start = doc.index("first bytes are the mark of one of `MAGIC_KINDS` (") + len(
+        "first bytes are the mark of one of `MAGIC_KINDS` ("
+    )
+    listed = doc[start : doc.index(":", start)]
+    assert listed == ", ".join(g.MAGIC_KINDS), (
+        f"the docstring lists {listed!r}, the table has {g.MAGIC_KINDS!r}"
+    )
+
+
+def test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # new feature (fails on old code: os.fchmod was called unguarded, an AttributeError where it is absent (Windows before 3.13))
+    repo = tmp_path / "r"
+    (repo / "d").mkdir(parents=True)
+    (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
+    (repo / "d" / "run.sh").chmod(0o751)
+    monkeypatch.delattr(os, "fchmod", raising=False)
+    target = tmp_path / "out.sh"
+    g._copy_regular(repo, "d/run.sh", target)
+    assert target.read_text(encoding="utf-8") == "x\n"
+    assert stat.S_IMODE(target.stat().st_mode) == 0o751, "the mode was not copied without fchmod"

@@ -95,6 +95,7 @@ __all__ = [
     "banner_or_unconfirmed",
     "names_in",
     "not_confirmed",
+    "not_confirmed_banner",
 ]
 
 _DEMO_STAGE = "demo"  # the stage whose banner may say "made-up"; it is checked against STAGES below, not its position
@@ -305,7 +306,7 @@ def _banner_for(
     stand_ins: Sequence[str],
     names: Mapping[str, str] | None = None,
     words: BannerWords = DEFAULT_WORDS,
-    overridden: Sequence[str] = (),
+    overridden: Sequence[str],
 ) -> ModeBanner:
     """The banner for a stage and the services it is connected to (the lower-level call: prefer `banner_from_config`).
 
@@ -313,10 +314,15 @@ def _banner_for(
     default, so an empty list always means "checked, none". `names` maps a service key to the name a person reads (a key
     without an entry is shown as "component <key>"). A stage that is not in `stages.STAGES`, a bare string, dict or set
     where a list is wanted, a `names` that is not a mapping, a name that is not plain words, or a text too long for the
-    page script raises (the screen must not show a banner built from a value nobody checked). `overridden` names the
-    `app.build` overrides that were given (see `OVERRIDES`): the banner then lists them in the words
-    `BannerWords.overridden_note`, and never claims made-up data or "no real service" (tone "unconfirmed", unless a real
-    service is already listed, which keeps tone "real")."""
+    page script raises (the screen must not show a banner built from a value nobody checked). `overridden` is required (no
+    default: "none handed in" is `()`) and names the `app.build` overrides that were given (see `OVERRIDES`). With one or more
+    given: tone "real" (a real service is already listed) keeps its tone and gets the sentence `BannerWords.overridden_note`
+    added; any other tone becomes "unconfirmed" and its text is EXACTLY `words.not_confirmed` (the made-up claim and "no real
+    service" both rest on the config alone). The unconfirmed banner carries the names only in `overridden`: the PAGE builds the
+    note itself, in its own English words (`OVERRIDDEN_NOTE`), and paints the unconfirmed banner only when its tag and text are
+    exactly the default not-confirmed words; a banner reworded through `words.not_confirmed` is therefore painted by the page
+    as its own English fallback (the names are then shown there too). That is a stated limit of the ready-made page, pinned by
+    a test; a screen with other words writes its own painter."""
     if mode not in STAGES:
         raise ValueError(f"mode {mode!r} is not one of {', '.join(STAGES)}")
     if names is not None and not isinstance(names, Mapping):
@@ -473,16 +479,15 @@ class ConfigLike(Protocol):
 # The keyword arguments of `app.build` that replace what the config names with an object the caller made. The banner is built
 # from the config and cannot judge such an object, so `app.build` records which were given and the banner says so.
 # `hold_run_ids` is caller code that decides which runs are held and can query any store, so it is one of them.
-OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids")
-# Every other parameter of `app.build`, each with the reason it cannot connect the system to anything: a test requires that
-# every parameter of `build` is in exactly one of the two lists, so a new parameter cannot be left unrecorded by mistake.
-# Limit: a `clock` callable returns a time and is trusted to do nothing else; it could in theory do other work (the trigger
-# to revisit this is the merge of Part 2, which judges callables).
+OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_run_ids", "clock")
+# Every other parameter of `app.build`, each with the reason it cannot connect the system to anything (what was checked is
+# in the reason): a test requires that every parameter of `build` is in exactly one of the two lists, so a new parameter
+# cannot be left unrecorded by mistake. `clock` is an override (decision of batch 9): the core only calls it from the approvals
+# for a time, but it is a callable the caller made and nothing checks what it does, like `hold_run_ids`.
 NOT_CONNECTIVITY: dict[str, str] = {
-    "config_dir": "a folder that is read for the config; the config is what the banner reads",
-    "agents": "the names of the agents to start; they connect nothing by themselves",
-    "clock": "returns the current time only; it holds no records and reaches no service",
-    "timeout_s": "a number of seconds",
+    "config_dir": "a folder that `load_config` reads; the config is what the banner reads; checked: used only there in `build`",
+    "agents": "a list of agent names that `Runtime` checks against the registry; checked: no callable or object is handed in",
+    "timeout_s": "a number of seconds handed to the executor; checked: it is not called, only compared",
 }
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"
@@ -718,6 +723,9 @@ def banner_or_unconfirmed(
     hosts), `not_confirmed(words)`. One log line names the kind of error and nothing from the config (no value, no host,
     no name). `tool_specs` and `overridden` are required, so forgetting either is a TypeError at the call, before this function runs;
     `overridden=None` (not known) gives the not-confirmed banner. The supported call for an app is `App.mode_banner()`."""
+    if overridden is None:  # the expected "not known" answer: no raise, no warning
+        _LOG.debug("mode banner: overridden is not known: showing the not-confirmed banner")
+        return _not_confirmed_that_cannot_fail(words)
     try:
         return banner_from_config(
             config, names, words, tool_specs=tool_specs, overridden=overridden
@@ -751,6 +759,12 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
     except Exception:  # noqa: BLE001, S110 - malformed words: fall through to the fixed defaults
         pass
     return not_confirmed(DEFAULT_WORDS)
+
+
+def not_confirmed_banner(words: object = DEFAULT_WORDS) -> dict[str, Any]:
+    """`not_confirmed(words)` that never raises (malformed words give the default words): for a caller that must always get a
+    finished banner."""
+    return _not_confirmed_that_cannot_fail(words)
 
 
 def not_confirmed(words: BannerWords = DEFAULT_WORDS) -> dict[str, Any]:

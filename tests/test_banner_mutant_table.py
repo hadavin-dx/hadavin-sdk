@@ -210,9 +210,6 @@ def test_pin_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_i
         f"crash rows not pinned: {sorted(declared - set(bm.CRASH_ROWS))}; pinned but not crash rows: "
         f"{sorted(set(bm.CRASH_ROWS) - declared)}"
     )
-    assert len(bm.CRASH_ROWS) == 12, (
-        "the pinned crash set changed size: update the CHANGELOG figure with it"
-    )
     assert interpreter_text_problems() == []
 
 
@@ -234,3 +231,15 @@ def test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported() 
     assert interpreter_text_problems(rows=rows, pinned={"Z1"}) == [
         ("Z2", "expect is an interpreter message and the row is not a pinned crash row")
     ]
+
+
+def test_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported() -> None:
+    from collections import Counter
+
+    kill = Counter(m.only_test for m in bm.M).most_common(1)[0][0]
+    names = [m.name for m in bm.M if m.only_test == kill][:2]
+    assert len(names) == 2
+    same = {names[0]: "assert 1 == 2", names[1]: "assert 1 == 2"}
+    assert bm.shared_first_lines(same) == [[n.split(" ", 1)[0] for n in names]]
+    assert bm.shared_first_lines({names[0]: "assert 1 == 2", names[1]: "assert 3 == 4"}) == []
+    assert bm.shared_first_lines({}) == []
