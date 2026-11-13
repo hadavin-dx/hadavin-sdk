@@ -62,17 +62,15 @@ def _core_runtime_class() -> type | None:
 
 
 def _holder_ok(holder: object) -> bool:
-    """True only for a plain ``dict`` that is empty, or whose one key is the text ``rt`` and whose value is an
-    instance of exactly the core's runtime class (identity, never ``isinstance`` or ``==``)."""
+    """True only for a plain ``dict`` that is empty, or whose one entry under ``rt`` is an
+    instance of exactly the core's runtime class (identity, never ``isinstance`` or ``==``; a one-entry dict under
+    another key has no ``rt`` and is counted)."""
     if type(holder) is not dict:
         return False
     size = dict.__len__(holder)
     if size == 0:
         return True
     if size != 1:
-        return False
-    (key,) = dict.keys(holder)
-    if type(key) is not str or key != "rt":
         return False
     cls = _core_runtime_class()
     return cls is not None and type(dict.get(holder, "rt")) is cls

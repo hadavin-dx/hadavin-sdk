@@ -2702,8 +2702,14 @@ def test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_q
         "assert want <= set(standins._PINNED), sorted(want - set(standins._PINNED))\n"
         "print('pinned', len(want))\n"
     )
+
+    proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
     done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+        [sys.executable, "-c", proof + code],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
     )
     assert done.returncode == 0 and "pinned 6" in done.stdout, (
         f"the pins were not all taken at import: {done.stderr[-300:]}"
@@ -2818,8 +2824,14 @@ def test_the_classes_still_read_as_stand_ins_after_their_annotations_are_read() 
         "assert all(standins.is_stand_in(o) for o in objs), 'a read of __annotations__ changed the verdict'\n"
         "print('ok')\n"
     )
+
+    proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
     done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+        [sys.executable, "-c", proof + code],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
     )
     assert done.returncode == 0 and "ok" in done.stdout, (
         f"a read of __annotations__ changed the verdict: {done.stderr[-300:]}"
@@ -3186,24 +3198,6 @@ def test_the_depth_limit_for_held_values_is_eight_and_one_level_more_reads_as_re
     assert not is_stand_in_object(store), "a real object past the limit was trusted"
 
 
-def test_every_plain_data_class_keeps_all_its_state_in_the_instance_dictionary() -> None:
-    """The scan reads ``__dict__`` of a model row: a pydantic private attribute, an extra field or a slot would hold
-    state the scan cannot see. The models forbid extras and declare none of those; a change shows here."""
-    from hadavin_sdk import standins
-
-    for key in standins._DATA_CLASSES:
-        cls = standins.live_class(key)
-        assert cls is not None, key
-        assert all(
-            "__slots__" not in vars(base)
-            for base in cls.__mro__
-            if base.__module__.startswith("hadavin_sdk")
-        ), f"{key[1]} has __slots__: its state is not all in __dict__"
-        if hasattr(cls, "model_fields"):
-            assert cls.model_config.get("extra") == "forbid", f"{key[1]} allows extra fields"  # type: ignore[attr-defined]
-            assert not cls.__private_attributes__, f"{key[1]} has private attributes"  # type: ignore[attr-defined]
-
-
 # class C: the cost of reading a held structure is charged before it is made
 
 
@@ -3314,6 +3308,11 @@ def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_publi
     def closing_over_a_dict(run_id: str, status: str, d: object) -> object:
         return real["rt"]
 
+    empty: dict = {}
+
+    def closing_over_empty(run_id: str, status: str, d: object) -> object:
+        return empty
+
     text = "not a dict"
 
     def reads_text() -> str:
@@ -3322,6 +3321,7 @@ def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_publi
     cell_of_text = reads_text.__closure__
     shapes = {
         "a function that closes over a dict holding a service": closing_over_a_dict,
+        "a function that closes over an empty dict (not the core's code)": closing_over_empty,
         "a lambda": lambda run_id, status, d: None,
         "the core's code with a cell that is not a dict": types.FunctionType(
             _ON_DECIDED_CODE, {}, None, None, cell_of_text
@@ -3329,14 +3329,13 @@ def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_publi
     }
     for what, func in shapes.items():
         approvals = _approvals_with(app, func)
-        with monkeypatch.context() as m:
-            _no_server(m)
-            with pytest.raises(BindRefused, match="held on_decided"):
-                serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+        assert _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
+            f"{what} was not counted as held on_decided"
+        )
         assert "held on_decided: function" in real_services(
             app.config,
             approvals.held_services(),  # type: ignore[attr-defined]
-        ), f"{what} was not counted"
+        ), f"{what} was not named as held on_decided"
 
 
 def test_serve_with_an_unreadable_approvals_object_raises_bind_refused_not_another_error(
@@ -3389,11 +3388,22 @@ def _fresh(code: str) -> str:
     import subprocess
     import sys
 
+    import hadavin_sdk
+
+    proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
     done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+        [sys.executable, "-c", proof + code],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
     )
     last = (done.stderr.strip().splitlines() or [""])[-1]
     assert done.returncode == 0 and "ok" in done.stdout, f"{last} | {done.stdout[-100:]}"
+    package = done.stdout.split("PKG ", 1)[1].splitlines()[0]
+    assert package == hadavin_sdk.__file__, (
+        f"the child imported {package}, not the package under test {hadavin_sdk.__file__}"
+    )
     return done.stdout
 
 
@@ -3463,3 +3473,546 @@ def test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal
         "a class name with a control character was written"
     )
     assert held_services_found({"channel": _Opaque()}) == ("held channel: _Opaque",)
+
+
+# --- batch 8: class 1 (a helper believed by identity must have its content judged), class 2 (instance state outside
+# the scan), class 3 (one budget on every walk), class 4 (every read in serve()), class 5 (docs match code) ----------
+
+
+def _refused_on_public_bind(
+    app: object, approvals: Approvals, monkeypatch: pytest.MonkeyPatch, shown: str
+) -> bool:
+    """True when ``serve`` on a public bind is refused with ``shown`` in the text; False when it is served."""
+    with monkeypatch.context() as m:
+        _no_server(m)
+        try:
+            serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+        except BindRefused as exc:
+            assert shown in str(exc), f"refused for another reason: {exc}"
+            return True
+        except (
+            AssertionError
+        ) as exc:  # ``_no_server`` raises this when the server would be built: served
+            assert "a server was built" in str(exc), str(exc)
+    return False
+
+
+def _core_runtime() -> object:
+    from hadavin_sdk.runtime.agent_loop import Runtime
+
+    return object.__new__(Runtime)  # the exact core class; nothing is run
+
+
+def test_a_make_on_decided_holder_that_holds_anything_but_the_core_runtime_is_counted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = _built(tmp_path)
+    spoof_runtime = type("Runtime", (), {})  # same name, not the core class
+    counted = {
+        "a holder with a real object under rt": {"rt": _Opaque()},
+        "a holder with a lambda under rt": {"rt": lambda: None},
+        "a holder with a lambda under another key": {"other": lambda: None},
+        "a holder with two keys": {"rt": _core_runtime(), "extra": 1},
+        "a holder whose rt is a class of the same name": {"rt": spoof_runtime()},
+        "a holder with a non-text key": {1: _core_runtime()},
+    }
+    for what, holder in counted.items():
+        approvals = _approvals_with(app, make_on_decided(holder))
+        assert _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
+            f"{what} was believed to be the core's on_decided"
+        )
+    for what, holder in {
+        "an empty holder": {},
+        "the core runtime": {"rt": _core_runtime()},
+    }.items():
+        approvals = _approvals_with(app, make_on_decided(holder))
+        assert not _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
+            f"{what} was counted as a held service"
+        )
+
+
+def test_a_core_on_decided_whose_closure_cell_is_replaced_is_judged_by_what_it_now_holds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    app = _built(tmp_path)
+    func = make_on_decided({})
+    approvals = _approvals_with(app, func)
+    cell = func.__closure__[0]  # type: ignore[index]
+    assert not _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), "control"
+    for what, content in {
+        "a dict holding a lambda": {"rt": lambda: None},
+        "a list": [],
+        "a dict subclass": type("D", (dict,), {})(),
+    }.items():
+        cell.cell_contents = content
+        assert _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
+            f"a cell replaced by {what} was served"
+        )
+    cell.cell_contents = {"rt": _core_runtime()}
+    assert not _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
+        "a cell holding the core runtime was counted"
+    )
+
+
+def test_approvals_made_by_hand_with_empty_overrides_count_as_hand_built() -> None:
+    cfg = None
+    hand = Approvals(
+        MemoryStore(),
+        _Opaque(),  # type: ignore[arg-type]
+        _Opaque(),  # type: ignore[arg-type]
+        FakeChannel("sig" + "-b8-hand"),
+        make_on_decided({}),
+        config=cfg,
+        overrides={},
+    )
+    held = hand.held_services()
+    assert "audit" in held and "registry" in held, (
+        "an Approvals made by hand with overrides={} was believed to be built by build()"
+    )
+
+
+def test_a_clock_that_is_not_the_core_clock_is_counted_and_is_judged_at_every_question(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import types
+    from datetime import UTC, datetime
+
+    from hadavin_sdk.approvals.requests import _FIXED_CLOCK_CODE, fixed_clock
+    from hadavin_sdk.models import now
+
+    app = _built(tmp_path)
+    approvals = _approvals_with(app, make_on_decided({}))
+    assert "clock" not in approvals.held_services(), "the core clock was counted"
+    approvals.clock = fixed_clock(datetime(2026, 1, 1, tzinfo=UTC))
+    assert "clock" not in approvals.held_services(), "a fixed_clock was counted"
+    real = _Opaque()
+
+    def closing_over_real() -> object:
+        return real
+
+    shapes = {
+        "a lambda": lambda: now(),
+        "a function closing over a real object": closing_over_real,
+        "the fixed_clock code with a real object in its cell": types.FunctionType(
+            _FIXED_CLOCK_CODE, {}, None, None, (types.CellType(real),)
+        ),
+    }
+    for what, clock in shapes.items():
+        approvals.clock = clock  # type: ignore[assignment]
+        assert "clock" in approvals.held_services(), f"{what} was not counted as held"
+        assert _refused_on_public_bind(app, approvals, monkeypatch, "held clock"), (
+            f"{what} was served on a public bind"
+        )
+    approvals.clock = now
+    assert "clock" not in approvals.held_services(), "the core clock was counted after a reset"
+
+
+def test_a_counter_with_an_attribute_hung_on_it_reads_as_real(tmp_path: Path) -> None:
+    from collections import Counter
+
+    plain = Counter()
+    for host in _spoof_hosts(tmp_path):
+        assert is_stand_in_object(host), "control"
+        host.stats = plain  # type: ignore[attr-defined]
+        assert is_stand_in_object(host), "a plain empty Counter was refused"
+        hidden = Counter()
+        hidden.client = _Opaque()  # type: ignore[attr-defined]
+        host.stats = hidden  # type: ignore[attr-defined]
+        assert not is_stand_in_object(host), (
+            f"a Counter with an attribute holding a real object was trusted by {type(host).__name__}"
+        )
+
+
+def test_the_instance_state_helper_refuses_a_counter_with_an_attribute() -> None:
+    from collections import Counter
+
+    from hadavin_sdk import standins
+
+    clean = Counter()
+    assert standins._no_instance_state(clean, Counter), "the helper refused a clean Counter"
+    clean.client = _Opaque()  # type: ignore[attr-defined]
+    assert not standins._no_instance_state(clean, Counter), (
+        "the helper passed a Counter with an attribute"
+    )
+    assert standins._no_instance_state("text", str), "the helper refused a string"
+
+
+def test_the_fake_model_with_its_own_counter_still_reads_as_a_stand_in(tmp_path: Path) -> None:
+    llm = FakeLLM(tmp_path, {})
+    llm._attempts["x"] += 1  # type: ignore[attr-defined]
+    assert is_stand_in_object(llm), "the fake model holding a used Counter was refused"
+
+
+def test_only_the_counter_among_the_allowlisted_types_can_carry_instance_state() -> None:
+    """Every plain type goes through ``standins._no_instance_state``. A type that has an instance dictionary is
+    listed here: a new one fails until it is added to the test with its attribute check."""
+    from collections import Counter, defaultdict
+
+    from hadavin_sdk import standins
+
+    kinds = (*standins._ATOM_TYPES, *standins._PLAIN_CONTAINERS, Counter, defaultdict)
+    with_state = {k for k in kinds if k.__dictoffset__ != 0}
+    assert with_state == {Counter}, (
+        f"an allowlisted type has an instance dictionary: {sorted(k.__name__ for k in with_state)}; "
+        "check it in standins._no_instance_state and list it here"
+    )
+
+
+def _load_data_modules() -> None:
+    import hadavin_sdk.approvals.cards
+    import hadavin_sdk.config
+    import hadavin_sdk.models  # noqa: F401
+
+
+def _pydantic_rows() -> list[tuple[tuple[str, str], type]]:
+    from hadavin_sdk import standins
+
+    _load_data_modules()
+    found = [(key, standins.live_class(key)) for key in standins._DATA_CLASSES]
+    assert all(c is not None for _, c in found)
+    return [(key, c) for key, c in found if key not in standins._DATACLASS_KEYS]  # type: ignore[misc]
+
+
+@pytest.mark.parametrize("slot", ["__pydantic_extra__", "__pydantic_private__"])
+def test_a_model_row_with_state_in_a_pydantic_slot_reads_as_real(slot: str) -> None:
+    for key, cls in _pydantic_rows():
+        row = cls.model_construct()
+        store = MemoryStore()
+        store.extra = row  # type: ignore[attr-defined]
+        assert is_stand_in_object(store), f"control: a plain {key[1]} row was refused"
+        object.__setattr__(row, slot, {"c": _Opaque()})
+        assert not is_stand_in_object(store), (
+            f"a {key[1]} row with a real object in {slot} was trusted"
+        )
+
+
+def test_a_model_row_with_a_foreign_fields_set_reads_as_real() -> None:
+    for key, cls in _pydantic_rows():
+        for what, value in {
+            "a non-text member": {1},
+            "a subclass of set": type("S", (set,), {})(),
+            "a list": [],
+        }.items():
+            row = cls.model_construct()
+            object.__setattr__(row, "__pydantic_fields_set__", value)
+            store = MemoryStore()
+            store.extra = row  # type: ignore[attr-defined]
+            assert not is_stand_in_object(store), (
+                f"a {key[1]} row whose fields-set is {what} was trusted"
+            )
+
+
+def test_a_patched_method_of_a_model_class_is_seen_because_data_classes_are_pinned(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from hadavin_sdk.models import Run
+
+    store = _populated_store()
+    assert is_stand_in_object(store), "control"
+    monkeypatch.setattr(Run, "hash_marker", lambda self: "x", raising=False)
+    assert not is_stand_in_object(store), "a method added to a model class was not seen"
+
+
+def _data_class_problem(key: tuple[str, str], cls: type) -> str | None:
+    import dataclasses
+
+    from pydantic import BaseModel
+
+    if dataclasses.is_dataclass(cls):
+        return None if "__slots__" not in vars(cls) else "a dataclass with slots"
+    if not (isinstance(cls, type) and issubclass(cls, BaseModel)):
+        return f"{key[1]} is neither a pydantic model nor a plain dataclass"
+    if cls.model_config.get("extra") != "forbid":
+        return f"{key[1]} does not forbid extra fields"
+    if cls.__private_attributes__:
+        return f"{key[1]} declares private attributes"
+    return None
+
+
+def test_every_data_class_is_a_forbidding_pydantic_model_or_the_one_plain_dataclass() -> None:
+    from hadavin_sdk import standins
+
+    _load_data_modules()
+
+    for key in standins._DATA_CLASSES:
+        cls = standins.live_class(key)
+        assert cls is not None, key
+        assert _data_class_problem(key, cls) is None, _data_class_problem(key, cls)
+        assert (key in standins._DATACLASS_KEYS) == __import__("dataclasses").is_dataclass(cls), (
+            f"{key[1]} is listed with the wrong base kind"
+        )
+    assert _data_class_problem(("m", "Plain"), type("Plain", (), {})) is not None, (
+        "the check passed a class that is not a pydantic model"
+    )
+
+
+def _counting(monkeypatch: pytest.MonkeyPatch, name: str, limit: int) -> list[int]:
+    from hadavin_sdk import standins
+
+    calls = [0]
+    real = getattr(standins, name)
+
+    def counted(*args: object, **kw: object) -> object:
+        calls[0] += 1
+        assert calls[0] <= limit, (
+            f"{name} was called more than {limit} times: the cost is not bounded"
+        )
+        return real(*args, **kw)
+
+    monkeypatch.setattr(standins, name, counted)
+    return calls
+
+
+def test_a_detector_list_built_to_fan_out_is_cut_off_by_the_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import time
+
+    d = RegexDetector(0.5)
+    deep = AnyOf([AnyOf([AnyOf([AnyOf([d] * 100)] * 100)] * 100)] * 100)
+    calls = _counting(monkeypatch, "_check", 5_000)
+    started = time.monotonic()
+    assert not is_stand_in_object(deep), "a fan-out of 10^8 visits was trusted"
+    assert time.monotonic() - started < 5, "the fan-out took more than 5 s"
+    assert calls[0] <= 5_000
+
+
+def test_the_walk_of_a_detector_list_is_charged_for_every_visit() -> None:
+    d = RegexDetector(0.5)
+    assert is_stand_in_object(AnyOf([d] * 400)), "400 shared detectors were refused"
+    assert not is_stand_in_object(AnyOf([d] * 1_200)), (
+        "1,200 shared detectors (scanned once, walked once) were not charged for the walk"
+    )
+
+
+def test_a_million_shared_members_of_a_detector_list_cost_a_bounded_time_and_memory() -> None:
+    import time
+    import tracemalloc
+
+    big = AnyOf([RegexDetector(0.5)] * 10**6)
+    tracemalloc.start()
+    before = tracemalloc.get_traced_memory()[0]
+    started = time.monotonic()
+    answer = is_stand_in_object(big)
+    took = time.monotonic() - started
+    peak = tracemalloc.get_traced_memory()[1] - before
+    tracemalloc.stop()
+    assert not answer, "a detector list of 10^6 shared members was trusted"
+    assert took < 5, f"10^6 shared members took {took:.1f} s"
+    assert peak < 4_000_000, f"10^6 shared members were copied: peak {peak} bytes"
+
+
+def test_a_hundred_thousand_references_to_one_stand_in_cost_one_shape_comparison_per_class(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    channel = FakeChannel("sig" + "-b8-shared")
+    store = MemoryStore()
+    store.extra = [channel] * 100_000  # type: ignore[attr-defined]
+    calls = _counting(monkeypatch, "_same_shape", 20)
+    assert not is_stand_in_object(store), "100,000 references to one stand-in were trusted"
+    assert calls[0] <= 20
+
+
+def test_a_stand_in_is_charged_fifty_values_and_a_few_hundred_references_are_fine() -> None:
+    channel = FakeChannel("sig" + "-b8-weight")
+    store = MemoryStore()
+    store.extra = [channel] * 1_500  # type: ignore[attr-defined]
+    assert is_stand_in_object(store), (
+        "1,500 references to one stand-in (75,000 values) were refused"
+    )
+    store.extra = [channel] * 2_500  # type: ignore[attr-defined]
+    assert not is_stand_in_object(store), "2,500 references to one stand-in (125,000 values) passed"
+    store.extra = [1] * 2_500  # type: ignore[attr-defined]
+    assert is_stand_in_object(store), "2,500 plain numbers were charged like stand-ins"
+
+
+def test_an_over_budget_structure_is_named_apart_from_a_real_service() -> None:
+    from hadavin_sdk import standins
+
+    big = MemoryStore()
+    big.extra = list(range(standins.SCAN_NODES + 1))  # type: ignore[attr-defined]
+    assert standins.verdict(big) == standins.VERDICT_OVER_BUDGET
+    foreign = MemoryStore()
+    foreign.extra = _Opaque()  # type: ignore[attr-defined]
+    assert standins.verdict(foreign) == standins.VERDICT_REAL, (
+        "a real object was reported as over budget"
+    )
+    assert standins.verdict(MemoryStore()) == standins.VERDICT_STAND_IN
+    assert held_services_found({"store": big}) == (
+        "held store: over budget (too many values to check)",
+    ), "an over-budget store was not named apart"
+    assert held_services_found({"store": foreign}) == ("held store: MemoryStore",), (
+        "a real object inside a store was reported as over budget"
+    )
+
+
+@pytest.mark.parametrize("slot", Approvals.__slots__)
+def test_serve_refuses_with_bind_refused_when_any_slot_is_deleted(
+    tmp_path: Path, slot: str
+) -> None:
+    """A deleted slot (``object.__delattr__``) means the object cannot be trusted: the start check reads every slot
+    and answers ``BindRefused`` for each one, also for the three that a built object's start check did not read."""
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    saved = object.__getattribute__(a, slot)
+    object.__delattr__(a, slot)
+    try:
+        with pytest.raises(BindRefused, match="could not read what the approvals hold"):
+            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+    finally:
+        object.__setattr__(a, slot, saved)
+
+
+def test_every_name_in_a_refusal_line_is_a_plain_word() -> None:
+    unreadable = ("held (unreadable)",)
+    for hostile in ("channel: FakeChannel", "a b", "a.b", "a-b", "9lives", "", "é\u200b"):
+        assert held_services_found({hostile: _Opaque()}) == unreadable, (
+            f"the key {hostile!r} was written to the refusal line"
+        )
+    assert held_services_found({"channel_2": _Opaque()}) == ("held channel_2: _Opaque",)
+    assert held_services_found({"channel": type("a b", (), {})()}) == (
+        "held channel: (unreadable)",
+    ), "a class name with a space was written to the refusal line"
+
+
+def test_operator_config_names_are_filtered_in_the_refusal_line(stand_in_config: Config) -> None:
+    from hadavin_sdk.bindguard import config_services
+
+    cfg = stand_in_config.model_copy(
+        update={
+            "tool_modules": ["ok.module-name", "bad name: x", "y" * 41],
+            "check_modules": ["line\nbreak"],
+        }
+    )
+    lines = config_services(cfg)
+    assert "tools:ok.module-name" in lines, "a plain module name was refused its own name"
+    assert "tools:(unreadable)" in lines, (
+        "a hostile tools module name was written to the refusal line"
+    )
+    assert "checks:(unreadable)" in lines, (
+        "a hostile checks module name was written to the refusal line"
+    )
+    assert not any("bad name" in line or "break" in line for line in lines)
+
+
+def test_every_run_state_member_keeps_only_the_keys_of_a_fresh_enum_member() -> None:
+    from hadavin_sdk import standins
+    from hadavin_sdk.models import RunState
+
+    for member in RunState:
+        keys = set(object.__getattribute__(member, "__dict__"))
+        assert keys <= standins._ENUM_MEMBER_KEYS, (
+            f"{member.name} holds {sorted(keys - standins._ENUM_MEMBER_KEYS)} beyond the keys of a "
+            f"fresh enum member {sorted(standins._ENUM_MEMBER_KEYS)} on this Python: a Run would read as real"
+        )
+    assert standins._ENUM_MEMBER_KEYS >= {"_value_", "_name_"}, (
+        "the probe enum has no value and name keys"
+    )
+
+
+def test_the_class_level_attributes_of_the_pinned_classes_are_functions_or_builtin_descriptors() -> (
+    None
+):
+    """``inspect.ismethoddescriptor`` accepts anything with ``__get__`` and no ``__set__``, an ``lru_cache`` wrapper
+    included. Only these types are allowed as a class attribute that holds code."""
+    import functools
+    import types
+
+    from hadavin_sdk import standins
+
+    allowed = (
+        types.FunctionType,
+        classmethod,
+        staticmethod,
+        property,
+        types.WrapperDescriptorType,
+        types.MethodDescriptorType,
+        types.ClassMethodDescriptorType,
+        types.MemberDescriptorType,
+        types.GetSetDescriptorType,
+    )
+    assert not isinstance(functools.lru_cache(lambda: 1), allowed), (
+        "control: a cache wrapper is refused"
+    )
+    for key in standins._PINNED_KEYS:
+        cls = standins.live_class(key)
+        for base in cls.__mro__:  # type: ignore[union-attr]
+            if base is object:
+                continue
+            for name, value in vars(base).items():
+                if callable(value) or hasattr(type(value), "__get__"):
+                    assert type(value) in allowed or isinstance(value, type), (
+                        f"{base.__name__}.{name} is a {type(value).__name__}, not a function or builtin descriptor"
+                    )
+
+
+def _changelog_problems(
+    text: str,
+    depth_values: int,
+    nodes: int,
+    weight: int,
+    depth: int,
+    slots: tuple[str, ...],
+    rows: int,
+) -> list[str]:
+    problems = []
+    if "handover/" in text:
+        problems.append("the CHANGELOG points at a handover path")
+    for want in (
+        f"depth of {depth_values} levels",
+        f"at most {nodes} values",
+        f"charged {weight} values",
+        f"nesting at most {depth} deep",
+        f"read are: {', '.join(f'`{s}`' for s in slots)}.",
+        f"runs {rows} mutants ({rows - 1} on Python 3.14",
+    ):
+        if want not in text:
+            problems.append(f"the CHANGELOG does not say {want!r}")
+    return problems
+
+
+def _code_numbers() -> tuple[int, int, int, int, tuple[str, ...], int]:
+    import sys
+
+    from hadavin_sdk import standins
+    from tests import bind_mutants
+
+    rows = len(bind_mutants.M) + (1 if sys.version_info >= (3, 14) else 0)
+    return (
+        standins.SCAN_DEPTH_VALUES,
+        standins.SCAN_NODES,
+        standins.STAND_IN_WEIGHT,
+        standins.SCAN_DEPTH,
+        Approvals.__slots__,
+        rows,
+    )
+
+
+def test_changelog_numbers_and_lists_are_the_ones_in_the_code() -> None:
+    changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+    if not changelog.is_file():  # the mutation runner copies src and tests only
+        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+    problems = _changelog_problems(changelog.read_text(encoding="utf-8"), *_code_numbers())
+    assert not problems, f"the CHANGELOG and the code differ: {problems}"
+
+
+def test_the_changelog_check_notices_a_changed_number_a_changed_list_and_a_handover_path() -> None:
+    changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+    if not changelog.is_file():
+        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+    text = changelog.read_text(encoding="utf-8")
+    depth_values, nodes, weight, depth, slots, rows = _code_numbers()
+    for what, args in {
+        "depth": (depth_values + 1, nodes, weight, depth, slots, rows),
+        "nodes": (depth_values, nodes + 1, weight, depth, slots, rows),
+        "weight": (depth_values, nodes, weight + 1, depth, slots, rows),
+        "detector depth": (depth_values, nodes, weight, depth + 1, slots, rows),
+        "slots": (depth_values, nodes, weight, depth, slots[:-1], rows),
+        "rows": (depth_values, nodes, weight, depth, slots, rows + 1),
+    }.items():
+        assert _changelog_problems(text, *args), (
+            f"a changed {what} was not noticed in the CHANGELOG"
+        )
+    assert _changelog_problems(text + "\nsee handover/x", *_code_numbers()), (
+        "a handover path in the CHANGELOG was not noticed"
+    )

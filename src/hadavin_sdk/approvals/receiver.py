@@ -112,7 +112,7 @@ def serve(
     no reason the question is asked again at every request (answer 503, empty body, one log line): the objects the
     approvals hold can be replaced after the server started. The request check also refuses an object that
     is no longer an exact ``Approvals`` (a swapped ``__class__``), an ``Approvals`` class that changed since it was
-    pinned, and a missing slot (answered 503 too); the private slots are set once by ``__setattr__`` and cannot be
+    pinned, and a missing slot (answered 503 too, and ``serve`` itself refuses an object with any slot missing: every slot is read at the start); the private slots are set once by ``__setattr__`` and cannot be
     deleted by ``__delattr__``, and a person who writes or deletes them with ``object.__setattr__`` or
     ``object.__delattr__`` is caught by that request check (every slot is read, so each deleted slot is answered 503).
     Every class the guard judges is compared by identity, never by ``==`` or hash. A value too big to read within the
@@ -129,6 +129,10 @@ def serve(
     # every attribute of the approvals is read here, inside the one refusal type: an unreadable object (a slot
     # deleted with ``object.__delattr__``, a mapping that raises) is a ``BindRefused``, not some other error
     try:
+        for slot in (
+            Approvals.__slots__
+        ):  # a deleted slot (any of them) is a refusal at the start, not a late 503
+            object.__getattribute__(approvals, slot)
         approvals_config = approvals.config
         held = Approvals.held_services(approvals)
         frozen = approvals.config_facts
