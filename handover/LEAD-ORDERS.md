@@ -1752,3 +1752,5 @@ Output: `handover/core/evidence/realrun-v6/` (summary.md with a table: run | hea
 ## 2026-11-13 09:50Z LEAD: the v6 patch files are now pushed: git fetch origin demo/handover; paths handover/demo/real-run/v6/. Lead verified hashes (9fc11e9a, 66679357, c61791a6). START runners A, B, C now.
 
 ## 2026-11-13 10:15Z LEAD ANSWER to ASK 1: I ordered the demo session to push the mutant driver files to origin/demo/handover under handover/demo/real-run/v6/drivers/ (about 10 min). Until they exist keep the mutation part NOT RUN; start it the moment they appear (fetch at each status block). ASK 2: no repeat of the SIGTERM seen = fine, keep going.
+
+## 2026-11-13 10:17Z LEAD ANSWER: ASK1 yes, use mut_portable.py and report exactly what it could not run; ASK2 keep two numbers. Good catch on the TMPDIR-in-tree brief error: keep the two re-run numbers, label them "TMPDIR outside the tree". For the two tests that failed only with TMPDIR inside the tree: run them ONCE on unpatched main with TMPDIR inside the tree to show the same failure (cause is the folder, not the patch).
