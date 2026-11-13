@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 15:47Z: ENV PROBE RUNNING (N8N-ENV-PROBE.md follows within ~10 min)
+- LOAD: no agent. One shell job (isolated-vm rebuild attempt) only. Nothing stuck.
+- DONE so far: basics, network, registry, postgres manifest, 2-min idle vmstat, n8n 2.46.6 installed in scratch (6 min), start tried 3 times.
+- KEY FINDINGS (raw files follow): (a) n8n 2.46.6 needs Node >=24; machine has Node 22.23.4 (n8n refuses to start). (b) Node 24.22.2 is obtainable via npm. (c) IPv6 "::" not available here: needs N8N_LISTEN_ADDRESS=127.0.0.1. (d) N8N_PORT=5679 collides with the task broker default port 5679: needs N8N_RUNNERS_BROKER_PORT=5780. (e) install under Node 22 then run under Node 24 fails (isolated-vm native module): install must run under Node 24. (f) disk free is only 1.1 GB after install (3.0 GB node_modules).
+- ASK: none. Default: finish probe, delete scratch, then QUEUE DONE.
+
 ## REPORT 15:2xZ: PAPER ITEMS DONE (WATCH-CHECKLIST.md, FAILED-TAKE-NOTE.md)
 - LOAD: no agents running, no suite running.
 - STATUS: both one-page notes written in handover/demo/. No new code, no review rounds. PR stays DRAFT TEXT.
