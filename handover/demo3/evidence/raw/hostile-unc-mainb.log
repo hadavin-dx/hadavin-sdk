@@ -1,0 +1,63 @@
+module: /home/user/work/mainb/tools/pathconfine.py
+== path_module posixpath
+'\\\\host\\share\\x.db' -> 'file:///tmp/%5C%5Chost%5Cshare%5Cx.db?mode=ro'
+'//host/share/x.db' -> 'file:////host/share/x.db?mode=ro'
+'\\\\?\\UNC\\host\\share\\x.db' -> 'file:///tmp/%5C%5C%3F%5CUNC%5Chost%5Cshare%5Cx.db?mode=ro'
+'\\/host/share/x.db' -> 'file:///tmp/%5C/host/share/x.db?mode=ro'
+'/\\host\\share\\x.db' -> 'file:///%5Chost%5Cshare%5Cx.db?mode=ro'
+'\\\\?\\C:\\x.db' -> 'file:///tmp/%5C%5C%3F%5CC%3A%5Cx.db?mode=ro'
+'\\\\.\\C:\\x.db' -> 'file:///tmp/%5C%5C.%5CC%3A%5Cx.db?mode=ro'
+'C:\\x.db' -> 'file:///tmp/C%3A%5Cx.db?mode=ro'
+'\\\\localhost\\share\\x.db' -> 'file:///tmp/%5C%5Clocalhost%5Cshare%5Cx.db?mode=ro'
+'//localhost/c$/x.db' -> 'file:////localhost/c%24/x.db?mode=ro'
+'\\\\host\\share' -> 'file:///tmp/%5C%5Chost%5Cshare?mode=ro'
+'\\\\host' -> 'file:///tmp/%5C%5Chost?mode=ro'
+'/tmp/ok.db' -> 'file:///tmp/ok.db?mode=ro'
+'rel.db' -> 'file:///tmp/rel.db?mode=ro'
+'\\\\?\\UNC\\' -> 'file:///tmp/%5C%5C%3F%5CUNC%5C?mode=ro'
+'///host/share/x.db' -> 'file:///host/share/x.db?mode=ro'
+'\\\\\\host\\share' -> 'file:///tmp/%5C%5C%5Chost%5Cshare?mode=ro'
+== path_module ntpath
+'\\\\host\\share\\x.db' -> 'N/A on main (no path_module param)'
+'//host/share/x.db' -> 'N/A on main (no path_module param)'
+'\\\\?\\UNC\\host\\share\\x.db' -> 'N/A on main (no path_module param)'
+'\\/host/share/x.db' -> 'N/A on main (no path_module param)'
+'/\\host\\share\\x.db' -> 'N/A on main (no path_module param)'
+'\\\\?\\C:\\x.db' -> 'N/A on main (no path_module param)'
+'\\\\.\\C:\\x.db' -> 'N/A on main (no path_module param)'
+'C:\\x.db' -> 'N/A on main (no path_module param)'
+'\\\\localhost\\share\\x.db' -> 'N/A on main (no path_module param)'
+'//localhost/c$/x.db' -> 'N/A on main (no path_module param)'
+'\\\\host\\share' -> 'N/A on main (no path_module param)'
+'\\\\host' -> 'N/A on main (no path_module param)'
+'/tmp/ok.db' -> 'N/A on main (no path_module param)'
+'rel.db' -> 'N/A on main (no path_module param)'
+'\\\\?\\UNC\\' -> 'N/A on main (no path_module param)'
+'///host/share/x.db' -> 'N/A on main (no path_module param)'
+'\\\\\\host\\share' -> 'N/A on main (no path_module param)'
+== confine/confine_existing/confine_anywhere on Linux os.path
+confine '\\\\host\\share\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '//host/share/x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_existing '//host/share/x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere '//host/share/x.db' -> EXC PathRefused --x: no such file
+confine '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '\\/host/share/x.db' -> EXC PathRefused --x: a folder on the path does not exist
+confine_existing '\\/host/share/x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\/host/share/x.db' -> EXC PathRefused --x: no such file
+confine '/\\host\\share\\x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_existing '/\\host\\share\\x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere '/\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '\\\\?\\C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\?\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\?\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine '\\\\.\\C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\.\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\.\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine 'C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing 'C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere 'C:\\x.db' -> EXC PathRefused --x: no such file
+exit 0
