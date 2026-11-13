@@ -115,3 +115,4 @@ container restart; A and B2 resumed
 A run2 ~56%; B2 mutant sets in progress
 A run2 ~95%; B2 sets in progress
 10:50Z runner A done (run2 3781 pass 0 fail); B2 running; summary pending
+10:58Z unpatched-main TMPDIR-in-tree check: 1 of 2 reproduced; B2 running

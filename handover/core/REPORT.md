@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 10:58Z (16:28 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-A2 | the 2 TMPDIR-in-tree tests, run ONCE on clean unpatched main 61ded9e (fresh clone, TMPDIR inside tree) | LEAD 10:17Z order: show cause is the folder, not the patch | 10:55Z / 16:25 | DONE 10:57Z | 1 of 1 | done by me, raw log pushed (A/raw/unpatched-main-tmpdir-in-tree.log). test_demo_folder_guard FAILS on unpatched main with TMPDIR inside (conftest ImportError under .tmp-run), so that one is the folder, not the patch. test_no_placeholders PASSES here (2 passed, 1 failed): run alone it never creates the desk.db-shm files, so its failure in A run 1 appears only after the full suite has run. NOT shown on unpatched main; would need a full run there (about 22 min) | ask below |
+| RR6-B2 | mutation sets on tree-M | patches' mutants | 10:15Z / 15:45 | hard stop 11:50Z | 1 of 1 | running, no report yet | wait |
+| RR6-sum | summary.md with interim-vs-final survivor table | LEAD 10:53Z | after B2 | about 11:15Z | n/a | waits for B2; no fixes | write when B2 reports |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Note: tree-B was dirty (new tests copied in), so I used a fresh clone (tree-U) for this check.
+
+ASK:
+1. Run the full suite once on clean unpatched main with TMPDIR inside the tree (about 22 min, one slot) to close the test_no_placeholders question? Default: yes, start now.
+
+
 ## REPORT 10:50Z (15:20 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
