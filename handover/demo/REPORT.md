@@ -1,6 +1,39 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:11Z / 08:41 IST - P3 security review: 3 Majors, and its odds with Sonar are LOWER than I said (15-25% paths, 25-35% S8706); the API serves the taint flows, so a small PROBE push can tell us what Sonar accepts; P2 built; 5 agents
+FAILED / UNCERTAIN first:
+1. **P3 (sonar-p3-path-helper.patch) must NOT be applied as it is.** Fresh security review (sonar/REVIEW-p3-fresh.md): MAJOR-1 it breaks the documented real run: `run_real_check.py --config /var/tmp/x/run.env` (docs/real-services.md step 1 says keep the config OUTSIDE the repo) is refused, and DESK_DB_PATH from the config is confined deep in the run: the final read_book fails AFTER real HubSpot calls and mails; --dry-fakes cannot see it. MAJOR-2 a mutant survives (call site of the sqlite URI untested). MAJOR-3 argv-path siblings unconfined (run_live_check.py --key-file/--ledger, load_tools/catcher.py --out/--control). MINOR: `load_driver.py --help` and `check_invariants.py --help` fail without PYTHONPATH. 18 of 20 mutants killed; hostile inputs (.., absolute, symlinks, NUL, 5000 chars, sqlite URI injection) all refused; TOCTOU not covered (documented).
+2. **My earlier statement 'the issues have no flow data' was wrong**: `issues/search ...&rules=pythonsecurity:S8707,pythonsecurity:S8706&additionalFields=_all` DOES return the 12 taint flows of 7-9 locations (saved: sonar/flows-s8707-s8706.json). From them the reviewer reads the engine as interprocedural and summary-based; a user-written confine() is analysed as ordinary code, a raise-only guard probably is NOT a validator, the return value stays tainted. Estimates: helper form clears the path issues 15-25%, S8706 25-35%; inlining may not help either. Do NOT spend a push on the whole patch to find out.
+3. **PROBE plan (needs one small push from you):** a builder (a75929772685cf304) is making two tiny probe patches that change ONLY load_tools/check_invariants.py read_jsonl (the first flagged site): A = inline realpath + commonpath + raise + open(real); B = flow-breaking (choose the path from a trusted directory listing and open that, never the argument text). You push ONE probe, read the new flows via the API, and we know what Sonar accepts before a full P3 v2. If none clears: these are false positives for developer CLIs; the owner can mark them 'reviewed' in the Sonar UI (not a code suppression), your decision.
+4. P2 (sonar-p2-regex-http-bug.patch, applies on db54e13 alone and with P1+P3): built, 11 issues addressed in code, 4 of 5 clearances uncertain: the S2583 was NOT a bug (refactor only), the scrub MAIL regex could not be made slow (its timing test passes on old code too: equivalence fuzz 300k+1.38M texts, 0 differences guards it), `server.py:492` is `super().server_bind()` (real fix would be TLS on loopback: not done; 'reviewed' in the UI is the likely answer), S8786 on _ADDRESS and S8703 may stay. A fresh reviewer is running.
+5. real-run fixes v3: review done, 0 Blocker/Major, 2 Minor (files opened after the y/N question that are not checked: CA file/leadflow/approvers/replies path/ledger; a 2-line live key accepted): v4 builder running. Stray folder /nonexistent created by a test as root in this container (my rm was blocked by the safety check; harmless, left).
+6. Not run: the full suite on any series, Windows, CodeQL, any Sonar result.
+READY TO APPLY: P1 v1 (v2 coming). NOT ready: P3 (3 Majors), P2 (review pending).
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a75929772685cf304 | P3 v2 + probe A/B builder | 03:11 | running | 3 patches |
+| afb6f2533fc48ef07 | P1 v2 builder | 03:07 | running | sonar-p1-quickwins-v2.patch |
+| a9f7101d283c15a25 | fresh reviewer P2 | 03:10 | running | report |
+| a8ab418a167972aca | fresh reviewer crlf-guard-v3 + sonar-yaml-fix-v2 | 02:55 | running | report |
+| ab9bf150800668515 | real-run fixes v4 builder | 03:10 | running | v4 patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 5.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 1 | 1 Major | vacuous test | no | v2 read |
+| P2 | review 1 | pending | - | no | clean |
+| P3 | review 1 | 3 Major | breaks real run | no | v2 + probe result |
+| real-run | review 2 | 2 Minor | siblings | no | v4 read |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P2 built, pushed | yes |
+| P3 security review | 3 Majors, flows found |
+| real-run v3 review | 0 Major, 2 Minor |
+
 ## 2026-11-13 03:07Z / 08:37 IST - Sonar P1 reviewed (1 Major: fixing as v2), P3 built (UNCERTAIN against Sonar's taint engine), P2 still building; 5 agents running
 FAILED / UNCERTAIN first:
 1. **P1 (sonar/sonar-p1-quickwins.patch, applies on db54e13, 15 issues expected) has 1 Major from the fresh reviewer** (sonar/REVIEW-p1-fresh.md): its new start_all.sh test passes on the old code and tests no changed line; mutants of the changed `[[` lines passed all behaviour tests (only a string-match test noticed). v2 is being built (also: 2 remaining `[ ]` in lint.yml L77/79, regex holes, honest NOTES, a note that `sh scripts/reset.sh` under dash no longer works). Behaviour of both scripts is IDENTICAL before/after in 47 measured cases; real download with the new curl flags works. DO NOT apply v1 if you can wait for v2; applying v1 is safe but weak on test value.
