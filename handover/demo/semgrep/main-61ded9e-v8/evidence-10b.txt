@@ -1,0 +1,10 @@
+== fresh clone of the committed state (no caches): gitleaks dir
+8:44AM INF scanned ~3265107 bytes (3.27 MB) in 1.32s
+8:44AM INF no leaks found
+rc 0
+== gitleaks git (refs: refs/heads/v8 refs/remotes/origin/HEAD refs/remotes/origin/v8 )
+8:44AM INF Unknown SCM platform. Use --platform to include links in findings. host=
+8:44AM INF 5 commits scanned.
+8:44AM INF scanned ~3273486 bytes (3.27 MB) in 1.25s
+8:44AM INF no leaks found
+rc 0

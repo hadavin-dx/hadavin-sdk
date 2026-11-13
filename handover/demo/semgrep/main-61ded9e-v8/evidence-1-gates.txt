@@ -1,0 +1,17 @@
+tree: ba822b2b6ef6a95e4413d862e7d226f5651a771f (scratch commit of 61ded9e + v8 patch)
+== ruff check
+All checks passed!
+== ruff format
+159 files already formatted
+== mypy linux
+Success: no issues found in 28 source files
+== mypy win32
+Success: no issues found in 28 source files
+== bandit -ll (src tools scripts)
+rc 0
+== bandit -ll (+ load_tools)
+rc 0
+== noqa/nosec/NOSONAR/type: ignore added by the patch
+0
+== git diff 61ded9e HEAD --stat src
+0

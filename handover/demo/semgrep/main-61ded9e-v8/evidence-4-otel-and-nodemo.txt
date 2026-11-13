@@ -1,0 +1,17 @@
+== otel test with exceptions.txt line 34 removed (must FAIL)
+E       AssertionError: assert '^requirements-semgrep\\.txt:[0-9]+:(opentelemetry-[a-z-]+)(==[0-9]+)?$' in ['^[^:]+:[0-9]+:(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]{1,3}$', '^[^:]+:[0-9]+:127\\.0\\.0\\.1$', '^[^:]+:[...^[^:]+:[0-9]+:https:/{2}(github\\.com/(gitleaks/gitleaks|actions)|docs\\.github\\.com|docs\\.n8n\\.io)([:/].*)?$', ...]
+E        +  where ['^[^:]+:[0-9]+:(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]{1,3}$', '^[^:]+:[0-9]+:127\\.0\\.0\\.1$', '^[^:]+:[...^[^:]+:[0-9]+:https:/{2}(github\\.com/(gitleaks/gitleaks|actions)|docs\\.github\\.com|docs\\.n8n\\.io)([:/].*)?$', ...] = <built-in method splitlines of str object at 0x3af666a0>()
+E        +    where <built-in method splitlines of str object at 0x3af666a0> = '^[^:]+:[0-9]+:(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]{1,3}$\n^[^:]+:[0-9]+:127\\.0\\.0\\.1$\n^[^:]+:[0-9]+...desk-n8n$\n^requirements-semgrep\\.txt:[0-9]+:[0-9a-f]{64}$\n^[^:]+:[0-9]+:requirements-semgrep\\.in[^A-Za-z0-9_-]?$\n'.splitlines
+E        +      where '^[^:]+:[0-9]+:(192\\.0\\.2|198\\.51\\.100|203\\.0\\.113)\\.[0-9]{1,3}$\n^[^:]+:[0-9]+:127\\.0\\.0\\.1$\n^[^:]+:[0-9]+...desk-n8n$\n^requirements-semgrep\\.txt:[0-9]+:[0-9a-f]{64}$\n^[^:]+:[0-9]+:requirements-semgrep\\.in[^A-Za-z0-9_-]?$\n' = read_text(encoding='utf-8')
+restored
+== same test after restore
+1 passed in 3.33s
+== NEW retry/hazard tests against the v7 test file idea: v7 file has none of them (63 tests, none named *hazard* or *retries*)
+== no-demo copy (demo_only removed)
+ls: cannot access 'demo_only': No such file or directory
+All checks passed!
+Success: no issues found in 28 source files
+ssssss...............                                                    [100%]
+=========================== short test summary info ============================
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+15 passed, 6 skipped in 0.44s

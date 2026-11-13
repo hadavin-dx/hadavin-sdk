@@ -1,0 +1,57 @@
+semgrep: 1.185.0  (made-up local rule rule.yml, offline: unshare -rn)
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict d1
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 2
+ • Parsed lines: ~75.0%
+exit 3
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  d1
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 2
+ • Parsed lines: ~75.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict d5
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 2
+ • Parsed lines: ~100.0%
+exit 3
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  d5
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 2
+ • Parsed lines: ~100.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict d6
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 3
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  d6
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict e1
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  e1
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict e2
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  e2
+ • Findings: 0 (0 blocking)
+ • Targets scanned: 1
+ • Parsed lines: ~100.0%
+exit 0
+--- verbose on d6 and e1
+[WARN] Syntax error at line d6/broken.js:1:
+p1: exit 3  • Parsed lines: ~0.0% ; file: print("hit"|
+p2: exit 3  • Parsed lines: ~50.0% ; file: def f(:|  print("hit"|
+j1: exit 0  • Parsed lines: ~100.0% ; file: function f( {|}|
+j2: exit 3  • Parsed lines: ~0.0% ; file: eval("hit"|

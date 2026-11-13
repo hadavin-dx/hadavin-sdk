@@ -1,0 +1,24 @@
+committed tree: 0b7d4f3d57cc2cdf21416f2be372aaa9793aa448 parent 61ded9ebdb17397904aa850830f3d9837114f8f7; refs:
+refs/heads/v8
+== gitleaks dir
+[90m8:44AM[0m [32mINF[0m [1mscanned ~4375116 bytes (4.38 MB) in 955ms[0m
+[90m8:44AM[0m [33mWRN[0m [1mleaks found: 36[0m
+rc 1
+== gitleaks git
+[90m8:44AM[0m [32mINF[0m [1m5 commits scanned.[0m
+[90m8:44AM[0m [32mINF[0m [1mscanned ~3273486 bytes (3.27 MB) in 1.39s[0m
+[90m8:44AM[0m [32mINF[0m [1mno leaks found[0m
+rc 0
+== apply --check on clean 61ded9e
+OK
+ .codeant/configuration.json         |    1 
+ .github/workflows/semgrep.yml       |   79 ++
+ .gitleaks.toml                      |    8 
+ docs/tests.md                       |   20 +
+ exceptions.txt                      |    3 
+ requirements-semgrep.in             |   14 
+ requirements-semgrep.txt            | 1130 +++++++++++++++++++++++++++++++++++
+ tests/run_cmd.py                    |   49 ++
+ tests/test_gitleaks_semgrep_lock.py |  182 ++++++
+ tests/test_nosemgrep_form.py        |  315 ++++++++++
+ 10 files changed, 1800 insertions(+), 1 deletion(-)

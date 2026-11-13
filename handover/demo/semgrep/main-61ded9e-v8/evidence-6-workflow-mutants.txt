@@ -1,0 +1,36 @@
+baseline NEW:
+81 passed in 1.35s
+baseline OLD v7 file:
+63 passed in 1.32s
+== M7 persist-credentials true
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+NEW: FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_has_no_known_hazard;FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[persist-credentials removed];FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[persist-credentials true];3 failed, 78 passed in 1.30s;
+OLD v7: 63 passed in 0.95s
+restored byte-identical
+== M4 PR title in run
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+NEW: FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_has_no_known_hazard;FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[head_ref in a run step];FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[pull request title in a run step];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[clean];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[exit 2 then clean];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[exit 2 then findings];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[exit 2 three times];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[exit 2 twice then clean];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[findings are never retried];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[unreadable file];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[unreadable rule file];11 failed, 70 passed in 1.76s;
+OLD v7: 63 passed in 1.48s
+restored byte-identical
+== M8 strict removed
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+NEW: FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_has_no_known_hazard;FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[--error removed];FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[--strict removed];3 failed, 78 passed in 1.70s;
+OLD v7: 63 passed in 1.13s
+restored byte-identical
+== M10 severity WARNING
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+NEW: FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_has_no_known_hazard;FAILED tests/test_nosemgrep_form.py::test_a_workflow_hazard_is_found[severity WARNING];2 failed, 79 passed in 1.40s;
+OLD v7: 63 passed in 1.12s
+restored byte-identical
+== M9 retry also on exit 1
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+NEW: FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[exit 2 then findings];FAILED tests/test_nosemgrep_form.py::test_scan_step_retries_only_exit_2[findings are never retried];2 failed, 79 passed in 2.81s;
+OLD v7: 63 passed in 1.36s
+restored byte-identical
+== M12 GITHUB_TOKEN env
+ 1 file changed, 1 insertion(+)
+NEW: FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_has_no_known_hazard;1 failed, 80 passed in 1.90s;
+OLD v7: 63 passed in 1.56s
+restored byte-identical
+after restore NEW:
+81 passed in 2.06s
