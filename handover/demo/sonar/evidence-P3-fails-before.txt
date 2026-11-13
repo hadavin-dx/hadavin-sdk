@@ -1,0 +1,9 @@
+FAILED tests/test_path_confinement.py::test_check_invariants_readers_refuse_a_path_outside
+FAILED tests/test_path_confinement.py::test_check_invariants_main_does_not_write_json_outside
+FAILED tests/test_path_confinement.py::test_load_driver_run_refuses_log_and_facts_outside
+FAILED tests/test_path_confinement.py::test_load_driver_main_writes_nothing_outside
+FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out
+FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside
+FAILED tests/test_path_confinement.py::test_run_real_check_config_outside_is_refused
+FAILED tests/test_path_confinement.py::test_no_flagged_site_opens_a_raw_argument
+8 failed, 17 passed in 63.33s (0:01:03)
