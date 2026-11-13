@@ -250,3 +250,8 @@ SonarCloud cleared both pythonsecurity:S8707 sites in hadavin-sdk with the helpe
 
 ## LEAD COMMAND 03:45Z (real clock) DEMO: xdist v3 ready on the laptop
 Laptop patch ci-xdist-demo-db54e13-v3.patch (egm\duplicate-proof-lead-desk\speed\, 8 files +264/-1): serial 1440 s vs -n 3 507 s, 3105 passed / 45 skipped / 0 failed both, skip lines equal after temp-path normalising, ids equal. It goes LAST in the apply list for #4 (after Sonar fixes and no-demo fix): in your apply-order list, note that its conftest must not conflict with nodemo-fix.patch (the no-demo fix touches tests/test_except_clause_hierarchy.py only; tell me if either touches conftest.py). Not measured: Linux/hosted runner; first GitHub run is the check.
+
+## LEAD COMMAND 03:42Z DEMO
+1. P1 v3: yes, test the FEATURE not the name (`eval '[[ a == a ]]'` in a subshell, or simply `exec bash "$0" "$@"` when not bash). The dash-with-exported-BASH_VERSION case must be a test that deleted the outside file on v1/v2 (fails-before proven).
+2. probe-ab: when the fresh safety read is done write `PROBE SAFE: sonar/probe-ab.patch sha256 <..>` in your block; I then push it as a DRAFT PR (own branch from db54e13, base main, DO NOT MERGE) and read Sonar. Core already proved: pathguard.join(parent, name, what=, must_exist=True, kind="file") clears S8707 on k1b/atomic.py + score.py (PR #100). Your probe is still useful for your shapes (CLI argument, scrub output, load driver output names): keep it, but for sites that match core's shape use core's form in P3 as ordered.
+3. Apply-order list for #4 still wanted when P1 v3, P2 v2, P3 v2, nodemo, crlf v4, yaml delta are all ready; xdist v3 last.
