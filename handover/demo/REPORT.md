@@ -1,6 +1,39 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:32Z / 07:03 IST - CADENCE ORDER TAKEN (block every 5 min; an automatic heartbeat loop now guarantees it); STANDING QUEUE RUNNING: Q1 chunked run (chunk 7 of 10, chunks 0-6 green), Q2/Q3 Semgrep PR text + PR #2-#4 texts, Q4 dry-run checks, Q5 skip table, Q6 DONE
+FAILED / UNCERTAIN first:
+1. Q1: still no verdict on pr-3-tests 2db3926: chunks 0-6 exit 0 (112+624+276+156+306+329+466 = 2269 passed, 0 failed); chunk 7 running (17 passed so far); chunks 8-9 and the post-chunk steps (ruff, mypy x2, bandit, hygiene+gitleaks, gitleaks dir/git, restart test x5, node-off) follow automatically (resumable scripts; the container restarts every 5-30 min: I relaunch after each).
+2. Q3 PR texts #2-#4 (fetched from the GitHub API; read-only): reviewer verdict: EACH of the three texts has 1 BLOCKER (the sentence 'the three trees equal #1 (checked: the final tree is identical)' is FALSE now: pr-3-tests 2db3926 carries all batches since 20:16Z) + 4 Majors (no core touches named; new locks/deps/workflow change unnamed; no tests run/not run; 'merge them in order' is unsafe/misleading: lint/CodeQL fire only for PRs into main; local #2/#3 red). A verifier-drafter (opus, with a shell) is writing VERIFIED replacement 'User description' sections into pr-text/proposed/ with every unverified sentence marked [UNVERIFIED].
+3. Q2 Semgrep PR body: reviewer: 1 Major (core touches/'no src change' line missing) + unevidenced claims (unparsable-file exit 0, mypy line, test-file names) + jargon; the drafter is fixing it (body v2); the patch itself needs wording fixes (stack-form wording in 3 files; licence line says 'owner must decide' but the yes is final): builder S3 is making semgrep-on-2db3926-v3.patch with fresh gate evidence.
+4. Q6 DONE: scans/SCAN-TABLE.md (pushed): only pr-3-tests is clean (gitleaks dir 0, git 0, hygiene 0, test_hygiene 15 passed); main/cfg-sonar dir 1 + git 2; pr-1-code/pr-2-demo-folder dir 1 + git 325; initial-code git 325 and test_hygiene 1 failed.
+5. Not run anywhere: PowerShell/Windows, real GitHub CI, a real n8n, Python 3.13.
+READY TO APPLY NOW: nothing new (Semgrep own PR: v3 patch pending; PR texts: proposals pending).
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| Q1 chunk driver + post steps (shell) | full suite of 2db3926 + lints/hygiene/gitleaks/restart x5/node-off | 01:11 | chunk 7 of 10 | /tmp/work/h3chunk-*, h3post-* -> INT-3 |
+| D-PR (opus) | verified descriptions for PR #2/#3/#4 | 01:36 | running | pr-text/proposed/*.md + VERIFY.md |
+| S3 (sonnet) | semgrep-on-2db3926-v3.patch + gate evidence | 01:36 | running | semgrep patch v3 + evidence-sg-20 |
+| D-SG (opus) | Semgrep PR body v2 | 01:36 | running | pr-text/semgrep-pr-body-v2.md |
+| Q5 builder | skip table (Linux/Windows) | 01:27 | running | skips/SKIP-TABLE.md |
+| Q4 builder | dry-run checks of real-run scripts (synthetic) | 01:27 | running | real-run/DRY-RUN-CHECKS.md |
+| heartbeat loop (shell) | 5-minute block guarantee | 01:33 | running | blocks at the top of REPORT.md |
+Totals: agents 5, shells 2, containers 0, heavy pytest 1, load ~2.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| Semgrep PR (patch + body) | patch v3 / body v2 | patch review R5 delta 0B/1M (fixed v2); body review 0B/1M + nits | wording conflicts in the patch; body overclaims | no | confirming review of v3 + body v2 |
+| PR texts #2-#4 | 1 (verifier drafting) | 3 Blockers (same sentence), 12 Majors | the texts do not describe the branch | no | verified texts reviewed by a fresh reviewer, then the lead pastes them |
+| batch 3 gate | Q1 | chunks 0-6 green | final gate must complete | no | chunks 7-9 + post steps |
+TABLE 3 - FINISHED SINCE LAST BLOCK (01:25Z)
+| item | result |
+|---|---|
+| Q6 scan table | done, pushed (a4862562) |
+| Q2 first body draft | drafted; reviewed (Major); fix in progress |
+| Q3 review of PR #2-#4 texts | done: 3 Blockers, saved REVIEW-pr2-4.md |
+| cadence order | heartbeat loop started |
+
 ## 2026-11-13 01:32Z / 07:02 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 29 passed, 0 failed, running

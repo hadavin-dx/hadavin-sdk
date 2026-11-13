@@ -1,0 +1,49 @@
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+147 files already formatted
+$ bandit -ll -q -r src tools scripts load_tools -c pyproject.toml
+environment: line 32: bandit: command not found
+$ timeout 600 pytest -q -p no:cacheprovider tests/test_hygiene.py
+...............                                                          [100%]
+15 passed in 43.62s
+$ timeout 600 pytest -q -p no:cacheprovider tests/test_nosemgrep_form.py
+...............................................................          [100%]
+63 passed in 0.87s
+$ timeout 600 pytest -q -p no:cacheprovider tests/test_gitleaks_semgrep_lock.py
+...                                                                      [100%]
+3 passed in 7.84s
+$ timeout 600 pytest -q -p no:cacheprovider tests/test_gitleaks_exceptions.py
+............................................                             [100%]
+44 passed in 13.79s
+MUT cancel-in-progress true
+$ pytest -q -p no:cacheprovider tests/test_nosemgrep_form.py
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.74s
+MUT constant group
+$ pytest -q -p no:cacheprovider tests/test_nosemgrep_form.py
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.87s
+$ /tmp/work/gl/gitleaks dir . --no-banner
+[90m1:32AM[0m [33mWRN[0m [1mleaks found: 31[0m
+$ /tmp/work/gl/gitleaks git . --no-banner
+[90m1:32AM[0m [32mINF[0m [1mno leaks found[0m
+fdd2393c677aa112a286079185951dad9728d86376b7a2e83677c49d2bfd062c  /tmp/demo-push/handover/demo/semgrep/semgrep-on-2db3926-v3.patch
+$ (clean clone + v3 committed) gitleaks dir . --no-banner
+[90m1:32AM[0m [32mINF[0m [1mno leaks found[0m
+$ (clean clone + v3 committed) gitleaks git . --no-banner
+[90m1:32AM[0m [32mINF[0m [1mno leaks found[0m
+$ uvx bandit -ll -q -r src tools scripts load_tools -c pyproject.toml
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+exit 0

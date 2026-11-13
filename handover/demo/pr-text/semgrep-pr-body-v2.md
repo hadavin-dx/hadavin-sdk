@@ -85,15 +85,16 @@ The patch behind this PR is `semgrep-on-2db3926-v3.patch` (sha256 [V3-SHA256]).
 - Deliberate breakages of the real workflow file (mutants): `cancel-in-progress: true` made 1 test fail (62 passed). A constant `group: semgrep` made 1 test fail (62 passed).
 - Deliberate breakages of the gitleaks exceptions (left anchor removed, line rule widened, path widened, file-name rule widened): each made the lock test fail. These ran on an earlier version of the patch; the lock test file has not changed since.
 - The old suppression test, run against the new refused spellings, missed 23 of 24 of them. The new test refuses them.
-- `git apply --check` on a clean copy of `2db3926`: OK (v2 of the patch).
-- gitleaks scans of the files and of the history: no leaks. ruff check and ruff format: clean (v2 of the patch).
+- `git apply --check` on a clean copy of `2db3926`: OK for v2 and for v3 of the patch.
+- gitleaks scans of the files and of the history: no leaks (v2 of the patch).
+- v3 of the patch: ruff check and ruff format clean; mypy for Linux and for Windows: no issues in 26 source files.
 - Semgrep exit codes 0, 1, 2 and 7 were seen locally with the pinned version on a made-up rule.
 
 ## Tests NOT run
 
 - The full test suite on this PR at 2db3926. (An earlier version of this patch, on 0841f36, ran the full suite: 2426 passed, 115 skipped.)
-- mypy and bandit: not run on this patch version (no saved output for it).
-- Any of the checks above on v3 of the patch, unless a v3 evidence file is added here.
+- bandit: not run on this patch version (the tool was not installed where the checks ran).
+- The tests and the gitleaks scans on v3 of the patch: their results were not yet saved when this text was written. The 125 above is for v2. v3 changes only comments and wording against v2.
 - Any real GitHub CI run of this workflow.
 - Windows and PowerShell.
 - Python 3.13: only the lock regeneration ran on 3.13, not the tests.

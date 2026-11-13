@@ -1,4 +1,4 @@
-# Claims table for semgrep-pr-body.md
+# Claims table for semgrep-pr-body.md and semgrep-pr-body-v2.md (rows 1-53 hold for both unless a row says otherwise; v2-only rows 54-63 below)
 
 Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = semgrep/semgrep-on-2db3926-v2.patch (sha256 a5b71be56ceb0d473a176fdba59ad0a22827529baed6721594e38d580c78f1f9, recomputed by the drafter with sha256sum). "Base clone" = /tmp/work/q4-base (clean clone at 2db392650e8b, 0 changes in `git status`). "Drafter" = checked by D-SG in this session; "read" = read in the file, not re-run.
 
@@ -15,9 +15,9 @@ Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = s
 | 9 | n8n nominal: 3 JSON files, no pack reads JSON, Code-node JS not parsed | Patch docs hunk; `ls /tmp/work/q4-base/n8n` = desk-form.json, desk-webhook.json, proof.json | Drafter read + ran ls. "No pack reads JSON" is the docs' statement: not verified by a scan |
 | 10 | No WARNING/INFO findings looked at | lead-registry-run.txt "NOT checked: ... WARNING-level findings"; docs hunk | Drafter read |
 | 11 | No secrets scan; gitleaks in lint.yml does that | docs/tests.md (base and patch) lists gitleaks in lint.yml; workflow has no secrets step | Drafter read |
-| 12 | Unparsable Python file does not fail the job (exit 0 observed with --strict) | Patch workflow comment and docs hunk | Read only: the underlying run output is not in the semgrep/ folder (not verified by the drafter) |
+| 12 | Unparsable Python file does not fail the job (exit 0 observed with --strict) | Patch workflow comment and docs hunk | NOT VERIFIED: no saved output. Body v1 stated it as fact (fault). Body v2 moves it to "Tests NOT run" as "the patch author reports ..., but no output of that run is saved" |
 | 13 | Registry rules fetched at every run, cannot be pinned; results can change | Patch workflow comment | Drafter read (claim from the patch author; "no versioned pack" not verified independently) |
-| 14 | Not a required check unless the owner makes it one | Patch workflow comment "Keep it OUT of the required checks"; SUMMARY.md MAJOR 3 | Read. Actual GitHub branch-protection settings NOT verified (no GitHub calls allowed) |
+| 14 | v1: "Not a required check unless the owner makes it one"; v2: "intended not to be a required check" | Patch workflow comment "Keep it OUT of the required checks"; SUMMARY.md MAJOR 3 | Read. Actual GitHub branch-protection settings NOT verified (no GitHub calls allowed) |
 | 15 | "ERROR-level clean on the stack head at 0841f36 as of the lead's run"; image semgrep/semgrep:1.185.0; exit 0, no finding | semgrep/lead-registry-run.txt | Drafter read |
 | 16 | That run lacked --strict and --disable-version-check, other --config order, used --quiet so pack fetch not shown | lead-registry-run.txt (command line and NOT checked); docs hunk "Status of the scan" | Drafter read and compared the two command lines |
 | 17 | PR applies on 2db3926; 13 files in scanned folders changed since 0841f36 (405+, 60-); scan not repeated on 2db3926 | `git -C /tmp/work/q4-base diff --stat 0841f36 HEAD -- src scripts load_tools tools n8n` -> "13 files changed, 405 insertions(+), 60 deletions(-)"; 0841f36 is an ancestor (merge-base --is-ancestor). No Semgrep run on 2db3926 in any evidence file | Drafter ran |
@@ -50,15 +50,33 @@ Paths are relative to /tmp/demo-push/handover/demo/ unless absolute. "Patch" = s
 | 44 | Old suppression test missed 23 of 24 new refused shapes | SUMMARY-14b item 1 (evidence sg-13b) | Read (summary only; evidence-sg-13b not opened) |
 | 45 | git apply --check on clean 2db3926: OK; 9 files | `git -C /tmp/work/q4-base apply --check <patch>` -> APPLY_CHECK_OK; `grep '^diff --git'` = 9; also evidence-sg-19-v2-gates.txt "applycheck OK" | Drafter ran |
 | 46 | gitleaks dir and git: no leaks; ruff check and format clean | evidence-sg-19-v2-gates.txt ("no leaks found" x2, "All checks passed!", "147 files already formatted") | Read |
-| 47 | mypy linux and win32 clean "as reported by the builder" | REVIEW-5-delta.md (S3 gates); evidence-sg-19-gates-on-2db3926.txt (v1 tree: "Success: no issues found in 26 source files" x2) | Read. The v2 evidence file shows no mypy output: for v2 not verified |
+| 47 | v1 body: mypy linux and win32 clean "as reported by the builder" (FAULT: the only saved mypy output was for the v1 patch, evidence-sg-19-gates-on-2db3926.txt; none for v2). v2 body: mypy linux and win32 clean on v3 of the patch | semgrep/evidence-sg-20-v3-gates.txt: `mypy --platform linux` and `--platform win32` -> "Success: no issues found in 26 source files" | Read. The evidence file does not itself name the tree it ran on; it is the v3 gates file by its name and the coordinator's message |
 | 48 | Exit codes 0,1,2,7 seen locally on a made-up rule | evidence-sg-6-exit-codes-local.txt | Read |
 | 49 | Full suite NOT run on this PR; earlier version on 0841f36: 2426 passed, 115 skipped | evidence-sg-10-full-pytest.txt; SUMMARY.md BLOCKER 1 | Read |
 | 50 | No GitHub CI, no Windows/PowerShell, no Python 3.13 test runs | Brief; no such evidence file in semgrep/ | Not verified as an absence beyond the evidence folder; the evidence files do not record which Python ran the focused tests |
-| 51 | bandit: no clean output saved for this version | evidence-sg-19-v2-gates.txt has no bandit output; evidence-sg-19-gates-on-2db3926.txt shows "bandit: command not found" then an unlabelled summary | Drafter read. Note: APPLY-LIST.md line 90 says "bandit clean" for v1; the saved file contradicts or at least does not show it |
+| 51 | v1: bandit: no clean output saved; v2: bandit not run on this patch version, tool not installed | evidence-sg-19-v2-gates.txt has no bandit output; evidence-sg-19-gates-on-2db3926.txt shows "bandit: command not found" then an unlabelled summary | Drafter read. evidence-sg-19-gates-on-2db3926.txt (v1) and evidence-sg-20-v3-gates.txt (v3) both show "bandit: command not found". APPLY-LIST.md line 90 says "bandit clean" for v1: the saved output does not support that |
 | 52 | Local run commands; registry needed; docker not needed; fallback `pip install semgrep==1.185.0` elsewhere | Patch docs hunk "Run it on your own computer"; workflow install line | Read. Not run by the drafter (registry blocked from this sandbox, evidence-sg-3-registry.txt) |
 | 53 | Stays its own PR, after #2 to #4 | APPLY-LIST.md line 94 "Still own PR after #2-#4"; brief | Read |
+
+| 54 | v2: PR changes no code under src/ and no core module; adds or changes exactly 9 files (listed) | `grep '^diff --git'` on semgrep-on-2db3926-v3.patch = 9, names match the list; no path under src/ | Drafter ran on v3 |
+| 55 | v2: patch is semgrep-on-2db3926-v3.patch, sha256 [V3-SHA256] | Placeholder for the lead. At 01:31 the file had sha256 fdd2393c677aa112a286079185951dad9728d86376b7a2e83677c49d2bfd062c (drafter ran sha256sum); may still change | Drafter ran |
+| 56 | v2: v3 applies on a clean 2db3926 | `git -C /tmp/work/q4-base apply --check <v3>` -> V3_APPLY_OK; clone still clean after | Drafter ran |
+| 57 | v2: v3 changes only comments and wording against v2 | `diff` v2 vs v3: .gitleaks.toml comment, docs/tests.md two sentences (stack wording, licence yes), requirements-semgrep.in comment (patch-order line), test_gitleaks_semgrep_lock.py comment; plus blob index lines | Drafter ran |
+| 58 | v2: owner has said yes to p/python and p/javascript, this repo only | v3 docs hunk "The repository owner has said yes to this use of the registry packs p/python and p/javascript for this repository only"; SUMMARY.md | Read (owner's message itself not opened) |
+| 59 | v2: ruff check and format clean on v3 | evidence-sg-20-v3-gates.txt | Read |
+| 60 | v2: v3 test and gitleaks results not yet saved; the 125 is for v2 | evidence-sg-20-v3-gates.txt at 01:31 ended at `$ timeout 600 pytest ... tests/test_hygiene.py` with no result; per-file counts absent, so the 4-file list was dropped | Read. If the file is completed, the lead should replace this line with its numbers |
+| 61 | v2: Python 3.13 used only for the lock regeneration, not the tests | evidence-sg-17-uv-lock-identical.txt "Python host 3.13.18"; no test evidence names 3.13 | Read. Which Python ran the tests is not recorded |
+| 62 | v2: PRs #2-#4 are the code and test stack; they bring tests/ to main where it does not exist yet; Semgrep needs the five folders; the gitleaks exception needs the `cwd=target` change in tests/test_hygiene.py | ORDERS.md line 35 ("tests/ does not exist on main yet", "code stack (#2-#4)"); v3 .in and .gitleaks.toml comments; /tmp/work/q4-base/tests/test_hygiene.py:194 `cwd=target`; evidence-sg-6 (missing folder -> exit 2) | Read and grepped. That `cwd=target` arrived through #2-#4 (not already on main) is inferred from tests/ not being on main: not checked on GitHub |
+| 63 | v2: plain-word definitions (severity ERROR, lock tools, group names, ready-made packages, GitHub Actions, gitleaks exception, `.in` mistaken for a web address) | Wording only; facts behind them are rows 4, 23, 25-28, 29, 34 | n/a |
 
 ## Points the lead should know (not in the body as claims)
 
 - requirements-semgrep.in in the patch says "Patch order (this stack form): triage/codeant3-gitleaks.patch, then fixes/docs-and-deps.patch (v4), then this patch." At 2db3926 those are presumably already in the base (the `cwd=target` line exists); the sentence may read oddly to a stranger once the PR is opened on main. Not changed (read-only for me).
 - The docs hunk says the licence question "is for the repository owner to decide before the job is switched on"; the body says the yes was given. If the owner's yes is final, the docs sentence is now out of date.
+
+## What changed (after the fresh review, Major, no Blocker)
+
+- New body file semgrep-pr-body-v2.md; semgrep-pr-body.md left as it was.
+- Rows 12, 14, 47, 51 corrected or marked; rows 54-63 added for the v2 body.
+- Body v2: list of the 9 files and "no code under src/, no core module"; v3 patch named with [V3-SHA256]; licence = the owner has said yes; "intended not to be a required check"; the unparsable-file claim moved to Tests NOT run as unsaved; mypy now from the v3 evidence; bandit under Tests NOT run; the 4-file test list dropped (no per-file counts); Python 3.13 = lock regeneration only; plain-word definitions; long sentence split; PRs #2-#4 explained with the `cwd=target` reason. The scan-result sentence is kept word for word.
+- Both "points the lead should know" above are fixed in v3 (patch-order line and the licence sentence are gone; checked by diff).
