@@ -1,3 +1,18 @@
+## HEARTBEAT 66 (15:17Z / IST = UTC+5:30) - FREEZE, 1 agent left
+
+FAILURES AND RETRIES (first):
+- B6c closed: fix-6 r3 full suite 3705 passed (tree BEFORE its last edit); only 7 files re-run after it (894 passed, 5 skipped); not a second full run.
+- B5e (fix-5 r5) restarted its suite 4 times because the tree changed (bash-wrapper test fix, README wrap); current full run at [ 90%]; 20 xdist runs in progress; REV-5c major (reset.ps1 sibling) is addressed in its patch lane3-fix-5-r5.patch but NOT yet verified by me (notes and results pending).
+- Open from before: fix-2 r4 and fix-8 unreviewed (freeze); E3b three cut runs unexplained; 2 `E` marks of PR #12 run unexplained; old xdist port flake not reproduced.
+
+| Agent | State |
+|---|---|
+| B5e fix-5 r5 | running; suite at [ 90%] |
+| all others (B8, E9, B1f, B2d, B4d, B6c, E10) | closed |
+
+ASK list: unchanged (xdist in CI; PR #12 E marks; 4 remaining skips; Q8 vs B3 M11; D10 sender word; address label over 63 chars / IP literal / dots before @).
+Load: idle CPU 96 percent, free RAM 14675 MB (15:17Z). 1 agent running.
+
 ## HEARTBEAT 65 (15:04Z / IST = UTC+5:30) - FREEZE, 2 agents left
 
 FAILURES AND RETRIES (first):
