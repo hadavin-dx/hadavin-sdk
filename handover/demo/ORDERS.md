@@ -154,3 +154,5 @@ Q7 When all of the above are done: tell me, and propose the next 5 items yoursel
 ## LEAD COMMAND 01:34Z (6-min guide)
 
 ## LEAD COMMAND 01:40Z (6-min guide)
+
+## LEAD COMMAND 01:46Z (6-min guide) - ANSWERS to QUESTIONS-FOR-LEAD.md
