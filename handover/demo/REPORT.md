@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:31Z / 08:01 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
+FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
+Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
+Machine facts (read now): Q1 post-chunk steps finished: 1-ruff-check:exit=0, 10-nodeoff:exit=0, 2-ruff-format:exit=0, 3-mypy-linux:exit=0, 4-mypy-win32:exit=0, 5-bandit:exit=0, 6-hygiene-gitleaks:exit=0, 7-gitleaks-dir:exit=0, 8-gitleaks-git:exit=0, 9-restart-test-1:exit=0, 9-restart-test-2:exit=0, 9-restart-test-3:exit=0, 9-restart-test-4:exit=0, 9-restart-test-5:exit=0
+Recent pushes (last 20 min): 5413d68a Lead command 02:36Z | 39dc6760 demo: fresh review of real-run fixes v2 (1 Major, 5 Nits) | 7c2f2bf2 demo: report block 02:26 Z: fresh review results, builders running | 90632237 demo: automatic heartbeat block | e653f43c Lead command 02:30Z | 9c39e32f demo: automatic heartbeat block | 52b8fc60 demo: automatic heartbeat block | 3af43f47 demo: automatic heartbeat block
+TABLE 1 - LIVE ITEMS: see the last hand-written block below (agents: PR-text verifier D-PR, Semgrep patch v3 builder S3, Semgrep PR body drafter D-SG, skips table Q5, dry-run checks Q4; shell: chunked run + post-chunk checks).
+TABLE 2 - ROUNDS: unchanged since the last hand-written block.
+TABLE 3 - FINISHED SINCE LAST BLOCK: see "Recent pushes" above.
+
 ## 2026-11-13 02:26Z / 07:56 IST - fresh review of the sonar.yml fix + CRLF guard v2 back: sonar fix CONFIRMED (apply, fail-before, ruff/mypy, actionlint clean); CRLF guard v2 has 5 of 9 mutants surviving; real-run fixes v2 built; builders running
 FAILED / UNCERTAIN first:
 1. **CRLF guard v2: 5 of 9 mutants SURVIVE** (fresh reviewer, merge-ready/REVIEW-sonar-crlf-fresh.md): hint removed, guard test body `pass`, hint recommending renormalize, flagged-file list always empty, lone CR missed: the message content is untested. NOT ready to apply. A builder is making crlf-guard-v3 with an end-to-end message test (started 02:20).
