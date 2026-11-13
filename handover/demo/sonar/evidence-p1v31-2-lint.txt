@@ -1,0 +1,11 @@
+# ruff check, ruff format --check, mypy linux, mypy win32, bandit -ll -r src tools scripts -c pyproject.toml (as lint.yml)
+All checks passed!
+ruff check rc=0
+147 files already formatted
+format rc=0
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+		Medium: 0
+		High: 9
+Files skipped (0):
+bandit rc=0

@@ -1,0 +1,37 @@
+# 26 mutants (edit, run hygiene+reset_scripts+workflow_run_flags tests with -x, revert). First run, final code:
+S1 drop exec from keywords: KILLED (1 failed, 48 passed, 7 deselected in 2.63s) 3s
+S2 drop command|time: KILLED (1 failed, 24 passed, 7 deselected in 2.00s) 2s
+S3 drop ! handling: KILLED (1 failed, 17 passed, 7 deselected in 1.79s) 2s
+S4 comments not blanked: KILLED (1 failed, 39 passed, 7 deselected in 6.51s) 7s
+S5 ends-open always False: KILLED (1 failed, 76 passed, 7 deselected in 2.69s) 3s
+S6 drop $' handling: KILLED (1 failed, 28 passed, 7 deselected in 1.82s) 2s
+S7 drop the <<< exclusion: KILLED (1 failed, 49 passed, 7 deselected in 2.18s) 3s
+S8 heredoc never blanked: KILLED (1 failed, 41 passed, 7 deselected in 1.72s) 2s
+S9 workflow shell-key check removed: KILLED (1 failed, 95 passed, 7 deselected in 4.94s) 5s
+S9b step shell-key check removed: KILLED (1 failed, 93 passed, 7 deselected in 4.43s) 5s
+S10 run blocks not scanned: KILLED (1 failed, 97 passed, 7 deselected in 5.16s) 6s
+S11 `)` exclusion dropped: KILLED (1 failed, 45 passed, 7 deselected in 1.92s) 2s
+S12 backtick separator dropped: KILLED (1 failed, 22 passed, 7 deselected in 2.55s) 3s
+S13 $( inside dq not entered: KILLED (1 failed, 19 passed, 7 deselected in 1.88s) 2s
+N1 heredoc delimiter back to letters only: KILLED (1 failed, 58 passed, 7 deselected in 1.67s) 2s
+N2 unended heredoc not reported: KILLED (1 failed, 79 passed, 7 deselected in 1.78s) 2s
+N2b pending at EOF not reported: KILLED (1 failed, 80 passed, 7 deselected in 1.78s) 2s
+N3 opening single quote blanked to a space: KILLED (1 failed, 68 passed, 7 deselected in 2.04s) 2s
+N3b opening double quote blanked to a space: KILLED (1 failed, 66 passed, 7 deselected in 2.31s) 3s
+N4 [[ ]] inside not neutralised: KILLED (1 failed, 10 passed, 7 deselected in 1.64s) 2s
+N5 continuation lines not joined: KILLED (1 failed, 73 passed, 7 deselected in 1.86s) 2s
+N6 pad: delimiter must equal after strip (old leniency): KILLED (1 failed, 83 passed, 7 deselected in 1.38s) 2s
+N7 quadratic ((: look-back slice: KILLED (1 failed, 90 passed, 7 deselected in 40.05s) 40s
+P1 lint.yml pip back to the space form: KILLED (1 failed, 148 passed, 7 deselected in 24.08s) 25s
+G1 guard `;` instead of `&&` (reset.sh): KILLED (1 failed, 141 passed, 7 deselected in 23.59s) 24s
+G2 guard `;` instead of `&&` (start_all.sh): KILLED (1 failed, 142 passed, 7 deselected in 23.97s) 24s
+
+# History: in an earlier run of this work S7 (drop the <<< branch) and the quote-placeholder mutant SURVIVED because they were equivalent (the heredoc word regex excluded '<', and the opening quote was already a placeholder); the code and probes were changed so both are now killed (mutants2/3):
+S7 drop the <<< exclusion: KILLED (1 failed, 49 passed, 7 deselected in 1.89s) 2s
+S7b drop the <<< exclusion and `<` from the word class: KILLED (1 failed, 49 passed, 7 deselected in 2.78s) 3s
+N1 heredoc delimiter back to letters only: PATTERN COUNT 0 -> NOT RUN
+N3 opening single quote blanked to a space: SURVIVED (141 passed, 7 deselected in 22.03s) 22s
+N3b opening double quote blanked to a space: KILLED (1 failed, 66 passed, 7 deselected in 4.15s) 4s
+N1 heredoc delimiter back to letters only: KILLED (1 failed, 58 passed, 7 deselected in 1.99s) 2s
+N3 opening single quote blanked to a space: KILLED (1 failed, 68 passed, 7 deselected in 1.66s) 2s
+N3b opening double quote blanked to a space: KILLED (1 failed, 66 passed, 7 deselected in 1.61s) 2s

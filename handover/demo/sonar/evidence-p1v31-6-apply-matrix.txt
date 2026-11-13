@@ -1,0 +1,19 @@
+# apply matrix on db54e13 (git apply, real sequential applies). Pairs first, then random orders.
+pair results (A then B on db54e13); 'ok' or the patch that failed + first error line
+  p2 -> nd2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  p3 -> p3v3: FAIL at p3v3: error: patch failed: docs/real-services.md:18
+  p3 -> nd2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  p3v3 -> p3: FAIL at p3: error: patch failed: docs/real-services.md:18
+  p3v3 -> nd2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd1 -> nd2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> p1: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> p2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> p3: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> p3v3: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> nd1: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  nd2 -> yaml: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+  yaml -> nd2: FAIL at nd2: error: patch failed: tests/test_hygiene.py:16
+all other pairs ok
+
+set with p3: 360 orders have p1 before nd2; applied 90 random ones (seed 7); failures: 0
+set with p3v3: 360 orders have p1 before nd2; applied 90 random ones (seed 7); failures: 0

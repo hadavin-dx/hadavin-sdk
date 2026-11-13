@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:24Z / 09:54 IST - BREACH ROOT CAUSE FOUND (your 04:02Z item 2): there was NO guard to get around; the real hole is the vendor address as the DEFAULT; start-prompt-hardening.patch built (handover only), fresh safety review running; 7 agents
+FAILED / UNCERTAIN first:
+1. **Root cause of the breach (builder investigation, code reading, not a re-run):** (a) stdin: nothing refused a non-interactive stdin: run_real_check.py only did `input("Start? [y/N] ")` and caught EOFError, so a piped `y` was a yes: the reviewer got around NOTHING (`--assume-yes` exists and is already refused unless `--dry-fakes`; he did not use it). (b) THE REAL HOLE: HubspotSettings accepts https at the vendor's own domains or loopback http, but the DEFAULT `HUBSPOT_BASE_URL` is `https://api.hubapi.com`, which passes the check: a config that OMITS `DESK_HUBSPOT_BASE_URL` sends the (made-up) key to the vendor by omission: that is exactly the 52 create attempts. Same hole: `REAL_IMAP_n_HOST` defaulted to the mail provider's public host; `DESK_LIVE_BASE_URL` and run_live_check.py `--base-url` default to the vendor. DESK_SMTPP_HOST is already a required name (no change). Not re-run: all evidence is code reading + tests where input/desk/fakes/model/every socket connect raise if reached + a harness (never answered y).
+2. **real-run/start-prompt-hardening.patch (applies alone on db54e13 AND 2db3926; HANDOVER ONLY, scripts/docs/tests, no core):** run_real_check.py: refuses a non-terminal stdin (exit 2, fixed text, before DryFakes/config/start; pipes, files, /dev/null, schedulers: NOT a program driving a pseudo-terminal, which looks like a person: out of reach of any check), and refuses when DESK_HUBSPOT_BASE_URL or any REAL_IMAP_n_HOST (and DESK_LIVE_BASE_URL with --live-model) is not NAMED in the settings (`refused: <NAME>: not named in the settings...`, exit 2); `--assume-yes` stays only with `--dry-fakes`. run_live_check.py: `--base-url` has NO default, new `--assume-yes` only with a loopback base URL, non-terminal refused, EOF without traceback. Sibling sweep (scripts/ load_tools/ tools/ src/ demo_only/): only those two scripts prompt; hubspot_probe.py has no prompt (needs `--yes-spend-calls 7` + a token; always the vendor address unless `--dry-run` names a loopback stub): NOT changed, your call whether it should also require a terminal; a new AST test fails if an input()/getpass/stdin read appears elsewhere or before the terminal check. 26 of 29 new tests fail on old code (some only by AttributeError); 17/17 mutants killed; hygiene+gitleaks 117 passed; ruff/mypy/bandit clean. **Behaviour change: your existing private real-run configs are REFUSED until they add DESK_HUBSPOT_BASE_URL and REAL_IMAP_n_HOST (intended); make_synthetic_config.py needs the -q4f variant (maps the new placeholders to loopback).**
+   It CONFLICTS (mechanical) with real-run-fixes-v4/v5 in run_real_check.py, run_live_check.py, docs/settings.md, test_live_claude.py, test_real_check_dry.py (keep both blocks; my two inserts go before v4's desk_setting_problem call); I rebase over v5 once it lands. A fresh safety review is running (a38979cd722e47378): it also asks the honest question: does this close the class for ALL entry points that can send to the vendor (start_all, take mode, other paths)?
+3. Your 04:02Z item 4 (proxy-line evidence) stands as written in the 04:11Z block: not available from this sandbox.
+4. Open from before: probe-ab-v2 safety read (a937a30c97cc18b5b): NO `PROBE SAFE` yet, do not push; nodemo v2 review; P1 v3.1; P2 v2.1; crlf v5 + yaml trimmed-v2; real-run v5. READY TO PUSH: NOTHING YET.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a38979cd722e47378 | fresh safety reviewer start-prompt hardening | 04:24 | running | report |
+| a937a30c97cc18b5b | fresh safety reader probe-ab-v2 | 04:15 | running | PROBE SAFE / NOT |
+| a0b62ed1f6ca160f5 | P1 v3.1 builder | 04:00 | running | patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| ae8bce55f3b3082f4 | fresh reviewer nodemo v2 + CI job | 04:11 | running | report |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| start-prompt | build 1 | review pending | safety path, no cap | no | clean |
+| probe | review (v2) | pending | design | no | PROBE SAFE |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| breach root cause | found, patch built + pushed |
+| P3 v3 review | done: parked until probe |
+
 ## 2026-11-13 04:18Z / 09:48 IST - P3 v3 fresh security review: no bypass, 1 Windows Major (reading only), 6 mutants survive; P3 stays PARKED until the probe says which shape Sonar accepts; probe-ab-v2 built, safety read running; 7 agents
 FAILED / UNCERTAIN first:
 1. **P3 v3 (sonar/REVIEW-p3v3-fresh.md): no Blocker, no bypass for non-anywhere callers** (`anywhere` is keyword-only; the only caller is run_real_check.py:844 with a literal True: no user input reaches it). **Major (Windows, from reading CPython, NOT run on Windows):** anywhere mode tests containment against drive-letter anchors only; on Windows realpath of a mapped network drive returns the UNC form, so `--config Z:\run.env` or a UNC config would be refused (base reads both); fix: in anywhere mode skip the containment test and take the root from os.path.splitroot(real) (also removes an A:-Z: isdir probe that could stall on a disconnected drive). **6 of 16 reviewer mutants survive** (C1 controls allowed, DEL allowed, temp folder not an allowed root, explicit roots= not realpath'd, fallback tries the raw argument before the resolved path, a path equal to an allowed root): no test pins them though the helper text/README promise them. Minors: wide roots (all of /tmp and the whole repo are allowed: an output option can overwrite an existing file inside, e.g. `--json src/lead_desk/desk.py`, `.git/hooks/pre-commit`: README must say it in one sentence); a folder you can enter but not list inside an allowed root is refused (only anywhere has the fallback; README silent); run_live_check.py --key-file/--ledger stay unconfined (README's 'same reason' is weak for the ledger: OWNER DECISION). Nits: `python tools/scrub_n8n_export.py` direct start now raises ModuleNotFoundError (-m works); com0/lpt0 allowed as new names; U+202E/U+2028 accepted in existing names; a deleted working folder makes allowed_roots raise a traceback. Passed: real run with config/book outside the roots (all base URLs loopback fakes) exit 0; missing scrub input 'refused: in.json: no such file' (was a traceback); all 11 S8707 and the S8706 are reached only through confine; 152 + 542 + 111 tests passed.
