@@ -1,0 +1,128 @@
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index c8e07bd..774d554 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -25,13 +25,19 @@ if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "
+ fi
+ # a process that has ended but is not yet collected by its parent (state Z) is stopped
+ alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
++# the whole command line of a process, never cut at a terminal width: ps cuts it at $COLUMNS (even into a pipe) and
++# the marker is the last word. Linux: /proc (NUL separators become spaces); else ps -ww (unlimited width), else plain ps
++proc_args() {
++  if [[ -r "/proc/$1/cmdline" ]] && tr '\0' ' ' 2>/dev/null < "/proc/$1/cmdline"; then return 0; fi
++  ps -ww -p "$1" -o args= 2>/dev/null || ps -p "$1" -o args= 2>/dev/null
++}
+ for name in desk fakes; do
+   pidfile="$data_dir/$name.pid"
+   if [[ -e "$pidfile" ]]; then
+     pid="$(cat "$pidfile")"
+     # only stop a process that still is the desk or the demo server (a pid can be reused by another program);
+     # a process that has ended but is not yet collected (state Z) shows no program name, so it counts as gone
+-    what="$(ps -p "$pid" -o args= 2>/dev/null || true)"
++    what="$(proc_args "$pid" || true)"
+     if [[ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" == "Z" ]]; then what=""; fi
+     case "$what" in
+       *lead_desk.server*|*demo_only.fakes_server*)
+diff --git a/tests/test_reset_ps_width.py b/tests/test_reset_ps_width.py
+new file mode 100644
+index 0000000..701f0dc
+--- /dev/null
++++ b/tests/test_reset_ps_width.py
+@@ -0,0 +1,97 @@
++"""reset.sh tells the desk from another program by its command line, whose marker is the last word. `ps` cuts the
++line at the terminal width when COLUMNS is set (pytest-xdist workers and any terminal set it), so the script must
++read the whole line. Made-up processes only."""
++
++from __future__ import annotations
++
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++from support import wait_until
++from test_reset_scripts import SCRIPT, WINDOWS, _free_port, _kept, _run, book  # noqa: F401 (book is a fixture)
++
++pytestmark = pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++
++NARROW = {"COLUMNS": "80", "LINES": "24"}
++
++
++def _start(ready: Path, code: str, *padding: str) -> subprocess.Popen[bytes]:
++    # the marker is the last word, after the code and any padding words
++    return subprocess.Popen([sys.executable, "-c", code, *padding, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++
++
++def test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80(book: Path) -> None:  # noqa: F811
++    code = (
++        "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
++        "open(sys.argv[2], 'w').close(); time.sleep(60)"
++    )
++    ready = book.parent / "ready"
++    slow = _start(ready, code)
++    try:
++        wait_until(ready.exists, what="the child has installed its signal handler")
++        (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
++        done = _run(
++            SCRIPT,
++            book,
++            RESET_STOP_WAIT_SECONDS="1",
++            DESK_PORT=str(_free_port()),
++            DESK_FAKES_PORT=str(_free_port()),
++            **NARROW,
++        )
++    finally:
++        slow.kill()
++        slow.wait()
++    assert done.returncode == 5 and "did not stop" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert _kept(book)
++
++
++def test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_width_is_80(book: Path) -> None:  # noqa: F811
++    code = (
++        "import signal, sys, time\n"
++        "def stop(*a):\n"
++        "    time.sleep(3)\n"
++        "    sys.exit(0)\n"
++        "signal.signal(signal.SIGTERM, stop)\n"
++        "open(sys.argv[2], 'w').close()\n"
++        "time.sleep(60)\n"
++    )
++    ready = book.parent / "ready"
++    slow = _start(ready, code)
++    try:
++        wait_until(ready.exists, what="the child has installed its signal handler")
++        (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
++        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
++    finally:
++        slow.kill()
++        slow.wait()
++    assert done.returncode == 0, (done.stdout, done.stderr)
++    assert not book.exists() and not (book.parent / "desk.pid").exists()
++
++
++def test_a_command_line_over_200_characters_with_the_marker_last_is_still_the_desk(book: Path) -> None:  # noqa: F811
++    code = (
++        "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
++        "open(sys.argv[-1], 'w').close(); time.sleep(60)"
++    )
++    ready = book.parent / "ready"
++    slow = _start(ready, code, *["padding-word-%02d" % i for i in range(20)])  # about 300 characters before the marker
++    try:
++        wait_until(ready.exists, what="the child has installed its signal handler")
++        (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
++        done = _run(
++            SCRIPT,
++            book,
++            RESET_STOP_WAIT_SECONDS="1",
++            DESK_PORT=str(_free_port()),
++            DESK_FAKES_PORT=str(_free_port()),
++            COLUMNS="20",
++            LINES="24",
++        )
++    finally:
++        slow.kill()
++        slow.wait()
++    # the desk was recognised (so it was asked to stop, and refused to): 5, never 6 "not the desk"
++    assert done.returncode == 5 and "did not stop" in done.stdout + done.stderr, (done.stdout, done.stderr)
++    assert _kept(book)
