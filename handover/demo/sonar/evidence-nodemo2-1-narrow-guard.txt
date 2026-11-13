@@ -1,0 +1,39 @@
+== base ids
+49 /tmp/work/ids-base2.txt
+49 /tmp/work/ids-v2.txt
+== ids diff base vs v2 (empty = identical)
+IDENTICAL
+== demo present, v2
+.................................................                        [100%]
+49 passed in 0.29s
+== typo in product row, demo present (expect 2 failed)
+ 1 file changed, 33 insertions(+), 13 deletions(-)
+FAILED tests/test_except_clause_hierarchy.py::test_memory_and_send_errors_are_handed_back_before_except_exception[src/lead_desk/smtp_outbx.py::SmtpOutbox._dialogue[0][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_memory_and_send_errors_are_handed_back_before_except_exception[src/lead_desk/smtp_outbx.py::SmtpOutbox._dialogue[1][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_the_two_senders_have_exactly_the_six_bare_re_raise_handlers
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[src/lead_desk/smtp_outbx.py::SmtpOutbox.send[0][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[src/lead_desk/smtp_outbx.py::SmtpOutbox._dialogue[2][0]]
+12 failed, 37 passed in 0.50s
+== typo in ONE product row path of HANDLERS (line 49) and one of STILL_CAUGHT (line 90): smtp_outbox.py -> smtp_outbx.py
+2
+-- v2, demo present, DPLD_REQUIRE_DEMO=1
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[src/lead_desk/smtp_outbx.py::SmtpOutbox.send[0][0]]
+3 failed, 46 passed in 0.35s
+-- reviewer's reproduction of the OLD nodemo-fix.patch behaviour for contrast
+...s.............s...................s...........                        [100%]
+46 passed, 3 skipped in 0.28s
+-- v2, demo deleted, no typo
+43 passed, 6 skipped in 0.27s
+-- v2, demo deleted, typo
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[src/lead_desk/smtp_outbx.py::SmtpOutbox.send[0][0]]
+3 failed, 40 passed, 6 skipped in 0.33s
+-- plain db54e13, demo present, same typo (baseline)
+3 failed, 46 passed in 0.36s
+-- v2, demo present, one demo file missing but folder there
+3 failed, 46 passed in 0.55s

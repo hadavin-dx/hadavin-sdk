@@ -1,0 +1,23 @@
+== plain db54e13, demo present
+All checks passed!
+== plain db54e13, demo deleted
+Found 27 errors.
+[*] 27 fixable with `--fix`.
+27
+== + isort patch, demo present
+All checks passed!
+146 files already formatted
+== + isort patch, demo deleted
+All checks passed!
+137 files already formatted
+== pyproject diff (only added lines, nothing removed)
+4	0	pyproject.toml
+--- a/pyproject.toml
+== effective ruff config diff
+== diff of 'ruff check --show-settings' output, before vs after (the whole effective config)
+476c476,478
+< linter.isort.known_modules = {}
+---
+> linter.isort.known_modules = {
+> 	demo_only => Known(FirstParty),
+> }

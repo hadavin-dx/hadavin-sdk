@@ -1,0 +1,51 @@
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 1028da6..71ca22a 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -19,5 +19,6 @@
+-from support import REPO
+ 
+ from tools import hygiene
+ 
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
++
+ SRC = REPO / "src"
+@@ -42,7 +43,16 @@ def _gitleaks_exe() -> str | None:
+     return path
+ 
+ 
++def _need_git_work_tree() -> None:
++    """A copy made from an archive (or with .git removed) has no repository: the tests that list this repository's files
++    with git are skipped by name there, not failed."""
++    if not (REPO / ".git").exists():
++        pytest.skip("not a git work tree (a source archive): git cannot list the files")
++
++
+ def _git(cwd: Path, *args: str) -> str:
++    if cwd == REPO:
++        _need_git_work_tree()
+     p = subprocess.run(  # noqa: S603
+         ["git", *args],  # noqa: S607
+         cwd=cwd,
+@@ -137,6 +147,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+         assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+     # 2. the real tree
++    _need_git_work_tree()  # the canaries above need no repository; the scan of this tree does
+     left = hygiene.pipeline(REPO, patterns, exceptions)
+     assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+     # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+diff --git a/tests/test_no_placeholders.py b/tests/test_no_placeholders.py
+index 459c521..a488d5e 100644
+--- a/tests/test_no_placeholders.py
++++ b/tests/test_no_placeholders.py
+@@ -8,7 +8,8 @@ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++
++REPO = Path(__file__).resolve().parent.parent  # not from support, which needs demo_only/
+ 
+ MARKERS = ("DATE-TO-" + "FILL", "TO" + "DO", "FIX" + "ME", "X" * 3)
+ FOUND = re.compile(r"\b(" + "|".join(MARKERS) + r")\b")

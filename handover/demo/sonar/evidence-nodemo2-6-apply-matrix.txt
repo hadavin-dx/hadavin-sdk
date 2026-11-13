@@ -1,0 +1,36 @@
+each patch alone on db54e13:
+  nodemo-fix-v2: applies
+  nodemo-optional-hygiene-repo-v2: applies
+  nodemo-ruff-isort: applies
+full stacks (all orders of P1v3,P2v2,P3v2 then nodemo patches):
+sonar-p1-quickwins-v3 sonar-p2-regex-http-bug-v2 sonar-p3-path-helper-v2 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+sonar-p1-quickwins-v3 sonar-p3-path-helper-v2 sonar-p2-regex-http-bug-v2 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+sonar-p2-regex-http-bug-v2 sonar-p1-quickwins-v3 sonar-p3-path-helper-v2 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+sonar-p2-regex-http-bug-v2 sonar-p3-path-helper-v2 sonar-p1-quickwins-v3 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+sonar-p3-path-helper-v2 sonar-p1-quickwins-v3 sonar-p2-regex-http-bug-v2 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+sonar-p3-path-helper-v2 sonar-p2-regex-http-bug-v2 sonar-p1-quickwins-v3 nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+nodemo patches first, then the sonar patches:
+  FAIL at sonar-p1-quickwins-v3
+nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort sonar-p1-quickwins-v3 sonar-p2-regex-http-bug-v2 sonar-p3-path-helper-v2 => ok=0
+  ruff clean
+optional alone on db54e13 and with nodemo-fix-v2 + isort only:
+nodemo-optional-hygiene-repo-v2 => ok=1
+  ruff clean
+nodemo-fix-v2 nodemo-optional-hygiene-repo-v2 nodemo-ruff-isort => ok=1
+  ruff clean
+which one conflicts when nodemo patches go BEFORE P1v3:
+  nodemo-fix-v2 ok
+  nodemo-ruff-isort ok
+  sonar-p1-quickwins-v3 ok
+  sonar-p2-regex-http-bug-v2 ok
+  sonar-p3-path-helper-v2 ok
+optional first, then P1v3 alone:
+error: patch failed: tests/test_hygiene.py:15
+error: tests/test_hygiene.py: patch does not apply
+  P1v3 FAILS after optional-v2 (same lines of tests/test_hygiene.py): apply P1 first

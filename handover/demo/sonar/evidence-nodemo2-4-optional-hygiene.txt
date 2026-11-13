@@ -1,0 +1,22 @@
+gitleaks: 8.30.1  DPLD_REQUIRE_SCAN=1
+== A: demo deleted, .git removed (zip-style copy)
+ls: cannot access '.git': No such file or directory
+..sss..........s...........................................ss.s          [100%]
+=========================== short test summary info ============================
+SKIPPED [5] tests/test_hygiene.py:50: not a git work tree (a source archive): git cannot list the files
+SKIPPED [1] tests/test_no_placeholders.py:28: not a git work tree (a source archive): the file list is not available
+SKIPPED [1] tests/conftest.py:45: needs the demo_only folder, which is not here
+56 passed, 7 skipped in 2.78s
+== B: demo deleted, git init + add -A
+..............................................................s          [100%]
+62 passed, 1 skipped in 17.64s
+== C: demo present (this stack, git, patch applied)
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 36.49s
+== C0: demo present, stack WITHOUT the optional patch
+........................................................................ [ 67%]
+..................................                                       [100%]
+106 passed in 32.79s
+== counts for the two named files only (hygiene + placeholders)
+A (no demo, no .git):
