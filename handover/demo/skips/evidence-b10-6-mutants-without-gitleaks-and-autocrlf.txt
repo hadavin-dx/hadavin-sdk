@@ -1,0 +1,139 @@
+# same mutants, gitleaks NOT on PATH (4 gitleaks tests skipped)
+=== N1 hint loses git checkout cure: KILLED | 3 failed, 17 passed, 4 skipped in 24.99s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== N2 .ps1 no longer exempt: KILLED | 1 failed, 19 passed, 4 skipped in 21.85s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== N3 .txt also exempt: KILLED | 4 failed, 16 passed, 4 skipped in 33.02s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N4 LF_ONLY_FILES cut to sonar only: KILLED | 1 failed, 19 passed, 4 skipped in 18.41s
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file_and_refuses_an_empty_list
+=== N5 _crlf_note always empty: KILLED | 2 failed, 18 passed, 4 skipped in 22.41s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N6 ./ prefix kept: KILLED | 2 failed, 18 passed, 4 skipped in 18.58s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N7 bad JSON raises: KILLED | 1 failed, 19 passed, 4 skipped in 22.00s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+=== N8 file list dropped from message: KILLED | 1 failed, 19 passed, 4 skipped in 14.81s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N9 message drops 'values are redacted': KILLED | 1 failed, 19 passed, 4 skipped in 22.58s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N10 scan-file filter off: KILLED | 1 failed, 19 passed, 4 skipped in 22.41s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+=== N11 safety assert removed: KILLED | 1 failed, 19 passed, 4 skipped in 16.45s
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file_and_refuses_an_empty_list
+=== N12 missing file not skipped: KILLED | 1 failed, 19 passed, 4 skipped in 17.30s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== N13 .ps1 case sensitive: KILLED | 1 failed, 19 passed, 4 skipped in 9.70s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== N14 guard message drops the cure: KILLED | 3 failed, 17 passed, 4 skipped in 15.43s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== N15 python cure loses the lone-CR replace: KILLED | 2 failed, 18 passed, 4 skipped in 11.75s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== N15b python cure CRLF replace broken: KILLED | 1 failed, 19 passed, 4 skipped in 16.68s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== N15c v3 sed cure instead of python cure: SKIP old text occurs 0x
+=== N16 every file reported: KILLED | 4 failed, 16 passed, 4 skipped in 12.37s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== N17 scan --exit-code 1 -> 0: KILLED | 1 failed, 19 passed, 4 skipped in 13.96s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N18 scan without report format: KILLED | 1 failed, 19 passed, 4 skipped in 15.79s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== N19 ls-files from wrong path: KILLED | 4 failed, 16 passed, 4 skipped in 10.51s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== M1 CR check always false: KILLED | 5 failed, 15 passed, 4 skipped in 17.11s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== M3 note never appended: KILLED | 1 failed, 19 passed, 4 skipped in 11.22s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== M3b scan bypasses the message function: KILLED | 1 failed, 19 passed, 4 skipped in 15.26s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== M5 guard test body emptied: KILLED | 3 failed, 17 passed, 4 skipped in 18.25s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - Fa...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== M6 cure 1 replaced by --renormalize: KILLED | 1 failed, 19 passed, 4 skipped in 28.45s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== M8 _flagged_files always []: KILLED | 2 failed, 18 passed, 4 skipped in 36.96s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== M9 only CRLF counts, lone CR ignored: KILLED | 3 failed, 17 passed, 4 skipped in 50.83s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== C1 cure order swapped (CR first then CRLF): KILLED | 1 failed, 19 passed, 4 skipped in 28.14s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== C2 hint says python3 (Windows has no python3): KILLED | 2 failed, 18 passed, 4 skipped in 24.71s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== C3 backslash->slash normalisation dropped (Windows report paths): KILLED | 1 failed, 19 passed, 4 skipped in 24.26s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+=== C4 flagged files not de-duplicated: KILLED | 1 failed, 19 passed, 4 skipped in 21.25s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+=== C5 rows without File kept as empty name: KILLED | 1 failed, 19 passed, 4 skipped in 25.66s
+     FAILED tests/test_hygiene.py::test_the_scan_report_is_read_into_plain_file_names
+=== C6 --ignore-gitleaks-allow dropped from shared args: KILLED | 1 failed, 19 passed, 4 skipped in 14.67s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== C7 --redact dropped from shared args: KILLED | 1 failed, 19 passed, 4 skipped in 20.92s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== C8 scan cwd dropped: KILLED | 1 failed, 19 passed, 4 skipped in 9.68s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== C9 guard message lists only first bad file: KILLED | 1 failed, 19 passed, 4 skipped in 26.75s
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file_and_refuses_an_empty_list
+=== C10 note lists only first bad file: KILLED | 1 failed, 19 passed, 4 skipped in 23.41s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== C11 hint adds a third (bad) backtick cure: KILLED | 2 failed, 18 passed, 4 skipped in 20.64s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== C12 hint drops 'throws away your edits' warning: KILLED | 1 failed, 19 passed, 4 skipped in 19.58s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== C13 hint drops the 'needs Python' note: KILLED | 1 failed, 19 passed, 4 skipped in 21.24s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== C14 hint drops the python3-on-macOS note: KILLED | 1 failed, 19 passed, 4 skipped in 24.82s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== C15 guard scans index blobs not work copy (reads git show): KILLED | 5 failed, 15 passed, 4 skipped in 11.92s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== C16 guard skips lone CR at file end: KILLED | 2 failed, 18 passed, 4 skipped in 23.56s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file_and_refuses_an_empty_list
+=== C17 guard skips directory-nested via fnmatch->basename only? exact-match list: KILLED | 1 failed, 19 passed, 4 skipped in 29.29s
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file_and_refuses_an_empty_list
+=== C18 guard uses git ls-files -o only (untracked): KILLED | 4 failed, 16 passed, 4 skipped in 22.16s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== C19 pyproject marker not registered: KILLED | 1 failed, 19 passed, 4 skipped, 1 warning in 42.41s
+     FAILED tests/test_hygiene.py::test_the_editorconfig_and_the_marker_say_what_the_guard_assumes
+=== C20 .editorconfig says ps1 lf: KILLED | 1 failed, 19 passed, 4 skipped in 38.99s
+     FAILED tests/test_hygiene.py::test_the_editorconfig_and_the_marker_say_what_the_guard_assumes
+=== C21 .editorconfig [*] says crlf: KILLED | 1 failed, 19 passed, 4 skipped in 22.05s
+     FAILED tests/test_hygiene.py::test_the_editorconfig_and_the_marker_say_what_the_guard_assumes
+=== C22 gitleaks test: crlf copy gets LF (always clean) : SURVIVED | 20 passed, 4 skipped in 20.22s
+=== C23 report written inside scanned tree (target) instead of outside: SURVIVED | 20 passed, 4 skipped in 21.49s
+=== C24 real-scan: failure assert dropped in test_hygiene_scan_public: SURVIVED | 20 passed, 4 skipped in 21.63s
+=== C25 _scan_failure_message drops sub name: KILLED | 1 failed, 19 passed, 4 skipped in 14.66s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== C26 CRLF_BY_DESIGN adds .bat: KILLED | 4 failed, 16 passed, 4 skipped in 16.82s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure
+=== D1 hint loses the 'py -3' Windows note: KILLED | 1 failed, 19 passed, 4 skipped in 16.65s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== D2 hint loses 'replace <file> with the path': KILLED | 1 failed, 19 passed, 4 skipped in 19.73s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== D3 hint says 'Windows line endings' only for text (the binary wording dropped): KILLED | 1 failed, 19 passed, 4 skipped in 21.39s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do
+=== D4 .gitattributes dropped from the planted tree (the autocrlf bug): SURVIVED | 20 passed, 4 skipped in 17.44s
+=== restored: 20 passed, 4 skipped in 21.00s
+
+# D4 and N17 under GIT_CONFIG_GLOBAL core.autocrlf=true
+=== N17 scan --exit-code 1 -> 0: KILLED | 2 failed, 22 passed, 1 warning in 23.22s
+     FAILED tests/test_hygiene.py::test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_on_findings
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== D4 .gitattributes dropped from the planted tree (the autocrlf bug): KILLED | 1 failed, 23 passed, 1 warning in 21.44s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== restored: 24 passed, 1 warning in 28.40s

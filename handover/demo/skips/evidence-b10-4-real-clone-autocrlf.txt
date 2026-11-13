@@ -1,0 +1,26 @@
+git config core.autocrlf (GIT_CONFIG_GLOBAL) = true  [emulates Git for Windows default]
+v5 applied on real clone
+-- CR byte counts of the guarded files in this autocrlf=true checkout (must be 0):
+  sonar-project.properties 0
+  .gitleaks.toml 0
+  exceptions.txt 0
+  patterns.txt 0
+  requirements-browser-win.txt 0
+  requirements-browser.txt 0
+  requirements-coverage.txt 0
+  requirements-dev-win.txt 0
+  requirements-dev.txt 0
+-- files that DO hold CR (CRLF by design / binary):
+  scripts/reset.ps1 w/crlf
+  scripts/start_all.ps1 w/crlf
+-- real guard + whole hygiene file, DPLD_REQUIRE_SCAN=1:
+........................                                                 [100%]
+24 passed in 17.68s
+-- plant CRLF in real sonar-project.properties -> guard must fail and print the cure:
+E       AssertionError: sonar-project.properties: this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, the repository stores LF (.gitattributes). Replace <file> with the path of the file. Cure 1, on every system, throws away your edits to the file: `git checkout -- <file>`. Cure 2 keeps your edits and needs Python (write python3 on macOS or Linux, py -3 on Windows if python is not found): `python -c "import sys, pathlib; p = pathlib.Path(sys.argv[1]); p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n').replace(b'\r', b'\n'))" <file>`
+1 failed, 23 deselected in 0.08s
+-- cure 1 (git checkout -- file):
+  CR=0
+-- plant CRLF again, cure 2 (the python one-liner from the message, python3 here):
+  CR=0
+1 passed, 23 deselected in 0.04s

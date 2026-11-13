@@ -1,0 +1,59 @@
+# yaml trimmed-v2 mutants. (a) standalone patch on db54e13; (b) P1 v3 + after-p1v3 variant
+## (a)
+=== T1 string-on branch dropped: KILLED | 1 failed, 10 passed in 0.18s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[string-on] - ...
+=== T2 True-key branch dropped: KILLED | 4 failed, 7 passed in 0.30s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== T3 and->or: KILLED | 5 failed, 6 passed in 0.12s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== T4 empty jobs allowed: KILLED | 1 failed, 10 passed in 0.19s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[empty-jobs]
+=== T5 jobs not-dict allowed (list): KILLED | 1 failed, 10 passed in 0.14s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[jobs-not-mapping]
+=== T6 top-level check dropped: KILLED | 1 failed, 10 passed in 0.15s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[list-on-top]
+=== T7 yaml error swallowed: KILLED | 1 failed, 10 passed in 0.14s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[colon-space]
+=== T8 glob yaml dropped: KILLED | 1 failed, 10 passed in 0.14s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T9 glob yml dropped: KILLED | 1 error in 0.12s | 
+=== T10 dir typo: KILLED | 1 error in 0.12s | 
+=== T11 real-file assert neutered: KILLED | 1 failed, 10 passed in 0.15s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T13 safe_load->BaseLoader: SURVIVED | 11 passed in 0.08s | 
+=== T14 no-jobs message dropped: KILLED | 2 failed, 9 passed in 0.12s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[empty-jobs]
+=== R2 real tab: KILLED | 1 failed, 10 passed in 0.12s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[sonar
+=== R3 real: on renamed: KILLED | 1 failed, 10 passed in 0.08s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[lint.
+=== R4 real: jobs renamed: KILLED | 1 failed, 10 passed in 0.10s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== R5 real: unclosed quote: KILLED | 1 failed, 10 passed in 0.10s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[lint.
+=== T12 workflow_files non-empty assert removed: KILLED | 1 failed, 10 passed in 0.10s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T15 helper assert neutered (message path): KILLED | 1 failed, 10 passed in 0.12s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== R1 real: pre-fix plain scalar with colon-space: KILLED | 1 failed, 10 passed in 0.68s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[sonar
+=== R6 real: duplicate key (not caught by design): SURVIVED | 11 passed in 0.10s | 
+=== E1 sorted dropped from workflow_files: KILLED | 1 failed, 10 passed in 0.44s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E2 'no top-level on' message dropped: KILLED | 2 failed, 9 passed in 0.07s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E3 read_text without utf-8: SURVIVED | 11 passed in 0.10s | 
+=== E4 workflow_files returns first file only: KILLED | 1 failed, 8 passed in 0.12s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E5 on-check dropped (any doc with jobs passes): KILLED | 2 failed, 9 passed in 0.36s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E6 duplicate real job key sonar.yml (equivalent for YAML parse): SURVIVED | 11 passed in 1.05s | 
+=== restored: 11 passed in 0.07s
+## (b)
+=== T1 string-on branch dropped: KILLED | 1 failed, 16 passed in 0.20s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[string-on] - ...
+=== T2 True-key branch dropped: KILLED | 4 failed, 13 passed in 0.20s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== T3 and->or: KILLED | 5 failed, 12 passed in 0.16s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== T4 empty jobs allowed: KILLED | 1 failed, 16 passed in 0.18s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[empty-jobs]
+=== T5 jobs not-dict allowed (list): KILLED | 1 failed, 16 passed in 0.17s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[jobs-not-mapping]
+=== T6 top-level check dropped: KILLED | 1 failed, 16 passed in 0.21s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[list-on-top]
+=== T7 yaml error swallowed: KILLED | 1 failed, 16 passed in 0.34s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[colon-space]
+=== T8 glob yaml dropped: KILLED | 1 failed, 16 passed in 0.13s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T9 glob yml dropped: KILLED | 1 error in 0.13s | 
+=== T10 dir typo: KILLED | 1 error in 0.17s | 
+=== T11 real-file assert neutered: KILLED | 1 failed, 16 passed in 0.30s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T13 safe_load->BaseLoader: SURVIVED | 17 passed in 0.16s | 
+=== T14 no-jobs message dropped: KILLED | 2 failed, 15 passed in 0.19s | FAILED tests/test_workflow_files_parse.py::test_the_shape_check[empty-jobs]
+=== R2 real tab: KILLED | 3 failed, 14 passed in 0.33s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[sonar
+=== R3 real: on renamed: KILLED | 1 failed, 16 passed in 0.15s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[lint.
+=== R4 real: jobs renamed: KILLED | 3 failed, 14 passed in 1.44s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[codeq
+=== R5 real: unclosed quote: KILLED | 3 failed, 14 passed in 0.14s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[lint.
+=== T12 workflow_files non-empty assert removed: KILLED | 1 failed, 16 passed in 0.25s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== T15 helper assert neutered (message path): KILLED | 1 failed, 16 passed in 0.29s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== R1 real: pre-fix plain scalar with colon-space: KILLED | 3 failed, 14 passed in 0.36s | FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_on_and_jobs[sonar
+=== R6 real: duplicate key (not caught by design): SURVIVED | 17 passed in 0.09s | 
+=== E1 sorted dropped from workflow_files: KILLED | 1 failed, 16 passed in 0.16s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E2 'no top-level on' message dropped: KILLED | 2 failed, 15 passed in 0.11s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E3 read_text without utf-8: SURVIVED | 17 passed in 0.13s | 
+=== E4 workflow_files returns first file only: KILLED | 1 failed, 10 passed in 0.16s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E5 on-check dropped (any doc with jobs passes): KILLED | 2 failed, 15 passed in 0.76s | FAILED tests/test_workflow_files_parse.py::test_the_helpers_reject_a_bad_file_and_an_empty_folder_an
+=== E6 duplicate real job key sonar.yml (equivalent for YAML parse): KILLED | 2 failed, 15 passed in 0.18s | FAILED tests/test_workflow_files_parse.py::test_a_download_in_a_workflow_is_https_only_and_modern_tl
+=== restored: 17 passed in 0.11s

@@ -1,0 +1,6 @@
+ruff/mypy/tests for trimmed-v2 on db54e13:
+All checks passed!
+1 file already formatted
+...........                                                              [100%]
+11 passed in 0.10s
+84 tests/test_workflow_files_parse.py

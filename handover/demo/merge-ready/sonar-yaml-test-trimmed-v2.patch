@@ -1,0 +1,110 @@
+diff --git a/tests/test_workflow_files_parse.py b/tests/test_workflow_files_parse.py
+index 50513ea..af8800e 100644
+--- a/tests/test_workflow_files_parse.py
++++ b/tests/test_workflow_files_parse.py
+@@ -1,8 +1,12 @@
+-"""Every GitHub Actions workflow file must be valid YAML with the shape GitHub needs.
++"""Every GitHub Actions workflow file must be valid YAML with a top level `on` and at least one job.
+ 
+-Why: a plain `run:` value that contains a colon followed by a space (for example `--only-binary=:all: -r`) is NOT
+-valid YAML. GitHub then shows the run as failed with no jobs, and a check can stay "queued" for ever. No other test
+-parsed the files. PyYAML is in the development lock (requirements-dev.txt), so the check needs no new dependency.
++Why: a plain `run:` value with a colon and a space (for example `--only-binary=:all: -r`) is not valid YAML; GitHub then
++shows the run as failed with no jobs. PyYAML is in the development lock (requirements-dev.txt), so no new dependency.
++
++This is NOT a workflow linter and must not grow into one: it does not check job or step keys, `if:` expressions or
++`${{ }}` names. `actionlint` is the control for those (measured: it reports `=` for `==` and a typo such as
++`runnr.os`; this test does not). actionlint is NOT yet wired into CI, so until it is, those mistakes are found only
++when GitHub runs the workflow.
+ """
+ 
+ from pathlib import Path
+@@ -11,28 +15,70 @@ import pytest
+ import yaml
+ 
+ REPO = Path(__file__).resolve().parent.parent
+-WORKFLOWS = sorted((REPO / ".github" / "workflows").glob("*.yml"))
+ 
+ 
+-def test_the_workflow_folder_is_not_empty() -> None:
+-    assert WORKFLOWS, "no workflow file found: the check below would pass for nothing"
++def workflow_files(folder: Path) -> list[Path]:
++    found = sorted(p for ext in ("*.yml", "*.yaml") for p in folder.glob(ext))
++    assert found, f"no workflow file in {folder}: the check below would pass for nothing"
++    return found
+ 
+ 
+-@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
+-def test_a_workflow_file_is_valid_yaml_with_jobs_and_steps(path: Path) -> None:
+-    text = path.read_text(encoding="utf-8")
++def file_problems(text: str) -> list[str]:
++    """What is wrong with the text of a workflow file, as plain sentences; an empty list means fine."""
+     try:
+         doc = yaml.safe_load(text)
+     except yaml.YAMLError as e:
+-        pytest.fail(f"{path.name} is not valid YAML, so GitHub cannot start it: {e}")
+-    assert isinstance(doc, dict), f"{path.name}: the top level must be a mapping"
+-    jobs = doc.get("jobs")
+-    assert isinstance(jobs, dict) and jobs, f"{path.name}: no jobs"
+-    for name, job in jobs.items():
+-        assert isinstance(job, dict), f"{path.name}: job {name} is not a mapping"
+-        steps = job.get("steps")
+-        assert isinstance(steps, list) and steps, f"{path.name}: job {name} has no steps"
+-        for i, step in enumerate(steps):
+-            assert isinstance(step, dict) and ("run" in step or "uses" in step), (
+-                f"{path.name}: job {name}, step {i + 1} has neither run nor uses"
+-            )
++        return [f"is not valid YAML, so GitHub cannot start it: {e}"]
++    if not isinstance(doc, dict):
++        return ["the top level must be a mapping"]
++    out = []
++    if "on" not in doc and True not in doc:  # PyYAML (YAML 1.1) turns the bare key `on` into True
++        out.append("no top-level `on` (nothing would trigger this workflow)")
++    if not isinstance(doc.get("jobs"), dict) or not doc["jobs"]:
++        out.append("no jobs")
++    return out
++
++
++def assert_file_is_fine(path: Path) -> None:
++    found = file_problems(path.read_text(encoding="utf-8"))
++    assert not found, f"{path.name}: " + "; ".join(found)
++
++
++WORKFLOWS = workflow_files(REPO / ".github" / "workflows")  # also used by the tests that follow in this file
++
++
++@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
++def test_a_workflow_file_is_valid_yaml_with_on_and_jobs(path: Path) -> None:
++    assert_file_is_fine(path)
++
++
++def test_the_helpers_reject_a_bad_file_and_an_empty_folder_and_find_both_extensions(tmp_path: Path) -> None:
++    with pytest.raises(AssertionError, match="no workflow file"):
++        workflow_files(tmp_path)
++    (tmp_path / "bad.txt").write_text("jobs: {}", encoding="utf-8")
++    with pytest.raises(AssertionError, match="bad.txt: no top-level"):
++        assert_file_is_fine(tmp_path / "bad.txt")
++    for n in ("b.yml", "a.yaml"):
++        (tmp_path / n).write_text("x", encoding="utf-8")
++    assert [p.name for p in workflow_files(tmp_path)] == ["a.yaml", "b.yml"]  # both extensions, sorted by name
++
++
++@pytest.mark.parametrize(
++    ("text", "expect"),
++    [
++        ("run: python -m pip install --only-binary=:all: -r x", "not valid YAML"),
++        ("- a list", "top level must be a mapping"),
++        ("on: [push]\njobs: {}", "no jobs"),
++        ("on: [push]\njobs: [a]", "no jobs"),
++        ("jobs: {a: {}}", "no top-level `on`"),
++        ("'on': [push]\njobs: {a: {}}", ""),  # the quoted spelling, as a YAML 1.2 reader gives it
++        ("on: [push]\njobs: {a: {}}", ""),
++    ],
++    ids=["colon-space", "list-on-top", "empty-jobs", "jobs-not-mapping", "no-on", "string-on", "bare-on"],
++)
++def test_the_shape_check(text: str, expect: str) -> None:
++    found = file_problems(text)
++    if expect:
++        assert any(expect in f for f in found), found
++    else:
++        assert not found, found

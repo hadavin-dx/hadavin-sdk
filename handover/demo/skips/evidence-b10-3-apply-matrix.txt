@@ -1,0 +1,19 @@
+patches: C=b10 crlf-guard-v5, G=semgrep-on-2db3926-v4, 1=P1 v3, 2=P2 v2, 3=P3 v2, T=trimmed-v2 (db54e13 only, never with P1), U=trimmed-v2-after-p1v3 (needs P1 v3 first)
+db54e13 sequences: 1956 ok: 1271 fail: 685
+  expected failures (U before 1, by design): 685  unexpected failures: 0
+2db3926 sequences: 4 ok: 4 fail: 0
+  expected failures (U before 1, by design): 0  unexpected failures: 0
+--- v3.1 P1 vs v5 (known conflict reported by coordinator)
+order C P:
+error: patch failed: tests/test_hygiene.py:3
+error: tests/test_hygiene.py: patch does not apply
+order P C:
+error: patch failed: tests/test_hygiene.py:3
+error: tests/test_hygiene.py: patch does not apply
+1
+evidence-p1v3-2-dash-bypass.txt
+evidence-p3v3-2-mutants.txt
+--- P1 v3.2 (from /tmp/demo-push/handover/demo/sonar/) with C=v5, G, 2, 3 and T=trimmed-v2 (v3.2 does not touch test_workflow_files_parse.py; defines its own WORKFLOWS in test_workflow_run_flags.py)
+db54e13 sequences: 1956 ok: 1956 fail: 0
+  expected failures (U before 1, by design): 0  unexpected failures: 0
+--- P1 v3.2 + C pairwise: both orders apply (see matrix: C1 and 1C)

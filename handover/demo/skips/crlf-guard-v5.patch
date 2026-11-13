@@ -1,0 +1,330 @@
+diff --git a/.editorconfig b/.editorconfig
+new file mode 100644
+index 0000000..f1bada1
+--- /dev/null
++++ b/.editorconfig
+@@ -0,0 +1,8 @@
++# Line endings match .gitattributes: LF for everything, CRLF only for PowerShell scripts.
++root = true
++
++[*]
++end_of_line = lf
++
++[*.ps1]
++end_of_line = crlf
+diff --git a/docs/tests.md b/docs/tests.md
+index 7c39ffa..28399ca 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -71,7 +71,7 @@ When a check fails: read the last lines of its output first; they name the file
+ 
+ What the two secret checks reported, measured on 2026-11-13 with gitleaks 8.30.1 and this repository's `.gitleaks.toml`. The test values were made up and put after the prefix `hadavin-dx_` in lines that start with `sonar.projectKey=` or `x_api_key=`, in files named `cfg.txt`, `notes.properties` and `x_api_key.txt`. Gitleaks (rule `generic-api-key`) reported values of 20, 30, 40, 50 and 60 random lowercase letters and digits. It did not report values of letters only, of words joined by hyphens, or of one repeated letter, at any of those lengths. One digit added to the hyphenated words made gitleaks report them; one digit added to the repeated letter did not. So the cause looks like "no digit" or "too little variety" in the value, not the prefix; the rule inside gitleaks was not read. The real project key holds a digit and was reported once its allowlist was removed. A prefix inside a line of ordinary text was not reported by gitleaks at any length.
+ 
+-The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports an unbroken run of 40 or more of those characters. The prefix and a key name before `=` count towards the 40; a dot, a space or a quote ends the run. It reported every `key=value` line above, so a letters-only second project key in `sonar-project.properties` is seen by that scan alone. The exception for the real key (last line of `exceptions.txt`, the `sonar.projectKey` allowlist in `.gitleaks.toml`) therefore has to stay exact. `tests/test_gitleaks_exceptions.py` plants near-misses in a temporary copy and fails if either exception is widened. To add a second key of this shape, add its exact text, never a wider pattern or a whole file, and keep that test passing. `.gitattributes` forces LF endings; the real line with CRLF endings is reported by gitleaks, not by the repository scan.
++The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports an unbroken run of 40 or more of those characters. The prefix and a key name before `=` count towards the 40; a dot, a space or a quote ends the run. It reported every `key=value` line above, so a letters-only second project key in `sonar-project.properties` is seen by that scan alone. The exception for the real key (last line of `exceptions.txt`, the `sonar.projectKey` allowlist in `.gitleaks.toml`) therefore has to stay exact. `tests/test_gitleaks_exceptions.py` plants near-misses in a temporary copy and fails if either exception is widened. To add a second key of this shape, add its exact text, never a wider pattern or a whole file, and keep that test passing. `.gitattributes` forces LF endings; the real line with CRLF endings is reported by gitleaks, not by the repository scan. If a file was saved with CRLF (or with a lone carriage return), the failure now says so (`tests/test_hygiene.py` checks the scan files for a carriage return) and names two cures, and a test runs both on a planted file: `git checkout -- <file>` works on every system but throws away your edits to the file; the Python one-liner in the message keeps your edits and turns both CRLF and a lone carriage return into LF (write `python3` on macOS or Linux, `py -3` on Windows if `python` is not found; replace `<file>` with the path). A test also checks that `.editorconfig` and the `gitleaks` marker say what the guard assumes, and the planted-tree tests carry their own `.gitattributes` so they pass under `core.autocrlf=true`, the Git for Windows default. `sed -i 's/\r$//' <file>` is not offered: it is GNU-only (macOS needs `sed -i ''`, Windows PowerShell and cmd have no sed) and leaves a lone carriage return in place. `git add --renormalize .` does not help, because it only changes the index and the scan reads the working copy (`.editorconfig` asks editors to save LF). The test that runs the real gitleaks program on a planted CRLF tree is marked `gitleaks`: select it with `pytest -m gitleaks tests/test_hygiene.py` (about 1 s; skipped without gitleaks). The cures were not run on real Windows.
+ 
+ ## What each promise rests on
+ 
+diff --git a/pyproject.toml b/pyproject.toml
+index 2b49700..edf3180 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -12,6 +12,7 @@ testpaths = ["tests"]
+ # A test stuck for 5 minutes prints the stack of every thread (the run is not stopped; a hung server shutdown
+ # shows up as BaseServer.shutdown in the dump). No new dependency: this is built into pytest.
+ faulthandler_timeout = 300
++markers = ["gitleaks: runs the real gitleaks program, skipped without it; select with -m gitleaks"]
+ # test command: python -m pytest -q
+ # Run commands set PYTHONPATH=src (there is no build-system); see contract.md, Run commands.
+ 
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index e072229..4d7b937 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -3,12 +3,16 @@
+ 
+ from __future__ import annotations
+ 
++import configparser
+ import copy
++import fnmatch
+ import json
+ import os
+ import re
++import shlex
+ import shutil
+ import subprocess
++import sys
+ import tomllib
+ import unicodedata
+ import warnings
+@@ -54,6 +58,78 @@ def _git(cwd: Path, *args: str) -> str:
+     return p.stdout
+ 
+ 
++CRLF_HINT = (  # the two commands between backticks are run by test_every_cure_in_the_message_works
++    "this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, "
++    "the repository stores LF (.gitattributes). Replace <file> with the path of the file. "
++    "Cure 1, on every system, throws away your edits to the file: `git checkout -- <file>`. "
++    "Cure 2 keeps your edits and needs Python (write python3 on macOS or Linux, py -3 on Windows if python is not "
++    "found): "
++    '`python -c "import sys, pathlib; p = pathlib.Path(sys.argv[1]); '
++    "p.write_bytes(p.read_bytes().replace(b'\\r\\n', b'\\n').replace(b'\\r', b'\\n'))\" <file>`"
++)
++HINT_PHRASES = (  # words a reader relies on; a test fails if one is dropped from the hint
++    "throws away your edits|needs Python|python3 on macOS or Linux|py -3|Replace <file> with the path|a text file"
++)
++CRLF_BY_DESIGN = (".ps1",)  # the only CRLF file kind in .gitattributes (*.ps1 text eol=crlf); .bat and .cmd get LF
++# The files whose exact text the secret-scan exceptions name (sonar-project.properties key line) or that hold the scan
++# rules and lock files: a CR in any of them makes `gitleaks dir` report the key line, with no word about line endings.
++LF_ONLY_FILES = ("sonar-project.properties", ".gitleaks.toml", "exceptions.txt", "patterns.txt", "requirements-*.txt")
++
++
++def _gitleaks_common(toml: Path) -> list[str]:
++    return ["--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
++
++
++def _gitleaks_scan(exe: str, sub: str, toml: Path, target: Path, report: Path) -> str:
++    """One gitleaks scan run from the root of target, like lint.yml: "" when it found nothing, else the failure text."""
++    fmt = ["--report-format", "json", "--report-path", str(report)]
++    p = subprocess.run(  # noqa: S603
++        [exe, sub, *_gitleaks_common(toml), *fmt, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False
++    )
++    return _scan_failure_message(sub, _flagged_files(report), target) if p.returncode else ""
++
++
++def _files_with_cr(root: Path, names: list[str]) -> list[str]:
++    """The names (relative to root) whose file holds a carriage return; .ps1 scripts are CRLF by design and skipped."""
++    out = []
++    for n in names:
++        f = root / n
++        if n.lower().endswith(CRLF_BY_DESIGN) or not f.is_file():
++            continue
++        if b"\r" in f.read_bytes():
++            out.append(n)
++    return out
++
++
++def _crlf_note(root: Path, names: list[str]) -> str:
++    """A plain hint for a failure message: empty when none of the named files holds a carriage return. It reads the
++    current working copy, so for a `gitleaks git` finding it shows the file as it is now, not the old blob."""
++    bad = _files_with_cr(root, names)
++    return f"\n{', '.join(bad)}: {CRLF_HINT}" if bad else ""
++
++
++def _flagged_files(report: Path) -> list[str]:
++    """File names from a gitleaks JSON report (values are redacted, the names are not secret)."""
++    try:
++        rows = json.loads(report.read_text(encoding="utf-8") or "[]")
++    except (OSError, ValueError):
++        return []
++    return sorted({str(x.get("File", "")).replace(chr(92), "/").removeprefix("./") for x in rows if x.get("File")})
++
++
++def _scan_failure_message(sub: str, flagged: list[str], root: Path) -> str:
++    """The text of a failed gitleaks scan: the flagged file names (values stay redacted) plus the CRLF hint when one of
++    those files holds a carriage return. One function so the test of the message and the scan share the same text."""
++    return f"gitleaks {sub} reported findings (values are redacted); files: {flagged}" + _crlf_note(root, flagged)
++
++
++def _scan_files_with_cr(root: Path) -> list[str]:
++    """The tracked scan files (LF_ONLY_FILES) under root, a git work tree, that hold a carriage return."""
++    names = [n for n in _git(root, "ls-files").splitlines() if any(fnmatch.fnmatch(n, g) for g in LF_ONLY_FILES)]
++    assert "sonar-project.properties" in names, "the list of files to check is empty: the test would prove nothing"
++    return _files_with_cr(root, names)
++
++
+ def test_no_demo_only_outside_loader() -> None:
+     """src/ may name demo_only only in loader.py; tests/, scripts/, conftest.py, README and docs may."""
+     offenders = [
+@@ -147,7 +223,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+     ids = [r["id"] for r in tomllib.loads(toml.read_text(encoding="utf-8")).get("rules", [])]
+     report = tmp_path / "canary-report.json"  # reports go outside the repo
+-    common = ["--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
++    common = _gitleaks_common(toml)
+     fmt = ["--report-format", "json", "--report-path", str(report)]
+     subprocess.run([exe, "dir", *common, *fmt, str(canary)], check=False)  # noqa: S603
+     found = {x["RuleID"] for x in json.loads(report.read_text(encoding="utf-8") or "[]")}
+@@ -191,8 +267,8 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+         warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+     for sub, target in scans:  # from the root of the scanned folder with ".", exactly like lint.yml: the path rules in
+         # .gitleaks.toml start with ^ and need paths relative to the root (an absolute temp path would never match them)
+-        p = subprocess.run([exe, sub, *common, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False)  # noqa: S603
+-        assert p.returncode == 0, f"gitleaks {sub} reported findings (values are redacted)"
++        failure = _gitleaks_scan(exe, sub, toml, target, report)
++        assert not failure, failure
+ 
+ 
+ def test_sh_blobs_no_cr() -> None:
+@@ -204,6 +280,170 @@ def test_sh_blobs_no_cr() -> None:
+         assert 13 not in blob, f"{n} contains a carriage return in the index"
+ 
+ 
++def test_the_secret_scan_files_have_no_carriage_return() -> None:
++    """A CR in a root-level file the scan exceptions name makes `gitleaks dir` report it; fail early and say why."""
++    bad = _scan_files_with_cr(REPO)
++    assert not bad, f"{', '.join(bad)}: {CRLF_HINT}"
++
++
++CRLF, LONE_CR = bytes([13, 10]), bytes([13])
++SCAN_FILES = (  # real file names, at least one for each LF_ONLY_FILES entry (checked below)
++    "sonar-project.properties",
++    ".gitleaks.toml",
++    "exceptions.txt",
++    "patterns.txt",
++    "requirements-dev.txt",
++    "requirements-browser-win.txt",
++)
++
++
++def test_the_carriage_return_check_names_every_bad_file_and_says_what_to_do(tmp_path: Path) -> None:
++    for name, data in {
++        "a.txt": b"x=1" + CRLF,
++        "b.txt": b"x=1\n",
++        "c.ps1": b"x" + CRLF,
++        "D.PS1": b"x" + CRLF,  # a file name is not case sensitive on Windows
++        "e.txt": b"x=1" + LONE_CR + b"y=2",
++        "f.txt": b"x=1" + LONE_CR,  # the lone CR is the very last byte
++    }.items():
++        (tmp_path / name).write_bytes(data)
++    assert _files_with_cr(tmp_path, ["a.txt", "b.txt", "c.ps1", "D.PS1", "e.txt", "f.txt", "missing.txt"]) == [
++        "a.txt",
++        "e.txt",
++        "f.txt",
++    ]
++    note = _crlf_note(tmp_path, ["a.txt", "e.txt", "f.txt"])
++    assert note.startswith("\na.txt, e.txt, f.txt: ") and CRLF_HINT in note  # every bad file, not only the first
++    assert all(p in note for p in HINT_PHRASES.split("|")), note  # the warnings and the platform notes are pinned
++    assert _crlf_note(tmp_path, ["b.txt", "c.ps1", "D.PS1"]) == ""
++
++
++def test_the_scan_report_is_read_into_plain_file_names(tmp_path: Path) -> None:
++    report = tmp_path / "r.json"
++    rows = [{"File": ".\\sub\\a.txt"}, {"File": "sub/a.txt"}, {"File": "./sonar-project.properties"}, {"RuleID": "x"}]
++    report.write_text(
++        json.dumps(rows), encoding="utf-8"
++    )  # Windows slashes, a duplicate, a ./ prefix, a row with no File
++    assert _flagged_files(report) == ["sonar-project.properties", "sub/a.txt"]
++    for broken in ("{not json", ""):  # a broken or empty report is "nothing named", never an error
++        report.write_text(broken, encoding="utf-8")
++        assert _flagged_files(report) == []
++    assert _flagged_files(tmp_path / "missing.json") == []
++
++
++def test_the_scan_is_redacted_runs_from_the_scanned_root_and_fails_with_the_names_and_the_cure(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    calls: list[tuple[list[str], dict[str, object]]] = []
++
++    def fake_run(argv: list[str], **kw: object) -> subprocess.CompletedProcess[bytes]:
++        calls.append((argv, kw))
++        return subprocess.CompletedProcess(argv, len(calls) - 1)  # first call: exit 0, second: exit 1
++
++    monkeypatch.setattr(subprocess, "run", fake_run)
++    (tmp_path / "a.txt").write_bytes(b"x" + CRLF)
++    report = tmp_path / "r.json"
++    report.write_text(json.dumps([{"File": "./a.txt"}]), encoding="utf-8")
++    assert _gitleaks_scan("gl", "git", tmp_path / "c.toml", tmp_path, report) == ""
++    failure = _gitleaks_scan("gl", "dir", tmp_path / "c.toml", tmp_path, report)
++    assert failure == f"gitleaks dir reported findings (values are redacted); files: ['a.txt']\na.txt: {CRLF_HINT}"
++    for argv, kw in calls:
++        assert {"--redact", "--ignore-gitleaks-allow", "--report-format"} <= set(argv), argv
++        assert argv[argv.index("--exit-code") + 1] == "1" and argv[-1] == "." and kw["cwd"] == tmp_path, (argv, kw)
++
++
++def test_the_editorconfig_and_the_marker_say_what_the_guard_assumes() -> None:
++    cfg = configparser.ConfigParser()
++    cfg.read_string("[top]\n" + (REPO / ".editorconfig").read_text(encoding="utf-8"))  # its first lines have no section
++    assert cfg["*"]["end_of_line"] == "lf"
++    assert all(cfg["*" + ext]["end_of_line"] == "crlf" for ext in CRLF_BY_DESIGN)
++    pytest_ini = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["pytest"]["ini_options"]
++    assert any(m.startswith("gitleaks:") for m in pytest_ini["markers"])
++
++
++def _planted_tree(tmp_path: Path, line_end: bytes, name: str = "sonar-project.properties") -> Path:
++    """A git work tree like a Windows checkout: the index holds LF, the work copy of `name` (and nothing else) has
++    line_end instead. Both files hold the real sonar-project.properties text."""
++    tree = tmp_path / "planted"
++    tree.mkdir(parents=True)
++    lf = (REPO / "sonar-project.properties").read_bytes().replace(b"\r", b"")
++    # as in the repo: without it core.autocrlf=true (the Git for Windows default) treats a CRLF copy as clean
++    (tree / ".gitattributes").write_text("* text eol=lf\n", encoding="utf-8")
++    for n in {"sonar-project.properties", name}:
++        (tree / n).write_bytes(lf)
++    for cmd in (["init", "-q"], ["add", "."]):
++        subprocess.run(["git", *cmd], cwd=tree, check=True, capture_output=True)  # noqa: S603, S607
++    (tree / name).write_bytes(lf.replace(b"\n", line_end))
++    return tree
++
++
++def _guard_message(tree: Path, monkeypatch: pytest.MonkeyPatch) -> str:
++    """The text of the failure of the real guard test run against the tree (it must fail)."""
++    monkeypatch.setattr(sys.modules[__name__], "REPO", tree)
++    with pytest.raises(AssertionError) as exc:
++        test_the_secret_scan_files_have_no_carriage_return()
++    return str(exc.value)
++
++
++@pytest.mark.parametrize("line_end", [CRLF, LONE_CR], ids=["crlf", "lone-cr"])
++def test_every_cure_in_the_message_works(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line_end: bytes) -> None:
++    """Takes the commands (between backticks) out of the real failure message, runs each one on a fresh planted file
++    and checks that the guard then passes and the file is the LF text again. `python` is run as this interpreter."""
++    msg = _guard_message(_planted_tree(tmp_path / "msg", line_end), monkeypatch)
++    cures = re.findall(r"`([^`]+)`", msg)
++    assert [c.split()[0] for c in cures] == ["git", "python"], cures
++    for i, cure in enumerate(cures):
++        tree = _planted_tree(tmp_path / f"cure{i}", line_end)
++        argv = shlex.split(cure.replace("<file>", "sonar-project.properties"))
++        argv[0] = sys.executable if argv[0] == "python" else argv[0]
++        subprocess.run(argv, cwd=tree, check=True, capture_output=True)  # noqa: S603
++        assert _scan_files_with_cr(tree) == [], cure
++        lf = (REPO / "sonar-project.properties").read_bytes().replace(b"\r", b"")
++        assert (tree / "sonar-project.properties").read_bytes() == lf, cure
++
++
++def test_the_guard_flags_every_scan_file_and_refuses_an_empty_list(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    for glob in LF_ONLY_FILES:
++        assert any(fnmatch.fnmatch(n, glob) for n in SCAN_FILES), f"add a real file name for {glob} to SCAN_FILES"
++    tree = _planted_tree(tmp_path / "all", CRLF)
++    for i, n in enumerate(SCAN_FILES):  # every name at once, CRLF or a lone CR as the last byte; _planted_tree did one
++        (tree / n).write_bytes(b"x" + (CRLF, LONE_CR)[i % 2])
++        subprocess.run(["git", "add", n], cwd=tree, check=True, capture_output=True)  # noqa: S603, S607
++    assert sorted(_scan_files_with_cr(tree)) == sorted(SCAN_FILES)
++    named = _guard_message(tree, monkeypatch).split(": " + CRLF_HINT)[0]  # pytest also prints the list: cut it off
++    assert sorted(named.split(", ")) == sorted(SCAN_FILES)  # the message names every file
++    empty = tmp_path / "empty"  # no sonar-project.properties: the check must refuse to answer
++    empty.mkdir()
++    (empty / "other.txt").write_bytes(b"x")
++    for cmd in (["init", "-q"], ["add", "."]):
++        subprocess.run(["git", *cmd], cwd=empty, check=True, capture_output=True)  # noqa: S603, S607
++    with pytest.raises(AssertionError, match="empty"):
++        _scan_files_with_cr(empty)
++
++
++@pytest.mark.gitleaks
++def test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure(tmp_path: Path) -> None:
++    """The real gitleaks program (about 1 s on this two-file tree; select with `-m gitleaks`, skipped without it): the
++    LF copy is clean, the CRLF copy of the same file is reported and the failure text names it and holds the cure."""
++    exe = _gitleaks_exe()
++    if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
++        pytest.skip(
++            f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
++        )
++    assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
++    for label, line_end in (("lf", bytes([10])), ("crlf", CRLF)):
++        tree = _planted_tree(tmp_path / label, line_end)
++        shutil.copyfile(REPO / ".gitleaks.toml", tree / ".gitleaks.toml")
++        failure = _gitleaks_scan(exe, "dir", tree / ".gitleaks.toml", tree, tmp_path / f"{label}.json")
++        if label == "lf":
++            assert failure == "", failure
++        else:
++            assert "(values are redacted); files: ['sonar-project.properties']" in failure, failure
++            assert "git checkout --" in failure and "python -c" in failure, failure
++
++
+ def test_exceptions_narrow(tmp_path: Path) -> None:
+     """Each exception covers only its own file kind and length: the same value elsewhere must still be reported."""
+     h40, h64 = "a1b2c3d4e5" * 4, "a1b2c3d4e5f6a7b8" * 4
