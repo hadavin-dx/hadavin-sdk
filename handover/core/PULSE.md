@@ -73,3 +73,4 @@
 04:22Z P6 r11 resolved (0B/4M); batch 12 builder a7978edf live; no laptop run yet
 04:27Z P2 batch 11 landed 82dd69c1; r11 reviewers+runner live; P2 diff has 244 suppression lines
 04:28Z P2 r11 design 0B/3M (possible fail-open limits.store); codebase review + runner live
+04:30Z P6 runner a2432ae7 reported: 1102 focused pass 3.12+3.13, mutants 112 rows 0 survived, 69 suppression lines; RESULTS.md committed
