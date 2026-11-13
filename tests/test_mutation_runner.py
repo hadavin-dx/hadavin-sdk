@@ -1573,6 +1573,22 @@ def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_o
         run_mutants(root, [], ["tests/test_link.py"], extra_files=("LINK.md",), **kwargs)
     except RuntimeError:
         raise AssertionError("a link named in extra_files was copied into the copy") from None
+    # a link to a file OUTSIDE the tree is left out too, as the docstring says (it is not a reason to refuse the run)
+    (tmp_path / "outside.md").write_text("outside\n", encoding="utf-8")
+    _symlink_or_skip(tmp_path / "outside.md", root / "OUT.md")
+    (root / "tests" / "test_out.py").write_text(
+        "from pathlib import Path\n\n\ndef test_outside_link_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'OUT.md').exists()\n",
+        encoding="utf-8",
+    )
+    try:
+        run_mutants(root, [], ["tests/test_out.py"], extra_files=("OUT.md",), **kwargs)
+    except ValueError:
+        raise AssertionError(
+            "a link to a file outside the tree named in extra_files refused the run"
+        ) from None
+    except RuntimeError:
+        raise AssertionError("a link to a file outside the tree was copied into the copy") from None
     # a folder that is a link: a file reached through it is left out too
     (root / "sub").mkdir()
     (root / "sub" / "DEEP.md").write_text("deep\n", encoding="utf-8")
@@ -1603,6 +1619,33 @@ def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_o
     except OSError as exc:
         raise AssertionError(f"a nested extra file made the copy fail: {exc}") from None
     assert nested == [], "a file in a folder named in extra_files did not reach the copy"
+
+
+def test_a_junction_in_the_folder_part_of_an_extra_file_is_refused(tmp_path, monkeypatch):
+    """The folder part of a path in `extra_files` is looked at for a junction like a fixture folder: `shutil.copy` of a file
+    behind a junction would copy a file of another tree. On Linux nothing is a junction, so `isjunction` says that a folder
+    named `jn` is one (the same stand-in as the test of the fixture folders)."""
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
+    )
+    root = _raising_tree(tmp_path)
+    for folder in ("jn", "ok"):
+        (root / folder).mkdir()
+        (root / folder / "X.md").write_text("x\n", encoding="utf-8")
+    kwargs = {"extra_dirs": (), "timeout": 120}
+    assert (
+        run_mutants(root, [], ["tests/test_core.py"], extra_files=("ok/X.md",), **kwargs) == []
+    ), "a folder that is no junction made the run refuse"
+    _must_refuse(
+        "a junction in the folder part of an extra file was copied",
+        run_mutants,
+        root,
+        [],
+        ["tests/test_core.py"],
+        extra_files=("jn/X.md",),
+        match="junction",
+        **kwargs,
+    )
 
 
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
