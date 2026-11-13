@@ -1,0 +1,15 @@
+tree 61ded9e + v9 patch; gitleaks 8.30.1; DPLD_REQUIRE_SCAN=1; refs: []
+All checks passed!
+158 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+bandit rc 0
+bandit(+load_tools) rc 0
+added lines with noqa|nosec|NOSONAR|type: ignore: 0
+added lines holding the WORD nosem (any case; docs, test data, workflow message): 64
+src files changed: 0
+ 9 files changed, 1807 insertions(+), 1 deletion(-)
+........................................................................ [ 64%]
+........................................................................ [ 86%]
+.............................................                            [100%]
+333 passed in 78.23s (0:01:18)

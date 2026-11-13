@@ -1,0 +1,78 @@
+baseline NEW v9:
+93 passed in 1.51s
+baseline OLD v8 file (v8 patch's test, for comparison):
+81 passed in 1.68s
+== persist-credentials true
+NEW v9: 3 failed, 90 passed in 1.77s
+OLD v8: 3 failed, 78 passed in 1.82s
+restored byte-identical
+== PR title in run
+NEW v9: 13 failed, 80 passed in 1.89s
+OLD v8: 11 failed, 70 passed in 2.11s
+restored byte-identical
+== head_ref in run
+NEW v9: 13 failed, 80 passed in 2.04s
+OLD v8: 11 failed, 70 passed in 1.95s
+restored byte-identical
+== ref_name in run
+NEW v9: 13 failed, 80 passed in 2.01s
+OLD v8: 10 failed, 71 passed in 2.29s
+restored byte-identical
+== base_ref in run
+NEW v9: 13 failed, 80 passed in 2.07s
+OLD v8: 10 failed, 71 passed in 2.06s
+restored byte-identical
+== strict removed
+NEW v9: 4 failed, 89 passed in 1.90s
+OLD v8: 3 failed, 78 passed in 2.95s
+restored byte-identical
+== severity WARNING
+NEW v9: 2 failed, 91 passed in 2.26s
+OLD v8: 2 failed, 79 passed in 1.96s
+restored byte-identical
+== retry also on exit 1
+NEW v9: 2 failed, 91 passed in 2.11s
+OLD v8: 2 failed, 79 passed in 2.16s
+restored byte-identical
+== GITHUB_TOKEN env
+NEW v9: 1 failed, 92 passed in 2.31s
+OLD v8: 1 failed, 80 passed in 1.85s
+restored byte-identical
+== no-deps removed
+NEW v9: 2 failed, 91 passed in 2.27s
+OLD v8: 81 passed in 2.32s
+restored byte-identical
+== continue-on-error step
+NEW v9: 1 failed, 92 passed in 2.17s
+OLD v8: 81 passed in 1.91s
+restored byte-identical
+== continue-on-error job
+NEW v9: 1 failed, 92 passed in 2.14s
+OLD v8: 81 passed in 2.36s
+restored byte-identical
+== extra pack p/ci
+NEW v9: 2 failed, 91 passed in 2.79s
+OLD v8: 81 passed in 1.59s
+restored byte-identical
+== self-hosted
+NEW v9: 4 failed, 89 passed in 2.07s
+OLD v8: 81 passed in 2.01s
+restored byte-identical
+== metrics removed
+NEW v9: 2 failed, 91 passed in 1.98s
+OLD v8: 81 passed in 1.58s
+restored byte-identical
+== folder tools dropped
+NEW v9: 2 failed, 91 passed in 2.29s
+OLD v8: 81 passed in 1.99s
+restored byte-identical
+== job id-token write
+NEW v9: 1 failed, 92 passed in 2.22s
+OLD v8: 81 passed in 1.85s
+restored byte-identical
+== timeout 360
+NEW v9: 2 failed, 91 passed in 1.87s
+OLD v8: 81 passed in 1.95s
+restored byte-identical
+after
+93 passed in 2.14s

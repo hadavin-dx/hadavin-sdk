@@ -1,0 +1,11 @@
+fresh clone of scratch commit (parent 61ded9e); refs: refs/heads/v9 refs/remotes/origin/HEAD refs/remotes/origin/v9 
+9:16AM INF scanned ~3267223 bytes (3.27 MB) in 449ms
+9:16AM INF no leaks found
+dir rc 0
+9:16AM INF Unknown SCM platform. Use --platform to include links in findings. host=
+9:16AM INF 5 commits scanned.
+9:16AM INF scanned ~3275602 bytes (3.28 MB) in 648ms
+9:16AM INF no leaks found
+git rc 0
+apply --check on clean 61ded9e:
+OK
