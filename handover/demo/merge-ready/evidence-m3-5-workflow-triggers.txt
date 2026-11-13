@@ -1,4 +1,4 @@
-# evidence (session lead, 2026-11-13 00:50Z): workflow triggers read with git show on the three PR heads (public repo, fetched)
+# evidence (session lead, 2026-11-13 00:39Z): workflow triggers read with git show on the three PR heads (public repo, fetched)
 ## pr-1-code
 -- lint.yml (trigger block)
 on:

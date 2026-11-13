@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 00:41Z / 06:11 IST - RUNTIME SET (8 patches) AND MERGE-READINESS PATCH v3 ARE READY TO APPLY; C2 GREEN IN CHUNKS (3094 passed, 0 failed); nothing running that can fail
+FAILED / UNCERTAIN first:
+- Correction to my 00:24Z block: I wrote that test_claim_checks_and_crm_mode and test_later_approval were in chunks 1-3; they are in chunks 0 and 3 (both PASSED). No other change.
+- C2 is 'green in chunks': 10 separate pytest processes over contiguous alphabetical file groups (the container was restarted 3 times and killed long runs); cross-file process-wide state is not exercised; the un-chunked baseline on pristine f5fe824 is 2988 passed (run A). Not run on the C2 tree: lints, the restart test x5, the Node-off pass (builders ran lints on their own trees); not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install, real GitHub CI (I cannot see it).
+- The merge-readiness reviews had NO shell each time (read-only tools): they could not run the tests, mutants or apply checks: I ran those myself (below). Two reviewer limits stay: Windows behaviour of the new tests is unrun; gitleaks internals (why a digit matters) are not understood: the docs note says so.
+READY TO APPLY NOW (all clean):
+1. RUNTIME SET, 8 patches in order on pr-3-tests f5fe824: speed/fake-hubspot-read-body-before-answer.patch, triage/codeant2-desk.patch (sha256 f0084b2f0a7f; the module-level `book_problem` version; NOT -r3), codeant2-portal-log, codeant2-demo-only, codeant2-tests-hardening, codeant2-fakes-body, codeant2-standins-body, hang/hang-fix-v2.patch (hang guard: optional safety net, green in the stack). C2: 3094 passed, 3 skipped (root file-permission test, load-measurement test, Windows-only reset test), 0 failed; the 8 tests that failed in run B all pass. PR text must name the core touches plainly (server.py 413/501 body drain; loader.py KnowsBoundAddress; contract.md :143/:277; the `:memory:` refusal in `main` through a module-level `book_problem` in desk.py, because a test that replaces `server.Desk` must not break it).
+2. MERGE-READINESS (your order): merge-ready/merge-ready-hygiene-v3.patch (sha256 84bcffdd63b1...) + MERGE-READINESS-2-4.md: new tests/test_gitleaks_exceptions.py (44 tests: 25 near-miss variants of the sonar-key exception incl. CRLF/blanks/double key/spaces; 17+7 widening mutants killed) + a docs/tests.md note on the detector gap, ONLY what was measured. I CONFIRMED MYSELF on a fresh f5fe824 clone: v3 applies; 59 passed (44 new + 15 hygiene) with GITLEAKS_BIN and DPLD_REQUIRE_SCAN=1; the two mutants I ran (drop `$`; add `.*`) FAIL the near-miss test; v3 applies after all 8 runtime patches and in both orders with semgrep-on-head.patch.
+3. Semgrep: semgrep/semgrep-on-head.patch (sha256 7c8633cad5216c78...; own PR after #2-#4; needs your yes on the `concurrency:` group).
+WHAT THE CHECKLIST SAYS (from the workflow files, evidence-m3-5: `git show` on d23cf8f, f31e261, f5fe824): lint.yml and codeql.yml trigger only for pull requests INTO main and pushes to main (identical on all three heads); sonar.yml runs on every PR. So as a stack only #2 (base main) runs lint/CodeQL; local gitleaks/pytest on #2 and #3 are red (1 and 325 gitleaks findings; no tests) but those are LOCAL, not what GitHub shows. Questions for you: which checks appear on #2/#3/#4; does main require lint/Sonar; retargeting #3/#4 to main after #2 merges is an `edited` event (not a default pull_request type): lint/CodeQL may need a new push or reopen.
+NEEDS FROM LEAD: (1) Semgrep `concurrency:` group yes/no; (2) tell me if you want an un-chunked full run of the final merged stack (about 22 min; a container restart can kill it) or if chunked-green is enough.
+
+TABLE 1 - LIVE ITEMS (load 0.1)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| (none) | all builders and reviewers have handed back; C2 chunks finished 00:30Z | - | - | - | idle | - | - |
+Totals: agents 0, shells 0, containers 0, heavy pytest 0, load 0.1.
+Flags: none. Idle: waiting for your answers/next order; next useful work if none: an un-chunked full run of the merged stack, or the lints/restart-test/node-off pass on the C2 tree.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt runtime + hang guard | done | R1-R4 reviews + INT-2b runs B (8 fail) and C2 (green) | main refusal vs monkeypatched names | none | YES: green full run (chunked) | apply |
+| merge-readiness patch | 3 done | R1 4M, R2 1M, R3 0B/0M | docs overclaim; CI facts derived from commands not workflow triggers | none | YES: clean + my own confirming run | apply |
+| Semgrep, security, nits, layout | done | - | - | - | YES | - |
+Waste check: none open. The costly lesson stays: review rounds without a shell cannot replace a full run (INT-2b caught 8 failures that 4 review rounds did not).
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (00:24Z)
+| item | result |
+|---|---|
+| run C2 chunks 7-9 | 220 + 431 + 215 passed, 0 failed: total 3094 passed, 3 skipped, 0 failed |
+| M2 v2/v3 + reviews 2-3 | merge-readiness patch v3 clean; checklist rewritten from workflow triggers (evidenced) |
+| my confirming checks | 59 tests, 2 mutants, 3 apply combinations, workflow `git show` evidence |
+
 ## 2026-11-13 00:24Z / 05:54 IST - RUN C2 (fixed stack, chunked): 7 OF 10 CHUNKS DONE, 2228 PASSED, 0 FAILED SO FAR; the 8 files that failed in run B are in chunks 7-9 (running now); NOTHING NEW READY TO APPLY UNTIL THEY PASS
 FAILED / UNCERTAIN first:
 1. NO VERDICT YET. Run C2 is the fixed runtime stack (f5fe824 + speed + codeant2-desk f0084b2f0a7f + portal-log + demo-only + tests-hardening + fakes-body + standins-body + hang-fix-v2), run in 10 contiguous chunks of the alphabetical test-file order (79 files; one output + exit file per chunk; resumable because the container was restarted again at 00:05Z; GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1 so the 3 gitleaks tests run). Done: chunks 0-6 all exit 0: 112 + 624 + 275 + 124 + 307 + 320 (1 skipped) + 466 = 2228 passed, 0 failed, 0 errors, 1 skipped (chunk 6 took 6:40: browser tests). Chunk 7 started 00:22:15Z (15 passed so far); chunks 8-9 follow. The 6 reaper/SIGTERM tests and the 2 `book_problem` tests that FAILED in run B (test_server_main_reaper, test_stall_eviction, test_claim_checks_and_crm_mode, test_later_approval) are in these chunks or already passed: test_claim_checks_and_crm_mode and test_later_approval are in chunks 1-3 and PASSED (0 failures there). The `test_server_main_reaper` / `test_stall_eviction` ones are the decisive ones still ahead. ETA about 00:40Z.
