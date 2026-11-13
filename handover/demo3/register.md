@@ -108,3 +108,7 @@ resolve round 2 fix-1 | done 13:40Z: evidence/resolve-round2-lane3-fix-1.md (17 
 B5 | reported 13:27Z closed: lane3-fix-5.patch (reset.sh ps width; 3 tests; xdist 0 failed)
 B1c | agent ade8ef..: lane3-fix-1 round 3 builder | 13:27Z | ~14:05Z stop 14:25Z | running
 REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:45Z | running
+| B4b | BUILDER lane3-fix-4 round 2 (docs+test) | 13:38Z | ~14:15Z; stop 14:30Z | running |
+| B6 | BUILDER lane3-fix-6 docs from Q6b+Q3c | 13:38Z | ~14:15Z; stop 14:30Z | running |
+| B7 | BUILDER lane3-fix-7 tests that kill Q8b survivors | 13:38Z | ~14:15Z; stop 14:30Z | running |
+| Q8b | closed 13:31Z, report mutation-identity-claims.md | | | closed |

@@ -1,5 +1,22 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:40Z / 19:10 IST  HEARTBEAT 57 (Q8b reported; fix-4 resolved; three new builders)
+**Idle (`vmstat`, 13:30Z): IDLE 92%, free RAM about 8 GB.**
+| id | what it does | since | expected end | state |
+|---|---|---|---|---|
+| E4b | EVIDENCE RUNNER lane3-fix-3 r3 proof | 13:15Z | ~13:45Z | running |
+| B2b | BUILDER lane3-fix-2 round 2 (product code) | 13:15Z | ~14:00Z; stop 14:15Z | running |
+| E3b | EVIDENCE RUNNER lane3-fix-1 round 2 suites | 13:16Z | ~14:15Z | running |
+| B1c | BUILDER lane3-fix-1 round 3 | 13:22Z | ~14:05Z; stop 14:25Z | running |
+| B5b | BUILDER lane3-fix-5 round 2 | 13:27Z | ~13:55Z; stop 14:15Z | running |
+| **B4b** (new) | BUILDER lane3-fix-4 round 2 per resolution plan (18 accepted items) + stack variant | 13:38Z | ~14:15Z; stop 14:30Z | running |
+| **B6** (new) | BUILDER lane3-fix-6: tests.md / real-services doc defects from Q6b and Q3c (+ test pinning facts) | 13:38Z | ~14:15Z; stop 14:30Z | running |
+| **B7** (new) | BUILDER lane3-fix-7: tests that kill the Q8b survivors (I03 I04 I06 I11 I12 C03 C19) | 13:38Z | ~14:15Z; stop 14:30Z | running |
+**Q8b RESULT (evidence/mutation-identity-claims.md): identity.py 14/20 killed (15/20 wider set), desk.py claim logic 16/20 (17/20).** Survivors: I03 casefold instead of lower, I04 NFKC added, I06 email length `<` instead of `<=`, I11 field limit `>=` instead of `>`, I12 length before strip: real gaps; C03 verdict write-once guard: likely real, hard to reach; C19 token check: weak; C18 equivalent. B7 is writing the tests.
+**lane3-fix-4 resolve (evidence/resolve-round1-lane3-fix-4.md):** 18 accepted, 0 contested, 1 escalated, 1 declined. Checks: casefold fixes ß and ſ but NOT ı (the first review's proposed wording was false); 98 letters do not round-trip under lower(); the proposed remedy ß->ss, ı->i covers only 3 of them so it is NOT offered; the lines `ADA@Example.COM` (hygiene) and a 126-character line are real defects. ESCALATED to the lead: `loc@.dom` and `loc@a..b` are accepted by the desk (is that wanted?).
+### FAILURES AND RETRIES: no new failures. Q3c wording corrected in HEARTBEAT 56 (197 unknown follow-ups, documented). Open: 2 unexplained PR #12 `E` marks.
+ASK: 1. `loc@.dom` and `loc@a..b` accepted by identity check: product decision (default: leave, record in questions-for-lead.md). 2. Same open asks as heartbeat 55.
+
 ## 2026-11-13 13:30Z / 19:00 IST  HEARTBEAT 56 (Q2b, Q3c, Q6b reported; both lane3-fix-4 reviews saved)
 **Idle (`vmstat`, 13:28Z): user 74, IDLE 22, free RAM about 8 GB.** Queue not empty.
 | id | what it does | since | expected end | real progress now | state |
