@@ -1,0 +1,10 @@
+== mutant (recipient also depends on the outbox object's id) vs NEW test
+=========================== short test summary info ============================
+FAILED tests/test_smtp_provider.py::test_recipients_are_spread_and_stable - A...
+1 failed, 61 deselected in 0.51s
+== same mutant vs OLD test
+.                                                                        [100%]
+1 passed, 61 deselected in 0.24s
+== real code vs NEW test
+.                                                                        [100%]
+1 passed, 61 deselected in 0.22s

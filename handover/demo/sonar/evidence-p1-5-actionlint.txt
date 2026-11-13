@@ -1,0 +1,6 @@
+== .github/workflows/codeql.yml
+exit=0
+== .github/workflows/lint.yml
+exit=0
+== .github/workflows/sonar.yml
+exit=0

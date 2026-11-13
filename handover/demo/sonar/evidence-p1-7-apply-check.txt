@@ -1,0 +1,11 @@
+APPLY_OK
+ .github/workflows/lint.yml         |    5 ++--
+ scripts/reset.sh                   |   10 ++++----
+ scripts/start_all.sh               |    4 ++-
+ tests/test_followup_edge_cases.py  |    4 ++-
+ tests/test_hygiene.py              |   47 ++++++++++++++++++++++++++++++++++++
+ tests/test_lead_step_route.py      |    2 +-
+ tests/test_reset_scripts.py        |   19 +++++++++++++++
+ tests/test_smtp_provider.py        |    7 ++++-
+ tests/test_workflow_files_parse.py |   33 +++++++++++++++++++++++++
+ 9 files changed, 117 insertions(+), 14 deletions(-)

@@ -1,0 +1,13 @@
+E               AssertionError: lint.yml: curl without --proto '=https': curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+tests/test_workflow_files_parse.py:60: AssertionError
+E           AssertionError: lint.yml: pip install without --only-binary :all: -> python -m pip install --require-hashes -r requirements-dev.txt
+tests/test_workflow_files_parse.py:68: AssertionError
+E       AssertionError: raw direction control characters in: ['tests/test_followup_edge_cases.py:439', 'tests/test_followup_edge_cases.py:447']
+tests/test_hygiene.py:501: AssertionError
+E           AssertionError: scripts/reset.sh: single-bracket test on lines [15, 20, 25, 28, 33]
+tests/test_hygiene.py:520: AssertionError
+FAILED tests/test_workflow_files_parse.py::test_a_download_in_a_workflow_is_https_only_and_modern_tls[lint.yml]
+FAILED tests/test_workflow_files_parse.py::test_a_pip_install_in_a_workflow_takes_wheels_only_with_hashes[lint.yml]
+FAILED tests/test_hygiene.py::test_no_tracked_file_holds_a_raw_direction_control_character
+FAILED tests/test_hygiene.py::test_sh_scripts_use_double_brackets_for_tests
+4 failed, 5 passed, 19 deselected in 0.13s
