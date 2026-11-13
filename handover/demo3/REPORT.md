@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:00Z / 15:30 IST  HEARTBEAT 5
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner (Sonnet): full suite, Python 3.12, no browser tests; main 61ded9e and PR #12 8d65577 | pass/fail evidence PR #12 vs main | 09:39Z / 15:09 | run2 of both heads started ~09:58Z, ends ~10:18Z / 15:48 IST (about 18 min left) | run 1 of 2 finished on both heads (main 1110 s, PR12 1172 s); run 2 is the order's second run, not a retry | running | when run2 ends A writes evidence/suite.md; I write evidence/summary.md numbers table on top |
+| B | Evidence runner (Sonnet): hostile-input pass | path-confinement evidence | 09:39Z / 15:09 | done 09:49Z | 5 of 5 groups | reported, closed | none |
+| C | Evidence runner (Sonnet): hang hunt on test_burst_run_logs_every_request, fresh main copy | whether and when the test hangs | 09:53Z / 15:23 | ~60 min; hard stop 11:07Z / 16:37 IST | task a (x10) and b (x5) and d1 (x5) already ended per progress-C.txt; first a-run was invalid (path confinement refused a basetemp outside TMPDIR) and was rerun with basetemp under TMPDIR | running (now waiting for A's run2 before d2 and the full suite c) | read progress-C.txt about 10:10Z |
+| lead-me | register, supervision, pushes | keeps A and C watched | 09:37Z / 15:07 | cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:10Z |
+
+ASK: none.
+RAW FACT, not a verdict: run 1 of BOTH heads ended with exit code 1 (rc=1), and the raw logs show `F` marks (many in the 27-57% range, same places on main and PR12), but the log files hold no pytest summary line (no "N passed, M failed" and no FAILED list yet). I have asked nothing of A yet; A must put the counts and each failure's last 15 lines into evidence/suite.md. I will check that it does and, if the summary is really missing from the logs, I will have the failing tests re-listed from run 2.
+
 ## 2026-11-13 09:53Z / 15:23 IST  HEARTBEAT 4 (ORDER 2: agent C started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

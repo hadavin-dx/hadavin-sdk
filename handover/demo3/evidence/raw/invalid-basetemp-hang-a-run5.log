@@ -1,0 +1,41 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________________ test_burst_run_logs_every_request _______________________
+
+desk_url = 'http://127.0.0.1:33777'
+tmp_path = PosixPath('/home/user/work/hangtmp/a-5/bt/test_burst_run_logs_every_requ0')
+
+    def test_burst_run_logs_every_request(desk_url: str, tmp_path: Path) -> None:
+        log = tmp_path / "req.jsonl"
+>       summary = load_driver.run(desk_url, "burst:30", log, tmp_path / "f.json", 2, 16, 1, "t")
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_load_tools.py:641: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+load_tools/load_driver.py:355: in run
+    log = confine(log, what="--log")  # the real location, checked; the part files and the writes below use only this
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:253: in confine
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = '/home/user/work/hangtmp/a-5/bt/test_burst_run_logs_every_requ0/req.jsonl'
+allowed = ('/home/user/work/hang', '/home/user/work/hangtmp/a-5/tmp')
+what = '--log'
+
+    def _real_inside(text: str, allowed: Sequence[str], what: str) -> tuple[str, str]:
+        """(allowed folder, parts below it as text) for the real location of ``text``; refused when it is in none of
+        ``allowed`` or when it is an allowed folder itself."""
+        real = _resolve(text, what)
+        for root in allowed:
+            if _inside(real, root):
+                relative = os.path.relpath(real, root)
+                if relative == os.curdir:
+                    raise PathRefused(f"{what}: names a folder, not a file")
+                return root, relative
+>       raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E       tools.pathconfine.PathRefused: --log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+tools/pathconfine.py:217: PathRefused
+1 failed in 0.15s
