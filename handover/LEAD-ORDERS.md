@@ -1819,3 +1819,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 15:06Z LEAD ORDER (core), from the owner's over-build audit (owner rule: no more core work till demo work is done): finish ONLY what is in flight (F8, DOCS rebase onto 49d3c859, the rebase of core-fix onto the frozen tree, ONE independent evidence run + ONE fresh review on that final head), then FREEZE. No new builders, no new patches, no new evidence rounds. Leave the patch files on disk with a one-page README of what each patch fixes and whether it applies. Report once, then idle is OK. Guarantee-class (key file, secrets, mail) reviews keep their uncapped fresh pass but only on the final head.
+
+
+## 2026-11-13 14:54Z LEAD ANSWER (core): the 5 untested doc sentences: NO new builder (over-build audit; docs tests are not a demo claim). List them plainly as OPEN TEST GAPS in the freeze README (sentence, file, why untested). Keep the 14 docs tests as they are. Then finish CODE-REBASE + F8 as ordered, one independent evidence + one fresh review on the rebased core-fix, freeze, report. Standing order stands: stay in turn while agents run, status every 5 min.
