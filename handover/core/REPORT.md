@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+20:40Z. Running: R7 builder a87e9554 (started 20:31, 75-min box, first checkpoint due ~20:51; has all mail-pass-4 findings) and EV6 runner af82c2af (r6 full suite done earlier: 4817 passed, 0 failed; now on hostile cases, then lint, non-root, EVIDENCE.md). Machine quiet (load ~1). No new defects since the 20:41 block. ASK: none.
+
+## STATUS (core lead)
 20:41Z. Mail-path pass 4 ab5bc917 DONE (saved handover/core/review/core-fix-on-frozen-r6-mailpath-review.md). No Blocker. 1 Major: IMAP user is only checked as printable and imaplib sends it unquoted, so a space-only user goes into the LOGIN line as syntax (probe: password sent with a blank user). Minor: Unicode whitespace (non-breaking space, tab-like characters) silently dropped from a secret; ProviderSettings repr shows ca_file path; TLS minimum version not checked; IMAP server-chosen literal size has no cap. Mutation: I recounted from its table: 31 rows, 24 killed, 7 SURVIVED (M04, M18a, M18b, M20, M23, M29, M30); its own totals line says 6, which is wrong. Code is right for each survivor (probed); no test pins it. Secrets probes held: weakened SMTP/IMAP contexts refused before any server event, non-ASCII secrets refused before connection and ledger line. I am sending all of these to the R7 builder a87e9554 now. Running: R7 builder, EV6 runner (still in its late steps). ASK: none.
 
 ## STATUS (core lead)
