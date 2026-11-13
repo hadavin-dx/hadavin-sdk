@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:37Z / New SONAR-PATH lane started; Q8c-1 nits pushed; Part 6 batch 9 and Part 2 batch 9 building
+
+**FAILED / UNCERTAIN FIRST**
+- No lane has a clean round yet. Part 6 07bfda12: full pytest and complete banner_mutants only on your laptop run (accepted). Part 2 batch 9 not pushed yet.
+- Q8c-1 head c5aa1c26 (nits): focused 536 passed, 6/6 and 7/7 mutant rows only; the full suite and the other ~460 rows were NOT run. Runner a7e31a96 (r17) still silent after 50 min, over the 8-minute rule.
+- SONAR-PATH: the earlier build ddf1d584 has round 1 resolved (not clean). SonarCloud has NOT been seen clean: only the PR run shows that.
+- Below the 6-agent minimum: 5 live. I do not start agents with no purpose to reach the number.
+
+**LEAD ACTIONS**: none new. No GH013 seen.
+
+**LIVE ITEMS (agents)**: a7e31a96 Q8c-1 runner; a37e6e83 Part 2 batch 9 builder; a69287e2 Part 6 batch 9 builder; a51ea641 SONAR-PATH fix builder (classes A-H); a14748c3 Q8c-1 code-only branch builder (core/q8c1-notes-check, no handover files). Disk 84% used, 6.5 GB free.
+
+**LANE SONAR-PATH (order 02:55Z, item E)**: A plan with rung table: done (design v2, rung table added in round 1 resolve), B siblings inventory: in the fix brief, C fail-before tests: builder working, D separate PR branch core/k1b-path-confinement: not yet. EGM step: 6 resolve done (r1); batch building, then fresh evidence, then TWO fresh reviewers (security, no cap). Demos kept out of the PR (recommended answer applied).
+
+**ROUNDS (WHY)**: Part 6 r9 and Part 2 r9 required (mode-safety / money paths, no cap); SONAR-PATH r2 required (security path).
+
+**FINISHED SINCE LAST BLOCK**: Part 6 cloud runner closed (247/247 rows, 475 focused passed; two builder claims wrong, recorded PDBANNER-r8-10); Q8c-1 nits builder closed.
+
+**EGM STEP PER PACKAGE**: Part 2: batch 9 building (step 3). Part 6: batch 9 building (step 3). Q8c-1: nits done, code-only branch (3), then delta evidence (4). SONAR-PATH: step 3 (build of resolve r1 fixes).
+
+
 ## 02:30Z / Part 6 round 8 RESOLVED (batch 9 brief written); masking follows main exactly
 
 **FAILED / UNCERTAIN FIRST**
