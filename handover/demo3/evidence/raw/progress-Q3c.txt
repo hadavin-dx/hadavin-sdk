@@ -1,1 +1,2 @@
 Q3c soak start UTC 2026-11-13T13:05:59Z IST 2026-11-13T18:35:59+0530 rounds=30 master_seed=7 outbox=blind legacy=True
+UTC 2026-11-13T13:07:45Z IST 2026-11-13T18:37:45+0530 rounds_done=25 (last 25) violations=2 hangs=0
