@@ -1,6 +1,35 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:25Z / 06:55 IST - CHUNKED RUN ON 2db3926: CHUNKS 0-4 GREEN (1474 passed, 0 failed); ANOTHER RESTART KILLED CHUNK 5 AT 01:18:51Z (52 passed, 0 failed), DRIVER RELAUNCHED 01:24:13Z; SEMGREP DELTA REVIEW DONE: 1 MAJOR (test gap) FIXED IN v2
+FAILED / UNCERTAIN first:
+1. **Still no complete verdict on 2db3926.** Chunked driver (pr-3-tests 2db3926, 80 test files, 10 chunks of 8 files, one pytest process per chunk): chunks 0-4 finished, all exit 0: 112 + 624 + 276 + 156 + 306 = **1474 passed, 0 failed, 0 errors, 0 skipped**. Chunk 5 was killed by yet ANOTHER container restart at 01:18:51Z (52 passed, 0 failed; partial kept as /tmp/work/h3chunk-5-killed-attempt1.txt); I relaunched the driver at 01:24:13Z: it skips chunks 0-4 and re-runs chunk 5 from its start, then 6-9 (ETA about 01:45Z if no restart hits again). Restarts so far: 23:05, 23:58, ~00:05, ~00:51, ~00:57, ~01:18, ~01:24: the container is now restarting every 5-30 minutes: only a RESUMABLE method can finish; the un-chunked run is not feasible at this frequency (attempts: 1909 and 322 tests, both 0 failures, both killed).
+2. The lints / hygiene with gitleaks / restart test x5 / node-off pass on the 2db3926 tree have NOT run yet (they follow the chunks; each is short and I will run them in resumable steps).
+3. Semgrep delta review (fresh reviewer, no shell): 0 Blocker, **1 Major: the new test pinned only the `cancel-in-progress` line, not the `group:` line**: a constant `group: semgrep` would still pass, and then a PR run could cancel an in-progress main run (what you forbade); builder S3 fixed it in `semgrep-on-2db3926-v2.patch` (sha256 a5b71be56ceb...): the test now pins the whole concurrency block (exactly one top-level `concurrency:`, one `group: semgrep-${{ github.ref }}`, one `cancel-in-progress: ${{ github.event_name == 'pull_request' }}`) with 8 mutant samples, and the workflow comment says the safety depends on github.ref staying in the group name. I verified v2 myself: applies on a fresh 2db3926 clone; tests/test_nosemgrep_form.py 63 passed; the two real-file mutants (cancel true; constant group) each fail 1 test. REVIEW-5-delta.md pushed (22272b2c).
+4. Not run anywhere: PowerShell/Windows, real GitHub CI, a real n8n, Python 3.13, Windows lock install.
+READY TO APPLY NOW: Semgrep (own PR): **semgrep/semgrep-on-2db3926-v2.patch (sha256 a5b71be56ceb...)**: do NOT use semgrep-on-2db3926.patch (the group is not pinned there). Everything else is applied (batch 3).
+NEEDS FROM LEAD: (1) browser-lock anchor vs semgrep anchor confirmation (S3 could not see your tightened line); (2) chunked is the only feasible method now: confirm it is acceptable as the final gate.
+
+TABLE 1 - LIVE ITEMS (load ~1)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| h3 chunked driver (nohup, resumable) | full suite of 2db3926 | 01:11 (relaunched 01:24:13) | 14 min total | 01:45 | running chunk 5 (re-run) | /tmp/work/h3chunk-*.txt/.exit -> integration/INT-3-2db3926.md | chunks 0-4 exit 0 |
+Totals: agents 0, shells 1, containers 0, heavy pytest 1, load ~1.
+Flags: container restarts every 5-30 min (7 so far); the driver resumes at chunk granularity (a chunk takes 1-7 minutes).
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| batch 3 on head 2db3926 | gate: full run (chunked) | chunks 0-4: 1474 passed, 0 failed; un-chunked attempts 1-2 killed with 0 failures at 1909 and 322 tests | container restarts | gate must complete | no | chunks 5-9 green + lints |
+| Semgrep for 2db3926 | 5 done | R1-R4 clean; delta review: 0B/1M (test gap) fixed in v2 and verified by me | test pinned only the cancel line | none | YES: v2 verified (mutants fail) | apply v2 as its own PR |
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (01:13Z)
+| item | result |
+|---|---|
+| Semgrep delta review | 0B/1M/nits (saved REVIEW-5-delta.md); v2 built + verified |
+| chunks 0-4 | 1474 passed, 0 failed |
+| chunk 5 | killed by a restart at 52 passed; relaunched |
+
 ## 2026-11-13 01:13Z / 06:43 IST - FULL RUN ATTEMPT 2 ALSO KILLED BY A CONTAINER RESTART (322 passed / 0 failed in 4.5 min); SWITCHED TO THE RESUMABLE CHUNKED DRIVER ON THE 2db3926 TREE (started 01:11:12Z); Semgrep delta review started
 FAILED / UNCERTAIN first:
 1. **Still no verdict on 2db3926.** Attempt 2 of the un-chunked run (started 00:52:56Z) died at 00:57:31Z after 322 tests (322 PASSED, 0 FAILED) with another container restart; the container was down about 13 minutes and came back at ~01:10Z (restart log: 23:05, 23:58, ~00:05, ~00:51, ~00:57; the gaps between restarts are now shorter than the 22 minutes an un-chunked run needs: I have NO un-chunked pass of 2db3926 and I cannot promise one while this continues). So I started the same tree (/tmp/work/h3, pr-3-tests 2db3926, 80 test files) in the RESUMABLE chunked driver (10 chunks of 8 files, one pytest process per chunk, an .exit file per finished chunk; after a restart I relaunch and it skips finished chunks): same flags (`-v -o faulthandler_timeout=300 -rs`, GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1, Node + Playwright). The previous chunked run of the stack (C2, f5fe824 + the batch-3 patches) took about 25 minutes wall and was 3094 passed / 0 failed. ETA about 01:40Z if no restart interrupts it. I will ALSO retry the un-chunked run afterwards if restarts stop (tell me if you prefer one over the other).
