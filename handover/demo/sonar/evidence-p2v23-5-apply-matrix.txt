@@ -1,0 +1,30 @@
+## A: base 26ca762 (has P2 v2.1)
+D22 D23 -> ok=1
+  fail at P1
+P1 D22 D23 -> ok=0
+  fail at P1
+D22 D23 P1 -> ok=0
+  fail at P1
+D22 P1 D23 -> ok=0
+P3 D22 D23 -> ok=1
+D22 D23 P3 -> ok=1
+D22 P3 D23 -> ok=1
+  fail at P1
+P1 P3 D22 D23 -> ok=0
+  fail at P1
+P3 P1 D22 D23 -> ok=0
+  fail at P1
+D22 D23 P1 P3 -> ok=0
+  fail at P1
+D22 P1 D23 P3 -> ok=0
+  fail at P1
+P1 D22 P3 D23 -> ok=0
+## B: base db54e13 + P2 v2.1
+P1 P3 D22 D23 -> ok=1
+P3 P1 D22 D23 -> ok=1
+D22 D23 P1 P3 -> ok=1
+P1 D22 D23 P3 -> ok=1
+D22 P1 P3 D23 -> ok=1
+P3 D22 P1 D23 -> ok=1
+D22 D23 -> ok=1
+NOTE: P1 v3.2 fails on 26ca762 because 26ca762 already contains it (commit 00d9220), not because of the delta (P1 alone fails the same way). D22 = v2.2 delta, D23 = v2.3 delta, P3 = p3-path-helper-v3.

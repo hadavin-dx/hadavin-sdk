@@ -1,0 +1,33 @@
+M01 KILLED (5: test_a_sent_result_moves_the_stage_and_frees_the_copy_wait,test_c_nudge_result_with_no_row_logs_changed_0,test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move,test_c_stale_token_logs_changed_0,test_e_a_locked_database_is_swallowed_and_logged)
+M04 KILLED (1: test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move)
+M06 KILLED (1: test_a_database_error_that_is_not_a_lock_answer_propagates)
+M08 KILLED (1: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait)
+M09 KILLED (1: test_c_stale_token_logs_changed_0)
+M10 KILLED (1: test_c_nudge_result_with_no_row_logs_changed_0)
+M26 KILLED (1: test_d_the_listening_line_is_exactly_http_host_port)
+O01 moved = rows>0 only KILLED (2: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait,test_g_a_stage_at_the_same_rank_does_not_move)
+O02 locked => moved True KILLED (1: test_e_a_locked_database_is_swallowed_and_logged)
+O03 no stayed-locked log KILLED (1: test_e_a_locked_database_is_swallowed_and_logged)
+O04 retry off-by-one KILLED (2: test_e_a_locked_database_is_swallowed_and_logged,test_f_busy_tries_within_the_deadline_are_all_used)
+O05 retry GateBusy retried KILLED (1: test_e_a_locked_database_is_swallowed_and_logged)
+O06 retry no deadline KILLED (1: test_f_no_new_try_after_the_call_deadline)
+O07 sent moves for unknown too KILLED (1: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait)
+O08 drop token in UPDATE KILLED (6: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait,test_a_sent_result_moves_the_stage_and_frees_the_copy_wait,test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move,test_c_stale_token_logs_changed_0,test_g_a_sent_result_clears_the_last_error,test_g_a_stage_at_the_same_rank_does_not_move)
+O09 changed > 1 warns only KILLED (2: test_c_nudge_result_with_no_row_logs_changed_0,test_c_stale_token_logs_changed_0)
+O10 wait never freed KILLED (1: test_a_sent_result_moves_the_stage_and_frees_the_copy_wait)
+O11 wait always freed KILLED (3: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait,test_e_a_locked_database_is_swallowed_and_logged,test_g_a_stage_at_the_same_rank_does_not_move)
+O12 mark_contacted rank <= KILLED (1: test_g_a_stage_at_the_same_rank_does_not_move)
+O13 sent_at always set SURVIVED
+O14 last_error kept on sent KILLED (1: test_g_a_sent_result_clears_the_last_error)
+O15 ambiguous dropped SURVIVED
+O16 nudge record drops attempts KILLED (1: test_c_nudge_result_with_no_row_logs_changed_0)
+O17 give_back_nudge lost warn SURVIVED
+O18 record_nudge no finish KILLED (1: test_c_nudge_result_with_no_row_logs_changed_0)
+O19 busy reraise (finish_with) KILLED (1: test_e_a_locked_database_is_swallowed_and_logged)
+O20 finish_with returns None KILLED (1: test_a_sent_result_moves_the_stage_and_frees_the_copy_wait)
+O21 swallow only GateBusy as busy KILLED (1: test_e_a_locked_database_is_swallowed_and_logged)
+O22 rc==1 guard dropped (flag) KILLED (1: test_c_stale_token_logs_changed_0)
+O23 warn count uses result[1] KILLED (5: test_a_sent_result_moves_the_stage_and_frees_the_copy_wait,test_c_nudge_result_with_no_row_logs_changed_0,test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move,test_c_stale_token_logs_changed_0,test_e_a_locked_database_is_swallowed_and_logged)
+O24 mirror copied unfinished SURVIVED
+O25 mirror_failed unfinished SURVIVED
+O26 _locked_retry returns None on busy last KILLED (3: test_a_database_error_that_is_not_a_lock_answer_propagates,test_e_a_locked_database_is_swallowed_and_logged,test_f_busy_tries_within_the_deadline_are_all_used)
