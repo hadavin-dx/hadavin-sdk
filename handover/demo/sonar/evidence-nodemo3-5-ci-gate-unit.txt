@@ -1,0 +1,25 @@
+ok   gate exit 0 (want 0) all good: TOTAL (no demo_only/): {'passed': 639, 'failed': 0, 'error': 0, 'skipped': 0} collected: 639 floor: 1 skip budget: 90
+ok   gate exit 1 (want 1) last chunk: no tests ran: chunk 8: pytest did not finish, last line 'no tests ran in 0.01s'
+ok   gate exit 1 (want 1) last chunk: progress line: chunk 8: pytest did not finish, last line '....s....  [ 40%]'
+ok   gate exit 1 (want 1) last chunk: progress line without newline fused: chunk 8: pytest did not finish, last line 'ssss....ssssss'
+ok   gate exit 1 (want 1) last chunk: pytest.Exit message: chunk 8: pytest did not finish, last line '!!!! _pytest.outcomes.Exit: stop !!!!'
+ok   gate exit 1 (want 1) last chunk: 1 error: chunk 8: pytest exit code 1: '1 error in 0.20s'
+ok   gate exit 1 (want 1) last chunk: 1 failed: chunk 8: pytest exit code 1: '1 failed, 5 passed in 0.20s'
+ok   gate exit 1 (want 1) last chunk: 1 failed with rc 0 (impossible but fed): tests failed in the no-demo copy
+ok   gate exit 1 (want 1) last chunk: good summary but exit code 1: chunk 8: pytest exit code 1: '71 passed in 3.10s'
+ok   gate exit 1 (want 1) last chunk: good summary but exit code 2: chunk 8: pytest exit code 2: '71 passed in 3.10s'
+ok   gate exit 1 (want 1) last chunk: empty last line: chunk 8: pytest did not finish, last line ''
+ok   gate exit 1 (want 1) middle chunk empty line: chunk 3: pytest did not finish, last line ''
+ok   gate exit 1 (want 1) 10 lines: 10 chunk lines instead of 9
+ok   gate exit 1 (want 1) 8 lines: 8 chunk lines instead of 9
+ok   gate exit 1 (want 1) 0 lines (empty file): 0 chunk lines instead of 9
+ok   gate exit 1 (want 1) blank line inserted (10 lines): 10 chunk lines instead of 9
+ok   gate exit 1 (want 1) progress line fused with next chunk (8 lines): 8 chunk lines instead of 9
+ok   gate exit 0 (want 0) skipped-only chunk is fine: TOTAL (no demo_only/): {'passed': 568, 'failed': 0, 'error': 0, 'skipped': 9} collected: 577 floor: 1 skip budget: 90
+count mismatch (collected 640 vs 639 reported) 1 639 tests reported but 640 collected: a chunk lost tests
+count mismatch (collected 630 vs 639 reported) 1 639 tests reported but 630 collected: a chunk lost tests
+skip budget exceeded (91 > 90) 1 91 skipped, the budget is 90: tests are being skipped that should run
+skip at budget (90 <= 90) passes 0 TOTAL (no demo_only/): {'passed': 628, 'failed': 0, 'error': 0, 'skipped': 90} collected: 718 floor: 1 skip budget: 90
+floor not reached (639 passed < 640) 1 only 639 passed, the floor is 640: tests are being skipped that should run
+floor reached (639 >= 639) 0 TOTAL (no demo_only/): {'passed': 639, 'failed': 0, 'error': 0, 'skipped': 0} collected: 639 floor: 639 skip budget: 90
+WRONG VERDICTS: 0

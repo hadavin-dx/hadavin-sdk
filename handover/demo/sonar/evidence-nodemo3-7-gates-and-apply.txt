@@ -1,0 +1,46 @@
+# final stack in G (db54e13 + P1v3.1 + P2v2 + P3v3 + nodemo-fix-v3 + isort + optional-v3 + ci-job-v3), demo present
+## ruff check
+All checks passed!
+## ruff format --check
+151 files already formatted
+## mypy linux
+Success: no issues found in 28 source files
+## mypy win32
+Success: no issues found in 28 source files
+## bandit -ll -r src tools scripts -c pyproject.toml
+	No issues identified.
+	Total issues (by severity):
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Medium: 0
+		High: 9
+bandit rc 0
+## workflow yaml parse
+.github/workflows/codeql.yml ok ['analyze']
+.github/workflows/lint.yml ok ['lint']
+.github/workflows/nodemo.yml ok ['no-demo']
+.github/workflows/sonar.yml ok ['build']
+## apply matrix
+== each v3 nodemo patch alone on db54e13 (git apply --check)
+ok   nodemo-fix-v3
+ok   nodemo-ruff-isort
+error: patch failed: tests/test_hygiene.py:18
+error: tests/test_hygiene.py: patch does not apply
+FAIL nodemo-optional-hygiene-repo-v3
+ok   nodemo-ci-job-v3
+== all 6 orders of P1v3.1/P2v2/P3v3, then fix-v3, isort, optional-v3, ci-job-v3 (each applied for real; tree reset between orders)
+order 1 2 3: ok
+order 1 3 2: ok
+order 2 1 3: ok
+order 2 3 1: ok
+order 3 1 2: ok
+order 3 2 1: ok
+== nodemo patches in other orders after P1 P2 P3 (fix, ci, isort, optional in all-but-optional-first permutations)
+nodemo-ci-job-v3 nodemo-ruff-isort nodemo-fix-v3 nodemo-optional-hygiene-repo-v3: ok
+nodemo-ruff-isort nodemo-optional-hygiene-repo-v3 nodemo-ci-job-v3 nodemo-fix-v3: ok
+nodemo-optional-hygiene-repo-v3 nodemo-fix-v3 nodemo-ci-job-v3 nodemo-ruff-isort: ok
+== optional-v3 BEFORE P1v3.1 (known order limit)
+error: patch failed: tests/test_hygiene.py:18
+error: tests/test_hygiene.py: patch does not apply
+FAIL (expected: P1 must come first)

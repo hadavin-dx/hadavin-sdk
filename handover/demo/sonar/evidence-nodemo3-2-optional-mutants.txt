@@ -1,0 +1,24 @@
+O1 helper never skips
+    git copy, demo deleted (B): 1 failed, 107 passed in 25.05s
+    no-git copy (C): 6 failed, 101 passed, 1 skipped in 6.27s
+O2 _git does not call helper
+    git copy, demo deleted (B): 1 failed, 107 passed in 26.96s
+    no-git copy (C): 5 failed, 101 passed, 2 skipped in 6.18s
+O3 scan test does not call helper
+    git copy, demo deleted (B): 108 passed in 27.41s
+    no-git copy (C): 1 failed, 102 passed, 5 skipped in 6.11s
+O4 .git must be a dir (worktree/submodule .git file misread)
+    git copy, demo deleted (B): 1 failed, 107 passed in 29.17s
+    no-git copy (C): 1 failed, 101 passed, 6 skipped in 6.10s
+O5 REPO one level too low
+    git copy, demo deleted (B): 8 failed, 96 passed, 4 skipped in 5.42s
+    no-git copy (C): 8 failed, 95 passed, 5 skipped in 3.94s
+O6 helper inverted
+    git copy, demo deleted (B): 1 failed, 102 passed, 5 skipped in 6.08s
+    no-git copy (C): 6 failed, 101 passed, 1 skipped in 5.45s
+O7 _git skips for any folder, not only REPO
+    git copy, demo deleted (B): 1 failed, 107 passed in 27.94s
+    no-git copy (C): 1 failed, 99 passed, 8 skipped in 4.86s
+O8 .git must be a file (clone folder misread)
+    git copy, demo deleted (B): 1 failed, 102 passed, 5 skipped in 5.73s
+    no-git copy (C): 1 failed, 101 passed, 6 skipped in 6.08s

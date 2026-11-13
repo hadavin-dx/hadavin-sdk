@@ -1,0 +1,30 @@
+G1 skip product rows too (drop startswith)
+    demo present: whole file: 1 failed, 51 passed in 0.34s
+    demo deleted: whole file: 2 failed, 6 passed, 44 skipped in 0.15s
+G2a DEMO_GONE always True
+    demo present: whole file: 1 failed, 45 passed, 6 skipped in 0.47s
+    demo deleted: whole file: 46 passed, 6 skipped in 0.41s
+G2b _present ignores its argument (always True)
+    demo present: whole file: 2 failed, 44 passed, 6 skipped in 0.66s
+    demo deleted: whole file: 1 failed, 45 passed, 6 skipped in 0.46s
+G3 or instead of and
+    demo present: whole file: 3 failed, 43 passed, 6 skipped in 0.33s
+    demo deleted: whole file: 3 failed, 5 passed, 44 skipped in 0.13s
+G4 never skip
+    demo present: whole file: 1 failed, 51 passed in 0.70s
+    demo deleted: whole file: 8 failed, 44 passed in 0.75s
+G5 wrong folder name
+    demo present: whole file: 2 failed, 50 passed in 0.45s
+    demo deleted: whole file: 8 failed, 44 passed in 1.09s
+G6 prefix without slash
+    demo present: whole file: 1 failed, 51 passed in 0.48s
+    demo deleted: whole file: 1 failed, 45 passed, 6 skipped in 0.55s
+G7 is_file on the folder
+    demo present: whole file: 1 failed, 45 passed, 6 skipped in 0.65s
+    demo deleted: whole file: 46 passed, 6 skipped in 0.28s
+G8 probe fakes.py instead of the folder
+    demo present: whole file: 52 passed in 0.71s
+    demo deleted: whole file: 46 passed, 6 skipped in 0.74s
+G9 call site passes False (guarded test never skips)
+    demo present: whole file: 52 passed in 0.84s
+    demo deleted: whole file: 3 failed, 45 passed, 4 skipped in 1.03s

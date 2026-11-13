@@ -1,0 +1,24 @@
+== B (demo deleted; git copy)
+........................................................................ [ 66%]
+....................................                                     [100%]
+108 passed in 20.13s
+== C (demo deleted; no .git)
+...sss..........s....................................................... [ 66%]
+.................................ss.                                     [100%]
+=========================== short test summary info ============================
+SKIPPED [5] tests/test_hygiene.py:52: not a git work tree (a source archive): git cannot list the files
+SKIPPED [1] tests/test_no_placeholders.py:28: not a git work tree (a source archive): the file list is not available
+102 passed, 6 skipped in 5.76s
+== P (demo present, DPLD_REQUIRE_DEMO=1) except_hierarchy
+....................................................                     [100%]
+52 passed in 0.45s
+== B except_hierarchy (demo deleted)
+...........ss............ss................ss.......                     [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_except_clause_hierarchy.py:173: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:173: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:179: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:179: demo_only/fake_smtp_tls.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:219: demo_only/fake_imap.py: demo_only/ was removed
+SKIPPED [1] tests/test_except_clause_hierarchy.py:219: demo_only/fake_smtp_tls.py: demo_only/ was removed
+46 passed, 6 skipped in 0.36s
