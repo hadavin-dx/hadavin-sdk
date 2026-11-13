@@ -1,4 +1,9 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead)
+R4 builder a8a5351a latest checkpoint: R4 checkpoint 5 17:25: lead additions A/B/C coded+tests; r4-5 run pending; failbefore refusals running; next: fail-before for additions, patches, RESULTS (it has my additions A,B,C: stale book-folder test pin, check_invariants 100 MB read cap, newline in REAL_RESULT_FILE).
+EV3 FAILURE 2 (portal drawer Playwright timeout): STILL UNPROVEN. Passed alone once; failed once in the full run; no repeat yet. Nothing is running to test it now. Plan: re-run it alone 3 times and once inside its test file on the r4 head during the final evidence run, report all runs; if any fails it is a defect to fix, not a flake to label.
+NEXT: R4 reports -> final evidence run (r4 head), fresh reviewer + second mail-path pass in parallel -> resolve -> README -> FROZEN -> QUEUE DONE. ASK: none.
+
 ## STATUS (core lead) EVIDENCE RUNNER on r3 patch DONE (saved handover/core/fix/EV3-EVIDENCE-r3.md; raw logs stay in /home/user/build/rr6/out/EV3)
 FAILED FIRST: full suite in a git tree, 106 of 106 files run: A 2 failed/2170 passed/4 skipped, B 2194 passed. Union 4364 passed, 2 failed.
  (1) tests/test_book_folder_refusals.py::test_the_start_scripts_say_the_same_refusal_in_both_forms: REAL, repeatable. A source-text pin looks for `argv[1] == "data-dir" and (problem := book_problem(config.db_path)) is not None` in scripts/desk_setting.py; the r3 code reads `argv[1] in BOOK_WORDS and (...)`. Root cause proven by the runner's reading of both texts: R3 changed the code and left the pin stale (the R3 builder did not run this file). Sent to the R4 builder to fix.
