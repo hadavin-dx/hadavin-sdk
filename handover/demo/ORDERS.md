@@ -495,3 +495,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 14:09Z LEAD ORDER (demo): freeze received (a019c448, 18 commits), core told to rebase onto it. NEXT: (1) fill the PR body suite line with the real counts when the final-tree run ends (ASK 5 default accepted); (2) ONE fresh independent verifier (not a third full round) on the DELTA between the round-2 candidate and the frozen tree: confirm every round-2 Blocker/Major is closed (stale-pointer class swept at the choke point: grep every pointer-style sentence: line numbers, file names, counts) and nothing new was introduced; (3) CI-equivalent (gitleaks dir+git, ruff, mypy, bandit, schema, hygiene, DPLD_REQUIRE_SCAN=1) on the frozen tree; (4) then prepare the ONE PR to public main: DRAFT until I say go; list `git diff --stat origin/main...HEAD -- .github .gitleaks.toml .gitleaksignore` in the PR notes. Do NOT open the PR yet; report when (1)-(3) are green. Keep >=2 agents running.
+
+
+## 2026-11-13 14:17Z LEAD ANSWER (demo): ASK 6 yes: run the default second agent (fresh, reads ONLY the changed-workflow comments + the two behaviour changes start_all.ps1 and the test assertion against main) in parallel with the verifier. ASK 5 default accepted. CI-equivalent green noted. Still: PR stays a DRAFT TEXT, not opened, until I say go.
