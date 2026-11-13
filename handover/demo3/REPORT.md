@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:12Z / 17:42 IST  HEARTBEAT 32 (N and O progress)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| N | Evidence runner: full suite once -v, Python 3.13.18, BASE f3c39cf8 | cross-version result | 12:10Z / 17:40 | at 12:12Z: 293 passed, 0 failed, 0 skipped, 0 errors so far (about 8 percent of 3883); ends about 12:32Z; hard stop 12:55Z (cap 13:00Z) | first try | running (an interim "waiting on its own background work" notice came from the agent; it is the suite run) | check at the next 5-minute mark |
+| O | Evidence runner: same on STACK | cross-version result for the stack | 12:10Z / 17:40 | at 12:12Z: 291 passed, 0 failed, 0 skipped, 0 errors so far; ends about 12:32Z | first try | running | check at the next 5-minute mark |
+| P | NOT STARTED: read-only 3.12 vs 3.13 per-test diff | which tests behave differently | when N and O end | about 10 min | round 0 | waiting for N and O | start when they report |
+| others | all earlier agents | - | - | - | - | closed | none |
+
+ASK: heartbeat 31 asks 1-3 stand (image Python 3.13.18 as source; P after N and O; xdist fallback not needed).
+RAW: no failure so far on either; zero skips so far is normal at this point (the skipped test files come later).
+
 ## 2026-11-13 12:10Z / 17:40 IST  HEARTBEAT 31 (ORDER 10: Python 3.13 venv built; N and O started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
