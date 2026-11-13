@@ -2535,6 +2535,7 @@ def test_the_seven_pinned_classes_hold_no_class_level_mutable_value() -> None:
     place (a list, a dict, a set, a mutable instance) would change without the pin noticing. The five stand-ins, the
     detector list and ``Approvals`` hold only functions, descriptors, classes and plain atoms there."""
     import inspect
+    import types
 
     from hadavin_sdk import standins
 
@@ -2552,8 +2553,14 @@ def test_the_seven_pinned_classes_hold_no_class_level_mutable_value() -> None:
                 allowed = (
                     inspect.isfunction(value)
                     or isinstance(value, classmethod | staticmethod | property | type)
-                    or inspect.ismethoddescriptor(value)
-                    or inspect.isdatadescriptor(value)
+                    or type(value)
+                    in (
+                        types.WrapperDescriptorType,
+                        types.MethodDescriptorType,
+                        types.ClassMethodDescriptorType,
+                        types.MemberDescriptorType,
+                        types.GetSetDescriptorType,
+                    )
                     or standins._is_one_of(type(value), standins._ATOM_TYPES)
                     or (type(value) is tuple and all(type(v) is str for v in value))
                     or type(value) in (frozenset, type(None), type(Ellipsis))

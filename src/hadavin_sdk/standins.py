@@ -39,7 +39,14 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
   container bigger than what is left of the budget is not copied and reads as real, so a huge list referenced a
   thousand times costs the size check, not a thousand copies). Both limits FAIL CLOSED: a container that is still
   unexplored after the last level and holds anything but plain atoms (str, int, ...) reads as real, and so does an
-  instance that holds more than the budget;
+  instance that holds more than the budget. ONE budget (``_Budget``) is made per question and charged at every visit
+  (a plain value or container costs 1; a stand-in or a data row costs ``STAND_IN_WEIGHT`` (50)), so a list of a
+  million references to one object cannot cost more than the budget. A value is plain only if it holds no state
+  outside what the scan reads: its ``__dict__`` is empty (or it has none), and a ``Counter`` carries no instance
+  dictionary entries. A data class (pydantic) is judged by its slots too: ``__pydantic_extra__`` and
+  ``__pydantic_private__`` empty or None, ``__pydantic_fields_set__`` a plain set of str; the class base kinds are
+  pinned once per question. ``verdict()`` gives "stand-in", "real" or "over budget" (named apart, so the approvals
+  receiver can say that the store is too big rather than that it is real);
 * a detector list (``AnyOf``) is pinned the same way, its ``detectors`` must be a plain ``tuple``, and every
   member must itself be a stand-in (nesting at most ``SCAN_DEPTH`` (4) deep, cycles refused by an id set);
 * any error while asking reads as "not a stand-in".
