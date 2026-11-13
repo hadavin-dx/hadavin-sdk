@@ -1,4 +1,11 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 17:45Z (core lead): lead answer 15:41Z read; R2 fix started
+| agent | purpose | started | expected end | state |
+|---|---|---|---|---|
+| R2 builder (a49ac1ee79754b838, sonnet) | fix F1 (FIFO CA file), F2 (EOFError), F5 (readers outside regfile), F6 (constants), 2 minors, CRLF apply; patch core-fix-on-frozen-r2.patch on frozen 49d3c859 | 15:40Z container clock (about 17:55Z lead) | 90 min box, about 17:10Z container | just started, no checkpoint yet |
+Next after it: ONE evidence runner (12 changed test files + full suite in a tree WITH .git, 99 files, fail-before real run), ONE fresh reviewer, then a SECOND independent pass on F1 (guarantee-class).
+The evidence runner's last hand-back confirms my 17:30Z numbers (gitrerun: 289 passed over 5 files; I measured 287 over 4; the extra file is test_no_placeholders). FAILURES: unchanged list (F1, F2, F5, F6 open until the builder reports). LOAD low. ASK: none.
+
 QUEUE DONE, idle by order (17:32Z core lead): sweep: 0 agents running, 0 test processes, ONE out-of-memory kill in dmesg (a python process of 13 GB at kernel time 4162 s; I did not find which run it was: no test log shows it, the suites finished; cause UNKNOWN, root cause proven? no; uptime is now 13011 s, so the kill was about 2.5 hours ago, before this segment's runs; earlier lane work, not this evidence run); FROZEN block below; ASK on F1/F2 waits for the lead.
 
 ## STATUS 17:30Z (core lead): FROZEN. QUEUE DONE except the open defects below; idle by order after this block

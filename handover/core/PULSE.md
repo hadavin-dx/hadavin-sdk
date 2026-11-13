@@ -193,3 +193,4 @@ core: V4e done, 5 untested doc sentences (ASK), F8+REB running
 16:55Z core lead: F8 reported (rebase incomplete), EVF started
 17:10Z core lead: EVF interim, 3 real defects found in patch, reviewer started
 17:30Z core lead: FROZEN, evidence+review in, 4 Majors open, ASK F1/F2
+17:45Z core lead: R2 builder started
