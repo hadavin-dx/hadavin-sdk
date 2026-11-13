@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:08Z / 07:38 IST - **URGENT: .github/workflows/sonar.yml ON pr-3-tests IS INVALID YAML (since batch 2a, commit 0841f36): SonarQube cannot have run on #4**; fix patch + a new workflow-parse test ready and verified; A/B paper done (evidence supports your lean A, only after this fix)
+FAILED / UNCERTAIN first:
+1. **sonar.yml is invalid YAML on pr-3-tests (2db3926).** Found by the A/B paper drafter from the public GitHub API, VERIFIED BY ME with PyYAML: `yaml.safe_load` of .github/workflows/sonar.yml on pr-3-tests fails: 'mapping values are not allowed here, line 45, column 71': the step `run: python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt` is a plain YAML value containing a colon followed by a space (`--only-binary=:all: -r`). main, pr-1-code and pr-2-demo-folder parse fine; lint.yml and codeql.yml on pr-3-tests parse fine. It comes from the Sonar-coverage patch (lane 7, batch 2a: reviewed 3 rounds clean and tested by the whole suite: nobody parsed the YAML). On GitHub (from the API, evidence-ab-sonar-yaml.txt / evidence-ab-sonar-run.txt): 5 failed workflow runs with 0 jobs and a SonarQube check that stays 'queued' on 2db3926. My full runs did not and could not show it (they run pytest, not GitHub).
+   FIX (verified): merge-ready/sonar-yaml-fix.patch (sha256 966fd0faea5febc3...; applies on 2db3926, before and after the Semgrep v4 patch): sonar.yml: `run: |` with the command on the next line (a block scalar: no colon problem); NEW test tests/test_workflow_files_parse.py: every .github/workflows/*.yml must be valid YAML with jobs and steps (PyYAML is already in the dev lock: no new dependency): it FAILS on the old sonar.yml (1 failed: sonar.yml) and passes on the fixed tree (4 passed; with test_hygiene 19 passed; with the Semgrep v4 patch's semgrep.yml also parses: 5 passed); ruff clean. CLASS-LEVEL: the new test covers every workflow file now and in future. This needs one push to pr-3-tests (yours): the SonarQube check on #4 only starts after it.
+2. A/B paper (pr-stack/AB-PAPER.md, CARRY-OVER-CHECKLIST.md 291 rows, 11 evidence files): measured from the public API: Option A (retarget #4 = full tree) would show 226 files, +58211/-4, 17 commits; the 100-file limit is stated by the bots (CodeRabbit free plan: hard 100-file limit, comment 6830154982 on #1; CodeAnt skips reviews over 100 files but can be forced with the comment '@codeant-ai : review', comment 6837514351 on #4): #4 alone is already 142 files, so CodeAnt skipped it too; CodeRabbit reviewed none of the four PRs. What A loses: NO human review thread exists on any PR (every inline comment is from a bot); #4 keeps its own 216 comments; the loss is the 43 inline findings on #2/#3 (19 still at the same line text at the same line in the final tree, 14 moved, 10 changed) + 14 CodeAnt nitpicks on #3; the public API cannot show whether a thread is resolved (needs a token: the session's is invalid). B measured on GitHub: lint on #2 fails at the gitleaks step and skips the tests (run 43297870133); Sonar's quality gate on #2 failed; main is unprotected on unauthenticated reads (protected false, rulesets [] ; admin-only settings not read); real CI has never run on 2db3926; the nearest real full-tree lint run passed on 43110e7 (958 s tests step). The evidence supports your lean A, but A only works after the sonar.yml fix and one push. CI coverage: no CI job runs the 166 browser tests: the paper recommends a separate browser job (install requirements-browser.txt, `playwright install chromium`); adding gitleaks to the Sonar job is optional (lint already enforces the scan).
+3. CRLF guard v2 (skips/crlf-guard-v2.patch): the Major (the hint 'git add --renormalize .' does not cure it) is fixed BY MEASUREMENT: renormalize leaves the CRs and both tests still fail; `git checkout -- <file>`, `sed -i 's/\r$//' file` and rm + checkout cure it; the hint and docs say so; nits fixed; 62 tests pass; applies alone and with Semgrep v4 / versions-md-allowance in both orders and all together. Needs its confirming read (not done).
+4. Real-run script fixes (D1-D6): review: 0 Blocker, 1 Major (the five --keep self-tests leave real-dry-* folders in the system temp on every pytest run) + 4 nits; the builder is making v2; stays handover only.
+5. Descriptions v5 + option-A description are done (0 [UNVERIFIED]); the A/B facts above change a few lines (CodeAnt skipped #4; no human threads): the drafter will update after your choice.
+6. Not run anywhere: PowerShell beyond your Windows run, real GitHub CI (never on 2db3926), a real n8n, Python 3.13 tests.
+READY TO APPLY NOW (order): 1) merge-ready/versions-md-allowance.patch, 2) merge-ready/sonar-yaml-fix.patch (NEW: fixes SonarQube), 3) semgrep/semgrep-on-2db3926-v4.patch. Not ready: crlf-guard-v2 (confirming read), real-run fixes v2.
+NEEDS FROM LEAD: push the sonar.yml fix; A or B (the evidence leans A); whether to add a browser CI job.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| Q4b builder (sonnet) | real-run fixes v2 | 02:05 | running | real-run/real-run-fixes-v2.patch |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 1 (below the minimum: starting two more now), shells 1, load low.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| sonar.yml fix | built + verified by me | the YAML error (all earlier reviews missed it) | none | YES (fail-before test, apply checks) | the lead pushes |
+| PR stack | paper done | evidence leans A | the lead decides | no | A or B |
+| CRLF guard | v2 | Major fixed | confirming read | no | read clean |
+| real-run fixes | v2 | 1 Major + 4 nits | fix | no | review clean |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| A/B paper + carry-over checklist | done |
+| sonar.yml invalid YAML | found, verified, fix + test built |
+| CRLF guard v2 | built |
+| Q4b review | done (1 Major) |
+
 ## 2026-11-13 02:04Z / 07:34 IST - **VERDICT: pr-3-tests 2db3926 SINGLE-PROCESS FULL RUN GREEN: 3138 passed, 3 skipped, 0 failed, 0 errors, 20 min 18 s, exit 0** (same totals as the chunked run); PR descriptions v5 + option-A description done (no marker left); D1-D6 script fixes built (review running); CRLF guard patch reviewed (1 Major, being fixed)
 FAILED / UNCERTAIN first:
 1. NOTHING FAILED in the final claim. The un-chunked run: fresh clone of pr-3-tests 2db3926 (verified, no git operations in it), ONE pytest process, python -u, `-o faulthandler_timeout=300 -rs`, GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1 (the gitleaks tests ran), Node 22 + Playwright 1.63.0: started 01:42:49Z, finished 02:03:08Z: 3138 passed, 3 skipped (n8n file-permission test as root; load-measurement test; Windows-only stall test), 0 failed, 0 errors, 1218.48 s, exit 0. Evidence pushed: integration/INT-3-2db3926.md (section SINGLE-PROCESS RUN) + evidence-int3-2db3926-SINGLE-PROCESS-full.txt/.exit (4d48ef8f). Your Windows run on the same head: 3096 passed, 45 skipped, 0 failed. Still not run anywhere: PowerShell beyond your Windows run, real GitHub CI, a real n8n, Python 3.13 tests.
