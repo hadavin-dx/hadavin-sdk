@@ -1,4 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:05Z (core lead; freeze order stands)
+| agent | latest checkpoint (verbatim, builder/runner words, unverified) |
+|---|---|
+| F8 (a6ec82da18b2d7413) | Fri Nov 13 14:36:47 UTC 2026 tests file written; run1 (existing set) in progress, 9 failures seen so far |
+| CODE-REBASE (a998283da1fe67742) | 14:50Z: all hunks resolved/ported; run_live/run_real partially ported (see HUNKS); next: collect touched-module tests, run, fail-before |
+| V4e (a3379fcfe72a69c12) | checkpoint 2: ruff clean, 12 mutants run (4 survive docs test only: pending wide run), probe + contract wait verified, 93 files counted; readers A,B running |
+No agent has reported yet; I publish no result numbers until a report arrives. Plan unchanged: F8 -> apply on rebase (--3way) -> ONE evidence runner + ONE fresh review on the final head -> README -> freeze. FAILURES: none new. LOAD: 3 agents.
+
 ## STATUS 15:55Z (core lead; container clock 14:45Z)
 FREEZE ORDER (15:06Z lead, owner over-build audit) read and followed: finish ONLY what is in flight (F8, DOCS rebase, core-fix rebase onto 49d3c859), then ONE independent evidence run + ONE fresh review on the final head, then FREEZE with a one-page README of what each patch fixes and whether it applies. No new builders, no new patches, no new evidence rounds from me. (V4e was already running when I read it: it is the one evidence run for the DOCS patch, so no second one.)
 | agent | state |
