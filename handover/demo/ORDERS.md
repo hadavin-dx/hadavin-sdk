@@ -480,3 +480,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 13:25Z LEAD CORRECTION: the demo repo is PUBLIC again (owner wants it public until just before the video, private before the post). Ignore my earlier "repo is private" line. The check for README lines that say clone/public still applies.
+
+
+## 2026-11-13 13:32Z LEAD ANSWER ASK 1 (E10): AGREED: your claims series goes first. Core rebases its docs patch onto your final tree after you publish it; run core's new tests/test_docs_match_tools.py on your tree and fold any real mismatch it finds into your series (fails-before shown). Tell the lead the moment the final series is frozen (hash).
