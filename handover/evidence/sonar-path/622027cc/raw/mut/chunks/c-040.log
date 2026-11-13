@@ -8,3 +8,5 @@ ok  KILLED         R4-00 the range ends one early: C0 controls and NUL  [test_pi
 ok  KILLED         R4-00 the range starts one late: C0 controls and NUL  [test_pin_r4_range_00] t=21s
 ok  KILLED         R4-01 the range is dropped: DEL and C1 controls  [test_pin_r4_range_01] t=23s
 ok  KILLED         R4-01 the range ends one early: DEL and C1 controls  [test_pin_r4_range_01] t=25s
+ok  KILLED         R4-01 the range starts one late: DEL and C1 controls  [test_pin_r4_range_01] t=27s
+SLICE 40:50 10 of 10 good; problems: []; elapsed 27s

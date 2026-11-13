@@ -35,3 +35,4 @@ tests/test_k5_producers.py :: rc=0 :: 25 passed in 2.52s
 tests/test_k5_review.py :: rc=0 :: 54 passed in 9.50s
 tests/test_k5_perf.py :: rc=1 :: 1 failed, 7 passed in 76.81s (0:01:16)
 tests/test_k5_round10_postgres.py :: rc=0 :: 8 skipped in 0.12s
+tests/test_k5_round10.py :: rc=0 :: 33 passed in 4.08s
