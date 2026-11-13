@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:36Z (17:06 IST) CORE lead (container clock `date -u` shows 11:30Z at writing; I use the container clock from here)
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-T3 | builder: P2, P4, P10 | LEAD order (a) | 11:32Z / 17:02 | DONE | 1 of 1 | reported: all 3 EQUIVALENT, no test patch. I checked the code myself (crm_hubspot.py 183-188, config.py 206-211, P10 old/new text): the refusal at 183 / 206 comes first, so `env.get(X) or VENDOR` can only return env[X]; P10 puts `pass` before the raise, the raise still runs. Builder ran unmutated 16 passed and each mutant 16 passed (survives). Tree restored (29 entries) | pushed to triage/T3 |
+| TRI-T1 | builder: R20, N20, why R20 survived | order (a),(b),(d) | 11:32Z / 17:02 | hard stop 12:30Z | 1 of 1 | running (R20 full-file run log exists) | wait |
+| TRI-T2 | builder: K6, K10, C9, pair run | order (a),(b),(c) | 11:32Z / 17:02 | hard stop 12:30Z | 1 of 1 | running (pair runs and a draft survivor_tests_T2.py exist; unjudged) | wait |
+| TRI-EV | evidence runner for proofs | order | after T1, T2 | about 12:10Z | n/a | not started; nothing to prove for T3 (no patch) | start when T1/T2 patches exist |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdict table so far (verdict, test, killed): P2 EQUIVALENT (none needed; not killed, correct); P4 EQUIVALENT (same); P10 EQUIVALENT (same; its name "check disabled" is misleading: the raise still runs). R20, N20, K6, K10, C9: pending.
+
+ASK: none.
+
+
 ## REPORT 11:34Z (17:04 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |

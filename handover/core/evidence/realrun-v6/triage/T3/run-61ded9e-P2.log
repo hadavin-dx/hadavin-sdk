@@ -1,0 +1,7 @@
+P2 AST equal ignoring Pass: see below
+AST identical after dropping Pass nodes: False
+................                                                         [100%]
+16 passed in 0.55s
+ 
+rc 0
+restored ok

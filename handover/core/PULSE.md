@@ -123,3 +123,4 @@ A run2 ~95%; B2 sets in progress
 11:24Z B2 at R 16/20 then combos
 11:30Z B2 done, summary.md pushed, lane done
 11:34Z survivor triage: 3 builders started
+T3 done: P2 P4 P10 equivalent (verified by me)
