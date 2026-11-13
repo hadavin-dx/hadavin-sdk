@@ -1,0 +1,28 @@
+# evidence-b3-4: real gitleaks on the combined tree with sonar-project.properties saved CRLF, then restored (50s each)
+CRLF: 1 failed (test_hygiene_scan_public)
+AssertionError: gitleaks dir reported findings (values are redacted); files: ['sonar-project.properties']
+  sonar-project.properties: this file has Windows line endings (CRLF); the repository stores LF (.gitattributes); save it with LF (for example: sed -i 's/\r$//' <file>), or discard your edits to it with: git checkout -- <file>
+after git checkout -- sonar-project.properties: 2 passed
+
+# combined tree (v3+sonar-v2+versions+semgrep-v4) gates:
+ M .codeant/configuration.json
+ A .editorconfig
+ A .github/workflows/semgrep.yml
+ M .github/workflows/sonar.yml
+ M .gitleaks.toml
+ M docs/tests.md
+ M exceptions.txt
+ A requirements-semgrep.in
+ A requirements-semgrep.txt
+ A tests/test_gitleaks_semgrep_lock.py
+ M tests/test_hygiene.py
+ A tests/test_nosemgrep_form.py
+ A tests/test_workflow_files_parse.py
+ M versions.md
+All checks passed!
+148 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+........................................................................ [ 99%]
+.                                                                        [100%]
+145 passed in 65.83s (0:01:05)

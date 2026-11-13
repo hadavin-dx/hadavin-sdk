@@ -1,0 +1,67 @@
+# evidence-b3-5: sonar-yaml-fix-v2 mutants on sonar.yml (new tests/test_workflow_files_parse.py, 11 tests)
+=== M-a runs-on -> run-on (line 29)
+--- mutant diff:
+29c29
+<     runs-on: ubuntu-24.04
+---
+>     run-on: ubuntu-24.04
+FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_jobs_and_steps[sonar.yml]
+1 failed, 10 passed in 0.07s
+=== M-b uses -> use (line 34)
+--- mutant diff:
+34c34
+<       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
+---
+>       - use: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
+FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_jobs_and_steps[sonar.yml]
+1 failed, 10 passed in 0.08s
+=== M-c if: operator == -> = (line 32)
+--- mutant diff:
+32c32
+<     if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository &
+---
+>     if: github.event_name = 'push' || (github.event.pull_request.head.repo.full_name == github.repository &&
+11 passed in 0.07s
+=== M-d runner.os -> runnr.os (lines 56,57)
+--- mutant diff:
+56,57c56,57
+<           key: ${{ runner.os }}-sonar
+<           restore-keys: ${{ runner.os }}-sonar
+---
+>           key: ${{ runnr.os }}-sonar
+>           restore-keys: ${{ runnr.os }}-sonar
+11 passed in 0.08s
+=== M-e unpatched original sonar.yml (colon bug)
+--- mutant diff:
+45,46c45
+<         run: |
+<           python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements
+---
+>         run: python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requireme
+FAILED tests/test_workflow_files_parse.py::test_a_workflow_file_is_valid_yaml_with_jobs_and_steps[sonar.yml]
+1 failed, 10 passed in 0.14s
+
+== actionlint on the good file
+exit 0
+== actionlint M-c
+.github/workflows/sonar.yml:32:28: got unexpected character ' ' while lexing == operator, expecting '=' [expression]
+   |
+32 |     if: github.event_name = 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+   |                            ^
+== actionlint M-d
+.github/workflows/sonar.yml:56:20: undefined variable "runnr". available variables are "env", "github", "inputs", "job", "matrix", "needs", "runner", "secrets",
+   |
+56 |           key: ${{ runnr.os }}-sonar
+   |                    ^~~~~~~~
+.github/workflows/sonar.yml:57:29: undefined variable "runnr". available variables are "env", "github", "inputs", "job", "matrix", "needs", "runner", "secrets",
+   |
+57 |           restore-keys: ${{ runnr.os }}-sonar
+   |                             ^~~~~~~~
+== gates on v2 tree
+All checks passed!
+146 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+0
+bandit exit 0
+11 passed in 0.08s

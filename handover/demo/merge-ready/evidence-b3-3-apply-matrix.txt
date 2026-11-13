@@ -1,0 +1,28 @@
+alone C: OK
+alone S: OK
+alone V: OK
+alone G: OK
+order CSVG: all applied, tree-diff sha f71075957aa7
+order CSGV: all applied, tree-diff sha f71075957aa7
+order CVSG: all applied, tree-diff sha f71075957aa7
+order CVGS: all applied, tree-diff sha f71075957aa7
+order CGSV: all applied, tree-diff sha f71075957aa7
+order CGVS: all applied, tree-diff sha f71075957aa7
+order SCVG: all applied, tree-diff sha f71075957aa7
+order SCGV: all applied, tree-diff sha f71075957aa7
+order SVCG: all applied, tree-diff sha f71075957aa7
+order SVGC: all applied, tree-diff sha f71075957aa7
+order SGCV: all applied, tree-diff sha f71075957aa7
+order SGVC: all applied, tree-diff sha f71075957aa7
+order VCSG: all applied, tree-diff sha f71075957aa7
+order VCGS: all applied, tree-diff sha f71075957aa7
+order VSCG: all applied, tree-diff sha f71075957aa7
+order VSGC: all applied, tree-diff sha f71075957aa7
+order VGCS: all applied, tree-diff sha f71075957aa7
+order VGSC: all applied, tree-diff sha f71075957aa7
+order GCSV: all applied, tree-diff sha f71075957aa7
+order GCVS: all applied, tree-diff sha f71075957aa7
+order GSCV: all applied, tree-diff sha f71075957aa7
+order GSVC: all applied, tree-diff sha f71075957aa7
+order GVCS: all applied, tree-diff sha f71075957aa7
+order GVSC: all applied, tree-diff sha f71075957aa7

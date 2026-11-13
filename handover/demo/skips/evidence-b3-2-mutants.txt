@@ -1,0 +1,44 @@
+# evidence-b3-2: mutants M3 M5 M6 M8 M9 (+M1 control) run on v3 tests/test_hygiene.py, LF tree; each must fail >=1 test
+=== M3
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+2 failed, 21 passed in 18.22s
+=== M5
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[lone-cr]
+2 failed, 21 passed in 17.58s
+=== M6
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[lone-cr]
+4 failed, 19 passed in 16.41s
+=== M8
+ 1 file changed, 1 insertion(+)
+FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+3 failed, 20 passed in 16.88s
+=== M9
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[lone-cr]
+FAILED tests/test_hygiene.py::test_a_lone_cr_is_a_carriage_return - Assertion...
+3 failed, 20 passed in 19.97s
+=== M1
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[crlf]
+FAILED tests/test_hygiene.py::test_end_to_end_the_guard_test_fails_on_a_planted_cr_tree[lone-cr]
+FAILED tests/test_hygiene.py::test_a_lone_cr_is_a_carriage_return - Assertion...
+7 failed, 16 passed in 14.81s
+=== restored
+23 passed in 15.11s
+=== M3b (NOT killed): scan call site stops using _scan_failure_message (inline plain text)
+23 passed: survives (needs real gitleaks on a CRLF tree; see evidence-b3-4)
