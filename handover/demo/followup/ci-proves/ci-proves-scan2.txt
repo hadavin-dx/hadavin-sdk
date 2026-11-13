@@ -1,0 +1,3 @@
+== tests/test_hygiene.py
+........................                                                 [100%]
+24 passed in 15.18s
