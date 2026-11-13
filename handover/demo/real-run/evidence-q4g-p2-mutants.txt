@@ -1,0 +1,12 @@
+P1 hubspot: blank allowed through the required check	killed	1 failed in 0.05s
+P2 hubspot: absent falls back to the vendor	SURVIVED	16 passed in 0.60s
+P3 live: blank allowed through the required check	killed	1 failed, 4 passed in 0.06s
+P4 live: absent falls back to the provider	SURVIVED	16 passed in 0.54s
+P5 hubspot dataclass default restored	killed	1 failed, 2 passed in 0.05s
+P6 live dataclass default restored	killed	1 failed, 6 passed in 0.07s
+P7 hubspot percent check removed	killed	1 failed, 8 passed in 0.06s
+P8 live percent check removed	killed	1 failed, 8 passed in 0.06s
+P9 vendor constant imported in crm_hubspot (sibling tripwire)	killed	1 failed, 14 passed in 1.50s
+P10 desk process: refusal swallowed (exit 0 path) - hubspot required check disabled	SURVIVED	16 passed in 0.53s
+P2b hubspot: no required check AND fallback to the vendor killed 1 failed in 0.05s
+P4b live: no required check AND fallback to the provider killed 1 failed, 4 passed in 0.05s

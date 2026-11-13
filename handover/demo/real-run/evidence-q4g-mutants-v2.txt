@@ -1,0 +1,23 @@
+M1 stdin_is_terminal always True	killed	1 failed in 0.17s
+M2 isatty only (no console test)	killed	1 failed, 31 passed in 0.40s
+M3 windows probe ignored	killed	1 failed, 30 passed in 0.35s
+M4 windows probe fails open	killed	1 failed, 30 passed in 0.52s
+M5 ask_to_start takes y	killed	1 failed, 9 passed in 0.39s
+M6 ask_to_start reads a non-terminal	killed	1 failed, 32 passed in 0.27s
+M7 ask_to_start takes y as the word	killed	1 failed, 32 passed in 0.36s
+M8 real early check removed	killed	1 failed, 5 passed in 0.19s
+M9 live early check removed	killed	1 failed, 33 passed in 0.52s
+M10 real: any answer starts	killed	1 failed, 8 passed in 0.35s
+M11 live: any answer starts	killed	1 failed, 50 passed in 0.82s
+M12 real early refusal exit 1	killed	1 failed in 0.31s
+M13 banner without mailbox lines	killed	1 failed, 20 passed in 0.51s
+M14 banner not printed	killed	1 failed, 20 passed in 0.41s
+M15 imap host shape unchecked	killed	1 failed, 22 passed in 0.38s
+M16 imap falls back to default	killed	1 failed, 22 passed in 0.58s
+M17 unnamed check off	killed	1 failed, 56 passed in 0.66s
+M18 loopback by substring	killed	1 failed, 39 passed in 0.64s
+M19 live no-base-url refusal off	killed	1 failed, 48 passed in 0.73s
+M20 guard ignores the name input	killed	1 failed, 65 passed in 1.11s
+M21 guard ignores sys.stdin attribute	killed	1 failed, 71 passed in 1.26s
+M22 guard ignores getpass import	killed	1 failed, 73 passed in 0.95s
+M23 repo walk skips scripts	killed	1 failed, 126 passed in 1.69s

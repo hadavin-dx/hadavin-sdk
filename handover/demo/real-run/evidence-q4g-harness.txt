@@ -1,0 +1,59 @@
+# settings used: every URL/host loopback (HubSpot http://127.0.0.1:9 + ALLOW_ANY=yes, smtp/imap localhost); made-up keys; each run inside unshare -rn (loopback only) with a sitecustomize that blocks and logs any non-loopback connect or name lookup; only 'n' or an empty line is ever typed, never y and never the host
+## A. piped stdin (echo n |)
+refused: this script asks a question and needs a person at a terminal; standard input here is not one (a pipe, a file, the NUL device or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## B. stdin /dev/null
+refused: this script asks a question and needs a person at a terminal; standard input here is not one (a pipe, a file, the NUL device or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## B2. closed stdin
+refused: this script asks a question and needs a person at a terminal; standard input here is not one (a pipe, a file, the NUL device or a scheduled job), so nothing was started. Run it from your own terminal
+exit 2
+## C. pseudo-terminal, n typed
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> 127.0.0.1
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+To start, type the HubSpot host (127.0.0.1) and press Enter; anything else stops: n
+stopped, nothing was called
+
+answer sent: b'n' | exit: 1
+## C2. pseudo-terminal, empty line
+stopped, nothing was called
+
+answer sent: b'' | exit: 1
+## D. live check, piped, loopback --base-url
+refused: this script asks a question and needs a person at a terminal; standard input here is not one (a pipe, a file, the NUL device or a scheduled job), so nothing was called. Run it from your own terminal
+exit 2
+## D2. live check, no --base-url (pseudo-terminal)
+refused: --base-url: not given; name the provider's address (a loopback address for a test)
+
+answer sent: b'n' | exit: 2
+## D3. live check, pseudo-terminal, n typed
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+the key goes to: 127.0.0.1 (--base-url); the leads' e-mail addresses are made up
+To start, type the provider's host (127.0.0.1) and press Enter; anything else stops: n
+stopped, nothing was called
+
+answer sent: b'n' | exit: 1
+## E. HubSpot address not named (pseudo-terminal)
+refused: DESK_HUBSPOT_BASE_URL: not named in the settings; the default address is the vendor's and is never used on its own: name the address you mean (a loopback address for a test)
+
+answer sent: b'n' | exit: 2
+## F. mailbox 2 host is an unreplaced placeholder (pseudo-terminal)
+refused: ValueError: REAL_IMAP_2_HOST is required and must be a host name (letters, digits, dots and hyphens only)
+
+answer sent: b'n' | exit: 2
+## harness log: lines=0 BLOCK lines=0
+## entries left in the work dir (none expected besides inputs): cfg
+cfg-badimap.env
+cfg-nohub.env

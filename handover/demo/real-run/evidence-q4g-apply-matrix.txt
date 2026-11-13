@@ -1,0 +1,6 @@
+== db54e13: db54e13 sonar.yml: valid YAML (block scalar for the pip install line) plus a test that every workflow file parses
+start-prompt-hardening-v2.patch: applies cleanly
+11
+== 2db3926: 2db3926 Batch 3: CodeAnt runtime set (8 patches: speed fake fix, desk book check, portal log, demo-only, tests hardening, fake bodies, stand-in bodies, stop guard) and merge-readiness hygiene tests v3
+start-prompt-hardening-v2.patch: applies cleanly
+11

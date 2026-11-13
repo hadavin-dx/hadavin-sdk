@@ -1,0 +1,75 @@
+E       AssertionError: {'scripts/run_live_check.py': ['the name input (a call, an alias or a callback)'], 'scripts/run_real_check.py': ['the ... alias or a callback)'], 'scripts/terminal_guard.py': ['sys.stdin', 'the name input (a call, an alias or a callback)']}
+E       assert {'scripts/run...nal_guard.py'} == {'scripts/terminal_guard.py'}
+E         
+E         Extra items in the left set:
+E         'scripts/run_real_check.py'
+E         'scripts/run_live_check.py'
+E         Use -v to get more diff
+
+tests/test_start_prompt_hardening.py:699: AssertionError
+__ test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too ___
+
+    def test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too() -> None:
+        for name in ("scripts/run_real_check.py", "scripts/run_live_check.py"):
+            tree = ast.parse((REPO / name).read_text(encoding="utf-8"))
+            asks, checks = _call_lines(tree, "ask_to_start"), _call_lines(tree, "stdin_is_terminal")
+>           assert asks and checks and checks[0] < asks[0], name  # the early refusal comes before the question
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: scripts/run_real_check.py
+E           assert ([])
+
+tests/test_start_prompt_hardening.py:714: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[api.hubapi.com\n]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+FAILED tests/test_start_prompt_hardening.py::test_a_terminal_reaches_the_question_and_a_wrong_answer_stops
+FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[y]
+FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[Y]
+FAILED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[api.hubapi.com]
+FAILED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[  API.HUBAPI.COM ]
+FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question
+FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_the_model_host_with_the_live_model
+FAILED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[None]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin1]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin2]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin3]
+FAILED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin4]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[127.0.0.1\n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_is_for_a_loopback_address_only
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1@evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://[::1]@evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://0.0.0.0]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.1]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://2130706433]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1%2eevil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_closed_terminal_is_a_stop_not_a_traceback
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[y]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[yes]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[n]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[localhost.evil.test]
+FAILED tests/test_start_prompt_hardening.py::test_live_check_typing_the_host_starts_the_run
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST]
+FAILED tests/test_start_prompt_hardening.py::test_real_check_the_live_model_address_must_be_named_too
+FAILED tests/test_start_prompt_hardening.py::test_unnamed_remote_default_unit
+FAILED tests/test_start_prompt_hardening.py::test_only_the_terminal_guard_reads_a_person_in_the_whole_repository
+FAILED tests/test_start_prompt_hardening.py::test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too
+52 failed, 77 passed in 3.48s

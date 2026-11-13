@@ -1,0 +1,12 @@
+# desk-address-required.patch tree (db54e13 + patch)
+# ruff check
+All checks passed!
+# ruff format --check
+147 files already formatted
+# mypy --platform linux
+Success: no issues found in 26 source files
+# mypy --platform win32
+Success: no issues found in 26 source files
+# bandit -ll
+	No issues identified.
+		High: 9

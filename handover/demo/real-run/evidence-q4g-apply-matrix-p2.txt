@@ -1,0 +1,29 @@
+== db54e13
+desk-address-required.patch alone: applies
+== 2db3926
+desk-address-required.patch alone: applies
+v2 then desk-address-required (db54e13): applies
+desk-address-required then v2 (db54e13): applies
+== desk-address-required.patch on db54e13 + real-run-fixes-v4.patch
+Applied patch to 'contract.md' cleanly.
+Applied patch to 'docs/settings.md' cleanly.
+Applied patch to 'src/lead_desk/config.py' cleanly.
+Applied patch to 'src/lead_desk/constants.py' cleanly.
+Applied patch to 'src/lead_desk/crm_hubspot.py' cleanly.
+Applied patch to 'tests/test_crm_hubspot.py' cleanly.
+Falling back to direct application...
+Applied patch to 'tests/test_env_numbers.py' cleanly.
+Applied patch to 'tests/test_ledger_amounts.py' cleanly.
+Applied patch to 'tests/test_live_claude.py' cleanly.
+v2 applied
+after-v2 variant applies on db54e13+v2
+error: patch failed: tests/test_real_check_dry.py:14
+error: tests/test_real_check_dry.py: patch does not apply
+== real-run-fixes-v4 + v2-on-v4 (merged tree) + desk-address-required-after-v2.patch
+error: patch failed: docs/settings.md:81
+error: docs/settings.md: patch does not apply
+(check done)
+Falling back to direct application...
+Applied patch to 'tests/test_env_numbers.py' cleanly.
+Applied patch to 'tests/test_ledger_amounts.py' cleanly.
+Applied patch to 'tests/test_live_claude.py' cleanly.

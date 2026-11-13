@@ -1,0 +1,15 @@
+# apply matrix (final patches)
+== 2db3926
+start-prompt-hardening-v2.patch: applies
+desk-address-required.patch: applies
+v2 then desk-address-required-after-v2.patch: applies
+== combined tree gates
+All checks passed!
+149 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+59 passed in 33.24s
+== db54e13 (clean tree)
+start-prompt-hardening-v2.patch: applies
+desk-address-required.patch: applies
+v2 then desk-address-required-after-v2.patch: applies

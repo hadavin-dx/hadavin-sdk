@@ -1,0 +1,16 @@
+Applied patch to 'docs/settings.md' with conflicts.
+Applied patch to 'pyproject.toml' cleanly.
+Applied patch to 'scripts/real-run.env.example' cleanly.
+Applied patch to 'scripts/run_live_check.py' with conflicts.
+Applied patch to 'scripts/run_real_check.py' with conflicts.
+Falling back to direct application...
+Applied patch to 'tests/conftest.py' with conflicts.
+Applied patch to 'tests/test_ledger_amounts.py' cleanly.
+Applied patch to 'tests/test_live_claude.py' with conflicts.
+Applied patch to 'tests/test_real_check_dry.py' cleanly.
+Falling back to direct application...
+U docs/settings.md
+U scripts/run_live_check.py
+U scripts/run_real_check.py
+U tests/conftest.py
+U tests/test_live_claude.py
