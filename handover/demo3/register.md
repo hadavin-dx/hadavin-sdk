@@ -131,3 +131,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B5c | closed: lane3-fix-5-r3.patch sha256 e677e3d6...709f, notes lane3-fix-5-r3-notes.md; old script 8 failed/7 passed, r2+r3 tests 1 failed (blank), new 226 passed 4 skipped; 1 moved noqa S603 remains | | | closed |
 | REV-5c | fresh egm-codebase-details on lane3-fix-5-r3 (13:46Z) | 13:46Z | ~14:05Z | running |
 | E7 | EVIDENCE RUNNER lane3-fix-5-r3 (reset tests, xdist, full suite once) | 13:46Z | stop 14:30Z | running |
+| B2b | closed: lane3-fix-2-r2.patch (+ for-stack); items 1-13,15 done, 14 declined; OPEN: r2 does not apply after lane3-fix-1-r2 (docs/limits.md:117 exit-code line); unwritable-parent test skipped as root | | | closed |
+| REV-2c | fresh egm-design on lane3-fix-2-r2 | now | ~14:10Z | running |
+| REV-2d | fresh egm-codebase-details on lane3-fix-2-r2 | now | ~14:10Z | running |
+| E5 | EVIDENCE RUNNER lane3-fix-2-r2 (full suite once, tests fail on f3c39cf8 code) | now | stop 14:35Z | running |
+| REV-5c | closed: 0 blocker, 1 major (ruff I001 import style, 2 files), 4 minor, 1 nit; saved evidence/review-lane3-fix-5-r3.md | | | closed; builder B5d next (round 4, security-adjacent so uncapped) |
