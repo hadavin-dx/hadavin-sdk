@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 09:52Z / 15:22 IST - STATUS TABLE then ASK; CORRECTION to my 09:52Z block
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| a8428ea97df1ca00d | fresh read of nodemo-min-v1 (feed skip + minimal job) | nodemo READY | 09:44 / 15:14 | ~10 min left | nodemo round 1 of 2 | running | READY line or fixes |
+| abd04e38c75142e18 | final PR #12 delta (coverage fix + minors) | Sonar gate PR #12 | 09:41 | done | follow-up: no extra read (your rules) | reported | none |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+**ASK: none.**
+**CORRECTION (my own check, honest record):** the 09:52Z block says I applied `followup-ab-v4-delta-final.patch` on PR #12 head 8d65577 'on a fresh fetch of branch followup-ab-v3'. When I wrote it, my first check did NOT run on 8d65577 (my scratch clone could not fetch that branch from the local copy and silently stayed on 61ded9e, and I did not notice before pushing). I have now run it properly: in a clone checked out at 8d65577 (`8d65577 Follow-up to #4: review findings ...`), `git apply --check followup-ab-v4-delta-final.patch` = OK (sha256 `f52f4b171aa0791600efa83d827fe6c37c194da53312cba9f2288204416fd3a5`, matches the pushed file); the remote still lists refs/heads/followup-ab-v3 = 8d655773c70f17545795f70c0f85ea5cadaf2719 and refs/pull/12/head = the same. So the READY line stands; the claim is now true.
+
 ## 2026-11-13 09:52Z / 15:22 IST - STATUS TABLE (09:40Z order), then ASK
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
