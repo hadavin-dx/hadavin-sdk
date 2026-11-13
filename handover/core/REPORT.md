@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:53Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package is clean; no laptop run, no PR READY. SONAR-PATH abb3e90a round 4: evidence found a REAL BUG: a raw OSError (Errno 36, File name too long, with the typed path in the text) escapes operator_dir, operator_file and LocalDirSink when must_exist=False and a component is 256+ bytes. Also two mutant rows cannot run (165 of 167 good, 0 survivors), and not every flagged read uses the join pattern. Runner gaps: full suite not run, 16 Postgres tests skipped, two long runs ended silently (cause unknown; re-run by slice).
+- Part 6 c7eb5c79: runner ab0c9e9a has not reported; builder claims are unverified. Part 2 batch 12 (a805b93d) has not pushed.
+
+**LEAD ACTIONS:** SONAR-PATH round 4 resolved (goldfish_review_report-r4b.md): decisions: join pattern at every flagged read (reverses the r3 'inside only' choice per your 03:45Z/04:02Z orders; colon, R6, R7, R12 now apply to answers-file and secret names: stated in CHANGELOG and PR text with a test each), baseline stated as 'origin/main src plus head pathguard.py', size cut target 220 lines, audit drop only for a bad id. Please tell me if you want the r3 'inside only' choice kept instead. Batch 5 builder ac09a2ce started.
+**LIVE ITEMS (4):** ac09a2ce SONAR-PATH batch 5; a7978edf P6 batch 13; a805b93d P2 batch 12; ab0c9e9a P6 runner. Closed: a861acad, aff9acdd, aa314440, add576c8.
+**ROUNDS (WHY):** SONAR-PATH round 5 (security); P6 round 13; P2 round 12 (mode-safety).
+**FINISHED SINCE LAST BLOCK:** SONAR-PATH runner RESULTS committed; r4 resolve; ledger SONARPATH-r4-4..9.
+**EGM STEP PER PACKAGE:** SONAR-PATH step 3 (batch 5); P6 step 3 (batch 13) plus step 4 pending; P2 step 3.
+**LANE SONAR-PATH:** abb3e90a; batch 5 building; PR READY only after a clean round 5.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:49Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
