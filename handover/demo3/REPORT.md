@@ -1,5 +1,21 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:05Z / 16:35 IST  HEARTBEAT 13 (C2 reported)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| C2 | Evidence runner: hang hunt on main 61ded9e | clean main run, hang names | 10:25Z / 15:55 | ended 11:02Z | tasks a, b, d1, d2 once; full suite twice (c1 log cut by my git slip, c2 complete) | reported, closed | none |
+| E | Evidence runner: PR #14 edadd00 full suite once -v + F7/C1/whitespace/bytes | evidence for the current head | 10:44Z / 16:14 | at 11:03Z: 3353 passed, 0 FAILED (about 91 percent of 3686); ends about 11:07Z / 16:37 | run 1 of 1 | running | report E result to you at once when it ends |
+| D | Evidence runner PR #14 d5b4451 (stale) | stale head | 10:25Z | reported 10:57Z | 1 of 1 | closed | none |
+| A, B | closed earlier | - | - | - | - | A INVALID, B reported | none |
+
+ASK: none (the earlier ASK about waiting until 11:12Z for E stands as the default).
+RESULTS (raw, no verdict):
+- main 61ded9e, full suite, valid flags (C2 run c2): 3407 passed, 0 failed, 198 skipped, 3605 collected, exit 0, 1067 s, no hang. Skips: Playwright missing (6), no gitleaks (3), Windows-only or root-only tests.
+- The hang hunt on test_burst_run_logs_every_request (main): alone x10, its file x5, one core x5 and under nice plus 3 CPU hogs x5: 25 of 25 passed (2-11 s each), no hang, no stack dump. Caveat: the hog window was only about 20 s long (each run took 3-4 s), so the load case barely overlapped other work. Details in evidence/hang-hunt.md.
+- PR #14 d5b4451 (stale): run 1 exit 0, 1127 s, recovered log 3426 passed, 0 failed (97 percent).
+- F7 rows on d5b4451: NT object path, empty and NUL are now refused (were accepted); evidence/hostile-f7-rerun.md. On edadd00: evidence/hostile-f7-rerun-edadd00.md.
+- evidence/summary.md has the valid rows first, the four A rows marked INVALID.
+
 ## 2026-11-13 11:01Z / 16:31 IST  HEARTBEAT 12
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
