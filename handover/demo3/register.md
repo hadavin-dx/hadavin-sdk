@@ -24,3 +24,6 @@ H | reported 11:36Z closed: no conflicts, patch sha 7138e884, apply --check rc 0
 I | agent ad7742..: STACK and BASE hygiene + full suite | 11:39Z | ~12:05Z, stop 12:35Z | 11:40Z | running | check 11:52Z
 J | reported 11:43Z closed: 2 STALE (3726 -> 3883 collected, 91 -> 92 files), 4 CANNOT TELL, 10 STILL TRUE
 I | reported 11:58Z closed: STACK and BASE both 3683 passed 0 failed 200 skipped exit 0
+K | agent a2c7fe..: unskip browser tests BASE then STACK | 12:00Z | ~12:30Z, stop 12:45Z | now | running | check 5 min
+L | agent afb874..: unskip gitleaks tests + hygiene, DPLD_REQUIRE_SCAN=1, BASE then STACK | 12:00Z | ~12:25Z, stop 12:45Z | now | running | check 5 min
+M | agent a275db..: classify the 200 skips (read-only) | 12:00Z | ~12:20Z, stop 12:30Z | now | running | check 5 min

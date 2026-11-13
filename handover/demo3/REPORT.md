@@ -1,5 +1,18 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 27 (ORDER 9: K, L, M started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| K | Evidence runner: install the hash-locked browser lock (Playwright 1.63.0) in a new venv and run the 166 browser tests that were skipped, on BASE f3c39cf8 and then on STACK (f3c39cf8 + claims patch) | shows whether the browser tests pass | 12:00Z / 17:30 | about 20-30 min; hard stop 12:45Z (cap 12:50Z) | first try | running | check progress-K.txt in 5 min |
+| L | Evidence runner: fetch the gitleaks release pinned in lint.yml (checksum verified), run the 30 skipped gitleaks tests plus tests/test_hygiene.py with DPLD_REQUIRE_SCAN=1 on BASE and then on STACK | shows whether the secret-scan tests pass | 12:00Z / 17:30 | about 15-25 min; hard stop 12:45Z | first try | running | check progress-L.txt in 5 min |
+| M | Agent (read-only): classify all 200 skips (on purpose, opt-in, cloud image, handled by K/L) and what would make each run | tells which skips can never run here | 12:00Z / 17:30 | about 20 min; hard stop 12:30Z | first try | running | check progress-M.txt in 5 min |
+| I, H, J, G, F, E, D, C2, A, B | earlier agents | - | - | - | - | closed | none |
+
+ASK:
+1. K needs the pre-installed Chromium to match Playwright 1.63.0 (docs/tests.md: build 1243). `playwright install chromium` is not allowed by my brief (no download outside the pins). If the machine's browser build differs, K stops and reports the exact error; say if I may allow the one browser download that docs/tests.md names. Default: no download.
+2. L downloads the one gitleaks release named in lint.yml from GitHub (checksum checked). If the network policy refuses it, L reports the error and stops. Default: that is the allowed outside access of ORDER 9.
+3. Status blocks every 5 minutes as ordered (I write one at every check).
+
 ## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 26 (I reported; all agents closed)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
