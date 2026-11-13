@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:32Z / 07:02 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
+FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
+Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 29 passed, 0 failed, running
+Machine facts (read now): Q1 post-chunk steps finished: none yet
+Recent pushes (last 20 min): 6378f53f demo: PR text review #2-#4 saved | f8b0920b Lead: owner cadence order (report every 5 min, lead command every 6 min) | a4862562 demo: Q6 scan table, current PR bodies, Semgrep PR body draft (unreviewed) | 13def437 demo: Semgrep PR body draft and claims table (unreviewed) | 486f256c Lead: standing queue so the demo session never idles | 448f3a07 demo: report block 01:25Z (chunks 0-4 green on 2db3926; semgrep v2) | 22272b2c demo: semgrep v2 for 2db3926 (group pinned), delta review saved
+TABLE 1 - LIVE ITEMS: see the last hand-written block below (agents: PR-text verifier D-PR, Semgrep patch v3 builder S3, Semgrep PR body drafter D-SG, skips table Q5, dry-run checks Q4; shell: chunked run + post-chunk checks).
+TABLE 2 - ROUNDS: unchanged since the last hand-written block.
+TABLE 3 - FINISHED SINCE LAST BLOCK: see "Recent pushes" above.
+
 ## 2026-11-13 01:25Z / 06:55 IST - CHUNKED RUN ON 2db3926: CHUNKS 0-4 GREEN (1474 passed, 0 failed); ANOTHER RESTART KILLED CHUNK 5 AT 01:18:51Z (52 passed, 0 failed), DRIVER RELAUNCHED 01:24:13Z; SEMGREP DELTA REVIEW DONE: 1 MAJOR (test gap) FIXED IN v2
 FAILED / UNCERTAIN first:
 1. **Still no complete verdict on 2db3926.** Chunked driver (pr-3-tests 2db3926, 80 test files, 10 chunks of 8 files, one pytest process per chunk): chunks 0-4 finished, all exit 0: 112 + 624 + 276 + 156 + 306 = **1474 passed, 0 failed, 0 errors, 0 skipped**. Chunk 5 was killed by yet ANOTHER container restart at 01:18:51Z (52 passed, 0 failed; partial kept as /tmp/work/h3chunk-5-killed-attempt1.txt); I relaunched the driver at 01:24:13Z: it skips chunks 0-4 and re-runs chunk 5 from its start, then 6-9 (ETA about 01:45Z if no restart hits again). Restarts so far: 23:05, 23:58, ~00:05, ~00:51, ~00:57, ~01:18, ~01:24: the container is now restarting every 5-30 minutes: only a RESUMABLE method can finish; the un-chunked run is not feasible at this frequency (attempts: 1909 and 322 tests, both 0 failures, both killed).
