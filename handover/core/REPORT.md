@@ -1,5 +1,31 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:24Z (06:54 IST) / plants run finished (5 passed); batches 7 and 8 not reported; slots measured (all 3 busy, 1 job waiting)
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 plants run: finished 01:20:54Z, 5 passed, exit 0, but it took 54 min 54 s against my 47 min estimate. I think slot sharing caused the extra 8 min; I have NOT measured that (no per-job wait was recorded for it). Q8c-1 is NOT yet pushed: bandit and the full suite on a5908c0b have not run, and the lane origin/wip/cloud-q8c1-b16 is still at 37cd5157.
+- Part 2 batch 8 and Part 6 batch 7 have not reported. I make no claim about either. Part 2 round 7 was NOT clean (2 Blocker, 4 Major); Part 6 round 6 was NOT clean (1 Blocker, 3 Major). The full 174-row bind run at 07de0091 was never done; batch 8 is running it now at its own head.
+- Builder notes are the builders' own words, not verified by me.
+
+**Slot situation (measured 01:24Z, answer to the lead)**: yes, measured with ps, flock on the three slot files and /tmp/heavy-wait. All 3 slots busy: batch 8 holds 2 (full pytest and bind_mutants), one more full pytest holds the third (probably batch 7). One job waits: priority 1, the Q8c-1 full suite (waiting about 2.5 min at the time of the check). One old waiter marker from 23:31Z is left over from a dead process; heavy.sh ignores it. Not measured: wait time of earlier jobs (heavy.sh does not log waits); the only earlier number is 4 min 10 s for the stage mutants.
+
+**LEAD ACTIONS**: none new. Your answer on Part 6 Issue 3 is applied (ledger PDBIND-r7-10 tracks the follow-up after Part 2 merges).
+
+**LIVE ITEMS** (3 agents, 3 heavy slots busy, 1 waiting)
+- abb52410 Part 2 batch 8 builder: rows B182-B205 fixed, full pytest + all bind rows + stage rows running; box to about 01:49Z. Next: round 8 (security, no cap).
+- a075c8b2 Part 6 batch 7 builder: mutant run 3 then full pytest at final head; box to about 01:42Z. Next: round 7 (mode-safety, no cap).
+- a35e15e9 Q8c-1 builder: full suite queued behind the slots; then bandit, push to wip/cloud-q8c1-b16 only if green, snapshot, runner, round 17.
+- Heads: pd-bind 07de0091, pd-banner 88e79c25, q8c1-b16 37cd5157 (none moved).
+
+**ROUNDS (WHY)**
+- Part 2: round 7 done, not clean (holder content, Counter state, CHANGELOG versus code). WHY round 8: security path, no cap, needs a clean round.
+- Part 6: round 6 done, not clean. WHY round 7: mode-safety path, no cap.
+- Q8c-1: round 17 pending after the push. The reviewers must check the builder's equivalent-mutant judgement (466 of 466 policy mutants).
+
+**FINISHED SINCE LAST BLOCK (01:16Z)**
+- Q8c-1 plants run: 5 passed, exit 0 (01:20:54Z).
+- Nothing else finished.
+
 ## 01:16Z (06:46 IST) / no head moved; Q8c-1 plants run past its estimate; both batches still in their gates
 FAILED / UNCERTAIN FIRST: (1) Q8c-1 plants run did NOT end at about 01:12Z as I estimated: its log still shows only dots at 01:16Z; it shares heavy slots with the builders' gate runs, which is the likely cause but I have not measured it. I will not claim a result before the log ends; if it is not done by 01:35Z I will report the slot situation to you. (2) Part 2 batch 8 (box to 01:49Z) and Part 6 batch 7 (box to 01:42Z) have not reported; last checkpoints: batch 8 source and 24 new rows written, fail-before logs and gates still to do; batch 7 fail-before log saved, gates next. No claim about either until they report. (3) Part 2 still has no full 174-row run at 07de0091 (batch 8 does it at its head).
 LEAD ACTIONS: none new.
