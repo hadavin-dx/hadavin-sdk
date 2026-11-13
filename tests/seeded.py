@@ -1,7 +1,7 @@
-"""A small seeded generator for the property tests. The same seed gives the same cases on every run and on every Python
-version (the standard `random` module is not used: the project's lint rule refuses it, as it is not for secrets, and a
-test needs repeatable cases, not unpredictable ones). SplitMix64 (Steele, Lea and Flood, 2014): a 64-bit counter run
-through a fixed mixing step."""
+"""A small seeded generator for the property tests. The same seed gives the same cases on every run and
+on every Python version (the standard `random` module is not used: the project's lint rule refuses
+it, as it is not for secrets, and a test needs repeatable cases, not unpredictable ones). SplitMix64
+(Steele, Lea and Flood, 2014): a 64-bit counter run through a fixed mixing step."""
 
 from __future__ import annotations
 

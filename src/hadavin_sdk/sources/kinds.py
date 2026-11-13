@@ -48,8 +48,9 @@ KINDS: dict[str, SourceKind] = {
 
 
 def source_endpoint(source: Any) -> str:
-    """The API url of a configured source (`Config.sources` entry): its kind's `endpoint` applied to the validated
-    settings. The one place this is worked out; the app reads its host, the mode banner reads the whole url."""
+    """The API url of a configured source (`Config.sources` entry): its kind's `endpoint` applied to
+    the validated settings. The one place this is worked out; the app reads its host, the mode
+    banner reads the whole url."""
     kind = KINDS[source.kind]
     return kind.endpoint(kind.settings(**source.settings))
 

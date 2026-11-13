@@ -1,13 +1,14 @@
-"""The demo-only folder guard (tools/demo_only_guard.py): product code must not name the folder that holds everything
-that exists only for demos, nor a made-up record id; the build must still pass with the folder deleted. Made-up data only.
+"""The demo-only folder guard (tools/demo_only_guard.py): product code must not name the folder that
+holds everything that exists only for demos, nor a made-up record id; the build must still pass with
+the folder deleted. Made-up data only.
 
-Rows: the real repo is clean and the scan is not vacuous; each way to depend on the folder is a hit that names the file
-and line but never prints the matched text (symlinks, every file type, every product folder, any depth, any spelling of
-the name, loader files, the copy-run marker); the settings are checked (a bad setting stops the guard); a missing folder
-stops a run that requires it; pytest in a copy without the folder passes for a clean product and fails for one that
-reaches into the folder, and the copy imports its own code, never the original checkout.
-(That CI runs the scan is checked in tests/test_demo_only_guard_ci.py.)
-"""
+Rows: the real repo is clean and the scan is not vacuous; each way to depend on the folder is a hit
+that names the file and line but never prints the matched text (symlinks, every file type, every
+product folder, any depth, any spelling of the name, loader files, the copy-run marker); the
+settings are checked (a bad setting stops the guard); a missing folder stops a run that requires it;
+pytest in a copy without the folder passes for a clean product and fails for one that reaches into
+the folder, and the copy imports its own code, never the original checkout. (That CI runs the scan
+is checked in tests/test_demo_only_guard_ci.py.)"""
 
 from __future__ import annotations
 
@@ -19,6 +20,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -48,8 +50,9 @@ def _cfg(**over: Any) -> g.GuardConfig:
 
 
 def _repo(tmp_path: Path, files: dict[str, str]) -> Path:
-    """A made-up repository. It is a git repository (the guard lists files with git) with nothing added or committed:
-    files that are not ignored count, as in a fresh checkout that has not run `git add` yet."""
+    """A made-up repository. It is a git repository (the guard lists files with git) with nothing added
+    or committed: files that are not ignored count, as in a fresh checkout that has not run `git
+    add` yet."""
     for rel, text in files.items():
         p = tmp_path / rel
         p.parent.mkdir(parents=True, exist_ok=True)
@@ -60,12 +63,14 @@ def _repo(tmp_path: Path, files: dict[str, str]) -> Path:
 
 
 def _track(repo: Path) -> Path:
-    """Add every file that is not ignored to git's index: the copy run copies the files git tracks (and only those)."""
+    """Add every file that is not ignored to git's index: the copy run copies the files git tracks (and
+    only those)."""
     run_fixed(["git", "-C", str(repo), "add", "-A"], check=True)
     return repo
 
 
-# the mutation runner copies the sources without .git: the two tests on this very repository then have nothing to scan
+# the mutation runner copies the sources without .git: the two tests on this very repository then
+# have nothing to scan
 needs_git = pytest.mark.skipif(not (ROOT / ".git").exists(), reason="this copy has no .git")
 
 
@@ -78,7 +83,8 @@ CLEAN = {
 }
 
 
-# -- the real repository ---------------------------------------------------------------------------------------------
+# -- the real repository
+# ---------------------------------------------------------------------------------------------
 @needs_git
 def test_this_repository_is_clean_and_the_scan_is_not_vacuous() -> None:
     cfg = g.load_config(ROOT / "tools" / "demo_only_guard.toml")
@@ -97,7 +103,8 @@ def test_the_folder_name_is_in_the_settings_file_only() -> None:
     assert '"demo_only"' not in text  # no hard-coded name in the script itself
 
 
-# -- every way to depend on the folder --------------------------------------------------------------------------------
+# -- every way to depend on the folder
+# --------------------------------------------------------------------------------
 def test_a_clean_product_passes_even_though_the_folder_holds_fake_ids(tmp_path: Path) -> None:
     assert g.scan(_repo(tmp_path, CLEAN), _cfg()) == []
 
@@ -270,7 +277,8 @@ def test_the_settings_of_this_repository_scan_every_product_folder() -> None:
     ), "the_settings_of_this_repository_scan_every_product_folder: check 3"
 
 
-# -- symlinks, spellings, depth ---------------------------------------------------------------------------------------
+# -- symlinks, spellings, depth
+# ---------------------------------------------------------------------------------------
 def test_every_symlink_under_a_product_root_is_a_hit(tmp_path: Path) -> None:
     repo = _repo(tmp_path / "r", CLEAN)
     outside = _repo(tmp_path / "outside", {"x.py": "A = 1\n"})
@@ -336,7 +344,8 @@ def test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path:
         )
 
 
-# -- the guard's own files, and the copy-run marker ---------------------------------------------------------------------
+# -- the guard's own files, and the copy-run marker
+# ---------------------------------------------------------------------
 def test_the_exempt_files_are_exactly_the_guard_itself_and_each_is_skipped_whole(
     tmp_path: Path,
 ) -> None:
@@ -411,7 +420,8 @@ def test_property_a_hit_is_reported_exactly_where_it_was_planted(tmp_path: Path)
         assert set(g.scan(_repo(repo, files), _cfg())) == planted
 
 
-# -- the settings are checked -----------------------------------------------------------------------------------------
+# -- the settings are checked
+# -----------------------------------------------------------------------------------------
 def _toml(tmp_path: Path, **over: str) -> Path:
     base = {
         "folder": '"demo_only"',
@@ -467,7 +477,8 @@ def test_a_pattern_that_matches_the_empty_text_stops_the_guard(tmp_path: Path) -
             g.load_config(_toml(tmp_path, fake_id_patterns=f'["{pattern}"]'))
 
 
-# -- the command line ------------------------------------------------------------------------------------------------
+# -- the command line
+# ------------------------------------------------------------------------------------------------
 def _main(repo: Path, cfg: Path, *extra: str) -> int:
     return g.main(["--root", str(repo), "--config", str(cfg), *extra])
 
@@ -505,7 +516,8 @@ def test_the_script_runs_as_a_program_on_this_repository() -> None:
     assert done.returncode == 0 and done.stdout == "", done.stdout + done.stderr
 
 
-# -- the build without the folder -------------------------------------------------------------------------------------
+# -- the build without the folder
+# -------------------------------------------------------------------------------------
 PRODUCT = "def answer():\n    return 42\n"
 PLAIN_TEST = "import sys\nfrom pathlib import Path\nsys.path.insert(0, str(Path(__file__).parents[1] / 'src'))\nfrom pkg import answer\n\n\ndef test_it():\n    assert answer() == 42\n"
 NEEDS_FOLDER_TEST = "def test_needs_folder():\n    import demo_only.fakes\n"
@@ -540,8 +552,8 @@ def test_a_clean_product_passes_in_a_copy_without_the_folder(tmp_path: Path) -> 
 
 
 def test_a_product_that_reaches_into_the_folder_fails_in_the_copy(tmp_path: Path) -> None:
-    # the name is built from pieces at run time, which no text scan finds: the copy run is the check for it (a name written
-    # out is stopped by the scan that now runs first, see the batch 7 tests)
+    # the name is built from pieces at run time, which no text scan finds: the copy run is the check
+    # for it (a name written out is stopped by the scan that now runs first, see the batch 7 tests)
     repo = _mini(
         tmp_path / "r",
         PRODUCT + 'import importlib\nimportlib.import_module("demo" + "_only.fakes")\n',
@@ -564,7 +576,8 @@ def test_the_copy_run_really_has_no_folder(tmp_path: Path) -> None:
     assert g.run_without_folder(repo, _cfg(), ["tests/test_plain.py"]) == 0
 
 
-# -- one list of files: git's ---------------------------------------------------------------------------------------
+# -- one list of files: git's
+# ---------------------------------------------------------------------------------------
 def test_the_scan_refuses_a_folder_that_is_not_a_git_checkout(tmp_path: Path) -> None:
     (tmp_path / "src").mkdir()
     with pytest.raises(SystemExit) as stop:
@@ -598,7 +611,8 @@ def test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit
     ], "a_link_outside_the_product_folders_that_points_into_the_fold: check 1"
 
 
-# -- the copy run proves the copy, not the original -----------------------------------------------------------------
+# -- the copy run proves the copy, not the original
+# -----------------------------------------------------------------
 def test_the_copy_run_imports_the_copy_even_if_the_original_is_on_the_import_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -616,7 +630,8 @@ def test_the_copy_run_fails_when_the_package_comes_from_somewhere_else(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     repo = _mini(tmp_path / "r")
-    # "json" is real and importable but is not in the copy: the check must refuse to call that a pass
+    # "json" is real and importable but is not in the copy: the check must refuse to call that a
+    # pass
     assert g.run_without_folder(repo, _cfg(product_packages=("json",)), []) == 3, (
         "a package that does not come from the copy was accepted"
     )
@@ -628,7 +643,8 @@ def test_the_copy_run_without_a_package_to_check_is_refused(tmp_path: Path) -> N
         g.run_without_folder(_mini(tmp_path / "r"), _cfg(product_packages=()), [])
 
 
-# -- round 3 ---------------------------------------------------------------------------------------------------------
+# -- round 3
+# ---------------------------------------------------------------------------------------------------------
 def test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash(tmp_path: Path) -> None:
     cfg = _cfg(allowed_phrases=("DEMO_ONLY",))
     for i, line in enumerate(["DEMO_ONLY-x", "x-DEMO_ONLY", "demo_only", "Demo_Only", "DEMO-ONLY"]):
@@ -651,7 +667,8 @@ def test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_sea
     (real / "src/pkg/logo.png").write_bytes(
         b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + FOLDER.encode()
     )
-    # a NUL byte near the start: a real binary, not read as text; its bytes are searched for the name instead
+    # a NUL byte near the start: a real binary, not read as text; its bytes are searched for the
+    # name instead
     assert g.scan(real, _cfg()) == [
         "src/pkg/logo.png: names-demo-only-folder (inside a binary file)"
     ]
@@ -669,7 +686,8 @@ def test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_sea
 
 
 def _gitlink(repo: Path, rel: str) -> None:
-    """Add a git link (what a submodule is) at `rel`: the index holds mode 160000 and the path is a folder on disk."""
+    """Add a git link (what a submodule is) at `rel`: the index holds mode 160000 and the path is a
+    folder on disk."""
     (repo / rel).mkdir(parents=True)
     sha = "1" * 40
     run_fixed(
@@ -687,7 +705,8 @@ def test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not(tmp_pa
     ], "a_submodule_under_a_product_root_is_a_hit_and_one_outside_is: check 1"
 
 
-# -- round 4 ---------------------------------------------------------------------------------------------------------
+# -- round 4
+# ---------------------------------------------------------------------------------------------------------
 def test_a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_a_path(tmp_path: Path) -> None:
     wide = "".join(
         chr(ord(c) + 0xFEE0) if c.isalpha() else c for c in FOLDER
@@ -771,7 +790,8 @@ def test_a_submodule_whose_folder_is_missing_is_still_a_hit(tmp_path: Path) -> N
     ], "a_submodule_whose_folder_is_missing_is_still_a_hit: check 1"
 
 
-# -- round 5: the guard fails closed everywhere -----------------------------------------------------------------------
+# -- round 5: the guard fails closed everywhere
+# -----------------------------------------------------------------------
 def test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -788,7 +808,8 @@ def test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip(
         "a file that cannot be read was not a hit"
     )
     monkeypatch.undo()
-    # a tracked file that was replaced by a pipe (git still lists it): a read would block, so it is a hit, never opened
+    # a tracked file that was replaced by a pipe (git still lists it): a read would block, so it is
+    # a hit, never opened
     (repo / "src/pkg/pipe.py").write_text("X = 1\n", encoding="utf-8")
     (repo / "elsewhere/pipe.py").write_text("X = 1\n", encoding="utf-8")
     run_fixed(
@@ -1094,7 +1115,8 @@ def test_a_full_width_product_root_that_is_the_folder_is_a_hit(tmp_path: Path) -
     assert want in hits, f"a full-width product root named like the folder was not a hit: {hits}"
 
 
-# -- batch 6, class B: the content decides, an entry that cannot be inspected is a hit, special files keep their shape ---
+# -- batch 6, class B: the content decides, an entry that cannot be inspected is a hit, special
+# files keep their shape ---
 REAL_SAMPLES = {  # the first bytes of a real file of each kind the settings allow without reading it as text
     ".png": PNG + b"\x00\x00",
     ".jpg": b"\xff\xd8\xff\xe0\x00\x10JFIF\x00",
@@ -1190,7 +1212,8 @@ def test_an_entry_is_gone_only_when_the_system_says_no_such_file(
 def test_a_tracked_file_in_a_folder_that_cannot_be_entered_is_a_hit_not_a_skip(
     tmp_path: Path,
 ) -> None:
-    """Run as a user that is not root (root can enter any folder): a tracked file under a folder of mode 000."""
+    """Run as a user that is not root (root can enter any folder): a tracked file under a folder of
+    mode 000."""
     import shutil
     import tempfile
 
@@ -1322,10 +1345,11 @@ def test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_t
     assert "1 file(s) are not added to git" in capsys.readouterr().out
 
 
-# -- batch 7: first-byte kinds, marks for webp/ttf/otf, exempt files, the copy run, git excludes ------------------------
-# "Fails on old code" is stated per test (old code = 88e79c25).
+# -- batch 7: first-byte kinds, marks for webp/ttf/otf, exempt files, the copy run, git excludes
+# ------------------------ "Fails on old code" is stated per test (old code = 88e79c25).
 def _pe_blob(offset: int = 0x40, total: int | None = None) -> bytes:
-    """A made-up PE header made only of valid UTF-8 bytes: "MZ", filler, the offset at 0x3C, "PE\\0\\0" at the offset."""
+    """A made-up PE header made only of valid UTF-8 bytes: "MZ", filler, the offset at 0x3C, "PE\\0\\0"
+    at the offset."""
     head = bytearray(b"MZ" + b"A" * 58 + offset.to_bytes(4, "little"))
     head += b"A" * max(0, offset - len(head)) + b"PE\x00\x00" + b"tail"
     if total:
@@ -1367,8 +1391,9 @@ def test_the_samples_cover_exactly_the_kinds_the_guard_lists() -> None:
 def test_every_first_byte_kind_is_a_hit_by_kind_under_an_unmarked_and_a_marked_ending(
     tmp_path: Path,
 ) -> None:
-    # fails on old code for Mach-O and PE (a hit only when not valid UTF-8; the PE sample is valid UTF-8, and a Mach-O
-    # file named .png was reported as "ending-does-not-match-content" instead of by kind)
+    # fails on old code for Mach-O and PE (a hit only when not valid UTF-8; the PE sample is valid
+    # UTF-8, and a Mach-O file named .png was reported as "ending-does-not-match-content" instead of
+    # by kind)
     for kind, sample in KIND_SAMPLES.items():
         for ending in (".dat", ".txt", ".png", ".woff2", ".ttf"):
             label = f"{kind} named {ending}"
@@ -1413,7 +1438,8 @@ def test_a_pe_header_that_cannot_say_is_not_called_a_pe_file_and_one_far_in_is_f
 def test_an_unmarked_ending_that_is_not_utf8_is_a_hit_and_is_not_searched_and_a_nul_file_is_read_as_text(
     tmp_path: Path,
 ) -> None:
-    # the branches of the CHANGELOG sentence about unmarked endings; the first two held already on old code
+    # the branches of the CHANGELOG sentence about unmarked endings; the first two held already on
+    # old code
     repo = _repo(tmp_path / "a", CLEAN)
     (repo / "src/pkg/blob.dat").write_bytes(b"\xff\xfe\x00demo_only")
     got = _first_hit(repo)
@@ -1437,7 +1463,8 @@ def test_an_unmarked_ending_that_is_not_utf8_is_a_hit_and_is_not_searched_and_a_
 def test_webp_ttf_and_otf_with_wrong_first_bytes_are_hits_and_with_the_right_ones_pass(
     tmp_path: Path,
 ) -> None:
-    # fails on old code: these three endings had no mark, so a wrong file was read as text and passed
+    # fails on old code: these three endings had no mark, so a wrong file was read as text and
+    # passed
     wrong = {
         ".webp": b"NOTMAGIC plain text",
         ".ttf": b"NOTMAGIC plain text",
@@ -1599,7 +1626,8 @@ def test_the_copy_run_does_not_start_when_the_scan_has_a_hit(
 def test_an_entry_that_cannot_be_inspected_is_a_hit_or_present_never_absent(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # fails on old code: Path.is_dir and is_file swallowed ELOOP, ENOTDIR and EACCES and read the entry as absent
+    # fails on old code: Path.is_dir and is_file swallowed ELOOP, ENOTDIR and EACCES and read the
+    # entry as absent
     import errno
 
     repo = _tracked_repo(tmp_path / "r", {"tools/loader.py": f"# {FOLDER}\n"})
@@ -1672,7 +1700,8 @@ def test_if_present_and_require_do_not_take_an_unreadable_folder_for_a_missing_o
 def test_a_file_the_person_running_the_guard_ignores_for_themselves_is_still_scanned(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # fails on old code: core.excludesFile of the global git config hid the untracked file from the scan
+    # fails on old code: core.excludesFile of the global git config hid the untracked file from the
+    # scan
     home = tmp_path / "home"
     (home / ".config" / "git").mkdir(parents=True)
     ignore = home / "my-ignore"
@@ -1704,9 +1733,11 @@ def test_a_file_the_person_running_the_guard_ignores_for_themselves_is_still_sca
     )
 
 
-# -- batch 8: the copy run and the scan decide paths from the file system, not from text (class E) ------------------------
+# -- batch 8: the copy run and the scan decide paths from the file system, not from text (class E)
+# ------------------------
 def test_two_chained_links_cannot_lead_the_copy_run_out_of_the_copy(tmp_path: Path) -> None:
-    # proof (fails on old code: each target was worked out by text, so `k -> ..` then `l -> k/../../outside` passed)
+    # proof (fails on old code: each target was worked out by text, so `k -> ..` then `l ->
+    # k/../../outside` passed)
     cases = {
         "k-then-l": {"docs/k": "..", "docs/l": "k/../../outside"},
         "nested": {"a/b/link1": "../..", "a/link2": "b/link1/../.."},
@@ -1742,7 +1773,8 @@ def test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_cop
 def test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # proof (fails on old code: O_NOFOLLOW guarded the last component only, so a swapped parent was read through)
+    # proof (fails on old code: O_NOFOLLOW guarded the last component only, so a swapped parent was
+    # read through)
     repo = _tracked_repo(tmp_path / "r", {"docs/a.txt": "plain\n"})
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -1768,7 +1800,8 @@ def test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_re
 def test_without_the_walk_flags_a_link_anywhere_on_the_path_is_refused(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # pin of the Windows branch (it runs here by switching `_CAN_WALK` off): a link on a parent folder is refused
+    # pin of the Windows branch (it runs here by switching `_CAN_WALK` off): a link on a parent
+    # folder is refused
     repo = _tracked_repo(tmp_path / "r", {"docs/a.txt": "plain\n"})
     monkeypatch.setattr(g, "_CAN_WALK", False)
     g._copy_regular(repo, "docs/a.txt", tmp_path / "plain-copy")
@@ -1784,8 +1817,9 @@ def test_without_the_walk_flags_a_link_anywhere_on_the_path_is_refused(
 def test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # proof (fails on old code: with `Path.resolve` raising RuntimeError, as Python 3.12 does on a loop, the scan died with a
-    # traceback; on 3.13 a link outside the product folders that loops was no hit at all)
+    # proof (fails on old code: with `Path.resolve` raising RuntimeError, as Python 3.12 does on a
+    # loop, the scan died with a traceback; on 3.13 a link outside the product folders that loops
+    # was no hit at all)
     repo = _tracked_repo(tmp_path / "r", {"docs/readme.txt": "x\n"})
     os.symlink("loop", repo / "docs" / "loop")
     _track(repo)
@@ -1814,7 +1848,8 @@ def test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises(
 def test_a_file_that_vanishes_at_any_point_of_the_scan_is_never_a_traceback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # proof (fails on old code: a second `os.lstat` after `_stat_kind` raised FileNotFoundError for an exempt file)
+    # proof (fails on old code: a second `os.lstat` after `_stat_kind` raised FileNotFoundError for
+    # an exempt file)
     files = {"src/pkg/ex.txt": f"names {FOLDER} on purpose\n"}
 
     def calls_for(vanish_after: int | None) -> int:
@@ -1902,19 +1937,22 @@ def _only_the_mark_and_nul_bytes(tmp_path: Path, label: str, raw: bytes, kind: s
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
-    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
+    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such
+    # a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "mz", b"MZ" + b"\x00" * 30, "DOS or Windows program")
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
-    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
+    # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such
+    # a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR")
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
-    # What it guards against (a fault of the code before batch 8): it needs the kinds to exist; otherwise a pin that text is not refused)
+    # What it guards against (a fault of the code before batch 8): it needs the kinds to exist;
+    # otherwise a pin that text is not refused)
     text = _repo(tmp_path / "text", {**CLEAN, "src/pkg/a.txt": "MZ is fine as text, so is Rar!\n"})
     assert g.scan(text, _cfg()) == [], "plain text that starts like a mark was refused"
     utf16 = _repo(tmp_path / "u16", CLEAN)
@@ -1926,8 +1964,9 @@ def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
-    # What it guards against (a fault of the code before batch 8): the level byte was not looked at). On purpose, level 0 and ":" are not bzip2: the format
-    # has levels 1 to 9, so a file with another level byte is not a valid bzip2 file.
+    # What it guards against (a fault of the code before batch 8): the level byte was not looked
+    # at). On purpose, level 0 and ":" are not bzip2: the format has levels 1 to 9, so a file with
+    # another level byte is not a valid bzip2 file.
     for head, is_bzip2 in (
         (b"BZh1" + b"1AY&SY", True),
         (b"BZh9" + b"\x17rE8P\x90", True),
@@ -1941,7 +1980,8 @@ def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
-    # What it guards against (a fault of the code before batch 8): the mark after the level byte was not looked at). On purpose, a bad block mark is not bzip2.
+    # What it guards against (a fault of the code before batch 8): the mark after the level byte was
+    # not looked at). On purpose, a bad block mark is not bzip2.
     for head, is_bzip2 in (
         (b"BZh9" + b"XXXXXX", False),
         (b"BZh5" + b"1AY&SX", False),
@@ -1953,8 +1993,9 @@ def test_pin_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
     assert g._magic_kind(b"BZh") == "", "three letters alone were read as bzip2"
 
 
-# The places that list the tracked files of the repository. The CHANGELOG states how many there are and names each of them; the
-# test below compares exactly these, and `tests/test_changelog_numbers.py` reads this table, so the count is written once.
+# The places that list the tracked files of the repository. The CHANGELOG states how many there are
+# and names each of them; the test below compares exactly these, and
+# `tests/test_changelog_numbers.py` reads this table, so the count is written once.
 LISTING_FILES = ("tools/demo_only_guard.py", "tools/scan_repo.py", "tests/test_repo_rules.py")
 SUPERSET_FILE = "tests/test_no_reference_material.py"  # walks the folder on purpose; only checked to hold every tracked file
 
@@ -1962,10 +2003,13 @@ SUPERSET_FILE = "tests/test_no_reference_material.py"  # walks the folder on pur
 def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file_and_an_unusual_name(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # Decision (also in the CHANGELOG): core has no shared helper, so the guard, `tools/scan_repo.py` and
-    # `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED files (exact names, `-z`), and these THREE listings must be equal;
-    # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a reference file counts too), so it is only a SUPERSET check
-    # What it guards: (it must hold every tracked file, and is not compared for equality). Proof (fails only on the code before batch 8: test_repo_rules listed without -z and quoted the name).
+    # Decision (also in the CHANGELOG): core has no shared helper, so the guard,
+    # `tools/scan_repo.py` and `tests/test_repo_rules.py` each ask `git ls-files` for the TRACKED
+    # files (exact names, `-z`), and these THREE listings must be equal;
+    # `tests/test_no_reference_material.py` walks the folder on purpose (an untracked copy of a
+    # reference file counts too), so it is only a SUPERSET check What it guards: (it must hold every
+    # tracked file, and is not compared for equality). Proof (fails only on the code before batch 8:
+    # test_repo_rules listed without -z and quoted the name).
     import importlib.util
 
     from tests.test_repo_rules import tracked_files
@@ -1997,7 +2041,8 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     )
     assert all(listing == from_guard for listing in listings.values()), listings
     assert "docs/café.txt" in from_guard and "docs/new-not-added.txt" not in from_guard
-    # the guard's default listing adds files not yet added, and still lists one a user-level ignore file hides
+    # the guard's default listing adds files not yet added, and still lists one a user-level ignore
+    # file hides
     assert "docs/new-not-added.txt" in g.tracked_paths(repo)
     assert "docs/b.secretnote" in g.tracked_paths(repo) and "docs/b.secretnote" not in from_guard
 
@@ -2011,7 +2056,8 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_git_message_hides_names_with_key_or_token() -> None:
-    # What it guards against (a fault of the code before batch 8): the whole first line of git was shown as it came)
+    # What it guards against (a fault of the code before batch 8): the whole first line of git was
+    # shown as it came)
     line = (
         "fatal: bypass_key=abc123 bypass_token=def456 url https://user:pw@host/x.git "
         "plain Bearer yyyy Authorization: Bearer zzz9"
@@ -2023,8 +2069,9 @@ def test_pin_git_message_hides_names_with_key_or_token() -> None:
     assert "Bearer yyyy" in shown, f"a bare scheme word was changed: {shown}"
 
 
-# -- batch 9: the git-message masker (class 4) and the guard minors (class 5) ---------------------------------------------
-# Every fake value below is built from parts: no secret-shaped literal sits in this file.
+# -- batch 9: the git-message masker (class 4) and the guard minors (class 5)
+# --------------------------------------------- Every fake value below is built from parts: no
+# secret-shaped literal sits in this file.
 TOK = "to" + "ken"
 PW = "pass" + "word"
 SEC = "sec" + "ret"
@@ -2051,7 +2098,8 @@ def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> 
 # fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 # fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> None:
-    # letters only: the guard and the core agree (the rows where the guard hides more are in the next test)
+    # letters only: the guard and the core agree (the rows where the guard hides more are in the
+    # next test)
     for scheme, core, low in (
         ("Bearer", "BEARER", 12),
         ("basic", "BASIC", 8),
@@ -2078,7 +2126,8 @@ def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> N
 def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_stated_ones() -> (
     None
 ):
-    # (line, what the guard shows, whether the core hides a token in it). Intended differences: the guard hides more.
+    # (line, what the guard shows, whether the core hides a token in it). Intended differences: the
+    # guard hides more.
     rows = (
         (
             "x Bearer a1b2c3 y",
@@ -2157,7 +2206,8 @@ def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
 
 # fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
 def test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters() -> None:
-    # what it shows (`authorization=Bearer <token>` of 8, 10 or 11 characters stayed visible; the core hides them)
+    # what it shows (`authorization=Bearer <token>` of 8, 10 or 11 characters stayed visible; the
+    # core hides them)
     for n in (8, 10, 11):
         token = "q" * n
         for scheme in ("Bearer", "bearer", "Basic"):
@@ -2203,7 +2253,8 @@ def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() 
         assert "<hidden>" in shown, (
             f"a hidden-side value at the end of the line stayed visible: {line!r}"
         )
-    # a plain word followed by anything else on the line is hidden (only the end of the line may follow it)
+    # a plain word followed by anything else on the line is hidden (only the end of the line may
+    # follow it)
     assert g._hide_secrets("bypass=true x") == "bypass=<hidden> x", (
         "a flag with a word after it was shown"
     )
@@ -2291,8 +2342,9 @@ def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() 
 def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Counted work, not seconds: the number of characters the name check reads and the output length are bounded by the
-    # line length. (The old quadratic pattern is shown by `test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds`.)
+    # Counted work, not seconds: the number of characters the name check reads and the output length
+    # are bounded by the line length. (The old quadratic pattern is shown by
+    # `test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds`.)
     for line in (
         "a-" * 5000,
         "=" * 10000,
@@ -2319,9 +2371,10 @@ def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds() -> None:
-    # what it keeps (also: fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of name characters, with
-    # no name of the new code needed): a wide bound only, not a ratio of two timings: a line of 60000 characters is hidden in
-    # under 5 seconds (linear: a few milliseconds; quadratic: minutes). The exact check is the count of steps in
+    # what it keeps (also: fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of
+    # name characters, with no name of the new code needed): a wide bound only, not a ratio of two
+    # timings: a line of 60000 characters is hidden in under 5 seconds (linear: a few milliseconds;
+    # quadratic: minutes). The exact check is the count of steps in
     # `test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line`.
     import time
 
@@ -2335,10 +2388,12 @@ def test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds() ->
 def test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Counted work, not seconds, and ONLY for the pair step (the `name=value` search): characters handed to the name pattern
-    # plus the calls of the name-character test; the header, bearer, basic and URL steps are not counted here. Lines with
-    # many `=` and short names (a quadratic pair step would search the whole text before each `=` again), one long name, many
-    # secret-looking names. The bound is 4 reads of a character; a linear pass reads each one about once or twice.
+    # Counted work, not seconds, and ONLY for the pair step (the `name=value` search): characters
+    # handed to the name pattern plus the calls of the name-character test; the header, bearer,
+    # basic and URL steps are not counted here. Lines with many `=` and short names (a quadratic
+    # pair step would search the whole text before each `=` again), one long name, many
+    # secret-looking names. The bound is 4 reads of a character; a linear pass reads each one about
+    # once or twice.
     steps = 0
     real_search, real_char = g._SECRET_NAME.search, g._is_name_char
 
@@ -2380,20 +2435,22 @@ def _a_scheme_after_a_secret_name(scheme: str, token: str) -> None:
 
 # fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1'
 def test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
-    # what it shows (the pair step ran first and hid only the word `Bearer`, leaving the token in clear)
+    # what it shows (the pair step ran first and hid only the word `Bearer`, leaving the token in
+    # clear)
     _a_scheme_after_a_secret_name("Bearer", "a1" * 10)
 
 
 # fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
 def test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
-    # what it shows (the pair step ran first and hid only the word `Basic`, leaving the token in clear)
+    # what it shows (the pair step ran first and hid only the word `Basic`, leaving the token in
+    # clear)
     _a_scheme_after_a_secret_name("Basic", "b2" * 6)
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
-    # pin: only `name=value` pairs are hidden; the colon form is a stated limit (see the comment above `_BEARER`), shown here
-    # by behaviour. A made-up value built from parts.
+    # pin: only `name=value` pairs are hidden; the colon form is a stated limit (see the comment
+    # above `_BEARER`), shown here by behaviour. A made-up value built from parts.
     value = "v1" * 6
     for line in (f"fatal: {PW}: {value}", f'fatal: "{TOK}": "{value}"', f"fatal: --{PW} {value}"):
         assert g._hide_secrets(line) == line, (
@@ -2403,8 +2460,9 @@ def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
 
 # fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a 12 character token stayed
 def test_a_bearer_token_of_11_characters_stays_visible_as_on_main() -> None:
-    # pin: the bearer rule needs 12 or more characters, as on main (`hadavin_sdk.guard.redact`), so a shorter token after a
-    # name stays visible; 12 characters are hidden. A made-up token built from parts.
+    # pin: the bearer rule needs 12 or more characters, as on main (`hadavin_sdk.guard.redact`), so
+    # a shorter token after a name stays visible; 12 characters are hidden. A made-up token built
+    # from parts.
     short, long_ = "c" * 11, "c3" * 6
     assert len(short) == 11 and len(long_) == 12
     assert short in g._hide_secrets(f"fatal: {TOK}=Bearer {short}"), (
@@ -2510,7 +2568,8 @@ def test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_tabl
 def test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # what it shows (os.fchmod was called unguarded, an AttributeError where it is absent (Windows before 3.13))
+    # what it shows (os.fchmod was called unguarded, an AttributeError where it is absent (Windows
+    # before 3.13))
     repo = tmp_path / "r"
     (repo / "d").mkdir(parents=True)
     (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
@@ -2518,15 +2577,16 @@ def test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     monkeypatch.delattr(os, "fchmod", raising=False)
     target = tmp_path / "out.sh"
     g._copy_regular(repo, "d/run.sh", target)
-    # the mode first: a copy with mode 0 cannot be read by an ordinary user, and a read before the mode would end in a crash
-    # (PermissionError) instead of this assertion
+    # the mode first: a copy with mode 0 cannot be read by an ordinary user, and a read before the
+    # mode would end in a crash (PermissionError) instead of this assertion
     assert stat.S_IMODE(target.stat().st_mode) == 0o751, "the mode was not copied without fchmod"
     assert target.read_text(encoding="utf-8") == "x\n"
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> None:
-    # what it shows (no test read the mode of a copy made through `fchmod`, so a wrong mode went unseen)
+    # what it shows (no test read the mode of a copy made through `fchmod`, so a wrong mode went
+    # unseen)
     repo = tmp_path / "r"
     (repo / "d").mkdir(parents=True)
     (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
@@ -2611,8 +2671,9 @@ def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_pat
 def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     tmp_path: Path,
 ) -> None:
-    # Wording only: the system gives the same error (ELOOP) for a loop and for a chain that is too long, so the rule text names
-    # both causes; this test does not tell the two apart. It fails on dd827d79 because the text there named only a loop.
+    # Wording only: the system gives the same error (ELOOP) for a loop and for a chain that is too
+    # long, so the rule text names both causes; this test does not tell the two apart. It fails on
+    # dd827d79 because the text there named only a loop.
     repo = _tracked_repo(tmp_path / "r", {"docs/end.txt": "x\n"})
     previous = "end.txt"
     for i in range(45):
@@ -2631,7 +2692,10 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
 def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
     None
 ):
-
+    # Under a broken helper some of these cases would really start a program (`shell=True` runs `sh
+    # -c <python> -c pass`, which is a bare interpreter reading its input). So no case may wait: the
+    # input is empty and ends at once, and a time limit stops anything else.
+    started = time.monotonic()
     for kwargs in (
         {"shell": True},
         {"shell": 1},
@@ -2640,7 +2704,16 @@ def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keywor
         {"stdin": None},
     ):
         try:
-            fixed_run.run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
+            fixed_run.run_fixed(
+                [sys.executable, "-c", "pass"],
+                check=True,
+                timeout=20,
+                input=None if "stdin" in kwargs else "",
+                text=True,
+                **kwargs,
+            )
+        except subprocess.TimeoutExpired:
+            raise AssertionError(f"a program was started with {kwargs} and ran on") from None
         except ValueError as refusal:
             assert next(iter(kwargs)) in str(refusal), (
                 f"the refused keyword is not named: {refusal}"
@@ -2649,6 +2722,9 @@ def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keywor
         raise AssertionError(f"a program was started with {kwargs}")
     assert not ({"shell", "executable", "preexec_fn", "stdin"} & fixed_run.ALLOWED_KEYWORDS), (
         "a risky keyword is allowed"
+    )
+    assert time.monotonic() - started < 60, (
+        "the refusals took more than a minute: a case ran a program"
     )
 
 
@@ -2728,3 +2804,369 @@ def test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper(
         for call in calls:
             risky = {k.arg for k in call.keywords} & {"shell", "executable", "preexec_fn"}
             assert not risky, f"{name} line {call.lineno}: passes {sorted(risky)}"
+
+
+# -- batch 15: the limits of the line masker, the empty file list, the one program starter
+# ---------------------------
+# fail-before: the rows below are real runs on dd827d79 and c7eb5c79 in the table "fail-before runs" of batch 15 (see the
+# CHANGELOG); a test that needs the guard code of this branch cannot say more than that there.
+def test_a_dashed_scheme_token_of_16_characters_is_hidden() -> None:
+    assert g._hide_secrets("x Basic abc-defghijklmno y") == "x Basic <hidden> y", (
+        "a 16 character Basic token with a dash stayed visible"
+    )
+
+
+def test_pin_a_dashed_scheme_token_of_15_characters_stays_visible_as_in_the_core() -> None:
+    line = "x Basic abc-defghijklmn y"
+    assert g._hide_secrets(line) == line, "a 15 character Basic token with a dash was hidden"
+
+
+def test_pin_a_dashed_scheme_token_of_13_characters_stays_visible_as_in_the_core() -> None:
+    line = "x Basic abc-defghijkl y"
+    assert g._hide_secrets(line) == line, "a 13 character Basic token with a dash was hidden"
+
+
+def test_the_end_of_a_value_with_a_quote_that_never_closes_is_the_end_of_the_line() -> None:
+    for text in ('a="abc', 'a="ab\\'):
+        assert g._value_end(text, 2) == len(text), (
+            f"the end of an open quote is not the end of {text!r}"
+        )
+
+
+def test_the_end_of_a_value_with_a_quote_that_closes_is_after_the_closing_quote() -> None:
+    assert g._value_end('a="x" y', 2) == 5, "the closing quote is not part of the quoted value"
+
+
+def test_a_token_that_an_earlier_pass_already_hid_is_not_hidden_twice_into_the_scheme_word() -> (
+    None
+):
+    shown = g._hide_secrets("authorization=Bearer abcdefghijklmn x")
+    assert shown == "authorization=<hidden> <hidden> x", (
+        f"an already hidden token was handled: {shown!r}"
+    )
+
+
+def test_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it() -> (
+    None
+):
+    shown = g._hide_secrets("authorization=Bearer   \nnext")
+    assert shown == "authorization=<hidden>   \nnext", (
+        f"white space after a bare scheme word: {shown!r}"
+    )
+
+
+def test_an_authorization_digest_with_several_parts_is_hidden_to_the_end_of_its_line() -> None:
+    shown = g._hide_secrets('authorization=Digest username="a", response="b" tail')
+    assert shown == "authorization=<hidden>", f"a part of a Digest value stayed visible: {shown!r}"
+
+
+def test_an_authorization_digest_does_not_hide_the_next_line() -> None:
+    shown = g._hide_secrets('authorization=Digest username="a", response="b"\nnext line=1')
+    assert shown == "authorization=<hidden>\nnext line=1", (
+        f"the Digest hid the next line: {shown!r}"
+    )
+
+
+def _stop_text(call: Any) -> str | None:
+    """The text of the stop (`SystemExit`) that `call()` ends in, or None when it does not stop. The
+    caller asserts after this returns, so a failed assert is not chained to the stop it was reading.
+    """
+    try:
+        call()
+    except SystemExit as stop:
+        return str(stop)
+    return None
+
+
+def test_an_empty_repository_is_refused_with_the_message_for_an_empty_list(tmp_path: Path) -> None:
+    repo = _repo(tmp_path, {})
+    said = _stop_text(lambda: g.tracked_paths(repo))
+    assert said is not None, "an empty file list of an empty repository was not refused"
+    assert "git listed no files" in said, f"the empty list message is not given: {said}"
+
+
+def test_a_repository_with_only_files_not_added_is_refused_by_the_tracked_list_and_says_so(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path, {"src/pkg/a.py": "A = 1\n"})
+    assert g.tracked_paths(repo) == ["src/pkg/a.py"], (
+        "the new file is not in the list with new files"
+    )
+    said = _stop_text(lambda: g.tracked_paths(repo, include_new=False))
+    assert said is not None, "an empty tracked list was not refused"
+    assert "git add the files" in said, f"the message does not say what to do: {said}"
+
+
+def test_the_copy_run_of_a_repository_with_only_files_not_added_says_which_and_stops(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo = _repo(tmp_path, {"src/pkg/a.py": "A = 1\n"})
+    said = _stop_text(lambda: g.run_without_folder(repo, _cfg(), ["tests"]))
+    printed = capsys.readouterr().out
+    assert said is not None, "the copy run on a repository with no tracked file was not refused"
+    assert "1 file(s) are not added to git" in printed, f"the new file is not named: {printed!r}"
+    assert "git tracks no files" in said, f"the stop does not say why: {said}"
+
+
+# -- the one program starter: what each check of it refuses or accepts
+# ---------------------------------------------------
+def _outcome(argv: Any, **kwargs: Any) -> str:
+    """What `run_fixed` does with `argv`: the name of what it raised, or "ran". No case waits: empty
+    input and a limit."""
+    if "stdin" not in kwargs:
+        kwargs.setdefault("input", "")
+    try:
+        fixed_run.run_fixed(argv, check=True, timeout=20, text=True, **kwargs)
+    except (
+        TypeError,
+        ValueError,
+        LookupError,
+        SystemExit,
+        OSError,
+        subprocess.SubprocessError,
+    ) as error:
+        return type(error).__name__
+    return "ran"
+
+
+def test_pin_a_string_as_the_command_is_refused() -> None:
+    got = _outcome("echo hello")
+    assert got == "TypeError", f"a string as the command was not refused: {got}"
+
+
+def test_pin_an_empty_command_is_refused() -> None:
+    got = [_outcome([]), _outcome(())]
+    assert got == ["TypeError", "TypeError"], f"an empty command was not refused: {got}"
+
+
+def test_pin_a_text_with_a_nul_character_is_refused() -> None:
+    got = _outcome([sys.executable, "-c", "pass\0x"])
+    assert got == "TypeError", f"a NUL character in an argument was not refused: {got}"
+
+
+def test_pin_an_element_that_is_not_text_or_a_path_is_refused() -> None:
+    got = {repr(e): _outcome([sys.executable, e]) for e in (7, None, b"x")}
+    assert set(got.values()) == {"TypeError"}, f"an element that is not text was not refused: {got}"
+
+
+def test_pin_a_tuple_and_a_path_element_are_accepted() -> None:
+    assert _outcome((sys.executable, "-c", "pass")) == "ran", "a tuple was refused"
+    assert _outcome([Path(sys.executable), "-c", "pass"]) == "ran", "a path element was refused"
+
+
+def test_pin_a_dict_a_set_a_generator_and_a_path_as_the_whole_command_are_refused() -> None:
+    cases = {
+        "dict": {sys.executable: 1},
+        "set": {sys.executable},
+        "generator": (a for a in [sys.executable]),
+        "path": Path(sys.executable),
+    }
+    got = {name: _outcome(value) for name, value in cases.items()}
+    assert set(got.values()) == {"TypeError"}, f"a whole command that is not a list was run: {got}"
+
+
+def test_pin_a_program_that_is_found_on_the_path_runs_and_one_that_is_not_stops_the_caller() -> (
+    None
+):
+    assert _outcome(["git", "--version"]) == "ran", "a program on the PATH was not started"
+    missing = _outcome(["no-such-program-" + "x" * 8])
+    assert missing == "SystemExit", (
+        f"a program that is not found did not stop the caller: {missing}"
+    )
+
+
+def test_pin_a_missing_program_is_not_handed_on_as_no_program() -> None:
+    got = _outcome(["no-such-program-" + "x" * 8])
+    assert got != "TypeError", "a missing program was handed on as no program"
+
+
+def test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused(
+    tmp_path: Path,
+) -> None:
+    ok = {
+        "cwd": str(tmp_path),
+        "env": dict(os.environ),
+        "capture_output": True,
+        "encoding": "utf-8",
+    }
+    for name, value in ok.items():
+        got = _outcome([sys.executable, "-c", "pass"], **{name: value})
+        assert got == "ran", f"the allowed keyword {name} was refused: {got}"
+    risky = {
+        "shell": True,
+        "executable": "/bin/sh",
+        "preexec_fn": print,
+        "stdin": None,
+        "stdout": None,
+        "close_fds": False,
+        "start_new_session": True,
+    }
+    for name, value in risky.items():
+        got = _outcome([sys.executable, "-c", "pass"], **{name: value})
+        assert got == "ValueError", f"{name} was not refused: {got}"
+
+
+# -- the marker count and the sweep of every program start
+# --------------------------------------------------------------
+def _comment_markers(path: Path) -> list[tuple[int, str]]:
+    import io
+    import tokenize
+
+    pattern = re.compile(r"noqa|nosec|type:\s*ignore|fmt:\s*(?:skip|off)|pragma:\s*no\s*cover")
+    out = []
+    for tok in tokenize.generate_tokens(io.StringIO(path.read_text(encoding="utf-8")).readline):
+        if tok.type == tokenize.COMMENT and pattern.search(tok.string):
+            out.append((tok.start[0], tok.string))
+    return out
+
+
+def test_the_guard_and_the_helper_files_hold_exactly_one_marker_and_it_is_on_the_line_that_starts_the_program() -> (
+    None
+):
+    files = (
+        "tools/demo_only_guard.py",
+        "tools/fixed_run.py",
+        "tools/scan_repo.py",
+        "tests/fixed_run.py",
+    )
+    found = {f: _comment_markers(ROOT / f) for f in files}
+    total = [(f, m) for f, ms in found.items() for m in ms]
+    assert len(total) == 1, f"the markers are not exactly one: {total}"
+    ((name, (lineno, text)),) = total
+    assert name == "tools/fixed_run.py" and "S603" in text, (
+        f"the marker is not the S603 one: {total}"
+    )
+    line = (ROOT / name).read_text(encoding="utf-8").splitlines()[lineno - 1]
+    assert "subprocess.run(" in line, (
+        f"the marker is not on the line that starts the program: {line!r}"
+    )
+
+
+_STARTING_CALLS = {
+    "run",
+    "Popen",
+    "call",
+    "check_call",
+    "check_output",
+    "getoutput",
+    "getstatusoutput",
+}
+
+
+def _program_starts(source: str) -> list[tuple[int, str]]:
+    """Where a source starts a program by itself: an attribute call on the `subprocess` or `os` module
+    under any alias, and any `from subprocess import ...` or `from os import
+    system/popen/exec*/spawn*`."""
+    import ast
+
+    tree = ast.parse(source)
+    modules: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name in ("subprocess", "os"):
+                    modules[a.asname or a.name] = a.name
+    os_names = ("system", "popen", "fork", "forkpty")
+    os_prefixes = ("exec", "spawn", "posix_spawn")
+    out: list[tuple[int, str]] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module in ("subprocess", "os"):
+            for a in node.names:
+                if (
+                    node.module == "subprocess"
+                    or a.name in os_names
+                    or a.name.startswith(os_prefixes)
+                ):
+                    out.append((node.lineno, f"from {node.module} import {a.name}"))
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+        ):
+            owner, attr = modules.get(node.func.value.id), node.func.attr
+            if owner == "subprocess" and attr in _STARTING_CALLS:
+                out.append((node.lineno, f"subprocess.{attr}"))
+            if owner == "os" and (attr in os_names or attr.startswith(os_prefixes)):
+                out.append((node.lineno, f"os.{attr}"))
+    return sorted(out)
+
+
+# The ONE allowed place is the helper. The files below start programs by themselves TODAY. They are
+# listed with their number of starts so that no new one slips in and so that a fixed file must leave
+# the list; each is a follow-up item (a later batch moves it to the helper), not an allowed way.
+THE_HELPER = {"tools/fixed_run.py": 1}
+FOLLOW_UP_DIRECT_STARTS = {
+    "tests/demo_askdata/conftest.py": 1,
+    "tests/demo_askdata/test_meter.py": 1,
+    "tests/test_ci_gitleaks_scope.py": 4,
+    "tests/test_k5_classes.py": 1,
+    "tests/test_mutation_runner.py": 6,
+    "tests/test_mutation_runner_helpers.py": 2,
+    "tests/test_mutation_runner_meta.py": 1,
+    "tests/test_scan_repo.py": 3,
+    "tools/mutation_runner.py": 2,
+}
+
+
+def test_every_start_of_a_program_in_tools_tests_and_src_is_the_helper_or_a_listed_follow_up() -> (
+    None
+):
+    found: dict[str, int] = {}
+    for top in ("tools", "tests", "src"):
+        for path in sorted((ROOT / top).rglob("*.py")):
+            starts = _program_starts(path.read_text(encoding="utf-8"))
+            if starts:
+                found[path.relative_to(ROOT).as_posix()] = len(starts)
+    assert found == {**THE_HELPER, **FOLLOW_UP_DIRECT_STARTS}, (
+        "the files that start a program by themselves are not the listed ones: "
+        f"{sorted(set(found.items()) ^ set({**THE_HELPER, **FOLLOW_UP_DIRECT_STARTS}.items()))}"
+    )
+
+
+def test_the_sweep_finds_an_alias_a_from_import_and_the_os_calls() -> None:
+    source = (
+        "import subprocess as sp\nimport os as o\nfrom subprocess import run\nfrom os import system\n"
+        "sp.run(['x'])\nsp.Popen(['x'])\no.system('x')\no.execvp('x', [])\no.spawnl(0, 'x')\no.popen('x')\nsp.DEVNULL\n"
+    )
+    names = [what for _, what in _program_starts(source)]
+    assert names == [
+        "from subprocess import run",
+        "from os import system",
+        "subprocess.run",
+        "subprocess.Popen",
+        "os.system",
+        "os.execvp",
+        "os.spawnl",
+        "os.popen",
+    ], f"the sweep missed or added a start: {names}"
+
+
+def _loader_body(name: str) -> str:
+    import ast
+
+    tree = ast.parse((ROOT / "tools" / name).read_text(encoding="utf-8"))
+    (fn,) = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_load_fixed_run"]
+    return ast.dump(
+        ast.Module(body=fn.body[1:], type_ignores=[])
+    )  # the body, without its docstring
+
+
+# The two files cannot share this function: each must load the program starter before it can import anything, and the
+# scan rule forbids a product file that names the demo-only folder (the guard does), so the scan cannot import the guard.
+def test_the_two_loaders_of_the_program_starter_are_the_same() -> None:
+    guard, scan = _loader_body("demo_only_guard.py"), _loader_body("scan_repo.py")
+    assert guard == scan, "the two copies of _load_fixed_run have drifted apart"
+
+
+def test_a_changed_loader_is_not_the_same_as_the_other_one(tmp_path: Path) -> None:
+    src = (ROOT / "tools" / "scan_repo.py").read_text(encoding="utf-8")
+    changed = src.replace("spec.loader is None", "spec.loader is not None", 1)
+    assert changed != src, "the planted change did not apply"
+    (tmp_path / "scan_repo.py").write_text(changed, encoding="utf-8")
+    import ast
+
+    tree = ast.parse(changed)
+    (fn,) = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "_load_fixed_run"]
+    assert ast.dump(ast.Module(body=fn.body[1:], type_ignores=[])) != _loader_body(
+        "demo_only_guard.py"
+    ), "a changed copy still compares equal"

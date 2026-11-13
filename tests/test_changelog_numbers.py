@@ -1,6 +1,7 @@
-"""The numbers the CHANGELOG states about the mode banner and the demo-only guard are checked against the code here, one
-test per number-bearing sentence. Each number is read from the code (or computed by the code's own rule), and each sentence
-is found by a pattern with word boundaries, so "five passes" is not matched inside "fifteen passes"."""
+"""The numbers the CHANGELOG states about the mode banner and the demo-only guard are checked against
+the code here, one test per number-bearing sentence. Each number is read from the code (or computed
+by the code's own rule), and each sentence is found by a pattern with word boundaries, so "five
+passes" is not matched inside "fifteen passes"."""
 
 from __future__ import annotations
 
@@ -80,8 +81,10 @@ def test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its
     def top(magic: int) -> int:
         return min(8191, max(3999, magic + 1000))
 
-    # the magic numbers of the final releases (3.12: 3531, 3.14: 3627) are typed here from the interpreters' own tables, and the
-    # figures are worked out by the same rule as `_PYC_MAGIC_MAX`: they are "from the formula", not measured on 3.14 (CI runs
+    # the magic numbers of the final releases (3.12: 3531, 3.14: 3627) are typed here from the
+    # interpreters' own tables, and the
+    # figures are worked out by the same rule as `_PYC_MAGIC_MAX`: they are "from the formula", not
+    # measured on 3.14 (CI runs
     # 3.12 and 3.13; only the interpreter running this test is checked against the code, below)
     assert (top(3531), top(3627)) == (4531, 4627)
     assert re.search(
@@ -209,3 +212,85 @@ def test_the_changelog_says_what_the_masker_is_compared_with() -> None:
     assert "`tools/demo_only_guard.py` is new in this branch" in text, (
         "the CHANGELOG does not say the guard is new"
     )
+
+
+# -- batch 15: the one paragraph that states the masker, claim by claim
+# --------------------------------------------------- (input, what the masker gives, whether the
+# core redactor changes the input at all)
+MASKER_CLAIMS = [
+    ("Bearer a1b2c3", "Bearer <hidden>", False),
+    ("Basic abc1", "Basic <hidden>", False),
+    ("Basic abc-defghijklmno", "Basic <hidden>", False),
+    ("Basic abc-defghijklmn", "Basic abc-defghijklmn", False),
+    ("authorization=Bearer abcdefgh", "authorization=<hidden>", True),
+    ('authorization=Bearer "abc def"', "authorization=<hidden>", False),
+    ('authorization=Digest username="a", response="b"', "authorization=<hidden>", True),
+    ("bypass=true x", "bypass=<hidden> x", False),
+    ("Authorization: Foo bar", "Authorization: <hidden>", False),
+    ("bypass_key=x", "bypass_key=<hidden>", False),
+    ("bypass=1", "bypass=1", True),
+    ("bypass=0", "bypass=0", True),
+    ("bypass=true", "bypass=true", False),
+    ("Bearer abcdefghijk", "Bearer abcdefghijk", False),
+    ("Basic abcdefg", "Basic abcdefg", False),
+    ("password: hunter2", "password: hunter2", True),
+    ('"token": "x"', '"token": "x"', True),
+    ("--password x", "--password x", False),
+    ('"authorization": "Bearer x"', '"authorization": "Bearer x"', False),
+    (
+        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2ln",
+        "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.c2ln",
+        True,
+    ),
+    ("Zm9vYmFyYmF6cXV4cXV1eA", "Zm9vYmFyYmF6cXV4cXV1eA", False),
+    ("Cookie: sid=abc123def456", "Cookie: sid=abc123def456", True),
+]
+
+
+def _masker_paragraph() -> str:
+    marker = "the line masker (batch 15).**"
+    (para,) = [ln for ln in CHANGELOG.split("\n") if marker in ln]
+    return para
+
+
+# fail-before: it cannot run on the old heads (the paragraph and the claim table are new); it fails when a claim and the code differ.
+def test_every_example_of_the_masker_paragraph_gives_the_stated_result_in_the_masker_and_the_core() -> (
+    None
+):
+    from hadavin_sdk.guard import redact
+
+    wrong = []
+    for text, masked, core_changes in MASKER_CLAIMS:
+        got = g._hide_secrets(text)
+        core = redact(text).text != text
+        if got != masked or core != core_changes:
+            wrong.append((text, got, core))
+    assert not wrong, (
+        f"examples whose result is not the stated one (input, masker, core changes it): {wrong}"
+    )
+
+
+def test_every_example_of_the_claim_table_is_written_in_the_masker_paragraph() -> None:
+    para = _masker_paragraph()
+    missing = [text for text, _, _ in MASKER_CLAIMS if f"`{text}`" not in para]
+    assert not missing, f"examples of the table that the paragraph does not show: {missing}"
+
+
+def test_the_masker_text_does_not_say_it_is_the_core_or_that_it_only_hides_more() -> None:
+    banned = (
+        "follows the core",
+        "all on the hiding side",
+        "never shows less",
+        "exactly as in the core",
+    )
+    source = (ROOT / "tools" / "demo_only_guard.py").read_text(encoding="utf-8")
+    start = source.index("# The line masker `_hide_secrets`")
+    comments = source[start : source.index("_BEARER = re.compile(")]
+    for where, text in (("CHANGELOG.md", CHANGELOG), ("the masker comment of the guard", comments)):
+        found = [b for b in banned if b in text]
+        assert not found, f"{where} says {found}"
+    for where, text in (
+        ("the masker paragraph", _masker_paragraph()),
+        ("the masker comment", comments),
+    ):
+        assert not re.search(r"\bexactly\b", text), f"{where} says 'exactly'"

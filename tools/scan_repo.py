@@ -16,11 +16,11 @@ from pathlib import Path
 
 
 def _load_fixed_run():
-    """The program starter next to this file, read by its file path: never an installed or foreign `tools`
-    package, and it works when the file is run alone with `-I` (the script folder is not on the path then).
-    The same body is in the folder guard next to this file: each must load the starter before it
-    can import anything, so the two copies stay and `test_the_two_loaders_of_the_program_starter_are_the_same`
-    compares them."""
+    """The program starter next to this file, read by its file path: never an installed or foreign
+    `tools` package, and it works when the file is run alone with `-I` (the script folder is not on
+    the path then). The same body is in the folder guard next to this file: each must load the
+    starter before it can import anything, so the two copies stay and
+    `test_the_two_loaders_of_the_program_starter_are_the_same` compares them."""
     from importlib import util
 
     spec = util.spec_from_file_location(
@@ -89,7 +89,8 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
 
 
 def tracked_paths(repo: Path) -> set[str]:
-    """The files git tracks (`git ls-files -z`: exact names, no quoting of unusual ones; ignore files do not matter)."""
+    """The files git tracks (`git ls-files -z`: exact names, no quoting of unusual ones; ignore
+    files do not matter)."""
     cmd = ["git", "-C", str(repo), "ls-files", "-z"]
     listing = run_fixed(cmd, capture_output=True, check=True).stdout
     return {rel for rel in listing.decode("utf-8").split("\0") if rel}

@@ -1,7 +1,7 @@
-"""The table of banner and guard mutants (`tests/banner_mutants.py`) is checked here. The runner replaces EVERY occurrence
-of a row's search text, so a row whose text occurs twice changes two places at once and can be killed for a reason that is
-not its own; a text that is not found is an error at run time. `non_unique_rows` finds both, and a planted duplicate proves
-that it does."""
+"""The table of banner and guard mutants (`tests/banner_mutants.py`) is checked here. The runner
+replaces EVERY occurrence of a row's search text, so a row whose text occurs twice changes two
+places at once and can be killed for a reason that is not its own; a text that is not found is an
+error at run time. `non_unique_rows` finds both, and a planted duplicate proves that it does."""
 
 from __future__ import annotations
 
@@ -42,9 +42,10 @@ GENERIC_EXPECTATIONS = ("AssertionError", "did not match", "boom", "assert", "Ex
 
 
 def weak_expectations(rows=None) -> list[tuple[str, str]]:
-    """Rows whose `expect` would also fit an unrelated failure: a bare exception word, pytest's own "did not match"
-    line, a bare tuple repr, or a short bare comparison of two values. Every row names a fragment of its own message
-    instead (the message of the assert, or the name of the rule it expects)."""
+    """Rows whose `expect` would also fit an unrelated failure: a bare exception word, pytest's own
+    "did not match" line, a bare tuple repr, or a short bare comparison of two values. Every row
+    names a fragment of its own message instead (the message of the assert, or the name of the rule
+    it expects)."""
     weak: list[tuple[str, str]] = []
     for m in bm.M if rows is None else rows:
         e = m.expect.strip()
@@ -107,10 +108,11 @@ EXCEPTION_ONLY = re.compile(r"[A-Za-z_.]*(Error|Exception|Exit|Warning)")
 
 
 def shape_problems(rows=None, same=None) -> list[tuple[str, str]]:
-    """Rows whose `expect` is a shape that cannot tell its own killer assert from another failure: a bare exception type,
-    pytest's own `DID NOT RAISE` line (it names no input), a fragment that starts with a quote or an operator (it is the
-    middle of a comparison, so it also fits any other line holding that value), and two rows that share one killer and one
-    expectation unless `same` (label group -> reason) lists the group with a reason."""
+    """Rows whose `expect` is a shape that cannot tell its own killer assert from another failure: a
+    bare exception type, pytest's own `DID NOT RAISE` line (it names no input), a fragment that
+    starts with a quote or an operator (it is the middle of a comparison, so it also fits any other
+    line holding that value), and two rows that share one killer and one expectation unless `same`
+    (label group -> reason) lists the group with a reason."""
     same = bm.SAME_ASSERT if same is None else same
     rows = bm.M if rows is None else rows
     problems: list[tuple[str, str]] = []
@@ -190,8 +192,9 @@ INTERPRETER_TEXT = re.compile(
 
 
 def interpreter_text_problems(rows=None, pinned=None) -> list[tuple[str, str]]:
-    """Rows whose `expect` is the interpreter's or a library's own error text, unless the row is on the pinned crash list:
-    only a row that crashes on purpose may be expected to show that text; any other row must show a message of its test."""
+    """Rows whose `expect` is the interpreter's or a library's own error text, unless the row is on the
+    pinned crash list: only a row that crashes on purpose may be expected to show that text; any
+    other row must show a message of its test."""
     pinned = bm.CRASH_ROWS if pinned is None else pinned
     problems = []
     for m in bm.M if rows is None else rows:
@@ -255,8 +258,9 @@ def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_report
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file() -> None:
-    """A renamed or removed killer left its row naming a test that is not there (R9A4 did, found by running it); the run
-    then reports an error for the row only when someone runs that row. Checked here for every row, with no run."""
+    """A renamed or removed killer left its row naming a test that is not there (R9A4 did, found by
+    running it); the run then reports an error for the row only when someone runs that row. Checked
+    here for every row, with no run."""
     root = Path(bm.ROOT)
     missing = []
     for m in bm.M:
@@ -267,9 +271,10 @@ def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file()
 
 
 def _rows_in_the_text_of_the_table() -> list[str]:
-    """The row calls of the list `M`, read from the SOURCE TEXT of the table (not from the objects it builds): every call of
-    one of the row helpers at the top level of the list. A row that is built any other way would not be counted, and the
-    count then differs from `len(M)`: the next test compares the two."""
+    """The row calls of the list `M`, read from the SOURCE TEXT of the table (not from the objects it
+    builds): every call of one of the row helpers at the top level of the list. A row that is built
+    any other way would not be counted, and the count then differs from `len(M)`: the next test
+    compares the two."""
     import ast
 
     tree = ast.parse(Path(bm.__file__).read_text(encoding="utf-8"))
@@ -303,15 +308,17 @@ def test_the_changelog_states_the_row_count_of_the_table() -> None:
 
 
 def _module_functions(tree) -> dict:
-    """The functions of the module level of a parsed test file, by name (a killer and its helpers are found only here)."""
+    """The functions of the module level of a parsed test file, by name (a killer and its helpers are
+    found only here)."""
     import ast
 
     return {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
 
 
 def _shadowed_names(tree, names) -> list[str]:
-    """Of `names`, those that are defined more than once at the module level, or again as a nested function anywhere in
-    the file: the name then does not say which function runs, and the check would read the wrong one."""
+    """Of `names`, those that are defined more than once at the module level, or again as a nested
+    function anywhere in the file: the name then does not say which function runs, and the check
+    would read the wrong one."""
     import ast
 
     top = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
@@ -328,10 +335,11 @@ def _shadowed_names(tree, names) -> list[str]:
 
 
 def _text_pieces(tree, name: str) -> list[tuple[str, object]]:
-    """The strings a killer can print: ("plain", text) for a string constant and ("fstring", parts) for an f-string, where
-    `parts` lists its literal texts and None for each formatted value. They are read from the function `name` of a parsed
-    test file and from the module-level functions of that file it calls by name DIRECTLY (its helpers; the helpers of the
-    helpers are not read) and from the module-level tables those read by name. Nothing else counts: not the rest of the file."""
+    """The strings a killer can print: ("plain", text) for a string constant and ("fstring", parts) for
+    an f-string, where `parts` lists its literal texts and None for each formatted value. They are
+    read from the function `name` of a parsed test file and from the module-level functions of that
+    file it calls by name DIRECTLY (its helpers; the helpers of the helpers are not read) and from
+    the module-level tables those read by name. Nothing else counts: not the rest of the file."""
     import ast
 
     funcs = _module_functions(tree)
@@ -390,9 +398,10 @@ MIN_FRAGMENT = 8  # the least text of the killer's own that an expectation must 
 
 
 def _is_part_of_fstring_output(parts: list, fragment: str) -> bool:
-    """True when `fragment` can be a stretch of the text that the f-string prints: the literal parts it covers are matched
-    exactly and in order, a formatted value may print anything, and the literal text matched is at least MIN_FRAGMENT
-    characters. A literal that merely occurs inside the fragment, with other text around it, does not count."""
+    """True when `fragment` can be a stretch of the text that the f-string prints: the literal parts it
+    covers are matched exactly and in order, a formatted value may print anything, and the literal
+    text matched is at least MIN_FRAGMENT characters. A literal that merely occurs inside the
+    fragment, with other text around it, does not count."""
     from functools import cache
 
     @cache
@@ -427,11 +436,13 @@ def _is_part_of_fstring_output(parts: list, fragment: str) -> bool:
     return False
 
 
-# Rows whose `expect` holds text that is made at run time and is in no string of the killer or of its direct helpers: a value
-# of a loop or of a data table built by a helper of a helper, the text of the page script's probe, or the text of the checked
-# code itself. The static check cannot see these; the mutation run can (the expectation must appear in the first failing line
-# of the killer, or the row is not good). Each entry says where its text comes from; `test_every_computed_expectation_has_
-# a_reason_and_is_not_seen_by_the_static_check` keeps the list honest (a row that the static check accepts must leave it).
+# Rows whose `expect` holds text that is made at run time and is in no string of the killer or of
+# its direct helpers: a value of a loop or of a data table built by a helper of a helper, the text
+# of the page script's probe, or the text of the checked code itself. The static check cannot see
+# these; the mutation run can (the expectation must appear in the first failing line of the killer,
+# or the row is not good). Each entry says where its text comes from;
+# `test_every_computed_expectation_has_ a_reason_and_is_not_seen_by_the_static_check` keeps the list
+# honest (a row that the static check accepts must leave it).
 COMPUTED_EXPECT = {
     "B1": "the case is the loop variable `mode` of the killer (f'stage {mode!r}' printed by the shared refused helper)",
     "B39": "the odd url is a value of the killer's own data list, printed in the failure",
@@ -461,8 +472,8 @@ COMPUTED_EXPECT = {
 
 
 def _printable(pieces: list, fragment: str) -> bool:
-    """Whether the killer can print `fragment`: inside one plain string (at least MIN_FRAGMENT characters) or as a stretch
-    of what one of its f-strings prints."""
+    """Whether the killer can print `fragment`: inside one plain string (at least MIN_FRAGMENT
+    characters) or as a stretch of what one of its f-strings prints."""
     for kind, payload in pieces:
         if kind == "plain":
             if len(fragment) >= MIN_FRAGMENT and fragment in payload.strip():
@@ -473,14 +484,16 @@ def _printable(pieces: list, fragment: str) -> bool:
 
 
 def expectation_nowhere_in_killer(rows=None, root=None, strict=False) -> list[tuple[str, str]]:
-    """Rows whose `expect` cannot come from the killer's own assertion message. `expect` is a fragment of that message AS
-    PRINTED. It is accepted when it lies inside one string of the killer or of its direct helpers (at least MIN_FRAGMENT
-    characters), or, where the message formats a value (an f-string), when it is a stretch of what that f-string prints (its
-    literal parts exact and in order, any value in between, at least MIN_FRAGMENT characters of the killer's own text). Not
-    accepted: a fragment found only elsewhere in the test file, an f-string of another function, a literal that only occurs
-    somewhere inside the fragment, a start-of-text match of a few characters, or a killer whose name is defined twice (the
-    check would not know which one runs). Crash rows (the pinned set) expect the text of the interpreter or of the changed
-    code and are left out."""
+    """Rows whose `expect` cannot come from the killer's own assertion message. `expect` is a fragment
+    of that message AS PRINTED. It is accepted when it lies inside one string of the killer or of
+    its direct helpers (at least MIN_FRAGMENT characters), or, where the message formats a value (an
+    f-string), when it is a stretch of what that f-string prints (its literal parts exact and in
+    order, any value in between, at least MIN_FRAGMENT characters of the killer's own text). Not
+    accepted: a fragment found only elsewhere in the test file, an f-string of another function, a
+    literal that only occurs somewhere inside the fragment, a start-of-text match of a few
+    characters, or a killer whose name is defined twice (the check would not know which one runs).
+    Crash rows (the pinned set) expect the text of the interpreter or of the changed code and are
+    left out."""
     import ast
 
     base = Path(bm.ROOT if root is None else root)
@@ -508,13 +521,186 @@ def expectation_nowhere_in_killer(rows=None, root=None, strict=False) -> list[tu
         pieces = _text_pieces(tree, m.only_test)
         if _printable(pieces, m.expect):
             continue
-        # the shared `refused` helper (tests/refusal.py) prints "<what> was not refused" or "<what>: refused, but with
-        # another text": `what` is the killer's own text (a string, or the start of an f-string with a value after it)
+        # the shared `refused` helper (tests/refusal.py) prints "<what> was not refused" or "<what>:
+        # refused, but with another text": `what` is the killer's own text (a string, or the start
+        # of an f-string with a value after it)
         what = re.split(r" was not refused|: refused, but with another text", m.expect)[0]
         if what != m.expect and _printable(pieces, what):
             continue
         nowhere.append((label, m.expect))
     return nowhere
+
+
+def _pieces_of_node(node) -> list[tuple[str, object]]:
+    """The strings one message expression can print (see `_text_pieces` for the shapes)."""
+    import ast
+
+    pieces: list[tuple[str, object]] = []
+    in_fstring = {
+        id(part)
+        for sub in ast.walk(node)
+        if isinstance(sub, ast.JoinedStr)
+        for part in sub.values
+        if isinstance(part, ast.Constant)
+    }
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.JoinedStr):
+            parts = [p.value if isinstance(p, ast.Constant) else None for p in sub.values]
+            pieces.append(("fstring", parts))
+        elif (
+            isinstance(sub, ast.Constant)
+            and isinstance(sub.value, str)
+            and id(sub) not in in_fstring
+        ):
+            pieces.append(("plain", sub.value))
+    return pieces
+
+
+# Rows whose killer has several asserts and whose `expect` belongs to a LATER one. A static read cannot tell whether
+# the first assert passes under the mutant, so each row was run (batch 15, `python tests/banner_mutants.py <labels>`):
+# the runner killed it with this expect, which means the first assert passed under the mutant and the later one
+# fired. The set must equal what the check finds, so a row that is fixed, or a new row, shows up here.
+LATER_ASSERT_RUN = frozenset(
+    {
+        "B6",
+        "B7b",
+        "B10g",
+        "B10e",
+        "J4",
+        "J11",
+        "G3b",
+        "G3c",
+        "G16",
+        "J20",
+        "G26",
+        "B32",
+        "B35",
+        "G31",
+        "B56",
+        "B57",
+        "B63",
+        "J24",
+        "J22",
+        "G41",
+        "G58",
+        "G59",
+        "G61",
+        "G62",
+        "G63",
+        "G64",
+        "G65",
+        "G66",
+        "G68",
+        "G70",
+        "G71",
+        "B85",
+        "G84",
+        "G85",
+        "N10",
+        "G93",
+        "G94",
+        "G96",
+        "G102",
+        "G103",
+        "R7A2",
+        "R7D3",
+        "R7E10",
+        "R9A3",
+        "R9A5",
+        "R9A7",
+        "R9D2",
+        "R9D14",
+        "R10A5",
+        "R10A6",
+        "R10A9",
+        "R10A12",
+        "R10B2",
+        "R10F4",
+        "R10F5",
+        "R10F6",
+        "R11A6",
+        "R11B2",
+        "R14A2",
+        "R13B2",
+        "R13B3",
+        "R13B4",
+        "R15E1",
+        "R15E3",
+        "R15H6",
+        "R15H7",
+        "R15Kshell",
+        "R15Kexecutable",
+        "R15Kpreexec_fn",
+        "R15Kstdin",
+    }
+)
+
+
+def expectation_in_first_assert(rows=None, root=None, listed=None) -> list[tuple[str, str]]:
+    """Rows of a killer that is a plain test function with several asserts whose `expect` can only come
+    from a LATER assert message: the first assert fires first under the mutant, so the runner would
+    see another message and exit 1. Rows the check cannot decide (a killer with one assert, a
+    message from a helper, a computed expectation, or an expectation no assert message of the
+    function prints) are not reported here; the other checks cover them."""
+    import ast
+
+    base = Path(bm.ROOT if root is None else root)
+    trees: dict[str, object] = {}
+    wrong = []
+    for m in bm.M if rows is None else rows:
+        label = m.name.split(" ", 1)[0]
+        if label in bm.CRASH_ROWS or label in COMPUTED_EXPECT:
+            continue
+        if m.test_file not in trees:
+            trees[m.test_file] = ast.parse((base / m.test_file).read_text(encoding="utf-8"))
+        fn = _module_functions(trees[m.test_file]).get(m.only_test)
+        if fn is None:
+            continue
+        asserts = sorted(
+            (n for n in ast.walk(fn) if isinstance(n, ast.Assert) and n.msg is not None),
+            key=lambda n: (n.lineno, n.col_offset),
+        )
+        if len(asserts) < 2:
+            continue
+        printable = [_printable(_pieces_of_node(n.msg), m.expect) for n in asserts]
+        if (
+            not printable[0]
+            and any(printable[1:])
+            and label not in (LATER_ASSERT_RUN if listed is None else listed)
+        ):
+            wrong.append((label, m.expect))
+    return wrong
+
+
+# fail-before: it cannot run on the old heads (the checker is new in this file); the old heads have no such check.
+def test_every_expectation_is_in_the_first_assert_of_a_plain_killer_or_the_row_was_run() -> None:
+    assert expectation_in_first_assert() == []
+
+
+def test_every_row_listed_as_run_for_a_later_assert_still_has_its_expectation_in_a_later_assert() -> (
+    None
+):
+    found = {label for label, _ in expectation_in_first_assert(rows=bm.M, listed=frozenset())}
+    assert found == LATER_ASSERT_RUN, sorted(found ^ LATER_ASSERT_RUN)
+
+
+def test_a_planted_killer_whose_expectation_belongs_to_its_second_assert_is_reported(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "t.py").write_text(
+        "def test_two():\n"
+        "    assert 1 == 2, 'the first message of the killer'\n"
+        "    assert 3 == 4, 'the second message of the killer'\n"
+        "def test_ok():\n"
+        "    assert 1 == 2, 'the first message of the killer'\n"
+        "    assert 3 == 4, 'the second message of the killer'\n",
+        encoding="utf-8",
+    )
+    bad = bm.mutant("Z1 a", "x.py", "a", "b", "t.py", "test_two", "second message of the")
+    good = bm.mutant("Z2 b", "x.py", "a", "b", "t.py", "test_ok", "first message of the")
+    assert expectation_in_first_assert(rows=[bad, good], root=tmp_path) == [
+        ("Z1", "second message of the")
+    ]
 
 
 # fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.

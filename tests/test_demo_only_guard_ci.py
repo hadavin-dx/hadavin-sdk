@@ -1,5 +1,5 @@
-"""CI runs the demo-only folder guard. Kept apart from tests/test_demo_only_guard.py because it reads .github, which the
-mutation runner's copy of the repository does not hold."""
+"""CI runs the demo-only folder guard. Kept apart from tests/test_demo_only_guard.py because it reads
+.github, which the mutation runner's copy of the repository does not hold."""
 
 from __future__ import annotations
 
@@ -14,7 +14,8 @@ def test_ci_runs_the_scan_in_the_main_check_job_with_read_only_permissions() -> 
     head = ci.split("\njobs:\n", 1)[0]
     assert re.search(r"^permissions:\n  contents: read\n", head, re.MULTILINE)  # no new rights
     check_job = ci.split("\n  check:\n", 1)[1].split("\n  tests-py312:\n", 1)[0]
-    # one step of the check job whose own `run:` line starts the guard (not a word in a comment or in another job)
+    # one step of the check job whose own `run:` line starts the guard (not a word in a comment or
+    # in another job)
     assert re.search(r"(?m)^\s+run: python tools/demo_only_guard\.py(\s|$)", check_job)
     assert not re.search(
         r"(?m)^\s+run: python tools/demo_only_guard\.py", ci.replace(check_job, "")
@@ -26,7 +27,8 @@ def _steps(ci: str) -> list[str]:
 
 
 def _step_block(job: str, run_line: str) -> str:
-    """The text of the one step whose `run:` line is `run_line` (from its `- name:` line to the next step)."""
+    """The text of the one step whose `run:` line is `run_line` (from its `- name:` line to the next
+    step)."""
     blocks = re.split(r"(?m)^      - name: ", job)
     found = [b for b in blocks if f"run: {run_line}" in b]
     assert len(found) == 1, f"expected exactly one step running {run_line!r}, found {len(found)}"
@@ -43,7 +45,8 @@ def test_ci_runs_the_copy_run_the_banner_mutants_and_checks_node_is_there() -> N
     assert copy_run in runs  # the copy run takes the same test selection as the main tests step
     assert "python tests/banner_mutants.py" in runs
     assert "node --version" in runs
-    # the order of the node check and the node env of both steps are pinned on the parsed workflow below
+    # the order of the node check and the node env of both steps are pinned on the parsed workflow
+    # below
 
 
 def test_ci_requires_node_in_the_python_312_test_job_too() -> None:

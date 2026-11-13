@@ -1,8 +1,10 @@
-"""The mutants of the mode banner and the demo-only folder guard, run by the mutation runner (``tools/mutation_runner.py``).
+"""The mutants of the mode banner and the demo-only folder guard, run by the mutation runner
+(``tools/mutation_runner.py``).
 
-Each mutant reverts ONE guard in a temp copy; the test in ``killer`` must fail first, and its first failing line must hold
-``expect`` (a fragment of the assertion MESSAGE). A separate list (not in ``tests/mutation_runner_mutants.py`` and not in
-``tests/stage_mutants.py``: their meta-tests pin those lists by count). Not collected by pytest. Run from the repo root:
+Each mutant reverts ONE guard in a temp copy; the test in ``killer`` must fail first, and its first
+failing line must hold ``expect`` (a fragment of the assertion MESSAGE). A separate list (not in
+``tests/mutation_runner_mutants.py`` and not in ``tests/stage_mutants.py``: their meta-tests pin
+those lists by count). Not collected by pytest. Run from the repo root:
 
     python tests/banner_mutants.py            # all mutants; exit 1 if any is not good
     python tests/banner_mutants.py G3         # only mutants whose name contains the text
@@ -61,7 +63,8 @@ def gt(name, old, new, killer, expect):
 
 
 M = [
-    # -- Python: the banner words and choice (src/hadavin_sdk/mode_banner.py) ----------------------------------------
+    # -- Python: the banner words and choice (src/hadavin_sdk/mode_banner.py)
+    # ----------------------------------------
     mb(
         "B1 an unknown stage is accepted (the code keeps running)",
         "    if mode not in STAGES:",
@@ -275,7 +278,8 @@ M = [
         "test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry",
         "the old public name 'banner_for' is still in the module",
     ),
-    # -- the page script (templates/mode-banner/mode_banner.js) -------------------------------------------------------
+    # -- the page script (templates/mode-banner/mode_banner.js)
+    # -------------------------------------------------------
     js(
         "J1 a banner with an unknown tone is painted",
         "if (TONES.indexOf(tone) < 0) return NOT_CONFIRMED;",
@@ -395,7 +399,8 @@ M = [
         "test_the_page_lists_are_the_python_lists",
         "the_page_lists_are_the_python_lists: check 1",
     ),
-    # -- the demo-only folder guard (tools/demo_only_guard.py and its settings) -------------------------------------
+    # -- the demo-only folder guard (tools/demo_only_guard.py and its settings)
+    # -------------------------------------
     gd(
         "G1 a product file that names the folder is not a hit",
         "        if name.search(shown):\n",
@@ -627,7 +632,8 @@ M = [
         "test_every_symlink_under_a_product_root_is_a_hit",
         "src/pkg/to_out.py: symlink-in-product-root']",
     ),
-    # -- round 3: endpoints beyond the backends, the claim post-condition, the page and guard minors ------------------
+    # -- round 3: endpoints beyond the backends, the claim post-condition, the page and guard minors
+    # ------------------
     mb(
         "B20 a system that is not this machine is not counted as real",
         "        found.append(EXTERNAL_SYSTEMS)",
@@ -761,7 +767,8 @@ M = [
         "test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash",
         "demo_only",
     ),
-    # -- round 4: tool hosts, the page fallback, guard rules, URL parity, name parity --------------------------------------
+    # -- round 4: tool hosts, the page fallback, guard rules, URL parity, name parity
+    # --------------------------------------
     mb(
         "B30 tool_specs gets a default",
         "    tool_specs: Mapping[str, Mapping[str, ToolSpec]] | None,\n    overridden: Sequence[str] | None,\n) -> ModeBanner:",
@@ -982,7 +989,8 @@ M = [
         "test_a_submodule_whose_folder_is_missing_is_still_a_hit",
         "a_submodule_whose_folder_is_missing_is_still_a_hit: check 1",
     ),
-    # -- round 5: one host rule, tool specs that fail toward the risk, parity pins, claims, the guard fails closed -----
+    # -- round 5: one host rule, tool specs that fail toward the risk, parity pins, claims, the
+    # guard fails closed -----
     mb(
         "B50 a bare host that is not ASCII is read as this machine",
         "or not host.isascii()",
@@ -1072,7 +1080,7 @@ M = [
     ),
     mb(
         "B62 banner_or_unconfirmed lets the error out",
-        "    except READ_ERRORS as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
+        "    except READ_ERRORS as exc:\n        # not readable: shown as not confirmed; any other error is a bug and propagates\n",
         "    except ZeroDivisionError as exc:\n        # narrowed\n",
         "test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one",
         "TypeError: tool 'internal-host-xxxxx' of agent 'a' has no `hosts` list of text",
@@ -1344,7 +1352,8 @@ M = [
         "test_a_full_width_product_root_that_is_the_folder_is_a_hit",
         "a full-width product root named like the folder was not a hit",
     ),
-    # -- batch 6: the allow-list, words that are required, the content that decides, the shape of special files ----------
+    # -- batch 6: the allow-list, words that are required, the content that decides, the shape of
+    # special files ----------
     mb(
         "B80 the words of a name check have a default again",
         "    kind: str, keys: object, names: Mapping[str, str], words: BannerWords\n",
@@ -1478,7 +1487,8 @@ M = [
         "test_an_ending_with_no_known_mark_cannot_be_listed_in_the_settings",
         "the ending .bmp with no known mark was not refused",
     ),
-    # -- batch 7: the read-once class, the overrides, the new guard rules and the page repair -------------------------
+    # -- batch 7: the read-once class, the overrides, the new guard rules and the page repair
+    # -------------------------
     mb(
         "N1 tool modules are read without the collection check",
         '    modules = _config_collection(config, "tool_modules", ordered=True)',
@@ -1665,7 +1675,8 @@ M = [
         "test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted",
         "painted odd unconfirmed",
     ),
-    # -- batch 8 (r7 fixes): unknown differs from none, the build list, the page and the guard -----------------------------
+    # -- batch 8 (r7 fixes): unknown differs from none, the build list, the page and the guard
+    # -----------------------------
     mutant(
         "R7A1 an App made by hand records no overrides, as if build had been given none",
         "src/hadavin_sdk/app.py",
@@ -1811,7 +1822,8 @@ M = [
         "test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked",
         "the repository path was not masked",
     ),
-    # -- batch 9 (r8 fixes) -----------------------------------------------------------------------------------------------
+    # -- batch 9 (r8 fixes)
+    # -----------------------------------------------------------------------------------------------
     # class 1: the seal holds references
     ap(
         "R9A2 the fields and the tools of the hooks are not read for the fingerprint",
@@ -1915,8 +1927,8 @@ M = [
     ),
     gd(
         "R9C1 the guard docstring leaves a first-byte kind out",
-        "class file, PE, RAR, DOS or Windows program",
-        "class file, PE, DOS or Windows program",
+        "PE, RAR, DOS or Windows",
+        "PE, DOS or Windows",
         "test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table",
         "the docstring lists",
     ),
@@ -2086,10 +2098,11 @@ M = [
         "test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit",
         "a file behind a swapped folder was read through it",
     ),
-    # -- batch 10 (r9 fixes): the seal reads what the banner reads; the page; the masker; the guard ------------------------
-    # Why no row turns the `is` comparison into `id()`: the sealed value holds every part, so no part can be freed and its
-    # number reused while the seal exists; the two comparisons give the same answer (an equivalent mutant). What can be
-    # shown is that the seal keeps the objects alive (R10A1).
+    # -- batch 10 (r9 fixes): the seal reads what the banner reads; the page; the masker; the guard
+    # ------------------------ Why no row turns the `is` comparison into `id()`: the sealed value
+    # holds every part, so no part can be freed and its number reused while the seal exists; the two
+    # comparisons give the same answer (an equivalent mutant). What can be shown is that the seal
+    # keeps the objects alive (R10A1).
     ap(
         "R10A1 the sealed value drops the references of its parts",
         "src/hadavin_sdk/app.py",
@@ -2289,7 +2302,8 @@ M = [
         "test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes",
         "was not named as a chain",
     ),
-    # -- batch 11 (r10 fixes): every named container is read or the build says so; only build can seal; the masker --------
+    # -- batch 11 (r10 fixes): every named container is read or the build says so; only build can
+    # seal; the masker --------
     ap(
         "R11A1 a named container that is missing is skipped without a word",
         "src/hadavin_sdk/app.py",
@@ -2443,17 +2457,10 @@ M = [
     ),
     mb(
         "R13A5 banner_or_unconfirmed catches every error",
-        "    except READ_ERRORS as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
-        "    except Exception as exc:\n        # a banner that cannot be read is shown as not confirmed; any other error is a bug and propagates\n",
+        "    except READ_ERRORS as exc:\n        # not readable: shown as not confirmed; any other error is a bug and propagates\n",
+        "    except Exception as exc:\n        # not readable: shown as not confirmed; any other error is a bug and propagates\n",
         "test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner",
         "a bug of an unnamed type was turned into a banner",
-    ),
-    mb(
-        "R14C1 the endpoint check of a source catches every error",
-        "    except READ_ERRORS:\n        return True  # any failure to read the source",
-        "    except Exception:\n        return True  # any failure to read the source",
-        "test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer",
-        "an unnamed type in the endpoint of a source was turned into an answer",
     ),
     mb(
         "R13A6 the words of the banner may fail with any error",
@@ -2476,6 +2483,13 @@ M = [
         "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)",
         "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError, Exception)",
         "test_the_list_of_read_errors_holds_no_type_that_takes_every_error",
+        "READ_ERRORS is not the five named types",
+    ),
+    mb(
+        "R15B1 the list of read errors takes every kind of failure (the first test fires too, this killer is the second)",
+        "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)",
+        "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError, BaseException)",
+        "test_the_list_of_read_errors_holds_no_type_that_takes_an_error_nobody_named",
         "READ_ERRORS holds a type that takes every error",
     ),
     ap(
@@ -2508,6 +2522,13 @@ M = [
         "test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core",
         "a 12 character Basic token with a dash was hidden",
     ),
+    mb(
+        "R14C1 the endpoint check of a source catches every error",
+        "    except READ_ERRORS:\n        return True  # any failure to read the source",
+        "    except Exception:\n        return True  # any failure to read the source",
+        "test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer",
+        "an unnamed type in the endpoint of a source was turned into an answer",
+    ),
     gd(
         "R13B1 the token after a scheme word in an authorization pair is not hidden",
         "                if stop > tail and line[tail:stop] != _HIDDEN:\n",
@@ -2536,10 +2557,239 @@ M = [
         "test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word",
         "a flag with a word after it was shown",
     ),
+    gd(
+        "R15D1 a dashed token of 16 characters after a bare scheme word stays visible",
+        "return len(body) >= 16 or",
+        "return len(body) >= 17 or",
+        "test_a_dashed_scheme_token_of_16_characters_is_hidden",
+        "a 16 character Basic token with a dash stayed visible",
+    ),
+    gd(
+        "R15D2 a dashed token of 15 characters after a bare scheme word is hidden",
+        "return len(body) >= 16 or",
+        "return len(body) >= 15 or",
+        "test_pin_a_dashed_scheme_token_of_15_characters_stays_visible_as_in_the_core",
+        "a 15 character Basic token with a dash was hidden",
+    ),
+    gd(
+        "R15D3 a dashed token of 13 characters after a bare scheme word is hidden",
+        "return len(body) >= 16 or",
+        "return len(body) >= 13 or",
+        "test_pin_a_dashed_scheme_token_of_13_characters_stays_visible_as_in_the_core",
+        "a 13 character Basic token with a dash was hidden",
+    ),
+    gd(
+        "R15D4 the end of an unterminated quoted value is one past the end of the line",
+        "        return min(end + 1, n)\n",
+        "        return end + 1\n",
+        "test_the_end_of_a_value_with_a_quote_that_never_closes_is_the_end_of_the_line",
+        "the end of an open quote is not the end of",
+    ),
+    gd(
+        "R15D5 the end of a closed quoted value is the closing quote",
+        "        return min(end + 1, n)\n",
+        "        return end\n",
+        "test_the_end_of_a_value_with_a_quote_that_closes_is_after_the_closing_quote",
+        "the closing quote is not part of the quoted value",
+    ),
+    gd(
+        "R15D6 an already hidden token after a scheme word is taken into the pair again",
+        "if stop > tail and line[tail:stop] != _HIDDEN:",
+        "if stop > tail:",
+        "test_a_token_that_an_earlier_pass_already_hid_is_not_hidden_twice_into_the_scheme_word",
+        "an already hidden token was handled",
+    ),
+    gd(
+        "R15D7 a scheme word with no token swallows the white space after it",
+        "if stop > tail and line[tail:stop] != _HIDDEN:",
+        "if line[tail:stop] != _HIDDEN:",
+        "test_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it",
+        "white space after a bare scheme word",
+    ),
+    gd(
+        "R15D8 a Digest value ends at its first space",
+        '                if value.lower() == "digest":\n',
+        "                if False:\n",
+        "test_an_authorization_digest_with_several_parts_is_hidden_to_the_end_of_its_line",
+        "a part of a Digest value stayed visible",
+    ),
+    gd(
+        "R15D9 a Digest value runs past the end of its line",
+        'stop = line.find("\\n", tail) if "\\n" in line[tail:] else n',
+        "stop = n",
+        "test_an_authorization_digest_does_not_hide_the_next_line",
+        "the Digest hid the next line",
+    ),
+    gd(
+        "R15E1 the copy run of a repository with no tracked file goes on",
+        "    if not tracked:\n",
+        "    if False:\n",
+        "test_the_copy_run_of_a_repository_with_only_files_not_added_says_which_and_stops",
+        "the stop does not say why",
+    ),
+    gd(
+        "R15E2 an empty list of files is not refused",
+        "    if not paths:\n",
+        "    if False:\n",
+        "test_an_empty_repository_is_refused_with_the_message_for_an_empty_list",
+        "an empty file list of an empty repository was not refused",
+    ),
+    gd(
+        "R15E3 the empty tracked list gives the message of the empty list",
+        'what = "files" if include_new else "tracked files (git add the files you want in the copy)"',
+        'what = "files"',
+        "test_a_repository_with_only_files_not_added_is_refused_by_the_tracked_list_and_says_so",
+        "the message does not say what to do",
+    ),
+    ap(
+        "R15H1 a string is accepted as the command",
+        "tools/fixed_run.py",
+        "if not isinstance(argv, (list, tuple)) or not argv:",
+        "if not argv:",
+        T_G,
+        "test_pin_a_string_as_the_command_is_refused",
+        "a string as the command was not refused",
+    ),
+    ap(
+        "R15H2 an empty list is accepted as the command",
+        "tools/fixed_run.py",
+        "if not isinstance(argv, (list, tuple)) or not argv:",
+        "if not isinstance(argv, (list, tuple)):",
+        T_G,
+        "test_pin_an_empty_command_is_refused",
+        "an empty command was not refused",
+    ),
+    ap(
+        "R15H3 a NUL character in an argument is accepted",
+        "tools/fixed_run.py",
+        'isinstance(w, str) and "\\0" not in w',
+        "isinstance(w, str)",
+        T_G,
+        "test_pin_a_text_with_a_nul_character_is_refused",
+        "a NUL character in an argument was not refused",
+    ),
+    ap(
+        "R15H4 an element that is not text is accepted",
+        "tools/fixed_run.py",
+        'isinstance(w, str) and "\\0" not in w',
+        "True",
+        T_G,
+        "test_pin_an_element_that_is_not_text_or_a_path_is_refused",
+        "an element that is not text was not refused",
+    ),
+    ap(
+        "R15H5 a tuple is refused as the command",
+        "tools/fixed_run.py",
+        "(list, tuple)) or not argv",
+        "(list,)) or not argv",
+        T_G,
+        "test_pin_a_tuple_and_a_path_element_are_accepted",
+        "a tuple was refused",
+    ),
+    ap(
+        "R15H6 a path element is not turned into text",
+        "tools/fixed_run.py",
+        "words = [os.fspath(a) for a in argv]",
+        "words = [a for a in argv]",
+        T_G,
+        "test_pin_a_tuple_and_a_path_element_are_accepted",
+        "a path element was refused",
+    ),
+    ap(
+        "R15H7 a program that is not on the PATH is not looked up",
+        "tools/fixed_run.py",
+        "shutil.which(words[0])",
+        "words[0]",
+        T_G,
+        "test_pin_a_program_that_is_found_on_the_path_runs_and_one_that_is_not_stops_the_caller",
+        "a program that is not found did not stop the caller",
+    ),
+    ap(
+        "R15H8 a program that is not found does not stop the caller",
+        "tools/fixed_run.py",
+        "    if exe is None:\n",
+        "    if False:\n",
+        T_G,
+        "test_pin_a_missing_program_is_not_handed_on_as_no_program",
+        "a missing program was handed on as no program",
+    ),
+    ap(
+        "R15Kshell the list of keywords allows shell",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding", "shell"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "shell was not refused",
+    ),
+    ap(
+        "R15Kexecutable the list of keywords allows executable",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding", "executable"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "executable was not refused",
+    ),
+    ap(
+        "R15Kpreexec_fn the list of keywords allows preexec_fn",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding", "preexec_fn"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "preexec_fn was not refused",
+    ),
+    ap(
+        "R15Kstdin the list of keywords allows stdin",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding", "stdin"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "stdin was not refused",
+    ),
+    ap(
+        "R15Kcwd the list of keywords drops cwd",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"env", "capture_output", "text", "timeout", "input", "encoding"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "the allowed keyword cwd was refused",
+    ),
+    ap(
+        "R15Kenv the list of keywords drops env",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "capture_output", "text", "timeout", "input", "encoding"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "the allowed keyword env was refused",
+    ),
+    ap(
+        "R15Kcapture_output the list of keywords drops capture_output",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "text", "timeout", "input", "encoding"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "the allowed keyword capture_output was refused",
+    ),
+    ap(
+        "R15Kencoding the list of keywords drops encoding",
+        "tools/fixed_run.py",
+        '{"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}',
+        '{"cwd", "env", "capture_output", "text", "timeout", "input"}',
+        T_G,
+        "test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused",
+        "the allowed keyword encoding was refused",
+    ),
 ]
 
-# Mutations that cannot change what the code does, with the reason (a test checks that each has one and that its text is
-# still in the file, so the note cannot drift away from the line it is about). Not rows of the table: no test could kill them.
+# Mutations that cannot change what the code does, with the reason (a test checks that each has one
+# and that its text is still in the file, so the note cannot drift away from the line it is about).
+# Not rows of the table: no test could kill them.
 EQUIVALENT = {
     (
         "src/hadavin_sdk/app.py",
@@ -2551,19 +2801,21 @@ EQUIVALENT = {
 }
 
 
-# The number of rows in `M` (the CHANGELOG states it; a table test compares this value with the rows it parses out of
-# the text of this file, so it cannot drift from the table).
+# The number of rows in `M` (the CHANGELOG states it; a table test compares this value with the rows
+# it parses out of the text of this file, so it cannot drift from the table).
 ROW_COUNT: int = len(M)
 
-# Rows that share one killer AND one expectation on purpose: none is left (batch 14: R13A5 and R13A8 each have their own
-# killer). A new pair needs its own entry here (key: the space-joined labels in table order, as `shape_problems` builds it)
-# with a reason read from the killer, or its own message in the killer.
+# Rows that share one killer AND one expectation on purpose: none is left (batch 14: R13A5 and R13A8
+# each have their own killer). A new pair needs its own entry here (key: the space-joined labels in
+# table order, as `shape_problems` builds it) with a reason read from the killer, or its own message
+# in the killer.
 SAME_ASSERT: dict[str, str] = {}
 
-# The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an assertion of the killer),
-# so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row
-# that crashes on purpose must be listed, and the table test refuses a row outside this set whose `expect` reads like an
-# interpreter message. The set is derived in the test from the rows that declare `crash=`; both must be this set.
+# The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an
+# assertion of the killer), so their `expect` is the interpreter's or library's own message or the
+# code's own error text. Pinned here by name: a row that crashes on purpose must be listed, and the
+# table test refuses a row outside this set whose `expect` reads like an interpreter message. The
+# set is derived in the test from the rows that declare `crash=`; both must be this set.
 CRASH_ROWS = frozenset(
     {
         "B5",
@@ -2586,10 +2838,11 @@ CRASH_ROWS = frozenset(
 
 
 def non_unique_rows(root=ROOT, rows=None):
-    """The rows whose search text (`old`) is not found exactly once in its file, and the names used twice. The runner
-    replaces EVERY occurrence of `old`, so a row whose text occurs twice changes two places at once and may be killed
-    for a reason that has nothing to do with its name; a text that is not found is an ERROR at run time. Returns
-    ``(name_or_label, reason)`` pairs; ``[]`` means the table is clean. A row name is its first word (J19, G5c ...)."""
+    """The rows whose search text (`old`) is not found exactly once in its file, and the names used
+    twice. The runner replaces EVERY occurrence of `old`, so a row whose text occurs twice changes
+    two places at once and may be killed for a reason that has nothing to do with its name; a text
+    that is not found is an ERROR at run time. Returns ``(name_or_label, reason)`` pairs; ``[]``
+    means the table is clean. A row name is its first word (J19, G5c ...)."""
     problems = []
     seen = {}
     for m in M if rows is None else rows:
@@ -2605,9 +2858,10 @@ def non_unique_rows(root=ROOT, rows=None):
 
 
 def shared_first_lines(first_lines):
-    """Rows (of those run) whose killer stopped at the very same first failing line:
-    they would be killed by one assertion and say nothing about their own mutation. Returns the groups as
-    lists of labels; ``[]`` is clean. `first_lines` maps a row name to the first failing line of its killer."""
+    """Rows (of those run) whose killer stopped at the very same first failing line: they would be
+    killed by one assertion and say nothing about their own mutation. Returns the groups as lists of
+    labels; ``[]`` is clean. `first_lines` maps a row name to the first failing line of its killer.
+    """
     by_line = {}
     for m in M:
         line = first_lines.get(m.name)
@@ -2617,8 +2871,9 @@ def shared_first_lines(first_lines):
 
 
 def focus_problems(only: list[str], ran: list[str], names: list[str] | None = None) -> list[str]:
-    """For a focused run (names given on the command line): every focus word must match a row of the table, and every
-    row that was run must contain one of the focus words, so a typo cannot run nothing and a run cannot widen itself."""
+    """For a focused run (names given on the command line): every focus word must match a row of the
+    table, and every row that was run must contain one of the focus words, so a typo cannot run
+    nothing and a run cannot widen itself."""
     names = [m.name for m in M] if names is None else names
     out = [f"focus word matches no row: {o}" for o in only if not any(o in n for n in names)]
     out += [
@@ -2631,9 +2886,6 @@ def focus_problems(only: list[str], ran: list[str], names: list[str] | None = No
 
 if __name__ == "__main__":
     only = sys.argv[1:]
-    if only and not any(o in m.name for m in M for o in only):
-        print(f"no mutant name contains any of {only}; nothing was run", file=sys.stderr)
-        sys.exit(2)
     first_lines: dict[str, str] = {}
 
     def show(row):
