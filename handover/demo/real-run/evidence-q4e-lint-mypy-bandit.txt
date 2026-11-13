@@ -1,0 +1,23 @@
+# v5 gates on db54e13 + v5 patch (builder /tmp/work/b9-11834)
+$ ruff check .
+All checks passed!
+exit=0
+$ ruff format --check .
+148 files already formatted
+exit=0
+$ mypy --platform linux
+Success: no issues found in 26 source files
+exit=0
+$ mypy --platform win32
+Success: no issues found in 26 source files
+exit=0
+$ git diff --cached --check
+exit=0
+$ bandit -ll -r src scripts
+	No issues identified.
+		Low: 4
+		Medium: 0
+		High: 0
+		Low: 0
+		Medium: 0
+		High: 4

@@ -1,0 +1,3 @@
+gitleaks 8.30.1: dir + git on clean clone of db54e13 + v5 (committed):
+dir: no leaks found (3.04 MB); git: 23 commits scanned, no leaks found
+DPLD_REQUIRE_SCAN=1 hygiene + gitleaks exceptions + refusals: 172 passed (before the last test was added)

@@ -1,0 +1,10 @@
+db54e13 orders containing v5: 1631 ok: 946 fail: 685
+   685 x 3 error: patch failed: scripts/run_real_check.py:837
+
+2db3926 orders containing v5: 1631 ok: 946 fail: 685
+   685 x 3 error: patch failed: scripts/run_real_check.py:837
+
+All 685 failures on each base are orders with v5 applied BEFORE sonar-p3 (the known conflict, same as v4); every order with sonar-p3 first applies (v5-after-sonar-p3 is used automatically in the check) - verified by script: failing orders all have V before 3.
+sonar-p1-quickwins-v3 (db54e13 only) and versions-md-allowance (2db3926 only) are included as the 5th letter.
+Patches used: semgrep-on-2db3926-v4, crlf-guard-v4, sonar-p1-quickwins-v3, sonar-p2-regex-http-bug-v2, sonar-p3-path-helper-v2, versions-md-allowance. Orders: every subset in every order that contains v5 (1631 per base).
+fresh tree db54e13 + p3-v2 + v5-after-p3: applies; then semgrep-v4, crlf-guard-v4, p2-v2, p1-v3 --check clean; ruff, format, mypy linux+win32 clean; refusals + path-confinement tests 157 passed (before the last 4 tests: re-run below)

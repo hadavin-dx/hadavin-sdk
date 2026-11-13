@@ -1,0 +1,12 @@
+S1 scan ignores bytes: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.48s
+S2 scan no glued join: CAUGHT: 2 failed, 40 passed, 76 deselected in 0.48s
+S3 scan skips class attrs: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.36s
+S4 scan decorator any constant: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.43s
+S5 scan setattr None ok: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.61s
+S6 scan setattr anywhere: CAUGHT: 2 failed, 40 passed, 76 deselected in 0.53s
+S7 scan child check off: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.47s
+S8 scan default param ok: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.55s
+S9 scan async not handled: CAUGHT: 2 failed, 40 passed, 76 deselected in 0.72s
+S10 scan rebind check off: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.42s
+S11 scan keep-alone helper off: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.53s
+S12 scan docstrings counted: CAUGHT: 1 failed, 41 passed, 76 deselected in 0.40s

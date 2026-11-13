@@ -1,0 +1,27 @@
+R1 result check off: CAUGHT: 3 failed, 110 passed in 40.47s
+R2 folder test off: CAUGHT: 1 failed, 112 passed in 70.16s (0:01:10)
+R3 parent test off: CAUGHT: 2 failed, 111 passed in 38.98s
+R4 parent exists() not is_dir(): CAUGHT: 1 failed, 112 passed in 70.48s (0:01:10)
+R5 check writes the file: CAUGHT: 3 failed, 110 passed in 39.48s
+R6 write_result raises: CAUGHT: 2 failed, 111 passed in 100.87s (0:01:40)
+R7 write_result prints the path: CAUGHT: 1 failed, 112 passed in 72.14s (0:01:12)
+R8 real script takes the lock: CAUGHT: 1 failed, 113 passed in 136.82s (0:02:16)
+R9 live script takes the lock: CAUGHT: 1 failed, 113 passed in 105.20s (0:01:45)
+R10 core read_totals takes the lock: CAUGHT: 3 failed, 111 passed in 74.88s (0:01:14)
+R11 core read_totals makes the folder: CAUGHT: 3 failed, 111 passed in 76.49s (0:01:16)
+R12 core check_readable back: CAUGHT: 1 failed, 113 passed in 109.91s (0:01:49)
+R13 certificate wording changed: CAUGHT: 3 failed, 111 passed in 136.06s (0:02:16)
+R14 bind name repeated: CAUGHT: 1 failed, 113 passed in 76.81s (0:01:16)
+R15 old db-path wording: CAUGHT: 1 failed, 113 passed in 47.67s
+R16 generic handler prints type: SURVIVED: 114 passed in 76.26s (0:01:16)
+R17 missing names old wording: CAUGHT: 1 failed, 113 passed in 136.41s (0:02:16)
+R18 persons old wording: CAUGHT: 1 failed, 116 passed in 103.59s (0:01:43)
+R19 mailbox order old: CAUGHT: 1 failed, 116 passed in 105.39s (0:01:45)
+R20 config unreadable old: CAUGHT: 1 failed, 116 passed in 135.16s (0:02:15)
+S1 scan ignores bytes: CAUGHT: 1 failed, 116 passed in 105.01s (0:01:45)
+S2 scan no glued join: CAUGHT: 2 failed, 115 passed in 74.23s (0:01:14)
+S3 scan skips class attrs: CAUGHT: 1 failed, 116 passed in 135.42s (0:02:15)
+S4 scan decorator any constant: SURVIVED: 117 passed in 104.78s (0:01:44)
+S5 scan setattr None ok: CAUGHT: 1 failed, 116 passed in 102.23s (0:01:42)
+S6 scan setattr anywhere: CAUGHT: 2 failed, 116 passed in 139.38s (0:02:19)
+S7 scan child check off: CAUGHT: 1 failed, 117 passed in 111.51s (0:01:51)

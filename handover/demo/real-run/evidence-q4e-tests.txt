@@ -1,0 +1,7 @@
+# v5 tests (all raw counts from pytest -q runs on the final patch; no real service, no y answered to a non-loopback config)
+db54e13 + v5, DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1 on PATH: test_hygiene + test_gitleaks_exceptions + test_take_script_refusals: 177 passed
+db54e13 + v5 (earlier patch state, before 4 later tests): test_real_check_dry + test_live_claude + test_ledger_amounts + test_clock_steps + hygiene + gitleaks exceptions: 311 passed
+2db3926 + v5 (patch state with 114 refusal tests): test_take_script_refusals.py 114 passed; ruff, format, mypy linux + win32 clean
+db54e13 + sonar-p3-v2 + v5-after-sonar-p3 (final): test_take_script_refusals + test_path_confinement: 161 passed; ruff, format (150 files), mypy win32 (27 files) clean
+New test file now has 118 tests (v4 had 66).
+Not re-run on the final patch: the 311-test related set (only the refusals file, hygiene, gitleaks), and 2db3926 with the last 4 tests (apply-only checked in the matrix).

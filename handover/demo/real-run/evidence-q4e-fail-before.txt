@@ -1,0 +1,37 @@
+>       assert rrc._readback_failed(A(), tmp_path, env, rrc.CrmError("x"), 0, {"created": 0}) == rrc.EXIT_FAILED  # type: ignore[arg-type]
+scripts/run_real_check.py:576: in _readback_failed
+the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The desk's own counter shows that it created no contact, so there is nothing to archive.
+FAILED tests/test_take_script_refusals.py::test_keep_without_the_self_test_is_refused
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist]
+FAILED tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback
+FAILED tests/test_take_script_refusals.py::test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written
+FAILED tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing
+FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form
+FAILED tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once
+FAILED tests/test_take_script_refusals.py::test_the_docs_state_the_refusal_form_and_the_result_file_check
+10 failed, 103 passed in 69.79s (0:01:09)
+
+# scan tests with the v4 keep_scan.py (new samples against the old scan)
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by plus]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by join]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test without fixture]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test with fixture]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[decorator that only contains the word]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[skipif reason that only contains the word]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr by dotted name]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr to None is a no-op]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under if False]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under try]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr only]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a nested helper belongs to its test]
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a docstring that talks about the flags]
+18 failed, 23 passed, 72 deselected in 0.69s
+
+# whole_dry_run test on v4 code: 1 failed (AttributeError: run_real_check has no attribute write_result: the old code has no guarded write; the old behaviour is a traceback at out.write_text, established by reading, not by this run)
