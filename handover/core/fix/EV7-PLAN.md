@@ -318,3 +318,9 @@ Rules: run the same 3-7 test files once on a plain copy of `tree-EV7` first (the
 | `required_fails.py` | section 5 | EV6 r6 lists: output in `rf-test-ast.out`, `rf-required.txt`; format test with 3 input formats on a toy list; NOT tested against r7 |
 | `mk_mutants.py` | makes the broken patches for the apply matrix mutation proof | used once on r6 |
 | the recipes in this file (`run-group.sh`, `run-alone.sh`, `run-fb-file.sh`, `run_mutant`, count/cols shell) | sections 3-8 | copied from the EV6 scripts that ran; the r7 paths and the `run_mutant` function were NOT run (written here, check them with one trial mutant before the batch) |
+
+## 10. TAINTED CONTAINER NOTE (added by the core lead, 21:35Z, lead order)
+On the cloud machine used for rounds 1-7, /dev/null was turned into a REGULAR FILE at about 21:29Z by a probe of the r6 stats writer (a real defect, fixed in r7). The owner decides whether it is restored; nobody restores it by another route. Consequences for EV7:
+1. If a FRESH container or checkout is available, run the EV7 full suite and the hostile table there.
+2. If not, write plainly at the top of the evidence file: "/dev/null was a regular file during this run" and re-run alone any test that fails and uses DEVNULL or /dev/null. The list of those uses (31 lines in 16 files, r6 tree) is `devnull-uses-r6.txt` in this folder; re-check it on the r7 tree with: grep -rIn -E 'DEVNULL|/dev/null|os\.devnull' tests scripts src tools load_tools demo_only.
+3. Nothing in the EV7 run may write to /dev/null or any /dev path; never use a real /dev path in a test.
