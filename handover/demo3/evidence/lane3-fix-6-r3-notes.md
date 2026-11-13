@@ -1,0 +1,28 @@
+# lane3-fix-6 round 3 (builder B6c): documentation and pinning tests
+Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Tree: /home/user/work/b6c-base (r2 + 6b applied, then the 18 resolve items; staged, no commit). Product code changed: none beyond the 6b docstring/comment.
+
+## Failures first, and what was not checked
+1. The reviewer's wording "137 imitates a kill but is not one" was false (hooks.py os._exit(137)); the docs now say the desk ends itself with os._exit, exit code 137, a real process end; a test bans the false phrasing.
+2. My full-suite run and E9's both ran with 4 sandbox proxy variables (AWS_*, ANTHROPIC_*) set: the "no cloud configuration" condition was NOT met. No test failed because of it.
+3. The full suite (3705 passed, 200 skipped, exit 0, raw/b6c-full.log) ran on the tree BEFORE the last small edit (E9 numbers into one bullet in docs/tests.md and the matching test pin). After that edit I re-ran only 7 test files (the two doc files, hygiene, vendor hosts, nosemgrep, path confinement, env numbers): 894 passed, 5 skipped, on both the plain tree and the stack tree. That is not a second full run.
+4. Not run: ruff, mypy, bandit, gitleaks (CI only, per brief); my line-length (<=120) and noqa checks were done by awk/grep, formatting by ruff was not. No full suite on the stack tree (only the 7 files above). Windows PowerShell commands not tried. Soak numbers not re-run (quoted from crash-soak-blind.md). The browser/gitleaks numbers (241, 72, 3684) and the 3683/200 counts stay "reported, not re-measured" (E9 could not measure 241/72).
+5. The plan's item 1 phrase set was implemented as written except: I did not claim what a plain run prints beyond "the verdict `new`" (verified in b6b-facts E7).
+6. The two test files were renamed (tests/test_docs_run_and_counts.py, tests/test_docs_run_commands.py) so "lane3" is gone from public file names. The old names in lane3-fix-6-r2.patch / 6b are replaced by this patch.
+7. Items declined by the resolve plan (undefined "book", N1, N2) are untouched.
+
+## Items (resolve plan numbers)
+1 crash demo steps: docs/tests.md "Crash demo (instead of step 2)" (flag file path printed by crash_desk.py, BEFORE sending the lead write D2 into it, echo / Set-Content, desk prints "simulate crash", removes flag, os._exit 137, run window 2 again). 2 one demo server: README "Words used here" defines it; README/settings.md/n8n-recipe.md/SECURITY.md/tests.md changed from "demo servers" to "demo server"; the quoted code message "cannot reach the demo servers" kept with a note that it is one program. 3 macOS: "Linux shell syntax (macOS uses the same syntax but was not tried)", "(Linux; macOS not tried)". 4 counts: "the commit that added this paragraph"; expected total 3883 + 22 = 3905 (the test computes the 22 from the two files); E9's measured 3693 (3683 + 10) added as history. 5 eight vs ten files, 22/113 disambiguation. 6 137 wording, README:99 and the "only D2" sentences, soak kept apart from the tests. 7 soak labels (soak test, soak script not in repo, option, checks 1-4 verified against run_checks order and docstrings, 5-7 named). 8 54/9100/143. 9 "failed" expected on a blind mail system. 10 real-services wording (example.com addresses, 12 + twin = 13, 8+1 and 6+3 = 9, an UNKNOWN, moment the desk is stopped, exit codes in docs/settings.md, one name "config file", `unknown`/UNKNOWN, allowance = min(in flight at kill, SEND_WORKERS_MAX)). 11 private names removed ("b6b", "raw/", "private ports"). 12 "none of the 200 skipped tests gives Node". 13 241/72 wording. 14 prerequisites (.venv, ./data, Windows pointer, src;. in window 3). 15 README by-hand paragraph (third window, PowerShell not tried). 16 start_all also sets DESK_LEADFLOW_FILE and DESK_NUDGE_TO. 17 contract.md run-commands paragraph. 18 heading "Running the desk by hand", "README, Try it", "browser lock files".
+
+## Evidence (raw/)
+- Fails-before: new test files copied onto f3c39cf8 + r2 + 6b: 18 failed, 4 passed (raw/b6c-fails-before.log). The 4 that pass are unchanged claims: test_old_desk_commands_are_gone_from_every_doc, test_documented_assume_yes_flag_exists_in_the_script, and the 2 code-only tests in test_docs_run_commands.py. Failing: by_hand_steps, start_up_outcomes, windows_powershell, soak_flag, counts, dry_run_people, one_demo_server, crash_demo, only_d2, soak_paragraph, old_and_new_counts, eight_and_ten_files, real_services_text, no_private_names, by_hand_intro, start_all_extra_settings, contract_run_commands, small_wording_fixes.
+- Mutation proof: removing each of 172 pinned literals from its doc fails the tests: 172 of 172 (raw/b6c-mutation-pins.log; 55 literals are code/regex strings, not mutated).
+- Full suite: raw/b6c-full.log, `3705 passed, 200 skipped in 1255.20s`, EXIT_CODE=0 (3683 + 22 = 3705).
+- Apply checks: raw/b6c-apply-checks.log: r3 on f3c39cf8 rc 0; for-stack on f3c39cf8 + claims-stack rc 0 and the result is byte-identical to the merged stack tree; plain r3 on the stack tree fails (README.md:85), as expected.
+- Added lines over 120: 0; noqa / type: ignore added: 0; test names kept within the hygiene scan's 12-character words.
+
+## Patches (sha256)
+- lane3-fix-6-r3.patch a685d69aed816794e614c1e42cb09c98e23d2d131c532af0a8405dcd4b4497b4 (full diff from f3c39cf8: r2 + 6b + r3)
+- lane3-fix-6-r3-for-stack.patch dcbb6d9b730362a9126b0c0a1705ad0620c8b7531a8652cd892b757c8993fe6a (apply on f3c39cf8 + claims-stack-on-f3c39cf8.patch; made by 3-way merge of the r3 changes into the stack variant; 3 conflicts resolved by hand: SECURITY.md, README.md line 88, docs/tests.md older-count bullets)
+
+## Ladder
+Rung 1 (reuse existing docs, tests and scripts); no custom code. Own worktrees b6c-old, b6c-clean, b6c-stack removed; b6c-base kept.

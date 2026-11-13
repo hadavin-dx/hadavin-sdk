@@ -5,3 +5,4 @@ B6c progress
 14:40Z full suite started on final doc tree (b6c-base), log raw/b6c-full.log
 14:42Z r3 + r3-for-stack patches made and apply-checked (rc 0 both); stack tree tests (new files+hygiene) 42 passed; waiting full suite
 14:43Z waiting for full suite (monitor armed)
+15:04Z
