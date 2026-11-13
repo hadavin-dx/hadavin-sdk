@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:02Z / 17:32 IST  HEARTBEAT 29 (L reported; K at about half)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| L | Evidence runner: 30 skipped gitleaks tests + hygiene, DPLD_REQUIRE_SCAN=1, BASE and STACK | secret-scan results | 12:00Z / 17:30 | ended 12:02Z | first try | reported, closed | none |
+| K | Evidence runner: 166 browser tests, BASE and STACK (running at the same time) | browser test results | 12:00Z / 17:30 | BASE 90 passed, 0 failed so far; STACK 89 passed, 0 failed so far (about 55 percent of 166); stop 12:45Z | first try | running | report when both end |
+| M | Agent: classify the 200 skips | - | 12:00Z | ended 12:00Z | - | reported, closed | none |
+| others | I, H, J, G, F, E, D, C2, A, B | closed | - | - | - | closed | none |
+
+ASK: heartbeat 27 asks 1-3: ask 2 is answered (the gitleaks download was allowed and worked); asks 1 and 3 stand (no browser download needed so far: the browser tests run).
+L RESULT (I read both raw logs): the 30 gitleaks-skipped tests now run and pass. BASE f3c39cf8: **72 passed, 0 failed, 0 skipped**, exit 0, 76 s; STACK (f3c39cf8 + claims patch): **72 passed, 0 failed, 0 skipped**, exit 0, 75 s; both with DPLD_REQUIRE_SCAN=1. Groups, same on both: tests/test_hygiene.py 24 of 24, tests/test_gitleaks_exceptions.py 44 of 44, tests/test_gitleaks_semgrep_lock.py 4 of 4. The history scan (`gitleaks git .`) ran inside the hygiene test and passed on both. gitleaks 8.30.1; release tarball sha256 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb matches the value in lint.yml; binary in /home/user/work/tools/gitleaks-bin/ (outside the repo). Detail: the skip log shows 24 + 2 + 4 = 30 gitleaks skips across those three files, not the 24 + 5 + 1 of the order (same total). Gap: only these three files were run, not the full suite. Files: evidence/unskip-gitleaks.md, raw/unskip-gitleaks-{base,stack}.log.
+
 ## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 28 (M reported)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

@@ -28,3 +28,4 @@ K | agent a2c7fe..: unskip browser tests BASE then STACK | 12:00Z | ~12:30Z, sto
 L | agent afb874..: unskip gitleaks tests + hygiene, DPLD_REQUIRE_SCAN=1, BASE then STACK | 12:00Z | ~12:25Z, stop 12:45Z | now | running | check 5 min
 M | agent a275db..: classify the 200 skips (read-only) | 12:00Z | ~12:20Z, stop 12:30Z | now | running | check 5 min
 M | reported 12:00Z closed: 4 others classified (2 never on Linux/3.12, 1 opt-in LEAD_DESK_LOAD_N, 1 root)
+L | reported 12:02Z closed: 72 passed 0 failed 0 skipped on BASE and STACK
