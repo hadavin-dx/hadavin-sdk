@@ -462,3 +462,11 @@ Also list: every agent that crashed, timed out, or was restarted; every command 
 - E5 RE-DERIVE THE PR BODY: every number in claims-pr-body.md recomputed from the final tree (test-file count, collected count with the exact flag, commits, files changed, +/- lines), plus the list of what was NOT done.
 - E6 PUBLIC-TEXT SAFETY SWEEP of the whole series diff: no price, no partner term, no client claim, no 'we/our' voice in the PR body, no secrets, no personal e-mail/address, no vendor-inspired product names (the repo has a test that lists them: run it), no word stand-in.
 Then keep self-assigning (standing rule). Status block every 5 minutes with ALL rows and the FAILURES table.
+
+
+## 2026-11-13 13:14Z LEAD ORDER (your report shows 0 agents running: that is idle; start these now, status block every 5 min)
+1. FIX every FALSE row and every UNPROVEN row from E2a/E2b in the claims text: fix to what the code proves, or delete the sentence; no hedge words as a fix. Each fix: sentence | old | new | proof (file:line / command output).
+2. Then FRESH independent egm reviewers (`egm:egm-codebase-details` for facts, `egm:egm-comprehension` for a naive reader) on the FINAL series diff + PR body (inline reports; you save them), round 1 of cap 2; any Blocker/Major is fixed and the changed sentences re-verified by a different fresh agent.
+3. E8 (start now, one core): CI-equivalent on the final tree: ruff, mypy, gitleaks with the repo toml, semgrep config (1.185.0 pinned, network only if the sandbox allows: say if it cannot), hygiene scan with DPLD_REQUIRE_SCAN=1, the vendor-names test, `git am` of the whole series onto main f3c39cf8 and the full suite once on that result.
+4. E9: a stranger-readiness pass on the README top 60 lines only (first impression for a LinkedIn reader: does it say what it is, plainly that the leads are made up, how to run it in 5 minutes, what it does NOT prove): list what a hostile reader would attack; do NOT write new claims.
+Then self-assign (standing rule). Nothing public until the lead says.
