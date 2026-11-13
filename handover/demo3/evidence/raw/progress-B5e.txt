@@ -9,3 +9,4 @@ B5e 14:54Z README fixed to a new paragraph (applies on claims stack); full + xdi
 B5e 14:55Z FINAL tree ff57d806a5ab7fc48b513ac4a3e02aa6b19cfd87: full + xdist started (restart #3 after bash-wrapper test fix); fails-before logs redone on final tests
 B5e 14:56Z FINAL tree ede143b58e41528384386efb9867a88c4901dd82: full + xdist started (restart #4, README wrapped)
 B5e checkpoint: code and tests done; waiting on full serial (b5e-full.log) and 20x xdist (b5e-xdist.log); notes to write after results
+B5e 15:19Z full serial run 1 INVALID (my basetemp was outside TMPDIR: 'path outside allowed folders' x70); rerun started with basetemp inside TMPDIR
