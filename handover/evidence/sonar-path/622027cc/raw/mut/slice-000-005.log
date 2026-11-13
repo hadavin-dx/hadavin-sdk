@@ -3,3 +3,5 @@ ok  KILLED         R1 empty and dot names accepted  [test_pin_r1_empty_and_dot_n
 ok  KILLED         R2 a separator is accepted  [test_pin_r2_a_separator_is_refused_on_every_os] t=5s
 ok  KILLED         R3 a colon is accepted  [test_pin_r3_a_colon_is_refused_on_every_os] t=6s
 ok  KILLED         R4a a control character in a name is accepted  [test_pin_r4_a_control_character_is_refused_in_a_name] t=7s
+ok  KILLED         R4b a control character in an operator path is accepted  [test_pin_r4_a_control_character_is_refused_in_an_operator_pa] t=8s
+SLICE 0:5 5 of 5 good; problems: []; elapsed 8s

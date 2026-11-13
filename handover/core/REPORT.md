@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:44Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- SONAR-PATH head 622027cc is NOT clean: round 5 = 0 Blocker, 6 Major (5 issues). Real defects: a tool module name of 253-255 bytes still leaks a raw operating-system error with the path; `signer.key_path` still uses raw `mkdir`/`resolve`; several test header counts and one fail-before sentence are wrong; the CHANGELOG describes a bug in functions that are new in this change. Batch 6 is with builder ac09a2ce. Evidence runner a8d58542 has not reported; nothing in batch 5 is runner-verified. No SonarCloud finding is claimed cleared.
+- Part 6 head 8c814fe6: builder's own report says the full mutant table and the 60-row sample were NOT run, R13B2 has no fresh killed line, 34 test files outside the 54-file set were not run, the 3.12/3.13 runs were on c0190f40 not 8c814fe6, and two small test gaps remain (log-name test not restored; empty-file-list refusal untested). All of that is unverified until runner a3ea530e reports. Round 14 reviewers are reading.
+- Part 2 head 54c3d8a2: runner found no failing test or mutant, but its counts differ from the builder's (62 vs 57 pin-label failures; 13 + 3 handler sites, not 12 + 1); 18 tests that pass on the old tree are not named test_pin_*. Batch 13 is fixing; runner facts forwarded.
+
+**LEAD ACTIONS:** Q-R5-1: for operator-typed key, token, answers and golden files, keep the refusal of a link that leaves its own folder (recommended: it is the ORDER 260 pattern and the only Sonar evidence is for it) or revert `operator_file` at those five sites? Default applied: keep, and name the case in CHANGELOG with tests. Q8c-1 (laptop extra steps) is still unanswered.
+
+**LIVE ITEMS:** ac09a2ce SONAR-PATH batch 6; a8d58542 SONAR-PATH runner; a805b93d Part 2 batch 13; a3ea530e Part 6 runner; a3deb962 and a75e33ef Part 6 round 14 reviewers. Closed: a7978edf, a555e712, abe994a0, ad1ab18f. I removed two scratch worktrees left by a7978edf.
+
+**ROUNDS (WHY):** SONAR-PATH round 6 required (security path, code changes). Part 6 round 14 running. Part 2 round 13 follows batch 13.
+
+**FINISHED SINCE LAST BLOCK:** Part 2 round 12 evidence committed; SONAR-PATH round 5 design and codebase reviews, resolve report and ledger rows SONARPATH-r5-1..5; Part 6 batch 14 pushed (8c814fe6).
+
+**EGM STEP PER PACKAGE:** Part 2: batch 13 build. Part 6: round 14 evidence + review. SONAR-PATH: round 5 resolved, batch 6 build.
+
+**LANE SONAR-PATH:** no PR READY (round 5 not clean).
+
+**RUN ON LAPTOP:** none yet.
+
 ## 05:35Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

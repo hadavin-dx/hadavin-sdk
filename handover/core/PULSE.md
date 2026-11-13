@@ -88,3 +88,4 @@
 05:19Z CORE: Part 6 r13 resolved (0B/3M); batch14 started; runner on 63996217 running
 05:25Z CORE: Part 6 r13 runner in (R13B2 survived, ruff S603); batch14 building; 3 agents live
 05:35Z CORE: Part 2 r12 resolved, batch13 started; Part 6 batch14 + SONAR batch5 building; 4 agents live
+05:44Z CORE: SONAR r5 resolved (batch6), Part6 r14 reviewing, Part2 batch13; 7 agents live

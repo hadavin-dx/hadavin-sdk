@@ -1,0 +1,13 @@
+21:+  - The page script `templates/mode-banner/mode_banner.js` (with an optional `mode_banner.css`) paints the finished banner as plain text and never throws: a banner with an unknown tone, a tag or t
+24:+- **Demo-only folder guard, batches 13 and 14.** `pyproject.toml` keeps one per-file ignore, `tests/**` (S101); the BLE001 and S603 per-file ignores are gone. This diff adds ONE inline marker, `no
+1259:+      // answer. For a real or an unconfirmed banner (which claim nothing made-up) it reads a missing list as empty.
+4026:+There is one place in the project that starts a program, so the project's subprocess rule is never waived."""
+5040:+import subprocess
+6601:+    real_run = subprocess.run
+6603:+    def watch(argv: list[str], **kw: Any) -> subprocess.CompletedProcess[bytes]:
+6610:+    monkeypatch.setattr(fixed_run.subprocess, "run", watch)
+7743:+                assert not (isinstance(owner, ast.Name) and owner.id == "subprocess"), (
+13142:+caller goes through this one start point, the project's subprocess rule needs one marker, on the
+13149:+import subprocess
+13160:+) -> subprocess.CompletedProcess[Any]:
+13173:+    return subprocess.run([exe, *words[1:]], check=check, **kwargs)  # noqa: S603 argv validated above
