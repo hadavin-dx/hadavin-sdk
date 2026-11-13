@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:19Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 head 63996217, round 13 reviews done (0 Blocker, 3 Major, 15 Minor across both reviewers; no fail-open found). Majors: (1) ruff S603 still fires at tools/fixed_run.py:30; (2) mutant row R13B2 probably SURVIVES (no hidden-side bypass case at end of line); (3) guard comments, CHANGELOG batch 10 and a test name still say the masker equals the core, but it now hides more. Also wrong fail-before labels (a "332 rows" claim, helper pins) and the guard now loads a sibling file.
+- Builder's own batch 13 report left unverified: new mutant rows not run against mutants, dd827d79 fail-before not run, 34 test files never run. The evidence runner a34f80e2 on 63996217 is running now and will cover these.
+- Reviewers could not run ruff or any test; all review findings are from reading.
+
+**LEAD ACTIONS:** S603 ruling: I decided the builder restructures to literal command lists per call site, deletes tools/fixed_run.py and tests/fixed_run.py, and the guard keeps one git call inside itself (no sibling file). No waiver, no per-file ignore. Tell me if you want a different option. "LIVE" stays as the prod display word (old stage word is dev).
+
+**LIVE ITEMS:** a7978edf Part 6 batch 14 (resumed 05:17Z, box to ~06:15Z); a34f80e2 evidence runner on 63996217; a805b93d Part 2 batch 12; ac09a2ce SONAR-PATH batch 5.
+
+**ROUNDS (WHY):** Part 6 round 14 required after batch 14 (mode-safety, no cap).
+
+**FINISHED SINCE LAST BLOCK:** Part 6 round 13 design and codebase reviews saved; resolve report goldfish_review_report-r13.md (Status resolved); ledger PDBANNER-r13-1..5.
+
+**EGM STEP PER PACKAGE:** Part 6: resolve done, fix batch 14 started. Part 2: fix batch 12. SONAR-PATH: fix batch 5.
+
+**LANE SONAR-PATH:** batch 5 building; no SonarCloud finding claimed cleared.
+
+**RUN ON LAPTOP:** none yet (no clean round).
+
 ## 05:14Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
