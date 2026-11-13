@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:17Z (16:47 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-A3 | full suite on clean unpatched main 61ded9e, TMPDIR inside tree | show run-1 failures come from the folder, not the patch | 10:50Z / 16:20 | DONE 11:10Z | 1 of 1 | DONE (my run, raw log pushed A/raw/unpatched-main-full-tmpdir-in-tree.log): 2 failed, 3405 passed, 198 skipped, 1165 s (19m25s), no hang. The 2 failures are the same two tests as A run 1 (test_demo_folder_guard::test_a_missing_demo_folder_skips..., test_no_placeholders::test_no_placeholder_text_ships). So both come from the in-tree TMPDIR, not from the patches. 3405 vs 3781 passed: the patches add tests (difference 376; I did not count them per file) | include in summary.md |
+| RR6-B2 | mutation sets on tree-M (runner a7df64b5) | patches' mutants vs first-pass survivors | 10:15Z / 15:45 | hard stop 11:50Z (about 34 min left) | 1 of 1 | running; R log at 16 lines, SP pending; no report yet; counts unjudged | wait for report |
+| RR6-sum | summary.md with survivor table | LEAD 10:53Z | after B2 | about 11:30-11:40Z | n/a | waits for B2 | write when B2 reports |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle; 1 pytest process (B2's) running | none |
+
+ASK: none.
+
+
 ## REPORT 11:10Z (16:40 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
