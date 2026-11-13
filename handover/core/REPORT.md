@@ -1,5 +1,30 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:52Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 dcf64b36 (lead runner, 05:58Z command): policy_mutants shows 469 of 470 good. Mutant row B17 ("the files that do not parse are merged") SURVIVED, so no test kills it. Not yet fixed; builder a592bb13 is writing the killing test.
+- Banner mutant B12 ("the lists get a default again") had no killing test at dd827d79. Batch 15 must show B12 killed on its own head; evidence runner a3ea530e was told to run it.
+- Not run at dcf64b36: notes_lines_check, gitleaks, trivy, semgrep, pip-audit, zizmor, stale-ignore, demo_only_guard. The cloud session cannot run trivy, semgrep, pip-audit or zizmor (not installed, 8-minute limit); gitleaks runs on every push here. Proposed to the lead as RUN ON LAPTOP below.
+- SONAR-PATH 622027cc is NOT clean (round 5: 0 Blocker, 6 Major). Batch 6 building. No SonarCloud finding is claimed cleared.
+- Part 6 8c814fe6 (round 14): 0 Blocker, 3 Major (wording "follows the core exactly"; "all on the hiding side" false for bypass=true; one expectation sits on the wrong assert). Batch 15 sent.
+- Part 2 54c3d8a2: runner found no failing test, but counts differ from builder (62 vs 57). Batch 13 building.
+- Git: the stuck-rebase fault recurred twice (runner writes while I pull). Repaired by removing the empty rebase folder; the tree is clean and HEAD equals origin.
+
+**LEAD ACTIONS:** (1) Q-R5-1 still open: recommended keep the refusal of operator-typed links that leave their folder. (2) Please run or assign the tools listed above.
+
+**LIVE ITEMS:** a592bb13 Q8c-1 B17; a805b93d Part 2 batch 13; ac09a2ce SONAR batch 6; a8d58542 SONAR runner; a3ea530e Part 6 runner; a7978edf Part 6 batch 15. 6 agents live.
+
+**ROUNDS (WHY):** Part 6 round 15 required (mode-safety path, code changes). SONAR round 6 required (path-safety, code changes). Part 2 round 13 after batch 13.
+
+**FINISHED SINCE LAST BLOCK:** Part 6 round 14 resolved (20 fixes, 3 declined); SONAR round 5 resolved; ledger rows PDBANNER-r14-1..3, SONARPATH-r5-1..5 pushed.
+
+**EGM STEP PER PACKAGE:** Q8c-1: build. Part 6: builder (batch 15) + runner. SONAR-PATH: builder (batch 6) + runner. Part 2: builder (batch 13).
+
+**LANE SONAR-PATH:** branch core/k1b-path-confinement not yet READY.
+
+**RUN ON LAPTOP:** core/q8c1-notes-check dcf64b36: notes_lines_check, trivy fs, semgrep, pip-audit, zizmor, stale-ignore check, demo_only_guard (loopback only, no prompts); gitleaks already clean on each push.
+
 ## 05:44Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

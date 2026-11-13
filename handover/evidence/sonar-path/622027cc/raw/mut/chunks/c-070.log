@@ -1,0 +1,7 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R4-12 the range is dropped: Hangul filler  [test_pin_r4_range_12] t=9s
+ok  KILLED         R4-13 the range is dropped: variation selectors  [test_pin_r4_range_13] t=10s
+ok  KILLED         R4-13 the range ends one early: variation selectors  [test_pin_r4_range_13] t=11s
+ok  KILLED         R4-13 the range starts one late: variation selectors  [test_pin_r4_range_13] t=12s
+ok  KILLED         R4-14 the range is dropped: byte order mark  [test_pin_r4_range_14] t=13s
+ok  KILLED         R4-15 the range is dropped: halfwidth Hangul filler  [test_pin_r4_range_15] t=15s

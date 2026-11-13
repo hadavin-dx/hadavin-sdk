@@ -1,1 +1,12 @@
 sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R4-02 the range is dropped: soft hyphen  [test_pin_r4_range_02] t=8s
+ok  KILLED         R4-03 the range is dropped: combining grapheme joiner  [test_pin_r4_range_03] t=10s
+ok  KILLED         R4-04 the range is dropped: Arabic letter mark  [test_pin_r4_range_04] t=11s
+ok  KILLED         R4-05 the range is dropped: Hangul fillers  [test_pin_r4_range_05] t=13s
+ok  KILLED         R4-05 the range ends one early: Hangul fillers  [test_pin_r4_range_05] t=15s
+ok  KILLED         R4-05 the range starts one late: Hangul fillers  [test_pin_r4_range_05] t=17s
+ok  KILLED         R4-06 the range is dropped: Khmer inherent vowels  [test_pin_r4_range_06] t=19s
+ok  KILLED         R4-06 the range ends one early: Khmer inherent vowels  [test_pin_r4_range_06] t=21s
+ok  KILLED         R4-06 the range starts one late: Khmer inherent vowels  [test_pin_r4_range_06] t=23s
+ok  KILLED         R4-07 the range is dropped: Mongolian vowel separator  [test_pin_r4_range_07] t=25s
+SLICE 50:60 10 of 10 good; problems: []; elapsed 26s
