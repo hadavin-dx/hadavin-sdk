@@ -160,15 +160,14 @@ TONES = ("demo", "real", "quiet", "unconfirmed")
 # The (component, kind) pairs that connect to nothing outside the process. They are neither a real service nor a
 # stand-in, so the banner does not list them. This is an explicit allow-list; it is not derived from the table the prod
 # gate reads (`backends.table.NOT_PROD`, which is about what is allowed in prod and can grow for other reasons); only the
-# name of the built-in detector kind is read from `backends.table.DEFAULTS`: every OTHER
-# kind outside the DEMO_ONLY table counts as real, so a kind this file does not know, or a kind added to another table
-# later, is never hidden: naming too much is the safe mistake. A test pins the exact content.
+# name of the built-in detector kind is read from `backends.table.DEFAULTS`: every OTHER kind outside the DEMO_ONLY
+# table counts as real, so a kind this file does not know, or a kind added to another table later, is never hidden:
+# naming too much is the safe mistake. A test pins the exact content.
 #   ("signer", "none")   no signing at all: nothing is called.
 #   ("anchor", "none")   no anchoring at all: nothing is called.
 #   ("detector", <the default detector kind>)  the built-in pattern detector runs inside the process.
 # Not listed on purpose: ("signer", "ed25519_local") signs in process but reads its key from the secrets component or a
-# file and is shown as real (the safe reading); every other signer and
-# anchor kind calls a key service or a storage service over the network.
+# file and is shown as real (the safe reading); every other signer and anchor kind calls a key service or a storage service over the network.
 NOTHING_CONNECTED: frozenset[tuple[str, str]] = frozenset(
     {("signer", "none"), ("anchor", "none"), ("detector", DEFAULTS["detector"])}
 )
@@ -728,10 +727,14 @@ def banner_or_unconfirmed(
     overridden: Sequence[str] | None,
 ) -> dict[str, Any]:
     """What a screen should call: the finished banner as plain data (`banner_from_config(...).as_dict()`), or, when the
-    banner cannot be built for any reason (a missing config field, a name that is not plain words, a spec without
-    hosts), `not_confirmed(words)`. One log line names the kind of error and nothing from the config (no value, no host,
-    no name). `tool_specs` and `overridden` are required, so forgetting either is a TypeError at the call, before this function runs;
-    `overridden=None` (not known) gives the not-confirmed banner. The supported call for an app is `App.mode_banner()`."""
+    banner cannot be built with one of `READ_ERRORS` (a missing config field, a name that is not plain words, a spec
+    without hosts), `not_confirmed(words)`. An error of any other type is a bug and propagates.
+
+    Log rule: this function logs one warning on EVERY call that cannot build the banner (not once per process; the
+    error type only, nothing from the config), and a debug line for `overridden=None`. `App.mode_banner()` calls it, so
+    that path is logged on every call. `tool_specs` and `overridden` are required, so forgetting either is a TypeError
+    at the call; `overridden=None` (not known) gives the not-confirmed banner. The supported call for an app is
+    `App.mode_banner()`."""
     if overridden is None:  # the expected "not known" answer: no raise, no warning
         _LOG.debug("mode banner: overridden is not known: showing the not-confirmed banner")
         return _not_confirmed_that_cannot_fail(words)
@@ -749,13 +752,11 @@ def banner_or_unconfirmed(
 
 
 def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
-    """`not_confirmed(words)`, but built so that malformed `words` cannot make it fail: the tag
-    and the text of `words` are used
-    only when both are non-empty texts the page script will show; otherwise (malformed `words`,
-    a missing field, a getter that
-    fails with one of `READ_ERRORS`) the default words are used. An error of any other type is a
-    bug and propagates, so the
-    caller gets an error and no banner (never a made-up or a quiet one)."""
+    """`not_confirmed(words)`, but built so that malformed `words` cannot make it fail: the tag and the text of `words`
+    are used only when both are non-empty texts the page script will show; otherwise (malformed `words`, a missing
+    field, a getter that fails with one of `READ_ERRORS`) the default words are used, with one debug line. An error of
+    any other type is a bug and propagates, so the caller gets an error and no banner (never a made-up or a quiet
+    one)."""
     shown: dict[str, Any] | None = None
     try:
         given = cast(BannerWords, words)
@@ -779,10 +780,8 @@ def _not_confirmed_that_cannot_fail(words: object) -> dict[str, Any]:
 
 
 def not_confirmed_banner(words: object = DEFAULT_WORDS) -> dict[str, Any]:
-    """`not_confirmed(words)` that malformed words cannot make fail (they give the default
-    words; see
-    `_not_confirmed_that_cannot_fail` for the one rule on error types): for a caller that must
-    get a finished banner."""
+    """`not_confirmed(words)` that malformed words cannot make fail (they give the default words; see
+    `_not_confirmed_that_cannot_fail` for the one rule on error types): for a caller that must get a finished banner."""
     return _not_confirmed_that_cannot_fail(words)
 
 

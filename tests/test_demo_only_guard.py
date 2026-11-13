@@ -2550,26 +2550,60 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there (the helper file is copied in; the old head has no such file). A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_pin_the_shared_start_of_a_program_refuses_a_shell_and_a_command_string() -> None:
-    from tools.fixed_run import run_fixed
+# fail-before: the helper file does not exist on the old heads, so there is nothing to run there; it is a new contract, tested here and by rows R13A9 and R14D1.
+def test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
+    None
+):
+    from tools.fixed_run import ALLOWED_KEYWORDS, run_fixed
 
-    for kwargs in ({"shell": True}, {"shell": 1}):
+    for kwargs in (
+        {"shell": True},
+        {"shell": 1},
+        {"executable": "/bin/sh"},
+        {"preexec_fn": print},
+        {"stdin": None},
+    ):
         try:
             run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
-        except ValueError:
+        except ValueError as refusal:
+            assert next(iter(kwargs)) in str(refusal), (
+                f"the refused keyword is not named: {refusal}"
+            )
             continue
-        raise AssertionError(f"a shell was started with {kwargs}")
-    for bad in ("echo hello", b"echo hello", [], ()):
+        raise AssertionError(f"a program was started with {kwargs}")
+    assert not ({"shell", "executable", "preexec_fn", "stdin"} & ALLOWED_KEYWORDS), (
+        "a risky keyword is allowed"
+    )
+
+
+def test_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text() -> (
+    None
+):
+    from tools.fixed_run import run_fixed
+
+    for bad in (
+        "echo hello",
+        b"echo hello",
+        [],
+        (),
+        None,
+        [sys.executable, 7],
+        [sys.executable, None],
+    ):
         try:
             run_fixed(bad, check=True)
         except TypeError:
             continue
-        raise AssertionError(f"a command that is not a list was run: {bad!r}")
+        raise AssertionError(f"a command that is not a list of texts was run: {bad!r}")
+    for bad in ([sys.executable, "-c", "pass\0x"], ["git\0", "status"]):
+        try:
+            run_fixed(bad, check=True)
+        except TypeError:
+            continue
+        raise AssertionError(f"a text with a NUL character was run: {bad!r}")
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there (the helper file is copied in; the old head has no such file). A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
+def test_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
     from tools.fixed_run import run_fixed
 
     done = run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
@@ -2581,3 +2615,36 @@ def test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_fo
         assert missing in str(stop), f"the missing program is not named: {stop}"
     else:
         raise AssertionError("a missing program did not stop the caller")
+
+
+def _calls_of(path: Path, names: set[str]) -> list[Any]:
+    import ast
+
+    out = []
+    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(node, ast.Call):
+            f = node.func
+            called = (
+                f.id if isinstance(f, ast.Name) else f.attr if isinstance(f, ast.Attribute) else ""
+            )
+            if called in names:
+                out.append(node)
+    return out
+
+
+def test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper() -> None:
+    import ast
+
+    for name in ("demo_only_guard.py", "scan_repo.py"):
+        tree = ast.parse((ROOT / "tools" / name).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                owner = node.func.value
+                assert not (isinstance(owner, ast.Name) and owner.id == "subprocess"), (
+                    f"{name} line {node.lineno}: a program is started without the helper"
+                )
+        calls = _calls_of(ROOT / "tools" / name, {"run_fixed"})
+        assert calls, f"{name} no longer uses the helper"
+        for call in calls:
+            risky = {k.arg for k in call.keywords} & {"shell", "executable", "preexec_fn"}
+            assert not risky, f"{name} line {call.lineno}: passes {sorted(risky)}"

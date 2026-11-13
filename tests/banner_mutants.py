@@ -1979,15 +1979,15 @@ M = [
     ),
     gd(
         "R9D7 a quoted value is read as an unquoted one",
-        '            if end < n and line[end] in "\'\\"":',
-        "            if False:",
+        '    if end < n and line[end] in "\'\\"":\n',
+        "    if False:\n",
         "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
         'quoted password="ab cd\'ef"',
     ),
     gd(
         "R9D8 an inner quote or ampersand ends an unquoted value",
-        "                while end < n and not line[end].isspace():\n                    end += 1\n            value = line[at + 1 : end]",
-        '                while end < n and not line[end].isspace() and line[end] not in "\'\\"&":\n                    end += 1\n            value = line[at + 1 : end]',
+        "    while end < n and not line[end].isspace():\n        end += 1\n    return end",
+        '    while end < n and not line[end].isspace() and line[end] not in "\'\\"&":\n        end += 1\n    return end',
         "test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list",
         'unquoted password="ab\'cd"',
     ),
@@ -2449,6 +2449,13 @@ M = [
         "a bug of an unnamed type was turned into a banner",
     ),
     mb(
+        "R14C1 the endpoint check of a source catches every error",
+        "    except READ_ERRORS:\n        return True  # any failure to read the source",
+        "    except Exception:\n        return True  # any failure to read the source",
+        "test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer",
+        "an unnamed type in the endpoint of a source was turned into an answer",
+    ),
+    mb(
         "R13A6 the words of the banner may fail with any error",
         "    except READ_ERRORS as exc:  # malformed words\n",
         "    except Exception as exc:  # malformed words\n",
@@ -2468,17 +2475,17 @@ M = [
         "R13A8 the list of read errors takes every error",
         "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)",
         "READ_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError, Exception)",
-        "test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner",
-        "a bug of an unnamed type was turned into a banner",
+        "test_the_list_of_read_errors_holds_no_type_that_takes_every_error",
+        "READ_ERRORS holds a type that takes every error",
     ),
     ap(
         "R13A9 the shared start of a program accepts a shell",
         "tools/fixed_run.py",
-        '    if kwargs.get("shell"):\n',
+        "    if refused:\n",
         "    if False:\n",
         T_G,
-        "test_pin_the_shared_start_of_a_program_refuses_a_shell_and_a_command_string",
-        "a shell was started",
+        "test_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list",
+        "a program was started with {'shell'",
     ),
     gd(
         "R13B1 the token after a scheme word in an authorization pair is not hidden",
@@ -2523,21 +2530,14 @@ EQUIVALENT = {
 }
 
 
-# The number of rows in `M` (the CHANGELOG states it; a table test compares this constant with the rows it parses out of
+# The number of rows in `M` (the CHANGELOG states it; a table test compares this value with the rows it parses out of
 # the text of this file, so it cannot drift from the table).
-ROW_COUNT: int = 333
+ROW_COUNT: int = len(M)
 
-# Rows that share one killer AND one expectation on purpose: one is left (batch 13). Each of the six groups that used to
-# share one assertion now has an assertion message that shows the observed value, and each row expects the fragment of
-# that value its own mutation produces. A new pair needs its own entry here (key: the space-joined labels in table order,
-# as `shape_problems` builds it) with a reason read from the killer, or its own message in the killer.
-SAME_ASSERT: dict[str, str] = {
-    "R13A5 R13A8": (
-        "one site, two ways to catch every error there: R13A5 writes `except Exception` at the site, R13A8 adds `Exception` to "
-        "the shared tuple that the site names; the killer assert is the same one by design (an error of an unnamed type is "
-        "turned into a banner)"
-    ),
-}
+# Rows that share one killer AND one expectation on purpose: none is left (batch 14: R13A5 and R13A8 each have their own
+# killer). A new pair needs its own entry here (key: the space-joined labels in table order, as `shape_problems` builds it)
+# with a reason read from the killer, or its own message in the killer.
+SAME_ASSERT: dict[str, str] = {}
 
 # The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an assertion of the killer),
 # so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row

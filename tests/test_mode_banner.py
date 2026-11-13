@@ -3764,9 +3764,7 @@ def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
 ) -> None:
     # the other side of the rule above: each error in `READ_ERRORS` is an unreadable banner, shown
     # as not confirmed
-    for kind in (
-        getattr(mb, "READ_ERRORS", None) or mb._READ_ERRORS
-    ):  # the old head has the private name
+    for kind in mb.READ_ERRORS:
 
         def raise_kind(*_a, _kind=kind, **_k):
             raise _kind("unreadable")
@@ -3779,6 +3777,40 @@ def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
         else:  # `_seal` returns nothing: the app is sealed as unreadable
             assert app.mode_banner()["tone"] == "unconfirmed", f"{site}: {kind.__name__}"
         monkeypatch.undo()  # the next error type starts from an untouched app
+
+
+# fail-before: the old heads name no READ_ERRORS tuple (they have a private one), so the first run there fails on that name, which is not a behaviour result; this is a new check of the tuple itself.
+def test_the_list_of_read_errors_holds_no_type_that_takes_every_error() -> None:
+    wide = [kind.__name__ for kind in mb.READ_ERRORS if issubclass(_Surprise, kind)]
+    assert not wide, f"READ_ERRORS holds a type that takes every error: {wide}"
+
+
+# fail-before: not run on the old heads; the source check at mode_banner.py `_source_leaves_this_machine` is the sixth `except READ_ERRORS` site (the other five are in the surprise list above).
+def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(mb, "source_endpoint", _raise_surprise)
+    try:
+        mb._source_leaves_this_machine(object())
+    except _Surprise:
+        return
+    raise AssertionError(
+        "a bug of an unnamed type in the endpoint of a source was turned into an answer"
+    )
+
+
+def test_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine(
+    monkeypatch,
+) -> None:
+    for kind in mb.READ_ERRORS:
+
+        def raise_kind(*_a, _kind=kind, **_k):
+            raise _kind("unreadable")
+
+        monkeypatch.setattr(mb, "source_endpoint", raise_kind)
+        assert mb._source_leaves_this_machine(object()) is True, (
+            f"{kind.__name__} did not read as unknown"
+        )
 
 
 # fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a bug in the channel was reported as an undelivered card

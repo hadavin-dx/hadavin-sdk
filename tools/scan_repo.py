@@ -14,10 +14,23 @@ import re
 import sys
 from pathlib import Path
 
-try:  # imported as `tools.scan_repo` (tests) or run as a script, where `tools/` is the first path entry
-    from tools.fixed_run import run_fixed
-except ModuleNotFoundError:
-    from fixed_run import run_fixed
+
+def _load_fixed_run():
+    """The program starter next to this file, read by its file path: never an installed or foreign `tools` package, and
+    it works when the file is run alone with `-I` (the script folder is not on the path then)."""
+    from importlib import util
+
+    spec = util.spec_from_file_location(
+        "fixed_run", Path(__file__).resolve().with_name("fixed_run.py")
+    )
+    if spec is None or spec.loader is None:
+        raise SystemExit("the program starter next to this file (fixed_run.py) cannot be read")
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.run_fixed
+
+
+run_fixed = _load_fixed_run()
 
 HERE = Path(__file__).resolve().parent
 EXAMPLE_KEY = "AKIAIOSFODNN7EXAMPLE"  # the one literal AWS documents as a placeholder

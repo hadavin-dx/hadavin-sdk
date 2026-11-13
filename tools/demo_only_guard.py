@@ -78,23 +78,23 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-try:  # imported as `tools.demo_only_guard` (tests) or run as a script, where `tools/` is the first path entry
-    from tools.fixed_run import run_fixed
-except (
-    ModuleNotFoundError
-):  # run by path with `-I`: the script folder is not on the path, so read the sibling by its file
-    import importlib.util as _util
 
-    _spec = _util.spec_from_file_location(
+def _load_fixed_run():
+    """The program starter next to this file, read by its file path: never an installed or foreign `tools` package, and
+    it works when the file is run alone with `-I` (the script folder is not on the path then)."""
+    from importlib import util
+
+    spec = util.spec_from_file_location(
         "fixed_run", Path(__file__).resolve().with_name("fixed_run.py")
     )
-    if _spec is None or _spec.loader is None:
-        raise SystemExit(
-            "the guard helper next to this file (fixed_run.py) cannot be read"
-        ) from None
-    _mod = _util.module_from_spec(_spec)
-    _spec.loader.exec_module(_mod)
-    run_fixed = _mod.run_fixed
+    if spec is None or spec.loader is None:
+        raise SystemExit("the program starter next to this file (fixed_run.py) cannot be read")
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.run_fixed
+
+
+run_fixed = _load_fixed_run()
 
 HERE = Path(__file__).resolve().parent
 # The first bytes a file with each of the endings that may hold a non-text file must start with. The content decides: a
@@ -278,23 +278,30 @@ def _git_env() -> dict[str, str]:
 # What is hidden in git's own line (`_hide_secrets`), in this order:
 #  1. everything after a literal `Authorization:` header name, to the end of the line, whatever the scheme (Basic, Bearer,
 #     Digest ...). This is WIDER than the core redactor on purpose: a header name was given, so everything after it is a credential;
-#  2. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`) by EXACTLY the two rules of `hadavin_sdk.guard.redact`
-#     (BEARER: token of 12 or more characters; BASIC: 8 or more): the same patterns, copied here because the guard runs
-#     without importing the product package; a test compares the pattern text with the core and runs both on a table of inputs.
-#     Shorter tokens stay visible, as in the core. These run BEFORE the pairs below: in `authorization=Bearer <token>` the pair
-#     value stops at the first white space, so a pair step that ran first would hide only the word `Bearer` and leave the
-#     token in clear;
+#  2. a bare scheme word and its token (`Bearer abc...`, `Basic abc...`): first the two rules of `hadavin_sdk.guard.redact`
+#     (BEARER: token of 12 or more characters; BASIC: 8 or more; the same patterns, copied here because the guard runs
+#     without importing the product package; a test compares the pattern text with the core and runs both on a table of
+#     inputs), then TWO EXTRA rules that hide more than the core: a token (letters, digits and `. _ ~ + / - < >`, then `=`
+#     padding) that is 16 or more characters long, or that holds both a letter and a digit, is hidden at any length. The
+#     guard therefore hides, for a bare scheme word and its token, everything the core hides and some more. These run BEFORE the
+#     pairs below: in `authorization=Bearer <token>` the pair value stops at the first white space, so a pair step that ran
+#     first would hide only the word `Bearer` and leave the token in clear;
 #  3. the user and password part of a URL: everything between `://` and the LAST `@` before the next white space (a password
 #     that holds `@` or `/` is hidden whole; a path that holds an `@` is over-hidden, the safe side);
 #  4. the value of a `name=value` pair whose NAME holds key, token, secret, password, passwd, pwd, auth or credential (case
 #     does not matter): a value that starts with a quote runs to the matching quote (a backslash escapes), any other value runs
 #     to white space (an inner quote or `&` does not end it). So `bypass_key=x` and `bypass_token=x` are hidden and a bare
-#     `bypass=true` at the END of the line is shown (a bare `bypass` is hidden unless its value is exactly true, false, yes, no, on, off, 0 or 1 and nothing but white space follows it).
+#     `bypass=true` at the END of the line is shown. A bare name `bypass` is hidden unless its value is exactly true, false,
+#     yes, no, on, off, 0 or 1 (any case) and nothing but white space follows it on the line. After a name that holds `auth`
+#     and a value that is a scheme word (Bearer, Basic, Digest) the pair also takes the token after it, at any length, and a
+#     value that starts with a quote runs to the matching quote (`authorization=Bearer "a b"` is hidden whole).
 # Stated limits: only the `name=value` form is read, so the colon form (`password: x`, `"token": "x"`, `--password x`) is NOT
 # hidden here (git's own first error line does not use it; the core redactor is the place for such text). A pair name is
 # looked for to the left of the `=` only.
-# Stated limit of the bearer rule: a token of 11 characters or fewer after a bearer word stays visible (`token=Bearer` + 11
-# characters is shown), exactly as on main (BEARER needs 12; BASIC needs 8); a test pins the 11/12 border.
+# Stated limit of the bare scheme word rules: a token after `Bearer` stays visible only when the core shows it too (11
+# characters or fewer, or a character the core pattern does not accept such as `Basic abc-defghijk`) AND it holds no digit
+# AND it is under 16 characters; `token=Bearer` + 11 letters is shown, as on main. A test pins the 11/12 border and the rows
+# that differ from the core (the two extra rules).
 # Five passes over the line (header, bearer, basic, URL, pairs), each with no nested repetition, so a very long line costs
 # time in proportion to its length (a test counts the reads).
 _BEARER = re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")
@@ -353,13 +360,28 @@ def _hide_shaped_scheme_token(line: str) -> str:
     )
 
 
+def _value_end(line: str, start: int) -> int:
+    """Where the value that begins at `start` ends: a value that starts with a quote runs to the matching quote (a backslash
+    escapes), any other value runs to white space."""
+    n = len(line)
+    end = start
+    if end < n and line[end] in "'\"":
+        quote = line[end]
+        end += 1
+        while end < n and line[end] != quote:
+            end += 2 if line[end] == "\\" else 1
+        return min(end + 1, n)
+    while end < n and not line[end].isspace():
+        end += 1
+    return end
+
+
 def _hide_pairs(line: str) -> str:
     out: list[str] = []
     pos = 0
     n = len(line)
-    last_text = len(
-        line.rstrip()
-    )  # a plain flag is shown only when nothing but white space follows it
+    # a plain on/off value of the bare word is shown only when nothing but white space follows it on the line
+    last_text = len(line.rstrip())
     at = line.find("=")
     while at >= 0:
         start = at
@@ -368,31 +390,16 @@ def _hide_pairs(line: str) -> str:
         name = line[start:at]
         named_secret = bool(_SECRET_NAME.search(name)) if start < at else False
         if start < at and (named_secret or name.lower() == _BARE_WORD):
-            end = at + 1
-            if end < n and line[end] in "'\"":
-                quote = line[end]
-                end += 1
-                while end < n and line[end] != quote:
-                    end += 2 if line[end] == "\\" else 1
-                end = min(end + 1, n)
-            else:
-                while end < n and not line[end].isspace():
-                    end += 1
+            end = _value_end(line, at + 1)
             value = line[at + 1 : end]
             if not named_secret and value.lower() in _PLAIN_FLAGS and end >= last_text:
                 at = line.find("=", at + 1)  # a bare flag word with a plain on/off value is shown
                 continue
-            if (
-                "auth" in name.lower()
-                and value.lower() in _SCHEME_WORDS
-                and not value.startswith(("'", '"'))
-            ):
+            if "auth" in name.lower() and value.lower() in _SCHEME_WORDS:
                 tail = end
                 while tail < n and line[tail].isspace() and line[tail] != "\n":
                     tail += 1
-                stop = tail
-                while stop < n and not line[stop].isspace():
-                    stop += 1
+                stop = _value_end(line, tail)
                 if stop > tail and line[tail:stop] != _HIDDEN:
                     end = stop  # `authorization=Bearer <token>`: the scheme word and the token, whatever the length
             out.append(line[pos : at + 1] + _HIDDEN)
@@ -469,7 +476,12 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
     if done.returncode != 0:
         raise SystemExit(_git_failure("git ls-files failed", done.stderr, repo))
     text = done.stdout.decode("utf-8", errors="surrogateescape")
-    return sorted({p for p in text.split("\0") if p})
+    paths = sorted({p for p in text.split("\0") if p})
+    if not paths:
+        raise SystemExit(
+            f"demo_only_guard: git listed no files in {repo}; refusing to scan an empty list"
+        )
+    return paths
 
 
 def _gitlinks(repo: Path) -> set[str]:

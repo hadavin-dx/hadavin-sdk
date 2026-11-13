@@ -129,12 +129,66 @@ def test_the_changelog_names_the_exact_error_types_the_banner_reads_and_the_card
     from hadavin_sdk import mode_banner as mb
 
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    read = ", ".join(f"`{t.__name__}`" for t in getattr(mb, "READ_ERRORS", None) or mb._READ_ERRORS)
+    read = ", ".join(f"`{t.__name__}`" for t in mb.READ_ERRORS)
     assert f"({read}; one tuple, defined once" in text, (
         f"the CHANGELOG does not list READ_ERRORS as the code has it: {read}"
     )
     delivery = ", ".join(f"`{t.__name__}`" for t in app_mod._DELIVERY_ERRORS)
-    for name in delivery.split(", ")[:-1]:
-        assert name in text
+    assert f"only for {_and_list(app_mod._DELIVERY_ERRORS)} (`_DELIVERY_ERRORS`)" in text, (
+        f"the CHANGELOG does not give the full delivery list as the code has it: {delivery}"
+    )
     assert "`build` does NOT fail" not in text, "the old, wider sentence is still there"
-    assert "`banner_or_unconfirmed` logs a warning on every call" in text, "the log rule per path"
+
+
+def _and_list(kinds: tuple[type, ...]) -> str:
+    names = [f"`{t.__name__}`" for t in kinds]
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def test_the_changelog_counts_the_read_error_sites_as_the_source_has_them() -> None:
+    sites = sum(
+        (ROOT / "src/hadavin_sdk" / name).read_text(encoding="utf-8").count("except READ_ERRORS")
+        for name in ("app.py", "mode_banner.py")
+    )
+    assert sites == 6, (
+        f"the source has {sites} `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the tests"
+    )
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "used by all six `except READ_ERRORS` sites" in text, (
+        "the CHANGELOG does not say how many sites there are"
+    )
+
+
+def test_the_changelog_states_the_log_rule_of_each_path_of_the_banner() -> None:
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    for phrase in (
+        "`banner_or_unconfirmed` logs a warning on every call",
+        "`App.mode_banner()` calls it, so a banner that cannot be built is logged on every call, not once",
+        "`_warn_once` covers only the sealing in `build`, the read of the connected parts and the read of `registry.tools`",
+        "the source check logs nothing and the words of the banner log at debug level",
+    ):
+        assert phrase in text, f"the log rule is not in the CHANGELOG: {phrase}"
+
+
+def test_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_and_by_the_function(
+    tmp_path, monkeypatch, caplog
+) -> None:
+    import logging
+
+    from tests.test_mode_banner import _sealed_app
+
+    def boom(*_a, **_k):
+        raise RuntimeError("unreadable")
+
+    from hadavin_sdk import mode_banner as mb
+
+    app = _sealed_app(tmp_path, "log1")
+    monkeypatch.setattr(mb, "banner_from_config", boom)
+    caplog.set_level(logging.WARNING)
+    for _ in range(3):
+        app.mode_banner()
+    lines = [r for r in caplog.records if "could not be built" in r.getMessage()]
+    assert len(lines) == 3, f"expected one warning per call, got {len(lines)}"
+    assert all(
+        "RuntimeError" in r.getMessage() and "unreadable" not in r.getMessage() for r in lines
+    )

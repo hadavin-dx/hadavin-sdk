@@ -1,8 +1,9 @@
 """The ONE place the project starts a program: the folder guard, `tools/scan_repo.py` and the tests all call `run_fixed`.
 
-The arguments are a fixed list (never a shell string, and `shell=True` is refused), the program is looked up on the PATH and
-run by its full path (this interpreter is already one), and a program that is not found stops the caller with its name. A
-single start point means the project's subprocess rule needs no waiver anywhere else."""
+The validated-argv contract: the arguments are a list or tuple of texts or paths (never one string), the program is an absolute
+path or is found on the PATH, only the keyword arguments in `ALLOWED_KEYWORDS` may be given (so `shell`, `executable`,
+`preexec_fn`, `stdin` and the like are refused), and a program that is not found stops the caller with its name. Because every
+caller goes through this one start point, the project's subprocess rule needs one marker, on the line that starts the program."""
 
 from __future__ import annotations
 
@@ -12,19 +13,24 @@ import subprocess
 from collections.abc import Sequence
 from typing import Any
 
+ALLOWED_KEYWORDS = frozenset(
+    {"cwd", "env", "capture_output", "text", "timeout", "input", "encoding"}
+)
+
 
 def run_fixed(
     argv: Sequence[str | os.PathLike[str]], *, check: bool, **kwargs: Any
 ) -> subprocess.CompletedProcess[Any]:
-    """The ONE place the guard, `tools/scan_repo.py` and the tests start a program: a fixed list of arguments (never a shell
-    string; `shell=True` is refused), the program found on the PATH and run by its full path (this interpreter is already
-    one). A missing program stops the caller with its name."""
-    if isinstance(argv, (str, bytes)) or not argv:
-        raise TypeError("run_fixed takes a list of arguments, never a shell string")
-    if kwargs.get("shell"):
-        raise ValueError("run_fixed never starts a shell")
-    first = os.fspath(argv[0])
-    exe = first if os.path.isabs(first) else shutil.which(first)
+    """Start `argv` once, with the contract of the module text. A broken contract raises before anything starts."""
+    if not isinstance(argv, (list, tuple)) or not argv:
+        raise TypeError("run_fixed takes a non-empty list or tuple of arguments, never a string")
+    refused = sorted(set(kwargs) - ALLOWED_KEYWORDS)
+    if refused:
+        raise ValueError(f"run_fixed does not accept {refused}: no shell, no executable, no hooks")
+    words = [os.fspath(a) for a in argv]
+    if not all(isinstance(w, str) and "\0" not in w for w in words):
+        raise TypeError("run_fixed takes texts or paths without a NUL character")
+    exe = words[0] if os.path.isabs(words[0]) else shutil.which(words[0])
     if exe is None:
-        raise SystemExit(f"{first} was not found on the PATH; nothing here guesses")
-    return subprocess.run([exe, *argv[1:]], check=check, **kwargs)
+        raise SystemExit(f"{words[0]} was not found on the PATH; nothing here guesses")
+    return subprocess.run([exe, *words[1:]], check=check, **kwargs)  # noqa: S603 - argv validated above, never a shell
