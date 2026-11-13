@@ -1,0 +1,13 @@
+ss...................ssssssssssssssssssssss....s.......s.......ss....... [ 96%]
+...                                                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [24] tests/test_gitleaks_exceptions.py:145: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:150: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:344: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:533: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:580: no gitleaks program on PATH (set GITLEAKS_BIN)
+47 passed, 28 skipped in 9.62s
+
+real	0m10.199s
+user	0m22.297s
+sys	0m0.331s

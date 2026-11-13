@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:17Z (17:47 IST; container clock 12:02Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| GITLEAKS TESTS (agent a6b01e5b) | the tests that skip without gitleaks | LEAD 12:02Z order (2) | 12:01Z / 17:31 | DONE | 1 of 1 | reported (runner output): BEFORE (no gitleaks): 47 passed, 28 skipped (24 in test_gitleaks_exceptions.py, 4 in test_hygiene.py, all "no gitleaks program"). AFTER (GITLEAKS_BIN=8.30.1, DPLD_REQUIRE_SCAN=1, unshare -n): test_gitleaks_exceptions 44 passed, test_hygiene 24 passed, test_codeant_hygiene 7 passed; all three in one run 75 passed, 0 failed, 0 skipped (47 + 28 = 75). Canary test_hygiene_scan_public: 1 passed. Failure table empty. Caveat: its runs 2-4 had TMPDIR inside the tree (my brief's template); runs 5-6 outside; same results | pushed to gates/GL |
+| GATES | lint workflow commands | order (1) | | DONE | | see 12:14Z block: all clean; gitleaks full-history re-run clean | none |
+| BROWSER (agent ad766811) | hash-locked playwright, run the 166 browser tests | order (2) | 12:01Z / 17:31 | hard stop 12:45Z (about 43 min); no checkpoint yet | 1 of 1 | running: pip install log, "before" run and browser file list exist; no browser result yet | wait |
+| AFTER-RUN | full-suite "after" counts | order | when BROWSER reports | about 12:25-12:45Z | n/a | not started: gitleaks side is ready, browser side pending. I will start it as soon as browser reports; if the browser cannot run, the after-run uses the gitleaks binary only (expect 28 more passes, 166 still skipped) | start then |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Counts so far: before 3781 passed, 0 failed, 198 skipped. Gitleaks side after: 28 more pass (198 -> 170 skipped expected). Browser side: pending.
+
+ASK: none new (earlier defaults stand: stay on 61ded9e; "cloud image blocks it" is an acceptable browser result).
+
+
 ## REPORT 12:14Z (17:44 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
