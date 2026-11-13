@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead, one line)
+R3 builder a804cecf: running, no checkpoint file yet (started 19:20Z, box ends ~20:20Z). Evidence runner a6382a93: running, hostile stage (EV2 logs full-A/B, failbefore, lint exist; no result yet). Nothing failed. ASK: none.
+
 ## STATUS 19:20Z (core lead)
 R3 BUILDER LAUNCHED (agent a804cecf9f9f39d83, sonnet, 60 min box, ends about 20:20Z, started 19:20Z): fixes R2-01..R2-12 on a copy tree-R3, no full suite, deliverables /home/user/build/rr6/out/R3/. EVIDENCE RUNNER a6382a93f1923c45c (r2 patch) still running. Nothing else running. ASK: none. LOAD: runner + builder.
 
