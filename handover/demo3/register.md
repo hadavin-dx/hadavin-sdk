@@ -10,3 +10,4 @@ L | my shell: tests/test_real_check_dry.py alone on main, timeout 600, started 1
 R1 | my rescue copy loops for orphaned logs of pids 652 (D run1) and 1351 (C2 full), 15 s, max 100 rounds | 10:40Z | ends when the pytest ends | running | check rescue.log
 E | agent ab117a..: edadd00 full suite once + F7/C1/bytes | 10:42Z | ~11:05Z | 10:47Z | running | check 10:55Z
 D | reported 10:57Z, closed (run 1 only, exit 0; suite-pr14.md corrected) | closed
+C2 | reported 11:02Z, closed: no hang, no failure; c2 full main 3407 passed 198 skipped 0 failed exit 0 1067 s | closed
