@@ -118,3 +118,4 @@ A run2 ~95%; B2 sets in progress
 10:58Z unpatched-main TMPDIR-in-tree check: 1 of 2 reproduced; B2 running
 11:00Z A3 at 55pct, B2 running
 11:00Z re-block (crossed with lead ping)
+11:10Z A3 95pct, B2 R set running
