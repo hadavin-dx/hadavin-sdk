@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 10:43Z CORE: realrun-v6 runners A and B2 still running
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full suite serial, run 2 in tree-A2, then 2-file rerun in tree-A1 | patched chain passes on Linux, repeatable | run 2 attempt 2 started 10:24Z / 15:54 IST | run 2 ends about 10:47Z (log at about 95%); hard stop 11:50Z / 17:20 IST | run 2 attempt 2 | running | wait for its report |
+| a7df64b5 (runner B2) | v6 mutant sets on tree-M | mutants killed by the new tests | 10:14Z / 15:44 IST, chain restarted 10:25Z | hard stop 11:50Z | chain 1, restarted | running (sets CN, M, P, S, K have result files; R, SP not yet) | wait for its report |
+
+Interim raw counts from B2's result files, unjudged, not reported by the runner and not final: CN 27 killed / 2 survived (29 rows); M 22 killed / 1 "wrong reason suspected" (23); P 7 killed / 3 survived (10); S 12 killed (12); K 7 killed / 1 survived (8, still growing). Not yet compared with the first-pass survivor list.
+No new results from A. Finished and pushed earlier: runners B and C. No core jobs. Nothing blocked.
+
+ASK:
+1. Mutant driver question (mut_portable.py instead of mut.py) still unanswered; default: B2 keeps mut_portable.py.
+2. Hard stop for A and B2 moved to 11:50Z because of the restart; default unless you say otherwise.
+
+
 ## REPORT 2026-11-13 10:35Z CORE: realrun-v6 runners A and B2 running after the restart
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

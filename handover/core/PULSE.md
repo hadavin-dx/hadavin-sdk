@@ -113,3 +113,4 @@ B2 mutation runner started; A,C running
 runner C reported; TMPDIR correction sent to A and B2
 container restart; A and B2 resumed
 A run2 ~56%; B2 mutant sets in progress
+A run2 ~95%; B2 sets in progress
