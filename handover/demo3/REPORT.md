@@ -1,3 +1,10 @@
+## HEARTBEAT 68 (15:34Z / 21:04 IST) - NOT YET FROZEN: 1 agent running
+
+B5e (fix-5 r5): valid full serial suite, run alone, started 15:19Z, now at 72 percent at 15:34Z with no F or E mark in any progress line so far (read from raw/b5e-full.log; not a result until the summary line). ETA about 15:41Z (21:11 IST). Then its 20 xdist runs (about 6 minutes), then its notes. FROZEN is written after B5e reports.
+
+FAILURES AND RETRIES: unchanged from HEARTBEAT 67 (B5e run 1 invalid, basetemp outside TMPDIR, per B5e; fix-2 r4 and fix-8 unreviewed; E3b cuts, PR #12 `E` marks, old xdist flake unexplained).
+Load: idle CPU 96 percent, free RAM 14.7 GB (15:34Z). 1 agent running. ASK list unchanged.
+
 ## HEARTBEAT 67 (15:24Z / 20:54 IST) - NOT YET FROZEN: 1 agent running
 
 STILL RUNNING: B5e (fix-5 r5, patch lane3-fix-5-r5.patch exists). Its full serial suite ALONE started 15:19Z (log raw/b5e-full.log); a full run takes about 20 minutes here, so ETA about 15:40Z (21:10 IST). Then its 20 xdist runs, then its notes. I write FROZEN after that report and the one freeze report to the lead.
