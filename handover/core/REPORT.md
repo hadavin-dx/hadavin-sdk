@@ -1,5 +1,15 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:24Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run: full suite on patched tree | before/after counts (before 3781 passed, 0 failed, 198 skipped) | 12:05Z container / 17:35 IST | about 12:35Z, ~10 min left | run 1 of 1 | RUNNING, at [ 63%] | read last line, push gates/AF |
+| MD-2 | closing run: 3 test-side mutation files + K6+K10 pair on final patched tree | 12:14Z order step 2 | after AF | about 12:45Z | 1 of 1 | WAITING for AF | start when AF ends |
+
+ASK: none
+
+
 ## REPORT 12:2xZ (container clock 12:18Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
