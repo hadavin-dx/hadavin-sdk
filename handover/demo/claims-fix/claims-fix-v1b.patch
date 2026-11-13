@@ -1,0 +1,50 @@
+diff --git a/.github/workflows/lint.yml b/.github/workflows/lint.yml
+index a35835a..185a973 100644
+--- a/.github/workflows/lint.yml
++++ b/.github/workflows/lint.yml
+@@ -1,7 +1,8 @@
+ # Checks that run on every pull request and every push to main.
+ # Rules for this file: every third-party Action is pinned to a full commit SHA (version in the comment, looked up
+-# 2026-11-09); read-only permissions; this file uses no repository secret (sonar.yml uses SONAR_TOKEN, only on its scan step); GitHub-hosted runner only; no pull request text
+-# is ever placed inside a run: step; versions and URLs go through env:.
++# 2026-11-09); read-only permissions; this file uses no repository secret (sonar.yml uses SONAR_TOKEN, only on its
++# scan step); GitHub-hosted runner only; no pull request text is ever placed inside a run: step; versions and URLs go
++# through env:.
+ name: lint
+ 
+ on:
+diff --git a/contract.md b/contract.md
+index 7c49e2e..b2b1cd3 100644
+--- a/contract.md
++++ b/contract.md
+@@ -19,7 +19,7 @@ This file is the single reference for the replies the desk and the fake servers
+ | Any other internal error | 500 | `{"error":"internal"}` | the receipt id, or `null` |
+ | Any 409 or `bad_decision` row (retry/resolve) | 409 / 400 | `{"error":"...","hint":"..."}` / `{"error":"bad_decision"}` | not present (these rows never carry `receipt_id`). In approval mode also `409 already_decided` (body: the six decision keys, no `hint`) and `403 not_an_approver` (resolve, see step 3a). |
+ 
+-The `Content-Type` header of a request is not checked: the body is read as JSON whatever it says (text/plain or a form type are accepted if the body parses as JSON). The body must be UTF-8 text: a body in another encoding, UTF-16 for example, cannot be read and is answered 400 `bad_envelope`. State once: only the POST /leads rows carry `receipt_id`. The 409 and `bad_decision` rows never carry it. A 503 from a lock wait, and 500, carry the receipt number, or `null` if the receipt was not yet written. 400 `bad_envelope` and 413 `too_large` carry `null`.
++The `Content-Type` header of a request is not checked: the body is read as JSON whatever it says (text/plain or a form type are accepted if the body parses as JSON). The body must be UTF-8 text: a body in another encoding, UTF-16 for example, cannot be read: `POST /leads` answers 400 `bad_envelope`, the resolve route 400 `bad_decision` and the step route 400 `bad_step`; any other route that reads a body answers 400 with its own code. State once: only the POST /leads rows carry `receipt_id`. The 409 and `bad_decision` rows never carry it. A 503 from a lock wait, and 500, carry the receipt number, or `null` if the receipt was not yet written. 400 `bad_envelope` and 413 `too_large` carry `null`.
+ 
+ Input rules (the tests are in `tests/test_input_edge_cases.py`, `tests/test_desk_edge_cases.py`, `tests/test_desk_http_edge_cases.py` and the other `tests/test_*_edge_cases.py` files, `tests/test_stamp_locks_and_budget.py`, `tests/test_model_stamp_and_reaper.py`, `tests/test_claim_checks_and_crm_mode.py`, `tests/test_hung_model_call.py` and `tests/test_hung_adapter_calls.py`):
+ * (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`.
+@@ -272,7 +272,7 @@ These rules are part of this contract. Where one differs from a table row above,
+   * The view `review_items` and the indexes (two partial ones, `receipts_open_ix` on open receipts and `followups_active_ix` on pending and sending follow-ups, plus `receipts_time_ix` and the unique `leads_email_key_uq`) belong to the schema.
+   * A desk's records made by an older version of the desk gets the columns, their backfills, the view and the indexes in ONE transaction at start-up (`db._migrate`): a crash in the middle changes nothing, and a book that has the columns but lost the view or an index is repaired at the next start.
+   * Backfills for books migrated this way are not corrected afterwards. The table `later_decisions` (approval mode, see Resolve check order step 3a) is created by the same script and is part of the schema; its two triggers are in the repair list.
+-- `crm_done` backfill: a `sending` row gets 2 (a put may have started; the safe path decides); a row whose `last_error` is `refused`, `unreachable`, `ambiguous` or `crash_while_sending` (the error came from the send, so the CRM was asked first) gets 1, in any state; a row whose `last_error` is `internal:CrmNothingStored`, `internal:KeyError`, `internal:ValueError` or `internal:LookupError` (the error happened before the CRM put) keeps 0, so the next try asks the CRM; any other `internal:` error gets 2; a `failed` row with a label and any other error gets 1 (older books asked the CRM before the first send); any other row that was tried (attempts > 0) gets 2. A row never tried (attempts 0, not `sending`) and a `sent` row are never touched. The order is the order of this list (`test_backfill_classes` checks nine of these cases).
++- `crm_done` backfill: a `sending` row gets 2 (a put may have started; the safe path decides); a row whose `last_error` is `refused`, `unreachable`, `ambiguous` or `crash_while_sending` (the error came from the send, so the CRM was asked first) gets 1, in any state except `sending`; a row whose `last_error` is `internal:CrmNothingStored`, `internal:KeyError`, `internal:ValueError` or `internal:LookupError` (the error happened before the CRM put) keeps 0, so the next try asks the CRM; any other `internal:` error gets 2; a `failed` row with a label and any other error gets 1 (older books asked the CRM before the first send); any other row that was tried (attempts > 0) gets 2. A row never tried (attempts 0, not `sending`) and a `sent` row are never touched. The order is the order of this list (`test_backfill_classes` checks nine of these cases).
+ - `ambiguous_prior` backfill: 1 for a `pending` row whose last_error is `crash_while_sending`. `send_started` backfill: 1 for a `sending` row with `crm_done=1` (it may have sent: the safe side), 0 elsewhere.
+ - Journal mode: `db.connect` raises RuntimeError unless the file is in WAL mode (a private `:memory:` book is exempt in `db.connect` itself, which single-threaded tests use; the desk never accepts one, see step (4) of the start-up list above).
+ - Lock file: the db path is resolved first (symlinks). BlockingIOError means another desk. On Windows only EACCES (locking violation) and EDEADLK mean another desk. Any other OSError, and a lock file that keeps being replaced (3 tries), give `LockUnavailableError` (the lock could not be taken for another reason; still a refusal).
+diff --git a/docs/settings.md b/docs/settings.md
+index 02bd58c..7b9a5aa 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -67,7 +67,7 @@ How reminders behave: a lead is reminded once when `nudge_after_seconds` have pa
+ 
+ The default addresses below end in `example.test`, a name reserved for examples. They are used only on the mail step, which never passes an address to a CRM. A real HubSpot account refused a contact whose address ended in `.test` (`docs/hubspot-probe.md`), so any made-up address of a lead that goes into a real CRM must end in a real domain such as `example.com`.
+ 
+-* `DESK_SMTP_HOST` (default `127.0.0.1`; must be a loopback IP address: the desk makes no name lookup, refuses a name and refuses any address that is not this computer's. The desk cannot tell what listens there: a real mail relay or a tunnel to a real server on `127.0.0.1` is the owner's responsibility, and the demo banner would then be wrong), `DESK_SMTP_PORT` (default 2525), `DESK_SMTP_FROM` (default `desk@example.test`), `DESK_SMTP_MESSAGE_ID_DOMAIN` (default `example.test`), `DESK_SMTP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender; it does not follow `DESK_SEND_TIMEOUT_SECONDS`).
++* `DESK_SMTP_HOST` (default `127.0.0.1`; must be a loopback IP address: the desk makes no name lookup, refuses a name and refuses any address that is not this computer's. The desk cannot tell what listens there: a real mail relay or a tunnel to a real server on `127.0.0.1` is the owner's responsibility, and the demo banner would then be wrong), `DESK_SMTP_PORT` (default 2525), `DESK_SMTP_FROM` (default `desk@example.test`), `DESK_SMTP_MESSAGE_ID_DOMAIN` (default `example.test`), `DESK_SMTP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender; it is only the fallback when a send is made without a time limit (a limit of 0 or less), and the desk always gives one: `DESK_SEND_TIMEOUT_SECONDS`, with the whole deadline capped at `CALL_DEADLINE_MAX_SECONDS`, 9 seconds. So the real wait follows `DESK_SEND_TIMEOUT_SECONDS`).
+ 
+ `DESK_OUTBOX=smtp_provider`:
+ 
