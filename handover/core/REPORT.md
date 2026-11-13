@@ -1,5 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:1xZ CORE: GO (narrow) steps 1-3 done; core packages stay PAUSED
+STEP 1: agents 0, shells 0 of mine (only the harness processes remain: environment-manager, the claude preload). Main repo: `git status --porcelain` empty, `git log @{u}..HEAD` empty.
+STEP 2 disk: free 6 GB before, 16 GB after. TARGET 25 GB NOT MET. Removed: 150 clean worktrees whose HEAD is contained in a remote branch (`git worktree remove`; list saved before in /home/user/build/wt-saved-before-prune.txt), all venvs, all `*-tmp` scratch dirs, pytest temp dirs. Left on purpose (3 worktrees): B-Q8a1-b8 (untracked handover/), B-Q8c1-b12 (one untracked gitleaks log), EV-Q8a1-b16-20581c80/wt-mut (HEAD not seen on a remote branch by my check; it is on pushed branch scratch/stop-1113-EV-Q8a1-b16-20581c80-wt-mut). Still large and kept because they may hold raw evidence not on any branch: /home/user/build/evidence-raw (283 MB), snapshots under /home/user/build/snap, /tmp (about 3 GB of my review files). Next step to reach 25 GB: say if I may delete those after you confirm they are saved, or delete the 3 left trees.
+STEP 3 probe (no login, nothing installed): nproc 4; RAM 15 GB total (9 GB free); python 3.13.18 and 3.12.3; uv 0.11.32; node v22.23.4 and npx present; n8n not installed, npm registry reachable (`npm view n8n version` = 2.47.6), so `npx n8n` should be startable but I have NOT started it. Docker: client 29.9.2 installed, but the daemon is NOT reachable (`failed to connect to the docker API at /var/run/docker.sock`), so no containers can run here. Clone: public repo duplicate-proof-lead-desk-n8n cloned read-only, depth 1, no token, to /home/user/build/dpld-main at 61ded9e (README, contract.md, demo_only, docs, load_tools, ...). Nothing pushed to it.
+STEP 4: waiting for demo lane briefs. Synthetic data only, no model calls, no merges.
+
+
 ## STOPPED 2026-11-13 (CORE)
 Verified from a clean `git fetch --all --prune` (second run after the sweep). Resume file: handover/CLOUD-RESUME-2026-11-13.md.
 
