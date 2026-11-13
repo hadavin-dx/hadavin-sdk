@@ -52,6 +52,7 @@ def weak_expectations(rows=None) -> list[tuple[str, str]]:
             or e.startswith("AssertionError: (")
             or (e.startswith("assert ") and len(e) < 30)  # a bare comparison of two short values
             or (e.startswith("AssertionError: ") and len(e) < 24)
+            or "..." in e  # pytest shortened the line: what hides behind the dots is not checked
         )
         if generic:
             weak.append((m.name, e))
@@ -75,6 +76,15 @@ def test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported
         bm.mutant("Z4 boom", "x.py", "a", "b", "t.py", "test_k", "boom"),
         bm.mutant("Z5 cut", "x.py", "a", "b", "t.py", "test_k", "assert 0 == 2"),
         bm.mutant("Z6 tuple", "x.py", "a", "b", "t.py", "test_k", "AssertionError: ('x',)"),
+        bm.mutant(
+            "Z8 dots",
+            "x.py",
+            "a",
+            "b",
+            "t.py",
+            "test_k",
+            "wrong value in ['src/pkg/a.p...-only-folder']",
+        ),
     ]
     assert [name for name, _ in weak_expectations(rows)] == [
         "Z2 bare",
@@ -82,6 +92,7 @@ def test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported
         "Z4 boom",
         "Z5 cut",
         "Z6 tuple",
+        "Z8 dots",
     ]
     same = bm.mutant("Z7 same", "x.py", "a", "a", "t.py", "test_k", "wrong value written")
     assert [m.name for m in [good, same] if m.old == m.new] == ["Z7 same"]

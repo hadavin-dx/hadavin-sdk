@@ -97,7 +97,9 @@ def test_product_code_that_names_the_folder_is_a_hit_with_file_and_line_only(
     tmp_path: Path,
 ) -> None:
     repo = _repo(tmp_path, {**CLEAN, "src/pkg/a.py": f"x = 1\nimport {FOLDER}.fakes\n"})
-    assert g.scan(repo, _cfg()) == ["src/pkg/a.py:2: names-demo-only-folder"]
+    assert g.scan(repo, _cfg()) == ["src/pkg/a.py:2: names-demo-only-folder"], (
+        "product_code_that_names_the_folder_is_a_hit_with_file_and_li: check 1"
+    )
 
 
 def test_a_fake_record_id_in_product_code_is_a_hit_and_the_id_is_not_printed(
@@ -105,7 +107,9 @@ def test_a_fake_record_id_in_product_code_is_a_hit_and_the_id_is_not_printed(
 ) -> None:
     repo = _repo(tmp_path, {**CLEAN, "src/pkg/b.py": 'ID = "FAKE-REC-0042"\n'})
     hits = g.scan(repo, _cfg())
-    assert hits == ["src/pkg/b.py:1: fake-record-id"] and "0042" not in "".join(hits)
+    assert hits == ["src/pkg/b.py:1: fake-record-id"] and "0042" not in "".join(hits), (
+        "a_fake_record_id_in_product_code_is_a_hit_and_the_id_is_not_: check 1"
+    )
 
 
 def test_the_table_name_and_listed_phrases_are_not_hits_but_a_path_or_a_longer_word_is(
@@ -137,7 +141,9 @@ def test_the_folder_inside_a_product_root_is_a_hit(tmp_path: Path) -> None:
 
 def test_a_missing_product_root_is_a_hit_not_a_silent_pass(tmp_path: Path) -> None:
     hits = g.scan(_repo(tmp_path, {f"{FOLDER}/a.json": "{}", MARKER: ""}), _cfg())
-    assert hits == ["src: product-root-missing (a missing root would make the scan prove nothing)"]
+    assert hits == [
+        "src: product-root-missing (a missing root would make the scan prove nothing)"
+    ], "a_missing_product_root_is_a_hit_not_a_silent_pass: check 1"
 
 
 def test_a_loader_may_name_the_folder_and_nothing_else_may(tmp_path: Path) -> None:
@@ -152,18 +158,24 @@ def test_a_loader_may_name_the_folder_and_nothing_else_may(tmp_path: Path) -> No
 def test_a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fake_id(tmp_path: Path) -> None:
     loader = ("src/pkg/loader.py",)
     one = _repo(tmp_path / "one", {**CLEAN, "src/pkg/loader.py": f"A = '{FOLDER}'\nB = 1\n"})
-    assert g.scan(one, _cfg(loaders=loader)) == []
+    assert g.scan(one, _cfg(loaders=loader)) == [], (
+        "a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fa: check 1"
+    )
     two = _repo(
         tmp_path / "two", {**CLEAN, "src/pkg/loader.py": f"A = '{FOLDER}'\nB = '{FOLDER}'\n"}
     )
     assert g.scan(two, _cfg(loaders=loader)) == [
         "src/pkg/loader.py:2: loader-names-folder-too-often"
-    ]
-    assert g.scan(two, _cfg(loaders=loader, loader_max_lines=2)) == []
+    ], "a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fa: check 2"
+    assert g.scan(two, _cfg(loaders=loader, loader_max_lines=2)) == [], (
+        "a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fa: check 3"
+    )
     fake = _repo(
         tmp_path / "fk", {**CLEAN, "src/pkg/loader.py": f"A = '{FOLDER}'\nID = 'FAKE-REC-0001'\n"}
     )
-    assert g.scan(fake, _cfg(loaders=loader)) == ["src/pkg/loader.py:2: fake-record-id"]
+    assert g.scan(fake, _cfg(loaders=loader)) == ["src/pkg/loader.py:2: fake-record-id"], (
+        "a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fa: check 4"
+    )
     named = _repo(tmp_path / "nm", {**CLEAN, f"src/pkg/{FOLDER}_loader.py": f"A = '{FOLDER}'\n"})
     assert g.scan(named, _cfg(loaders=(f"src/pkg/{FOLDER}_loader.py",))) == [], (
         "a loader file whose own name holds the folder name was reported"
@@ -176,7 +188,7 @@ def test_a_stale_loader_entry_is_a_hit(tmp_path: Path) -> None:
     assert sorted(hits) == [
         "src/pkg/gone.py: stale-loader-entry (file does not exist)",
         "src/pkg/loader.py: stale-loader-entry (file does not name the folder)",
-    ]
+    ], "a_stale_loader_entry_is_a_hit: check 1"
 
 
 def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
@@ -185,7 +197,7 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     )
     (repo / "src/pkg/logo.png").write_bytes(PNG + b"\xff\xfe" + b"pixels")
     (repo / "src/pkg/LOGO.PNG").write_bytes(PNG + b"\x00\x00 pixels")
-    assert g.scan(repo, _cfg()) == []
+    assert g.scan(repo, _cfg()) == [], "ignored_files_and_binary_endings_are_skipped: check 1"
 
 
 def test_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
@@ -214,7 +226,7 @@ def test_a_file_that_is_not_text_and_not_a_known_binary_ending_is_refused(tmp_pa
     assert sorted(h.split(" (")[0] for h in g.scan(repo, _cfg())) == [
         "src/pkg/blob.dat: unreadable-file",
         "src/pkg/noending: unreadable-file",
-    ]
+    ], "a_file_that_is_not_text_and_not_a_known_binary_ending_is_ref: check 1"
 
 
 @pytest.mark.parametrize("root", ["templates", "tools", "demos"])
@@ -234,11 +246,15 @@ def test_the_other_product_folders_are_scanned_too(tmp_path: Path, root: str) ->
 
 def test_the_settings_of_this_repository_scan_every_product_folder() -> None:
     cfg = g.load_config(ROOT / "tools" / "demo_only_guard.toml")
-    assert cfg.product_roots == ("src", "templates", "tools", "demos")
-    assert cfg.skip_suffixes == g.DEFAULT_SKIP_SUFFIXES
+    assert cfg.product_roots == ("src", "templates", "tools", "demos"), (
+        "the_settings_of_this_repository_scan_every_product_folder: check 1"
+    )
+    assert cfg.skip_suffixes == g.DEFAULT_SKIP_SUFFIXES, (
+        "the_settings_of_this_repository_scan_every_product_folder: check 2"
+    )
     assert not any(
         s in cfg.skip_suffixes for s in (".py", ".js", ".toml", ".md", ".txt", ".sh", ".cfg")
-    )
+    ), "the_settings_of_this_repository_scan_every_product_folder: check 3"
 
 
 # -- symlinks, spellings, depth ---------------------------------------------------------------------------------------
@@ -254,7 +270,7 @@ def test_every_symlink_under_a_product_root_is_a_hit(tmp_path: Path) -> None:
     assert sorted(hits) == sorted(
         f"src/pkg/{n}: symlink-in-product-root"
         for n in ("to_file.py", "to_dir", "to_out.py", "dangling.py", "__pycache__")
-    )
+    ), "every_symlink_under_a_product_root_is_a_hit: check 1"
     for name in ("to_file.py", "to_dir", "to_out.py", "dangling.py"):
         one = _repo(tmp_path / f"one-{name}", CLEAN)
         link = one / "src/pkg" / name
@@ -262,7 +278,9 @@ def test_every_symlink_under_a_product_root_is_a_hit(tmp_path: Path) -> None:
             one / FOLDER if name == "to_dir" else one / "gone.py",
             target_is_directory=name == "to_dir",
         )
-        assert _main(one, _toml(tmp_path)) == 1
+        assert _main(one, _toml(tmp_path)) == 1, (
+            "every_symlink_under_a_product_root_is_a_hit: check 2"
+        )
 
 
 def test_a_product_root_that_is_itself_a_symlink_is_a_hit(tmp_path: Path) -> None:
@@ -286,7 +304,7 @@ def test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit(tmp_path: Pat
     assert sorted(g.scan(repo, _cfg())) == [
         "src/pkg/my-demo_only-data: path-names-demo-only-folder",
         "src/pkg/x_demo_only.py: path-names-demo-only-folder",
-    ]
+    ], "a_file_or_folder_name_that_holds_the_folder_name_is_a_hit: check 1"
 
 
 def test_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Path) -> None:
@@ -304,25 +322,39 @@ def test_the_exempt_files_are_exactly_the_guard_itself_and_each_is_skipped_whole
     tmp_path: Path,
 ) -> None:
     cfg = g.load_config(ROOT / "tools" / "demo_only_guard.toml")
-    assert cfg.exempt_files == ("tools/demo_only_guard.py", "tools/demo_only_guard.toml")
+    assert cfg.exempt_files == ("tools/demo_only_guard.py", "tools/demo_only_guard.toml"), (
+        "the_exempt_files_are_exactly_the_guard_itself_and_each_is_sk: check 1"
+    )
     repo = _repo(tmp_path, {**CLEAN, "src/pkg/self.py": f"# {FOLDER}\n"})
-    assert g.scan(repo, _cfg(exempt_files=("src/pkg/self.py",))) == []
-    assert g.scan(repo, _cfg()) == ["src/pkg/self.py:1: names-demo-only-folder"]
+    assert g.scan(repo, _cfg(exempt_files=("src/pkg/self.py",))) == [], (
+        "the_exempt_files_are_exactly_the_guard_itself_and_each_is_sk: check 2"
+    )
+    assert g.scan(repo, _cfg()) == ["src/pkg/self.py:1: names-demo-only-folder"], (
+        "the_exempt_files_are_exactly_the_guard_itself_and_each_is_sk: check 3"
+    )
     assert g.scan(repo, _cfg(exempt_files=("src/pkg/gone.py",)))[0].startswith(
         "src/pkg/gone.py: stale-exempt-entry"
-    )
+    ), "the_exempt_files_are_exactly_the_guard_itself_and_each_is_sk: check 4"
 
 
 def test_a_repository_that_has_the_folder_needs_the_copy_run_marker(tmp_path: Path) -> None:
     without = {k: v for k, v in CLEAN.items() if k != MARKER}
     repo = _repo(tmp_path / "a", without)
-    assert [h.split(" (")[0] for h in g.scan(repo, _cfg())] == [f"{MARKER}: copy-run-not-wired"]
-    assert _main(repo, _toml(tmp_path)) == 1
-    assert g.scan(_repo(tmp_path / "b", CLEAN), _cfg()) == []
+    assert [h.split(" (")[0] for h in g.scan(repo, _cfg())] == [f"{MARKER}: copy-run-not-wired"], (
+        "a_repository_that_has_the_folder_needs_the_copy_run_marker: check 1"
+    )
+    assert _main(repo, _toml(tmp_path)) == 1, (
+        "a_repository_that_has_the_folder_needs_the_copy_run_marker: check 2"
+    )
+    assert g.scan(_repo(tmp_path / "b", CLEAN), _cfg()) == [], (
+        "a_repository_that_has_the_folder_needs_the_copy_run_marker: check 3"
+    )
     no_folder = _repo(
         tmp_path / "c", {"src/pkg/__init__.py": ""}
     )  # no folder, no marker needed (core)
-    assert g.scan(no_folder, _cfg()) == []
+    assert g.scan(no_folder, _cfg()) == [], (
+        "a_repository_that_has_the_folder_needs_the_copy_run_marker: check 4"
+    )
 
 
 def test_the_copy_run_if_present_does_nothing_without_a_folder_and_runs_with_one(
@@ -521,7 +553,7 @@ def test_a_file_is_scanned_whether_it_is_added_to_git_or_not(tmp_path: Path) -> 
     assert sorted(g.scan(repo, _cfg())) == [
         "src/pkg/added.py:1: names-demo-only-folder",
         "src/pkg/new.py:1: names-demo-only-folder",
-    ]
+    ], "a_file_is_scanned_whether_it_is_added_to_git_or_not: check 1"
 
 
 def test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit(
@@ -534,7 +566,7 @@ def test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit
     assert sorted(g.scan(repo, _cfg())) == [
         "docs/to_file: symlink-to-demo-only-folder",
         "docs/to_folder: symlink-to-demo-only-folder",
-    ]
+    ], "a_link_outside_the_product_folders_that_points_into_the_fold: check 1"
 
 
 # -- the copy run proves the copy, not the original -----------------------------------------------------------------
@@ -623,7 +655,7 @@ def test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not(tmp_pa
     _gitlink(repo, "elsewhere/vendored")
     assert g.scan(repo, _cfg()) == [
         "src/vendored: submodule-in-product-root (its files cannot be scanned)"
-    ]
+    ], "a_submodule_under_a_product_root_is_a_hit_and_one_outside_is: check 1"
 
 
 # -- round 4 ---------------------------------------------------------------------------------------------------------
@@ -636,7 +668,9 @@ def test_a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_a_path(tmp_
         repo = _repo(tmp_path / f"l{i}", {**CLEAN, "src/pkg/a.py": f"from {spelling} import y\n"})
         assert g.scan(repo, _cfg()) == ["src/pkg/a.py:1: names-demo-only-folder"], spelling
         path_repo = _repo(tmp_path / f"p{i}", {**CLEAN, f"src/pkg/{spelling}/x.py": "X = 1\n"})
-        assert g.scan(path_repo, _cfg()) == [f"src/pkg/{spelling}: folder-inside-product-root"]
+        assert g.scan(path_repo, _cfg()) == [f"src/pkg/{spelling}: folder-inside-product-root"], (
+            "a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_: check 2"
+        )
 
 
 def test_a_compiled_or_packed_file_in_a_product_folder_is_refused(tmp_path: Path) -> None:
@@ -668,7 +702,7 @@ def test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending(tmp_path
     (repo / "src/pkg/notes.txt").write_bytes(f"see {FOLDER}\n".encode("utf-16-le"))
     assert g.scan(repo, _cfg()) == [
         "src/pkg/notes.txt: names-demo-only-folder (as UTF-16 or UTF-32 text)"
-    ]
+    ], "text_written_as_utf16_without_a_mark_is_found_in_a_text_endi: check 1"
 
 
 def test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped(
@@ -679,17 +713,21 @@ def test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped(
     )  # no NUL anywhere: only the "not valid UTF-8" rule marks it as binary
     (repo / "src/pkg/a.png").write_bytes(PNG + b"\xff\xfe" + FOLDER.encode())
     (repo / "src/pkg/b.png").write_bytes(PNG + b"\xff\xfe pixels only")
-    assert g.scan(repo, _cfg()) == ["src/pkg/a.png: names-demo-only-folder (inside a binary file)"]
+    assert g.scan(repo, _cfg()) == [
+        "src/pkg/a.png: names-demo-only-folder (inside a binary file)"
+    ], "a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_n: check 1"
 
 
 def test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit(tmp_path: Path) -> None:
     repo = _repo(tmp_path, CLEAN)
     _gitlink(repo, "src/vendored")
-    assert (
-        g.scan(repo, _cfg(exempt_files=("src/vendored",))) == []
+    assert g.scan(repo, _cfg(exempt_files=("src/vendored",))) == [], (
+        "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 1"
     )  # a clean exempt git link is no hit
     gone = g.scan(repo, _cfg(exempt_files=("src/vendored", "src/not-there")))
-    assert gone == ["src/not-there: stale-exempt-entry (neither a file nor a git link that exists)"]
+    assert gone == [
+        "src/not-there: stale-exempt-entry (neither a file nor a git link that exists)"
+    ], "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 2"
 
 
 def test_a_submodule_whose_folder_is_missing_is_still_a_hit(tmp_path: Path) -> None:
@@ -700,7 +738,7 @@ def test_a_submodule_whose_folder_is_missing_is_still_a_hit(tmp_path: Path) -> N
     (repo / "elsewhere/vendored").rmdir()
     assert g.scan(repo, _cfg()) == [
         "src/vendored: submodule-in-product-root (its files cannot be scanned)"
-    ]
+    ], "a_submodule_whose_folder_is_missing_is_still_a_hit: check 1"
 
 
 # -- round 5: the guard fails closed everywhere -----------------------------------------------------------------------
@@ -989,8 +1027,8 @@ def test_the_byte_patterns_are_built_once_for_a_whole_scan(
     calls: list[str] = []
     real = g._byte_patterns
     monkeypatch.setattr(g, "_byte_patterns", lambda folder: calls.append(folder) or real(folder))
-    assert g.scan(repo, _cfg()) == []
-    assert calls == [FOLDER]
+    assert g.scan(repo, _cfg()) == [], "the_byte_patterns_are_built_once_for_a_whole_scan: check 1"
+    assert calls == [FOLDER], "the_byte_patterns_are_built_once_for_a_whole_scan: check 2"
 
 
 def test_a_full_width_product_root_that_is_the_folder_is_a_hit(tmp_path: Path) -> None:

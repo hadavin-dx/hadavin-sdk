@@ -96,10 +96,18 @@ def test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up() -> None:
 def test_pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone() -> None:
     for mode in ("pilot", "prod"):
         b = _b(mode, [], ["ai", "mail"], names=NAMES)
-        assert b.tone == "quiet" and b.text == "No real service is connected."
-        assert b.standins == "Still stand-ins, not connected: AI step, mail."
-        assert b.stand_ins == ("AI step", "mail")
-        assert "made-up" not in (b.text + b.standins).lower()
+        assert b.tone == "quiet" and b.text == "No real service is connected.", (
+            "pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone: check 1"
+        )
+        assert b.standins == "Still stand-ins, not connected: AI step, mail.", (
+            "pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone: check 2"
+        )
+        assert b.stand_ins == ("AI step", "mail"), (
+            "pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone: check 3"
+        )
+        assert "made-up" not in (b.text + b.standins).lower(), (
+            "pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone: check 4"
+        )
 
 
 def test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real() -> None:
@@ -115,8 +123,12 @@ def test_names_come_from_the_caller_and_repeats_are_shown_once_in_order() -> Non
 
 
 def test_a_key_without_a_shown_name_is_read_as_component_and_the_key() -> None:
-    assert _b("pilot", ["llm", "store"]).real == ("component llm", "component store")
-    assert _b("pilot", ["llm"], names={"other": "Other"}).real == ("component llm",)
+    assert _b("pilot", ["llm", "store"]).real == ("component llm", "component store"), (
+        "a_key_without_a_shown_name_is_read_as_component_and_the_key: check 1"
+    )
+    assert _b("pilot", ["llm"], names={"other": "Other"}).real == ("component llm",), (
+        "a_key_without_a_shown_name_is_read_as_component_and_the_key: check 2"
+    )
 
 
 def test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen() -> None:
@@ -283,11 +295,19 @@ NOTHING = {("signer", "none"), ("anchor", "none"), ("detector", "regex")}
 def test_banner_from_config_reads_the_stage_and_both_lists_from_the_config(tmp_path: Path) -> None:
     cfg = load_config(make_cfg(tmp_path))  # the fixture is the demo config and holds fakes
     real, pretend = _services(cfg)
-    assert real == () and {"llm", "channel", "secrets", "store"} <= set(pretend)
+    assert real == () and {"llm", "channel", "secrets", "store"} <= set(pretend), (
+        "banner_from_config_reads_the_stage_and_both_lists_from_the_c: check 1"
+    )
     b = _banner(cfg)
-    assert (b.mode, b.tone) == (cfg.environment, "demo")
-    assert b.stand_ins == tuple(f"component {c}" for c in pretend) and b.real == ()
-    assert {(c, s.kind) for c, s in cfg.backends.entries() if c in pretend} <= DEMO_ONLY
+    assert (b.mode, b.tone) == (cfg.environment, "demo"), (
+        "banner_from_config_reads_the_stage_and_both_lists_from_the_c: check 2"
+    )
+    assert b.stand_ins == tuple(f"component {c}" for c in pretend) and b.real == (), (
+        "banner_from_config_reads_the_stage_and_both_lists_from_the_c: check 3"
+    )
+    assert {(c, s.kind) for c, s in cfg.backends.entries() if c in pretend} <= DEMO_ONLY, (
+        "banner_from_config_reads_the_stage_and_both_lists_from_the_c: check 4"
+    )
     for named in ("demo", "pilot", "prod"):  # the stage is read from the config, never fixed
         assert _banner(_fake_config(named, [("llm", "anthropic")])).mode == named, (
             f"the banner did not read the stage {named} from the config"
@@ -532,15 +552,21 @@ def test_the_painter_never_throws_and_never_leaves_the_page_blank() -> None:
 
 @needs_node
 def test_the_page_fallback_has_the_same_words_as_the_python_fallback() -> None:
-    assert _paint(None)["notConfirmed"] == mb.not_confirmed()
+    assert _paint(None)["notConfirmed"] == mb.not_confirmed(), (
+        "the_page_fallback_has_the_same_words_as_the_python_fallback: check 1"
+    )
 
 
 @needs_node
 def test_the_page_lists_are_the_python_lists() -> None:
     seen = _paint(None)
-    assert seen["modes"] == list(STAGES) and seen["tones"] == list(mb.TONES)
-    assert seen["maxText"] == mb.MAX_TEXT_LENGTH
-    assert re.search(rf"var MAX_TEXT = {mb.MAX_TEXT_LENGTH};", JS.read_text(encoding="utf-8"))
+    assert seen["modes"] == list(STAGES) and seen["tones"] == list(mb.TONES), (
+        "the_page_lists_are_the_python_lists: check 1"
+    )
+    assert seen["maxText"] == mb.MAX_TEXT_LENGTH, "the_page_lists_are_the_python_lists: check 2"
+    assert re.search(rf"var MAX_TEXT = {mb.MAX_TEXT_LENGTH};", JS.read_text(encoding="utf-8")), (
+        "the_page_lists_are_the_python_lists: check 3"
+    )
 
 
 @needs_node
@@ -747,7 +773,9 @@ def test_a_banner_is_checked_against_what_it_claims_before_it_leaves() -> None:
 
 @needs_node
 def test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page() -> None:
-    assert _paint(None)["frozen"] == [True] * 6
+    assert _paint(None)["frozen"] == [True] * 6, (
+        "the_page_exports_and_the_fallback_cannot_be_changed_by_a_pag: check 1"
+    )
 
 
 @needs_node
