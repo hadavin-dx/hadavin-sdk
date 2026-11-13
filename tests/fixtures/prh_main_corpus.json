@@ -1,0 +1,17 @@
+{
+ "coloured_test_output": 0,
+ "cp1252_c1": 0,
+ "curl_continuation": 0,
+ "dockerfile_run": 0,
+ "emoji_joiners": 0,
+ "grep_match_inside_word": 0,
+ "hindi": 0,
+ "json": 0,
+ "kubectl_tab_table": 0,
+ "log_lines": 0,
+ "makefile_rule": 0,
+ "nroff_overstrike": 0,
+ "persian_zwnj": 0,
+ "six_cell_row": 0,
+ "windows_path_line_end": 0
+}
