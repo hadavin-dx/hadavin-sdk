@@ -1,0 +1,19 @@
+$ mypy --platform linux
+Success: no issues found in 26 source files
+exit=0
+$ mypy --platform win32
+Success: no issues found in 26 source files
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ ruff format --check .
+148 files already formatted
+exit=0
+$ bandit -ll -q -r src tools scripts load_tools -c pyproject.toml
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+exit=0

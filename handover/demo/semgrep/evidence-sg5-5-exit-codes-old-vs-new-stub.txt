@@ -1,0 +1,23 @@
+stub exit 0 | OLD rc 0 tries 1 | NEW rc 0 tries 1 | messages identical: True
+   msgs: []
+stub exit 1 | OLD rc 1 tries 1 | NEW rc 1 tries 1 | messages identical: True
+   msgs: ['findings above (exit 1): fix them, or suppress with # nosemgrep: <rule-id> <reason>, see docs/tests.md']
+stub exit 2 | OLD rc 2 tries 3 | NEW rc 2 tries 3 | messages identical: True
+   msgs: ['semgrep exit 2 (registry or network failure, bad configuration, or a scan path that does not exist), try 1 of 3', 'semgrep exit 2 (registry or network failure, bad configuration, or a scan path that does not exist), try 2 of 3', 'semgrep exit 2 (registry or network failure, bad configuration, or a scan path that does not exist), try 3 of 3', 'semgrep failed with exit 2: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)']
+stub exit 3 | OLD rc 3 tries 1 | NEW rc 3 tries 1 | messages identical: True
+   msgs: ['semgrep failed with exit 3: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)']
+stub exit 7 | OLD rc 7 tries 1 | NEW rc 7 tries 1 | messages identical: True
+   msgs: ['semgrep failed with exit 7: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)']
+stub exit 2then0 | OLD rc 0 tries 2 | NEW rc 0 tries 2 | messages identical: True
+   msgs: ['semgrep exit 2 (registry or network failure, bad configuration, or a scan path that does not exist), try 1 of 3']
+# same stub run, but under the explicit 'shell: bash' form (bash --noprofile --norc -eo pipefail): results
+stub exit 0 | OLD rc 0 tries 1 | NEW rc 0 tries 1 | messages identical: True
+stub exit 1 | OLD rc 1 tries 1 | NEW rc 1 tries 1 | messages identical: True
+stub exit 2 | OLD rc 2 tries 3 | NEW rc 2 tries 3 | messages identical: True
+stub exit 3 | OLD rc 3 tries 1 | NEW rc 3 tries 1 | messages identical: True
+stub exit 7 | OLD rc 7 tries 1 | NEW rc 7 tries 1 | messages identical: True
+stub exit 2then0 | OLD rc 0 tries 2 | NEW rc 0 tries 2 | messages identical: True
+
+# PyYAML parse
+parsed; jobs: ['semgrep']
+shell keys: [('Install Semgrep (pinned version, hashes are checked)', None), ('Check the install (a package missing from the lockfile must not look like a finding)', None), ('Semgrep (fails on findings of severity ERROR)', None)] job defaults: None

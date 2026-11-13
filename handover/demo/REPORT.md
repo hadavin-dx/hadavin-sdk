@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:00Z / 10:30 IST - **P1 v3.2 CLEAN (fifth fresh read): READY TO PUSH: P1 v3.2** ; nothing else clean yet; 8 agents
+**READY TO PUSH (in this order): 1. sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c** (applies on db54e13). Replaces v1/v2/v3/v3.1: do NOT apply any of those. A small test-only delta (v3.2.1: fixes the reviewer's Minors/Nits) will follow and applies on top; it is not needed for the gate.
+FAILED / UNCERTAIN first:
+1. **Fresh read of P1 v3.2 (sonar/REVIEW-p1v32-fresh.md): 'P1 v3.2 CLEAN': 0 Blocker, 0 Major, 3 Minor, 5 Nit (none present in the repo today).** Verified by the reader: 9 of 9 files byte-identical to v3.1 (cmp: the two scripts with the guard, lint.yml, README, five test files); tests/test_hygiene.py untouched; guard with BASH_VERSION=5.2 exported + made-up db in a temp dir: dash and posh refuse reset.sh and start_all.sh exit 2 and leave the db untouched; busybox sh/ksh/mksh/zsh run [[ ]], pass the guard and stop at the db-path check exit 2; 110 own probes (65 flagged, 43 not, 2 refused as designed: CRLF and 4001 chars); ~46 adversarial 1 MB shapes peak 0.10 s (1M empty lines 0.26 s): linear, the 4000 cap hides nothing; db54e13 gives 9 flagged lines (reset.sh 15,20,25,28,33; start_all.sh 12,16; lint.yml block lines 5,7), the patched tree 0; workflow run-block extraction right for | > |- |+ one-liners multi-job anchors; raw U+202E in a tracked test file fails tests/test_raw_bidi_chars.py (all 12 direction controls); apply matrix: each patch alone incl. crlf v5; 480 random orders of 7 patches 0 failures; 360 exhaustive orders of P1, nodemo-optional-hygiene, nodemo-fix, yaml and one crlf patch 0 failures; 176 tests passed with gitleaks 8.30.1 + DPLD_REQUIRE_SCAN=1; ruff/format/mypy linux+win32/bandit clean; combined stack lead order with crlf v5: 185 passed; 14 of 16 reader mutants killed (survivors = nits). Minors: workflow-level `defaults: run: shell: sh` not checked; `git ls-files` without -z (an odd tracked name fails LOUDLY, not silently); an assignment prefix (`FOO=1 [ x ]`) and a stray-apostrophe line (`echo don't; [ x ]; echo it's`) are missed. Not run: SonarCloud, full suite, real Windows. Sonar's accepted spellings for S7688/S8541/S6506 remain unverified: the gate will tell.
+   **PR text for the series (the lead's earlier order): `sh scripts/reset.sh` and `sh scripts/start_all.sh` now exit 2 'this shell is not bash' (a feature test of `[[`, not BASH_VERSION); before the series they ran under dash and, worse, a dash run with an exported BASH_VERSION skipped the 'database not inside ./data' refusal in the first drafts of this patch (never in the repo as shipped).**
+2. **crlf v5 / trimmed yaml v2 (builder report in the 04:55Z note; fresh read running ab2ff104856bc1ffa)**: crlf v5 sha256 prefix d80b3b9ca7c022bb, +253/-4 (size target of ~120 missed: the kills need real tests), autocrlf true AND false pass (emulated with GIT_CONFIG_GLOBAL on Linux: the evidence covers Linux emulation of both settings, NOT a Windows run); trimmed yaml v2 prefix 2590a42fd30e7758 (84 lines; applies with P1 v3.2 in any order). **NEW: semgrep-on-2db3926-v4 + P1 FAILS P1's own single-bracket tripwire (semgrep.yml has 4 `[ ]` tests: the S7688 class): rebuilding as semgrep-on-db54e13-v5 with [[ ]] (a4fe9e94ece46430a).**
+3. Other open (all running): probe-ab v3 safety read (a00a7504872aa22f0; no push before 'PROBE v3 SAFE'), P2 v2.1 third read (ab6c25f7e78008d2e), nodemo v3 (ac09125403a1f310b), start-prompt v2 + desk-address-required (core, needs your approval) (a2f6af4dc21cb8a4c), real-run v5 (a71eeae97124ff4bb).
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| (new) | P1 v3.2.1 delta builder (minors/nits, test-only) | 04:58 | running | delta patch |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a4fe9e94ece46430a | semgrep-on-db54e13-v5 builder ([[ ]]) | 04:55 | running | patch |
+| a00a7504872aa22f0 | fresh safety reader probe-ab v3 + writes2 | 04:52 | running | SAFE / READING |
+| ab6c25f7e78008d2e | fresh third reader P2 v2.1 | 04:37 | running | CLEAN / NOT |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 8.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 5 (v3.2) | 0 Major (CLEAN) | none for the gate; delta for minors | YES for the gate | done |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v3.2 | CLEAN (5th fresh read) |
+| crlf v5 + yaml trimmed-v2 | built, pushed, read running |
+
 ## 2026-11-13 04:53Z / 10:23 IST - P1 v3.2 (simple linear tripwire, test_hygiene.py untouched) built: fifth fresh read running; probe-ab-v3 built (+ writes2): safety read running; 8 agents; batch 1 still NOT clean
 FAILED / UNCERTAIN first:
 1. **P1 v3.2 (sonar/sonar-p1-quickwins-v3.2.patch, sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c, applies on db54e13, touches NO tests/test_hygiene.py):** builder's evidence (NOT yet independently read): scripts/guard/lint/README/flag tests byte-identical to v3.1 (cmp); the quadratic bash scanner is gone: a per-line regex tripwire in NEW tests/test_shell_single_bracket.py (line cap 4000 chars; any CR raises a clear ValueError; empty explicit allowlist) and the raw-bidi tests in NEW tests/test_raw_bidi_chars.py; 66 probes (36 flagged / 30 not), all rv21 survivors covered; on db54e13 it flags the 7 script lines (the 10 S7688) + lint.yml run lines 5 and 7 = 9 lines, patched tree 0; 31 of 31 mutants killed; timing of 26 shapes of ~1 MB each 0.006-0.24 s (single 1 MB line refused in 0.4 ms; 4000-char lines measured so the cap does not hide a slow regex); tests 362 passed 8 skipped (playwright); ruff/mypy linux+win32/bandit clean; APPLY MATRIX: P1 before or after crlf (v4, v4-autocrlf-fix, v5) and nodemo-optional-hygiene-repo-v2 in all orders = 18 of 18, 150+100+60+60 random orders of 7 patches 0 failures: so **the crlf-step breakage of v3.1 is gone**. Caveats: the 'crlf v5' it used is /tmp/work/b10-v5.patch (no crlf-guard-v5.patch exists yet in skips/); crlf v4 and v4-autocrlf-fix conflict with EACH OTHER (both create .editorconfig: alternatives, take the fix); the tripwire does NOT check quoting across lines, heredoc bodies, [[ ]] spans or case patterns (false positives in heredoc bodies documented); Sonar acceptance of S7688/S8541/S6506 spellings still unverified. **Fifth fresh reader running (ae77c2d963b6a78b7): 'P1 v3.2 CLEAN' / 'NOT CLEAN' line comes next.**

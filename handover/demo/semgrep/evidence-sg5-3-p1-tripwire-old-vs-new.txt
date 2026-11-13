@@ -1,0 +1,11 @@
+# OLD: db54e13 + P1 v3.2 + semgrep v4 (the builder's finding)
+E        +  where ['semgrep.yml#block-3:7', 'semgrep.yml#block-3:9', 'semgrep.yml#block-3:11', 'semgrep.yml#block-3:13'] = _flagged({'scripts/reset.sh': '#!/usr/bin/env bash\n# Stop what start_all.sh started (only those process ids) and delete the le...n"${RUNNER_TEMP}/gitleaks/gitleaks" git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow\n', ...}, {})
+
+tests/test_shell_single_bracket.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_shell_single_bracket.py::test_no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test
+1 failed, 106 passed in 3.04s
+# NEW: db54e13 + P1 v3.2 + yaml-trimmed-v2 + crlf-guard-v5 + P2 v2.1 + P3 v3 + nodemo-fix-v2 + semgrep v5
+........................................................................ [ 67%]
+...................................                                      [100%]
+107 passed in 3.06s

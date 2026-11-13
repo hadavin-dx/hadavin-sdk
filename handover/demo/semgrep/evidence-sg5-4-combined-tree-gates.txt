@@ -1,0 +1,36 @@
+# combined tree: all 7 patches
+$ mypy --platform linux
+Success: no issues found in 28 source files
+exit=0
+$ mypy --platform win32
+Success: no issues found in 28 source files
+exit=0
+$ ruff check .
+All checks passed!
+exit=0
+$ ruff format --check .
+155 files already formatted
+exit=0
+$ bandit -ll -q -r src tools scripts load_tools -c pyproject.toml
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+exit=0
+$ pytest tests/test_shell_single_bracket.py
+........................................................................ [ 67%]
+...................................                                      [100%]
+107 passed in 2.67s
+$ pytest tests/test_workflow_files_parse.py
+............                                                             [100%]
+12 passed in 0.09s
+$ pytest tests/test_nosemgrep_form.py
+...............................................................          [100%]
+63 passed in 1.59s
+$ pytest tests/test_gitleaks_semgrep_lock.py
+...                                                                      [100%]
+3 passed in 8.26s
+$ pytest tests/test_gitleaks_exceptions.py
+............................................                             [100%]
+44 passed in 17.21s
+$ pytest tests/test_hygiene.py
+........................                                                 [100%]
+24 passed in 70.74s (0:01:10)

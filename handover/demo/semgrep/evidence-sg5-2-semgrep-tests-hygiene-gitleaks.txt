@@ -1,0 +1,37 @@
+# git add -A done; tree = db54e13 + v5 patch; gitleaks 8.30.1, DPLD_REQUIRE_SCAN=1
+M  .codeant/configuration.json
+A  .github/workflows/semgrep.yml
+M  .gitleaks.toml
+M  docs/tests.md
+M  exceptions.txt
+A  requirements-semgrep.in
+A  requirements-semgrep.txt
+A  tests/test_gitleaks_semgrep_lock.py
+A  tests/test_nosemgrep_form.py
+$ pytest -q -p no:cacheprovider tests/test_nosemgrep_form.py
+...............................................................          [100%]
+63 passed in 1.03s
+$ pytest -q -p no:cacheprovider tests/test_gitleaks_semgrep_lock.py
+...                                                                      [100%]
+3 passed in 8.19s
+$ pytest -q -p no:cacheprovider tests/test_gitleaks_exceptions.py
+............................................                             [100%]
+44 passed in 14.71s
+$ pytest -q -p no:cacheprovider tests/test_workflow_files_parse.py
+.....                                                                    [100%]
+5 passed in 0.08s
+$ pytest -q -p no:cacheprovider tests/test_hygiene.py
+...............                                                          [100%]
+15 passed in 71.02s (0:01:11)
+$ gitleaks dir
+[90m4:57AM[0m [32mINF[0m [1mscanned ~3794289 bytes (3.79 MB) in 1.06s[0m
+[90m4:57AM[0m [33mWRN[0m [1mleaks found: 25[0m
+exit=0
+$ gitleaks git
+[90m4:57AM[0m [32mINF[0m [1m24 commits scanned.[0m
+[90m4:57AM[0m [32mINF[0m [1mscanned ~5822046 bytes (5.82 MB) in 2.01s[0m
+[90m4:57AM[0m [32mINF[0m [1mno leaks found[0m
+# gitleaks dir on a clean clone of the committed tree (the 25 hits in the previous file are all in git-ignored caches: __pycache__, .mypy_cache, .ruff_cache)
+[90m4:57AM[0m [32mINF[0m [1mscanned ~3086125 bytes (3.09 MB) in 903ms[0m
+[90m4:57AM[0m [32mINF[0m [1mno leaks found[0m
+exit=0
