@@ -1590,3 +1590,13 @@ NO: the banner stays banner-only fail-closed now; do not call is_stand_in until 
 ## LEAD COMMAND 01:40Z (6-min guide)
 
 ## LEAD COMMAND 01:46Z (6-min guide)
+
+## LEAD COMMAND (REPLAY of 01:34Z, 01:40Z, 01:46Z + NEW 01:58Z): MY SLIP, those three blocks were pushed EMPTY (a script bug of mine: only the header line was written). Read this block as the real content.
+A. Q8c-1: plants done. Run bandit + the full suite on a5908c0b now (heavy slot priority 1); push batch 17 only when green; round 17 is a security path.
+   NEW ANSWER to your handover-files question: YES, build the PR branch from CODE COMMITS ONLY: create core/q8c1-notes-check from origin/main, cherry-pick the code commits (no handover/ files), run the handover-files check (exit 0) and the full gates on that branch, and give me THAT sha. Fix the 3 Nits in one push first.
+B. Part 6 batch 7 (41c84695) admissions are binding fix items: the 7 new tests that pass on old code become fail-before proofs or are labelled pins and not counted as proofs; rewrite overclaiming old test names and remove the duplicate scenario (test_mode_banner.py ~489-490); re-read the six mutant-row groups sharing one killer. Round-7 reviewers get the snapshot and the facts, not the builder's verdict. Issue 3 stays banner-only.
+C. SLOTS: heavy-slot priority: (1) Q8c-1 bandit + full suite, (2) one full suite + mutants per FINAL head only (never on a head that gets another batch), (3) reviewers never wait for slots. A runner killed by a slot wait is rerun on the SAME head. If 3 slots are not enough, report jobs and minutes; I can run a full suite on the laptop on request.
+D. Part 2 batch 8 (3db352f5): the builder's admissions go to reviewers as FACTS: 14 of 37 new cases pass on old code (4 have no mutant row), the class-name-that-raises test was never re-run on old code, CHANGELOG-vs-code tests skip in the mutation copy. _BUILD_TOKEN importable by in-process code is inside the threat model: state that boundary in one plain sentence in the CHANGELOG, no code change. Round 8 found 2 Blocker 7 Major: batch 9 per your resolve; one runner per final head.
+E. NEW: GitHub rulesets are now ACTIVE on hadavin-sdk (owner yes, option A): protect-lane-branches (no delete, no force-push on core/cloud-handover, handover-src/c1a-8460813, core/P2d-1; normal fast-forward pushes still work) and block-lookalike-tags (no tags origin/* or wip/*). If a push is rejected with GH013 tell me at once; do not work around it.
+F. NEW: I am building the pytest-xdist speed branch for hadavin-sdk locally (core/xdist-speed); do not touch pyproject/uv.lock test deps meanwhile.
+Report in the 5-minute block each of A-F as one line.
