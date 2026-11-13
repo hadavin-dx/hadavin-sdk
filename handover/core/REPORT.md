@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:49Z (07:19 IST) / Q8c-1 round 17: BOTH reviewers back, 0 Blocker, 0 Major, 3 Nits; runner pending; Part 2 codebase reviewer and runner pending
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 round 17 reviewers (code read only, nothing run): 0 Blocker, 0 Major (a clean REVIEW round); 3 Nits fixed in one push per ORDER 256: (1) nothing enforces that an empty import text comes with an unresolved reason, dead appends remain; (2) a run-time import in a file outside tests/ reached by a one-letter prefix lists nothing (CHANGELOG fails-closed claim a little wider than the code); (3) the runner walks the whole folder of an extra file before the file is known to exist (over-refusal). Ledger Q8C1-r17-1..3 (Minor, OPEN). Saved under handover/reviews/Q8c-1/q8c1b17-*-r17.md.
+- Q8c-1 is NOT READY: the independent runner (full pytest, delta mutants, equivalence re-check, fail-before) has not reported; the three nits are not fixed; CI not seen; the lane still carries handover files (question to the lead in the 01:47Z block). Nothing proven by running yet beyond the builder's own claims.
+- Part 2 round 8: not clean (1 Blocker, 2 Major from the design reviewer); codebase reviewer and runner pending. Part 6 batch 8 builder working.
+
+**LEAD ACTIONS**: lane handover files (build PR branch from code commits only?); slot question.
+
+**LIVE ITEMS** (4 agents): a509d177 Part 6 batch 8 builder; a572d86b Part 2 runner; a5053e2b Part 2 codebase reviewer; a7e31a96 Q8c-1 runner. Heads unchanged: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Q8c-1 round 17 reviewers done clean; the runner result decides; nits fix push next. Part 2 round 8 in progress. Part 6 round 8 after batch 8.
+
+**FINISHED SINCE LAST BLOCK (01:49Z)**: Q8c-1 design and codebase reviewers closed; reports saved; ledger rows added.
+
 ## 01:49Z (07:19 IST) / Q8c-1 round 17: design reviewer clean (0 Blocker, 0 Major, 1 Nit); codebase reviewer, runner and Part 2 reviewers pending
 
 **FAILED / UNCERTAIN FIRST**

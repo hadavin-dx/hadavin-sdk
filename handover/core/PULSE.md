@@ -34,3 +34,4 @@
 01:44Z part 2 batch 8 landed 3db352f5; round 8 runner and reviewers started
 01:47Z part 2 r8 design: 1 Blocker 2 Major; Q8c-1 a5908c0b landed, round 17 started
 01:49Z Q8c-1 r17 design clean (1 Nit); others pending
+01:49Z Q8c-1 r17 reviewers clean (3 Nits); runner pending
