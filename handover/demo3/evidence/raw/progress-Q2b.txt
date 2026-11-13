@@ -40,3 +40,5 @@
 2026-11-13 13:16:18Z UTC / 18:46:18 IST  seed 7004 END
 2026-11-13 13:16:18Z UTC / 18:46:18 IST  seed 7005 START
 2026-11-13 13:16:18Z UTC / 18:46:18 IST  seed 7005 campaign a START n=2400
+2026-11-13 13:18:11Z UTC / 18:48:11 IST  seed 7005 campaign a END rc=0 {"campaign": "a", "seed": 7005, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 112.4, "violations": 0, "counterexamples_total": 675, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 675}} 
+2026-11-13 13:18:11Z UTC / 18:48:11 IST  seed 7005 campaign b START n=40000
