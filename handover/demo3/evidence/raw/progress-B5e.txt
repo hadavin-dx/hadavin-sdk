@@ -1,3 +1,5 @@
 B5e start 14:38Z
 B5e 14:45 base applied, designing
 B5e 14:41Z reset.sh/ps1/support/conftest edited; rewriting tests
+B5e 14:48Z full serial started in bg (b5e-full.log); building r4 tree for fails-before
+B5e 14:51Z full serial RE-started (tree changed: new test_port_helpers.py); fails-before rerun next

@@ -1,0 +1,5 @@
+# the 8 real-process marker cases of r4 (test_a_program_that_only_contains_the_marker_text_is_not_stopped) run against the ORIGINAL scripts/reset.sh of f3c39cf8 (git diff of scripts/ against f3c39cf8 is empty), COLUMNS and LINES unset
+# expected: all 8 fail (the original script stops or refuses wrongly)
+sha256 reset.sh: a22341d86fd7ce7776fa7891f2571b416b0e829854384548d5ab306a82bdfe2b  base: a22341d86fd7ce7776fa7891f2571b416b0e829854384548d5ab306a82bdfe2b
+Fri Nov 13 14:52:58 UTC 2026
+FFFF

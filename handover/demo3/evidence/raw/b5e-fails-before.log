@@ -1,0 +1,1390 @@
+# B5e fails-before. Part A: r5 tests (r5 tests/ files incl. support.py, conftest.py) against the r4 SCRIPTS (reset.sh from lane3-fix-5-r4.patch; reset.ps1 unchanged from base)
+Fri Nov 13 14:51:59 UTC 2026
+bringing up nodes...
+bringing up nodes...
+
+...............F..F........F..F..........FF..F..F.........F.F........... [ 48%]
+...........................FFFFFFFFFFFFFFFFFFFFFFFFsssss........FFFs.... [ 97%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words8] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-mobhf4h0/desk.sqlite3')
+pid_file = 'desk.pid'
+words = ['-c', "import sys, time; open(sys.argv[-1], 'w').close(); time.sleep(60)", '-m', 'lead_desk.server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["-c", SLEEP, "vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "xlead_desk.server"]),
+            ("desk.pid", ["-c", SLEEP, "--x=lead_desk.server"]),
+            ("desk.pid", ["-c", SLEEP, "lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["-c", SLEEP, "demo_only.fakes_server"]),
+            ("fakes.pid", ["-c", SLEEP, "-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.server"]),  # -c is the second word: python runs it, no module
+            ("desk.pid", ["-u", "-m", "lead_desk.server"]),  # another python option first: not the shape start_all.sh gives
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        ready = book.parent / "ready"
+        tree = stub_tree(book.parent / "stub-tree", SLEEP)  # `-m lead_desk.server` finds the made-up module here
+        child = start_proc([*words, str(ready)], dict(os.environ), cwd=tree)
+        code, said, still_running = _run_against(book, pid_file, child, ready)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:273: AssertionError
+_ test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words9] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-zqwgn4lp/desk.sqlite3')
+pid_file = 'desk.pid', words = ['-u', '-m', 'lead_desk.server']
+
+    @pytest.mark.parametrize(
+        ("pid_file", "words"),
+        [
+            ("desk.pid", ["-c", SLEEP, "vim", "lead_desk.server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.serverx"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "xlead_desk.server"]),
+            ("desk.pid", ["-c", SLEEP, "--x=lead_desk.server"]),
+            ("desk.pid", ["-c", SLEEP, "lead_desk.server"]),  # the old bare-word shape
+            ("fakes.pid", ["-c", SLEEP, "demo_only.fakes_server"]),
+            ("fakes.pid", ["-c", SLEEP, "-m", "lead_desk.server.py", "demo_only.fakes_server.py"]),
+            ("desk.pid", ["-c", SLEEP, "-m", "lead_desk.server"]),  # -c is the second word: python runs it, no module
+            ("desk.pid", ["-u", "-m", "lead_desk.server"]),  # another python option first: not the shape start_all.sh gives
+        ],
+    )
+    def test_a_program_that_only_contains_the_marker_text_is_not_stopped(
+        book: Path, pid_file: str, words: list[str]
+    ) -> None:
+        ready = book.parent / "ready"
+        tree = stub_tree(book.parent / "stub-tree", SLEEP)  # `-m lead_desk.server` finds the made-up module here
+        child = start_proc([*words, str(ready)], dict(os.environ), cwd=tree)
+        code, said, still_running = _run_against(book, pid_file, child, ready)
+>       assert still_running, "a program that is not the desk was stopped"
+E       AssertionError: a program that is not the desk was stopped
+E       assert False
+
+tests/test_reset_ps_width.py:273: AssertionError
+_ test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[desk.pid] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-3tam2uxz/desk.sqlite3')
+pid_file = 'desk.pid'
+
+    @pytest.mark.parametrize("pid_file", ["desk.pid", "fakes.pid"])
+    def test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped(book: Path, pid_file: str) -> None:
+        # /.../python-tools/bin/less -m lead_desk.server <ready>: the same words as the real shape, but argv[0] is `less`
+        ready = book.parent / "ready"
+        module = FAKES_MODULE if pid_file == "fakes.pid" else DESK_MODULE
+        program = _link(book.parent / "python-tools" / "bin", "less")
+        child = start_module_proc(ready, SLEEP, module=module, program=program)
+        code, said, still_running = _run_against(book, pid_file, child, ready)
+>       assert still_running, "a program called less was stopped because python is in its folder name"
+E       AssertionError: a program called less was stopped because python is in its folder name
+E       assert False
+
+tests/test_reset_ps_width.py:303: AssertionError
+_ test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[fakes.pid] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-9lz7r7oo/desk.sqlite3')
+pid_file = 'fakes.pid'
+
+    @pytest.mark.parametrize("pid_file", ["desk.pid", "fakes.pid"])
+    def test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped(book: Path, pid_file: str) -> None:
+        # /.../python-tools/bin/less -m lead_desk.server <ready>: the same words as the real shape, but argv[0] is `less`
+        ready = book.parent / "ready"
+        module = FAKES_MODULE if pid_file == "fakes.pid" else DESK_MODULE
+        program = _link(book.parent / "python-tools" / "bin", "less")
+        child = start_module_proc(ready, SLEEP, module=module, program=program)
+        code, said, still_running = _run_against(book, pid_file, child, ready)
+>       assert still_running, "a program called less was stopped because python is in its folder name"
+E       AssertionError: a program called less was stopped because python is in its folder name
+E       assert False
+
+tests/test_reset_ps_width.py:303: AssertionError
+_ test_the_real_desk_and_demo_server_command_lines_are_still_stopped[desk.pid-lead_desk.server-words3-Python] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-irs06ekp/desk.sqlite3')
+pid_file = 'desk.pid', module = 'lead_desk.server', words = []
+program_name = 'Python'
+
+    @pytest.mark.parametrize(
+        ("pid_file", "module", "words", "program_name"),
+        [
+            ("desk.pid", DESK_MODULE, [], None),  # this interpreter, as start_all.sh starts it
+            ("fakes.pid", FAKES_MODULE, ["--outbox", "keyed", "--port", "1"], None),
+            ("desk.pid", DESK_MODULE, [], "python3.12"),
+            ("desk.pid", DESK_MODULE, [], "Python"),  # the macOS framework name
+            ("fakes.pid", FAKES_MODULE, ["--outbox", "keyed"], "python"),
+        ],
+    )
+    def test_the_real_desk_and_demo_server_command_lines_are_still_stopped(
+        book: Path, pid_file: str, module: str, words: list[str], program_name: str | None
+    ) -> None:
+        ready = book.parent / "ready"
+        # a folder name with a space: the words are told apart one by one, never by splitting a line at spaces
+        program = None if program_name is None else _link(book.parent / "my tools" / "bin", program_name)
+        child = start_module_proc(ready, SLEEP, *words, module=module, program=program)
+        code, said, still_running = _run_against(book, pid_file, child, ready)
+>       assert not still_running and code == 0, (code, said)
+E       AssertionError: (6, 'refused: pid 1009 in /home/user/work/b5e-old/data/reset-guard-irs06ekp/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+E         ')
+E       assert (not True)
+
+tests/test_reset_ps_width.py:325: AssertionError
+_ test_the_ps_text_fallback_decides_the_same_way[python-tools/bin/less -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-xp6e1n8j/desk.sqlite3')
+tmp_path = PosixPath('/home/user/work/priv/b5e-tmp/old-bt/popen-gw0/test_the_ps_text_fallback_deci1')
+line = 'python-tools/bin/less -m lead_desk.server', stopped = False
+
+    @pytest.mark.parametrize(
+        ("line", "stopped"),
+        [
+            ("python -m lead_desk.server", True),
+            ("python -m lead_desk.server ", True),
+            ("/venv/bin/python3.12 -m lead_desk.server", True),
+            ("my tools/venv/bin/python3.12 -m lead_desk.server", False),  # a space in the path: refused, the safe side
+            ("/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server", True),
+            ("python -m demo_only.fakes_server", True),
+            ("python -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("vim lead_desk.server.py", False),
+            ("vim -m lead_desk.server", False),
+            ("python-tools/bin/less -m lead_desk.server", False),
+            ("my python/bin/less -m lead_desk.server", False),
+            ("bash -c python -m lead_desk.server", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("python demo_only.fakes_server.py", False),
+        ],
+    )
+    def test_the_ps_text_fallback_decides_the_same_way(book: Path, tmp_path: Path, line: str, stopped: bool) -> None:
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        answer = f"printf '%s\\n' {shlex.quote(line)}"
+        body = f'#!/usr/bin/env bash\ncase "$*" in *stat=*) echo S ;; *) {answer} ;; esac\n'
+        (stubs / "ps").write_text(body, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(str(dead_pid()), encoding="utf-8")
+        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
+        done = _run(SCRIPT, book, first_on_path=stubs, **ports, **NARROW)
+>       assert done.returncode == (0 if stopped else 6), (line, done.returncode, done.stdout, done.stderr)
+E       AssertionError: ('python-tools/bin/less -m lead_desk.server', 0, 'reset done
+E         ', '')
+E       assert 0 == 6
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_ps_width.py:382: AssertionError
+_ test_the_ps_text_fallback_decides_the_same_way[my python/bin/less -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-285di5sx/desk.sqlite3')
+tmp_path = PosixPath('/home/user/work/priv/b5e-tmp/old-bt/popen-gw0/test_the_ps_text_fallback_deci2')
+line = 'my python/bin/less -m lead_desk.server', stopped = False
+
+    @pytest.mark.parametrize(
+        ("line", "stopped"),
+        [
+            ("python -m lead_desk.server", True),
+            ("python -m lead_desk.server ", True),
+            ("/venv/bin/python3.12 -m lead_desk.server", True),
+            ("my tools/venv/bin/python3.12 -m lead_desk.server", False),  # a space in the path: refused, the safe side
+            ("/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server", True),
+            ("python -m demo_only.fakes_server", True),
+            ("python -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("vim lead_desk.server.py", False),
+            ("vim -m lead_desk.server", False),
+            ("python-tools/bin/less -m lead_desk.server", False),
+            ("my python/bin/less -m lead_desk.server", False),
+            ("bash -c python -m lead_desk.server", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("python demo_only.fakes_server.py", False),
+        ],
+    )
+    def test_the_ps_text_fallback_decides_the_same_way(book: Path, tmp_path: Path, line: str, stopped: bool) -> None:
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        answer = f"printf '%s\\n' {shlex.quote(line)}"
+        body = f'#!/usr/bin/env bash\ncase "$*" in *stat=*) echo S ;; *) {answer} ;; esac\n'
+        (stubs / "ps").write_text(body, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(str(dead_pid()), encoding="utf-8")
+        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
+        done = _run(SCRIPT, book, first_on_path=stubs, **ports, **NARROW)
+>       assert done.returncode == (0 if stopped else 6), (line, done.returncode, done.stdout, done.stderr)
+E       AssertionError: ('my python/bin/less -m lead_desk.server', 0, 'reset done
+E         ', '')
+E       assert 0 == 6
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_ps_width.py:382: AssertionError
+_ test_the_ps_text_fallback_decides_the_same_way[bash -c python -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-gxwj686i/desk.sqlite3')
+tmp_path = PosixPath('/home/user/work/priv/b5e-tmp/old-bt/popen-gw0/test_the_ps_text_fallback_deci3')
+line = 'bash -c python -m lead_desk.server', stopped = False
+
+    @pytest.mark.parametrize(
+        ("line", "stopped"),
+        [
+            ("python -m lead_desk.server", True),
+            ("python -m lead_desk.server ", True),
+            ("/venv/bin/python3.12 -m lead_desk.server", True),
+            ("my tools/venv/bin/python3.12 -m lead_desk.server", False),  # a space in the path: refused, the safe side
+            ("/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server", True),
+            ("python -m demo_only.fakes_server", True),
+            ("python -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("vim lead_desk.server.py", False),
+            ("vim -m lead_desk.server", False),
+            ("python-tools/bin/less -m lead_desk.server", False),
+            ("my python/bin/less -m lead_desk.server", False),
+            ("bash -c python -m lead_desk.server", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("python demo_only.fakes_server.py", False),
+        ],
+    )
+    def test_the_ps_text_fallback_decides_the_same_way(book: Path, tmp_path: Path, line: str, stopped: bool) -> None:
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        answer = f"printf '%s\\n' {shlex.quote(line)}"
+        body = f'#!/usr/bin/env bash\ncase "$*" in *stat=*) echo S ;; *) {answer} ;; esac\n'
+        (stubs / "ps").write_text(body, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(str(dead_pid()), encoding="utf-8")
+        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
+        done = _run(SCRIPT, book, first_on_path=stubs, **ports, **NARROW)
+>       assert done.returncode == (0 if stopped else 6), (line, done.returncode, done.stdout, done.stderr)
+E       AssertionError: ('bash -c python -m lead_desk.server', 0, 'reset done
+E         ', '')
+E       assert 0 == 6
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_ps_width.py:382: AssertionError
+_ test_the_ps_text_fallback_decides_the_same_way[my tools/venv/bin/python3.12 -m lead_desk.server-False] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-uzx4d7ow/desk.sqlite3')
+tmp_path = PosixPath('/home/user/work/priv/b5e-tmp/old-bt/popen-gw2/test_the_ps_text_fallback_deci3')
+line = 'my tools/venv/bin/python3.12 -m lead_desk.server', stopped = False
+
+    @pytest.mark.parametrize(
+        ("line", "stopped"),
+        [
+            ("python -m lead_desk.server", True),
+            ("python -m lead_desk.server ", True),
+            ("/venv/bin/python3.12 -m lead_desk.server", True),
+            ("my tools/venv/bin/python3.12 -m lead_desk.server", False),  # a space in the path: refused, the safe side
+            ("/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server", True),
+            ("python -m demo_only.fakes_server", True),
+            ("python -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("vim lead_desk.server.py", False),
+            ("vim -m lead_desk.server", False),
+            ("python-tools/bin/less -m lead_desk.server", False),
+            ("my python/bin/less -m lead_desk.server", False),
+            ("bash -c python -m lead_desk.server", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("python demo_only.fakes_server.py", False),
+        ],
+    )
+    def test_the_ps_text_fallback_decides_the_same_way(book: Path, tmp_path: Path, line: str, stopped: bool) -> None:
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        answer = f"printf '%s\\n' {shlex.quote(line)}"
+        body = f'#!/usr/bin/env bash\ncase "$*" in *stat=*) echo S ;; *) {answer} ;; esac\n'
+        (stubs / "ps").write_text(body, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(str(dead_pid()), encoding="utf-8")
+        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
+        done = _run(SCRIPT, book, first_on_path=stubs, **ports, **NARROW)
+>       assert done.returncode == (0 if stopped else 6), (line, done.returncode, done.stdout, done.stderr)
+E       AssertionError: ('my tools/venv/bin/python3.12 -m lead_desk.server', 0, 'reset done
+E         ', '')
+E       assert 0 == 6
+E        +  where 0 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=0, stdout='reset done\n', stderr='').returncode
+
+tests/test_reset_ps_width.py:382: AssertionError
+_ test_the_ps_text_fallback_decides_the_same_way[/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server-True] _
+[gw2] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-l7k1xtcf/desk.sqlite3')
+tmp_path = PosixPath('/home/user/work/priv/b5e-tmp/old-bt/popen-gw2/test_the_ps_text_fallback_deci4')
+line = '/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server'
+stopped = True
+
+    @pytest.mark.parametrize(
+        ("line", "stopped"),
+        [
+            ("python -m lead_desk.server", True),
+            ("python -m lead_desk.server ", True),
+            ("/venv/bin/python3.12 -m lead_desk.server", True),
+            ("my tools/venv/bin/python3.12 -m lead_desk.server", False),  # a space in the path: refused, the safe side
+            ("/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server", True),
+            ("python -m demo_only.fakes_server", True),
+            ("python -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("vim lead_desk.server.py", False),
+            ("vim -m lead_desk.server", False),
+            ("python-tools/bin/less -m lead_desk.server", False),
+            ("my python/bin/less -m lead_desk.server", False),
+            ("bash -c python -m lead_desk.server", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("python demo_only.fakes_server.py", False),
+        ],
+    )
+    def test_the_ps_text_fallback_decides_the_same_way(book: Path, tmp_path: Path, line: str, stopped: bool) -> None:
+        stubs = tmp_path / "stubs"
+        stubs.mkdir()
+        answer = f"printf '%s\\n' {shlex.quote(line)}"
+        body = f'#!/usr/bin/env bash\ncase "$*" in *stat=*) echo S ;; *) {answer} ;; esac\n'
+        (stubs / "ps").write_text(body, encoding="utf-8")
+        (stubs / "ps").chmod(0o755)
+        pidfile = book.parent / "desk.pid"
+        pidfile.write_text(str(dead_pid()), encoding="utf-8")
+        ports = {"DESK_PORT": str(_free_port()), "DESK_FAKES_PORT": str(_free_port())}
+        done = _run(SCRIPT, book, first_on_path=stubs, **ports, **NARROW)
+>       assert done.returncode == (0 if stopped else 6), (line, done.returncode, done.stdout, done.stderr)
+E       AssertionError: ('/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server', 6, '', 'refused: pid 1941 in /ho...id is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+E         ')
+E       assert 6 == 0
+E        +  where 6 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=6, stdout='', stderr='refused: ...id is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)\n').returncode
+
+tests/test_reset_ps_width.py:382: AssertionError
+_____ test_the_old_bare_substring_match_and_the_unchecked_number_are_gone ______
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+    def test_the_old_bare_substring_match_and_the_unchecked_number_are_gone() -> None:
+        code = _code()
+>       assert not re.search(r"-match\s+'lead_desk\\\.server\|", code), "the bare substring match is back"
+E       AssertionError: the bare substring match is back
+E       assert not <re.Match object; span=(1226, 1252), match="-match 'lead_desk\\.server|">
+E        +  where <re.Match object; span=(1226, 1252), match="-match 'lead_desk\\.server|"> = <function search at 0x7f57d84a0b80>("-match\\s+'lead_desk\\\\\\.server\\|", '$ErrorActionPreference = \'Stop\'\n$env:PYTHONPATH = \'src;.\'\n$stopWait = 10\nif ($env:RESET_STOP_WAIT_SECONDS) {\n...kes.err.log", "$dataDir\\crash.flag") {\n    if (Test-Path $f) { Remove-Item -Force $f }\n}\nWrite-Host \'reset done\'')
+E        +    where <function search at 0x7f57d84a0b80> = re.search
+
+tests/test_reset_ps1_pid_rules.py:40: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python -m lead_desk.server', ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = '"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server'
+ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Program Files\\Python312\\python.exe" -m lead_desk.server-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = '"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server'
+ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\Program Files\\Python312\\python.exe -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'C:\\Program Files\\Python312\\python.exe -m lead_desk.server'
+ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\venv\\python.exe -m lead_desk.server-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'C:\\venv\\python.exe -m lead_desk.server', ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5'
+ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[PYTHON.EXE -m LEAD_DESK.SERVER-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'PYTHON.EXE -m LEAD_DESK.SERVER', ours = True
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[notepad lead_desk.server.py-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'notepad lead_desk.server.py', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server.py-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python -m lead_desk.server.py', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.serverx-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python -m lead_desk.serverx', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m xlead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python -m xlead_desk.server', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -mlead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python -mlead_desk.server', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'python lead_desk.server', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\python-tools\\less.exe -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'C:\\python-tools\\less.exe -m lead_desk.server', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[cmd /c echo python -m lead_desk.server-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'cmd /c echo python -m lead_desk.server', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[powershell -Command "python -m demo_only.fakes_server.py"-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+line = 'powershell -Command "python -m demo_only.fakes_server.py"', ours = False
+
+    @pytest.mark.parametrize(
+        ("line", "ours"),
+        [
+            ("python -m lead_desk.server", True),
+            ('"C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server', True),
+            ('"C:\\Program Files\\Python312\\python.exe" -m lead_desk.server', True),
+            ("C:\\Program Files\\Python312\\python.exe -m lead_desk.server", False),  # no quotes, a space: the safe side
+            ("C:\\venv\\python.exe -m lead_desk.server", True),
+            ("C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5", True),
+            ("PYTHON.EXE -m LEAD_DESK.SERVER", True),
+            ("notepad lead_desk.server.py", False),
+            ("python -m lead_desk.server.py", False),
+            ("python -m lead_desk.serverx", False),
+            ("python -m xlead_desk.server", False),
+            ("python -mlead_desk.server", False),
+            ("python lead_desk.server", False),
+            ("C:\\python-tools\\less.exe -m lead_desk.server", False),
+            ("cmd /c echo python -m lead_desk.server", False),
+            ('powershell -Command "python -m demo_only.fakes_server.py"', False),
+        ],
+    )
+    def test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes(line: str, ours: bool) -> None:
+>       assert bool(re.search(_ours_pattern(), line, re.IGNORECASE)) is ours, line
+                              ^^^^^^^^^^^^^^^
+
+tests/test_reset_ps1_pid_rules.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _ours_pattern() -> str:
+        """The pattern reset.ps1 builds: `$interpreter = '...'` and `$ours = '...' + $interpreter + '...'`."""
+        code = _code()
+        interpreter = re.search(r"^\$interpreter = '(?P<text>.*)'$", code, re.MULTILINE)
+        ours = re.search(r"^\$ours = (?P<expr>.*)$", code, re.MULTILINE)
+>       assert interpreter and ours, "reset.ps1 has no $interpreter and $ours patterns for the desk's command line"
+E       AssertionError: reset.ps1 has no $interpreter and $ours patterns for the desk's command line
+E       assert (None)
+
+tests/test_reset_ps1_pid_rules.py:31: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123-True] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '123', plain = True
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+__ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[1-True] __
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '1', plain = True
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[007-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '007', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[0-False] __
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '0', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[abc-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = 'abc', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12 34-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '12 34', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12\n34-False] _
+[gw0] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+text = '12\n34', plain = False
+
+    @pytest.mark.parametrize(
+        ("text", "plain"),
+        [("123", True), ("1", True), ("007", False), ("0", False), ("abc", False), ("12 34", False), ("12\n34", False)],
+    )
+    def test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only(text: str, plain: bool) -> None:
+        found = re.search(r"-cmatch '(?P<rule>\^\[1-9\]\[0-9\]\*\$)'", _code())
+>       assert found, "the pid shape rule is not in reset.ps1"
+E       AssertionError: the pid shape rule is not in reset.ps1
+E       assert None
+
+tests/test_reset_ps1_pid_rules.py:81: AssertionError
+_ test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[named-pipe] _
+[gw1] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-pao20k2b/desk.sqlite3')
+make = <function _fifo at 0x7f3d22568ae0>
+
+    @pytest.mark.parametrize("make", [_fifo, _socket_file], ids=["named-pipe", "socket-file"])
+    def test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset(
+        book: Path, make: Callable[[Path], None]
+    ) -> None:
+        pidfile = book.parent / "desk.pid"
+        make(pidfile)
+        try:
+>           done = _run(SCRIPT, book, timeout=30, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_reset_ps_width.py:403: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/support.py:118: in reset_run
+    return subprocess.run(  # noqa: S603 (the script is this repository's own file, the path is made by the test)
+/usr/lib/python3.12/subprocess.py:550: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1209: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:2116: in _communicate
+    self._check_timeout(endtime, orig_timeout, stdout, stderr)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Popen: returncode: -9 args: ['bash', '/home/user/work/b5e-old/scripts/reset...>
+endtime = 16154.44702506, orig_timeout = 30, stdout_seq = [], stderr_seq = []
+skip_check_and_raise = False
+
+    def _check_timeout(self, endtime, orig_timeout, stdout_seq, stderr_seq,
+                       skip_check_and_raise=False):
+        """Convenience for checking if a timeout has expired."""
+        if endtime is None:
+            return
+        if skip_check_and_raise or _time() > endtime:
+>           raise TimeoutExpired(
+                    self.args, orig_timeout,
+                    output=b''.join(stdout_seq) if stdout_seq else None,
+                    stderr=b''.join(stderr_seq) if stderr_seq else None)
+E           subprocess.TimeoutExpired: Command '['bash', '/home/user/work/b5e-old/scripts/reset.sh']' timed out after 30 seconds
+
+/usr/lib/python3.12/subprocess.py:1253: TimeoutExpired
+_ test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[socket-file] _
+[gw1] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-n39gop06/desk.sqlite3')
+make = <function _socket_file at 0x7f3d22568b80>
+
+    @pytest.mark.parametrize("make", [_fifo, _socket_file], ids=["named-pipe", "socket-file"])
+    def test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset(
+        book: Path, make: Callable[[Path], None]
+    ) -> None:
+        pidfile = book.parent / "desk.pid"
+        make(pidfile)
+        try:
+            done = _run(SCRIPT, book, timeout=30, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+        finally:
+            if pidfile.exists() and pidfile.is_fifo():  # lets a reader that is still waiting for a writer go (old script)
+                os.close(os.open(pidfile, os.O_RDWR))
+>       assert done.returncode == 0 and not pidfile.exists(), (done.returncode, done.stdout, done.stderr)
+E       AssertionError: (1, '', 'cat: /home/user/work/b5e-old/data/reset-guard-n39gop06/desk.pid: No such device or address
+E         ')
+E       assert (1 == 0)
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=1, stdout='', stderr='cat: /home/user/work/b5e-old/data/reset-guard-n39gop06/desk.pid: No such device or address\n').returncode
+
+tests/test_reset_ps_width.py:407: AssertionError
+_ test_a_pid_file_that_is_a_folder_is_refused_with_exit_7_and_nothing_is_deleted _
+[gw1] linux -- Python 3.12.3 /home/user/work/q1-xdist-venv/bin/python
+
+book = PosixPath('/home/user/work/b5e-old/data/reset-guard-3q817h62/desk.sqlite3')
+
+    def test_a_pid_file_that_is_a_folder_is_refused_with_exit_7_and_nothing_is_deleted(book: Path) -> None:
+        (book.parent / "desk.pid").mkdir()
+        done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()), **NARROW)
+>       assert done.returncode == 7 and "cannot be removed" in done.stdout + done.stderr, (done.stdout, done.stderr)
+E       AssertionError: ('', 'cat: /home/user/work/b5e-old/data/reset-guard-3q817h62/desk.pid: Is a directory
+E         ')
+E       assert (1 == 7)
+E        +  where 1 = CompletedProcess(args=['bash', '/home/user/work/b5e-old/scripts/reset.sh'], returncode=1, stdout='', stderr='cat: /home/user/work/b5e-old/data/reset-guard-3q817h62/desk.pid: Is a directory\n').returncode
+
+tests/test_reset_ps_width.py:414: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words8]
+FAILED tests/test_reset_ps_width.py::test_a_program_that_only_contains_the_marker_text_is_not_stopped[desk.pid-words9]
+FAILED tests/test_reset_ps_width.py::test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[desk.pid]
+FAILED tests/test_reset_ps_width.py::test_a_program_with_python_in_a_folder_name_and_the_marker_is_not_stopped[fakes.pid]
+FAILED tests/test_reset_ps_width.py::test_the_real_desk_and_demo_server_command_lines_are_still_stopped[desk.pid-lead_desk.server-words3-Python]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[python-tools/bin/less -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[my python/bin/less -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[bash -c python -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[my tools/venv/bin/python3.12 -m lead_desk.server-False]
+FAILED tests/test_reset_ps_width.py::test_the_ps_text_fallback_decides_the_same_way[/Library/Frameworks/Python.framework/Versions/3.12/bin/Python -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_old_bare_substring_match_and_the_unchecked_number_are_gone
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Users\\me\\venv\\Scripts\\python.exe" -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["C:\\Program Files\\Python312\\python.exe" -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\Program Files\\Python312\\python.exe -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\venv\\python.exe -m lead_desk.server-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\x\\pythonw.exe -m demo_only.fakes_server --outbox keyed --port 5-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[PYTHON.EXE -m LEAD_DESK.SERVER-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[notepad lead_desk.server.py-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.server.py-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m lead_desk.serverx-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -m xlead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python -mlead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[python lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[C:\\python-tools\\less.exe -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[cmd /c echo python -m lead_desk.server-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes[powershell -Command "python -m demo_only.fakes_server.py"-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[123-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[1-True]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[007-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[0-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[abc-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12 34-False]
+FAILED tests/test_reset_ps1_pid_rules.py::test_the_pid_shape_rule_in_reset_ps1_accepts_one_plain_number_only[12\n34-False]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[named-pipe]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_pipe_or_a_socket_is_stale_and_does_not_stop_the_reset[socket-file]
+FAILED tests/test_reset_ps_width.py::test_a_pid_file_that_is_a_folder_is_refused_with_exit_7_and_nothing_is_deleted
+37 failed, 105 passed, 6 skipped in 49.32s
+EXIT_CODE=1
+
+# Part B: m4 and m5 tests (tests/test_port_helpers.py) against the r4 tests/support.py and r4 tests/conftest.py (whole r4 tree)
+Fri Nov 13 14:52:49 UTC 2026
+.FFFF                                                                    [100%]
+=================================== FAILURES ===================================
+____ test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest _____
+
+request = <FixtureRequest for <Function test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest>>
+
+    def test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest(request: pytest.FixtureRequest) -> None:
+>       assert "_release_held_ports" in request.fixturenames, "no autouse fixture releases the held ports after a test"
+E       AssertionError: no autouse fixture releases the held ports after a test
+E       assert '_release_held_ports' in ['_no_desk_settings_from_the_shell', 'monkeypatch', '_stuck_servers_fail_the_test', 'request']
+E        +  where ['_no_desk_settings_from_the_shell', 'monkeypatch', '_stuck_servers_fail_the_test', 'request'] = <FixtureRequest for <Function test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest>>.fixturenames
+
+tests/test_port_helpers.py:34: AssertionError
+__________ test_free_port_never_returns_a_number_that_held_port_holds __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f86804d8590>
+
+    def test_free_port_never_returns_a_number_that_held_port_holds(monkeypatch: pytest.MonkeyPatch) -> None:
+        held, other = 41001, 41002
+        _operating_system_hands_out(monkeypatch, [held, held, held, other])
+        assert held_port() == held
+>       assert free_port() == other  # the answers that said `held` again were refused
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 41001 == 41002
+E        +  where 41001 = free_port()
+
+tests/test_port_helpers.py:73: AssertionError
+________ test_held_port_never_returns_a_number_that_free_port_gave_away ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f86804da570>
+
+    def test_held_port_never_returns_a_number_that_free_port_gave_away(monkeypatch: pytest.MonkeyPatch) -> None:
+        given, other = 41003, 41004
+        _operating_system_hands_out(monkeypatch, [given, given, other])
+        assert free_port() == given
+>       assert held_port() == other  # the caller of free_port() may bind `given` at any moment
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 41003 == 41004
+E        +  where 41003 = held_port()
+
+tests/test_port_helpers.py:80: AssertionError
+______ test_free_port_stops_with_a_clear_error_when_every_answer_is_held _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f86804dbaa0>
+
+    def test_free_port_stops_with_a_clear_error_when_every_answer_is_held(monkeypatch: pytest.MonkeyPatch) -> None:
+        _operating_system_hands_out(monkeypatch, [41005] * 101)
+        assert held_port() == 41005
+>       with pytest.raises(AssertionError, match="held"):
+E       Failed: DID NOT RAISE AssertionError
+
+tests/test_port_helpers.py:86: Failed
+=========================== short test summary info ============================
+FAILED tests/test_port_helpers.py::test_the_held_ports_of_a_test_are_released_by_the_fixture_in_conftest
+FAILED tests/test_port_helpers.py::test_free_port_never_returns_a_number_that_held_port_holds
+FAILED tests/test_port_helpers.py::test_held_port_never_returns_a_number_that_free_port_gave_away
+FAILED tests/test_port_helpers.py::test_free_port_stops_with_a_clear_error_when_every_answer_is_held
+4 failed, 1 passed in 0.05s
+EXIT_CODE=1
