@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:24Z (16:54 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-B2 | mutation sets on tree-M (runner a7df64b5) | patches' mutants vs first-pass survivors | 10:15Z / 15:45 | hard stop 11:50Z (about 26 min left) | 1 of 1 | running. Runner checkpoint 11:18Z: M 23, CN 29, P 10, S 12 done; K done or nearly; R 16 of 20 done (log 19 lines at 11:23Z), then combo P2b/P4b. SP not listed in the checkpoint (I cannot tell if it is dropped or pending; will ask in the report). Counts unjudged | wait for report |
+| RR6-sum | summary.md with interim-vs-final survivor table | LEAD 10:53Z | after B2 | about 11:35-11:45Z | n/a | waits for B2; A, B, C inputs ready | write when B2 reports |
+| RR6-A3 | unpatched main full run | | | DONE 11:10Z | | pushed at 11:17Z | none |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle; 1 pytest process (B2's) | none |
+
+ASK: none. (If B2 has not reported by 11:45Z I will message it for a partial report before the 11:50Z stop; default.)
+
+
 ## REPORT 11:17Z (16:47 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
