@@ -1,0 +1,25 @@
+== v3 test files on the v2 scripts/workflows
+        feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+        feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+        feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+        feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh-BASH_VERSION-unset]
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh-BASH_VERSION-exported]
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[start_all.sh-BASH_VERSION-unset]
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[start_all.sh-BASH_VERSION-exported]
+FAILED tests/test_workflow_files_parse.py::test_a_pip_install_in_a_workflow_takes_wheels_only_with_hashes[lint.yml]
+5 failed, 105 passed, 3 skipped in 34.26s
+38 probe snippets; v2 scan wrong on 13; v3 scan wrong on 0
+  v2 wrong (should be caught=True): 'x="$( [ -e y ] && echo 1 )"'
+  v2 wrong (should be caught=True): 'echo "$(if [ -e x ]; then echo 1; fi)"'
+  v2 wrong (should be caught=True): 'x=`[ -e y ]`'
+  v2 wrong (should be caught=True): 'x="`[ -e y ]`"'
+  v2 wrong (should be caught=True): 'command [ -e x ]'
+  v2 wrong (should be caught=True): 'time [ -e x ]'
+  v2 wrong (should be caught=True): "echo it\\'s ; [ -e x ]"
+  v2 wrong (should be caught=True): 'echo "a \\" b" ; [ -e x ]'
+  v2 wrong (should be caught=True): "echo $'it\\'s' ; [ -e x ]"
+  v2 wrong (should be caught=False): 'cat <<EOF\n[ -e x ]\nEOF\n[[ -e x ]]'
+  v2 wrong (should be caught=False): "cat <<-'EOF'\n\t[ -e x ]\n\tEOF"
+  v2 wrong (should be caught=False): 'echo "a\n[ -e x ]\nb"'
+  v2 wrong (should be caught=False): 'x=$(( 1 + 2 )) [ '

@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:41Z / 09:11 IST - NEW this block: P1 v3 (dash bypass closed, measured), P2 v2 (3 patches), nodemo-fix (6 failures -> 0, first chunked no-demo run 867/80/0), all pushed; 6 fresh reviews running
+FAILED / UNCERTAIN first:
+1. **P2 v1 failed the gitleaks hygiene scan** (test_hygiene_scan_public flags tests/test_sonar_p2_choke_points.py: `desk.corp.` and `169.254.169.254`): the v1 builder never ran the gitleaks tests. P2 v2 fixes it (hygiene + gitleaks run on all five patches: 45 passed). Lesson recorded: every builder brief now needs a gitleaks run (DPLD_REQUIRE_SCAN=1) in its gates.
+2. **P1 v1/v2 dash bypass is CLOSED in v3** (sonar-p1-quickwins-v3.patch, applies on db54e13 alone and in 7 orders with P2 and P3; sha256 prefix above): with BASH_VERSION=5.2.0 exported, v2 under dash printed `[[: not found`, 'reset done' and DELETED the outside file; v3 refuses (rc 2) and keeps it; shell matrix of 14 runs (dash refuses; busybox sh/ash, zsh, bash --posix, bash run the file and stop at the data/ refusal). The hygiene scan is rewritten as a whole-text scanner (38 probe snippets: v2 scan wrong on 13, v3 on 0) with remaining holes listed in NOTES (`test -e`, `sudo [`, `))` case patterns). lint.yml now uses `--only-binary=:all:` (the form sonar.yml uses; Sonar's accepted spelling for S8541/S6506/S7688 is unverified). 7 test files 292 passed 11 skipped (8 playwright + 3 gitleaks: not installed in that venv). v3 is not yet reviewed by a fresh reader (the third pass): I start it now.
+3. **nodemo-fix.patch (your 03:40Z order), sonar/, +16/-4 test-only, applies on db54e13**: confirmed on plain db54e13 with demo_only deleted: 6 failures, all in tests/test_except_clause_hierarchy.py (2 files x 3 tests): FIXED; chunked no-demo run of ALL 81 test files (9 chunks, one pytest at a time): **0 failed, 867 passed, 80 skipped**; before: 6 failed. With the demo present the 4 affected files: 110 passed (the 6 demo rows run). RUN ON LAPTOP line text from the builder: 'demo_only/ deleted, chunked 9 x pytest on db54e13 + nodemo-fix.patch: 0 failed, 867 passed, 80 skipped'. Only 13 of 81 files run in full in a client copy; the rest are skipped by conftest. DECISION FOR YOU: optional nodemo-optional-hygiene-repo.patch: tests/test_hygiene.py and test_no_placeholders.py import `support` (which imports demo_only) only for REPO, so in a client copy BOTH WHOLE FILES ARE SKIPPED: the portal demo-words scan and the 'only loader.py may name demo_only' rule never run where they matter most. The patch (2 lines per file, needs P1 first) makes them run in client copies; it exposes the P2 literal failure of item 1 (not caused by it). A fresh review of nodemo-fix is running.
+4. **P2 v2 (3 patches)**: main (identity S8786 x2, five S5332, S2583: all >= 80% by the builder's reasoning, NOT measured) + optional regex (run_real_check._ADDRESS ~75%, scrub MAIL ~55-60%) + optional feed (drops the undocumented `feed.py --url`, S8703 ~75%). One behaviour change on the guarantee-class send path: after a locked DB with an uncommitted stage move, v2 no longer frees the copy wait (the old code did): a fresh adversarial review is running on exactly that.
+5. Still not run: the full suite WITH demo present on any series (laptop), Windows, any Sonar result.
+READY TO APPLY NOW (db54e13): nodemo-fix.patch (review running), then P1 v3 (review running); the rest as before; P3 waits for the probe result.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7f2198e245a04151 | fresh reviewer P2 v2 (3 patches) | 03:41 | running | report |
+| a6c64d8bc4da605d6 | fresh reviewer nodemo-fix | 03:39 | running | report |
+| a772c50e2730958f1 | fresh security reviewer probe-ab + P3 v2 | 03:37 | running | report |
+| a5174404d55a3357a | fresh reviewer crlf v4 + yaml delta v2 | 03:31 | running | report |
+| a425d1049580d6b03 | fresh reviewer real-run fixes v4 | 03:28 | running | report |
+| (starting) | fresh reviewer P1 v3 | 03:44 | starting | report |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | build 3 | review 2: 1 Major (closed) | fresh read | no | clean |
+| P2 | build 2 | review 1: 1 Major | design | no | clean |
+| nodemo | build 1 | - | new | no | clean |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v3 | built, pushed |
+| P2 v2 (3 patches) | built, pushed |
+| nodemo-fix + optional | built, pushed, chunked no-demo run green |
+
 ## 2026-11-13 03:37Z / 09:07 IST - probe-ab.patch READY (sonar/, applies on db54e13) pending a fresh safety read; P3 v2 built (fixes the 3 Majors); P1 v2 has a Major (dash guard bypass): v3 building; 7 agents
 FAILED / UNCERTAIN first:
 1. **P1 v2 must not be applied**: fresh review (sonar/REVIEW-p1v2-fresh.md): the dash guard tests BASH_VERSION, which dash inherits from the environment: `export BASH_VERSION=5.2; dash scripts/reset.sh` with a db path outside ./data printed `[[: not found` and then DELETED the outside file (v1/v2 both). Fix = test the feature (`eval '[[ a == a ]]'` in a subshell), not the name: P1 v3 builder running (ac735b2234f85b6e5). Behaviour under bash is unchanged (818 + 71 before/after cases, 0 differences). Minor: hygiene scan holes; lint.yml `--only-binary=:all:` hedge; empty pid-file mutant.

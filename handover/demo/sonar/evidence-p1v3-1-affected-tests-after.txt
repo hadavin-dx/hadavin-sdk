@@ -1,0 +1,11 @@
+..............................................s......ss................. [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 71%]
+............................................ss.......................... [ 95%]
+.....sssss....s                                                          [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:145: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:373: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:420: no gitleaks program on PATH (set GITLEAKS_BIN)
+SKIPPED [8] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+292 passed, 11 skipped in 74.12s (0:01:14)

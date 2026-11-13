@@ -1,0 +1,15 @@
+BASH_VERSION unset | dash | rc=2 | refused: run this script with bash (bash scripts/reset.sh); this shell is not ba | db kept: yes
+BASH_VERSION unset | busybox sh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION unset | busybox ash | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION unset | zsh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION unset | zsh --emulate sh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION unset | bash --posix | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION unset | bash | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | dash | rc=2 | refused: run this script with bash (bash scripts/reset.sh); this shell is not ba | db kept: yes
+BASH_VERSION exported | busybox sh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | busybox ash | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | zsh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | zsh --emulate sh | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | bash --posix | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+BASH_VERSION exported | bash | rc=2 | refused: the database path is not inside this repository's data/ folder, so noth | db kept: yes
+(dash/ash/zsh/bash all rc 2 expected; dash = not-bash refusal, others reach the data/ refusal because they run [[ ]])

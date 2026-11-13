@@ -1,0 +1,21 @@
+===== v2 (tree with the BASH_VERSION name guard)
+--- dash scripts/reset.sh   (BASH_VERSION=5.2.0 exported, db outside data/)
+scripts/reset.sh: 16: [[: not found
+scripts/reset.sh: 29: [[: not found
+scripts/reset.sh: 29: [[: not found
+reset done
+rc=0
+--- bash scripts/reset.sh   (BASH_VERSION=5.2.0 exported, db outside data/)
+refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+rc=2
+desk.sqlite3
+
+===== v3
+--- dash scripts/reset.sh   (BASH_VERSION=5.2.0 exported, db outside data/)
+refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped
+rc=2
+desk.sqlite3
+--- bash scripts/reset.sh   (BASH_VERSION=5.2.0 exported, db outside data/)
+refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+rc=2
+desk.sqlite3
