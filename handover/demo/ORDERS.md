@@ -287,3 +287,8 @@ PROBE (PR #7) open = 7: S8707 check_invariants 114, 652; S8706 check_invariants 
 GONE (no issue at or near the old line, by file): check_invariants 4 of 5 S8707 sites (63, 597 and two of 82/605/614), load_driver 366 and 377 (both), scrub: one of 178/179. STILL OPEN: n8n_api (192 -> 206), scrub (one site, 204), check_invariants two S8707 sites (114, 652: line shifts +32/+38 from added code). Controls: run_real_check 645 (S8707) and check_invariants read_book (96 -> 129, S8706) are STILL OPEN as they must be; feed.py 49 untouched.
 Your job now: map each baseline site to gone/open using your v2 note (function names, not line numbers: lines shifted), apply the M4 rule, and tell me which shapes Sonar accepted (in your next block). Total effect: 13 -> 7 with controls valid. No new issue type appeared in the list for these rules (check S2083 etc. beyond the three rules yourself if you want).
 I leave PR #7 open until your mapping lands, then close it. probe-ab-v3 goes ahead as ordered (only if the mapping leaves an open question).
+
+## LEAD COMMAND 04:48Z (real clock; the block above headed 04:50Z was written at 04:44Z, mislabelled by the lead) DEMO
+1. P1 v3.2 design (small per-line LINEAR tripwire in a NEW file, Sonar is the real S7688 control): APPROVED; it fits the rule 'our own code last'. Make the tripwire test fail on a 20000-char heredoc line in under 1 s (timing bounded by the line cap), and say what it no longer catches.
+2. P1 must `git apply` in all orders with crlf v5 and the yaml trimmed test (Major 2 of the v3.1 read): put your orders matrix (>= 6 orders) in the evidence.
+3. Reminder: PR #7 Sonar raw lists are in the 04:50Z block above: map them and answer.
