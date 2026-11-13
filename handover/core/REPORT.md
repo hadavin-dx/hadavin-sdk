@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:54Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F1 | builder: tracebacks to one refusal line | fix order | 12:45Z | done 12:54Z | build 1 | DONE (builder's claims, unverified): fix.patch 511 lines (feed.py, reset_check.py, crash_desk.py, scrub_n8n_export.py, smtp_provider.py CA-file, new scripts/refusals.py, new tests/test_script_refusals_feed.py 32 tests); fails-before 32 failed, after 32 passed (3 more runs passed); neighbour 12 files 1419 passed 6 skipped; ruff clean on 7 files. NOT done by builder: reset.sh/start_all.sh/.ps1 wrappers still show a traceback for a bad DESK_* value (python -c ... Config.from_env()); it backed out its parser edits to avoid clashing with F2, so feed.py's argparse echo stays until F2 | V1 evidence; F5 wrappers builder after F2 lands |
+| V1 | independent evidence runner for F1 (fails-before, 3x after, neighbours, ruff, 8 mutants, 20 hostile inputs) | proof | 12:54Z | 45 min | 1 | RUNNING | then egm:egm-codebase-details reviewer |
+| V4 | evidence for F4 | proof | 12:52Z | 13:37Z | 1 | RUNNING | read |
+| F2 F3 | builders | fix order | 12:45Z | about 13:45Z | build 1 | RUNNING | evidence runners next |
+| E1 | root-cause experiments | fix order | 12:47Z | 13:45Z | 1 | RUNNING | table |
+| D1 | full suite + docs patch | docs patch safe? | 12:38Z | 13:10Z | 1 | RUNNING about 60% | compare to 3978 passed |
+| C6 | flakiness 20x | queue | 12:33Z | 13:30Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: none new from my side. F1 had one flaky hang-up test during its build; it found a real misclassification and the builder fixed it (builder's claim, V1 re-checks with 3 runs). Totals: no new failures.
+LOAD: 6 agents + D1 on 4 cores, load about 4.1.
+ASK: 1. F1 chose exit code 3 for "desk cannot be reached" (same as run_live_check and run_real_check; n8n_api.py uses 1). Default if no answer in 10 min: keep 3.
+
+
 ## REPORT (container clock 12:51Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
