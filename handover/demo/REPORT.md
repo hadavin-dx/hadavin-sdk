@@ -1,5 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 16:20Z: RERUN-RUNBOOK DONE (handover/demo/RERUN-RUNBOOK.md)
+- LOAD: no agent, no job. Only new test: venv + pytest on this machine (pytest 9.2.0 installs, tmux/setsid/nohup present); scratch deleted.
+- Runbook has 13 steps plus a proved/not-proved list. TESTED: Node 24 from npm, rebuild fix, dockerd, digest pull with retry, Postgres container, ports, vmstat, venv. UNTESTED (marked): clone, npm ci in the harness folder, harness tests, smoke, --min-idle, full run, labels, result folder names.
+- Run order differs from the section numbers (written in the file): disk, Node, dockerd, pull, npm ci + rebuild, venv, tests, smoke, quiet check, full run, cleanup, push-back.
+- ASK: send the harness branch name, repository address, module names, label and port numbers; I replace each placeholder. Default: placeholders stay.
+- Paper items (WATCH-CHECKLIST, FAILED-TAKE-NOTE) unchanged and still current; the four UNVERIFIED take items still open.
+- QUEUE DONE, idle by order.
+
 ## REPORT 16:00Z: DOCKER PROBE DONE (handover/demo/DOCKER-PROBE.md)
 - LOAD: no agent, no job; dockerd killed, scratch deleted.
 - RESULT: dockerd STARTS (first try, root, default overlayfs, ready 1 s). Tag pull hit Docker Hub 429 twice; pull by digest worked on try 3 (9 s): harness must retry. postgres:16 by digest = linux/amd64, 638 MB on disk; container ran, pg_isready over TCP ok in 2 s, psql 16.16. Free disk 4.2 G -> 3.5 G with the image (n8n install needs 3 G).
