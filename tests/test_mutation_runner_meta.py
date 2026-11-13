@@ -80,7 +80,7 @@ MOVED = (
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
 )
-EXPECTED_MUTANTS = 224
+EXPECTED_MUTANTS = 248
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 
@@ -124,10 +124,10 @@ def test_a_there_are_the_listed_number_of_mutants_with_unique_names():
         mm.MR,
         "tests/conftest.py",
     }  # the guard fixture of the database address is mutated too
-    assert sum(m.file == mm.MU for m in mm.M) == 12
+    assert sum(m.file == mm.MU for m in mm.M) == 13
     assert sum(m.file == "tests/conftest.py" for m in mm.M) == 4
     assert (
-        sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 12 - 4
+        sum(m.file == mm.MR for m in mm.M) == EXPECTED_MUTANTS - 13 - 4
     )  # not the judge, not the conftest
 
 
@@ -168,14 +168,15 @@ def test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists
         assert m.pinned == pin + m.only_test, (m.name, m.pinned)
 
 
-def test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not():
+def test_a_the_four_crash_mutants_declare_their_exception_class_and_the_others_do_not():
     crash = {m.name: m.crash_type for m in mm.M if m.allow_crash}
     assert crash == {
         "runner: a failing tree kill is not caught": "PermissionError",
         "b2: a refused junit stops the run": "ValueError",
         "runner: a truncated junit stops the run": "ParseError",
+        "runner: a JUnit file that cannot be read stops the run": "PermissionError",
     }
-    assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 3
+    assert sum(not m.allow_crash and not m.crash_type for m in mm.M) == EXPECTED_MUTANTS - 4
 
 
 def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
