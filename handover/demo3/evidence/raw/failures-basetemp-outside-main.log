@@ -1,0 +1,1164 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/main/.venv/bin/python
+rootdir: /home/user/work/main
+configfile: pyproject.toml
+collecting ... collected 56 items
+
+tests/test_http.py::test_crash_d2_subprocess_with_the_blind_smtp_sender FAILED [  1%]
+tests/test_load_tools.py::test_clean_case_passes FAILED                  [  3%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_lost_receipt-1-form:r-gone] FAILED [  5%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_double_mail-3-L1] FAILED [  7%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_sent_without_mail-3-L2] FAILED [  8%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_crm_missing-4-L3] FAILED [ 10%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_crm_extra-4-L5-ghost] FAILED [ 12%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_five_model_calls-5-L4] FAILED [ 14%]
+tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_pending_left-2-L4] FAILED [ 16%]
+tests/test_load_tools.py::test_mail_that_cannot_be_matched_fails_check_3[fault_wrong_recipient-wrong-recipient:L1] FAILED [ 17%]
+tests/test_load_tools.py::test_mail_that_cannot_be_matched_fails_check_3[fault_unreadable_message-unparseable-message] FAILED [ 19%]
+tests/test_load_tools.py::test_all_unknown_book_fails_unless_allowed FAILED [ 21%]
+tests/test_load_tools.py::test_unknown_row_present_is_allowed FAILED     [ 23%]
+tests/test_load_tools.py::test_503_ceiling_and_drain_ceiling FAILED      [ 25%]
+tests/test_load_tools.py::test_drain_falls_back_to_the_book FAILED       [ 26%]
+tests/test_load_tools.py::test_offenders_capped_at_ten FAILED            [ 28%]
+tests/test_load_tools.py::test_cli_exit_codes FAILED                     [ 30%]
+tests/test_load_tools.py::test_two_messages_to_one_address_fail_check_3_whatever_their_keys FAILED [ 32%]
+tests/test_load_tools.py::test_a_message_text_that_is_not_the_followup_text_fails_check_3 FAILED [ 33%]
+tests/test_load_tools.py::test_a_follow_up_text_that_differs_from_the_constant_is_a_wrong_text FAILED [ 35%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[2-True-expect0] FAILED [ 37%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[2-False-expect1] FAILED [ 39%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[0-False-expect2] FAILED [ 41%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[0-True-expect3] FAILED [ 42%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[1-False-expect4] FAILED [ 44%]
+tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[1-True-expect5] FAILED [ 46%]
+tests/test_load_tools.py::test_book_is_opened_read_only FAILED           [ 48%]
+tests/test_load_tools.py::test_burst_run_logs_every_request FAILED       [ 50%]
+tests/test_load_tools.py::test_model_log_feeds_check_5 FAILED            [ 51%]
+tests/test_load_tools.py::test_total_loss_all_failed_fails FAILED        [ 53%]
+tests/test_load_tools.py::test_nothing_sent_fails_whatever_the_allowances FAILED [ 55%]
+tests/test_load_tools.py::test_total_loss_sent_without_crm_or_mail_fails FAILED [ 57%]
+tests/test_load_tools.py::test_sent_no_crm_mark_fails_4 FAILED           [ 58%]
+tests/test_load_tools.py::test_failed_row_needs_a_reason FAILED          [ 60%]
+tests/test_load_tools.py::test_book_without_leads_fails FAILED           [ 62%]
+tests/test_load_tools.py::test_empty_request_log_fails FAILED            [ 64%]
+tests/test_load_tools.py::test_receipt_without_a_verdict_fails FAILED    [ 66%]
+tests/test_load_tools.py::test_review_verdict_fails_unless_allowed FAILED [ 67%]
+tests/test_load_tools.py::test_every_request_id_has_exactly_one_new_verdict FAILED [ 69%]
+tests/test_load_tools.py::test_two_leads_for_one_person_fail FAILED      [ 71%]
+tests/test_load_tools.py::test_unknown_row_that_really_sent_is_reported_not_failed FAILED [ 73%]
+tests/test_load_tools.py::test_sent_without_model_call_flagged FAILED    [ 75%]
+tests/test_load_tools.py::test_marker_cannot_pull_the_drain_earlier FAILED [ 76%]
+tests/test_load_tools.py::test_total_loss_book_fails FAILED              [ 78%]
+tests/test_load_tools.py::test_catcher_counts_a_message_it_cannot_parse FAILED [ 80%]
+tests/test_load_tools.py::test_a_wrong_subject_fails_check_3 FAILED      [ 82%]
+tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[to] FAILED [ 83%]
+tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[body_sha256] FAILED [ 85%]
+tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[subject] FAILED [ 87%]
+tests/test_load_tools.py::test_crm_rows_are_compared_with_their_lead FAILED [ 89%]
+tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[201] FAILED [ 91%]
+tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[202] FAILED [ 92%]
+tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[204] FAILED [ 94%]
+tests/test_n8n_api_url.py::test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message FAILED [ 96%]
+tests/test_n8n_api_url.py::test_importing_a_workflow_with_such_a_name_also_ends_cleanly FAILED [ 98%]
+tests/test_path_confinement.py::test_scrub_started_as_a_script_without_pythonpath_works FAILED [100%]
+
+=================================== FAILURES ===================================
+_____________ test_crash_d2_subprocess_with_the_blind_smtp_sender ______________
+tests/test_http.py:366: in test_crash_d2_subprocess_with_the_blind_smtp_sender
+    assert catcher.poll() is None
+E   AssertionError: assert 2 is None
+E    +  where 2 = poll()
+E    +    where poll = <Popen: returncode: 2 args: ['/home/user/work/main/.venv/bin/python', '/home...>.poll
+____________________________ test_clean_case_passes ____________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:132: in test_clean_case_passes
+    result = run_world(tmp_path, make_world())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____ test_planted_fault_fails_one_check[fault_lost_receipt-1-form:r-gone] _____
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________ test_planted_fault_fails_one_check[fault_double_mail-3-L1] __________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_______ test_planted_fault_fails_one_check[fault_sent_without_mail-3-L2] _______
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________ test_planted_fault_fails_one_check[fault_crm_missing-4-L3] __________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_planted_fault_fails_one_check[fault_crm_extra-4-L5-ghost] ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_______ test_planted_fault_fails_one_check[fault_five_model_calls-5-L4] ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_________ test_planted_fault_fails_one_check[fault_pending_left-2-L4] __________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:187: in test_planted_fault_fails_one_check
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_ test_mail_that_cannot_be_matched_fails_check_3[fault_wrong_recipient-wrong-recipient:L1] _
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:208: in test_mail_that_cannot_be_matched_fails_check_3
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_ test_mail_that_cannot_be_matched_fails_check_3[fault_unreadable_message-unparseable-message] _
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:208: in test_mail_that_cannot_be_matched_fails_check_3
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________________ test_all_unknown_book_fails_unless_allowed __________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:216: in test_all_unknown_book_fails_unless_allowed
+    assert failed(run_world(tmp_path, w, max_unknown=0)) == [2]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____________________ test_unknown_row_present_is_allowed ______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:226: in test_unknown_row_present_is_allowed
+    assert failed(run_world(tmp_path, w)) == []
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______________________ test_503_ceiling_and_drain_ceiling ______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:231: in test_503_ceiling_and_drain_ceiling
+    assert failed(run_world(tmp_path, w, max_503_rate=0.01)) == [6]  # 1 of 8 attempts
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______________________ test_drain_falls_back_to_the_book _______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:268: in test_drain_falls_back_to_the_book
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_________________________ test_offenders_capped_at_ten _________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:276: in test_offenders_capped_at_ten
+    c = run_world(tmp_path, w)["checks"][0]
+        ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____________________________ test_cli_exit_codes ______________________________
+tests/test_load_tools.py:308: in test_cli_exit_codes
+    assert ci.main(argv) == ci.EXIT_OK
+E   AssertionError: assert 2 == 0
+E    +  where 2 = <function main at 0x7f67b7476840>(['--requests', '/home/user/work/ord/t3/base/b2/test_cli_exit_codes0/req.jsonl', '--book', '/home/user/work/ord/t3/base/b2/test_cli_exit_codes0/desk.sqlite3', '--catcher', '/home/user/work/ord/t3/base/b2/test_cli_exit_codes0/mail.jsonl', ...])
+E    +    where <function main at 0x7f67b7476840> = ci.main
+E    +  and   0 = ci.EXIT_OK
+----------------------------- Captured stderr call -----------------------------
+INPUT ERROR: --requests: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______ test_two_messages_to_one_address_fail_check_3_whatever_their_keys _______
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:345: in test_two_messages_to_one_address_fail_check_3_whatever_their_keys
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_______ test_a_message_text_that_is_not_the_followup_text_fails_check_3 ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:355: in test_a_message_text_that_is_not_the_followup_text_fails_check_3
+    assert "wrong-body:L3" in run_world(tmp_path, w)["checks"][2]["offenders"]
+                              ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____ test_a_follow_up_text_that_differs_from_the_constant_is_a_wrong_text _____
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:367: in test_a_follow_up_text_that_differs_from_the_constant_is_a_wrong_text
+    res = run_world(tmp_path, w)
+          ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[2-True-expect0] _________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[2-False-expect1] ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[0-False-expect2] ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[0-True-expect3] _________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[1-False-expect4] ________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_keyed_crm_end_state_of_a_failed_followup[1-True-expect5] _________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:391: in test_keyed_crm_end_state_of_a_failed_followup
+    assert failed(run_world(tmp_path, w)) == expect
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________________ test_book_is_opened_read_only _________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book d.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:410: in test_book_is_opened_read_only
+    ci.read_book(tmp_path / "d.sqlite3")
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book d.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______________________ test_burst_run_logs_every_request _______________________
+tests/test_load_tools.py:641: in test_burst_run_logs_every_request
+    summary = load_driver.run(desk_url, "burst:30", log, tmp_path / "f.json", 2, 16, 1, "t")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+load_tools/load_driver.py:355: in run
+    log = confine(log, what="--log")  # the real location, checked; the part files and the writes below use only this
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:253: in confine
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: --log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_________________________ test_model_log_feeds_check_5 _________________________
+load_tools/check_invariants.py:78: in read_jsonl
+    path = confine_existing(path, what="log file")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: log file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:740: in test_model_log_feeds_check_5
+    result = ci.check_model_calls(ci.read_jsonl(model.call_log), 3)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:80: in read_jsonl
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: log file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_______________________ test_total_loss_all_failed_fails _______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:756: in test_total_loss_all_failed_fails
+    assert failed(run_world(tmp_path, w, max_failed=0)) == [2]  # every lead ended failed: above the allowed number
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_______________ test_nothing_sent_fails_whatever_the_allowances ________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:765: in test_nothing_sent_fails_whatever_the_allowances
+    res = run_world(tmp_path, w, max_failed=100, max_unknown=100)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________ test_total_loss_sent_without_crm_or_mail_fails ________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:773: in test_total_loss_sent_without_crm_or_mail_fails
+    result = run_world(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________________ test_sent_no_crm_mark_fails_4 _________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:780: in test_sent_no_crm_mark_fails_4
+    assert failed(run_world(tmp_path, w)) == [4]
+                  ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________________ test_failed_row_needs_a_reason ________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:792: in test_failed_row_needs_a_reason
+    w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], max_failed=1, max_unknown=1
+               ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________________ test_book_without_leads_fails _________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:810: in test_book_without_leads_fails
+    result = ci.run_checks(w["reqs"], ci.read_book(db), [], [], [], w["drained_ts"])
+                                      ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_________________________ test_empty_request_log_fails _________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:817: in test_empty_request_log_fails
+    assert 1 in failed(run_world(tmp_path, w))
+                       ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____________________ test_receipt_without_a_verdict_fails _____________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:845: in test_receipt_without_a_verdict_fails
+    assert _checks_of(tmp_path, make_world()) == []
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:841: in _checks_of
+    return failed(ci.run_checks(w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], **kw))
+                                           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+___________________ test_review_verdict_fails_unless_allowed ___________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:851: in test_review_verdict_fails_unless_allowed
+    assert 1 in _checks_of(tmp_path, w, "source='webhook'", "review")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:841: in _checks_of
+    return failed(ci.run_checks(w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], **kw))
+                                           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______________ test_every_request_id_has_exactly_one_new_verdict _______________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:857: in test_every_request_id_has_exactly_one_new_verdict
+    assert 1 in _checks_of(tmp_path, make_world(), "source='webhook'", "new")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:841: in _checks_of
+    return failed(ci.run_checks(w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], **kw))
+                                           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+______________________ test_two_leads_for_one_person_fail ______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:873: in test_two_leads_for_one_person_fail
+    w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], max_failed=1, max_unknown=1
+               ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+___________ test_unknown_row_that_really_sent_is_reported_not_failed ___________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:882: in test_unknown_row_that_really_sent_is_reported_not_failed
+    result = _checks_of(tmp_path, w)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:841: in _checks_of
+    return failed(ci.run_checks(w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], **kw))
+                                           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_____________________ test_sent_without_model_call_flagged _____________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:889: in test_sent_without_model_call_flagged
+    assert _checks_of(tmp_path, w) == []
+           ^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:841: in _checks_of
+    return failed(ci.run_checks(w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], **kw))
+                                           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________________ test_marker_cannot_pull_the_drain_earlier ___________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:899: in test_marker_cannot_pull_the_drain_earlier
+    w["reqs"], ci.read_book(db), w["mail"], w["crm"], w["model"], w["drained_ts"], max_failed=1, max_unknown=1
+               ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________________________ test_total_loss_book_fails __________________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:908: in test_total_loss_book_fails
+    res = ci.run_checks(w["reqs"], ci.read_book(db), [], [], [], w["drained_ts"], max_failed=1, max_unknown=1)
+                                   ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________________ test_catcher_counts_a_message_it_cannot_parse _________________
+load_tools/check_invariants.py:78: in read_jsonl
+    path = confine_existing(path, what="log file")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: log file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:988: in test_catcher_counts_a_message_it_cannot_parse
+    rows = ci.read_jsonl(out)
+           ^^^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:80: in read_jsonl
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: log file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+----------------------------- Captured stderr call -----------------------------
+UNPARSEABLE message #1: ValueError
+______________________ test_a_wrong_subject_fails_check_3 ______________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:1001: in test_a_wrong_subject_fails_check_3
+    assert "wrong-subject:L2" in run_world(tmp_path, w)["checks"][2]["offenders"]
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_ test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[to] _
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:1009: in test_messages_that_cannot_be_compared_are_counted_and_fail_when_required
+    loose = run_world(tmp_path, w)  # a real mailbox log: counted, not failed
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_ test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[body_sha256] _
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:1009: in test_messages_that_cannot_be_compared_are_counted_and_fail_when_required
+    loose = run_world(tmp_path, w)  # a real mailbox log: counted, not failed
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+_ test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[subject] _
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:1009: in test_messages_that_cannot_be_compared_are_counted_and_fail_when_required
+    loose = run_world(tmp_path, w)  # a real mailbox log: counted, not failed
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+__________________ test_crm_rows_are_compared_with_their_lead __________________
+load_tools/check_invariants.py:123: in read_book
+    path = confine_existing(path, what=f"book {path.name}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:263: in confine_existing
+    root, relative = _real_inside(text, _roots(roots), what)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/pathconfine.py:217: in _real_inside
+    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
+E   tools.pathconfine.PathRefused: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+
+The above exception was the direct cause of the following exception:
+tests/test_load_tools.py:1020: in test_crm_rows_are_compared_with_their_lead
+    offenders = run_world(tmp_path, w)["checks"][3]["offenders"]
+                ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_load_tools.py:121: in run_world
+    book = ci.read_book(db)
+           ^^^^^^^^^^^^^^^^
+load_tools/check_invariants.py:125: in read_book
+    raise InputError(str(e)) from e
+E   load_tools.check_invariants.InputError: book desk.sqlite3: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+________ test_another_success_answer_is_reported_without_its_body[201] _________
+tests/test_n8n_api_url.py:397: in test_another_success_answer_is_reported_without_its_body
+    assert _run_against(_fixed(status, body), monkeypatch, tmp_path, ["import", str(wf)]) == 1  # not a 200: a failure
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_n8n_api_url.py:230: in _run_against
+    return mod.main(["n8n_api.py", *argv])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/n8n_api.py:199: in main
+    raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
+E   SystemExit: cannot read a workflow from /home/user/work/ord/t3/base/b2/test_another_success_answer_is0/wf.json (PathRefused)
+________ test_another_success_answer_is_reported_without_its_body[202] _________
+tests/test_n8n_api_url.py:397: in test_another_success_answer_is_reported_without_its_body
+    assert _run_against(_fixed(status, body), monkeypatch, tmp_path, ["import", str(wf)]) == 1  # not a 200: a failure
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_n8n_api_url.py:230: in _run_against
+    return mod.main(["n8n_api.py", *argv])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/n8n_api.py:199: in main
+    raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
+E   SystemExit: cannot read a workflow from /home/user/work/ord/t3/base/b2/test_another_success_answer_is1/wf.json (PathRefused)
+________ test_another_success_answer_is_reported_without_its_body[204] _________
+tests/test_n8n_api_url.py:397: in test_another_success_answer_is_reported_without_its_body
+    assert _run_against(_fixed(status, body), monkeypatch, tmp_path, ["import", str(wf)]) == 1  # not a 200: a failure
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_n8n_api_url.py:230: in _run_against
+    return mod.main(["n8n_api.py", *argv])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/n8n_api.py:199: in main
+    raise SystemExit(f"cannot read a workflow from {a[2]} ({type(e).__name__})") from None
+E   SystemExit: cannot read a workflow from /home/user/work/ord/t3/base/b2/test_another_success_answer_is2/wf.json (PathRefused)
+_ test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message _
+tests/test_n8n_api_url.py:651: in test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message
+    assert "cannot read a workflow" in _message(e) and "RecursionError" in _message(e)
+E   AssertionError: assert ('cannot read a workflow' in 'cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)' and 'RecursionError' in 'cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)')
+E    +  where 'cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)' = _message(<ExceptionInfo SystemExit('cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)') tblen=2>)
+E    +  and   'cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)' = _message(<ExceptionInfo SystemExit('cannot read a workflow from /home/user/work/ord/t3/base/b2/test_a_workflow_file_nested_a_0/deep.json (PathRefused)') tblen=2>)
+_________ test_importing_a_workflow_with_such_a_name_also_ends_cleanly _________
+tests/test_n8n_api_url.py:716: in test_importing_a_workflow_with_such_a_name_also_ends_cleanly
+    assert done.returncode == 0, done.stderr
+E   AssertionError: cannot read a workflow from /home/user/work/ord/t3/base/b2/test_importing_a_workflow_with0/w.json (PathRefused)
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/home/user/work/main/.venv/bin/python', '/home/user/work/main/scripts/n8n_api.py', 'import', '/home/user/work/ord/t3/base/b2/test_importing_a_workflow_with0/w.json'], returncode=1, stdout='', stderr='cannot read a workflow from /home/user/work/ord/t3/base/b2/test_importing_a_workflow_with0/w.json (PathRefused)\n').returncode
+___________ test_scrub_started_as_a_script_without_pythonpath_works ____________
+tests/test_path_confinement.py:1030: in test_scrub_started_as_a_script_without_pythonpath_works
+    assert proc.returncode == 0, out[-500:]
+E   AssertionError: b'refused: in.json: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+E     '
+E   assert 2 == 0
+E    +  where 2 = <Popen: returncode: 2 args: ['/home/user/work/main/.venv/bin/python', '/home...>.returncode
+=========================== short test summary info ============================
+FAILED tests/test_http.py::test_crash_d2_subprocess_with_the_blind_smtp_sender
+FAILED tests/test_load_tools.py::test_clean_case_passes - load_tools.check_in...
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_lost_receipt-1-form:r-gone]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_double_mail-3-L1]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_sent_without_mail-3-L2]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_crm_missing-4-L3]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_crm_extra-4-L5-ghost]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_five_model_calls-5-L4]
+FAILED tests/test_load_tools.py::test_planted_fault_fails_one_check[fault_pending_left-2-L4]
+FAILED tests/test_load_tools.py::test_mail_that_cannot_be_matched_fails_check_3[fault_wrong_recipient-wrong-recipient:L1]
+FAILED tests/test_load_tools.py::test_mail_that_cannot_be_matched_fails_check_3[fault_unreadable_message-unparseable-message]
+FAILED tests/test_load_tools.py::test_all_unknown_book_fails_unless_allowed
+FAILED tests/test_load_tools.py::test_unknown_row_present_is_allowed - load_t...
+FAILED tests/test_load_tools.py::test_503_ceiling_and_drain_ceiling - load_to...
+FAILED tests/test_load_tools.py::test_drain_falls_back_to_the_book - load_too...
+FAILED tests/test_load_tools.py::test_offenders_capped_at_ten - load_tools.ch...
+FAILED tests/test_load_tools.py::test_cli_exit_codes - AssertionError: assert...
+FAILED tests/test_load_tools.py::test_two_messages_to_one_address_fail_check_3_whatever_their_keys
+FAILED tests/test_load_tools.py::test_a_message_text_that_is_not_the_followup_text_fails_check_3
+FAILED tests/test_load_tools.py::test_a_follow_up_text_that_differs_from_the_constant_is_a_wrong_text
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[2-True-expect0]
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[2-False-expect1]
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[0-False-expect2]
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[0-True-expect3]
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[1-False-expect4]
+FAILED tests/test_load_tools.py::test_keyed_crm_end_state_of_a_failed_followup[1-True-expect5]
+FAILED tests/test_load_tools.py::test_book_is_opened_read_only - load_tools.c...
+FAILED tests/test_load_tools.py::test_burst_run_logs_every_request - tools.pa...
+FAILED tests/test_load_tools.py::test_model_log_feeds_check_5 - load_tools.ch...
+FAILED tests/test_load_tools.py::test_total_loss_all_failed_fails - load_tool...
+FAILED tests/test_load_tools.py::test_nothing_sent_fails_whatever_the_allowances
+FAILED tests/test_load_tools.py::test_total_loss_sent_without_crm_or_mail_fails
+FAILED tests/test_load_tools.py::test_sent_no_crm_mark_fails_4 - load_tools.c...
+FAILED tests/test_load_tools.py::test_failed_row_needs_a_reason - load_tools....
+FAILED tests/test_load_tools.py::test_book_without_leads_fails - load_tools.c...
+FAILED tests/test_load_tools.py::test_empty_request_log_fails - load_tools.ch...
+FAILED tests/test_load_tools.py::test_receipt_without_a_verdict_fails - load_...
+FAILED tests/test_load_tools.py::test_review_verdict_fails_unless_allowed - l...
+FAILED tests/test_load_tools.py::test_every_request_id_has_exactly_one_new_verdict
+FAILED tests/test_load_tools.py::test_two_leads_for_one_person_fail - load_to...
+FAILED tests/test_load_tools.py::test_unknown_row_that_really_sent_is_reported_not_failed
+FAILED tests/test_load_tools.py::test_sent_without_model_call_flagged - load_...
+FAILED tests/test_load_tools.py::test_marker_cannot_pull_the_drain_earlier - ...
+FAILED tests/test_load_tools.py::test_total_loss_book_fails - load_tools.chec...
+FAILED tests/test_load_tools.py::test_catcher_counts_a_message_it_cannot_parse
+FAILED tests/test_load_tools.py::test_a_wrong_subject_fails_check_3 - load_to...
+FAILED tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[to]
+FAILED tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[body_sha256]
+FAILED tests/test_load_tools.py::test_messages_that_cannot_be_compared_are_counted_and_fail_when_required[subject]
+FAILED tests/test_load_tools.py::test_crm_rows_are_compared_with_their_lead
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[201]
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[202]
+FAILED tests/test_n8n_api_url.py::test_another_success_answer_is_reported_without_its_body[204]
+FAILED tests/test_n8n_api_url.py::test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_message
+FAILED tests/test_n8n_api_url.py::test_importing_a_workflow_with_such_a_name_also_ends_cleanly
+FAILED tests/test_path_confinement.py::test_scrub_started_as_a_script_without_pythonpath_works
+============================== 56 failed in 5.35s ==============================

@@ -205,3 +205,7 @@ tests/test_crm_hubspot.py::test_same_email_other_lead_id_is_taken_and_nothing_is
 tests/test_crm_hubspot.py::test_same_person_different_email_makes_a_second_contact PASSED [  5%]
 tests/test_crm_hubspot.py::test_timeout_after_create_then_retry_finds_it_and_does_not_double PASSED [  5%]
 tests/test_crm_hubspot.py::test_slow_answer_inside_budget_is_ok_and_beyond_it_is_unclear PASSED [  5%]
+tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx] PASSED [  5%]
+tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx_after_store] PASSED [  5%]
+tests/test_crm_hubspot.py::test_429_waits_the_named_seconds_then_succeeds PASSED [  5%]
+tests/test_crm_hubspot.py::test_429_uses_the_backoff_without_retry_after_and_gives_up_busy PASSED [  5%]

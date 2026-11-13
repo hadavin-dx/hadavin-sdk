@@ -1,5 +1,20 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:37Z / 16:07 IST  HEARTBEAT 9 (ORDER 4 answered: evidence/failures.md)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| me (ORDER 4) | explain the 56 F and the 71 percent stop (read logs, collect-only mapping, reruns of the failing ids) | removes the red on main | 10:28Z / 15:58 | done 10:37Z (9 min of the 30 min box) | n/a | reported: evidence/failures.md | wait for lead's reply |
+| D | Evidence runner: PR #14 d5b4451 full suite x2 with -v, plus F7 rerun | evidence for PR #14 | 10:25Z / 15:55 | run1 ~10:45Z, run2 ~11:05Z / 16:35 (cap 11:07Z) | run 1 of 2 | running (its log was orphaned by my git pull at 10:27:39Z; I copy it out of /proc every 15 s) | write numbers into summary.md |
+| C2 | Evidence runner: hang hunt: full suite once -v on main (the (d2) hog case ended 10:25Z) | names slow or hanging tests | 10:25Z / 15:55 | ~10:58Z / 16:28 | first try | running (same log problem, same rescue) | finish hang-hunt.md |
+| R1 | my rescue copy loops (pids 652 and 1351) | keeps the raw logs of D run1 and C2 | 10:35Z / 16:05 | until those pytest end | n/a | running | check rescue.log |
+| A, B, C(old) | closed earlier | - | - | - | - | A: logs INVALID (see below); B: reported; C: replaced by C2 | none |
+
+ASK:
+1. A's four suite runs (main and PR #12) are invalid as pass/fail evidence (basetemp outside TMPDIR, plus my git operations cut the logs). Do you want a clean rerun of main 61ded9e? Default: no extra run; C2's full -v run on main (valid flags) is the clean main run, D's two runs are the clean PR #14 runs.
+2. Do you want a product note on this? `--basetemp` outside `TMPDIR` makes 56 tests fail with a clear refusal text (path confinement doing its job), and docs/tests.md does not say that pytest's `--basetemp` must be inside TMPDIR. I fixed nothing. Default: report only.
+3. My slip: I committed and rebased live log files while tests wrote to them. Rule I now follow: commit only, never pull/rebase/stash while a run is writing; I use `git fetch` + `git show` to read your orders. OK? Default: yes.
+FACTS: evidence/failures.md has the ids, messages, reproduction commands and raw logs (raw/failures-*.log, failing-ids-*.txt).
+
 ## 2026-11-13 10:26Z / 15:56 IST  HEARTBEAT 8 (container restarted at about 10:20Z; A and C were stopped; D and C2 started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
