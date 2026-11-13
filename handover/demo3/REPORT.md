@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:20Z / 16:50 IST  HEARTBEAT 17
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| F | Evidence runner: PR #14 head 6b1fe49 full suite once -v + F7/new cases (job 2 done 11:09Z) | evidence for the previous head | 11:09Z / 16:39 | suite at 11:19Z: 2442 passed, 0 FAILED, 40 skipped (about 67 percent of 3686+); ends about 11:30Z / 17:00; hard stop 11:50Z | run 1 of 1 | running | report F result at once when it ends; then start G |
+| G | NOT STARTED: path tests only on the new head c14a514 | evidence for the second review-fix delta | starts when F ends | about 5-10 min | round 0 | waiting for F | start at F's report |
+| others | A, B, C2, D, E | closed | - | - | - | closed | none |
+
+ASK: none.
+No F result yet; no failures so far in F's log.
+
 ## 2026-11-13 11:13Z / 16:43 IST  HEARTBEAT 16 (ORDER 7 received; G waits for F)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
