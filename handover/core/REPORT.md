@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 19:20Z (core lead)
+R3 BUILDER LAUNCHED (agent a804cecf9f9f39d83, sonnet, 60 min box, ends about 20:20Z, started 19:20Z): fixes R2-01..R2-12 on a copy tree-R3, no full suite, deliverables /home/user/build/rr6/out/R3/. EVIDENCE RUNNER a6382a93f1923c45c (r2 patch) still running. Nothing else running. ASK: none. LOAD: runner + builder.
+
 ## STATUS 19:05Z (core lead)
 REVIEWER a4054d937f64ebc0e REPORTED on core-fix-on-frozen-r2.patch (round 2, FALLBACK persona; saved: handover/core/review/core-fix-on-frozen-r2-review.md). It confirmed by probes that F1, F2, F5 listed tools, F6 and the minors are fixed (FIFO as CA file refused at once; both patches apply cleanly and equal the builder's tree; no secret or typed value leaked). It says NOT CLEAN: 0 Blockers, 6 MAJORS, found by reading and probes (it could not run pytest):
 R2-01 load_driver `--scenario burst:nan` / `burst:inf` traceback, no upper cap. R2-02 run_real_check: a bad REAL_RESULT_FILE path is found only AFTER the real run, with a traceback and the result lost. R2-03 fake_model_server reads a key file with no size cap (3 MB read whole). R2-04 `--port 99999/-5` OverflowError in catcher, fakes_server, fake_model_server; `burst.py --n 0` ValueError. R2-08 the guard test is too weak (scans only scripts/ and tools/, 4 call shapes; misses run_real_check log/flag writes and has no guard for the CA-file class). R2-09 nothing tests the /proc reads in load_driver (works by hand on this kernel).
