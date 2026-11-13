@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:48Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 cdbe1445 is NOT clean. Round 10: codebase review 1 Blocker (CHANGELOG line 226 still wrong), 3 Major, 8 Nit; design review 0 Blocker, 5 Major, 8 Nit. Resolve done (goldfish_review_report-r10.md, 11 issues, classes A-G); round 11 required.
+- Runner facts on cdbe1445 (records only): builder's fail-before claim was WRONG: 62 new or changed tests, 23 fail on old, 39 pass on old (builder said 36, 23, 13); all 39 are named test_pin_*; one extra test (row-table label test) also fails on old. Calling private _seal(()) again restores the demo banner on a built app. A token of 11 characters after token=Bearer stays visible (rule is 12+, equal to main). 42 odd banner inputs: 30 refused, 12 gave a banner, none claimed made-up while a real service was listed.
+- Runner NOT run (lead order): full pytest, Playwright, 218 of 307 mutant rows; the per-test diffs of item 4 not read; bandit came from the system, not the project venv.
+- What did pass (runner, cloud): focused tests 322 passed on 3.12 and 3.13; ruff and format clean; bandit -ll rc 0; gitleaks 21 commits clean; 89 of 89 mutant rows good (29 named plus 60 seeded sample; 2 CRASH rows R9A4 and R9E4 count as ok per the script).
+- Part 2 builder aa234f9b (41 min) and SONAR-PATH builder a73b09c1 (38 min) have not pushed (heads 83cdb7a2, e29cc269).
+
+**LEAD ACTIONS:** collected codebase review and runner; resolve r10 written; ledger rows PDBANNER-r10-1..14 OPEN; resumed builder ab741cc2 with the batch 11 fix brief (classes A-G plus runner facts).
+**LIVE ITEMS:** ab741cc2 (P6 batch 11), aa234f9b (P2 batch 10), a73b09c1 (SONAR-PATH batch 3). Finished: ac5bb8c9, ab8ca8d3, aca83f68.
+**ROUNDS (WHY):** Part 6 round 11 (mode-safety, no cap; Blocker plus seal Majors); Part 2 r10 and SONAR-PATH r3 pending.
+**FINISHED SINCE LAST BLOCK:** P6 r10 reviews, runner, resolve.
+**EGM STEP PER PACKAGE:** P6: resolve done, builder batch 11 (step 6 to 3). P2: builder. SONAR-PATH: builder.
+**LANE SONAR-PATH:** a73b09c1; builder; A done, B running.
+**RUN ON LAPTOP:** none (Part 6 not final).
+
+
 ## 03:45Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
