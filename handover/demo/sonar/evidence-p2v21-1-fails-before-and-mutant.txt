@@ -1,0 +1,29 @@
+## A. Nit1 mutant (reviewer's M3): flag true whenever rc==1 and state=='sent', ignoring what _mark_contacted returned
+-- v2 test file (new test deselected), mutant code:
+.................                                                        [100%]
+17 passed, 1 deselected in 0.53s
+-- v2.1 test file, mutant code:
+tests/test_sonar_p2_choke_points.py:249: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sonar_p2_choke_points.py::test_a_sent_result_when_the_stage_is_already_further_keeps_the_copy_wait
+1 failed, 17 passed in 1.15s
+-- v2.1 test file, real code:
+..................                                                       [100%]
+18 passed in 1.32s
+
+## B. Nit2 new test on the v2 lambda wrapper (desk.py from v2 patch)
+E       assert False
+E        +  where False = all(<generator object test_every_finish_update_caller_in_desk_py_passes_a_named_function.<locals>.<genexpr> at 0x7f62bd0cdc40>)
+
+tests/test_sonar_p2_choke_points.py:292: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sonar_p2_choke_points.py::test_finish_update_hands_the_callers_own_function_to_the_retry_loop
+FAILED tests/test_sonar_p2_choke_points.py::test_every_finish_update_caller_in_desk_py_passes_a_named_function
+2 failed, 16 passed in 1.65s
+
+## C. Nit4 class-order test on v2 server.py (no _ExclusiveHTTPServer)
+tests/test_sonar_p2_choke_points.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sonar_p2_choke_points.py::test_the_server_class_order_and_a_real_double_bind_rebind_cycle
+1 failed, 17 passed in 0.57s
+ 6 files changed, 57 insertions(+), 26 deletions(-)
