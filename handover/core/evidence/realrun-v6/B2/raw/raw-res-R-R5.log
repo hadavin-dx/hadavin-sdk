@@ -1,0 +1,73 @@
+........................................................................ [ 50%]
+......................................................F
+=================================== FAILURES ===================================
+_ test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-93/test_a_result_path_that_cannot1')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f237baece00>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f237b1398b0>
+kind = 'no-folder', text = 'the folder for the result file does not exist'
+
+    @pytest.mark.parametrize(
+        ("kind", "text"),
+        [
+            ("a-folder", "the result path is a folder: give a file path"),
+            ("no-folder", "the folder for the result file does not exist"),
+            ("folder-is-a-file", "the folder for the result file does not exist"),
+        ],
+    )
+    def test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, kind: str, text: str
+    ) -> None:
+        (tmp_path / "plain-file").write_text("x", encoding="utf-8")
+        (tmp_path / "a-folder").mkdir()
+        path = {
+            "a-folder": tmp_path / "a-folder",
+            "no-folder": tmp_path / "missing" / "r.json",
+            "folder-is-a-file": tmp_path / "plain-file" / "r.json",
+        }[kind]
+        before = sorted(p.name for p in tmp_path.iterdir())
+>       out = _refused_before_the_question(
+            tmp_path, capsys, monkeypatch, "REAL_RESULT_FILE", "plain-file", REAL_RESULT_FILE=str(path)
+        )
+
+tests/test_take_script_refusals.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_take_script_refusals.py:347: in _refused_before_the_question
+    assert rrc.main(["--config", str(_valid_config(tmp_path, **over))]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:1100: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1250: in _run
+    started = ask_to_start(
+scripts/terminal_guard.py:76: in ask_to_start
+    return input(prompt).strip().lower() == expected
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'To start, type the HubSpot host (api.hubapi.com) and press Enter; anything else stops: '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 126 passed in 87.25s (0:01:27)

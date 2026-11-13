@@ -1,0 +1,19 @@
+.......................................................................F [ 55%]
+
+=================================== FAILURES ===================================
+_ test_the_guard_finds_every_way_python_can_read_a_person[for line in sys.stdin] _
+
+name = 'for line in sys.stdin'
+
+    @pytest.mark.parametrize("name", sorted(READS))
+    def test_the_guard_finds_every_way_python_can_read_a_person(name: str) -> None:
+>       assert reads_a_person(READS[name]), name
+E       AssertionError: for line in sys.stdin
+E       assert []
+E        +  where [] = reads_a_person('import sys\nlines = [x for x in sys.stdin]')
+
+tests/test_start_prompt_hardening.py:647: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[for line in sys.stdin]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 71 passed in 0.33s

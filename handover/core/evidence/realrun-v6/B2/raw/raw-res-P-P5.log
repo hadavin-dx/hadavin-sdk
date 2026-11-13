@@ -1,0 +1,16 @@
+..F
+=================================== FAILURES ===================================
+_________ test_hubspot_settings_have_no_default_address_in_code_either _________
+
+    def test_hubspot_settings_have_no_default_address_in_code_either() -> None:
+        field = next(f for f in dataclasses.fields(HubspotSettings) if f.name == "base_url")
+>       assert field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
+E       AssertionError: assert ('https://api.hubapi.com' is <dataclasses._MISSING_TYPE object at 0x7fece920d340>)
+E        +  where 'https://api.hubapi.com' = Field(name='base_url',type='str',default='https://api.hubapi.com',default_factory=<dataclasses._MISSING_TYPE object at 0x7fece920d340>,init=True,repr=True,hash=None,compare=True,metadata=mappingproxy({}),kw_only=False,_field_type=_FIELD).default
+E        +  and   <dataclasses._MISSING_TYPE object at 0x7fece920d340> = dataclasses.MISSING
+
+tests/test_desk_address_required.py:64: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_desk_address_required.py::test_hubspot_settings_have_no_default_address_in_code_either
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed in 0.05s

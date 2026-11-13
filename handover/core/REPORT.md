@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:30Z (17:00 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-B2 | mutation sets on tree-M | patches' mutants | 10:15Z / 15:45 | DONE 11:25Z (about 25 min before the hard stop) | 1 of 1 | runner reported: 9 survivors (R20, K6, K10, C9, N20, P2, P4, P10 named; plus none other, see summary), 23 M killed, no crash, no timeout. R20 differs from the demo's first pass (killed there). K6+K10 pair not run | pushed |
+| RR6-sum | summary.md | LEAD 10:53Z | 11:26Z | DONE | n/a | written and pushed: handover/core/evidence/realrun-v6/summary.md, with the interim-vs-final survivor table, B2 results and raw logs; no fixes | LEAD review |
+| RR6 lane | whole real-run v6 evidence lane | LEAD 10:00Z | 09:45Z | DONE | | A, B, B2, C, A3 done; 0 agents and 0 test processes of mine running | wait for LEAD |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Note: I count 8 named survivors above (R20, K6, K10, C9, N20, P2, P4, P10); the runner's headline says "9 total" but lists only these 8 plus the sentence repeated; treat 8 as the verified count until the lead says otherwise.
+
+ASK:
+1. Should I run the K6+K10 pair together (about 2-3 min), and look into why R20 survived here but was killed in the demo's run? Both are evidence runs, no fixes. Default: no, wait for your order.
+
+
 ## REPORT 11:24Z (16:54 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |

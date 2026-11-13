@@ -1,0 +1,22 @@
+...................................................................F
+=================================== FAILURES ===================================
+__________ test_the_scan_reads_the_pieces_of_a_place_in_source_order ___________
+
+    def test_the_scan_reads_the_pieces_of_a_place_in_source_order() -> None:
+        """The old scan walked the tree breadth first: for f(["a" + "b", "c"], "d") it saw c, d, a, b. The glued text
+        (which finds a flag split over pieces) must follow the source."""
+        import ast
+    
+        import keep_scan
+    
+>       assert keep_scan._texts(ast.parse('f(["a" + "b", "c"], "d")')) == ["a", "b", "c", "d"]
+E       AssertionError: assert ['d', 'c', 'a', 'b'] == ['a', 'b', 'c', 'd']
+E         
+E         At index 0 diff: 'd' != 'a'
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:310: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_scan_reads_the_pieces_of_a_place_in_source_order
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 67 passed, 70 deselected in 46.08s

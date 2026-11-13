@@ -1,0 +1,58 @@
+.............F
+=================================== FAILURES ===================================
+___________ test_a_result_file_that_is_a_pipe_is_refused_not_written ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-43/test_a_result_file_that_is_a_p0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7facfcdf0380>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7facfcdc3560>
+
+    @FIFO_SKIP
+    def test_a_result_file_that_is_a_pipe_is_refused_not_written(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        fifo = tmp_path / "res.pipe"
+        os.mkfifo(fifo)
+>       out = _result_refusal(tmp_path, capsys, str(fifo))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_real_run_v6.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_real_run_v6.py:165: in _result_refusal
+    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:1098: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1248: in _run
+    started = ask_to_start(
+scripts/terminal_guard.py:76: in ask_to_start
+    return input(prompt).strip().lower() == expected
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'To start, type the HubSpot host (api.hubapi.com) and press Enter; anything else stops: '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_a_result_file_that_is_a_pipe_is_refused_not_written
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 13 passed in 0.23s

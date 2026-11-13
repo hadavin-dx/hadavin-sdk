@@ -1,0 +1,57 @@
+F
+=================================== FAILURES ===================================
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-5/test_real_check_refuses_a_stdi0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fd0152e5880>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd0152e5be0>
+piped = 'y\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:1098: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1248: in _run
+    started = ask_to_start(
+scripts/terminal_guard.py:76: in ask_to_start
+    return input(prompt).strip().lower() == expected
+           ^^^^^^^^^^^^^
+tests/test_start_prompt_hardening.py:65: in <lambda>
+    monkeypatch.setattr("builtins.input", lambda prompt="": _boom())
+                                                            ^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (), _k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.11s

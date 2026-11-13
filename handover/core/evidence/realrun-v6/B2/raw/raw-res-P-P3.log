@@ -1,0 +1,19 @@
+....F
+=================================== FAILURES ===================================
+_______ test_live_settings_from_env_refuse_an_address_that_is_not_named ________
+
+    def test_live_settings_from_env_refuse_an_address_that_is_not_named() -> None:
+        with pytest.raises(ValueError, match="DESK_LIVE_BASE_URL is required for the live model") as e:
+            Config.from_env(LIVE)
+        assert "never filled in by a default" in str(e.value)
+        for blank in BLANKS:
+>           with pytest.raises(ValueError, match="DESK_LIVE_BASE_URL is required"):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'DESK_LIVE_BASE_URL is required'
+E             Actual message: 'DESK_LIVE_BASE_URL must be an http(s) address with a host and no path'
+
+tests/test_desk_address_required.py:92: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_desk_address_required.py::test_live_settings_from_env_refuse_an_address_that_is_not_named
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 4 passed in 0.05s

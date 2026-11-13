@@ -1,0 +1,28 @@
+........................................................F
+=================================== FAILURES ===================================
+_ test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-21/test_real_check_refuses_an_add0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f70f05ebcb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f70f084a5d0>
+name = 'DESK_HUBSPOT_BASE_URL', how = 'absent'
+
+    @pytest.mark.parametrize("name", ["DESK_HUBSPOT_BASE_URL", "REAL_IMAP_1_HOST", "REAL_IMAP_2_HOST"])
+    @pytest.mark.parametrize("how", ["absent", "blank"])
+    def test_real_check_refuses_an_address_the_settings_do_not_name(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, name: str, how: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())  # a person is there: the refusal is about the address
+        cfg = _config(tmp_path, drop=(name,) if how == "absent" else (), **({name: "  "} if how == "blank" else {}))
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert out.startswith(f"refused: {name}: not named in the settings") and "To start" not in out
+E       assert (False)
+E        +  where False = <built-in method startswith of str object at 0x7f70f0bbf960>('refused: DESK_HUBSPOT_BASE_URL: not named in the settings')
+E        +    where <built-in method startswith of str object at 0x7f70f0bbf960> = "refused: DESK_HUBSPOT_BASE_URL: is required for the <value> CRM: name the address the key is sent to (the vendor's own, or a loopback address for a test); it is never filled in by a default\n".startswith
+
+tests/test_start_prompt_hardening.py:441: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 56 passed in 0.23s

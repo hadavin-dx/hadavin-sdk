@@ -1,0 +1,36 @@
+........................................................................ [ 83%]
+.....F
+=================================== FAILURES ===================================
+_ test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0] _
+
+reader = 'hubspot'
+texts = {'empty': 'the hubspot key file holds no key', 'short': 'the hubspot key file holds a key that is too short (at least ...h spaces or unprintable characters', 'multi': 'the hubspot key file has more than one line: it must hold only the key'}
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-30/test_the_reason_text_of_every_0')
+
+    @pytest.mark.parametrize(("reader", "texts"), [("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)])
+    def test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text(
+        reader: str, texts: dict[str, str], tmp_path: Path
+    ) -> None:
+        seen: dict[str, int] = {}
+        for raw in CASES:
+            got, msg = outcome(reader, raw, tmp_path)
+            why = _reason(reader, raw)
+            if why == "accepted":
+                assert got is not None
+                continue
+            assert got is None
+            if why == "other":
+                assert any(part in msg for part in OTHER), (reader, raw, msg)
+            else:
+>               assert msg == texts[why], (reader, raw, msg)
+E               AssertionError: ('hubspot', b'%', 'the hubspot key file holds no key')
+E               assert 'the hubspot ... holds no key' == 'the hubspot ...8 characters)'
+E                 
+E                 - the hubspot key file holds a key that is too short (at least 8 characters)
+E                 + the hubspot key file holds no key
+
+tests/test_core_key_readers.py:284: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 77 passed in 1.19s

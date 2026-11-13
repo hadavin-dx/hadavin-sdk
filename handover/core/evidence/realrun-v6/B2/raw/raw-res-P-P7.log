@@ -1,0 +1,18 @@
+........F
+=================================== FAILURES ===================================
+_ test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2f] _
+
+sign = '%2f'
+
+    @pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
+    def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
+        suffix = HUBSPOT_HOST_SUFFIXES[0]
+        hub = "https://" + "evil.test" + sign + "." + suffix
+>       with pytest.raises(ValueError, match="no percent sign"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:117: Failed
+=========================== short test summary info ============================
+FAILED tests/test_desk_address_required.py::test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2f]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 8 passed in 0.06s

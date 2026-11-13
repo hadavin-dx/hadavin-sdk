@@ -121,3 +121,4 @@ A run2 ~95%; B2 sets in progress
 11:10Z A3 95pct, B2 R set running
 11:17Z A3 done: same 2 failures on unpatched main with TMPDIR in tree; B2 running
 11:24Z B2 at R 16/20 then combos
+11:30Z B2 done, summary.md pushed, lane done

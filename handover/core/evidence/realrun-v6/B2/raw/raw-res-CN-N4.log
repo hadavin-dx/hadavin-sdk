@@ -1,0 +1,26 @@
+.......F
+=================================== FAILURES ===================================
+___ test_a_blank_result_file_says_it_is_empty_not_that_it_is_a_folder[empty] ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-41/test_a_blank_result_file_says_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f076224dd90>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f076207f230>
+blank = ''
+
+    @pytest.mark.parametrize("blank", ["", "   "], ids=["empty", "spaces"])
+    def test_a_blank_result_file_says_it_is_empty_not_that_it_is_a_folder(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, blank: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        out = _result_refusal(tmp_path, capsys, blank)
+>       assert out == "refused: REAL_RESULT_FILE: is empty: give a file path or remove the name from the config file\n"
+E       AssertionError: assert 'refused: REA...a file path\n' == 'refused: REA...config file\n'
+E         
+E         - refused: REAL_RESULT_FILE: is empty: give a file path or remove the name from the config file
+E         + refused: REAL_RESULT_FILE: the result path is a folder: give a file path
+
+tests/test_real_run_v6.py:178: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_a_blank_result_file_says_it_is_empty_not_that_it_is_a_folder[empty]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed in 0.15s

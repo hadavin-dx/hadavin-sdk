@@ -1,0 +1,41 @@
+........................................................................ [ 50%]
+............................................................F
+=================================== FAILURES ===================================
+_ test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-96/test_a_new_live_ledger_in_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f729c39f260>
+
+    def test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        lines = {**_live_lines(tmp_path, key), "DESK_LIVE_LEDGER_PATH": str(tmp_path / "not-yet" / "ledger")}
+        monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **lines)), "--live-model"]) == rrc.EXIT_STOPPED
+>       assert not (tmp_path / "not-yet").exists()
+E       AssertionError: assert not True
+E        +  where True = exists()
+E        +    where exists = (PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-96/test_a_new_live_ledger_in_the_0') / 'not-yet').exists
+
+tests/test_take_script_refusals.py:620: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> 127.0.0.1
+stopped, nothing was called
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 132 passed in 82.64s (0:01:22)
