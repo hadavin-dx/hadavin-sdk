@@ -1,0 +1,28 @@
+tree: 61ded9ebdb17397904aa850830f3d9837114f8f7 + patch applied (staged, uncommitted)
+$ gitleaks dir . (before any cache is created)
+[90m8:07AM[0m [32mINF[0m [1mscanned ~3253368 bytes (3.25 MB) in 1.14s[0m
+[90m8:07AM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+$ ruff check .
+All checks passed!
+rc=0
+$ ruff format --check .
+158 files already formatted
+$ mypy --platform linux
+Success: no issues found in 28 source files
+$ mypy --platform win32
+Success: no issues found in 28 source files
+$ bandit -ll -r src tools scripts -c pyproject.toml (lint.yml form)
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+rc=0
+$ bandit -ll -q -r src tools scripts load_tools
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+rc=0

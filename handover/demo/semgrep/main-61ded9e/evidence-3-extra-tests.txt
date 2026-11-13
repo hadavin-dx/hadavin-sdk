@@ -1,0 +1,7 @@
+extra: tests that mention files the patch touches
+........................................................................ [ 45%]
+..................................................................s..... [ 91%]
+.............                                                            [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+156 passed, 1 skipped in 7.42s

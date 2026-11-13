@@ -1,0 +1,16 @@
+no-demo copy: /tmp/sgv-nodemo = /tmp/sgv with demo_only/ deleted (git add -A)
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+149 files already formatted
+$ mypy linux
+Success: no issues found in 28 source files
+$ mypy win32
+Success: no issues found in 28 source files
+$ bandit
+rc=0
+$ pytest
+ssss...............ss                                                    [100%]
+=========================== short test summary info ============================
+SKIPPED [6] tests/conftest.py:45: needs the demo_only folder, which is not here
+15 passed, 6 skipped in 0.31s

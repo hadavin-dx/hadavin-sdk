@@ -1,0 +1,17 @@
+Stand-in for semgrep (NOT Semgrep): run block extracted from .github/workflows/semgrep.yml of /tmp/sgv, RETRY_PAUSE_SECONDS=0. scan_calls = number of 'scan' calls made.
+seq=[0] shell=[bash -e] rc=0 scan_calls=1 last=[standin scan call 1]
+seq=[0] shell=[bash --noprofile --norc -eo pipefail] rc=0 scan_calls=1 last=[standin scan call 1]
+seq=[1] shell=[bash -e] rc=1 scan_calls=1 last=findings above (exit 1): fix them, or suppress with # nosemgrep: <rule-id> <reason>, see docs/tests.md
+seq=[1] shell=[bash --noprofile --norc -eo pipefail] rc=1 scan_calls=1 last=findings above (exit 1): fix them, or suppress with # nosemgrep: <rule-id> <reason>, see docs/tests.md
+seq=[2 0] shell=[bash -e] rc=0 scan_calls=2 last=[standin scan call 2]
+seq=[2 0] shell=[bash --noprofile --norc -eo pipefail] rc=0 scan_calls=2 last=[standin scan call 2]
+seq=[2 2 0] shell=[bash -e] rc=0 scan_calls=3 last=[standin scan call 3]
+seq=[2 2 0] shell=[bash --noprofile --norc -eo pipefail] rc=0 scan_calls=3 last=[standin scan call 3]
+seq=[2 2 2] shell=[bash -e] rc=2 scan_calls=3 last=semgrep failed with exit 2: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)
+seq=[2 2 2] shell=[bash --noprofile --norc -eo pipefail] rc=2 scan_calls=3 last=semgrep failed with exit 2: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)
+seq=[2 1] shell=[bash -e] rc=1 scan_calls=2 last=findings above (exit 1): fix them, or suppress with # nosemgrep: <rule-id> <reason>, see docs/tests.md
+seq=[2 1] shell=[bash --noprofile --norc -eo pipefail] rc=1 scan_calls=2 last=findings above (exit 1): fix them, or suppress with # nosemgrep: <rule-id> <reason>, see docs/tests.md
+seq=[3] shell=[bash -e] rc=3 scan_calls=1 last=semgrep failed with exit 3: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)
+seq=[3] shell=[bash --noprofile --norc -eo pipefail] rc=3 scan_calls=1 last=semgrep failed with exit 3: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)
+seq=[7] shell=[bash -e] rc=7 scan_calls=1 last=semgrep failed with exit 7: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)
+seq=[7] shell=[bash --noprofile --norc -eo pipefail] rc=7 scan_calls=1 last=semgrep failed with exit 7: a tool or network error, NOT findings (see the log above and docs/tests.md, Semgrep)

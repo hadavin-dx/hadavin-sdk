@@ -1,0 +1,8 @@
+tree 61ded9e + patch (staged). gitleaks: 8.30.1  DPLD_REQUIRE_SCAN=1
+(run 1 had 1 failure caused by my own extra git refs in this clone: gitleaks git scans all refs and found a hit in an old scratch commit 718557c, not in main or the patch; refs deleted, run 2 below)
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 73%]
+........................................................................ [ 97%]
+.......                                                                  [100%]
+295 passed in 85.06s (0:01:25)

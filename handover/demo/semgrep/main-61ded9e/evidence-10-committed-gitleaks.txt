@@ -1,0 +1,24 @@
+scratch commit of 61ded9e + docsfix patch, in /tmp/sgv-commit (not pushed)
+0
+Note: switching to '2c5b027bd368a838da87016dae15bbf92aaf0e4a'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+[90m8:17AM[0m [32mINF[0m [1mno leaks found[0m
+[90m8:17AM[0m [32mINF[0m [1mscanned ~3262089 bytes (3.26 MB) in 684ms[0m
+[90m8:17AM[0m [32mINF[0m [1mno leaks found[0m
+.......................................................................  [100%]
+71 passed in 76.31s (0:01:16)

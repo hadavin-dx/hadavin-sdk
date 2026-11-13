@@ -1,0 +1,15 @@
+semgrep 1.185.0 (venv /tmp/work/sg2-venv-sg), made-up local rule /tmp/work/sg21/rule.yml (NOT the registry packs), tree 61ded9e + patch, files tracked by git (git add -A done), no network use intended (--metrics=off --disable-version-check; local rule)
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error  src scripts load_tools tools n8n
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 47
+ • Parsed lines: ~100.0%
+Ran 2 rules on 47 files: 0 findings.
+exit 0
+$ semgrep scan --config rule.yml --metrics=off --disable-version-check --error --strict src scripts load_tools tools n8n
+ • Findings: 0 (0 blocking)
+ • Rules run: 2
+ • Targets scanned: 47
+ • Parsed lines: ~100.0%
+Ran 2 rules on 47 files: 0 findings.
+exit 0

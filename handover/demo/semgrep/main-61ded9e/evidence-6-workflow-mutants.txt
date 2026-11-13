@@ -1,0 +1,12 @@
+baseline
+...............................................................          [100%]
+63 passed in 1.21s
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+mutant 1: cancel-in-progress true
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 1.06s
+mutant 2: constant group
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.96s
+restored
+63 passed in 0.98s
