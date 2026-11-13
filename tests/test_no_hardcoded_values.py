@@ -105,16 +105,16 @@ def _plant(tmp_path: Path, text: str) -> Path:
 @pytest.mark.parametrize(
     ("text", "kind"),
     [
-        ("AKIA" + "ABCDEFGHIJKLMNOP", "key"),
-        ("sk-" + "a" * 30, "key"),
-        ("ghp_" + "A1" * 20, "key"),
-        ("Zq9Lm2Xk7Rp4Vb8N" * 3, "long-secret-shape"),
-        ("123456789012", "account-id"),
-        ("arn:aws:iam::123456789012:role/x", "arn"),
-        ("https://kubernetes.default.svc", "url"),
-        ("https://api.internal.example.com/v1", "url"),
-        ("db.prod.corp", "host"),
-        ("billing-db.internal", "host"),
+        pytest.param(*("AKIA" + "ABCDEFGHIJKLMNOP", "key"), id="plant-key-aws"),
+        pytest.param(*("sk-" + "a" * 30, "key"), id="plant-key-sk"),
+        pytest.param(*("ghp_" + "A1" * 20, "key"), id="plant-key-ghp"),
+        pytest.param(*("Zq9Lm2Xk7Rp4Vb8N" * 3, "long-secret-shape"), id="plant-long-secret"),
+        pytest.param(*("123456789012", "account-id"), id="plant-account-id"),
+        pytest.param(*("arn:aws:iam::123456789012:role/x", "arn"), id="plant-arn"),
+        pytest.param(*("https://kubernetes.default.svc", "url"), id="plant-url-k8s"),
+        pytest.param(*("https://api.internal.example.com/v1", "url"), id="plant-url-internal"),
+        pytest.param(*("db.prod.corp", "host"), id="plant-host-prod"),
+        pytest.param(*("billing-db.internal", "host"), id="plant-host-billing"),
     ],
 )
 def test_plant_a_hardcoded_value_is_caught(tmp_path, text, kind):
@@ -155,3 +155,40 @@ def test_defaults_live_in_one_module():
     text = "".join((SRC / "hadavin_sdk" / f).read_text(encoding="utf-8") for f in K5_FILES)
     for literal in ("2 * 1024 * 1024", "20_000", "= 65536", "9093, 3100", "= 16384", "86400"):
         assert literal not in text, f"{literal} is written outside defaults.py"
+
+
+_KEY_SHAPES = (
+    re.compile(r"A[KS]IA[0-9A-Z]{16}"),
+    re.compile(r"sk-[A-Za-z0-9]{20,}"),
+    re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}"),
+    re.compile(r"xox[baprs]-[A-Za-z0-9]"),
+    re.compile(r"BEGIN [A-Z ]*KEY"),
+)
+_LONG_RUN = re.compile(r"[A-Za-z0-9]{28,}")
+
+
+def _key_shaped(text: str) -> bool:
+    if any(shape.search(text.replace(AWS_DOC_KEY, "")) for shape in _KEY_SHAPES):
+        return True
+    return any(len(set(run)) >= 8 for run in _LONG_RUN.findall(text))
+
+
+class _Names:
+    def __init__(self) -> None:
+        self.ids: list[str] = []
+
+    def pytest_collection_modifyitems(self, items) -> None:
+        self.ids = [item.nodeid for item in items]
+
+
+def test_no_test_name_carries_a_key_shaped_string():
+    """pytest prints a parameter value as part of the test name, so a planted fake key in a parameter list lands in logs and
+    reports (a secret scanner reads those). Every such parameter needs an explicit readable id."""
+    names = _Names()
+    code = pytest.main(
+        ["--collect-only", "-q", "-p", "no:cacheprovider", str(Path(__file__).parent)],
+        plugins=[names],
+    )
+    assert code == 0 and len(names.ids) > 1000, (code, len(names.ids))
+    bad = [name.split("[")[0] for name in names.ids if _key_shaped(name)]
+    assert bad == [], f"{len(bad)} test names carry a key-shaped string: {bad[:5]}"

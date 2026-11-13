@@ -100,9 +100,7 @@ def _run(store):
     return run
 
 
-@pytest.mark.parametrize(
-    "frm,to", [(f, t) for f, ts in ALLOWED.items() for t in sorted(ts, key=str)]
-)
+@pytest.mark.parametrize("frm,to", [(f, t) for f, ts in ALLOWED.items() for t in ts])
 def test_every_legal_transition(frm, to):
     store = MemoryStore()
     run = _run(store)
