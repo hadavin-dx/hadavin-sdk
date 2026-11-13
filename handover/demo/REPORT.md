@@ -1,6 +1,35 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:53Z / 10:23 IST - P1 v3.2 (simple linear tripwire, test_hygiene.py untouched) built: fifth fresh read running; probe-ab-v3 built (+ writes2): safety read running; 8 agents; batch 1 still NOT clean
+FAILED / UNCERTAIN first:
+1. **P1 v3.2 (sonar/sonar-p1-quickwins-v3.2.patch, sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c, applies on db54e13, touches NO tests/test_hygiene.py):** builder's evidence (NOT yet independently read): scripts/guard/lint/README/flag tests byte-identical to v3.1 (cmp); the quadratic bash scanner is gone: a per-line regex tripwire in NEW tests/test_shell_single_bracket.py (line cap 4000 chars; any CR raises a clear ValueError; empty explicit allowlist) and the raw-bidi tests in NEW tests/test_raw_bidi_chars.py; 66 probes (36 flagged / 30 not), all rv21 survivors covered; on db54e13 it flags the 7 script lines (the 10 S7688) + lint.yml run lines 5 and 7 = 9 lines, patched tree 0; 31 of 31 mutants killed; timing of 26 shapes of ~1 MB each 0.006-0.24 s (single 1 MB line refused in 0.4 ms; 4000-char lines measured so the cap does not hide a slow regex); tests 362 passed 8 skipped (playwright); ruff/mypy linux+win32/bandit clean; APPLY MATRIX: P1 before or after crlf (v4, v4-autocrlf-fix, v5) and nodemo-optional-hygiene-repo-v2 in all orders = 18 of 18, 150+100+60+60 random orders of 7 patches 0 failures: so **the crlf-step breakage of v3.1 is gone**. Caveats: the 'crlf v5' it used is /tmp/work/b10-v5.patch (no crlf-guard-v5.patch exists yet in skips/); crlf v4 and v4-autocrlf-fix conflict with EACH OTHER (both create .editorconfig: alternatives, take the fix); the tripwire does NOT check quoting across lines, heredoc bodies, [[ ]] spans or case patterns (false positives in heredoc bodies documented); Sonar acceptance of S7688/S8541/S6506 spellings still unverified. **Fifth fresh reader running (ae77c2d963b6a78b7): 'P1 v3.2 CLEAN' / 'NOT CLEAN' line comes next.**
+2. **probe-ab-v3 (sonar/probe-ab-v3.patch sha256 prefix f21835fe654bf3d9, 7 files +871/-5; second push: probe-ab-v3-writes2-full.patch prefix 311fceff996b2f1a, applies on db54e13 alone; PROBE-AB-V3-NOTE.md):** builder's design: constant sink API (Path.*) at every site; pairs inside the argparse family (#1 confine_existing with env roots vs #5 same code with constant roots vs #4 combined confine; #1 vs #2 inline; #6 basename; writes #7 dict vs #8 iteration); sys.argv sites as replicates (#9 helper, #10 inline write, #11 inline read); NEW #13 helper variant picking the root by integer index with its own _ix_* internals (shares only allowed_roots(), PathRefused and constants): pair T = #13 vs #1; controls read_book L96 and load_env L645 untouched; positive control = an equality allow-list on one duplicate function (`name != "README.md" and name != "catcher.py"` -> None else Path(DRAIN_DIR, name).read_text) : **caveat: 'known-accepted' is NOT confirmed (rules.sonarsource.com/docs refused by the proxy): if it is flagged the engine ignores equality guards; if it is NOT flagged we cannot tell 'analysed and clean' from 'not analysed' (the negative controls tell the engine ran)**; U+202E removed (escape); FIXED_TEMP constant instead of gettempdir in the env-free variant; stricter-than-v2 behaviour listed (#5 fails closed and ignores LEAD_DESK_PATH_ROOTS; /tmp constant: on Windows/macOS a facts file in the system temp folder is refused at #5 only). Builder: 26 mutants 24 killed (2 equivalent), fails-before 9 by behaviour + 8 skipped (module new), 1185 passed in one run but 2 hygiene hits in its own test text (fixed) and one `gitleaks git` hit caused by `git stash` commits in ITS scratch clone (not the patch; tree identical by diff -r, 83 passed after): the fresh read re-checks both on a clean clone. **No push before a fresh 'PROBE v3 SAFE' + 'READING CLEAN' (reader a00a7504872aa22f0 running).** If you want PR #7's reading first, fine: it is independent.
+3. Breach class: desk-address patch (CORE, optional) + start-prompt v2 building (a2f6af4dc21cb8a4c): the desk itself still sends by omission (see 04:49Z block): your core approval needed before it enters any series.
+4. Running: nodemo v3, P2 v2.1 third read, crlf v5, real-run v5. **READY TO PUSH: NOTHING YET.**
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| ae77c2d963b6a78b7 | fresh fifth reader P1 v3.2 | 04:53 | running | CLEAN / NOT |
+| a00a7504872aa22f0 | fresh safety reader probe-ab v3 + writes2 | 04:52 | running | PROBE v3 SAFE / READING |
+| ab6c25f7e78008d2e | fresh third reader P2 v2.1 | 04:37 | running | CLEAN / NOT |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 5 (v3.2) | pending | redesign after 4 rounds | no | CLEAN |
+| probe | review 4 (v3) | pending | design | no | SAFE + CLEAN reading |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v3.2 | built, pushed |
+| probe-ab-v3 + writes2 | built, pushed |
+
 ## 2026-11-13 04:49Z / 10:19 IST - **BREACH CLASS NOT CLOSED YET: the check scripts are closed, but THE DESK ITSELF still sends to the vendor by omission** (fresh safety review: Major, a Blocker if the claim is 'all entry points'); core fix patch needs YOUR approval; 8 agents
 FAILED / UNCERTAIN first:
 1. **Fresh safety review of start-prompt-hardening (real-run/REVIEW-start-prompt-fresh.md; run under `unshare -rn` so no packet could leave, with a sitecustomize logging every connect/lookup; never sent y; used `yes n |`, EOF, /dev/null, closed stdin, a file, a here-string, a pty with `n`).** Closed: every non-terminal stdin form is refused exit 2 before the question with 0 connects; an omitted DESK_HUBSPOT_BASE_URL / REAL_IMAP_n_HOST / (with --live-model) DESK_LIVE_BASE_URL (and blank/quoted/whitespace values) is refused exit 2, 0 connects; loopback config with --dry-fakes --assume-yes exit 0 with 0 blocked attempts; every lookalike (127.0.0.1.evil.test, localhost.evil.test, userinfo, 0.0.0.0, 127.1, decimal/hex/octal, trailing dots, mapped IPv6) refused by the settings classes; fails-before 26 failed / 3 passed on db54e13; 14 of 16 reviewer mutants killed; 652 tests passed.
