@@ -1,5 +1,36 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:38Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF, MD-2 | after-run, mutation files | counts | 12:05-12:40Z | done | 1 | DONE (3978 passed / 101 passed) | none |
+| C1 C3 C4 | cold reader, doc vs code, survivor tests review | queue | 12:28Z | done | 1 | DONE, pushed standing/ | C10 |
+| C2 C5 C6 C7 C8 | hostile 1, other docs, flakiness 20x, hostile 2, demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
+| C9 | K6+K10 together, -OO, survivor-tests-v2 | self-assigned | 12:35Z | 45 min | 1 | RUNNING | read RESULTS.md |
+| C10 | docs-only fix patch | self-assigned | 12:41Z | 40 min | 1 | RUNNING | read patch |
+
+ASK: none (the NEEDS-CODE default from my 12:40Z block stands).
+
+**FAILURES AND RETRIES** (from the real logs in handover/core/evidence/realrun-v6/; first lines verbatim where a log has them)
+
+| id | test or step | result (failed / passed / skipped / errors) | failure first line verbatim | cause | retries so far and why | what I did | verified how |
+|---|---|---|---|---|---|---|---|
+| A run 1 | full suite, patched tree, TMPDIR inside tree (my brief's mistake) | 2 / 3779 / 198 / 0 | `files that could not be read as text, so not checked: ['.tmp-run/pytest-of-unknown/...desk.db-shm', ...]` (tests/test_no_placeholders.py:44); the other: tests/test_demo_folder_guard.py::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci (first error line not extracted) | environment (my brief put TMPDIR inside the tree) | 1 re-run with TMPDIR outside | corrected the brief | A run 2: 0 / 3781 / 198; A re-run of the 2 files: 3 passed |
+| C | core-touches-3 alone, TMPDIR inside tree | 2 / 3417 / 198 / 0 | same two tests | environment (same cause) | 1 re-run outside | same | re-run: 3 passed |
+| A3 | full suite on clean UNPATCHED main, TMPDIR inside tree | 2 / 3405 / 198 / 0 | same two tests | environment: shows it is not the patches | none needed | none | same two names fail on clean main |
+| A attempt1 / A2 attempt1 | full suite | no result | killed: SIGTERM exit 143 at ~7% (A attempt 1); container restart about 10:22Z (A2 attempt 1) | environment (harness / restart) | re-run each once | resumed | A run 2 and attempt 2 completed |
+| B2 baseline | baseline script (SK part) | rc=1 once, 54 s | not extracted | UNKNOWN (probably a shared TMPDIR: the first baseline script was not fully stopped and ran in parallel) | final baseline rc=0, 73 passed; all mutant runs after it | none | UNEXPLAINED: I have not shown the cause; B2/baseline-SK.log is the raw file |
+| B2 survivors | 8 mutants survived (R20 K6 K10 C9 N20 P2 P4 P10) | n/a (survivors, not test failures) | n/a | R20 K6 K10 = real gaps in tests; C9 P2 P4 P10 = equivalent; N20 = covered by another file | triage T1-T3 | wrote survivor-tests-v1.patch (not applied) | EV run: new tests fail on mutant, pass unmutated; R20 difference cause is an inference (triage/SUMMARY.md line 7), not a re-run of the pre-P3 tree |
+| G gitleaks | gate on origin/main | 927 hits | (gates/G) | test bug: runner used the old .gitleaks.toml | re-ran with main's own toml | full clone `gitleaks git`: clean | gates/G, GL |
+| AF | after-run | 0 / 3978 / 4 / 0 | none | n/a | none | none | gates/AF/after-full.log rc=0 |
+| MD-2 | 3 test-side mutation files | 0 / 101 / 0 / 0 | none | n/a | none | none | gates/AF/md2-mutfiles.log rc=0 |
+| C1 and C3 findings | not test failures: product defects the agents found (feed.py 2 tracebacks, OverflowError text, unvalidated --price-date, 7 doc mismatches) | n/a | `ValueError: index must be 1..6` (I reproduced) | REAL defects in the demo code/docs | none | C10 writes a docs-only patch; code items to NEEDS CODE (orders forbid code fixes) | I reproduced the two tracebacks; the rest is agent report |
+
+Agents crashed, timed out or restarted: none in this segment; earlier the container restart killed runs A2 and others (resumed). Non-zero commands: A attempt 1 (143), A run 1 (rc 1), C (rc 1), A3 (rc 1), B2 first baseline SK (rc 1). Blocker/Major against my output: none; no review of my output has run (round 0 of cap 2; lead has not ordered one). Numbers I changed later: survivor count first "6" then "9" in B2's headline, corrected to 8 (summary.md; per-set total); unpatched-main gitleaks 927 hits was wrong (old toml), now 0; desk-address "12 failed / 4 passed" in src-v6/README vs 13 / 3 measured.
+**Totals: 2 distinct tests failed in 3 full runs today (4 failures counted per run), 0 real defects in the tests, 0 flakes, 1 unexplained (B2 first baseline rc=1).** C6 (20x flake check) is running and may change the flake count.
+
+
 ## REPORT (container clock 12:36Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
