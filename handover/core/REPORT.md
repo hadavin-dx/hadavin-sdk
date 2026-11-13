@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:24Z (17:54 IST; container clock 12:09Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| BROWSER (agent ad766811) | hash-locked playwright 1.63.0, run the browser tests | LEAD 12:02Z order (2) | 12:01Z / 17:31 | DONE 12:09Z | 1 of 1 | reported (runner output): BEFORE (no playwright): 75 passed, 166 skipped in 109 s over 10 files. AFTER: 241 passed, 0 failed, 0 skipped (75 + 166, the same 241 tests), each file serial under `unshare -n`. NO browser-build mismatch: the pinned browsers.json wants chromium 1243 (153.0.8010.12), headless shell 1243, ffmpeg 1011, and the pre-installed folders are exactly those revisions; the only workaround is 3 symlinks (RR/pw-browsers) because the download host is blocked. Chromium starts as root with no arguments, plain and under unshare -n. Not run: tests/test_portal_mode.py (Node-only), single run each (no flakiness repeat) | pushed to gates/BR |
+| GITLEAKS TESTS | | | | DONE | | 28 skips -> 28 passed (12:17Z block) | none |
+| GATES | | | | DONE | | all clean (12:14Z block) | none |
+| AFTER-RUN (me) | one full-suite run, patched tree with survivor-tests-v1, browser + gitleaks 8.30.1 + CI switches DPLD_REQUIRE_SCAN=1 and DPLD_REQUIRE_DEMO=1, TMPDIR outside tree, unshare -n, serial, detached | LEAD order: after counts | 12:08Z (container) / 17:38 | about 12:35Z container clock (expected 26-30 min; hard stop 12:50Z) | 1 of 1 | running, at 1% after 20 s; raw log out/AF/after-full.log; tree-AF head d3b2b7b (local commit, never pushed) | read the final line, push |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle; one pytest run (mine) | none |
+
+Counts: before 3781 passed, 0 failed, 198 skipped. Expected after (from the parts, not yet measured): 3781 + 3 new survivor tests + 166 + 28 + 0 = 3978 passed; 4 skipped (root-can-read, ntpath.isreserved needs 3.13, load-measurement, Windows-only). The measured number comes from the running full run.
+
+ASK: none.
+
+
 ## REPORT 12:17Z (17:47 IST; container clock 12:02Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
