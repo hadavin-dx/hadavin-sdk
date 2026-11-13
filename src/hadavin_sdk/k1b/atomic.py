@@ -7,7 +7,9 @@ so a name that came from data can neither leave the folder nor be a Windows devi
 Honest limits. ``O_NOFOLLOW`` protects only the last component of the temp name and does not exist on Windows;
 ``os.replace`` resolves its target by name; a second local process that changes the folder while this runs is outside the
 threat model (see ``pathguard``). A temp file is removed on any exception (including Ctrl-C); a hard kill (power loss,
-SIGKILL) can still leave a ``.<name>.<random>.tmp`` file, which ``score`` reports as a stray file.
+SIGKILL) can still leave a ``.<name>.<random>.tmp`` file, which ``score`` reports as a stray file. A name that is a hard
+link (a second name of a file that may lie outside the folder) is replaced by a new file: the other name keeps the old
+content (one test pins this); mount points are not handled.
 """
 
 from __future__ import annotations
@@ -18,18 +20,16 @@ from pathlib import Path
 
 from hadavin_sdk import pathguard
 
-# The temp name is ".<name>.<16 hex>.tmp": this many bytes more than the name, and it must stay within one name's limit.
-_TEMP_EXTRA = 1 + 1 + 16 + 4
-
 
 def atomic_write(base: Path, name: str, text: str) -> None:
-    """Write ``text`` to ``base/name`` (UTF-8, ``\\n`` line ends, unencodable characters as backslash escapes)."""
+    """Write ``text`` to ``base/name`` (UTF-8, ``\\n`` line ends, unencodable characters as backslash escapes). A name that
+    is already a link is refused: the link is not replaced and its target is not written through it."""
     final = pathguard.join(base, name, what="output file")
-    if (
-        len(name.encode("utf-8", errors="surrogatepass")) + _TEMP_EXTRA
-        > pathguard.MAX_COMPONENT_BYTES
-    ):
+    if len(name.encode("utf-8", errors="surrogatepass")) > pathguard.MAX_WRITE_NAME_BYTES:
         raise pathguard.PathRefused("R5", "output file: too long")
+    # the unresolved name: join() resolved a link to its target
+    if os.path.islink(Path(base) / name):
+        raise pathguard.PathRefused("R8", "output file: a link is not replaced")
     tmp = pathguard.join(final.parent, f".{name}.{secrets.token_hex(8)}.tmp", what="temp file")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)

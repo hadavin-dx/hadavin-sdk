@@ -238,9 +238,6 @@ def test_r9_absolute_drive_rooted_and_unc_names_are_refused(tmp_path):
 
 def test_r10_a_path_that_cannot_be_resolved_is_refused(tmp_path):
     _must_refuse(
-        "R10", "NUL inside a path", pathguard.inside, tmp_path, tmp_path / "a\x00b", what="x"
-    )
-    _must_refuse(
         "R10",
         "missing with must_exist",
         pathguard.join,
@@ -681,3 +678,23 @@ def test_the_guard_scope_files_have_no_suppression_comment():
         if b in f.read_text(encoding="utf-8") and (f.name == "pathguard.py" or b == "NOSONAR")
     ]
     assert hits == [], f"suppression comments in the touched files: {hits}"
+
+
+def test_r10_a_value_error_from_resolve_is_refused_as_r10(tmp_path, monkeypatch):
+    """The NUL case moved to R4 (explicit check); a ValueError raised by resolve itself is still R10."""
+
+    def boom(self, strict=False):
+        raise ValueError("embedded null byte")
+
+    monkeypatch.setattr(Path, "resolve", boom)
+    _must_refuse("R10", "resolve raises ValueError", pathguard.operator_dir, "plain", what="x")
+
+
+def test_r4_a_nul_in_a_whole_path_is_refused_explicitly(tmp_path):
+    _must_refuse(
+        "R4",
+        "NUL in operator folder",
+        pathguard.operator_dir,
+        str(tmp_path) + "\x00",
+        what="x",
+    )

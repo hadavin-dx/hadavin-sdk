@@ -53,3 +53,51 @@ def copies(src, dst):
 def os_calls(name):
     os.remove(name)
     os.listdir(name)
+
+
+def replaces_a_path(a, b):
+    a.replace(b)
+
+
+def renames_a_path(a, b):
+    a.rename(b)
+
+
+def removes_a_folder(a):
+    a.rmdir()
+
+
+def touches_a_path(a):
+    a.touch()
+
+
+def links_a_path(a, b):
+    a.symlink_to(b)
+
+
+def changes_a_mode(a):
+    a.chmod(0o600)
+
+
+def writes_bytes_to_a_parameter(a):
+    a.write_bytes(b"x")
+
+
+def writes_text_to_a_parameter(a):
+    a.write_text("x")
+
+
+def opens_a_method_path(a):
+    a.open()
+
+
+def counts_component_as_a_guard(base, name):
+    safe = pathguard.component(name, what="x")
+    (base / safe).read_text()
+    target = pathguard.component(name, what="y")
+    target.unlink()
+
+
+def counts_operator_text_as_a_guard(path):
+    pathguard.operator_text(path, what="x")
+    path.read_text()

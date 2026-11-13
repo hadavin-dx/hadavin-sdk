@@ -36,14 +36,14 @@ class CauseList:
 
 
 def _load(directory: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
-    """Read ``DIR/name`` (``name`` is a constant of ours). The path is resolved once and the file read is that resolved
-    path, so a swap after the check cannot redirect it; containment is ``pathguard.join``."""
+    """Read ``DIR/name`` (``name`` is a constant of ours). Containment is ``pathguard.join``; the file is then read by
+    its resolved name, so a swap between the check and the read is out of scope (the threat model of ``pathguard``)."""
     try:
         path = pathguard.join(directory, name, what="cause list file", must_exist=True, kind="file")
     except pathguard.PathRefused as exc:
         if exc.rule == "R10":  # missing file, symlink loop, permission
-            raise ConfigError(f"cause list: {name} is missing or not readable") from exc
-        raise ConfigError(f"cause list: {name} must be a file inside the directory") from exc
+            raise ConfigError(f"cause list: {name} is missing or not readable") from None
+        raise ConfigError(f"cause list: {name} must be a file inside the directory") from None
     try:
         raw = path.read_bytes()
         data = json.loads(raw.decode("utf-8-sig"))
@@ -74,8 +74,8 @@ def _load(directory: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
 def load_cause_list(directory: Path) -> CauseList:
     try:
         directory = pathguard.operator_dir(directory, what="cause list folder")
-    except pathguard.PathRefused as exc:
-        raise ConfigError("cause list: directory not found") from exc
+    except pathguard.PathRefused:  # missing, not a folder, cannot be resolved, a control character
+        raise ConfigError("cause list: directory not found") from None
     services, s_hash = _load(directory, "services.json", MAX_SERVICES)
     faults, f_hash = _load(directory, "fault_types.json", MAX_FAULT_TYPES)
     return CauseList(services, faults, s_hash, f_hash)

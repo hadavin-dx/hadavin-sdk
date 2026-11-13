@@ -87,5 +87,5 @@ def test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_mis
 
 def test_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
-    with pytest.raises(ConfigError, match="outputs folder does not exist"):
+    with pytest.raises(ConfigError, match="outputs folder: contains a control character"):
         score(type(out)(str(out) + "\x00x"), answers, cause_dir, bundles)

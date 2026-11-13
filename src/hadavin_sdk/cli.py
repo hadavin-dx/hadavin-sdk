@@ -33,7 +33,7 @@ import traceback
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from hadavin_sdk import evals
+from hadavin_sdk import evals, pathguard
 from hadavin_sdk.audit import AuditUnavailable
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
@@ -130,7 +130,10 @@ def _main(argv: list[str] | None = None) -> int:
     sc.add_argument("--bundles", required=True, type=Path)
     args = p.parse_args(argv)
     if args.config:
-        os.environ["HADAVIN_CONFIG_DIR"] = args.config
+        # the operator's own folder: its shape is checked once and the resolved path is what is used afterwards
+        os.environ["HADAVIN_CONFIG_DIR"] = str(
+            pathguard.operator_dir(args.config, what="config folder", must_exist=False)
+        )
     if args.cmd == "tick":
         return _tick()
     cfg = load_config()
@@ -249,7 +252,6 @@ def score_cmd(audit, args) -> int:
     """Body of ``score``. Order: intent event (a failed append writes nothing), the report file, then
     ``written`` and one ``score_run`` per run. A report that cannot be written leaves ``score_report`` ``started`` followed by
     ``score_report`` ``failed``; a crash leaves ``started`` alone."""
-    from hadavin_sdk import pathguard
     from hadavin_sdk.k1b.atomic import atomic_write
     from hadavin_sdk.k1b.report import render_score_report
     from hadavin_sdk.k1b.score import REPORT_DIR, audit_result, score
@@ -257,11 +259,13 @@ def score_cmd(audit, args) -> int:
     try:  # the operator's own --outputs folder: its shape is checked; the report folder name is ours
         outputs = pathguard.operator_dir(args.outputs, what="outputs folder")
     except pathguard.PathRefused as exc:
-        raise ConfigError("outputs folder does not exist") from exc
+        if exc.rule in ("R10", "R11"):  # missing, not a folder, cannot be resolved
+            raise ConfigError("outputs folder does not exist") from None
+        raise
     report_dir = pathguard.join(outputs, REPORT_DIR, what="score report folder")
     if report_dir.exists() and (not report_dir.is_dir() or any(report_dir.iterdir())):
         raise ConfigError("score report folder exists and is not empty")
-    res = score(args.outputs, args.answers, args.cause_list, args.bundles)
+    res = score(outputs, args.answers, args.cause_list, args.bundles)
     run_id = new_id("k1b")
     ref = {"object_ref": res.answers_sha256, "inputs_hash": res.outputs_digest}
     audit.emit("score_report", run_id, **ref, result="started")

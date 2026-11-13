@@ -99,6 +99,12 @@ def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None
         raise ConfigError("replay refuses a route with a zero input or output price")
 
 
+class _Progress:
+    """One flag: has ``_replay`` made the output folder yet? Set by ``_replay``, read by ``replay``."""
+
+    output_created = False
+
+
 def _replay(
     registry: Registry,
     llm: LLM,
@@ -114,9 +120,10 @@ def _replay(
     llm_kind: str | None = None,
     acknowledge_masked: bool = False,
     clock: Callable[[], float] | None = None,
+    progress: _Progress | None = None,
 ) -> ReplayResult:
-    """Raises ``ConfigError`` for any refusal (nothing written), ``AuditUnavailable`` when an event cannot be
-    written. Aborts (non-transient provider error) and the USD cap return exit code 1."""
+    """Raises ``ConfigError`` for any refusal before the output folder exists (nothing written), ``AuditUnavailable``
+    when an event cannot be written. ``progress`` is set by ``replay`` so it knows whether the folder exists. Aborts (non-transient provider error) and the USD cap return exit code 1."""
     cfg = registry.config
     if k < 1:
         raise ConfigError("replay k must be at least 1")
@@ -145,6 +152,8 @@ def _replay(
     system = registry.prompt(agent_id) + "\n\n" + loop.SYSTEM_PROMPT
     max_steps = min(cfg.k1b.max_steps, agent.max_steps)
     out.mkdir(parents=True, exist_ok=True)
+    if progress is not None:
+        progress.output_created = True
 
     run_id = new_id("k1b")
     budget = loop.Budget(max_usd)
@@ -290,10 +299,12 @@ def _mark_failed(out_arg: Path, exc: BaseException) -> None:
 def replay(*args: Any, **kwargs: Any) -> ReplayResult:
     """Run a replay (arguments: see ``_replay``). If it dies after the output folder exists, ``FAILED.txt`` is
     written into it so the operator can tell a dead run from a finished one; delete the folder to run again."""
+    progress = _Progress()
     try:
-        return _replay(*args, **kwargs)
-    except ConfigError:  # every refusal happens before anything is written
-        raise
-    except BaseException as exc:  # includes Ctrl-C: the folder must not look finished
-        _mark_failed(kwargs["out"], exc)
+        return _replay(*args, progress=progress, **kwargs)
+    except (
+        BaseException
+    ) as exc:  # includes Ctrl-C and a refusal (PathRefused is a ConfigError) after output exists
+        if progress.output_created:  # a refusal before the folder exists wrote nothing: no marker
+            _mark_failed(kwargs["out"], exc)
         raise

@@ -17,19 +17,27 @@ import tempfile
 import threading
 from pathlib import Path
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.models import AuditEvent
 
 
 class LocalDirSink:
     def __init__(self, root: Path) -> None:
-        self.root = Path(root)
+        # the operator's own audit folder (it may not exist yet): shape checked, the resolved path is what is used;
+        # the three names below it are constants of ours
+        self.root = pathguard.operator_dir(root, what="audit folder", must_exist=False)
         self.objects = self.root / "objects"
         self.outbox = self.root / "outbox"
         self.index = self.root / "index.jsonl"
         self._lock = threading.Lock()
         # Last resort when even the outbox folder cannot be written: kept in memory for reconcile.
         self._pending: list[AuditEvent] = []
+
+    def _object(self, key: str) -> Path:
+        """``objects/<key>``. The key is data-derived (an event id, or a line of ``index.jsonl``), so it goes through
+        ``pathguard``: one plain file name, and the result stays inside ``objects``."""
+        return pathguard.join(self.objects, key, what="audit object")
 
     def _entries(self) -> list[dict]:
         """Index lines, skipping a torn one (disk full mid-append): it records nothing, and must not block
@@ -79,6 +87,7 @@ class LocalDirSink:
         body = event.model_dump_json().encode("utf-8")
         key = f"{event.event_id}.json"
         entry = {"key": key, "run_id": event.run_id, "sha256": hashlib.sha256(body).hexdigest()}
+        target = self._object(key)  # refused (PathRefused) before anything is written
         with self._lock:
             self.objects.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(dir=self.objects, prefix=".tmp-")
@@ -88,11 +97,11 @@ class LocalDirSink:
                     f.flush()
                     os.fsync(f.fileno())
                 try:
-                    os.link(tmp, self.objects / key)  # atomic, and fails if the object exists
+                    os.link(tmp, target)  # atomic, and fails if the object exists
                     self._fsync_dir(self.objects)
                 except FileExistsError:
                     # Same bytes and no index line = a half-finished earlier write: finish it.
-                    if self._indexed(key) or (self.objects / key).read_bytes() != body:
+                    if self._indexed(key) or target.read_bytes() != body:
                         raise DuplicateEvent(event.event_id) from None
             finally:
                 Path(tmp).unlink(missing_ok=True)
@@ -104,6 +113,8 @@ class LocalDirSink:
             return self._write(event)
         except DuplicateEvent:
             raise
+        except pathguard.PathRefused as exc:  # an event id that is not one plain file name
+            raise AuditUnavailable(f"intent {event.event_id!r}: refused ({exc.rule})") from None
         except OSError as exc:
             raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
 
@@ -116,9 +127,14 @@ class LocalDirSink:
         except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
             try:
                 self.outbox.mkdir(parents=True, exist_ok=True)
-                tmp = self.outbox / f".tmp-{event.event_id}"
+                tmp = pathguard.join(
+                    self.outbox, f".tmp-{event.event_id}", what="audit outbox file"
+                )
+                final = pathguard.join(
+                    self.outbox, f"{event.event_id}.json", what="audit outbox file"
+                )
                 tmp.write_text(event.model_dump_json(), encoding="utf-8")
-                os.replace(tmp, self.outbox / f"{event.event_id}.json")  # never a half file
+                os.replace(tmp, final)  # never a half file
             except Exception:  # noqa: BLE001
                 self._pending.append(event)
             return None
@@ -138,12 +154,17 @@ class LocalDirSink:
             done += 1
         if not self.outbox.exists():
             return done
-        for path in sorted(self.outbox.glob("*.json")):
+        for listed in sorted(p.name for p in self.outbox.glob("*.json")):
+            try:  # a name from the listing goes through pathguard; one that cannot is left alone (a person looks)
+                path = pathguard.join(self.outbox, listed, what="audit outbox file")
+            except pathguard.PathRefused:
+                continue
             try:
                 event = AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))
             except ValueError:
-                (self.outbox / "corrupt").mkdir(exist_ok=True)
-                os.replace(path, self.outbox / "corrupt" / path.name)
+                corrupt = pathguard.join(self.outbox, "corrupt", what="audit outbox folder")
+                corrupt.mkdir(exist_ok=True)
+                os.replace(path, pathguard.join(corrupt, listed, what="audit outbox file"))
                 continue
             try:
                 self._write(event)
@@ -156,7 +177,7 @@ class LocalDirSink:
         return done
 
     def verify_object(self, key: str) -> bool:
-        body = (self.objects / key).read_bytes()
+        body = self._object(key).read_bytes()
         digest = hashlib.sha256(body).hexdigest()
         for entry in self._entries():
             if entry["key"] == key:
@@ -170,7 +191,7 @@ class LocalDirSink:
             if run_id is None or entry.get("run_id") == run_id:
                 out.append(
                     AuditEvent.model_validate_json(
-                        (self.objects / entry["key"]).read_text(encoding="utf-8")
+                        self._object(entry["key"]).read_text(encoding="utf-8")
                     )
                 )
         return out

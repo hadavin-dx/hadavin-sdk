@@ -24,9 +24,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.http import NoRedirect
@@ -175,8 +175,13 @@ def connect(settings, **kw: Any) -> VaultProvider:
 
         def login(p: VaultProvider) -> str:
             try:
-                jwt = Path(settings.jwt_path).read_text(encoding="utf-8").strip()
-            except (OSError, UnicodeDecodeError) as exc:
+                # Operator config: a mounted service-account file, outside any base folder by design; the shape is
+                # checked (a NUL or control character is refused) and the resolved path is read.
+                jwt_file = pathguard.operator_file(
+                    settings.jwt_path, what="vault sign-in token file", must_exist=False
+                )
+                jwt = jwt_file.read_text(encoding="utf-8").strip()
+            except (OSError, UnicodeDecodeError, pathguard.PathRefused) as exc:
                 raise ConfigError(
                     f"vault kubernetes sign-in: cannot read {settings.jwt_path} ({type(exc).__name__})"
                 ) from None

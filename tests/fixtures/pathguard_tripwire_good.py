@@ -3,6 +3,7 @@
 import os
 
 from hadavin_sdk import pathguard
+from hadavin_sdk.config import confined
 
 
 def reads_a_guarded_file(base):
@@ -33,3 +34,23 @@ def writes_and_replaces(base, name):
 def calls_that_are_not_file_operations(items):
     items.get("a")
     return items.keys()
+
+
+def uses_inside(base, path):
+    real = pathguard.inside(base, path, what="x")
+    return real.read_text()
+
+
+def uses_operator_file(path):
+    real = pathguard.operator_file(path, what="x")
+    real.chmod(0o600)
+    return real.read_bytes()
+
+
+def uses_confined(base, name):
+    real = confined(base, name)
+    real.rmdir()
+
+
+def a_string_replace_is_not_a_path_call(text):
+    return text.replace("a", "b").replace("c", "d")

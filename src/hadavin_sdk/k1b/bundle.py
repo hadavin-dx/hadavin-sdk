@@ -117,8 +117,8 @@ def _load_json(case: str, root: Path, rel: str) -> Any:
         OSError,
         ValueError,
         RecursionError,
-    ) as exc:  # PathRefused and UnicodeDecodeError are ValueErrors
-        raise _fail(case, f"{rel} is not valid JSON") from exc
+    ):  # PathRefused and UnicodeDecodeError are ValueErrors; no chain: an OSError text can hold the path
+        raise _fail(case, f"{rel} is not valid JSON") from None
     _no_surrogates(case, rel, obj)
     return obj
 
@@ -145,8 +145,8 @@ def _text(case: str, path: Path, rel: str) -> str:
             path, *rel.split("/"), what="bundle file", must_exist=True, kind="file"
         )
         return target.read_bytes().decode("utf-8-sig")
-    except (OSError, ValueError) as exc:
-        raise _fail(case, f"{rel} is not valid UTF-8 text") from exc
+    except (OSError, ValueError):  # no chain: an OSError text can hold the path
+        raise _fail(case, f"{rel} is not valid UTF-8 text") from None
 
 
 def _keys(case: str, rel: str, obj: Any, allowed: set[str]) -> dict[str, Any]:
@@ -198,10 +198,14 @@ def load_bundle(path: Path) -> Bundle:
     case = path.name
     if not CASE_RE.fullmatch(case) or path.is_symlink() or not path.is_dir():
         raise _fail(case, "folder name must look like case-001")
+    # The case id becomes a file name (``<case>.json``) in replay and score. Refuse here, before anything is written,
+    # a case id that ``atomic_write`` could not write (one constant, shared with it).
+    if len(f"{case}.json".encode()) > pathguard.MAX_WRITE_NAME_BYTES:
+        raise _fail(case, "case id too long to write as a file")
     try:
         path = pathguard.operator_dir(path, what="bundle folder")
     except pathguard.PathRefused as exc:
-        raise _fail(case, "folder name must look like case-001") from exc
+        raise _fail(case, str(exc)) from None
     man_path = pathguard.join(path, "manifest.json", what="bundle file")
     if not man_path.is_file():
         raise _fail(case, "manifest.json is missing")
@@ -357,7 +361,9 @@ def load_bundles(root: Path) -> list[Bundle]:
     try:
         root = pathguard.operator_dir(root, what="bundles folder")
     except pathguard.PathRefused as exc:
-        raise ConfigError("bundles folder does not exist") from exc
+        if exc.rule in ("R10", "R11"):  # missing, not a folder, cannot be resolved
+            raise ConfigError("bundles folder does not exist") from None
+        raise
     # each name from the listing goes through pathguard.component; load_bundle then checks the case-NNN shape
     names = sorted(
         pathguard.component(p.name, what="bundle folder")

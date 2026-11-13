@@ -525,6 +525,9 @@ def load_config(config_dir: Path | None = None) -> Config:
     """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
     try:
         root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+        # the operator's own config folder (typed or from HADAVIN_CONFIG_DIR): shape only; a missing folder is reported
+        # below by the settings check, as before
+        root = pathguard.operator_dir(root, what="config folder", must_exist=False)
         raw = _read_yaml(root / "config.yaml")
         egress = _read_yaml(root / "egress.yaml").get("hosts") or []
         if early := deferred.key_problems("config.yaml", raw):
@@ -533,7 +536,10 @@ def load_config(config_dir: Path | None = None) -> Config:
             raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
         for key in ("golden_dir", "inputs_dir"):
             if key in raw:
-                raw[key] = root / raw[key]
+                # Operator config: relative to the config folder and allowed to lie beside it (``../golden``), so it is
+                # NOT confined to the config folder; the shape is checked. Each file read from it later is confined
+                # to it (``confined(cfg.golden_dir, ...)``).
+                raw[key] = pathguard.operator_dir(root / raw[key], what=key, must_exist=False)
         raw["backends"] = parse_backends(raw.get("backends"), root)
         return Config(**raw, egress_hosts=frozenset(egress), root=root)
     except ConfigError:

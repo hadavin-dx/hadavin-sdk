@@ -103,9 +103,16 @@ def build_local(settings, deps) -> LocalSigner:
         source = f"secret {settings.private_key_secret_name!r}"
         pem = deps.resolve(settings.private_key_secret_name).encode("utf-8")
     else:
-        path = Path(settings.private_key_path)
-        if not path.is_file():
-            raise ConfigError(f"signer ed25519_local: no key file at {path}")
+        # Operator config: the operator picks any key file (no outer folder exists, so nothing "contains" it);
+        # its shape is checked and the resolved path is what is read.
+        try:
+            path = pathguard.operator_file(settings.private_key_path, what="signer key file")
+        except pathguard.PathRefused as exc:
+            if exc.rule not in ("R10", "R11"):  # a control character or an over-long path: say so
+                raise
+            raise ConfigError(
+                f"signer ed25519_local: no key file at {settings.private_key_path}"
+            ) from None
         source, pem = str(path), path.read_bytes()
     try:
         key = _private_key(pem, passphrase, source)
@@ -135,6 +142,9 @@ def key_path(path: Path, base: Path | None = None) -> Path:
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     folder = folder.resolve(strict=True)
     target = Path(path).expanduser()
+    pathguard.operator_text(
+        target, what="key file"
+    )  # a NUL or control character: refused before any resolve
     if target.is_symlink():
         raise ValueError(f"{path} is a symlink: a key file is never used through one")
     real: Path | None
@@ -203,7 +213,9 @@ def generate_key(
 
 
 def load_private_key(path: Path, passphrase: bytes | None = None) -> ed25519.Ed25519PrivateKey:
-    return _private_key(path.read_bytes(), passphrase, str(path))
+    # an operator-chosen key file (no outer folder): shape checked, the resolved path is read
+    real = pathguard.operator_file(path, what="private key file")
+    return _private_key(real.read_bytes(), passphrase, str(path))
 
 
 def _private_key(pem: bytes, passphrase: bytes | None, source: str) -> ed25519.Ed25519PrivateKey:
@@ -215,7 +227,9 @@ def _private_key(pem: bytes, passphrase: bytes | None, source: str) -> ed25519.E
 
 def load_public_key(path: Path) -> bytes:
     """A PEM public key file as the raw 32 bytes (what `verify_signature` takes)."""
-    key = serialization.load_pem_public_key(path.read_bytes())
+    # operator-chosen file, shape checked
+    real = pathguard.operator_file(path, what="public key file")
+    key = serialization.load_pem_public_key(real.read_bytes())
     if not isinstance(key, ed25519.Ed25519PublicKey):
         raise TypeError(f"{path} is not an Ed25519 public key")
     return key.public_bytes(*_RAW)
