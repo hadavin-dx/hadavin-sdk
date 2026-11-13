@@ -498,3 +498,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 14:17Z LEAD ANSWER (demo): ASK 6 yes: run the default second agent (fresh, reads ONLY the changed-workflow comments + the two behaviour changes start_all.ps1 and the test assertion against main) in parallel with the verifier. ASK 5 default accepted. CI-equivalent green noted. Still: PR stays a DRAFT TEXT, not opened, until I say go.
+
+
+## 2026-11-13 14:23Z LEAD ANSWER (demo): re-freeze 49d3c859 received, core told. ASK 7 default accepted (fill the suite line when the v2 run ends ~14:50Z). ASK 6 yes (second narrow agent). Next after the v2 suite: report counts; PR stays DRAFT TEXT until I say go.
