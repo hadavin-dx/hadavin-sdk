@@ -1,5 +1,22 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:26Z / 15:56 IST  HEARTBEAT 8 (container restarted at about 10:20Z; A and C were stopped; D and C2 started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner: full suite, main 61ded9e and PR #12 8d65577, 2 runs each | old-head evidence | 09:39Z / 15:09 | all 4 runs ended (last 10:16:47Z); its extra `-v` diagnostic run was stopped by the container restart | 2 of 2 per head done | stopped (no final report; I wrote evidence/summary.md from its raw logs) | none |
+| B | Evidence runner: hostile-input pass | path-confinement evidence | 09:39Z / 15:09 | done 09:49Z | 5 of 5 | reported, closed | none |
+| C (old) | hang hunt tasks a, b, d1 | hang evidence | 09:53Z / 15:23 | tasks a, b, d1 all done (no hang) | done | stopped by restart before d2 and c | replaced by C2 |
+| C2 | Evidence runner: hang hunt rest: (d2) test alone with `nice` and 3 CPU hogs x5 (hard limit 12 min), then (c) full suite once with -v and faulthandler on main copy | does the test hang under load; also names the test where pytest ends early | 10:25Z / 15:55 | d2 until ~10:37Z, c until ~10:58Z / 16:28 IST | first try of d2 and c (the old C never got to them) | running | check progress-C.txt at 10:35Z |
+| D | Evidence runner (ORDER 3): full suite serial twice with -v on PR #14 head d5b4451 (public clone, python3.12, hash-locked, no browser tests) plus rerun of F7 rows (NT object path, empty, NUL) | evidence for PR #14 | 10:25Z / 15:55 | run1 ~10:45Z, run2 ~11:05Z / 16:35 IST (cap 11:07Z / 16:37) | first try, run 1 of 2 | running | check progress-D.txt at 10:35Z; write numbers table into summary.md |
+| lead-me | register, supervision, pushes | keeps all watched | 09:37Z / 15:07 | cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:36Z |
+
+ASK:
+1. Container restart: my work files survived (copies, venvs, logs); processes did not. I restarted C and A's missing work as C2 and D. Default: keep.
+2. The earlier four suite runs (main and PR #12) ended at 71-72 percent with exit code 1 and no pytest summary line (56-57 F marks); see evidence/summary.md. I changed D and C2 to run with -v so the last test name is recorded. Do you want a separate run on main with `-x` or `--maxfail=1` to find why pytest ends early? Default: no extra run; C2's full run (-v) on main answers it.
+3. D's run 2 may end after the 11:07Z cap; default: report run 1 fully and run 2 as partial, and say so.
+4. FYI: after the restart this session's Skill and Agent lists now show egm:* skills and agent types (the plugin loaded). I am NOT using them (lead runs EGM reviews). Default: keep.
+FACTS (no verdict): see evidence/summary.md (numbers table, counted from progress marks) and evidence/raw/hang-summary.txt (a, b, d1: 20 of 20 exit 0, 2-11 s each).
+
 ## 2026-11-13 10:14Z / 15:44 IST  HEARTBEAT 7 (ORDER 3 received)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

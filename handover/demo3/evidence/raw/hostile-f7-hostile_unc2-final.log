@@ -1,0 +1,21 @@
+'\\\\?\\unc\\host\\share\\x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\?\\\\UNC\\host\\share' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'//?/UNC/host/share/x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'//./C:/x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\??\\UNC\\host\\share\\x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\host/share/x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'/\\/host/x' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'//' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'' -> EXC PathRefused book path: the path is empty
+'\x00' -> EXC PathRefused book path: contains a control character
+'a\x00b' -> EXC PathRefused book path: contains a control character
+== read_book (check_invariants) on Linux
+'\\\\host\\share\\x.db' -> EXC InputError book \\host\share\x.db: no such file
+'//host/share/x.db' -> EXC InputError book x.db: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+'\\\\?\\UNC\\host\\share\\x.db' -> EXC InputError book \\?\UNC\host\share\x.db: no such file
+'\\/host/share/x.db' -> EXC InputError book x.db: no such file
+123 -> EXC InputError book: not a path
+None -> EXC InputError book: not a path
+b'x' -> EXC InputError book: not a path
+'\x00' -> EXC InputError book ?: contains a control character

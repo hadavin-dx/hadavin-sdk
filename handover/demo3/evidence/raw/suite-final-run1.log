@@ -1,0 +1,8 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/final-venv/bin/python
+rootdir: /home/user/work/final
+configfile: pyproject.toml
+testpaths: tests
+collecting ... collected 3704 items
+
+tests/test_ai_after_claim.py::test_reaper_does_not_ask_model_again 

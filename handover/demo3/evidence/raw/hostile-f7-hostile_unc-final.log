@@ -1,0 +1,62 @@
+module: /home/user/work/final/tools/pathconfine.py
+== path_module posixpath
+'\\\\host\\share\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5Chost%5Cshare%5Cx.db?mode=ro'
+'//host/share/x.db' -> 'file:////host/share/x.db?mode=ro'
+'\\\\?\\UNC\\host\\share\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5C%3F%5CUNC%5Chost%5Cshare%5Cx.db?mode=ro'
+'\\/host/share/x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C/host/share/x.db?mode=ro'
+'/\\host\\share\\x.db' -> 'file:///%5Chost%5Cshare%5Cx.db?mode=ro'
+'\\\\?\\C:\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5C%3F%5CC%3A%5Cx.db?mode=ro'
+'\\\\.\\C:\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5C.%5CC%3A%5Cx.db?mode=ro'
+'C:\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/C%3A%5Cx.db?mode=ro'
+'\\\\localhost\\share\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5Clocalhost%5Cshare%5Cx.db?mode=ro'
+'//localhost/c$/x.db' -> 'file:////localhost/c%24/x.db?mode=ro'
+'\\\\host\\share' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5Chost%5Cshare?mode=ro'
+'\\\\host' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5Chost?mode=ro'
+'/tmp/ok.db' -> 'file:///tmp/ok.db?mode=ro'
+'rel.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/rel.db?mode=ro'
+'\\\\?\\UNC\\' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5C%3F%5CUNC%5C?mode=ro'
+'///host/share/x.db' -> 'file:///host/share/x.db?mode=ro'
+'\\\\\\host\\share' -> 'file:///home/user/hadavin-sdk/handover/demo3/%5C%5C%5Chost%5Cshare?mode=ro'
+== path_module ntpath
+'\\\\host\\share\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'//host/share/x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\/host/share/x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'/\\host\\share\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\?\\C:\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\.\\C:\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'C:\\x.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/C%3A%5Cx.db?mode=ro'
+'\\\\localhost\\share\\x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'//localhost/c$/x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\host\\share' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\host' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'/tmp/ok.db' -> 'file:///tmp/ok.db?mode=ro'
+'rel.db' -> 'file:///home/user/hadavin-sdk/handover/demo3/rel.db?mode=ro'
+'\\\\?\\UNC\\' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'///host/share/x.db' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+'\\\\\\host\\share' -> EXC PathRefused book path: a Windows device or network path (\\server\share, \\?\C:\) cannot be opened read-only by SQLite
+== confine/confine_existing/confine_anywhere on Linux os.path
+confine '\\\\host\\share\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '//host/share/x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_existing '//host/share/x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere '//host/share/x.db' -> EXC PathRefused --x: no such file
+confine '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\?\\UNC\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '\\/host/share/x.db' -> EXC PathRefused --x: a folder on the path does not exist
+confine_existing '\\/host/share/x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\/host/share/x.db' -> EXC PathRefused --x: no such file
+confine '/\\host\\share\\x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_existing '/\\host\\share\\x.db' -> EXC PathRefused --x: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere '/\\host\\share\\x.db' -> EXC PathRefused --x: no such file
+confine '\\\\?\\C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\?\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\?\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine '\\\\.\\C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing '\\\\.\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere '\\\\.\\C:\\x.db' -> EXC PathRefused --x: no such file
+confine 'C:\\x.db' -> EXC PathRefused --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+confine_existing 'C:\\x.db' -> EXC PathRefused --x: no such file
+confine_anywhere 'C:\\x.db' -> EXC PathRefused --x: no such file
