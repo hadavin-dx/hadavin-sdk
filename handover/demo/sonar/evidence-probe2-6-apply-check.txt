@@ -1,0 +1,4 @@
+probe-ab-v2 after [nothing]: APPLIES
+probe-ab-v2 after [sonar-p1-quickwins-v3.patch]: APPLIES
+probe-ab-v2 after [sonar-p1-quickwins-v3.patch sonar-p2-regex-http-bug-v2.patch]: APPLIES
+probe-ab-v2 on db54e13 alone (fresh clone, git apply --check): APPLIES

@@ -1,0 +1,15 @@
+## test_probe_ab.py (the new test file only) run on db54e13 WITHOUT the probe code. The module tools/pathconfine.py does not exist there; HAS_HELPER=False so the site tests run and fail by BEHAVIOUR
+SKIPPED [1] tests/test_probe_ab.py:170: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:181: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:206: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:228: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:243: tools/pathconfine.py is part of the probe
+FAILED tests/test_probe_ab.py::test_all_checker_sites_inside_then_outside - F...
+FAILED tests/test_probe_ab.py::test_links_and_prefix_sibling_are_refused_at_every_checker_site
+FAILED tests/test_probe_ab.py::test_nul_in_a_path_is_a_clean_refusal_never_a_traceback
+FAILED tests/test_probe_ab.py::test_roots_from_the_environment_reach_the_inline_and_the_helper_sites
+FAILED tests/test_probe_ab.py::test_scrub_read_is_fixed_roots_and_write_is_inline
+FAILED tests/test_probe_ab.py::test_load_driver_run_refuses_outside_by_behaviour
+FAILED tests/test_probe_ab.py::test_drain_marker_name_only - Failed: DID NOT ...
+FAILED tests/test_probe_ab.py::test_n8n_import_inline - Failed: DID NOT RAISE...
+8 failed, 5 skipped in 32.32s

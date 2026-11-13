@@ -1,0 +1,15 @@
+MUTANT M1-no-NUL-catch-in-inline: 1 failed, 2 passed in 2.23s
+MUTANT M2-inline-ignores-env: 1 failed, 3 passed in 0.09s
+MUTANT M3-scrub-write-ignores-env: 1 failed, 4 passed in 0.15s
+MUTANT M4-fixed-reads-env: 1 failed, 4 passed in 0.14s
+MUTANT M5-existing-accepts-new-name: 1 failed, 4 passed in 0.18s
+MUTANT M6-iter-accepts-space: 1 failed, 6 passed in 0.12s
+MUTANT M7-startswith-for-commonpath: 1 failed, 1 passed in 0.15s
+MUTANT M8-drain-keeps-folder: 1 failed, 11 passed in 0.25s
+MUTANT M9-drain-allows-dotdot: 13 passed in 0.27s
+MUTANT M10-write-open-argument-text: 13 passed in 0.21s
+## --help without PYTHONPATH (probe is expected to FAIL here; base works)
+probe load_tools/load_driver.py: ModuleNotFoundError: No module named 'tools'
+probe load_tools/check_invariants.py: ModuleNotFoundError: No module named 'tools'
+base db54e13 load_tools/load_driver.py: --help OK
+base db54e13 load_tools/check_invariants.py: --help OK
