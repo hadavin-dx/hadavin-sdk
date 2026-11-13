@@ -1,0 +1,20 @@
+All checks passed!
+147 files already formatted
+34
+........................................................................ [ 57%]
+.....................................................                    [100%]
+125 passed in 64.08s (0:01:04)
+MUT cancel
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.72s
+MUT group
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.82s
+--- patch diff
+49
+applycheck OK
+[90m1:13AM[0m [32mINF[0m [1mno leaks found[0m
+[90m1:13AM[0m [32mINF[0m [1mno leaks found[0m
+ M .codeant/configuration.json
+ A .github/workflows/semgrep.yml
+ M .gitleaks.toml
