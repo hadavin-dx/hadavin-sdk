@@ -1,0 +1,370 @@
+### pass 1 case hsp-help [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --help
+### last 30 lines of output:
+usage: hubspot_probe.py [-h] [--plan] [--yes-spend-calls YES_SPEND_CALLS]
+                        [--token-env TOKEN_ENV] [--dry-run URL]
+
+One-shot HubSpot free-account API probe (see the module docstring).
+
+options:
+  -h, --help            show this help message and exit
+  --plan                print the planned call count and exit
+  --yes-spend-calls YES_SPEND_CALLS
+                        must equal the count --plan prints
+  --token-env TOKEN_ENV
+                        NAME of the environment variable holding the token
+  --dry-run URL         run against a loopback stub at this address
+
+### pass 1 case hsp-plan [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --plan
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+
+### pass 1 case hsp-confirm-missing [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: pass --yes-spend-calls 7 to confirm the planned call count
+
+### pass 1 case hsp-confirm-6 [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 6
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: pass --yes-spend-calls 7 to confirm the planned call count
+
+### pass 1 case hsp-confirm-abc [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls abc
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 1 case hsp-token-unset [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env NOT_SET_VAR_XYZ
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: the token environment variable is missing, empty or not a single token
+
+### pass 1 case hsp-token-name-is-token [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env made-up-key-0001
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --token-env must be the NAME of an environment variable, not the token
+
+### pass 1 case hsp-token-with-space [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: the token environment variable is missing, empty or not a single token
+
+### pass 1 case hsp-dryrun-nonloopback [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://192.0.2.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 1 case hsp-dryrun-https [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run https://127.0.0.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 1 case hsp-dryrun-userinfo [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1@192.0.2.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 1 case hsp-dryrun-dead-port [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+WARNING: the probe contact probe-b6f2d1b5@example.com may still exist; delete it by hand in HubSpot
+WARNING: the create answer was lost; look for probe-b6f2d1b5@example.com in HubSpot and delete it by hand
+
+owners readable      FAIL
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               FAIL
+calls used: 4 of 8
+status classes seen: tag property: no answer (0); owners: no answer (0); create: no answer (0); delete permanent: no answer (0)
+
+### pass 1 case hsp-token-as-argument [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --token made-up-key-0001
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 1 case hsp-abbreviation [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --pla
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 1 case hsp-stub-happy [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:32973
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+created contact ...0001 for probe-43dcf96f@example.com
+
+owners readable      PASS
+contact create       PASS
+owner write          PASS
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 7 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 2xx (201); patch owner: 2xx (200); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 1 case hsp-stub-happy-callorder [hsp] status=PASS want_exit=7 calls in plan order got_exit=ok 
+### command: (stub log)
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+created contact ...0001 for probe-43dcf96f@example.com
+
+owners readable      PASS
+contact create       PASS
+owner write          PASS
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 7 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 2xx (201); patch owner: 2xx (200); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 1 case hsp-stub-owners403 [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:40163
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+created contact ...0001 for probe-0449c377@example.com
+
+owners readable      FAIL
+contact create       PASS
+owner write          SKIPPED (no owner found)
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 6 of 8
+status classes seen: tag property: 4xx (404); owners: 4xx (403) "missing scopes"; create: 2xx (201); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 1 case hsp-stub-echo [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:38033
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+
+owners readable      PASS
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               NOT NEEDED (nothing was created)
+calls used: 3 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 4xx (400) [VALIDATION_ERROR] "bad ***"
+
+### pass 1 case hsp-stub-createlost [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:33743
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+note: create outcome unknown (its answer was lost); the contact existed and is now deleted
+
+owners readable      PASS
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               PASS (permanent)
+calls used: 4 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 5xx (500); delete permanent: 2xx (204)
+
+### pass 2 case hsp-help [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --help
+### last 30 lines of output:
+usage: hubspot_probe.py [-h] [--plan] [--yes-spend-calls YES_SPEND_CALLS]
+                        [--token-env TOKEN_ENV] [--dry-run URL]
+
+One-shot HubSpot free-account API probe (see the module docstring).
+
+options:
+  -h, --help            show this help message and exit
+  --plan                print the planned call count and exit
+  --yes-spend-calls YES_SPEND_CALLS
+                        must equal the count --plan prints
+  --token-env TOKEN_ENV
+                        NAME of the environment variable holding the token
+  --dry-run URL         run against a loopback stub at this address
+
+### pass 2 case hsp-plan [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --plan
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+
+### pass 2 case hsp-confirm-missing [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: pass --yes-spend-calls 7 to confirm the planned call count
+
+### pass 2 case hsp-confirm-6 [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 6
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: pass --yes-spend-calls 7 to confirm the planned call count
+
+### pass 2 case hsp-confirm-abc [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls abc
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 2 case hsp-token-unset [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env NOT_SET_VAR_XYZ
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: the token environment variable is missing, empty or not a single token
+
+### pass 2 case hsp-token-name-is-token [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env made-up-key-0001
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --token-env must be the NAME of an environment variable, not the token
+
+### pass 2 case hsp-token-with-space [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: the token environment variable is missing, empty or not a single token
+
+### pass 2 case hsp-dryrun-nonloopback [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://192.0.2.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 2 case hsp-dryrun-https [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run https://127.0.0.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 2 case hsp-dryrun-userinfo [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1@192.0.2.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+refused: --dry-run only talks to a loopback http address
+
+### pass 2 case hsp-dryrun-dead-port [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:9
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+WARNING: the probe contact probe-11a250a0@example.com may still exist; delete it by hand in HubSpot
+WARNING: the create answer was lost; look for probe-11a250a0@example.com in HubSpot and delete it by hand
+
+owners readable      FAIL
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               FAIL
+calls used: 4 of 8
+status classes seen: tag property: no answer (0); owners: no answer (0); create: no answer (0); delete permanent: no answer (0)
+
+### pass 2 case hsp-token-as-argument [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --token made-up-key-0001
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 2 case hsp-abbreviation [hsp] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --pla
+### last 30 lines of output:
+refused: bad arguments (see --help); the token is never an argument
+
+### pass 2 case hsp-stub-happy [hsp] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:37153
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+created contact ...0001 for probe-f4ef096f@example.com
+
+owners readable      PASS
+contact create       PASS
+owner write          PASS
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 7 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 2xx (201); patch owner: 2xx (200); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 2 case hsp-stub-happy-callorder [hsp] status=PASS want_exit=7 calls in plan order got_exit=ok 
+### command: (stub log)
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+created contact ...0001 for probe-f4ef096f@example.com
+
+owners readable      PASS
+contact create       PASS
+owner write          PASS
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 7 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 2xx (201); patch owner: 2xx (200); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 2 case hsp-stub-owners403 [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:42897
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+created contact ...0001 for probe-ce574bc5@example.com
+
+owners readable      FAIL
+contact create       PASS
+owner write          SKIPPED (no owner found)
+lead-status write    PASS
+read-back equal      PASS
+delete               PASS (permanent)
+calls used: 6 of 8
+status classes seen: tag property: 4xx (404); owners: 4xx (403) "missing scopes"; create: 2xx (201); patch lead status: 2xx (200); read back: 2xx (200); delete permanent: 2xx (204)
+
+### pass 2 case hsp-stub-echo [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:36127
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+
+owners readable      PASS
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               NOT NEEDED (nothing was created)
+calls used: 3 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 4xx (400) [VALIDATION_ERROR] "bad ***"
+
+### pass 2 case hsp-stub-createlost [hsp] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python -I /tmp/work/q4-base/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:39987
+### last 30 lines of output:
+planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+tag property dpld_tag: absent, skipped
+owners: 1 found, ids ['...1234']
+note: create outcome unknown (its answer was lost); the contact existed and is now deleted
+
+owners readable      PASS
+contact create       FAIL
+owner write          NOT RUN
+lead-status write    NOT RUN
+read-back equal      NOT RUN
+delete               PASS (permanent)
+calls used: 4 of 8
+status classes seen: tag property: 4xx (404); owners: 2xx (200); create: 5xx (500); delete permanent: 2xx (204)
+

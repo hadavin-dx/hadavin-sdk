@@ -1,0 +1,158 @@
+### pass 1 case rck-clean [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+### last 30 lines of output:
+
+### pass 1 case rck-memory-no-stray [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH=':memory:' /tmp/work/int2-venv/bin/python scripts/reset_check.py; test ! -e ':memory:.lock' && test ! -e ':memory:'
+### last 30 lines of output:
+
+### pass 1 case rck-port-answers [rst] status=PASS want_exit=4 got_exit=4 
+### command: bash -c cd 'TMP/repocopy' || exit 9; python3 -c "import socket,time;s=socket.socket();s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1);s.bind(('127.0.0.1',34647));s.listen(1);time.sleep(5)" & sleep 1; /tmp/work/int2-venv/bin/python scripts/reset_check.py; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; exit $rc
+### last 30 lines of output:
+refused: something still answers on port 34647; nothing was deleted
+
+### pass 1 case start-bad-mode [rst] status=PASS want_exit=1 got_exit=1 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh bogus
+### last 30 lines of output:
+mode must be keyed or blind
+
+### pass 1 case start-ok [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; PATH='/tmp/work/int2-venv/bin:/usr/bin:/bin' bash scripts/start_all.sh keyed
+### last 30 lines of output:
+started: demo servers (keyed outbox) pid 14698, desk pid 14699
+ports: desk 38047, demo CRM and outbox 34647 (check with: curl http://127.0.0.1:38047/counts)
+logs: data/fakes.log and data/desk.log
+
+### pass 1 case start-desk-answers [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; curl -s --noproxy '*' -m 3 http://127.0.0.1:38047/counts
+### last 30 lines of output:
+{"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794534332, "expected_match": null, "ok": null}
+### pass 1 case start-again-refused [rst] status=PASS want_exit=1 got_exit=1 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh keyed
+### last 30 lines of output:
+pid files exist: run scripts/reset.sh first
+
+### pass 1 case rck-lock-held [rst] status=PASS want_exit=3 got_exit=3 
+### command: bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+### last 30 lines of output:
+refused: a process still holds the database (the desk is running); nothing was deleted
+
+### pass 1 case reset-stops-and-deletes [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh; test -z "$(ls -A data)"
+### last 30 lines of output:
+reset done
+
+### pass 1 case reset-twice [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh
+### last 30 lines of output:
+reset done
+
+### pass 1 case reset-wait-empty-means-10 [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS= bash scripts/reset.sh
+### last 30 lines of output:
+reset done
+
+### pass 1 case reset-wait-08 [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=08 bash scripts/reset.sh
+### last 30 lines of output:
+refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted
+
+### pass 1 case reset-wait-1000 [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=1000 bash scripts/reset.sh
+### last 30 lines of output:
+refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted
+
+### pass 1 case reset-db-outside-data [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH='TMP/elsewhere/d.sqlite3' bash scripts/reset.sh
+### last 30 lines of output:
+refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+
+### pass 1 case reset-foreign-pid [rst] status=PASS want_exit=6 got_exit=6 
+### command: bash -c cd 'TMP/repocopy' || exit 9; mkdir -p data; sleep 30 & echo $! > data/desk.pid; bash scripts/reset.sh; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; rm -f data/desk.pid; exit $rc
+### last 30 lines of output:
+refused: pid 15128 in data/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+
+### pass 1 case ports-freed [rst] status=PASS want_exit=all closed got_exit=all closed 
+### command: (connect to the ports used)
+### last 30 lines of output:
+reset done
+
+### pass 2 case rck-clean [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+### last 30 lines of output:
+
+### pass 2 case rck-memory-no-stray [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH=':memory:' /tmp/work/int2-venv/bin/python scripts/reset_check.py; test ! -e ':memory:.lock' && test ! -e ':memory:'
+### last 30 lines of output:
+
+### pass 2 case rck-port-answers [rst] status=PASS want_exit=4 got_exit=4 
+### command: bash -c cd 'TMP/repocopy' || exit 9; python3 -c "import socket,time;s=socket.socket();s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1);s.bind(('127.0.0.1',34647));s.listen(1);time.sleep(5)" & sleep 1; /tmp/work/int2-venv/bin/python scripts/reset_check.py; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; exit $rc
+### last 30 lines of output:
+refused: something still answers on port 34647; nothing was deleted
+
+### pass 2 case start-bad-mode [rst] status=PASS want_exit=1 got_exit=1 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh bogus
+### last 30 lines of output:
+mode must be keyed or blind
+
+### pass 2 case start-ok [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; PATH='/tmp/work/int2-venv/bin:/usr/bin:/bin' bash scripts/start_all.sh keyed
+### last 30 lines of output:
+started: demo servers (keyed outbox) pid 26325, desk pid 26326
+ports: desk 38047, demo CRM and outbox 34647 (check with: curl http://127.0.0.1:38047/counts)
+logs: data/fakes.log and data/desk.log
+
+### pass 2 case start-desk-answers [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; curl -s --noproxy '*' -m 3 http://127.0.0.1:38047/counts
+### last 30 lines of output:
+{"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794534692, "expected_match": null, "ok": null}
+### pass 2 case start-again-refused [rst] status=PASS want_exit=1 got_exit=1 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh keyed
+### last 30 lines of output:
+pid files exist: run scripts/reset.sh first
+
+### pass 2 case rck-lock-held [rst] status=PASS want_exit=3 got_exit=3 
+### command: bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+### last 30 lines of output:
+refused: a process still holds the database (the desk is running); nothing was deleted
+
+### pass 2 case reset-stops-and-deletes [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh; test -z "$(ls -A data)"
+### last 30 lines of output:
+reset done
+
+### pass 2 case reset-twice [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh
+### last 30 lines of output:
+reset done
+
+### pass 2 case reset-wait-empty-means-10 [rst] status=PASS want_exit=0 got_exit=0 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS= bash scripts/reset.sh
+### last 30 lines of output:
+reset done
+
+### pass 2 case reset-wait-08 [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=08 bash scripts/reset.sh
+### last 30 lines of output:
+refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted
+
+### pass 2 case reset-wait-1000 [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=1000 bash scripts/reset.sh
+### last 30 lines of output:
+refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted
+
+### pass 2 case reset-db-outside-data [rst] status=PASS want_exit=2 got_exit=2 
+### command: bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH='TMP/elsewhere/d.sqlite3' bash scripts/reset.sh
+### last 30 lines of output:
+refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+
+### pass 2 case reset-foreign-pid [rst] status=PASS want_exit=6 got_exit=6 
+### command: bash -c cd 'TMP/repocopy' || exit 9; mkdir -p data; sleep 30 & echo $! > data/desk.pid; bash scripts/reset.sh; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; rm -f data/desk.pid; exit $rc
+### last 30 lines of output:
+refused: pid 26615 in data/desk.pid is not the desk or the demo server; nothing was stopped or deleted (delete the pid file yourself if it is stale)
+
+### pass 2 case ports-freed [rst] status=PASS want_exit=all closed got_exit=all closed 
+### command: (connect to the ports used)
+### last 30 lines of output:
+reset done
+

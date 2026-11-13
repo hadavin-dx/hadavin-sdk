@@ -1,0 +1,1064 @@
+### pass 1 case rrc-help [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --help
+### last 30 lines of output:
+REAL_MAIL_SETTLE_SECONDS (default MAIL_POLL_SECONDS), REAL_RESULT_FILE (default result.json next to the database),
+DESK_HUBSPOT_BASE_URL, DESK_PORT. With --live-model also every DESK_LIVE_* name (its own cap in dollars; the key goes
+only to the provider's own address or this computer unless the config says DESK_LIVE_ALLOW_ANY_BASE_URL=yes).
+Every name is upper-case letters, digits and underscore (a lower-case name is refused). DESK_DB_PATH must NOT exist
+yet: the clean-up relies on a book that holds only this run's leads.
+
+What it does: starts the desk on loopback, sends made-up people (@example.com, labelled) through both doors (new
+people, repeats through the same door, repeats through the other door, one person with two different e-mail
+addresses), stops the desk hard once after the load started (the crash), starts it again, re-sends what was lost,
+waits until the desk is idle, then READS BACK: the HubSpot contacts that carry this run's
+lead ids, the mails in your inbox
+(counted by a header, no body or address is read) and the desk's own book. It prints ONLY counts and a pass/fail table
+and writes the same to a JSON file. It never prints a key, an address or a message text.
+Nothing is sent to the made-up people: every mail goes to your own inboxes. It first prints the worst case of calls,
+mails and dollars and asks y/N.
+
+options:
+  -h, --help            show this help message and exit
+  --config CONFIG       the settings file (outside the repository)
+  --dry-fakes           self-test: run against local fake services, no real
+                        call
+  --live-model          also use the live model (its own dollar cap)
+  --cleanup             afterwards archive the HubSpot contacts this run made
+  --assume-yes          skip the y/N question; only together with --dry-fakes
+  --dry-port-base DRY_PORT_BASE
+                        with --dry-fakes: fixed ports from this one (default:
+                        ephemeral)
+  --dry-smtp-script DRY_SMTP_SCRIPT
+                        with --dry-fakes: behaviour of the fake mail server
+                        (ok, final_452 ...)
+
+### pass 1 case rrc-noargs [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py
+### last 30 lines of output:
+refused: give --config PATH (see scripts/real-run.env.example) or --dry-fakes
+
+### pass 1 case rrc-assume-noconf [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --assume-yes
+### last 30 lines of output:
+refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+
+### pass 1 case rrc-assume-with-config [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --assume-yes --config TMP/ok/real-run.env
+### last 30 lines of output:
+refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+
+### pass 1 case rrc-unknown-flag [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --nope
+### last 30 lines of output:
+usage: run_real_check.py [-h] [--config CONFIG] [--dry-fakes] [--live-model]
+                         [--cleanup] [--assume-yes]
+                         [--dry-port-base DRY_PORT_BASE]
+                         [--dry-smtp-script DRY_SMTP_SCRIPT]
+run_real_check.py: error: unrecognized arguments: --nope
+
+### pass 1 case rrc-cfg-missing-file [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/none.env
+### last 30 lines of output:
+refused: FileNotFoundError
+
+### pass 1 case rrc-cfg-dir [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/adir
+### last 30 lines of output:
+refused: IsADirectoryError
+
+### pass 1 case rrc-cfg-empty [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config /dev/null
+### last 30 lines of output:
+refused: the config lacks: DESK_DB_PATH, DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS, REAL_HUBSPOT_READBACK_MAX_CALLS, DESK_SMTPP_HOST, DESK_SMTPP_USER, DESK_SMTPP_PASSWORD_FILE, DESK_SMTPP_FROM, DESK_SMTPP_RECIPIENTS, DESK_SMTPP_MAX_SENDS, REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE
+
+### pass 1 case rrc-cfg-binary [rrc] status=FAIL(known) want_exit=2 got_exit=2  found /byte 0x|position/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/binary.env
+### last 30 lines of output:
+refused: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+
+### pass 1 case rrc-cfg-lowercase [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/lower.env
+### last 30 lines of output:
+refused: ValueError: config line 17 is not NAME=VALUE with an upper-case name
+
+### pass 1 case rrc-cfg-line-is-a-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/noeq.env
+### last 30 lines of output:
+refused: ValueError: config line 17 is not NAME=VALUE with an upper-case name
+
+### pass 1 case rrc-missing-DESK_DB_PATH [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_DB_PATH/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_DB_PATH
+
+### pass 1 case rrc-missing-DESK_HUBSPOT_KEY_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_KEY_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_HUBSPOT_KEY_FILE
+
+### pass 1 case rrc-missing-DESK_HUBSPOT_MAX_CALLS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_MAX_CALLS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_HUBSPOT_MAX_CALLS
+
+### pass 1 case rrc-missing-REAL_HUBSPOT_READBACK_MAX_CALLS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_HUBSPOT_READBACK_MAX_CALLS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_HUBSPOT_READBACK_MAX_CALLS
+
+### pass 1 case rrc-missing-DESK_SMTPP_HOST [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_HOST/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_HOST
+
+### pass 1 case rrc-missing-DESK_SMTPP_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_USER
+
+### pass 1 case rrc-missing-DESK_SMTPP_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_PASSWORD_FILE
+
+### pass 1 case rrc-missing-DESK_SMTPP_FROM [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_FROM/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_FROM
+
+### pass 1 case rrc-missing-DESK_SMTPP_RECIPIENTS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_RECIPIENTS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_RECIPIENTS
+
+### pass 1 case rrc-missing-DESK_SMTPP_MAX_SENDS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_MAX_SENDS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_MAX_SENDS
+
+### pass 1 case rrc-missing-REAL_IMAP_1_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_1_USER
+
+### pass 1 case rrc-missing-REAL_IMAP_1_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_1_PASSWORD_FILE
+
+### pass 1 case rrc-missing-REAL_IMAP_2_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_2_USER
+
+### pass 1 case rrc-missing-REAL_IMAP_2_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_2_PASSWORD_FILE
+
+### pass 1 case rrc-refuse-persons7 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons7/real-run.env
+### last 30 lines of output:
+refused: REAL_PERSONS must be at least 8
+
+### pass 1 case rrc-refuse-persons1001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons1001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_PERSONS must be at most 1000
+
+### pass 1 case rrc-refuse-persons-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons-key/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_PERSONS is not a number
+
+### pass 1 case rrc-refuse-readback4 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-readback4/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_HUBSPOT_READBACK_MAX_CALLS must be at least 5
+
+### pass 1 case rrc-refuse-readback10001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-readback10001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_HUBSPOT_READBACK_MAX_CALLS must be at most 10000
+
+### pass 1 case rrc-refuse-maxcalls0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxcalls0/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_MAX_CALLS must be between 1 and 10000
+
+### pass 1 case rrc-refuse-maxcalls10001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxcalls10001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_MAX_CALLS must be between 1 and 10000
+
+### pass 1 case rrc-refuse-maxsends0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxsends0/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_SMTPP_MAX_SENDS must be between 1 and 10000
+
+### pass 1 case rrc-refuse-timeout10 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-timeout10/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_TIMEOUT_SECONDS must be at most 9.0
+
+### pass 1 case rrc-refuse-port99999 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-port99999/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_PORT must be between 0 and 65535
+
+### pass 1 case rrc-refuse-security-bad [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-security-bad/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_SMTPP_SECURITY must be starttls or ssl
+
+### pass 1 case rrc-refuse-rcpt-mismatch [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-rcpt-mismatch/real-run.env
+### last 30 lines of output:
+refused: the mailbox users REAL_IMAP_n_USER must be the addresses of DESK_SMTPP_RECIPIENTS, in the same order
+
+### pass 1 case rrc-refuse-drain0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-drain0/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_DRAIN_SECONDS must be a number of seconds above 0
+
+### pass 1 case rrc-refuse-drain-nan [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-drain-nan/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_DRAIN_SECONDS is not a number
+
+### pass 1 case rrc-refuse-wait-big [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-wait-big/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_MAIL_WAIT_SECONDS must be at most 86400.0
+
+### pass 1 case rrc-refuse-folder-bad [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-folder-bad/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_IMAP_1_FOLDERS: a folder name must be plain ASCII without quotes or backslashes
+
+### pass 1 case rrc-refuse-url-public [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-public/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 1 case rrc-refuse-url-http-public [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-http-public/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL: plain http is allowed for a loopback address only
+
+### pass 1 case rrc-refuse-url-https-loopback [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-https-loopback/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 1 case rrc-refuse-url-has-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-has-key/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 1 case rrc-refuse-db-exists [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-db-exists/real-run.env
+### last 30 lines of output:
+refused: ValueError: DESK_DB_PATH names a file that already exists: give a new database file for each run
+
+### pass 1 case rrc-valid-eof [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called: there is no terminal to answer the question on
+
+### pass 1 case rrc-valid-answer-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rrc-valid-cleanup-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env --cleanup
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rrc-qualifier-forced-recorded [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/qual/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rrc-live-settings-missing [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env --live-model
+### last 30 lines of output:
+refused: SettingRefused: DESK_LIVE_MODEL is required for the live model
+
+### pass 1 case rrc-live-public-url [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/livepub/real-run.env --live-model
+### last 30 lines of output:
+refused: SettingRefused: DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)
+
+### pass 1 case rrc-live-loopback-answer-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/liveloop/real-run.env --live-model
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$0.5)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rrc-dry-fakes [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    2,
+    5
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.9,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-7r58skbq/run/result.json
+
+### pass 1 case rrc-dry-fakes-stray [rrc] status=FAIL(known) want_exit=no stray got_exit=stray: 14 entries left in TMPDIR: real-dry-7r58skbq 
+### command: (TMPDIR listing before/after)
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    2,
+    5
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.9,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-7r58skbq/run/result.json
+
+### pass 1 case rrc-dry-fakes-no-assume [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes
+### last 30 lines of output:
+people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 1200 by the desk + 300 read-back = 1500
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 400, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called: there is no terminal to answer the question on
+
+### pass 1 case rrc-dry-fakes-with-config [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes --config TMP/ok/real-run.env
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    4,
+    3
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 34.0,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-o0_tg_a5/run/result.json
+
+### pass 1 case rrc-dry-fakes-mail-fails [rrc] status=PASS want_exit=3 got_exit=3 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes --dry-smtp-script final_452
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 18,
+  "mails_in_mailbox": 0,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    0,
+    0
+  ],
+  "mails_sent_by_the_desk_total": 0,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.3,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 0
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-a4kkvv3s/run/result.json
+
+### pass 1 case rrc-y-memory [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ymem/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the run could not finish: the desk ended while starting (see its log in the run folder)
+
+### pass 1 case rrc-y-keyfile-missing [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ykm/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/ykm/run/result.json
+
+### pass 1 case rrc-y-keyfile-2line [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/yk2/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/yk2/run/result.json
+
+### pass 1 case rrc-y-keyfile-short [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/yks/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/yks/run/result.json
+
+### pass 2 case rrc-help [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --help
+### last 30 lines of output:
+REAL_MAIL_SETTLE_SECONDS (default MAIL_POLL_SECONDS), REAL_RESULT_FILE (default result.json next to the database),
+DESK_HUBSPOT_BASE_URL, DESK_PORT. With --live-model also every DESK_LIVE_* name (its own cap in dollars; the key goes
+only to the provider's own address or this computer unless the config says DESK_LIVE_ALLOW_ANY_BASE_URL=yes).
+Every name is upper-case letters, digits and underscore (a lower-case name is refused). DESK_DB_PATH must NOT exist
+yet: the clean-up relies on a book that holds only this run's leads.
+
+What it does: starts the desk on loopback, sends made-up people (@example.com, labelled) through both doors (new
+people, repeats through the same door, repeats through the other door, one person with two different e-mail
+addresses), stops the desk hard once after the load started (the crash), starts it again, re-sends what was lost,
+waits until the desk is idle, then READS BACK: the HubSpot contacts that carry this run's
+lead ids, the mails in your inbox
+(counted by a header, no body or address is read) and the desk's own book. It prints ONLY counts and a pass/fail table
+and writes the same to a JSON file. It never prints a key, an address or a message text.
+Nothing is sent to the made-up people: every mail goes to your own inboxes. It first prints the worst case of calls,
+mails and dollars and asks y/N.
+
+options:
+  -h, --help            show this help message and exit
+  --config CONFIG       the settings file (outside the repository)
+  --dry-fakes           self-test: run against local fake services, no real
+                        call
+  --live-model          also use the live model (its own dollar cap)
+  --cleanup             afterwards archive the HubSpot contacts this run made
+  --assume-yes          skip the y/N question; only together with --dry-fakes
+  --dry-port-base DRY_PORT_BASE
+                        with --dry-fakes: fixed ports from this one (default:
+                        ephemeral)
+  --dry-smtp-script DRY_SMTP_SCRIPT
+                        with --dry-fakes: behaviour of the fake mail server
+                        (ok, final_452 ...)
+
+### pass 2 case rrc-noargs [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py
+### last 30 lines of output:
+refused: give --config PATH (see scripts/real-run.env.example) or --dry-fakes
+
+### pass 2 case rrc-assume-noconf [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --assume-yes
+### last 30 lines of output:
+refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+
+### pass 2 case rrc-assume-with-config [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --assume-yes --config TMP/ok/real-run.env
+### last 30 lines of output:
+refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+
+### pass 2 case rrc-unknown-flag [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --nope
+### last 30 lines of output:
+usage: run_real_check.py [-h] [--config CONFIG] [--dry-fakes] [--live-model]
+                         [--cleanup] [--assume-yes]
+                         [--dry-port-base DRY_PORT_BASE]
+                         [--dry-smtp-script DRY_SMTP_SCRIPT]
+run_real_check.py: error: unrecognized arguments: --nope
+
+### pass 2 case rrc-cfg-missing-file [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/none.env
+### last 30 lines of output:
+refused: FileNotFoundError
+
+### pass 2 case rrc-cfg-dir [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/adir
+### last 30 lines of output:
+refused: IsADirectoryError
+
+### pass 2 case rrc-cfg-empty [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config /dev/null
+### last 30 lines of output:
+refused: the config lacks: DESK_DB_PATH, DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS, REAL_HUBSPOT_READBACK_MAX_CALLS, DESK_SMTPP_HOST, DESK_SMTPP_USER, DESK_SMTPP_PASSWORD_FILE, DESK_SMTPP_FROM, DESK_SMTPP_RECIPIENTS, DESK_SMTPP_MAX_SENDS, REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE
+
+### pass 2 case rrc-cfg-binary [rrc] status=FAIL(known) want_exit=2 got_exit=2  found /byte 0x|position/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/binary.env
+### last 30 lines of output:
+refused: UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+
+### pass 2 case rrc-cfg-lowercase [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/lower.env
+### last 30 lines of output:
+refused: ValueError: config line 17 is not NAME=VALUE with an upper-case name
+
+### pass 2 case rrc-cfg-line-is-a-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/noeq.env
+### last 30 lines of output:
+refused: ValueError: config line 17 is not NAME=VALUE with an upper-case name
+
+### pass 2 case rrc-missing-DESK_DB_PATH [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_DB_PATH/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_DB_PATH
+
+### pass 2 case rrc-missing-DESK_HUBSPOT_KEY_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_KEY_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_HUBSPOT_KEY_FILE
+
+### pass 2 case rrc-missing-DESK_HUBSPOT_MAX_CALLS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_MAX_CALLS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_HUBSPOT_MAX_CALLS
+
+### pass 2 case rrc-missing-REAL_HUBSPOT_READBACK_MAX_CALLS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_HUBSPOT_READBACK_MAX_CALLS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_HUBSPOT_READBACK_MAX_CALLS
+
+### pass 2 case rrc-missing-DESK_SMTPP_HOST [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_HOST/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_HOST
+
+### pass 2 case rrc-missing-DESK_SMTPP_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_USER
+
+### pass 2 case rrc-missing-DESK_SMTPP_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_PASSWORD_FILE
+
+### pass 2 case rrc-missing-DESK_SMTPP_FROM [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_FROM/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_FROM
+
+### pass 2 case rrc-missing-DESK_SMTPP_RECIPIENTS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_RECIPIENTS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_RECIPIENTS
+
+### pass 2 case rrc-missing-DESK_SMTPP_MAX_SENDS [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_MAX_SENDS/real-run.env
+### last 30 lines of output:
+refused: the config lacks: DESK_SMTPP_MAX_SENDS
+
+### pass 2 case rrc-missing-REAL_IMAP_1_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_1_USER
+
+### pass 2 case rrc-missing-REAL_IMAP_1_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_1_PASSWORD_FILE
+
+### pass 2 case rrc-missing-REAL_IMAP_2_USER [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_USER/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_2_USER
+
+### pass 2 case rrc-missing-REAL_IMAP_2_PASSWORD_FILE [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_PASSWORD_FILE/real-run.env
+### last 30 lines of output:
+refused: the config lacks: REAL_IMAP_2_PASSWORD_FILE
+
+### pass 2 case rrc-refuse-persons7 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons7/real-run.env
+### last 30 lines of output:
+refused: REAL_PERSONS must be at least 8
+
+### pass 2 case rrc-refuse-persons1001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons1001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_PERSONS must be at most 1000
+
+### pass 2 case rrc-refuse-persons-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-persons-key/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_PERSONS is not a number
+
+### pass 2 case rrc-refuse-readback4 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-readback4/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_HUBSPOT_READBACK_MAX_CALLS must be at least 5
+
+### pass 2 case rrc-refuse-readback10001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-readback10001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_HUBSPOT_READBACK_MAX_CALLS must be at most 10000
+
+### pass 2 case rrc-refuse-maxcalls0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxcalls0/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_MAX_CALLS must be between 1 and 10000
+
+### pass 2 case rrc-refuse-maxcalls10001 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxcalls10001/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_MAX_CALLS must be between 1 and 10000
+
+### pass 2 case rrc-refuse-maxsends0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-maxsends0/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_SMTPP_MAX_SENDS must be between 1 and 10000
+
+### pass 2 case rrc-refuse-timeout10 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-timeout10/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_TIMEOUT_SECONDS must be at most 9.0
+
+### pass 2 case rrc-refuse-port99999 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-port99999/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_PORT must be between 0 and 65535
+
+### pass 2 case rrc-refuse-security-bad [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-security-bad/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_SMTPP_SECURITY must be starttls or ssl
+
+### pass 2 case rrc-refuse-rcpt-mismatch [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-rcpt-mismatch/real-run.env
+### last 30 lines of output:
+refused: the mailbox users REAL_IMAP_n_USER must be the addresses of DESK_SMTPP_RECIPIENTS, in the same order
+
+### pass 2 case rrc-refuse-drain0 [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-drain0/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_DRAIN_SECONDS must be a number of seconds above 0
+
+### pass 2 case rrc-refuse-drain-nan [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-drain-nan/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_DRAIN_SECONDS is not a number
+
+### pass 2 case rrc-refuse-wait-big [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-wait-big/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: REAL_MAIL_WAIT_SECONDS must be at most 86400.0
+
+### pass 2 case rrc-refuse-folder-bad [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-folder-bad/real-run.env
+### last 30 lines of output:
+refused: ValueError: REAL_IMAP_1_FOLDERS: a folder name must be plain ASCII without quotes or backslashes
+
+### pass 2 case rrc-refuse-url-public [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-public/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 2 case rrc-refuse-url-http-public [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-http-public/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL: plain http is allowed for a loopback address only
+
+### pass 2 case rrc-refuse-url-https-loopback [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-https-loopback/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 2 case rrc-refuse-url-has-key [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-url-has-key/real-run.env
+### last 30 lines of output:
+refused: SettingRefused: DESK_HUBSPOT_BASE_URL must be an https address at one of the vendor's own domains
+
+### pass 2 case rrc-refuse-db-exists [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/r-db-exists/real-run.env
+### last 30 lines of output:
+refused: ValueError: DESK_DB_PATH names a file that already exists: give a new database file for each run
+
+### pass 2 case rrc-valid-eof [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called: there is no terminal to answer the question on
+
+### pass 2 case rrc-valid-answer-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rrc-valid-cleanup-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env --cleanup
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rrc-qualifier-forced-recorded [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/qual/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rrc-live-settings-missing [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ok/real-run.env --live-model
+### last 30 lines of output:
+refused: SettingRefused: DESK_LIVE_MODEL is required for the live model
+
+### pass 2 case rrc-live-public-url [rrc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/livepub/real-run.env --live-model
+### last 30 lines of output:
+refused: SettingRefused: DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)
+
+### pass 2 case rrc-live-loopback-answer-n [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/liveloop/real-run.env --live-model
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$0.5)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rrc-dry-fakes [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    4,
+    3
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.9,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-hfvic6_u/run/result.json
+
+### pass 2 case rrc-dry-fakes-stray [rrc] status=FAIL(known) want_exit=no stray got_exit=stray: 14 entries left in TMPDIR: real-dry-hfvic6_u 
+### command: (TMPDIR listing before/after)
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    4,
+    3
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.9,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-hfvic6_u/run/result.json
+
+### pass 2 case rrc-dry-fakes-no-assume [rrc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes
+### last 30 lines of output:
+people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 1200 by the desk + 300 read-back = 1500
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 400, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] stopped, nothing was called: there is no terminal to answer the question on
+
+### pass 2 case rrc-dry-fakes-with-config [rrc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes --config TMP/ok/real-run.env
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    4,
+    3
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.9,
+  "smtp_by_the_desk": {
+    "attempts": 8,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-06kldqen/run/result.json
+
+### pass 2 case rrc-dry-fakes-mail-fails [rrc] status=PASS want_exit=3 got_exit=3 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --dry-fakes --assume-yes --dry-smtp-script final_452
+### last 30 lines of output:
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 18,
+  "mails_in_mailbox": 0,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    0,
+    0
+  ],
+  "mails_sent_by_the_desk_total": 0,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 33.4,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 0
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: TMP/tmp/real-dry-5n51cigc/run/result.json
+
+### pass 2 case rrc-y-memory [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ymem/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the run could not finish: the desk ended while starting (see its log in the run folder)
+
+### pass 2 case rrc-y-keyfile-missing [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/ykm/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/ykm/run/result.json
+
+### pass 2 case rrc-y-keyfile-2line [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/yk2/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/yk2/run/result.json
+
+### pass 2 case rrc-y-keyfile-short [rrc] status=FAIL(known) want_exit=2 got_exit=3  exit 3 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_real_check.py --config TMP/yks/real-run.env
+### last 30 lines of output:
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 800 by the desk + 200 read-back = 1000
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 120, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+Start? [y/N] the CRM read-back failed (CrmConfigError): the contacts of this run were NOT counted. The desk created an unknown number of contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+result file: TMP/yks/run/result.json
+

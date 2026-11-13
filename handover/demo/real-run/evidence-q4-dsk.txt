@@ -1,0 +1,40 @@
+### pass 1 case dsk-memory-refused2 [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses to start: the lead book must be a file: ':memory:' is empty for every thread but the first
+
+### pass 1 case dsk-port-refused [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_PORT must be between 0 and 65535
+
+### pass 1 case dsk-bind-with-real-service [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_BIND is not a loopback address while a real service is set (crm): anyone who can reach the port could write to it. Bind to 127.0.0.1
+
+### pass 1 case dsk-fakes-host-nonloopback [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address
+
+### pass 2 case dsk-memory-refused2 [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses to start: the lead book must be a file: ':memory:' is empty for every thread but the first
+
+### pass 2 case dsk-port-refused [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_PORT must be between 0 and 65535
+
+### pass 2 case dsk-bind-with-real-service [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_BIND is not a loopback address while a real service is set (crm): anyone who can reach the port could write to it. Bind to 127.0.0.1
+
+### pass 2 case dsk-fakes-host-nonloopback [dsk] status=PASS want_exit=4 got_exit=4 
+### command: timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+### last 30 lines of output:
+the desk refuses a setting: DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address
+

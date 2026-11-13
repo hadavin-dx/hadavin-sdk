@@ -1,0 +1,228 @@
+### pass 1 case rlc-help [rlc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --help
+### last 30 lines of output:
+
+Check runner: asks a live model for a label on ~12 made-up leads, 3 runs, per model, through the same adapter the
+desk uses (lead_desk.live_claude). Prints ONLY counts, cost, valid-label rate, flip rate and latency. Never prints the
+key or any reply text.
+
+Usage (run it from your own terminal, not from a script that runs without you):
+  python scripts/run_live_check.py --key-file PATH --base-url ADDRESS --ledger PATH \
+      --cap-run 0.50 --cap-total 3 --price-date YYYY-MM-DD --model ID=IN_PRICE,OUT_PRICE [--model ...]
+IN_PRICE and OUT_PRICE are US$ per million tokens, read from the provider's price page on --price-date.
+Use the model ids and prices from your provider's own price page (the form is ID=IN_PRICE,OUT_PRICE).
+Nothing is assumed: without caps, prices and a price date the script refuses to start. It prints the exact
+worst-case cost of the whole run and waits for y/N before the first call. --base-url is the provider address
+(default: the desk's own default address). The key is sent in a header of every request; any address other than
+the provider's own or this computer is refused. The leads' e-mail addresses are made up (example.com).
+
+options:
+  -h, --help            show this help message and exit
+  --key-file KEY_FILE   file holding the key; read by this script only
+  --base-url BASE_URL
+  --ledger LEDGER       spend ledger file (kept; counts across runs)
+  --cap-run CAP_RUN     US$ cap for one model run
+  --cap-total CAP_TOTAL
+                        US$ cap over the whole ledger
+  --price-date PRICE_DATE
+  --model MODEL         ID=IN_PRICE,OUT_PRICE
+  --max-tokens MAX_TOKENS
+  --effort EFFORT
+  --timeout TIMEOUT
+  --leads LEADS
+  --runs RUNS
+
+### pass 1 case rlc-noargs [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: the following arguments are required: --key-file, --ledger, --cap-run, --cap-total, --price-date, --model
+
+### pass 1 case rlc-public-url [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url https://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)
+
+### pass 1 case rlc-http-public [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_BASE_URL: plain http is allowed for a loopback address only
+
+### pass 1 case rlc-cap-run-over-total [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/l --cap-run 5 --cap-total 3 --price-date 2026-01-01 --model m=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_CAP_RUN_USD is above DESK_LIVE_CAP_TOTAL_USD
+
+### pass 1 case rlc-bad-model [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --ledger TMP/lv/l --cap-run 1 --cap-total 3 --price-date 2026-01-01 --model m=abc
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: argument --model: --model needs ID=IN_PRICE,OUT_PRICE
+
+### pass 1 case rlc-leads0 [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --leads 0 --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: --leads and --runs must each be at least 1
+
+### pass 1 case rlc-answer-n [rlc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rlc-eof-prompt [rlc] status=FAIL(known) want_exit=1 got_exit=1  traceback; missing /stopped, nothing was called/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] Traceback (most recent call last):
+  File "/tmp/work/q4-base/scripts/run_live_check.py", line 177, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/work/q4-base/scripts/run_live_check.py", line 153, in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
+
+### pass 1 case rlc-n-keyfile-missing [rlc] status=FAIL(known) want_exit=2 got_exit=1  exit 1 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/none.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
+### pass 1 case rlc-n-keyfile-2line [rlc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k2.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rlc-help [rlc] status=PASS want_exit=0 got_exit=0 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --help
+### last 30 lines of output:
+
+Check runner: asks a live model for a label on ~12 made-up leads, 3 runs, per model, through the same adapter the
+desk uses (lead_desk.live_claude). Prints ONLY counts, cost, valid-label rate, flip rate and latency. Never prints the
+key or any reply text.
+
+Usage (run it from your own terminal, not from a script that runs without you):
+  python scripts/run_live_check.py --key-file PATH --base-url ADDRESS --ledger PATH \
+      --cap-run 0.50 --cap-total 3 --price-date YYYY-MM-DD --model ID=IN_PRICE,OUT_PRICE [--model ...]
+IN_PRICE and OUT_PRICE are US$ per million tokens, read from the provider's price page on --price-date.
+Use the model ids and prices from your provider's own price page (the form is ID=IN_PRICE,OUT_PRICE).
+Nothing is assumed: without caps, prices and a price date the script refuses to start. It prints the exact
+worst-case cost of the whole run and waits for y/N before the first call. --base-url is the provider address
+(default: the desk's own default address). The key is sent in a header of every request; any address other than
+the provider's own or this computer is refused. The leads' e-mail addresses are made up (example.com).
+
+options:
+  -h, --help            show this help message and exit
+  --key-file KEY_FILE   file holding the key; read by this script only
+  --base-url BASE_URL
+  --ledger LEDGER       spend ledger file (kept; counts across runs)
+  --cap-run CAP_RUN     US$ cap for one model run
+  --cap-total CAP_TOTAL
+                        US$ cap over the whole ledger
+  --price-date PRICE_DATE
+  --model MODEL         ID=IN_PRICE,OUT_PRICE
+  --max-tokens MAX_TOKENS
+  --effort EFFORT
+  --timeout TIMEOUT
+  --leads LEADS
+  --runs RUNS
+
+### pass 2 case rlc-noargs [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: the following arguments are required: --key-file, --ledger, --cap-run, --cap-total, --price-date, --model
+
+### pass 2 case rlc-public-url [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url https://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_BASE_URL is not the provider's own address (DESK_LIVE_ALLOW_ANY_BASE_URL=yes allows it)
+
+### pass 2 case rlc-http-public [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_BASE_URL: plain http is allowed for a loopback address only
+
+### pass 2 case rlc-cap-run-over-total [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/l --cap-run 5 --cap-total 3 --price-date 2026-01-01 --model m=1,5
+### last 30 lines of output:
+refused: DESK_LIVE_CAP_RUN_USD is above DESK_LIVE_CAP_TOTAL_USD
+
+### pass 2 case rlc-bad-model [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --ledger TMP/lv/l --cap-run 1 --cap-total 3 --price-date 2026-01-01 --model m=abc
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: argument --model: --model needs ID=IN_PRICE,OUT_PRICE
+
+### pass 2 case rlc-leads0 [rlc] status=PASS want_exit=2 got_exit=2 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --leads 0 --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+                         --ledger LEDGER --cap-run CAP_RUN --cap-total
+                         CAP_TOTAL --price-date PRICE_DATE --model MODEL
+                         [--max-tokens MAX_TOKENS] [--effort EFFORT]
+                         [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+run_live_check.py: error: --leads and --runs must each be at least 1
+
+### pass 2 case rlc-answer-n [rlc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rlc-eof-prompt [rlc] status=FAIL(known) want_exit=1 got_exit=1  traceback; missing /stopped, nothing was called/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] Traceback (most recent call last):
+  File "/tmp/work/q4-base/scripts/run_live_check.py", line 177, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/work/q4-base/scripts/run_live_check.py", line 153, in main
+    if input("Start? [y/N] ").strip().lower() != "y":
+       ^^^^^^^^^^^^^^^^^^^^^^
+EOFError: EOF when reading a line
+
+### pass 2 case rlc-n-keyfile-missing [rlc] status=FAIL(known) want_exit=2 got_exit=1  exit 1 want 2; missing /refus/;
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/none.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
+### pass 2 case rlc-n-keyfile-2line [rlc] status=PASS want_exit=1 got_exit=1 
+### command: /tmp/work/int2-venv/bin/python /tmp/work/q4-base/scripts/run_live_check.py --key-file TMP/lv/k2.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+### last 30 lines of output:
+models: 1, calls per model: 36, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0360 (caps: run 0.50, total 3)
+Start? [y/N] stopped, nothing was called
+
