@@ -219,7 +219,158 @@
   before starting the runtime; until then start-up raises `Unqualified`. After this one re-gate, adding an optional
   field with a default no longer un-qualifies agents, and swapping the llm backend does.
 
+- **Behaviour change: a Vault secrets kind with an empty `path_prefix` is refused.** Before, an empty prefix was accepted and let the kind read every secret directly under the mount. Now the settings, the start-up and every read refuse it with the sentence "path_prefix must not be empty: ... name the folder of this deployment, for example hadavin/acme/", and the commands that load the config exit 2. An existing config that left the prefix out must name the folder of its deployment. The Vault signing kind (transit) has no prefix and is not changed.
+- **The notes check: more reading rules and one stated limit.** It now follows a constant bound by a walrus inside another assignment, the set-up and tear-down of a unittest case, a fixture named as text (`usefixtures`, `getfixturevalue`), a module named in `pytest_plugins` or in the `-p` options, a module imported by a name built at run time, and a star import of a test module. Limit, stated in the tool and pinned by a test: the rows of all notes files of the change are read as one table, so a row of an older notes file counts for a unit of this one.
+- **Corrected count (batch 14 notes).** The lines added to `secrets_vault.py`, `signer_vault.py` and `kubernetes.py` against main hold 7, 5 and 1 lines with a `*`; each is a path named in the `never` list of the kind's policy (what must not be granted) or one docstring line, none is a grant (counted, see `handover/evidence/Q8c-1/b15/NOTES.md`).
+- **The notes check, batch 16: one rule for a module name built at run time, and more links followed.** A name that cannot be read (`import_module(name)`, `import_module(**kw)`, a call with no name) now lists every test of the file for every Python file under `tests`, whatever else the file imports; before, a file that also imported a package of `tests` (`from tests.helpers import make`) was exempt, which was wrong. One exception stays: a name that starts with the `__name__` of a package of `tests` that the file imports (`f"{kinds.__name__}.{x}"`) is that package's folder, which the imports already reach. The name is the first argument or `name=`; another name of the function (`imp = importlib.import_module`, `from importlib import import_module as imp`) is the same call; the function handed on as a value (`map(import_module, names)`) is a call with a name that cannot be read; a text that starts a package (`tests.zz.`) reaches the package's `__init__.py`. Also followed now: `@pytest.fixture(name="alias")`; `parametrize(..., indirect=True)` (a text, a list or a tuple of names, or names that cannot be read); `getfixturevalue`, `getfuncargvalue`, `usefixtures(*names)` and `lazy_fixture` with a name that cannot be read (read as every fixture of the file and of the conftests above it); a walrus in a default argument, a decorator, a base class or behind another assignment (`W = (X := helper())`, also in `X += (Y := 1)`). Stated limits, each pinned by a test: a plugin that is installed as a package and found through its entry point, a `-p` plugin given in `PYTEST_ADDOPTS` or on the command line, a name built with `getattr` or `exec`, and a module loaded from a path (`runpy`, `importlib.util.spec_from_file_location`) are not seen (batch 17, below, follows a path loader and lists every test for a `getattr` or `exec` name it cannot read). Eight branches that had no test of their own (`getfuncargvalue`, the `%` format, the `__import__` prefix, `-pNAME`, `pytest.ini`, `tox.ini` and `setup.cfg`, `pytest_plugins` with an annotation, relative and chained star imports, a walrus in an augmented assignment) now have one each, and 25 mutants of the batch 16 code (names that start `B16`) are killed by them; two batch 14 and 15 mutants were re-pointed to the new lines.
+- **The notes check, batch 17: it fails closed.** Before, something it could not read made it list nothing. Now one rule: a change of a file under `tests/` lists every test unless the check proves that nothing can reach that file. One collector, `unresolved_edge`, takes every place where the check meets something it cannot read (a module name or path worked out at run time, a file that does not parse, a base class or import it cannot find, `pytest_plugins` built by an expression, `PYTEST_ADDOPTS` used in a test, `getattr` on a module of `tests` with a name that is no text); with one reason or more in the tests tree, a change of any file under `tests/` except `.md` and `.rst` lists every test, and the first five reasons are printed. The real tests tree has no reason at this head. Followed now: `tests/__init__.py` and the `__init__.py` of each package folder, a fixture that takes the fixture of its own name (an override), `pytest.importorskip`, `importlib.util.find_spec`, `spec_from_file_location`, `runpy.run_module` and `run_path` (a path is worked out from `__file__`, `Path`, `/` and texts), a relative or dotted module name (read as unresolved), every form of `autouse` (a name, a number, a call, a nested class), `pytest_plugins` with `+=`, `.append`, `.extend` and `.insert`, the settings files `.pytest.ini` and `pytest.toml`, a bare `from helpers import x` of a module next to the file, and every function of a conftest whose name starts with `pytest_` (it acts on every test below it). Every kind of test is a unit: inherited, any base class (a project base may be a `unittest.TestCase`), inside `if`, `try`, `with` and `match`, a nested class (also an inherited one), and `test_x = factory()`. Removed: the exemption of a name that starts with the name of an imported package, except `pkg.__name__ + "."` of a package that the file imports (checked against the tree). The 26 places that call `unresolved_edge` have one mutant each. Batch 17 fix: the branch of the run-time import check that listed every Python file under `tests` for an empty text was removed from `tools/notes_lines_check.py`, because every place that adds an empty text also calls `unresolved_edge`, which already lists every test (its mutant could not be told from the rule); the other mutant of that line now expects the first failing line `a changed module listed`. Batch 18: the four places that stored an empty text next to an `unresolved_edge` reason no longer store it, and the `if prefix:` guard is gone (an empty text would now list every file, the safe side); a test pins that an unreadable name is a reason and never an empty text. The reasons of the tree are now collected over every file a file of `tests` can reach by a name worked out at run time, also one outside `tests/` (a prefix such as `t` reaches `tools/helper.py`: a run-time import in that file is a reason, and its text is part of the digest), so the sentence "unless the check proves that nothing can reach that file" holds for those files too. Stated limits (pinned by a test): a plugin installed as a package and found through its entry point, and a plugin named only in `PYTEST_ADDOPTS` on the command line, are not seen (a `PYTEST_ADDOPTS` in a test file is an unresolved edge); an alias of an alias is followed for at most 8 passes; and the check lists more tests per change than before, so more rows are asked for.
+- **Renewal plants: the printed row counts are pinned.** The two overdue messages give a figure each. The message for both lists says "a renewal of both lists asked for about 36 rows and a renewal of the names and claims alone asked for about 1 row"; the message for the kinds alone says "a renewal of the kinds alone asked for about 35 rows". The plants read each figure from the printed text (exactly one figure per renewal, and not 0; the names and the kinds figures are also read in the fast plant) and fail when the real count is more than half the figure away (more than 5 for a figure of 10 or less) or is 0. The figure is a size, not a promise. Batch 17 adds tests that a missing, doubled or zero figure and a count beyond the tolerance are refused, with 12 mutants.
+- **`tools/mutation_runner.py` (a core module, its hash in `tests/fixtures/mutation_manifest.json` changed): a link named in `extra_files` is left out and a nested file reaches the copy.** The check `is_symlink()` ran on a path that had already been resolved, so it never fired and a link was copied as the file it points to; it now looks at each path part before resolving. A file in a folder of the tree (`docs/a.md`) failed the copy because the folder was not made; the copy now makes it. Batch 17 (three mutant rows changed or added here: one search text re-pointed, two new): the link is now asked about before the path is resolved, so a link to a file outside the tree is left out (it was a refusal of the run, against the docstring), and a junction in the folder part of an `extra_files` path is refused like one under `src`. Batch 18: that check now runs only for an extra file that exists, and looks only at the parts of that file's own path (before, it walked the whole folder, so a junction anywhere below `tests/` refused `tests/NOTE.md`, a link to a folder was walked, and a file that is not there was refused); the hash changed again. **Demos that copy this module must be synced to the new hash** (`tools/mutation_runner.py`: see `tests/fixtures/mutation_manifest.json`).
+- **Comment only: `src/hadavin_sdk/sources/kubernetes.py` wording.** The comment now uses the policy page's wording (a name that is "not found in a vendor source" is listed under `claims_unverified`). No code changed; the policy tests pass.
+- **Test coverage: every command that loads the config refuses an empty Vault `path_prefix` with exit 2.** Added for `gate`, `limits`, `migrate` and `audit verify` (before only `tick` was tested). The new tests pass on the old code too: they are controls that pin the sentence above.
+
 ### Added
+- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer)
+  and `kubernetes` (source). Each of the three kind modules now carries a `POLICY` literal: the permissions its
+  code needs, one reason per permission, the requests that need no permission, and what the identity must never
+  be given. [docs/declared-permissions.md](docs/declared-permissions.md) is generated from it
+  (`python tools/policy_page.py --write`; `--check` prints one line per problem and exits 1 when a data rule is
+  broken or the page and the data differ).
+  - What is tested: three backend kinds ship a declared permission set tied to the calls their code makes;
+    Kubernetes is checked against the code's own read-only rule. "Tied to the calls" means: the requests written
+    in that module by the listed call shapes are all declared, every declared request is still made, and each
+    Vault permission is exactly the path and the capability of its one request (`tests/test_policy_guard.py`).
+    Indirect ways to send a request (`getattr`, a new import, a raw HTTP call, another module importing the
+    Vault client, a query parameter that changes a Kubernetes verb) are refused by listed rules, not by proof.
+  - Not yet seen on a server: for the two Vault kinds, refusals by a real server are checked by tests that run
+    against a real Vault server in CI only (`tests/test_policy_engine.py`, required there through
+    `HADAVIN_REQUIRE_VAULT_ENGINE=1`, skipped on a machine with no Vault server). These tests have not run yet.
+    They run against one server image (`hashicorp/vault:2.2.0`, Business Source License 1.1); the open
+    alternative OpenBao has not been run.
+  - The Vault secrets permission covers exactly one path part below the configured prefix (Vault's one-part
+    wildcard `+`), which is what the code reads; it no longer covers everything below the prefix. That the `+`
+    matches exactly one whole path part (nothing deeper) was read in the vendors' source files by the builder of a
+    fix only: no evidence runner has re-read it and no server has run the test of it. The page lists it under
+    "claims not checked" and gives no copy-ready text for the Vault secrets kind until that is done. The never-list
+    lines `undelete`, `subkeys` and `byok-export` were read the same way and show "not yet checked". Two more
+    statements about server behaviour are unchecked and listed the same way: that the exact signing path R18 does
+    not also allow Vault's longer sign path that ends in a hash algorithm name, and that the query parameters the
+    Kubernetes code sends do not change the verb a request needs (R20 to R22). So the page now gives no copy-ready
+    text for any of the three kinds. Each unchecked claim has a dated test entry (review by the earliest review date,
+    which the page names); a source id read by the builder of a fix only is marked "(builder only)" wherever the page lists it. Two new checks: no
+    never-list line may cover a grant of its own kind (same path or resource and a capability the line forbids;
+    Vault paths are compared by whether one concrete path fits both patterns, Kubernetes resources by name), and every note of a kind is
+    classed once by a person as "code", "sources" or "claim", so a new statement about server behaviour cannot be
+    added without a source id or an unchecked-claim entry. The 12
+    Vault server tests still need one CI run with `HADAVIN_REQUIRE_VAULT_ENGINE=1` that shows 12 passed and 0
+    skipped; until then the page says "not run yet".
+  - Round-4 review fixes: a free request and a never-list line can now carry an unchecked claim like a grant (the
+    Kubernetes `rules_review` request and the `create` never-list line no longer say the self-review requests
+    "create nothing" as a checked fact; each has a dated entry), a never-list type must fit its platform, the
+    never-versus-grant check compares real overlap of two Vault paths (including a `{path_prefix}` of any number of
+    parts, and `+` or a last `*` on both sides), the builder-only source marks are read from the head of the
+    sources file, notes of class "sources" print their source ids and the page ends with the list of sources it
+    names, the four grants that allow more than their reason says (R17, R20 to R22) say so in the "what limits a
+    wildcard" cell, the 92-day limit is one number in `tools/policy_page.py`, and the Transit server test sends
+    the longer sign path that ends in a hash name for the signing key and expects a refusal (not yet run: needs
+    a Vault server).
+  - Round-5 review fixes: every unchecked claim on the page now carries one of two marks, "builder read the
+    passage" (only the `+` of R17) or "nobody has read the passage" (every other claim, including a new claim
+    that a `read` on a secret's path also serves an older version, R17); the marks are read from the head of the
+    sources file and a claim with no mark fails the check. Free requests and never-list lines with a claim mark
+    their partly read sources too. Every note and every reason (grant, free request, never-list line) has one
+    class in `NOTE_CLASSES` (a reason is matched by its exact text), the rule runs in `tools/policy_page.py
+    --check` and a bad class table is a reported problem, never a crash. The never-versus-grant check now treats
+    `{path_prefix}` as one value with the same number of parts on both sides, so `{mount}/data/{path_prefix}+/deeper/+`
+    is no longer reported as covering R17. The page head and the R17 cell say the same scope.
+  - Round-6 review fixes: a claim has its mark only when its whole text equals a text listed in the head of the
+    sources file (a clause added to a claim, a text under both marks, or a text ending in ` ;;` is a problem), and
+    the builder-read mark must stand on a claim of an entry that names a source only the builder read, so the
+    R17 and R18 marks cannot be swapped unseen. One reader (`head_lines`) strips a leading byte-order mark once
+    for the row, id and claim parsers. The marks are read from the `root` the check is given, so a damaged head
+    is one problem line (exit 1), not a crash. The dated lists of names and claims, and the shape of
+    `NOTE_CLASSES`, now run in `python tools/policy_page.py --check`. The R17 older-versions scope is said as
+    "may also read every older version of each (not yet checked against the vendor)" in the head, the reason,
+    the cell and the rendered comment. The sources file head states that only V-POL and B-POL have a
+    builder-read passage and the other 7 sources are nobody-read, and the page head lists the claims of each
+    mark from that file. The policy mutants gained 14 mutants for these rules and every B4 and B5 mutant is
+    anchored on text of its own function. The last review round added 5 more (108 in all) and a new test that
+    judges a reason by its exact text on planted data; the tool takes the byte-order mark as an escape, not as an
+    invisible character, and its `main` takes a `today` argument so the tests can fix the day. One person editing the sources file to move the builder-read mark onto
+    another claim of an entry that already names a builder-only source is not caught by `--check`, and is caught
+    for R17 only by the pinned test; for any other such entry only a human re-reading the vendor text can tell
+    who read it. The rule "an entry that names a builder-only source needs a builder-read claim" applies to every
+    claim of such an entry, so a new claim added to one makes `--check` ask for a builder-read claim.
+  - The page also gained a plain-words legend for its column heads, a sentence that Vault calls signing `update`
+    although signing stores nothing, and the two links the call check does not follow. New checks: the paging
+    query of the Kubernetes list wrapper, the one sending function of the Vault client, the setting-to-attribute
+    map through `build`, and every `.call` outside the three modules.
+  - What is not shown: no test shows that a permission name is right. The names and path forms were found in the
+    vendors' documentation and source files on the day the sources file gives (`tests/fixtures/policy_sources_*.txt`, every
+    row pinned to a commit id written in its URL; seven rows carry a 7-character abbreviated id, and the OpenBao
+    documentation rows sit at a commit whose release was not looked up, so the OpenBao claims are not tied to one
+    release); the rendered vendor pages could not be reached. No policy has been confirmed on a
+    real account or a real cluster. Sign-in through an AppRole or Kubernetes role is not exercised, and there
+    the role and identity groups can add policies.
+  - No behaviour change: no kind sends a different request. The other 16 kinds that sign in to an outside system
+    (the AWS, Azure and Google Cloud kinds, Slack, Postgres, the API-key model kinds) have no declared permission
+    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
+    the other 9 from 2027-02-01, unless the second pull request has landed or the dates were decided again (at
+    most 92 days at a time). The dated lists of names and claims (13 entries) fail from the day after the
+    earliest `review_by` in the tests and in `python tools/policy_page.py --check` (a blocking CI step); from
+    that day `--write` stops too, until the dates are renewed. The date guard is a reminder, not a check that
+    anyone re-read the names: it stops the page and the tests, and a person must renew it with a dated
+    decision.
+  - **Renewing or emptying the dated lists, and the empty marker.** In `tests/fixtures/policy_sources_*.txt` each of
+    the four head lines (the claims a builder read, the claims nobody read, and the two lists of names) may now hold
+    the single word `none`. It means "no claim of this kind is waiting for a check"; a line that mixes `none` with a
+    claim text, or an empty line, is refused, and the page head then says that no claim on the page is waiting for a
+    check. Two groups are renewed on their own days. Renew all or none: every entry of PENDING_NAMES and PENDING_CLAIMS gets the same new `decided` day (`DECIDED`); renewing only some of them is refused. Renew all or none: every kind of PENDING_KINDS gets the new decision day (`KINDS_DECIDED`); the names and claims lists keep their own `DECIDED` and are not moved with it. A new decision day is a day decided again plus a new `review_by` at most 92 days later.
+    The steps are printed in the overdue message of each group (the names and claims: the day `DECIDED` and every `decided` and `review_by` in
+    `tools/policy_page.py`, the pin test of that day, the page rewritten, one notes row for each changed test; the 16 kinds: `KINDS_DECIDED`,
+    `_PR2` and the `review_by` days in the guard test, the pin `KINDS_LITERAL` and `KINDS_GROUPS` in `tests/test_policy_changelog.py`, and the
+    sentence of this entry that gives the days the kinds start to fail). `tests/policy_mutants.py` is not edited by a renewal: every day that must follow a renewal comes from the live lists (the
+    day that the B13 mutant plants is built from `DECIDED`); the seven days written in the file (the clock day in the search texts of
+    three mutants and the literal days that B9 and B10 plant in a docstring) stand for a planted defect, not for the decision day, and
+    the search texts are found again after a renewal. Three tests
+    (`test_plant_a_full_renewal_...`, one for the kinds list alone and one for the names and claims alone) renew a temporary copy
+    with an edit list that the test builds from the live days and the printed steps (the list is written in the test, it is not
+    read out of the printed text), and then, on the new decision day and on the day after it, run in that copy: the page check
+    (`python tools/policy_page.py --check`), the four policy test files (`tests/test_policy_guard.py`, `tests/test_policy_changelog.py`, `tests/test_policy_docs.py`, `tests/test_notes_lines_check.py`; the plants do not run the whole suite: no other test file reads a decision day, and `tests/test_policy_engine.py` only reads the Vault server switch), the notes check on the copy (the plant writes the rows it asks for, then the check passes; a rehearsal asked 36 rows for a full renewal, 35 for the kinds alone and 1 for the names and claims alone), the check that every search text of the
+    mutants is found, and the mutants B8 and B9. Four fast tests in `tests/test_policy_renewal_copy.py` check without running those tests that each plant edits every file its printed steps name, and ten mutants of the plant helpers are killed by them. With the variable `HADAVIN_POLICY_FULL_RENEWAL_RUN` set to 1 they run the whole
+    mutant list in the copy on both days (the rehearsal does this; it takes several minutes, so it is not part of a normal run).
+    A step that the printed lists leave out shows as a red test only when the plant makes that edit; a file that a renewal must
+    touch and that the plant does not edit would not be seen by the plant. A renewal made twice in a row is not a case the
+    plant plants: the order of the kinds groups no longer depends on the day. When the last unchecked claim is checked, its entries are deleted, its marker line becomes `none`, and its class in
+    `NOTE_CLASSES` is moved off the claim lists.
+  - **What the builder-notes check now sees, and what it cannot see.** `tools/notes_lines_check.py` runs on every
+    pull request (`--auto`, from the common ancestor of the base branch and the pull request head, read from the
+    head commit, never from the merge commit). A new or changed test or mutant needs its own row in the notes with a
+    reason that names a killing mutant, a failing run, a plant or a control and something to look up after it. What it
+    sees: every test file of the head commit is read whenever a file under `tests/` changed, so a change to a helper
+    lists every test that reaches it, through any number of imports (helper to helper to test file) and in the other
+    direction too. A value is followed through the code behind it: `SKIP = False` read by a `pytestmark`, a constant built
+    by a function, a constant built from another (`B = A + 1`), a tuple or annotated target. The ways a file or a class is
+    switched off or changed list every test they act on: `__test__`, `setup_module`, `teardown_module`, `setup_function`,
+    `teardown_function`, `pytest_generate_tests`, `pytest_collection_modifyitems`, module-level code (an `if`, a `for`, a
+    call, a mark), and in a test class its marks, helper methods, `setup_method`, `setup_class` and fixtures; a
+    `unittest.TestCase` class and a file ending in `_test.py` are read as tests. A conftest counts: its functions, each
+    name it assigns, and all its other module-level code (a `for` loop, `collect_ignore.append(...)`) are units, and a fixture
+    it holds lists the tests that take it from the nearest conftest. A mutant counts the helpers of its own file that its
+    call reaches. A change to `pytest.ini`, `tox.ini`, `setup.cfg`, the pytest tables of `pyproject.toml` (not a
+    dependency), the conftest at the root, or any file under `tests/` that is not Python, needs a row too. A row names its
+    file by the whole path (a bare file name serves only a file that no other path shares the name of); a mutant row is
+    found by its whole cell or an exact `;` item, never by a part of one. The unit cell of a row must name a test, a mutant or
+    a unit that exists. The tests, mutants and log files a reason names must exist in the head commit: a mutant name
+    is checked when it starts with a code (`B12 `) or with the first word of a mutant of the tree (`Kinds:`); a log is found in
+    the logs folder of the notes that name it, or by the end of its path (`b12/logs/x.log`). A new function or constant
+    that nothing reaches (no test, fixture, conftest, import or mutant) needs no row, because it changes no run; the change
+    that makes something use it lists the user. What it cannot see: a test written or collected another way (generated at
+    run time, or by a plugin that is not in a conftest), a name built at run time with `getattr` or `exec`, or by an `importlib`, `pkgutil` or `__import__` call that names nothing in the tree (a file that makes such an import call is read as reaching the modules it names as text and every Python file below each package folder it imports from, so a change of a module that `tests/contracts/conftest.py` loads by `pkgutil` lists the contract tests), a change in
+    `src/` or `tools/` that a test reads (those have their own mutants), a change to a workflow, a lock file or a command
+    line option, and a text a test reads from a file outside `tests/` at run time. A backticked text in a reason that starts
+    with another word than a mutant code or the first word of a mutant is read as a quote and not checked. It cannot tell
+    whether a reason is true: that stays with the reviewer and the logs the row names. The step has not yet run on GitHub.
 - **G4 command withholding** (P5/P6 follow-ups). `channel.clean` now withholds every command a person could
   paste to change a system: `[command withheld (G4)]` stands in its place.
   - It covers AWS, gcloud/gsutil/bq, az, azcopy and PowerShell Az, kubectl/oc, helm, terraform/tofu/pulumi,
@@ -401,4 +552,4 @@
   - `src/hadavin_sdk/testing/__init__.py`: `3c77d034fe2a1ee70adea0d0bd259a20edda397d8ebd55a0e40b63e5c21c9e1c`
   - `src/hadavin_sdk/testing/mutation.py`: `75c32a4e501f5c3a4edcd6f1fd8a58603ebb2ef6fd43842e558ce0761eaee03e`
   - `tools/__init__.py`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
-  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`
+  - `tools/mutation_runner.py`: `f311ee4944e4645ef8966e400af78bd79635fc3b21ea66397a767b9df276d576`

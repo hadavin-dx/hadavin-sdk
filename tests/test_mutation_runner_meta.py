@@ -68,6 +68,7 @@ MOVED = (
     "test_a_signal_while_the_temp_folders_are_removed_leaves_none",
     "test_the_process_group_is_killed_while_its_leader_is_not_yet_reaped",
     "test_the_pytest_run_writes_no_file_into_its_working_folder_and_leaves_no_temp_folder",
+    "test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not",
     "test_a_leader_reaped_by_someone_else_is_known_as_ended_so_its_group_is_not_signalled",
     "test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_the_outer_one_alone",
     "test_a_relative_link_that_points_out_of_the_tree_is_refused_at_snapshot_time",
@@ -77,8 +78,10 @@ MOVED = (
     "test_a_reaped_child_is_an_error_row_for_a_mutant",
     "test_a_reaped_baseline_is_refused_as_reaped_not_as_a_failing_baseline",
     "test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused",
+    "test_a_junction_in_the_folder_part_of_an_extra_file_is_refused",
+    "test_only_the_path_of_an_extra_file_that_exists_is_looked_at_for_a_junction",
 )
-EXPECTED_MUTANTS = 62
+EXPECTED_MUTANTS = 69
 MANIFEST_TEST = "test_the_manifest_pins_the_files_a_demo_copies"
 
 

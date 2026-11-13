@@ -67,6 +67,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0  # the notes check needs the common ancestor of the pull request and main, and the old text of each test file
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           version: "0.13.6"
@@ -88,10 +89,26 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_VAULT_ENGINE: "1"  # the generated Vault policies must be refused by this real server: a skip of tests/test_policy_engine.py fails
           HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
         run: pytest -q -m "not live and not perf" -rs
       - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
         run: python tests/stage_mutants.py
+      - name: Declared-permission mutants (each reverted guard rule must be killed by its named test) (blocks)
+        run: python tests/policy_mutants.py
+      - name: Declared-permission page and dated lists (fails from the day after the earliest review date, until renewed) (blocks)
+        run: python tools/policy_page.py --check
+      # The builder notes of a pull request hold one row (file, test id, reason) for each test the whole pull request
+      # adds or changes: the change is read from the common ancestor of main and the pull request head, up to that head
+      # (by its commit id, never the merge commit the runner checks out), and every text is read from git, not from
+      # the working folder. The checkout above has the full history (`fetch-depth: 0`), so the ancestor exists.
+      - name: Builder notes hold one row for each new or changed test (blocks, pull requests only)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python tools/notes_lines_check.py --auto "$BASE_SHA" --head "$HEAD_SHA"
       # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
       # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
       - name: Performance of the redaction patterns (blocks)
@@ -150,6 +167,7 @@ jobs:
         env:
           HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
           HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_VAULT_ENGINE: "1"  # the generated Vault policies must be refused by this real server: a skip of tests/test_policy_engine.py fails
         run: pytest -q -m "not live and not perf" -rs
 
   security:

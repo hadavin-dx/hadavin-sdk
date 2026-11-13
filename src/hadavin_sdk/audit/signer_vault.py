@@ -79,3 +79,159 @@ def build(settings, deps) -> VaultTransitSigner:
     client = connect(settings, ttl_s=0)
     signer = VaultTransitSigner(client, settings.transit_mount, settings.key_name, version)
     return probe(signer, "signer vault_transit")
+
+
+# The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
+# from the source text. `tests/test_policy_guard.py` fails when it differs from the requests written above in
+# the call shapes that test lists; a request sent in a way no rule of that test lists is not seen.
+# `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
+# (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
+# account; None everywhere so far.
+POLICY = {
+    "platform": "vault",
+    "credential": {
+        "how": (
+            "The same Vault client and sign-in as the `vault` secrets kind. A Vault token: read from an "
+            "environment variable (auth `token`), or issued at sign-in through AppRole (the role's secret id "
+            "is read from an environment variable) or through the pod's Kubernetes service account."
+        ),
+        "lifetime": "long",
+        "exception": (
+            "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
+            "and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself "
+            "a long-lived credential unless the operator gives it an expiry in Vault. A token issued through "
+            "AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes "
+            "these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it."
+        ),
+    },
+    "notes": (
+        (
+            "The sign-in request of this kind is written in the imported module `actions/secrets_vault.py` "
+            "and is declared there, not here."
+        ),
+        (
+            "In the call column, `{self.mount}` is the `transit_mount` setting and `{self.key_name}` the "
+            "`key_name` setting, as the signer object holds them; the permission is written with the "
+            "setting's name."
+        ),
+        (
+            "Vault's sign path has an optional last part naming a hash algorithm. R18 is the exact path "
+            "without it, and the code never sends the longer form. That the exact path does not also allow "
+            "the longer form is a claim nobody has checked (see the claims column of R18)."
+        ),
+        (
+            "In plain words: Vault calls signing `update`, but signing stores nothing; the permission lets "
+            "the identity ask for a signature, not change any key or secret."
+        ),
+        (
+            "The signer signs a test message when it is built, and verifying the audit trail builds the "
+            "signer, so a process that only verifies needs R18 too."
+        ),
+        (
+            "Create the token or the sign-in role so that it holds this policy only. Vault adds its `default` "
+            "policy to every token unless told not to (`no_default_policy` when a token is created, "
+            "`token_no_default_policy` on an AppRole or Kubernetes role)."
+        ),
+    ),
+    "grants": (
+        {
+            "id": "R18",
+            "name": "update",
+            "resource": "{transit_mount}/sign/{key_name}",
+            "bound": "",
+            "operations": (("POST", "{self.mount}/sign/{self.key_name}"),),
+            "applies_when": "",
+            "reason": "signs each audit checkpoint and the start-up test message",
+            "verified": ("2026-11-11", "V-TR", "B-TR", "V-POL"),
+            "confirmed_live": None,
+            "claims_unverified": (
+                (
+                    "the exact path R18 does not also allow Vault's longer sign path that ends in a hash "
+                    "algorithm name"
+                ),
+            ),
+        },
+        {
+            "id": "R19",
+            "name": "read",
+            "resource": "{transit_mount}/keys/{key_name}",
+            "bound": "",
+            "operations": (("GET", "{self.mount}/keys/{self.key_name}"),),
+            "applies_when": "",
+            "reason": "reads the pinned version's public key and the key type",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+            "confirmed_live": None,
+            "claims_unverified": (),
+        },
+    ),
+    "free": (),
+    "never": (
+        {
+            "type": "role",
+            "name": "root",
+            "reason": "the built-in policy that may do everything",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "sys/*",
+            "reason": "the server's own settings: mounts, policies, audit devices",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/keys/{key_name}",
+            "capabilities": ("delete",),
+            "reason": "deletes the key that signs the audit trail",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/keys/{key_name}/config",
+            "reason": "can allow the key to be deleted or exported",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/export/*",
+            "reason": "copies the private key out",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/byok-export/*",
+            "reason": "copies the private key out, wrapped for another system",
+            "verified": None,
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/keys/{key_name}/rotate",
+            "reason": "makes a new key version, so new signatures no longer match the pinned version",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/keys/{key_name}/trim",
+            "reason": "removes old key versions for good",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/restore",
+            "reason": "replaces a key with one from a backup",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/restore/*",
+            "reason": "replaces the named key with one from a backup",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+        {
+            "type": "path",
+            "name": "{transit_mount}/backup/*",
+            "reason": "copies the private key out as a backup",
+            "verified": ("2026-11-11", "V-TR", "B-TR"),
+        },
+    ),
+}

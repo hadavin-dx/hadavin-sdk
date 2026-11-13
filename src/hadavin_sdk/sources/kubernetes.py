@@ -3,7 +3,10 @@
 It speaks the Kubernetes REST API through an injected ``fetch`` (a tool's ``ToolContext.fetch`` with the
 ServiceAccount token bound), so it holds no secret, no client library and no cloud SDK: it works against any
 conformant cluster (EKS, GKE, AKS, k3s, on-premises). Only ``get`` and ``list`` calls are made, plus one
-``SelfSubjectRulesReview`` (a POST that creates nothing: it asks what the token may do).
+``SelfSubjectRulesReview`` (a POST that asks what the token may do; the Kubernetes API takes it as a ``create`` of a
+review object, so the page lists it as a ``create`` and the start-up check lets it through; that it changes nothing in
+the cluster was not found in a vendor source, and the page lists it under ``claims_unverified``). The start-up check refuses write verbs, wildcard verbs, shell resources and
+reading secrets; it does not refuse a read of other things (``get`` or ``list`` on configmaps, pods or nodes).
 
 Neutral protocol: the Kubernetes REST API (HTTPS, JSON).
 """
@@ -349,3 +352,246 @@ class KubernetesSource:
                 problems.append(f"namespace {ns}: the rules review is incomplete, scope not proven")
             problems += rules_problems(ns, status["resourceRules"])
         return problems
+
+
+# The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
+# from the source text. `tests/test_policy_guard.py` fails when it differs from the requests written above in
+# the call shapes that test lists; a request sent in a way no rule of that test lists is not seen.
+# `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
+# (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
+# account; None everywhere so far.
+POLICY = {
+    "platform": "kubernetes_rbac",
+    "credential": {
+        "how": (
+            "The secret named by the source's `token_secret_name` setting: the fetch in `app.py` sends it as "
+            "a bearer token, and only when that setting is set. Nothing in this code says it is a "
+            "ServiceAccount token. Without it the request is sent unauthenticated. This module holds no "
+            "credential."
+        ),
+        "lifetime": "long",
+        "exception": (
+            "Whether the token expires is decided by the cluster and the operator; this code cannot tell and "
+            "does not shorten it. Use a token that expires. No ticket removes a "
+            "long-lived token yet: ledger row BL-core-q8c1-lifetime tracks it."
+        ),
+    },
+    "notes": (
+        (
+            "One Role and one RoleBinding per namespace in `namespaces`. Never a ClusterRole or a "
+            "ClusterRoleBinding."
+        ),
+        (
+            "At every start-up the kind asks the cluster what this identity may do and reports write verbs, "
+            "the wildcard verb `*`, shell subresources and any read of `secrets`. It does not report the "
+            "verb `watch`."
+        ),
+        (
+            "The requests carry these query parameters and no others: `limit` and `continue` on the two "
+            "list requests, `timestamps`, `sinceTime` and `limitBytes` on the log request. `watch` and "
+            "`follow` are never sent, and a test refuses any other parameter written in this module. That "
+            "none of these parameters changes the verb the request needs is a claim nobody has checked "
+            "(see the claims column of R20 to R22)."
+        ),
+    ),
+    "grants": (
+        {
+            "id": "R20",
+            "name": "list",
+            "resource": "apps/deployments in {namespaces}",
+            "bound": (
+                "Allows more than the reason says: `list` returns the whole Deployment objects, with every "
+                "setting written in them (including any value set in the pod template), not only the "
+                "revision and the images. A right cannot be limited to some fields of an object"
+            ),
+            "operations": (("k8s.list_deployments",),),
+            "applies_when": "",
+            "reason": "reads deployments, their rollout revision and images",
+            "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (
+                "the query parameters `limit` and `continue` do not change the verb the request needs",
+            ),
+        },
+        {
+            "id": "R21",
+            "name": "list",
+            "resource": "core/events in {namespaces}",
+            "bound": (
+                "Allows more than the reason says: Kubernetes rights cannot be limited by time, so the right "
+                "covers every event of each configured namespace, not only the time window the code asks for"
+            ),
+            "operations": (("k8s.list_events",),),
+            "applies_when": "",
+            "reason": "reads events in the time window",
+            "verified": ("2026-11-11", "K-AUTHZ", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (
+                "the query parameters `limit` and `continue` do not change the verb the request needs",
+            ),
+        },
+        {
+            "id": "R22",
+            "name": "get",
+            "resource": "core/pods/log in {namespaces}",
+            "bound": (
+                "Allows more than the reason says: the right covers the log of every pod in each configured "
+                "namespace, not one pod; a pod name list cannot be written in advance. Log lines can hold "
+                "secrets, and what a log holds is outside this kind's control"
+            ),
+            "operations": (("k8s.pod_log",),),
+            "applies_when": "",
+            "reason": "reads one pod's log lines",
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+            "confirmed_live": None,
+            "claims_unverified": (
+                "the query parameters `timestamps`, `sinceTime` and `limitBytes` do not change the verb the request needs",
+            ),
+        },
+    ),
+    "free": (
+        {
+            "operations": (("k8s.rules_review",),),
+            "reason": (
+                "asks the cluster what this identity may do; the start-up check treats it as harmless "
+                "(that it changes nothing in the cluster was not found in a vendor source)"
+            ),
+            "note": (
+                "a default cluster gives every signed-in identity this right. The request path names no "
+                "namespace, so the namespaced Role on this page cannot grant it: in a cluster that took the "
+                "right away, an administrator must grant `create` on `selfsubjectrulesreviews` with a "
+                "cluster-wide role and binding of their own; this page produces no text for that and no test "
+                "covers such a cluster"
+            ),
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC", "K-SSRR"),
+            "claims_unverified": (
+                (
+                    "a `create` on `selfsubjectrulesreviews` changes nothing in the cluster (the one source "
+                    "for the resource, K-SSRR, does not say so)"
+                ),
+            ),
+        },
+    ),
+    "never": (
+        {
+            "type": "role",
+            "name": "cluster-admin",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "role",
+            "name": "admin",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "role",
+            "name": "edit",
+            "reason": "a built-in role that may write",
+            "verified": None,
+        },
+        {
+            "type": "action",
+            "name": "create",
+            "reason": (
+                "a write verb: this source only reads. One exception, the same one the start-up check "
+                "makes: `create` on the self-review resources (`selfsubjectrulesreviews`, "
+                "`selfsubjectaccessreviews`, `selfsubjectreviews`), which the start-up check treats as "
+                "harmless; that these three requests write nothing was not found in a vendor source"
+            ),
+            "verified": ("2026-11-11", "K-AUTHZ"),
+            "claims_unverified": (
+                (
+                    "`create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` and "
+                    "`selfsubjectreviews` writes nothing (the source for the first, K-SSRR, does not mention "
+                    "the verb; none was found for the other two)"
+                ),
+            ),
+        },
+        {
+            "type": "action",
+            "name": "update",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "patch",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "delete",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "deletecollection",
+            "reason": "a write verb: this source only reads",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "escalate",
+            "reason": "lets the identity widen its own rights",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "bind",
+            "reason": "lets the identity widen its own rights",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "action",
+            "name": "impersonate",
+            "reason": "lets the identity act as another one",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/exec",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/attach",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/portforward",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "pods/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "nodes/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-KUBELET"),
+        },
+        {
+            "type": "resource",
+            "name": "services/proxy",
+            "reason": "opens a shell or a tunnel into a workload",
+            "verified": ("2026-11-11", "K-SRC"),
+        },
+        {
+            "type": "resource",
+            "name": "secrets",
+            "reason": "reading a secret reveals its value",
+            "verified": ("2026-11-11", "K-AUTHZ"),
+        },
+    ),
+}

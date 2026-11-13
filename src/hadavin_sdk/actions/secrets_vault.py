@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from hadavin_sdk.actions.secrets_cache import CachedSecrets
+from hadavin_sdk.backends.table import VAULT_EMPTY_PREFIX
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard.http import NoRedirect
 
@@ -112,6 +113,8 @@ class VaultProvider(CachedSecrets):
             raise ConfigError(
                 f"secret {name!r}: Vault names here are letters, digits, '.', '_', '-'"
             )
+        if not self.path_prefix:  # an empty prefix would read the whole mount
+            raise ConfigError(f"secrets vault: {VAULT_EMPTY_PREFIX}")
         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
         if status == 404:
             raise ConfigError(f"secret {name!r} not found in Vault")
@@ -150,6 +153,8 @@ def _env(name: str) -> str:
 
 
 def build(settings, deps) -> VaultProvider:
+    if not settings.path_prefix:  # settings made without their checks are refused too
+        raise ConfigError(f"secrets vault: {VAULT_EMPTY_PREFIX}")
     return connect(
         settings,
         ttl_s=settings.ttl_s,
@@ -193,3 +198,141 @@ def connect(settings, **kw: Any) -> VaultProvider:
         renewable=settings.auth != "token",
         **kw,
     )
+
+
+# The permissions this kind needs. Data only: nothing here is run. `tools/policy_page.py` reads this literal
+# from the source text. `tests/test_policy_guard.py` fails when it differs from the requests written above in
+# the call shapes that test lists; a request sent in a way no rule of that test lists is not seen.
+# `verified` = (date, source ids): the name and the path form were found, spelled so, in those vendor sources
+# (the ids resolve in tests/fixtures/policy_sources_2026-11-11.txt). `confirmed_live` = accepted by a real
+# account; None everywhere so far.
+POLICY = {
+    "platform": "vault",
+    "credential": {
+        "how": (
+            "A Vault token: read from an environment variable (auth `token`), or issued at sign-in through "
+            "AppRole (the role's secret id is read from an environment variable) or through the pod's "
+            "Kubernetes service account."
+        ),
+        "lifetime": "long",
+        "exception": (
+            "With auth `token` the operator supplies the token, so how long it lives is the operator's choice "
+            "and this kind cannot shorten it. With auth `approle` the secret id in the environment is itself "
+            "a long-lived credential unless the operator gives it an expiry in Vault. A token issued through "
+            "AppRole or Kubernetes sign-in lives as long as the Vault role says. No ticket removes "
+            "these long-lived credentials yet: ledger row BL-core-q8c1-lifetime tracks it."
+        ),
+    },
+    "notes": (
+        (
+            "Create the token or the sign-in role so that it holds this policy only. Vault adds its `default` "
+            "policy to every token unless told not to (`no_default_policy` when a token is created, "
+            "`token_no_default_policy` on an AppRole or Kubernetes role)."
+        ),
+        (
+            "In the call column, `{self.mount}` and `{self.path_prefix}` are the settings `mount` and "
+            "`path_prefix` as the object holds them, and `{name}` is the secret's name: one path part, "
+            "checked by the code before the request is sent."
+        ),
+    ),
+    "grants": (
+        {
+            "id": "R17",
+            "name": "read",
+            "resource": "{mount}/data/{path_prefix}+",
+            "bound": (
+                "the `+` stands for exactly one path part, the secret's name, directly under this "
+                "deployment's `path_prefix` setting (which must not be empty: the settings, the start-up and every read "
+                "refuse an empty one); nothing deeper is covered. "
+                "Allows more than the reason says: the right covers every secret directly under the prefix, "
+                "not only the one the code asks for; it may also cover every older version of each (not yet "
+                "checked against the vendor: the claims cell lists the claim that a `read` on a secret's path "
+                "also serves a request for an older version); the right cannot name one secret because "
+                "the secret's name is not known when the policy is written"
+            ),
+            "operations": (("GET", "{self.mount}/data/{self.path_prefix}{name}"),),
+            "applies_when": "",
+            "reason": (
+                "reads one named secret; the right also covers every secret directly under the prefix; it may "
+                "also cover every older version of each (not yet checked against the vendor, see the claims cell)"
+            ),
+            "verified": (
+                "2026-11-11",
+                "V-KV",
+                "V-POL",
+                "V-ACL",
+                "V-PARSE",
+                "B-KV",
+                "B-POL",
+                "B-ACL",
+            ),
+            "confirmed_live": None,
+            "claims_unverified": (
+                "the + matches exactly one whole path part, nothing deeper",
+                "a `read` on a secret's path also serves a request for an older version of that secret",
+            ),
+        },
+    ),
+    "free": (
+        {
+            "operations": (("POST", "auth/{auth_mount}/login"),),
+            "reason": (
+                "the sign-in request of auth `approle` and `kubernetes` carries no token; auth `token` sends "
+                "no sign-in request"
+            ),
+            "note": "",
+            "verified": ("2026-11-11", "V-API", "V-APPROLE", "V-K8S", "B-API"),
+        },
+    ),
+    "never": (
+        {
+            "type": "role",
+            "name": "root",
+            "reason": "the built-in policy that may do everything",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "sys/*",
+            "reason": "the server's own settings: mounts, policies, audit devices",
+            "verified": ("2026-11-11", "V-POL"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/data/*",
+            "capabilities": ("create", "update", "patch", "delete"),
+            "reason": "the reader could replace, change or remove what it reads",
+            "verified": ("2026-11-11", "V-POL", "V-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/delete/*",
+            "reason": "marks versions of a secret as deleted",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/undelete/*",
+            "reason": "brings deleted versions of a secret back",
+            "verified": None,
+        },
+        {
+            "type": "path",
+            "name": "{mount}/subkeys/*",
+            "reason": "shows the field names inside secrets this kind was not asked to read",
+            "verified": None,
+        },
+        {
+            "type": "path",
+            "name": "{mount}/metadata/*",
+            "reason": "lists every secret name and can delete every version of a secret",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+        {
+            "type": "path",
+            "name": "{mount}/destroy/*",
+            "reason": "removes versions of a secret for good",
+            "verified": ("2026-11-11", "V-KV", "B-KV"),
+        },
+    ),
+}

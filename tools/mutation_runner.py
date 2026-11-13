@@ -135,6 +135,17 @@ def _inside(base: Path, rel: str) -> Path:
     return path
 
 
+def _through_a_link(base: Path, rel: str) -> bool:
+    """True when ``rel`` or a folder on its way is a link under ``base`` (looked at as written, not resolved: ``_inside`` resolves a
+    link to its target, so a link would be copied as the file it points to)."""
+    path = base
+    for part in Path(rel).parts:
+        path = path / part
+        if path.is_symlink():
+            return True
+    return False
+
+
 _IS_WINDOWS = (
     os.name == "nt"
 )  # one place to ask (tests set it to check the Windows branch of the tree kill on any system)
@@ -368,6 +379,7 @@ def run_mutants(
     tests: Sequence[str],
     *,
     extra_dirs: Sequence[str] = ("tests/fixtures",),
+    extra_files: Sequence[str] = (),
     only: Sequence[str] = (),
     timeout: float = DEFAULT_TIMEOUT,
     baseline_timeout: float | None = None,
@@ -378,7 +390,8 @@ def run_mutants(
     ``timeout`` seconds is ``(name, Verdict.ERROR, "TIMEOUT", False)``. The unmutated baseline run gets ``baseline_timeout`` (default: ``timeout``; 0 is a real, immediate timeout and not "unset"),
     so a test can use a short mutant timeout without failing a slow baseline. ``on_result`` is called with each result as soon as that mutant
     finishes (stream it and a timeout of the whole run still leaves a kill list). Every ``tests`` and ``extra_dirs`` entry and every mutant file
-    must name a file inside its tree (``ValueError``). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
+    must name a file inside its tree (``ValueError``); ``extra_files`` are single files (a changelog, a settings file) that every copy also holds
+    when they exist (a missing one, a link, a file behind a folder link, or a link to a file outside the tree is left out; a junction in the folder part of the path of one that exists is refused, and only the parts of that path are looked at: nothing else below its folder is walked). ``first_lines``, if given, is emptied at the start and then filled with the first ``E`` line
     of each judged kill (mutant name -> line; diagnostics, and what ``crash_type`` is checked against): it belongs to this call, so two
     runs in two threads never share it. A SIGTERM or SIGHUP during the call ends it like Ctrl-C (see the module docstring).
     NOT re-entrant: the signal state is one module-level record, so on POSIX in the main thread a ``run_mutants`` call made while another is
@@ -387,7 +400,7 @@ def run_mutants(
     with _terminations_raise():
         return _run_mutants(
             root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
-            {} if first_lines is None else first_lines,
+            {} if first_lines is None else first_lines, extra_files,
         )  # fmt: skip
 
 
@@ -413,7 +426,7 @@ def _refuse_links_out(base: Path) -> None:
 
 def _refuse_junctions(root: Path, rel: str) -> None:
     """Refuse a Windows junction at ``root / rel`` (``ValueError``): the folder itself, any part of the path ``rel`` (``tests`` in
-    ``tests/fixtures``) and anything below it. ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
+    ``tests/fixtures``) and anything below it (for a file that is only the parts of its path: a file has nothing below it, ``os.walk`` of a file lists nothing). ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
     3.12 ``islink`` is False for it), follows it and copies the target as a real folder, so the snapshot would hold files from outside the
     tree. Looked at in the CALLER's tree before the copy: afterwards nothing tells the copy from a real folder. ``os.path.isjunction`` exists
     from Python 3.12 (always False off Windows); where it is missing there is nothing to ask."""
@@ -443,11 +456,12 @@ def _run_mutants(
     baseline_timeout: float | None,
     on_result: Callable[[tuple[str, Verdict, str, bool]], None] | None,
     first_lines: dict[str, str],
+    extra_files: Sequence[str] = (),
 ) -> list[tuple[str, Verdict, str, bool]]:
     first_lines.clear()  # the diagnostics of an earlier run must not answer for this one
     root = Path(root)
     mutants = list(mutants)
-    for t in (*tests, *extra_dirs):
+    for t in (*tests, *extra_dirs, *extra_files):
         _relative(t)
     for m in mutants:  # before anything runs: a bad `test_file` must not surface after earlier mutants were already run
         if m.test_file and m.test_file not in tests:
@@ -472,6 +486,11 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(snap, d), _inside(tmp, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in extra_files:
+            if _inside(snap, f).is_file():
+                # a file in a folder of the tree: the snapshot made the folder, this copy must too
+                _inside(tmp, f).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(_inside(snap, f), _inside(tmp, f))
 
     def fresh() -> None:
         """Rebuild the temp copy: retried ``SETUP_TRIES`` times, then the last ``OSError`` is raised (never swallowed)."""
@@ -514,6 +533,15 @@ def _run_mutants(
                 shutil.copytree(
                     _inside(root, d), _inside(snap, d), symlinks=True, dirs_exist_ok=True
                 )
+        for f in extra_files:  # single files at the root of the tree (a changelog, a settings file)
+            # the link is asked about FIRST, as written: `_inside` resolves it, and a link to a file outside the tree would
+            # make it refuse the run instead of leaving the file out, as the docstring says
+            if not _through_a_link(root, f) and _inside(root, f).is_file():
+                # only for a file that is there, and for ITS path (never its folder: that would walk everything below it): a junction in
+                # the folder part would copy a file of another tree
+                _refuse_junctions(root, f)
+                _inside(snap, f).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(_inside(root, f), _inside(snap, f))
         _refuse_links_out(snap)
         fresh()
         base_rc = _pytest(

@@ -105,7 +105,9 @@ def test_vault_refuses_odd_names_missing_fields_and_reports_status_only(vault):
             provider.get(bad)
     with pytest.raises(ConfigError, match="no field 'nope'"):
         provider.get("db")
-    denied = VaultProvider(vault.address, lambda p: "not-a-token", renewable=False)
+    denied = VaultProvider(
+        vault.address, lambda p: "not-a-token", path_prefix="app/", renewable=False
+    )
     with pytest.raises(VaultError, match="answered 403$"):
         denied.get("db")
 
@@ -155,8 +157,11 @@ def test_vault_settings_need_tls_and_their_auth_fields(vault):
         {"address": vault.address, "path_prefix": "../"},
     ):
         with pytest.raises(ValueError):
-            VaultSettings(kind="vault", **bad)
-    provider = make("secrets", VaultSettings(kind="vault", address="https://vault.example"))
+            VaultSettings(kind="vault", **{"path_prefix": "app/", **bad})
+    provider = make(
+        "secrets",
+        VaultSettings(kind="vault", address="https://vault.example", path_prefix="app/"),
+    )
     assert provider._context.verify_mode == ssl.CERT_REQUIRED and provider._context.check_hostname
 
 

@@ -1530,6 +1530,165 @@ def test_a_junction_as_the_folder_itself_or_a_part_of_its_path_is_refused(tmp_pa
         )  # fmt: skip
 
 
+def test_a_file_named_in_extra_files_is_in_every_copy_and_a_missing_or_outside_one_is_not(tmp_path):
+    """`extra_files` carries a root file (a changelog) into the copies: a test that reads it passes only when it is
+    there (the copy of a mutant run holds `src`, the tests and the named folders, nothing else)."""
+    root = tmp_path / "pkg"
+    (root / "src").mkdir(parents=True)
+    (root / "tests").mkdir()
+    (root / "NOTE.md").write_text("hello\n", encoding="utf-8")
+    (root / "tests" / "test_a.py").write_text(
+        "from pathlib import Path\n\n\ndef test_a():\n"
+        "    assert (Path(__file__).parents[1] / 'NOTE.md').read_text() == 'hello\\n'\n",
+        encoding="utf-8",
+    )
+    kwargs = {"extra_dirs": (), "timeout": 120}
+    with_file = run_mutants(root, [], ["tests/test_a.py"], extra_files=("NOTE.md",), **kwargs)
+    assert with_file == [], (
+        "a run with the root file named in extra_files did not pass its baseline"
+    )
+    try:
+        run_mutants(root, [], ["tests/test_a.py"], **kwargs)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("the copy held a root file that extra_files did not name")
+    _must_refuse(
+        "an extra file that leaves the tree",
+        run_mutants,
+        root,
+        [],
+        ["tests/test_a.py"],
+        extra_dirs=(),
+        extra_files=("../x.md",),
+    )
+    # a link is left out (the docstring says so): a test that wants the name absent passes only when it is
+    (root / "tests" / "test_link.py").write_text(
+        "from pathlib import Path\n\n\ndef test_link_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'LINK.md').exists()\n",
+        encoding="utf-8",
+    )
+    _symlink_or_skip(root / "NOTE.md", root / "LINK.md")
+    try:
+        run_mutants(root, [], ["tests/test_link.py"], extra_files=("LINK.md",), **kwargs)
+    except RuntimeError:
+        raise AssertionError("a link named in extra_files was copied into the copy") from None
+    # a link to a file OUTSIDE the tree is left out too, as the docstring says (it is not a reason to refuse the run)
+    (tmp_path / "outside.md").write_text("outside\n", encoding="utf-8")
+    _symlink_or_skip(tmp_path / "outside.md", root / "OUT.md")
+    (root / "tests" / "test_out.py").write_text(
+        "from pathlib import Path\n\n\ndef test_outside_link_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'OUT.md').exists()\n",
+        encoding="utf-8",
+    )
+    try:
+        run_mutants(root, [], ["tests/test_out.py"], extra_files=("OUT.md",), **kwargs)
+    except ValueError:
+        raise AssertionError(
+            "a link to a file outside the tree named in extra_files refused the run"
+        ) from None
+    except RuntimeError:
+        raise AssertionError("a link to a file outside the tree was copied into the copy") from None
+    # a folder that is a link: a file reached through it is left out too
+    (root / "sub").mkdir()
+    (root / "sub" / "DEEP.md").write_text("deep\n", encoding="utf-8")
+    _symlink_or_skip(root / "sub", root / "lnkdir", target_is_directory=True)
+    (root / "tests" / "test_nolinkdir.py").write_text(
+        "from pathlib import Path\n\n\ndef test_link_folder_is_absent():\n"
+        "    assert not (Path(__file__).parents[1] / 'lnkdir').exists()\n",
+        encoding="utf-8",
+    )
+    try:
+        run_mutants(
+            root, [], ["tests/test_nolinkdir.py"], extra_files=("lnkdir/DEEP.md",), **kwargs
+        )
+    except RuntimeError:
+        raise AssertionError(
+            "a file behind a folder link named in extra_files was copied into the copy"
+        ) from None
+    # a file in a folder of the tree reaches the copy of every mutant (the snapshot made the folder, the copy did not)
+    (root / "tests" / "test_deep.py").write_text(
+        "from pathlib import Path\n\n\ndef test_deep():\n"
+        "    assert (Path(__file__).parents[1] / 'sub' / 'DEEP.md').read_text() == 'deep\\n'\n",
+        encoding="utf-8",
+    )
+    try:
+        nested = run_mutants(
+            root, [], ["tests/test_deep.py"], extra_files=("sub/DEEP.md",), **kwargs
+        )
+    except OSError as exc:
+        raise AssertionError(f"a nested extra file made the copy fail: {exc}") from None
+    assert nested == [], "a file in a folder named in extra_files did not reach the copy"
+
+
+def test_a_junction_in_the_folder_part_of_an_extra_file_is_refused(tmp_path, monkeypatch):
+    """The folder part of a path in `extra_files` is looked at for a junction like a fixture folder: `shutil.copy` of a file
+    behind a junction would copy a file of another tree. On Linux nothing is a junction, so `isjunction` says that a folder
+    named `jn` is one (the same stand-in as the test of the fixture folders)."""
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
+    )
+    root = _raising_tree(tmp_path)
+    for folder in ("jn", "ok"):
+        (root / folder).mkdir()
+        (root / folder / "X.md").write_text("x\n", encoding="utf-8")
+    kwargs = {"extra_dirs": (), "timeout": 120}
+    assert (
+        run_mutants(root, [], ["tests/test_core.py"], extra_files=("ok/X.md",), **kwargs) == []
+    ), "a folder that is no junction made the run refuse"
+    _must_refuse(
+        "a junction in the folder part of an extra file was copied",
+        run_mutants,
+        root,
+        [],
+        ["tests/test_core.py"],
+        extra_files=("jn/X.md",),
+        match="junction",
+        **kwargs,
+    )
+
+
+def test_only_the_path_of_an_extra_file_that_exists_is_looked_at_for_a_junction(
+    tmp_path, monkeypatch
+):
+    """Batch 18 (C17-2): the junction check of an extra file reads the parts of ITS path only, and only for a file that
+    exists. It does not walk the folder (a junction elsewhere below `tests/` is no business of `tests/NOTE.md`), it does
+    not walk the target of a folder link (the file behind a link is left out before anything is looked at), and a file
+    that is not there is left out without a refusal. On Linux nothing is a junction, so `isjunction` says that a folder
+    named `jn` is one."""
+    monkeypatch.setattr(
+        os.path, "isjunction", lambda path: os.path.basename(path) == "jn", raising=False
+    )
+    root = _raising_tree(tmp_path)
+    kwargs = {"extra_dirs": (), "timeout": 120}
+    # (1) a junction elsewhere below the folder of the file: not looked at
+    (root / "tests" / "jn").mkdir()
+    (root / "tests" / "NOTE.md").write_text("note\n", encoding="utf-8")
+    try:
+        got = run_mutants(
+            root, [], ["tests/test_core.py"], extra_files=("tests/NOTE.md",), **kwargs
+        )
+    except ValueError:
+        raise AssertionError("an extra file was refused for a junction beside its path") from None
+    assert got == [], f"an extra file next to a junction folder gave {got}"
+    # (2) a file that is not there, under a junction: left out, not refused
+    (root / "jn").mkdir()
+    try:
+        got = run_mutants(root, [], ["tests/test_core.py"], extra_files=("jn/gone.md",), **kwargs)
+    except ValueError:
+        raise AssertionError("a missing extra file under a junction refused the run") from None
+    assert got == [], f"a missing extra file gave {got}"
+    # (3) a file behind a folder link: left out before any walk of the linked folder
+    (root / "real" / "jn").mkdir(parents=True)
+    (root / "real" / "DEEP.md").write_text("deep\n", encoding="utf-8")
+    _symlink_or_skip(root / "real", root / "lnk", target_is_directory=True)
+    try:
+        got = run_mutants(root, [], ["tests/test_core.py"], extra_files=("lnk/DEEP.md",), **kwargs)
+    except ValueError:
+        raise AssertionError("a file behind a folder link walked the linked folder") from None
+    assert got == [], f"a file behind a folder link gave {got}"
+
+
 # last on purpose: a mutation of a pinned file must be judged by the test aimed at it, not by this hash pin
 def test_the_manifest_pins_the_files_a_demo_copies():
     root = Path(__file__).resolve().parents[1]
