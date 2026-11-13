@@ -1,5 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+22:23Z (lead clock; container 22:04). 3 agents running, none final; figures are from their checkpoint notes, not checked by me.
+R7b finisher a8d14771: no new note since 21:58 container (6 min): E1-E3 test groups running; N1-N4 and the TLS finding still queued. If no note by 22:10 container I message it.
+Mail pass 5 a6ab5ccc: all 48 mutants run: 47 killed, 1 SURVIVED (N8: the minimum TLS 1.2 line in new_verifying_context removed, no test notices); it is writing a killing test and verifying its fix draft for the IMAP untagged-flood deadline bypass (F2) and the TLS 1.1 context finding (F1).
+Part 2 reviewer aa0f010a: F8 closed (a nit: trailing space); F10 guard only matches type(x).__name__ (closed in the tree, narrow); F9 file-call guard: it planted 143 call shapes, the guard found 96 and MISSED 47, relevant ones: getaddrinfo/gethostbyname, ctx.Pool, loop.sock_connect, getattr with a literal name, ssl.SSLContext. That is a real gap in a guard the builder called complete (the r6 review had said ~17 shapes missed): will be in the R8 batch. Possible: portal CRM view over 4 MiB (~20k rows) (it is checking). 
+Defects open: N1, N2, N3, N4, mail F1, F2, N8 (survivor), guard shapes (47 missed), plus the finisher's items. 3 agents running. ASK: none.
+
+## STATUS (core lead)
 22:18Z (lead clock; container reads 21:59). All three agents running, none final; the numbers below come from their checkpoint notes and I have not checked them against raw logs.
 R7b finisher a8d14771: S603 helper batch done (its words); 4 tests in test_tools_and_fakes_pipes failed because they expected the wrong exception class (a test bug in r7, not a code bug), fixed; remaining test groups E1-E3 running; N3 docs and N4 test scripts staged; N1/N2 (nested body, header drip) and the TLS finding queued, not started. No patches regenerated yet.
 Mail pass 5 a6ab5ccc: 24 of 48 mutants run so far, all killed (M01-M23). Probes: https clients refuse an untrusted certificate with no key sent; SMTP paths clean. NEW finding F2: an IMAP server flooding untagged lines bypasses total_seconds (ran 13.5 s against a 3 s limit): a real hang-class defect on the mail path; it has a draft fix and tests in its work folder. Earlier F1: caller TLS context allowing TLS 1.1 still sends AUTH/LOGIN. Final report not in.
