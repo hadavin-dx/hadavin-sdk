@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:59Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| V4 | independent evidence for F4 | proof | 12:52Z | done 12:59Z | 1 | DONE (runner's raw numbers, pushed handover/core/fix/V4-evidence.md): fails-before 5 failed / 2 passed; after 7 passed; 14 doc-reading files + hygiene 1246 passed, 0 failed, 32 skipped (playwright missing); ruff clean; mutants: 7 of 8 killed, 1 SURVIVED (docs/tests.md "with no total line" -> "with a total line"; the -qq test never reads that sentence) | fix the survivor (F4b, test-only, small), then reviewer result |
+| R4 | codebase_details review of F4 (snapshot handover/core/review/snap-F4) | independent read | 12:59Z | 20 min | round 1 of 2 | RUNNING. Honest note: the egm:* agent types and skills are NOT registered in this session ("not found"), so I used the skill's written fallback: a general-purpose agent told to adopt agents/codebase_details.md. Not the registered egm agent: the lead should say if that is acceptable | read, resolve |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| E1, C6, D1 | root cause / flakiness / full suite | proof | 12:33-12:47Z | 13:10-13:45Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: V4 mutant survivor above (test gap, cause: test bug, root cause proven: yes, the mutant run shows the test passes with the wrong sentence); fix pending. No other failures. Totals: no new test failures.
+LOAD: 6 agents + D1 on 4 cores.
+ASK: 1. Is the fallback reviewer (general-purpose agent with the egm persona file) acceptable while egm:* agent types are not registered? Default if no answer in 10 min: yes, label every such review "fallback" in its report.
+
+
 ## REPORT (container clock 12:57Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
