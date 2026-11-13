@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:45Z (17:15 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-T1 | builder: R20, N20, why R20 survived | LEAD order | 11:32Z / 17:02 | DONE 11:40Z | 1 of 1 | reported (builder claim; I spot-checked the code lines, the proof re-run by the evidence runner is still to come): R20 = REAL GAP. In run_real_check.py the `except OSError` arm (line 1134) is reached only if the read itself fails, because `confine_anywhere` (line 746) turns a missing file or folder into a ValueError first; no existing test makes the read fail. New test test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line (patch survivor-tests-T1.patch): killed on mutant yes (1 failed), passes unmutated yes (1 passed). N20 = not a gap in the full suite: killed by test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder] in test_take_script_refusals.py (full file 1 failed, 142 passed); survives only in the other two files | pushed to triage/T1 |
+| WHY R20 | cause of "survived here, killed in the demo" | order (d) | | DONE (inference, not a re-run of the old tree) | | the demo's first pass ran BEFORE the sonar-p3-final patch: then a missing "nope.env" went through the OSError arm and R20's text broke the one-line form, so it was killed. After the patch, a missing file is a ValueError and the OSError arm lost its only test. Builder simulation: R20 plus `config = path` in place of the confine line = 1 failed; simulation alone = 1 passed. Test count 133 vs 143 is not the cause | none |
+| TRI-T2 | builder: K6, K10, C9, pair run | order | 11:32Z / 17:02 | hard stop 12:30Z | 1 of 1 | running (drafts, re-runs) | wait |
+| TRI-T3 | P2, P4, P10 | | | DONE | | all 3 EQUIVALENT | none |
+| TRI-EV | evidence runner | order | after T2 | about 12:10Z | n/a | not started | start when T2 reports |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdicts so far: P2, P4, P10 EQUIVALENT; R20 REAL GAP (test written, proof pending runner); N20 killed by the full refusals file, so not a gap in the suite. K6, K10, C9 pending.
+One detail to fix before the final patch: the new file is named survivor_tests_T1.py, which pytest does not collect by default (only works when named on the command line). The patch's final name will be a `test_*.py` name; I will correct that in the final patch file.
+
+ASK: none.
+
+
 ## REPORT 11:40Z (17:10 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
