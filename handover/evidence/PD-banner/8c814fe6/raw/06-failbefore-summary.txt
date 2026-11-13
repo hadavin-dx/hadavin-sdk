@@ -2,3 +2,7 @@ O2 strict test_mode_banner rc=2 1 error in 0.68s
 O2 strict test_demo_only_guard rc=2 1 error in 0.49s
 O2 strict test_banner_mutant_table rc=1 2 failed, 20 passed in 7.38s
 O2 strict test_changelog_numbers rc=2 1 error in 0.59s
+O2 shim test_mode_banner rc=1 ................................FFFF....
+O2 shim test_demo_only_guard rc=1 7 failed, 151 passed in 16.50s
+O2 shim test_banner_mutant_table rc=1 2 failed, 20 passed in 9.88s
+O2 shim test_changelog_numbers rc=1 4 failed, 7 passed in 1.30s

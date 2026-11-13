@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:02Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Secret-scanner hit (my slip): gitleaks flagged a junit evidence file (SONAR-PATH 622027cc, test_no_hardcoded_values) in a commit I pushed at about 06:00Z, because my push step logged the scan but did not stop on it. The key-shaped id is a planted fake in a test name (16 distinct characters, not in any source file on main; no real credential exists in this session). I removed the file in the next commit, but the old commit stays in history (no force-push). Owner-only step: a .gitleaksignore entry for that fingerprint, or accept the flag. The push step now stops on a gitleaks failure.
+- SONAR-PATH 622027cc runner (a8d58542): 1 test fails at head on 3.13 and 3.12 (stale registry line in tests/fixtures/pathguard_exceptions.txt); audit-drop tests pass on the old tree, so they are not fail-before; header counts wrong in 3 files; an R10 refusal still keeps the OS error with the path in __context__; 18 of 103 test files not run. Batch 6 builder ac09a2ce was sent these facts; its work is still uncommitted.
+- Part 2 e75037b6 (batch 13) is incomplete: about 65 mutant rows have no result, old-tree runs, cost, bandit, suppression count, 3.12 not run. Fresh finisher adecceff started.
+- Part 6 batch 15: part 1 only (38168e73); B12 killed on head not yet shown. Q8c-1 B17: still being built.
+
+**LEAD ACTIONS:** (1) .gitleaksignore decision above (owner-only). (2) Q-R5-1 (operator-typed links) still open. (3) The laptop tool list from the 05:52Z block.
+
+**LIVE ITEMS:** ac09a2ce SONAR batch 6; a3ea530e Part 6 runner; a592bb13 Q8c-1 B17; a7978edf Part 6 batch 15; adecceff Part 2 finisher. 5 running (a805b93d finished).
+
+**ROUNDS (WHY):** no round started this block; all three branches still wait for builder pushes. Part 6 r15, SONAR r6, Part 2 r13 follow.
+
+**FINISHED SINCE LAST BLOCK:** SONAR runner report committed (handover/evidence/sonar-path/622027cc/RESULTS.md). Nothing closed.
+
+**EGM STEP PER PACKAGE:** Q8c-1 build; Part 6 build + runner; SONAR build (batch 6); Part 2 build (finisher).
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none new.
+
 ## 05:57Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
