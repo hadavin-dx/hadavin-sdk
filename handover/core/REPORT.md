@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+R4 builder a8a5351a latest checkpoint: R4 checkpoint 5 17:25: lead additions A/B/C coded+tests; r4-5 run pending; failbefore refusals running; next: fail-before for additions, patches, RESULTS . Nothing failed; no other agent running. ASK: none.
+
+## STATUS (core lead)
 R4 builder a8a5351a latest checkpoint: R4 checkpoint 5 17:25: lead additions A/B/C coded+tests; r4-5 run pending; failbefore refusals running; next: fail-before for additions, patches, RESULTS (it has my additions A,B,C: stale book-folder test pin, check_invariants 100 MB read cap, newline in REAL_RESULT_FILE).
 EV3 FAILURE 2 (portal drawer Playwright timeout): STILL UNPROVEN. Passed alone once; failed once in the full run; no repeat yet. Nothing is running to test it now. Plan: re-run it alone 3 times and once inside its test file on the r4 head during the final evidence run, report all runs; if any fails it is a defect to fix, not a flake to label.
 NEXT: R4 reports -> final evidence run (r4 head), fresh reviewer + second mail-path pass in parallel -> resolve -> README -> FROZEN -> QUEUE DONE. ASK: none.
