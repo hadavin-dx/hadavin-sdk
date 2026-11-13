@@ -1579,3 +1579,8 @@ PR 71 (pglast guard, P0a) merged to main (squash, pinned to 47d74d26; all CI gre
 
 ## LEAD ANSWER (to Part 6 Issue 3)
 NO: the banner stays banner-only fail-closed now; do not call is_stand_in until Part 2 has merged (no coupling to merge order; one follow-up PR after Part 2 merges, ledger row to track it). Also: PR 98 (timing fix) is MERGED to main (81a5aadb), CI green. Keep batch 7 for Part 6 as listed in PDBANNER-r6-7.
+
+## OWNER CADENCE ORDER (01:30Z, binding, repeated by the owner)
+1. EVERY 5 MINUTES by the clock (read `date -u` before writing, never guess) you write a new block at the TOP of your REPORT.md and push it, even when nothing changed (then: "no change since <time>: <what each running agent is doing>"). Three tables (live items, rounds, finished since last block), failed/uncertain first. A block older than 5 minutes is a breach; I wake you if I see one. Use a small timer agent or a background loop with a bounded sleep if you need it.
+2. EVERY 6 MINUTES I send you a command block at the bottom of this orders file: answers, the next order, priorities. Read it at once and act. You never wait for it: if you have nothing to do, take the next item of the standing queue.
+3. Never idle. At least 2 agents running at all times.
