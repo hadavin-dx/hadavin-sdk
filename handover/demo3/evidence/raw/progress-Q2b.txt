@@ -4,3 +4,5 @@
 2026-11-13 12:52:08Z UTC / 18:22:08 IST  seed 7001 campaign b START n=40000
 2026-11-13 12:53:45Z UTC / 18:23:45 IST  seed 7001 campaign b END rc=0 {"campaign": "b", "seed": 7001, "pairs": 40000, "requests_sent": 80000, "wall_s": 96.0, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
 2026-11-13 12:53:45Z UTC / 18:23:45 IST  seed 7001 campaign c START n=5000
+2026-11-13 12:54:07Z UTC / 18:24:07 IST  seed 7001 campaign c END rc=0 {"campaign": "c", "seed": 7001, "replays": 5000, "wall_s": 22.2, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
+2026-11-13 12:54:07Z UTC / 18:24:07 IST  seed 7001 campaign d START n=1200

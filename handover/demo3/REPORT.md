@@ -1,5 +1,30 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:58Z / 18:28 IST  HEARTBEAT 45 (Q1 serial run done: valid replacement run; Q3 final report; REV-1b saved)
+**Idle (`vmstat`, 12:55Z): CPU idle 14 percent, IO-wait 22, user 47, free RAM 11.1 GB, 20 pytest processes.** Idle is below 30 percent, so NO new agent (throttle rule). Queued for the first free slot: Q3c (blind-mail soak, see below), Q10 (the PR #12 `E` marks).
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof | 12:31Z | xdist run ~13:30Z | **serial run ENDED 12:53:33Z: 3683 passed, 200 skipped, 0 failed, 1295 s (21:35), rc=0, log written OUTSIDE the repo (/home/user/work/q1-logs/serial.log) with no git command touching it**; the xdist run waits for Q4's END line (max 40 min) | running |
+| Q2 | identity fuzz (round 2, seed 2202) | 12:31Z | ~13:30Z | running | running |
+| Q2b | fuzz seeds 7001-7005 + extra generators | 12:49Z | ~14:00Z | seed 7001 campaign d (1200 cases) | running |
+| Q3b | crash soak 2 (seed 20261114, 5 leads, double kill 151-300) | 12:49Z | ~13:35Z | 125 of 300 rounds, 0 violations, 0 hangs | running |
+| Q4 | load numbers vs docs | 12:31Z | pass 1 ~13:30Z | measuring (NOISY) | running |
+| Q6b | cold reader: tests, real-services, hubspot docs | 12:37Z | ~13:25Z | part C running | running |
+| Q8b | mutation check identity.py + claim logic | 12:49Z | ~13:50Z | starting | running |
+| B2 | BUILDER lane3-fix-2 | 12:43Z | ~13:30Z | building | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 full suites (2 trees) | 12:52Z | ~13:25Z | running | running |
+| E4 | EVIDENCE RUNNER lane3-fix-3 mutant proof | 12:52Z | ~13:20Z | running | running |
+| REV-1a | `egm:egm-codebase-details` on lane3-fix-1, round 1 of cap 2 | 12:51Z | ~13:10Z | reading | running |
+| REV-1b | `egm:egm-comprehension` on lane3-fix-1 | 12:51Z | done 12:58Z | **reported: 5 MAJOR, 7 MINOR** (saved: evidence/review-lane3-fix-1-comprehension-r1.md; MAJORs: README /counts sentence wrong for other counters; limits.md:91 "just started" is not a fresh desk; "lead count and follow-up count" are not field names; N8N_API_KEY_FILE is an environment variable not a setting and the sentence nests five parentheses; n8n-recipe.md:25 contradicts itself about the ports) | closed |
+| REV-3 | `egm:egm-implementation-readiness` on lane3-fix-3 (security path, no round cap) | 12:53Z | ~13:15Z | reading | running |
+**Q1 serial RESULT (answers your point 2 of the 12:40Z order):** one full run with the log outside the repo and no git command touching the tree while it ran: **3683 passed, 200 skipped, 0 failed, 1295.23 s, exit 0, with the full tail and the pytest summary line** (the last lines are the skip list ending with `tests/test_stall_eviction.py:526 ... Windows only`). This is one more valid replacement run for every number taken from the invalid runs; it equals agent I's 3683/200 on f3c39cf8. The cut-log cause was already proven from git history (heartbeat 40).
+**Q3 FINAL (crash soak 1, master seed 20261113; evidence/crash-soak.md):** 300 of 300 rounds, **0 violations, 0 hangs, 0 harness errors**, 12:36:21Z to 12:52:30Z, f3c39cf8, real desk + keyed demo fakes; longest round 11.3 s; invariants (no double processing, at most 1 mail per lead, no lead lost) held 300/300; check_invariants.py exit 0 in 300/300; volume 7220 leads, 11576 sends (2153 second-door sends, 2203 exact replays), 386 kills (239 at 10 documented crash points, 147 random SIGKILLs, 86 rounds with 2 kills), final 7220 sent, 0 unknown, 0 failed; 18 point kills never fired (harness SIGKILLed instead, recorded). **Caveats (the agent's own):** the keyed fake mail dedupes by key, so the "at most 1 mail" check is partly the fake's doing; the checker ran with `--no-require-comparable` (the fake mail log has no body hash); fresh book each round, not one book across rounds; **blind mail (a mail system that cannot recognise repeats) was only a 30-round self-test: in 4 of 30 rounds the checker's no-unknown rule failed (check 2, 1 to 3 `unknown` follow-ups per round) and I did not run it for 300.** I do not know if that is a defect or the documented behaviour of blind mode (README describes it as a mail system that cannot recognise repeats; "unknown" = a person must look). Queued Q3c below to find out, not parked.
+**Queued (start when idle is above 30 percent):** Q3c = blind-mail soak: read what the docs promise for blind mode, reproduce the 4-of-30 rounds with their seeds, run 300 rounds blind, count `unknown` follow-ups per round and check that each one is shown to a person (not silently sent twice or lost); if the behaviour contradicts a document, a builder patch the same hour. Q10 = the PR #12 `E` marks (the test file x20 in lockstep).
+
+ASK:
+1. Q3's blind-mail rounds: is "1 to 3 unknown follow-ups per round" the documented behaviour of blind mode? Default: Q3c reads the docs and decides; I tell you in the next block.
+2. Idle stays below 30 percent; Q8b, Q2 round 2 and Q6b are the lowest value. Default: keep all, start nothing new.
+
 ## 2026-11-13 12:55Z / 18:25 IST  HEARTBEAT 44 (CPU now saturated: idle 6 percent: no new agents; Q3, Q8, B1, B3 reported)
 **Idle measurement (`vmstat 1 3`, 12:52Z): user 63, system 16, IDLE 6 percent, IO-wait 14, free RAM 11.3 GB, 17 pytest processes.** Your throttle rule (stop starting at idle below 30 percent) now applies: I start no new agent until idle is above 30 percent again. Q3 and Q8 ended, which frees about a core and some disk.
 | id | what it does | since | expected end | real progress now | state |
