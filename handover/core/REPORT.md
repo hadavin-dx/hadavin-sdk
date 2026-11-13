@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:32Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F1b | builder round 2 of the F1 fix | V1 findings | 13:19Z | done | round 2 of 2 | DONE and STOPPED by me at 13:32Z (it sent the same report 4 times because its own wait-monitors kept timing out; no process of it was left; verified with pgrep). Report as in the previous block | COMBINE |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 13:55Z | 1 | RUNNING (full suite at about 68%) | read |
+| V4c | evidence for the round-3 docs head | proof | 13:33Z | 14:05Z | 1 | RUNNING (mutant logs MA-MG written) | read |
+| F4d | final docs builder | resolve | 13:40Z | 14:15Z | round 3 | RUNNING (failing-before and passing-after logs written) | V4d |
+| F6 | builder writer-side opens + wrappers | open classes | 13:18Z | 14:20Z | 1 | RUNNING (failing-before logs for class A, class B and a book check written) | COMBINE starts when it reports |
+| done | F1 F1b F2 F3 F4 F4b F4c D1 E1 E2 C6 R4 R5 V1 V3 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: no new failures. Open: F1b's two slow test files (test_real_check_dry.py, test_clock_steps.py) never finished under the builder; I will run them in the COMBINE evidence. Agents stopped by me: 1 (F1b, after its report). Totals unchanged: failures with proven cause 1 (T1); unexplained 2; flakes 0; crashed agents 0.
+LOAD: 4 agents running.
+ASK: none new.
+
+
 ## REPORT (container clock 13:29Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
