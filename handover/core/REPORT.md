@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:45Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 r10 design review: 0 Blocker, 5 Major, 8 Nit (saved, ledgered PDBANNER-r10-1..6, all OPEN). Round 11 needed. Part 6 is NOT clean; no laptop run yet.
+- Not yet in: codebase reviewer aca83f68 and runner ac5bb8c9 for cdbe1445. Resolve waits for them.
+- Part 2 builder aa234f9b (37 min) and SONAR-PATH builder a73b09c1 (34 min) not pushed; remote heads unchanged (83cdb7a2, e29cc269).
+
+**LEAD ACTIONS:** no new orders after 03:45Z (probe result, already forwarded to a73b09c1). Saved the design review.
+**LIVE ITEMS:** aa234f9b, a73b09c1 (builders); ac5bb8c9 (runner P6), aca83f68 (codebase reviewer P6).
+**ROUNDS (WHY):** Part 6 r11 required (Majors on seal completeness and build behaviour, mode-safety path).
+**FINISHED SINCE LAST BLOCK:** Part 6 r10 design review saved.
+**EGM STEP PER PACKAGE:** Part 6: reviews and evidence (steps 3-4), design review in. Part 2: builder. SONAR-PATH: builder.
+**LANE SONAR-PATH:** a73b09c1; builder; A done, B running.
+**RUN ON LAPTOP:** none yet.
+
+
 ## 03:40Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
