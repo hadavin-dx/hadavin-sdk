@@ -1,0 +1,5 @@
+/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/__init__.py
+...............................FF.FFFFFFFFFFFFF......................... [ 15%]
+.................FFFFFFF.FFFFFFF..FF..F.FF.FFFFF.FF.FFFFFFF..FF.FF.FFFFF [ 30%]
+..FF..........FFF.FFFFFFFFFFFFF.FFF....FF.........F.FFFFFFF.FFFFFFFF...F [ 46%]
+.FF.F.

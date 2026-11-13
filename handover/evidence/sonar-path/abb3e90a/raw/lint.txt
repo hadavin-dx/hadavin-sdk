@@ -1,0 +1,13 @@
+ruff version: ruff 0.17.1
+### ruff check (all changed .py)
+All checks passed!
+rc=0
+### ruff format --check
+27 files already formatted
+rc=0
+### bandit -ll
+ls: cannot access '/home/user/build/wt/q8c1-b17fix/.venv/bin/bandit': No such file or directory
+/root/.local/bin/bandit
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+rc=0
