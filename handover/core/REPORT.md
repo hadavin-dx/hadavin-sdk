@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:49Z (07:19 IST) / Q8c-1 round 17: design reviewer clean (0 Blocker, 0 Major, 1 Nit); codebase reviewer, runner and Part 2 reviewers pending
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 round 17 is NOT decided: only the design reviewer is back (code read only, nothing run): 0 Blocker, 0 Major, 1 Nit (nothing enforces that an empty import text always comes with an unresolved reason; four dead appends remain). It judges the removed mutant equivalent by tracing every producer. Not checked by it: manifest hash, renewal-plant bodies, delta lines 980-3227. Codebase reviewer and independent runner (delta mutants, full pytest, fail-before, equivalence re-check) not back; the lane stays NOT READY until the runner is green on a5908c0b and CI is green. Saved: handover/reviews/Q8c-1/q8c1b17-design-r17.md.
+- Q8c-1 lane carries handover files (ORDER 266): question to the lead is in the 01:47Z block (build the PR branch from code commits only?).
+- Part 2 round 8 NOT clean so far (1 Blocker clock tzinfo, 2 Major); codebase reviewer and runner pending. Part 6 batch 8 builder working.
+- Plants not repeated at a5908c0b by me (builder run only).
+
+**LEAD ACTIONS**: lane handover files; slot question.
+
+**LIVE ITEMS** (6 agents): a509d177 Part 6 batch 8 builder; a572d86b Part 2 runner; a5053e2b Part 2 codebase reviewer; a7e31a96 Q8c-1 runner; ac50dfa3 Q8c-1 codebase reviewer. Heads unchanged: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Q8c-1 round 17 (security, no cap) in progress; Part 2 round 8 in progress, round 9 after batch 9; Part 6 round 8 after batch 8.
+
+**FINISHED SINCE LAST BLOCK (01:47Z)**: Q8c-1 design reviewer closed, report saved.
+
 ## 01:47Z (07:17 IST) / Part 2 round 8 design review: NOT clean (1 Blocker, 2 Major); Q8c-1 batch 17 landed (a5908c0b), round 17 started
 
 **FAILED / UNCERTAIN FIRST**
