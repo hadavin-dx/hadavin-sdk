@@ -83,4 +83,52 @@ ss.ssss.....sssssssssssssssssssssssssssssssss..........ss..s............ [ 72%]
 ........................................................................ [ 90%]
 ........................................................................ [ 92%]
 ........................................................................ [ 94%]
-..............................................................
+........................................................................ [ 96%]
+........................................................ssssssssssssss.. [ 97%]
+................................s....................................... [ 99%]
+..............                                                           [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_codeant_demo_only.py:50: node is not installed
+SKIPPED [24] tests/test_gitleaks_exceptions.py:145: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [2] tests/test_gitleaks_semgrep_lock.py:38: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:150: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:344: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:533: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:580: no gitleaks program on PATH (set GITLEAKS_BIN)
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_mode_safety.py:175: node is not installed
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+SKIPPED [1] tests/test_n8n_proof_result.py:55: node is not installed
+SKIPPED [10] tests/test_n8n_proof_result.py:64: node is not installed
+SKIPPED [1] tests/test_path_confinement.py:284: ntpath.isreserved needs Python 3.13
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [2] tests/test_portal_lead_pages.py:488: no node
+SKIPPED [1] tests/test_portal_log_poll.py:32: node is not installed
+SKIPPED [1] tests/test_portal_log_poll.py:39: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:42: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:52: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:59: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:235: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:307: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:320: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:336: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:417: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:440: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:448: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:458: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:470: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:483: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:532: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:552: node is not installed
+SKIPPED [1] tests/test_portal_mode.py:637: node is not installed
+SKIPPED [3] tests/test_portal_mode.py:642: node is not installed
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_settings_lane3.py:247: root ignores folder permissions: an unwritable folder cannot be tested as root
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+3809 passed, 237 skipped in 1132.18s (0:18:52)
+EXIT_CODE=0
+WALL_SECONDS=1133
