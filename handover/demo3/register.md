@@ -53,3 +53,5 @@ Q7 | reported 12:40Z closed: 196 tests pass under 3.13 BASE and STACK
 Q9 | reported 12:40Z closed: 1 mismatch (versions.md:9 collect flags); edge-case test x20 passed
 B1 | agent a089825..: lane3-fix-1 prose patch (builder) | 12:42Z | ~13:20Z, stop 14:00Z | running
 R1 | agent a502a2..: numbers audit (read-only) | 12:42Z | ~13:05Z, stop 13:30Z | running
+Q5b | reported 12:41Z closed: 5 fails (bad-value claims, line count, switch wording, extra key, portal pages)
+B2 | agent a5bf93..: lane3-fix-2 settings/docs patch builder | 12:45Z | ~13:30Z stop 14:00Z | running

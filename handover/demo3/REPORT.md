@@ -1,5 +1,26 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:46Z / 18:16 IST  HEARTBEAT 41 (Q5b reported; builder B2 started)
+**Load (measured 12:43Z):** loadavg 6.91 / 5.39 / 3.29 on 4 cores (high), 10 agents running. I start no more agents until the load is under 4.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof (serial, log outside git) | 12:31Z | serial ~12:58Z; xdist ~13:50Z | serial 2376 passed, 0 FAILED (about 61 percent) | running |
+| Q2 | identity fuzz | 12:31Z | ~13:30Z | campaign b running (seed 1202) | running |
+| Q3 | crash soak 300 rounds | 12:31Z | ~13:15Z | 125 rounds, 0 violations, 0 hangs | running |
+| Q4 | load numbers vs docs | 12:31Z | pass 1 ~13:30Z | measuring (NOISY) | running |
+| Q6b | cold reader tests/real-services/hubspot docs | 12:37Z | ~13:25Z | part A running | running |
+| Q8 | mutation check, 30 mutants of tools/pathconfine.py | 12:34Z | ~13:35Z | 10 of 30 done (M10 KILLED) | running |
+| B1 | BUILDER: lane3-fix-1 prose patch (Q5, Q6 findings) | 12:42Z | ~13:20Z | reproducing findings (12:42:32Z) | running |
+| B2 | BUILDER: lane3-fix-2 patch (Q5b findings: settings, scrub-tool line count, contract wording, /fake/outbox key, portal pages), fails-before tests, code only where clearly wrong | 12:46Z | ~13:30Z; stop 14:00Z | starting | running |
+| R1 | audit of numbers taken from invalid runs | 12:42Z | ~13:05Z | running | running |
+| Q5b | cold reader | - | - | reported (below), closed | closed |
+**Q5b RESULT (cold reader on settings.md, portal.md, why-this-code.md, contract.md, SECURITY.md; evidence/cold-reader-settings-portal.md):** FAILS: (1) settings.md line 3 says "a bad value stops the start with an error". These do not: `DESK_BIND="not an address"` starts with no error; `DESK_DB_PATH=""` and a broken or missing `DESK_REPLIES_PATH` file give a TRACEBACK with exit 1, not the documented exit 4; missing or too-short key and password files (`DESK_HUBSPOT_KEY_FILE`, `DESK_LIVE_KEY_FILE`, `DESK_SMTPP_PASSWORD_FILE`) start normally; (2) why-this-code.md line 24 says the scrub tool is "Under 100 lines" but tools/scrub_n8n_export.py has 205; (3) contract.md says the switch is "Hide email addresses" but the portal and portal.md say "Hide names and email addresses"; (4) `GET /fake/outbox` returns an extra `reminders` key that contract.md does not list; (5) portal.md names five pages but gives only `/ui/` (in-browser routes; curl cannot show them; no document-named URL returned 404). Everything else matched (README steps, defaults, error text, exit codes, Host/Origin rules, reply table, constants). Not run: browser masking and several error paths. These are REAL DEFECTS (a traceback where the exit code is documented is a code defect; the rest are document defects): not parked, builder B2 started the same hour as ordered (fails-before tests, evidence runner, then the independent egm reviewer).
+**Pipeline per patch (your order):** builder (B1, B2) -> evidence runner (full suite + hygiene on patched tree, log outside git) -> independent `egm:*` reviewer agents on the diff, the spec and the evidence (reports saved by me) -> `egm:egm-resolve` -> fixes -> repeat until none (code paths: no round cap if a security path; docs: max 2 rounds) -> `egm:egm-drift-report` before I call it done. Reviewers and the egm skills are called through the Agent and Skill tools (the plugin is loaded since the restart).
+
+ASK:
+1. B2 may change product code (exit 4 and a plain message for a bad `DESK_DB_PATH` or `DESK_REPLIES_PATH`; maybe a bad `DESK_BIND`). Your "CODE LAST" rule says fix the sentence if the sentence is wrong; B2 decides per case and writes the reasoning and a rung table. Do you want any such code change reviewed as a security path (no round cap)? Default: no round cap for the settings validation change (it touches how the desk refuses to start), 2 rounds for pure prose.
+2. B1 and B2 patch overlapping documents with each other and with the demo session's claims stack; each reports conflicts, neither resolves them. Default: yes.
+
 ## 2026-11-13 12:45Z / 18:15 IST  HEARTBEAT 40 (ORDER of 12:40Z: root causes, valid replacements, fixes; Q7 and Q9 reported)
 **Load (measured at 12:42Z):** loadavg 3.04 / 4.65 / 2.95 (4 cores), 7 pytest processes, 9 agents running. Heavy slots 3 of 3.
 | id | what it does | since | expected end | real progress now | state |
