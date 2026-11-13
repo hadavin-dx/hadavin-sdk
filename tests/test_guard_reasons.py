@@ -3,8 +3,8 @@
 A reason written in words only can be wrong and nobody sees it. Here every reason that this round gave (and the sites it
 covers) has a check that reads the code or runs it: a value that the reason calls an `int` is cast to `int` or declared
 `int`, a list that the reason calls "written in code" is a constant in the source, a label that the reason calls "a
-literal at every caller" is a literal at every caller. The reasons of earlier rounds are listed in `UNCHECKED`: the list
-may only get shorter (a test pins its size), and each of them is named in the notes of this batch as not yet checked by code.
+literal at every caller" is a literal at every caller. A reason that has no check is listed in `UNCHECKED`: the list may
+only get shorter (a test pins its size); at round 16 it holds `REDACTED` only, which waits for an owner decision.
 """
 
 from __future__ import annotations
@@ -21,12 +21,10 @@ from tests._guard_allowances import NEW_ALLOWED, REASONS
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
 
-# Reasons that have no check by code. The size may only go down (round 15: STOREID and URL are checked by data flow now).
-# Each has an exception that is allowed (the owner or another repository, not "later"):
-#   CARD      needs the card portal fixture that lives in the demo repositories (other repository); next step: copy the
-#             fixture into `tests/` when the demo repository publishes it, due when Q8a-1 closes
+# Reasons that have no check by code. The size may only go down (round 16: CARD is checked by `check_card`).
 #   REDACTED  the owner question q-q8a1-hide-ids decides what the redaction may leave; only the owner can close it
-UNCHECKED = {"CARD", "REDACTED"}
+#             (what a tool module may write into its own exception text before `error_reason` scrubs it)
+UNCHECKED = {"REDACTED"}
 
 
 @functools.cache
@@ -186,13 +184,16 @@ def check_literal() -> list[str]:
     return bad
 
 
-def _package_functions() -> set[str]:
-    return {
-        n.name
-        for p in SRC.rglob("*.py")
-        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
-        if isinstance(n, FUNCS)
-    }
+@functools.cache
+def _package_functions() -> dict[str, list[ast.AST]]:
+    """Every function of the package by name (a name can have several definitions: all of them are read)."""
+    out: dict[str, list[ast.AST]] = {}
+    for p in SRC.rglob("*.py"):
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+            if isinstance(n, FUNCS):
+                n._rel = p.relative_to(SRC).as_posix()  # type: ignore[attr-defined]
+                out.setdefault(n.name, []).append(n)
+    return out
 
 
 def _own_sentence(arg: ast.AST) -> bool:
@@ -203,10 +204,56 @@ def _own_sentence(arg: ast.AST) -> bool:
         return True
     if isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add):
         return _own_sentence(arg.left) and _own_sentence(arg.right)
+    if isinstance(arg, ast.List | ast.Tuple):
+        return all(_own_sentence(e) for e in arg.elts)
+    if isinstance(arg, ast.ListComp | ast.GeneratorExp):
+        return _own_sentence(arg.elt)
+    if isinstance(arg, ast.IfExp):
+        return _own_sentence(arg.body) and _own_sentence(arg.orelse)
     if isinstance(arg, ast.Call):
         name = getattr(arg.func, "id", getattr(arg.func, "attr", ""))
-        return name in _package_functions() and name not in {"str", "repr", "format", "ascii"}
+        if name in {"str", "repr", "format", "ascii"}:
+            return False
+        # the callee must resolve to function(s) of the package whose every `return` is a sentence of the package
+        defs = _package_functions().get(name)
+        return bool(defs) and all(_returns_own_sentence(d) for d in defs)
     return False
+
+
+def _returns_a_named_list(call: ast.AST) -> bool:
+    if not isinstance(call, ast.Call):
+        return False
+    defs = _package_functions().get(getattr(call.func, "id", getattr(call.func, "attr", "")))
+    return bool(defs) and all(
+        r.value is not None and isinstance(r.value, ast.Name)
+        for d in defs
+        for r in ast.walk(d)
+        if isinstance(r, ast.Return)
+    )
+
+
+def _returns_own_sentence(fn: ast.AST, depth: int = 0) -> bool:
+    if depth > 3:
+        return False
+    rets = [n for n in ast.walk(fn) if isinstance(n, ast.Return)]
+    if not rets:
+        return False
+    for r in rets:
+        v = r.value
+        if v is None:
+            return False
+        if isinstance(v, ast.Call):
+            nm = getattr(v.func, "id", getattr(v.func, "attr", ""))
+            defs = _package_functions().get(nm)
+            if (
+                nm in {"str", "repr", "format", "ascii"}
+                or not defs
+                or not all(_returns_own_sentence(d, depth + 1) for d in defs)
+            ):
+                return False
+        elif not _own_sentence(v):
+            return False
+    return True
 
 
 def check_listed() -> list[str]:
@@ -220,14 +267,34 @@ def check_listed() -> list[str]:
             k in ast.unparse(n) for n in ast.walk(tree) if isinstance(n, ast.stmt)
         ):
             bad.append(f"{m}: {k[:60]} is not found in the module")
-    # the lists themselves
-    for rel, name, var in (
-        ("app.py", "build", "problems"),
-        ("registry.py", "load_registry", "problems"),
-        ("registry.py", "_load_tools", "problems"),
-        ("config.py", "_anchor_refusals", "refused"),
-        ("registry.py", "_module_pin_problems", "out"),
-    ):
+    # the lists themselves, derived from the rows (Round 16, Issue 7): every list that a LISTED row joins or adds to
+    lists: set[tuple[str, str, str]] = set()
+    for m, k in _rows("LISTED"):
+        for node in _sites(m, k):
+            fn = _enclosing(m, node)
+            if fn is None:
+                continue
+            names = set()
+            for c in ast.walk(node):
+                if isinstance(c, ast.Call) and getattr(c.func, "attr", "") == "join" and c.args:
+                    names |= {n.id for n in ast.walk(c.args[0]) if isinstance(n, ast.Name)}
+            if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+                names.add(node.target.id)
+                v = node.value
+                if isinstance(v, ast.Name):  # `found += problems`: the other list is read too
+                    names.add(v.id)
+                if isinstance(
+                    v, ast.Call
+                ):  # `refused += _anchor_refusals(...)`: the list that function returns
+                    for d in _package_functions().get(_callee(v), []):
+                        for r in (n for n in ast.walk(d) if isinstance(n, ast.Return)):
+                            if isinstance(r.value, ast.Name):
+                                lists.add((d._rel, d.name, r.value.id))  # type: ignore[attr-defined]
+            for nm in names:
+                lists.add((m, fn.name, nm))
+    if not lists:
+        bad.append("no list was found in the LISTED rows: the check would pass by being empty")
+    for rel, name, var in sorted(lists):
         fn = _fn(
             rel, name
         )  # a missing function fails the check: the list it guards is no longer read
@@ -242,6 +309,17 @@ def check_listed() -> list[str]:
                 arg = n.args[-1]
                 if not _own_sentence(arg):
                     bad.append(f"{rel}:{n.lineno}: {var}.{n.func.attr} of {ast.unparse(arg)[:50]}")
+            if (
+                isinstance(n, ast.AugAssign)
+                and isinstance(n.target, ast.Name)
+                and n.target.id == var
+                and not _own_sentence(n.value)
+                and not isinstance(n.value, ast.Name)  # another list: read by its own name (above)
+                and not _returns_a_named_list(
+                    n.value
+                )  # a package function that returns a list: read in that function
+            ):
+                bad.append(f"{rel}:{n.lineno}: {var} += {ast.unparse(n.value)[:50]}")
     return bad
 
 
@@ -879,7 +957,7 @@ def check_classnames() -> list[str]:
                 )
     for mod, site in _rows("CLASSNAMES"):
         if not _sites(mod, site):
-            bad.append(f"{mod}: {site[:50]} is not found in the module")
+            bad.append(f"CLASSNAMES row of {mod}: {site[:50]} is not found in the module")
         text = site
         if "str(exc)" in text or "safe_head" in text or "exc.args" in text:
             bad.append(f"{mod}: {site}: prints the text of an error")
@@ -979,6 +1057,24 @@ def check_mignames() -> list[str]:
         for n in names
         if not re.fullmatch(r"\d{3,4}_[a-z0-9_]+\.sql", n)
     ]
+    # ledger rows come from the database: only a name shaped like a shipped file is shown, the rest is counted
+    ledger = migrate._LEDGER_NAME
+    bad += [
+        f"{n}: a shipped name is not accepted as a ledger name"
+        for n in names
+        if not ledger.fullmatch(n[:-4])
+    ]
+    hostile = [
+        "0001_x" + "\n" + "secret",
+        "../etc",
+        "payments-prod",
+        "0001_x y",
+        "a" * 90,
+        "0001_" + "A" * 3,
+    ]
+    bad += [
+        f"a hostile ledger name is accepted: {h[:10]!r}" for h in hostile if ledger.fullmatch(h)
+    ]
     return bad
 
 
@@ -996,7 +1092,9 @@ def check_fields() -> list[str]:
         return (
             []
             if (marker not in shown and "position 2" in shown and "alpha" in shown)
-            else [f"text: {shown[:200]}"]
+            else [
+                f"FIELDS: an unknown setting shows its key, or the position is missing: {shown[:200]}"
+            ]
         )
     return ["an unknown setting was accepted"]
 
@@ -1022,7 +1120,19 @@ def check_arg() -> list[str]:
 # --- round 14: the reasons that had no check, and the checks that read text instead of the tree ------------------------
 
 FUNCS = (ast.FunctionDef, ast.AsyncFunctionDef)
-SHOWN = {"print", "debug", "info", "warning", "error", "exception", "critical", "add_note"}
+SHOWN = {
+    "print",
+    "debug",
+    "info",
+    "warning",
+    "warn",
+    "error",
+    "exception",
+    "critical",
+    "fatal",
+    "log",
+    "add_note",
+}
 _SITE_CACHE: dict[str, tuple[dict, dict]] = {}
 
 
@@ -1105,6 +1215,18 @@ def _declared_numbers() -> set[str]:
                         and ast.unparse(n.returns) in _NUMERIC_NOTES
                     ):
                         names.add(n.name)  # a property or a method that returns a number
+                    if isinstance(
+                        n, FUNCS
+                    ):  # `self.x: Decimal = ...` in a method declares the field too
+                        for m in ast.walk(n):
+                            if (
+                                isinstance(m, ast.AnnAssign)
+                                and isinstance(m.target, ast.Attribute)
+                                and isinstance(m.target.value, ast.Name)
+                                and m.target.value.id == "self"
+                                and ast.unparse(m.annotation) in _NUMERIC_NOTES
+                            ):
+                                names.add(m.target.attr)
     return names
 
 
@@ -1126,6 +1248,24 @@ def _non_numeric_names() -> frozenset[str]:
                         and ast.unparse(n.annotation) not in _NUMERIC_NOTES
                     ):
                         names.add(n.target.id)
+    return frozenset(names)
+
+
+@functools.cache
+def _number_maps() -> frozenset[str]:
+    """Attribute names declared `dict[..., int | float | Decimal]` (a table of counters or of money)."""
+    names = set()
+    for p in SRC.rglob("*.py"):
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
+            if (
+                isinstance(n, ast.AnnAssign)
+                and isinstance(n.target, ast.Attribute)
+                and re.fullmatch(
+                    r"(?:dict|defaultdict)\[.*,\s*(?:int|float|Decimal)\]",
+                    ast.unparse(n.annotation),
+                )
+            ):
+                names.add(n.target.attr)
     return frozenset(names)
 
 
@@ -1158,11 +1298,13 @@ def _own_declaration(cls: ast.ClassDef, name: str) -> bool | None:
     return None
 
 
-_NUMBER_FUNCS = {
-    "len", "int", "round", "abs", "float", "count", "log", "comb", "Decimal", "start", "end",
-}  # fmt: skip
-# `min`, `max` and `sum` are numbers only when their arguments are numbers (`_numeric` reads them); `index`, `find` and
-# `rfind` are not listed (a method of that name can return anything).
+# Round 16 (Issue 3e): a number function is told by what it is, not by its name alone. A built-in that always gives a
+# number (`len`, `int`, `round`, `abs`, `float`, `ord`) when it is called as a bare name; `Decimal` when the module
+# imports it from `decimal`; `math.log`, `math.comb` and the like through the module `math`. A method called `count`,
+# `start`, `end`, `index`, `find` is not a number by its name (a method of that name can return anything).
+_NUMBER_BUILTINS = {"len", "int", "round", "abs", "float", "ord"}
+_MATH_NUMBERS = {"log", "comb", "ceil", "floor", "sqrt", "log2", "log10"}
+# `min`, `max` and `sum` are numbers only when their arguments are numbers (`_numeric` reads them).
 
 
 def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0) -> bool:
@@ -1205,12 +1347,23 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                 )
                 for a in e.args
             )
-        return (
-            name in _NUMBER_FUNCS
-            or name.startswith("purge_")
-            or name in declared
-            or name in _NUMBER_FORMATTERS
+        by_form = (
+            (isinstance(e.func, ast.Name) and name in _NUMBER_BUILTINS)
+            or (isinstance(e.func, ast.Name) and name == "Decimal")
+            or (
+                isinstance(e.func, ast.Attribute)
+                and isinstance(e.func.value, ast.Name)
+                and e.func.value.id == "math"
+                and name in _MATH_NUMBERS
+            )
         )
+        return (
+            by_form or name.startswith("purge_") or name in declared or name in _NUMBER_FORMATTERS
+        )
+    if isinstance(e, ast.Subscript) and isinstance(e.value, ast.Attribute):
+        return (
+            e.value.attr in _number_maps()
+        )  # an item of a table declared as one of numbers or money
     if isinstance(e, ast.Attribute):
         cls = _CTX["cls"]
         if cls is not None and isinstance(e.value, ast.Name) and e.value.id == "self":
@@ -1278,7 +1431,21 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     parts: list[ast.AST] = []
     if isinstance(node, ast.Expr):
         node = node.value
-    if isinstance(node, ast.AugAssign):
+    if isinstance(node, ast.Return) and node.value is not None:
+        node = node.value
+    if (
+        isinstance(node, ast.Call)
+        and getattr(node.func, "id", "") == "format"
+        and len(node.args) == 2
+        and isinstance(node.args[1], ast.Constant)
+        and node.args[1].value == "f"
+    ):
+        parts = [node.args[0]]  # `format(number, "f")` shows a number in fixed-point form
+    elif (
+        isinstance(node, ast.Call) and getattr(node.func, "id", "") == "str" and len(node.args) == 1
+    ):
+        parts = [node.args[0]]  # `str(number)`
+    elif isinstance(node, ast.AugAssign):
         parts = [node.value]
     elif isinstance(node, ast.JoinedStr):
         for v in node.values:
@@ -1784,6 +1951,73 @@ def _callee(c: ast.Call) -> str:
     return getattr(c.func, "id", getattr(c.func, "attr", ""))
 
 
+_PASS_THROUGH = {
+    "str",
+    "repr",
+    "format",
+    "ascii",
+    "bytes",
+    "bytearray",
+    "encode",
+    "decode",
+    "strip",
+    "lower",
+    "upper",
+    "join",
+    "quote",
+}
+
+
+def _flowing(value: ast.AST) -> set[str]:
+    """The names whose value can BE the value of the expression: through names, attributes, items, f-strings, operators,
+    conditionals and the conversions of `_PASS_THROUGH`; not through the result of any other call (the reply of a function
+    that was handed a token is not the token)."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST) -> None:
+        if isinstance(n, ast.Call):
+            if _callee(n) in _PASS_THROUGH:
+                for a in [*n.args, *(k.value for k in n.keywords)]:
+                    walk(a)
+                if isinstance(n.func, ast.Attribute):
+                    walk(n.func.value)
+            return
+        if isinstance(n, ast.Attribute | ast.Name):
+            out.update(_carriers(n))
+            return
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(value)
+    return out
+
+
+def _aliases(scope: ast.AST, carried: set[str]) -> set[str]:
+    """Names that the function binds from an expression that holds a carried name (assignment, annotated assignment,
+    walrus, `for` target over a carried name, `with ... as`), repeated until no new name is found."""
+    found: set[str] = set()
+    changed = True
+    while changed:
+        changed = False
+        known = carried | found
+        for n in ast.walk(scope):
+            pairs: list[tuple[ast.AST, ast.AST | None]] = []
+            if isinstance(n, ast.Assign):
+                pairs = [(t, n.value) for t in n.targets]
+            elif isinstance(n, ast.AnnAssign | ast.NamedExpr | ast.AugAssign):
+                pairs = [(n.target, n.value)]
+            elif isinstance(n, ast.For):
+                pairs = [(n.target, n.iter)]
+            for target, value in pairs:
+                if value is None or not (_flowing(value) & known):
+                    continue
+                for t in ast.walk(target):
+                    if isinstance(t, ast.Name) and t.id not in known and not t.id[:1].isupper():
+                        found.add(t.id)
+                        changed = True
+    return found
+
+
 def _flow_check(reason: str) -> list[str]:
     """Data flow, by function: the value of the row is put in a query, a list, a name or a request, never in a message. No
     name that carries it (a local name or a dotted attribute such as `req.approval_id`) is in a raise, a print or a log call
@@ -1800,6 +2034,9 @@ def _flow_check(reason: str) -> list[str]:
             carried = {
                 c for c in _carriers(node) if not c[:1].isupper() and c not in {"self", "sql"}
             }
+            # a name bound from a carried name (`alias = req.approval_id`, `text = f"{alias}"`) carries the value too
+            # (Round 16, Issue 7): followed to a fixed point over the single assignments of the function
+            carried |= _aliases(scope, carried)
             # a call that hands out a secret (`self._key()`) is a carrier by its name too
             keyed = {
                 _callee(c)
@@ -1862,60 +2099,374 @@ def check_keptid() -> list[str]:
     return bad
 
 
+def _unfiltered_attrs(node: ast.AST) -> set[str]:
+    """Attribute names read by the expression outside a hiding filter (`shown_id`, `status_text`, `shown_name`)."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST) -> None:
+        if isinstance(n, ast.Call) and _callee(n) in _HIDING:
+            return
+        if isinstance(n, ast.Attribute):
+            out.add(n.attr)
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(node)
+    return out
+
+
 def check_closed() -> list[str]:
-    """The fields of a stored model that the rows read are declared closed: a `RunState`, an `ApprovalStatus` (a
-    `Literal` of words) or an `int`."""
+    """A CLOSED row is a site that reads a field of a stored model. Every attribute the row reads (`x.state`,
+    `req.status`, `req.current_step`) must be a field that some model of the package declares as a closed set of words
+    (an enum, or a `Literal` of strings) or as an `int`: the fields are taken FROM THE ROWS, not from a fixed list."""
     import enum
 
-    from hadavin_sdk.models import ApprovalRequest, Run
+    from hadavin_sdk import models
 
     bad = []
-    for cls, name in (
-        (Run, "state"),
-        (ApprovalRequest, "status"),
-        (ApprovalRequest, "current_step"),
-    ):
-        hint = typing.get_type_hints(cls)[name]
-        closed = (
-            hint is int
-            or (isinstance(hint, type) and issubclass(hint, enum.Enum))
-            or typing.get_origin(hint) is typing.Literal
-        )
-        if not closed or (
-            typing.get_origin(hint) is typing.Literal
-            and not all(isinstance(a, str) for a in typing.get_args(hint))
-        ):
-            bad.append(f"{cls.__name__}.{name} is declared {hint}, not a closed set or an int")
+    fields: dict[str, list] = {}
+    for cls in vars(models).values():
+        if isinstance(cls, type) and hasattr(cls, "model_fields"):
+            try:
+                hints = typing.get_type_hints(cls)
+            except Exception as exc:  # noqa: BLE001
+                bad.append(f"{cls.__name__}: type hints cannot be read ({type(exc).__name__})")
+                continue
+            for name in cls.model_fields:
+                fields.setdefault(name, []).append((cls.__name__, hints.get(name)))
+    rows = _rows("CLOSED")
+    if not rows:
+        bad.append("no CLOSED row: the reason is not needed")
+    for m, k in rows:
+        nodes = _sites(m, k)
+        if not nodes:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+        for node in nodes:
+            for attr in _unfiltered_attrs(node):
+                if attr not in fields:
+                    continue  # a method or a module name: not a field of a stored model
+                for cname, hint in fields[attr]:
+                    closed = hint is int or (isinstance(hint, type) and issubclass(hint, enum.Enum))
+                    if typing.get_origin(hint) is typing.Literal:
+                        closed = all(isinstance(a, str) for a in typing.get_args(hint))
+                    if not closed:
+                        bad.append(
+                            f"{m}: {k[:40]}: {cname}.{attr} is declared {hint}, not a closed set or an int"
+                        )
     return bad
 
 
 def check_filename() -> list[str]:
-    """An event id is used as a file name in the local audit folder: the model refuses an id that is not a plain name."""
+    """An event id is used as a file name in the local audit folder: the model refuses an id that is not a plain name,
+    refuses without quoting the id, and an unexpected error is a failure here, never a silent pass."""
     from pydantic import ValidationError
 
     from hadavin_sdk.models import AuditEvent
 
     base = {"run_id": "r", "domain": "d", "operation": "o", "principal": "p", "source": "s"}
     bad = []
-    for ok in ("evt-" + "a" * 32, "abc_1:2-3"):
+    for ok in ("evt-" + "a" * 32, "abc_1-2-3", "con-x", "a"):
         try:
             AuditEvent(event_id=ok, **base)
         except ValidationError:
             bad.append(f"a plain event id is refused: {ok}")
-        except TypeError:
-            return []  # the model needs other fields: the real check is in the test file of this round
-    for hostile in ("../x", "a/b", "a\\b", ".hidden", "a b", "", "x" * 129, "a\x00b", "a.json"):
+    hostile_ids = (
+        "../x", "a/b", "a\\b", ".hidden", "a b", "", "x" * 129, "a\x00b", "a.json", "abc\n", "a:b", "ABC", "nul", "com1", "lpt9",
+    )  # fmt: skip
+    for hostile in hostile_ids:
         try:
             AuditEvent(event_id=hostile, **base)
-        except ValidationError:
+        except ValidationError as exc:
+            text = str(exc)
+            if "input_value" in text or (len(hostile) > 2 and hostile.strip() and hostile in text):
+                bad.append(f"the refusal of an event id quotes it: {hostile!r}")
             continue
-        except Exception:  # noqa: BLE001 - the model needs other fields: judged by the test file of this round
-            return []
         bad.append(f"an event id that is no plain name is accepted: {hostile!r}")
     return bad
 
 
+def check_handoff() -> list[str]:
+    """A HANDOFF row stores an error object in a local dict. In the function that owns the dict, the key that holds the
+    error is read only by a `raise` (directly, or through a name that is only raised, tested by `isinstance` or named
+    by `type(...).__name__`); the dict is not printed, logged, formatted or returned whole."""
+    bad = []
+    for m, k in _rows("HANDOFF"):
+        found = _sites(m, k)
+        if not found:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+        for node in found:
+            if not (
+                isinstance(node, ast.Assign)
+                and isinstance(node.targets[0], ast.Subscript)
+                and isinstance(node.targets[0].value, ast.Name)
+                and isinstance(node.targets[0].slice, ast.Constant)
+            ):
+                bad.append(f"{m}: {k[:50]} is not a store into a keyed local dict")
+                continue
+            box, key = node.targets[0].value.id, node.targets[0].slice.value
+            owner = [a for a in _up(m, node) if isinstance(a, FUNCS)][-1]
+            for n in ast.walk(owner):
+                if not (isinstance(n, ast.Name) and n.id == box and isinstance(n.ctx, ast.Load)):
+                    continue
+                par = next(_up(m, n))
+                if isinstance(par, ast.Compare):
+                    continue  # `"error" in box`
+                if not isinstance(par, ast.Subscript):
+                    bad.append(f"{m}:{n.lineno}: {box} is used as {ast.unparse(par)[:40]}")
+                    continue
+                if not (isinstance(par.slice, ast.Constant) and par.slice.value == key):
+                    continue  # another key: not the error
+                if isinstance(par.ctx, ast.Store):
+                    continue  # the store itself
+                use = next(_up(m, par))
+                if isinstance(use, ast.Raise):
+                    continue
+                if isinstance(use, ast.Assign) and isinstance(use.targets[0], ast.Name):
+                    held = use.targets[0].id
+                    for u in ast.walk(owner):
+                        if isinstance(u, ast.Name) and u.id == held and isinstance(u.ctx, ast.Load):
+                            up = next(_up(m, u))
+                            ok = (
+                                isinstance(up, ast.Raise)
+                                or (
+                                    isinstance(up, ast.Call)
+                                    and getattr(up.func, "id", "") in {"isinstance", "type"}
+                                )
+                                or (isinstance(up, ast.Attribute) and up.attr == "__name__")
+                            )
+                            if not ok:
+                                bad.append(
+                                    f"{m}:{u.lineno}: {held} (the stored error) is used as {ast.unparse(up)[:40]}"
+                                )
+                    continue
+                bad.append(f"{m}:{n.lineno}: the stored error is used as {ast.unparse(use)[:40]}")
+    return bad
+
+
+def _filter_behaviour(name: str) -> list[str]:
+    """`status_text` shows only a real `int`; `shown_id` shows only the shape of an id the code makes. Each is run with
+    hostile values (a text, an `int` or `str` subclass with its own `__str__`/`__repr__`, a bool)."""
+    from hadavin_sdk import errors
+
+    class Loud(str):
+        def __str__(self) -> str:
+            return "loud-text"
+
+        __repr__ = __str__
+
+    class LoudInt(int):
+        def __str__(self) -> str:
+            return "loud-text"
+
+        __repr__ = __str__
+
+    bad = []
+    if name == "status_text":
+        for v in ("401 secret", Loud("x"), True, None, 4.5, b"1"):
+            out = errors.status_text(v)
+            if out != "?":
+                bad.append(f"status_text shows {type(v).__name__}: {out[:20]!r}")
+        if errors.status_text(LoudInt(404)) != "404" or errors.status_text(200) != "200":
+            bad.append("status_text does not show a plain status number as its digits")
+    else:
+        good = "run-" + "a" * 32
+        if errors.shown_id(good) != good:
+            bad.append("shown_id does not show an id of the shape the code makes")
+        got = errors.shown_id(
+            Loud(good)
+        )  # the shape is the content; a subclass's own text methods are not used
+        if got != good or type(got) is not str:
+            bad.append(f"shown_id uses the text methods of a str subclass: {got[:20]!r}")
+        for v in ("secret text", good + " x", "RUN-" + "a" * 32, good + "\n", None, 7):
+            out = errors.shown_id(v)
+            if out != "?":
+                bad.append(f"shown_id shows {type(v).__name__}: {out[:20]!r}")
+    return bad
+
+
+def check_filter() -> list[str]:
+    """A FILTER row is the return of `shown_name`: the first statement of the function refuses (returns the sentence
+    `NOT_SHOWN`) every name that `word_like` does not accept, so only a word-like name reaches the row."""
+    bad = []
+    for m, k in _rows("FILTER"):
+        if not _sites(m, k):
+            bad.append(f"{m}: {k[:50]} is not found in the module")
+        for node in _sites(m, k):
+            fn = _enclosing(m, node)
+            if fn.name in {"status_text", "shown_id"}:
+                bad += _filter_behaviour(fn.name)
+                continue
+            body = [
+                s
+                for s in fn.body
+                if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))
+            ]
+            first = body[0] if body else None
+            ok = (
+                isinstance(first, ast.If)
+                and isinstance(first.test, ast.UnaryOp)
+                and isinstance(first.test.op, ast.Not)
+                and isinstance(first.test.operand, ast.Call)
+                and getattr(first.test.operand.func, "id", "") == "word_like"
+                and len(first.body) == 1
+                and isinstance(first.body[0], ast.Return)
+                and ast.unparse(first.body[0].value) == "NOT_SHOWN"
+            )
+            if not ok:
+                bad.append(
+                    f"{m}: {fn.name} does not start by refusing a name that is not word-like"
+                )
+    return bad
+
+
+def check_card() -> list[str]:
+    """Round 16 (Issue 4): the card producers put only the fields of the plan that the approver must read in the card
+    and in the text sent to the chat channel. The test fills EVERY other field of `Plan` and `GateDecision` (the list is
+    taken from the models, so a field added later is covered at once) with a canary text, renders the real shadow and abstain cards,
+    posts them through the real channel code with a recording stand-in for the network, and looks for the canary in the
+    card text, the blocks and the body that would go to the channel. The fields the card shows on purpose are the plan's
+    action, its version, its inputs, its system, its expected outcome, the called ids it cites and the rule id. The half that
+    needs the demo repositories' own card fixture is ticket Q8a1-CARD-FIXTURE (handover/tickets, due 2026-11-19)."""
+    import json
+
+    from hadavin_sdk.approvals import cards
+    from hadavin_sdk.approvals.slack_channel import SlackChannel
+    from hadavin_sdk.models import GateDecision, Plan, Target
+
+    shown_plan = {
+        "run_id",
+        "action_id",
+        "action_version",
+        "inputs",
+        "target",
+        "expected_outcome",
+        "risk_class",
+    }
+    shown_decision = {
+        "run_id",
+        "plan_hash",
+        "outcome",
+        "rule_id",
+        "ts",
+        "schema_version",
+    }  # every field the check fills or ignores
+    canary = "zq-card-" + "Kx7" + "-canary"
+    plan_fields: dict = {
+        "run_id": "run-" + "a" * 32,
+        "agent_id": "agent-" + canary,
+        "action_id": "create_draft_record",
+        "action_version": 1,
+        "risk_class": "reversible",
+        "inputs": {"title": "Desk"},
+        "target": Target(system="fixture-records", ref="ref-" + canary),
+        "idempotency_key": "idem-" + canary,
+        "expected_outcome": "one draft record",
+        "plan_id": "pln-" + canary,
+    }
+    bad = []
+    extra = {n for n in Plan.model_fields if n not in plan_fields and n not in shown_plan}
+    extra -= {
+        "created_at",
+        "schema_version",
+    }  # filled by the model itself (a clock, a number written in code)
+    if extra:
+        bad.append(f"Plan has fields the check does not fill: {sorted(extra)}")
+    plan = Plan(**plan_fields)
+    decision = GateDecision(
+        run_id=plan.run_id,
+        plan_hash="h" * 8 + canary,
+        outcome="needs_approval",
+        rule_id="class.reversible",
+    )
+    extra = {n for n in GateDecision.model_fields if n not in shown_decision}
+    if extra:
+        bad.append(f"GateDecision has fields the check does not fill: {sorted(extra)}")
+
+    sent: list[dict] = []
+
+    class Recording(SlackChannel):
+        def _call(self, method, body):
+            sent.append(body)
+            return {"ok": True, "ts": "1.2", "channel": "C0"}
+
+    ch = Recording("C0", "tok-" + canary, "sig-" + canary)
+    shown = [
+        ("shadow", cards.render_shadow(plan, decision, ["call-1"], diagnosis="a plain diagnosis")),
+        ("abstain", cards.render_abstain(plan.run_id, "no_plan", ["call-1"])),
+    ]
+    for label, card in shown:
+        if not ch.post_card(card).ok:
+            bad.append(f"the {label} card was not posted")
+        body = json.dumps([card.text, card.blocks, sent[-1] if sent else None], default=str)
+        if canary in body:
+            bad.append(
+                f"the {label} card or its channel message holds a field that is not shown on purpose"
+            )
+        if label == "shadow" and not (
+            "create_draft_record" in card.text and "one draft record" in card.text
+        ):
+            bad.append(
+                "the shadow card does not show the action and the expected outcome: the check would pass by being empty"
+            )
+        if plan.run_id in card.text:
+            bad.append(
+                f"the {label} card text shows the run id (it belongs in the button values only)"
+            )
+    # the approval request: the summary shows the plan's agent, class, action, inputs and outcome (the approver reads who
+    # asks, so this plan's agent is a plain name); the request's chain id and requester, and the plan's id, key and target ref, are not shown
+    from datetime import UTC, datetime
+
+    from hadavin_sdk.approvals.requests import summary
+    from hadavin_sdk.models import ApprovalRequest, ChainStep
+
+    req = ApprovalRequest(
+        run_id=plan.run_id,
+        plan_hash="0" * 64,
+        risk_class="reversible",
+        chain_id="chain-" + canary,
+        steps=[ChainStep(approver_ids=["slack:U123ABC"], timeout_s=60)],
+        step_expires_at=datetime(2030, 1, 1, tzinfo=UTC),
+        requested_by="svc:" + canary,
+        summary=summary(
+            Plan(**{**plan_fields, "agent_id": "test-agent"})
+        ),  # the summary names the agent on purpose
+        channel_ref="C0|1.2",  # the channel's own address of the message: it is what `update` sends
+    )
+    extra = {
+        n
+        for n in ApprovalRequest.model_fields
+        if n
+        not in {
+            "approval_id", "run_id", "plan_hash", "risk_class", "chain_id", "steps", "current_step", "status",
+            "step_expires_at", "requested_by", "summary", "created_at", "sent_at", "channel_ref", "schema_version",
+        }
+    }  # fmt: skip
+    if extra:
+        bad.append(f"ApprovalRequest has fields the check does not fill: {sorted(extra)}")
+    sent.clear()
+    ch.send(req, ["slack:U123ABC"])
+    ch.update(req)
+    if canary in json.dumps(sent, default=str).replace("tok-" + canary, "").replace(
+        "sig-" + canary, ""
+    ):
+        bad.append(
+            "the approval request or its channel message holds a field that is not shown on purpose"
+        )
+    if "asks to run create_draft_record" not in req.summary:
+        bad.append("the summary does not show the action: the check would pass by being empty")
+    # every CARD row is a line of one of the two producers: not found means the row is stale
+    for m, k in _rows("CARD"):
+        if m not in {"approvals/cards.py", "approvals/slack_channel.py", "approvals/requests.py"}:
+            bad.append(f"{m}: a CARD row outside the card producers")
+        if not _sites(m, k):
+            bad.append(f"{m}: {k[:50]} is not found in the module")
+    return bad
+
+
 CHECKS = {
+    "CARD": check_card,
+    "HANDOFF": check_handoff,
+    "FILTER": check_filter,
     "STOREID": check_storeid,
     "URL": check_url,
     "KEPTID": check_keptid,
@@ -1974,7 +2525,9 @@ def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
-    assert len(UNCHECKED) <= 2  # round 15: may only go down (round 14: 4, round 13: 12)
+    assert (
+        len(UNCHECKED) <= 1
+    )  # may only go down (round 16: 1, round 15: 2, round 14: 4, round 13: 12)
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))
