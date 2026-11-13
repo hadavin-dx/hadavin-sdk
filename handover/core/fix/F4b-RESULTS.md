@@ -1,0 +1,24 @@
+FAILED/UNCERTAIN FIRST: (1) The recipe in load_tools/README.md was run twice by me (first as a script, then the exact block extracted from the final README) on loopback only; no test runs it, and the page now says so. (2) CI change not proven on the real runner: I added DPLD_REQUIRE_COUNT=1 to lint.yml and sonar.yml; it passes here with the plain last line, but I could not run GitHub Actions. If the runner prints another last line, that CI step goes red on purpose. (3) Windows: nothing run; the docs now say "only the Linux form was run". (4) The 14-file run printed a kernel out-of-memory notice; the run still ended "1250 passed, 32 skipped" (skips: gitleaks missing, playwright missing, one Python-3.13-only test), but a killed worker cannot be ruled out. Full suite not run. gitleaks scan not run (not installed).
+
+Bug class: a documentation sentence not checked against the tool or code (standard: the page's own claim vs `pytest --collect-only`, desk.py receipts upsert, the recipe's real output).
+
+Findings 1-11
+1 FIXED. "changes nothing" about a repeated request was in README.md (line 20 area, 37, 62, 79, 96) and docs/tests.md P1(b). All now say: no second lead, no second email, it only uses one receipt number and adds one to that request's count of arrivals (code: desk.py:1347-1362, ON CONFLICT ... attempts = attempts + 1). Repo grep (README, docs/, load_tools/, n8n docs, demo_only docs, contract.md, versions.md) found no other line about a repeat with that claim (other "changes nothing" hits are about other things: route retries, later decisions, step moves; left). Pinned by test_no_page_says_that_sending_a_request_again_changes_nothing (scans README, versions.md, load_tools/README.md, docs/*.md).
+   Not changed, flagged: contract.md:303 says a replay of a new request drives a follow-up if due; so "uses one receipt number and one attempt" is not the whole effect of a replay; I did not add that to the README.
+2 FIXED. load_tools/README.md recipe: fresh folder (rm -rf data/load), own book data/load/desk.sqlite3, own ports (18765/18766/12525), wait_for each server, bounded drain wait, kill $(jobs -p). Run on 2026-11-13 under `unshare -n` + lo_up-q4g.py: 30 requests sent, 24 distinct request numbers, 21 leads, 21 mails at the catcher, ALL 7 CHECKS HOLD, exit 0 (out/F4b/recipe-run.log). Claim reworded: "run once as written on 2026-11-13 ... not repeated by any test".
+3 FIXED. -qq test now asserts the two phrases. Mutant (delete "with no total line"): 1 failed, 10 passed (out/F4b/mutants.log); before, it survived.
+4 FIXED. New switch DPLD_REQUIRE_COUNT (DPLD_REQUIRE_SCAN already exists but means the secret scan, so not reused): any non-empty value turns the three skips into failures. Shown: unset -> Skipped, set -> Failed (mutants.log). Documented in docs/settings.md. CI answer: lint.yml and sonar.yml install only requirements-dev.txt; no `playwright install` step exists, so browser tests skip in CI; the collector's last line was not shown to change; I set the switch in both workflows.
+5 FIXED. Failure message now prints both numbers and the exact sentence to write (mutants.log mutant 2).
+6 FIXED by stating less: docs/tests.md and crash_desk.py say only the Linux form was run; new test pins that the Windows text is the Linux entries joined by ";" and carries that sentence. Not run on Windows.
+7 FIXED. Probe test name is now "qzx9 not-a-name 7kv".
+8 FIXED. README "What you will see" bullet rewritten in plain words (no SQLite).
+9 FIXED. README test-count sentence and docs/tests.md "2329/135" bullet say "an earlier commit"; test_every_old_test_count_is_named_as_from_an_earlier_commit pins 2516/2465/2464 lines.
+10 FIXED (the pass counts named a date, not a commit): versions.md and docs/limits.md now say "on an earlier commit, not named here; the commit of this tree was not run in full" (I do not know the commit); pinned.
+11 VERIFIED: --assume-yes only with --dry-fakes is true (run_real_check.py:1102, 1108, 1245); "F1 to F6" exist in the function comment (run_real_check.py:335-347). Other lines of real-services.md not checked.
+
+Count: collector now prints "3993 tests collected" in 97 files (-q: one line per test plus this total; -qq: one line per file, no total; run both). docs/tests.md says 3993 (my 4 new tests added 4 to 3989).
+
+Fails before / passes after: out/F4b/failing-before.log (baseline docs + new tests, DPLD_REQUIRE_COUNT=1): 5 failed, 6 passed. out/F4b/passing-after.log: docs file + hygiene: 31 passed, 4 skipped, rc 0. out/F4b/fourteen-files.log: 14 doc-reading files incl. hygiene: 1250 passed, 32 skipped.
+Ruff 0.17.4: `ruff check` All checks passed; `ruff format --check` 2 files already formatted (tests/test_docs_match_tools.py, scripts/crash_desk.py; project line length 100 from pyproject).
+Patch: out/F4b/fix.patch (git diff 7b1cfb4).
+NOT RUN: full suite, mutation run, gitleaks, mypy, bandit, Windows/macOS, GitHub Actions, rest of real-services.md.

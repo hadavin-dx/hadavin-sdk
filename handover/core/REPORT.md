@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:11Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F4b | builder round 2: fix all 9 findings of R4 | resolve order | 13:24Z | done 13:11Z | round 2 of 2 | DONE (builder's claims, unverified; handover/core/fix/F4b-fix.patch): all 9 fixed, 10 and 11 verified; load_tools recipe run once on loopback with its new ports: 30 requests, "ALL 7 CHECKS HOLD"; new switch DPLD_REQUIRE_COUNT (not DPLD_REQUIRE_SCAN, which already means the secret scan) makes a skipped count check a failure; CI answer: both workflows install only requirements-dev.txt, no playwright install, so in CI the count check would have skipped silently. TEST COUNT now 3993 in 97 files. Fails-before 5 failed / 6 passed; 14 files 1250 passed 32 skipped; ruff clean. UNCERTAIN (builder's words): the CI switch is not proven on the real runner; the 14-file run printed a kernel out-of-memory notice; Windows not run. NOT fixed on purpose: contract.md:303 does not mention that a replay of a new request can drive a due follow-up. **This patch edits .github/workflows/lint.yml and sonar.yml: it is a patch only, nothing applied; the lead and owner decide.** | V4b evidence |
+| V4b | independent evidence runner for F4b (fails-before, passes-after, 8 mutants, load_tools recipe re-run) | proof | 13:11Z | 45 min | 1 | RUNNING | then short round-2 review |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| D1 | full suite + docs patch | docs patch safe? | 12:38Z | late, about 13:30Z | 1 | RUNNING | compare |
+
+FAILURES AND RETRIES: none new. The contract.md:303 gap is NOT left as a limitation: it goes into a small F4c fix with the next docs round (my slip: I should have told F4b to fix it; the builder reported it and I am not relaying it).
+LOAD: 5 agents + D1 on 4 cores.
+ASK: none.
+
+
 ## REPORT (container clock 13:05Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
