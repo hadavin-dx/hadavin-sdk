@@ -2321,6 +2321,21 @@ def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> No
     assert held_services_found(Raises()) == ("held (unreadable)",)  # type: ignore[arg-type]
 
 
+def test_a_class_whose_name_raises_when_read_is_counted_with_a_fixed_label() -> None:
+    """New test, fails on the old code only if the label read is outside the try (the try is the choke point that
+    turns any error while a held object is looked at into a fixed label)."""
+
+    class Meta(type):
+        @property
+        def __name__(cls) -> str:  # type: ignore[override]
+            raise RuntimeError("the name of a class that raises")
+
+    odd = Meta("Odd", (), {})
+    assert held_services_found({"channel": odd()}) == ("held (unreadable)",), (
+        "the name of a class that raises was not counted with a fixed label"
+    )
+
+
 # class 6: a refused request is logged at most once a minute per set of services
 
 
