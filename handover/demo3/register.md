@@ -85,3 +85,8 @@ B3c | agent a7bcc5..: lane3-fix-3 r3 minors | 13:06Z | ~13:30Z stop 13:50Z | run
 Q3c | agent ab9f5d..: blind-mail soak | 13:03Z | ~14:00Z stop 14:20Z | running
 Q10 | agent a38c40..: flake chase PR12 E marks | 13:04Z | ~13:40Z stop 14:00Z | running
 B3c | reported 13:10Z closed: lane3-fix-3-r3.patch sha b272b9a8
+Q2 | reported 13:08Z closed: 0 violations; UNDOCUMENTED casefold class (861/867 variants)
+B2 | reported 13:09Z closed: lane3-fix-2.patch (code + docs + tests; changed one old test)
+REV-2a | agent a31bac..: egm:egm-codebase-details on lane3-fix-2 | 13:10Z | ~13:30Z | running
+REV-2b | agent aebdf3..: egm:egm-design on lane3-fix-2 | 13:10Z | ~13:30Z | running
+B4 | agent a52889..: lane3-fix-4 identity case docs + casefold analysis | 13:11Z | ~13:45Z stop 14:10Z | running

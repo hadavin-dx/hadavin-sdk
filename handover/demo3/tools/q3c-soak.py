@@ -555,7 +555,7 @@ class Round:
                 out["unknown_visible"] += 1 if vis else 0
                 if not vis:
                     out["A"].append(f"{lid}: unknown follow-up NOT listed in GET /review (ui lists it: {vis_ui})")
-                if err in ("ambiguous_prior", "ambiguous") and m <= 1:
+                if err in ("ambiguous_prior", "ambiguous", "crash_while_sending") and m <= 1:
                     out["B"].append(f"{lid}: unknown/{err}, {m} mail(s)")
                 else:
                     out["C"].append(f"{lid}: unknown/{err}, {m} mail(s)")
