@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:37Z / 09:07 IST - probe-ab.patch READY (sonar/, applies on db54e13) pending a fresh safety read; P3 v2 built (fixes the 3 Majors); P1 v2 has a Major (dash guard bypass): v3 building; 7 agents
+FAILED / UNCERTAIN first:
+1. **P1 v2 must not be applied**: fresh review (sonar/REVIEW-p1v2-fresh.md): the dash guard tests BASH_VERSION, which dash inherits from the environment: `export BASH_VERSION=5.2; dash scripts/reset.sh` with a db path outside ./data printed `[[: not found` and then DELETED the outside file (v1/v2 both). Fix = test the feature (`eval '[[ a == a ]]'` in a subshell), not the name: P1 v3 builder running (ac735b2234f85b6e5). Behaviour under bash is unchanged (818 + 71 before/after cases, 0 differences). Minor: hygiene scan holes; lint.yml `--only-binary=:all:` hedge; empty pid-file mutant.
+2. **PROBE (your 03:30Z order): sonar/probe-ab.patch + PROBE-AB-NOTE.md applies on db54e13, 6 files, +383/-7.** Helper form (A) on check_invariants L63,597, scrub L178,179, load_driver L366,377; inline guard (B) on check_invariants L82,605,614 and n8n_api L192; untouched controls: check_invariants L96 (S8706) and run_real_check L645 (if a control vanishes, distrust the whole result; if the A read sites vanish but the output sites 179/366/377 stay, only the new-output-name step is at fault). NOTE the letters: in probe-ab A = helper, B = inline (swapped versus the single-function probe-a/probe-b). Pathguard comparison (core's pathguard.py, wip/cloud-sonar-probe 247caa5, read-only): differs from B in four ways: it is a helper (B inline); Path.resolve()+is_relative_to (B realpath+commonpath); its base is the argument's own parent (B fixed roots); it returns the resolved path (B opens `real` itself); core also has name rules B lacks. 6 of 6 probe tests fail on old code, 560 passed. A fresh safety review of the probe (and P3 v2) is running (a772c50e2730958f1): wait for it before you push the draft PR if you can; the probe changes behaviour only inside the same functions P3 would.
+3. **P3 v2 (sonar-p3-path-helper-v2.patch, applies on db54e13, P1, P1v2, P2, and with real-run v3 both orders)**: closes the 3 Majors of the first review: confinement applies to command-line paths only; `--config` allowed anywhere; paths INSIDE the config are not confined (so the documented real run cannot be refused late: test with a config and book outside the roots, exit 0); the f-string sqlite mutant now dies; catcher.py --out/--control confined; run_live_check.py --key-file/--ledger deliberately NOT confined (docs put them outside the repo; Sonar did not flag them); `--help` works without PYTHONPATH. The helper now looks the file up BY NAME in directory listings and returns the listing's own path (a validate-and-return-the-same-text helper is the form least likely to satisfy the engine, from the flows). User-visible changes: scrub/n8n_api import files must lie in repo/cwd/temp or LEAD_DESK_PATH_ROOTS; a NEW output file name may only use letters, digits, `.`, `_`, `-`. Known risk: reading LEAD_DESK_PATH_ROOTS from the environment may itself count as taint. Sonar acceptance of ANY shape is unknown; if none is accepted the 12 issues are false positives for the owner to mark reviewed in the UI.
+4. Still running: P2 v2 (split by odds), nodemo builder, crlf v4 + yaml delta fresh review, real-run v4 fresh review.
+5. Not run: full suite on any series (the nodemo builder will produce the first chunked no-demo run), Windows, any Sonar result.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a772c50e2730958f1 | fresh security reviewer probe-ab + P3 v2 | 03:37 | running | report |
+| ac735b2234f85b6e5 | P1 v3 builder (dash feature test) | 03:31 | running | v3 patch |
+| ae184ee748e1ae95d | P2 v2 builder (split by odds) | 03:20 | running | patches |
+| af720ffd002889ae0 | no-demo bug builder + chunked no-demo run | 03:33 | running | nodemo-fix.patch |
+| a5174404d55a3357a | fresh reviewer crlf v4 + yaml delta v2 | 03:31 | running | report |
+| a425d1049580d6b03 | fresh reviewer real-run fixes v4 | 03:28 | running | report |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 2 | 1 Major | guard bypass | no | v3 read |
+| P3 / probe | review 2 | pending | security | no | clean + Sonar result |
+| P2 | build 2 | review 1 done | split | no | v2 read |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| probe-ab.patch + P3 v2 + probes | built, pushed |
+| P1 v2 fresh review | 1 Major, pushed |
+
 ## 2026-11-13 03:29Z / 08:59 IST - commands 03:30/03:36/03:40 read: probe-ab.patch ordered, P2 v2 split, no-demo bug lane started; crlf-guard-v4 + sonar yaml delta v2 built (v4 grew: +228 lines); 6 agents
 FAILED / UNCERTAIN first:
 1. **crlf-guard-v4 is NOT small**: tests/test_hygiene.py +228/-4 (your limit: ~120, else drop the lone-CR class). The builder reports all 19 of the review's mutants + M1..M9 die (the 3 gitleaks-dependent ones only when gitleaks is installed: CI must set DPLD_REQUIRE_SCAN=1) and the cure commands are RUN by a test (`git checkout -- <file>` first, then a python one-liner keeping edits; no GNU sed; the new `-m gitleaks` test is ~1 s). The sonar yaml test delta v2 (on db54e13; the delta over the 38-line v1 test) is 163 lines, 31 of 32 mutants die (the survivor T13 only matters on a bad real workflow). A THIRD fresh reviewer (a5174404d55a3357a) is measuring a trimmed version (smaller wins if every mutant still dies) and whether the guard misfires on Windows `core.autocrlf=true` checkouts (this matters for your Windows run). Not ready to apply.
