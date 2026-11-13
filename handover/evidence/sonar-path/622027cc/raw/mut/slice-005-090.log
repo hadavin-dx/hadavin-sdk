@@ -73,3 +73,5 @@ ok  KILLED         R4-15 the range is dropped: halfwidth Hangul filler  [test_pi
 ok  KILLED         R4-16 the range is dropped: interlinear annotation  [test_pin_r4_range_16] t=75s
 ok  KILLED         R4-16 the range ends one early: interlinear annotation  [test_pin_r4_range_16] t=76s
 ok  KILLED         R4-16 the range starts one late: interlinear annotation  [test_pin_r4_range_16] t=77s
+ok  KILLED         R4-17 the range is dropped: musical symbol format characters  [test_pin_r4_range_17] t=78s
+rc=0

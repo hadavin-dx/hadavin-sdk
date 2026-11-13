@@ -64,3 +64,7 @@ ok  KILLED         S-replay the marker folder is not checked  [test_replay_mark_
 ok  KILLED         S-replay an interrupt while marking is not named  [test_replay_keeps_the_first_error_and_names_it_when_marking_] t=76s
 ok  KILLED         S-replay a marking failure is not turned into a note  [test_replay_marking_failure_leaves_the_first_error_with_a_no] t=77s
 ok  KILLED         S-fake the recording name is not joined through pathguard  [test_fake_llm_refuses_a_recording_name_that_is_a_link_out] t=78s
+ok  KILLED         X-atomic the file is made for the group and world too  [test_atomic_write_creates_its_file_for_the_owner_only] t=78s
+ok  KILLED         X-atomic an error of the open keeps the path  [test_atomic_write_errors_carry_no_path] t=79s
+ok  KILLED         X-atomic an error of the rename keeps the path  [test_atomic_write_rename_error_carries_no_path] t=79s
+rc=0
