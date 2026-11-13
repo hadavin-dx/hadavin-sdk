@@ -146,3 +146,7 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B7 | closed: lane3-fix-7.patch (only tests/test_identity_claims_lane3.py, 16 tests, no product code); 7 of 8 Q8b survivors killed, C18 equivalent (alive); own full suite rc=0 3699 passed 200 skipped 1161 s; C03/C19 reached via private steps, no real two-thread race | | | closed |
 | REV-7a | fresh egm-codebase-details on lane3-fix-7 | 13:57Z | ~14:15Z | running |
 | REV-1g | closed: 0 blocker, 5 major, 7 minor; saved evidence/review-lane3-fix-1-r4-comprehension.md (reader did not read patch lines 609-835) | | | closed; wait REV-1h + E3c, then resolve + B1e |
+| REV-1h | closed: 0 blocker, 1 major (new noqa S603 + 5 type: ignore, LEAD VERIFIED), 5 minor (n8n_api strip claim LEAD VERIFIED); saved evidence/review-lane3-fix-1-r4-technical.md | | | closed; resolve + B1e next |
+| REV-7a | closed: 0 blocker, 0 major, 3 minor; saved evidence/review-lane3-fix-7-r1.md; minors fixed by B7b (small) | | | closed |
+| RES-1d | egm-resolve round 4 of fix-1: 18 accepted, 0 contested, 0 escalated, 1 declined; saved evidence/resolve-round4-lane3-fix-1.md | | | closed; B1e next |
+| B1e | BUILDER lane3-fix-1 round 5 (18 accepted items of RES-1d) | 13:57Z | stop 14:45Z | running |
