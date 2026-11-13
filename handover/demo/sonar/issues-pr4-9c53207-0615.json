@@ -1,0 +1,167 @@
+[
+ {
+  "key": "AaHSunYaaEM5wJhSg2cd",
+  "rule": "python:S8786",
+  "type": "CODE_SMELL",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:tools/scrub_n8n_export.py",
+  "line": 102,
+  "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T22:20:08+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2cX",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 63,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in check_invariants.read_jsonl()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2cZ",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 82,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in check_invariants.read_crm()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2cV",
+  "rule": "pythonsecurity:S8706",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 96,
+  "message": "Connection String Injection via faulty LLM-supplied CLI arguments in check_invariants.read_book()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2ca",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 597,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in check_invariants._intended()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2cY",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 605,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in check_invariants._facts_say_live()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYCaEM5wJhSg2cW",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/check_invariants.py",
+  "line": 614,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in check_invariants._drain_marker()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunXyaEM5wJhSg2cT",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/load_driver.py",
+  "line": 366,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in load_driver.run()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunXyaEM5wJhSg2cU",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:load_tools/load_driver.py",
+  "line": 377,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in load_driver.run()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunVCaEM5wJhSg2b-",
+  "rule": "pythonsecurity:S8703",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:scripts/feed.py",
+  "line": 50,
+  "message": "Server-Side Request Forgery via faulty LLM-supplied CLI arguments in feed.post()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunV5aEM5wJhSg2cF",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:scripts/n8n_api.py",
+  "line": 192,
+  "message": "Path Traversal via command-line argument in n8n_api.main()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunWXaEM5wJhSg2cK",
+  "rule": "python:S8786",
+  "type": "CODE_SMELL",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:scripts/run_real_check.py",
+  "line": 116,
+  "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunWXaEM5wJhSg2cL",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:scripts/run_real_check.py",
+  "line": 645,
+  "message": "Path Traversal via faulty LLM-supplied CLI arguments in run_real_check.load_env()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYaaEM5wJhSg2cf",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:tools/scrub_n8n_export.py",
+  "line": 178,
+  "message": "Path Traversal via command-line argument in scrub_n8n_export.main()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ },
+ {
+  "key": "AaHSunYaaEM5wJhSg2ce",
+  "rule": "pythonsecurity:S8707",
+  "type": "VULNERABILITY",
+  "severity": "MAJOR",
+  "component": "hadavin-dx_duplicate-proof-lead-desk-n8n:tools/scrub_n8n_export.py",
+  "line": 179,
+  "message": "Path Traversal via command-line argument in scrub_n8n_export.main()",
+  "status": "OPEN",
+  "creationDate": "2026-11-12T17:36:32+0000"
+ }
+]
