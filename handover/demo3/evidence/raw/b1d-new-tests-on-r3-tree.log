@@ -1,0 +1,271 @@
+FF.FF.F.FF.FF.F                                                          [100%]
+=================================== FAILURES ===================================
+_______________ test_exit_code_1_uses_the_words_the_desk_prints ________________
+
+tmp_path = PosixPath('/home/user/work/priv/b1d-tmp/pr3/test_exit_code_1_uses_the_word0')
+
+    def test_exit_code_1_uses_the_words_the_desk_prints(tmp_path: Path) -> None:
+        env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}  # nothing of the tester's own settings
+        env["PYTHONPATH"] = os.pathsep.join([str(REPO / "src"), str(REPO)])
+        env.update(
+            DESK_PORT=str(free_port()),
+            DESK_FAKES_PORT=str(free_port()),  # nothing listens here: the demo servers are "not running"
+            DESK_DB_PATH=str(tmp_path / "data" / "desk.db"),
+        )
+        done = subprocess.run(  # noqa: S603 - our own interpreter and module, fixed arguments
+            [sys.executable, "-m", "lead_desk.server"],
+            cwd=tmp_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        if done.returncode == 3:  # the desk checks the open-file limit first (containers often allow only 4096)
+            pytest.skip(f"this computer's open-file limit is too low for the desk (exit 3): {done.stdout.strip()[-200:]}")
+        lines = done.stdout.strip().splitlines()
+        assert lines, f"premise: the desk printed nothing (exit {done.returncode}, error output: {done.stderr[-200:]!r})"
+        printed = lines[-1]
+        assert done.returncode == 1, f"premise: exit code 1 means the demo servers cannot be reached: {done.returncode}"
+        phrase = printed.split(" (")[0]  # "cannot reach the demo servers"
+        assert phrase.startswith("cannot reach the demo servers"), f"premise: the desk prints this phrase: {printed}"
+        bullet = _flat(_line_with(_read("docs/limits.md"), "* Exit codes:"))
+        assert phrase in bullet, _p("limits.md quotes the words the desk prints for exit code 1")
+        assert "the sender cannot be reached" not in bullet, _p("the old word 'sender' for the demo servers is gone")
+>       assert re.search(r"traceback.*program fault, or that someone edited a fixed value", bullet), _p(
+            "a traceback is a program fault OR an edited fixed value"
+        )
+E       AssertionError: this sentence protects: a traceback is a program fault OR an edited fixed value (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('traceback.*program fault, or that someone edited a fixed value', '* Exit codes: 1 the demo servers cannot be reached (the desk prints "cannot reach the demo servers"), or a Python tra...at is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:89: AssertionError
+_____________ test_the_fresh_desk_counts_are_what_the_readme_says ______________
+
+env = <conftest.Env object at 0x7fbb7af48aa0>
+tmp_path = PosixPath('/home/user/work/priv/b1d-tmp/pr3/test_the_fresh_desk_counts_are0')
+
+    def test_the_fresh_desk_counts_are_what_the_readme_says(env, tmp_path: Path) -> None:
+        base = _start_real_desk(env, tmp_path)
+        status, reply = call(base, "GET", "/counts")
+        assert status == 200, "premise: the counts check answers HTTP 200"
+        for name in FIVE:
+            assert reply[name] == 0, f"premise: the five counts are 0 on a fresh desk: {name}"
+        time_field = "last_reaper_pass_at"
+        others = [
+            key
+            for key, value in reply.items()
+            if isinstance(value, int) and not isinstance(value, bool) and key not in FIVE and key != time_field
+        ]
+        assert others, "premise: there are other counts besides the five counts"
+        for name in others:
+            assert reply[name] == 0, f"premise: every other count is 0 on a fresh desk: {name}"
+        assert all(v == 0 for v in reply["hung_workers"].values()), "premise: the numbers inside hung_workers are 0"
+        assert len(reply["hung_workers"]) == 4, "premise: hung_workers holds four numbers"
+        server_text = _read("src/lead_desk/server.py")
+        assert server_text.index("desk.start_background()") < server_text.index("server.serve_forever()"), (
+            "premise: the Reaper is started before the desk serves its first request"
+        )
+        wait_until(lambda: call(base, "GET", "/counts")[1]["reaper_running"] is True, what="reaper running")
+        reply = call(base, "GET", "/counts")[1]
+        assert reply[time_field] is None or isinstance(reply[time_field], int), "premise: a time in seconds, or null"
+        assert reply["expected_match"] is None and reply["ok"] is None, "premise: expected_match and ok are null"
+    
+        readme = _read("README.md")
+        linux = _between(readme, "**Linux**", "**Windows PowerShell**")
+        assert FIVE_NAMED in linux and re.search(r"are 0\. So are the other counts", linux), _p(
+            "the five counts are named and the other counts are 0 too"
+        )
+        for name in ("rejected_envelopes", "failed_followups", "hung_workers"):
+            assert name in linux and name in reply, _p(f"the Linux text names the real field {name}")
+        for key in reply["hung_workers"]:
+            assert re.search(rf"\b{key}\b", linux.split("hung_workers")[1][:200]), _p(f"hung_workers names its kind {key}")
+        assert re.search(r"`reaper_running` is `true`", linux), _p("`reaper_running` is stated as true")
+        assert re.search(r"^\* \*\*Reaper\*\*: ", readme, re.M), _p("the word list defines the Reaper")
+>       assert re.search(r"says `false` and still does after 10 seconds, read `data/desk.log`", linux), _p(
+            "a reaper_running that is false is waited for 10 seconds, then data/desk.log is read"
+        )
+E       AssertionError: this sentence protects: a reaper_running that is false is waited for 10 seconds, then data/desk.log is read (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('says `false` and still does after 10 seconds, read `data/desk.log`', '**Linux** python3 -m venv .venv && . .venv/bin/activate export PYTHONPATH=src # tells Python where the code is bash s...oes not run, for example where `sh` is dash (Debian and Ubuntu). A shell that does run `[[` (busybox sh, zsh) goes on.')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:159: AssertionError
+_________ test_the_receipt_explanation_is_true_and_the_word_is_defined _________
+
+    def test_the_receipt_explanation_is_true_and_the_word_is_defined() -> None:
+        flat = _flat(_read("README.md"))
+        word = re.search(r"\* \*\*receipt_id\*\*: ([^*]*?)(?= \* \*\*)", flat)
+        assert word and "counting up from 1" in word.group(1) and "not the request id" in word.group(1), _p(
+            "the word list defines receipt_id as the desk's own number counting up from 1, not the request id"
+        )
+        para = flat.split("About the receipt number of the webhook line:")[1].split("Run both scripts")[0]
+>       assert re.search(r"repeat was not stored again", para), _p("the repeat was not stored again")
+E       AssertionError: this sentence protects: the repeat was not stored again (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('repeat was not stored again', ' its `receipt_id` is 3, not 2. The repeated request got no new receipt: the desk recognised it as the same request an...gap does not mean a lost request. In the counts, `received` counts stored receipts, which is why it says 2 and not 3. ')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:238: AssertionError
+_______ test_the_words_repeat_duplicate_and_request_id_keep_one_meaning ________
+
+    def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
+        flat = _flat(_read("README.md"))
+>       assert re.search(
+            r"\*\*Repeat\*\* \(the reply says `\"replayed\": true`\): the "
+            r"same request id came again on the same door",
+            flat,
+        ), _p(
+            "a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)"
+        )
+E       AssertionError: this sentence protects: a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref) (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('\\*\\*Repeat\\*\\* \\(the reply says `\\"replayed\\": true`\\): the same request id came again on the same door', '# duplicate-proof-lead-desk **In plain words** 1. A sales lead can arrive twice: the same person fills in the web for...n reviewed by a lawyer. Outside contributions (pull requests) are not accepted. See `SECURITY.md` to report a problem.')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:258: AssertionError
+___________ test_the_burst_steps_explain_each_term_and_both_systems ____________
+
+    def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+        steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
+        sends = int(re.search(r"--n (\d+)", steps).group(1))  # type: ignore[union-attr]
+        numbering = rf"`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-{sends}"
+>       assert re.search(numbering, steps), _p(
+            "burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them"
+        )
+E       AssertionError: this sentence protects: burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-100', '* Burst test: many connections open at the same moment, all for the same lead (the same email under different request...s/test_docs_claims_lane3.py` for all three cases): with n sends the fresh-desk answer is `201=1` and `200=` n minus 1.')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:331: AssertionError
+___________ test_the_recipe_names_the_ports_each_workflow_file_needs ___________
+
+    def test_the_recipe_names_the_ports_each_workflow_file_needs() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+        assert re.search(r"`desk-form\.json` and `desk-webhook\.json` need only the desk on 127\.0\.0\.1:8765", flat), _p(
+            "the form and webhook files need only the desk port"
+        )
+        assert re.search(
+            r"`proof\.json` also needs the demo servers on 127\.0\.0\.1:8766 and n8n itself on port 5679", flat
+        ), _p("the proof file also needs the demo servers and n8n")
+        assert re.search(r"files[^.]*do not read the settings", flat), _p("the files do not follow docs/settings.md")
+        assert "(host and port from `docs/settings.md`)" not in flat, _p(
+            "the old sentence implying the files follow settings"
+        )
+        assert "The three workflow files" not in flat, _p("not all three files need all three ports")
+        assert re.search(r"editing the file[^.]*written permission", flat), _p("editing a workflow file needs permission")
+        assert re.search(r"keep the default ports: desk 8765, demo servers 8766, n8n 5679", flat), _p(
+            "'the easiest way' names what to keep: the default ports"
+        )
+>       assert re.search(
+            r"8765 and 8766 are the defaults of `docs/settings\.md`; 5679 is the default of `scripts/n8n_api\.py`", flat
+        ), _p(
+            "8765 and 8766 come from docs/settings.md, 5679 from scripts/n8n_api.py"
+        )
+E       AssertionError: this sentence protects: 8765 and 8766 come from docs/settings.md, 5679 from scripts/n8n_api.py (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('8765 and 8766 are the defaults of `docs/settings\\.md`; 5679 is the default of `scripts/n8n_api\\.py`', '# The n8n workflows of the demo, what each one does Who this is for: someone who has used n8n a little and wants to r...cate`) in a real n8n, including how n8n finds the output of the step "Wait for the desk to finish" from the last step.')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:438: AssertionError
+______________ test_the_recipe_tells_one_true_story_about_docker _______________
+
+    def test_the_recipe_tells_one_true_story_about_docker() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+        docker = flat.split("**n8n in Docker.**")[1].split("* **n8n's port.**")[0]
+>       assert docker.startswith(" Not tried here."), _p("the Docker paragraph says first that it was not tried")
+E       AssertionError: this sentence protects: the Docker paragraph says first that it was not tried (if you reword the sentence, keep this fact)
+E       assert False
+E        +  where False = <built-in method startswith of str object at 0x7fbb400b2430>(' Not tried here.')
+E        +    where <built-in method startswith of str object at 0x7fbb400b2430> = ' If n8n runs in Docker, the address `127.0.0.1` inside the workflow files points to the n8n container itself, not to .... Checked: n8n run directly with Node reached the desk and the demo servers on `127.0.0.1`. Not tried: n8n in Docker. '.startswith
+
+tests/test_docs_claims_lane3.py:453: AssertionError
+___________ test_the_recipe_says_to_reset_and_start_everything_again ___________
+
+    def test_the_recipe_says_to_reset_and_start_everything_again() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+        intro = flat.split("Before you try the example inputs")[1].split("Example inputs (made-up):")[0]
+        assert "make a fresh desk" in intro, _p("the reset comes first")
+        assert "scripts/reset.sh" in intro and r"scripts\reset.ps1" in intro and "no leads yet" in intro, _p(
+            "the reset is named for Linux and Windows"
+        )
+        assert re.search(r"project folder with `\.venv` switched on", intro), _p("the reset says where to run it")
+        assert re.search(r"start the demo servers and the desk again", intro), _p(
+            "start BOTH the demo servers and the desk"
+        )
+        assert "scripts/start_all.sh keyed" in intro and r"scripts\start_all.ps1 keyed" in intro, _p(
+            "the start command is named for Linux and Windows"
+        )
+        assert "deletes the desk's records and logs" in intro, _p("the reset says what it deletes")
+>       assert re.search(r"after that demo or after the burst test the form call answers `duplicate`", intro), _p(
+            "the form example also answers duplicate after the burst test (same email address)"
+        )
+E       AssertionError: this sentence protects: the form example also answers duplicate after the burst test (same email address) (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('after that demo or after the burst test the form call answers `duplicate`', ', make a fresh desk. In the project folder with `.venv` switched on, run `bash scripts/reset.sh` (Windows: `.\\script...Example) as the one `scripts/feed.py` sends in the README demo, so after that demo the form call answers `duplicate`. ')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:508: AssertionError
+________________ test_the_recipe_import_steps_match_the_script _________________
+
+    def test_the_recipe_import_steps_match_the_script() -> None:
+        recipe = _read("docs/n8n-recipe.md")
+        script = _read("scripts/n8n_api.py")
+        steps = _recipe_steps()
+        assert "N8N_API_KEY_FILE" in script and "N8N_URL" in script, "premise: the script reads both variables"
+        assert re.search(r"environment variable[^.]*`N8N_API_KEY_FILE`", steps), _p(
+            "the key file is an environment variable"
+        )
+        assert 'export N8N_API_KEY_FILE="$HOME/n8n-key.txt"' in recipe, _p("the Linux way, a file outside the folder")
+        assert '$env:N8N_API_KEY_FILE = "$HOME\\n8n-key.txt"' in recipe, _p("the Windows way, the same file name")
+        assert "/path/to/keyfile" not in recipe and ".\\n8n-key.txt" not in recipe, _p(
+            "no key file path inside the project"
+        )
+        assert re.search(r"lasts only in this terminal window", steps), _p("the variable lasts only in that terminal")
+        assert "`N8N_URL`" in steps, _p("N8N_URL is mentioned in the steps")
+        assert re.search(r"create an API key", steps) and "one word on one line" in steps, _p("the key is made in n8n")
+        assert re.search(r"OUTSIDE the project folder", steps), _p("the key file lives outside the project folder")
+        assert "python scripts/n8n_api.py import n8n/desk-form.json" in steps, _p("the import command")
+>       assert re.search(
+            r"(?:^| )1\. Install n8n as the n8n documentation says \(https://docs\.n8n\.io/\)", steps
+        ), _p(
+            "step 1: install n8n as the n8n documentation says, with its link"
+        )
+E       AssertionError: this sentence protects: step 1: install n8n as the n8n documentation says, with its link (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fbb7c41d300>('(?:^| )1\\. Install n8n as the n8n documentation says \\(https://docs\\.n8n\\.io/\\)', ', do these steps in order (they were run once with a real n8n, except where a step says "not tried"; the menu names i... at once)"`. (Steps 4 and 5 were not run again in this form; the earlier real run used the same script and commands.) ')
+E        +    where <function search at 0x7fbb7c41d300> = re.search
+
+tests/test_docs_claims_lane3.py:542: AssertionError
+_________________ test_readme_port_check_explains_000_and_404 __________________
+
+    def test_readme_port_check_explains_000_and_404() -> None:
+        readme = _read("README.md")
+        linux = readme.split("**Linux**")[1].split("**Windows PowerShell**")[0]
+        assert "curl " in linux, "premise: the Linux block uses curl (reads the block, not the 'You need' sentence)"
+        lines = readme.splitlines()
+        first = next(i for i, ln in enumerate(lines) if ln.startswith("You need Linux or Windows"))
+        last = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("1. On this repository"))
+        chunk = lines[first:last]
+        need = _flat("\n".join(chunk))
+        bullets = [ln for ln in chunk if ln.startswith("* ")]
+>       assert len(bullets) >= 4, _p("the port check is a bullet list (Linux, 000, other number, Windows)")
+E       AssertionError: this sentence protects: the port check is a bullet list (Linux, 000, other number, Windows) (if you reword the sentence, keep this fact)
+E       assert 0 >= 4
+E        +  where 0 = len([])
+
+tests/test_docs_claims_lane3.py:623: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs_claims_lane3.py::test_exit_code_1_uses_the_words_the_desk_prints
+FAILED tests/test_docs_claims_lane3.py::test_the_fresh_desk_counts_are_what_the_readme_says
+FAILED tests/test_docs_claims_lane3.py::test_the_receipt_explanation_is_true_and_the_word_is_defined
+FAILED tests/test_docs_claims_lane3.py::test_the_words_repeat_duplicate_and_request_id_keep_one_meaning
+FAILED tests/test_docs_claims_lane3.py::test_the_burst_steps_explain_each_term_and_both_systems
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_names_the_ports_each_workflow_file_needs
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_tells_one_true_story_about_docker
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_says_to_reset_and_start_everything_again
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_import_steps_match_the_script
+FAILED tests/test_docs_claims_lane3.py::test_readme_port_check_explains_000_and_404
+10 failed, 5 passed in 3.38s

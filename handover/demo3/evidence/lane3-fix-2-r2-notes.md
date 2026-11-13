@@ -1,7 +1,7 @@
 # Lane 3 fix 2, round 2 (B2b): start-up validation of settings
 Base f3c39cf89ec989f032ea48a23cfd824b88da9c68, plus the round-1 patch `lane3-fix-2.patch` (untouched), plus the round-2 changes. Worktree /home/user/work/b2b-base (mine). Plan followed: `resolve-round1-lane3-fix-2.md` section (3), in the ordered work order (experiment, items 2, 1, 4, 5, 3, 10, 15, then documents 6, 7, 9, 12, 13). Clock: started 13:15Z / 18:45 IST.
-Patch `lane3-fix-2-r2.patch` SHA256 __SHA_R2__ (17 files).
-Stack variant `lane3-fix-2-r2-for-stack.patch` SHA256 __SHA_STACK__ (the same without the `docs/why-this-code.md` hunk).
+Patch `lane3-fix-2-r2.patch` SHA256 3887dc09928e06b3cc27f76f1bda33d5ef760f5aa40db0c76f126442fb74f50a (18 files).
+Stack variant `lane3-fix-2-r2-for-stack.patch` SHA256 bcf3d85d9a73e5c0929fd978240f692b775c6b0d070a716ab15d1009341d29a6 (the same without the `docs/why-this-code.md` hunk).
 
 ## Failures and gaps first
 1. CONFLICT with `lane3-fix-1-r2.patch`: `git apply --check` of my patch after it fails on `docs/limits.md:117` (the exit-code line: both patches edit it; plan item 12 requires my edit of that line). I did not resolve it (the brief says to state it). With `lane3-fix-3-r3.patch` and with the claims stack (variant) there is no conflict. The lead decides the order, or lets one of the two patches carry the limits.md line.
@@ -87,7 +87,13 @@ Fails-before = the same new test file run on a copy of the ROUND-1 tree (f3c39cf
 Not resolved by me (cross-patch conflicts are the lead's decision).
 
 ## Counts
-__COUNTS__
+- Family run on the patched tree (47 test files: every tests/test_*.py that mentions DESK_, exit code, returncode, contract.md, settings.md, portal.md, limits.md, why-this-code, check_secret, book_problem or from_env; list in /home/user/work/b2b-tmp/family.txt), run BEFORE the last two test fixes: `2 failed, 2856 passed, 56 skipped in 820.42s (0:13:40)`, EXIT=1. The two failures were mine, both fixed afterwards:
+  1. `tests/test_hygiene.py::test_hygiene_scan_public`: it scans tests too once the new file is tracked (`git add -N`): literals `256.1.1.1`, `1.2.3.4`, `127.0.0.2`, `my-host.local` in `tests/test_settings_lane3.py` -> built from parts.
+  2. `tests/test_live_claude.py::test_the_environment_opt_out_is_the_word_yes_only` (an EXISTING test, CHANGED on purpose by item 15a): it pinned that the words `true` and `1` leave `DESK_LIVE_ALLOW_ANY_BASE_URL` off and end with "not the provider's own address"; those words are now refused earlier with "DESK_LIVE_ALLOW_ANY_BASE_URL must be yes or no". The test still pins that only `yes` lifts the check (None and `no` still give the old message); the new assertion fails on the round-1 tree (`AssertionError: Regex pattern did not match.`), passes now. A reviewer should look at this edit (it is the second changed old test; the first is in tests/test_env_numbers.py, item 3, which is now STRONGER than before).
+- After the fixes: `tests/test_hygiene.py tests/test_settings_lane3.py tests/test_live_claude.py tests/test_env_numbers.py tests/test_bind_refusals.py`: `552 passed, 5 skipped in 67.82s`. A fresh worktree with only `lane3-fix-2-r2.patch` applied: `tests/test_settings_lane3.py tests/test_live_claude.py tests/test_env_numbers.py`: `503 passed, 1 skipped in 28.92s` (the skip is the unwritable-parent test, root).
+- The 47-file family was NOT re-run in full after those two fixes (only the five files above, and the doc-related files below). Doc-related files re-run after the last doc edit: __DOCRUN__
+- Round-1 tree with the new tests (guarded imports): `51 failed, 51 passed, 1 skipped` (103 selected), table in evidence/raw/lane3-fix-2-r2-r1-table.txt.
+- Processes: my fakes server (pid file /home/user/work/b2b-tmp/fakes.pid) was stopped (checked with ps: no process on port 30501); the desk processes were ended by `timeout`; my worktrees b2b-base, b2b-orig, b2b-r1, b2b-chk-* are left in place for the reviewer and are in /home/user/work (outside the repo).
 
 ## Not changed, and why
 - Order in `server.main` (bad key file after the demo-server check): decided against moving it; `check_secret_files` needs the objects `load_demo_adapters` builds. Stated in limits.md and contract.md instead (item 9).

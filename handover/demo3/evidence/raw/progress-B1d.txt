@@ -1,3 +1,5 @@
 13:37Z 19:07 IST B1d start
 13:39Z burst n=100 run verified; writing docs next; no process of mine left
 13:40Z docs edited (README, limits, recipe); next: tests
+13:42Z tests pass 15; wrapping long lines, then proof runs
+13:45Z 12-file run started (log priv/b1d-run12b.log)

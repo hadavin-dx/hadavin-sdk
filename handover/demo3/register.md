@@ -128,3 +128,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-3d | closed: 0 blocker 0 major 4 minor, all applied in lane3-fix-3-r5.patch | | | closed (security path: fresh pass found nothing real) |
 | REV-5b | closed: 3 blocker (E501 x3, noqa S603 x2, isort), 4 major, 5 minor | | | closed; builder B5c next |
 | B5c | BUILDER lane3-fix-5 round 3 (3 blockers, 4 majors from REV-5b) | now | stop 14:35Z | running |
+| B5c | closed: lane3-fix-5-r3.patch sha256 e677e3d6...709f, notes lane3-fix-5-r3-notes.md; old script 8 failed/7 passed, r2+r3 tests 1 failed (blank), new 226 passed 4 skipped; 1 moved noqa S603 remains | | | closed |
+| REV-5c | fresh egm-codebase-details on lane3-fix-5-r3 (13:46Z) | 13:46Z | ~14:05Z | running |
+| E7 | EVIDENCE RUNNER lane3-fix-5-r3 (reset tests, xdist, full suite once) | 13:46Z | stop 14:30Z | running |
