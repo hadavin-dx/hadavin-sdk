@@ -4,6 +4,21 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| R4 | review of F4 (fallback reviewer; saved handover/core/review/F4-review-r1.md) | independent read | 13:09Z | done 13:01Z | round 1 of 2 | DONE: 0 Blocker, 3 Major, 7 Minor, 1 Nit. Majors: (1) README.md:62/79/96 still say a repeated request "changes nothing" though it uses a receipt number and adds 1 to attempts (desk.py:1362); (2) load_tools/README.md:17 "run as written" claim: no test runs it, no readiness wait, shared book file; (3) the surviving mutant: the -qq test never asserts the doc sentence. Reviewer verified 8 other claims against code with file:line | F4b |
+| F4b | builder round 2: fix all 9 findings, run the load_tools recipe once on loopback, tests fail on baseline | resolve order | 13:01Z | 14:10Z | round 2 of cap 2 | RUNNING | then V4b evidence + short re-review |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| D1, C6 | full suite + docs patch; flakiness | proof | 12:33-12:38Z | 13:10-13:30Z | 1 | RUNNING (D1 past its expected end; checking) | read |
+
+FAILURES AND RETRIES: no new test failures. Findings against my output: R4 has 3 Majors against F4 (round 1 of 2), being fixed in F4b.
+LOAD: 6 agents + D1 on 4 cores.
+ASK: none.
+
+
+## REPORT (container clock 13:01Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | E2 | clean rerun: test_no_placeholders with TMPDIR out / in tree | settle the open one | 13:01Z | done | 1 | DONE (runner's numbers, handover/core/evidence/realrun-v6/E1/E2-RESULTS.md): the test passed in 9 of 9 alone-runs (4 outside, 4 inside, 1 other in-tree folder name). NOT reproduced alone. The runner could not prove a clean tree (tree has the uncommitted patch test files; no baseline copy), and it observed the test lists files with git ls-files and an in-tree TMPDIR is not git-ignored, so a file written there by ANOTHER test earlier in a full run could fail it: this is a hypothesis, not shown | next: one full-suite run with in-tree TMPDIR is expensive (45 min); instead E3 greps which tests write marker text into TMPDIR; decision below |
 | R4 | review of F4 | independent read | 13:09Z | 13:30Z | round 1 of 2 | RUNNING | read |
 | V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
