@@ -22,3 +22,4 @@ d2 run1 duration=4s exit=0
 d2 run2 duration=4s exit=0
 d2 run3 duration=3s exit=0
 d2 run4 duration=4s exit=0
+d2 run5 duration=3s exit=0
