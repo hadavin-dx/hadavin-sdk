@@ -1,5 +1,20 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:10Z / 17:40 IST  HEARTBEAT 30 (K reported; ORDER 9 done; all agents closed)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| K | Evidence runner: the 166 browser-skipped tests (10 whole files), BASE and STACK | browser test results | 12:00Z / 17:30 | ended 12:07Z | first try | reported, closed | none |
+| L | gitleaks tests + hygiene | secret-scan results | 12:00Z | ended 12:02Z | first try | reported, closed | none |
+| M | classify the 200 skips | - | 12:00Z | ended 12:00Z | - | reported, closed | none |
+| all earlier agents | A, B, C2, D, E, F, G, H, I, J | - | - | - | - | closed | none |
+Nothing is running (agents 0, pytest or browser processes 0). Cap 12:50Z not needed.
+
+ASK:
+1. Do you want the 4 remaining skips run too? (a) the opt-in burst measurement with LEAD_DESK_LOAD_N=300 (local only, a few minutes); (b) the root-user n8n permission test through setpriv as user nobody (needs checking that nobody can read the venv and worktree); (c) the Python-3.13 `ntpath.isreserved` test needs a new Python 3.13 environment with the hash-locked dev lock (the lock is for 3.12, so that is probably not possible without a new pin); (d) the Windows-only test cannot run on Linux. Default: not run; say which letters you want.
+2. Do you want one FULL suite on f3c39cf8 with Playwright and gitleaks installed (everything unskipped at once), to get one number? The pieces above cover all 196, but there is no single run. About 25 minutes. Default: no.
+**K RESULT (I read all four raw summary lines):** all previously skipped browser tests now run and pass. BASE f3c39cf8: pass 1 (4 files) 113 passed in 104 s, pass 2 (6 files) 128 passed in 207 s; STACK: 113 passed in 105 s and 128 passed in 206 s; 0 failed, 0 skipped, exit 0 on all four runs. The 166 skips came from one Playwright helper shared by 10 test files, so K ran those whole files (241 tests per head, which includes tests that were never skipped). Playwright 1.63.0, Chromium build 1243 (pre-installed, matches the lock), Node v22.23.4, pytest 9.2.0, Python 3.12.
+**ORDER 9 total:** 196 of 200 skipped tests now run and pass on f3c39cf8 and on the claims STACK; 4 remain skipped on purpose (listed in evidence/summary.md). No failure, so no cloud-image issue to report.
+
 ## 2026-11-13 12:02Z / 17:32 IST  HEARTBEAT 29 (L reported; K at about half)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

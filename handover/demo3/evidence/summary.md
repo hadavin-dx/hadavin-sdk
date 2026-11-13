@@ -1,3 +1,14 @@
+# UNSKIP RESULT (ORDER 9, 12:10Z / 17:40 IST): the 200 skipped tests on public main f3c39cf8 (agents K, L, M; counts checked by me in the raw logs)
+
+| group | head | tests run | passed | failed | skipped | wall time |
+|---|---|---|---|---|---|---|
+| browser (the 166 Playwright skips): 10 whole test files, pass 1 (4 files) | f3c39cf8 / STACK | 113 / 113 | 113 / 113 | 0 / 0 | 0 / 0 | 104 s / 105 s |
+| browser: 10 whole test files, pass 2 (6 files) | f3c39cf8 / STACK | 128 / 128 | 128 / 128 | 0 / 0 | 0 / 0 | 207 s / 206 s |
+| gitleaks (the 30 gitleaks skips) + tests/test_hygiene.py, DPLD_REQUIRE_SCAN=1: test_hygiene.py 24, test_gitleaks_exceptions.py 44, test_gitleaks_semgrep_lock.py 4 | f3c39cf8 / STACK | 72 / 72 | 72 / 72 | 0 / 0 | 0 / 0 | 76 s / 75 s |
+| the 4 other skips (M, read-only, nothing run) | - | 4 | - | - | 4 stay skipped | - |
+
+Reading: 196 of the 200 skipped tests now run and **all pass on both heads** (exit 0 on every run): Playwright 1.63.0 with Chromium build 1243 (pre-installed in /opt/pw-browsers, matches the lock, no download), Node v22.23.4; gitleaks 8.30.1 (release checksum matches lint.yml). The browser runs executed WHOLE files (241 tests per head, including tests that were never skipped), because the 166 skips all come from one shared Playwright helper used by 10 test files. **4 stay skipped, on purpose:** the Windows-only test (tests/test_stall_eviction.py:526), the Python-3.13-only `ntpath.isreserved` test (tests/test_path_confinement.py:284, python3.13 exists here but has no pytest or project packages), the opt-in burst measurement (tests/test_server_hardening.py:224, runs with LEAD_DESK_LOAD_N=300) and the root-user n8n file-permission test (tests/test_n8n_api_url.py:510, could run through setpriv as nobody). No failure on either head, so there is nothing to attribute to the cloud image. Not run: ruff, mypy, bandit, the full suite with everything unskipped at once. STACK = f3c39cf8 + claims-stack-on-f3c39cf8.patch (sha256 7138e884...89194c). Details: evidence/unskip-browser.md, unskip-gitleaks.md, skipped-on-purpose.md.
+
 # LATEST (12:00Z / 17:30 IST): rebased claims stack on public main f3c39cf8 (agent I; counts checked by me in the raw logs)
 
 | head | scope | passed | failed | skipped | errors | wall time | exit |
