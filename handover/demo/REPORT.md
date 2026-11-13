@@ -1,6 +1,33 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:22Z / 10:52 IST - **PROBE v3 SAFE. READING CLEAN** (fresh safety read): probe-ab-v3 + probe-ab-v3-writes2-full may be pushed as throwaway draft PRs; **a FLAKY TEST ON BASE found (test_resolve_413 3/10 on db54e13): a red sonar.yml run stops before the scan, so re-run it**; 6 agents
+**PROBE v3 SAFE.** **READING CLEAN** (decision level; pairs bundle a few extra differences, listed below, none makes a row misleading).
+Push order: 1) sonar/probe-ab-v3.patch sha256 f21835fe654bf3d92dbdd2e057ba939b18b5af003419016bac7fd6489b75d1fe (applies on db54e13 alone); second push (writes, #7 inline / #8 helper swapped, scrub write as helper): sonar/probe-ab-v3-writes2-full.patch sha256 311fceff996b2f1ae1bf61382b9709ba1c2b1bfe050261cc0a1b56c3e9ebd86c (applies on db54e13 alone). Notes: sonar/PROBE-AB-V3-NOTE.md; fresh read: sonar/REVIEW-probe3-fresh.md. Branch cut from db54e13, PR to main, never merged, do NOT touch PR #7.
+FAILED / UNCERTAIN first (no Blocker, no Major):
+1. **sonar.yml risk, a FLAKY TEST ON BASE:** the reader ran the full suite on writes2 with sonar.yml's environment: 1 failed, 3132 passed, 30 skipped. The failure is `tests/test_later_approval.py::test_resolve_413_drains_the_unread_body_like_post_leads`: run 10 times alone: **db54e13 itself failed 3 of 10, writes2 failed 3 of 10**: so it is NOT caused by the probe and it WILL bite the series: a red test stops sonar.yml before the scan (no Sonar reading, no coverage). This is the area of the 413/501 body-drain core touch (server.py): I will assign a root-cause builder now (timing race in the test or a real race in the drain): until it is fixed, re-run a red job once before concluding anything. **ALSO: this may be what the earlier INT runs' 'one flaky failure' (rv5: stopped after 1114 passed at a flaky failure of this very test while mutants ran) was: now proven to exist on base.**
+2. **sonar.yml risk, TMPDIR:** the #5 site (`_facts_say_live`, env-free variant) uses the constant `/tmp`: with TMPDIR set to another folder `tests/test_load_tools.py::test_cli_exit_codes` fails on v3 (base passes with the same TMPDIR). ubuntu-24.04 runners normally leave TMPDIR unset: expected no effect, NOT proven; a local run on Windows/macOS would fail that test (probe only: never merged). At #5 a path refused for ANY reason (including one only allowed through LEAD_DESK_PATH_ROOTS) answers 'live': stricter, never weaker.
+3. **Design caveats (minor), so you read the Sonar result right:** pair T (#13 vs #1) bundles several differences (index pick, no returned pair, its own `_ix_*` functions, inlined text checks, a new wrapper): #13 is a NEW site so 'vanished' means 'no issue appears'; pair E (#1 vs #2) differs in guard shape plus the listing rebuild AND in sink syntax (variable receiver `path.read_text` at helper sites vs constructor `Path(real).read_text` at inline sites; both forms are flagged in base); the writes2 swap changes guard shape and sink syntax together (still the best same-site comparison); **the positive control #14 compares against tuple subscripts, not literals: Sonar likely ignores comparisons so it will probably show a NEW S8707 in `_probe_control`: the note reads that correctly; a literal `name not in ("README.md","catcher.py")` would be a cleaner control** (I can rebuild if you want it before pushing: 15 min). Rule M4 (sink moved) covers an issue at os.scandir in `_entry`/`_ix_entry`. Controls #3 (read_book L96) and #12 (load_env L645) are in no hunk and unreachable from any probed helper.
+4. **Measured by the reader:** both patches apply alone on fresh clones at db54e13; hygiene+gitleaks (DPLD_REQUIRE_SCAN=1, after git add -A): v3 32 passed, writes2 84 passed 0 skipped; `gitleaks git` on a clean clone with no stashes: 17 commits (18 with the patch) no leaks (**the builder's stash-commit finding does NOT reproduce**); ruff/format/mypy linux+win32 (27 files)/bandit clean on both; bypass attempts (.., absolute, links to a file/dir/dangling, loops, prefix sibling, NUL, control chars, empty, 5000 chars, mixed slashes) against EVERY helper and checker site, load_driver.run (log and facts, v3 and writes2), scrub src and dst, n8n_api import: all refused, nothing written outside; confine precedes the sink on every path; no site weaker than base (narrowing at #6, #7/#8, #5 and scrub as the note says); mutants: 15 of 15 on v3 killed, 3 of 4 on writes2 (the survivor writes facts_path instead of real_facts: equivalent); 'PROBE ONLY, DO NOT MERGE' in the new files; `run_real_check.py --help` and `python -m tools.scrub_n8n_export` still work. Not run: Sonar, CodeQL, Windows/macOS, the full suite on v3 alone.
+5. P2 v2.1 is also READY (previous block): READY TO PUSH list is now: P1 v3.2, P2 v2.1 (series, in this order), semgrep v5.1 (separate PR), probe v3 / writes2 (throwaway PRs). Open: real-run v5 safety read, crlf v5 + yaml trimmed-v2 read, nodemo v3, start-prompt v2 + desk-address (core), P1 v3.2.1 delta read, P2 v2.2 test delta.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| (new) | flaky test_resolve_413 root-cause builder | 05:24 | starting | root cause + fix patch |
+| a0c9fa499e0239fab | P2 v2.2 test delta builder | 05:21 | running | delta |
+| a4c3b1e106ab36b0e | fresh sixth reader P1 v3.2.1 delta | 05:19 | running | CLEAN / NOT |
+| afd3a7d7745c30316 | fresh safety reader real-run v5 | 05:15 | running | CLEAN / NOT |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| probe v3 safety read | PROBE v3 SAFE, READING CLEAN |
+| P2 v2.1 third read | CLEAN |
+
 ## 2026-11-13 05:21Z / 10:51 IST - **READY TO PUSH: P1 v3.2, P2 v2.1** (both fresh-read CLEAN); semgrep v5.1 as its own PR; 7 agents
 **READY TO PUSH, in this order on db54e13:**
 1. sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c (CLEAN, fifth fresh read)
