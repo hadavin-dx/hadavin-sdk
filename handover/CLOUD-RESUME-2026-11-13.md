@@ -64,3 +64,12 @@ Builders a592bb13 (Q8c-1), ac09a2ce (SONAR-PATH), aa1d792a (Part 6 batch 16) fin
 8. Run `egm:egm-resolve` for Part 2 round 13, then a batch 14 builder.
 9. Queue RUN ON LAPTOP lines for Q8c-1 and every FINAL head, once each.
 10. Append findings to the ledger the same turn; write PULSE lines; push with cpush.sh.
+
+## Added at the end of the STOP sweep
+- Two git stashes were saved as branches: `stop-stash/1113-0` (WIP on core/prh-strip-hidden-controls) and `stop-stash/1113-1` (an autostash from a stuck rebase). Inspect, then delete if not needed.
+- One local branch had diverged from its remote and was pushed under another name, not forced: `core/prh-b3-local` local head e852b577 is on `stop-local/1113-core-prh-b3-local`.
+- 9 other local branches are only behind their remote (local is an ancestor of the remote head): nothing lost.
+- Scratch (detached) trees were switched to `scratch/stop-1113-<name>` branches and pushed. Table: handover/evidence/stop-sweep-2026-11-13.txt (state), stop-sweep-actions-2026-11-13.txt (per-tree action).
+- Builder notes, checkpoints and briefs from /home/user/build and the scratchpad (markdown only, under 1 MB each) copied to handover/evidence/stop-notes/. Logs, junit and raw files were not committed by rule.
+- Two worktrees keep untracked files that were left out on purpose: B-Q8a1-b8 (`handover/`, builders never commit handover/) and B-Q8c1-b12 (a gitleaks log under handover/evidence/Q8c-1/b12/logs/). Both branches are otherwise pushed and equal to the remote.
+- Part 6 batch 16 checkpoint: handover/evidence/stop-notes/checkpoint-pdbanner-b16.md if present; SONAR-PATH batch 7 checkpoint: checkpoint-b7.md in the same folder.

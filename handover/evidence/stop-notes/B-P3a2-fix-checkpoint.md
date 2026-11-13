@@ -1,0 +1,4 @@
+# fix checkpoint Wed Nov 11 23:35:35 UTC 2026 start; pg at /home/user/build/B-P3a2-fx-pg port 56912; worktree B-P3a2-fx
+# Wed Nov 11 23:37:07 UTC 2026 30min? no: ~25min in. Done: 3 tests re-pointed (new step-2 wording per ticket 4.1 step 2; mutant 'if False and before' kills all 3); lockin fix: driver facade in store/postgres.py (SqlPart, Rollback, named_rows, tuple_rows, quote_identifier, sql_words, sql_template, sql_string), migration_verify uses pg.*; lockin guard 56 pass. Next: migration_rules, flaky alone, mutants, gates, full suite, fail-before, push.
+# Wed Nov 11 23:38:26 UTC 2026 added 2 real-server tests for EX1/EX2 (extension-owned managed object: early owner check skips, step-2 state check refuses); now run EX1 EX2 mutants, gates, full suite.
+# Wed Nov 11 23:53:09 UTC 2026 mutants: 262/301 killed; 39 survivors all in uncalled code (3c). next: timing alone, fail-before, commit, full suite, push
