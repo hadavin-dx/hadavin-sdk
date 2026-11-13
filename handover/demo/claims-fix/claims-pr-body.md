@@ -12,8 +12,8 @@ This is a series of 19 commits, 41 files, 602 insertions and 547 deletions. Each
 |---|---|
 | False or out-of-date sentences | rewritten to what the code does (for example a background pass can run longer than 55 s because the CRM-copy and reminder parts of the same pass each add their own time; a send timeout above 9 s is accepted, the call is still cut off at 9 s, and the value lengthens the wait before a stuck follow-up is put back; the exit codes of the desk; a repeated request does use up a receipt number and can start a due follow-up; the crash-script command needs `PYTHONPATH=src:.`) |
 | Sentences about tests | every "no test checks ...", "not tested" and "tests/x.py checks ..." was searched against `tests/`: wrong denials were corrected (a test for a restart on one port exists; `tests/test_portal_api.py::test_foreign_host_is_refused_on_every_route` checks that a refused Host does not count) and citations that said more than the test asserts were narrowed |
-| Numbers and names | a script and readers compared every backticked name, path, route, constant, default, exit code and number with the code; a handful were wrong and are fixed |
-| What a command prints | the Linux commands named in the docs were run as written and the sentences about what they print were corrected; the commands that need Windows were not run on Windows |
+| Numbers and names | a script compared the backticked names, paths, routes, constants, exit codes and numbers in the docs with the code (output: 1065 items, 1 explained mismatch); sentences found wrong, by the script or by readers, are fixed |
+| What a command prints | sentences about what a command prints were corrected where a run showed a different output (no single log of those runs is kept); the commands that need Windows were not run on Windows |
 | Results of earlier runs and outside facts | deleted where this repository cannot prove them (test counts of earlier runs, timings, the author's runs of the HubSpot probe, an independent rerun, the Semgrep run log) |
 | Plain wording | the longest and most confusing paragraphs were split and the first-use terms defined |
 
@@ -34,7 +34,7 @@ The other code files differ from main only in docstrings and comments (checked: 
 
 ## Checks
 
-Run on the final tree (main f3c39cf8 plus the 19 commits applied with `git am`; head commit 36dbb1060c3c5023e918344449730c5a56960a75; the resulting tree is identical to the build tree, tree hash 49d3c85938fe5323a3378a49195d3b8da434b3ca). Raw logs are in the handover folder, not in this repository.
+Run on the final tree (main f3c39cf8 plus the 19 commits applied with `git am`; head commit 36dbb1060c3c5023e918344449730c5a56960a75; the resulting tree is identical to the build tree, tree hash 49d3c85938fe5323a3378a49195d3b8da434b3ca). The raw logs are kept outside this repository, in the author's handover folder `handover/demo/tools-claims/`.
 
 * gitleaks 8.30.1 with the repository config: `dir`, `git` (all history) and `git` over f3c39cf8..HEAD: no leaks found (exit 0 each).
 * `ruff check .`: exit 0. `ruff format --check .`: 159 files already formatted.
@@ -42,8 +42,8 @@ Run on the final tree (main f3c39cf8 plus the 19 commits applied with `git am`; 
 * `bandit -ll -r src tools scripts -c pyproject.toml`: exit 0.
 * `scripts/check_schema.py`: RESULT ALL PASS.
 * Syntax-tree comparison with docstrings blanked: 21 of the 22 changed .py files are identical to main; the one different file is `tests/test_input_edge_cases.py` (the tightened assertion). YAML parse equality with main: the four workflows and `.coderabbit.yaml`.
-* Link and name check over the docs: 7 references reported, all of the kind "quoted bold lead-in is not a heading" or the placeholder file name `tests/test_name.py`; one test-name check reports a deliberate name prefix in `docs/limits.md`.
-* Full suite, Python 3.12, loopback-only network, run before the last round of wording fixes: 1 failed, 3878 passed, 4 skipped. The failure was a test that runs as an unprivileged user and could not read the clone folder (folder mode 700, a set-up fault of the run, not of the code). Python 3.13, same stage: 1 failed, 3713 passed, 169 skipped; the failure was a `git commit` that needed network for commit signing. FULL-SUITE-FINAL-PLACEHOLDER
+* Link check over the docs on the final tree: 356 references found, 7 reported as broken (quoted section names that are not headings, and the placeholder file name `tests/test_name.py`); these 7 were not changed. Name and number check over the docs on the final tree: 1065 items, 1 mismatch, a deliberate test-name prefix in `docs/limits.md` (a full test name there would break the secret-scan rule on long tokens).
+* Full suite, Python 3.12, loopback-only network, on the tree before the last round of wording fixes: 1 failed, 3878 passed, 4 skipped. The failure was `tests/test_path_confinement.py::test_v1_a_config_below_a_traverse_only_folder_is_refused_with_a_message_as_an_unprivileged_user` with `ModuleNotFoundError: No module named 'tools'`; that test runs as an unprivileged user and the clone folder had mode 700, so I take it as a fault of the run set-up (the clone folder is mode 755 in later runs). Python 3.13, same stage: 1 failed, 3713 passed, 169 skipped; the failure was `tests/test_hygiene.py::test_term_scan_finds_a_planted_term`, where `git commit` exited with status 128; I take the cause to be commit signing that needs the network (inferred; with signing switched off the hygiene tests pass). FULL-SUITE-FINAL-PLACEHOLDER
 * Semgrep could not be run here (the rule registry is not reachable from the sandbox); the semgrep workflow was compared as YAML only.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

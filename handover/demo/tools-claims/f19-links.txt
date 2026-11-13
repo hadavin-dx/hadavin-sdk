@@ -1,0 +1,8 @@
+ok references: 356; broken: 7
+BROKEN | contract.md | 48 | Exit codes | quoted section name: no heading with that name
+BROKEN | docs/limits.md | 99 | Later messages | quoted section name: no heading with that name
+BROKEN | docs/settings.md | 13 | CRM settings | quoted section name: no heading with that name
+BROKEN | docs/settings.md | 41 | The leadflow file | quoted section name: no heading with that name
+BROKEN | docs/tests.md | 40 | Run it on your own computer | quoted section name: no heading with that name
+BROKEN | docs/tests.md | 84 | tests/test_name.py | referenced file missing
+BROKEN | docs/tests.md | 125 | Approved by | quoted section name: no heading with that name
