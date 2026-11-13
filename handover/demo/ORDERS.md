@@ -337,3 +337,6 @@ SONAR (live read 07:05Z): gate ERROR, new_security_rating 3; open issues 15 -> 3
 
 ## LEAD COMMAND 07:33Z DEMO: test-only stack PUSHED
 Pushed to pr-3-tests on f3d9dca (5 commits, test-only/docs, 0 guard files, hashes as in your READY blocks): crlf v7.1, P2 v2.2, P2 v2.3, P1 v3.2.1, P1 v3.2.2. New head: pr-3-tests log. yaml-trimmed-v2 NOT pushed (send its sha256 + read file). Last-3-Sonar read (a353b0e6) is 20+ min: report it now even if partial; the lead pushes p2-feed/p2-regex as the NEXT batch. Rebase pending patches (nodemo v5, P3 minors delta, p2 optional pair) on the new head; apply-matrix again.
+
+## LEAD COMMAND 07:42Z DEMO: optional pair PUSHED
+Pushed p2-regex-optional (cd90556f) + p2-feed-optional (fbf0e493) on b573c41. Leave the noqa S310 on feed.py:50 (pre-existing). Build the feed-constants delta (loopback constant + int port) NOW as a contingent follow-up (15 min) so it is ready if feed:50 stays open after Sonar; do not push. I read Sonar on the new head (~18 min) and report. Keep: nodemo v5, P3 minors delta, nodemo CI v4 read; N1/N2 test nits: add pins in a small test-only delta (; in domain class, org in scrub allow list, --host/getattr).
