@@ -1,0 +1,21 @@
+(the block below, "sh on the v2 tree before the guard was added", shows why the guard exists: dash prints "[[: not found" and carries on past the line-15 refusal test)
+== guard present
+2 passed, 37 deselected in 0.12s
+== mutant: reset.sh without the guard (run under dash; reset.sh only, start_all would start servers)
+E       AssertionError: ('refused: something still answers on port 8766; nothing was deleted
+E       assert 4 == 2
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh]
+1 failed, 1 passed, 37 deselected in 0.22s
+== dash on the OLD scripts (db54e13, single brackets) for comparison: sh reset.sh with a db outside data
+refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted
+db
+== new bidi test with the OLD tests/test_followup_edge_cases.py (raw U+202E): 
+E       AssertionError: raw direction control characters in: ['tests/test_followup_edge_cases.py:439', 'tests/test_followup_edge_cases.py:445']
+1 failed, 37 deselected in 0.09s
+== dash: sh scripts/reset.sh on patched tree
+scripts/reset.sh: 15: [[: not found
+scripts/reset.sh: 28: [[: not found
+rc=0
+== start_all.sh
+scripts/start_all.sh: 13: [[: not found
+scripts/start_all.sh: 17: [[: not found

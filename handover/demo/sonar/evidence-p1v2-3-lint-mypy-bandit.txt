@@ -1,0 +1,14 @@
+== ruff check
+All checks passed!
+== ruff format --check
+146 files already formatted
+== mypy linux
+Success: no issues found in 26 source files
+== mypy win32
+Success: no issues found in 26 source files
+== bandit -ll exit code 0
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0

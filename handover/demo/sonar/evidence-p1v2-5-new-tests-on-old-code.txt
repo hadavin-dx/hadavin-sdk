@@ -1,0 +1,7 @@
+FAILED tests/test_hygiene.py::test_sh_scripts_and_workflow_run_blocks_use_double_brackets_for_tests
+FAILED tests/test_lead_step_route.py::test_demo_launchers_name_the_demo_file_and_the_off_switch
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh]
+FAILED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[start_all.sh]
+FAILED tests/test_workflow_files_parse.py::test_a_download_in_a_workflow_is_https_only_and_modern_tls[lint.yml]
+FAILED tests/test_workflow_files_parse.py::test_a_pip_install_in_a_workflow_takes_wheels_only_with_hashes[lint.yml]
+6 failed, 219 passed, 3 skipped in 48.66s

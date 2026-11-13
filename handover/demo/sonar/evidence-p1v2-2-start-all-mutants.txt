@@ -1,0 +1,32 @@
+Mutants of scripts/start_all.sh, new tests kept (python -m pytest tests/test_reset_scripts.py -k start_all)
+== unmutated
+11 passed, 26 deselected in 0.22s
+== mutant (sed): s/!= off \]\]/!= of ]]/
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+2 failed, 9 passed, 26 deselected in 0.26s
+== mutant (sed): s/-n "\$DESK_LEADFLOW_FILE" \]\]/-z "$DESK_LEADFLOW_FILE" ]]/
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+5 failed, 6 passed, 26 deselected in 0.28s
+== mutant (sed): s/\[\[ -e "\$data_dir\/fakes.pid" \]\] ||/[[ -e "$data_dir\/fakes.pi" ]] ||/
+FAILED tests/test_reset_scripts.py::test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing[fakes.pid]
+1 failed, 10 passed, 26 deselected in 0.24s
+== mutant (sed): s/ || \[\[ -e "\$data_dir\/desk.pid" \]\]/ || [[ -e "$data_dir\/desk.pi" ]]/
+FAILED tests/test_reset_scripts.py::test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing[desk.pid]
+1 failed, 10 passed, 26 deselected in 0.24s
+== mutant (sed): s/\]\] \&\& \[\[ -n/]] || [[ -n/
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+FAILED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[...]
+2 failed, 9 passed, 26 deselected in 0.24s
+== mutant: lint.yml line 77 back to single bracket (hygiene test)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+E       AssertionError: single-bracket test in: ['lint.yml run-block line 5']
+E       assert not ['lint.yml run-block line 5']
+FAILED tests/test_hygiene.py::test_sh_scripts_and_workflow_run_blocks_use_double_brackets_for_tests
+1 failed, 34 passed, 3 skipped in 6.99s
+== mutant: scripts/reset.sh line 15 back to single bracket
+3:# Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
