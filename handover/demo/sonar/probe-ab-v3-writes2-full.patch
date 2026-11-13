@@ -1,0 +1,1055 @@
+diff --git a/load_tools/check_invariants.py b/load_tools/check_invariants.py
+index 211c406..1117290 100644
+--- a/load_tools/check_invariants.py
++++ b/load_tools/check_invariants.py
+@@ -17,6 +17,22 @@ from collections.abc import Iterable, Mapping
+ from pathlib import Path
+ from typing import Any
+ 
++from tools.pathconfine import (
++    PathRefused,
++    allowed_roots,
++    confine,
++    confine_existing,
++    confine_existing_fixed,
++    confine_existing_ix,
++)
++
++# PROBE ONLY, DO NOT MERGE. Which flagged site has which shape is in PROBE-AB-V3-NOTE.md.
++# PROBE shape NAME-ONLY: the drain marker is found by NAME in this folder
++DRAIN_DIR = str(Path(__file__).resolve().parent)
++# PROBE positive control: the only names the control function reads (compared by equality, then used)
++CONTROL_NAMES = ("README.md", "catcher.py")
++
++
+ # ---- config block (the only place for numbers and words) ----
+ FIRST_N = 10  # offending ids listed per check
+ DEFAULT_MODEL_CALL_BOUND = 3  # check 5: most model calls allowed for one lead
+@@ -58,6 +74,10 @@ class InputError(Exception):
+ 
+ 
+ def read_jsonl(path: Path) -> list[dict[str, Any]]:
++    try:  # PROBE shape SPLIT: helper for an existing file only (no new-name branch), environment roots
++        path = confine_existing(path, what="log file")
++    except PathRefused as e:
++        raise InputError(str(e)) from e
+     rows: list[dict[str, Any]] = []
+     try:
+         text = path.read_text(encoding="utf-8")
+@@ -78,8 +98,18 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
+ 
+ def read_crm(path: Path) -> list[dict[str, Any]]:
+     """Accepts the fakes server reply {"count", "rows": [...]} or a bare list of rows (each has lead_id)."""
++    try:  # PROBE shape INLINE: realpath, check against the allowed folders, refuse, then read the real path
++        real = os.path.realpath(path)
++        inside = any(
++            os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
++            for root in allowed_roots()
++        )
++    except (OSError, ValueError):  # a NUL or a loop in the path, or another drive
++        inside = False
++    if not inside:
++        raise InputError("--crm: path is outside the allowed folders")
+     try:
+-        obj = json.loads(path.read_text(encoding="utf-8"))
++        obj = json.loads(Path(real).read_text(encoding="utf-8"))
+     except (OSError, ValueError) as e:
+         raise InputError(f"cannot read CRM dump {path.name}: {type(e).__name__}") from e
+     rows = obj.get("rows") if isinstance(obj, dict) else obj
+@@ -593,6 +623,10 @@ def render_table(result: Mapping[str, Any]) -> str:
+ 
+ 
+ def _intended(path: Path) -> int:
++    try:  # PROBE shape COMBINED: the helper that also has the new-name branch
++        path = confine(path, what="--facts")
++    except PathRefused as e:
++        raise InputError(str(e)) from e
+     try:
+         return int(json.loads(path.read_text(encoding="utf-8"))["intended_requests"])
+     except (OSError, ValueError, KeyError, TypeError) as e:
+@@ -601,6 +635,10 @@ def _intended(path: Path) -> int:
+ 
+ def _facts_say_live(path: Path) -> bool:
+     """True when the driver's facts file records that the run's AI step was the live model (see load_driver.run)."""
++    try:  # PROBE shape SPLIT-FIXED: existing file only, allowed folders WITHOUT the environment
++        path = confine_existing_fixed(path, what="--facts")
++    except PathRefused:
++        return True  # fail closed: a refused path counts as "live" (the model-required check on); _intended refuses it
+     try:
+         return bool(json.loads(path.read_text(encoding="utf-8")).get("qualifier") == "live_claude")
+     except (OSError, ValueError, AttributeError):
+@@ -610,14 +648,43 @@ def _facts_say_live(path: Path) -> bool:
+ def _drain_marker(path: Path | None) -> float | None:
+     if path is None:
+         return None
++    # PROBE shape NAME-ONLY: only the name counts; the folder is the constant DRAIN_DIR
++    name = os.path.basename(str(path))
++    if name in ("", ".", ".."):
++        raise InputError("--drain: not a file name")
+     try:
+-        obj = json.loads(path.read_text(encoding="utf-8"))
++        obj = json.loads(Path(os.path.join(DRAIN_DIR, name)).read_text(encoding="utf-8"))
+         value = obj.get("drained_ts")
+     except (OSError, ValueError, AttributeError) as e:
+         raise InputError(f"cannot read drain marker {path.name}: {type(e).__name__}") from e
+     return None if value is None else float(value)
+ 
+ 
++def _probe_index_read(path: Path) -> int:
++    """PROBE ONLY: a second read of a log through the INDEX helper (a twin of read_jsonl, same file, same source)."""
++    try:  # PROBE shape INDEX: as read_jsonl, but the helper picks the folder by index and returns no pair
++        path = confine_existing_ix(path, what="log file")
++    except PathRefused as e:
++        raise InputError(str(e)) from e
++    try:
++        text = path.read_text(encoding="utf-8")
++    except OSError as e:
++        raise InputError(f"cannot read {path.name}: {type(e).__name__}") from e
++    return len(text)
++
++
++def _probe_control(path: Path) -> int | None:
++    """PROBE ONLY, positive control: the name is compared by equality with constants, then used; any other name is
++    ignored (None). The only difference from an unguarded read is that comparison."""
++    name = str(path)
++    if name != CONTROL_NAMES[0] and name != CONTROL_NAMES[1]:
++        return None
++    try:
++        return len(Path(DRAIN_DIR, name).read_text(encoding="utf-8"))
++    except OSError:
++        return None
++
++
+ def main(argv: list[str] | None = None) -> int:
+     ap = argparse.ArgumentParser(prog="load_tools.check_invariants")
+     ap.add_argument("--requests", type=Path, required=True, help="client request log (JSONL)")
+@@ -659,6 +726,8 @@ def main(argv: list[str] | None = None) -> int:
+         a.model_required = os.environ.get("DESK_QUALIFIER") == "live_claude" or _facts_say_live(facts_path)
+     try:
+         intended = _intended(facts_path)
++        _probe_index_read(a.catcher)  # PROBE ONLY: the index helper on the same file as read_jsonl(a.catcher) below
++        _probe_control(a.model_log)  # PROBE ONLY: positive control
+         result = run_checks(
+             read_jsonl(a.requests),
+             read_book(a.book),
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index 3a9a750..7104aed 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -25,6 +25,8 @@ from collections import Counter
+ from pathlib import Path
+ from typing import Any
+ 
++from tools.pathconfine import allowed_roots, confine_iter  # PROBE ONLY, DO NOT MERGE
++
+ FALLBACK_RETRY_VALUES = (
+     0.1,
+     1.0,
+@@ -346,6 +348,17 @@ def machine_facts() -> dict[str, Any]:
+ def run(
+     base_url: str, scenario: str, log: Path, facts_path: Path, workers: int, threads: int, seed: int, prefix: str
+ ) -> dict[str, Any]:
++    log = confine_iter(log, what="--log")  # PROBE writes2: the HELPER on this write (iteration table, as in v3)
++    try:  # PROBE writes2 shape INLINE on a write: realpath, check against the allowed folders, refuse
++        real_facts = os.path.realpath(facts_path)
++        inside = any(
++            os.path.commonpath([os.path.normcase(real_facts), os.path.normcase(root)]) == os.path.normcase(root)
++            for root in allowed_roots()
++        )
++    except (OSError, ValueError):  # a NUL or a loop in the path, or another drive
++        inside = False
++    if not inside:
++        raise ValueError("--facts: path is outside the allowed folders")
+     facts = machine_facts()
+     t0 = time.time() + START_LEAD_SECONDS  # wall-clock: calendar stamp
+     schedule = build_schedule(scenario, t0, prefix, seed)
+@@ -363,7 +376,7 @@ def run(
+         seed=seed,
+         qualifier=os.environ.get("DESK_QUALIFIER", ""),  # lets the checker know the AI step was live
+     )
+-    facts_path.write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
++    Path(real_facts).write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+     ctx = multiprocessing.get_context("spawn")
+     with ctx.Pool(workers) as pool:
+         pool.map(_worker, jobs, chunksize=1)
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index 97a9e07..0b03549 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -31,6 +31,7 @@ import json
+ import os
+ import re
+ import sys
++import tempfile
+ import urllib.error
+ import urllib.request
+ from http import HTTPStatus
+@@ -41,6 +42,13 @@ REPO = Path(__file__).resolve().parents[1]
+ if str(REPO / "src") not in sys.path:
+     sys.path.insert(0, str(REPO / "src"))
+ 
++
++def _probe_roots() -> list[str]:
++    """PROBE ONLY, DO NOT MERGE. Allowed folders: current folder, repository, temporary folder, LEAD_DESK_PATH_ROOTS."""
++    extra = [r for r in os.environ.get("LEAD_DESK_PATH_ROOTS", "").split(os.pathsep) if r]
++    return [os.path.realpath(r) for r in (os.getcwd(), str(REPO), tempfile.gettempdir(), *extra)]
++
++
+ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.config import is_loopback_host  # noqa: E402
+@@ -189,7 +197,13 @@ def main(a: list[str]) -> int:
+             say(w["name"], "active" if w["active"] else "inactive")
+     elif cmd == "import":
+         try:
+-            wf = json.loads(Path(a[2]).read_text(encoding="utf-8"))
++            real = os.path.realpath(a[2])  # PROBE shape INLINE (a NUL makes realpath raise ValueError: caught below)
++            if not any(
++                os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
++                for root in _probe_roots()
++            ):
++                raise ValueError("outside the allowed folders")
++            wf = json.loads(Path(real).read_text(encoding="utf-8"))
+             wf.setdefault("settings", {})
+             str(wf["name"])  # a workflow file without a name is refused here, not after the call
+         except (OSError, ValueError, KeyError, AttributeError, RuntimeError) as e:  # no file, not JSON (or nested too
+diff --git a/tests/test_load_tools.py b/tests/test_load_tools.py
+index bd23577..6c5890a 100644
+--- a/tests/test_load_tools.py
++++ b/tests/test_load_tools.py
+@@ -279,6 +279,7 @@ def test_offenders_capped_at_ten(tmp_path: Path) -> None:
+ 
+ 
+ def test_cli_exit_codes(tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(ci, "DRAIN_DIR", str(tmp_path), raising=False)  # probe: the drain marker is found by name here
+     w = make_world()
+     make_book(tmp_path / "desk.sqlite3", w["leads"])
+ 
+diff --git a/tests/test_probe_ab.py b/tests/test_probe_ab.py
+new file mode 100644
+index 0000000..e238e1c
+--- /dev/null
++++ b/tests/test_probe_ab.py
+@@ -0,0 +1,482 @@
++"""PROBE ONLY, DO NOT MERGE. Tests for the path-guard shapes of the Sonar measuring probe (PROBE-AB-V3-NOTE.md).
++
++Shapes: the SPLIT, COMBINED, FIXED, INDEX, DICT and ITERATION helpers (tools/pathconfine.py), INLINE guards
++(check_invariants, n8n_api and scrub_n8n_export), NAME-ONLY (check_invariants._drain_marker), and one positive
++control (an equality check).
++Made-up data only. The site tests run unchanged against the code before the probe (the base commit has no
++tools/pathconfine.py): there the refusal assertions fail by behaviour (the old code opens any path); only the tests of
++the helper functions themselves fail for the missing module."""
++
++from __future__ import annotations
++
++import importlib
++import importlib.util
++import json
++import os
++import sys
++import tempfile
++from pathlib import Path
++
++import pytest
++
++from load_tools import check_invariants as ci
++from load_tools import load_driver
++from tools import scrub_n8n_export
++
++REPO = Path(__file__).resolve().parent.parent
++ROOTS_ENV = "LEAD_DESK_PATH_ROOTS"
++HAS_HELPER = importlib.util.find_spec("tools.pathconfine") is not None
++needs_helper = pytest.mark.skipif(not HAS_HELPER, reason="tools/pathconfine.py is part of the probe")
++
++
++@pytest.fixture
++def jail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
++    """(inside, outside): the only allowed folder is ``inside`` (plus the repository, which holds neither)."""
++    inside, outside = tmp_path / "inside", tmp_path / "outside"
++    inside.mkdir()
++    outside.mkdir()
++    monkeypatch.chdir(inside)
++    monkeypatch.setattr(tempfile, "tempdir", str(inside))
++    monkeypatch.delenv(ROOTS_ENV, raising=False)
++    if HAS_HELPER:
++        monkeypatch.setattr("tools.pathconfine.REPO_ROOT", inside)
++        monkeypatch.setattr("tools.pathconfine.FIXED_TEMP", str(inside))
++    return inside, outside
++
++
++def _write_all(folder: Path) -> None:
++    (folder / "a.jsonl").write_text('{"a": 1}\n', encoding="utf-8")
++    (folder / "f.json").write_text(json.dumps({"intended_requests": 3, "qualifier": "live_claude"}), encoding="utf-8")
++    (folder / "g.json").write_text(json.dumps({"intended_requests": 3, "qualifier": "fake"}), encoding="utf-8")
++    (folder / "crm.json").write_text('[{"lead_id": "L1"}]', encoding="utf-8")
++    (folder / "drain.json").write_text(json.dumps({"drained_ts": 7}), encoding="utf-8")
++
++
++def _read_sites(p: Path) -> dict[str, object]:
++    """The five checker functions, called with one path each; the value is the result or the exception class."""
++    out: dict[str, object] = {}
++    for name, fn in (
++        ("jsonl", ci.read_jsonl),
++        ("crm", ci.read_crm),
++        ("intended", ci._intended),
++        ("live", ci._facts_say_live),
++    ):
++        try:
++            out[name] = fn(p)
++        except ci.InputError:
++            out[name] = ci.InputError
++    return out
++
++
++# ---- every shape: inside works, outside / .. / link out / prefix sibling are refused ----
++
++
++def test_all_checker_sites_inside_then_outside(jail: tuple[Path, Path]) -> None:
++    inside, outside = jail
++    _write_all(inside)
++    _write_all(outside)
++    assert ci.read_jsonl(inside / "a.jsonl") == [{"a": 1}]  # SPLIT helper
++    assert ci._intended(inside / "f.json") == 3  # COMBINED helper
++    assert ci.read_crm(inside / "crm.json") == [{"lead_id": "L1"}]  # INLINE
++    assert ci._facts_say_live(inside / "f.json") is True  # SPLIT-FIXED helper
++    assert ci._facts_say_live(inside / "g.json") is False  # exists, says not live
++    for name, fn in (
++        ("a.jsonl", ci.read_jsonl),
++        ("f.json", ci._intended),
++        ("crm.json", ci.read_crm),
++    ):
++        for bad in (outside / name, Path("..") / "outside" / name):
++            with pytest.raises(ci.InputError, match="outside"):
++                fn(bad)
++    # a refused facts path counts as "live" (fail closed: the model-required check goes on, never off); never read
++    (outside / "g.json").write_text(json.dumps({"intended_requests": 3, "qualifier": "fake"}), encoding="utf-8")
++    assert ci._facts_say_live(outside / "g.json") is True
++
++
++def test_links_and_prefix_sibling_are_refused_at_every_checker_site(jail: tuple[Path, Path]) -> None:
++    inside, outside = jail
++    _write_all(outside)
++    evil = inside.parent / (inside.name + "-evil")  # a folder whose name starts with the allowed folder's name
++    evil.mkdir()
++    _write_all(evil)
++    for src in (outside, evil):
++        for name, fn in (
++            ("a.jsonl", ci.read_jsonl),
++            ("f.json", ci._intended),
++            ("crm.json", ci.read_crm),
++        ):
++            if src is outside and sys.platform != "win32":
++                (inside / f"link-{name}").symlink_to(outside / name)
++                target: Path = inside / f"link-{name}"
++            else:
++                target = src / name
++            with pytest.raises(ci.InputError, match="outside"):
++                fn(target)
++    assert ci._facts_say_live(evil / "g.json") is True  # refused: fail closed
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="NUL in a path is refused by the OS API on Windows differently")
++def test_nul_in_a_path_is_a_clean_refusal_never_a_traceback(jail: tuple[Path, Path]) -> None:
++    got = _read_sites(Path("a\x00b"))
++    assert got["crm"] is ci.InputError
++    assert got["live"] is True  # refused: fail closed
++    assert got["jsonl"] is ci.InputError and got["intended"] is ci.InputError
++
++
++def test_roots_from_the_environment_reach_the_inline_and_the_helper_sites(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    inside, outside = jail
++    _write_all(outside)
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_crm(outside / "crm.json")
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert ci.read_crm(outside / "crm.json") == [{"lead_id": "L1"}]  # INLINE
++    assert ci._facts_say_live(outside / "g.json") is True  # SPLIT-FIXED ignores the environment: refused, fail closed
++    assert ci.read_jsonl(outside / "a.jsonl") == [{"a": 1}]  # SPLIT helper (environment roots)
++    assert ci._intended(outside / "f.json") == 3  # COMBINED helper
++    assert ci._probe_index_read(outside / "a.jsonl") > 0  # INDEX helper (environment roots)
++    monkeypatch.setenv(ROOTS_ENV, "")  # an empty value adds nothing
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_crm(outside / "crm.json")
++    with pytest.raises(ci.InputError, match="outside"):
++        ci._probe_index_read(outside / "a.jsonl")
++
++
++# ---- scrub: SPLIT read (178, replicate) and INLINE write (179) ----
++
++
++def test_scrub_read_is_split_helper_and_write_is_inline(
++    jail: tuple[Path, Path], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    inside, outside = jail
++    wf = json.dumps({"name": "w", "nodes": []})
++    (inside / "in.json").write_text(wf, encoding="utf-8")
++    (outside / "in.json").write_text(wf, encoding="utf-8")
++    assert scrub_n8n_export.main(["x", str(outside / "in.json"), "out.json"]) == 2
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "out.json")]) == 2
++    assert scrub_n8n_export.main(["x", "in.json", "../outside/out.json"]) == 2
++    assert scrub_n8n_export.main(["x", "missing.json", "out.json"]) == 2  # a missing input is refused, not a traceback
++    assert not (outside / "out.json").exists() and "refused" in capsys.readouterr().out
++    assert scrub_n8n_export.main(["x", "in.json", "out.json"]) == 0
++    assert json.loads((inside / "out.json").read_text(encoding="utf-8"))["name"] == "w"
++    if sys.platform != "win32":
++        (inside / "link-out.json").symlink_to(outside / "out.json")
++        (inside / "link-in.json").symlink_to(outside / "in.json")
++        assert scrub_n8n_export.main(["x", "in.json", "link-out.json"]) == 2
++        assert scrub_n8n_export.main(["x", "link-in.json", "out.json"]) == 2
++        assert not (outside / "out.json").exists()
++        assert scrub_n8n_export.main(["x", "in.json", "a\x00b"]) == 2  # NUL: refused, no traceback
++        assert scrub_n8n_export.main(["x", "a\x00b", "out.json"]) == 2
++    # LEAD_DESK_PATH_ROOTS: honoured by the INLINE write (179) and by the SPLIT read (178)
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "out.json")]) == 0
++    assert (outside / "out.json").is_file()
++    assert scrub_n8n_export.main(["x", str(outside / "in.json"), "out2.json"]) == 0
++
++
++# ---- the helper functions themselves (they only exist in the probe) ----
++
++
++@needs_helper
++def test_inside_rejects_the_prefix_sibling_directly(tmp_path: Path) -> None:
++    from tools.pathconfine import _inside
++
++    root = tmp_path / "in"
++    root.mkdir()
++    assert _inside(str(root / "x"), str(root)) and _inside(str(root), str(root))
++    assert not _inside(str(tmp_path / "in-evil" / "x"), str(root))
++    assert not _inside(str(tmp_path), str(root))
++
++
++@needs_helper
++def test_five_helpers_on_existing_new_and_missing(jail: tuple[Path, Path]) -> None:
++    from tools.pathconfine import (
++        PathRefused,
++        confine,
++        confine_existing,
++        confine_existing_fixed,
++        confine_existing_ix,
++        confine_iter,
++    )
++
++    inside, _ = jail
++    (inside / "here.txt").write_text("x", encoding="utf-8")
++    (inside / "odd name é.txt").write_text("x", encoding="utf-8")
++    for fn in (confine, confine_iter):  # may name a new file
++        assert fn("here.txt", what="w") == inside / "here.txt"
++        assert fn("odd name é.txt", what="w") == inside / "odd name é.txt"  # existing: any name
++        assert fn("new-1.txt", what="w") == inside / "new-1.txt"
++        for bad in ("new name.txt", "néw.txt", "a;b", "...", "x" * 300):
++            with pytest.raises(PathRefused):
++                fn(bad, what="w")
++    for efn in (confine_existing, confine_existing_fixed, confine_existing_ix):  # existing only
++        assert efn("here.txt", what="r") == inside / "here.txt"
++        assert efn(inside / "odd name é.txt", what="r") == inside / "odd name é.txt"
++        with pytest.raises(PathRefused, match="no such file"):
++            efn("new-1.txt", what="r")
++    for fn2 in (confine, confine_iter, confine_existing, confine_existing_fixed, confine_existing_ix):
++        for bad2 in ("", "  ", "a\x00b", "a\nb", "x" * 5000, "../outside/x", 5, None, b"here.txt"):
++            with pytest.raises(PathRefused):
++                fn2(bad2, what="w")  # type: ignore[arg-type]
++
++
++@needs_helper
++def test_dict_table_and_iteration_rebuild_agree_on_every_character() -> None:
++    """The only difference between confine and confine_iter is how the new name is rebuilt: same results."""
++    from tools.pathconfine import PathRefused, _new_name, _new_name_iter
++
++    for name in (
++        "a",
++        "A-z_9.x",
++        "x.",
++        ".x",
++        "é",
++        "a b",
++        "a/b",
++        "a\\b",
++        "a:b",
++        "\u202e",
++        "~",
++        "a" * 255,
++        "a" * 256,
++        ".",
++    ):
++        try:
++            want: str | type = _new_name(name, "w")
++        except PathRefused:
++            want = PathRefused
++        try:
++            got: str | type = _new_name_iter(name, "w")
++        except PathRefused:
++            got = PathRefused
++        assert got == want, name
++    for code in range(0x20, 0x250):
++        c = chr(code)
++        assert (_new_name("a" + c, "w") if c.isalnum() and c.isascii() or c in "._-" else None) == (
++            _new_name_iter("a" + c, "w") if c.isalnum() and c.isascii() or c in "._-" else None
++        )
++
++
++@needs_helper
++def test_fixed_roots_has_no_environment_and_existing_fixed_ignores_it(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from tools.pathconfine import PathRefused, allowed_roots, confine_existing, confine_existing_fixed, fixed_roots
++
++    inside, outside = jail
++    (outside / "f.txt").write_text("x", encoding="utf-8")
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert str(outside.resolve()) in allowed_roots() and str(outside.resolve()) not in fixed_roots()
++    assert confine_existing(outside / "f.txt", what="r") == outside.resolve() / "f.txt"
++    with pytest.raises(PathRefused, match="outside"):
++        confine_existing_fixed(outside / "f.txt", what="r")
++
++
++@needs_helper
++def test_fixed_roots_never_ask_the_standard_library_for_the_temporary_folder(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """No environment read in our code and none through ``tempfile``: the temporary folder is a constant."""
++    from tools import pathconfine
++
++    def boom() -> str:
++        raise AssertionError("fixed_roots must not call tempfile.gettempdir")
++
++    monkeypatch.setattr(tempfile, "gettempdir", boom)
++    roots = pathconfine.fixed_roots()
++    assert str(Path(pathconfine.FIXED_TEMP).resolve()) in roots
++    with pytest.raises(AssertionError):
++        pathconfine.allowed_roots()  # the other roots function does ask (one place only)
++
++
++@needs_helper
++def test_index_helper_agrees_with_confine_existing_everywhere(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The INDEX helper and ``confine_existing`` differ only in how they pick the folder: same answer (path or the
++    refusal) for every input, with and without an extra folder from the environment."""
++    from tools.pathconfine import PathRefused, confine_existing, confine_existing_ix
++
++    inside, outside = jail
++    (inside / "sub").mkdir()
++    (inside / "sub" / "f.txt").write_text("x", encoding="utf-8")
++    (outside / "o.txt").write_text("x", encoding="utf-8")
++    cases: list[object] = [
++        "sub/f.txt",
++        "sub",
++        ".",
++        "sub/../sub/f.txt",
++        "sub/missing.txt",
++        "missing/f.txt",
++        "sub/f.txt/x",
++        str(inside / "sub" / "f.txt"),
++        str(outside / "o.txt"),
++        "../outside/o.txt",
++        "",
++        " ",
++        "a\x00b",
++        "a\nb",
++        "x" * 5000,
++        7,
++        None,
++    ]
++    if sys.platform != "win32":
++        (inside / "ln").symlink_to(inside / "sub" / "f.txt")
++        (inside / "ln-out").symlink_to(outside / "o.txt")
++        (inside / "loop").symlink_to(inside / "loop")
++        cases += ["ln", "ln-out", "loop", "loop/x"]
++    for env in (None, str(outside)):
++        if env is None:
++            monkeypatch.delenv(ROOTS_ENV, raising=False)
++        else:
++            monkeypatch.setenv(ROOTS_ENV, env)
++        for case in cases:
++            outcomes = []
++            for fn in (confine_existing, confine_existing_ix):
++                try:
++                    outcomes.append(("path", fn(case, what="w")))  # type: ignore[arg-type]
++                except PathRefused as e:
++                    outcomes.append(("refused", str(e)))
++            assert outcomes[0] == outcomes[1], (env, case)
++
++
++@needs_helper
++def test_index_helper_refuses_a_prefix_sibling_and_picks_the_right_folder(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from tools.pathconfine import PathRefused, confine_existing_ix
++
++    inside, outside = jail
++    evil = inside.parent / (inside.name + "-evil")
++    evil.mkdir()
++    (evil / "f.txt").write_text("x", encoding="utf-8")
++    (outside / "o.txt").write_text("x", encoding="utf-8")
++    with pytest.raises(PathRefused, match="outside"):
++        confine_existing_ix(evil / "f.txt", what="r")
++    monkeypatch.setenv(ROOTS_ENV, os.pathsep.join([str(evil), str(outside)]))  # the LAST roots hold the file
++    assert confine_existing_ix(outside / "o.txt", what="r") == outside.resolve() / "o.txt"
++    assert confine_existing_ix(evil / "f.txt", what="r") == evil.resolve() / "f.txt"
++
++
++def test_probe_index_read_and_the_positive_control(jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch) -> None:
++    inside, outside = jail
++    _write_all(inside)
++    _write_all(outside)
++    assert ci._probe_index_read(inside / "a.jsonl") == len('{"a": 1}\n')
++    for bad in (outside / "a.jsonl", Path("..") / "outside" / "a.jsonl", Path("a\x00b"), Path("nope.jsonl")):
++        with pytest.raises(ci.InputError):
++            ci._probe_index_read(bad)
++    if not hasattr(ci, "_probe_control"):  # old code: nothing to measure here
++        return
++    folder = inside / "ctl"
++    folder.mkdir()
++    monkeypatch.setattr(ci, "DRAIN_DIR", str(folder))
++    (folder / ci.CONTROL_NAMES[0]).write_text("12345", encoding="utf-8")
++    assert ci._probe_control(Path(ci.CONTROL_NAMES[0])) == 5
++    assert ci._probe_control(Path(ci.CONTROL_NAMES[1])) is None  # allowed name, no such file: no crash
++    (folder / ci.CONTROL_NAMES[1]).write_text("123", encoding="utf-8")
++    assert ci._probe_control(Path(ci.CONTROL_NAMES[1])) == 3  # both constants work
++    for other in ("../outside/a.jsonl", "..", "a.jsonl", "", "readme.md", "a\x00b"):
++        assert ci._probe_control(Path(other)) is None
++    assert not (outside / "created").exists()
++
++
++@needs_helper
++def test_load_driver_run_refuses_outside_before_any_write(jail: tuple[Path, Path]) -> None:
++    inside, outside = jail
++    with pytest.raises(ValueError, match="outside"):  # ITERATION shape (log)
++        load_driver.run("http://127.0.0.1:1", "burst:1", outside / "l.jsonl", inside / "f.json", 1, 1, 1, "p")
++    with pytest.raises(ValueError, match="outside"):  # DICT shape (facts)
++        load_driver.run("http://127.0.0.1:1", "burst:1", inside / "l.jsonl", outside / "f.json", 1, 1, 1, "p")
++    for bad in ("new name.jsonl", "../outside/l.jsonl"):
++        with pytest.raises(ValueError):
++            load_driver.run("http://127.0.0.1:1", "burst:1", Path(bad), inside / "f.json", 1, 1, 1, "p")
++    assert not list(outside.iterdir())
++    assert not list(inside.iterdir())
++
++
++def test_load_driver_run_refuses_outside_by_behaviour(jail: tuple[Path, Path]) -> None:
++    """Runs on the old code too: there the driver starts a run and writes outside (the fail-before measurement)."""
++    inside, outside = jail
++    try:
++        load_driver.run("http://127.0.0.1:1", "burst:1", outside / "l.jsonl", inside / "f.json", 1, 1, 1, "p")
++    except Exception as e:  # noqa: BLE001  (any refusal; the point is that nothing is written outside)
++        assert "outside" in str(e)
++    assert not list(outside.iterdir())
++
++
++# ---- NAME-ONLY shape: check_invariants._drain_marker ----
++
++
++def test_drain_marker_name_only(jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch) -> None:
++    inside, outside = jail
++    if not hasattr(ci, "DRAIN_DIR"):  # the old code: the path is used as typed
++        (outside / "drain.json").write_text(json.dumps({"drained_ts": 7}), encoding="utf-8")
++        with pytest.raises(ci.InputError, match="outside"):
++            ci._drain_marker(outside / "drain.json")
++        return
++    folder = inside / "drain-dir"
++    folder.mkdir()
++    monkeypatch.setattr(ci, "DRAIN_DIR", str(folder))
++    (folder / "drain.json").write_text(json.dumps({"drained_ts": 7}), encoding="utf-8")
++    (outside / "drain.json").write_text(json.dumps({"drained_ts": 99}), encoding="utf-8")
++    (outside / "only-outside.json").write_text(json.dumps({"drained_ts": 99}), encoding="utf-8")
++    assert ci._drain_marker(None) is None
++    assert ci._drain_marker(Path("drain.json")) == 7.0
++    # only the NAME counts: the folder part of what was typed is dropped, so this reads the file in the folder
++    assert ci._drain_marker(outside / "drain.json") == 7.0
++    assert ci._drain_marker(Path("../outside/drain.json")) == 7.0
++    for bad in (outside / "only-outside.json", Path("../outside/only-outside.json"), Path(".."), Path("a\x00b")):
++        with pytest.raises(ci.InputError):
++            ci._drain_marker(bad)
++    if sys.platform != "win32":
++        (folder / "link.json").symlink_to(outside / "only-outside.json")  # a link is the operator's own doing
++        assert ci._drain_marker(Path("link.json")) == 99.0
++    assert not (outside / "created").exists()
++
++
++# ---- INLINE shape: n8n_api import ----
++
++
++def test_n8n_import_inline(jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch) -> None:
++    inside, outside = jail
++    (inside / "wf.json").write_text(json.dumps({"name": "made-up"}), encoding="utf-8")
++    (outside / "wf.json").write_text(json.dumps({"name": "made-up"}), encoding="utf-8")
++    (inside / "key.txt").write_text("made-up-key-for-the-test\n", encoding="utf-8")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(inside / "key.txt"))
++    monkeypatch.setenv("N8N_URL", "http://127.0.0.1:1")
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    mod = importlib.import_module("n8n_api")
++    sent: list[str] = []
++    monkeypatch.setattr(mod, "call", lambda *a, **k: sent.append("call") or (200, {}))
++    for bad in (str(outside / "wf.json"), "../outside/wf.json", "a\x00b"):
++        with pytest.raises(SystemExit, match="cannot read a workflow"):
++            mod.main(["n8n_api.py", "import", bad])
++    assert sent == []
++    assert mod.main(["n8n_api.py", "import", "wf.json"]) == 0
++    assert sent == ["call"]
++    monkeypatch.setenv(ROOTS_ENV, str(outside))  # LEAD_DESK_PATH_ROOTS reaches the inline guard
++    assert mod.main(["n8n_api.py", "import", str(outside / "wf.json")]) == 0
++    assert sent == ["call", "call"]
++
++
++# ---- writes2 (the second push): the facts write of load_driver is INLINE, the scrub output is the HELPER ----
++
++
++def test_writes2_inline_facts_write_and_helper_scrub_write(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    inside, outside = jail
++    for bad in (outside / "f.json", Path("../outside/f.json"), Path("a\x00b")):
++        with pytest.raises(ValueError, match="outside"):
++            load_driver.run("http://127.0.0.1:1", "burst:1", inside / "l.jsonl", bad, 1, 1, 1, "p")
++    assert not list(outside.iterdir()) and not list(inside.iterdir())
++    wf = json.dumps({"name": "w", "nodes": []})
++    (inside / "in.json").write_text(wf, encoding="utf-8")
++    assert scrub_n8n_export.main(["x", "in.json", "new name.json"]) == 2  # the helper's new-name rule
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "o.json")]) == 2
++    assert scrub_n8n_export.main(["x", "in.json", "o.json"]) == 0
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "o.json")]) == 0
+diff --git a/tools/pathconfine.py b/tools/pathconfine.py
+new file mode 100644
+index 0000000..2cb688d
+--- /dev/null
++++ b/tools/pathconfine.py
+@@ -0,0 +1,297 @@
++"""PROBE ONLY, DO NOT MERGE (a measuring draft: it carries the shapes under test, not a finished design).
++
++One place that decides whether a file path typed on a command line may be opened. Standard library only.
++
++Class of bug: a command-line tool opened whatever path it was given (``Path(argv[2]).read_text()``), so a path written
++by a faulty script or by an AI agent that drives the tool (``../../secret``, an absolute path, a link that points out
++of the work folder) was read or overwritten. Standard cure (CWE-22, OWASP "Path Traversal"): resolve the path to its
++real location (``os.path.realpath`` follows links and removes ``..``) and refuse unless that location lies inside a
++folder the tool is allowed to use. ``confine`` is that check; every tool calls it on the argument and uses ONLY the
++returned path afterwards, never the original text.
++
++The probe has five spellings, each differing from its pair in ONE thing (see PROBE-AB-V3-NOTE.md): ``confine`` (existing
++or new file, new name from a dict table), ``confine_iter`` (same, new name by iteration over a constant),
++``confine_existing`` (a file that must exist, no new-name branch), ``confine_existing_fixed`` (same, allowed folders
++without the environment) and ``confine_existing_ix`` (same as ``confine_existing``, but the allowed folder is chosen
++by an INDEX and the walk gets the folder and the relative text as two separate values, never as a returned pair; it
++shares no helper function with the other four except ``allowed_roots``, ``PathRefused`` and two constants).
++
++How the returned path is made: after the check, the file is looked up BY NAME in a directory listing, one folder level
++at a time, starting at the allowed folder (which comes from this module, not from the argument). The returned text is
++the listing's own entry. So the text that gets opened is never the argument's text, only something the file system
++itself reported. A name that is not in the listing yet (an output file that does not exist) is rebuilt character by
++character from a table of allowed characters (letters, digits, ``.``, ``_``, ``-``); any other character in a NEW
++file's name is refused (an existing file may have any name).
++
++Allowed folders (the same words everywhere): the folder the tool was started in, the repository folder, and the
++operating system's temporary folder (so a test or a scratch run works). A person who keeps logs elsewhere lists the
++extra folders in ``LEAD_DESK_PATH_ROOTS`` (folders separated by ``os.pathsep``). The list is read on every call.
++
++What is refused, each with a message that names the argument and never prints the value: not text or a path; empty;
++a NUL or another control character; longer than ``MAX_PATH_CHARS``; a path that cannot be resolved; a link loop (a
++link that still is a link after resolution); a folder on the path that does not exist or cannot be listed; a path
++whose real location is outside every allowed folder (``..``, absolute path, link that leaves the folder, other drive).
++
++What this is NOT: a defence against a person or an agent that controls the shell (it can start the tool in another
++folder or set ``LEAD_DESK_PATH_ROOTS``). It fences a wrong argument. It also does not defend against a second local
++process that swaps a folder for a link between the check and the open (two steps; the tools are single-user command
++lines). On a case-insensitive file system that is not Windows (macOS default) the folders of a path must be written
++in the case the file system reports.
++"""
++
++from __future__ import annotations
++
++import os
++import re
++import string
++import tempfile
++from collections.abc import Sequence
++from pathlib import Path
++
++MAX_PATH_CHARS = 4096  # a whole path, in characters (the usual Linux limit; Windows allows less)
++MAX_NAME_CHARS = 255  # one file name of a NEW file
++ROOTS_ENV = "LEAD_DESK_PATH_ROOTS"
++REPO_ROOT = Path(__file__).resolve().parents[1]
++# the temporary folder of the fixed-roots variant is a CONSTANT, so nothing on its call path reads the environment
++# (``tempfile.gettempdir`` reads TMPDIR/TEMP/TMP); built by ``os.path.join``, not written as one literal
++FIXED_TEMP = os.path.join(os.sep, "tmp")
++
++# C0 (U+0000-U+001F), DEL and C1 (U+0080-U+009F): NUL ends a name early in C code, the rest reorder or hide text
++_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
++# the characters a NEW file's name may use. Two spellings of the same rule, one per probe shape (see the note):
++# a table looked up by the character (``confine``), and a constant string searched by iteration (``confine_iter``)
++_NAME_CHARS = {c: c for c in string.ascii_letters + string.digits + "._-"}
++_NAME_ALPHABET = string.ascii_letters + string.digits + "._-"
++
++
++class PathRefused(ValueError):
++    """A path argument was refused. The text names the argument and the rule, never the value."""
++
++
++def allowed_roots() -> tuple[str, ...]:
++    """The real locations of the allowed folders: current folder, repository, temporary folder, and the extra
++    folders in ``LEAD_DESK_PATH_ROOTS``. A listed folder that is empty text is ignored."""
++    extra = [p for p in os.environ.get(ROOTS_ENV, "").split(os.pathsep) if p]
++    candidates = [os.getcwd(), str(REPO_ROOT), tempfile.gettempdir(), *extra]
++    return tuple(dict.fromkeys(os.path.realpath(c) for c in candidates))
++
++
++def _inside(real: str, root: str) -> bool:
++    """True when ``real`` is ``root`` or lies below it. Compared with ``os.path.commonpath`` after ``normcase``
++    (Windows ignores case); a path on another drive makes commonpath raise, which counts as outside."""
++    try:
++        return os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
++    except ValueError:
++        return False
++
++
++def _new_name(name: str, what: str) -> str:
++    """Table shape: a NEW file's name rebuilt from a dict keyed by the character (a dict READ keyed by text)."""
++    if len(name) > MAX_NAME_CHARS or not name.strip("."):
++        raise PathRefused(f"{what}: not usable as the name of a new file")
++    try:
++        return "".join(_NAME_CHARS[c] for c in name)
++    except KeyError:
++        raise PathRefused(f"{what}: the name of a new file may only use letters, digits, '.', '_' and '-'") from None
++
++
++def _new_name_iter(name: str, what: str) -> str:
++    """Iteration shape: the same rule, but each output character is the ELEMENT of a constant string that equals the
++    input character; the input character is only used in a comparison, no dict is read with it as a key."""
++    if len(name) > MAX_NAME_CHARS or not name.strip("."):
++        raise PathRefused(f"{what}: not usable as the name of a new file")
++    chars = [next((k for k in _NAME_ALPHABET if k == c), "") for c in name]  # "" (a fixed default): not in the alphabet
++    if "" in chars:
++        raise PathRefused(f"{what}: the name of a new file may only use letters, digits, '.', '_' and '-'")
++    return "".join(chars)
++
++
++def _entry(current: str, part: str, what: str) -> os.DirEntry[str] | None:
++    """The directory entry called ``part`` in ``current`` (None when there is none)."""
++    try:
++        with os.scandir(current) as listing:
++            return next((e for e in listing if os.path.normcase(e.name) == os.path.normcase(part)), None)
++    except OSError:
++        raise PathRefused(f"{what}: a folder on the path cannot be listed") from None
++
++
++def _step(entry: os.DirEntry[str], last: bool, what: str) -> str:
++    if entry.is_symlink():  # resolution removed every link that works: what is left is a loop
++        raise PathRefused(f"{what}: a link on the path does not resolve (a loop)")
++    if not last and not entry.is_dir(follow_symlinks=False):
++        raise PathRefused(f"{what}: a folder on the path is not a folder")
++    return entry.path
++
++
++def _locate(root: str, parts: list[str], what: str) -> str:
++    """Walk ``parts`` below ``root`` through listings; the result is the listing's own path text. A part that is not
++    listed yet (the last one only) is a NEW name, rebuilt with the table shape."""
++    current = root
++    for index, part in enumerate(parts):
++        last = index == len(parts) - 1
++        entry = _entry(current, part, what)
++        if entry is None:
++            if not last:
++                raise PathRefused(f"{what}: a folder on the path does not exist")
++            return os.path.join(current, _new_name(part, what))
++        current = _step(entry, last, what)
++    return current
++
++
++def _locate_iter(root: str, parts: list[str], what: str) -> str:
++    """Same as ``_locate`` but a new name is rebuilt with the iteration shape."""
++    current = root
++    for index, part in enumerate(parts):
++        last = index == len(parts) - 1
++        entry = _entry(current, part, what)
++        if entry is None:
++            if not last:
++                raise PathRefused(f"{what}: a folder on the path does not exist")
++            return os.path.join(current, _new_name_iter(part, what))
++        current = _step(entry, last, what)
++    return current
++
++
++def _locate_existing(root: str, parts: list[str], what: str) -> str:
++    """Same walk, for a file that must already exist: there is NO new-name branch (a missing part is a refusal)."""
++    current = root
++    for index, part in enumerate(parts):
++        entry = _entry(current, part, what)
++        if entry is None:
++            raise PathRefused(f"{what}: no such file or folder")
++        current = _step(entry, index == len(parts) - 1, what)
++    return current
++
++
++def _text(path: str | os.PathLike[str], what: str) -> str:
++    """The checks on the text of the argument."""
++    if not isinstance(path, (str, os.PathLike)):
++        raise PathRefused(f"{what}: not a path")
++    text = os.fspath(path)
++    if not isinstance(text, str) or not text.strip():
++        raise PathRefused(f"{what}: empty path")
++    if _CONTROL.search(text):
++        raise PathRefused(f"{what}: contains a control character")
++    if len(text) > MAX_PATH_CHARS:
++        raise PathRefused(f"{what}: path too long")
++    return text
++
++
++def _real_inside(text: str, allowed: Sequence[str], what: str) -> tuple[str, str]:
++    """(allowed folder, parts below it) for the real location of ``text``; refused when it is in none of ``allowed``."""
++    try:
++        real = os.path.realpath(text)  # follows links, removes "..", makes it absolute
++    except (OSError, RuntimeError, ValueError) as exc:  # a link loop, a NUL, an unreadable folder
++        raise PathRefused(f"{what}: cannot be resolved") from exc
++    for root in allowed:
++        if _inside(real, root):
++            relative = os.path.relpath(real, root)
++            return root, "" if relative == os.curdir else relative
++    raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
++
++
++def _parts(relative: str) -> list[str]:
++    return [] if not relative else relative.split(os.sep)
++
++
++def fixed_roots() -> tuple[str, ...]:
++    """Allowed folders WITHOUT the environment: current folder, repository, and the constant ``FIXED_TEMP`` (probe
++    shape: no environment variable is read in our code or in the standard library on the call path of
++    ``confine_existing_fixed``)."""
++    return tuple(dict.fromkeys(os.path.realpath(c) for c in (os.getcwd(), str(REPO_ROOT), FIXED_TEMP)))
++
++
++def confine(path: str | os.PathLike[str], *, what: str) -> Path:
++    """COMBINED shape: existing or NEW file (new name from the dict table); allowed folders include the environment."""
++    text = _text(path, what)
++    root, relative = _real_inside(text, allowed_roots(), what)
++    return Path(_locate(root, _parts(relative), what))
++
++
++def confine_iter(path: str | os.PathLike[str], *, what: str) -> Path:
++    """COMBINED shape with the ITERATION spelling of the new-name rule (the only difference from ``confine``)."""
++    text = _text(path, what)
++    root, relative = _real_inside(text, allowed_roots(), what)
++    return Path(_locate_iter(root, _parts(relative), what))
++
++
++def confine_existing(path: str | os.PathLike[str], *, what: str) -> Path:
++    """SPLIT (reads) shape: the file must exist; no new-name branch; allowed folders include the environment."""
++    text = _text(path, what)
++    root, relative = _real_inside(text, allowed_roots(), what)
++    return Path(_locate_existing(root, _parts(relative), what))
++
++
++def confine_existing_fixed(path: str | os.PathLike[str], *, what: str) -> Path:
++    """``confine_existing`` with ``fixed_roots`` (no environment read): the only difference from it."""
++    text = _text(path, what)
++    root, relative = _real_inside(text, fixed_roots(), what)
++    return Path(_locate_existing(root, _parts(relative), what))
++
++
++# ---- the INDEX variant: the same job as ``confine_existing``, with its own internal functions ----
++# What differs from ``confine_existing``: (1) the allowed folder is picked by an integer index into the roots (no
++# ``(root, relative)`` pair is returned by any function); (2) the relative text is a separate local; (3) the helper
++# functions below are copies, so a taint that sticks to a returned pair or to one shared helper cannot reach this path.
++
++
++def _ix_inside(real: str, root: str) -> bool:
++    try:
++        return os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
++    except ValueError:
++        return False
++
++
++def _ix_pick(real: str, roots: Sequence[str]) -> int:
++    """The index of the first allowed folder that holds ``real`` (-1 when none does)."""
++    for index, root in enumerate(roots):
++        if _ix_inside(real, root):
++            return index
++    return -1
++
++
++def _ix_entry(current: str, part: str, what: str) -> os.DirEntry[str] | None:
++    try:
++        with os.scandir(current) as listing:
++            return next((e for e in listing if os.path.normcase(e.name) == os.path.normcase(part)), None)
++    except OSError:
++        raise PathRefused(f"{what}: a folder on the path cannot be listed") from None
++
++
++def _ix_step(entry: os.DirEntry[str], last: bool, what: str) -> str:
++    if entry.is_symlink():
++        raise PathRefused(f"{what}: a link on the path does not resolve (a loop)")
++    if not last and not entry.is_dir(follow_symlinks=False):
++        raise PathRefused(f"{what}: a folder on the path is not a folder")
++    return entry.path
++
++
++def confine_existing_ix(path: str | os.PathLike[str], *, what: str) -> Path:
++    """INDEX shape (reads): like ``confine_existing`` (file must exist, environment roots) with the folder picked by
++    index and no returned pair."""
++    if not isinstance(path, (str, os.PathLike)):
++        raise PathRefused(f"{what}: not a path")
++    text = os.fspath(path)
++    if not isinstance(text, str) or not text.strip():
++        raise PathRefused(f"{what}: empty path")
++    if _CONTROL.search(text):
++        raise PathRefused(f"{what}: contains a control character")
++    if len(text) > MAX_PATH_CHARS:
++        raise PathRefused(f"{what}: path too long")
++    roots = allowed_roots()
++    try:
++        real = os.path.realpath(text)
++    except (OSError, RuntimeError, ValueError) as exc:
++        raise PathRefused(f"{what}: cannot be resolved") from exc
++    index = _ix_pick(real, roots)
++    if index < 0:
++        raise PathRefused(f"{what}: path is outside the allowed folders (add a folder with {ROOTS_ENV})")
++    relative = os.path.relpath(real, roots[index])
++    parts = [] if relative == os.curdir else relative.split(os.sep)
++    current = roots[index]
++    for position, part in enumerate(parts):
++        entry = _ix_entry(current, part, what)
++        if entry is None:
++            raise PathRefused(f"{what}: no such file or folder")
++        current = _ix_step(entry, position == len(parts) - 1, what)
++    return Path(current)
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index c32c883..57d7eba 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -46,9 +46,10 @@ import copy
+ import json
+ import re
+ import sys
+-from pathlib import Path
+ from typing import Any
+ 
++from tools.pathconfine import PathRefused, confine, confine_existing  # PROBE ONLY, DO NOT MERGE
++
+ TOP = ("name", "active", "nodes", "connections")
+ SETTINGS = ("executionOrder",)  # add a key here only when the demo needs that setting
+ NODE = (
+@@ -175,8 +176,18 @@ def main(argv: list[str]) -> int:
+     except ValueError:
+         print("usage: python -m tools.scrub_n8n_export in.json out.json")
+         return 2
+-    wf = json.loads(Path(src).read_text(encoding="utf-8"))
+-    Path(dst).write_text(json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
++    try:  # PROBE replicate of shape SPLIT (as check_invariants.read_jsonl): existing file only, environment roots
++        src_path = confine_existing(src, what="in.json")
++    except PathRefused as e:
++        print(f"refused: {e}")
++        return 2
++    wf = json.loads(src_path.read_text(encoding="utf-8"))
++    try:  # PROBE writes2 shape HELPER on a WRITE (the combined helper with the dict table), environment roots
++        out_path = confine(dst, what="out.json")
++    except PathRefused as e:
++        print(f"refused: {e}")
++        return 2
++    out_path.write_text(json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
+     return 0
+ 
+ 

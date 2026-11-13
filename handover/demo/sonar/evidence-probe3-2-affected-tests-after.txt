@@ -1,0 +1,23 @@
+## run 1 (tree before the two test-file literal fixes): 1 failed = test_hygiene hardcoded literals tests/test_probe_ab.py:3 and :377 (fixed in the test file)
+E         tests/test_probe_ab.py:377:"/etc/passwd
+E       assert not ['tests/test_probe_ab.py:3:SPLIT/COMBINED/FIXED/INDEX/DICT/ITERATION', 'tests/test_probe_ab.py:377:"/etc/passwd']
+
+tests/test_hygiene.py:140: AssertionError
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+1 failed, 1185 passed, 1 skipped in 407.12s (0:06:47)
+rc=1
+
+## run 2 (final tree, fresh clone, 19 files, GITLEAKS_BIN=/tmp/work/gl/gitleaks 8.30.1 DPLD_REQUIRE_SCAN=1 DPLD_REQUIRE_DEMO=1, git add -A first): 1 failed = gitleaks git (history scan) in the scratch clone, caused by two stash commits there
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+1 failed, 1185 passed, 1 skipped in 492.30s (0:08:12)
+rc=1
+
+## re-run after git stash clear, tree identical to the patch tree (diff -r: none): hygiene, gitleaks_exceptions, codeant_hygiene, probe_ab
+83 passed in 42.36s
+
+## writes2 tree (w): probe_ab, scrub, hygiene, gitleaks_exceptions, load_tools (same env vars)
+........................................................................ [ 87%]
+...................................................                      [100%]
+411 passed in 76.98s (0:01:16)

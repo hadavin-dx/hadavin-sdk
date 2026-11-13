@@ -1,0 +1,113 @@
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index 1fa29b6..7104aed 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -25,7 +25,7 @@ from collections import Counter
+ from pathlib import Path
+ from typing import Any
+ 
+-from tools.pathconfine import confine, confine_iter  # PROBE ONLY, DO NOT MERGE
++from tools.pathconfine import allowed_roots, confine_iter  # PROBE ONLY, DO NOT MERGE
+ 
+ FALLBACK_RETRY_VALUES = (
+     0.1,
+@@ -348,8 +348,17 @@ def machine_facts() -> dict[str, Any]:
+ def run(
+     base_url: str, scenario: str, log: Path, facts_path: Path, workers: int, threads: int, seed: int, prefix: str
+ ) -> dict[str, Any]:
+-    log = confine_iter(log, what="--log")  # PROBE shape ITERATION table (new name by iteration over a constant)
+-    facts_path = confine(facts_path, what="--facts")  # PROBE shape DICT table (new name from a dict)
++    log = confine_iter(log, what="--log")  # PROBE writes2: the HELPER on this write (iteration table, as in v3)
++    try:  # PROBE writes2 shape INLINE on a write: realpath, check against the allowed folders, refuse
++        real_facts = os.path.realpath(facts_path)
++        inside = any(
++            os.path.commonpath([os.path.normcase(real_facts), os.path.normcase(root)]) == os.path.normcase(root)
++            for root in allowed_roots()
++        )
++    except (OSError, ValueError):  # a NUL or a loop in the path, or another drive
++        inside = False
++    if not inside:
++        raise ValueError("--facts: path is outside the allowed folders")
+     facts = machine_facts()
+     t0 = time.time() + START_LEAD_SECONDS  # wall-clock: calendar stamp
+     schedule = build_schedule(scenario, t0, prefix, seed)
+@@ -367,7 +376,7 @@ def run(
+         seed=seed,
+         qualifier=os.environ.get("DESK_QUALIFIER", ""),  # lets the checker know the AI step was live
+     )
+-    facts_path.write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
++    Path(real_facts).write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+     ctx = multiprocessing.get_context("spawn")
+     with ctx.Pool(workers) as pool:
+         pool.map(_worker, jobs, chunksize=1)
+diff --git a/tests/test_probe_ab.py b/tests/test_probe_ab.py
+index 4b86a0a..e238e1c 100644
+--- a/tests/test_probe_ab.py
++++ b/tests/test_probe_ab.py
+@@ -460,3 +460,23 @@ def test_n8n_import_inline(jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPa
+     monkeypatch.setenv(ROOTS_ENV, str(outside))  # LEAD_DESK_PATH_ROOTS reaches the inline guard
+     assert mod.main(["n8n_api.py", "import", str(outside / "wf.json")]) == 0
+     assert sent == ["call", "call"]
++
++
++# ---- writes2 (the second push): the facts write of load_driver is INLINE, the scrub output is the HELPER ----
++
++
++def test_writes2_inline_facts_write_and_helper_scrub_write(
++    jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    inside, outside = jail
++    for bad in (outside / "f.json", Path("../outside/f.json"), Path("a\x00b")):
++        with pytest.raises(ValueError, match="outside"):
++            load_driver.run("http://127.0.0.1:1", "burst:1", inside / "l.jsonl", bad, 1, 1, 1, "p")
++    assert not list(outside.iterdir()) and not list(inside.iterdir())
++    wf = json.dumps({"name": "w", "nodes": []})
++    (inside / "in.json").write_text(wf, encoding="utf-8")
++    assert scrub_n8n_export.main(["x", "in.json", "new name.json"]) == 2  # the helper's new-name rule
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "o.json")]) == 2
++    assert scrub_n8n_export.main(["x", "in.json", "o.json"]) == 0
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert scrub_n8n_export.main(["x", "in.json", str(outside / "o.json")]) == 0
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 2981dee..57d7eba 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -44,13 +44,11 @@ from __future__ import annotations
+ 
+ import copy
+ import json
+-import os
+ import re
+ import sys
+-from pathlib import Path
+ from typing import Any
+ 
+-from tools.pathconfine import PathRefused, allowed_roots, confine_existing  # PROBE ONLY, DO NOT MERGE
++from tools.pathconfine import PathRefused, confine, confine_existing  # PROBE ONLY, DO NOT MERGE
+ 
+ TOP = ("name", "active", "nodes", "connections")
+ SETTINGS = ("executionOrder",)  # add a key here only when the demo needs that setting
+@@ -184,18 +182,12 @@ def main(argv: list[str]) -> int:
+         print(f"refused: {e}")
+         return 2
+     wf = json.loads(src_path.read_text(encoding="utf-8"))
+-    try:  # PROBE shape INLINE on a WRITE: realpath, check against the allowed folders, refuse, write the real path
+-        real = os.path.realpath(dst)
+-        inside = any(
+-            os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
+-            for root in allowed_roots()
+-        )
+-    except (OSError, ValueError):  # a NUL or a loop in the path, or another drive
+-        inside = False
+-    if not inside:
+-        print("refused: out.json: path is outside the allowed folders")
++    try:  # PROBE writes2 shape HELPER on a WRITE (the combined helper with the dict table), environment roots
++        out_path = confine(dst, what="out.json")
++    except PathRefused as e:
++        print(f"refused: {e}")
+         return 2
+-    Path(real).write_text(json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
++    out_path.write_text(json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
+     return 0
+ 
+ 

@@ -1,0 +1,29 @@
+## 26 hand-made mutants against tests/test_probe_ab.py (script /tmp/work/sn-v3/mut.py); 24 killed, 2 survive
+## (the label 'expected equivalent' on the ix link check was a guess: it is KILLED by the link-loop test)
+baseline (0, '17 passed in 0.64s')
+KILLED   ix inside: startswith instead of commonpath | 1 failed, 11 passed in 0.17s
+KILLED   ix: abspath instead of realpath | 1 failed, 10 passed in 0.16s
+KILLED   ix: ignores the environment | 1 failed, 3 passed in 0.41s
+KILLED   ix: always the first folder | 1 failed, 3 passed in 0.61s
+KILLED   ix: a missing part is accepted | 1 failed, 6 passed in 0.58s
+KILLED   fixed_roots reads the environment | 1 failed, 9 passed in 0.17s
+KILLED   fixed_roots = allowed_roots | 1 failed, 3 passed in 0.11s
+KILLED   facts_say_live: refused counts as not live | 1 failed in 0.15s
+KILLED   facts_say_live: no guard | 1 failed in 0.19s
+KILLED   read_crm: inline guard off | 1 failed in 0.14s
+KILLED   read_crm: ignores environment | 1 failed, 3 passed in 0.18s
+KILLED   read_jsonl: no confine | 1 failed in 0.09s
+KILLED   _intended: no confine | 1 failed in 0.09s
+KILLED   drain: no basename | 1 failed, 15 passed in 0.67s
+KILLED   control: reads any name | 1 failed, 12 passed in 0.26s
+KILLED   control: second name never read | 1 failed, 12 passed in 0.37s
+KILLED   index read: no confine | 1 failed, 3 passed in 0.30s
+KILLED   scrub: write guard off | 1 failed, 4 passed in 0.08s
+KILLED   scrub: read guard off | 1 failed, 4 passed in 0.32s
+SURVIVED scrub: write uses dst not real | 17 passed in 0.22s
+KILLED   _step: link check off | 1 failed, 10 passed in 0.21s
+KILLED   n8n inline: guard off | 1 failed, 16 passed in 0.21s
+KILLED   load_driver: log unconfined | 1 failed, 13 passed in 31.71s
+KILLED   load_driver: facts unconfined | 1 failed, 13 passed in 32.04s
+SURVIVED helper: NUL not a control char (expected equivalent) | 17 passed in 0.85s
+KILLED   ix: link check off (expected equivalent) | 1 failed, 10 passed in 0.14s

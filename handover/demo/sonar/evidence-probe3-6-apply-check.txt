@@ -1,0 +1,15 @@
+## v3 alone
+ok
+## stack: sonar-p1-quickwins-v3.1.patch then probe v3 / writes2-full
+probe v3 applies
+writes2-full applies
+## stack: sonar-p1-quickwins-v3.1.patch sonar-p2-regex-http-bug-v2.1.patch then probe v3 / writes2-full
+probe v3 applies
+writes2-full applies
+## writes2 DELTA on db54e13 alone (expected to fail: delta on v3)
+error: patch failed: load_tools/load_driver.py:25
+writes2 delta applies on v3
+## sha256
+311fceff996b2f1ae1bf61382b9709ba1c2b1bfe050261cc0a1b56c3e9ebd86c  ../probe-ab-v3-writes2-full.patch
+83e31e5a2a7263d24bcf1b98a1ebf0bc9b07eec3e0a9816ab8608ba525bb9ae1  ../probe-ab-v3-writes2.patch
+f21835fe654bf3d92dbdd2e057ba939b18b5af003419016bac7fd6489b75d1fe  ../probe-ab-v3.patch

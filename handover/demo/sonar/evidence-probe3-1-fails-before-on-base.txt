@@ -1,0 +1,19 @@
+## fails before: tests/test_probe_ab.py (v3 version) copied alone onto db54e13, venv fresh-venv5
+FAILED tests/test_probe_ab.py::test_all_checker_sites_inside_then_outside - F...
+FAILED tests/test_probe_ab.py::test_links_and_prefix_sibling_are_refused_at_every_checker_site
+FAILED tests/test_probe_ab.py::test_nul_in_a_path_is_a_clean_refusal_never_a_traceback
+FAILED tests/test_probe_ab.py::test_roots_from_the_environment_reach_the_inline_and_the_helper_sites
+FAILED tests/test_probe_ab.py::test_scrub_read_is_split_helper_and_write_is_inline
+FAILED tests/test_probe_ab.py::test_probe_index_read_and_the_positive_control
+FAILED tests/test_probe_ab.py::test_load_driver_run_refuses_outside_by_behaviour
+FAILED tests/test_probe_ab.py::test_drain_marker_name_only - Failed: DID NOT ...
+FAILED tests/test_probe_ab.py::test_n8n_import_inline - Failed: DID NOT RAISE...
+SKIPPED [1] tests/test_probe_ab.py:181: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:192: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:224: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:261: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:276: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:293: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:344: tools/pathconfine.py is part of the probe
+SKIPPED [1] tests/test_probe_ab.py:385: tools/pathconfine.py is part of the probe
+9 failed, 8 skipped in 31.62s
