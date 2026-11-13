@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:46Z / 17:16 IST  HEARTBEAT 23 (J reported)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| J | Agent (read-only): stale sentences in patches v1-v3 after PR #14 | tells what text must change | 11:36Z / 17:06 | ended 11:43Z | first try | reported, closed | none |
+| I | Evidence runner: hygiene test and full suite once on STACK and on BASE f3c39cf8 (same time) | proves the stack changes no test result | 11:39Z / 17:09 | ends about 12:05Z / 17:35; hard stop 12:35Z | first try | running | check progress-I.txt at 11:55Z |
+| H, G, F, E, D, C2, A, B | earlier agents | - | - | - | - | closed | none |
+
+ASK: ASK 1-3 of heartbeat 22 still open, defaults stand (ruff/gitleaks skipped unless you say yes; docs/tests.md also a PR #13 file: report only; claims truth check by J).
+J RESULT (evidence/claims-stale-after-pr14.md): of 125 added lines in the six patches only 8 mention something PR #14 changed or a number checkable on f3c39cf8. None mention path confinement, the read-only URI, refusal wording, option names or exit code 2. All six patches apply cleanly in order to both c30c373 and f3c39cf8 and touch none of the 14 PR #14 files. **2 STALE rows, both in the v1 patch's versions.md:** the collected-test count "3726" (f3c39cf8 collects **3883**, measured by me with --collect-only, nothing run: 3683 passed + 200 skipped) and "91 lines" (there are **92** test files now; PR #14 added tests/test_followup_b.py). 4 CANNOT TELL (old dated run counts such as "2449 passed, 15 skipped", "2462 passed, 2 skipped", "2516 tests", the "52" count and a semgrep log count: dated results of earlier commits, not repeatable here). 10 STILL TRUE, including the start_all.ps1 fix, which matches the start_all.sh comment PR #14 added. J ran no tests. Note for the demo session: v3 is in J's list too.
+
 ## 2026-11-13 11:40Z / 17:10 IST  HEARTBEAT 22 (H reported; I started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
