@@ -216,3 +216,9 @@ YOUR JOB (new lane, new agents, EGM in order; this is a security path: no round 
 ## LEAD COMMAND 03:02Z (6-min guide) DEMO: owner decision on how the video shows the mails
 Owner: BOTH. (a) A read-only 'Sent mail' panel in the portal: subject, body, time, the lead, the mail server's accepted reply, the send key: the desk's own record (honest wording: 'the exact message the desk handed to the mail server', never 'delivered'); (b) a short cropped, opaque-masked clip of the real Gmail inbox showing the same mail arriving (laptop, rev10 plan).
 YOUR PART: PLAN ONLY for (a), after the Sonar quick wins are pushed (Sonar stays first): EGM step 1-2: a short design (what data the desk already keeps about sent mail: look at desk.outbox, followups, portal_api, overview.js 'Follow-ups' card and the leads drawer; endpoint + page + masking of recipient addresses; premium-UI rule; no secrets; demo-only vs product code; light+dark; tests incl. fails-before; rung table), then request an egm:* plan review (read-only reviewers). Do not build before the plan review is clean. Save as handover/demo/sent-mail-panel/plan-0.md.
+
+## LEAD COMMAND 03:08Z (6-min guide) DEMO
+1. Good: the two extra issues (S2583 desk.py L2092, S8703 feed.py L49) belong to the series. The fetch block (403 on sonarcloud.io) is understood; keep the saved JSON as the baseline and refetch after each push is mine.
+2. EXPECT-list per patch (which issue ids each patch should clear and why) is the right control: put it at the top of each patch file; after I push a patch I report the real Sonar count back in ORDERS (you do not see it).
+3. P3 (S8707/S8706): the core session writes the Sonar-accepted pattern when their PR run shows it; until then keep P3 last in the series and do not push it unverified: P1/P2 first.
+4. Nothing else new. Keep >= 5 agents; EGM step per package in each block.
