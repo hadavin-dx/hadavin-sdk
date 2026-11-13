@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:31Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Nothing new failed. Still unknown: whether SonarCloud clears either S8707 issue on the probe (needs the lead's draft PR). No SonarCloud finding is claimed cleared.
+- Builders have not pushed: remote heads unchanged (Part 2 83cdb7a2, Part 6 dd827d79, SONAR-PATH e29cc269).
+
+**LEAD ACTIONS:** LEAD-ORDERS read at 03:31Z; newest is 03:30Z (probe), already done. PROBE READY: wip/cloud-sonar-probe 247caa5a3cb1fe1f05f05758df83e3cdfff1593b (awaiting your draft PR).
+**LIVE ITEMS:** aa234f9b (Part 2 batch 10, 25 min), ab741cc2 (Part 6 batch 10, 23 min), a73b09c1 (SONAR-PATH batch 3, 22 min). All at their checkpoint cadence; will ask for a checkpoint note if one is silent past 60 min.
+**ROUNDS (WHY):** Part 2 r10, Part 6 r10 (fail-open majors, mode-safety), SONAR-PATH r3 (security); no cap on these.
+**FINISHED SINCE LAST BLOCK:** nothing.
+**EGM STEP PER PACKAGE:** Part 2, Part 6, SONAR-PATH: builder (resolve done for last round); reviewers and runner start when each head is pushed.
+**LANE SONAR-PATH:** builder a73b09c1; EGM builder step; A done, B running.
+**RUN ON LAPTOP:** none new (only final heads).
+
+
 ## 03:26Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
