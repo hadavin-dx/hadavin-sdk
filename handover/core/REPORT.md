@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:06Z (17:36 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| GATES (agent a384f32c) | ruff check, ruff format --check, mypy linux + win32, bandit -ll, gitleaks dir + git, as the repo CI lint workflow | LEAD 12:02Z order (1) | 12:01Z / 17:31 | hard stop 12:45Z (about 39 min) | 1 of 1 | running, tree-G (main + 2 patches + survivor-tests-v1, one local commit, never pushed) | wait for report |
+| BROWSER (agent ad766811) | install the hash-locked playwright set; run the 166 browser tests | order (2) | 12:01Z / 17:31 | hard stop 12:45Z | 1 of 1 | running, tree-BR. Known risk I found while probing: the browser download hosts return 403 from the proxy; a Chromium build (revision 1243) is pre-installed. The agent is told to point the pinned playwright at it with symlinks and report the revision difference; if the browser cannot start it records the error. Result may be "cloud image blocks it" | wait for report |
+| GITLEAKS TESTS (agent a6b01e5b) | run the 28 gitleaks tests with the pinned gitleaks | order (2) | 12:01Z / 17:31 | hard stop 12:45Z | 1 of 1 | running, tree-GL | wait for report |
+| gitleaks install | pinned release 8.30.1, sha256 from the repo's lint workflow | prerequisite | 12:00Z / 17:30 | DONE | | done by me: checksum OK (551f6fc8...), `version` prints 8.30.1, at /home/user/build/rr6/bin/gitleaks (outside the repo) | none |
+| AFTER-RUN | one full-suite run on the patched tree with browser and gitleaks available (the "after" counts) | order: before/after counts | after BROWSER and GITLEAKS TESTS report | about 12:25-12:45Z | n/a | not started; before = 3781 passed, 0 failed, 198 skipped (A run 2, patched tree without survivor-tests-v1, 3 tests fewer) | start when both report, if time allows; else after = sum of the per-group runs |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+The three agents are evidence runners themselves (they record, never judge, never fix); no separate runner is needed for the proof runs.
+
+ASK:
+1. If the browser cannot be made to start with the pre-installed Chromium (a revision mismatch with the pin), is a result of "166 still skipped or failing because of the cloud image, with the exact error" acceptable? Default: yes, report it as that; the laptop runs them.
+
+
 ## REPORT 11:58Z (17:28 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
