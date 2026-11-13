@@ -1,4 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:20Z (core lead; freeze order stands; orders file bottom block read: newest order is 15:06Z freeze, no new one)
+| agent | state (builder words, unverified) |
+|---|---|
+| F8 (a6ec82da18b2d7413) | running 30 min of 60; files fresh at 14:53 (full.log), BEHAVIOUR-CHANGES.md exists; no report yet |
+| CODE-REBASE (a998283da1fe67742) | running 15 min; checkpoint 14:55Z: fail-before done (259 failed / 22 passed on the OLD frozen tree); touched-module run in progress, 'F' marks visible in pytest-touched.log (not yet read: causes unknown) |
+FAILURES AND RETRIES: no new failure judged by me this block. The F marks in the rebase run are builder-side and UNEXPLAINED until the report; root cause proven? no. Open from before: 5 untested doc sentences (ASK pending), B2 rc=1 UNKNOWN, T2 UNEXPLAINED.
+LOAD: 2 agents, low. ASK: unchanged (5 doc sentences: default = list in freeze README).
+NEXT: collect both reports, apply F8 onto the rebase, ONE evidence run, ONE review, README, freeze.
+
 ## STATUS 16:12Z (core lead)
 V4e DONE (independent, docs-on-frozen-49d3c859.patch sha256 f0677496..., 456 lines, on tree hash 49d3c859): patch applies, result identical to the builder's tree; docs test 14 passed x3; fails-before 10 failed/4 passed (matches); builder's 8-file set 206 passed/28 skipped/0 failed; a 10-file extra set 999 passed/3 skipped/0 failed; ruff clean (160 files); both real doc-vs-tool mismatches re-checked by the runner (probe --plan with a bad --token-env: yes; contract.md:323 5 s wait: read from the code, not run end to end); test-file count 93 matches. Builder-claimed vs measured: all match.
 FAILED / OPEN: 5 of the runner's 12 own doc-sentence mutants SURVIVE both the docs test and the 999-test set: README 'the replay uses up a receipt number' -> 'does not'; settings.md HubSpot key file 'not at start' -> 'only at start'; load_tools/README.md port 18765 -> 18775; settings.md SMTP password file 'opened again for every send' -> 'once at start'; load_tools/README.md 'seq 1 60' -> 'seq 1 30'. Cause proven (the mutant runs): no test pins those sentences. Not fixed: the freeze order forbids a new builder. fix-dont-defer says fix; the freeze order is the lead's explicit later order, so this is a lead decision.
