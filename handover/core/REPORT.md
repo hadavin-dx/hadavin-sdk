@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead, one line)
+EV3 runner a0fe0c8c running, checkpoint: hostile chain started 16:51 ; reviewer aa2f22e6 running (reads only, no checkpoint file by design). Nothing failed. ASK: none.
+
 ## STATUS (core lead) R3 BUILDER DONE; final evidence run and fresh reviewer STARTED (parallel)
 R3 builder a804cecf reported (builder-claimed, saved handover/core/fix/R3-RESULTS.md plus core-fix-on-frozen-r3.patch, -r3-lf.patch, delta). Not run by builder: full suite, mutation, ~100 of 120 test files; Py3.13, Windows; some files ran on an earlier head (listed in R3-RESULTS.md); delta patch not apply-tested. Builder-claimed: R2-01..10 fixed, 56 changed py files lint/format clean, bandit -ll 0 Medium/High in src (2 Medium B604 in tests/test_reset_scripts.py, already in R2), last batch 14 files 938 passed, fail-before logs per finding (e.g. number limits 89 failed, ca_file_reads 9, real_check_dry 6, guard 1). Extras done: --leads capped 1..1000, --runs 1..100; run_live_check checks for no terminal before cost lines; found and fixed EBADF traceback on closed descriptor (only run_live_check has a test; run_real_check same fix untested).
 Deviations (I accept unless you say otherwise): REAL_RESULT_FILE refusal exits 2 (matches DESK_DB_PATH refusal) not 4; DESK_PORT spaces stay accepted (pinned by tests/test_env_numbers.py, Windows cmd.exe 'set X=8765 ') and DESK_LIVE_EFFORT now strips the same; db-path refuses a folder/pipe (exit 4).
