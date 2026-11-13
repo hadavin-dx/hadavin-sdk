@@ -1,6 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 09:46Z / 15:16 IST - STATUS TABLE (09:40Z order), then ASK
+| id | what it does | why (unblocks) | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| abd04e38c75142e18 | FINAL v4 delta on PR #12 head 8d65577: (a) 4 minors of the fresh read, (b) **BLOCKER 09:52Z: Sonar coverage on PR #12 = 63.2% new code (need 80): the three duplicated 7-line foreign-`tools` fallback blocks (catcher 7/15, check_invariants 7/21, load_driver 7/9) run only in a subprocess**: collapse into ONE helper (or in-process tests with a fake foreign `tools` in sys.modules), every new branch fails on old code, target >= 90% new-line coverage measured with the repo's own coverage command | the Sonar gate on PR #12 | 09:41 / 15:11 (order received 09:46 / 15:16) | ~25 min | follow-up: read 4 = the delta read (CLEAN); this is the coverage-fix round, SAME push, no extra read per your 08:58Z/09:52Z rules | running | deliver followup-ab-v4-delta-final.patch + per-file coverage before/after, then READY with new sha |
+| a8428ea97df1ca00d | fresh read of nodemo-min-v1 (feed skip + minimal job) | nodemo READY | 09:44 / 15:14 | ~20 min | nodemo round 1 of 2 | running | READY line or fixes |
+| aa639f098fbdbe37d | fresh read of the v4 delta (AST walker -> grep test) | follow-up READY | 09:39 / 15:09 | done 09:45 | read 1 of 1 | reported CLEAN (0 Blocker/Major; minors folded into the final patch) | none |
+| ae598562acabd540a | nodemo-min-v1 builder | nodemo | 09:38 / 15:08 | done | nodemo round 1 of 2 | reported | none |
+| ac18a0b3f2b7bca03 / a1b57c720788826f0 | nodemo optional v6 builder / reader | shelved by you (09:35Z) | 08:31 | stopped | n/a | v6 reported, reader STOPPED | none (v6 in handover) |
+| heartbeat loop | 5-minute guarantee blocks | cadence | 01:33 / 07:03 | running | n/a | running | none |
+**ASK: none** (your 09:48Z answers are applied: no hubspot_probe change, pins dropped, v6 shelved, Semgrep PR no more work unless CI fails; I read ORDERS.md from the top at every pull from now on; the 08:52Z/08:58Z miss is owned in the 09:38Z block).
+**WHAT I DID WITH THE 09:52Z BLOCKER:** read it, sent the coverage fix to the builder that owns the PR #12 delta (message above). **Why the numbers are what they are (my reading, not yet measured by me):** your per-file list matches the item-3 fallback blocks exactly (3 files x 7 lines): the existing tests run those lines only in subprocesses, which coverage does not see. The plan (collapse into one tested helper, or in-process tests with a fake foreign `tools` package) keeps the behaviour identical and removes the uncovered lines; the builder measures coverage with the repo's own command before/after. **READY: not yet for the final delta (the 09:45Z read was CLEAN for the delta WITHOUT the coverage fix: `followup-ab-v4-delta.patch` sha256 d1b2713fa53defaaf2f9795f30df6fb3f0be82970aba42dc69432ba32f28fd6d, do NOT push that one: it would still fail the Sonar gate).** Other READY lines unchanged: Semgrep v10 `7e944af38fa6d5400fd84da34a3ea30ec81e5b147547749495d37635078c0bfb` (you opened PR #13); real-run set handover-only.
+**LIMITS:** coverage is measured locally with the repo's own command, Sonar's own number comes from CI (authoritative): a local >= 90% on those lines is the proxy; not measured: Windows, the full suite, Sonar itself.
+
 ## 2026-11-13 09:38Z / 15:08 IST - STATUS TABLE (09:40Z order) then ASK list; READY: Semgrep v10 (09:36Z block)
 | id | what it does | why (unblocks) | started UTC+IST | expected end / left | round of cap | state | next action |
 |---|---|---|---|---|---|---|---|
