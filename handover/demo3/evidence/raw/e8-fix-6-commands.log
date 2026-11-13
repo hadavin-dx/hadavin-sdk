@@ -1,0 +1,51 @@
+== A: fakes_server keyed (README/tests.md command, private ports)
+== B: crash_desk
+crash flag file: /home/user/work/priv/e8/tmp2/data/crash.flag  (write a point name such as D2 into it to arm the crash)
+desk listening on http://127.0.0.1:18765
+{"received": 0, "new": 0, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_e
+usage: feed.py [-h] --source {form,webhook} [--index INDEX] [--all]
+
+Send canned made-up leads to the desk.
+
+options:
+  -h, --help            show this help message and exit
+  --source {form,webhook}
+  --index INDEX         position in canned_leads.json, starting at 1
+canned-1 form -> 201 {"receipt_id": 1, "verdict": "new", "lead_id": "L9eebe931358a", "replayed": false}
+[2]+  Exit 137                PYTHONPATH=src:. $PY scripts/crash_desk.py > $TMPDIR/desk.out 2>&1
+desk exit code 137
+desk.db
+desk.db-shm
+desk.db-wal
+desk.db.lock
+-- desk.out
+crash flag file: /home/user/work/priv/e8/tmp2/data/crash.flag  (write a point name such as D2 into it to arm the crash)
+desk listening on http://127.0.0.1:18765
+simulate crash
+== C: run_real_check --dry-fakes --assume-yes
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 11,
+  "mails_in_mailbox": 8,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    6,
+    2
+  ],
+  "mails_sent_by_the_desk_total": 8,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 35.4,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 8
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: /home/user/work/priv/e8/tmp2/real-dry-fj4tx45l/run/result.json
+rc=0
