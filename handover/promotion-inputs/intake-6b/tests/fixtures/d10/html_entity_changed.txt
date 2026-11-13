@@ -1,4 +1,0 @@
-INVOICE INV-1001
-Supplier: Acme Widgets Ltd
-Your PO PO-77 USD
-Account No &#56;&#55;&#54;&#53;&#52;&#51;&#50;&#49;
