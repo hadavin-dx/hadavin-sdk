@@ -1,3 +1,21 @@
+## HEARTBEAT 60 (14:00Z / 19:30 IST)
+
+FAILURES AND RETRIES (first):
+- B6 (fix-6 docs): its one full run on the final tree FAILED (1 failed: hygiene flagged `src:\.`); fixed, but NO green full run on the final tree yet. E8 now does a valid full run.
+- B4b (fix-4 r2): not run here: ruff/mypy/bandit/gitleaks (CI only). `loc@.dom` and `loc@a..b` still accepted (ASK).
+- Still unexplained: 2 `E` marks of PR #12 run; r2 xdist flake (E6 chasing).
+
+| Item | State |
+|---|---|
+| B4b | closed: fix-4 r2, full run 3706 passed 200 skipped rc 0; REV-4c launched |
+| B6 | closed: fix-6; E8 + REV-6a + REV-6b launched |
+| B1e, B2c, B5d | running (fix-1 r5, fix-2 r3, fix-5 r4) |
+| E3b, E3c, E5, E6, E7, E8 | running |
+| B7b | not yet launched (3 minors on fix-7 tests) |
+
+Load 13:58Z: idle CPU 57 %, free RAM 5 GB (above throttle).
+ASK list unchanged (sz/dotless-i rule, loc@.dom, quiet re-measure, fix-4 stack variant now exists, xdist in CI, PR #12 E marks, 4 skips, Q8 vs B3 M11, D10 "sender").
+
 ## HEARTBEAT 59 (13:46Z UTC; IST = UTC+5:30; clock read from the container)
 
 B5c finished round 3 of lane3-fix-5 (`lane3-fix-5-r3.patch`, sha256 e677e3d6...709f). Not yet reviewed or run independently: builder claims only. Builder says: old script 8 failed / 7 passed with the r3 tests; new script 226 passed, 4 skipped (gitleaks absent); no ruff run (CI-only); one `# noqa: S603` line only moved. The r2 xdist flake cause is still unknown (E6 chases it).

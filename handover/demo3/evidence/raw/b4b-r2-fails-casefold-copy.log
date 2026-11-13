@@ -1,4 +1,4 @@
-F.FF........F.F.FFFF.                                                    [100%]
+F.FF........F.F.F.FFFF.                                                  [100%]
 =================================== FAILURES ===================================
 ______ test_split_pairs_differ[stra\xdfe@example.com-STRASSE@example.com] ______
 
@@ -41,9 +41,20 @@ E        +  where 'strasse@example.com' = normalise_email('straße@example.com')
 E        +  and   'strasse@example.com' = normalise_email('StraSSe@example.com')
 
 tests/test_email_case_rule.py:62: AssertionError
+___________________________ test_other_rare_letters ____________________________
+
+    def test_other_rare_letters() -> None:
+        """docs/limits.md names µ, ŉ, ǰ and a Greek final sigma before a full stop as more letters that split."""
+        for letter in "µŉǰ":
+>           assert _splits(letter), f"{letter!r} now joins its capital form: change docs/limits.md"
+E           AssertionError: 'µ' now joins its capital form: change docs/limits.md
+E           assert False
+E            +  where False = _splits('µ')
+
+tests/test_email_case_rule.py:99: AssertionError
 ___ test_desk_two_leads_two_mails[stra\xdfe@example.com-STRASSE@example.com] ___
 
-env = <conftest.Env object at 0x7f7e53e8a870>, small = 'straße@example.com'
+env = <conftest.Env object at 0x7f2518ebf770>, small = 'straße@example.com'
 capitals = 'STRASSE@example.com'
 
     @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
@@ -57,10 +68,10 @@ E
 E         At index 1 diff: (200, 'duplicate') != (201, 'new')
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:111: AssertionError
+tests/test_email_case_rule.py:125: AssertionError
 _____ test_desk_two_leads_two_mails[\u017fam@example.com-SAM@example.com] ______
 
-env = <conftest.Env object at 0x7f7e53e8b3e0>, small = 'ſam@example.com'
+env = <conftest.Env object at 0x7f2518d564b0>, small = 'ſam@example.com'
 capitals = 'SAM@example.com'
 
     @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
@@ -74,7 +85,7 @@ E
 E         At index 1 diff: (200, 'duplicate') != (201, 'new')
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:111: AssertionError
+tests/test_email_case_rule.py:125: AssertionError
 _____________ test_docs_name_the_letters[README, Not claimed list] _____________
 
 place = 'README, Not claimed list'
@@ -91,7 +102,7 @@ E         At index 0 diff: 'ı' != 'ß'
 E         Right contains 2 more items, first extra item: 'ı'
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:134: AssertionError
+tests/test_email_case_rule.py:148: AssertionError
 _________ test_docs_name_the_letters[README, definition of Same lead] __________
 
 place = 'README, definition of Same lead'
@@ -108,7 +119,7 @@ E         At index 0 diff: 'ı' != 'ß'
 E         Right contains 2 more items, first extra item: 'ı'
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:134: AssertionError
+tests/test_email_case_rule.py:148: AssertionError
 ___________________ test_docs_name_the_letters[contract.md] ____________________
 
 place = 'contract.md'
@@ -125,7 +136,7 @@ E         At index 0 diff: 'ı' != 'ß'
 E         Right contains 2 more items, first extra item: 'ı'
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:134: AssertionError
+tests/test_email_case_rule.py:148: AssertionError
 __________________ test_docs_name_the_letters[docs/limits.md] __________________
 
 place = 'docs/limits.md'
@@ -142,15 +153,16 @@ E         At index 0 diff: 'ı' != 'ß'
 E         Right contains 2 more items, first extra item: 'ı'
 E         Use -v to get more diff
 
-tests/test_email_case_rule.py:134: AssertionError
+tests/test_email_case_rule.py:148: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_email_case_rule.py::test_split_pairs_differ[stra\xdfe@example.com-STRASSE@example.com]
 FAILED tests/test_email_case_rule.py::test_split_pairs_differ[\u017fam@example.com-SAM@example.com]
 FAILED tests/test_email_case_rule.py::test_first_capital_splits[stra\xdfe@example.com-StraSSe@example.com]
+FAILED tests/test_email_case_rule.py::test_other_rare_letters - AssertionErro...
 FAILED tests/test_email_case_rule.py::test_desk_two_leads_two_mails[stra\xdfe@example.com-STRASSE@example.com]
 FAILED tests/test_email_case_rule.py::test_desk_two_leads_two_mails[\u017fam@example.com-SAM@example.com]
 FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, Not claimed list]
 FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
 FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[contract.md]
 FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[docs/limits.md]
-9 failed, 12 passed in 2.21s
+10 failed, 13 passed in 2.30s

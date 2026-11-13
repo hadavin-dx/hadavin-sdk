@@ -150,3 +150,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-7a | closed: 0 blocker, 0 major, 3 minor; saved evidence/review-lane3-fix-7-r1.md; minors fixed by B7b (small) | | | closed |
 | RES-1d | egm-resolve round 4 of fix-1: 18 accepted, 0 contested, 0 escalated, 1 declined; saved evidence/resolve-round4-lane3-fix-1.md | | | closed; B1e next |
 | B1e | BUILDER lane3-fix-1 round 5 (18 accepted items of RES-1d) | 13:57Z | stop 14:45Z | running |
+| B6 | closed 13:58Z: fix-6 docs patch (4 files +79 -6). FAILED first: builder's single full run on final tree = 1 failed (hygiene flagged text `src:\.`), fixed, NOT repeated; only hygiene+new tests re-run (26 passed 4 skipped). No green full run yet. Skip numbers 30 gitleaks/166 browser (brief said 29/163). saved evidence/lane3-fix-6.patch, -notes.md | | | closed; E8, REV-6a, REV-6b launched 13:59Z |
+| E8 | EVIDENCE RUNNER fix-6 (valid full run, fails-before, commands run) | 13:59Z | stop 14:40Z | running |
+| REV-6a | egm-codebase-details fix-6 r1 | 13:59Z | | running |
+| REV-6b | egm-comprehension fix-6 r1 | 13:59Z | | running |
+| B4b | closed 13:59Z: fix-4 r2 (docs+23 tests), 5 fail on base docs, 10 fail on casefold copy; ONE full run 3706 passed 200 skipped rc 0 (19m28s). Not run: ruff/mypy/bandit/gitleaks (CI only). Open: loc@.dom / loc@a..b accepted (ASK to lead). Patches lane3-fix-4-r2.patch, -for-stack-r2.patch | | | closed; REV-4c next |

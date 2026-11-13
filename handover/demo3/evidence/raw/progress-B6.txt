@@ -1,2 +1,3 @@
 13:31Z start B6
 13:35Z edits done, 6 new tests fail on base/pass patched; starting full suite
+13:57Z B6 done

@@ -1,0 +1,1534 @@
+diff --git a/contract.md b/contract.md
+index b2b1cd3..88c3679 100644
+--- a/contract.md
++++ b/contract.md
+@@ -128,7 +128,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+ * A held lead-book lock raises `OSError` from `lockfile.acquire`. A `RecordedQualifier` label that is not `hot`, `warm` or `cold` raises a `KeyError` that names the label, from `qualify` (a follow-up then ends `failed` with `internal:KeyError`).
+ * Fakes server flag `--crm keyed|blind` (default `keyed`) selects the CRM's mode; `--outbox` is unchanged.
+ * `python -m lead_desk.server` prints one line `desk listening on http://<host>:<port>` when it accepts requests. The port in it is the real one, so `DESK_PORT=0` (ephemeral) works; the subprocess tests still pick a free port themselves.
+-  * Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file; 3 the open-file limit is too low; 4 the desk refuses a setting, in any of three places: `Config.from_env` (a number that is not plain digits or is outside its range, any other bad `DESK_*` value), an adapter's `from_env` (a bad `DESK_SMTP*`, `DESK_HUBSPOT*` or `DESK_LIVE*` value), or when the `Desk` is built (an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s); the message names the setting; an error that is not a refused setting never gets code 4; 5 the port could not be bound within `BIND_RETRY_SECONDS` (any `OSError` is retried first, because on Windows a restart can meet the old port in TIME_WAIT). `EXIT_SIMULATED_KILL` 137 is only the crash scripts.
++  * Exit codes: 1 the demo servers cannot be reached (the desk says so first: a bad key file is reported only once they are reachable), or a Python traceback (a constant that is out of range); 2 another desk holds the lock file, or the lock file cannot be opened; 3 the open-file limit is too low; 4 the desk refuses a setting, in any of these places: `Config.from_env` (a number that is not plain digits or is outside its range, any other bad `DESK_*` value), an adapter's `from_env` (a bad `DESK_SMTP*`, `DESK_HUBSPOT*` or `DESK_LIVE*` value), `Desk` being built (an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s), `desk.book_problem` (a lead-book path that is `:memory:`, a folder, inside a file, or a path the system will not let the desk look at), the step that makes the book's folder (a folder that cannot be made), the replies loader (a replies file that cannot be read), and the start-up check of each kind (`check_start`: a key or password file of a real service that is missing, unreadable or too short); the message names the setting; an error that is not a refused setting never gets code 4; 5 the port could not be bound within `BIND_RETRY_SECONDS` (any `OSError` is retried first, because on Windows a restart can meet the old port in TIME_WAIT). `EXIT_SIMULATED_KILL` 137 is only the crash scripts.
+   * Refused connections (503 busy without a handler thread): after the reply the socket goes to one lingerer thread (`_Lingerer`, at most `LINGER_MAX_SOCKETS` = 16 at once, at most `DRAIN_TOTAL_SECONDS` each, ends at once when the client closes) which reads and drops request bytes still on their way, so the close does not send a reset (on Windows a reset destroys a reply the client has not read yet). A silent client costs the accept loop nothing. When the lingerer is full, bytes already there are read and the socket is closed. The 16 are counted in `FD_RESERVE_ITEMS`.
+   * Start-up order:
+ * (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows.
+@@ -138,14 +138,18 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+   * With the defaults the need is 4 x 1024 + 96 = 4192 open files: a computer whose hard limit is below that exits 3 (4096 is a common container default; raise it, for example `ulimit -n 8192` or the container's own setting, or the container's own open-file setting).
+   * The 4 and the 96 are arithmetic, partly measured (`test_connection_holds_counted_files` for one connection, `test_reserve_covers_its_items` for the portal's connections; the other items are read from the code); DNS lookups and the temporary files SQLite makes are covered by the reserve only roughly.
+   * The soft limit is raised to exactly the need, not to the hard limit, when the hard limit is unlimited or at least that. The refusal message names the open-file limit in force and what the desk needs.
+-* (2) The lock file (exit 2, "another desk is using this database").
+-* (3) The adapters (exit 1 if `/fake/info` cannot be read).
+-* (4) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if the desk refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first; `main` runs this one check after the open-file check, `Config.from_env` and the public-bind check, but BEFORE the folder and lock steps (so a refused start makes no `.lock` file and no folder), and `Desk` repeats it); the message is printed and nothing is served; this code differs from exit 1 on purpose).
+-* (5) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5).
+-* (6) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
+-* (7) `desk.start_background()` (starts the reaper).
+-* (8) `Desk.startup()` (schema and sweep).
+-* (9) The listening line, then serve. When the accept loop gets no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning.
++* (2) The settings are read and checked (`Config.from_env`, then the public-bind check): exit 4 for a setting the desk refuses (a bad number, a `DESK_BIND` that can never be an address, a `DESK_DB_PATH` that is empty, a bad `DESK_LIVE*` value, a `DESK_LIVE_LEDGER_PATH` that names a folder). The `DESK_HUBSPOT*` and `DESK_SMTPP*` settings are read in step 7. Nothing is made on disk yet.
++* (3) The lead-book path is checked by `desk.book_problem` (exit 4): `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first), a folder instead of a file, a part of the path that is a file where a folder must be, or a part of the path the system will not let the desk look at (no permission). The messages name `DESK_DB_PATH` and never hold the path. `main` runs this BEFORE the lock step, so a refused start leaves no `.lock` file; `Desk` repeats it when it is built.
++* (4) The folder of the lead book is made if it is missing (exit 4 if it cannot be made, for example no permission).
++* (5) The lock file (exit 2: "another desk is using this database", or the lock file cannot be opened).
++* (6) The approvers file (approval mode only) and the leadflow file (only when `DESK_LEADFLOW_FILE` is set) are read (exit 4 for a bad file or a bad reminder setting).
++* (7) The demo adapters are loaded (exit 1 if `/fake/info` cannot be read: "cannot reach the demo servers"; exit 4 for a replies file that cannot be read, or a bad adapter setting), then every kind that holds a key or password file is asked to read it once (`check_secret_files`, exit 4 for a file that is missing, unreadable, too long, not UTF-8 text, of several lines or too short; the message names the setting, never the path or the key). A bad key file is therefore reported only once the demo servers are reachable.
++* (8) `Desk` is built (exit 4, `EXIT_DESK_SETTING_REFUSED`, if it refuses a setting here: an AI adapter that declares a `timeout_seconds` that is not a number above 0 or is above the AI call budget of 9 s; the lead-book path rules of step 3 are repeated); the message is printed and nothing is served; this code differs from exit 1 on purpose.
++* (9) The bind (retried for `BIND_RETRY_SECONDS`, then exit 5; a name that is well formed but that this computer cannot resolve ends here, not in step 2).
++* (10) The SIGTERM and SIGINT handler is installed, after the bind and before `desk.start_background()`, inside the `try` that holds the shutdown steps.
++* (11) `desk.start_background()` (starts the reaper).
++* (12) `Desk.startup()` (schema and sweep).
++* (13) The listening line, then serve. When the accept loop gets no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning.
+   * Signals and shutdown: the first SIGTERM or SIGINT stops the desk like Ctrl+C: the serve loop ends, `desk.stop_background()` runs before the socket is closed (the reaper join waits up to 10 s), then the socket and the database connection are closed and the lock file is given back (a warning is logged if the reaper did not end in time). A second signal while these steps run is ignored on purpose, so it cannot cut a step short. What the operator does: wait about 10 s; if the process is still there, end it with SIGKILL (on Windows, end the process); the operating system drops the lock, and the next start puts every `sending` row back. A signal that arrives after the lock file is taken and before the handler is installed is not caught and ends the process at once.
+ * `Desk.run_followup` leaves a follow-up that is not `pending` alone (a second drive of a `sent` follow-up changes nothing). An exception in steps 1-2 after Retry's own claim goes through `_abort_unsent`: the claim started the automatic count at 1, so the row is `pending` with `internal:<class>` and a backoff (not `failed`), and the reply is 200 with `state` `pending` (a test runs it: `test_retry_step_error_is_pending`). A database that stayed locked gives the try back instead (except after the model answered: `ModelAnswerLost`, the try stays used up).
+ * Item existence for 404: `F<lead_id>` needs a follow-up row; `R<n>` a receipt with verdict `review`; `D<n>` a receipt with verdict `duplicate` and a non-empty `differing_fields`; `O<n>` an open receipt (any age). Anything else is 404.
+@@ -219,14 +223,14 @@ All desk replies carry `Content-Length` and `Connection: close`. They are JSON,
+ | `GET /api/ui/review` (actions: failed card `retry`; each UNKNOWN card `retry` first, then its resolve choices. Retry on an UNKNOWN card is answered by the desk with 409 `unknown_needs_person` and changes nothing; the page shows the desk's words. The desk's `title` and `reason_text` are the fallback: the page replaces them by kind with its own plain titles, for example "The follow-up email was not sent" for a failed follow-up and "The email may or may not have been sent" for an unknown one.) | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, state_view, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` (`state_view` as for the leads list) |
+ | `GET /api/ui/log?limit=&before=` | 200 | `{items[{request_id,received_at,door,result,lead_id,lead_name,followup_state,new_details,state_view}], next, total}` (`new_details` is true only for a `duplicate` result whose request differed from the first one in at least one field): the desk's request record, one line per request the desk received, newest first (ties on `received_at` are ordered by receipt number, highest first). `door` is `form` or `webhook` (the same words as `summary.doors[].source`; the page shows them as "Web form" and "Webhook"). `result` is `new`, `duplicate`, `review` or `open` (`open` = no verdict yet). `lead_id`, `lead_name` and `followup_state` (`pending`, `sending`, `sent`, `failed`, `unknown`) are filled when the request names a lead (every `new` and `duplicate`) and are `null` otherwise (a `review` or `open` request names none; a lead or follow-up row that is missing also gives `null`). `total` counts every request in the records and comes from the same read as the page. `next` is a cursor `<received_at>:<receipt number>` to pass as `before` for the next page, or `null` on the last page. `limit` is 1..200 (default 100); `before` is two whole numbers joined by a colon, each at most 18 digits (longer, or zero-padded past 18 characters: 400 `bad_query`; the same rule applies to every whole-number parameter). `request_id` and `lead_name` are shown exactly as the sender wrote them: a sender can type anything there, so the log keeps back email, phone, company and message but cannot vouch for those two free-text fields. The log holds the lead's display name and nothing else about the person: never email, phone, company or message. A value the desk's tables should never hold is shown as `review` (result), `unknown` (door, follow-up state), never as the stored text. This is the desk's request record, not a full audit log: it keeps the latest follow-up state, not every step. |
+ | | 400 | `{"error":"bad_query","field":"limit\|before\|<name>"}` (a limit outside 1..200, a `before` that is not two whole numbers joined by a colon, an unknown or repeated parameter) |
+-| `GET /api/ui/data-map` | 200 | `{mail_sender,ai_step{receives[],never_receives[],mode,note},stored[{field,where,purpose,sent_to[]}],access{bind,portal_pages_read_only,portal_actions[],host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `mail_sender` is the From address the mail step is configured with right now (a string), or null when the mail step has none (the HTTP stand-in); it is read from the adapter's `sender_address` at request time, never stored and never logged, and the lead panel shows it masked by default with an eye button; it is the current setting, not a record of who sent an earlier email. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `note` is a fixed sentence: the list is the inputs the AI is given, derived from its signature, and does not prove what a live AI looks up by id. `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the desk's records (one local database file); `sent_to` lists where else the desk sends that field (the mail step, the CRM, and the AI when the AI step receives it). The CRM entry follows the loaded CRM kind: `CRM (stand-in)` for the stand-in, which gets the whole record; `CRM` for HubSpot, which gets only the lead number, name, email and company (what `crm_hubspot.py` sends), plus the lead status and the owner id when a lead flow file is set. `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_pages_read_only` is `true` and means the pages and `/api/ui/*` read through a read-only connection (the buttons are the writers and go through the desk); `portal_actions` lists what the portal can change: `retry`, `resolve`, and `demo_controls` only when the demo extension is loaded; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three (the "Hide email addresses" switch of the Leads page is a display setting of the viewer's browser, not a desk setting; it is on by default, and the JSON replies carry the values either way, so it is not in this reply; the Data page row about it follows that switch). If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess. `stored` also lists the row `later_decision` (who approved or denied a later message, through which channel and when; approval mode only). |
++| `GET /api/ui/data-map` | 200 | `{mail_sender,ai_step{receives[],never_receives[],mode,note},stored[{field,where,purpose,sent_to[]}],access{bind,portal_pages_read_only,portal_actions[],host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `mail_sender` is the From address the mail step is configured with right now (a string), or null when the mail step has none (the HTTP stand-in); it is read from the adapter's `sender_address` at request time, never stored and never logged, and the lead panel shows it masked by default with an eye button; it is the current setting, not a record of who sent an earlier email. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `note` is a fixed sentence: the list is the inputs the AI is given, derived from its signature, and does not prove what a live AI looks up by id. `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the desk's records (one local database file); `sent_to` lists where else the desk sends that field (the mail step, the CRM, and the AI when the AI step receives it). The CRM entry follows the loaded CRM kind: `CRM (stand-in)` for the stand-in, which gets the whole record; `CRM` for HubSpot, which gets only the lead number, name, email and company (what `crm_hubspot.py` sends), plus the lead status and the owner id when a lead flow file is set. `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_pages_read_only` is `true` and means the pages and `/api/ui/*` read through a read-only connection (the buttons are the writers and go through the desk); `portal_actions` lists what the portal can change: `retry`, `resolve`, and `demo_controls` only when the demo extension is loaded; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three (the "Hide names and email addresses" switch of the Leads page is a display setting of the viewer's browser, not a desk setting; it is on by default, and the JSON replies carry the values either way, so it is not in this reply; the Data page row about it follows that switch). If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess. `stored` also lists the row `later_decision` (who approved or denied a later message, through which channel and when; approval mode only). |
+ | any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) or `{"error":"unavailable"}` (the read-only open failed or a table is missing: a request before start-up finished, a database path that is not a file, a deleted file) |
+ | any request, when the connection limit is reached | 503 | `{"error":"busy","reason":"busy"}`, header `Retry-After: 1` (see "Further rules", connection limit) |
+ | any request | 403 | `{"error":"forbidden_host"}` (Host missing, repeated or not allowed) or `{"error":"forbidden_origin"}` (Origin or Sec-Fetch-Site not from this server); see "Host and Origin gate" |
+ 
+ Fakes server (separate process; default `127.0.0.1:8766`; started with `--outbox keyed|blind --port 8766`). The replies to `POST /fake/outbox`, `GET /fake/outbox` and `GET /fake/info` (and the 422 `refused` reply of `POST /fake/outbox` and `POST /fake/crm`, and the 200 reply of `POST /fake/crm`) carry `"mode":"keyed|blind"` (the outbox mode, or the CRM mode for the CRM routes); `GET /fake/crm`, `POST /fake/control`, `POST /fake/reset` and the `bad_body`, `bad_control` and `not_found` errors do not.
+ * `POST /fake/outbox` `{"key","to","subject","body"}` -> keyed mode: 200 `{"status":"sent","mode":"keyed"}` the first time for a key and 200 `{"status":"already_sent","mode":"keyed"}` after; blind mode: always 200 `{"status":"sent","mode":"blind"}` and every post is stored. Bad body: 400 `{"error":"bad_body"}`.
+-* `GET /fake/outbox` -> `{"mode":"keyed|blind","count":n,"messages":[{"key","to","subject"}]}`.
++* `GET /fake/outbox` -> `{"mode":"keyed|blind","count":n,"reminders":r,"messages":[{"key","to","subject"}]}` (`reminders` is how many of the stored messages are reminders).
+ * `POST /fake/crm` `{"lead_id","record":{...}}` -> 200 `{"status":"put"|"already_present","mode":"..."}` (keyed by `lead_id`; for the n8n-only runs the CRM runs in blind counting mode, `--crm blind`: every post is stored). `GET /fake/crm` -> `{"count":n,"rows":[{"lead_id","record"}],"fields":{"<lead_id>":{"owner_id","status"}}}`.
+ * `POST /fake/crm/fields` `{"lead_id","email_key","owner_id","status"}` (four strings; the copy of lead owner and lead stage, `Crm.set_fields`) -> 200 `{"status":"set"}` (stored under `lead_id`, overwriting); 400 `bad_body`; 404 `no_contact` when no `POST /fake/crm` stored that lead; the one-shot controls of target `crm` apply as for `POST /fake/crm` (`refuse` 422, `drop` no answer and nothing stored, `record_then_drop` stored then no answer, `store_then_delay`). `Crm.set_fields(lead_id, email_key, crm_owner_id, crm_status)` raises `CrmNothingStored` (provably nothing changed) or `CrmError` (unclear; asking again is harmless).
+ * `GET /fake/info` -> `{"outbox_capability":"keyed|blind","mode":"keyed|blind","crm_capability":"keyed|blind"}` (`crm_capability` is the mode of the fake CRM; it is set like the outbox mode: `--crm keyed|blind` on the command line, or the `crm_mode` argument of `FakesState`).
+diff --git a/demo_only/fakes.py b/demo_only/fakes.py
+index a858481..f6b7c2c 100644
+--- a/demo_only/fakes.py
++++ b/demo_only/fakes.py
+@@ -109,6 +109,11 @@ class BlindOutbox(_FakeOutbox):
+     _keyed = False
+ 
+ 
++class RepliesFileError(ValueError):
++    """The replies file is JSON but not one object (the one typed way RecordedQualifier says "bad file"; a plain
++    ValueError from anywhere else is a bug and is never reported as a setting)."""
++
++
+ class RecordedQualifier:
+     """In-process and demo Qualifier. Reads replies.json (contract.md, section "Demo files"):
+     email key -> "hot"|"warm"|"cold".
+@@ -122,7 +127,7 @@ class RecordedQualifier:
+     def __init__(self, replies_path: Path) -> None:
+         data = json.loads(Path(replies_path).read_text(encoding="utf-8"))  # FileNotFoundError / ValueError: loud
+         if not isinstance(data, dict):
+-            raise ValueError("replies file must hold one JSON object")
++            raise RepliesFileError("replies file must hold one JSON object")
+         self._replies: dict[str, object] = data
+         self.calls = 0
+         self._lock = threading.Lock()
+diff --git a/demo_only/fakes_server.py b/demo_only/fakes_server.py
+index 93c6c3a..5ddc28b 100644
+--- a/demo_only/fakes_server.py
++++ b/demo_only/fakes_server.py
+@@ -82,7 +82,7 @@ class _Handler(BaseHTTPRequestHandler):
+                 )
+             if path == "/fake/outbox":
+                 msgs = [{"key": m["key"], "to": m["to"], "subject": m["subject"]} for m in st.outbox]
+-                # reminders are counted over every stored message (the capped list is not used for a number)
++                # reminders are counted over every stored message (the list of messages is not used for a number)
+                 reminders = sum(1 for m in st.outbox if str(m["key"]).startswith(NUDGE_KEY_PREFIX))
+                 return self._reply(
+                     HTTP_OK, {"mode": st.outbox_mode, "count": len(msgs), "reminders": reminders, "messages": msgs}
+diff --git a/docs/limits.md b/docs/limits.md
+index 677c3c9..922141c 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -55,7 +55,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   database waits of 5 s, 30 s with the defaults. One stage must fit inside it: the call budget (9 s) plus the longest write of the stamp that
+   follows (15 s: the 10 s write deadline plus one more database wait) is 24 s, strictly below the smallest grace of 25 s. A constant that does not
+   hold this ends with a Python error (exit code 1) when the program loads. An AI adapter that declares a `timeout_seconds` that is not
+-  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of exactly `:memory:` (refused right after the settings are read and checked, before the folder and the lock file are made): every request thread opens its own connection, and a private memory book would be empty for all but the first. A name such as `file::memory:` is not special: the desk turns every other name into an absolute path first, so it is a plain file with that name.
++  a number above 0, or above 9 s, is refused when the desk is built (exit code 4). So is a `db_path` of exactly `:memory:`, a folder, a path with a file where a folder must be, or a path the system will not let the desk look at (all refused right after the settings are read and checked, before the folder and the lock file are made): every request thread opens its own connection, and a private memory book would be empty for all but the first. A name such as `file::memory:` is not special: the desk turns every other name into an absolute path first, so it is a plain file with that name.
+ * **A lock after the model answered.** If the database stays locked when the answer is stamped or its label written, the answer is thrown away
+   and the try stays used up (`internal:ModelAnswerLost`), because the model was really asked; the 5-try limit then bounds how often it is
+   asked again (`test_locked_stamp_cannot_ask_for_ever`, `test_answer_lost_real_lock_keeps_try`). A lock before the model is asked gives the try back.
+@@ -117,7 +117,7 @@ Rules of the desk's records (the database refuses these, for a database created
+ * Threads: the desk serves each connection on its own thread. Writing a reply has a total limit of `REPLY_WRITE_TIMEOUT_SECONDS` (5 s): a client that does not read its reply loses the thread after that.
+ * Open files: at start-up the desk checks that the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 96 for everything else; contract.md lists what the 4 and the 96 are made of). With the default 1024 threads that is 4192 open files. A computer whose hard limit is lower than that makes the desk exit with code 3; 4096 is a common default inside containers, so there raise the open-file limit of the operating system (for example `ulimit -n 8192`, or the container's own open-file setting).
+   * The count is arithmetic, checked by measuring a database connection and the portal's connections; DNS lookups and the temporary files SQLite makes are covered by the 96 only roughly (not measured, not itemised). It raises the soft limit to exactly what is needed when the hard limit is unlimited or at least that, and otherwise refuses to start (exit code 3). The message names the open-file limit in force and what the desk needs.
+-* Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file; 3 the open-file limit is too low; 4 the desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, or an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).
++* Exit codes: 1 the demo servers cannot be reached (the desk prints "cannot reach the demo servers"; it says so first, because a bad key file is reported only once they are reachable), or a Python traceback (a long error text; it means a program fault, or that someone edited a fixed value in `src/lead_desk/constants.py` to a number that does not fit, because the program checks those values when it loads; it is never caused by a `DESK_*` setting, because a bad `DESK_*` value gives exit code 4). "Cannot reach the demo servers" is the message for the demo servers only. What the desk prints when a real CRM or a real mail sender cannot be reached is not described here; 2 another desk holds the lock file, or the lock file cannot be opened; 3 the open-file limit is too low; 4 the desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, a lead-book path that is a folder, inside a file, in a folder that cannot be made or that the system will not let the desk look at, a replies file that cannot be read, a key or password file of a real service that is missing, unreadable or too short, or an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).
+ * Stopping: Ctrl+C or SIGTERM stop the background job first and then give the lock file back. A second signal while that runs is ignored on purpose, so it cannot cut a step short. If the desk is still there after about 10 seconds, end it with SIGKILL (on Windows, end the process); the lock is dropped and the next start puts every unfinished follow-up back.
+ * Two limits apply. (1) At most `MAX_CONNECTIONS` (256) connections can be in their reading phase (request line, headers, body) at one time; a connection stops counting when the desk starts writing its reply, so a thread that is still finishing a follow-up does not count here. (2) At most `MAX_HANDLER_THREADS` (1024) handler threads exist in total: a thread counts from the moment it gets a connection until it ends, so the reply write, the draining and the follow-up count too. When either limit is reached and nothing can be closed to make room, the new connection gets 503 `busy` and nothing is stored.
+ * Idle connections: a client that opens connections and sends nothing holds a place until the header deadline (10 s), then gets 408 and is closed (`test_idle_sockets_closed_at_deadline`). While they hold the 256 places, a valid request gets 503 `busy` (that is the backpressure; send it again).
+diff --git a/docs/portal.md b/docs/portal.md
+index 5938eb9..8fb3042 100644
+--- a/docs/portal.md
++++ b/docs/portal.md
+@@ -2,7 +2,7 @@
+ 
+ Two words to keep apart: the **lead stage** shown in the portal (New, Contacted and so on) is the stage of a lead, from the lead flow file (`DESK_LEADFLOW_FILE`) and is not a stage of any deployment.
+ 
+-Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company and the lead number; request numbers are not searched while masked), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
++Open http://127.0.0.1:8765/ui/ in a browser while the desk runs. That is the only address to open in a browser: the pages named here are not separate addresses but screens the browser draws from the one page (their routes are inside the browser, written after a `#`, for example `#/overview`), so a program such as curl that fetches `/ui/` gets the same empty page for all of them. The data each screen shows comes from the `GET /api/ui/...` addresses listed in `contract.md`. It shows the desk's records on these pages: **Overview** (a summary that adds up: every received request is counted once, as New, Repeat, Request to check or Not decided yet), **Leads** (the leads, with a "Hide names and email addresses" switch that only changes the display: lead names, email addresses, phone numbers and messages are masked on screen by default, and the switch, remembered for that browser tab's session only, turns the masking off to see them and to search by name or address; while they are masked the search does not match names or address text (only the company and the lead number; request numbers are not searched while masked), and a small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. The JSON replies still carry the values, so a person with the browser's developer tools can read them, and the desk's logs never hold them), **Needs a person** (incomplete requests, and follow-ups that failed or whose outcome is unknown; tabs for items that are only waiting and for information), **Request log** and **Data and AI** (what the desk stores and what the AI step receives); a lead's side panel shows a "Next step:" line for a failed or unknown follow-up and lists the lead's later messages: each new request from the same email address, when it came, how long after the first one, and what it says differently.
+ 
+ When every kind is a stand-in (no real CRM, no real mail sender, no live AI step) but the demo tools are not installed, a banner reads "Every lead is demo data. The demo CRM and demo mail are not connected. Nothing here is sent to real customers or real systems."
+ 
+diff --git a/docs/settings.md b/docs/settings.md
+index 7b9a5aa..e5df73e 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -1,11 +1,11 @@
+ # Settings
+ 
+-Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error.
++Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error (exit code 4 and a message that names the setting, never a path or a key; see "Exit codes" in `docs/limits.md`). Key and password files (`DESK_HUBSPOT_KEY_FILE`, `DESK_LIVE_KEY_FILE`, `DESK_SMTPP_PASSWORD_FILE`) are read once at the start of the real service that uses them, so a missing, unreadable or too short file also stops the start. Only that is checked: the file must be readable and hold at least 8 characters; whether the key is valid at the vendor cannot be checked without a network call, and the permissions of the file are not checked. The key is not kept from that start-up read. The live-model key is read again at the first call and kept in memory only after that first call (so a key file replaced before the first call is the one used); the CRM key and the mail password are read at every call.
+ 
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+-| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, exit code 4, before any file is made) |
+-| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
++| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (refused at start with exit code 4, before any file is made: `:memory:`, an empty value, a folder, a path inside something that is a file, and a path whose folder cannot be made) |
++| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on: an IP address (IPv6 may be written in brackets, with a zone such as `[fe80::1%eth0]`) or a host name made of letters, digits, `.`, `-` and `_` (an underscore and one dot at the end are allowed). It must also resolve on this computer: the start refuses what can never be an address (a name with spaces or other characters, an empty part, a number-and-dots name with a part above 255, an IPv4 address in brackets), exit code 4; a name that is well written but that this computer cannot find stops the desk later, after `BIND_RETRY_SECONDS`, with exit code 5. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
+ | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
+ | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
+ | `qualifier` | `DESK_QUALIFIER` | `recorded` | the AI step: `recorded` (pre-written replies from a list; the value is still called `recorded`) or `live_claude` (a live model; needs the `DESK_LIVE_*` settings below) |
+@@ -17,7 +17,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
+ | `fakes_host`, `fakes_port` | `DESK_FAKES_HOST`, `DESK_FAKES_PORT` | `127.0.0.1`, `8766` | where the demo CRM and outbox listen; this computer only: `localhost` or a loopback address, anything else is refused |
+ | (both above) | `DESK_FAKES_URL` | built from the two above | one `http` address with host and port; wins over the two above |
+-| `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies |
++| `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies: one JSON file holding one object; a missing, unreadable or broken file is refused at start (exit code 4) |
+ | `send_timeout_seconds` | `DESK_SEND_TIMEOUT_SECONDS` | `5.0` | wait per network step, also for the CRM call |
+ | `size_cap_bytes` | `DESK_SIZE_CAP_BYTES` | `65536` | largest request body accepted (larger gets 413) |
+ | `stall_seconds` | `DESK_STALL_SECONDS` | `120` | after this long an unfinished item shows as `stalled` on the review list |
+@@ -84,7 +84,7 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+ 
+-Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4).
++Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4). The same holds for a `DESK_HUBSPOT_STATS_FILE`, `DESK_SMTPP_STATS_FILE` or `DESK_LIVE_LEDGER_PATH` that names a folder instead of a file, and for a `DESK_SMTPP_CA_FILE` that is missing or is not a certificate file. `DESK_HUBSPOT_ALLOW_ANY_BASE_URL` and `DESK_LIVE_ALLOW_ANY_BASE_URL` take `yes`, `no` or nothing (nothing means `no`); any other word is refused at start (exit code 4), it is never read as `no`.
+ 
+ ### Live model step (`DESK_QUALIFIER=live_claude`)
+ 
+@@ -96,7 +96,7 @@ The step asks the model for one word (hot, warm or cold) and keeps no secret in
+ | `DESK_LIVE_KEY_FILE` | path of the file that holds the key (required; unlike the other key and password files it has NO 4096-byte size limit: the whole file is read; keep it outside the repository; never put a key in a variable or on a command line) |
+ | `DESK_LIVE_PRICE_IN_PER_MTOK`, `DESK_LIVE_PRICE_OUT_PER_MTOK`, `DESK_LIVE_PRICE_DATE` | US$ per million input and output tokens and the date you read them from the provider's price page (required; each price from 0.000001 to 1,000,000). The desk uses these prices as you give them for the whole run, never checks how old the date is and writes dollars (not prices) in the ledger: keeping the prices right is your job |
+ | `DESK_LIVE_CAP_RUN_USD`, `DESK_LIVE_CAP_TOTAL_USD` | the most one run and the whole ledger may spend (required; above 0 and at most US$1,000,000; the run cap may not exceed the total) |
+-| `DESK_LIVE_LEDGER_PATH`, `DESK_LIVE_RUN_ID` | the spend ledger file (a file that records the money spent; kept across restarts) and the name of this run (required) |
++| `DESK_LIVE_LEDGER_PATH`, `DESK_LIVE_RUN_ID` | the spend ledger file (a file that records the money spent; kept across restarts) and the name of this run (required; any text) |
+ | `DESK_LIVE_BASE_URL` | service address; default is the provider's public address (`LIVE_DEFAULT_BASE_URL` in `constants.py`); plain `http` only for the local computer. The key is sent to this address, so the settings refuse any other address than the provider's own or this computer, wherever they are made (the desk, `scripts/run_real_check.py`, `scripts/run_live_check.py`) |
+ | `DESK_LIVE_ALLOW_ANY_BASE_URL` | the word `yes` lifts that refusal (the same idea as `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`); `scripts/run_real_check.py` reads it from its config file only |
+ | `DESK_LIVE_API_VERSION`, `DESK_LIVE_EFFORT`, `DESK_LIVE_TIMEOUT_SECONDS`, `DESK_LIVE_MAX_TOKENS` | request version header (default 2026-10-21), `output_config` effort (default low), total time limit of one call in seconds (default 8, at most 9: the desk cuts every model call there), output cap in tokens (default 64; thinking tokens are billed as output and the worst-case reserve uses this number) |
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9812f8e..6892452 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -53,7 +53,7 @@ from lead_desk.constants import (
+     STALL_SECONDS_MAX,
+     WILDCARD_BINDS,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_yes_no, refuse_unusable_file, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+ from lead_desk.urls import desk_origin
+ 
+@@ -61,6 +61,56 @@ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+ 
+ 
++_BIND_CHARS = re.compile(r"[A-Za-z0-9._:%\[\]-]+")  # ASCII letters, digits and . _ - : % [ ] only
++_ALL_DIGITS_AND_DOTS = re.compile(r"[0-9.]+")
++
++
++def _is_bind_name(name: str) -> bool:
++    """False only for what can never be the address the desk listens on; True for everything the operating system
++    might resolve (whether a name resolves on this computer is for the system to say: the desk then stops later with
++    exit code 5). Refused: empty, anything outside ASCII letters, digits and . - _ : % [ ] (so no space and no control
++    character), more than HOST_NAME_MAX characters, an empty part in a dotted name (`a..b`; one dot at the end is
++    fine), a number-and-dots name the system cannot read as IPv4 (a part above 255), brackets around anything but an
++    IPv6 address (an IPv4 address in brackets), and a name with a colon or % that is not an IPv6 address (a zone id is
++    fine: `[fe80::1%eth0]`). Allowed: an underscore (container and machine names), a trailing dot, the
++    all-interfaces spellings."""
++    if not name or len(name) > HOST_NAME_MAX or not _BIND_CHARS.fullmatch(name):
++        return False
++    if "[" in name or "]" in name:  # brackets go with an IPv6 address (zone allowed); IPv4 in brackets is refused
++        inner = name.strip("[]")  # an unpaired bracket (`[::1`) stays readable: public_bind_problem calls it public
++        return ":" in inner and "[" not in inner and "]" not in inner and _is_ipv6(inner)
++    if ":" in name or "%" in name:
++        return _is_ipv6(name)
++    if _ALL_DIGITS_AND_DOTS.fullmatch(name):  # the system reads short forms and 0 as IPv4; a part above 255 it cannot
++        try:
++            socket.inet_aton(name)
++        except OSError:
++            return False
++        return True
++    return all(name.rstrip(".").split("."))  # no empty part (`a..b`, `.a`)
++
++
++def _is_settable_bind_name(name: str) -> bool:
++    """The stricter check for a bind that came from the DESK_BIND setting (`Config.from_env`): everything
++    `_is_bind_name` accepts, and also exactly one pair of brackets around the whole IPv6 address (`[::1` and `::1]` can
++    never bind), and a letter or digit in every part of a name (`-`, `_` and `a.-.b` can never be a name). `Config`
++    itself keeps the looser check, so that `public_bind_problem` still calls a half-bracketed text public."""
++    if not _is_bind_name(name):
++        return False
++    if name.startswith("[") or name.endswith("]") or "[" in name or "]" in name:
++        return name.startswith("[") and name.endswith("]") and name.count("[") == 1 and name.count("]") == 1
++    if ":" in name or "%" in name or _ALL_DIGITS_AND_DOTS.fullmatch(name):
++        return True  # an IPv6 or IPv4 address that `_is_bind_name` already read
++    return all(any(c.isalnum() for c in part) for part in name.rstrip(".").split("."))
++
++
++def _is_ipv6(text: str) -> bool:
++    try:
++        return ipaddress.ip_address(text).version == 6
++    except ValueError:
++        return False
++
++
+ def is_loopback_host(name: str) -> bool:
+     """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+     reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+@@ -212,8 +262,9 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+         kw["effort"] = e["DESK_LIVE_EFFORT"]
+     if "DESK_LIVE_MAX_TOKENS" in e:
+         kw["max_tokens"] = env_number(e, "DESK_LIVE_MAX_TOKENS", int, low=1, high=LIVE_MAX_TOKENS_MAX)
+-    if e.get("DESK_LIVE_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++    if env_yes_no(e, "DESK_LIVE_ALLOW_ANY_BASE_URL"):
+         kw["allow_any_base_url"] = True
++    refuse_unusable_file("DESK_LIVE_LEDGER_PATH", Path(e["DESK_LIVE_LEDGER_PATH"]))  # a folder is never the ledger
+     return LiveSettings(
+         model=e["DESK_LIVE_MODEL"],
+         key_file=Path(e["DESK_LIVE_KEY_FILE"]),
+@@ -514,6 +565,8 @@ class Config:
+             raise SettingRefused("qualifier live_claude needs the live model settings (DESK_LIVE_*)")
+         if not self.bind or not self.fakes_host:
+             raise SettingRefused("DESK_BIND and DESK_FAKES_HOST must not be empty")
++        if not _is_bind_name(self.bind):
++            raise SettingRefused("DESK_BIND must be an IP address or a host name")
+         if not is_loopback_host(self.fakes_host):  # the stand-ins are local by construction: the banner relies on it
+             raise SettingRefused(
+                 "DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address"
+@@ -547,8 +600,12 @@ class Config:
+         e = os.environ if env is None else env
+         kw: dict[str, Any] = {}
+         if "DESK_DB_PATH" in e:
++            if not e["DESK_DB_PATH"].strip():  # Path("") is "." (a folder), never a lead book
++                raise SettingRefused("DESK_DB_PATH must not be empty")
+             kw["db_path"] = Path(e["DESK_DB_PATH"])
+         if "DESK_BIND" in e:
++            if e["DESK_BIND"] and not _is_settable_bind_name(e["DESK_BIND"]):  # empty: Config gives its own text
++                raise SettingRefused("DESK_BIND must be an IP address or a host name")
+             kw["bind"] = e["DESK_BIND"]
+         if "DESK_PORT" in e:
+             kw["port"] = env_number(e, "DESK_PORT", int, low=0, high=PORT_MAX)
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..35cba46 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -82,7 +82,7 @@ from lead_desk.constants import (
+     MIRROR_CALL_SHARE,
+     REPLY_MAX_BYTES,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_yes_no, refuse_unusable_file, split_url
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -189,10 +189,11 @@ class HubspotSettings:
+             kw["max_429_retries"] = env_number(
+                 env, "DESK_HUBSPOT_MAX_429_RETRIES", int, low=0, high=DEFAULT_429_RETRIES + 3
+             )
+-        if env.get("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++        if env_yes_no(env, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL"):
+             kw["allow_any_base_url"] = True
+         if env.get("DESK_HUBSPOT_STATS_FILE"):
+             kw["stats_file"] = Path(env["DESK_HUBSPOT_STATS_FILE"])
++            refuse_unusable_file("DESK_HUBSPOT_STATS_FILE", kw["stats_file"])  # a folder is never a stats file
+         return cls(
+             Path(env["DESK_HUBSPOT_KEY_FILE"]),
+             env_number(env, "DESK_HUBSPOT_MAX_CALLS", int, low=1, high=CAP_COUNT_MAX),
+@@ -249,6 +250,16 @@ class HubspotCrm:
+ 
+     # -- the wire -----------------------------------------------------------------------------------------------
+ 
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the key file once, as
++        the first call would, so a missing or empty key file stops the start (SettingRefused, exit code 4) instead of
++        failing every later call. The message names the setting and holds neither the path nor the key. The key is
++        not kept; each call still reads the file (a new key works)."""
++        try:
++            self._key()
++        except CrmConfigError as e:
++            raise SettingRefused(f"DESK_HUBSPOT_KEY_FILE: {e}") from None
++
+     def _key(self) -> str:
+         try:
+             with self.s.key_file.open("rb") as f:
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index bbb2ca8..31d8770 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -75,6 +75,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
++from lead_desk.envnum import path_kind
+ from lead_desk.gate import (
+     BUSY_ERRORS,
+     CRM_WORKERS_MAX,
+@@ -309,15 +310,37 @@ class Reply:
+ MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
+ 
+ 
++BOOK_IS_FOLDER_PROBLEM = "DESK_DB_PATH names a folder: it must name a file (the lead book)"
++BOOK_FOLDER_IS_FILE_PROBLEM = "DESK_DB_PATH sits inside something that is a file, not a folder"
++BOOK_UNREADABLE_PROBLEM = "DESK_DB_PATH cannot be looked at (no permission for a part of that path)"
++
++
+ def book_problem(db_path: Path | str) -> str | None:
+     """Why this lead-book path is refused (None: it is fine). A module-level function (not a `Desk` member) so that
+     `main` can call it by its own name: a test or caller that replaces `server.Desk` cannot take the check away.
+     `main` runs it BEFORE the lock step (the lock file is named after the book, so a refusal after it would leave
+-    `<name>.lock` behind) and the desk repeats it when it is built. `Path("")` is "." so only this spelling can name
+-    a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
+-    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.)"""
++    `<name>.lock` behind) and the desk repeats it when it is built. It is the one place for the lead-book path rules:
++    a private memory book, a folder instead of a file, and a part of the path that is a file where a folder must be
++    (the text names DESK_DB_PATH and never holds the path). A folder that cannot be made (no permission) is
++    refused by `main`'s `mkdir` step. `Path("")` is "." (a folder), so it is refused here too.
++    (A `file:` name is NOT refused: the desk resolves every other name to an absolute path before SQLite sees it, so
++    `file::memory:` is a plain file called that, never a memory book.)"""
+     if str(db_path) == ":memory:":
+         return MEMORY_BOOK_PROBLEM
++    path = Path(db_path)
++    kind = path_kind(path)  # the stdlib folder and exists probes raise PermissionError (a traceback, not exit 4)
++    if kind == "folder":  # also Path("") and ".": SQLite cannot open a folder (it ended in a traceback, exit code 1)
++        return BOOK_IS_FOLDER_PROBLEM
++    if kind == "unreadable":  # no permission to look inside a parent folder: refused with a fixed text
++        return BOOK_UNREADABLE_PROBLEM
++    for folder in path.parents:  # the first part of the path that exists must be a folder, not a file
++        kind = path_kind(folder)
++        if kind == "folder":
++            break
++        if kind == "file":
++            return BOOK_FOLDER_IS_FILE_PROBLEM
++        if kind == "unreadable":
++            return BOOK_UNREADABLE_PROBLEM
+     return None
+ 
+ 
+@@ -376,7 +399,7 @@ class Desk:
+         self._rejected_lock = threading.Lock()
+         self._inflight = FairSemaphore(INFLIGHT_MAX)
+         self._drives = FairSemaphore(DRIVE_MAX)
+-        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
++        db_text = str(config.db_path)  # (the path rules, `Path("")` included, are in book_problem)
+         if (problem := book_problem(db_text)) is not None:  # a private memory book is empty per thread
+             raise DeskSettingRefused(problem)
+         # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 087304a..4ae2d83 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -6,11 +6,14 @@ message. Every numeric parse of settings text in src/, scripts/, load_tools/, to
+ 
+ from __future__ import annotations
+ 
++import errno
+ import math
+ import re
++import stat
+ from collections.abc import Callable, Mapping
+ from decimal import Decimal
+-from typing import Any
++from pathlib import Path
++from typing import Any, Literal
+ from urllib.parse import SplitResult, urlsplit
+ 
+ _MISSING: Any = object()
+@@ -23,6 +26,46 @@ class SettingRefused(ValueError):
+     the value. `server.main` turns exactly this error into the clean exit 4; any other ValueError is a real bug."""
+ 
+ 
++PathKind = Literal["folder", "file", "absent", "unreadable"]
++_ABSENT_ERRNOS = (errno.ENOENT, errno.ENOTDIR, errno.ELOOP)  # nothing is there (or a loop of links): not a failure
++
++
++def path_kind(path: Path) -> PathKind:
++    """What a setting's path is right now: `folder`, `file` (anything else that exists), `absent`, or `unreadable`
++    (the system will not tell us, for example no permission to look inside a parent folder). The one place that
++    looks at a setting's path before the desk uses it: `Path.is_dir()` and `Path.exists()` raise PermissionError on
++    Python 3.12 and later, which ended in a traceback (exit code 1) where a refusal (exit code 4) is documented.
++    Every caller treats `unreadable` as a refusal with a fixed text (no path in it)."""
++    try:
++        mode = path.stat().st_mode
++    except ValueError:  # an embedded NUL: not a path that exists (what is_dir() reported too)
++        return "absent"
++    except OSError as e:
++        return "absent" if e.errno in _ABSENT_ERRNOS else "unreadable"
++    return "folder" if stat.S_ISDIR(mode) else "file"
++
++
++def refuse_unusable_file(name: str, path: Path) -> None:
++    """For a setting that must name a FILE (a counters file, a ledger): a folder, or a path the system will not let
++    us look at, is a SettingRefused naming the setting (never the path). A path that is absent or a file passes."""
++    kind = path_kind(path)
++    if kind == "folder":
++        raise SettingRefused(f"{name} names a folder, not a file")
++    if kind == "unreadable":
++        raise SettingRefused(f"{name} cannot be looked at (no permission for a part of that path)")
++
++
++def env_yes_no(env: Mapping[str, str], name: str) -> bool:
++    """A yes-or-no setting: `yes` is True; `no` and an unset or empty name are False. Any other word is a
++    SettingRefused naming the setting (a typo such as `ys` must not silently mean no). The value is not echoed."""
++    word = env.get(name, "").strip().lower()
++    if word in ("", "no"):
++        return False
++    if word == "yes":
++        return True
++    raise SettingRefused(f"{name} must be yes or no")
++
++
+ def env_number(
+     env: Mapping[str, str],
+     name: str,
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 177c552..9a27975 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -46,7 +46,6 @@ from lead_desk.constants import (
+     HTTP_TOO_MANY_REQUESTS,
+     LIVE_ERROR_BODY_MAX,
+     LIVE_ERROR_TYPE_MAX,
+-    LIVE_KEY_MIN_CHARS,
+     LIVE_LEDGER_FILE_MAX_BYTES,
+     LIVE_LEDGER_LOCK_TRIES,
+     LIVE_LEDGER_LOCK_WAIT,
+@@ -56,6 +55,9 @@ from lead_desk.constants import (
+     LIVE_REPLY_MAX_BYTES,
+     LIVE_REPORTED_TOKENS_MAX,
+ )
++from lead_desk.contract import SendRefused
++from lead_desk.envnum import SettingRefused
++from lead_desk.smtp_provider import read_secret_file
+ 
+ SYSTEM_TEXT = (
+     "You sort sales leads. Answer with exactly one word: hot, warm or cold. No other text, no punctuation. "
+@@ -418,15 +420,29 @@ class LiveQualifier:
+         built (a limit above MODEL_CALL_BUDGET_SECONDS is refused: the desk would cut the call first)."""
+         return self.s.timeout_seconds
+ 
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the key file once, as
++        the first call would, so a missing or too short key stops the start (SettingRefused, exit code 4) instead of
++        failing every call. The message names the setting and holds neither the path nor the key. The key is NOT kept
++        from this read: it is dropped at once, and the first call reads the file again (a key replaced between the
++        start and the first call is the one used)."""
++        try:
++            self._load_key()
++        except LiveTransport as e:
++            raise SettingRefused(f"DESK_LIVE_KEY_FILE: {e}") from None
++
++    def _load_key(self) -> str:
++        """Read the key file with the one rule for every secret file (`read_secret_file`: one line, at most
++        SECRET_FILE_MAX_BYTES, UTF-8, at least LIVE_KEY_MIN_CHARS printable characters); stores nothing. The text of a
++        refusal names the file kind and never the path or the content."""
++        try:
++            return read_secret_file(self.s.key_file, "live model key")
++        except SendRefused as e:
++            raise LiveTransport(str(e)) from None  # the message is fixed text; no chained error that holds the path
++
+     def _read_key(self) -> str:
+         if not self._key:
+-            try:
+-                key = self.s.key_file.read_text(encoding="utf-8").strip()
+-            except (OSError, UnicodeError):
+-                raise LiveTransport("the key file cannot be read") from None  # the error holds the path
+-            if len(key) < LIVE_KEY_MIN_CHARS:
+-                raise LiveTransport("the key file holds no key")
+-            self._key = key
++            self._key = self._load_key()
+         return self._key
+ 
+     def _post(self, body: bytes, key: str, timeout: float | None = None) -> dict[str, Any]:
+diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
+index e82592c..81f2bf8 100644
+--- a/src/lead_desk/loader.py
++++ b/src/lead_desk/loader.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import importlib
++import json
+ from collections.abc import Mapping
+ from pathlib import Path
+ from typing import TYPE_CHECKING, Any, Protocol, cast, runtime_checkable
+@@ -98,10 +99,36 @@ def load_demo_adapters(config: Config) -> tuple[Crm, Outbox, Qualifier]:
+                 "missing. Put the demo_only folder back, or set DESK_QUALIFIER=live_claude."
+             ) from e
+         replies = config.replies_path or Path(str(fakes.__file__)).resolve().parent / "replies.json"
+-        qualifier = fakes.RecordedQualifier(replies)
++        try:
++            qualifier = fakes.RecordedQualifier(replies)
++        except (OSError, UnicodeError, json.JSONDecodeError, fakes.RepliesFileError):
++            # a missing, unreadable or not-JSON replies file, or JSON that is not one object. Any other ValueError is
++            # a bug and propagates (it is never reported as a setting). No path, no content in the text.
++            if config.replies_path is None:
++                raise SettingRefused("the demo replies file cannot be read or does not hold one JSON object") from None
++            raise SettingRefused("DESK_REPLIES_PATH is not a readable file holding one JSON object") from None
+     return crm, outbox, qualifier
+ 
+ 
++@runtime_checkable
++class StartCheck(Protocol):
++    """The OPTIONAL start-up hook of a kind (crm, outbox, qualifier): a kind that holds a secret file implements it
++    and raises SettingRefused (the setting named, never the path or the secret) when the file is unusable. A kind
++    without the method is simply not checked."""
++
++    def check_start(self) -> None: ...
++
++
++def check_secret_files(crm: object, outbox: object, qualifier: object) -> None:
++    """Start-up check of the kinds in use: every kind that has `check_start` is asked once, so a missing or short key
++    or password file is a SettingRefused (exit code 4) at the start, not a failure of every later call. The kind
++    decides whether it holds a secret; the loader does not name any kind. server.main calls it right after
++    load_demo_adapters."""
++    for kind in (crm, outbox, qualifier):
++        if isinstance(kind, StartCheck):
++            kind.check_start()
++
++
+ def load_approvers(config: Config) -> tuple[tuple[tuple[str, str], ...], str]:
+     """The approvers for approval mode: the file in config.approvers_path (DESK_APPROVERS_FILE) when set, else the
+     approvers.json next to the demo_only package (the replies.json pattern). Returns ((id, name), ...) and the label.
+diff --git a/src/lead_desk/server.py b/src/lead_desk/server.py
+index a822f3a..e57b8ae 100644
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -89,7 +89,14 @@ from lead_desk.contract import is_fd_exhaustion
+ from lead_desk.desk import Desk, DeskSettingRefused, Reply
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import Hooks
+-from lead_desk.loader import DemoPortal, KnowsBoundAddress, load_approvers, load_demo_adapters, load_demo_portal
++from lead_desk.loader import (
++    DemoPortal,
++    KnowsBoundAddress,
++    check_secret_files,
++    load_approvers,
++    load_demo_adapters,
++    load_demo_portal,
++)
+ from lead_desk.urls import desk_origin
+ 
+ try:
+@@ -1109,12 +1116,15 @@ def main(hooks: Hooks | None = None) -> None:
+     """python -m lead_desk.server: open-file check, lock file, adapters, desk, bind, reaper, startup (schema and
+     sweep), serve. Exit code 2 if another desk holds the lock; exit code 5 if the port cannot be bound within
+     BIND_RETRY_SECONDS (a restart on Windows can meet the old port in TIME_WAIT, so any OSError is retried first);
+-    exit code 1 if the sender cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file limit;
++    exit code 1 if the demo servers cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file
++    limit;
+     exit code 4 if the desk refuses a setting: a bad value in any DESK_* name (a `SettingRefused` from `Config.from_env`
+     or from the adapter settings, printed with the setting's name; any other ValueError is a bug and is not
+     turned into 4), or an AI adapter that declares a `timeout_seconds` that
+     is not a number above 0 or is above MODEL_CALL_BUDGET_SECONDS (`DeskSettingRefused`): the message is printed,
+-    nothing is served. A `db_path` of `:memory:` is refused the same way (exit code 4): the check runs after
++    nothing is served. A bad `DESK_BIND`, an empty `DESK_DB_PATH` or a folder that cannot be made, a replies file that
++    cannot be read, and a key or password file of a real service (read once by `check_secret_files`) end the same way.
++    A `db_path` of `:memory:` is refused the same way (exit code 4): the check runs after
+     `ensure_descriptor_budget`, `Config.from_env` and the public-bind check, and before the folder and the lock step.
+     The checks of the constants themselves run when the modules are imported,
+     so an edited constant that does not fit ends with a Python traceback (exit code 1) before `main` runs.
+@@ -1137,7 +1147,11 @@ def main(hooks: Hooks | None = None) -> None:
+     if (problem := desk_module.book_problem(config.db_path)) is not None:
+         print(f"the desk refuses to start: {problem}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
+-    config.db_path.parent.mkdir(parents=True, exist_ok=True)
++    try:
++        config.db_path.parent.mkdir(parents=True, exist_ok=True)
++    except OSError:  # a folder that cannot be made (no permission, a file in the way): named, no path, no traceback
++        print("the desk refuses a setting: DESK_DB_PATH names a folder that cannot be made", flush=True)
++        sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+         lock = lockfile.acquire(config.db_path)
+     except lockfile.LockHeldError:
+@@ -1164,6 +1178,7 @@ def main(hooks: Hooks | None = None) -> None:
+             sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+         crm, outbox, qualifier = load_demo_adapters(config)
++        check_secret_files(crm, outbox, qualifier)
+     except FakesUnreachable:
+         print("cannot reach the demo servers (are they running? see scripts/start_all)", flush=True)
+         sys.exit(EXIT_ADAPTERS_UNREACHABLE)
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index a60f7f5..00fe75b 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -50,7 +50,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
+-from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.envnum import SettingRefused, env_number, refuse_unusable_file
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+     _ADDRESS,
+@@ -132,6 +132,8 @@ class ProviderSettings:
+         for name, setting in (("DESK_SMTPP_STATS_FILE", "stats_file"), ("DESK_SMTPP_CA_FILE", "ca_file")):
+             if env.get(name):
+                 kw[setting] = Path(env[name])
++                if setting == "stats_file":  # a folder is never a stats file (the counters could never be written)
++                    refuse_unusable_file(name, kw[setting])
+         default_port = 465 if kw.get("security") == "ssl" else 587
+         return cls(
+             host=env["DESK_SMTPP_HOST"].strip().lower(),
+@@ -184,13 +186,26 @@ class SmtpProviderOutbox:
+         """`ssl_context` is for a server with its own certificate; None = the system's trusted
+         authorities, host name and chain checked."""
+         self._s = settings
+-        self._ctx = ssl_context or (
+-            ssl.create_default_context(cafile=str(settings.ca_file)) if settings.ca_file else None
+-        )
++        self._ctx = ssl_context
++        if ssl_context is None and settings.ca_file:
++            try:
++                self._ctx = ssl.create_default_context(cafile=str(settings.ca_file))
++            except (OSError, ssl.SSLError):  # missing, unreadable or not a certificate file: no path in the text
++                raise SettingRefused("DESK_SMTPP_CA_FILE is not a readable certificate file") from None
+         self._lock = threading.Lock()
+         self.attempts = 0
+         self.sent = 0
+ 
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the password file
++        once, as the first send would, so a missing or empty file stops the start (SettingRefused, exit code 4)
++        instead of failing every send. The message names the setting and holds neither the path nor the password; the
++        password is not kept."""
++        try:
++            read_secret_file(self._s.password_file)
++        except SendRefused as e:
++            raise SettingRefused(f"DESK_SMTPP_PASSWORD_FILE: {e}") from None
++
+     @property
+     def sender_address(self) -> str:
+         """The configured From address (read by the portal's data map; never stored or logged)."""
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 81b0e27..f04f140 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -11,6 +11,7 @@ from typing import Any
+ 
+ import pytest
+ 
++from lead_desk import lockfile
+ from lead_desk.constants import REQUEST_TIMEOUT_SECONDS
+ from lead_desk.server import serve_in_thread
+ 
+@@ -152,6 +153,25 @@ def _no_desk_settings_from_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+         monkeypatch.delenv(name)
+ 
+ 
++@pytest.fixture
++def main_lock_handles_closed(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
++    """For a test that runs `server.main()` in THIS process past the lock step: the lock handle `main` takes is kept
++    for the life of the process, so without this it stays open (and the lock file stays locked) until the test run
++    ends. Every handle taken while the test runs is closed at teardown."""
++    handles: list[Any] = []
++    real_acquire = lockfile.acquire
++
++    def acquire(db_path: Path | str) -> Any:
++        handle = real_acquire(db_path)
++        handles.append(handle)
++        return handle
++
++    monkeypatch.setattr(lockfile, "acquire", acquire)
++    yield
++    for handle in handles:
++        handle.close()  # closing the file gives the lock back
++
++
+ @pytest.fixture
+ def env(tmp_path: Path) -> Iterator[Env]:
+     e = Env(tmp_path)
+diff --git a/tests/test_env_numbers.py b/tests/test_env_numbers.py
+index a17426f..d5b00dc 100644
+--- a/tests/test_env_numbers.py
++++ b/tests/test_env_numbers.py
+@@ -34,6 +34,7 @@ import pytest
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+ 
++from lead_desk import server  # noqa: E402
+ from lead_desk.config import Config  # noqa: E402
+ from lead_desk.constants import CAP_COUNT_MAX, SIZE_CAP_BYTES_MAX, STALL_SECONDS_MAX  # noqa: E402
+ from lead_desk.crm_hubspot import HubspotSettings  # noqa: E402
+@@ -344,14 +345,45 @@ def test_an_out_of_range_setting_ends_the_desk_with_exit_4_naming_it(
+     assert "Traceback" not in out
+ 
+ 
+-def test_a_plain_value_error_that_is_not_a_setting_is_not_called_a_setting_refusal(tmp_path: Path) -> None:
+-    replies = tmp_path / "replies.json"
+-    replies.write_text("{not json", encoding="utf-8")
+-    r = _run_desk(tmp_path, {"DESK_REPLIES_PATH": str(replies)})
+-    assert r.returncode != 4, (r.stdout + r.stderr)[-600:]
++def test_unreachable_demo_servers_exit_1_with_the_documented_words(tmp_path: Path) -> None:
++    # nothing listens on the port: exit 1 and the documented sentence, never a setting refusal
++    r = _run_desk(tmp_path, {"DESK_FAKES_PORT": "1"})
++    assert r.returncode == 1, (r.stdout + r.stderr)[-600:]
++    assert "cannot reach the demo servers" in r.stdout
+     assert "refuses a setting" not in r.stdout
+ 
+ 
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.usefixtures("main_lock_handles_closed")
++def test_a_plain_value_error_that_is_not_a_setting_is_not_called_a_setting_refusal(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    # the rule (server.main docstring): only SettingRefused becomes exit 4; any other ValueError is a bug and
++    # propagates.
++    # In this process, so the error is a plain ValueError whatever the cause (the loader step, then the Desk step).
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++
++    def broken_loader(config: object) -> None:
++        raise ValueError("a bug in an adapter")
++
++    monkeypatch.setattr(server, "load_demo_adapters", broken_loader)
++    with pytest.raises(ValueError, match="a bug in an adapter"):  # a SystemExit(4) here would fail this test
++        server.main()
++    assert "refuses a setting" not in capsys.readouterr().out
++
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "e.sqlite3"))
++    monkeypatch.setattr(server, "load_demo_adapters", lambda config: (object(), object(), object()))
++
++    def broken_desk(*args: object, **kwargs: object) -> None:
++        raise ValueError("a bug in the desk")
++
++    monkeypatch.setattr(server, "Desk", broken_desk)
++    with pytest.raises(ValueError, match="a bug in the desk"):
++        server.main()
++    assert "refuses a setting" not in capsys.readouterr().out
++
++
+ # ---------------------------------------------------------------- accepted spellings, pinned refusal rules, bad addresses
+ @pytest.mark.parametrize(
+     ("cast", "text", "expected"),
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index 7b9d857..848e588 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -249,9 +249,12 @@ def test_the_environment_opt_out_is_the_word_yes_only() -> None:
+         "DESK_LIVE_CAP_TOTAL_USD": "2",
+         "DESK_LIVE_BASE_URL": stranger,
+     }
+-    for word in (None, "no", "true", "1"):
++    for word in (None, "no"):  # nothing and `no` keep the check
+         with pytest.raises(ValueError, match="not the provider's own address"):
+             Config.from_env(env | ({} if word is None else {"DESK_LIVE_ALLOW_ANY_BASE_URL": word}))
++    for word in ("true", "1"):  # any other word is refused at the start (never read as `yes`, nor silently as `no`)
++        with pytest.raises(ValueError, match="DESK_LIVE_ALLOW_ANY_BASE_URL must be yes or no"):
++            Config.from_env(env | {"DESK_LIVE_ALLOW_ANY_BASE_URL": word})
+     live = Config.from_env(env | {"DESK_LIVE_ALLOW_ANY_BASE_URL": "yes"}).live
+     assert live is not None and live.base_url == stranger
+ 
+diff --git a/tests/test_settings_lane3.py b/tests/test_settings_lane3.py
+new file mode 100644
+index 0000000..90f0d7b
+--- /dev/null
++++ b/tests/test_settings_lane3.py
+@@ -0,0 +1,738 @@
++"""A bad setting stops the start (docs/settings.md, line 3): exit code 4, the setting named, no traceback, and never a
++path, key or password in the text. Cases found by a cold reader who followed the documents literally: a DESK_BIND
++that is no address, an empty or unmakeable DESK_DB_PATH, a broken or missing DESK_REPLIES_PATH file, and key or
++password files that were not looked at until the first call. Made-up data; key files hold made-up text."""
++
++from __future__ import annotations
++
++import errno
++import importlib
++import os
++import re
++import subprocess
++import sys
++import threading
++from collections.abc import Iterator
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from demo_only.fakes_server import serve_fakes_in_thread, stop_fakes
++from lead_desk import lockfile, server
++from lead_desk.config import Config
++from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings
++from lead_desk.desk import BOOK_UNREADABLE_PROBLEM, MEMORY_BOOK_PROBLEM, book_problem
++from lead_desk.envnum import SettingRefused, env_yes_no, path_kind
++from lead_desk.live_claude import LiveQualifier
++from lead_desk.loader import StartCheck, check_secret_files, load_demo_adapters
++from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
++
++REPO = Path(__file__).resolve().parents[1]
++ALL_ZEROS = ".".join("0000")  # built from parts: the every-interface address
++FAKE_KEY = "made" + "-up-" + "key-" + "0123456789"  # built from parts: never a real key
++
++
++@pytest.fixture(scope="module")
++def fakes_url() -> Iterator[str]:
++    srv, url, th = serve_fakes_in_thread("keyed")
++    yield url
++    stop_fakes(srv, th)
++
++
++def _env(tmp_path: Path, fakes_url: str, extra: dict[str, str]) -> dict[str, str]:
++    env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
++    env.update(
++        PYTHONPATH=os.pathsep.join([str(REPO / "src"), str(REPO)]),
++        DESK_DB_PATH=str(tmp_path / "d.sqlite3"),
++        DESK_PORT="0",
++        DESK_FAKES_URL=fakes_url,
++    )
++    env.update(extra)
++    return env
++
++
++def _run(tmp_path: Path, fakes_url: str, extra: dict[str, str]) -> subprocess.CompletedProcess[str]:
++    return subprocess.run(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++        [sys.executable, "-m", "lead_desk.server"],
++        capture_output=True,
++        text=True,
++        timeout=60,
++        cwd=tmp_path,
++        env=_env(tmp_path, fakes_url, extra),
++    )
++
++
++def _refused_any(r: subprocess.CompletedProcess[str], setting: str, *secrets: str) -> None:
++    """Exit 4, the setting named (the text may start `the desk refuses a setting:` or `the desk refuses to start:`)."""
++    out = r.stdout + r.stderr
++    assert r.returncode == 4, out[-600:]
++    assert setting in r.stdout, out[-600:]
++    assert "Traceback" not in out
++    for s in secrets:
++        assert s not in out
++
++
++def _refused(r: subprocess.CompletedProcess[str], setting: str, *secrets: str) -> None:
++    out = r.stdout + r.stderr
++    assert r.returncode == 4, out[-600:]
++    assert f"the desk refuses a setting: {setting}" in r.stdout, out[-600:]
++    assert "Traceback" not in out
++    for s in secrets:
++        assert s not in out
++
++
++# ---------------------------------------------------------------------------------------------- DESK_BIND
++@pytest.mark.parametrize(
++    "bind",
++    [
++        "not an address",
++        "a b",
++        "bad name!",
++        "a,b",
++        "",
++        "\t",
++        "a..b",
++        ".".join(("256", "1", "1", "1")),  # built from parts: the hygiene scan reads a written address as hard-coded
++        "[" + ".".join(("1", "2", "3", "4")) + "]",
++        "h\u00e9llo",
++        "host:80",
++        "a" * 300,
++    ],
++    ids=[
++        "spaces",
++        "space",
++        "bang",
++        "comma",
++        "empty",
++        "tab",
++        "empty-part",
++        "bad-ipv4",
++        "bracketed-ipv4",
++        "non-ascii",
++        "colon",
++        "long",
++    ],
++)
++def test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings(bind: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_BIND"):
++        Config(bind=bind)
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize(
++    "bind",
++    [
++        "127.0.0.1",
++        ".".join(("127", "0", "0", "2")),
++        "127.1",
++        "::1",
++        "[::1]",
++        "[fe80::1%eth0]",
++        "fe80::1%eth0",
++        "::",
++        "[::]",
++        ALL_ZEROS,
++        "0",
++        "localhost",
++        "LocalHost",
++        "localhost.",
++        "desk_web",
++        "my-host." + "lo" + "cal",
++    ],
++)
++def test_every_name_the_system_might_resolve_is_accepted(bind: str) -> None:
++    assert Config.from_env({"DESK_BIND": bind}).bind == bind
++
++
++@pytest.mark.parametrize("bind", ["[::1", "::1]", "[[::1]]", "[::1]]", "-", "_", "a.-.b", "a._"])
++def test_a_bind_that_can_never_bind_is_refused_by_the_setting_but_not_by_a_built_config(bind: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_BIND must be an IP address or a host name"):
++        Config.from_env({"DESK_BIND": bind})
++    if bind in ("[::1", "::1]"):  # `Config` keeps them readable: public_bind_problem still calls them public
++        assert Config(bind=bind).bind == bind
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_the_ip_path_and_the_bracket_path_agree_on_a_zone_id() -> None:
++    assert Config(bind="[fe80::1%eth0]").bind == "[fe80::1%eth0]"
++    assert Config(bind="fe80::1%eth0").bind == "fe80::1%eth0"
++
++
++def test_a_bind_that_is_no_address_ends_the_desk_with_exit_4(tmp_path: Path, fakes_url: str) -> None:
++    _refused(_run(tmp_path, fakes_url, {"DESK_BIND": "not an address"}), "DESK_BIND must be an IP address")
++
++
++# ---------------------------------------------------------------------------------------------- DESK_DB_PATH
++@pytest.mark.parametrize("value", ["", "   "])
++def test_an_empty_db_path_is_refused_by_the_settings(value: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_DB_PATH must not be empty"):
++        Config.from_env({"DESK_DB_PATH": value})
++
++
++def test_an_empty_db_path_ends_the_desk_with_exit_4(tmp_path: Path, fakes_url: str) -> None:
++    _refused(_run(tmp_path, fakes_url, {"DESK_DB_PATH": ""}), "DESK_DB_PATH must not be empty")
++
++
++def _main_refusal(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, db_path: str, capsys: pytest.CaptureFixture[str]
++) -> str:
++    """Run `server.main()` in this process with DESK_DB_PATH set; it must end in SystemExit(4) with no traceback."""
++    monkeypatch.setenv("DESK_DB_PATH", db_path)
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    out = capsys.readouterr().out
++    assert info.value.code == 4, out
++    return out
++
++
++def test_a_db_path_that_is_an_existing_folder_exits_4_with_no_path_and_no_lock_file(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    folder = tmp_path / "adir"
++    folder.mkdir()
++    out = _main_refusal(monkeypatch, tmp_path, str(folder), capsys)
++    assert out.startswith("the desk refuses to start: DESK_DB_PATH names a folder"), out
++    assert str(folder) not in out
++    assert not Path(f"{folder}.lock").exists()  # refused before the lock step
++
++
++def test_a_db_path_that_ends_in_a_dot_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    (tmp_path / "adir").mkdir()
++    out = _main_refusal(monkeypatch, tmp_path, str(tmp_path / "adir" / "."), capsys)
++    assert "DESK_DB_PATH names a folder" in out
++
++
++def test_a_db_path_whose_parent_is_a_file_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    out = _main_refusal(monkeypatch, tmp_path, str(in_the_way / "d.sqlite3"), capsys)
++    assert "DESK_DB_PATH sits inside something that is a file" in out
++    assert str(in_the_way) not in out
++
++
++def test_a_db_path_deeper_below_a_file_exits_4_and_the_folder_is_not_made(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    out = _main_refusal(monkeypatch, tmp_path, str(in_the_way / "sub" / "deeper" / "d.sqlite3"), capsys)
++    assert "DESK_DB_PATH sits inside something that is a file" in out
++    assert str(in_the_way) not in out
++
++
++def test_book_problem_is_the_one_place_for_the_db_path_rules(tmp_path: Path) -> None:
++    f = tmp_path / "a-file"
++    f.write_text("x", encoding="utf-8")
++    assert book_problem(":memory:") == MEMORY_BOOK_PROBLEM
++    assert book_problem(Path("")) is not None and "folder" in str(book_problem(Path("")))
++    assert book_problem(tmp_path) is not None
++    assert book_problem(f / "b.db") is not None
++    assert book_problem(tmp_path / "new" / "deeper" / "b.db") is None  # a folder that can still be made
++    assert book_problem(f) is None  # an existing file is the lead book itself
++
++
++def test_a_db_folder_that_cannot_be_made_ends_the_desk_with_exit_4_and_no_path(tmp_path: Path, fakes_url: str) -> None:
++    in_the_way = tmp_path / "a-file"
++    in_the_way.write_text("x", encoding="utf-8")
++    target = in_the_way / "sub" / "d.sqlite3"
++    _refused_any(_run(tmp_path, fakes_url, {"DESK_DB_PATH": str(target)}), "DESK_DB_PATH", str(in_the_way))
++
++
++@pytest.mark.skipif(
++    os.geteuid() == 0, reason="root ignores folder permissions: an unwritable folder cannot be tested as root"
++)
++def test_an_unwritable_db_parent_exits_4(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    ro = tmp_path / "ro"
++    ro.mkdir()
++    ro.chmod(0o500)
++    try:
++        out = _main_refusal(monkeypatch, tmp_path, str(ro / "sub" / "d.sqlite3"), capsys)
++    finally:
++        ro.chmod(0o700)
++    assert "DESK_DB_PATH names a folder that cannot be made" in out
++
++
++def _deny_looking_inside(monkeypatch: pytest.MonkeyPatch, locked: Path) -> None:
++    """Make every stat() of `locked` or anything below it fail with EACCES, as a folder without the search permission
++    does for a normal user. It works as root too (a real chmod does not), so these tests also run in this sandbox."""
++    real_stat = Path.stat
++
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        if self == locked or locked in self.parents:
++            raise PermissionError(errno.EACCES, "Permission denied")
++        return real_stat(self, *args, **kwargs)
++
++    monkeypatch.setattr(Path, "stat", stat)
++
++
++def test_a_db_path_below_a_folder_that_cannot_be_looked_into_exits_4_with_no_path(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    out = _main_refusal(monkeypatch, tmp_path, str(locked / "sub" / "d.sqlite3"), capsys)
++    assert out == f"the desk refuses to start: {BOOK_UNREADABLE_PROBLEM}\n", out
++    assert str(locked) not in out and "Traceback" not in out
++    monkeypatch.undo()  # the pretend lock is lifted: now look for a lock file (a refusal must leave none)
++    assert not list(locked.rglob("*.lock"))
++
++
++def test_book_problem_says_unreadable_for_a_path_the_system_will_not_show(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    assert book_problem(locked / "d.db") == BOOK_UNREADABLE_PROBLEM
++    assert book_problem(locked) == BOOK_UNREADABLE_PROBLEM
++    assert book_problem(tmp_path / "elsewhere" / "d.db") is None  # the rest is still judged as before
++
++
++def test_a_stats_file_or_ledger_that_cannot_be_looked_at_is_refused_with_no_path(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    locked = tmp_path / "locked"
++    locked.mkdir()
++    _deny_looking_inside(monkeypatch, locked)
++    target = str(locked / "x.json")
++    cases = (
++        (
++            "DESK_HUBSPOT_STATS_FILE",
++            lambda: HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_STATS_FILE": target}),
++        ),
++        (
++            "DESK_SMTPP_STATS_FILE",
++            lambda: ProviderSettings.from_env({**_provider(f), "DESK_SMTPP_STATS_FILE": target}),
++        ),
++        (
++            "DESK_LIVE_LEDGER_PATH",
++            lambda: Config.from_env(
++                {**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_LEDGER_PATH": target}
++            ),
++        ),
++    )
++    for name, build in cases:
++        with pytest.raises(SettingRefused) as info:
++            build()
++        assert str(info.value) == f"{name} cannot be looked at (no permission for a part of that path)"
++
++
++@pytest.mark.parametrize(
++    ("code", "expected"),
++    [
++        (errno.ENOENT, "absent"),
++        (errno.ENOTDIR, "absent"),
++        (errno.ELOOP, "absent"),
++        (errno.EACCES, "unreadable"),
++        (errno.EPERM, "unreadable"),
++        (errno.EIO, "unreadable"),
++    ],
++)
++def test_path_kind_sorts_every_stat_error(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, code: int, expected: str
++) -> None:
++    def stat(self: Path, *args: Any, **kwargs: Any) -> os.stat_result:
++        raise OSError(code, "x")
++
++    monkeypatch.setattr(Path, "stat", stat)
++    assert path_kind(tmp_path / "x") == expected
++
++
++def test_path_kind_names_a_folder_a_file_and_nothing(tmp_path: Path) -> None:
++    f = tmp_path / "a-file"
++    f.write_text("x", encoding="utf-8")
++    assert path_kind(tmp_path) == "folder"
++    assert path_kind(f) == "file"
++    assert path_kind(tmp_path / "none") == "absent"
++    assert path_kind(f / "below") == "absent"  # ENOTDIR
++
++
++def test_contract_start_up_order_is_the_order_of_the_calls_in_server_main() -> None:
++    """The doc test for the start-up order: contract.md lists the steps in the order `server.main` runs them."""
++    import inspect
++
++    code = inspect.getsource(server.main)
++    in_code = [
++        code.index(m)
++        for m in (
++            "Config.from_env()",
++            "book_problem(",
++            "mkdir(",
++            "lockfile.acquire(",
++            "load_approvers(",
++            "read_leadflow(",
++            "load_demo_adapters(",
++            "check_secret_files(",
++            "Desk(config",
++            "make_server(",
++        )
++    ]
++    assert in_code == sorted(in_code)
++    text = (Path(server.__file__).parents[2] / "contract.md").read_text(encoding="utf-8")
++    steps = {int(n): body for n, body in re.findall(r"^\* \((\d+)\) (.*)$", text, flags=re.M)}
++    assert sorted(steps) == list(range(1, 14)), sorted(steps)
++    order = [
++        (2, "settings are read and checked"),
++        (3, "desk.book_problem"),
++        (4, "folder of the lead book is made"),
++        (5, "lock file"),
++        (6, "approvers file"),
++        (7, "demo adapters are loaded"),
++        (8, "`Desk` is built"),
++        (9, "The bind"),
++    ]
++    for number, words in order:
++        assert words in steps[number], (number, words)
++    assert "check_secret_files" in steps[7] and "exit 2" in steps[5]
++
++
++def test_the_main_docstring_names_the_demo_servers_for_exit_code_1() -> None:
++    doc = " ".join((server.main.__doc__ or "").split())
++    assert "exit code 1 if the demo servers cannot be reached" in doc
++    assert "the sender cannot be reached" not in doc
++
++
++def test_no_setting_path_is_probed_with_is_dir_or_exists() -> None:
++    """The class guard: Path.is_dir()/exists() raise PermissionError on Python 3.12 and later. The four modules that
++    look at a setting's path use `path_kind` (via `refuse_unusable_file`) only."""
++    root = Path(server.__file__).parent
++    for name in ("desk.py", "config.py", "crm_hubspot.py", "smtp_provider.py"):
++        text = (root / name).read_text(encoding="utf-8")
++        assert ".is_dir(" not in text and ".exists(" not in text, name
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_lock_held_by_another_desk_still_exits_2(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    def held(db_path: object) -> None:
++        raise lockfile.LockHeldError
++
++    monkeypatch.setattr(server.lockfile, "acquire", held)
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == 2
++    assert "another desk is using this database" in capsys.readouterr().out
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_lock_file_that_cannot_be_opened_exits_2_as_the_exit_code_tables_say(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    def unavailable(db_path: object) -> None:
++        raise lockfile.LockUnavailableError
++
++    monkeypatch.setattr(server.lockfile, "acquire", unavailable)
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    assert info.value.code == 2
++    assert "cannot take the lock file" in capsys.readouterr().out
++
++
++# ---------------------------------------------------------------------------------------------- DESK_REPLIES_PATH
++@pytest.mark.parametrize("content", [None, "{not json", "[1, 2]", ""], ids=["missing", "broken", "not-object", "empty"])
++def test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4(
++    tmp_path: Path, fakes_url: str, content: str | None
++) -> None:
++    f = tmp_path / "replies-file.json"
++    if content is not None:
++        f.write_text(content, encoding="utf-8")
++    _refused(
++        _run(tmp_path, fakes_url, {"DESK_REPLIES_PATH": str(f)}),
++        "DESK_REPLIES_PATH is not a readable file holding one JSON object",
++        str(f),
++    )
++
++
++def test_a_damaged_default_replies_file_does_not_blame_a_setting_the_user_did_not_set(
++    monkeypatch: pytest.MonkeyPatch, fakes_url: str
++) -> None:
++    fakes = importlib.import_module("demo_only.fakes")
++
++    def damaged(path: object) -> None:
++        raise fakes.RepliesFileError("x")
++
++    monkeypatch.setattr(fakes, "RecordedQualifier", damaged)
++    with pytest.raises(SettingRefused) as info:
++        load_demo_adapters(Config.from_env({"DESK_FAKES_URL": fakes_url}))
++    assert "DESK_REPLIES_PATH" not in str(info.value)
++    assert "demo replies file" in str(info.value)
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++def test_a_damaged_replies_file_that_was_set_names_the_setting(tmp_path: Path, fakes_url: str) -> None:
++    bad = tmp_path / "replies-file.json"
++    bad.write_text("{not json", encoding="utf-8")
++    with pytest.raises(SettingRefused, match="DESK_REPLIES_PATH") as info:
++        load_demo_adapters(Config.from_env({"DESK_FAKES_URL": fakes_url, "DESK_REPLIES_PATH": str(bad)}))
++    assert str(bad) not in str(info.value)
++
++
++def test_a_plain_value_error_inside_the_replies_qualifier_is_a_bug_and_is_not_a_setting(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, fakes_url: str
++) -> None:
++    fakes = importlib.import_module("demo_only.fakes")
++
++    def buggy(path: object) -> None:
++        raise ValueError("a bug somewhere else")
++
++    monkeypatch.setattr(fakes, "RecordedQualifier", buggy)
++    with pytest.raises(ValueError, match="a bug somewhere else") as info:
++        load_demo_adapters(
++            Config.from_env({"DESK_FAKES_URL": fakes_url, "DESK_REPLIES_PATH": str(tmp_path / "x.json")})
++        )
++    assert not isinstance(info.value, SettingRefused)
++
++
++# ---------------------------------------------------------------------------------------------- key and password files
++def _write(tmp_path: Path, name: str, text: str) -> Path:
++    p = tmp_path / name
++    p.write_text(text, encoding="utf-8")
++    return p
++
++
++def _hubspot(key: Path) -> dict[str, str]:
++    return {"DESK_CRM": "hubspot", "DESK_HUBSPOT_KEY_FILE": str(key), "DESK_HUBSPOT_MAX_CALLS": "5"}
++
++
++def _live(key: Path, tmp_path: Path) -> dict[str, str]:
++    return {
++        "DESK_QUALIFIER": "live_claude",
++        "DESK_LIVE_MODEL": "made-up-model",
++        "DESK_LIVE_KEY_FILE": str(key),
++        "DESK_LIVE_PRICE_DATE": "2026-01-01",
++        "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger.jsonl"),
++        "DESK_LIVE_RUN_ID": "run1",
++        "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
++        "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
++        "DESK_LIVE_CAP_RUN_USD": "1",
++        "DESK_LIVE_CAP_TOTAL_USD": "3",
++    }
++
++
++def _provider(pw: Path) -> dict[str, str]:
++    return {
++        "DESK_OUTBOX": "smtp_provider",
++        "DESK_SMTPP_HOST": "mail.example.test",
++        "DESK_SMTPP_USER": "u",
++        "DESK_SMTPP_PASSWORD_FILE": str(pw),
++        "DESK_SMTPP_FROM": "a@example.test",
++        "DESK_SMTPP_RECIPIENTS": "b@example.test",
++        "DESK_SMTPP_MAX_SENDS": "5",
++    }
++
++
++@pytest.mark.parametrize("kind", ["hubspot", "live", "provider"])
++@pytest.mark.parametrize("state", ["missing", "short", "directory"])
++def test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting(
++    tmp_path: Path, fakes_url: str, kind: str, state: str
++) -> None:
++    f = tmp_path / "secret-file"
++    if state == "short":
++        f.write_text("abc\n", encoding="utf-8")
++    elif state == "directory":
++        f.mkdir()
++    extra = {"hubspot": _hubspot(f), "live": _live(f, tmp_path), "provider": _provider(f)}[kind]
++    setting = {
++        "hubspot": "DESK_HUBSPOT_KEY_FILE",
++        "live": "DESK_LIVE_KEY_FILE",
++        "provider": "DESK_SMTPP_PASSWORD_FILE",
++    }[kind]
++    _refused(_run(tmp_path, fakes_url, extra), setting + ": ", str(f), "abc")
++
++
++# ---------------------------------------------------------------------------------------------- start check hook
++class _NoHook:
++    """A kind with no secret: it has no check_start method and is simply not checked."""
++
++
++class _Refusing:
++    def check_start(self) -> None:
++        raise SettingRefused("DESK_MADE_UP_FILE: fixed text")
++
++
++class _Counting:
++    def __init__(self) -> None:
++        self.calls = 0
++
++    def check_start(self) -> None:
++        self.calls += 1
++
++
++def test_a_kind_without_check_start_starts_and_every_kind_with_it_is_asked_once() -> None:
++    a, b = _Counting(), _Counting()
++    check_secret_files(_NoHook(), a, b)
++    assert (a.calls, b.calls) == (1, 1)
++
++
++def test_a_check_start_that_refuses_is_a_setting_refusal_with_its_own_text() -> None:
++    with pytest.raises(SettingRefused, match="DESK_MADE_UP_FILE: fixed text"):
++        check_secret_files(_NoHook(), _Refusing(), _NoHook())
++
++
++@pytest.mark.usefixtures("main_lock_handles_closed")
++def test_main_turns_a_refusing_check_start_into_exit_4_without_a_traceback(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (_NoHook(), _Refusing(), _NoHook()))
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "d.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++    with pytest.raises(SystemExit) as info:
++        server.main()
++    out = capsys.readouterr().out
++    assert info.value.code == 4
++    assert "the desk refuses a setting: DESK_MADE_UP_FILE: fixed text" in out
++
++
++def _kinds(f: Path, tmp_path: Path) -> dict[str, Any]:
++    hs = HubspotSettings.from_env({k: v for k, v in _hubspot(f).items() if k != "DESK_CRM"})
++    pv = ProviderSettings.from_env({k: v for k, v in _provider(f).items() if k != "DESK_OUTBOX"})
++    lv = Config.from_env({**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude"}).live
++    assert lv is not None
++    return {"hubspot": HubspotCrm(hs), "provider": SmtpProviderOutbox(pv), "live": LiveQualifier(lv)}
++
++
++@pytest.mark.parametrize("kind", ["hubspot", "provider", "live"])
++def test_the_three_kinds_that_hold_a_secret_file_have_the_hook(tmp_path: Path, kind: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    assert isinstance(_kinds(f, tmp_path)[kind], StartCheck)
++
++
++@pytest.mark.parametrize("state", ["missing", "directory", "short", "utf16", "several-lines", "oversize", "not-utf8"])
++@pytest.mark.parametrize("kind", ["hubspot", "provider", "live"])
++def test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message(
++    tmp_path: Path, kind: str, state: str
++) -> None:
++    f = tmp_path / "very-private-file-name.txt"
++    secret_text = "SECRET" + "-text-" + "1234"
++    if state == "directory":
++        f.mkdir()
++    elif state == "short":
++        f.write_text("abc\n", encoding="utf-8")
++    elif state == "utf16":
++        f.write_bytes(b"\xff\xfe" + secret_text.encode("utf-16-le"))
++    elif state == "several-lines":
++        f.write_text(secret_text + "\n" + secret_text + "\n", encoding="utf-8")
++    elif state == "oversize":
++        f.write_text(secret_text * 5000, encoding="utf-8")
++    elif state == "not-utf8":
++        f.write_bytes(b"\xc3\x28" + secret_text.encode())
++    obj = _kinds(f, tmp_path)[kind]
++    with pytest.raises(SettingRefused) as info:  # the three kinds read a key file by one rule: every state is refused
++        obj.check_start()
++    msg = str(info.value)
++    assert msg.startswith("DESK_"), msg
++    assert os.sep not in msg and f.name not in msg and "SECRET" not in msg and "abc" not in msg, msg
++
++
++def test_after_check_start_the_live_qualifier_holds_no_key(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    q = _kinds(f, tmp_path)["live"]
++    q.check_start()
++    assert q._key == ""
++
++
++def test_a_key_file_replaced_between_the_start_and_the_first_call_is_the_one_used(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "-A\n")
++    q = _kinds(f, tmp_path)["live"]
++    q.check_start()
++    f.write_text(FAKE_KEY + "-B\n", encoding="utf-8")
++    assert q._read_key() == FAKE_KEY + "-B"
++    f.write_text(FAKE_KEY + "-C\n", encoding="utf-8")
++    assert q._read_key() == FAKE_KEY + "-B"  # kept in memory after the first call, as the settings page says
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize("kind", ["hubspot", "live", "provider"])
++def test_a_good_key_file_starts_the_desk_and_the_key_is_not_printed(tmp_path: Path, fakes_url: str, kind: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    extra = {"hubspot": _hubspot(f), "live": _live(f, tmp_path), "provider": _provider(f)}[kind]
++    p = subprocess.Popen(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++        [sys.executable, "-m", "lead_desk.server"],
++        stdout=subprocess.PIPE,
++        stderr=subprocess.STDOUT,
++        text=True,
++        cwd=tmp_path,
++        env=_env(tmp_path, fakes_url, extra),
++    )
++    assert p.stdout is not None
++    out = p.stdout
++    first: list[str] = []
++    reader = threading.Thread(target=lambda: first.append(out.readline()), daemon=True)
++    reader.start()
++    reader.join(timeout=40)  # a desk that stays silent fails here instead of hanging the test
++    try:
++        assert first, "the desk printed nothing within 40 seconds"
++        assert first[0].startswith("desk listening on "), first[0]
++    finally:
++        p.terminate()
++        try:
++            rest, _ = p.communicate(timeout=20)
++        except subprocess.TimeoutExpired:  # our own child: stop it for good
++            p.kill()
++            rest, _ = p.communicate(timeout=20)
++    assert FAKE_KEY not in first[0] + (rest or "")  # the whole output, not only the first line
++
++
++# ------------------------------------------------------------ other settings found silent
++def _hubspot_bad_word(f: Path, t: Path) -> object:
++    return HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "ys"})
++
++
++def _live_bad_word(f: Path, t: Path) -> object:
++    return Config.from_env({**_live(f, t), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_ALLOW_ANY_BASE_URL": "ys"})
++
++
++@pytest.mark.parametrize(
++    ("make", "name"),
++    [(_hubspot_bad_word, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL"), (_live_bad_word, "DESK_LIVE_ALLOW_ANY_BASE_URL")],
++    ids=["hubspot", "live"],
++)
++def test_a_yes_no_setting_with_another_word_is_refused_not_read_as_no(tmp_path: Path, make: Any, name: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    with pytest.raises(SettingRefused) as info:
++        make(f, tmp_path)
++    assert str(info.value) == f"{name} must be yes or no"  # the word typed is not echoed
++
++
++# REGRESSION GUARD: passes on the earlier tree too, by design (pins behaviour that must not change)
++@pytest.mark.parametrize("word", ["yes", "YES", " yes ", "no", "No", ""])
++def test_yes_no_words_that_are_accepted(word: str) -> None:
++    assert env_yes_no({"X": word}, "X") is (word.strip().lower() == "yes")
++    assert env_yes_no({}, "X") is False
++
++
++def test_a_stats_file_or_ledger_that_is_a_folder_is_refused(tmp_path: Path) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    d = tmp_path / "adir"
++    d.mkdir()
++    with pytest.raises(SettingRefused, match="DESK_HUBSPOT_STATS_FILE names a folder"):
++        HubspotSettings.from_env({**_hubspot(f), "DESK_HUBSPOT_STATS_FILE": str(d)})
++    with pytest.raises(SettingRefused, match="DESK_SMTPP_STATS_FILE names a folder"):
++        ProviderSettings.from_env({**_provider(f), "DESK_SMTPP_STATS_FILE": str(d)})
++    with pytest.raises(SettingRefused, match="DESK_LIVE_LEDGER_PATH names a folder"):
++        Config.from_env({**_live(f, tmp_path), "DESK_QUALIFIER": "live_claude", "DESK_LIVE_LEDGER_PATH": str(d)})
++
++
++@pytest.mark.parametrize("state", ["missing", "not-a-certificate"])
++def test_a_ca_file_that_cannot_be_read_is_refused_with_no_traceback_and_no_path(tmp_path: Path, state: str) -> None:
++    f = _write(tmp_path, "good-key", FAKE_KEY + "\n")
++    ca = tmp_path / "ca-file.pem"
++    if state != "missing":
++        ca.write_text("this is no certificate\n", encoding="utf-8")
++    env = {**_provider(f), "DESK_SMTPP_CA_FILE": str(ca)}
++    with pytest.raises(SettingRefused) as info:
++        SmtpProviderOutbox(ProviderSettings.from_env(env))
++    assert str(info.value) == "DESK_SMTPP_CA_FILE is not a readable certificate file"

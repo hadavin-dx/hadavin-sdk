@@ -1,4 +1,4 @@
-...................F.                                                    [100%]
+.....................F.                                                  [100%]
 =================================== FAILURES ===================================
 __________________ test_docs_name_the_letters[docs/limits.md] __________________
 
@@ -16,10 +16,10 @@ place = 'docs/limits.md'
 >       assert PHRASE.search(text), f"{place} must say that the two spellings are a different lead"
 E       AssertionError: docs/limits.md must say that the two spellings are a different lead
 E       assert None
-E        +  where None = <built-in method search of re.Pattern object at 0x7f70effe0bc0>("* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join...plit. What to do: check the Leads list for pairs that differ only in capitals. Tests: `tests/test_email_case_rule.py`.")
-E        +    where <built-in method search of re.Pattern object at 0x7f70effe0bc0> = re.compile('different\\s+lead').search
+E        +  where None = <built-in method search of re.Pattern object at 0x7fcd0e4c8bc0>("* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join...plit. What to do: check the Leads list for pairs that differ only in capitals. Tests: `tests/test_email_case_rule.py`.")
+E        +    where <built-in method search of re.Pattern object at 0x7fcd0e4c8bc0> = re.compile('different\\s+lead').search
 
-tests/test_email_case_rule.py:139: AssertionError
+tests/test_email_case_rule.py:153: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[docs/limits.md]
-1 failed, 20 passed in 2.22s
+1 failed, 22 passed in 2.18s

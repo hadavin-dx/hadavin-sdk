@@ -3,3 +3,4 @@ B4b 20min checkpoint pending; worktree b4b2-base ready, writing test 13:33Z IST 
 B4b checkpoint: test+docs written, 21 pass on patched; next: fix E501, fails-before, casefold copy 13:34Z IST 19:04
 full suite start 13:36Z IST 19:06
 full suite RESTART on final tree 13:37Z IST 19:07
+B4b DONE 13:58Z IST 19:28

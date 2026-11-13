@@ -3,3 +3,6 @@ B2c 20min: item 1 code written (path_kind in envnum, 4 sites) 13:53Z
 B2c ~14:12: items 1,4,7,8 done; next 6,3,11,2,12 13:55Z
 B2c ~14:20: items 6 done
 B2c 13:57Z/19:27 IST: items 1,4,6,7,8 done; now 3, 11, 2, 12
+B2c 14:05Z/19:35 IST: extra item 16 done (server.py docstring + test)
+B2c 14:10 (approx) items 3 done; now 11, 2, 12
+B2c ~14:15: items 2,3,11 done; now item 12 variants then hygiene+full suite

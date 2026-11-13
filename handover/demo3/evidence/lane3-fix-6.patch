@@ -66,7 +66,7 @@ index 16bac04..171ba3f 100644
  
 diff --git a/tests/test_docs_tests_md_lane3.py b/tests/test_docs_tests_md_lane3.py
 new file mode 100644
-index 0000000..e1e84cb
+index 0000000..9f0b697
 --- /dev/null
 +++ b/tests/test_docs_tests_md_lane3.py
 @@ -0,0 +1,70 @@
@@ -89,7 +89,7 @@ index 0000000..e1e84cb
 +
 +def test_crash_command_sets_the_path_with_the_repository_folder() -> None:
 +    text = _read("docs/tests.md")
-+    assert re.search(r"PYTHONPATH=src:\. python scripts/crash_desk\.py", text)
++    assert re.search(r"PYTHONPATH=src:[.] python scripts/crash_desk\.py", text)
 +    assert not re.search(r"PYTHONPATH=src python scripts/crash_desk\.py", text)
 +    assert not re.search(r"PYTHONPATH=src python -m lead_desk\.server", text)
 +    assert not re.search(r"PYTHONPATH=src python -m lead_desk\.server", _read("README.md"))
