@@ -1,0 +1,45 @@
+== old vs new address, measured ==
+--- OLD (head 3598120) ---
+'127.0.0.1'                8765 old='http://127.0.0.1:8765/leads'                new=-
+'127.0.0.2'                8765 old='http://127.0.0.2:8765/leads'                new=-
+'localhost'                8765 old='http://localhost:8765/leads'                new=-
+'LocalHost'                8765 old='http://LocalHost:8765/leads'                new=-
+'::1'                      8765 old='http://[::1]:8765/leads'                    new=-
+'[::1]'                    8765 old='http://[::1]:8765/leads'                    new=-
+'0:0:0:0:0:0:0:1'            80 old='http://[::1]:80/leads'                      new=-
+'0.0.0.0'                  8765 old='http://127.0.0.1:8765/leads'                new=-
+'::'                       8765 old='http://[::1]:8765/leads'                    new=-
+'[::]'                     8765 old='http://[::1]:8765/leads'                    new=-
+'0'                        8765 old='http://0:8765/leads'                        new=-
+'192.168.1.5'              8765 old='http://192.168.1.5:8765/leads'              new=-
+'desk.example'             8765 old='http://desk.example:8765/leads'             new=-
+'::ffff:127.0.0.1'         8765 old='http://[::ffff:127.0.0.1]:8765/leads'       new=-
+'127.0.0.1@evil.test'      8765 old='http://127.0.0.1@evil.test:8765/leads'      new=-
+'evil.test/x#'             8765 old='http://evil.test/x#:8765/leads'             new=-
+''                         8765 old='http://:8765/leads'                         new=-
+'127.0.0.1'                   0 old='http://127.0.0.1:0/leads'                   new=-
+'127.0.0.1'               65535 old='http://127.0.0.1:65535/leads'               new=-
+'127.0.0.1'               65536 old='http://127.0.0.1:65536/leads'               new=-
+'127.0.0.1'                  -1 old='http://127.0.0.1:-1/leads'                  new=-
+--- NEW ---
+'127.0.0.1'                8765 old='http://127.0.0.1:8765/leads'                new=http://127.0.0.1:8765/leads
+'127.0.0.2'                8765 old='http://127.0.0.2:8765/leads'                new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'localhost'                8765 old='http://localhost:8765/leads'                new=http://localhost:8765/leads
+'LocalHost'                8765 old='http://LocalHost:8765/leads'                new=http://localhost:8765/leads
+'::1'                      8765 old='http://[::1]:8765/leads'                    new=http://[::1]:8765/leads
+'[::1]'                    8765 old='http://[::1]:8765/leads'                    new=http://[::1]:8765/leads
+'0:0:0:0:0:0:0:1'            80 old='http://[::1]:80/leads'                      new=http://[::1]:80/leads
+'0.0.0.0'                  8765 old='http://127.0.0.1:8765/leads'                new=http://127.0.0.1:8765/leads
+'::'                       8765 old='http://[::1]:8765/leads'                    new=http://[::1]:8765/leads
+'[::]'                     8765 old='http://[::1]:8765/leads'                    new=http://[::1]:8765/leads
+'0'                        8765 old='http://0:8765/leads'                        new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'192.168.1.5'              8765 old='http://192.168.1.5:8765/leads'              new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'desk.example'             8765 old='http://desk.example:8765/leads'             new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'::ffff:127.0.0.1'         8765 old='http://[::ffff:127.0.0.1]:8765/leads'       new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'127.0.0.1@evil.test'      8765 old='http://127.0.0.1@evil.test:8765/leads'      new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'evil.test/x#'             8765 old='http://evil.test/x#:8765/leads'             new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+''                         8765 old='http://:8765/leads'                         new=REFUSED: the desk host must be a loopback address (127.0.0.1, [::1], localhost)
+'127.0.0.1'                   0 old='http://127.0.0.1:0/leads'                   new=REFUSED: the desk port must be 1..65535
+'127.0.0.1'               65535 old='http://127.0.0.1:65535/leads'               new=http://127.0.0.1:65535/leads
+'127.0.0.1'               65536 old='http://127.0.0.1:65536/leads'               new=REFUSED: the desk port must be 1..65535
+'127.0.0.1'                  -1 old='http://127.0.0.1:-1/leads'                  new=REFUSED: the desk port must be 1..65535

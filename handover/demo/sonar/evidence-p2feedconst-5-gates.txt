@@ -1,0 +1,10 @@
+hygiene+gitleaks (DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1, after git add -A) + feed tests:
+......................................                                   [100%]
+110 passed in 37.87s
+earlier run incl. test_portal_api.py (before the literal fix): 289 passed, 1 failed (hygiene: IP literals in my test: fixed above)
+180 passed in 125.58s (0:02:05)
+All checks passed!
+157 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+bandit -ll exit 0

@@ -1,0 +1,16 @@
+SURVIVED M1 no host check (use wanted)
+KILLED   M2 drop port lower bound
+KILLED   M3 drop port upper bound
+KILLED   M4 allow port 0
+KILLED   M5 raise never (return raw origin)
+KILLED   M6 no lower() on wanted
+KILLED   M7 wrong path
+KILLED   M8 add LAN host to list
+KILLED   M9 drop localhost from list
+KILLED   M10 skip target_host (wildcard unmapped)
+KILLED   M11 main ignores desk_url error (no ap.error)
+KILLED   M12 main bypasses desk_url
+KILLED   M13 envelope source is raw argument
+KILLED   M14 envelope drops source check
+KILLED   M15 index upper bound dropped
+KILLED   M16 port as string

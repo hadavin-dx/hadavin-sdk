@@ -1,0 +1,48 @@
+flaky413-fix.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-ci-job-v3.patch: applies on head alone; it first then delta: OK; delta first then it: OK
+nodemo-ci-job-v4.patch: applies on head alone; it first then delta: OK; delta first then it: OK
+nodemo-ci-job.patch: applies on head alone; it first then delta: OK; delta first then it: OK
+nodemo-fix-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-fix-v3.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-fix.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-optional-hygiene-repo-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-optional-hygiene-repo-v3.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-optional-hygiene-repo-v4.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-optional-hygiene-repo.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+nodemo-ruff-isort.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+probe-ab-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+probe-ab-v3-writes2-full.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+probe-ab-v3-writes2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+probe-ab-v3.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+probe-ab.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v3.1.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v3.2.1-delta.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v3.2.2-delta.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v3.2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins-v3.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p1-quickwins.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-feed-optional.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-optional-gaps-delta.patch: applies on head alone; it first then delta: OK; delta first then it: OK
+sonar-p2-regex-http-bug-v2.1.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-regex-http-bug-v2.2-delta.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-regex-http-bug-v2.3-delta.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-regex-http-bug-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-regex-http-bug.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p2-regex-optional.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-final-v2-minors.patch: applies on head alone; it first then delta: OK; delta first then it: OK
+sonar-p3-final-v2-risky.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-final.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-path-helper-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-path-helper-v3.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-path-helper.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-probe-a.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+sonar-p3-probe-b.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+hang-fix-v2.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+hang-fix.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+semgrep-pr-diff-lead.patch: does not apply on head 3598120 alone (not in the pending set; skipped)
+delta OK on minors+risky+gaps+nodemo-ci-v4
+applied after delta sonar-p3-final-v2-minors
+applied after delta sonar-p3-final-v2-risky
+applied after delta sonar-p2-optional-gaps-delta
+applied after delta nodemo-ci-job-v4

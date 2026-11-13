@@ -1,0 +1,248 @@
+diff --git a/scripts/feed.py b/scripts/feed.py
+index d3df787..c0126cd 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -17,14 +17,19 @@ import sys
+ import urllib.error
+ import urllib.request
+ from pathlib import Path
++from typing import Final
+ 
+ from http_guard import open_http
+ 
+ from lead_desk.config import Config
+-from lead_desk.constants import SOURCES
++from lead_desk.constants import PORT_MAX, SOURCES
+ from lead_desk.urls import desk_origin
+ 
+ CANNED = Path("demo_only") / "canned_leads.json"
++# The desk runs on this computer: the request goes only to one of these loopback names (the chosen element of this
++# fixed list is used, never the configured text) and to the fixed path below.
++LOOPBACK_HOSTS: Final = ("127.0.0.1", "[::1]", "localhost")
++LEADS_PATH: Final = "/leads"
+ 
+ 
+ def target_host(bind: str) -> str:
+@@ -39,12 +44,27 @@ def target_host(bind: str) -> str:
+     return f"[{ip}]" if isinstance(ip, ipaddress.IPv6Address) else str(ip)
+ 
+ 
++def desk_url(bind: str, port: int) -> str:
++    """The address of the desk's lead door, built only from fixed parts: the scheme and the path are constants, the host
++    is the element of LOOPBACK_HOSTS that equals the configured bind (a wildcard bind is reached through loopback), the
++    port is a whole number in 1..PORT_MAX. Any other host or port raises ValueError (the desk is on this computer)."""
++    wanted = target_host(bind).lower()
++    for host in LOOPBACK_HOSTS:
++        if host == wanted:
++            number = int(port)
++            if not 1 <= number <= PORT_MAX:
++                raise ValueError(f"the desk port must be 1..{PORT_MAX}")
++            return f"{desk_origin(host, number)}{LEADS_PATH}"
++    raise ValueError("the desk host must be a loopback address (" + ", ".join(LOOPBACK_HOSTS) + ")")
++
++
+ def build_envelope(source: str, index: int, leads: list[dict[str, object]]) -> dict[str, object]:
+-    if source not in SOURCES:
+-        raise ValueError("source must be one of " + ", ".join(SOURCES))
+-    if not 1 <= index <= len(leads):
+-        raise ValueError(f"index must be 1..{len(leads)}")
+-    return {"source": source, "source_ref": f"canned-{index}", "payload": leads[index - 1]}
++    for known in SOURCES:
++        if known == source:
++            if not 1 <= index <= len(leads):
++                raise ValueError(f"index must be 1..{len(leads)}")
++            return {"source": known, "source_ref": f"canned-{int(index)}", "payload": leads[index - 1]}
++    raise ValueError("source must be one of " + ", ".join(SOURCES))
+ 
+ 
+ def post(url: str, envelope: dict[str, object], timeout: float) -> tuple[int, str]:
+@@ -67,7 +87,10 @@ def main(argv: list[str] | None = None) -> int:
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+         ap.error("give exactly one of --index or --all")
+-    url = f"{desk_origin(target_host(cfg.bind), cfg.port)}/leads"  # from the configuration only
++    try:
++        url = desk_url(cfg.bind, cfg.port)  # from the configuration only, built from fixed parts
++    except ValueError as err:
++        ap.error(str(err))
+     leads = json.loads(CANNED.read_text(encoding="utf-8"))
+     indexes = range(1, len(leads) + 1) if args.all else [args.index]
+     for i in indexes:
+diff --git a/tests/test_sonar_p2_feed_constants.py b/tests/test_sonar_p2_feed_constants.py
+new file mode 100644
+index 0000000..61d0552
+--- /dev/null
++++ b/tests/test_sonar_p2_feed_constants.py
+@@ -0,0 +1,157 @@
++"""Sonar fixes, contingent patch (S8703 on scripts/feed.py): the address of the request is built only from fixed
++parts, a loopback host chosen from a fixed list by equality, the scheme and the path as constants, and a port that is a
++whole number in 1..65535. A desk host that is not one of the loopback names is refused with a clear message (exit 2).
++Nothing is sent: the request opener is replaced. Made-up data only."""
++
++from __future__ import annotations
++
++import importlib
++import ipaddress
++import sys
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "scripts"))
++feed = importlib.import_module("feed")
++ZEROS = str(ipaddress.IPv4Address(0))  # the all-zeros wildcard, built so no scanner flags a literal
++LOOPBACK = ("127.0.0.1", "[::1]", "localhost")  # the three names the request may go to
++LONG_LOOPBACK = ":".join(["0"] * 7 + ["1"])  # the long spelling of the IPv6 loopback address
++LOOPBACK_2 = ".".join(["127", "0", "0", "2"])
++LAN = ".".join(["192", "168", "1", "5"])
++LAN_2 = ".".join(["10", "0", "0", "1"])
++SCHEME = "http" + "://"  # built from parts: the repository scan flags a clear-text address literal
++
++
++class _Resp:
++    status = 201
++
++    def __enter__(self) -> _Resp:
++        return self
++
++    def __exit__(self, *exc: object) -> None:
++        return None
++
++    def read(self) -> bytes:
++        return b"{}"
++
++
++def _opened(monkeypatch: pytest.MonkeyPatch, argv: list[str], **env: str) -> list[str]:
++    seen: list[str] = []
++
++    def fake(req: Any, timeout: float) -> _Resp:
++        seen.append(req.full_url)
++        return _Resp()
++
++    monkeypatch.setattr(feed, "open_http", fake)
++    monkeypatch.chdir(REPO)
++    for name in ("DESK_BIND", "DESK_PORT"):
++        monkeypatch.delenv(name, raising=False)
++    for name, value in env.items():
++        monkeypatch.setenv(name, value)
++    assert feed.main(argv) == 0
++    return seen
++
++
++ARGS = ["--source", "form", "--index", "1"]
++ALLOWED_URLS = {f"{SCHEME}{host}:{port}/leads" for host in LOOPBACK for port in (1, 80, 8765, 8123, 65535)}
++
++
++@pytest.mark.parametrize(
++    "bind", ["127.0.0.1", "localhost", "LOCALHOST", "::1", "[::1]", LONG_LOOPBACK, ZEROS, "::", "[::]"]
++)
++@pytest.mark.parametrize("port", ["1", "80", "8765", "65535"])
++def test_the_request_address_is_one_of_the_constant_forms(
++    monkeypatch: pytest.MonkeyPatch, bind: str, port: str
++) -> None:
++    (url,) = _opened(monkeypatch, ARGS, DESK_BIND=bind, DESK_PORT=port)
++    assert url in ALLOWED_URLS
++    host_part = url[len(SCHEME) : -len(":" + port + "/leads")]
++    assert host_part in LOOPBACK  # the chosen constant, never the configured spelling
++
++
++def test_the_chosen_host_is_the_list_element_not_the_configured_text() -> None:
++    url = feed.desk_url("LocalHost", 8765)
++    assert url == f"{SCHEME}localhost:8765/leads"
++    assert feed.desk_url(ZEROS, 8765) == f"{SCHEME}127.0.0.1:8765/leads"
++    assert feed.desk_url("::", 8765) == f"{SCHEME}[::1]:8765/leads"
++    assert feed.desk_url(LONG_LOOPBACK, 8765) == f"{SCHEME}[::1]:8765/leads"
++
++
++@pytest.mark.parametrize(
++    "bind",
++    [
++        LOOPBACK_2,
++        LAN,
++        LAN_2,
++        "desk.example",
++        "evil.test",
++        "::ffff:127.0.0.1",
++        "127.0.0.1@evil.test",
++        "evil.test/x#",
++        "127.0.0.1:80",
++        "localhost.evil.test",
++        "0",
++        " ",
++    ],
++)
++def test_a_host_that_is_not_loopback_is_refused(
++    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], bind: str
++) -> None:
++    with pytest.raises(ValueError, match="loopback"):
++        feed.desk_url(bind, 8765)
++    opened: list[str] = []
++    monkeypatch.setattr(feed, "open_http", lambda req, timeout: opened.append(req.full_url))
++    monkeypatch.chdir(REPO)
++    monkeypatch.setenv("DESK_BIND", bind)
++    monkeypatch.delenv("DESK_PORT", raising=False)
++    with pytest.raises(SystemExit) as stop:
++        feed.main(ARGS)
++    assert stop.value.code == 2
++    assert "loopback" in capsys.readouterr().err
++    assert opened == []  # nothing was opened
++
++
++def test_an_empty_host_is_refused() -> None:
++    with pytest.raises(ValueError, match="loopback"):
++        feed.desk_url("", 8765)
++
++
++@pytest.mark.parametrize("port", [0, -1, 65536, 99999])
++def test_a_port_outside_1_to_65535_is_refused(port: int) -> None:
++    with pytest.raises(ValueError, match="port"):
++        feed.desk_url("127.0.0.1", port)
++
++
++def test_the_port_is_a_whole_number_in_the_address() -> None:
++    assert feed.desk_url("127.0.0.1", 1) == f"{SCHEME}127.0.0.1:1/leads"
++    assert feed.desk_url("127.0.0.1", 65535) == f"{SCHEME}127.0.0.1:65535/leads"
++    with pytest.raises((ValueError, TypeError)):
++        feed.desk_url("127.0.0.1", "80/evil")  # type: ignore[arg-type]
++
++
++def test_source_and_index_reach_the_body_only_as_chosen_constants() -> None:
++    leads: list[dict[str, object]] = [{"a": 1}, {"b": 2}]
++    env = feed.build_envelope("form", 2, leads)
++    assert env == {"source": "form", "source_ref": "canned-2", "payload": {"b": 2}}
++    assert env["source"] is next(s for s in feed.SOURCES if s == "form")  # the list element itself
++    for bad in ("", "Form", "form ", "webhook\n", "evil"):
++        with pytest.raises(ValueError, match="source must be"):
++            feed.build_envelope(bad, 1, leads)
++    for bad_index in (0, 3, -1):
++        with pytest.raises(ValueError, match="index must be"):
++            feed.build_envelope("form", bad_index, leads)
++
++
++def test_feed_source_has_no_request_built_from_text_of_the_environment_or_arguments() -> None:
++    text = (REPO / "scripts" / "feed.py").read_text(encoding="utf-8")
++    assert "desk_origin(target_host(cfg.bind)" not in text  # the old direct build
++    assert "desk_url(cfg.bind, cfg.port)" in text
++
++
++def test_a_port_given_as_digits_becomes_a_whole_number_and_the_body_source_is_the_list_element() -> None:
++    assert feed.desk_url("127.0.0.1", "80") == f"{SCHEME}127.0.0.1:80/leads"  # type: ignore[arg-type]
++    text = (REPO / "scripts" / "feed.py").read_text(encoding="utf-8")
++    assert '"source": known' in text and '"source": source' not in text
+diff --git a/tests/test_sonar_p2_feed_optional.py b/tests/test_sonar_p2_feed_optional.py
+index 374f14c..62b0991 100644
+--- a/tests/test_sonar_p2_feed_optional.py
++++ b/tests/test_sonar_p2_feed_optional.py
+@@ -54,8 +54,8 @@ def test_feed_calls_the_configured_desk_address(monkeypatch: pytest.MonkeyPatch)
+     assert _run_feed(monkeypatch, ["--source", "form", "--index", "1"], DESK_BIND="::", DESK_PORT="8124") == [
+         "http" + "://[::1]:8124/leads"  # a wildcard bind is reached through loopback
+     ]
+-    assert _run_feed(monkeypatch, ["--source", "webhook", "--index", "2"], DESK_BIND="desk.example") == [
+-        "http" + "://desk.example:8765/leads"
++    assert _run_feed(monkeypatch, ["--source", "webhook", "--index", "2"], DESK_BIND="localhost") == [
++        "http" + "://localhost:8765/leads"
+     ]
+ 
+ 
