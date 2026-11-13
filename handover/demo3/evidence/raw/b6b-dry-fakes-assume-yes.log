@@ -1,0 +1,105 @@
+people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 1200 by the desk + 300 read-back = 1500
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 400, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+#  result  check
+-  ------  -----
+1  PASS    every request id has one decided receipt and one lead
+            11 distinct request ids, 0 without a receipt, 0 with a wrong receipt number; 11 receipts = 9 new + 2 duplicate + 0 review, 0 undecided; 0 ids with two new verdicts, 0 people with two leads; 13 requests intended, 13 logged
+2  PASS    follow-up states add up and nothing is left pending
+            pending 0 + sending 0 + sent 6 + failed 0 + unknown 3 = 9; leads 9
+3  PASS    at most one message per send key; no message only for failed or unknown
+            7 messages; 0 unreadable, 0 to the wrong address; 0 keys more than once, 0 keys sharing an address, 0 with a wrong text, 0 with a wrong subject, 7 not comparable (no recipient, subject or text hash recorded), 0 sent without a message, 0 failed with a message, 1 unknown that did send (reported only), 0 keys of no lead
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            9 CRM rows; allowed 9 to 9 (done 9 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice, 0 sent without a CRM mark, 0 with a lead id or email that is not the lead's, 9 not comparable
+5  PASS    model calls per lead are within the bound
+            0 calls for 0 leads; most for one lead 0; bound 3
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 13 attempts got 503 (rate 0.0000); 0 of 13 requests saw one; 0 ended on 503; ceiling none (report only)
+7  PASS    drain time within the ceiling
+            0.02 s from the last intended send to drained (ceiling 240.0 s; marker (later than the book))
+F1  PASS    the expected leads exist and almost all of them ended sent
+            9 leads (expected 9); 6 sent, 3 unknown; crash window 3; at least 6 sent
+F2  PASS    the mailboxes hold at least one mail for every sent follow-up
+            7 mails in the mailboxes for 6 sent follow-ups
+F3  PASS    the CRM holds a contact for every lead marked done
+            9 CRM contacts with this run's lead ids for 9 leads marked done (this relies on the CRM list showing a contact right after it was created: UNVERIFIED with HubSpot)
+F4  PASS    the desk sent no more mails than leads plus unknown leads
+            the desk's mail counter says 7 sent (both processes together) and 7 mails were counted in the mailboxes: the larger, 7, is used; allowed at most 9 leads + 3 unknown = 12
+F5  PASS    the first desk process really stopped at the crash point
+            the first desk process ended with exit code 137 (expected 137: a stop on purpose)
+F6  PASS    the last mailbox read worked
+            the last mailbox read worked
+ALL CHECKS HOLD
+
+lead id          state    CRM rows  mails
+L007f88dbe6a5    sent            1      1
+L0a65113e588b    sent            1      1
+L304b981639ce    sent            1      1
+L37493a158cd3    sent            1      1
+L3c87e6dcdc37    unknown         1      0
+L50f4911498b8    unknown         1      1
+L58b704952684    sent            1      1
+L71b3cc76bd7a    unknown         1      0
+Lab29e008aa05    sent            1      1
+
+{
+  "crm_contacts_per_lead_max": 1,
+  "crm_contacts_with_our_ids": 9,
+  "desk_crash_exit_code": 137,
+  "desk_idle_at_end": true,
+  "followup_states": {
+    "sent": 6,
+    "unknown": 3
+  },
+  "hubspot_calls_by_readback": {
+    "archives": 0,
+    "calls": 1,
+    "conflicts": 0,
+    "created": 0,
+    "creates": 0,
+    "gets": 1,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "hubspot_calls_by_the_desk": {
+    "archives": 0,
+    "calls": 9,
+    "conflicts": 0,
+    "created": 9,
+    "creates": 9,
+    "gets": 0,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 7,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    4,
+    3
+  ],
+  "mails_sent_by_the_desk_total": 7,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 34.1,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 7
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: /home/user/work/priv/b6b/tmp/real-dry-u9v4ohsz/run/result.json
+exit=0
