@@ -361,9 +361,12 @@ def load_bundle(path: Path) -> Bundle:
 
 def load_bundles(root: Path) -> list[Bundle]:
     """Every ``case-NNN`` folder under ``root``, in sorted case order. Any bad bundle refuses the whole set."""
-    root = pathguard.operator_dir(
-        root, what="bundles folder", unusable="bundles folder does not exist"
-    )
+    try:
+        root = pathguard.operator_dir(root, what="bundles folder")
+    except pathguard.PathRefused as exc:
+        raise pathguard.mapped(
+            exc, R10="bundles folder does not exist", R11="bundles folder does not exist"
+        ) from None
     # each name from the listing goes through pathguard.component; load_bundle then checks the case-NNN shape
     names = sorted(
         pathguard.component(p.name, what="bundle folder")

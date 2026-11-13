@@ -1,6 +1,6 @@
 """pathguard through the real callers: ``score`` and ``replay`` on an outputs folder that holds links out of it.
 
-FAIL-BEFORE tests (they ran on main and failed for a behavioural reason): on main a run folder or a case file that was a link
+Tests that fail on main (behavioural reason, see the real run in the pull request body): on main a run folder or a case file that was a link
 to a folder or file OUTSIDE the outputs folder was read without a word; now it is refused (rule R8).
 """
 
@@ -56,7 +56,7 @@ def test_control_a_clean_outputs_folder_still_scores(tmp_path):
     assert score(out, answers, cause_dir, bundles).runs[0].hits == 2
 
 
-def test_a_run_folder_that_is_a_link_out_of_the_outputs_folder_is_refused(tmp_path):
+def test_pin_a_run_folder_that_is_a_link_out_of_the_outputs_folder_is_refused(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     elsewhere = tmp_path / "elsewhere"
     shutil.move(str(out / "run1"), str(elsewhere))
@@ -65,7 +65,7 @@ def test_a_run_folder_that_is_a_link_out_of_the_outputs_folder_is_refused(tmp_pa
         score(out, answers, cause_dir, bundles)
 
 
-def test_a_case_file_that_is_a_link_out_of_the_outputs_folder_is_refused(tmp_path):
+def test_pin_a_case_file_that_is_a_link_out_of_the_outputs_folder_is_refused(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     stolen = tmp_path / "stolen.json"
     shutil.move(str(out / "run1" / "case-001.json"), str(stolen))
@@ -88,7 +88,7 @@ def test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_mis
     assert result.warnings == [], "an outside digest file was reported as missing"
 
 
-def test_pin_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash(tmp_path):
+def test_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     with pytest.raises(ConfigError, match="outputs folder: contains a control character"):
         score(type(out)(str(out) + "\x00x"), answers, cause_dir, bundles)

@@ -2,9 +2,10 @@
 
 The scan reads the source of every ``src/hadavin_sdk/**/*.py`` except ``pathguard.py`` itself (the AST, nothing is run).
 Inside each function it flags a banned call (``open``, ``os.open``, ``os.replace``, ``os.remove``, ``os.rename``,
-``os.listdir``, ``os.scandir``, ``os.walk``, ``os.makedirs``, ``os.mkdir``, ``os.rmdir``, ``os.unlink``, ``shutil.*``, and
-the methods ``.read_bytes .read_text .write_bytes .write_text .open .mkdir .iterdir .glob .rglob .unlink .rmdir .touch
-.symlink_to .hardlink_to .chmod``, plus ``.replace(x)`` and ``.rename(x)`` with ONE argument: ``str.replace`` takes two, so
+``os.listdir``, ``os.scandir``, ``os.walk``, ``os.makedirs``, ``os.mkdir``, ``os.rmdir``, ``os.unlink``, ``os.access``,
+``os.chdir``, ``os.statvfs``, ``zipfile.ZipFile``, ``logging.FileHandler``, ``importlib.util.spec_from_file_location``,
+``shutil.*`` and the rest of the ``BANNED_*`` tables below, and the methods ``.read_bytes .read_text .write_bytes
+.write_text .open .mkdir .iterdir .glob .rglob .unlink .rmdir .touch .symlink_to .hardlink_to .chmod``, plus ``.replace(x)`` and ``.rename(x)`` with ONE argument: ``str.replace`` takes two, so
 one argument is the ``Path`` method) unless every path argument (the receiver for a method, the first argument for ``open``
 and ``os.*`` calls that take one path, every argument for ``os.replace``, ``os.rename`` and ``shutil.*``) is a plain NAME
 whose latest earlier assignment in the same function is a call ``pathguard.join``, ``pathguard.inside``,
@@ -13,7 +14,7 @@ whose latest earlier assignment in the same function is a call ``pathguard.join`
 in the code: there is no comment switch.
 
 A hit that is not guarded must be listed, with its reason, in ``tests/fixtures/pathguard_exceptions.txt``: one line per
-function, ``file | function | origin | reason``, where origin is one of ``operator`` (typed by the person, no outer folder),
+function and call, ``file | function | call | count | origin | validator | reason`` (seven columns), where origin is one of ``operator`` (typed by the person, no outer folder),
 ``config`` (a path in the config file), ``fixed`` (a constant of ours, or a fixed name under a folder checked elsewhere),
 ``package`` (a file shipped inside the package) or ``checked`` (validated by the caller or by a check this scan cannot
 follow; the reason names it). An unlisted hit fails the test, and so does a listed row that matches no hit any more.
@@ -90,6 +91,12 @@ BANNED_CALLS = {
     "tempfile.TemporaryDirectory": "dir",
     "tempfile.SpooledTemporaryFile": "dir",
     "sqlite3.connect": "first",
+    "os.access": "first",
+    "os.chdir": "first",
+    "os.statvfs": "first",
+    "zipfile.ZipFile": "first",
+    "importlib.util.spec_from_file_location": "all",
+    "logging.FileHandler": "first",
 }
 # every call of a name that starts with one of these (``shutil.copy``, ``glob.glob``, ...)
 BANNED_PREFIXES = {
@@ -484,7 +491,14 @@ def _called_names(path: Path) -> set[str]:
     return out
 
 
+_INLINE_VALIDATORS = {
+    "isidentifier"
+}  # a string method that is the whole check (tools.py module names)
+
+
 def validator_problems(rows: list[Row], known: set[str], root: Path = ROOT) -> list[str]:
+    """Every row of origin operator, config or checked needs a validator that exists and is CALLED: in the row's own file,
+    or in the file after ``@`` (``operator_dir@config.py``). A row cannot be its own validator."""
     problems = []
     for f, fn, call, _, origin, validator, _ in rows:
         where = f"{f} | {fn} | {call}"
@@ -492,10 +506,19 @@ def validator_problems(rows: list[Row], known: set[str], root: Path = ROOT) -> l
             if validator != "-":
                 problems.append(f"{where}: a {origin} row has no validator (write -)")
             continue
-        if validator == "-" or validator not in known:
+        name, _, other = validator.partition("@")
+        if name == "-" or (name not in known and name not in _INLINE_VALIDATORS):
             problems.append(f"{where}: validator {validator!r} is not a function of the package")
-        elif origin == "checked" and validator not in _called_names(root / f):
-            problems.append(f"{where}: {validator} is never called in {f}")
+        elif name == fn.rsplit(".", 1)[-1]:
+            problems.append(f"{where}: {name} cannot be its own validator")
+        else:
+            where_called = f"src/hadavin_sdk/{other}" if other else f
+            if not (root / where_called).is_file():
+                problems.append(f"{where}: {where_called} does not exist")
+            elif name not in _called_names(
+                root / where_called
+            ):  # a name in __all__ alone proves nothing
+                problems.append(f"{where}: {name} is never called in {where_called}")
     return problems
 
 
@@ -570,6 +593,12 @@ def test_the_seeded_good_fixture_passes():
         "def f(a):\n    a.open()\n",
         "def f(a, n):\n    p = pathguard.component(n, what='x')\n    p.read_text()\n",
         "def f(a, n):\n    pathguard.operator_text(n, what='x')\n    a.read_text()\n",
+        "import os\n\n\ndef f(a):\n    os.access(a, 0)\n",
+        "import os\n\n\ndef f(a):\n    os.chdir(a)\n",
+        "import os\n\n\ndef f(a):\n    os.statvfs(a)\n",
+        "import zipfile\n\n\ndef f(a):\n    zipfile.ZipFile(a)\n",
+        "import importlib.util\n\n\ndef f(a):\n    importlib.util.spec_from_file_location('m', a)\n",
+        "import logging\n\n\ndef f(a):\n    logging.FileHandler(a)\n",
     ],
 )
 def test_one_line_plants_are_caught(code):
@@ -666,3 +695,27 @@ def test_pin_the_guarded_twin_of_each_gap_passes(code):
 @pytest.mark.parametrize("code", ["def f(s, i):\n    s.touch(i)\n"])
 def test_a_method_named_touch_on_a_non_path_name_is_not_a_hit(code):
     assert scan_source(code, "twin.py") == [], code
+
+
+def test_a_validator_in_another_file_must_exist_there_and_be_called(tmp_path):
+    """The ``name@file.py`` form is read against ``src/hadavin_sdk/<file>``: a missing file or an uncalled name is refused."""
+    root = tmp_path
+    pkg = root / "src" / "hadavin_sdk"
+    pkg.mkdir(parents=True)
+    (pkg / "m.py").write_text("def g(p):\n    return p\n", encoding="utf-8")
+    (pkg / "c.py").write_text("def load(p):\n    return operator_dir(p)\n", encoding="utf-8")
+    known = {"operator_dir", "g"}
+
+    def row(validator: str) -> Row:
+        return ("src/hadavin_sdk/m.py", "g", ".read_text", 1, "config", validator, "x")
+
+    assert validator_problems([row("operator_dir@c.py")], known, root) == []
+    assert (
+        validator_problems([row("operator_dir@gone.py")], known, root) != []
+    )  # the file is not there
+    assert (
+        validator_problems([row("operator_dir@m.py")], known, root) != []
+    )  # there, but never called
+    assert (
+        validator_problems([row("operator_dir")], known, root) != []
+    )  # the same-file form needs a call in m.py

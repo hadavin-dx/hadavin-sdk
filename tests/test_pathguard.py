@@ -5,9 +5,9 @@ Proof rules (design ``sonar-path-traversal-design.md`` section 6):
 
 * Tests that call ``pathguard`` directly are proven by the mutants in ``tests/pathguard_mutants.py`` (one reverted rule each),
   not by "fails on main": the module does not exist on main.
-* REGRESSION tests call code that exists on main and already passed there (a ``..`` or a symlink out of the folder through
+* test_pin_* and test_control_* tests call code that exists on main and already passed there (a ``..`` or a symlink out of the folder through
   ``config.confined``, the pinned wording "escapes" and "outside"). They guard against losing a behaviour.
-* FAIL-BEFORE tests call code that exists on main and failed there for a behavioural reason: a NUL in a path (a bare
+* Plain-named tests call code that exists on main and failed there (a behavioural reason, or the new call shape): a NUL in a path (a bare
   ``ValueError`` on main, now a ``ConfigError``), a run folder or case file that is a link out of the outputs folder (read on
   main, refused now), a temp file name that is the same every time (random now), and the new ``atomic_write(base, name, text)``
   call shape. The counts measured on main are in the pull request body.
@@ -403,7 +403,7 @@ def test_operator_dir_accepts_a_folder_that_will_be_created(tmp_path):
 # ---------------------------------------------------------------- the three old checks now call it
 
 
-def test_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_path):
+def test_pin_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_path):
     """REGRESSION: passed on main."""
     base = tmp_path / "base"
     base.mkdir()
@@ -419,7 +419,7 @@ def test_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_path)
     assert confined(base, "") == base.resolve()
 
 
-def test_confined_does_not_gain_the_windows_name_rules(tmp_path):
+def test_pin_confined_does_not_gain_the_windows_name_rules(tmp_path):
     """REGRESSION: twelve other callers pass operator config names; only data-derived names get R6 and R7."""
     assert confined(tmp_path, "aux.md") == tmp_path.resolve() / "aux.md"
     assert confined(tmp_path, "notes.") == tmp_path.resolve() / "notes."
@@ -437,7 +437,7 @@ def test_a_nul_in_the_cause_list_folder_is_a_config_error(tmp_path):
         load_cause_list(Path(str(tmp_path) + "\x00x"))
 
 
-def test_key_path_keeps_the_word_outside_and_its_order(tmp_path):
+def test_pin_key_path_keeps_the_word_outside_and_its_order(tmp_path):
     """REGRESSION: tests pin "outside"; the key may not exist yet; a final symlink is refused first."""
     folder = tmp_path / "keys"
     folder.mkdir()

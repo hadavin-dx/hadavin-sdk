@@ -99,14 +99,10 @@ class ScoreResult:
 def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
     """``answers.json`` (``sealed`` is ignored in lite). Returns the answers and the SHA-256 of the file."""
     try:
-        real = pathguard.operator_file(
-            path, what="answers file"
-        )  # the operator's own --answers file
-        # the last check before the read: the name joined to its folder again, strictly, as a file
-        target = pathguard.join(
-            real.parent, real.name, what="answers file", must_exist=True, kind="file"
-        )
-        raw = target.read_bytes()
+        # the operator's own --answers file: its shape is checked and it is read by its resolved path. One guard: the
+        # operator chose the name, so the name rules (colon, ``con``) do not apply, as before this change
+        real = pathguard.operator_file(path, what="answers file")
+        raw = real.read_bytes()
         data = strict_json_loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError):  # PathRefused is a ValueError
         raise ConfigError("answers file is missing or not valid JSON") from None
@@ -164,14 +160,15 @@ def _recorded_digest(out: Path) -> str | None:
     """The digest the replay wrote (``out/outputs.sha256``), ``None`` when absent, ``""`` when unreadable (counts as
     changed; a file that leaves the folder through a link is refused by ``pathguard`` and is unreadable too)."""
     try:
-        sha_file = pathguard.join(out, "outputs.sha256", what="replay digest file")
-        if not sha_file.is_file():
-            return None
         target = pathguard.join(
             out, "outputs.sha256", what="replay digest file", must_exist=True, kind="file"
         )
         return target.read_text(encoding="utf-8").strip()
-    except (OSError, ValueError):  # PathRefused is a ValueError
+    except pathguard.PathRefused as exc:
+        return (
+            None if exc.rule in ("R10", "R11") else ""
+        )  # missing or a folder: absent; a link out: unreadable
+    except (OSError, ValueError):
         return ""
 
 
@@ -206,9 +203,12 @@ def _record(base: Path, case_id: str, ordinal: int) -> dict[str, Any]:
 def outputs_dir(out: Path | str) -> Path:
     """The operator's ``--outputs`` folder: shape checked, resolved. Callers (``score`` and the command line) use only
     the returned path."""
-    return pathguard.operator_dir(
-        out, what="outputs folder", unusable="outputs folder does not exist"
-    )
+    try:
+        return pathguard.operator_dir(out, what="outputs folder")
+    except pathguard.PathRefused as exc:
+        raise pathguard.mapped(
+            exc, R10="outputs folder does not exist", R11="outputs folder does not exist"
+        ) from None
 
 
 def _check_layout(out: Path, case_ids: list[str]) -> list[int]:

@@ -3,8 +3,11 @@
 # count: the exact number of unguarded hits of that call in that function: a new hit in a listed function fails the test.
 # origin: operator (typed by the person), config (a path in the config file), fixed (a constant of ours, or not a file),
 # package (a file shipped inside the package), checked (validated by a function the scan cannot follow).
-# validator: the function that checks the path ("-" only for fixed and package); the test finds it in the package, and for
-# "checked" rows also finds a call to it in the same file.
+# validator ("-" only for fixed and package): the function that checks the path. The test finds it in the package and finds
+# a call to it in the SAME file as the row (a name is not proof). Two other forms: "name@file.py" (the check sits in another
+# file of the package, for a path that arrives from there, such as the config folder checked in config.py: the test finds the
+# call in that file) and "isidentifier" (a string method, called in the same file). A row cannot name its own function.
+# What the test does not prove: that the validated value is the one the listed call uses; that stays with the reviewer.
 src/hadavin_sdk/actions/executor.py | Executor._caller.call | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
 src/hadavin_sdk/actions/secrets_vault.py | VaultProvider.call | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
 src/hadavin_sdk/app.py | _tls_context | .read_text | 1 | checked | confined | the path is confined(cfg.root, ca_file) on the line before it is read
@@ -53,18 +56,18 @@ src/hadavin_sdk/registry.py | Registry.golden_sha256 | .read_bytes | 2 | checked
 src/hadavin_sdk/registry.py | Registry.prompt | .read_text | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
 src/hadavin_sdk/registry.py | Registry.prompt_sha256 | .read_bytes | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
 src/hadavin_sdk/registry.py | _cross_check | .is_file | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
-src/hadavin_sdk/registry.py | _load_tools | .glob | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/registry.py | _load_tools | .is_dir | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/registry.py | _load_tools | .is_file | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/registry.py | _yaml | .exists | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/registry.py | _yaml | .read_text | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/registry.py | load_registry | .glob | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
-src/hadavin_sdk/replay_records.py | read_records | .exists | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
-src/hadavin_sdk/replay_records.py | read_records | .read_bytes | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/registry.py | _load_tools | .glob | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _load_tools | .is_dir | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _load_tools | .is_file | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _yaml | .exists | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _yaml | .read_text | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | load_registry | .glob | 1 | config | operator_dir@config.py | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/replay_records.py | read_records | .exists | 1 | config | operator_dir@config.py | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/replay_records.py | read_records | .read_bytes | 1 | config | operator_dir@config.py | a fixed file name under the config folder root, which load_config checked with operator_dir
 src/hadavin_sdk/runtime/agent_loop.py | _check_golden_refs | .is_file | 1 | checked | confined | the path is registry.golden_path(), which goes through confined
 src/hadavin_sdk/runtime/agent_loop.py | _check_golden_refs | .read_text | 1 | checked | confined | the path is registry.golden_path(), which goes through confined
-src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .exists | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
-src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .read_bytes | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .exists | 1 | config | operator_dir@config.py | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .read_bytes | 1 | config | operator_dir@config.py | a fixed file name under the config folder root, which load_config checked with operator_dir
 src/hadavin_sdk/store/migrate.py | _migration_files | .glob | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
 src/hadavin_sdk/store/migrate.py | _scan | .read_text | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
 src/hadavin_sdk/store/migrate.py | migrate | .read_text | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
@@ -77,6 +80,6 @@ src/hadavin_sdk/store/migration_numbers.py | released_problems | .is_file | 1 | 
 src/hadavin_sdk/store/migration_numbers.py | released_problems | .read_bytes | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
 src/hadavin_sdk/store/postgres.py | ca_file | tempfile.mkstemp | 1 | fixed | - | mkstemp makes a new private file in the OS temp folder; no operator path is read
 src/hadavin_sdk/tools.py | ToolContext.fetch | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
-src/hadavin_sdk/tools.py | _module_files | .is_file | 3 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
-src/hadavin_sdk/tools.py | load_tool_module | .read_bytes | 1 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
-src/hadavin_sdk/tools.py | module_sha256 | .read_bytes | 1 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
+src/hadavin_sdk/tools.py | _module_files | .is_file | 3 | config | isidentifier | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
+src/hadavin_sdk/tools.py | load_tool_module | .read_bytes | 1 | config | isidentifier | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
+src/hadavin_sdk/tools.py | module_sha256 | .read_bytes | 1 | config | isidentifier | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own

@@ -43,7 +43,7 @@ MAX_COMPONENT_BYTES = 255  # one name, in UTF-8 bytes (the usual file system lim
 # writer and by every loader that turns data into a file name, so the two can never disagree).
 TEMP_EXTRA_BYTES = 1 + 1 + 16 + 4
 MAX_WRITE_NAME_BYTES = MAX_COMPONENT_BYTES - TEMP_EXTRA_BYTES
-MAX_PATH_CHARS = 4096  # a whole path, in characters (the usual Linux limit; Windows allows less)
+MAX_PATH_BYTES = 4096  # a whole path, in UTF-8 bytes (the usual Linux limit; Windows allows less)
 
 # COM and LPT also come with the superscript digits 1, 2 and 3 (U+00B9, U+00B2, U+00B3), written as escapes here
 _DIGITS = "0123456789\u00b9\u00b2\u00b3"
@@ -59,13 +59,19 @@ CONTROL_RANGES = (
     ("soft hyphen", 0x00AD, 0x00AD),
     ("combining grapheme joiner", 0x034F, 0x034F),
     ("Arabic letter mark", 0x061C, 0x061C),
+    ("Hangul fillers", 0x115F, 0x1160),
+    ("Khmer inherent vowels", 0x17B4, 0x17B5),
     ("Mongolian vowel separator", 0x180E, 0x180E),
     ("zero-width and direction marks", 0x200B, 0x200F),
     ("line and paragraph separators and bidirectional embeddings", 0x2028, 0x202E),
     ("word joiner, invisible operators, isolates and deprecated format characters", 0x2060, 0x206F),
+    ("braille blank", 0x2800, 0x2800),
+    ("Hangul filler", 0x3164, 0x3164),
     ("variation selectors", 0xFE00, 0xFE0F),
     ("byte order mark", 0xFEFF, 0xFEFF),
+    ("halfwidth Hangul filler", 0xFFA0, 0xFFA0),
     ("interlinear annotation", 0xFFF9, 0xFFFB),
+    ("musical symbol format characters", 0x1D173, 0x1D17A),
     ("tag characters", 0xE0000, 0xE007F),
     ("variation selectors supplement", 0xE0100, 0xE01EF),
 )
@@ -134,24 +140,25 @@ def _resolve(path: Path, what: str, *, strict: bool) -> Path:
         ) from None  # the OSError text could hold the path
 
 
-def _check_kind(path: Path, kind: str | None, what: str) -> None:
-    if kind == "file" and not path.is_file():
-        raise _refuse("R11", what, "not a file")
-    if kind == "dir" and not path.is_dir():
-        raise _refuse("R11", what, "not a folder")
-
-
-def _check_length(text: str, what: str) -> None:
-    if len(text) > MAX_PATH_CHARS:
+def _check_text(text: str, what: str) -> None:
+    """R4 for a whole path text (the same character set as for a name), then R5 in bytes. Explicit: a NUL must not depend
+    on ``Path.resolve`` raising."""
+    if _CONTROL.search(text):
+        raise _refuse("R4", what, "contains a control character")
+    if len(text.encode("utf-8", errors="surrogatepass")) > MAX_PATH_BYTES:
         raise _refuse("R5", what, "too long")
 
 
-def _check_text(text: str, what: str) -> None:
-    """R4 for a whole path text (the same character set as for a name), then R5. Explicit: a NUL must not depend on
-    ``Path.resolve`` raising."""
-    if _CONTROL.search(text):
-        raise _refuse("R4", what, "contains a control character")
-    _check_length(text, what)
+def _within(root: Path, path: Path, what: str, must_exist: bool, kind: str | None) -> Path:
+    """The one tail of ``inside`` and ``join``: ``path`` resolved (strictly when ``must_exist``) must lie inside ``root``
+    and be of ``kind``."""
+    _check_text(str(path), what)
+    real = _resolve(path, what, strict=must_exist)
+    if not real.is_relative_to(root):
+        raise _refuse("R8", what, "path escapes its folder")
+    if (kind == "file" and not real.is_file()) or (kind == "dir" and not real.is_dir()):
+        raise _refuse("R11", what, "not a file" if kind == "file" else "not a folder")
+    return real
 
 
 def inside(
@@ -164,15 +171,10 @@ def inside(
 ) -> Path:
     """The real location of ``path`` (already joined, absolute or relative to the current folder), refused unless it
     lies inside the real location of ``base``. A symlink or junction that leaves the base is refused because resolving
-    follows it. Returns the resolved path."""
+    follows it. No name rule applies (R6, R7 and R12 are for ``join``): this is the form for a name an operator typed.
+    Returns the resolved path."""
     _check_text(str(base), what)
-    _check_text(str(path), what)
-    root = _resolve(Path(base), what, strict=False)
-    real = _resolve(Path(path), what, strict=must_exist)
-    if not real.is_relative_to(root):
-        raise _refuse("R8", what, "path escapes its folder")
-    _check_kind(real, kind, what)
-    return real
+    return _within(_resolve(Path(base), what, strict=False), Path(path), what, must_exist, kind)
 
 
 def join(
@@ -189,36 +191,15 @@ def join(
         _check_name(name, what)
     _check_text(str(base), what)
     root = _resolve(Path(base), what, strict=False)
-    candidate = root.joinpath(*names)
-    _check_text(str(candidate), what)
-    real = _resolve(candidate, what, strict=must_exist)
-    if not real.is_relative_to(root):
-        raise _refuse("R8", what, "path escapes its folder")
-    _check_kind(real, kind, what)
+    return _within(root, root.joinpath(*names), what, must_exist, kind)
+
+
+def _operator(path: Path | str, what: str, kind: str, must_exist: bool) -> Path:
+    _check_text(str(path), what)
+    real = _resolve(Path(path), what, strict=must_exist)
+    if must_exist or real.exists():
+        _within(real, real, what, True, kind)
     return real
-
-
-def _operator(
-    path: Path | str,
-    what: str,
-    kind: str,
-    must_exist: bool,
-    unusable: str | None,
-    unusable_rules: tuple[str, ...],
-) -> Path:
-    try:
-        text = str(path)
-        _check_text(text, what)
-        real = _resolve(Path(path), what, strict=must_exist)
-        if must_exist or real.exists():
-            _check_kind(real, kind, what)
-        return real
-    except PathRefused as exc:
-        if (
-            unusable is not None and exc.rule in unusable_rules
-        ):  # the one place that words "missing or wrong type"
-            raise ConfigError(unusable) from None
-        raise
 
 
 def operator_text(path: Path | str, *, what: str) -> None:
@@ -227,46 +208,37 @@ def operator_text(path: Path | str, *, what: str) -> None:
     _check_text(str(path), what)
 
 
-def operator_dir(
-    path: Path | str,
-    *,
-    what: str,
-    must_exist: bool = True,
-    unusable: str | None = None,
-    unusable_rules: tuple[str, ...] = ("R10", "R11"),
-) -> Path:
+def operator_dir(path: Path | str, *, what: str, must_exist: bool = True) -> Path:
     """A folder the operator typed: shape checked (no control characters, not too long, resolves, is a folder). There
     is no outer base, so nothing "contains" it. ``must_exist=False`` is for a folder the command will create: a path
-    that does not exist yet is accepted, one that exists must still be a folder. ``unusable`` is the plain message a
-    caller wants (as a ``ConfigError``) when the path is missing, cannot be resolved or is the wrong type (rules in
-    ``unusable_rules``): the one place that mapping lives. Returns the resolved path."""
-    return _operator(path, what, "dir", must_exist, unusable, unusable_rules)
+    that does not exist yet is accepted, one that exists must still be a folder. Returns the resolved path."""
+    return _operator(path, what, "dir", must_exist)
 
 
-def operator_file(
-    path: Path | str,
-    *,
-    what: str,
-    must_exist: bool = True,
-    unusable: str | None = None,
-    unusable_rules: tuple[str, ...] = ("R10", "R11"),
-) -> Path:
+def operator_file(path: Path | str, *, what: str, must_exist: bool = True) -> Path:
     """A file the operator typed: shape checked as for ``operator_dir``, and it must exist and be a file. Returns the
     resolved path. ``must_exist=False`` is for a caller that reads the file next and reports a missing one in its own
     words: only the shape is checked (and the type, when the path exists)."""
-    return _operator(path, what, "file", must_exist, unusable, unusable_rules)
+    return _operator(path, what, "file", must_exist)
+
+
+def mapped(exc: PathRefused, **words: str) -> ConfigError:
+    """The one place that turns a refusal into a caller's own plain message: ``words`` maps a rule (``R10``, ``R11``) to
+    the text to raise instead. A rule with no entry is returned unchanged. The caller raises the result ``from None``."""
+    return ConfigError(words[exc.rule]) if exc.rule in words else exc
 
 
 __all__ = [
     "CONTROL_RANGES",
     "MAX_COMPONENT_BYTES",
-    "MAX_PATH_CHARS",
+    "MAX_PATH_BYTES",
     "MAX_WRITE_NAME_BYTES",
     "TEMP_EXTRA_BYTES",
     "PathRefused",
     "component",
     "inside",
     "join",
+    "mapped",
     "operator_dir",
     "operator_file",
     "operator_text",

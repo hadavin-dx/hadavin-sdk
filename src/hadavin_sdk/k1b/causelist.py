@@ -41,9 +41,13 @@ def _load(directory: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
     try:
         path = pathguard.join(directory, name, what="cause list file", must_exist=True, kind="file")
     except pathguard.PathRefused as exc:
-        if exc.rule == "R10":  # missing file, symlink loop, permission
-            raise ConfigError(f"cause list: {name} is missing or not readable") from None
-        raise ConfigError(f"cause list: {name} must be a file inside the directory") from None
+        inside_only = f"cause list: {name} must be a file inside the directory"
+        raise pathguard.mapped(
+            exc,
+            R10=f"cause list: {name} is missing or not readable",  # missing file, symlink loop, permission
+            R8=inside_only,
+            R11=inside_only,
+        ) from None
     try:
         raw = path.read_bytes()
         data = json.loads(raw.decode("utf-8-sig"))

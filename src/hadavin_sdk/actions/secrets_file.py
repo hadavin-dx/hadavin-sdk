@@ -35,21 +35,18 @@ class MountedFileProvider(CachedSecrets):
         # ConfigError on `..`, absolute names or links out of the folder. The result is the real path, so
         # O_NOFOLLOW below refuses a link swapped in after this check.
         found = confined(self.root, name)
-        base = pathguard.operator_dir(self.root, what="secrets folder")
+        # the last check before the open. ``name`` is an operator-chosen secret name, so only containment applies
+        # (``inside``): a name such as ``vault:token`` or ``con`` was readable before and still is.
         try:
-            path = pathguard.join(
-                base,
-                *found.relative_to(base).parts,
-                what="mounted secret",
-                must_exist=True,
-                kind="file",
+            path = pathguard.inside(
+                self.root, found, what="mounted secret", must_exist=True, kind="file"
             )
         except pathguard.PathRefused as exc:
-            if exc.rule == "R10":  # no such file
-                raise ConfigError(f"secret {name!r} not found in the mounted folder") from None
-            if exc.rule == "R11":
-                raise ConfigError(f"secret {name!r} is not a regular file") from None
-            raise
+            raise pathguard.mapped(
+                exc,
+                R10=f"secret {name!r} not found in the mounted folder",
+                R11=f"secret {name!r} is not a regular file",
+            ) from None
         # O_NONBLOCK: a FIFO planted in the folder must not hang the open (S_ISREG below then refuses it).
         flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
         flags |= getattr(os, "O_BINARY", 0)
@@ -83,9 +80,9 @@ class MountedFileProvider(CachedSecrets):
 
 def build(settings, deps) -> MountedFileProvider:
     # the operator's mounted folder (config): shape checked, the resolved path is used
-    root = pathguard.operator_dir(
-        settings.dir,
-        what="secrets folder",
-        unusable=f"secrets mounted_file: {settings.dir} is not a folder",
-    )
+    try:
+        root = pathguard.operator_dir(settings.dir, what="secrets folder")
+    except pathguard.PathRefused as exc:
+        text = f"secrets mounted_file: {settings.dir} is not a folder"
+        raise pathguard.mapped(exc, R10=text, R11=text) from None
     return MountedFileProvider(root, settings.ttl_s)

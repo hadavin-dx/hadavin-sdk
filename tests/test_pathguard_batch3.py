@@ -46,13 +46,19 @@ EXPECTED_RANGES = (
     ("soft hyphen", 0x00AD, 0x00AD),
     ("combining grapheme joiner", 0x034F, 0x034F),
     ("Arabic letter mark", 0x061C, 0x061C),
+    ("Hangul fillers", 0x115F, 0x1160),
+    ("Khmer inherent vowels", 0x17B4, 0x17B5),
     ("Mongolian vowel separator", 0x180E, 0x180E),
     ("zero-width and direction marks", 0x200B, 0x200F),
     ("line and paragraph separators and bidirectional embeddings", 0x2028, 0x202E),
     ("word joiner, invisible operators, isolates and deprecated format characters", 0x2060, 0x206F),
+    ("braille blank", 0x2800, 0x2800),
+    ("Hangul filler", 0x3164, 0x3164),
     ("variation selectors", 0xFE00, 0xFE0F),
     ("byte order mark", 0xFEFF, 0xFEFF),
+    ("halfwidth Hangul filler", 0xFFA0, 0xFFA0),
     ("interlinear annotation", 0xFFF9, 0xFFFB),
+    ("musical symbol format characters", 0x1D173, 0x1D17A),
     ("tag characters", 0xE0000, 0xE007F),
     ("variation selectors supplement", 0xE0100, 0xE01EF),
 )
@@ -85,9 +91,9 @@ for _i in range(len(EXPECTED_RANGES)):
     globals()[f"test_pin_r4_range_{_i:02d}"] = _range_test(_i)
 
 
-def test_r4_there_are_fourteen_named_ranges_and_none_overlaps():
+def test_r4_there_are_twenty_named_ranges_and_none_overlaps():
     ranges = pathguard.CONTROL_RANGES
-    assert len(ranges) == 14
+    assert len(ranges) == 20
     assert tuple(ranges) == EXPECTED_RANGES
     spans = sorted((lo, hi) for _, lo, hi in ranges)
     assert all(a[1] < b[0] for a, b in itertools.pairwise(spans))
@@ -127,11 +133,11 @@ def _wide(tmp_path) -> str:
     resolved path does not see it, so each place that checks the text itself fails on its own."""
     (tmp_path / "d").mkdir(exist_ok=True)
     text = str(tmp_path) + "/d/.." * 900
-    assert len(text) > pathguard.MAX_PATH_CHARS and len(str(Path(text).resolve())) < 400
+    assert len(text) > pathguard.MAX_PATH_BYTES and len(str(Path(text).resolve())) < 400
     return text
 
 
-LONG = "/" + "a" * (pathguard.MAX_PATH_CHARS + 5)  # text only: no file system call can come first
+LONG = "/" + "a" * (pathguard.MAX_PATH_BYTES + 5)  # text only: no file system call can come first
 
 
 def test_pin_r5_join_refuses_a_long_base_text():
@@ -145,7 +151,7 @@ def test_pin_r5_join_refuses_a_wide_base_text_that_resolves_short(tmp_path):
 def test_pin_r5_join_refuses_a_long_joined_path_when_base_and_names_are_short(tmp_path):
     names = ["a" * 200] * 25  # each name is fine; together they are over the limit
     base = str(tmp_path)
-    assert len(base) + sum(len(n) + 1 for n in names) > pathguard.MAX_PATH_CHARS
+    assert len(base) + sum(len(n) + 1 for n in names) > pathguard.MAX_PATH_BYTES
     _refused("R5", pathguard.join, base, *names, what="n")
 
 
@@ -171,7 +177,7 @@ def test_pin_r5_operator_text_refuses_a_long_text():
 
 
 def test_control_r5_a_path_at_the_limit_is_not_refused_for_length(tmp_path):
-    text = str(tmp_path) + "/" + "a" * (pathguard.MAX_PATH_CHARS - len(str(tmp_path)) - 1)
+    text = str(tmp_path) + "/" + "a" * (pathguard.MAX_PATH_BYTES - len(str(tmp_path)) - 1)
     pathguard.operator_text(text, what="n")  # exactly the limit: allowed
 
 
@@ -199,16 +205,21 @@ def test_control_r11_a_missing_path_is_accepted_when_it_need_not_exist(tmp_path)
     assert pathguard.operator_dir(tmp_path / "later", what="n", must_exist=False).name == "later"
 
 
-def test_unusable_maps_only_the_listed_rules_to_one_plain_message(tmp_path):
-    with pytest.raises(ConfigError, match="^plain words$") as caught:
-        pathguard.operator_dir(tmp_path / "missing", what="n", unusable="plain words")
-    assert not isinstance(caught.value, PathRefused)
-    assert caught.value.__cause__ is None and caught.value.__suppress_context__
-    _refused("R4", pathguard.operator_dir, str(tmp_path) + CTRL, what="n", unusable="plain words")
-    with pytest.raises(PathRefused):  # R10 is not in the listed rules
-        pathguard.operator_dir(
-            tmp_path / "missing", what="n", unusable="plain words", unusable_rules=("R11",)
-        )
+def test_mapped_turns_only_the_listed_rules_into_one_plain_message(tmp_path):
+    with pytest.raises(PathRefused) as missing:
+        pathguard.operator_dir(tmp_path / "missing", what="n")
+    result = pathguard.mapped(missing.value, R10="plain words")
+    assert type(result) is ConfigError and str(result) == "plain words"
+    with pytest.raises(PathRefused) as control:
+        pathguard.operator_dir(str(tmp_path) + CTRL, what="n")
+    assert pathguard.mapped(control.value, R10="plain words") is control.value  # R4 is not listed
+    assert pathguard.mapped(missing.value, R11="other") is missing.value  # R10 is not listed here
+
+
+def test_r5_the_whole_path_limit_counts_bytes_not_characters():
+    text = "/" + "\u20ac" * 1400  # 1,401 characters, 4,201 bytes in UTF-8
+    assert len(text) < pathguard.MAX_PATH_BYTES < len(text.encode())
+    _refused("R5", pathguard.operator_text, text, what="n")
 
 
 # ------------------------------------------------------------------ atomic_write
@@ -236,16 +247,16 @@ def test_atomic_write_with_a_taken_temp_name_leaves_the_existing_file_untouched(
     assert exc.__cause__ is None and exc.__suppress_context__
 
 
-def test_pin_atomic_write_checks_the_temp_path_length_not_only_the_final_one(tmp_path, monkeypatch):
+def test_atomic_write_checks_the_temp_path_length_not_only_the_final_one(tmp_path, monkeypatch):
     final = pathguard.join(tmp_path, "r.txt", what="n")
     monkeypatch.setattr(
-        pathguard, "MAX_PATH_CHARS", len(str(final)) + 3
+        pathguard, "MAX_PATH_BYTES", len(str(final)) + 3
     )  # the final path fits, the temp one does not
     _refused("R5", atomic_write, tmp_path, "r.txt", "x")
     assert list(tmp_path.iterdir()) == []
 
 
-def test_pin_the_longest_writable_name_can_really_be_written(tmp_path):
+def test_the_longest_writable_name_can_really_be_written(tmp_path):
     name = "n" * pathguard.MAX_WRITE_NAME_BYTES
     atomic_write(
         tmp_path, name, "ok"
@@ -254,7 +265,7 @@ def test_pin_the_longest_writable_name_can_really_be_written(tmp_path):
     assert [p.name for p in tmp_path.iterdir()] == [name]
 
 
-def test_pin_atomic_write_removes_its_temp_file_when_fdopen_is_interrupted(tmp_path, monkeypatch):
+def test_atomic_write_removes_its_temp_file_when_fdopen_is_interrupted(tmp_path, monkeypatch):
     def interrupted(*args, **kwargs):
         raise KeyboardInterrupt
 
@@ -265,9 +276,7 @@ def test_pin_atomic_write_removes_its_temp_file_when_fdopen_is_interrupted(tmp_p
     assert list(tmp_path.iterdir()) == []
 
 
-def test_pin_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted(
-    tmp_path, monkeypatch
-):
+def test_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted(tmp_path, monkeypatch):
     def interrupted(src, dst):
         raise KeyboardInterrupt
 
@@ -278,7 +287,7 @@ def test_pin_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted(
     assert list(tmp_path.iterdir()) == []
 
 
-def test_pin_atomic_write_flushes_the_file_to_disk_before_the_rename(tmp_path, monkeypatch):
+def test_atomic_write_flushes_the_file_to_disk_before_the_rename(tmp_path, monkeypatch):
     synced: list[int] = []
     real = os.fsync
     monkeypatch.setattr(os, "fsync", lambda fd: (synced.append(fd), real(fd))[1])
@@ -295,7 +304,7 @@ def test_pin_atomic_write_still_leaves_its_temp_file_after_a_crash_it_cannot_cat
 # ------------------------------------------------------------------ score, bundle, causelist: converted sites
 
 
-def test_pin_site_score_read_json_refuses_a_file_name_with_a_control_character(tmp_path):
+def test_site_score_read_json_refuses_a_file_name_with_a_control_character(tmp_path):
     from hadavin_sdk.k1b import score as score_mod
 
     (tmp_path / f"a{CTRL}.json").write_text('{"x": 1}', encoding="utf-8")
@@ -303,7 +312,7 @@ def test_pin_site_score_read_json_refuses_a_file_name_with_a_control_character(t
         score_mod._read_json(tmp_path, f"a{CTRL}.json", what="the file")
 
 
-def test_pin_site_score_recorded_digest_does_not_read_a_file_behind_a_link(tmp_path):
+def test_site_score_recorded_digest_does_not_read_a_file_behind_a_link(tmp_path):
     from hadavin_sdk.k1b import score as score_mod
 
     outside = tmp_path / "outside.sha256"
@@ -314,7 +323,7 @@ def test_pin_site_score_recorded_digest_does_not_read_a_file_behind_a_link(tmp_p
     assert score_mod._recorded_digest(out) == ""  # unreadable, so counted as changed
 
 
-def test_control_site_score_recorded_digest_reads_a_plain_file_and_none_when_absent(tmp_path):
+def test_site_score_recorded_digest_reads_a_plain_file_and_none_when_absent(tmp_path):
     from hadavin_sdk.k1b import score as score_mod
 
     assert score_mod._recorded_digest(tmp_path) is None
@@ -322,7 +331,7 @@ def test_control_site_score_recorded_digest_reads_a_plain_file_and_none_when_abs
     assert score_mod._recorded_digest(tmp_path) == "ab"
 
 
-def test_pin_site_score_answers_file_with_a_control_character_in_its_name_is_refused(tmp_path):
+def test_site_score_answers_file_with_a_control_character_in_its_name_is_refused(tmp_path):
     from hadavin_sdk.k1b.causelist import CauseList
     from hadavin_sdk.k1b.score import load_answers
     from tests.k1b_support import write_answers
@@ -334,7 +343,7 @@ def test_pin_site_score_answers_file_with_a_control_character_in_its_name_is_ref
         load_answers(path, cause)
 
 
-def test_pin_site_score_run_folder_join_refuses_a_link_out_when_the_layout_check_is_skipped(
+def test_site_score_run_folder_join_refuses_a_link_out_when_the_layout_check_is_skipped(
     tmp_path, monkeypatch
 ):
     """The join at the run folder is its own guard: ``_check_layout`` and the digest steps are replaced so only it is left."""
@@ -353,7 +362,7 @@ def test_pin_site_score_run_folder_join_refuses_a_link_out_when_the_layout_check
         score_mod.score(out, answers, cause_dir, bundles)
 
 
-def test_pin_site_outputs_files_refuses_a_missing_folder_a_control_character_and_a_link(tmp_path):
+def test_site_outputs_files_refuses_a_missing_folder_a_control_character_and_a_link(tmp_path):
     import shutil
 
     from hadavin_sdk.k1b.replay import outputs_files
@@ -368,7 +377,7 @@ def test_pin_site_outputs_files_refuses_a_missing_folder_a_control_character_and
     _refused("R8", outputs_files, out)
 
 
-def test_pin_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_character(tmp_path):
+def test_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_character(tmp_path):
     from hadavin_sdk.k1b import bundle as bundle_mod
 
     (tmp_path / f"a{CTRL}.json").write_text('{"x": 1}', encoding="utf-8")
@@ -378,7 +387,7 @@ def test_pin_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_ch
         bundle_mod._text("case-001", tmp_path, f"a{CTRL}.json")
 
 
-def test_site_bundle_manifest_and_part_files_that_are_links_out_are_refused(tmp_path):
+def test_pin_site_bundle_manifest_and_part_files_that_are_links_out_are_refused(tmp_path):
     from hadavin_sdk.k1b.bundle import BundleError, load_bundle
     from tests.k1b_support import make_bundle, write_manifest
 
@@ -554,7 +563,7 @@ def test_local_dir_counts_a_refused_outcome_warns_once_and_keeps_nothing(tmp_pat
     assert sink.reconcile() == 0
 
 
-def test_control_local_dir_a_good_outcome_is_still_written(tmp_path):
+def test_local_dir_a_good_outcome_is_still_written(tmp_path):
     from hadavin_sdk.audit import LocalDirSink
 
     sink = LocalDirSink(tmp_path / "aud")
@@ -600,6 +609,24 @@ def test_signer_key_path_checks_the_shape_before_it_makes_any_folder(tmp_path):
     assert not (tmp_path / f"p{CTRL}").exists()
 
 
+def test_signer_key_path_refusal_text_holds_no_path(tmp_path):
+    """The evidence run on 9602b4ca found the full key file path and the resolved key folder in both ValueErrors."""
+    from hadavin_sdk.audit.signer import key_path
+
+    folder = tmp_path / "keys-CANARYDIR"
+    folder.mkdir()
+    outside = tmp_path / "elsewhere-CANARYFILE"
+    outside.write_text("x", encoding="utf-8")
+    link = folder / "lnk"
+    link.symlink_to(outside)
+    with pytest.raises(ValueError, match="symlink") as linked:
+        key_path(link, folder)
+    with pytest.raises(ValueError, match="outside") as away:
+        key_path(outside, folder)
+    for caught in (linked, away):
+        assert "CANARY" not in str(caught.value) and str(tmp_path) not in str(caught.value)
+
+
 def test_control_signer_key_path_still_makes_a_missing_key_folder_and_returns_the_path(tmp_path):
     from hadavin_sdk.audit.signer import key_path
 
@@ -612,7 +639,7 @@ def test_control_signer_key_path_still_makes_a_missing_key_folder_and_returns_th
 
 
 @pytest.mark.parametrize("key", ["golden_dir", "inputs_dir"])
-def test_pin_site_config_folder_setting_with_a_control_character_is_refused(tmp_path, cfg_dir, key):
+def test_site_config_folder_setting_with_a_control_character_is_refused(tmp_path, cfg_dir, key):
     from hadavin_sdk.config import load_config
 
     path = cfg_dir / "config.yaml"
@@ -634,7 +661,7 @@ def test_site_config_folder_setting_that_is_not_text_says_so_plainly(tmp_path, c
         load_config(cfg_dir)
 
 
-def test_pin_site_config_confined_delegates_to_pathguard_and_keeps_its_wording(tmp_path):
+def test_site_config_confined_delegates_to_pathguard_and_keeps_its_wording(tmp_path):
     _refused("R4", confined, tmp_path, "a" + CTRL)
     with pytest.raises(ConfigError, match="escapes"):
         confined(tmp_path, "../x")
@@ -726,6 +753,7 @@ TOUCHED = [
     "tests/test_pathguard_callers.py",
     "tests/test_pathguard_tripwire.py",
     "tests/test_pathguard_batch3.py",
+    "tests/test_pathguard_batch4.py",
     "tests/test_changelog_claims.py",
     "tests/test_k1b_cli.py",
     "tests/test_k1b_replay.py",
@@ -750,7 +778,7 @@ def test_pin_the_suppression_check_finds_every_spelling_in_a_seeded_line():
     assert suppression_hits("clean.py", "x = 1  # a plain comment\n", SUPPRESSION_TOKENS) == []
 
 
-def test_pin_there_is_no_sonar_exemption_comment_in_the_package_or_the_tests_in_any_letter_case():
+def test_there_is_no_sonar_exemption_comment_in_the_package_or_the_tests_in_any_letter_case():
     files = [*ROOT.joinpath("src").rglob("*.py"), *ROOT.joinpath("tests").rglob("*.py")]
     hits = [
         h
@@ -760,7 +788,7 @@ def test_pin_there_is_no_sonar_exemption_comment_in_the_package_or_the_tests_in_
     assert hits == []
 
 
-def test_pin_the_files_of_this_change_hold_no_suppression_comment_of_any_kind():
+def test_the_files_of_this_change_hold_no_suppression_comment_of_any_kind():
     hits = []
     for rel in TOUCHED:
         hits += suppression_hits(rel, (ROOT / rel).read_text(encoding="utf-8"), SUPPRESSION_TOKENS)
@@ -777,7 +805,7 @@ def test_pin_the_docstring_states_what_the_guard_does_not_cover():
         assert limit in text, limit
 
 
-def test_pin_score_refuses_a_report_folder_that_is_a_link_out_of_the_outputs_folder(
+def test_score_refuses_a_report_folder_that_is_a_link_out_of_the_outputs_folder(
     cfg_dir, tmp_path, capsys
 ):
     from hadavin_sdk import cli
@@ -837,7 +865,7 @@ def _boom(*args, **kwargs):
     raise RuntimeError("boom")
 
 
-def test_pin_replay_with_a_control_character_in_the_output_folder_is_refused_and_writes_nothing(
+def test_replay_with_a_control_character_in_the_output_folder_is_refused_and_writes_nothing(
     env,
 ):
     from hadavin_sdk.pathguard import PathRefused
@@ -912,7 +940,7 @@ def test_a_run_folder_swapped_for_a_link_mid_run_stops_the_next_write(env, monke
     ]  # written before the swap; nothing after it
 
 
-def test_pin_local_dir_outbox_fallback_refuses_a_device_name_as_the_event_id(tmp_path, monkeypatch):
+def test_local_dir_outbox_fallback_refuses_a_device_name_as_the_event_id(tmp_path, monkeypatch):
     """The outbox is used when the object store fails; ``con.json`` is a device name and only the guard on the final name stops
     it (``.tmp-con`` is a fine name)."""
     from hadavin_sdk.audit import LocalDirSink
@@ -967,7 +995,7 @@ def test_pin_hash_files_says_not_a_file_for_a_missing_file_and_for_a_folder(tmp_
             hash_files(tmp_path, [rel])
 
 
-def test_pin_secrets_file_keeps_its_not_found_and_not_a_regular_file_wording(tmp_path):
+def test_secrets_file_keeps_its_not_found_and_not_a_regular_file_wording(tmp_path):
     from hadavin_sdk.actions.secrets_file import MountedFileProvider
 
     folder = tmp_path / "mount"
@@ -979,7 +1007,7 @@ def test_pin_secrets_file_keeps_its_not_found_and_not_a_regular_file_wording(tmp
         provider.get("d")
 
 
-def test_pin_score_digest_and_answers_reads_keep_their_results(tmp_path):
+def test_score_digest_and_answers_reads_keep_their_results(tmp_path):
     from hadavin_sdk.k1b.score import _recorded_digest, load_answers
 
     assert _recorded_digest(tmp_path) is None  # no digest file

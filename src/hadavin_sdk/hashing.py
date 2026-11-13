@@ -17,28 +17,27 @@ def hash_files(root: Path, rel_paths: list[str]) -> str:
     ``a//b`` are one entry.
     """
     # the folder the caller names: shape checked, the resolved path is what is used below
-    base = pathguard.operator_dir(root, what="hash folder", unusable="hash folder does not exist")
+    try:
+        base = pathguard.operator_dir(root, what="hash folder")
+    except pathguard.PathRefused as exc:
+        raise pathguard.mapped(
+            exc, R10="hash folder does not exist", R11="hash folder does not exist"
+        ) from None
     entries: dict[str, str] = {}
     for rel in rel_paths:
         if chr(92) in rel or chr(0) in rel:
             raise ConfigError("path has a backslash or NUL character")
         found = confined(base, rel)
-        try:
-            path = pathguard.join(
-                base,
-                *found.relative_to(base).parts,
-                what="hash file",
-                must_exist=True,
-                kind="file",
-            )
+        try:  # the last check before the read; ``rel`` is a name the caller chose: containment only (``inside``)
+            path = pathguard.inside(base, found, what="hash file", must_exist=True, kind="file")
         except pathguard.PathRefused as exc:
-            if exc.rule in ("R10", "R11"):  # missing, or not a file
-                raise ConfigError(f"not a file: {rel}") from None
-            raise
+            raise pathguard.mapped(
+                exc, R10=f"not a file: {rel}", R11=f"not a file: {rel}"
+            ) from None
         try:
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
-        except OSError as exc:
-            raise ConfigError(f"cannot read: {rel}") from exc
+        except OSError:  # no chain: its text can hold the path
+            raise ConfigError(f"cannot read: {rel}") from None
         entries[path.relative_to(base).as_posix()] = digest
     outer = hashlib.sha256()
     for name, digest in sorted((k.encode("utf-8"), v) for k, v in entries.items()):

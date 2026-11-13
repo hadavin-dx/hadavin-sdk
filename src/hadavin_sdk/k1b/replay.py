@@ -144,13 +144,10 @@ def _replay(
             "k1b.redact is false: client data would go to the model unmasked. Pass "
             "--i-know-data-is-already-masked only if the bundles are already masked"
         )
-    out = pathguard.operator_dir(
-        out,
-        what="replay output folder",
-        must_exist=False,
-        unusable="replay output folder exists and is not empty",
-        unusable_rules=("R11",),  # it exists and is a file
-    )
+    try:
+        out = pathguard.operator_dir(out, what="replay output folder", must_exist=False)
+    except pathguard.PathRefused as exc:  # it exists and is a file
+        raise pathguard.mapped(exc, R11="replay output folder exists and is not empty") from None
     if out.exists() and any(out.iterdir()):
         raise ConfigError("replay output folder exists and is not empty")
     cause = load_cause_list(cause_list_dir)
@@ -322,4 +319,10 @@ def replay(*args: Any, **kwargs: Any) -> ReplayResult:
                 ConfigError,
             ) as second:  # the original error is the one the caller must see; this one is a note
                 exc.add_note(f"FAILED.txt was not written ({type(second).__name__})")
+            except (
+                KeyboardInterrupt,
+                MemoryError,
+            ) as stop:  # raised unchanged, with the first error named
+                stop.add_note(f"the replay had already stopped with {type(exc).__name__}")
+                raise
         raise

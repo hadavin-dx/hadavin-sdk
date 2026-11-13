@@ -170,6 +170,8 @@ class LocalDirSink:
                 path = pathguard.join(self.outbox, listed, what="audit outbox file")
             except pathguard.PathRefused:
                 continue
+            if path != pathguard.join(self.outbox, what="audit outbox folder") / listed:
+                continue  # a link inside the outbox is left for a person: unlinking would remove its target
             try:
                 event = AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))
             except ValueError:

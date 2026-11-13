@@ -3,7 +3,7 @@ function-level checks). A NUL or other control character in a path an operator t
 must be refused with ``PathRefused`` (a ``ConfigError``), never reach the file system and never put the value in the text.
 
 Fake paths are built from parts. FAIL-BEFORE: each test below ran on ddf1d584 (see handover evidence); the tests marked
-CONTROL pass on both.
+test_control_* pass on both.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ import pytest
 
 from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.k1b.atomic import atomic_write
 from hadavin_sdk.pathguard import PathRefused
 
 NUL = "\x00"
@@ -112,16 +113,23 @@ def test_operator_file_without_must_exist_checks_shape_only(tmp_path):
 
 def test_operator_text_returns_nothing_and_refuses_a_long_path():
     assert pathguard.operator_text("fine", what="n") is None
-    _refused("R5", pathguard.operator_text, "a" * (pathguard.MAX_PATH_CHARS + 1), what="n")
+    _refused("R5", pathguard.operator_text, "a" * (pathguard.MAX_PATH_BYTES + 1), what="n")
 
 
-def test_the_longest_writable_name_is_exactly_the_shared_limit():
-    assert (
-        pathguard.MAX_WRITE_NAME_BYTES + pathguard.TEMP_EXTRA_BYTES == pathguard.MAX_COMPONENT_BYTES
-    )
-    from hadavin_sdk.k1b import atomic
+def test_the_temp_name_is_the_write_name_plus_the_shared_extra(tmp_path, monkeypatch):
+    seen = []
+    real = os.open
 
-    assert not hasattr(atomic, "_TEMP_EXTRA")  # one constant, in pathguard
+    def spy(path, *args, **kwargs):
+        seen.append(os.path.basename(path))
+        return real(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", spy)
+    name = "n" * pathguard.MAX_WRITE_NAME_BYTES
+    atomic_write(tmp_path, name, "x")
+    assert len(seen) == 1
+    assert len(seen[0]) == pathguard.MAX_COMPONENT_BYTES, "temp name is not name + TEMP_EXTRA_BYTES"
+    assert len(seen[0]) - len(name) == pathguard.TEMP_EXTRA_BYTES
 
 
 def test_r10_a_nul_is_r4_and_a_missing_path_is_r10(tmp_path):
@@ -175,7 +183,7 @@ def test_atomic_write_replaces_a_hard_link_and_leaves_the_other_name_alone(tmp_p
         pytest.skip("hard links unavailable")
     atomic_write(tmp_path, "second.txt", "new")
     assert (tmp_path / "second.txt").read_text(encoding="utf-8") == "new"
-    assert first.read_text(encoding="utf-8") == "old"  # CONTROL: documented in the module text
+    assert first.read_text(encoding="utf-8") == "old"  # control: documented in the module text
 
 
 def test_atomic_write_refuses_the_longest_name_plus_one(tmp_path):
@@ -218,7 +226,7 @@ def test_site_score_outputs_folder_nul_and_missing(tmp_path):
         score_mod.outputs_dir(tmp_path / "missing")
 
 
-def test_site_score_answers_file_nul_is_a_config_error(tmp_path):
+def test_pin_site_score_answers_file_nul_is_a_config_error(tmp_path):
     from hadavin_sdk.k1b.causelist import CauseList
     from hadavin_sdk.k1b.score import load_answers
 
@@ -240,7 +248,7 @@ def test_site_causelist_folder_nul_gives_the_one_wording(tmp_path):
         load_cause_list(Path(str(tmp_path) + NUL))
 
 
-def test_site_replay_output_folder_nul_is_refused_and_writes_nothing(tmp_path):
+def test_site_replay_output_folder_nul_is_refused(tmp_path):
     from hadavin_sdk.k1b.replay import outputs_files
 
     _refused("R4", outputs_files, Path(str(tmp_path) + NUL))
@@ -278,7 +286,7 @@ def test_site_local_dir_root_nul_and_event_id(tmp_path):
     assert not (tmp_path / "evil.json").exists()
 
 
-def test_pin_site_config_root_nul(tmp_path):
+def test_site_config_root_nul(tmp_path):
     from hadavin_sdk.config import load_config
 
     _refused("R4", load_config, Path(str(tmp_path) + NUL))
@@ -339,8 +347,8 @@ def test_a_path_refusal_after_output_exists_still_leaves_failed_txt(tmp_path):
     assert outside.read_text(encoding="utf-8") == "keep"
 
 
-def test_a_refusal_before_output_exists_writes_no_marker(tmp_path):
-    """CONTROL: passes before and after. A refusal before the folder exists wrote nothing, so no marker."""
+def test_control_a_refusal_before_output_exists_writes_no_marker(tmp_path):
+    """Control: passes before and after. A refusal before the folder exists wrote nothing, so no marker."""
     from tests.k1b_support import ScriptedLLM
 
     env = _replay_env(tmp_path)
@@ -385,7 +393,7 @@ def test_vault_kubernetes_token_path_with_a_nul_is_a_config_error():
         make("secrets", settings).get("db")
 
 
-def test_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
+def test_pin_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
     """``.tmp-con`` is a fine name and ``con.json`` is a device name: only the guard on the final name stops the write."""
     from hadavin_sdk.audit import LocalDirSink
     from hadavin_sdk.models import AuditEvent

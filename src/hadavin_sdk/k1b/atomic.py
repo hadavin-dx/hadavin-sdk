@@ -36,11 +36,11 @@ def atomic_write(base: Path, name: str, text: str) -> None:
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
     try:
-        fd = os.open(tmp, flags, 0o666)  # the umask removes what the operator's setting removes
-    except (
-        FileExistsError
-    ):  # the existing file is left alone; the OS text holds the path, so it is not passed on
+        fd = os.open(tmp, flags, 0o600)  # owner only: replay outputs can hold case data
+    except FileExistsError:  # the existing file is left alone
         raise pathguard.PathRefused("R13", "temp file: the name is already in use") from None
+    except OSError as exc:
+        raise _without_path(exc) from None
     try:
         f = os.fdopen(fd, "w", encoding="utf-8", errors="backslashreplace", newline="\n")
     except BaseException:
@@ -53,6 +53,17 @@ def atomic_write(base: Path, name: str, text: str) -> None:
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp, final)
+    except OSError as exc:
+        tmp.unlink(missing_ok=True)
+        raise _without_path(exc) from None
     except BaseException:
         tmp.unlink(missing_ok=True)
         raise
+
+
+def _without_path(exc: OSError) -> OSError:
+    """The same kind of error and the same system reason, without the file names the OS puts in its text (an error that
+    carries no file name is returned as it is)."""
+    if exc.filename is None and exc.filename2 is None:
+        return exc
+    return type(exc)(exc.errno, exc.strerror or type(exc).__name__)

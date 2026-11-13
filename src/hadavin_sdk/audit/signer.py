@@ -107,13 +107,15 @@ def build_local(settings, deps) -> LocalSigner:
         # its shape is checked and the resolved path is what is read.
         try:
             path = pathguard.operator_file(settings.private_key_path, what="signer key file")
-        except pathguard.PathRefused as exc:
-            if exc.rule not in ("R10", "R11"):  # a control character or an over-long path: say so
-                raise
-            raise ConfigError(
-                f"signer ed25519_local: no key file at {settings.private_key_path}"
-            ) from None
-        source, pem = str(path), path.read_bytes()
+        except (
+            pathguard.PathRefused
+        ) as exc:  # a control character or an over-long path is refused as it is
+            text = f"signer ed25519_local: no key file at {settings.private_key_path}"
+            raise pathguard.mapped(exc, R10=text, R11=text) from None
+        source, pem = (
+            str(settings.private_key_path),
+            path.read_bytes(),
+        )  # as typed, never the resolved path
     try:
         key = _private_key(pem, passphrase, source)
     except (TypeError, ValueError) as exc:
@@ -147,7 +149,7 @@ def key_path(path: Path, base: Path | None = None) -> Path:
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     folder = folder.resolve(strict=True)
     if target.is_symlink():
-        raise ValueError(f"{path} is a symlink: a key file is never used through one")
+        raise ValueError("the key file is a symlink: a key file is never used through one")
     real: Path | None
     try:
         real = pathguard.inside(
@@ -158,8 +160,8 @@ def key_path(path: Path, base: Path | None = None) -> Path:
             raise
         real = None  # leaves the key folder: the refusal below, with its pinned wording
     if real is None or real == folder:
-        raise ValueError(
-            f"{path} is outside {folder}: key files are kept only there "
+        raise ValueError(  # no path in the text: the value as typed and the resolved folder both stay out
+            "the key file is outside the key folder: key files are kept only there "
             f"(set {KEY_DIR_ENV} to choose another folder)"
         )
     return real
