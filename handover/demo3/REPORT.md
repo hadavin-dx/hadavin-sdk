@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 28 (M reported)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| M | Agent (read-only): classify the 200 skips | tells which skips can never run here | 12:00Z / 17:30 | ended 12:00Z | first try | reported, closed (evidence/skipped-on-purpose.md) | none |
+| K | Evidence runner: 166 browser tests, BASE then STACK | browser test results | 12:00Z / 17:30 | stop 12:45Z | first try | running (logs started) | check at the next 5-minute mark |
+| L | Evidence runner: 30 gitleaks tests + hygiene with DPLD_REQUIRE_SCAN=1, BASE then STACK | secret-scan results | 12:00Z / 17:30 | stop 12:45Z | first try | running (gitleaks-bin folder exists) | check at the next 5-minute mark |
+| others | I, H, J, G, F, E, D, C2, A, B | closed | - | - | - | closed | none |
+
+ASK: heartbeat 27 asks 1-3 still open, defaults stand (no browser download; gitleaks download of the pinned release is allowed by ORDER 9).
+M RESULT (nothing was run; read from the log and sources): 200 = 166 Playwright + 30 gitleaks + 4 others, as ordered. The 4 others: (1) `tests/test_stall_eviction.py:526` Windows-only (class a: cannot run on Linux under any install); (2) `tests/test_path_confinement.py:284` the `ntpath.isreserved` test needs Python 3.13 (class a; /usr/local/bin/python3.13 exists but has no pytest or project packages, so running it needs a new environment: a person decides); (3) `tests/test_server_hardening.py:224` the burst measurement `test_measure_burst` (class b: opt-in, runs when `LEAD_DESK_LOAD_N=300` is set, optionally `LEAD_DESK_LOAD_RETRY=1`; local only and safe here); (4) `tests/test_n8n_api_url.py:510` an n8n file-permission test (class c: skipped because the user is root; it could run through `setpriv` as user nobody, not checked whether nobody can read the venv and worktree). Full table: evidence/skipped-on-purpose.md.
+
 ## 2026-11-13 12:00Z / 17:30 IST  HEARTBEAT 27 (ORDER 9: K, L, M started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
