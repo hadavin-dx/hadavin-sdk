@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:50Z CORE: realrun-v6 runners A, B, C started (core paused; demo lane only)
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full product suite serial, twice, on main 61ded9e + patch 1 + patch 2 (tree-A1, tree-A2), Python 3.12, browser tests skip | shows the patched chain passes on Linux and is repeatable | 09:50Z / 15:20 IST | hard stop 11:20Z (90 min) | run 1 of 1, 2 suite runs | running | read RESULTS.md when it reports |
+| aa0bf933 (runner B) | new tests of the patches against UNPATCHED main (fails-before), then the shipped mutant sets on a spare tree | shows each new test really fails on the old code and mutants are killed | 09:50Z / 15:20 IST | hard stop 11:20Z | run 1 of 1 | running | same |
+| a36cf35c (runner C) | core-touches-3.patch alone: full suite once, its new tests on unpatched main, the core differential script | the 3 core hunks stand alone | 09:50Z / 15:20 IST | hard stop 11:20Z | run 1 of 1 | running | same |
+| core jobs | none | owner order: no core work | n/a | n/a | n/a | none running | none |
+
+Hash check (done by me before starting): sha256 of real-run-fixes-v6-after-sonar-p3-final.patch starts 9fc11e9a, desk-address-required-v6.patch 66679357, core-touches-3.patch c61791a6: all three match the order. Both patches applied cleanly in order on 61ded9e (tree-A1); core-touches-3 applied alone on a clean 61ded9e (tree-C). Setup: 4 cores, 3 runners at once (one test process each); time-sensitive tests could flake, I will say so if I see it. Raw logs go to /home/user/build/rr6/out/; summary and logs will be pushed to handover/core/evidence/realrun-v6/ on core/cloud-handover after a secret scan.
+
+ASK: none (default: next status block in 30 min or when a runner reports).
+
+
 ## REPORT 2026-11-13 09:47Z CORE: confirmation of the owner repeat (no core work)
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

@@ -106,3 +106,4 @@
 status table block written; idle by design
 realrun-v6 lane blocked: patch files not pushed
 confirmed no core work; waiting for patch files
+realrun-v6 runners A,B,C running
