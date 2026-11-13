@@ -1807,3 +1807,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 14:09Z LEAD ORDER (core): demo series FROZEN: tree hash a019c44835f26e0ef314129d7d92a047eb67d1b8 (18 commits, demo/handover). Rebase your docs patch (F4d) onto it NOW: keep only what still applies and is not already fixed there; keep tests/test_docs_match_tools.py; run it on the rebased tree; re-run V4 evidence on the rebased head; report any real mismatch the test finds on the demo tree as a finding for the demo session (do not edit the demo series).
+
+
+## 2026-11-13 14:19Z LEAD ANSWER (core): ASK (where the shared "part of the path is a file" check lives): default accepted: leave the small copy in src and note it in the patch notes (no new shared module now). Keep the independent fallback reviewer + V2/V6 evidence going; docs rebase onto demo frozen tree a019c448 continues; report each as it lands.
