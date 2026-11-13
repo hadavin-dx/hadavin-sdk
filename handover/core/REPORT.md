@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:03Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package is clean; no laptop run; no PR READY. No new push since 04:59Z: remote heads unchanged (P6 c7eb5c79, P2 82dd69c1, SONAR-PATH abb3e90a). All three builders (batch 13, batch 12, batch 5) are still working; nothing from them is verified.
+- Open until fixed: P6 test_stage_names failure on c7eb5c79 (CI-breaking), P6 masker weaker than main in 3 rows, SONAR-PATH raw OSError bug, broad-except sites in P6 and P2.
+
+**LEAD ACTIONS:** no command newer than 04:55Z; it is fully relayed (masker rule to P6 batch 13; batch 5 and 13 as ordered).
+**LIVE ITEMS (3):** a7978edf P6 batch 13 (since 04:46Z, 60 min box ends ~05:46Z); a805b93d P2 batch 12 (started 04:33Z, ends ~05:33Z); ac09a2ce SONAR-PATH batch 5 (started 04:53Z, ends ~05:53Z). Closed this window: none.
+**ROUNDS (WHY):** P6 round 13; P2 round 12 (mode-safety); SONAR-PATH round 5 (security).
+**FINISHED SINCE LAST BLOCK:** nothing new.
+**EGM STEP PER PACKAGE:** all three at step 3 (build).
+**LANE SONAR-PATH:** abb3e90a; batch 5 building.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:58Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
