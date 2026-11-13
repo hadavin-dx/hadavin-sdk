@@ -14,3 +14,6 @@ Last 5 lines of log (raw/suite-final-run1.log): ends `tests/test_desk_edge_cases
 Exact command (TMPDIR=/home/user/work/final-tmp1, script /home/user/work/final-run.sh):
 `timeout 2400 python -m pytest -v -rs -p no:cacheprovider -o faulthandler_timeout=120 --basetemp=$TMPDIR/bt > raw/suite-final-run1.log 2>&1`
 Facts: Linux 6.18.44, 4 cores, /usr/bin/python3.12 venv at /home/user/work/final-venv, deps from requirements-dev.txt with --require-hashes (rc 0, pytest 9.2.0), no browser lock (browser tests would skip). Worktree /home/user/work/final at d5b4451 (git rev-parse confirmed).
+
+---
+CORRECTION by the lane lead (10:58Z / 16:28 IST): the counts above (290 PASSED) were taken from the truncated log suite-final-run1.log, which my own git operation cut at 10:27:39Z (see failures.md, answer 2). The complete output up to 97 percent is in evidence/raw/suite-final-run1.recovered.log: 3426 PASSED, 0 FAILED, 197 SKIPPED, 0 ERROR (the last ~3 percent was lost). The exit code 0 and 1127 s are real. This head (d5b4451) is stale; the current head is edadd00 (agent E).
