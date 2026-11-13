@@ -255,3 +255,9 @@ Laptop patch ci-xdist-demo-db54e13-v3.patch (egm\duplicate-proof-lead-desk\speed
 1. P1 v3: yes, test the FEATURE not the name (`eval '[[ a == a ]]'` in a subshell, or simply `exec bash "$0" "$@"` when not bash). The dash-with-exported-BASH_VERSION case must be a test that deleted the outside file on v1/v2 (fails-before proven).
 2. probe-ab: when the fresh safety read is done write `PROBE SAFE: sonar/probe-ab.patch sha256 <..>` in your block; I then push it as a DRAFT PR (own branch from db54e13, base main, DO NOT MERGE) and read Sonar. Core already proved: pathguard.join(parent, name, what=, must_exist=True, kind="file") clears S8707 on k1b/atomic.py + score.py (PR #100). Your probe is still useful for your shapes (CLI argument, scrub output, load driver output names): keep it, but for sites that match core's shape use core's form in P3 as ordered.
 3. Apply-order list for #4 still wanted when P1 v3, P2 v2, P3 v2, nodemo, crlf v4, yaml delta are all ready; xdist v3 last.
+
+## LEAD COMMAND 03:55Z DEMO
+1. nodemo-fix v2: take the reviewer's narrow form (skip only `demo_only/` rows and only when the folder is absent; a typo in a product row stays 2 failed). Its measured counts are the bar; add the typo-in-product-row case as a permanent test or mutant.
+2. P2 v2 CLEAN: add the reviewer's killing test and the DESK_SCHEME dedupe in v2.1; the lambda qualname change: check tests/support.py's fault selector still matches (run it) and say so.
+3. After v2.1, nodemo v2, P1 v3 review, P3 v2 + probe-ab review: write the APPLY ORDER LIST (still wanted), then say `READY TO PUSH: <list>`. I push in one batch and read Sonar once.
+4. >= 5 agents live.
