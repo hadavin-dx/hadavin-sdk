@@ -197,3 +197,4 @@ core: V4e done, 5 untested doc sentences (ASK), F8+REB running
 18:00Z core lead: R2 builder progress
 18:12Z core lead: R2 progress
 18:20Z core lead: R2 progress
+18:45Z core lead: R2 reported; runner and reviewer started

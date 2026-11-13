@@ -1,0 +1,40 @@
+# R2 results (builder; claims are builder-measured, not independent)
+
+## Failures and gaps first
+- NOT run: the full suite (the evidence runner does it with out/AF/run.sh style). I ran only 3 selections: sel1 (14 files, 452 passed, 1 skipped, first run had 3 failures, see below), sel2 (3 files, 84 passed), selA (test_real_check_dry + test_script_refusals_feed, 104 passed), selB (25 files, 1585 passed, 1 skipped). All under `unshare -n` with the lo_up-q4g driver, PYTHONPATH=tree-R2/src (package __file__ printed in each log: /home/user/build/rr6/tree-R2/src/lead_desk/__init__.py).
+- First sel1 run had 3 real failures, all fixed: (1) hygiene scan found the vendor URL I wrote in a constants comment (now words, no URL); (2) test_special_output_files key-file pipe and (3) test_file_reader_refusals load_env pipe pinned the OLD refusal text/error type; pathconfine now refuses a pipe on the read path first (PathRefused, a ValueError, "refused: --key-file: is not a regular file ..."). I edited those 2 tests to the new, still one-line refusal. Not weakened: they still require refusal, exit 2, no traceback.
+- Behaviour changes to know: (a) every `confine_existing`/`confine_anywhere` caller now refuses a pipe/device/socket at the last path part; (b) DESK_LIVE_EFFORT is now checked against LIVE_EFFORTS in LiveSettings (before: any non-empty word); the script no longer strips the word (" low" is refused, was accepted and sent with a space); (c) REAL_RESULT_FILE naming a pipe is refused at start (extra sibling found by me); (d) an all-whitespace/empty CA file is refused (ssl treats empty cadata as "use system authorities", found by my own first test run); (e) check_invariants/n8n_api/lockfile refusal texts now plain words (n8n_api exits still 1).
+- CA file with a cert that is not a CA (self-signed leaf) still works (counted by x509, not x509_ca). DER CA files are tried as bytes.
+- Not checked: Windows (.ps1 only apply-tested), Python 3.13, a real SMTP/IMAP TLS run beyond the existing fake-server tests, fork-skip branch (no platform without fork here).
+- Fail-before on B1 (tmp copy, new/changed tests copied in): see table; two files (test_ca_file_reads, test_crash_flag_reads) fail on old code at COLLECTION (missing constants), so I re-ran them on B1 plus a constants-only stub: test_ca_file_reads 22 failed (includes "trust" and valid-file cases that fail only because lead_desk.tls_trust does not exist; the smtp/imap FIFO, over-cap, empty and text cases fail on real behaviour, FIFO = child waits >5 s), test_crash_flag_reads 3 failed (not-utf8, point-oversize, window-oversize) and 2 passed (nul-megabyte and the good-flag control pass on old code: the old code did not misbehave on those, they are kept as pins; the minor "uncapped" cap is shown only by the oversize cases).
+- Siblings NOT changed (judged not named by a person): tools/hygiene.py pattern files, scripts/check_schema.py SCHEMA, run_real_check private writes in its own run folder (hs.key, pw.txt, flag, log), src/lead_desk/db.py schema. Say so if you want them moved too.
+
+## Fail-before on B1 (real run, first failing line)
+| file | old code | new code |
+|---|---|---|
+| test_no_terminal_questions | 2 failed (EOFError traceback; input() without guard in run_live_check) | 2 passed |
+| test_tools_and_fakes_pipes | 12 failed in 50 s (first: `assert 0 == 2` pathconfine read path accepts a pipe; others wait >5 s) | 12 passed |
+| test_regfile_limits_in_constants | 7 failed, 5 passed (first: regfile defines MAX_JSON_BYTES etc. itself) | 12 passed |
+| test_cli_refusals (+1 case " low", +1 text) | 2 failed, 123 passed | all pass (sel1) |
+| test_n8n_api_url (plain reasons) | 2 failed, 135 passed, 1 skipped | pass |
+| test_special_output_files (plain text, fork skip) | 4 failed, 43 passed (first: `...lock file: NotRegularFile` vs plain text) | pass |
+| test_real_check_dry -k named_pipe | 1 failed | 1 passed |
+| test_file_reader_refusals | 13 passed (edited tests are accepted by old code too except through pathconfine) | pass |
+| test_ca_file_reads / test_crash_flag_reads | see above | 22 passed / 5 passed |
+
+## What was done (files in /home/user/build/rr6/tree-R2, baseline commit B1 191dcae; changes are staged, not committed)
+- F1: new src/lead_desk/tls_trust.py `context_from_ca_file(path, setting)`: read_regular_bytes with CA_FILE_MAX_BYTES (constants), cadata=, refuses empty/no certificate, fixed text naming the setting only. Used by smtp_provider._context_from_file and run_real_check.imap_settings. Grep of the whole tree: no other cafile/capath/load_verify_locations use (fakes use load_cert_chain on files they make themselves in demo_only/fake_smtp_tls.py and fake_imap.py: not config paths, not changed). Tests tests/test_ca_file_reads.py: FIFO, over-cap, empty, text, folder, missing, valid, each x 3 entry points, child process 5 s.
+- F2: run_live_check catches EOFError: one line, exit 1, no ledger. Siblings: the only other input( is run_real_check (already guarded); AST test over scripts, load_tools, demo_only, tools, src fails any unguarded input(). tests/test_no_terminal_questions.py.
+- F5: pathconfine `_step` now refuses non-regular last part for reads too. Readers/writers switched to regfile (read_regular_text, load_json_file, open_output, open_regular): check_invariants (5 readers + json out), catcher (control, out), load_driver (/proc/net/tcp, kernel int, meminfo, part files, facts, log), fake_model_server control, fakes RecordedQualifier, portal_demo (canned, assets, and `_armed` flag read which was a plain open() on a flag path: extra sibling), run_real_check result file (two writes + start check). Import style: try/except ImportError block (adds src to path), no new noqa. New caps LOAD_FILE_MAX_BYTES (256 MiB), FLAG_FILE_MAX_BYTES. tests/test_tools_and_fakes_pipes.py one FIFO case per tool + an AST scan that no load_tools/ or the three demo_only files call read_text/open/write_text outside regfile. Docstring of test_file_reader_refusals corrected to what is true.
+- F6: MAX_JSON_BYTES, MAX_TEXT_BYTES, NEW_FILE_MODE (renamed, was _NEW_FILE_MODE), LIVE_PRICE_DATE_FLOOR (tuple, script derives date) and LIVE_EFFORTS are in constants.py only. LIVE_EFFORTS VERIFIED 2026-11-13 by a read-only fetch of the vendor effort page: levels low, medium, high, xhigh, max (xhigh and max are not on every model: comment says so). Desk setting and script share the list.
+- Minors: hooks.py and trace.py crash-flag read through read_regular_text, cap 4096, except (OSError, ValueError); O_NOCTTY added to _COMMON/_FLAGS (open_output too). Nits: new `plain_reason()` in regfile for refusal texts (check_invariants, n8n_api, lockfile); fork-based test module skips without fork.
+- Gates (tree-R2): ruff check: All checks passed; ruff format --check: 176 files already formatted; bandit -ll -r src tools scripts load_tools demo_only: no Medium/High. noqa count: frozen 267, now 267 (+1 E402 for the tls_trust import in run_real_check, -1 PTH123 removed in portal_demo); nosec unchanged (12).
+
+## Patches (in /home/user/build/rr6/out/R2)
+- core-fix-on-frozen-r2.patch: whole fix on frozen 49d3c859 (repo2 write-tree checked = 49d3c85938fe5323a3378a49195d3b8da434b3ca), .ps1 hunks CRLF. 4781 lines, 58 files.
+- core-fix-on-frozen-r2-lf.patch: same, .ps1 hunks LF, for a checkout with LF .ps1.
+- r2-delta.patch: only my changes over B1 (28 files, 1531 lines).
+- Apply tests (plain `git apply`, no flags): CRLF patch on `git archive` of frozen2: rc=0 and the result is identical to tree-R2 (diff -r, only untracked data dir/.ruff_cache differ in the scratch); CRLF patch on `git clone -b frozen2` (eol attribute checkout): rc=0; LF patch on a .ps1-LF checkout: rc=0 and identical; cross cases (LF patch on CRLF checkout, CRLF patch on LF checkout): rc=1 (--check), expected. README command: use -r2.patch on a normal checkout; -r2-lf.patch only if the two .ps1 files are LF.
+
+## Housekeeping
+Scratch removed except tree-R2 and out/R2. No commit of handover files, no push, nothing applied to a real repo, no live call, no y/yes given anywhere. Processes started: 4 background pytest runs, all ended.
