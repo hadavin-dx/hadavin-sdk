@@ -440,10 +440,14 @@ class _Finished:
 
 
 def _run_python(args: list[str], timeout: float) -> _Finished:
-    """Run this interpreter with ``args`` (a fixed program of this file) and wait at most ``timeout`` seconds. The same
-    as ``subprocess.run`` with a fixed argument list, no shell, ``sys.executable`` and a timeout that kills the child
-    and waits for it; it is not a lint workaround. Two differences: a timeout raises ``TimeoutError`` (not
-    ``subprocess.TimeoutExpired``), and the output is decoded strictly as UTF-8 (``subprocess.run`` with ``text=True``
+    """Run this interpreter with ``args`` (a fixed program of this file) and wait at most
+    ``timeout`` seconds. The same
+    as ``subprocess.run`` with a fixed argument list, no shell, ``sys.executable`` and a timeout
+    that kills the child
+    and waits for it; it is not a lint workaround. Two differences: a timeout raises
+    ``TimeoutError`` (not
+    ``subprocess.TimeoutExpired``), and the output is decoded strictly as UTF-8 (``subprocess.run``
+    with ``text=True``
     uses the locale)."""
 
     async def go() -> _Finished:
@@ -3502,8 +3506,10 @@ def test_every_slot_deleted_with_the_object_level_call_is_answered_503(
 
 
 def _child(code: str, timeout: float = 120) -> _Finished:
-    """Run ``code`` in a fresh child interpreter through ``_run_python``, after a line that proves the child imported the
-    package under test (not another copy on the path): when the child exits with 0 the package it printed must be the
+    """Run ``code`` in a fresh child interpreter through ``_run_python``, after a line that proves
+    the child imported the
+    package under test (not another copy on the path): when the child exits with 0 the package it
+    printed must be the
     one this process imports."""
     import hadavin_sdk
 
@@ -4193,7 +4199,10 @@ _BATCH13_SITE_FILES = (
 
 
 def _read_error_site_counts() -> tuple[int, int]:
-    """(places that catch only ``READ_ERRORS``, places that catch only ``ValueError``) in the files of the change."""
+    """(places that catch only ``READ_ERRORS``, places that catch only ``ValueError``).
+
+    Counted in the files of the change.
+    """
     named = value = 0
     for name in _BATCH13_SITE_FILES:
         text = (ROOT / name).read_text(encoding="utf-8")
@@ -4205,7 +4214,8 @@ def _read_error_site_counts() -> tuple[int, int]:
 
 
 def _batch13_claim_problems(text: str) -> list[str]:
-    """The sentences of the CHANGELOG about named read errors, the seal's caps and what it compares, against the code.
+    """The sentences of the CHANGELOG about named read errors, the seal's caps and what it compares,
+    against the code.
     A sentence that was false in batch 12 must be absent; the numbers and lists are the code's."""
     from hadavin_sdk.approvals import requests as R
     from hadavin_sdk.config import EvidenceSettings
@@ -4255,8 +4265,10 @@ def _batch13_claim_problems(text: str) -> list[str]:
 
 
 def test_the_changelog_says_what_the_code_does_about_errors_caps_and_compared_values() -> None:
-    """Class: CHANGELOG-TRUTH (round 12, issue 3): each sentence changed in batch 13 is checked against the code (the
-    count of places that catch only the named kinds, the cap of the walk, the list of named kinds, the fields that move
+    """Class: CHANGELOG-TRUTH (round 12, issue 3): each sentence changed in batch 13 is checked
+    against the code (the
+    count of places that catch only the named kinds, the cap of the walk, the list of named kinds,
+    the fields that move
     in use, the evidence settings) and each sentence that was false is absent."""
     changelog = ROOT / "CHANGELOG.md"
     if not changelog.is_file():  # the mutation runner copies src and tests only
@@ -4265,7 +4277,7 @@ def test_the_changelog_says_what_the_code_does_about_errors_caps_and_compared_va
     assert not problems, f"the CHANGELOG and the code differ: {problems}"
 
 
-def test_the_changelog_claim_check_notices_a_wrong_count_a_missing_sentence_and_an_old_false_one() -> (
+def test_the_changelog_claim_check_notices_a_wrong_count_a_missing_or_an_old_false_sentence() -> (
     None
 ):
     changelog = ROOT / "CHANGELOG.md"
@@ -4288,8 +4300,10 @@ def test_the_changelog_claim_check_notices_a_wrong_count_a_missing_sentence_and_
 
 
 def test_every_mutant_row_has_its_own_name_and_number() -> None:
-    """Class: MUTANT-KILLER (round 12, issue 4): the runner picks a row by a part of its name, so two rows with one number
-    (B270, B271 and B272 were each used twice) make a run of "B270" run both. The number (the first word) and the whole
+    """Class: MUTANT-KILLER (round 12, issue 4): the runner picks a row by a part of its name, so
+    two rows with one number
+    (B270, B271 and B272 were each used twice) make a run of "B270" run both. The number (the first
+    word) and the whole
     name are each unique."""
     from tests import bind_mutants
 
@@ -5168,7 +5182,9 @@ def _pin_sentence_problems(flat: str) -> list[str]:
 def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
     """Class: TEXT-TEST. The sentence that lists the pinned classes is PARSED: the count of classes pinned at import, the
     count of all pinned classes and every class name in the list are the ones in ``standins``; the 1,000-row figure is
-    ``MIXED_ROWS``. On 83cdb7a2 (a real run, old source with this file) it errors with ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the behaviour. The mutation runner copies no CHANGELOG, so this test is
+    ``MIXED_ROWS``. On 83cdb7a2 (a real run, old source with this file) it errors with
+    ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the
+    behaviour. The mutation runner copies no CHANGELOG, so this test is
     skipped there: the check that a count off by one is noticed is ``test_the_pin_count_check_notices_a_count_off_by_one``."""
     changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
     if not changelog.is_file():
@@ -5181,7 +5197,9 @@ def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
 def test_the_pin_count_check_notices_a_count_off_by_one() -> None:
     """Class: MUTANT-KILLER for the count itself, without the CHANGELOG file (so it runs in a mutation copy): a made-up
     sentence with the right counts agrees with the code, and the same sentence with each count one too high, or one class
-    name left out, does not. On 83cdb7a2 (a real run, old source with this file) it errors with ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the behaviour; its proof is the mutant rows B270 and B272."""
+    name left out, does not. On 83cdb7a2 (a real run, old source with this file) it errors with
+    ``AttributeError: no attribute 'HOOKS'``: a missing name, so it is NOT a fail-before test of the
+    behaviour; its proof is the mutant rows B270 and B272."""
     from hadavin_sdk import standins
 
     own_module = {standins.RUNTIME[0], standins.HOOKS[0], standins._ALLOWED[0][0]}
@@ -5678,7 +5696,8 @@ def test_pin_hooks_tools_replaced_by_a_copy_is_judged_by_contents_not_identity(
 
 
 def _decision_for_a_waiting_run(app: Any, rt: Any, decision: str) -> tuple[Any, Any]:
-    """Start a run that waits for approval and build the decision (``approve`` or ``reject``) of the first approver
+    """Start a run that waits for approval and build the decision (``approve`` or ``reject``) of the
+    first approver
     for it: returns (run, ApprovalDecision)."""
     from hadavin_sdk.models import ApprovalDecision
 
@@ -5699,11 +5718,16 @@ def _decision_for_a_waiting_run(app: Any, rt: Any, decision: str) -> tuple[Any, 
 def test_pin_a_real_tool_call_and_an_executed_action_leave_the_runtime_believed(
     tmp_path: Path,
 ) -> None:
-    """Class: OUTAGE-GUARD (round 11, issue 4). A real tool call through ``Runtime._run_tool`` and an approved action
-    through ``Approvals.decide`` -> ``on_decided`` -> ``execute`` (the executor runs and the run ends in the state the
-    fixture gives it) between two seal checks: a lazily made value in the executor, the toolbox or ``validate_proposal``
-    would read as a change and answer 503 to every public request. Verify and rollback are reached by ``execute`` only
-    when the executor's call succeeds; the fixture's call does not, so they are not driven here (named in the report)."""
+    """Class: OUTAGE-GUARD (round 11, issue 4). A real tool call through ``Runtime._run_tool`` and
+    an approved action
+    through ``Approvals.decide`` -> ``on_decided`` -> ``execute`` (the executor runs and the run
+    ends in the state the
+    fixture gives it) between two seal checks: a lazily made value in the executor, the toolbox or
+    ``validate_proposal``
+    would read as a change and answer 503 to every public request. Verify and rollback are reached
+    by ``execute`` only
+    when the executor's call succeeds; the fixture's call does not, so they are not driven here
+    (named in the report)."""
     app = _built(tmp_path, tools={"lookup": lambda inp: "found"})
     rt = _core_runtime(app)
     assert not _runtime_counted(app, rt), "control: counted before any work"
@@ -6100,8 +6124,10 @@ def _toolbox_with_a_spec() -> tuple[Any, Any]:
 def test_pin_a_counter_and_a_set_of_a_toolbox_that_move_in_use_are_not_a_change(
     tmp_path: Path,
 ) -> None:
-    """Class: PLAIN-VALUES, the NOT-compared list (``_MOVES_IN_USE``): ``ToolBox._active`` and ``ToolBox._abandoned``
-    change while the server works, so any plain value is accepted there. PIN: the same behaviour on the old tree."""
+    """Class: PLAIN-VALUES, the NOT-compared list (``_MOVES_IN_USE``): ``ToolBox._active`` and
+    ``ToolBox._abandoned``
+    change while the server works, so any plain value is accepted there. PIN: the same behaviour on
+    the old tree."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
     box, _spec = _toolbox_with_a_spec()
@@ -6133,8 +6159,10 @@ def test_pin_a_counter_and_a_set_of_a_toolbox_that_move_in_use_are_not_a_change(
 def test_a_governing_plain_value_changed_after_the_seal_is_counted(
     tmp_path: Path, where: str, field: str, value: object
 ) -> None:
-    """Class: PLAIN-VALUES (round 12, issue 2): a number, a bool or a text that governs a limit, the evidence, the scrub
-    or a tool is compared by value (text by keyed digest). Fails on 54c3d8a2 (any plain value was accepted)."""
+    """Class: PLAIN-VALUES (round 12, issue 2): a number, a bool or a text that governs a limit, the
+    evidence, the scrub
+    or a tool is compared by value (text by keyed digest). Fails on 54c3d8a2 (any plain value was
+    accepted)."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
     box, spec = _toolbox_with_a_spec()
@@ -6155,8 +6183,10 @@ def test_a_governing_plain_value_changed_after_the_seal_is_counted(
 
 
 def test_a_tool_spec_host_list_is_judged_by_its_contents(tmp_path: Path) -> None:
-    """Class: PLAIN-VALUES: inside a tool's specification a container is judged by what it holds (as ``hooks.tools``
-    is): a host list rebuilt with the same hosts is the same governing value, a host list with another host is not."""
+    """Class: PLAIN-VALUES: inside a tool's specification a container is judged by what it holds (as
+    ``hooks.tools``
+    is): a host list rebuilt with the same hosts is the same governing value, a host list with
+    another host is not."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
     box, spec = _toolbox_with_a_spec()
@@ -6184,8 +6214,10 @@ def test_a_tool_spec_host_list_is_judged_by_its_contents(tmp_path: Path) -> None
 def test_a_whole_container_of_a_member_replaced_after_the_seal_is_counted(
     tmp_path: Path, member: str, field: str, how: str
 ) -> None:
-    """Class: WHOLE-CONTAINER (round 12, issue 1): a dict, list or tuple held by a field of ``registry``, ``audit``,
-    ``limits`` or ``_evidence`` is marked by identity and class, so an equal copy of it is a change too. Fails on
+    """Class: WHOLE-CONTAINER (round 12, issue 1): a dict, list or tuple held by a field of
+    ``registry``, ``audit``,
+    ``limits`` or ``_evidence`` is marked by identity and class, so an equal copy of it is a change
+    too. Fails on
     54c3d8a2 (the mark was the class only)."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
@@ -6293,10 +6325,14 @@ def test_a_dead_weak_mark_is_not_matched_by_none(tmp_path: Path) -> None:
 def test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Class: API (round 11, issue 3), the ``type(hooks)`` check, kept as a second line of defence: the class pin
-    (``standins.is_pinned_instance``) is made to answer yes, as if the copy had passed it (it is a copy with the same
-    attributes, the module name is rebound to it and the hooks object is moved to it with ``__class__``); then only
-    the class the seal recorded tells the copy from the real ``Hooks``. Without that check the fields are equal and
+    """Class: API (round 11, issue 3), the ``type(hooks)`` check, kept as a second line of defence:
+    the class pin
+    (``standins.is_pinned_instance``) is made to answer yes, as if the copy had passed it (it is a
+    copy with the same
+    attributes, the module name is rebound to it and the hooks object is moved to it with
+    ``__class__``); then only
+    the class the seal recorded tells the copy from the real ``Hooks``. Without that check the
+    fields are equal and
     the runtime is believed (row B279)."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
@@ -6353,7 +6389,8 @@ def test_pin_the_contents_of_a_set_a_hook_object_holds_are_not_compared(tmp_path
 def test_a_named_error_while_reading_annotations_is_swallowed_and_an_unnamed_one_is_not(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Class: BROAD-EXCEPT, sites ``standins._touch_annotations`` (annotations and ``__slotnames__``): a named type
+    """Class: BROAD-EXCEPT, sites ``standins._touch_annotations`` (annotations and
+    ``__slotnames__``): a named type
     leaves the class read as it is, an unnamed type comes out."""
 
     class Getter:
@@ -6384,8 +6421,10 @@ def test_a_named_error_while_reading_annotations_is_swallowed_and_an_unnamed_one
 def test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guarded(
     pinning: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Class: BROAD-EXCEPT, sites ``standins.pin_module`` and ``standins.pin_all``: a named error while pinning is
-    swallowed and leaves the class unpinned; the first question then pins it, and a change made after that is refused.
+    """Class: BROAD-EXCEPT, sites ``standins.pin_module`` and ``standins.pin_all``: a named error
+    while pinning is
+    swallowed and leaves the class unpinned; the first question then pins it, and a change made
+    after that is refused.
     An unnamed error comes out of both."""
     key = standins.APPROVALS
     run = (lambda: standins.pin_module(key[0])) if pinning == "pin_module" else standins.pin_all
@@ -6411,7 +6450,8 @@ def test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_
 def test_an_unnamed_error_type_comes_out_of_the_ip_literal_read(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Class: BROAD-EXCEPT, site ``netguard.parse_ip_literal`` (``ValueError`` only): the standard library refuses a
+    """Class: BROAD-EXCEPT, site ``netguard.parse_ip_literal`` (``ValueError`` only): the standard
+    library refuses a
     bad address with ``ValueError``, which is answered ``None``; any other type comes out."""
     assert netguard.parse_ip_literal("not an address") is None
     monkeypatch.setattr(netguard.ipaddress, "ip_address", _raiser(ValueError))
@@ -6443,8 +6483,10 @@ def _fake_function(error: type[Exception]) -> Any:
 
 
 def test_an_unnamed_error_type_comes_out_of_the_cell_reads(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Class: BROAD-EXCEPT, sites ``requests._walk`` and ``requests._one_cell`` (``ValueError`` only: an empty cell).
-    A real cell raises nothing else, so a stand-in function class is used: a ``ValueError`` is answered as an empty
+    """Class: BROAD-EXCEPT, sites ``requests._walk`` and ``requests._one_cell`` (``ValueError``
+    only: an empty cell).
+    A real cell raises nothing else, so a stand-in function class is used: a ``ValueError`` is
+    answered as an empty
     cell, any other type comes out."""
     from hadavin_sdk.approvals import requests as R
 
@@ -6465,7 +6507,10 @@ def test_an_unnamed_error_type_comes_out_of_the_cell_reads(monkeypatch: pytest.M
 
 
 def _swallowed_by_a_dropped_connection(server: http.server.HTTPServer) -> bool:
-    """POST once; True when the client got no answer at all (the connection was closed), False for any status."""
+    """POST once.
+
+    True when the client got no answer at all (the connection was closed), False for any status.
+    """
     import http.client
 
     try:
@@ -6480,9 +6525,12 @@ def test_an_unnamed_error_in_the_receiver_closes_the_connection_and_no_action_ru
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """Class: BROAD-EXCEPT, sockets (loopback only), sites ``receiver._recheck`` and ``receiver._refused``. A named
-    error is a 503. An unnamed type is NOT a 503: ``do_POST`` raises, the server closes the connection (the client sees
-    no status line) and writes a traceback to its stderr, and ``handle_slack_action`` is never reached, so no action
+    """Class: BROAD-EXCEPT, sockets (loopback only), sites ``receiver._recheck`` and
+    ``receiver._refused``. A named
+    error is a 503. An unnamed type is NOT a 503: ``do_POST`` raises, the server closes the
+    connection (the client sees
+    no status line) and writes a traceback to its stderr, and ``handle_slack_action`` is never
+    reached, so no action
     runs. Fail-closed by dropping, loud by the traceback."""
     from hadavin_sdk.approvals import receiver
 

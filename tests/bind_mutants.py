@@ -1,5 +1,6 @@
 """The mutants of the public-bind refusal and the shared loopback check (named B1 and up; the runner prints the count; the
-numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147, B224 and B253 do not exist (removed with a reason in the
+numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147, B224 and B253 do
+not exist (removed with a reason in the
 change that removed them: B85 had the same killer and the same effect as B84; B224 was merged away in batch 9, no row of that name was kept; B253 was never made, its number was skipped in batch 10; checked 2026-11-13 with `git log --all -S'"B253 ' -- tests/bind_mutants.py`, which lists no commit; B279 was tried in batch 12 and dropped: removing the class comparison of the hooks is an equivalent change, because the class pin already refuses a copied class, see test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted, which passes with the comparison removed), and the rows are not in number order), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
@@ -63,7 +64,8 @@ def mutant(name, file, old, new, test_file, killer, expect, **kw):
 
 
 def unnamed(name, file, old, killer, expect="DID NOT RAISE", **kw):
-    """A row that puts ``Exception`` where the named tuple (or ``ValueError``) is: the test that an unnamed type
+    """A row that puts ``Exception`` where the named tuple (or ``ValueError``) is: the test that an
+    unnamed type
     comes out of the site must fail."""
     new = (
         old.replace("standins.READ_ERRORS", "Exception")
@@ -1571,7 +1573,8 @@ M = [
         "B172 the on_decided of the approvals is not counted",
         RQ,
         "        if not _is_core_on_decided(self.on_decided, not self._hand_built, scan):\n",
-        "        if False and not _is_core_on_decided(self.on_decided, not self._hand_built, scan):\n",
+        "        if False and not _is_core_on_decided(self.on_decided, not self._hand_built, "
+        "scan):\n",
         T_BG,
         "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
         "was not counted as held on_decided",
@@ -1608,7 +1611,8 @@ M = [
     mutant(
         "B176 the recheck reads only the slots the held-object scan happens to read",
         RC,
-        "        # every slot is read: an empty one raises AttributeError, answered 503\n        for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
+        "        # every slot is read: an empty one raises AttributeError, answered 503\n        "
+        "for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
         "        # every slot is read: an empty one raises AttributeError, answered 503\n",
         T_BG,
         "test_every_slot_deleted_with_the_object_level_call_is_answered_503",
@@ -1840,8 +1844,10 @@ M = [
     mutant(
         "B200 serve does not read every slot at the start",
         RC,
-        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n        for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
-        '        # a deleted slot (any of them) is a refusal at the start, not a late 503\n        for slot in Approvals.__slots__:\n            if slot != "_audit_sink":\n                object.__getattribute__(approvals, slot)\n',
+        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n       "
+        " for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
+        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n       "
+        ' for slot in Approvals.__slots__:\n            if slot != "_audit_sink":\n                object.__getattribute__(approvals, slot)\n',
         T_BG,
         "test_serve_refuses_with_bind_refused_when_any_slot_is_deleted",
         "DID NOT RAISE",
@@ -1850,8 +1856,10 @@ M = [
     mutant(
         "B207 serve does not read the registry slot at the start",
         RC,
-        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n        for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
-        '        # a deleted slot (any of them) is a refusal at the start, not a late 503\n        for slot in Approvals.__slots__:\n            if slot != "_registry":\n                object.__getattribute__(approvals, slot)\n',
+        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n       "
+        " for slot in Approvals.__slots__:\n            object.__getattribute__(approvals, slot)\n",
+        "        # a deleted slot (any of them) is a refusal at the start, not a late 503\n       "
+        ' for slot in Approvals.__slots__:\n            if slot != "_registry":\n                object.__getattribute__(approvals, slot)\n',
         T_BG,
         "test_serve_refuses_with_bind_refused_when_any_slot_is_deleted",
         "DID NOT RAISE",
@@ -2061,8 +2069,10 @@ M = [
     mutant(
         "B226 a holder key is compared with ==",
         RQ,
-        '    # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one\n    if type(key) is not str or key != "rt":\n',
-        '    # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one\n    if key != "rt":\n',
+        "    # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one\n    if type(key) "
+        'is not str or key != "rt":\n',
+        "    # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one\n    if key != "
+        '"rt":\n',
         T_BG,
         "test_a_holder_key_that_is_a_text_subclass_runs_no_code_of_its_own",
         "a holder whose key is a text subclass was believed",
@@ -2620,7 +2630,8 @@ M = [
         "test_pin_a_decision_through_on_decided_adds_no_name_to_the_runtime",
         "a decision added or removed a name of the runtime",
     ),
-    # Batch 13, A and B: the whole container, and the plain values, of the four members and of the hook objects
+    # Batch 13, A and B: the whole container, and the plain values, of the four members and of the
+    # hook objects
     mutant(
         "B278 a value that moves in use is compared by identity",
         RQ,
@@ -2633,7 +2644,8 @@ M = [
     mutant(
         "B279 the class of the hooks is not compared with the sealed one",
         RQ,
-        "    if type(hooks) is not sealed[5] or not standins.is_pinned_instance(hooks, standins.HOOKS):\n",
+        "    if type(hooks) is not sealed[5] or not standins.is_pinned_instance(hooks, "
+        "standins.HOOKS):\n",
         "    if not standins.is_pinned_instance(hooks, standins.HOOKS):\n",
         T_BG,
         "test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted",
@@ -2642,22 +2654,28 @@ M = [
     mutant(
         "B290 a container held by a member field is marked by its class only",
         RQ,
-        "            self.out.append((_MARK_ID, (id(obj), type(obj))))\n        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], obj):\n            raise _Changed\n        self.pos += 1\n\n    def plain",
-        "            self.out.append((_MARK_KIND, type(obj)))\n        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], obj):\n            raise _Changed\n        self.pos += 1\n\n    def plain",
+        "            self.out.append((_MARK_ID, (id(obj), type(obj))))\n        elif self.pos >= "
+        "len(self.marks) or not _mark_matches(self.marks[self.pos], obj):\n            raise _Changed\n        self.pos += 1\n\n    def plain",
+        "            self.out.append((_MARK_KIND, type(obj)))\n        elif self.pos >= "
+        "len(self.marks) or not _mark_matches(self.marks[self.pos], obj):\n            raise _Changed\n        self.pos += 1\n\n    def plain",
         T_BG,
         "test_a_whole_container_of_a_member_replaced_after_the_seal_is_counted",
         "replaced (equal copy) and was not counted",
-        pinned="tests/test_bindguard::test_a_whole_container_of_a_member_replaced_after_the_seal_is_counted[equal copy-registry-agents]",
+        pinned="tests/test_bindguard::test_a_whole_container_of_a_member_replaced_after_the_seal_i"
+        "s_counted[equal copy-registry-agents]",
     ),
     mutant(
         "B291 a plain value is not compared with its mark",
         RQ,
-        "        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], obj):\n            raise _Changed\n        self.pos += 1\n\n    def decide",
-        "        elif self.pos >= len(self.marks):\n            raise _Changed\n        self.pos += 1\n\n    def decide",
+        "        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], "
+        "obj):\n            raise _Changed\n        self.pos += 1\n\n    def decide",
+        "        elif self.pos >= len(self.marks):\n            raise _Changed\n        self.pos "
+        "+= 1\n\n    def decide",
         T_BG,
         "test_a_governing_plain_value_changed_after_the_seal_is_counted",
         "changed and was not counted",
-        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_counted[box-timeout_s-99.0]",
+        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_count"
+        "ed[box-timeout_s-99.0]",
     ),
     mutant(
         "B292 text is compared by its class only, not by its digest",
@@ -2667,7 +2685,8 @@ M = [
         T_BG,
         "test_a_governing_plain_value_changed_after_the_seal_is_counted",
         "changed and was not counted",
-        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_counted[spec-name-other]",
+        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_count"
+        "ed[spec-name-other]",
     ),
     mutant(
         "B293 every plain value is taken for one that moves in use",
@@ -2677,13 +2696,16 @@ M = [
         T_BG,
         "test_a_governing_plain_value_changed_after_the_seal_is_counted",
         "changed and was not counted",
-        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_counted[box-timeout_s-99.0]",
+        pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_count"
+        "ed[box-timeout_s-99.0]",
     ),
-    # Batch 13, F: every named-error site, an unnamed type comes out (``Exception`` put back at the site)
+    # Batch 13, F: every named-error site, an unnamed type comes out (``Exception`` put back at the
+    # site)
     unnamed(
         "B294 annotations of a class are read with any error swallowed",
         SI,
-        "    # a class without one (3.14 reads it differently) is fine\n    with contextlib.suppress(*READ_ERRORS):\n        _CLASS_ANNOTATIONS.__get__(cls)\n",
+        "    # a class without one (3.14 reads it differently) is fine\n    with "
+        "contextlib.suppress(*READ_ERRORS):\n        _CLASS_ANNOTATIONS.__get__(cls)\n",
         "test_a_named_error_while_reading_annotations_is_swallowed_and_an_unnamed_one_is_not",
     ),
     unnamed(
@@ -2695,16 +2717,22 @@ M = [
     unnamed(
         "B296 pin_module swallows any error",
         SI,
-        "            with contextlib.suppress(*READ_ERRORS):\n                if live_class(key) is not None:",
-        "test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guarded",
-        pinned="tests/test_bindguard::test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guarded[pin_module]",
+        "            with contextlib.suppress(*READ_ERRORS):\n                if live_class(key) "
+        "is not None:",
+        "test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guar"
+        "ded",
+        pinned="tests/test_bindguard::test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the"
+        "_first_question_and_then_guarded[pin_module]",
     ),
     unnamed(
         "B297 pin_all swallows any error",
         SI,
-        "        with contextlib.suppress(*READ_ERRORS):  # the lazy path pins it at the first question",
-        "test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guarded",
-        pinned="tests/test_bindguard::test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guarded[pin_all]",
+        "        with contextlib.suppress(*READ_ERRORS):  # the lazy path pins it at the first "
+        "question",
+        "test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the_first_question_and_then_guar"
+        "ded",
+        pinned="tests/test_bindguard::test_a_class_left_unpinned_by_a_named_error_is_pinned_at_the"
+        "_first_question_and_then_guarded[pin_all]",
     ),
     unnamed(
         "B298 the pinned-instance question swallows any error",
@@ -2733,14 +2761,16 @@ M = [
     unnamed(
         "B302 the receiver recheck answers 503 for any error",
         RC,
-        '    except standins.READ_ERRORS:\n        return ("the approvals object could not be read (a slot is missing)",)',
+        '    except standins.READ_ERRORS:\n        return ("the approvals object could not be '
+        'read (a slot is missing)",)',
         "test_an_unnamed_error_in_the_receiver_closes_the_connection_and_no_action_runs",
         expect="an unnamed error in the recheck was answered",
     ),
     unnamed(
         "B303 the refusal log hides any error",
         RC,
-        "    # a log failure must not turn the 503 into a dropped connection\n    except standins.READ_ERRORS:\n",
+        "    # a log failure must not turn the 503 into a dropped connection\n    except "
+        "standins.READ_ERRORS:\n",
         "test_an_unnamed_error_in_the_receiver_closes_the_connection_and_no_action_runs",
         expect="an unnamed error in the refusal log was answered",
     ),
@@ -2753,13 +2783,15 @@ M = [
     unnamed(
         "B305 the runtime check answers not-the-runtime for any error",
         RQ,
-        "    # anything unreadable is not the core's runtime (a hostile object may raise anything)\n    except standins.READ_ERRORS:\n",
+        "    # anything unreadable is not the core's runtime (a hostile object may raise "
+        "anything)\n    except standins.READ_ERRORS:\n",
         "test_an_unnamed_error_type_comes_out_of_the_runtime_check",
     ),
     unnamed(
         "B306 the over-budget walk counts the runtime for any error",
         RQ,
-        '    # an unreadable runtime is not "over budget"; it stays counted as held\n    except standins.READ_ERRORS:\n',
+        '    # an unreadable runtime is not "over budget"; it stays counted as held\n    except '
+        "standins.READ_ERRORS:\n",
         "test_an_unnamed_error_type_comes_out_of_the_over_budget_walk",
     ),
     unnamed(

@@ -103,8 +103,10 @@ _STATE_KINDS: tuple[type, ...] = (
     deque,
 )
 _WALK_DEPTH = 4  # levels entered below a hook field (functions, cells, bound methods, dicts, lists)
-# objects one walk may write down or compare. A runtime has two walks, each with its own count: the hooks, and the four
-# members (``limits``, ``audit``, ``registry``, ``_evidence``) together, so up to 10,000 objects per runtime. More in one
+# objects one walk may write down or compare. A runtime has two walks, each with its own count: the
+# hooks, and the four
+# members (``limits``, ``audit``, ``registry``, ``_evidence``) together, so up to 10,000 objects per
+# runtime. More in one
 # walk is refused at build and read as changed later.
 _WALK_NODES = 5_000
 
@@ -201,8 +203,10 @@ class _Walk:
         self.pos += 1
 
     def ident(self, obj: object) -> None:
-        """A container held directly by a field: written down as (identity, class), not by class only, so a whole
-        container replaced by another of the same class (an equal copy too) is a change. Its content is not read."""
+        """A container held directly by a field: written down as (identity, class), not by class
+        only, so a whole
+        container replaced by another of the same class (an equal copy too) is a change. Its content
+        is not read."""
         if self.pos >= _WALK_NODES:
             raise _Over
         if self.marks is None:
@@ -212,9 +216,12 @@ class _Walk:
         self.pos += 1
 
     def plain(self, obj: object, moves: bool) -> None:
-        """A plain value (text, number, bool, ``None``, set, frozenset, deque) held directly by a field of an entered
-        object. It is written down by value (text and bytes as a keyed digest; a set, frozenset or deque as
-        (identity, class)), unless the field is named in ``_MOVES_IN_USE`` as one that changes while the server works:
+        """A plain value (text, number, bool, ``None``, set, frozenset, deque) held directly by a
+        field of an entered
+        object. It is written down by value (text and bytes as a keyed digest; a set, frozenset or
+        deque as
+        (identity, class)), unless the field is named in ``_MOVES_IN_USE`` as one that changes while
+        the server works:
         then any plain value is accepted there (a slot)."""
         if self.pos >= _WALK_NODES:
             raise _Over
@@ -230,7 +237,8 @@ class _Walk:
         self.pos += 1
 
     def decide(self, choose: Callable[[], bool]) -> bool:
-        """A yes or no taken when the seal is written and read back, unchanged, when it is compared: the live object
+        """A yes or no taken when the seal is written and read back, unchanged, when it is compared:
+        the live object
         never answers it (its class is compared right after, by ``_member_fields``)."""
         if self.pos >= _WALK_NODES:
             raise _Over
@@ -287,8 +295,10 @@ def _walk(obj: object, w: _Walk, depth: int, entered: bool) -> None:
     elif entered:
         _member_fields(obj, w, depth + 1, deep=True)
     elif w.decide(lambda: kind in _ENTER_KINDS):
-        # a tool's specification or the scrub settings: their fields govern what a tool may reach, so they are read from
-        # a fresh depth (the objects hold plain values, tuples and dicts only: nothing nests without end)
+        # a tool's specification or the scrub settings: their fields govern what a tool may reach,
+        # so they are read from
+        # a fresh depth (the objects hold plain values, tuples and dicts only: nothing nests without
+        # end)
         _member_fields(obj, w, 1, deep=True)
 
 
@@ -330,11 +340,15 @@ def _member_fields(obj: object, w: _Walk, depth: int, deep: bool) -> None:
                 _member_fields(value, w, depth + 1, deep=False)
 
 
-# Exact classes whose own fields are read (compared) when one is met inside a hook or a member: the scrub settings
-# (redaction) and a tool's specification (its name, function, hosts, ports, secret names and limits).
+# Exact classes whose own fields are read (compared) when one is met inside a hook or a member: the
+# scrub settings
+# (redaction) and a tool's specification (its name, function, hosts, ports, secret names and
+# limits).
 _ENTER_KINDS: tuple[type, ...] = (ScrubSettings, ToolSpec)
-# Fields that change while the server works (a counter, a set of threads that were given up): any plain value is
-# accepted there. Every other plain field of an entered object is compared by value. Keyed by (module, class name).
+# Fields that change while the server works (a counter, a set of threads that were given up): any
+# plain value is
+# accepted there. Every other plain field of an entered object is compared by value. Keyed by
+# (module, class name).
 _MOVES_IN_USE: dict[tuple[str, str], frozenset[str]] = {
     ("hadavin_sdk.tools", "ToolBox"): frozenset({"_active", "_abandoned"}),
 }
