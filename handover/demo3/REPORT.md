@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 09:53Z / 15:23 IST  HEARTBEAT 4 (ORDER 2: agent C started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner (Sonnet): full suite, Python 3.12, no browser tests; main 61ded9e and PR #12 8d65577 | pass/fail evidence for PR #12 vs main | 09:39Z / 15:09 | run2 of both heads ends ~10:25Z / 15:55 IST | run 1 of 2 per head (order says twice) | running | read progress-A.txt; write evidence/summary.md numbers table on top when done |
+| B | Evidence runner (Sonnet): hostile-input pass | path-confinement evidence | 09:39Z / 15:09 | done 09:49Z | 5 of 5 groups | reported, closed | none |
+| C | Evidence runner (Sonnet): hang hunt on test_burst_run_logs_every_request, fresh main copy: (a) test alone x10, (b) its file x5, (d1) one core x5, then after A ends (d2) nice + 3 CPU hogs x5 and (c) full suite once with faulthandler | finds out whether and when the test hangs | 09:53Z / 15:23 | about 60-70 min; hard stop 11:07Z / 16:37 IST | task a first, no retry | running (setting up copy and venv) | read progress-C.txt every ~10 min |
+| lead-me | register, supervision, pushes | keeps A and C watched | 09:37Z / 15:07 | cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:10Z |
+
+ASK:
+1. Load: A runs 2 heavy suites; to keep A's numbers clean and stay within 3 heavy runs, C does the CPU-hog case (d2) and its full suite (c) only after A's four runs end (C waits at most 48 min, then runs (c) anyway and skips (d2) and says so). Default: keep this.
+
 ## 2026-11-13 09:52Z / 15:22 IST  HEARTBEAT 3 (B reported)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
