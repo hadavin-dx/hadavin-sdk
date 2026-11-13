@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:39Z (07:09 IST) / Part 6 round 7 resolved: 5 Major, round 8 needed; runner on 41c84695 INCOMPLETE; slots are the bottleneck
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 round 7 NOT clean (5 Major, 3 Minor groups). Report: handover/reviews/PD-banner/goldfish_review_report-r7.md; ledger PDBANNER-r7-1..8 added. One fix brief (classes A-F) goes to a batch 8 builder next.
+- Runner on 41c84695 is INCOMPLETE: its full pytest never got a slot (queued from 01:32:30, killed), banner table (225) killed unfinished, lint/bandit and fail-before not run. Done: stage 37 of 37 good, probes 6a-6e (0 violations), SAME_ASSERT re-read (the six reasons hold). The builder's own claims (10760 passed, 225 of 225) are therefore still NOT independently proven. That evidence will be run once, on the batch 8 head, not on the superseded 41c84695.
+- SLOT BOTTLENECK, measured at 01:39Z: 3 slots; Part 2 batch 8 builder holds 2 (its own bind_mutants and stage_mutants plus lint and the full pytest shown), Q8c-1 full suite (priority 1) has waited 17 min for a slot (heavy.sh pid 14074 age 1066 s). Runner wait for stage mutants 4 min 41 s, banner table 5 min 21 s. LEAD DECISION WANTED: the Q8c-1 suite and the next runner both wait behind the Part 2 builder's mutant runs; tell me if Q8c-1 should be served first (it already has priority 1; the slots are held by running jobs, not by queue order).
+- Part 2 batch 8 (box to 01:49Z) and Q8c-1 builder have not reported. No head moved except pd-banner 41c84695 (earlier).
+
+**LEAD ACTIONS**: the slot question above.
+
+**LIVE ITEMS**: abb52410 Part 2 batch 8; a35e15e9 Q8c-1 (suite queued); Part 6 batch 8 builder starting now (3 agents after start). Heads: pd-bind 07de0091, pd-banner 41c84695, q8c1-b16 37cd5157.
+
+**ROUNDS (WHY)**: Part 6 round 7 done not clean (mode-safety, no cap); round 8 after batch 8. Part 2 round 8 after its batch 8. Q8c-1 round 17 after the push.
+
+**FINISHED SINCE LAST BLOCK (01:37Z)**: Part 6 round 7 resolve report; ledger rows PDBANNER-r7-1..8; runner a389dd75 closed (incomplete).
+
 ## 01:37Z (07:07 IST) / Part 6 round 7: both reviewers back, NOT clean (0 Blocker, 6 Major distinct); resolve next; runner still waiting for evidence
 
 **FAILED / UNCERTAIN FIRST**
