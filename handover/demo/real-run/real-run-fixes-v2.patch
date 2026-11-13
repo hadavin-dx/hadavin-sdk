@@ -1,0 +1,595 @@
+diff --git a/docs/real-services.md b/docs/real-services.md
+index 958fd7c..660ea0a 100644
+--- a/docs/real-services.md
++++ b/docs/real-services.md
+@@ -11,7 +11,7 @@ This script has not been run against a real HubSpot account or a real Gmail mail
+ 1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in. Each name is explained inside the file. Secrets are never in that file, only the paths of one-line key files (a CRM service key with contacts read and write only; a mail app password).
+ 1a. **Before turning lead stages on in any real HubSpot account (required):** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off; test on one made-up contact first. The desk writes the lead status field and cannot see those automations (`docs/limits.md`, section "Which CRM stage things the desk touches").
+ 2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program never creates properties.
+-3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids).
++3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids). The self-test deletes its temporary folder (result file, desk logs, book) when it ends, also after a failure; add `--keep` to keep it and to see the result file path.
+ 
+ It sends new people, repeats through the same door and the other door, one person with two different addresses (a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the result says so), stops the desk hard once after the load started, restarts it, and re-sends. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (for example one Gmail and one Google Workspace mailbox; one block per mailbox in the config) by the header `X-Send-Key` (no body or address is read) and prints only counts and a pass/fail table of the checks, plus a per-lead table. The same goes into a JSON file.
+ 
+diff --git a/docs/settings.md b/docs/settings.md
+index 95e7942..52f25c2 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -1,6 +1,6 @@
+ # Settings
+ 
+-Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error.
++Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error (the one exception is the content of a key file: the desk opens `DESK_HUBSPOT_KEY_FILE` at its first CRM call, see the CRM settings below).
+ 
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+@@ -79,7 +79,7 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ 
+ ### CRM settings (`DESK_CRM=hubspot`)
+ 
+-* `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters.
++* `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters. The desk opens the file at its first CRM call, not at start: a missing or bad key file shows as a CRM configuration error then. `scripts/run_real_check.py` checks the file with the same code before its y/N question and refuses (exit code 2).
+ * `DESK_HUBSPOT_MAX_CALLS`: required hard cap, counted per process in memory: a restarted desk starts again at 0, so a restart loop is not limited by it. Only the live-model spend ledger is a file that survives restarts.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+@@ -113,12 +113,12 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ 
+ ## Settings of the helper scripts (not read by the desk)
+ 
+-* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run), `DESK_HUBSPOT_KEY_FILE`, `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
+-* Optional names of that script: `REAL_PERSONS` (default 12, at least 8, at most 1000), `REAL_DRAIN_SECONDS` (seconds to wait for the desk, default 150), `REAL_MAIL_WAIT_SECONDS` (default 90), `REAL_MAIL_SETTLE_SECONDS` (default 10, the mail poll time: after every mail is seen once, wait this long and count once more), each of these three above 0 and at most 86,400; `REAL_RESULT_FILE` (where the JSON result goes; default `result.json` next to the database).
++* `scripts/run_real_check.py` reads its names from the config file you give it (`scripts/real-run.env.example` explains each). It refuses to start (exit code 2) when a required name is missing: `DESK_DB_PATH` (must name a file that does NOT exist yet: a new book for each run; `:memory:` is refused before the question with the desk's own message and the desk's own exit code 4), `DESK_HUBSPOT_KEY_FILE` (a missing, two-line or too-short key file is refused too, before the question, without printing the key), `DESK_HUBSPOT_MAX_CALLS`, `REAL_HUBSPOT_READBACK_MAX_CALLS` (at least 5, at most 10000), `DESK_SMTPP_HOST`, `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`, `REAL_IMAP_1_USER`, `REAL_IMAP_1_PASSWORD_FILE`, `REAL_IMAP_2_USER` and `REAL_IMAP_2_PASSWORD_FILE`.
++* Optional names of that script: `REAL_PERSONS` (default 12, at least 8, at most 1000), `REAL_DRAIN_SECONDS` (seconds to wait for the desk, default 150), `REAL_MAIL_WAIT_SECONDS` (default 90), `REAL_MAIL_SETTLE_SECONDS` (default 10, the mail poll time: after every mail is seen once, wait this long and count once more), each of these three above 0 and at most 86,400; `REAL_RESULT_FILE` (where the JSON result goes; default `result.json` next to the database). Flag `--keep` (only with `--dry-fakes`): the self-test deletes its temporary folder at the end, also after a failure; `--keep` keeps it and prints the result file path. A config file that is not UTF-8 text is refused (exit code 2) with a fixed message that names no byte value.
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+ * Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+-* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
+-* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
++* Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 4 the book path is `:memory:` (refused as the desk refuses it, before the question, no file made); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
++* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file). Its exit codes: 0 every call was answered with a label; 1 stopped before calling anything (you did not answer `y`, or there was no terminal); 2 refused at the start (a bad setting or a key file that cannot be read or is shorter than 8 characters, checked before the question) or the spend ledger could not be used; 3 at least one call failed.
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+diff --git a/scripts/run_live_check.py b/scripts/run_live_check.py
+index 16523b3..bcfed78 100644
+--- a/scripts/run_live_check.py
++++ b/scripts/run_live_check.py
+@@ -10,7 +10,11 @@ Use the model ids and prices from your provider's own price page (the form is ID
+ Nothing is assumed: without caps, prices and a price date the script refuses to start. It prints the exact
+ worst-case cost of the whole run and waits for y/N before the first call. --base-url is the provider address
+ (default: the desk's own default address). The key is sent in a header of every request; any address other than
+-the provider's own or this computer is refused. The leads' e-mail addresses are made up (example.com)."""
++the provider's own or this computer is refused. The leads' e-mail addresses are made up (example.com).
++The key file is checked before the question (it must be readable and hold at least 8 characters).
++Exit codes: 0 every call was answered with a label; 1 stopped before calling anything (you did not answer y, or there
++was no terminal to answer on); 2 refused at the start (a bad setting or a key file that cannot be used) or the spend
++ledger could not be used; 3 at least one call failed (the errors are counted by class in the output)."""
+ 
+ from __future__ import annotations
+ 
+@@ -39,6 +43,8 @@ RUNS = 3
+ PCT = 100
+ P95 = 0.95
+ EXIT_REFUSED = 2
++EXIT_STOPPED = 1
++EXIT_FAILED = 3
+ BODY_OVERHEAD = 600  # bytes of JSON and system text around the question (a safe upper bound, for the estimate)
+ 
+ 
+@@ -143,6 +149,13 @@ def main(argv: list[str] | None = None) -> int:
+     except ValueError as e:
+         print(f"refused: {e}")
+         return EXIT_REFUSED
++    try:
++        # COUPLING: `_read_key` is a private method of LiveQualifier, called on purpose: it is the reader the calls use,
++        # so the check and the calls share one rule. Its messages are fixed texts (never the key or the path).
++        LiveQualifier(settings[0])._read_key()
++    except LiveError as e:
++        print(f"refused: {e}")
++        return EXIT_REFUSED
+     # worst case: every call of every model, the longest question this script can send
+     q_bytes = max(len(f"lead id: {lid}\ne-mail: {em}\nAnswer: hot, warm or cold?") for lid, em in leads) + BODY_OVERHEAD
+     with localcontext(MONEY_CONTEXT):  # the money context: exact sums, rounded UP so the figure is never too low
+@@ -150,10 +163,16 @@ def main(argv: list[str] | None = None) -> int:
+         worst_shown = worst.quantize(Decimal("0.0001"), rounding=ROUND_CEILING)
+     print(f"models: {len(settings)}, calls per model: {a.leads * a.runs}, prices dated {a.price_date}")
+     print(f"expected MAXIMUM cost of this whole run: US${worst_shown} (caps: run {a.cap_run}, total {a.cap_total})")
+-    if input("Start? [y/N] ").strip().lower() != "y":
++    try:
++        answer = input("Start? [y/N] ").strip().lower()
++    except EOFError:  # no terminal to answer on (a pipe, a scheduled job): never read as a yes
++        print("stopped, nothing was called: there is no terminal to answer the question on")
++        return EXIT_STOPPED
++    if answer != "y":
+         print("stopped, nothing was called")
+-        return 1
++        return EXIT_STOPPED
+     ledger = SpendLedger(Path(a.ledger))
++    failed = False
+     for s in settings:
+         try:
+             r = run_model(s, leads, a.runs, ledger)
+@@ -170,6 +189,10 @@ def main(argv: list[str] | None = None) -> int:
+             f" cost US${r['spent']:.5f} (US${Decimal(str(r['spent'])) * PCT / int(str(r['calls'])):.5f} per 100 calls),"
+             f" errors by class: {r['errors'] or 'none'}"
+         )
++        failed = failed or bool(r["errors"])
++    if failed:
++        print("at least one call failed: the check did not work (see the errors by class above)")
++        return EXIT_FAILED
+     return 0
+ 
+ 
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index a6e743e..50be193 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -76,7 +76,8 @@ from lead_desk.constants import (  # noqa: E402
+     REAL_PERSONS_MAX,
+     REAL_SECONDS_MAX,
+ )
+-from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
++from lead_desk.crm_hubspot import CrmConfigError, HubspotCrm, HubspotSettings  # noqa: E402
++from lead_desk.desk import book_problem  # noqa: E402
+ from lead_desk.envnum import env_number  # noqa: E402
+ from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
+ from lead_desk.imap_count import (  # noqa: E402
+@@ -93,6 +94,7 @@ from load_tools.check_invariants import InputError, read_book, render_table, run
+ from load_tools.load_driver import send_with_retries  # noqa: E402
+ 
+ EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = 2, 1, 3
++EXIT_BOOK_REFUSED = 4  # the desk's own exit code for a book path it refuses (`:memory:`)
+ # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+ # address: an assumption). Nothing is ever
+ # mailed to it: follow-ups go only to the configured inboxes
+@@ -542,16 +544,25 @@ def _readback_failed(
+     same note and end with EXIT_FAILED, so the person running the check knows how many contacts may still have to be
+     archived by hand."""
+     created = hub_stats.get("created")
+-    note = (
++    head = (
+         "the CRM read-back failed ("
+         + type(error).__name__
+         + "): the contacts of this run were NOT counted"
+         + (" and NOT archived" if a.cleanup else "")
+-        + ". The desk created "
+-        + (str(created) if created is not None else "an unknown number of")
+-        + " contacts in total (its own counter); up to that many may still be in HubSpot, "
+-        + "their lead ids start with L and are listed in the desk's book. Archive them by hand."
++        + ". "
+     )
++    if created == 0:
++        tail = "The desk's own counter shows that it created no contact, so there is nothing to archive."
++    else:
++        tail = (
++            "The desk created "
++            + (str(created) if created is not None else "an unknown number of")
++            + " contacts in total (its own counter"
++            + ("" if created is not None else ", which could not be read")
++            + "); up to that many may still be in HubSpot, "
++            + "their lead ids start with L and are listed in the desk's book. Archive them by hand."
++        )
++    note = head + tail
+     print(note)
+     out = Path(env.get("REAL_RESULT_FILE", run_dir / "result.json"))
+     out.write_text(
+@@ -560,7 +571,7 @@ def _readback_failed(
+         ),
+         encoding="utf-8",
+     )
+-    print(f"result file: {out}")
++    print(result_line(a, out))
+     return EXIT_FAILED
+ 
+ 
+@@ -642,7 +653,11 @@ def load_env(path: Path) -> dict[str, str]:
+     be upper-case letters, digits and underscore only: a lower-case `desk_qualifier` is refused here, so it can never
+     slip past the forced values (the child process may see a case-insensitive environment)."""
+     out: dict[str, str] = {}
+-    for n, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
++    try:
++        text = path.read_text(encoding="utf-8")
++    except UnicodeError:  # its text names a byte value and its place in the file: say only what is wrong
++        raise ValueError("the config file is not UTF-8 text: save it as plain UTF-8 text") from None
++    for n, raw in enumerate(text.splitlines(), 1):
+         line = raw.strip()
+         if not line or line.startswith("#"):
+             continue
+@@ -656,6 +671,34 @@ def load_env(path: Path) -> dict[str, str]:
+     return out
+ 
+ 
++FOLDER_DELETED = (
++    "the self-test folder (result file, desk logs, book) is deleted when the script ends; "
++    "to look at them, for example after a failed self-test, run it again with --keep"
++)
++
++
++def result_line(a: argparse.Namespace, out: Path) -> str:
++    """The line that names the result file. A --dry-fakes run deletes its folder at the end unless --keep is given,
++    so then it says that instead of naming a file that is gone."""
++    if a.dry_fakes and not a.keep:
++        return FOLDER_DELETED
++    return f"result file: {out}"
++
++
++def key_file_problem(hs: HubspotSettings) -> str | None:
++    """Why the HubSpot key file cannot be used (None: it is fine). It runs the desk's own check (the same code that
++    reads the key at the first CRM call), so the rules cannot drift apart. The messages are fixed texts: no key, no
++    path. Nothing is sent anywhere."""
++    try:
++        # COUPLING: `_key` is a private method of HubspotCrm. It is called here on purpose: it is the one reader of the
++        # key file, so this check and the desk's first CRM call can never use different rules. If it is renamed, the
++        # refusal tests in tests/test_take_script_refusals.py fail.
++        HubspotCrm(hs)._key()
++    except CrmConfigError as e:
++        return str(e)
++    return None
++
++
+ def make_plan(tag: str, persons: int) -> dict[str, list[dict[str, Any]]]:
+     """The made-up traffic, in two phases (the crash comes between them). Every item is a request the desk gets over
+     HTTP: {request_id, door, kind, envelope}. Emails end in EMAIL_DOMAIN (example.com) and are never mailed."""
+@@ -807,6 +850,7 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--live-model", action="store_true", help="also use the live model (its own dollar cap)")
+     ap.add_argument("--cleanup", action="store_true", help="afterwards archive the HubSpot contacts this run made")
+     ap.add_argument("--assume-yes", action="store_true", help="skip the y/N question; only together with --dry-fakes")
++    ap.add_argument("--keep", action="store_true", help="with --dry-fakes: keep the run folder (default: delete it)")
+     ap.add_argument(
+         "--dry-port-base", type=int, help="with --dry-fakes: fixed ports from this one (default: ephemeral)"
+     )
+@@ -824,13 +868,19 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+     if a.assume_yes and not a.dry_fakes:
+         print("refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks")
+         return EXIT_REFUSED
++    if a.keep and not a.dry_fakes:
++        print("refused: --keep is only for the self-test (--dry-fakes); a real run keeps its folder anyway")
++        return EXIT_REFUSED
+     env: dict[str, str] = {}
+     live_cap: Decimal | None = None
+     try:
+         if a.dry_fakes:
+             if a.config is not None:
+                 print("note: --config is ignored with --dry-fakes (the self-test uses its own local fakes)")
+-            fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
++            dry_folder = Path(tempfile.mkdtemp(prefix="real-dry-"))
++            if not a.keep:  # registered first, so it runs last: after the fakes are stopped, also on a failure
++                stack.callback(shutil.rmtree, dry_folder, ignore_errors=True)
++            fakes = DryFakes(dry_folder, a.dry_port_base, a.dry_smtp_script)
+             stack.callback(fakes.close)
+             env = fakes.env
+         elif a.config is None:
+@@ -846,6 +896,10 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         if persons < MIN_PERSONS:
+             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+             return EXIT_REFUSED
++        # the desk's own refusal, before the desk's own folder is made (a self-test's temp folder is removed on exit)
++        if (problem := book_problem(env["DESK_DB_PATH"])) is not None:
++            print(f"the desk refuses to start: {problem}")  # the desk's own words
++            return EXIT_BOOK_REFUSED
+         db = Path(env["DESK_DB_PATH"])
+         if db.exists():  # an old book would hold old leads: the clean-up could not tell this run's contacts apart
+             raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
+@@ -881,6 +935,9 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             )
+             live_worst = worst_case_usd(live, q_bytes) * MODEL_CALLS_PER_LEAD * (persons + 3) * 2
+         port = number("DESK_PORT", env, int, 0, low=0, high=PORT_MAX) or 8765
++        if (key_problem := key_file_problem(hs)) is not None:  # before the question: a typo must not cost a run
++            print(f"refused: DESK_HUBSPOT_KEY_FILE: {key_problem}")
++            return EXIT_REFUSED
+     except (ValueError, OSError, ArithmeticError) as e:
+         # these messages name a setting, never its value (scrub is the backstop); other errors show their type only
+         msg = scrub(str(e), env)[:200] if isinstance(e, ValueError) else ""
+@@ -966,6 +1023,8 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         print(f"the run could not finish: {e}")
+         d1.stop()
+         d2.stop()
++        if a.dry_fakes and not a.keep:
++            print(FOLDER_DELETED)
+         return EXIT_FAILED
+     finally:
+         d1.stop()
+@@ -975,6 +1034,8 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         book = read_book(db)
+     except InputError as e:
+         print(f"cannot read the desk's book: {e}")
++        if a.dry_fakes and not a.keep:
++            print(FOLDER_DELETED)
+         return EXIT_FAILED
+     lead_ids = set(book["leads"])
+     reqs = list(lines.values())
+@@ -1087,7 +1148,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         json.dumps({"checks": result, "summary": summary, "per_lead": per_lead}, indent=2, default=str),
+         encoding="utf-8",
+     )
+-    print(f"\nresult file: {out}")
++    print("\n" + result_line(a, out))
+     left: list[str] = []
+     if a.cleanup:
+         done, left = archive_all(crm, crm_pairs)
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 81b0e27..386824f 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -159,3 +159,13 @@ def env(tmp_path: Path) -> Iterator[Env]:
+         yield e
+     finally:
+         e.close()
++
++
++@pytest.fixture
++def own_tempdir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
++    """Temporary folders made by the code under test (for example the `--keep` self-test folder) go under the test's
++    own folder, so a test run leaves nothing in the system temp folder."""
++    import tempfile  # noqa: PLC0415
++
++    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
++    return tmp_path
+diff --git a/tests/test_clock_steps.py b/tests/test_clock_steps.py
+index 46695d7..1b09910 100644
+--- a/tests/test_clock_steps.py
++++ b/tests/test_clock_steps.py
+@@ -55,12 +55,13 @@ def _step_clock(monkeypatch: pytest.MonkeyPatch, delta: float, after: float) ->
+     monkeypatch.setattr(time, "time", stepped)
+ 
+ 
++@pytest.mark.usefixtures("own_tempdir")
+ @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+ def test_dry_run_survives_a_wall_clock_step(
+     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], delta: float
+ ) -> None:
+     _step_clock(monkeypatch, delta, after=0.5)
+-    code = rrc.main(["--dry-fakes", "--assume-yes"])
++    code = rrc.main(["--dry-fakes", "--keep", "--assume-yes"])
+     out = capsys.readouterr().out
+     result = Path(out.split("result file: ")[1].splitlines()[0])
+     data = json.loads(result.read_text(encoding="utf-8"))
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index 7b9d857..49b1910 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -607,7 +607,7 @@ def test_runner_counts_failures_by_class(tmp_path: Path, model: Model) -> None:
+     model.state.mode = "refusal"
+     args = ["--cap-run", "1", "--cap-total", "3", "--model", "fake-a=2,10", "--leads", "2", "--runs", "2"]
+     r = _run_runner(tmp_path, model, args, stdin="y\n")
+-    assert r.returncode == 0 and "valid labels 0 (0%)" in r.stdout and "LiveRefused" in r.stdout
++    assert r.returncode == 3 and "valid labels 0 (0%)" in r.stdout and "LiveRefused" in r.stdout
+     assert "flip rate n/a" in r.stdout
+ 
+ 
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 66461fc..3c5172c 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -27,8 +27,9 @@ def test_refuses_without_config_and_without_required_names(tmp_path: Path, capsy
+     assert "lacks" in capsys.readouterr().out
+ 
+ 
++@pytest.mark.usefixtures("own_tempdir")
+ def test_dry_fakes_run_end_to_end(capsys: pytest.CaptureFixture[str]) -> None:
+-    code = rrc.main(["--dry-fakes", "--assume-yes"])
++    code = rrc.main(["--dry-fakes", "--keep", "--assume-yes"])
+     out = capsys.readouterr().out
+     assert code == 0, out[-3000:]
+     assert rrc.DRY_KEY not in out and "@example" not in out  # no key, no address is printed
+@@ -180,6 +181,9 @@ def _config_file(tmp_path: Path, **over: str) -> Path:
+         "DESK_SMTPP_RECIPIENTS": "a@example.test",
+         "DESK_SMTPP_MAX_SENDS": "5",
+     }
++    key = tmp_path / "hub.key"  # a usable key file: the script checks it before the question
++    key.write_text("made-up-" + "key-0001\n", encoding="utf-8")
++    values["DESK_HUBSPOT_KEY_FILE"] = str(key)
+     cfg = tmp_path / "c.env"
+     cfg.write_text("\n".join(f"{k}={v}" for k, v in (values | over).items()), encoding="utf-8")
+     return cfg
+@@ -207,14 +211,16 @@ def test_a_refusal_for_a_missing_file_shows_no_path(tmp_path: Path, capsys: pyte
+     assert "no-such-folder" not in capsys.readouterr().out
+ 
+ 
++@pytest.mark.usefixtures("own_tempdir")
+ def test_dry_fakes_leave_no_certificate_or_key_folder_behind(capsys: pytest.CaptureFixture[str]) -> None:
+-    assert rrc.main(["--dry-fakes", "--assume-yes"]) == 0
++    assert rrc.main(["--dry-fakes", "--keep", "--assume-yes"]) == 0
+     result = Path(capsys.readouterr().out.split("result file: ")[1].splitlines()[0])
+     assert result.is_file() and not (result.parent.parent / "fakes").exists()  # certificate and key files are gone
+ 
+ 
++@pytest.mark.usefixtures("own_tempdir")
+ def test_a_dry_run_where_every_send_ends_in_doubt_fails(capsys: pytest.CaptureFixture[str]) -> None:
+-    code = rrc.main(["--dry-fakes", "--assume-yes", "--dry-smtp-script", "final_452"])
++    code = rrc.main(["--dry-fakes", "--keep", "--assume-yes", "--dry-smtp-script", "final_452"])
+     out = capsys.readouterr().out
+     assert code == rrc.EXIT_FAILED, out[-2500:]
+     assert "F1  FAIL" in out and "@" not in out.split("AT LEAST ONE CHECK FAILED")[0].split("#  result")[1]
+@@ -575,20 +581,18 @@ def test_a_first_poll_that_runs_out_of_time_is_tried_once_more_with_more_time(
+     assert "trying once more with more time" in capsys.readouterr().out
+ 
+ 
++@pytest.mark.usefixtures("own_tempdir")
+ def test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note(
+     capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+ ) -> None:
+     from lead_desk.adapters import CrmNothingStored
+ 
+-    class Broken:
+-        def __init__(self, *_a: Any, **_k: Any) -> None:
+-            pass
+-
++    class Broken(rrc.HubspotCrm):  # keeps the real key-file reader: only the read-back is broken
+         def rows_with_prefix(self, _prefix: str) -> Any:
+             raise CrmNothingStored("the hubspot call cap is used up")
+ 
+     monkeypatch.setattr(rrc, "HubspotCrm", Broken)
+-    code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
++    code = rrc.main(["--dry-fakes", "--keep", "--assume-yes", "--cleanup"])
+     out = capsys.readouterr().out
+     assert code == rrc.EXIT_FAILED and "Traceback" not in out
+     assert "read-back failed" in out and "NOT counted" in out and "NOT archived" in out and "by hand" in out
+diff --git a/tests/test_take_script_refusals.py b/tests/test_take_script_refusals.py
+new file mode 100644
+index 0000000..895eec1
+--- /dev/null
++++ b/tests/test_take_script_refusals.py
+@@ -0,0 +1,163 @@
++"""The take scripts refuse a bad key file, `:memory:` and a non-UTF-8 config BEFORE the y/N question, print no byte
++value, leave no stray folder; run_live_check.py ends without a traceback and with a non-zero exit when its calls
++failed. Loopback only, made-up data only."""
++
++from __future__ import annotations
++
++import subprocess  # noqa: S404
++import sys
++import tempfile
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "scripts"))
++import run_real_check as rrc  # noqa: E402
++from test_real_check_dry import _valid_config  # noqa: E402
++
++from lead_desk.desk import book_problem  # noqa: E402
++
++KEY = "made-up-" + "key-0002"  # built from parts
++
++
++def _no_question(prompt: str = "") -> str:
++    raise AssertionError("the y/N question was asked")
++
++
++@pytest.mark.parametrize(
++    "content", [None, KEY + "\n" + KEY + "\n", "short", b"\xff\xfe" + b"k\x00" * 9, b"\xc3\x28" * 9], ids=str
++)
++def test_a_bad_hubspot_key_file_is_refused_before_the_question(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, content: str | bytes | None
++) -> None:
++    key = tmp_path / "bad.key"
++    if isinstance(content, str):
++        key.write_text(content, encoding="utf-8")
++    elif content is not None:
++        key.write_bytes(content)
++    cfg = _valid_config(tmp_path, DESK_HUBSPOT_KEY_FILE=str(key))
++    monkeypatch.setattr("builtins.input", _no_question)
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "refused: DESK_HUBSPOT_KEY_FILE" in out and KEY not in out and "bad.key" not in out
++
++
++def test_memory_book_is_refused_like_the_desk_and_leaves_no_file(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.chdir(tmp_path)
++    monkeypatch.setattr("builtins.input", _no_question)
++    assert rrc.main(["--config", str(_valid_config(tmp_path, DESK_DB_PATH=":memory:"))]) == rrc.EXIT_BOOK_REFUSED == 4
++    assert str(book_problem(":memory:")) in capsys.readouterr().out
++    assert sorted(p.name for p in tmp_path.iterdir()) == ["c.env", "hub.key"]  # no desk-1.log, no new folder
++
++
++def test_a_config_that_is_not_utf8_is_refused_without_a_byte_value(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    cfg = tmp_path / "bin.env"
++    cfg.write_bytes(b"\xff\xfe\x00DESK_DB_PATH=x\n")
++    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "not UTF-8" in out and "0xff" not in out and "position" not in out
++
++
++def test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    class Broken:
++        def __init__(self, folder: Path, *_a: object) -> None:
++            (folder / "fakes").mkdir()
++            raise ValueError("the openssl program is needed for --dry-fakes")
++
++    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
++    monkeypatch.setattr(rrc, "DryFakes", Broken)
++    assert rrc.main(["--dry-fakes", "--assume-yes"]) == rrc.EXIT_REFUSED
++    assert "refused" in capsys.readouterr().out
++    assert list(tmp_path.glob("real-dry-*")) == []
++    monkeypatch.setattr(rrc, "DryFakes", Broken)
++    assert rrc.main(["--dry-fakes", "--keep", "--assume-yes"]) == rrc.EXIT_REFUSED
++    assert len(list(tmp_path.glob("real-dry-*"))) == 1  # --keep keeps it
++
++
++def test_the_readback_note_says_plainly_when_no_contact_was_created(tmp_path: Path) -> None:
++    class A:
++        cleanup = False
++        dry_fakes = False
++        keep = False
++
++    env = {"REAL_RESULT_FILE": str(tmp_path / "r.json")}
++    code = rrc._readback_failed(A(), tmp_path, env, rrc.CrmError("x"), 0, {"created": 0})  # type: ignore[arg-type]
++    text = (tmp_path / "r.json").read_text(encoding="utf-8")
++    assert code == rrc.EXIT_FAILED and "no contact" in text and "by hand" not in text
++
++
++# -- scripts/run_live_check.py (loopback, nothing listens there) -----------------------------------------------------
++
++
++def _live(tmp_path: Path, key: Path, stdin: int | str | None) -> subprocess.CompletedProcess[str]:
++    cmd = [
++        sys.executable,
++        str(REPO / "scripts" / "run_live_check.py"),
++        "--key-file",
++        str(key),
++        "--base-url",
++        "http://127.0.0.1:1",
++        "--ledger",
++        str(tmp_path / "ledger.jsonl"),
++        "--cap-run",
++        "1",
++        "--cap-total",
++        "3",
++        "--price-date",
++        "2026-01-01",
++        "--model",
++        "fake-a=2,10",
++        "--leads",
++        "1",
++        "--runs",
++        "1",
++    ]
++    kw: dict[str, object] = {"stdin": stdin} if stdin == subprocess.DEVNULL else {"input": stdin}
++    return subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False, **kw)  # type: ignore[call-overload]  # noqa: S603
++
++
++def test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback(tmp_path: Path) -> None:
++    key = tmp_path / "k"
++    key.write_text(KEY, encoding="utf-8")
++    r = _live(tmp_path, key, subprocess.DEVNULL)
++    assert r.returncode == 1 and "Traceback" not in r.stderr and "no terminal" in r.stdout
++
++
++def test_live_check_exits_non_zero_when_every_call_failed(tmp_path: Path) -> None:
++    key = tmp_path / "k"
++    key.write_text(KEY, encoding="utf-8")
++    r = _live(tmp_path, key, "y\n")
++    assert r.returncode == 3, r.stdout[-400:]
++    assert "LiveTransport" in r.stdout and KEY not in r.stdout + r.stderr
++
++
++@pytest.mark.parametrize("content", [None, "short"], ids=["missing", "short"])
++def test_live_check_refuses_a_bad_key_file_before_the_question(tmp_path: Path, content: str | None) -> None:
++    key = tmp_path / "k"
++    if content is not None:
++        key.write_text(content, encoding="utf-8")
++    r = _live(tmp_path, key, "y\n")  # a "y" is ready, but must never be read
++    assert r.returncode == 2 and "refused" in r.stdout and "Start?" not in r.stdout
++    assert str(tmp_path) not in r.stdout + r.stderr
++
++
++def test_keep_without_the_self_test_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    assert rrc.main(["--config", str(_valid_config(tmp_path)), "--keep"]) == rrc.EXIT_REFUSED
++    assert "--keep is only for the self-test" in capsys.readouterr().out
++
++
++def test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs(tmp_path: Path) -> None:
++    class A:
++        dry_fakes = True
++        keep = False
++
++    assert "--keep" in rrc.result_line(A(), tmp_path / "r.json")  # type: ignore[arg-type]
++    A.keep = True
++    assert rrc.result_line(A(), tmp_path / "r.json") == f"result file: {tmp_path / 'r.json'}"  # type: ignore[arg-type]

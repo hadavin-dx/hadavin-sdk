@@ -1,0 +1,62 @@
+OK: real-run-fixes-v2.patch
+ 
+OK: semgrep-on-2db3926-v4.patch
+ versions-md-allowance.patch
+ crlf-guard-v2.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ semgrep-on-2db3926-v4.patch
+ versions-md-allowance.patch
+ crlf-guard-v2.patch
+ 
+OK: semgrep-on-2db3926-v4.patch
+ crlf-guard-v2.patch
+ versions-md-allowance.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ semgrep-on-2db3926-v4.patch
+ crlf-guard-v2.patch
+ versions-md-allowance.patch
+ 
+OK: versions-md-allowance.patch
+ semgrep-on-2db3926-v4.patch
+ crlf-guard-v2.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ versions-md-allowance.patch
+ semgrep-on-2db3926-v4.patch
+ crlf-guard-v2.patch
+ 
+OK: versions-md-allowance.patch
+ crlf-guard-v2.patch
+ semgrep-on-2db3926-v4.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ versions-md-allowance.patch
+ crlf-guard-v2.patch
+ semgrep-on-2db3926-v4.patch
+ 
+OK: crlf-guard-v2.patch
+ semgrep-on-2db3926-v4.patch
+ versions-md-allowance.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ crlf-guard-v2.patch
+ semgrep-on-2db3926-v4.patch
+ versions-md-allowance.patch
+ 
+OK: crlf-guard-v2.patch
+ versions-md-allowance.patch
+ semgrep-on-2db3926-v4.patch
+ real-run-fixes-v2.patch
+ 
+OK: real-run-fixes-v2.patch
+ crlf-guard-v2.patch
+ versions-md-allowance.patch
+ semgrep-on-2db3926-v4.patch
+ 
