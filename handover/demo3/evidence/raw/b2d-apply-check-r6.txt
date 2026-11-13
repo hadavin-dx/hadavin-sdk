@@ -1,0 +1,19 @@
+order A check claims-stack-on-f3c39cf8 rc=0
+order A check lane3-fix-3-r5 rc=0
+order A check lane3-fix-5-r4 rc=0
+order A check lane3-fix-1-r6 rc=0
+order A check fix-2-r4-on-fix-1-r6 rc=0
+order B check claims-stack-on-f3c39cf8 rc=0
+order B check lane3-fix-3-r5 rc=0
+order B check lane3-fix-5-r4 rc=0
+error: patch failed: contract.md:128
+error: contract.md: patch does not apply
+error: patch failed: docs/limits.md:128
+error: docs/limits.md: patch does not apply
+order B check lane3-fix-2-r4-on-fix-1-r6 rc=1
+error: patch failed: contract.md:128
+error: contract.md: patch does not apply
+error: patch failed: docs/limits.md:128
+error: docs/limits.md: patch does not apply
+APPLYFAIL
+order B check lane3-fix-1-r6 rc=0
