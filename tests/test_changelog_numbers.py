@@ -198,3 +198,14 @@ def test_pin_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_an
     assert all(
         "RuntimeError" in r.getMessage() and "unreadable" not in r.getMessage() for r in lines
     )
+
+
+# fail-before: not run on the old heads (it reads the CHANGELOG text of this head only); it fails when the sentence is removed.
+def test_the_changelog_says_what_the_masker_is_compared_with() -> None:
+    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "the core redactor `hadavin_sdk.guard.redact`" in text, (
+        "the CHANGELOG does not name what the masker is compared with"
+    )
+    assert "`tools/demo_only_guard.py` is new in this branch" in text, (
+        "the CHANGELOG does not say the guard is new"
+    )

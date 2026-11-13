@@ -307,7 +307,7 @@ def _git_env() -> dict[str, str]:
 # Stated limit of the bare scheme word rules: a token after `Bearer` stays visible only when the
 # core shows it too (11 characters or fewer, or a character the core pattern does not accept such as
 # `Basic abc-defghijk`) AND it holds no digit AND it is under 16 characters; `token=Bearer` + 11
-# letters is shown, as on main. A test pins the 11/12 border and the rows that differ from the core
+# letters is shown, as the core redactor shows it. A test pins the 11/12 border and the rows that differ from the core
 # (the two extra rules). Five passes over the line (header, bearer, basic, URL, pairs), each with
 # no nested repetition, so a very long line costs time in proportion to its length (a test counts
 # the reads).
