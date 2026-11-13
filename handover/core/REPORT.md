@@ -1,5 +1,9 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## ACK 2026-11-13 07:03Z CORE: STOP received
+STOP received. Still running: only my own worktree sweep (committing and pushing scratch worktrees); all agents have finished. Nothing new started. Resume file written; verify table and STOPPED block follow.
+
+
 ## REPORT 06:49Z (core lead)
 **FAILED/UNCERTAIN FIRST**
 - No new SHA pushed by any builder since 06:42Z. Heads: Part 6 20c369f0, Part 2 4dd7ce1e, SONAR-PATH 4398e3bd, Q8c-1 7712c26e. Nothing is runner-verified yet.

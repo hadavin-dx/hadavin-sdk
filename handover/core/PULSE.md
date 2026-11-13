@@ -100,3 +100,4 @@
 06:35Z SONAR r6 resolved, batch 7 sent; Part 6 r15 pending; Q8c-1 fix push; Part 2 finisher running
 06:42Z lead block: Part 2 head 4dd7ce1e claimed, SONAR b7 + Q8c-1 + Part 6 r15 pending
 06:49Z no new heads; Part 2 r13 reviews saved; runners pending
+07:03Z STOP received; sweep running, no agents live
