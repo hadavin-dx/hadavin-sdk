@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:14Z (17:44 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| GATES (agent a384f32c) | CI lint-workflow commands on the patched tree | LEAD 12:02Z order (1) | 12:01Z / 17:31 | DONE 12:01Z | 1 of 1 | reported, all exit 0 (runner output; I re-did the gitleaks history check, below): gitleaks 8.30.1 dir: no leaks; ruff 0.17.4 check: all passed; ruff format --check: 166 files formatted; mypy 2.4.1 linux and win32: no issues in 30 files each; bandit 1.9.4 -ll: no issues (9 Low items below the threshold); check_schema: ALL PASS; literal scan: 0 lines; canary test present. Tool versions match the lock file | pushed to gates/G |
+| GITLEAKS HISTORY | `gitleaks git` on the full history (my own check) | the runner's clone was shallow: only 2 commits scanned, CI scans all history | 12:08Z / 17:38 | DONE | | MY SLIP FOUND: the runner's tree was made from a shallow local clone. I re-ran on a full clone of the public repo (5 commits on the patched local branch): no leaks. Scanning origin/main with the OLD config (61ded9e's .gitleaks.toml) gives 927 hits (919 long-hex-token = pip hashes in requirements-semgrep.txt, plus hostnames); with main's OWN current .gitleaks.toml: no leaks. So the 927 is my config mix-up, not a repo finding | none |
+| FACT FOR LEAD | demo main has moved: now f3c39cf (Semgrep scan #13, follow-up #14) after 61ded9e | patches were built on 61ded9e | | | | all three patches (patch 1, patch 2 after patch 1, survivor-tests-v1) pass `git apply --check` on f3c39cf (checked in order; nothing applied) | lead decides if the lane should move to f3c39cf |
+| BROWSER (agent ad766811) | hash-locked playwright, run the 166 browser tests | order (2) | 12:01Z / 17:31 | hard stop 12:45Z (about 31 min) | 1 of 1 | running | wait for report |
+| GITLEAKS TESTS (agent a6b01e5b) | run the 28 gitleaks tests | order (2) | 12:01Z / 17:31 | hard stop 12:45Z | 1 of 1 | running | wait for report |
+| AFTER-RUN | full-suite "after" counts | order | after BROWSER and GITLEAKS TESTS | about 12:25-12:45Z | n/a | not started | start when both report |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Before counts (A run 2, 61ded9e + 2 patches): 3781 passed, 0 failed, 198 skipped (166 browser, 28 gitleaks, 4 others). After counts: pending.
+
+ASK:
+1. Should the remaining runs (browser, gitleaks tests, after-run) move to main f3c39cf? Default: no, stay on 61ded9e as ordered; the three patches apply to f3c39cf, so a rerun there is possible later.
+2. Browser result "cloud image blocks it, exact error" acceptable? Default: yes.
+
+
 ## REPORT 12:06Z (17:36 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |

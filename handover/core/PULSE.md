@@ -130,3 +130,4 @@ T2 done; combined patch built; EV runner started
 11:52Z EV runner running step 6
 11:58Z triage done: summary + patch pushed
 gates lane started: 3 agents
+gates G clean; gitleaks full-history rechecked; main moved to f3c39cf, patches apply
