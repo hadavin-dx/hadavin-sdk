@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+20:45Z. R7 builder a87e9554: no checkpoint beyond "start 20:31" yet (first due ~20:51; I will message it if none by 20:55). EV6 runner af82c2af: r6 hostile cases f/f2/g/h/j done (rc=0 for run6b), now running the old EV5 hostile drivers; still to do: lint (pinned ruff 0.17.1), non-root runs, EVIDENCE.md. Defects: none new since the mail-pass block (F1 IMAP-user Major + 7 surviving mutants are with R7). Load ~0.5. 2 agents running. ASK: none.
+
+## STATUS (core lead)
 20:40Z. Running: R7 builder a87e9554 (started 20:31, 75-min box, first checkpoint due ~20:51; has all mail-pass-4 findings) and EV6 runner af82c2af (r6 full suite done earlier: 4817 passed, 0 failed; now on hostile cases, then lint, non-root, EVIDENCE.md). Machine quiet (load ~1). No new defects since the 20:41 block. ASK: none.
 
 ## STATUS (core lead)
