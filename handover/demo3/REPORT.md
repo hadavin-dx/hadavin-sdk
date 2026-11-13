@@ -1,3 +1,27 @@
+## HEARTBEAT 64 (15:01Z / IST = UTC+5:30) - FREEZE, waiting for 5 agents
+
+FAILURES AND RETRIES (first):
+- B1f: fix-2 variants do NOT apply on top of fix-1 r6 (limits.md exit-code-1 bullet, contract.md exit-codes line, why-this-code.md). B2d asked to re-cut as lane3-fix-2-r4-on-fix-1-r6.patch (time box 20 min). Until then fix-1 r6 and fix-2 are not both mergeable.
+- B2d full suite: 3809 passed, 237 skipped (37 more than the 200 baseline; 'node is not installed' skips appear; split not reconciled), 0 failed.
+- fix-8: no independent review (freeze order). Full suite 3723 passed, 200 skipped, rc 0 after one earlier hygiene failure.
+- fix-5: REV-5c major (reset.ps1 sibling) open until B5e (r5) reports; E10's serial run of r4 is green (3734 passed) but r4 is superseded; E10's 20 xdist runs still pending.
+- Heavy-slot rule broken earlier (6 full suites at once).
+- Unexplained still: E3b three cut runs; xdist port-43217 flake not reproduced; 2 `E` marks of PR #12 run; register times guessed more than once (corrected by notes).
+
+| Agent | Result so far |
+|---|---|
+| B8 fix-8 | closed: 3723 passed, 200 skipped, rc 0; unreviewed |
+| E9 fix-6 r2 | closed: 3693 passed, 200 skipped, rc 0 (r2 text) |
+| B1f fix-1 r6 | closed: 3716 passed, 200 skipped, rc 0 |
+| B6c fix-6 r3 | suite 3705 passed, 200 skipped, rc 0; report not in |
+| B4d fix-4 r4 | suite 3711 passed, 200 skipped, rc 0; report not in |
+| B2d fix-2 r4 | suite 3809 passed, 237 skipped, rc 0; re-cut on fix-1 r6 running |
+| B5e fix-5 r5 | running (stop 15:15Z) |
+| E10 | serial r4 green; xdist 20 runs pending |
+
+ASK list: xdist in CI (report only); PR #12 E marks; the 4 remaining skips; Q8 vs B3 M11; D10 "sender" word; label over 63 chars / IP literal / dots before @ in addresses (fix-8, docs say not checked).
+Load: idle CPU 14 percent, free RAM 14271 MB (15:01Z). 5 agents running.
+
 ## HEARTBEAT 63 (14:45Z / 20:15 IST) - FREEZE STARTED per the lead's order (the order is dated 15:05Z in ORDERS.md; I follow it now)
 
 FAILURES AND RETRIES (first):
