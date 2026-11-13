@@ -1,0 +1,49 @@
+# stack + nodemo-optional-hygiene-repo-v4, Python 3.12.3
+### baseB base: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 898, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 979 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7"
+   TOTAL (no demo_only/): {'passed': 898, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 979 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7%
+### baseB sigkill: expect RED rc 137
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: chunk 0: pytest exit code 137 (see chunk-0.log in the step output above)'
+### baseB sigsegv: expect RED rc 139
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: chunk 0: pytest exit code 139 (see chunk-0.log in the step output above)'
+### baseB fake-exit-normal: expect RED
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="RED: chunk 0: no valid junit result file ([Errno 2] No such file or directory: '/tmp/work/sn-v4-drv/rt-c-baseB-fake-exit-normal/nodemo/chunk-0.xml'): pytest was killed, stopped early or the file was r"
+### baseB fake-exit-capsys-disabled: expect RED (the Major 2 case)
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="RED: chunk 0: no valid junit result file ([Errno 2] No such file or directory: '/tmp/work/sn-v4-drv/rt-c-baseB-fake-exit-capsys-disabled/nodemo/chunk-0.xml'): pytest was killed, stopped early or the f"
+### baseB collectonly-conftest: expect RED
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: 0 tests reported but 979 collected: a chunk lost tests'
+   TOTAL (no demo_only/): {'passed': 0, 'failed': 0, 'skipped': 0, 'xfailed': 0} collected: 979 | placeholder files: 0 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 0.0%
+### baseB deselect-hook-reported: expect RED
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="no 'N tests collected' line from pytest (does addopts or a plugin change the output?)"
+### baseB addopts-q: expect RED
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="no 'N tests collected' line from pytest (does addopts or a plugin change the output?)"
+### baseB xfail-xpass: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 2} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.5"
+   TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 2} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.5%
+### baseB print-999-passed: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 980 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7"
+   TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 980 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7%
+### baseB failing-test: expect RED
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: chunk 0: pytest exit code 1 (see chunk-0.log in the step output above)'

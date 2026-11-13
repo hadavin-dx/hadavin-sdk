@@ -1,0 +1,11 @@
+== v4 alone
+db54e13 [True]
+9c53207 [True]
+== on db54e13 + P1 v3.2 + P2 v2.1 (applied in turn): [True, True, True]
+== on 9c53207 with fix-v3, isort, optional-v4, then v4 in each position:
+   (silence = all 24 orders applied)
+== v4 vs v3 (expected conflict: same new file): [True, False]
+== pairs with v4 on db54e13
+pairs where v4 breaks a patch that applies alone: []
+300 random orders (v3.2 before delta), v4 anywhere, 11 patches: all applied 300 failed 0
+git apply --check (plain) OK on 9c53207 and db54e13 (see command output in report)

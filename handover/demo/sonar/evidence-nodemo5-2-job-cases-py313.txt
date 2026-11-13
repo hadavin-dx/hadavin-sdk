@@ -1,0 +1,53 @@
+# same job, Python 3.13.18 (venv nm2venv), shipped stack then stack + optional-v4
+### baseA base: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 880, 'failed': 0, 'skipped': 83, 'xfailed': 0} collected: 963 | placeholder files: 71 | unexplained skips: 0 of 2 | floor: 819 (85% of collected) | passed share: 91.4"
+   TOTAL (no demo_only/): {'passed': 880, 'failed': 0, 'skipped': 83, 'xfailed': 0} collected: 963 | placeholder files: 71 | unexplained skips: 0 of 2 | floor: 819 (85% of collected) | passed share: 91.4%
+### baseA fake-exit-capsys-disabled: expect RED (the Major 2 case)
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="RED: chunk 0: no valid junit result file ([Errno 2] No such file or directory: '/tmp/work/sn-v4-drv/rt-c-baseA-fake-exit-capsys-disabled/nodemo/chunk-0.xml'): pytest was killed, stopped early or the f"
+### baseA xfail-xpass: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 881, 'failed': 0, 'skipped': 83, 'xfailed': 2} collected: 966 | placeholder files: 71 | unexplained skips: 0 of 2 | floor: 822 (85% of collected) | passed share: 91.2"
+   TOTAL (no demo_only/): {'passed': 881, 'failed': 0, 'skipped': 83, 'xfailed': 2} collected: 966 | placeholder files: 71 | unexplained skips: 0 of 2 | floor: 822 (85% of collected) | passed share: 91.2%
+### baseA sigkill: expect RED rc 137
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: chunk 0: pytest exit code 137 (see chunk-0.log in the step output above)'
+### baseB base: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 898, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 979 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7"
+   TOTAL (no demo_only/): {'passed': 898, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 979 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7%
+### baseB fake-exit-capsys-disabled: expect RED (the Major 2 case)
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line="RED: chunk 0: no valid junit result file ([Errno 2] No such file or directory: '/tmp/work/sn-v4-drv/rt-c-baseB-fake-exit-capsys-disabled/nodemo/chunk-0.xml'): pytest was killed, stopped early or the f"
+### baseB xfail-xpass: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 2} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.5"
+   TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 2} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.5%
+### baseB atexit-print: expect GREEN
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 980 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7"
+   TOTAL (no demo_only/): {'passed': 899, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 980 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 833 (85% of collected) | passed share: 91.7%
+### baseB odd-names: expect GREEN, 3 more tests
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 901, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.8"
+   TOTAL (no demo_only/): {'passed': 901, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 982 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 835 (85% of collected) | passed share: 91.8%
+### baseB nested-dir-and-nontests: expect GREEN (deep + a_test run; testdata/test.py not collected by pytest)
+   job rc=0
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=0 last-line="TOTAL (no demo_only/): {'passed': 900, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 981 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 834 (85% of collected) | passed share: 91.7"
+   TOTAL (no demo_only/): {'passed': 900, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 981 | placeholder files: 69 | unexplained skips: 0 of 2 | floor: 834 (85% of collected) | passed share: 91.7%
+### baseB skip-3-other: expect RED message lists them and says what to edit
+   job rc=1
+   RESULT job-step-rc=0 last-line='<no output>'
+   RESULT job-step-rc=1 last-line='RED: 3 skips that do not name demo_only, the limit is 2: tests.test_aa_sk::test_a: nope; tests.test_aa_sk::test_b: nope2; tests.test_aa_sk::test_c: nope3. If these skips are intended, edit MIN_PASSED_'
+   TOTAL (no demo_only/): {'passed': 898, 'failed': 0, 'skipped': 84, 'xfailed': 0} collected: 982 | placeholder files: 69 | unexplained skips: 3 of 2 | floor: 835 (85% of collected) | passed share: 91.4%

@@ -1,0 +1,26 @@
+######## stack baseA (git status: 0 changes after git add -A)
+Python 3.12.3
+b917716 nodemo
+yaml parse ok; env keys ['GITLEAKS_VERSION', 'GITLEAKS_SHA256', 'MIN_PASSED_PERCENT', 'MAX_UNEXPLAINED_SKIPPED']
+All checks passed!
+151 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+		Medium: 0
+		High: 0
+........................................................................ [ 78%]
+........................................                                 [100%]
+184 passed in 43.68s
+######## stack baseB (git status: 0 changes after git add -A)
+Python 3.12.3
+8b3897c nodemoB
+yaml parse ok; env keys ['GITLEAKS_VERSION', 'GITLEAKS_SHA256', 'MIN_PASSED_PERCENT', 'MAX_UNEXPLAINED_SKIPPED']
+All checks passed!
+152 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+		Medium: 0
+		High: 0
+........................................................................ [ 77%]
+.........................................                                [100%]
+185 passed in 37.13s
