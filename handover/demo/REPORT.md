@@ -1,6 +1,28 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:30Z / 11:00 IST - P1 v3.2.1 delta CLEAN (optional, one known gap); READY TO PUSH list unchanged (P1 v3.2, P2 v2.1; probe v3; semgrep v5.1); 6 agents: flaky-413 root cause, P2 v2.2, real-run v5 read, crlf/yaml read, nodemo v3, start-prompt v2
+FAILED / UNCERTAIN first:
+1. **P1 v3.2.1 delta (sonar/sonar-p1-quickwins-v3.2.1-delta.patch sha256 2fde683248e593555a56a431095c7b3051ca008cc0ea51c65a6aa4e6913e2de5; applies ONLY after v3.2; test-only; OPTIONAL): 'P1 v3.2.1 CLEAN' (sixth read, sonar/REVIEW-p1v321-fresh.md): 0 Blocker/Major, 1 Minor, 4 Nit.** Minor = a regression the builder did not list: double negation `! ! [ x ]` / `if ! ! [ x ]; then` / `{ ! ! [ x ]; }` was flagged by v3.2 and is NOT by the delta (contrived, not in the repo): recorded as a KNOWN GAP in NOTES-p1-quickwins-v321.md (fix if wanted: allow `(?:!\s+){0,4}+`). Corrections vs v3.2: `echo a ! [ x ]`, `echo ! [ x ]`, `FOO=1 ! [ x ]`, escaped `\;`/`\"` were false positives and are no longer flagged; 37+ gains all correct. Reader: 488 comparisons + 400k-snippet fuzz; 460 timing cases at 1 MB worst 0.34 s, linear to 16 MB; base flags 9 lines, v3.2.1 tree 0, combined 10-patch tree 0 (also semgrep v5.1: tripwire clean); 200 random orders of 10 patches 0 bad; 216 passed py3.13, 283 py3.12 combined; 25 of 26 mutants killed (survivor: a single-quote escape nit). Nit: `.github/actions` does not exist in the repo (the composite scan runs on synthetic trees only).
+2. **FLAKY test_resolve_413 on BASE (05:22Z block): root-cause builder a591307c05ae68faa running; re-run a red sonar.yml job once before concluding anything.**
+3. **READY TO PUSH (unchanged):** series on db54e13: (1) sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c; (2) sonar/sonar-p2-regex-http-bug-v2.1.patch sha256 0645cf551e1f27344266bcd89997825b333e9bd4149139ea4f87a1f106993159; optional (3) P1 v3.2.1 delta above. Separate PR: semgrep/semgrep-on-db54e13-v5.1.patch sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 + pr-text/semgrep-pr-body-v6.md. Throwaway PRs: probe-ab-v3 / probe-ab-v3-writes2-full (PROBE v3 SAFE). Still unread: crlf v5 + yaml trimmed-v2, real-run v5 (handover), nodemo v3, start-prompt v2 (core desk-address patch needs your approval).
+4. Not run anywhere: full suite WITH demo present, Windows autocrlf run, Sonar/Semgrep results of the series.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a591307c05ae68faa | flaky test_resolve_413 root-cause builder | 05:22 | running | cause + fix patch |
+| a0c9fa499e0239fab | P2 v2.2 test delta builder | 05:21 | running | delta |
+| afd3a7d7745c30316 | fresh safety reader real-run v5 | 05:15 | running | CLEAN / NOT |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6 (below the 7 you asked: starting one more reader as soon as the next build lands).
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v3.2.1 delta read | CLEAN, known gap listed |
+
 ## 2026-11-13 05:22Z / 10:52 IST - **PROBE v3 SAFE. READING CLEAN** (fresh safety read): probe-ab-v3 + probe-ab-v3-writes2-full may be pushed as throwaway draft PRs; **a FLAKY TEST ON BASE found (test_resolve_413 3/10 on db54e13): a red sonar.yml run stops before the scan, so re-run it**; 6 agents
 **PROBE v3 SAFE.** **READING CLEAN** (decision level; pairs bundle a few extra differences, listed below, none makes a row misleading).
 Push order: 1) sonar/probe-ab-v3.patch sha256 f21835fe654bf3d92dbdd2e057ba939b18b5af003419016bac7fd6489b75d1fe (applies on db54e13 alone); second push (writes, #7 inline / #8 helper swapped, scrub write as helper): sonar/probe-ab-v3-writes2-full.patch sha256 311fceff996b2f1ae1bf61382b9709ba1c2b1bfe050261cc0a1b56c3e9ebd86c (applies on db54e13 alone). Notes: sonar/PROBE-AB-V3-NOTE.md; fresh read: sonar/REVIEW-probe3-fresh.md. Branch cut from db54e13, PR to main, never merged, do NOT touch PR #7.
