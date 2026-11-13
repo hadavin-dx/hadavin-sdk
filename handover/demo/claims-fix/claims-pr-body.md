@@ -11,7 +11,8 @@ Text only, apart from three small code changes listed below. A read-through of t
 | docs/tests, limits, settings and portal sentences with no backing: softened or given a source | about 48 |
 | contract.md, n8n-recipe, hubspot-probe, real-services, why-this-code, workflow comments and code docstrings: sourced, softened or labelled | about 94 |
 | Sentences about tests ("no test ...", "not tested", "tests/x.py checks ..."): every one searched against tests/; 25 were wrong or too strong and are corrected (for example a denial of a test that exists) | 103 sentences searched, 25 corrected |
-| Final recount of the test count in versions.md | 1 sentence: 92 files, 3883 tests listed by `python -m pytest --collect-only -q` |
+| Numbers and names cross-checked against the code by a script and by reading (1046 backticked names, paths and constants; 166 number-and-unit statements; exit codes, HTTP codes, defaults) | 9 sentences and one code comment corrected (for example a test count labelled as this commit, a "retries three times" that is three tries in all, the 55-second overrun of a reaper pass, the body-size cap, the open-file reserve list) |
+| Final recount of the test count in versions.md | 1 sentence: 92 files, 3883 tests. `python -m pytest --collect-only -q` prints one line per test file and no total; the same command without `-q` ends with the line `3883 tests collected` |
 
 "Softened or labelled" means: where a number comes from a run the author did and no log is in the repository, the text now says "the author's own run; no log is shipped" instead of reading like a result of this commit. Counts of earlier runs stay as dated history.
 
@@ -25,7 +26,7 @@ Text only, apart from three small code changes listed below. A read-through of t
 
 ## What was NOT done
 
-* No code behaviour changed apart from item 1. The `.py` files in this change differ from main only in docstrings and comments, except the one assertion above (proof below).
+* No code behaviour changed apart from item 1 and one test assertion (item 2). The `.py` files in this change differ from main only in docstrings and comments, except that one assertion (proof below).
 * Sentences that rest on the author's own runs are still labelled as such; no logs were added.
 * The owner questions (security contact, private reporting, rule-pack permission) were answered by the repository owner and are written as such; the licence terms of the Semgrep rule packs were not read.
 * Not re-run on the combined tree: the full test suite (see Checks).
@@ -33,8 +34,8 @@ Text only, apart from three small code changes listed below. A read-through of t
 ## Checks
 
 * **Text-only proof.** For each `.py` file touched, the parsed syntax tree was compared before and after with docstrings and comments ignored: identical for 12 of 13; the 13th (`tests/test_input_edge_cases.py`) differs only by the one assertion in item 2. For each of the four workflow files, `yaml.safe_load` before and after is equal.
-* On the combined tree (main f3c39cf8 plus eleven commits): `ruff check` and `ruff format --check` pass; `gitleaks dir` with the repository config: no leaks; `gitleaks git` over the eleven new commits: no leaks; `tests/test_hygiene.py` with `DPLD_REQUIRE_SCAN=1`: passed.
-* Full suite: run on main f3c39cf8 and on main plus the FIRST FIVE patches of this series (v1, code-fix-v1, v1b, v2, v2b): 3683 passed, 200 skipped, 0 failed on both (so no test changed outcome). It was NOT run on the full eleven-commit tree: the later six commits are text-only apart from the proof above, but that is a reading, not a run. The 200 skips are the same on both (no Playwright, no gitleaks on that machine, Windows-only and similar).
+* On the combined tree (main f3c39cf8 plus thirteen commits): `ruff check` and `ruff format --check` pass; `gitleaks dir` with the repository config: no leaks; `gitleaks git` over the thirteen new commits: no leaks; `tests/test_hygiene.py` with `DPLD_REQUIRE_SCAN=1`: passed.
+* Full suite: run on main f3c39cf8 and on main plus the FIRST FIVE patches of this series (v1, code-fix-v1, v1b, v2, v2b): 3683 passed, 200 skipped, 0 failed on both (so no test changed outcome). It was NOT run on the full thirteen-commit tree: the later eight commits are text-only apart from the proof above, but that is a reading, not a run. The 200 skips are the same on both (no Playwright, no gitleaks on that machine, Windows-only and similar).
 * Test count: `python -m pytest --collect-only -q` lists 92 test files and 3883 tests on this tree.
 
 🤖 Generated with [Claude Code](https://claude.ai/code)

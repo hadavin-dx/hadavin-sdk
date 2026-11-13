@@ -1,0 +1,67 @@
+From af1864a71d8a88af6e38ed47f5eb97e02316f48c Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 12:26:31 +0000
+Subject: [PATCH 05/13] Review fixes: README timing sentence, versions.md notes
+
+Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ README.md   | 2 +-
+ SECURITY.md | 4 ++--
+ versions.md | 4 ++--
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/README.md b/README.md
+index 4e2cb51..c04c554 100644
+--- a/README.md
++++ b/README.md
+@@ -127,7 +127,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ ## Tests and more commands
+ 
+-The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (`docs/tests.md`, which says no log is shipped); it has not been timed on the current set, which is larger. The tests need a git clone (some tests read the list of tracked files with git).
++The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (no log of that run is shipped; see `docs/tests.md`); it has not been timed on the current set, which is larger. The tests need a git clone (some tests read the list of tracked files with git).
+ 
+ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
+ 
+diff --git a/SECURITY.md b/SECURITY.md
+index 43dbb2d..a309b23 100644
+--- a/SECURITY.md
++++ b/SECURITY.md
+@@ -6,8 +6,8 @@ reachable by other people. Do not put real customer data into it.
+ 
+ ## Reporting a problem
+ 
+-Send a report by e-mail to sales@hadavin.com (the address of the studio that publishes this demo; this repository cannot show who reads it), or try GitHub's
+-private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository (it works only if the owner has switched it on; this repository cannot show that).
++Send a report by e-mail to sales@hadavin.com (it reaches the author), or use GitHub's
++private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository.
+ Please do not describe the problem in a public place first.
+ 
+ ## Supported versions and answer time
+diff --git a/versions.md b/versions.md
+index c06c306..efc850f 100644
+--- a/versions.md
++++ b/versions.md
+@@ -37,7 +37,7 @@ The live step has only been run against the local stand-in server.
+ The commit SHAs in the rows above the `actions/cache` and `SonarSource/sonarqube-scan-action` rows, and the gitleaks download checksum in `lint.yml`, were checked by the author against the upstream repositories on 2026-11-12 (each tag resolving to the pinned commit, and the gitleaks 8.30.1 archive matching the checksum); no log of that check is shipped and it was not repeated here. The comment in `lint.yml` says where the checksum was copied from. The `actions/cache` and `SonarSource/sonarqube-scan-action` rows were added afterwards from the comments in `sonar.yml`; their pins were not part of that check.
+ 
+ ## Development tools (pinned with hashes, installed with `pip install --require-hashes`)
+-Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requirements-dev.txt` (the authority: Linux x86_64; its header records `pip-compile` run with Python 3.12 and the command `pip-compile --allow-unsafe --generate-hashes --strip-extras`; the exact Python patch version 3.12.16, the tool version pip-tools 7.6.2 and the throwaway container `python:3.12-slim` are from the author's records and are written in no file of this repository; the build tool is not itself pinned) and `requirements-dev-win.txt` (Windows, Python 3.13; made with `uv` (the header records this command but not the uv version; 0.12.21 is from the author's records): `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`). The only difference is `colorama` (a Windows-only transitive of pytest), which is in the Windows file and not in the Linux file. Each file is made for one operating system (the `--python-platform` setting in the Windows file's header; `colorama` only in the Windows file); installing either file on the other operating system was not tried.
++Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requirements-dev.txt` (the authority: Linux x86_64; its header records `pip-compile` run with Python 3.12 and the command `pip-compile --allow-unsafe --generate-hashes --strip-extras`; the exact Python patch version 3.12.16, the tool version pip-tools 7.6.2 and the throwaway container `python:3.12-slim` are from the author's records; no lock file header records them (this file names them, and `requirements-semgrep.in` names the container image); the build tool is not itself pinned) and `requirements-dev-win.txt` (Windows, Python 3.13; made with `uv` (the header records this command but not the uv version; 0.12.21 is from the author's records): `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`). The only difference is `colorama` (a Windows-only transitive of pytest), which is in the Windows file and not in the Linux file. Each file is made for one operating system (the `--python-platform` setting in the Windows file's header; `colorama` only in the Windows file); installing either file on the other operating system was not tried.
+ 
+ | Package | Version | Licence (as the author's `pip-licenses` scan read it; the raw output is not shipped, see below) | Used for |
+ |---|---|---|---|
+@@ -56,7 +56,7 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
+ ### Browser tests (optional, a separate lock)
+ `requirements-browser.in` lists one direct pin: `playwright==1.63.0`. Two lock files made with `uv` (the files do not record the uv version; the comment in `requirements-coverage.in` names uv 0.11.32 for the coverage lock, and that the same version made these two was not checked), each with hashes and each held to the pins of the matching development lock (`-c`), so installing it after the development lock changes no development pin: `requirements-browser.txt` (`uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt`) and `requirements-browser-win.txt` (the same with `--python-version 3.13 --python-platform windows`, `-c requirements-dev-win.txt` and `-o requirements-browser-win.txt`). `--exclude-newer` ignores any release uploaded after that date, so the same command gives the same lock later. Install: `pip install --require-hashes -r requirements-browser.txt` after `requirements-dev.txt`. The checks in `.github/workflows/lint.yml` do not install it (no browser job yet).
+ 
+-Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So, going by that settings file, the bot's check of dependencies for known vulnerabilities no longer reads these two files; the bot itself was not run or checked here. The settings file does not skip `requirements-browser.in`, which names `playwright==1.63.0`, but that file does not name the packages that only the lock files list (greenlet and pyee; typing-extensions is also listed only in locks, which are skipped).
++Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So, going by that settings file, the bot's check of dependencies for known vulnerabilities no longer reads these two files; the bot itself was not run or checked here. The settings file does not skip `requirements-browser.in`, which names `playwright==1.63.0`, but that file does not name the packages that only the lock files list (greenlet and pyee; typing-extensions is also listed only in the lock files, which are skipped).
+ 
+ Secret-scan allowance for the browser lock files: the entry in `.gitleaks.toml` accepts a 64-character hash line only in a file named `requirements-browser.txt` or `requirements-browser-win.txt` at the repository root (`paths = ['''^requirements-browser(-win)?\.txt$''']`). The secret scan in `tests/test_hygiene.py` runs from the repository root, so the path is relative and a copy in a sub-folder is not allowed: a planted hash line in a file of that name inside a sub-folder is reported by `gitleaks` (the author tried this once with gitleaks 8.30.1: one finding; no log is shipped and `gitleaks` was not run here), and the second check, the pattern list minus `exceptions.txt`, which is also root-anchored, reports it as well (the test `test_exceptions_narrow` in `tests/test_hygiene.py` plants such a file in a sub-folder and expects it to be reported).
+ 
+-- 
+2.43.0
+

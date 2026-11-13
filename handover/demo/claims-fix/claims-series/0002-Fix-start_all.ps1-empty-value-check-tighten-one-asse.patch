@@ -1,0 +1,96 @@
+From 7cb48cbf8c49f47dff4f0efb0d1c326bd11a3a51 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 12:26:31 +0000
+Subject: [PATCH 02/13] Fix start_all.ps1 empty-value check, tighten one
+ assertion, unify two comments
+
+Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ .github/workflows/lint.yml     | 2 +-
+ .github/workflows/sonar.yml    | 2 +-
+ scripts/start_all.ps1          | 2 +-
+ src/lead_desk/loader.py        | 3 ++-
+ tests/test_input_edge_cases.py | 7 ++++---
+ 5 files changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/.github/workflows/lint.yml b/.github/workflows/lint.yml
+index 1f5a921..a35835a 100644
+--- a/.github/workflows/lint.yml
++++ b/.github/workflows/lint.yml
+@@ -16,7 +16,7 @@ permissions:
+ jobs:
+   lint:
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 60  # generous on purpose: the runner speed is not measured yet; then set it to 1.6 times the longest observed run (the same rule as sonar.yml)
++    timeout-minutes: 60  # 60 minutes on purpose: the run time on a hosted runner is not measured yet; after real runs, set it to 1.6 times the longest observed run
+     env:
+       GITLEAKS_VERSION: "8.30.1"
+       # SHA-256 of gitleaks_8.30.1_linux_x64.tar.gz, copied from the release's published checksums file
+diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
+index 9d66085..ac24b7d 100644
+--- a/.github/workflows/sonar.yml
++++ b/.github/workflows/sonar.yml
+@@ -27,7 +27,7 @@ jobs:
+   build:
+     name: Build and analyze
+     runs-on: ubuntu-24.04
+-    timeout-minutes: 60  # same as lint.yml until a real run on a hosted runner shows the duration; then 1.6 times the longest observed run
++    timeout-minutes: 60  # 60 minutes on purpose: the run time on a hosted runner is not measured yet; after real runs, set it to 1.6 times the longest observed run
+     # A pull request from a fork or from Dependabot gets no repository secret: skip it instead of failing.
+     if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+     steps:
+diff --git a/scripts/start_all.ps1 b/scripts/start_all.ps1
+index b3e1fec..d15a8ea 100644
+--- a/scripts/start_all.ps1
++++ b/scripts/start_all.ps1
+@@ -6,7 +6,7 @@ param([ValidateSet('keyed', 'blind')][string]$Mode = 'keyed')
+ $ErrorActionPreference = 'Stop'
+ $env:PYTHONPATH = 'src;.'
+ if ($null -eq $env:DESK_LEADFLOW_FILE) { $env:DESK_LEADFLOW_FILE = 'demo_only/leadflow.json' }
+-if ($env:DESK_LEADFLOW_FILE -cne 'off' -and $null -eq $env:DESK_NUDGE_TO) { $env:DESK_NUDGE_TO = 'reminder@example.test' }
++if ($env:DESK_LEADFLOW_FILE -cne 'off' -and -not [string]::IsNullOrEmpty($env:DESK_LEADFLOW_FILE) -and $null -eq $env:DESK_NUDGE_TO) { $env:DESK_NUDGE_TO = 'reminder@example.test' }
+ $dataDir = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path.parent)").Trim()
+ $fakesPort = (python -c "from lead_desk.config import Config; print(Config.from_env().fakes_port)").Trim()
+ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+diff --git a/src/lead_desk/loader.py b/src/lead_desk/loader.py
+index e0bd77b..e82592c 100644
+--- a/src/lead_desk/loader.py
++++ b/src/lead_desk/loader.py
+@@ -41,7 +41,8 @@ def load_demo_portal(desk: Desk) -> DemoPortal | None:
+     """None ONLY when the demo module is absent: ModuleNotFoundError whose .name is "demo_only" or
+     "demo_only.portal_demo". Also None unless the desk runs with the demo adapters (config.adapters == "demo") and
+     every kind is a stand-in: the burst control writes leads and the crash control stops the desk on purpose, so they
+-    never load next to a real CRM, mail provider or live AI step. Any other import error propagates (a broken extension fails loud)."""
++    never load next to a real CRM, mail provider or live AI step. Any other import error propagates (a broken
++    extension fails loud)."""
+     if desk.config.adapters != "demo" or desk.config.real_services:
+         return None
+     try:
+diff --git a/tests/test_input_edge_cases.py b/tests/test_input_edge_cases.py
+index 6af8e0c..69eea40 100644
+--- a/tests/test_input_edge_cases.py
++++ b/tests/test_input_edge_cases.py
+@@ -69,14 +69,15 @@ def test_long_lowercase_email_is_review(env, monkeypatch) -> None:
+ 
+ 
+ def test_two_drives_one_email(env) -> None:
+-    """Two threads drive the same pending follow-up at once. The AI step may run on both (a cost, at most 2 calls);
+-    the stored label is one value, and exactly one email and one CRM row result."""
++    """Two threads drive the same pending follow-up at once. The AI step runs once (only the thread that wins the claim
++    asks it; `tests/test_ai_after_claim.py` pins that too); the stored label is one value, and exactly one email and
++    one CRM row result."""
+     rig = env.rig(replies={"ada@example.test": "hot"})
+     d = rig.desk
+     lead_id = d.process("form", "p1", lead()).body["lead_id"]  # process only: nothing drives the follow-up yet
+     assert rig.qualifier.calls == 0
+     run_threads([lambda: d.run_followup(lead_id), lambda: d.run_followup(lead_id)])
+-    assert rig.qualifier.calls in (1, 2)
++    assert rig.qualifier.calls == 1
+     assert d.lead(lead_id).body["followup"]["ai_label"] == "hot"
+     assert rig.crm.rows[lead_id]["ai_label"] == "hot"
+     assert (rig.outbox.count, rig.crm.count) == (1, 1)
+-- 
+2.43.0
+

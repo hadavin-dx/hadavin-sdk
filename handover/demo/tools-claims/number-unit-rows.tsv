@@ -1,0 +1,166 @@
+README.md:42	8 seconds	LIVE_DEFAULT_TIMEOUT_SECONDS,LIVE_KEY_MIN_CHARS,MAX_CONNECTIONS_MIN,MAX_HANDLER_THREADS_MIN,PORTAL_MAX_INFLIGHT	e, retries a refused send a few times with growing waits (1, 2, 4 and 8 seconds, up to 5 automatic tries in all), and settles rec
+README.md:60	10 seconds	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	ak; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1
+README.md:110	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	desk's time stamps use the computer's clock, so a clock that jumps by 30 seconds or more can make the desk ask again for a follow-
+README.md:130	16 minutes	LINGER_MAX_SOCKETS	ile or Python version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (n
+README.md:130	33 seconds	-	on version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (no log of th
+versions.md:9	92 lines	-	form `tests/test_workflow_run_flags.py: 10` (that is its last line), 92 lines in all, and the counts on them add up to 3883 (th
+contract.md:27	254 characters	EMAIL_MAX	* (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives
+contract.md:31	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	thread and the desk waits for it at most `MODEL_CALL_BUDGET_SECONDS` (9 s of real time), whatever the adapter declares; a q
+contract.md:34	8 threads	LIVE_DEFAULT_TIMEOUT_SECONDS,LIVE_KEY_MIN_CHARS,MAX_CONNECTIONS_MIN,MAX_HANDLER_THREADS_MIN,PORTAL_MAX_INFLIGHT	ad starts, so the bound is exact (`test_workers_stay_within_the_cap`: 8 threads at once, at most 4 workers started).
+contract.md:35	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	rror` is `model_busy` and the row waits `MODEL_BUSY_BACKOFF_SECONDS` (5 s) before the next drive.
+contract.md:38	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	is strictly older than the stuck grace (send timeout + 5 busy waits, 30 s with the defaults; `updated_at < now - grace`, wh
+contract.md:39	15 s	MODEL_GRACE_MARGIN_SECONDS	me plus the write of that second stamp. `MODEL_GRACE_MARGIN_SECONDS` (15 s) is the longest that one write can take: the writ
+contract.md:39	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	S` (15 s) is the longest that one write can take: the write deadline (10 s) plus one more SQLite busy wait (5 s) for a lock
+contract.md:39	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	e can take: the write deadline (10 s) plus one more SQLite busy wait (5 s) for a lock held by another program.
+contract.md:40	25 s	-	the budget plus the margin is not strictly below the smallest grace (25 s, the five busy waits alone; 9 + 15 = 24; an equal
+contract.md:41	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	* The accepted limit is 9 s (9 accepted, 9.1 refused): a longer declared time
+contract.md:45	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	back by the reaper once it is older than send timeout + 5 busy waits (5 s + 5 x 5 s = 30 s with the defaults; strictly olde
+contract.md:45	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	e reaper once it is older than send timeout + 5 busy waits (5 s + 5 x 5 s = 30 s with the defaults; strictly older, in whol
+contract.md:45	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	er once it is older than send timeout + 5 busy waits (5 s + 5 x 5 s = 30 s with the defaults; strictly older, in whole secon
+contract.md:84	5 second	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	code catches `OSError` broadly, tests use port 0, and the launcher's 5 second bind retry may not outlast TIME_WAIT on Windows.
+contract.md:104	253 characters	HOST_NAME_MAX	, digits or hyphens that neither start nor end with a hyphen, at most 253 characters in all, or an IPv6 address in brackets; a wildcar
+contract.md:115	100 characters	SEARCH_MAX,LEADS_LIMIT_MAX,LOG_LIMIT_DEFAULT,FIELD_NAME_MAX	ddress and the first request number only unless `by_email=0`, at most 100 characters, no control characters.
+contract.md:123	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	short form `34s ago`, `2m ago`, `3h ago`, `4d ago` (`just now` under 5 s); the tooltip has the full local and UTC time. At
+contract.md:131	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	ut_seconds` is not a number above 0 or is above the AI call budget of 9 s); the message names the setting; an error that is
+contract.md:135	4 files	EXIT_DESK_SETTING_REFUSED,FDS_PER_HANDLER_THREAD,FDS_PER_THREAD_MINIMUM	* A handler thread is counted at `FDS_PER_HANDLER_THREAD` = 4 files: its connection socket, its database file, the `-
+contract.md:137	2 files	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	e connection, the portal's read-only database connections (8 at once, 2 files each) and the reaper's adapter socket; the desk r
+contract.md:143	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	conds` that is not a number above 0 or is above the AI call budget of 9 s, or a `db_path` of `:memory:` (every request thre
+contract.md:148	0.05 s	ACCEPT_PAUSE_SECONDS,QUIET_DRAIN_SECONDS	s no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning (`tests/test_stamp_locks_and
+contract.md:149	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	ound()` runs before the socket is closed (the reaper join waits up to 10 s), then the socket and the database connection are
+contract.md:149	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	se, so it cannot cut a step short. What the operator does: wait about 10 s; if the process is still there, end it with SIGKI
+contract.md:155	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	up to `DRAIN_MAX_BYTES` or `DRAIN_TOTAL_SECONDS` of wall-clock time (1 s), whichever comes first, so the reply is not lost
+contract.md:156	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	nd the body phase each have a wall-clock limit (`DRAIN_TOTAL_SECONDS` 1 s, `HEADER_READ_DEADLINE_SECONDS` 10 s, `BODY_READ_
+contract.md:156	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	lock limit (`DRAIN_TOTAL_SECONDS` 1 s, `HEADER_READ_DEADLINE_SECONDS` 10 s, `BODY_READ_DEADLINE_SECONDS` 10 s).
+contract.md:156	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	s, `HEADER_READ_DEADLINE_SECONDS` 10 s, `BODY_READ_DEADLINE_SECONDS` 10 s).
+contract.md:157	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	reply has one total wall-clock limit, `REPLY_WRITE_TIMEOUT_SECONDS` (5 s, never above `REQUEST_TIMEOUT_SECONDS`): a client
+contract.md:157	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	ation of a handler thread has a timeout of `REQUEST_TIMEOUT_SECONDS` (30 s).
+contract.md:158	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	announced is 408 `request_timeout` once `BODY_READ_DEADLINE_SECONDS` (10 s after the end of the headers) has passed, if the
+contract.md:163	2 s	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	aders or body) AND has received no byte for `EVICT_MIN_IDLE_SECONDS` (2 s; accepted range above 0 and not above either read
+contract.md:167	0.05 s	ACCEPT_PAUSE_SECONDS,QUIET_DRAIN_SECONDS	nt costs the accept loop no time), for at most `QUIET_DRAIN_SECONDS` (0.05 s) in total, so a refused client that keeps sending
+contract.md:170	4 files	EXIT_DESK_SETTING_REFUSED,FDS_PER_HANDLER_THREAD,FDS_PER_THREAD_MINIMUM	* At start-up the open-file limit must cover 4 files per handler thread (`FDS_PER_HANDLER_THREAD`) plu
+contract.md:171	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	ic try is used up; such a row waits `NO_DESCRIPTORS_BACKOFF_SECONDS` (5 s) before the next drive, so the reaper does not dr
+contract.md:173	2 seconds	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	ows a refused connect to a closed local port reports only after about 2 seconds (from the author's own run on a Windows computer;
+contract.md:187	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	sent and kept the connection open until `BODY_READ_DEADLINE_SECONDS` (10 s after the end of the headers) ran out) |
+contract.md:215	100 characters	SEARCH_MAX,LEADS_LIMIT_MAX,LOG_LIMIT_DEFAULT,FIELD_NAME_MAX	er of starts of a try, not the number of automatic tries; `q` at most 100 characters and no control character; `by_email` 0 or 1 (defa
+contract.md:220	18 characters	MAX_DIGITS	oined by a colon, each at most 18 digits (longer, or zero-padded past 18 characters: 400 `bad_query`; the same rule applies to every
+contract.md:238	0.1 s	BURST_BACKOFF_SECONDS,LIVE_LEDGER_LOCK_WAIT	esk envelope. A 503 or a refused connection is retried by time (waits 0.1 s doubling to 1 s, `Retry-After` honoured up to 1 s
+contract.md:238	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	3 or a refused connection is retried by time (waits 0.1 s doubling to 1 s, `Retry-After` honoured up to 1 s, no new try mor
+contract.md:238	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	ed by time (waits 0.1 s doubling to 1 s, `Retry-After` honoured up to 1 s, no new try more than 30 s after the first; `BURS
+contract.md:238	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	ubling to 1 s, `Retry-After` honoured up to 1 s, no new try more than 30 s after the first; `BURST_BACKOFF_SECONDS`, `BURST_
+contract.md:248	3 tries	EXIT_SETTING_REFUSED,EMAIL_KEY_MIN,LOCK_RETRIES	ogram, no file handle left) is transient: it never counts towards the 3 tries and never writes a verdict.
+contract.md:253	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	32 requests are already inside the desk and no place frees up within 5 s. No receipt is written then, so the client can se
+contract.md:256	8 s	LIVE_DEFAULT_TIMEOUT_SECONDS,LIVE_KEY_MIN_CHARS,MAX_CONNECTIONS_MIN,MAX_HANDLER_THREADS_MIN,PORTAL_MAX_INFLIGHT	* The reaper tries again after 1, 2, 4, 8 s; after 5 automatic tries in all (`SEND_MAX_ATTEMP
+contract.md:264	18 characters	MAX_DIGITS	retry/resolve ids: a number with a leading zero (R0012) or more than 18 characters is 404 `not_found` (an item has exactly one id).
+contract.md:266	1 MiB	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	- Adapters: a reply is read up to `constants.REPLY_MAX_BYTES` (1 MiB; longer is an error, treated as unclear like any
+contract.md:278	3 tries	EXIT_SETTING_REFUSED,EMAIL_KEY_MIN,LOCK_RETRIES	r desk. Any other OSError, and a lock file that keeps being replaced (3 tries), give `LockUnavailableError` (the lock could not
+contract.md:284	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	intent mark) and before the send, so the reaper's grace (send timeout 5 s + 5 busy waits of 5 s = 30 s; a row is taken only
+contract.md:284	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	e the send, so the reaper's grace (send timeout 5 s + 5 busy waits of 5 s = 30 s; a row is taken only when strictly older)
+contract.md:284	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	send, so the reaper's grace (send timeout 5 s + 5 busy waits of 5 s = 30 s; a row is taken only when strictly older) counts
+contract.md:303	5 tries	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	try yet, or its backoff is over. Replays are not meant to use up the 5 tries: `test_replay_same_source_ref` in `tests/test_flo
+contract.md:308	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	a `sending` row is stuck, after a wrong-mode reply, or at most every 30 s (`gate.OUTBOX_REFRESH_SECONDS`); no requeue decis
+contract.md:309	55 s	-	pability reads at the start of the pass, so a pass can overrun (about 55 s at the very worst with the defaults, `gate.py` co
+contract.md:310	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	ries of one write share one deadline (`gate.WRITE_DEADLINE_SECONDS` = 10 s); a whole `process` call has one deadline (`gate.
+contract.md:310	15 s	MODEL_GRACE_MARGIN_SECONDS	le `process` call has one deadline (`gate.REQUEST_DEADLINE_SECONDS` = 15 s) that includes the in-flight wait.
+contract.md:311	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	r own 8 places (`gate.DRIVE_MAX`); a drive that finds no place within 5 s is left to the reaper (only when `start_backgroun
+contract.md:312	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	- The reaper's stuck grace is send timeout + 5 busy waits (30 s with the defaults), longer than the longest resul
+contract.md:312	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	h the defaults), longer than the longest result write (write deadline 10 s + one SQLite busy wait 5 s) and than the model bo
+contract.md:312	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	the longest result write (write deadline 10 s + one SQLite busy wait 5 s) and than the model bound plus the stamp that fol
+contract.md:312	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	sy wait 5 s) and than the model bound plus the stamp that follows it (9 s + 15 s).
+contract.md:312	15 s	MODEL_GRACE_MARGIN_SECONDS	t 5 s) and than the model bound plus the stamp that follows it (9 s + 15 s).
+docs/hubspot-probe.md:14	4 characters	EXIT_DESK_SETTING_REFUSED,FDS_PER_HANDLER_THREAD,FDS_PER_THREAD_MINIMUM	2. Reads up to 10 owners; prints the count and the last 4 characters of each id.
+docs/hubspot-probe.md:31	100 characters	SEARCH_MAX,LEADS_LIMIT_MAX,LOG_LIMIT_DEFAULT,FIELD_NAME_MAX	call (a 4xx answer) it prints HubSpot's error category and the first 100 characters of the message, with the token replaced by `***`
+docs/limits.md:10	9 seconds	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	he CRM and the mail system is cut off by the desk after a short time (9 seconds at most). A call that is cut off is not stopped:
+docs/limits.md:13	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	5. A computer clock that jumps by 30 seconds or more can make the desk ask again for a follow-
+docs/limits.md:32	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	and the desk waits for it at most `MODEL_CALL_BUDGET_SECONDS` (9 s) for the AI step and at most `min(send_timeout_se
+docs/limits.md:32	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	SECONDS` (9 s) for the AI step and at most `min(send_timeout_seconds, 9 s)` for a
+docs/limits.md:49	420 s	-	180, then 420 s between looks (the wait grows with every refusal
+docs/limits.md:49	60 s	SERIES_BUCKETS	earlier failed tries: a lead with two earlier failed tries starts at 60 s, with three at 180 s; it starts afresh when the l
+docs/limits.md:49	180 s	-	s: a lead with two earlier failed tries starts at 60 s, with three at 180 s; it starts afresh when the lead moves to another
+docs/limits.md:56	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	database waits of 5 s, 30 s with the defaults. One stage must fit insid
+docs/limits.md:56	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	database waits of 5 s, 30 s with the defaults. One stage must fit inside it:
+docs/limits.md:56	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	0 s with the defaults. One stage must fit inside it: the call budget (9 s) plus the longest write of the stamp that
+docs/limits.md:57	15 s	MODEL_GRACE_MARGIN_SECONDS	follows (15 s: the 10 s write deadline plus one more database w
+docs/limits.md:57	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	follows (15 s: the 10 s write deadline plus one more database wait) is 24
+docs/limits.md:57	24 s	ADAPTER_WORKERS_TOTAL	ollows (15 s: the 10 s write deadline plus one more database wait) is 24 s, strictly below the smallest grace of 25 s. A con
+docs/limits.md:57	25 s	-	one more database wait) is 24 s, strictly below the smallest grace of 25 s. A constant that does not
+docs/limits.md:59	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	a number above 0, or above 9 s, is refused when the desk is built (exit code 4).
+docs/limits.md:67	1.9 seconds	-	ily sending client is not closed early). The figure of one byte every 1.9 seconds was not tested here.
+docs/limits.md:77	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	y `main`, one pass every second) when it has been stuck for more than 30 seconds by the computer's calendar clock (a clock step of
+docs/limits.md:77	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	ore than 30 seconds by the computer's calendar clock (a clock step of 30 s or more forward can put back a follow-up that is
+docs/limits.md:77	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	e future to the new time, so such a row ages normally and is put back 30 s later; `_restamp_future` in `src/lead_desk/desk.p
+docs/limits.md:81	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	aper pass may start new follow-ups for at most `REAPER_PASS_SECONDS` (10 s) and then overruns by the one follow-up it is dri
+docs/limits.md:81	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	llow-up it is driving (at most three bounded adapter calls of at most 9 s, plus its database writes) and by its two capabil
+docs/limits.md:81	55 s	-	its two capability reads at the start (two deadlines): 10 + 27 + 18 = 55 s at the very worst with the defaults and no lock t
+docs/limits.md:81	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	the defaults and no lock trouble (so a pass can take longer than the 30 s grace; the grace is measured per row, not per pas
+docs/limits.md:81	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	per row, not per pass). `stop_background` waits only its own timeout (10 s); a pass that is still running ends by itself at
+docs/limits.md:93	1024 connections	LISTEN_QUEUE,MAX_HANDLER_THREADS	no script or log for that comparison is shipped). The waiting line is 1024 connections (`LISTEN_QUEUE` in `src/lead_desk/constants.py`)
+docs/limits.md:95	0.1 s	BURST_BACKOFF_SECONDS,LIVE_LEDGER_LOCK_WAIT	refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-A
+docs/limits.md:95	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that
+docs/limits.md:95	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	it doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the f
+docs/limits.md:95	30 s	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	ry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_
+docs/limits.md:97	1 MiB	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	h that is negative, not a plain number, longer than 7 digits or above 1 MiB: it answers 400 at once WITHOUT reading the body
+docs/limits.md:97	1 MiB	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	ould mean reading until the client stops); a client that really sends 1 MiB or more may therefore see a connection reset inst
+docs/limits.md:98	10 seconds	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	esk answers 408 `request_timeout` when the body has not fully arrived 10 seconds after the headers ended (`BODY_READ_DEADLINE_SECO
+docs/limits.md:112	3,132,800 bytes	-	el does not show them. The list part of the panel's answer is at most 3,132,800 bytes (50 later messages, every field at its longest in
+docs/limits.md:115	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	ne value only: it is kept in memory (never stored), hides again after 30 seconds, on Escape, when the panel closes or the page cha
+docs/limits.md:118	5 s	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	. Writing a reply has a total limit of `REPLY_WRITE_TIMEOUT_SECONDS` (5 s): a client that does not read its reply loses the
+docs/limits.md:119	4 files	EXIT_DESK_SETTING_REFUSED,FDS_PER_HANDLER_THREAD,FDS_PER_THREAD_MINIMUM	at the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 96 for everything else; contract.
+docs/limits.md:119	1024 threads	LISTEN_QUEUE,MAX_HANDLER_THREADS	ontract.md lists what the 4 and the 96 are made of). With the default 1024 threads that is 4192 open files. A computer whose hard li
+docs/limits.md:121	9 s	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	ut_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is
+docs/limits.md:122	10 seconds	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	so it cannot cut a step short. If the desk is still there after about 10 seconds, end it with SIGKILL (on Windows, end the process
+docs/limits.md:124	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	onnections and sends nothing holds a place until the header deadline (10 s), then gets 408 and is closed (`test_idle_sockets
+docs/limits.md:125	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	D_DEADLINE_SECONDS` and the body within `BODY_READ_DEADLINE_SECONDS` (10 s each, measured in real time from the start of tha
+docs/limits.md:126	256 connections	MAX_CONNECTIONS	* Making room: when 256 connections are being read, the oldest one that is still bein
+docs/limits.md:126	2 s	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	(headers or body) and has sent no byte for `EVICT_MIN_IDLE_SECONDS` (2 s) is closed with no reply (its sender sees a dropp
+docs/limits.md:126	0.1 s	BURST_BACKOFF_SECONDS,LIVE_LEDGER_LOCK_WAIT	`tests/test_stall_eviction.py` checks a crowd that sends a byte every 0.1 s and one whose work has started).
+docs/limits.md:138	420 seconds	-	en up at once: after a failed try the desk waits 10, 60, 180 and then 420 seconds before the next one (five tries in all, about 11
+docs/limits.md:138	11 minutes	-	80 and then 420 seconds before the next one (five tries in all, about 11 minutes, counted on the desk's own clock, so after a rest
+docs/limits.md:138	420 seconds	-	it is not copied again; the note says so. The waits (10, 60, 180 and 420 seconds), the five tries and the giving up are tested in
+docs/n8n-recipe.md:44	5 seconds	EXIT_PORT_UNAVAILABLE,BUSY_WAIT_SECONDS,BIND_RETRY_SECONDS,SQLITE_BUSY,NUDGES_PER_PASS	gs.md`). Its timeout is well above the desk's default send timeout of 5 seconds, so a slow answer ends the call in n8n later than
+docs/n8n-recipe.md:54	3 tries	EXIT_SETTING_REFUSED,EMAIL_KEY_MIN,LOCK_RETRIES	stopped halfway: the "Send to the desk" node has "Retry On Fail" on, 3 tries, 1 second apart. With the desk stopped and starte
+docs/n8n-recipe.md:54	1 second	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	halfway: the "Send to the desk" node has "Retry On Fail" on, 3 tries, 1 second apart. With the desk stopped and started again ab
+docs/n8n-recipe.md:54	2 seconds	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	conds the call failed once all three tries were used up (within about 2 seconds). The retry also repeats a 400 or 413 (3 tries ea
+docs/n8n-recipe.md:54	3 tries	EXIT_SETTING_REFUSED,EMAIL_KEY_MIN,LOCK_RETRIES	sed up (within about 2 seconds). The retry also repeats a 400 or 413 (3 tries each): the desk counts each rejected call 3 times
+docs/n8n-recipe.md:77	3 tries	EXIT_SETTING_REFUSED,EMAIL_KEY_MIN,LOCK_RETRIES	(`Error in workflow`). Because the sending box has Retry On Fail on (3 tries, 1 second apart; see `n8n/desk-form.json`), n8n r
+docs/n8n-recipe.md:77	1 second	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	in workflow`). Because the sending box has Retry On Fail on (3 tries, 1 second apart; see `n8n/desk-form.json`), n8n repeats suc
+docs/n8n-recipe.md:78	2 seconds	EXIT_ANOTHER_DESK,EVICT_MIN_IDLE_SECONDS	l three tries were used up and the call failed with 500 (within about 2 seconds). For longer outages raise the number of tries or
+docs/portal.md:5	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	small eye button beside a masked value shows that one value for up to 30 seconds without turning the name or address search on. Th
+docs/settings.md:15	32 characters	APPROVER_ID_MAX,LEADFLOW_LABEL_MAX	: who may decide. Ids are lower-case letters, digits and `-`, at most 32 characters; names are unique, one line, at most 64 character
+docs/settings.md:15	64 characters	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	s and `-`, at most 32 characters; names are unique, one line, at most 64 characters; the label is one line of at most 64 characters;
+docs/settings.md:15	64 characters	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	ue, one line, at most 64 characters; the label is one line of at most 64 characters; the file is at most 16384 bytes; an empty list i
+docs/settings.md:15	16384 bytes	APPROVERS_FILE_MAX_BYTES,LEADFLOW_FILE_MAX_BYTES	; the label is one line of at most 64 characters; the file is at most 16384 bytes; an empty list is refused in approval mode. Refus
+docs/settings.md:24	63 characters	-	host name (letters, digits and hyphens in dot-separated parts of 1 to 63 characters, none starting or ending with a hyphen) or an IPv
+docs/settings.md:28	9 seconds	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	d timeouts is a sanity bound only: the desk itself cuts every send at 9 seconds.
+docs/settings.md:36	9 seconds	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	t 600 (`SEND_TIMEOUT_SECONDS_MAX`); the desk still cuts every call at 9 seconds |
+docs/settings.md:41	9 seconds	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	K_LIVE_TIMEOUT_SECONDS`, `DESK_LIVE_MAX_TOKENS` | above 0 and at most 9 seconds; 1 to `LIVE_MAX_TOKENS_MAX` |
+docs/settings.md:50	16384 bytes	APPROVERS_FILE_MAX_BYTES,LEADFLOW_FILE_MAX_BYTES	| File | at most 16384 bytes (`LEADFLOW_FILE_MAX_BYTES`); only the keys `rota`
+docs/settings.md:52	32 characters	APPROVER_ID_MAX,LEADFLOW_LABEL_MAX	tter or digit first, then lower-case letters, digits and `-`, at most 32 characters (`[a-z0-9][a-z0-9-]{0,31}`) |
+docs/settings.md:53	64 characters	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	| An owner `name` | 1 to 64 characters on one line (`LEADFLOW_NAME_MAX`) |
+docs/settings.md:55	32 characters	APPROVER_ID_MAX,LEADFLOW_LABEL_MAX	| A step `label` | 1 to 32 characters on one line (`LEADFLOW_LABEL_MAX`) |
+docs/settings.md:56	64 characters	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	rm_status` | empty (owner only) or letters, digits, `_` and `-`, 1 to 64 characters (`[A-Za-z0-9_-]{1,64}`) |
+docs/settings.md:70	9 seconds	MODEL_CALL_BUDGET_SECONDS,CALL_DEADLINE_MAX_SECONDS	ONDS`, with the whole deadline capped at `CALL_DEADLINE_MAX_SECONDS`, 9 seconds. So the real wait follows `DESK_SEND_TIMEOUT_SECO
+docs/settings.md:75	4096 bytes	LIVE_ERROR_BODY_MAX,MAX_CONNECTIONS_MAX,DEMO_BODY_MAX	* `DESK_SMTPP_PASSWORD_FILE`: the path of a one-line file of at most 4096 bytes; never the password itself.
+docs/settings.md:82	4096 bytes	LIVE_ERROR_BODY_MAX,MAX_CONNECTIONS_MAX,DEMO_BODY_MAX	SPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters wi
+docs/settings.md:82	8 characters	LIVE_DEFAULT_TIMEOUT_SECONDS,LIVE_KEY_MIN_CHARS,MAX_CONNECTIONS_MIN,MAX_HANDLER_THREADS_MIN,PORTAL_MAX_INFLIGHT	line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters.
+docs/settings.md:107	10 s	HEADER_READ_DEADLINE_SECONDS,BODY_READ_DEADLINE_SECONDS	ad limit `MAX_HANDLER_THREADS` (1024), the header and body deadlines (10 s each) and the busy reply's `Retry-After` (1 s).
+docs/settings.md:107	1 s	SOURCE_REF_MIN,SCHEMA_VERSION,BURST_BACKOFF_MAX_SECONDS,BUSY_WRITE_TIMEOUT_SECONDS,BUSY_RETRY_AFTER_SECONDS	er and body deadlines (10 s each) and the busy reply's `Retry-After` (1 s).
+docs/settings.md:111	8 characters	LIVE_DEFAULT_TIMEOUT_SECONDS,LIVE_KEY_MIN_CHARS,MAX_CONNECTIONS_MIN,MAX_HANDLER_THREADS_MIN,PORTAL_MAX_INFLIGHT	* A live-model key (the line in `DESK_LIVE_KEY_FILE`) shorter than 8 characters is refused (`LIVE_KEY_MIN_CHARS`).
+docs/settings.md:112	8,000,000 bytes	LIVE_LEDGER_FILE_MAX_BYTES	* A spend ledger file larger than 8,000,000 bytes stops all spending: every call is refused (`LIVE_
+docs/settings.md:121	4096 characters	LIVE_ERROR_BODY_MAX,MAX_CONNECTIONS_MAX,DEMO_BODY_MAX	emory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a cont
+docs/tests.md:34	20 minutes	LEADFLOW_ROTA_MAX	urrency block, one job on `ubuntu-24.04` with a time limit of at most 20 minutes, exactly five steps with exactly the expected key
+docs/tests.md:36	64 files	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	): run 43403502735, 2026-11-13, head 15b8b15e. The log says "Scanning 64 files tracked by git with 79 Code rules" and "Ran 77 ru
+docs/tests.md:36	47 files	-	ning 64 files tracked by git with 79 Code rules" and "Ran 77 rules on 47 files: 0 findings", and the job ended with exit code 0
+docs/tests.md:36	64 files	APPROVER_NAME_MAX,LEADFLOW_NAME_MAX,LIVE_DEFAULT_MAX_TOKENS	trict`, the five folders above). Why the numbers differ (79 rules and 64 files in the first line, 77 rules and 47 files in the s
+docs/tests.md:36	47 files	-	numbers differ (79 rules and 64 files in the first line, 77 rules and 47 files in the second) is not explained here. **A green j
+docs/tests.md:42	20 seconds	LEADFLOW_ROTA_MAX	hed or a scan path does not exist (the job retries up to three times, 20 seconds apart, then fails); 7 = a rule file or address th
+docs/tests.md:42	47 files	-	ve (a made-up rule for Python and JavaScript, not the registry packs, 47 files on 61ded9e plus this change) gave exit 0 with and
+docs/tests.md:78	958 s	-	files, with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped were, as the author recorded them:
+docs/tests.md:79	16 minutes	LINGER_MAX_SOCKETS	he path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are
+docs/tests.md:79	33 seconds	-	e serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same t
+docs/tests.md:79	993 s	-	cess, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as
+docs/tests.md:80	82.7 s	-	ght installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the pat
+docs/tests.md:80	83.0 s	-	ed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 pas
+docs/tests.md:80	80.6 s	-	two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set
+docs/tests.md:92	34 lines	-	en by that scan alone. The exception for the real key (line 31 of the 34 lines of `exceptions.txt`, the `sonar.projectKey` allow
+docs/tests.md:129	30 seconds	BURST_RETRY_DEADLINE_SECONDS,REQUEST_TIMEOUT_SECONDS	small eye button beside a masked value shows that one value only, for 30 seconds at most, and does not turn on searching by name o
+docs/why-this-code.md:24	200 lines	HTTP_OK,NAME_MAX,COMPANY_MAX,LOG_LIMIT_MAX	se) | No ready-made tool known; the search was not exhaustive | About 200 lines, no business logic | Own code, small |
