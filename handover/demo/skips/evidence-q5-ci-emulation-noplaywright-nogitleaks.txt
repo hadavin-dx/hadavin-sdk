@@ -3,4 +3,19 @@ ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss.. [ 14%]
 .....sssssss.sssssssssssss..sss.........ss..s.........ss................ [ 44%]
 ...............sssss....s............................................... [ 59%]
 .......................................................s......ss...ss... [ 74%]
-................ssssssssssssssssssssss..........................
+................ssssssssssssssssssssss.................................. [ 89%]
+......................s..........................s                       [100%]
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named playwright
+SKIPPED [1] tests/test_hygiene.py:144: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:372: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:419: no gitleaks program on PATH (set GITLEAKS_BIN)
+SKIPPED [24] tests/test_gitleaks_exceptions.py:145: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+287 passed, 195 skipped in 160.46s (0:02:40)

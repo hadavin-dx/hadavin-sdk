@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:36Z / 07:06 IST - Q5 SKIP TABLE DONE; Semgrep PR body v2 reviewed (1 Major: the patch states an unparsable-file result as fact without saved output) -> patch v4 + body v3 in progress; chunk 7 of 10 running (chunks 0-6 green)
+FAILED / UNCERTAIN first:
+1. Q1 (pr-3-tests 2db3926, chunked): chunks 0-6 exit 0 = 2269 passed, 1 skipped, 0 failed; chunk 7: 189 passed, 0 failed so far; chunks 8-9 + post steps (ruff, mypy x2, bandit, hygiene+gitleaks, gitleaks dir/git, restart x5, node-off) still ahead. No verdict yet.
+2. Q5 (skips/SKIP-TABLE.md, pushed next): the lead's Windows '252 passed / 29 skipped' is a TARGETED run (not the full suite): the builder can name only 11 platform skips (reset.sh 4, /proc 2, lock 2, in-process restart 1, n8n root/permission 1, measure_burst 1) plus up to 27 gitleaks skips, so the 29 cannot be tied to a test list: SUGGESTION: re-run that Windows command with -rs and keep the SKIPPED lines. CI hides coverage (measured by emulation): requirements-dev.txt has no Playwright, so 166 browser tests skip in lint.yml and sonar.yml; sonar.yml has no gitleaks and no DPLD_REQUIRE_SCAN so 27 gitleaks/hygiene tests skip there; lint.yml sets DPLD_REQUIRE_SCAN=1 so a missing gitleaks FAILS there; no Windows CI job exists; 36 tests skip without node (measured); whether the GitHub runner has node is inferred, not checked. Expected skips as root with all tools: 3 (n8n permission test, measure_burst, the Windows-only stall test).
+3. Semgrep PR body v2 review (round 2): 0 Blocker, 1 MAJOR: the patch's docs/tests.md says 'a Python file that cannot be parsed did NOT change the exit code (0 was observed)' but no output is saved anywhere: builder S3 is running the real test (Semgrep 1.185.0, local made-up rule, Python and JS syntax-error files, with/without --strict) and making patch v4 with the sentence matched to the evidence; the body drafter is writing body v3 (removes the 31-leaks false-alarm sentence; plain wording for readers of main; no builder/patch-author wording).
+4. PR texts #2-#4: the verifier-drafter (opus, shell) is still writing the verified replacement descriptions (all three current texts have the false 'final tree is identical to #1' sentence).
+5. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13.
+READY TO APPLY NOW: Semgrep patch v3 (semgrep-on-2db3926-v3.patch fdd2393c677a...) is the current one but v4 is coming (unparsable-file sentence): wait for v4 if you can.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| Q1 shell chain | chunked run + post-chunk checks on 2db3926 | 01:11 | chunk 7 of 10 | h3chunk-*, h3post-* |
+| S3 (sonnet) | Semgrep patch v4 + evidence-sg-21 | 01:34 | running | semgrep-on-2db3926-v4.patch |
+| D-SG (opus) | Semgrep PR body v3 | 01:34 | running | pr-text/semgrep-pr-body-v3.md |
+| D-PR (opus) | verified PR #2/#3/#4 descriptions | 01:20 | running | pr-text/proposed/*.md + VERIFY.md |
+| Q4 builder | dry-run checks of the real-run scripts | 01:27 | running | real-run/DRY-RUN-CHECKS.md |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 4, shells 2, containers 0, heavy pytest 1, load ~2.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| Semgrep PR text + patch | body R3 / patch v4 | R1 body 1M; R2 body 1M (patch vs body) | the patch states an unmeasured result as fact | no | confirming review clean |
+| PR #2-#4 texts | 1 | 3 Blockers (same sentence) | descriptions must be replaced | no | verified texts reviewed |
+TABLE 3 - FINISHED SINCE LAST BLOCK (01:32Z)
+| item | result |
+|---|---|
+| Q5 skip table | done (SKIP-TABLE.md + 6 evidence files) |
+| Semgrep patch v3 | done, verified (974b2649) |
+| Semgrep body v2 + confirming review | review done: 1 Major, nits |
+
 ## 2026-11-13 01:32Z / 07:03 IST - CADENCE ORDER TAKEN (block every 5 min; an automatic heartbeat loop now guarantees it); STANDING QUEUE RUNNING: Q1 chunked run (chunk 7 of 10, chunks 0-6 green), Q2/Q3 Semgrep PR text + PR #2-#4 texts, Q4 dry-run checks, Q5 skip table, Q6 DONE
 FAILED / UNCERTAIN first:
 1. Q1: still no verdict on pr-3-tests 2db3926: chunks 0-6 exit 0 (112+624+276+156+306+329+466 = 2269 passed, 0 failed); chunk 7 running (17 passed so far); chunks 8-9 and the post-chunk steps (ruff, mypy x2, bandit, hygiene+gitleaks, gitleaks dir/git, restart test x5, node-off) follow automatically (resumable scripts; the container restarts every 5-30 min: I relaunch after each).

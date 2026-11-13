@@ -1,0 +1,18 @@
+# Linux measured skip lines of the h3 chunked run of 2db3926 (finished chunks; env of h3post.sh: node22, chromium, GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1; chunks run WITHOUT -rs except where a SKIPPED line shows)
+== /tmp/work/h3chunk-0.txt
+======================= 112 passed in 105.34s (0:01:45) ========================
+== /tmp/work/h3chunk-1.txt
+======================= 624 passed in 166.03s (0:02:46) ========================
+== /tmp/work/h3chunk-2.txt
+======================== 277 passed in 61.51s (0:01:01) ========================
+== /tmp/work/h3chunk-3.txt
+======================== 156 passed in 75.30s (0:01:15) ========================
+== /tmp/work/h3chunk-4.txt
+============================= 306 passed in 37.36s =============================
+== /tmp/work/h3chunk-5.txt
+tests/test_n8n_api_url.py::test_a_key_file_without_read_permission_is_a_clean_message_with_the_error_type_only SKIPPED [ 92%]
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+================== 329 passed, 1 skipped in 61.64s (0:01:01) ===================
+== /tmp/work/h3chunk-6.txt
+======================= 466 passed in 377.69s (0:06:17) ========================
+== /tmp/work/h3chunk-7.txt

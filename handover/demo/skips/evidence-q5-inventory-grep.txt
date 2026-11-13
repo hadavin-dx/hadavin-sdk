@@ -1,0 +1,92 @@
+# q5 inventory: grep of skip mechanisms at 2db3926 (pr-3-tests), read-only clone /tmp/work/q5-base
+tests/test_gitleaks_exceptions.py:120:    if shutil.which("git") is None:
+tests/test_gitleaks_exceptions.py:123:        pytest.skip(
+tests/test_gitleaks_exceptions.py:145:        pytest.skip(f"no gitleaks program (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure")
+tests/test_reset_scripts.py:18:WINDOWS = sys.platform == "win32"
+tests/test_reset_scripts.py:25:        powershell = shutil.which("powershell")
+tests/test_reset_scripts.py:27:            pytest.skip("Windows PowerShell is not installed")
+tests/test_reset_scripts.py:117:@pytest.mark.skipif(WINDOWS, reason="Windows ends a process at once; the slow stop is a POSIX case")
+tests/test_reset_scripts.py:138:@pytest.mark.skipif(WINDOWS, reason="Windows ends a process at once; the slow stop is a POSIX case")
+tests/test_reset_scripts.py:165:@pytest.mark.skipif(WINDOWS, reason="a process that ended but is not collected yet is a POSIX state")
+tests/test_load_tools.py:650:    if sys.platform == "win32":
+tests/test_codeant_demo_only.py:49:    if shutil.which("node") is None:
+tests/test_codeant_demo_only.py:50:        pytest.skip("node is not installed")
+tests/test_reset_ps1_links.py:80:        pytest.skip("this computer cannot make a symbolic link")
+tests/test_portal_log_poll.py:32:@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+tests/test_portal_log_poll.py:39:@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+tests/test_model_stamp_and_reaper.py:249:@pytest.mark.skipif(not os.path.isdir("/proc/self/fd"), reason="counts open files through /proc")
+tests/test_model_stamp_and_reaper.py:260:    before = len(os.listdir("/proc/self/fd"))
+tests/test_model_stamp_and_reaper.py:264:    held = len(os.listdir("/proc/self/fd")) - before
+tests/test_model_stamp_and_reaper.py:292:@pytest.mark.skipif(not os.path.isdir("/proc/self/fd"), reason="counts open files through /proc")
+tests/test_model_stamp_and_reaper.py:300:    before = len(os.listdir("/proc/self/fd"))
+tests/test_model_stamp_and_reaper.py:303:    held = len(os.listdir("/proc/self/fd")) - before
+tests/test_desk_edge_cases.py:871:        pytest.skip("this account cannot make symbolic links (Windows privilege); the test runs on Linux")
+tests/test_desk_edge_cases.py:890:@pytest.mark.skipif(sys.platform == "win32", reason="Windows cannot delete a file that is held open; runs on Linux")
+tests/test_server_hardening.py:224:@pytest.mark.skipif(not os.environ.get("LEAD_DESK_LOAD_N"), reason="measurement run: set LEAD_DESK_LOAD_N")
+tests/test_server_hardening.py:226:    n = int(os.environ["LEAD_DESK_LOAD_N"])
+tests/test_portal_browser.py:27:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_portal_browser.py:32:            pytest.skip(f"no browser: {e}")
+tests/test_no_placeholders.py:27:        pytest.skip("not a git work tree (a source archive): the file list is not available")
+tests/test_n8n_proof_result.py:18:needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+tests/test_n8n_proof_result.py:55:@needs_node
+tests/test_n8n_proof_result.py:64:@needs_node
+tests/test_mode_safety.py:32:needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+tests/test_mode_safety.py:110:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_mode_safety.py:115:            pytest.skip(f"no browser: {e}")
+tests/test_mode_safety.py:175:@needs_node
+tests/test_mode_safety.py:332:@pytest.mark.skipif(sys.platform == "win32", reason="reset.sh is the non-Windows script")
+tests/test_mode_safety.py:343:        found = shutil.which(tool)
+tests/test_ledger_amounts.py:388:    if sys.platform == "win32":
+tests/test_smtp_provider.py:34:            pytest.skip("the openssl program is not installed, so no test certificate can be made")
+tests/test_portal_lead_pages.py:113:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_portal_lead_pages.py:118:            pytest.skip(f"no browser: {e}")
+tests/test_portal_lead_pages.py:486:    node = shutil.which("node")
+tests/test_portal_lead_pages.py:488:        pytest.skip("no node")
+tests/test_n8n_api_url.py:510:@pytest.mark.skipif(
+tests/test_n8n_api_url.py:511:    not hasattr(os, "geteuid") or os.geteuid() == 0, reason="root (and Windows) can read a file with no permissions"
+tests/test_portal_wording_and_masking.py:171:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_portal_wording_and_masking.py:179:            pytest.skip(f"no browser: {e}")
+tests/test_portal_wording_and_masking.py:204:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_portal_wording_and_masking.py:211:            pytest.skip(f"no browser: {e}")
+tests/test_portal_wording_and_masking.py:257:    sync_api = pytest.importorskip("playwright.sync_api")
+tests/test_portal_wording_and_masking.py:264:            pytest.skip(f"no browser: {e}")
+tests/test_portal_api.py:854:        pytest.skip("this platform cannot make symbolic links here")
+tests/test_portal_api.py:1457:@pytest.mark.skipif(sys.platform == "win32", reason="in-process variant; the real-process restart runs everywhere")
+tests/test_portal_mode.py:28:needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+tests/test_portal_mode.py:42:@needs_node
+tests/test_portal_mode.py:52:@needs_node
+tests/test_portal_mode.py:59:@needs_node
+tests/test_portal_mode.py:235:@needs_node
+tests/test_portal_mode.py:307:@needs_node
+tests/test_portal_mode.py:320:@needs_node
+tests/test_portal_mode.py:336:@needs_node
+tests/test_portal_mode.py:417:@needs_node
+tests/test_portal_mode.py:440:@needs_node
+tests/test_portal_mode.py:448:@needs_node
+tests/test_portal_mode.py:458:@needs_node
+tests/test_portal_mode.py:470:@needs_node
+tests/test_portal_mode.py:483:@needs_node
+tests/test_portal_mode.py:532:@needs_node
+tests/test_portal_mode.py:552:@needs_node
+tests/test_portal_mode.py:637:@needs_node
+tests/test_portal_mode.py:642:@needs_node
+tests/conftest.py:45:        pytest.skip("needs the demo_only folder, which is not here")
+tests/test_hygiene.py:36:        found = shutil.which(raw)
+tests/test_hygiene.py:39:    if not (os.path.exists(path) or (os.name == "nt" and os.path.exists(path + ".exe"))):
+tests/test_hygiene.py:144:        pytest.skip(
+tests/test_hygiene.py:372:        pytest.skip(
+tests/test_hygiene.py:419:        pytest.skip(f"no gitleaks program on PATH (set {GITLEAKS_ENV})")
+tests/test_hygiene.py:425:        pytest.skip("gitleaks and the repository are on different drives: no relative path between them")
+tests/test_hygiene.py:433:    exe = folder / (name + (".exe" if os.name == "nt" else ""))
+tests/test_hygiene.py:465:        pytest.skip("no symbolic links here")
+tests/test_real_check_dry.py:829:        pytest.skip("the openssl program is needed for the dry fakes")
+tests/test_desk_http_edge_cases.py:511:        pytest.skip("this account cannot make symbolic links (Windows privilege); the test runs on Linux")
+tests/test_desk_http_edge_cases.py:555:    fcntl = pytest.importorskip("fcntl")  # POSIX only; the Windows lock path has its own tests
+tests/test_stall_eviction.py:526:@pytest.mark.skipif(sys.platform != "win32", reason="the reset that destroys the reply happens on Windows only")
+tests/test_portal_demo.py:53:            pytest.skip(f"{e.name} is not there: demo_only/ was removed", allow_module_level=True)
+tests/test_portal_demo.py:113:def symlink_or_skip(link: Path, target: Path) -> None:
+tests/test_portal_demo.py:118:        pytest.skip(f"cannot create a symlink here: {e}")
+tests/test_portal_demo.py:1007:    allowed = {HTTP_OK, HTTP_CONFLICT} if sys.platform == "win32" else {HTTP_OK}
+tests/test_portal_demo.py:1019:        symlink_or_skip(flag.parent / guess, victim)
+tests/test_portal_demo.py:1166:    symlink_or_skip(link, victim)
+demo_only/fake_smtp_tls.py:22:    exe = shutil.which("openssl")
