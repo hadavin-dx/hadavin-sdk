@@ -1,0 +1,536 @@
+diff --git a/contract.md b/contract.md
+index d24f76c..08d0722 100644
+--- a/contract.md
++++ b/contract.md
+@@ -73,7 +73,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
+ ## Config environment names
+ `Config.fakes_url` is a read-only property built from `fakes_host` and `fakes_port`.
+ * Env names: `DESK_DB_PATH, DESK_BIND, DESK_PORT, DESK_ADAPTERS, DESK_FAKES_URL, DESK_FAKES_HOST, DESK_FAKES_PORT, DESK_REPLIES_PATH, DESK_SEND_TIMEOUT_SECONDS, DESK_SIZE_CAP_BYTES, DESK_STALL_SECONDS, DESK_ALLOWED_HOSTS, DESK_QUALIFIER` (`recorded` or `live_claude`), `DESK_OUTBOX` (`http`, `smtp` or `smtp_provider`), `DESK_CRM` (`fake` or `hubspot`).
+-* With `DESK_QUALIFIER=live_claude` the `DESK_LIVE_*` names are read (model, key file, prices and their date, run and total caps, ledger path, run id, base URL, API version, effort, timeout, max tokens; `docs/settings.md` lists them); with `DESK_OUTBOX=smtp` the `DESK_SMTP_*` names are read (host, port, from, message-id domain, timeout seconds); with `DESK_OUTBOX=smtp_provider` the `DESK_SMTPP_*` names are read (`HOST`, `PORT`, `SECURITY` = `starttls` or `ssl`, `USER`, `PASSWORD_FILE`, `FROM`, `RECIPIENTS` as a comma list, `MESSAGE_ID_DOMAIN`, `TIMEOUT_SECONDS`, `MAX_SENDS` (required hard cap), `STATS_FILE`, `CA_FILE`); with `DESK_CRM=hubspot` the `DESK_HUBSPOT_*` names are read (`KEY_FILE` and `MAX_CALLS` required, `BASE_URL`, `TIMEOUT_SECONDS`, `MAX_429_RETRIES`, `STATS_FILE`, `ALLOW_ANY_BASE_URL` = the word yes).
++* With `DESK_QUALIFIER=live_claude` the `DESK_LIVE_*` names are read (model, key file, prices and their date, run and total caps, ledger path, run id, base URL (required: never defaulted to the provider's address), API version, effort, timeout, max tokens; `docs/settings.md` lists them); with `DESK_OUTBOX=smtp` the `DESK_SMTP_*` names are read (host, port, from, message-id domain, timeout seconds); with `DESK_OUTBOX=smtp_provider` the `DESK_SMTPP_*` names are read (`HOST`, `PORT`, `SECURITY` = `starttls` or `ssl`, `USER`, `PASSWORD_FILE`, `FROM`, `RECIPIENTS` as a comma list, `MESSAGE_ID_DOMAIN`, `TIMEOUT_SECONDS`, `MAX_SENDS` (required hard cap), `STATS_FILE`, `CA_FILE`); with `DESK_CRM=hubspot` the `DESK_HUBSPOT_*` names are read (`KEY_FILE`, `MAX_CALLS` and `BASE_URL` required, `TIMEOUT_SECONDS`, `MAX_429_RETRIES`, `STATS_FILE`, `ALLOW_ANY_BASE_URL` = the word yes).
+ * A secret is never a value in these names: only the path of a one-line key file. `DESK_FAKES_URL` wins over `DESK_FAKES_HOST` / `DESK_FAKES_PORT`; its scheme must be `http` (anything else raises `ValueError`), a path other than empty or `/` raises `ValueError`, a query, fragment and userinfo are ignored (only host and port are taken); an IPv6 host keeps its brackets. `DESK_LATER_MODE` (`off` default, or `approval`) and `DESK_LEADFLOW_FILE` (a path to the lead flow file: the lead owner list, the lead stages and the reminder wait; unset, empty or the word `off` means the feature is off; exit 4 when the file is refused) and `DESK_NUDGE_TO` (the one address that gets reminders; refused unless the lead flow file is on) and `DESK_APPROVERS_FILE` (a path; refused unless the mode is `approval`; `config.approvers`, `config.approvers_label` are filled from the file by `server.main` through `loader.load_approvers`, exit 4 when refused; `Desk` refuses approval mode with no approver).
+ 
+ ## Demo files
+diff --git a/docs/settings.md b/docs/settings.md
+index ad2ca7a..cc01c26 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -81,7 +81,7 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ 
+ * `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters. The desk opens the file at its first CRM call, not at start: a missing or bad key file shows as a CRM configuration error then. `scripts/run_real_check.py` checks the file with the same code before its start question and refuses (exit code 2).
+ * `DESK_HUBSPOT_MAX_CALLS`: required hard cap, counted per process in memory: a restarted desk starts again at 0, so a restart loop is not limited by it. Only the live-model spend ledger is a file that survives restarts.
+-* `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
++* `DESK_HUBSPOT_BASE_URL` (required, no default: the address the key is sent to; an absent or blank value is refused at start, exit code 4, so the key never goes to the vendor by omission. Name the vendor's own address (`HUBSPOT_BASE_URL` in `constants.py`) on purpose, or a loopback address together with `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=yes` for a test; a `%` in the host is refused), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+ 
+ Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4).
+@@ -97,7 +97,7 @@ The step asks the model for one word (hot, warm or cold) and keeps no secret in
+ | `DESK_LIVE_PRICE_IN_PER_MTOK`, `DESK_LIVE_PRICE_OUT_PER_MTOK`, `DESK_LIVE_PRICE_DATE` | US$ per million input and output tokens and the date you read them from the provider's price page (required; each price from 0.000001 to 1,000,000). The desk uses these prices as you give them for the whole run, never checks how old the date is and writes dollars (not prices) in the ledger: keeping the prices right is your job |
+ | `DESK_LIVE_CAP_RUN_USD`, `DESK_LIVE_CAP_TOTAL_USD` | the most one run and the whole ledger may spend (required; above 0 and at most US$1,000,000; the run cap may not exceed the total) |
+ | `DESK_LIVE_LEDGER_PATH`, `DESK_LIVE_RUN_ID` | the spend ledger file (a file that records the money spent; kept across restarts) and the name of this run (required) |
+-| `DESK_LIVE_BASE_URL` | service address; default is the provider's public address (`LIVE_DEFAULT_BASE_URL` in `constants.py`); plain `http` only for the local computer. The key is sent to this address, so the settings refuse any other address than the provider's own or this computer, wherever they are made (the desk, `scripts/run_real_check.py`, `scripts/run_live_check.py`) |
++| `DESK_LIVE_BASE_URL` | service address (required, no default: an absent or blank value is refused at start, exit code 4, so the key never goes to the provider by omission; name the provider's own address, `LIVE_DEFAULT_BASE_URL` in `constants.py`, on purpose, or a loopback address for a test); plain `http` only for the local computer; a `%` in the host is refused. The key is sent to this address, so the settings refuse any other address than the provider's own or this computer, wherever they are made (the desk, `scripts/run_real_check.py`, `scripts/run_live_check.py`) |
+ | `DESK_LIVE_ALLOW_ANY_BASE_URL` | the word `yes` lifts that refusal (the same idea as `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`); `scripts/run_real_check.py` reads it from its config file only |
+ | `DESK_LIVE_API_VERSION`, `DESK_LIVE_EFFORT`, `DESK_LIVE_TIMEOUT_SECONDS`, `DESK_LIVE_MAX_TOKENS` | request version header (default 2026-10-21), `output_config` effort (default low), total time limit of one call in seconds (default 8, at most 9: the desk cuts every model call there), output cap in tokens (default 64; thinking tokens are billed as output and the worst-case reserve uses this number) |
+ 
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 5ec5672..ff4725d 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -124,7 +124,7 @@ class LiveSettings:
+     cap_total_usd: Decimal
+     ledger_path: Path
+     run_id: str
+-    base_url: str = LIVE_DEFAULT_BASE_URL
++    base_url: str  # no default: a key never goes to the provider's address by omission (the caller names it)
+     api_version: str = LIVE_API_VERSION
+     timeout_seconds: float = LIVE_DEFAULT_TIMEOUT_SECONDS
+     max_tokens: int = LIVE_DEFAULT_MAX_TOKENS
+@@ -173,6 +173,8 @@ class LiveSettings:
+             or parts.password
+         ):
+             raise SettingRefused("DESK_LIVE_BASE_URL must be an http(s) address with a host and no path")
++        if "%" in parts.netloc:  # urllib would read the host differently from the provider check below
++            raise SettingRefused("DESK_LIVE_BASE_URL must hold no percent sign in the host")
+         if parts.scheme == "http" and parts.hostname not in ("127.0.0.1", "localhost", "::1"):
+             raise SettingRefused("DESK_LIVE_BASE_URL: plain http is allowed for a loopback address only")
+         host = parts.hostname.lower()
+@@ -200,9 +202,12 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+     for n in need:
+         if not e.get(n, "").strip():
+             raise SettingRefused(f"{n} is required for the live model")
+-    kw: dict[str, Any] = {}
+-    if "DESK_LIVE_BASE_URL" in e:
+-        kw["base_url"] = e["DESK_LIVE_BASE_URL"]
++    if not e.get("DESK_LIVE_BASE_URL", "").strip():
++        raise SettingRefused(
++            "DESK_LIVE_BASE_URL is required for the live model: name the address the key is sent to "
++            "(the provider's own, or a loopback address for a test); it is never filled in by a default"
++        )
++    kw: dict[str, Any] = {"base_url": e["DESK_LIVE_BASE_URL"]}
+     if "DESK_LIVE_API_VERSION" in e:
+         kw["api_version"] = e["DESK_LIVE_API_VERSION"]
+     if "DESK_LIVE_TIMEOUT_SECONDS" in e:
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index ad79be1..17cb50d 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -161,13 +161,13 @@ MIRROR_CALL_SHARE: Final = 0.5  # the CRM copy may use at most this share of DES
+ HUBSPOT_MODULE: Final = "lead_desk.crm_hubspot"
+ # The vendor host names live HERE and nowhere else (the repo's address scan allows this one file for them). Every other
+ # file, every test and every example imports these values or uses a reserved example name.
+-HUBSPOT_BASE_URL: Final = "https://api.hubapi.com"  # the CRM's address; DESK_HUBSPOT_BASE_URL overrides it
++HUBSPOT_BASE_URL: Final = "https://api.hubapi.com"  # the vendor's own address (examples, tests), no default
+ HUBSPOT_HOST_SUFFIXES: Final = ("hubapi.com", "hubspot.com")  # the key is sent only to these (or on purpose elsewhere)
+-MAIL_IMAP_DEFAULT_HOST: Final = "imap.gmail.com"  # default of REAL_IMAP_n_HOST in scripts/run_real_check.py
++MAIL_IMAP_DEFAULT_HOST: Final = "imap.gmail.com"  # an example for REAL_IMAP_n_HOST, no default
+ MAIL_SPAM_FOLDER: Final = "[Gmail]/Spam"  # the provider's English spam folder name; REAL_IMAP_n_FOLDERS overrides it
+ 
+ # Live model step (live_claude.py). No price, cap or model id lives here: they are required settings.
+-LIVE_DEFAULT_BASE_URL: Final = "https://api.anthropic.com"  # the provider's address; override by setting
++LIVE_DEFAULT_BASE_URL: Final = "https://api.anthropic.com"  # the provider's own address (host check), no default
+ # anthropic-version header value (config can override); where the value comes from: versions.md
+ LIVE_API_VERSION: Final = "2026-10-21"
+ LIVE_DEFAULT_EFFORT: Final = "low"  # output_config effort: one-word answer, so little thinking (config can override)
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 02c2f96..227b7e3 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -76,7 +76,6 @@ from lead_desk.constants import (
+     HTTP_INTERNAL_ERROR,
+     HTTP_REQUEST_TIMEOUT,
+     HTTP_TOO_MANY_REQUESTS,
+-    HUBSPOT_BASE_URL,
+     HUBSPOT_HOST_SUFFIXES,
+     LIVE_KEY_MIN_CHARS,
+     MIRROR_CALL_SHARE,
+@@ -143,7 +142,7 @@ class HubspotSettings:
+         repr=False
+     )  # one line: the service key; read at every call, never an argument, never printed
+     max_calls: int  # hard cap of calls this adapter may make in one run (no default: the caller states it)
+-    base_url: str = HUBSPOT_BASE_URL
++    base_url: str  # no default: a key never goes to the vendor's address by omission (the caller names it)
+     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS  # total budget of one put
+     max_429_retries: int = DEFAULT_429_RETRIES
+     stats_file: Path | None = None  # counters are written here after every change (run scripts read it)
+@@ -161,6 +160,8 @@ class HubspotSettings:
+             raise SettingRefused("DESK_HUBSPOT_BASE_URL must be an http(s) address with a host and no path")
+         if parts.query or parts.fragment or parts.username or parts.password:
+             raise SettingRefused("DESK_HUBSPOT_BASE_URL must hold no query, fragment or login")
++        if "%" in parts.netloc:  # urllib would read the host differently from the vendor-domain check below
++            raise SettingRefused("DESK_HUBSPOT_BASE_URL must hold no percent sign in the host")
+         if parts.scheme == "http" and parts.hostname not in ("127.0.0.1", "::1", "localhost"):
+             raise SettingRefused("DESK_HUBSPOT_BASE_URL: plain http is allowed for a loopback address only")
+         host = (parts.hostname or "").lower()
+@@ -171,16 +172,20 @@ class HubspotSettings:
+ 
+     @classmethod
+     def from_env(cls, env: Mapping[str, str]) -> HubspotSettings:
+-        """DESK_HUBSPOT_KEY_FILE and DESK_HUBSPOT_MAX_CALLS are required; DESK_HUBSPOT_BASE_URL,
+-        DESK_HUBSPOT_TIMEOUT_SECONDS, DESK_HUBSPOT_MAX_429_RETRIES,
++        """DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS and DESK_HUBSPOT_BASE_URL are required (the address the key is
++        sent to is never filled in by a default: name the vendor's own address on purpose, or a loopback address for
++        a test); DESK_HUBSPOT_TIMEOUT_SECONDS, DESK_HUBSPOT_MAX_429_RETRIES,
+         DESK_HUBSPOT_STATS_FILE, DESK_HUBSPOT_ALLOW_ANY_BASE_URL (the word yes) are optional. A bad value raises
+         ValueError (naming the setting, never its value)."""
+         for n in ("DESK_HUBSPOT_KEY_FILE", "DESK_HUBSPOT_MAX_CALLS"):
+             if not env.get(n, "").strip():
+                 raise SettingRefused(f"{n} is required for the hubspot CRM")
+-        kw: dict[str, Any] = {}
+-        if "DESK_HUBSPOT_BASE_URL" in env:
+-            kw["base_url"] = env["DESK_HUBSPOT_BASE_URL"]
++        if not env.get("DESK_HUBSPOT_BASE_URL", "").strip():
++            raise SettingRefused(
++                "DESK_HUBSPOT_BASE_URL is required for the hubspot CRM: name the address the key is sent to "
++                "(the vendor's own, or a loopback address for a test); it is never filled in by a default"
++            )
++        kw: dict[str, Any] = {"base_url": env["DESK_HUBSPOT_BASE_URL"]}
+         if "DESK_HUBSPOT_TIMEOUT_SECONDS" in env:
+             kw["timeout_seconds"] = env_number(
+                 env, "DESK_HUBSPOT_TIMEOUT_SECONDS", float, high=CALL_DEADLINE_MAX_SECONDS
+diff --git a/tests/test_crm_hubspot.py b/tests/test_crm_hubspot.py
+index e53c003..ad61b2a 100644
+--- a/tests/test_crm_hubspot.py
++++ b/tests/test_crm_hubspot.py
+@@ -324,13 +324,15 @@ def test_settings_validation_and_env() -> None:
+     with pytest.raises(ValueError, match="plain http"):
+         HubspotSettings(Path("k"), 1, base_url="http://example.com")
+     with pytest.raises(ValueError, match="DESK_HUBSPOT_MAX_CALLS must be a whole number between 1 and"):  # zero
+-        HubspotSettings(Path("k"), 0)
++        HubspotSettings(Path("k"), 0, base_url=HUBSPOT_BASE_URL)
+     with pytest.raises(ValueError, match="DESK_HUBSPOT_TIMEOUT_SECONDS"):
+-        HubspotSettings(Path("k"), 1, timeout_seconds=99)
++        HubspotSettings(Path("k"), 1, base_url=HUBSPOT_BASE_URL, timeout_seconds=99)
+     with pytest.raises(ValueError, match="DESK_HUBSPOT_MAX_CALLS is required"):  # missing
+         HubspotSettings.from_env({"DESK_HUBSPOT_KEY_FILE": "x"})
+-    s = HubspotSettings.from_env({"DESK_HUBSPOT_KEY_FILE": "x", "DESK_HUBSPOT_MAX_CALLS": "5"})
+-    assert s.base_url.startswith("https://") and s.max_calls == 5
++    s = HubspotSettings.from_env(
++        {"DESK_HUBSPOT_KEY_FILE": "x", "DESK_HUBSPOT_MAX_CALLS": "5", "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL}
++    )
++    assert s.base_url == HUBSPOT_BASE_URL and s.max_calls == 5
+ 
+ 
+ def test_config_and_loader_select_hubspot_and_default_stays_fake(rig: Rig, monkeypatch: pytest.MonkeyPatch) -> None:
+@@ -459,7 +461,12 @@ def test_the_key_goes_only_to_hubspot_hosts_unless_overridden(url: str) -> None:
+ 
+ def test_a_bad_number_names_the_setting_and_not_its_value() -> None:
+     for name, val in (("DESK_HUBSPOT_MAX_CALLS", "sec" + "ret-1"), ("DESK_HUBSPOT_TIMEOUT_SECONDS", "sec" + "ret-2")):
+-        env = {"DESK_HUBSPOT_KEY_FILE": "k", "DESK_HUBSPOT_MAX_CALLS": "5", name: val}
++        env = {
++            "DESK_HUBSPOT_KEY_FILE": "k",
++            "DESK_HUBSPOT_MAX_CALLS": "5",
++            "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL,
++            name: val,
++        }
+         with pytest.raises(ValueError) as e:
+             HubspotSettings.from_env(env)
+         assert name in str(e.value) and val not in str(e.value)
+@@ -577,4 +584,4 @@ def test_one_request_is_bounded_as_a_whole_even_when_the_status_line_trickles_in
+ 
+ def test_settings_do_not_print_the_key_file_path() -> None:
+     marker = "marker-folder-name"
+-    assert marker not in repr(HubspotSettings(Path(marker) / "k", 1))
++    assert marker not in repr(HubspotSettings(Path(marker) / "k", 1, base_url=HUBSPOT_BASE_URL))
+diff --git a/tests/test_desk_address_required.py b/tests/test_desk_address_required.py
+new file mode 100644
+index 0000000..db97e67
+--- /dev/null
++++ b/tests/test_desk_address_required.py
+@@ -0,0 +1,249 @@
++"""The desk never fills in the address a key is sent to (HubSpot, the live model): the settings must name it.
++
++The class (the incident of 2026-11-13, and the review of the start-prompt patch): `python -m lead_desk.server` with
++DESK_CRM=hubspot, a key file and a call cap but NO DESK_HUBSPOT_BASE_URL posted one lead and then tried the vendor's own
++address; DESK_QUALIFIER=live_claude without DESK_LIVE_BASE_URL did the same toward the model vendor. The default address
++was the vendor's own, so it passed the "vendor's own domain" check by omission. Now an absent or blank address is a
++refusal that names the setting, in the env readers and in the dataclasses (no default field). A loopback address, or the
++vendor's own address named on purpose, still works. Every test here runs without any network."""
++
++from __future__ import annotations
++
++import ast
++import dataclasses
++import os
++import subprocess
++import sys
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from lead_desk.config import Config, LiveSettings
++from lead_desk.constants import HUBSPOT_BASE_URL, HUBSPOT_HOST_SUFFIXES, LIVE_DEFAULT_BASE_URL
++from lead_desk.crm_hubspot import HubspotSettings, make_crm
++
++REPO = Path(__file__).resolve().parents[1]
++LOOPBACK = "http://127.0.0.1:9"
++HUBSPOT = {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "5"}
++LIVE = {
++    "DESK_QUALIFIER": "live_claude",
++    "DESK_LIVE_MODEL": "m",
++    "DESK_LIVE_KEY_FILE": "k.txt",
++    "DESK_LIVE_PRICE_DATE": "2026-01-01",
++    "DESK_LIVE_LEDGER_PATH": "l.jsonl",
++    "DESK_LIVE_RUN_ID": "r",
++    "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
++    "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
++    "DESK_LIVE_CAP_RUN_USD": "1",
++    "DESK_LIVE_CAP_TOTAL_USD": "3",
++}
++BLANKS = ["", " ", "\t", "\n"]
++
++
++# -- HubSpot: the env reader ------------------------------------------------------------------------------------------
++def test_hubspot_from_env_refuses_an_address_that_is_not_named() -> None:
++    with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required for the hubspot CRM") as e:
++        HubspotSettings.from_env(HUBSPOT)
++    assert "never filled in by a default" in str(e.value)
++    for blank in BLANKS:
++        with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required"):
++            HubspotSettings.from_env({**HUBSPOT, "DESK_HUBSPOT_BASE_URL": blank})
++
++
++def test_hubspot_from_env_accepts_the_vendors_own_address_named_on_purpose_and_a_loopback_one() -> None:
++    assert HubspotSettings.from_env({**HUBSPOT, "DESK_HUBSPOT_BASE_URL": HUBSPOT_BASE_URL}).base_url == HUBSPOT_BASE_URL
++    loop = {**HUBSPOT, "DESK_HUBSPOT_BASE_URL": LOOPBACK, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "yes"}
++    assert HubspotSettings.from_env(loop).base_url == LOOPBACK  # the documented test path
++    with pytest.raises(ValueError, match="vendor's own domains"):  # a named loopback https still needs the opt-out
++        HubspotSettings.from_env({**HUBSPOT, "DESK_HUBSPOT_BASE_URL": "https://127.0.0.1"})
++
++
++def test_hubspot_settings_have_no_default_address_in_code_either() -> None:
++    field = next(f for f in dataclasses.fields(HubspotSettings) if f.name == "base_url")
++    assert field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
++    with pytest.raises(TypeError):
++        HubspotSettings(Path("k"), 1)  # type: ignore[call-arg]
++
++
++def test_make_crm_the_desks_own_entry_point_refuses_before_anything_connects(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    import socket
++
++    def boom(*_a: Any, **_k: Any) -> Any:
++        raise AssertionError("a connection or a name lookup was tried")
++
++    monkeypatch.setattr(socket.socket, "connect", boom)
++    monkeypatch.setattr(socket, "getaddrinfo", boom)
++    for name, value in HUBSPOT.items():
++        monkeypatch.setenv(name, value)
++    monkeypatch.delenv("DESK_HUBSPOT_BASE_URL", raising=False)
++    with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required"):
++        make_crm(Config(crm="hubspot"))
++
++
++# -- live model: the env reader ---------------------------------------------------------------------------------------
++def test_live_settings_from_env_refuse_an_address_that_is_not_named() -> None:
++    with pytest.raises(ValueError, match="DESK_LIVE_BASE_URL is required for the live model") as e:
++        Config.from_env(LIVE)
++    assert "never filled in by a default" in str(e.value)
++    for blank in BLANKS:
++        with pytest.raises(ValueError, match="DESK_LIVE_BASE_URL is required"):
++            Config.from_env({**LIVE, "DESK_LIVE_BASE_URL": blank})
++
++
++def test_live_settings_from_env_accept_the_providers_own_address_named_and_a_loopback_one() -> None:
++    live = Config.from_env({**LIVE, "DESK_LIVE_BASE_URL": LIVE_DEFAULT_BASE_URL}).live
++    assert live is not None and live.base_url == LIVE_DEFAULT_BASE_URL
++    live = Config.from_env({**LIVE, "DESK_LIVE_BASE_URL": LOOPBACK}).live
++    assert live is not None and live.base_url == LOOPBACK  # plain http to this computer needs no opt-out
++
++
++def test_live_settings_have_no_default_address_in_code_either() -> None:
++    field = next(f for f in dataclasses.fields(LiveSettings) if f.name == "base_url")
++    assert field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
++
++
++def test_the_address_is_only_read_when_the_live_model_is_on() -> None:
++    assert Config.from_env({"DESK_QUALIFIER": "recorded"}).live is None  # no live name, no address needed
++
++
++# -- the percent sign (the review's nit 7): the vendor-domain check and urllib must read the same host ---------------
++@pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
++def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
++    suffix = HUBSPOT_HOST_SUFFIXES[0]
++    hub = "https://" + "evil.test" + sign + "." + suffix
++    with pytest.raises(ValueError, match="no percent sign"):
++        HubspotSettings(Path("k"), 1, base_url=hub)
++    own = (LIVE_DEFAULT_BASE_URL.split("//", 1)[1]).split("/")[0]
++    live = "https://" + "evil.test" + sign + "." + own
++    kw: dict[str, Any] = {
++        "model": "m",
++        "key_file": Path("k"),
++        "price_in_per_mtok": 1,
++        "price_out_per_mtok": 1,
++        "price_date": "d",
++        "cap_run_usd": 1,
++        "cap_total_usd": 2,
++        "ledger_path": Path("l"),
++        "run_id": "r",
++        "base_url": live,
++    }
++    from decimal import Decimal
++
++    kw |= {k: Decimal(kw[k]) for k in ("price_in_per_mtok", "price_out_per_mtok", "cap_run_usd", "cap_total_usd")}
++    with pytest.raises(ValueError, match="no percent sign"):
++        LiveSettings(**kw)
++    with pytest.raises(ValueError, match="no percent sign"):  # also with the opt-out: it is never a host
++        HubspotSettings(Path("k"), 1, base_url=hub, allow_any_base_url=True)
++
++
++# -- the desk process itself ----------------------------------------------------------------------------------------
++_BLOCKER = """
++import ipaddress, os, socket
++def _lo(h):
++    if isinstance(h, bytes):
++        h = h.decode()
++    if h in ("localhost", None, ""):
++        return True
++    try:
++        return ipaddress.ip_address(str(h).strip("[]")).is_loopback
++    except ValueError:
++        return False
++def _log(what, target):
++    with open(os.environ["BLOCK_LOG"], "a") as f:
++        f.write(what + " " + repr(target) + "\\n")
++_gai = socket.getaddrinfo
++def getaddrinfo(host, *a, **k):
++    if not _lo(host):
++        _log("lookup", host)
++        raise OSError("blocked")
++    return _gai(host, *a, **k)
++socket.getaddrinfo = getaddrinfo
++_c = socket.socket.connect
++def connect(self, addr):
++    if not (isinstance(addr, str) or _lo(addr[0])):
++        _log("connect", addr)
++        raise OSError("blocked")
++    return _c(self, addr)
++socket.socket.connect = connect
++"""
++
++
++def _run_desk(tmp_path: Path, extra: dict[str, str]) -> tuple[subprocess.CompletedProcess[str], list[str]]:
++    """`python -m lead_desk.server` as a child with a made-up key, a blocker for every non-loopback connection or name
++    lookup, and no DESK_* name from the shell. Returns the result and what the blocker logged (must stay empty)."""
++    block = tmp_path / "block"
++    block.mkdir()
++    (block / "sitecustomize.py").write_text(_BLOCKER, encoding="utf-8")
++    key = tmp_path / "key.txt"
++    key.write_text("made-up-" + "key-0123456789\n", encoding="utf-8")
++    log = tmp_path / "blocked.log"
++    env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
++    env |= {
++        "PYTHONPATH": os.pathsep.join([str(block), str(REPO / "src"), str(REPO)]),
++        "BLOCK_LOG": str(log),
++        "DESK_DB_PATH": str(tmp_path / "data" / "desk.db"),
++        "DESK_PORT": "0",
++        "DESK_ADAPTERS": "demo",
++        **extra,
++    }
++    done = subprocess.run(  # noqa: S603 (our own interpreter and module)
++        [sys.executable, "-m", "lead_desk.server"],
++        env=env,
++        cwd=REPO,
++        capture_output=True,
++        text=True,
++        timeout=60,
++        check=False,
++        stdin=subprocess.DEVNULL,
++    )
++    return done, (log.read_text(encoding="utf-8").splitlines() if log.exists() else [])
++
++
++def test_the_desk_process_refuses_hubspot_without_an_address_and_connects_nowhere(tmp_path: Path) -> None:
++    key = tmp_path / "k.txt"
++    done, blocked = _run_desk(
++        tmp_path, {"DESK_CRM": "hubspot", "DESK_HUBSPOT_KEY_FILE": str(key), "DESK_HUBSPOT_MAX_CALLS": "5"}
++    )
++    assert done.returncode == 4, done.stdout + done.stderr  # EXIT_DESK_SETTING_REFUSED: a plain refusal
++    assert "the desk refuses a setting: DESK_HUBSPOT_BASE_URL is required for the hubspot CRM" in done.stdout
++    assert "Traceback" not in done.stdout + done.stderr and blocked == []
++
++
++def test_the_desk_process_refuses_the_live_model_without_an_address_and_connects_nowhere(tmp_path: Path) -> None:
++    live = {k: v for k, v in LIVE.items() if k != "DESK_QUALIFIER"} | {
++        "DESK_LIVE_KEY_FILE": str(tmp_path / "k.txt"),
++        "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger.jsonl"),
++    }
++    done, blocked = _run_desk(tmp_path, {"DESK_QUALIFIER": "live_claude", **live})
++    assert done.returncode == 4, done.stdout + done.stderr
++    assert "the desk refuses a setting: DESK_LIVE_BASE_URL is required for the live model" in done.stdout
++    assert "Traceback" not in done.stdout + done.stderr and blocked == []
++
++
++# -- sibling sweep: no vendor address is a default anywhere in src --------------------------------------------------
++_VENDOR_ADDRESS_NAMES = {"HUBSPOT_BASE_URL", "LIVE_DEFAULT_BASE_URL", "MAIL_IMAP_DEFAULT_HOST"}
++
++
++def test_no_vendor_address_constant_is_used_as_a_default_in_src() -> None:
++    """The three vendor addresses live in constants.py. The only use in src/ is the live settings' check that a key goes
++    to the provider's own host (config.py). Any other use (a dataclass default, a `.get(name, VENDOR)`) fails here."""
++    used: dict[str, set[str]] = {}
++    for path in sorted((REPO / "src").rglob("*.py")):
++        if path.name == "constants.py":
++            continue
++        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
++            names = {a.name for a in node.names} if isinstance(node, ast.ImportFrom) else set()
++            if isinstance(node, ast.Name):
++                names.add(node.id)
++            hit = names & _VENDOR_ADDRESS_NAMES
++            if hit:
++                used.setdefault(path.name, set()).update(hit)
++    assert used == {"config.py": {"LIVE_DEFAULT_BASE_URL"}}, used
++
++
++def test_the_settings_reference_says_the_address_is_required() -> None:
++    text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    assert "`DESK_HUBSPOT_BASE_URL` (required" in text and "`DESK_LIVE_BASE_URL` | service address (required" in text
+diff --git a/tests/test_env_numbers.py b/tests/test_env_numbers.py
+index a17426f..bc7789d 100644
+--- a/tests/test_env_numbers.py
++++ b/tests/test_env_numbers.py
+@@ -55,6 +55,7 @@ LIVE = {
+     "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
+     "DESK_LIVE_CAP_RUN_USD": "1",
+     "DESK_LIVE_CAP_TOTAL_USD": "3",
++    "DESK_LIVE_BASE_URL": "http://127.0.0.1:9",  # named: the live settings never fall back to the provider's address
+ }
+ PROVIDER = {
+     "DESK_SMTPP_HOST": "mail.example.test",
+@@ -64,7 +65,12 @@ PROVIDER = {
+     "DESK_SMTPP_RECIPIENTS": "b@example.test",
+     "DESK_SMTPP_MAX_SENDS": "5",
+ }
+-HUBSPOT = {"DESK_HUBSPOT_KEY_FILE": "k.txt", "DESK_HUBSPOT_MAX_CALLS": "5"}
++HUBSPOT = {
++    "DESK_HUBSPOT_KEY_FILE": "k.txt",
++    "DESK_HUBSPOT_MAX_CALLS": "5",
++    "DESK_HUBSPOT_BASE_URL": "http://127.0.0.1:9",  # named; plain http to this computer needs the opt-out only to pass
++    "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "yes",
++}
+ 
+ 
+ def _config(name: str) -> Any:
+diff --git a/tests/test_ledger_amounts.py b/tests/test_ledger_amounts.py
+index 3d07b58..f069762 100644
+--- a/tests/test_ledger_amounts.py
++++ b/tests/test_ledger_amounts.py
+@@ -595,6 +595,7 @@ def test_junk_number_settings_are_a_clean_refusal_that_names_the_setting(name: s
+         "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
+         "DESK_LIVE_CAP_RUN_USD": "1",
+         "DESK_LIVE_CAP_TOTAL_USD": "3",
++        "DESK_LIVE_BASE_URL": "http://127.0.0.1:9",
+         name: junk,
+     }
+     with pytest.raises(ValueError, match=f"{name} is not a number"):
+@@ -616,6 +617,7 @@ def test_non_finite_or_out_of_range_timeouts_are_refused(junk: str) -> None:
+         "DESK_LIVE_PRICE_OUT_PER_MTOK": "2",
+         "DESK_LIVE_CAP_RUN_USD": "1",
+         "DESK_LIVE_CAP_TOTAL_USD": "3",
++        "DESK_LIVE_BASE_URL": "http://127.0.0.1:9",
+         "DESK_LIVE_TIMEOUT_SECONDS": junk,
+     }
+     with pytest.raises(ValueError):
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index 5fb50d6..b584dda 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -188,8 +188,11 @@ def test_settings_need_money_values() -> None:
+         "cap_total_usd": Decimal("2"),
+         "ledger_path": Path("l"),
+         "run_id": "r",
++        "base_url": LIVE_DEFAULT_BASE_URL,  # named: there is no default address
+     }
+     LiveSettings(**base)
++    with pytest.raises(TypeError):
++        LiveSettings(**{k: v for k, v in base.items() if k != "base_url"})  # no default address
+     with pytest.raises(TypeError):
+         LiveSettings(**{k: v for k, v in base.items() if k != "cap_total_usd"})  # no default for a cap
+     for bad in (
+@@ -216,6 +219,7 @@ def _live_kw(**over: Any) -> dict[str, Any]:
+         "cap_total_usd": Decimal("2"),
+         "ledger_path": Path("l"),
+         "run_id": "r",
++        "base_url": LIVE_DEFAULT_BASE_URL,  # named: there is no default address
+     }
+     return base | over
+ 
+@@ -224,7 +228,7 @@ def test_the_key_goes_only_to_the_providers_host_or_this_computer() -> None:
+     """The check is in the settings themselves (not in one script): a stranger's https host is refused when the
+     settings are made, so the key can never be sent there by any caller. The opt-out is explicit."""
+     stranger = "https://" + "model-host" + ".example.test"
+-    LiveSettings(**_live_kw())  # the provider's own default
++    LiveSettings(**_live_kw())  # the provider's own address, named
+     LiveSettings(**_live_kw(base_url="http://127.0.0.1:9"))
+     LiveSettings(**_live_kw(base_url="https://localhost"))
+     with pytest.raises(ValueError, match="not the provider's own address"):
+@@ -271,6 +275,7 @@ def test_config_from_env_live(tmp_path: Path) -> None:
+         DESK_LIVE_LEDGER_PATH=str(tmp_path / "l"),
+         DESK_LIVE_RUN_ID="r1",
+     )
++    env["DESK_LIVE_BASE_URL"] = LIVE_DEFAULT_BASE_URL  # named on purpose: never a default
+     with pytest.raises(ValueError, match="PRICE_IN"):
+         Config.from_env(env)
+     env.update(

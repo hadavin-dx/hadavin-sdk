@@ -1,0 +1,32 @@
+# git apply --check then git apply, in the order given, on a fresh worktree of each base. Patches are the FINAL files of this folder. bases: db54e13, 2db3926, 9c53207 (= db54e13 + sonar-p1-quickwins-v3.2 + sonar-p2-regex-http-bug-v2.1)
+v6 alone on db54e13: OK
+core-touches-3 alone on db54e13: OK
+core-touches-3 then v6-rest on db54e13: OK
+v6 then desk-address-required-v6 on db54e13: OK
+core-touches-3 then v6-rest then desk-address-required-v6 on db54e13: OK
+v6 alone on 2db3926: OK
+core-touches-3 alone on 2db3926: OK
+core-touches-3 then v6-rest on 2db3926: OK
+v6 then desk-address-required-v6 on 2db3926: OK
+core-touches-3 then v6-rest then desk-address-required-v6 on 2db3926: OK
+v6 alone on 9c53207: OK
+core-touches-3 alone on 9c53207: OK
+core-touches-3 then v6-rest on 9c53207: OK
+v6 then desk-address-required-v6 on 9c53207: OK
+core-touches-3 then v6-rest then desk-address-required-v6 on 9c53207: OK
+desk-address-required-v6 ALONE on db54e13 (expected FAIL: it is rebased on v6): FAIL at desk-address-required-v6.patch: error: patch failed: docs/settings.md:81
+p1v3.2 + p2v2.1 then v6 on db54e13: OK
+v6 then p1v3.2 + p2v2.1 on db54e13: OK
+p1v3.2 + p2v2.1 then v6 then desk-address-required-v6 on db54e13: OK
+p3-v3 then v6-after-sonar-p3 on db54e13: OK
+p3-v3 then v6-after-sonar-p3 then desk-address-required-v6 on db54e13: OK
+p3-v2 then v6-after-sonar-p3 on db54e13 (expected FAIL: made for p3-v3): FAIL at real-run-fixes-v6-after-sonar-p3.patch: error: patch failed: tests/test_path_confinement.py:556
+p3-v3 then plain v6 on db54e13 (expected FAIL: the --config block): FAIL at real-run-fixes-v6.patch: error: patch failed: scripts/run_real_check.py:822
+p3-v2 then plain v6 on db54e13 (expected FAIL: the --config block): FAIL at real-run-fixes-v6.patch: error: patch failed: scripts/run_real_check.py:822
+sonar-p1-quickwins-v3.2 + sonar-p2-regex-http-bug-v2.1 on db54e13: tree identical to commit 9c53207 (git write-tree compared)
+core-touches-3 + real-run-fixes-v6-rest on db54e13: tree identical to real-run-fixes-v6 on db54e13 (git write-tree compared)
+p3-final then v6-after-sonar-p3-final on db54e13: OK
+p3-final then v6-after-sonar-p3-final then desk-address-required-v6 on db54e13: OK
+p3-final then plain v6 on db54e13 (expected FAIL: load_env / the --config block): FAIL at real-run-fixes-v6.patch: error: patch failed: scripts/run_real_check.py:87
+p3-final then v6-after-sonar-p3 (the p3-v3 variant) on db54e13 (expected FAIL): FAIL at real-run-fixes-v6-after-sonar-p3.patch: error: patch failed: scripts/run_real_check.py:87
+sonar-p3-final.patch: exists (sonar/sonar-p3-final.patch, 06:27); the -final variant above is made for it; the old '-after-sonar-p3' variant is for sonar-p3-path-helper-v3

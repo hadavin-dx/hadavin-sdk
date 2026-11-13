@@ -1,0 +1,416 @@
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..02c2f96 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -265,8 +265,14 @@ class HubspotCrm:
+             raise CrmConfigError("the hubspot key file is not UTF-8 text: save it as plain UTF-8 text") from None
+         if "\n" in key or "\r" in key:
+             raise CrmConfigError("the hubspot key file has more than one line: it must hold only the key")
+-        if len(key) < LIVE_KEY_MIN_CHARS or any(c.isspace() or not c.isprintable() for c in key):
++        if not key:
+             raise CrmConfigError("the hubspot key file holds no key")
++        if len(key) < LIVE_KEY_MIN_CHARS:
++            raise CrmConfigError(
++                f"the hubspot key file holds a key that is too short (at least {LIVE_KEY_MIN_CHARS} characters)"
++            )
++        if any(c.isspace() or not c.isprintable() for c in key):
++            raise CrmConfigError("the hubspot key file holds a key with spaces or unprintable characters")
+         return key
+ 
+     def _count(self, *names: str) -> None:
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 177c552..5829d6c 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -424,8 +424,15 @@ class LiveQualifier:
+                 key = self.s.key_file.read_text(encoding="utf-8").strip()
+             except (OSError, UnicodeError):
+                 raise LiveTransport("the key file cannot be read") from None  # the error holds the path
+-            if len(key) < LIVE_KEY_MIN_CHARS:
++            # one line only, as in the HubSpot and SMTP readers (their other rules differ)
++            if "\n" in key or "\r" in key:
++                raise LiveTransport("the key file has more than one line: it must hold only the key")
++            if not key:
+                 raise LiveTransport("the key file holds no key")
++            if len(key) < LIVE_KEY_MIN_CHARS:
++                raise LiveTransport(
++                    f"the key file holds a key that is too short (at least {LIVE_KEY_MIN_CHARS} characters)"
++                )
+             self._key = key
+         return self._key
+ 
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index a60f7f5..2d6f90b 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -167,8 +167,14 @@ def read_secret_file(path: Path, what: str = "smtp password") -> str:
+     if "\n" in text or "\r" in text:
+         raise SendRefused(f"the {what} file has more than one line: it must hold only the password")
+     secret = "".join(text.split())
+-    if len(secret) < LIVE_KEY_MIN_CHARS or not secret.isascii() or not secret.isprintable():
++    if not secret:
+         raise SendRefused(f"the {what} file holds no password")
++    if len(secret) < LIVE_KEY_MIN_CHARS:
++        raise SendRefused(
++            f"the {what} file holds a password that is too short (at least {LIVE_KEY_MIN_CHARS} characters)"
++        )
++    if not secret.isascii() or not secret.isprintable():
++        raise SendRefused(f"the {what} file holds a password with characters other than plain printable ASCII")
+     return secret
+ 
+ 
+diff --git a/tests/test_core_key_readers.py b/tests/test_core_key_readers.py
+new file mode 100644
+index 0000000..a961c38
+--- /dev/null
++++ b/tests/test_core_key_readers.py
+@@ -0,0 +1,349 @@
++"""The three core key readers that the real-run fixes touch, pinned one by one (made-up data only, no network).
++
++The three places (all in src/, all read a one-line secret file; each had ONE refusal text "holds no key"):
++  1. `LiveQualifier._read_key` (live_claude.py): a BEHAVIOUR change. A key file that holds more than one line is now
++     refused (it was accepted when the text was at least 8 characters long). The text of an empty file and of a too
++     short key are now two texts.
++  2. `HubspotCrm._key` (crm_hubspot.py): MESSAGE TEXT only. The one text became three (empty / too short / spaces or
++     unprintable characters). What is accepted and what is refused must not change.
++  3. `read_secret_file` (smtp_provider.py): MESSAGE TEXT only, the same split. Accept and refuse must not change.
++
++How each is pinned:
++  * the `*_reason_*` tests fail on the old code: they assert the new texts (and, for the live reader, the new refusal);
++  * the `*_accept_and_refuse_*` tests compare 1512 generated key files with a copy of the OLD rule written out in this
++    file (an oracle): accept/refuse must be identical (for the live reader: identical except a multi-line key). They
++    pass on the old and on the new code on purpose: they are the "nothing else changed" pin;
++  * the `*_no_content_*` tests: no message holds the key text, the file name or the folder (they also pass on the old
++    code on purpose: the rule is "never", and it must stay true);
++  * the texts form a closed set: every message of every generated case is one of the fixed texts below.
++"""
++
++from __future__ import annotations
++
++import random
++from decimal import Decimal
++from pathlib import Path
++
++import pytest
++
++from lead_desk.config import LiveSettings
++from lead_desk.constants import HUBSPOT_BASE_URL, LIVE_DEFAULT_BASE_URL, LIVE_KEY_MIN_CHARS
++from lead_desk.contract import SendRefused
++from lead_desk.crm_hubspot import CrmConfigError, HubspotCrm, HubspotSettings
++from lead_desk.live_claude import LiveQualifier, LiveTransport
++from lead_desk.smtp_provider import SECRET_FILE_MAX_BYTES, read_secret_file
++
++MIN = LIVE_KEY_MIN_CHARS  # 8
++# The characters of the generated key files. No letter or digit that the fixed texts hold (a canary must never be
++# found in a message by chance): only Z, Q, 7 and symbols, plus every kind of blank and control character.
++CLEAN = ["Z", "Q", "7", "#", "%", "-"]
++BAD = [" ", " ", "\t", "\r", "\n", "\x00", "\x0b", "\x0c", "\u00e9", "\u00a0", "\u200b"]  # blanks, controls, non-ASCII
++RAW_CASES: list[bytes] = [
++    b"",
++    b"\n",
++    b"   \n",
++    b"\xef\xbb\xbf",  # a UTF-8 byte-order mark alone
++    b"\xef\xbb\xbf" + b"ZQ7#ZQ7#ZQ7#",
++    b"\xff\xfe" + "ZQ7#ZQ7#ZQ7#".encode("utf-16-le"),  # UTF-16 little endian
++    b"\xfe\xff" + "ZQ7#ZQ7#ZQ7#".encode("utf-16-be"),
++    b"ZQ7#\xffZQ7#ZQ7#",  # not UTF-8
++    b"ZQ7#ZQ7#ZQ7#\r\n",
++    b"ZQ7#ZQ7#ZQ7#\r",
++    b"ZQ7#ZQ7#\nZQ7#ZQ7#",
++    b"ZQ7#ZQ7#\r\nZQ7#ZQ7#\n",
++    b"Z" * SECRET_FILE_MAX_BYTES,
++    b"Z" * (SECRET_FILE_MAX_BYTES + 1),
++    b"Z" * (SECRET_FILE_MAX_BYTES * 2),
++]
++
++
++def generated_texts() -> list[bytes]:
++    """1512 key files: the hand-picked ones above, three more, then random ones from a fixed seed (the same files on
++    every run): lengths 0 to 14 in turn, each made of clean characters with 0, 1, 2 or 5 positions replaced by a blank,
++    a control or a non-ASCII character, so that the border between accepted and refused is crossed from both sides."""
++    rng = random.Random(1512)
++    out = [*RAW_CASES, b"ZQ7#ZQ7#", b"ZQ7# ZQ7# ", b" ZQ7#ZQ7# "]
++    i = 0
++    while len(out) < 1512:
++        chars = [rng.choice(CLEAN) for _ in range(i % 15)]
++        for _ in range(rng.choice([0, 0, 0, 1, 1, 2, 5])):
++            if chars:
++                chars[rng.randrange(len(chars))] = rng.choice(BAD)
++        out.append("".join(chars).encode("utf-8"))
++        i += 1
++    return out
++
++
++CASES = generated_texts()
++
++# ---- the OLD rules, written out (these are the oracles; they are a copy of the code before the change) ----
++
++
++def old_hubspot(raw: bytes) -> str | None:
++    """The accepted key of the old `HubspotCrm._key`, or None when it refused."""
++    if len(raw[: SECRET_FILE_MAX_BYTES + 1]) > SECRET_FILE_MAX_BYTES:
++        return None
++    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
++        return None
++    try:
++        key = raw.decode("utf-8-sig").strip()
++    except UnicodeError:
++        return None
++    if "\n" in key or "\r" in key:
++        return None
++    if len(key) < MIN or any(c.isspace() or not c.isprintable() for c in key):
++        return None
++    return key
++
++
++def old_smtp(raw: bytes) -> str | None:
++    """The accepted secret of the old `read_secret_file`, or None when it refused."""
++    if len(raw[: SECRET_FILE_MAX_BYTES + 1]) > SECRET_FILE_MAX_BYTES:
++        return None
++    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
++        return None
++    try:
++        text = raw.decode("utf-8-sig").strip()
++    except UnicodeError:
++        return None
++    if "\n" in text or "\r" in text:
++        return None
++    secret = "".join(text.split())
++    if len(secret) < MIN or not secret.isascii() or not secret.isprintable():
++        return None
++    return secret
++
++
++def _live_text(raw: bytes) -> str | None:
++    """What `Path.read_text(encoding="utf-8")` gives (strict UTF-8, line ends turned into "\\n"), stripped; None when
++    the text cannot be decoded."""
++    try:
++        return raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").strip()
++    except UnicodeError:
++        return None
++
++
++def old_live(raw: bytes) -> str | None:
++    """The accepted key of the old `LiveQualifier._read_key`, or None when it refused."""
++    key = _live_text(raw)
++    if key is None or len(key) < MIN:
++        return None
++    return key
++
++
++# ---- the three readers, called the way the desk calls them ----
++
++
++def read_hubspot(path: Path) -> str:
++    return HubspotCrm(HubspotSettings(key_file=path, max_calls=5, base_url=HUBSPOT_BASE_URL))._key()
++
++
++def read_smtp(path: Path) -> str:
++    return read_secret_file(path)
++
++
++def read_live(path: Path) -> str:
++    s = LiveSettings(
++        model="fake-model-1",
++        key_file=path,
++        price_in_per_mtok=Decimal("1"),
++        price_out_per_mtok=Decimal("1"),
++        price_date="2026-01-01",
++        cap_run_usd=Decimal("1"),
++        cap_total_usd=Decimal("3"),
++        ledger_path=path.parent / "ledger.jsonl",
++        run_id="run-a",
++        base_url=LIVE_DEFAULT_BASE_URL,
++    )
++    return LiveQualifier(s)._read_key()
++
++
++READERS = {
++    "hubspot": (read_hubspot, CrmConfigError),
++    "smtp": (read_smtp, SendRefused),
++    "live": (read_live, LiveTransport),
++}
++
++
++def outcome(reader: str, raw: bytes, tmp_path: Path) -> tuple[str | None, str]:
++    """(the accepted secret, "") or (None, the refusal text) for one key file."""
++    fn, exc = READERS[reader]
++    f = tmp_path / "secret-name.txt"
++    f.write_bytes(raw)
++    try:
++        return fn(f), ""
++    except exc as e:
++        return None, str(e)
++
++
++# ---- 1. accept and refuse are identical to the old rule (passes on the old code too: it pins "nothing else moved") ---
++
++
++def test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files(tmp_path: Path) -> None:
++    accepted = 0
++    for raw in CASES:
++        got, _ = outcome("hubspot", raw, tmp_path)
++        assert got == old_hubspot(raw), raw
++        accepted += got is not None
++    assert len(CASES) // 10 < accepted < len(CASES) // 2  # not vacuous: a good share is accepted, most refused
++
++
++def test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files(tmp_path: Path) -> None:
++    accepted = 0
++    for raw in CASES:
++        got, _ = outcome("smtp", raw, tmp_path)
++        assert got == old_smtp(raw), raw
++        accepted += got is not None
++    assert 0 < accepted < len(CASES) // 2
++
++
++def test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line(tmp_path: Path) -> None:
++    accepted = changed = 0
++    for raw in CASES:
++        got, _ = outcome("live", raw, tmp_path)
++        old = old_live(raw)
++        multi = old is not None and "\n" in old
++        assert got == (None if multi else old), raw  # the ONE behaviour change: a multi-line key is now refused
++        accepted += got is not None
++        changed += multi
++    assert accepted > 0 and changed > 0  # both sides are exercised by the generated files
++
++
++# ---- 2. the changed refusals: these fail on the old code ----
++
++HUBSPOT_TEXTS = {
++    "empty": "the hubspot key file holds no key",
++    "short": f"the hubspot key file holds a key that is too short (at least {MIN} characters)",
++    "chars": "the hubspot key file holds a key with spaces or unprintable characters",
++    "multi": "the hubspot key file has more than one line: it must hold only the key",
++}
++SMTP_TEXTS = {
++    "empty": "the smtp password file holds no password",
++    "short": f"the smtp password file holds a password that is too short (at least {MIN} characters)",
++    "chars": "the smtp password file holds a password with characters other than plain printable ASCII",
++    "multi": "the smtp password file has more than one line: it must hold only the password",
++}
++LIVE_TEXTS = {
++    "empty": "the key file holds no key",
++    "short": f"the key file holds a key that is too short (at least {MIN} characters)",
++    "multi": "the key file has more than one line: it must hold only the key",
++}
++OTHER = (
++    "cannot be read",
++    "is too large",
++    "is UTF-16 text",
++    "is not UTF-8 text",
++)  # the texts that did not change (a part of each)
++
++
++def _reason(reader: str, raw: bytes) -> str:
++    """Which text the NEW code must give for a refused key file (the order of the checks is part of the contract)."""
++    if reader == "live":
++        key = _live_text(raw)
++        if key is None:
++            return "other"
++        if "\n" in key:
++            return "multi"
++        if not key:
++            return "empty"
++        return "short" if len(key) < MIN else "accepted"
++    if len(raw) > SECRET_FILE_MAX_BYTES or raw.startswith((b"\xff\xfe", b"\xfe\xff")):
++        return "other"
++    try:
++        text = raw.decode("utf-8-sig").strip()
++    except UnicodeError:
++        return "other"
++    if "\n" in text or "\r" in text:
++        return "multi"
++    if reader == "smtp":
++        text = "".join(text.split())
++    if not text:
++        return "empty"
++    if len(text) < MIN:
++        return "short"
++    if reader == "smtp":
++        return "chars" if not text.isascii() or not text.isprintable() else "accepted"
++    return "chars" if any(c.isspace() or not c.isprintable() for c in text) else "accepted"
++
++
++@pytest.mark.parametrize(("reader", "texts"), [("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)])
++def test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text(
++    reader: str, texts: dict[str, str], tmp_path: Path
++) -> None:
++    seen: dict[str, int] = {}
++    for raw in CASES:
++        got, msg = outcome(reader, raw, tmp_path)
++        why = _reason(reader, raw)
++        if why == "accepted":
++            assert got is not None
++            continue
++        assert got is None
++        if why == "other":
++            assert any(part in msg for part in OTHER), (reader, raw, msg)
++        else:
++            assert msg == texts[why], (reader, raw, msg)
++        seen[why] = seen.get(why, 0) + 1
++    assert set(seen) == set(texts) | {"other"}, seen  # every reason was produced by some generated file
++
++
++def test_the_live_reader_refuses_a_key_of_more_than_one_line_that_is_long_enough(tmp_path: Path) -> None:
++    """The behaviour change, in plain words: two lines of 8 characters each were accepted before (the second line was
++    sent in the key header); now refused with the multi-line text. Fails on the old code."""
++    for raw in (b"ZQ7#ZQ7#\nZQ7#ZQ7#", b"ZQ7#ZQ7#\r\nZQ7#ZQ7#\r\n", b"ZQ7#ZQ7#\rZQ7#ZQ7#", b"ZQ7#ZQ7#ZQ7#\n\nZQ7#"):
++        got, msg = outcome("live", raw, tmp_path)
++        assert got is None and msg == LIVE_TEXTS["multi"], (raw, msg)
++    # unchanged: one line (with the usual end of line, also a blank line after it) is still accepted
++    for raw, key in ((b"ZQ7#ZQ7#\n", "ZQ7#ZQ7#"), (b"ZQ7#ZQ7#\r\n\r\n", "ZQ7#ZQ7#"), (b"  ZQ7#ZQ7#  ", "ZQ7#ZQ7#")):
++        assert outcome("live", raw, tmp_path) == (key, "")
++
++
++def test_each_reader_has_three_different_texts_for_empty_short_and_odd_characters(tmp_path: Path) -> None:
++    """Fails on the old code: there the three cases shared one text."""
++    for reader, raws in (
++        ("hubspot", (b"", b"ZQ7#", b"ZQ7# ZQ7#ZQ7#")),
++        ("smtp", (b"", b"ZQ7#", "ZQ7#ZQ7é".encode())),
++    ):
++        msgs = [outcome(reader, raw, tmp_path)[1] for raw in raws]
++        assert all(msgs) and len(set(msgs)) == 3, (reader, msgs)
++    msgs = [outcome("live", raw, tmp_path)[1] for raw in (b"", b"ZQ7#")]
++    assert all(msgs) and len(set(msgs)) == 2, msgs
++
++
++# ---- 3. no message holds the key text, the file name or the folder ----
++
++
++@pytest.mark.parametrize("reader", ["hubspot", "smtp", "live"])
++def test_no_message_holds_the_key_text_the_file_name_or_the_folder(reader: str, tmp_path: Path) -> None:
++    folder = tmp_path / "a-folder-with-a-distinct-name"
++    folder.mkdir()
++    refused = 0
++    for raw in CASES:
++        got, msg = outcome(reader, raw, folder)
++        if got is not None:
++            continue
++        refused += 1
++        for secret_part in {raw.decode("utf-8", "replace"), raw.decode("utf-8", "replace").strip()}:
++            if len(secret_part) >= 3:
++                assert secret_part not in msg, (reader, raw, msg)
++        for piece in (str(folder), folder.name, "secret-name", "secret-name.txt", str(tmp_path)):
++            assert piece not in msg, (reader, piece, msg)
++    assert refused > 700  # most generated files are refused (old and new alike)
++    # an unreadable (missing) file: the text names neither the path nor the OS error
++    fn, exc = READERS[reader]
++    with pytest.raises(exc) as e:
++        fn(folder / "no-such-file-name.txt")
++    assert "no-such-file-name" not in str(e.value) and str(folder) not in str(e.value) and "Errno" not in str(e.value)
++
++
++def test_the_set_of_texts_is_closed_every_message_is_one_of_a_few_fixed_texts(tmp_path: Path) -> None:
++    """No text is built from the file: over all 1512 key files each reader says one of at most 8 different things."""
++    for reader, texts in (("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)):
++        msgs = {outcome(reader, raw, tmp_path)[1] for raw in CASES} - {""}
++        fixed = set(texts.values())
++        extra = {m for m in msgs if m not in fixed}
++        assert len(extra) <= 4 and all(any(p in m for p in OTHER) for m in extra), (reader, extra)
++        assert len(msgs) <= 8, (reader, len(msgs))
++        assert fixed <= msgs, (
++            reader,
++            fixed - msgs,
++        )  # every fixed text is produced by some file (fails on the old code)

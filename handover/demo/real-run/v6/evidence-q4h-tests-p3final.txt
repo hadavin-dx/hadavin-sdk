@@ -1,0 +1,5 @@
+# tree = db54e13 + sonar-p3-final.patch + real-run-fixes-v6-after-sonar-p3-final.patch, under unshare -rn + blocker; NOT the whole suite
+# files: test_path_confinement + the 11 files of evidence-q4h-tests-v6.txt (without crm_hubspot/smtp_provider)
+FAILED tests/test_path_confinement.py::test_v1_a_config_below_a_traverse_only_folder_is_refused_with_a_message_as_an_unprivileged_user
+1 failed, 1207 passed, 1 skipped in 444.70s (0:07:24)
+# the one failure: test_v1_a_config_below_a_traverse_only_folder_is_refused_with_a_message_as_an_unprivileged_user needs os.setuid, which fails with EINVAL inside the user namespace (not caused by v6); NOT run outside the namespace (not allowed)

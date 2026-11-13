@@ -1,0 +1,10 @@
+# desk-address-required-v6 on v6 (db54e13 + v6 + da), 15 files under unshare + blocker, NOT the whole suite
+1177 passed in 415.49s (0:06:55)
+# ruff / format / mypy linux+win32 / bandit
+All checks passed!
+154 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+		Low: 9
+		Medium: 0
+		High: 0
