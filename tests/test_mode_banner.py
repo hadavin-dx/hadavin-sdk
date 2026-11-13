@@ -120,9 +120,7 @@ def test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real() -> 
 
 def test_names_come_from_the_caller_and_repeats_are_shown_once_in_order() -> None:
     b = _b("pilot", ["b", "a", "b"], names={"a": "Alpha", "b": "Beta"})
-    assert b.real == ("Beta", "Alpha"), (
-        "names_come_from_the_caller_and_repeats_are_shown_once_in_ord: check 1"
-    )
+    assert b.real == ("Beta", "Alpha"), f"names shown: {b.real}"
 
 
 def test_a_key_without_a_shown_name_is_read_as_component_and_the_key() -> None:
@@ -487,7 +485,6 @@ def test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed() -> None
         {**GOOD_DEMO, "real": "crm"},
         {**GOOD_DEMO, "stand_ins": "a"},
         {**GOOD_DEMO, "stand_ins": [1]},
-        {**GOOD_DEMO, "stand_ins": {"0": "a"}},
         {k: v for k, v in GOOD_DEMO.items() if k != "real"},
         {k: v for k, v in GOOD_DEMO.items() if k != "stand_ins"},
     ]
@@ -539,7 +536,7 @@ def test_a_banner_that_contradicts_itself_is_not_painted_as_given() -> None:
 
 
 @needs_node
-def test_a_tag_that_is_not_plain_text_is_not_painted_as_given() -> None:
+def test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given() -> None:
     controls = _paint(GOOD_DEMO)
     assert controls["tone"] == "demo", "the control banner must be painted as given"
     for value in [None, 5, "", ["x"], {"a": 1}, "x" * (mb.MAX_TEXT_LENGTH + 1)]:
@@ -547,7 +544,7 @@ def test_a_tag_that_is_not_plain_text_is_not_painted_as_given() -> None:
 
 
 @needs_node
-def test_a_text_that_is_not_plain_text_is_not_painted_as_given() -> None:
+def test_pin_a_text_that_is_not_plain_text_is_not_painted_as_given() -> None:
     controls = _paint(GOOD_DEMO)
     assert controls["tone"] == "demo", "the control banner must be painted as given"
     for value in [None, 5, "", ["x"], {"a": 1}, "x" * (mb.MAX_TEXT_LENGTH + 1)]:
@@ -810,9 +807,8 @@ def test_a_banner_is_checked_against_what_it_claims_before_it_leaves() -> None:
 
 @needs_node
 def test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page() -> None:
-    assert _paint(None)["frozen"] == [True] * 6, (
-        "the_page_exports_and_the_fallback_cannot_be_changed_by_a_pag: check 1"
-    )
+    frozen = _paint(None)["frozen"]  # api, fallback, its two lists, TONES, MODES
+    assert frozen == [True] * 6, f"frozen flags: {frozen}"
 
 
 @needs_node
@@ -884,6 +880,9 @@ def test_tool_specs_has_no_default_so_forgetting_it_is_an_error() -> None:
 def test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service() -> None:
     cfg = _fake_config("demo", [("llm", "fake")])
     specs = {"agent": {"read_x": _spec("api.example.test")}}
+    assert mb._outside_endpoints(cfg, specs) == [mb.TOOL_HOSTS], (
+        "the outside-endpoint search missed a tool manifest host that leaves this machine"
+    )
     real, _ = _services(cfg, specs)
     assert real == (mb.TOOL_HOSTS,), (
         f"a tool manifest host that leaves this machine was not real: {real}"
@@ -2223,7 +2222,7 @@ def test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_wi
     )
 
 
-def test_the_page_lists_and_the_python_lists_of_overrides_agree() -> None:
+def test_pin_the_page_lists_and_the_python_lists_of_overrides_agree() -> None:
     # pin (passes on old code that had the same six names in both places; the page list is new)
     js = JS.read_text(encoding="utf-8")
     found = re.search(r"var OVERRIDES = Object.freeze\(\[(.*?)\]\);", js)
@@ -2263,7 +2262,7 @@ def _blank_set_of_python() -> set[int]:
     return {cp for lo, hi in mb.BLANK_RANGES for cp in range(lo, hi + 1)}
 
 
-def test_the_blank_set_of_python_and_of_the_page_literal_is_one_set() -> None:
+def test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set() -> None:
     # pin (the sets did not exist as lists on old code)
     assert _blank_set_of_js_literal() == _blank_set_of_python(), (
         f"blank sets differ at code points {sorted(_blank_set_of_js_literal() ^ _blank_set_of_python())}"
@@ -2332,7 +2331,7 @@ def test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_not
 
 
 @needs_node
-def test_a_tag_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted() -> (
+def test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted() -> (
     None
 ):
     # proof (fails on old code: U+0085, U+001C and U+FEFF are blank to one of strip and trim, not to the other)

@@ -199,7 +199,8 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     )
     (repo / "src/pkg/logo.png").write_bytes(PNG + b"\xff\xfe" + b"pixels")
     (repo / "src/pkg/LOGO.PNG").write_bytes(PNG + b"\x00\x00 pixels")
-    assert g.scan(repo, _cfg()) == [], "ignored_files_and_binary_endings_are_skipped: check 1"
+    hits = g.scan(repo, _cfg())
+    assert hits == [], f"scan hits: {hits}"
 
 
 def test_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
@@ -272,7 +273,7 @@ def test_every_symlink_under_a_product_root_is_a_hit(tmp_path: Path) -> None:
     assert sorted(hits) == sorted(
         f"src/pkg/{n}: symlink-in-product-root"
         for n in ("to_file.py", "to_dir", "to_out.py", "dangling.py", "__pycache__")
-    ), "every_symlink_under_a_product_root_is_a_hit: check 1"
+    ), f"link hits: {sorted(hits)}"
     for name in ("to_file.py", "to_dir", "to_out.py", "dangling.py"):
         one = _repo(tmp_path / f"one-{name}", CLEAN)
         link = one / "src/pkg" / name
@@ -733,8 +734,9 @@ def test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped(
 def test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit(tmp_path: Path) -> None:
     repo = _repo(tmp_path, CLEAN)
     _gitlink(repo, "src/vendored")
-    assert g.scan(repo, _cfg(exempt_files=("src/vendored",))) == [], (
-        "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 1"
+    clean = g.scan(repo, _cfg(exempt_files=("src/vendored",)))
+    assert clean == [], (
+        f"an exempt submodule gave hits: {clean}"
     )  # a clean exempt git link is no hit
     gone = g.scan(repo, _cfg(exempt_files=("src/vendored", "src/not-there")))
     assert gone == [

@@ -119,7 +119,7 @@ M = [
         "out.setdefault(shown, None)",
         "out[shown + str(len(out))] = None",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "repeats_are_shown_once_in_ord: check 1",
+        "names shown: ('Beta0'",
     ),
     mb(
         "B4 a real service is also listed as a stand-in",
@@ -163,14 +163,14 @@ M = [
         "return tuple(out)",
         "return tuple(sorted(out))",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "repeats_are_shown_once_in_ord: check 1",
+        "names shown: ('Alpha', 'Beta')",
     ),
     mb(
         "B9 the names from the caller are ignored",
         'shown = names.get(key, f"component {key}")',
         "shown = key",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "repeats_are_shown_once_in_ord: check 1",
+        "names shown: ('b', 'a')",
     ),
     mb(
         "B9b an unnamed key is shown as the bare key",
@@ -495,7 +495,7 @@ M = [
         '"--cached", "--others", "--exclude-standard"',
         '"--cached", "--others"',
         "test_ignored_files_and_binary_endings_are_skipped",
-        "ignored_files_and_binary_endings_are_skipped: check 1",
+        "scan hits: ['src/pkg/__pycache__/x.py",
     ),
     gd(
         "G9c a folder that is not a git checkout is scanned as empty",
@@ -530,7 +530,7 @@ M = [
         '        if is_link:\n            hits.append(f"{rel}: symlink-in-product-root")',
         '        if False:\n            hits.append(f"{rel}: symlink-in-product-root")',
         "test_every_symlink_under_a_product_root_is_a_hit",
-        "every_symlink_under_a_product_root_is_a_hit: check 1",
+        "link hits: ['src/pkg/__pycache__: unreadable-file",
     ),
     gd(
         "G13b a link outside the product folders into the folder is not a hit",
@@ -558,7 +558,7 @@ M = [
         "if suffix in cfg.skip_suffixes and _looks_binary(data):",
         "if path.suffix in cfg.skip_suffixes and _looks_binary(data):",
         "test_ignored_files_and_binary_endings_are_skipped",
-        "ignored_files_and_binary_endings_are_skipped: check 1",
+        "src/pkg/LOGO.PNG",
     ),
     gt(
         "G15 only src is a product folder",
@@ -621,7 +621,7 @@ M = [
         "    for rel in listed:",
         "    for rel in [r for r in listed if '__pycache__' not in r]:",
         "test_every_symlink_under_a_product_root_is_a_hit",
-        "every_symlink_under_a_product_root_is_a_hit: check 1",
+        "src/pkg/to_out.py: symlink-in-product-root']",
     ),
     # -- round 3: endpoints beyond the backends, the claim post-condition, the page and guard minors ------------------
     mb(
@@ -692,14 +692,14 @@ M = [
         "var NOT_CONFIRMED = Object.freeze({",
         "var NOT_CONFIRMED = ({",
         "test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page",
-        "the_page_exports_and_the_fallback_cannot_be_changed_by_a_pag: check 1",
+        "frozen flags: [True, False, True",
     ),
     js(
         "J19 the exports can be changed by a page",
         "var api = Object.freeze({",
         "var api = ({",
         "test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page",
-        "the_page_exports_and_the_fallback_cannot_be_changed_by_a_pag: check 1",
+        "frozen flags: [False, True, True",
     ),
     js(
         "J20 the last-resort write does not unhide the element first",
@@ -770,7 +770,7 @@ M = [
         "    if leaves:\n        found.append(TOOL_HOSTS)",
         "    if False:\n        found.append(TOOL_HOSTS)",
         "test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service",
-        "a tool manifest host that leaves this machine was not real",
+        "the outside-endpoint search missed a tool manifest host",
     ),
     mb(
         "B32 tool modules without manifests count as nothing",
@@ -969,7 +969,7 @@ M = [
         "            if _under(rel, roots) is not None and rel not in exempt:",
         "            if _under(rel, roots) is not None:",
         "test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit",
-        "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 1",
+        "submodule-in-product-root",
     ),
     gd(
         "G39 a submodule whose folder is missing is not a hit",
@@ -1331,7 +1331,7 @@ M = [
         'if _stat_kind(repo / rel) in ("gone", "folder") and rel not in gitlinks:',
         'if _stat_kind(repo / rel) in ("gone", "folder"):',
         "test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit",
-        "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 1",
+        "stale-exempt-entry",
     ),
     gd(
         "G73 a product root is compared without the shared folding",
@@ -1387,14 +1387,14 @@ M = [
         "J23a the page does not check the tag is plain text",
         "      if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;\n",
         "      if (!isText(text)) return NOT_CONFIRMED;\n",
-        "test_a_tag_that_is_not_plain_text_is_not_painted_as_given",
+        "test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given",
         "tag check: tag = ",
     ),
     js(
         "J23b the page does not check the text is plain text",
         "      if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;\n",
         "      if (!isText(tag)) return NOT_CONFIRMED;\n",
-        "test_a_text_that_is_not_plain_text_is_not_painted_as_given",
+        "test_pin_a_text_that_is_not_plain_text_is_not_painted_as_given",
         "text check: text = ",
     ),
     gd(
@@ -1717,7 +1717,7 @@ M = [
         "R7D2 the page blank set lacks one code point (U+FEFF)",
         "\\u3000\\ufeff]",
         "\\u3000]",
-        "test_a_tag_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted",
+        "test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted",
         "painted tag '\\ufeff'",
     ),
     js(
@@ -1800,18 +1800,11 @@ M = [
 ]
 
 
-# Rows that share one killer AND one expectation on purpose: the killer holds ONE assertion (or a first assertion that fails
-# before any later one runs) that each of the rows breaks. The key is the space-joined labels of the rows in table order,
-# as `shape_problems` (tests/test_banner_mutant_table.py) builds it from the rows; the reason says, from the killer's own
-# text, why its assertion cannot tell the rows apart. A new pair needs its own entry here or its own message in the killer.
-SAME_ASSERT = {
-    "B3f B8 B9": "the killer makes ONE call and compares the shown names (a tuple) once with ('Beta', 'Alpha'); a repeat shown twice, a sorted order and the key instead of the given name each change that tuple",
-    "G9b G14c": "the killer has ONE assertion that the scan of a repo holding an ignored file and two png files (one named LOGO.PNG) gives no hit; G9b makes the ignored file a hit and G14c makes LOGO.PNG one",
-    "G13 G23": "the killer has two checks (the sorted hit list of five links, then an exit code per link) and both rows fail the first one, so the second never runs: G13 drops every link hit, G23 drops the link named like a cache folder",
-    "J10 J19": "the killer has ONE assertion that six frozen flags are all True; J10 unfreezes the fallback and J19 the exports, each turns one flag False",
-    "B31 B35": "the killer's first assertion is that the real services of a demo config with a tool host leaving this machine are exactly the tool-hosts entry; B31 drops the entry and B35 ignores the tool specs, so both give no entry",
-    "G38 G72": "the killer's first check is that a clean exempt submodule gives no hit; G38 reports it as a submodule and G72 reports it as stale, so both fail that first check",
-}
+# Rows that share one killer AND one expectation on purpose: none are left (batch 8). Each of the six groups that used to
+# share one assertion now has an assertion message that shows the observed value, and each row expects the fragment of
+# that value its own mutation produces. A new pair needs its own entry here (key: the space-joined labels in table order,
+# as `shape_problems` builds it) with a reason read from the killer, or its own message in the killer.
+SAME_ASSERT: dict[str, str] = {}
 
 # The rows whose killer is expected to END IN A CRASH (an exception from the changed code, not an assertion of the killer),
 # so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row

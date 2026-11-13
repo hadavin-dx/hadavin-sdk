@@ -147,7 +147,7 @@ def test_the_changelog_names_exactly_the_first_byte_kinds_the_guard_lists_and_st
         assert phrase in log, f"the CHANGELOG no longer says: {phrase}"
 
 
-def test_the_changelog_list_of_endings_that_may_skip_the_text_read_is_the_marks_table() -> None:
+def test_pin_the_changelog_list_of_endings_that_may_skip_the_text_read_is_the_marks_table() -> None:
     import importlib.util
     import sys
 

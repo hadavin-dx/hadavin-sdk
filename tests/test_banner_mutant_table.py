@@ -202,7 +202,7 @@ def interpreter_text_problems(rows=None, pinned=None) -> list[tuple[str, str]]:
     return problems
 
 
-def test_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_interpreter_message() -> (
+def test_pin_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_interpreter_message() -> (
     None
 ):
     declared = {m.name.split(" ", 1)[0] for m in bm.M if m.allow_crash}
@@ -216,7 +216,7 @@ def test_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_inter
     assert interpreter_text_problems() == []
 
 
-def test_a_planted_interpreter_message_outside_the_pinned_set_is_reported() -> None:
+def test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported() -> None:
     rows = [
         bm.mutant(
             "Z1 on",
