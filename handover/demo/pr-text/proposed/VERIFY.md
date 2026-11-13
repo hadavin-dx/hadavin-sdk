@@ -80,3 +80,20 @@ EGM skipped for this file: a read-only verification table. The three PR texts st
 
 ## Cleanup
 Mine: /tmp/work/dpr-base (kept for re-checks), /tmp/work/dpr-*.txt and .json; the two worktrees and the archive folders are removed. I did not touch /tmp/work/h3; I only read its output files. No process left running.
+
+## v2 update (after the second review)
+Files: pr2/pr3/pr4-user-description-v2.md (v1 kept), QUESTIONS-FOR-LEAD.md (internal items). No internal markers in the v2 bodies except [FILL: single-process result]; no [UNVERIFIED] lines, no handover file names, no first person, no "lead"; every sentence under 35 words (script check). The rows above still hold; new or changed rows:
+| # | statement | how verified | result |
+|---|---|---|---|
+| 62 | src/ files in #4: 16 | `git diff --name-only initial-code pr-3-tests -- src` and `pr-2-demo-folder...pr-3-tests -- src` | 16 (9 py, 4 css, 3 js) |
+| 63 | wait "about 10, 60, 180 and at most 420 s, depending on earlier tries" | desk.py L824-825 on pr-3-tests; constants.py L159 `(10.0, 60.0, 180.0, 420.0)` | verified |
+| 64 | `exclusive=True` on the stage-copy call for every CRM (before: no exclusive argument, default False) | desk.py L806-809 (pr-3-tests) vs initial-code L779-785; other CRM calls L1582 | verified; only this call |
+| 65 | 2db3926 post steps: ruff, format (145 files), mypy linux+win32, bandit exit 0, hygiene+gitleaks tests 59 passed, gitleaks dir+git no leaks, restart test 5 x 1 passed | /tmp/work/h3post-1..9*.txt/.exit | verified (all exit=0) |
+| 66 | single-process run of 2db3926 | /tmp/work/full2db-b.txt (at 01:43Z: running, ~2%) | not finished: [FILL] in #4 |
+| 67 | 325 history findings: scan reads every branch; #2's older settings flag lock files added in #4 (313 long-hex-token), 10 hostname-like, 2 SonarQube key | gitleaks 8.30.1 `git` on a pr-1-code worktree of the full clone, `-f json`, grouped by rule/file/commit (commits 0841f36, 5947364, 7ec367b, a0b97a4) | verified; the reviewer's stated reason was wrong |
+| 68 | "earlier heads of this branch were also run in full, with 0 failures" | INT-2b run A (f5fe824: 0 failed); APPLY-LIST INT-1 (Batch 1 tree: 2400 passed, 0 failed) | from files |
+| 69 | sonar.yml: one job; SONAR_TOKEN only on the scan step; split is open | `git show pr-3-tests:.github/workflows/sonar.yml` comment lines 7-12 and the `env:` of the scan step | verified |
+| 70 | "should start" (lint/CodeQL/SonarQube) | inference from workflow files (row 16-18) | wording now says inferred |
+| 71 | browser minimum = a reviewer's estimate, not in the repo docs | row 32 | wording fixed |
+| 72 | Windows 252/29 figure | dropped from v2 (QUESTIONS item 5) | n/a |
+| 73 | INT-3-2db3926.md | not present in /tmp/demo-push (find) | not read; same figures verified from raw files |

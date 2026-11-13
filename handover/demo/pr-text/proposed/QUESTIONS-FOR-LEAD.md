@@ -1,0 +1,15 @@
+# Questions for the lead before the v2 PR texts go up (D-PR; internal, never in the PR text)
+1. CORE TOUCHES NOT ON YOUR APPROVAL LISTS (ORDERS L100/L110/L117/L120). The v2 text of #4 names them as plain facts. Approve each one, or tell me to drop the line:
+   a. desk.py CRM stage copy: busy wait (10/60/180/420 s, index min(max(tries_before,1)-1+busy-1, 3)) and `exclusive=True` (Batch 3, codeant2-desk). NOTE: `exclusive=True` applies to the stage-copy call only (desk.py L809), for every CRM, keyed or not; the other CRM calls keep `exclusive = capability != "keyed"` (L1582). The order "applies to every CRM call" would overclaim; v2 says "this call is now exclusive for every CRM, keyed or not".
+   b. desk.py `functools.partial` instead of `lambda` (Batch 1, py-retry).
+   c. except-list clean-ups in config.py, crm_hubspot.py, live_claude.py, smtp_outbox.py, smtp_provider.py (Batch 1, py-retry).
+   d. portal_api.py unused-name renames (Batch 1).
+   e. portal.js / overview.js declarations and loop (Batch 1, js-portal); log.js "Load more" rows (Batch 3, portal-log).
+2. CodeAnt AI on 142 files: does it still review all of #4? Read it on GitHub; v2 makes no claim either way (says only "grew past the planned size").
+3. Branch protection on `main`: which checks are required? And after #2 merges, does a retarget of #3/#4 to `main` start lint and CodeQL without a new push (reviewer's reading: the `edited` event is not a default pull_request type)? v2 drops this speculation.
+4. Sonar two-job split (tests without the secret, scan in a second job): still an open owner decision? sonar.yml line 12 points to "the pull request description"; v2 #4 has one line saying it is open.
+5. Windows figure "252 passed / 29 skipped": quotable? v2 drops it (a targeted run, not reproduced here). Add it back as "reported by the maintainer for a targeted run" only if you want it.
+6. [FILL: single-process result] in #4: fill from /tmp/work/full2db-b.txt when it ends (started 01:42:49Z per your message). If it fails, the chunked line stays but the text must not say "0 failed" alone.
+7. Count: #4 has 16 files under src/ (`git diff --name-only initial-code pr-3-tests -- src`): 9 Python (config, crm_hubspot, desk, live_claude, loader, portal_api, server, smtp_outbox, smtp_provider) + 4 CSS + 3 JS (portal.js, overview.js, log.js) = 16, not 17. v2 says 16.
+8. The 325 history findings: the reviewer's reason ("the first commits contained lock-file hash lines before the allowlist") is WRONG. Measured: gitleaks `git` reads all branches of the clone; with #2's older .gitleaks.toml it flags the lock files added on pr-3-tests (requirements-coverage.txt 131, requirements-browser.txt 91, -win 91 long-hex-token), 10 hostname-like names and 2 SonarQube-key lines. v2 says this. What GitHub's lint (its own checkout) would see on #2 is a different question: not measured.
+9. integration/INT-3-2db3926.md is not in my copy of the handover folder (not pulled). I verified the same figures from /tmp/work/h3chunk-*.txt and /tmp/work/h3post-*.txt instead.
