@@ -70,3 +70,8 @@ REV-1a | agent ae1e1c..: egm:egm-codebase-details on lane3-fix-1 | 12:51Z | ~13:
 REV-1b | agent a07d07..: egm:egm-comprehension on lane3-fix-1 | 12:51Z | ~13:10Z | running
 REV-3 | agent a4b680..: egm:egm-implementation-readiness on lane3-fix-3 | 12:53Z | ~13:15Z | running
 Q1 serial | ended 12:53Z ok: 3683 passed 200 skipped 1295 s
+REV-1a/1b/3 | reported 12:57-13:00Z closed (round 1 saved: review-lane3-fix-1-*.md, review-lane3-fix-3-r1.md)
+egm-resolve | done 13:05Z via Skill tool: evidence/resolve-round1-lane3-fix-1-and-3.md
+B1b | agent aeb061..: lane3-fix-1 round 2 builder | 12:58Z | ~13:35Z stop 14:00Z | running
+B3b | agent a266bb..: lane3-fix-3 round 2 builder | 12:58Z | ~13:35Z stop 14:00Z | running
+Q2 | told 12:57Z to finish its campaign and stop

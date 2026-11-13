@@ -6,3 +6,9 @@
 2026-11-13 12:53:45Z UTC / 18:23:45 IST  seed 7001 campaign c START n=5000
 2026-11-13 12:54:07Z UTC / 18:24:07 IST  seed 7001 campaign c END rc=0 {"campaign": "c", "seed": 7001, "replays": 5000, "wall_s": 22.2, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
 2026-11-13 12:54:07Z UTC / 18:24:07 IST  seed 7001 campaign d START n=1200
+2026-11-13 12:55:32Z UTC / 18:25:32 IST  seed 7001 campaign d END rc=0  6000, "UNDOCUMENTED (docs never mention internationalised domains; code keeps unicode and punycode forms apart, identity.py:44-46)": 6000, "documented as different at docs/limits.md:24 (plus-tag and dots are different leads) + README.md:28": 3600}} 
+2026-11-13 12:55:32Z UTC / 18:25:32 IST  seed 7001 END
+2026-11-13 12:55:32Z UTC / 18:25:32 IST  seed 7002 START
+2026-11-13 12:55:32Z UTC / 18:25:32 IST  seed 7002 campaign a START n=2400
+2026-11-13 12:57:45Z UTC / 18:27:45 IST  seed 7002 campaign a END rc=0 {"campaign": "a", "seed": 7002, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 133.0, "violations": 0, "counterexamples_total": 831, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 831}} 
+2026-11-13 12:57:45Z UTC / 18:27:45 IST  seed 7002 campaign b START n=40000

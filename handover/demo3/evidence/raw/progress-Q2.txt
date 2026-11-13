@@ -7,3 +7,4 @@
 2026-11-13 12:49:09Z UTC / 18:19:09 IST  round 2 campaign a START seed=2101
 2026-11-13 12:51:08Z UTC / 18:21:08 IST  round 2 campaign a END rc=0 {"campaign": "a", "seed": 2101, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 119.1, "violations": 0, "counterexamples_total": 867, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 867}} 
 2026-11-13 12:51:08Z UTC / 18:21:08 IST  round 2 campaign b START seed=2202
+2026-11-13 12:57:47Z UTC / 18:27:47 IST  round 2 driver stopped on coordinator order; campaign b (seed 2202) left to finish; campaign c round 2 NOT run
