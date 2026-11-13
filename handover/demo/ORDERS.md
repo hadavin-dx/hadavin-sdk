@@ -322,3 +322,6 @@ Your job: map by function (lines shifted) which shapes Sonar accepted/refused in
 
 ## LEAD COMMAND 06:25Z DEMO: BATCH 2 PUSHED
 Pushed to pr-3-tests on top of 9c53207: nodemo-fix-v3 (sha 48c35c47...) and nodemo-ruff-isort (sha 821b80d1...). New head: see git log of pr-3-tests (two commits). nodemo-ci-job-v3 NOT pushed (RED stack; v4 building). flaky413-fix NOT pushed (fresh read running): send READY when clean. Rebase every pending patch on the NEW head and re-run the apply matrix. I read CI + Sonar on the new head and report.
+
+## LEAD COMMAND 06:50Z DEMO
+flaky413-fix READY accepted; the lead HOLDS it to batch with P3 (one CI cycle, not two). Send READY for P3 the moment its security read is clean; if the read finds a Major, fix and re-read, report the SHA. Keep crlf v7, real-run v6, nodemo ci v4, P2 v2.3 going; for each: apply-matrix on the CURRENT pr-3-tests head, fresh read before READY.
