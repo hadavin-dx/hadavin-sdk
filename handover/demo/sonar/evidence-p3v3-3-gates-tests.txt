@@ -1,0 +1,20 @@
+# gates on db54e13 + sonar-p3-path-helper-v3.patch (fresh worktree, patch applied, git add -A)
+All checks passed!
+148 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+--- bandit (as lint.yml)
+== bandit as CI
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+--- pytest (PATH has gitleaks 8.30.1, DPLD_REQUIRE_SCAN=1): path_confinement load_tools scrub_n8n_export n8n_api_url real_check_dry hygiene gitleaks_exceptions codeant_hygiene
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+760 passed, 1 skipped in 154.00s (0:02:33)
+exit 0

@@ -1,0 +1,46 @@
+# 15 mutants of tools/pathconfine.py (v3), tests/test_path_confinement.py, pytest -x
+('M01 startswith instead of commonpath', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v5_inside_compares_whole_folders_not_text_prefixes')
+('M03 no path-length check', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v5_the_path_length_limit_is_checked_before_resolving')
+('M05 non-folder in the middle accepted', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v5_a_file_in_the_middle_of_the_path_is_refused_as_not_a_folder[Fal')
+('M07 no normcase in the match', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v5_the_listing_match_ignores_case_where_the_system_does')
+('M08 no NFC in the match', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form')
+('M09 loose match wins over exact', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form')
+('M10 no anywhere fallback', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v1_anywhere_works_when_an_ancestor_folder_cannot_be_listed')
+('M11 fallback ignores the original text (/dev/fd)', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v1_a_name_the_listing_does_not_show_still_opens_in_anywhere_mode')
+('M12 reader missing file treated as new name', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v1_a_name_the_listing_does_not_show_still_opens_in_anywhere_mode')
+('M13 no device-name check', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-con]')
+('M14 device check only without extension', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-con]')
+('M15 no trailing-dot check', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v3_a_new_name_that_ends_with_a_dot_is_refused[new.]')
+('M16 com9/lpt9 missing', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com9]')
+('M17 device check case-sensitive', 'KILLED', 'FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-con]')
+('M18 no outside refusal', 'KILLED', 'FAILED tests/test_path_confinement.py::test_dot_dot_escape_is_refused - Faile...')
+
+import subprocess, sys, shutil
+P = "tools/pathconfine.py"
+orig = open(P).read()
+M = {
+ "M01 startswith instead of commonpath": ('return os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)', 'return os.path.normcase(real).startswith(os.path.normcase(root))'),
+ "M03 no path-length check": ('    if len(text) > MAX_PATH_CHARS:\n        raise PathRefused(f"{what}: path too long")\n', ''),
+ "M05 non-folder in the middle accepted": ('if not last and not entry.is_dir(follow_symlinks=False):', 'if False:'),
+ "M07 no normcase in the match": ('return os.path.normcase(unicodedata.normalize("NFC", name))', 'return unicodedata.normalize("NFC", name)'),
+ "M08 no NFC in the match": ('return os.path.normcase(unicodedata.normalize("NFC", name))', 'return os.path.normcase(name)'),
+ "M09 loose match wins over exact": ('        if e.name == part:\n            return e\n', ''),
+ "M10 no anywhere fallback": ('                if not anywhere:\n                    raise', '                if True:\n                    raise'),
+ "M11 fallback ignores the original text (/dev/fd)": ('for c in (real, text)', 'for c in (real,)'),
+ "M12 reader missing file treated as new name": ('            if output:\n                return', '            if True:\n                return'),
+ "M13 no device-name check": ('    if name.split(".", 1)[0].lower() in _DEVICES:', '    if False:'),
+ "M14 device check only without extension": ('name.split(".", 1)[0].lower() in _DEVICES', 'name.lower() in _DEVICES'),
+ "M15 no trailing-dot check": (' or name.endswith(".")', ''),
+ "M16 com9/lpt9 missing": ('for n in range(1, 10)', 'for n in range(1, 9)'),
+ "M17 device check case-sensitive": ('name.split(".", 1)[0].lower() in _DEVICES', 'name.split(".", 1)[0] in _DEVICES'),
+ "M18 no outside refusal": ('    raise PathRefused(f"{what}: path is outside the allowed folders', '    return Path(real)\n    raise PathRefused(f"{what}: path is outside the allowed folders'),
+}
+res = []
+for k, (a, b) in M.items():
+    assert a in orig, k
+    open(P, "w").write(orig.replace(a, b, 1))
+    r = subprocess.run([sys.executable, "-m", "pytest", "tests/test_path_confinement.py", "-q", "-x", "-p", "no:cacheprovider", "--timeout=120"] if False else [sys.executable, "-m", "pytest", "tests/test_path_confinement.py", "-q", "-x", "-p", "no:cacheprovider"], capture_output=True, text=True, timeout=300)
+    last = [l for l in r.stdout.splitlines() if l.startswith("FAILED")]
+    res.append((k, "KILLED" if r.returncode else "SURVIVED", (last[0][:110] if last else "")))
+    print(res[-1], flush=True)
+open(P, "w").write(orig)

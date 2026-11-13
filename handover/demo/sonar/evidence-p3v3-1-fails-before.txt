@@ -1,0 +1,138 @@
+# V-1..V-4 behaviour script on v2 (OLD) then v3 (NEW); uid 65534 reproduction for V-1 (child process started as root, os.setuid)
+## v2 (db54e13 + sonar-p3-path-helper-v2.patch)
+V-1 uid65534: REFUSED --config: a folder on the path cannot be listed
+V-2 missing reader 'my log.jsonl': REFUSED (PathRefused): --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+V-2 missing reader 'café.jsonl': REFUSED (PathRefused): --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+V-2 missing, output=True 'my log.jsonl': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'nul': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'aux.json': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'COM1.txt': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'lpt9': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'new.': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'con.tar.gz': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-3 new 'console.json': REFUSED (TypeError): confine() got an unexpected keyword argument 'output'
+V-4 stored NFD, typed NFC: REFUSED (PathRefused): --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+V-1b /dev/fd/N anywhere: REFUSED (PathRefused): --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+
+## v3
+V-1 uid65534: ACCEPTED A=1
+V-2 missing reader 'my log.jsonl': REFUSED (_Unconfirmed): --x: no such file
+V-2 missing reader 'café.jsonl': REFUSED (_Unconfirmed): --x: no such file
+V-2 missing, output=True 'my log.jsonl': REFUSED (PathRefused): --x: the name of a new file may only use letters, digits, '.', '_' and '-'
+V-3 new 'nul': REFUSED (PathRefused): --x: a Windows device name cannot be the name of a new file
+V-3 new 'aux.json': REFUSED (PathRefused): --x: a Windows device name cannot be the name of a new file
+V-3 new 'COM1.txt': REFUSED (PathRefused): --x: a Windows device name cannot be the name of a new file
+V-3 new 'lpt9': REFUSED (PathRefused): --x: a Windows device name cannot be the name of a new file
+V-3 new 'new.': REFUSED (PathRefused): --x: not usable as the name of a new file (empty, too long, or ends with a dot)
+V-3 new 'con.tar.gz': REFUSED (PathRefused): --x: a Windows device name cannot be the name of a new file
+V-3 new 'console.json': ACCEPTED -> 'console.json'
+V-4 stored NFD, typed NFC: ACCEPTED -> 'café.json'
+V-1b /dev/fd/N anywhere: ACCEPTED -> '3'
+
+# new tests on v2 code: plain (confine has no output= keyword, TypeError) then with a shim that ignores it
+108 failed, 44 passed in 6.62s
+# new test file on v2 code with a shim (confine accepts and ignores output=): behavioural fails-before
+FAILED tests/test_path_confinement.py::test_v1_anywhere_works_when_an_ancestor_folder_cannot_be_listed
+FAILED tests/test_path_confinement.py::test_v1_anywhere_reads_a_config_below_a_traverse_only_folder_as_an_unprivileged_user
+FAILED tests/test_path_confinement.py::test_v1_a_name_the_listing_does_not_show_still_opens_in_anywhere_mode
+FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[my log.jsonl]
+FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[caf\xe9.jsonl]
+FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[a?b]
+FAILED tests/test_path_confinement.py::test_v2_a_missing_file_that_is_read_says_no_such_file[name3]
+FAILED tests/test_path_confinement.py::test_v2_check_invariants_names_the_missing_reader_file
+FAILED tests/test_path_confinement.py::test_v2_an_existing_name_with_a_control_character_is_refused_for_everyone
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-con]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-prn]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-aux]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-nul]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-com9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}-lpt9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-con]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-prn]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-aux]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-nul]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-com9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.txt-lpt9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-con]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-prn]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-aux]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-nul]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-com9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.tar.gz-lpt9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-con]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-prn]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-aux]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-nul]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-com9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt1]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt2]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt3]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt4]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt5]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt6]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt7]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt8]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_may_not_be_a_windows_device_name[{}.-lpt9]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_that_ends_with_a_dot_is_refused[new.]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_that_ends_with_a_dot_is_refused[new..]
+FAILED tests/test_path_confinement.py::test_v3_a_new_name_that_ends_with_a_dot_is_refused[a.b.]
+FAILED tests/test_path_confinement.py::test_v3_a_device_named_output_is_refused_before_anything_is_created
+FAILED tests/test_path_confinement.py::test_v4_a_fake_macos_listing_is_matched_in_the_other_unicode_form
+FAILED tests/test_path_confinement.py::test_v4_confine_finds_a_file_and_a_folder_typed_in_the_other_unicode_form
+103 failed, 49 passed in 6.52s

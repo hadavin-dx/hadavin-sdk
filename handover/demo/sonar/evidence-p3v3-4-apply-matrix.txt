@@ -1,0 +1,66 @@
+# apply check, every ordering of every subset of {p3v3, p1v3, p2v2, real-run-fixes-v4} on a fresh db54e13 worktree (run on the final patch file)
+p3 : OK
+p1 : OK
+p2 : OK
+rr : OK
+p3 p1 : OK
+p3 p2 : OK
+p3 rr : OK
+p1 p3 : OK
+p1 p2 : OK
+p1 rr : OK
+p2 p3 : OK
+p2 p1 : OK
+p2 rr : OK
+rr p3 : OK
+rr p1 : OK
+rr p2 : OK
+p3 p1 p2 : OK
+p3 p1 rr : OK
+p3 p2 p1 : OK
+p3 p2 rr : OK
+p3 rr p1 : OK
+p3 rr p2 : OK
+p1 p3 p2 : OK
+p1 p3 rr : OK
+p1 p2 p3 : OK
+p1 p2 rr : OK
+p1 rr p3 : OK
+p1 rr p2 : OK
+p2 p3 p1 : OK
+p2 p3 rr : OK
+p2 p1 p3 : OK
+p2 p1 rr : OK
+p2 rr p3 : OK
+p2 rr p1 : OK
+rr p3 p1 : OK
+rr p3 p2 : OK
+rr p1 p3 : OK
+rr p1 p2 : OK
+rr p2 p3 : OK
+rr p2 p1 : OK
+p3 p1 p2 rr : OK
+p3 p1 rr p2 : OK
+p3 p2 p1 rr : OK
+p3 p2 rr p1 : OK
+p3 rr p1 p2 : OK
+p3 rr p2 p1 : OK
+p1 p3 p2 rr : OK
+p1 p3 rr p2 : OK
+p1 p2 p3 rr : OK
+p1 p2 rr p3 : OK
+p1 rr p3 p2 : OK
+p1 rr p2 p3 : OK
+p2 p3 p1 rr : OK
+p2 p3 rr p1 : OK
+p2 p1 p3 rr : OK
+p2 p1 rr p3 : OK
+p2 rr p3 p1 : OK
+p2 rr p1 p3 : OK
+rr p3 p1 p2 : OK
+rr p3 p2 p1 : OK
+rr p1 p3 p2 : OK
+rr p1 p2 p3 : OK
+rr p2 p3 p1 : OK
+rr p2 p1 p3 : OK
+OK count: 64 of 64
