@@ -1,0 +1,7 @@
+# run of each cure on a planted copy of the real sonar-project.properties (index LF, work copy CRLF or lone CR); script curedemo.py
+crlf     sed -i s/\r$// f       CRs left=0 equals LF original=True
+crlf     git checkout -- f      CRs left=0 equals LF original=True
+crlf     python-oneliner        CRs left=0 equals LF original=True
+lone-cr  sed -i s/\r$// f       CRs left=13 equals LF original=False
+lone-cr  git checkout -- f      CRs left=0 equals LF original=True
+lone-cr  python-oneliner        CRs left=0 equals LF original=True

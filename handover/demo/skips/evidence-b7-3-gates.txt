@@ -1,0 +1,45 @@
+# gates, db54e13 + crlf-guard-v4
+== ruff check
+All checks passed!
+== ruff format --check
+146 files already formatted
+== mypy linux
+Success: no issues found in 26 source files
+== mypy win32
+Success: no issues found in 26 source files
+== bandit -ll
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+bandit exit 0
+
+# 2db3926 + crlf-guard-v4
+== 2db3926 + C v4
+All checks passed!
+145 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+31 passed, 1 warning in 15.07s
+
+== tree: db54e13 + C(v4) + S(delta v2) + G(semgrep v4)
+All checks passed!
+148 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+		Medium: 0
+		High: 9
+Files skipped (0):
+bandit exit 0
+== pytest touched + related, gitleaks 8.30.1
+tests/test_hygiene.py::test_hygiene_scan_public
+  /tmp/work/b7-all-13930/tests/test_hygiene.py:261: UserWarning: gitleaks history scan skipped: set DPLD_REQUIRE_SCAN=1 to scan the history
+    warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+161 passed, 1 warning in 36.52s

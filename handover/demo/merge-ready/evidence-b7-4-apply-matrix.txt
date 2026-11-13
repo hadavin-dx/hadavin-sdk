@@ -1,0 +1,12 @@
+base=db54e13 order=[C S G] => C:ok S:ok G:ok
+base=db54e13 order=[C G S] => C:ok G:ok S:ok
+base=db54e13 order=[S C G] => S:ok C:ok G:ok
+base=db54e13 order=[S G C] => S:ok G:ok C:ok
+base=db54e13 order=[G C S] => G:ok C:ok S:ok
+base=db54e13 order=[G S C] => G:ok S:ok C:ok
+base=2db3926 order=[C] => C:ok
+base=2db3926 order=[G] => G:ok
+base=2db3926 order=[C G] => C:ok G:ok
+base=2db3926 order=[G C] => G:ok C:ok
+base=2db3926 order=[S] => S:FAIL(error: tests/test_workflow_files_parse.py: No such file or directory)
+base=2db3926 order=[S C] => S:FAIL(error: tests/test_workflow_files_parse.py: No such file or directory) C:ok

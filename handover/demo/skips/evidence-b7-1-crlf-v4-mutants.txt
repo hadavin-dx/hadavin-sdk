@@ -1,0 +1,95 @@
+# crlf-guard-v4 mutants, measured 2026-11-13: each mutant applied once to tests/test_hygiene.py (v4 on db54e13), whole file run, gitleaks 8.30.1 via GITLEAKS_BIN. Script: mut.py (not shipped).
+=== N1 hint loses git checkout cure: KILLED | 5 failed, 26 passed, 1 warning in 16.17s
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== N2 .ps1 no longer exempt: KILLED | 1 failed, 30 passed, 1 warning in 17.64s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+=== N3 .txt also exempt: KILLED | 6 failed, 25 passed, 1 warning in 16.58s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file[exceptions.txt]
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file[patterns.txt]
+=== N4 LF_ONLY_FILES cut to sonar only: KILLED | 5 failed, 26 passed, 1 warning in 15.77s
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file[.gitleaks.toml]
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file[exceptions.txt]
+     FAILED tests/test_hygiene.py::test_the_guard_flags_every_scan_file[patterns.txt]
+=== N5 _crlf_note always empty: KILLED | 5 failed, 26 passed, 1 warning in 16.10s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+     FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+=== N6 ./ prefix kept: KILLED | 3 failed, 28 passed, 1 warning in 15.39s
+     FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+=== N7 bad JSON raises: KILLED | 1 failed, 30 passed, 1 warning in 17.01s
+     FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+=== N8 file list dropped from message: KILLED | 3 failed, 28 passed, 1 warning in 17.03s
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== N9 message drops 'values are redacted': KILLED | 3 failed, 28 passed, 1 warning in 16.63s
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== N10 scan-file filter off: KILLED | 1 failed, 30 passed, 1 warning in 16.41s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+=== N11 safety assert removed: KILLED | 1 failed, 30 passed, 1 warning in 16.82s
+     FAILED tests/test_hygiene.py::test_the_scan_file_list_has_a_case_for_every_entry_and_a_safety_check
+=== N12 missing file not skipped: KILLED | 1 failed, 30 passed, 1 warning in 24.27s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+=== N13 .ps1 case sensitive: KILLED | 1 failed, 30 passed, 1 warning in 20.36s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+=== N14 guard message drops the cure: KILLED | 2 failed, 29 passed, 1 warning in 15.86s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== N15 python cure loses the lone-CR replace: KILLED | 2 failed, 29 passed, 1 warning in 16.86s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== N15b python cure CRLF replace broken: KILLED | 1 failed, 30 passed, 1 warning in 14.88s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== N15c v3 sed cure instead of python cure: SKIP old text occurs 0x
+=== N16 every file reported: KILLED | 11 failed, 20 passed, 1 warning in 15.98s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+=== N17 scan --exit-code 1 -> 0: KILLED | 1 failed, 30 passed, 1 warning in 17.41s
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== N18 scan without report format: KILLED | 1 failed, 30 passed, 1 warning in 16.14s
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== N19 ls-files from wrong path: KILLED | 9 failed, 22 passed, 1 warning in 16.55s
+     FAILED tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== M1 CR check always false: KILLED | 14 failed, 17 passed, 1 warning in 15.97s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+     FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+=== M3 note never appended: KILLED | 3 failed, 28 passed, 1 warning in 15.77s
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== M3b scan bypasses the message function: KILLED | 1 failed, 30 passed, 1 warning in 16.86s
+     FAILED tests/test_hygiene.py::test_gitleaks_on_a_planted_crlf_tree_names_the_file_and_the_cure
+=== M5 guard test body emptied: KILLED | 2 failed, 29 passed, 1 warning in 18.02s
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - Fa...
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== M6 cure 1 replaced by --renormalize: KILLED | 4 failed, 27 passed, 1 warning in 16.63s
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf] - As...
+=== M8 _flagged_files always []: KILLED | 4 failed, 27 passed, 1 warning in 14.77s
+     FAILED tests/test_hygiene.py::test_the_scan_failure_names_the_flagged_file_and_the_crlf_fix
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[crlf]
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+=== M9 only CRLF counts, lone CR ignored: KILLED | 4 failed, 27 passed, 1 warning in 14.41s
+     FAILED tests/test_hygiene.py::test_the_carriage_return_check_flags_crlf_and_skips_ps1_scripts
+     FAILED tests/test_hygiene.py::test_end_to_end_a_cr_file_gives_a_failure_message_with_the_name_and_the_cure[lone-cr]
+     FAILED tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr]
+=== restored: 31 passed, 1 warning in 14.91s
+
+# SAME N17,N18,M3b WITHOUT gitleaks (GITLEAKS_BIN unset, none on PATH): they SURVIVE, the gitleaks test is skipped
+=== N17 scan --exit-code 1 -> 0: SURVIVED | 27 passed, 4 skipped in 6.93s
+=== N18 scan without report format: SURVIVED | 27 passed, 4 skipped in 6.27s
+=== M3b scan bypasses the message function: SURVIVED | 27 passed, 4 skipped in 6.47s
+=== restored: 27 passed, 4 skipped in 6.29s
+# N15c (the v3 sed cure) is not a text mutant on v4; measured by hand instead, see evidence-b7-5
