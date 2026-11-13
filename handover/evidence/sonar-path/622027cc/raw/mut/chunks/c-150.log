@@ -8,3 +8,5 @@ ok  KILLED         X-atomic the file is made for the group and world too  [test_
 ok  KILLED         X-atomic an error of the open keeps the path  [test_atomic_write_errors_carry_no_path] t=19s
 ok  KILLED         X-atomic an error of the rename keeps the path  [test_atomic_write_rename_error_carries_no_path] t=21s
 ok  KILLED         R5j the whole-path limit counts characters, not bytes  [test_pin_r5_the_whole_path_limit_counts_bytes_not_characters] t=24s
+ok  KILLED         H-hashing a read error keeps its chain  [test_hash_files_read_error_is_raised_without_a_chain] t=37s
+SLICE 150:160 10 of 10 good; problems: []; elapsed 38s

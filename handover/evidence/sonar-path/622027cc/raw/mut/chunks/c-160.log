@@ -1,0 +1,10 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         H-signer the resolved key path is printed  [test_control_build_local_signer_error_prints_the_key_path_as] t=6s
+ok  CRASH          A the existence check of a typed path is not wrapped (a long name leaks an OSError)  [test_a_long_name_is_a_refusal_never_an_oserror_in_every_type] t=8s
+ok  CRASH          A the file or folder check of a typed path is not wrapped  [test_pin_an_error_while_asking_if_a_path_is_a_file_is_a_refu] t=9s
+ok  CRASH          A the wrap catches only a missing file  [test_a_long_name_is_a_refusal_never_an_oserror_in_every_type] t=10s
+ok  KILLED         R4f a typed path text is not checked for a control character  [test_pin_r4_a_control_character_is_refused_in_an_operator_pa] t=12s
+ok  KILLED         D the event id is not checked (a bad id is written as a file name)  [test_an_outcome_with_a_bad_event_id_is_dropped_and_counted] t=13s
+ok  KILLED         D reconcile compares with the typed outbox path, not the resolved one  [test_control_reconcile_replays_a_file_when_the_outbox_folder] t=15s
+ok  KILLED         D a refusal for another reason drops the outcome (the drop is not limited to the event id)  [test_an_outcome_refused_for_another_reason_takes_the_outbox_] t=16s
+ok  KILLED         D a bad event id is no longer dropped  [test_an_outcome_with_a_bad_event_id_is_dropped_and_counted] t=18s
