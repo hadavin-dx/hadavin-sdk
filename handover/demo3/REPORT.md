@@ -1,5 +1,19 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:40Z / 17:10 IST  HEARTBEAT 22 (H reported; I started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| H | Agent: rebase of the claims stack onto f3c39cf8 | the stack for the merged main | 11:36Z / 17:06 | ended 11:36Z (took about 1 min) | first try | reported, closed | none |
+| I | Evidence runner: on the rebased stack (STACK) and, at the same time, on unpatched main f3c39cf8 (BASE, to tell a stack effect from an old failure): hygiene test alone, then the FULL suite once each with -v (basetemp inside TMPDIR, logs outside git until pytest ends); no ruff, no gitleaks (see ASK 1) | proves the stack changes no test result | 11:39Z / 17:09 | about 20-25 min, ends about 12:05Z / 17:35; hard stop 12:35Z (cap 12:40Z) | first try | running | check progress-I.txt at 11:52Z |
+| J | Agent (read-only): which sentences of the patches v1-v3 are now stale because of PR #14 | tells what text must change | 11:36Z / 17:06 | hard stop 12:15Z | first try | running | check progress-J.txt at 11:52Z |
+| G, F, E, D, C2, A, B | earlier agents | - | - | - | - | closed | none |
+
+ASK:
+1. Still open from heartbeat 21: may agent I run ruff check, ruff format --check and gitleaks (ORDER 8) given the owner's rule that CI-class checks run only on GitHub CI? Default: I runs only product tests (hygiene test and full suite); say yes and I add the three commands (about 2 minutes).
+2. The stack changes docs/tests.md, and your ownership map (09:58Z) lists docs/tests.md as a PR #13 file. If PR #13 is still open, the two touch the same file. Default: report only; I change nothing.
+3. H's patch has no conflicts and changes no claim text, but H did NOT check whether each claim is still true on f3c39cf8 (the patches touch none of the files PR #14 changed). Agent J is checking exactly that for the sentences that mention PR #14 topics. Default: keep.
+FACTS (I checked myself): the rebased patch `evidence/claims-stack-on-f3c39cf8.patch` (sha256 7138e884333d4bd0f9d377873fe05aae5f1dfce275758952d2b6e4f05d89194c, 16 files, 66 insertions, 60 deletions) applies cleanly (`git apply --check` rc=0) to a fresh worktree of f3c39cf8; all five patches applied with plain `git apply`, no conflicts. Notes: evidence/claims-stack-rebase-notes.md.
+
 ## 2026-11-13 11:38Z / 17:08 IST  HEARTBEAT 21 (ORDER 8: H and J started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

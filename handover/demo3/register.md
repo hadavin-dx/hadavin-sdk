@@ -20,3 +20,5 @@ G | reported 11:35Z closed: c14a514 path tests 378 passed 0 failed 1 skipped
 H | agent a9451e..: rebase claims stack v1-v2b onto f3c39cf8 | 11:36Z / 17:06 | ~12:10Z, hard stop 12:20Z | 11:38Z | running | check 11:50Z
 J | agent acac22..: stale sentences after PR 14 (read-only) | 11:36Z / 17:06 | ~12:00Z, hard stop 12:15Z | 11:38Z | running | check 11:50Z
 I | NOT STARTED, waits for H and for lead answer on ruff/gitleaks | - | - | - | waiting | start at H report
+H | reported 11:36Z closed: no conflicts, patch sha 7138e884, apply --check rc 0 (verified by me)
+I | agent ad7742..: STACK and BASE hygiene + full suite | 11:39Z | ~12:05Z, stop 12:35Z | 11:40Z | running | check 11:52Z
