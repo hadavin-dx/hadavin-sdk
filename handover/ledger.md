@@ -3314,3 +3314,4 @@
 | SONARPATH-r3-9 | major | sonar-path | Test names/labels do not match assertions (pins vs controls, tautologies, stale citations) | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
 | SONARPATH-r3-10 | major | sonar-path | CHANGELOG claims without tests; R10/R11 mapping copied inline at four sites | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
 | PDBIND-r10-10 | major | PD-bind | Mutant B98 (mro not compared) SURVIVES on 304c3bd3; killed on 83cdb7a2 (kill lost in batch 10) | OPEN | handover/evidence/PD-bind/304c3bd3/RESULTS.md |  | 2026-11-13 |
+| SONARPATH-r3-11 | major | sonar-path | Runner probe: signer.key_path ValueError for a symlink or outside file prints the full path; fail-before runs show several e29cc269 failures are missing API, not behaviour | OPEN | handover/evidence/sonar-path/9602b4ca/RESULTS.md |  | 2026-11-13 |
