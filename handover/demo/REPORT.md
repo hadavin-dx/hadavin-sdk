@@ -1,6 +1,29 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:24Z / 09:54 IST - **PROBE SAFE: probe-ab-v2.patch is safe to push as a throwaway draft PR** (fresh read, measured) BUT its Sonar reading is confounded; v3 re-cut is building (~15 min); your choice: push v2 now with the corrected reading rules, or wait for v3
+FAILED / UNCERTAIN first:
+1. **VERDICT: PROBE SAFE** (sonar/REVIEW-probe2-fresh.md): applies alone on db54e13 (7 files, +648/-6); 'PROBE ONLY, DO NOT MERGE' in 6 patch files and the note; 406 + 492 tests passed with gitleaks 8.30.1 + DPLD_REQUIRE_SCAN=1; ruff/mypy linux+win32/bandit clean; no site weaker than base (.., absolute, links, prefix sibling, NUL, newline, ESC, C1, bidi, empty, 5000 chars all refused cleanly; confine precedes the only sink on every path); 12 of 14 reviewer mutants killed (2 equivalent); controls read_book L96 and load_env L645 in no hunk and not reachable from any probed helper (negative controls only: there is NO positive control).
+2. **BUT THE DESIGN IS CONFOUNDED (4 Majors):** M1 pairs B and D cross the taint SOURCE kind (scrub/n8n_api #9-#11 start at sys.argv with the message 'command-line argument'; check_invariants/load_driver start at argparse with 'faulty LLM-supplied CLI arguments'): 'ONE difference' is false, 'env is the cause' does not follow; M2 inline sites end in open(real)/fh.write, helper sites in Path.read_text/write_text: D and E mix guard shape with sink API; M3 all four helpers share _text/_real_inside (returns the tuple (root, relative))/_entry/_step: if the engine taints the tuple, every helper site stays whatever dict/iteration/env says: A, B, C and the helper side of E are unreadable; #4 and #7 share one function (not independent); M4 reading rule: an S8707 appearing in tools/pathconfine.py (likely os.scandir in _entry) or at an inline open(real) means the SINK MOVED: count all helper sites as stayed even if the caller's issue vanished, read ALL components. Clean pairs: C (#7 vs #8) and F (#6 vs #2/#5); A is mild. Risk: sonar.yml runs the whole pytest suite BEFORE the scan: one red test = no Sonar reading (the reviewer ran 21 touched-module test files: all passed; the full suite as one process is yours).
+3. **IF YOU PUSH v2 NOW read B, D and E only as HINTS, not decisions; read C and F as decisions; apply the M4 rule.** Better: wait for **probe-ab-v3** (builder running): sink API constant (Path(real).read_text/write_text everywhere), pairs only inside one source family, the sys.argv sites as replicates, ONE helper variant without the shared tuple, a positive control (an allow-list/equality check against constants on one duplicate function) if it can be designed cheaply, no new text:S6389 (the U+202E literal in tests/test_probe_ab.py at line 211 is removed), the corrected '13 pythonsecurity issues of 38' wording, plus a second tiny patch probe-ab-v3-writes2.patch (inline vs helper on the three write sites, swapped) for a second cheap push. A v3 fresh safety read follows before I say PROBE SAFE for it.
+4. start-prompt hardening: fresh safety review running; others unchanged. **READY TO PUSH: NOTHING YET** (batch 1 still waits for P1 v3.1, nodemo v2 review, P2 v2.1).
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| (new) | probe-ab-v3 builder (re-cut) | 04:26 | running | probe-ab-v3 + writes2 |
+| a38979cd722e47378 | fresh safety reviewer start-prompt hardening | 04:24 | running | report |
+| a0b62ed1f6ca160f5 | P1 v3.1 builder | 04:00 | running | patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| ae8bce55f3b3082f4 | fresh reviewer nodemo v2 + CI job | 04:11 | running | report |
+| aa25bbd93a8dd5a23 | crlf v5 + trimmed yaml v2 builder | 03:58 | running | 2 patches |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| probe-ab-v2 safety read | PROBE SAFE, design confounded |
+
 ## 2026-11-13 04:24Z / 09:54 IST - BREACH ROOT CAUSE FOUND (your 04:02Z item 2): there was NO guard to get around; the real hole is the vendor address as the DEFAULT; start-prompt-hardening.patch built (handover only), fresh safety review running; 7 agents
 FAILED / UNCERTAIN first:
 1. **Root cause of the breach (builder investigation, code reading, not a re-run):** (a) stdin: nothing refused a non-interactive stdin: run_real_check.py only did `input("Start? [y/N] ")` and caught EOFError, so a piped `y` was a yes: the reviewer got around NOTHING (`--assume-yes` exists and is already refused unless `--dry-fakes`; he did not use it). (b) THE REAL HOLE: HubspotSettings accepts https at the vendor's own domains or loopback http, but the DEFAULT `HUBSPOT_BASE_URL` is `https://api.hubapi.com`, which passes the check: a config that OMITS `DESK_HUBSPOT_BASE_URL` sends the (made-up) key to the vendor by omission: that is exactly the 52 create attempts. Same hole: `REAL_IMAP_n_HOST` defaulted to the mail provider's public host; `DESK_LIVE_BASE_URL` and run_live_check.py `--base-url` default to the vendor. DESK_SMTPP_HOST is already a required name (no change). Not re-run: all evidence is code reading + tests where input/desk/fakes/model/every socket connect raise if reached + a harness (never answered y).
