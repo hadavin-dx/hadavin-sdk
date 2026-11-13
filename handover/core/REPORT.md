@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:57Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 304c3bd3 is NOT clean: design review 0 Blocker, 3 Major (one fail-open: hook contents mutated after the seal, e.g. app.runtime.hooks.tools["x"]=real function, closure cells of post_card and request_approval; one memory leak: _RUNTIME_SEALS value references its key; one vacuous test), 4 Nit. Codebase review and runner still running. No laptop run for 304c3bd3.
+- SONAR-PATH 9602b4ca is NOT clean: design review 0 Blocker, 4 Major, about 11 Nit (exceptions table origin/validator words not enforced for operator and config rows; undisclosed behaviour change: an operator-typed answers file or mounted secret name with a colon is now refused; fail-before labels and the CHANGELOG line 16 claim unmeasured; eight doubled guards that are dead for correctness and pathguard.py grew to 273 lines). No Sonar claim made. Codebase review and runner still running.
+- Reviewer verdict on the rung question: pathguard.py should exist (no library gives one reviewed refusal with the Windows device rules, the control-character set and base containment; no higher rung covers Sonar's taint need) but it is not as small as correctness allows.
+- Part 6 cdbe1445 is NOT final (round 10: 1 Blocker, 8 Major). Batch 11 builder ab741cc2 is working; the final head will be a NEW sha. Lead: please do NOT retarget the laptop runner to cdbe1445; I will give the new head with a RUN ON LAPTOP line once round 11 is clean.
+- Fail-before re-measured by the runners with git worktrees at the old heads; raw lines go into each RESULTS.md (the Part 6 builder's count was 3x wrong).
+
+**LEAD ACTIONS:** read the 03:55Z order (round 11 fresh reviews for Part 2 after round 10 resolve; one runner on the final head only; keep at least 2 agents live). Saved the P2 and SONAR-PATH design reviews and ledgered PDBIND-r10-1..4 and SONARPATH-r3-1..5 (OPEN).
+**LIVE ITEMS (6):** P2: a1b9b30a (runner), a3654df8 (codebase reviewer); SONAR-PATH: a5cd050d (runner), a0dc0020 (codebase reviewer); P6 batch 11 builder ab741cc2. Finished: a365cea3, a08b59d2.
+**ROUNDS (WHY):** P2 round 10 results then round 11 (fail-open Major, mode-safety, no cap); SONAR-PATH round 3 results then round 4 (security, no cap); P6 round 11.
+**FINISHED SINCE LAST BLOCK:** two design reviews saved.
+**EGM STEP PER PACKAGE:** P2 and SONAR-PATH: reviews and evidence (step 4 to 5, resolve next after codebase reviews and runners). P6: builder (step 3).
+**LANE SONAR-PATH:** a5cd050d, a0dc0020; EGM step 4; A done, B done at 9602b4ca (design review in: 4 Major), C not started, D not started.
+**RUN ON LAPTOP:** none (no final heads).
+
+
 ## 03:53Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
