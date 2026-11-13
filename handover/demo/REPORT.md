@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:17Z / 08:47 IST - P1 v2 built (closes its Major; found that v1 made `sh scripts/reset.sh` BYPASS a deletion safety check under dash: fixed by a bash guard); crlf-guard-v3 + sonar-yaml-fix-v2 FAILED review (v4 building); 5 agents
+FAILED / UNCERTAIN first:
+1. **crlf-guard-v3: fresh review says the 9/9 rule is NOT met**: 8 of 19 new mutants survive; and the `sed -i 's/\r$//'` cure does NOT cure the lone-CR file the patch itself plants (tests only check the text 'sed -i', never run it); `sed -i` is GNU-only. Not ready; v4 builder running (cure commands will be run by a test; `git checkout -- <file>` first). **sonar-yaml-fix-v2 does NOT apply on db54e13** (it already has the v1 fix + the 38-line v1 test): a reviewer's delta (merge-ready/sonar-yaml-test-delta-on-db54e13.patch, 11 tests) applies; its test has 4 unreached branches; the same builder fixes it. db54e13 also already contains versions-md-allowance (a no-op there).
+2. **P1 v1 was worse than the review said**: under dash, `[[` prints 'not found' and counts as FALSE, so `sh scripts/reset.sh` skipped the 'database not inside ./data' refusal (a deletion safety check). P1 v2 (sonar/sonar-p1-quickwins-v2.patch, applies on db54e13, sha256 17acc9ec...) starts both scripts with a 3-line `case "${BASH_VERSION:-}"` guard: dash exits 2 'run this script with bash'. PR text must say: `sh scripts/reset.sh` / `sh scripts/start_all.sh` now exit 2 (before the series they ran under dash). Do NOT apply v1.
+3. P1 v2 measured by the builder: 6 affected files 225 passed 3 skipped; v2 tests on old code 6 failed; mutants of start_all.sh lines 12/16 now die (5 mutants); lint/mypy/bandit clean. NOT measured: actionlint on v2, Sonar's view of the new guard `case` (S7688 might flag it; not expected), S6506's accepted flag spelling (API serves no rule text). A fresh reviewer is running on v2.
+4. P3 v2 + probe A/B: builder running (probe = ONE tiny push to learn what Sonar's taint engine accepts). P2: fresh review running. real-run v4: building.
+5. Full suite on any combined series: NOT RUN. No Sonar result on any patch.
+READY TO APPLY (db54e13): sonar-p1-quickwins-v2.patch (after its fresh review: running). NOT ready: P2 (review), P3, crlf-guard, sonar test delta.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7652eeec21645d91 | fresh reviewer P1 v2 | 03:17 | running | report |
+| a9f7101d283c15a25 | fresh reviewer P2 | 03:10 | running | report |
+| a75929772685cf304 | P3 v2 + probe A/B builder | 03:11 | running | 3 patches |
+| adf8ad218658bc26e | crlf-guard-v4 + sonar test delta v2 builder | 03:14 | running | 2 patches |
+| ab9bf150800668515 | real-run fixes v4 builder | 03:10 | running | v4 patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 5.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | build 2 | review 1: 1 Major | fixed | no | review 2 clean |
+| crlf-guard | review 2 | 2 Major | survivors, wrong cure | no | v4 read |
+| sonar yaml test | review 1 | does not apply, 4 branches | rebase on db54e13 | no | delta read |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P1 v2 | built, pushed (52154b5a) |
+| crlf-guard-v3 + sonar-yaml-fix-v2 review | done: both fail the rule, reports pushed |
+
 ## 2026-11-13 03:11Z / 08:41 IST - P3 security review: 3 Majors, and its odds with Sonar are LOWER than I said (15-25% paths, 25-35% S8706); the API serves the taint flows, so a small PROBE push can tell us what Sonar accepts; P2 built; 5 agents
 FAILED / UNCERTAIN first:
 1. **P3 (sonar-p3-path-helper.patch) must NOT be applied as it is.** Fresh security review (sonar/REVIEW-p3-fresh.md): MAJOR-1 it breaks the documented real run: `run_real_check.py --config /var/tmp/x/run.env` (docs/real-services.md step 1 says keep the config OUTSIDE the repo) is refused, and DESK_DB_PATH from the config is confined deep in the run: the final read_book fails AFTER real HubSpot calls and mails; --dry-fakes cannot see it. MAJOR-2 a mutant survives (call site of the sqlite URI untested). MAJOR-3 argv-path siblings unconfined (run_live_check.py --key-file/--ledger, load_tools/catcher.py --out/--control). MINOR: `load_driver.py --help` and `check_invariants.py --help` fail without PYTHONPATH. 18 of 20 mutants killed; hostile inputs (.., absolute, symlinks, NUL, 5000 chars, sqlite URI injection) all refused; TOCTOU not covered (documented).
