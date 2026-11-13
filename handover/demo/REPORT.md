@@ -1,6 +1,34 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:49Z / 07:19 IST - SINGLE-PROCESS RUN: 1313 PASSED, 0 FAILED (about 45%); PR #2-#4 DESCRIPTIONS v4 DONE (3 review rounds; ready for the lead's answers); Q4 dry-run checks nearly done; review map of PR #4 started (Q7 item)
+FAILED / UNCERTAIN first:
+1. The single-process run (what you require for the final claim) is NOT finished: started 01:42:49Z, 1313 passed, 0 failed at 01:49Z (about 45%); no restart since about 01:10Z; ETA about 02:05Z.
+2. PR #2-#4 descriptions: v4 written after 3 fresh reviews (round 3: 0 Blocker, 3 Major (way B stated as fact; two unsourced claims; #2/#3 ruff/mypy from an old file); all fixed; the drafter re-ran ruff and mypy on d23cf8f and f31e261 itself: ruff check/format pass (51 and 60 files), mypy no issues in Linux and Windows mode on both heads). Merge order now two options A/B for the owner (no recommendation). ONE marker left in #4: [FILL: single-process result]. QUESTIONS-FOR-LEAD.md (10 items) needs YOUR answers: approve or drop the 5 extra core touches; CodeAnt and the 142 files; branch protection/retarget; the Sonar two-job split; the Windows figure; A or B. A fresh final read of v4 is optional (the changes were small and sourced).
+3. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13 tests (the Windows lock headers say python 3.13).
+READY TO APPLY NOW: Semgrep patch v4 (sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9) + body v5 for its PR; nothing pending on pr-3-tests.
+NEEDS FROM LEAD: answers to QUESTIONS-FOR-LEAD.md; the 'stack head at 0841f36' wording; whether to run one fresh egm review of the final v4 texts.
+Q7 (propose the next 5 items, value order): (1) PR #4 review map (started): what to read first in the 142 files, by risk; (2) full suite of the Semgrep PR tree (2db3926 + v4) in resumable chunks after the single-process run (the new tests only add 2 files: check they pass in the whole run); (3) a CRLF/Windows checkout dry run of the new gitleaks exception tests (tests/test_gitleaks_exceptions.py) by emulation: write the files with CRLF and see what the repo scans report (documents the Windows risk without a Windows machine); (4) a 'tests that never ran in any environment' list (what only a Windows/Playwright-on-Windows/PowerShell run can show): the lead's Windows run needs -rs; (5) a Semgrep registry pack smoke test on the laptop (the lead's Docker) of the FINAL tree (2db3926 + v4) with --strict to prove the job's real exit code before the first CI run.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| single-process run (shell) | whole suite of 2db3926 in ONE pytest process | 01:42:49 | 1313 passed, 0 failed | /tmp/work/full2db-b.txt -> INT-3 update |
+| Q4 builder | dry-run checks of the real-run scripts | 01:27 | finishing (evidence files written) | real-run/DRY-RUN-CHECKS.md |
+| map builder (sonnet) | review map of PR #4 | 01:50 | running | pr-text/REVIEW-MAP-PR4.md |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 2, shells 2, containers 0, heavy pytest 1, load about 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | single-process run | chunked 3138 passed 0 failed | the lead requires one process | no | run ends green |
+| PR #2-#4 descriptions | v4 (4 rounds) | R1 3 Blockers; R2 1B/11M; R3 0B/4M; R4 0B/3M, all fixed | none open | YES: clean (small final fixes sourced) | lead answers + pastes |
+| Semgrep PR text | body v5 | R3 fixed | none | YES | lead pastes |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| PR descriptions v3 -> v4 | merge-order options A/B; unsourced claims cut; ruff/mypy re-run on the two old heads |
+| final read of v3 | 0 Blocker, 3 Major (fixed in v4) |
+
 ## 2026-11-13 01:45Z / 07:15 IST - SINGLE-PROCESS RUN OF 2db3926 RUNNING (290 passed, 0 failed so far; ETA about 02:05Z); node-off pass DONE (205 passed, 22 skipped); PR #2-#4 descriptions v2 (internal items moved out) under confirming review; Semgrep body v5 done
 FAILED / UNCERTAIN first:
 1. The single-process (un-chunked) run you require for the final claim is NOT finished: started 01:42:49Z in a fresh clone (/tmp/work/h4, pr-3-tests 2db3926 verified, no git operations in it), python -u, gitleaks required: 290 passed, 0 failed at 01:45Z; no container restart since about 01:10Z. If a restart kills it I rerun at once. Until it ends the claim is: chunked green (3138 passed, 3 skipped, 0 failed), single-process pending.

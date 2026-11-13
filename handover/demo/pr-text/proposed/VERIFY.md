@@ -105,3 +105,14 @@ Files: pr2/pr3/pr4-user-description-v3.md (v1 and v2 kept). Changes: merge order
 | 74 | 19:46 vs 19:47: both are right, for different branches. ac93153 (main into pr-1-code) 01:16:24+05:30 = 19:46:24Z, used in #2. 51abd28 (into pr-2) 19:47:36Z and b29bb1f (into pr-3) 19:47:37Z, used in #3/#4 | `git log --date=iso-strict` (row 9) | consistent per branch |
 | 75 | way A/B: lint and CodeQL only for base main, SonarQube for every PR | rows 16-17 | verified (files); what GitHub allows for each merge step is not claimed |
 | 76 | GitHub may retarget a PR when its base branch is deleted after merging | GitHub's documented behaviour, not tested on this repo | worded "may" |
+
+## v4 update (after the final read)
+Files: pr2/pr3/pr4-user-description-v4.md (older kept).
+| # | statement | how verified | result |
+|---|---|---|---|
+| 77 | replaces row 59 wording: "Lint and CodeQL start only for a pull request whose base is main. After a base change they may need a new push to start." | rows 16-17 (files); "may" because the retarget event was not tested | hedged; the earlier "each part gets them when its base becomes main" removed |
+| 78 | "Semgrep: not run." (the "own pull request after this stack" clause cut: no source in the PR text) | none needed | cut |
+| 79 | Windows lock files target Python 3.13 | headers of requirements-dev-win.txt and requirements-browser-win.txt on pr-3-tests (`uv pip compile ... --python-version 3.13 --python-platform windows`) | verified |
+| 80 | supersedes row 22: d23cf8f: ruff "All checks passed!", format "51 files already formatted", mypy linux and win32 "no issues found in 26 source files" (head has [tool.mypy] in pyproject.toml) | my re-run in a detached worktree, ruff/mypy from /tmp/work/int2-venv/bin | verified |
+| 81 | f31e261: ruff "All checks passed!", format "60 files already formatted", mypy linux and win32 "no issues found in 26 source files" | same | verified |
+| 82 | CodeRabbit and DeepSource defined once in #4 ("an automatic code-review tool") | text | done |
