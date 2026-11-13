@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:44Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 batch 12 landed as c7eb5c79 (builder report, unverified): only focused tests (432 passed on 3.12 and 3.13) and 9 mutant rows; no full suite. Added 5 broad-except sites behind per-file ruff ignores (BLE001 app.py, mode_banner.py; S603 on 3 files). Your 04:45Z decision (named tuple + surprise-error test) makes those ignores wrong: they go in batch 13 as one class fix. Part 6 is NOT clean; no laptop run.
+- Part 2 82dd69c1 and SONAR-PATH abb3e90a are NOT clean. SONAR-PATH design r4: 0B/3M; codebase review and runner still running.
+
+**LEAD ACTIONS:** 04:45Z command read: (1) broad-except decision approved, relayed to Part 2 builder a805b93d now; Part 6 gets it in batch 13; I will report the site count. (2) SONAR-PATH: will state the fail-before baseline as "main src + pathguard.py" and split pins from real fail-before in the evidence; PR READY line only after a clean round.
+**LIVE ITEMS (6):** a805b93d P2 batch 12 builder; aa314440 P6 r12 design; add576c8 P6 r12 codebase; ab0c9e9a P6 runner c7eb5c79; aff9acdd SONAR-PATH codebase r4; a861acad SONAR-PATH runner. Closed: a7978edf.
+**ROUNDS (WHY):** P6 round 12 and P2 round 12 (mode-safety, no cap); SONAR-PATH round 4 (security).
+**FINISHED SINCE LAST BLOCK:** P6 batch 12 pushed; r12 reviews and runner launched.
+**EGM STEP PER PACKAGE:** P6 step 5 (reviews + evidence); P2 step 3 (build); SONAR-PATH step 5.
+**LANE SONAR-PATH:** abb3e90a, round 4 pending resolve.
+**RUN ON LAPTOP:** none (no clean head).
+
+
 ## 04:40Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

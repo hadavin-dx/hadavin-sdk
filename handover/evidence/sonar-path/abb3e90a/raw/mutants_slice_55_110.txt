@@ -1,0 +1,2 @@
+ok  KILLED       R4-05 the range is dropped: Hangul fillers  [test_pin_r4_range_05]
+ok  KILLED       R4-05 the range ends one early: Hangul fillers  [test_pin_r4_range_05]
