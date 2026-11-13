@@ -9,3 +9,5 @@ run 7 rc=0 142 passed, 6 skipped in 22.55s
 run 8 rc=0 142 passed, 6 skipped in 24.17s
 run 9 rc=0 142 passed, 6 skipped in 23.82s
 run 10 rc=0 142 passed, 6 skipped in 23.84s
+run 11 rc=0 142 passed, 6 skipped in 21.86s
+run 12 rc=0 142 passed, 6 skipped in 22.67s
