@@ -30,3 +30,6 @@ M | agent a275db..: classify the 200 skips (read-only) | 12:00Z | ~12:20Z, stop 
 M | reported 12:00Z closed: 4 others classified (2 never on Linux/3.12, 1 opt-in LEAD_DESK_LOAD_N, 1 root)
 L | reported 12:02Z closed: 72 passed 0 failed 0 skipped on BASE and STACK
 K | reported 12:07Z closed: browser tests all pass BASE and STACK (241 per head), 0 skipped
+N | agent ae964c..: py3.13 full suite BASE | 12:12Z | ~12:35Z, stop 12:55Z | now | running | check 5 min
+O | agent ab5cea..: py3.13 full suite STACK | 12:12Z | ~12:35Z, stop 12:55Z | now | running | check 5 min
+P | NOT STARTED: 3.12 vs 3.13 per-test diff, read-only | after N and O | - | waiting

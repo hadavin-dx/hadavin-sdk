@@ -1,5 +1,20 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:10Z / 17:40 IST  HEARTBEAT 31 (ORDER 10: Python 3.13 venv built; N and O started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| me (venv) | built the Python 3.13 venv and installed the hash-locked requirements-dev.txt of f3c39cf8 | needed by N and O | 12:10Z / 17:40 | done | first try | done, pip rc=0 | none |
+| N | Evidence runner: full suite once -v under Python 3.13 on BASE f3c39cf8 | cross-version result | 12:10Z / 17:40 | about 20 min; hard stop 12:55Z (cap 13:00Z) | first try | running | check progress-N.txt in 5 min |
+| O | Evidence runner: same on STACK (f3c39cf8 + claims patch), at the same time | cross-version result for the stack | 12:10Z / 17:40 | about 20 min; hard stop 12:55Z | first try | running | check progress-O.txt in 5 min |
+| P | NOT STARTED: read-only per-test comparison 3.12 vs 3.13 (needs N's and O's logs) | which tests behave differently | when N and O end | about 10 min | round 0 | waiting for N and O | start when they report |
+| all earlier agents | K, L, M, I, H, J, G, F, E, D, C2, A, B | - | - | - | - | closed | none |
+
+ASK:
+1. Source of Python 3.13: it is the image's own `/usr/local/bin/python3.13` (version 3.13.18; the laptop has 3.13.3), not downloaded; I did not use uv. Is that a trusted pinned source for you? Default: yes, the image is the trusted base; the exact version is recorded in every table.
+2. P needs N's and O's logs, so it starts when they end (reading only, about 10 minutes, ends before 13:00Z). Default: keep.
+3. The xdist fallback of ORDER 10 is not possible: pytest-xdist is not in the repo lock (0 matches in requirements-dev.txt). Not needed, since the 3.13 install worked. Default: not run.
+FACTS: `pip install --require-hashes -r requirements-dev.txt` under Python 3.13.18 succeeded (rc=0): every locked package has a usable wheel or source for 3.13, nothing stopped. `ntpath.isreserved` exists on this Python (True), so the 3.13-only test should run. Playwright and gitleaks are not installed in this venv, so the same 196 tests skip as before; that is the 3.12 baseline for comparison.
+
 ## 2026-11-13 12:10Z / 17:40 IST  HEARTBEAT 30 (K reported; ORDER 9 done; all agents closed)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
