@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:19Z (07:49 IST) / disk cleanup DONE (df 96 percent -> 83 percent); lead 02:16Z items 1-6
+
+**FAILED / UNCERTAIN FIRST**
+- Nothing proven on any lane by running yet (runner a7e31a96 on Q8c-1 a5908c0b still not reported; Part 2 and Part 6 builders working). Part 2 3db352f5 round 8 NOT clean; Part 6 41c84695 round 7 NOT clean; Q8c-1 not ready.
+- Disk cleanup: it freed less than my estimate (my guess of 28 GB was wrong: many environments share files). df before: 252G size, 37G used, 1.8G free, 96 percent. After: 32G used, 6.9G free, 83 percent (+5.1 GB). I removed by exact path: 101 finished-runner Python environments (venv-*, B-*-venv, ER-*-venv, EV-*, RB-*, PRH-venv, pdbanner-b6-venv, pdbind7-venv), 7 closed-runner database folders (ER-*-pg) and the 511 MB clone ER-timing-r2-clone, and 51 detached worktrees whose heads are on a pushed remote branch (git worktree remove, no force). Kept: 26 worktrees that are dirty, unpushed or in use, the 6 environments in use, the lane worktrees under wt/, all wip branches. Remaining free space is 6.9 GB of a limited allowance; the 25 GB build folder is still the main user and I cannot tell what else the platform counts.
+
+**LEAD ACTIONS**: none new. Item 5 rulesets: no push rejected so far (last push 02:19Z ok).
+
+**Lead 02:16Z items**: 1 disk: done (above); one shared environment per lane: new builders reuse B-PD-bind9-venv and B-Q8c1-b16-venv, no new ones. 2 answers: bare word like bypass=true is SHOWN and pinned by a test row; bypass_key and bypass_token hidden; bare scheme word plus token without header name keeps the default; one-sentence rationale in the CHANGELOG: sent to the Part 6 builder a509d177. 3 Part 2: batch 9 builder a37e6e83 running; I will write the RUN ON LAPTOP line when its head is final and pushed. 4 Q8c-1: nits builder ad39b1c1 started now (60 min box, focused tests only); code-only branch core/q8c1-notes-check follows after runner green and the nit push. 5 noted. 6 see below.
+
+**EGM STEP PER PACKAGE**: Part 2 (PD-bind): step 6 (resolve done for r8, fix batch 9 building), then evidence on final head (laptop for full), round 9 reviewers, drift report. Part 6 (PD-banner): step 6 (resolve r7 done, batch 8 building), then evidence and round 8 reviewers. Q8c-1: step 5 done for r17 (0 Blocker 0 Major), runner pending (step 4), nits fix (step 6), delta evidence, drift report. Agents running: 4 (target 6: I have no other independent work that is ready: the Part 2/Part 6 reviewers and runners wait for builder heads; tell me if you want a lane started in parallel).
+
+**LIVE ITEMS** (4): a509d177 Part 6 batch 8 builder; a7e31a96 Q8c-1 runner; a37e6e83 Part 2 batch 9 builder; ad39b1c1 Q8c-1 nits builder. Heads unchanged: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: unchanged.
+
+**FINISHED SINCE LAST BLOCK (02:13Z)**: disk cleanup; Q8c-1 nits builder launched; lead answers forwarded.
+
 ## 02:12Z (07:42 IST) / no change since 02:08Z: three agents running
 
 **FAILED / UNCERTAIN FIRST**
