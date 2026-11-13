@@ -1,0 +1,74 @@
+        adding the repository folder afterwards changed nothing and the start failed with ModuleNotFoundError."""
+        adding the repository folder afterwards changed nothing and the start failed with ModuleNotFoundError."""
+        repository folder afterwards changed nothing and the start failed."""
+FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out
+FAILED tests/test_path_confinement.py::test_each_tool_file_imports_the_path_helper[demo_only/fake_model_server.py]
+FAILED tests/test_path_confinement.py::test_each_known_site_still_uses_the_path_helper[load_tools/check_invariants.py-def read_book(-confine_anywhere(path, what=what)]
+FAILED tests/test_path_confinement.py::test_each_known_site_still_uses_the_path_helper[load_tools/check_invariants.py-def read_book(-confine_existing(path, what=what)]
+FAILED tests/test_path_confinement.py::test_each_known_site_still_uses_the_path_helper[demo_only/fake_model_server.py-def main(-confine_existing(a.key_file, what="--key-file")]
+FAILED tests/test_path_confinement.py::test_each_known_site_still_uses_the_path_helper[demo_only/fake_model_server.py-def main(-confine(a.call_log, what="--call-log")]
+FAILED tests/test_path_confinement.py::test_each_known_site_still_uses_the_path_helper[demo_only/fake_model_server.py-def main(-confine(a.control_file, what="--control-file")]
+FAILED tests/test_path_confinement.py::test_a_script_start_survives_a_foreign_tools_package[check_invariants.py]
+FAILED tests/test_path_confinement.py::test_a_script_start_survives_a_foreign_tools_package[load_driver.py]
+FAILED tests/test_path_confinement.py::test_a_foreign_tools_pathconfine_that_lacks_the_name_falls_back_to_ours[check_invariants.py]
+FAILED tests/test_path_confinement.py::test_a_foreign_tools_pathconfine_that_lacks_the_name_falls_back_to_ours[load_driver.py]
+FAILED tests/test_path_confinement.py::test_a_foreign_tools_pathconfine_that_lacks_the_name_falls_back_to_ours[catcher.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_drops_only_foreign_tools_modules[check_invariants.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_drops_only_foreign_tools_modules[load_driver.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_drops_only_foreign_tools_modules[catcher.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_import_runs_in_this_process_and_keeps_our_modules[check_invariants.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_import_runs_in_this_process_and_keeps_our_modules[load_driver.py]
+FAILED tests/test_path_confinement.py::test_the_fallback_import_runs_in_this_process_and_keeps_our_modules[catcher.py]
+FAILED tests/test_path_confinement.py::test_the_hard_link_limit_is_documented
+FAILED tests/test_path_confinement.py::test_the_foreign_tools_limit_is_stated_where_the_import_is
+FAILED tests/test_path_confinement.py::test_read_book_turns_the_network_path_refusal_into_an_input_error
+FAILED tests/test_path_confinement.py::test_check_invariants_main_reports_a_network_path_book_as_an_input_error
+FAILED tests/test_path_confinement.py::test_run_real_check_reads_a_network_path_book_as_unreadable_not_a_traceback
+FAILED tests/test_path_confinement.py::test_a_windows_network_path_is_refused_for_the_sqlite_uri
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\host\\share\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[//host/share/x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\/host\\share/x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[/\\host/share/x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\?\\UNC\\host\\share\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[//?/UNC/host/share/x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\?\\C:\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\.\\C:\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\localhost\\share\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[//localhost/c$/x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\\\host]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[//]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\??\\UNC\\host\\share\\x]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\??\\C:\\x.db]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[/??/UNC/host/share/x]
+FAILED tests/test_path_confinement.py::test_every_windows_device_or_network_form_is_refused_with_ntpath[\\??\\unc\\host]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[ntpath--the path is empty]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[ntpath-\x00-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[ntpath-a\x01b.db-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[ntpath-a\nb.db-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[ntpath-a\x7fb.db-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[os.path--the path is empty]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[os.path-\x00-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[os.path-a\x01b.db-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[os.path-a\nb.db-control character]
+FAILED tests/test_path_confinement.py::test_empty_and_control_character_text_is_refused_on_every_system[os.path-a\x7fb.db-control character]
+FAILED tests/test_path_confinement.py::test_ordinary_windows_forms_still_pass_with_ntpath[C:\\books\\x.db]
+FAILED tests/test_path_confinement.py::test_ordinary_windows_forms_still_pass_with_ntpath[x.db]
+FAILED tests/test_path_confinement.py::test_ordinary_windows_forms_still_pass_with_ntpath[sub\\x.db]
+FAILED tests/test_path_confinement.py::test_ordinary_windows_forms_still_pass_with_ntpath[C:/books/x.db]
+FAILED tests/test_path_confinement.py::test_ordinary_windows_forms_still_pass_with_ntpath[\\x.db]
+FAILED tests/test_path_confinement.py::test_fake_model_server_refuses_each_path_option_outside_the_allowed_folders[--call-log]
+FAILED tests/test_path_confinement.py::test_fake_model_server_refuses_each_path_option_outside_the_allowed_folders[--control-file]
+FAILED tests/test_path_confinement.py::test_fake_model_server_refuses_each_path_option_outside_the_allowed_folders[--key-file]
+FAILED tests/test_path_confinement.py::test_fake_model_server_hands_the_checked_paths_on_and_reads_the_key_from_the_checked_file
+FAILED tests/test_path_confinement.py::test_n8n_api_import_message_names_the_rule_and_the_folder_list
+FAILED tests/test_path_confinement.py::test_read_book_refuses_an_argument_that_is_not_a_path_instead_of_failing_on_its_name[None]
+FAILED tests/test_path_confinement.py::test_read_book_refuses_an_argument_that_is_not_a_path_instead_of_failing_on_its_name[123]
+FAILED tests/test_path_confinement.py::test_read_book_refuses_an_argument_that_is_not_a_path_instead_of_failing_on_its_name[book.db]
+FAILED tests/test_path_confinement.py::test_read_book_label_shows_only_printable_characters
+FAILED tests/test_path_confinement.py::test_catcher_default_control_file_for_an_out_name_with_a_space
+FAILED tests/test_followup_b.py::test_n8n_api_puts_src_ahead_of_the_repository_folder
+FAILED tests/test_followup_b.py::test_start_all_sh_comment_says_what_the_script_does
+FAILED tests/test_followup_b.py::test_catcher_start_survives_a_foreign_tools_package
+FAILED tests/test_sonar_p2_choke_points.py::test_the_portal_demo_re_exports_the_scheme_name_explicitly
+FAILED tests/test_sonar_p2_choke_points.py::test_the_urls_docstring_makes_no_claim_about_every_file
+70 failed, 274 passed, 1 skipped in 70.91s (0:01:10)
