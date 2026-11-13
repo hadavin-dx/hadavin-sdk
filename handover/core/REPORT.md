@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:22Z (07:52 IST) / Part 6 batch 8 PUSHED (07bfda12): reviewers and a cloud-limited runner started
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 07bfda12 has NO full pytest and NO complete banner_mutants run (the builder stopped them when the 8-minute rule arrived; last full pytest 10785 passed was on the earlier head 1c7d648). RUN ON LAPTOP: hadavin-sdk 07bfda12678f49b90f970ad320cb8f07580f44cb pytest -q full + banner_mutants complete (pushed on origin wip/cloud-pd-banner; handover-files check exit 0).
+- Builder admissions (facts, given to reviewers): 7 tests pass on old code and are renamed test_pin_* (not counted as proofs); the git-message masker test was not run against old code; 14 older test comments say "not re-run against older code"; not every older test name audited; tools/server_scan.py does not exist in this repo so that gate was not run; the 3.12 loop behaviour is emulated (local Python is 3.13); on 1c7d648 the first complete table run had 13 BAD rows (stale expects), fixed and re-run alone 13 of 13 good.
+- Lead decision (b) "keep the default for a bare scheme word plus token": the builder could not check what main hides; reviewers asked to look. Please confirm main's rule if you know it.
+- Part 2 batch 9 and Q8c-1 nits builders working; Q8c-1 runner a7e31a96 still not reported (about 40 min). Still nothing proven by a clean round on any lane.
+
+**LEAD ACTIONS**: RUN ON LAPTOP line above (Part 6). Confirm main's masking for a bare scheme word plus token.
+
+**LIVE ITEMS** (6): a1ea1b4d design reviewer and a271d9ff codebase reviewer (Part 6 round 8), a773a83b evidence runner (Part 6, cloud-limited, 50 min box), a37e6e83 Part 2 batch 9 builder, ad39b1c1 Q8c-1 nits builder, a7e31a96 Q8c-1 runner. Heads: pd-bind 3db352f5, pd-banner 07bfda12, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Part 6 round 8 (mode safety, no cap; round 7 was not clean). Part 2 round 9 after batch 9. Q8c-1 r17 clean; delta evidence after the nits push.
+
+**EGM STEP PER PACKAGE**: Part 6: step 4 and 5 in parallel (evidence runner plus both reviewers on the snapshot of 07bfda12); Part 2: step 3 (build batch 9); Q8c-1: step 4 (runner) and step 3 (nits build).
+
+**FINISHED SINCE LAST BLOCK (02:19Z)**: Part 6 batch 8 builder a509d177 reported and closed; snapshot pdbanner-07bfda12 made; reviewers and runner launched.
+
 ## 02:19Z (07:49 IST) / disk cleanup DONE (df 96 percent -> 83 percent); lead 02:16Z items 1-6
 
 **FAILED / UNCERTAIN FIRST**
