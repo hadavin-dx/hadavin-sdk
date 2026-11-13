@@ -1,6 +1,40 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:29Z / 08:59 IST - commands 03:30/03:36/03:40 read: probe-ab.patch ordered, P2 v2 split, no-demo bug lane started; crlf-guard-v4 + sonar yaml delta v2 built (v4 grew: +228 lines); 6 agents
+FAILED / UNCERTAIN first:
+1. **crlf-guard-v4 is NOT small**: tests/test_hygiene.py +228/-4 (your limit: ~120, else drop the lone-CR class). The builder reports all 19 of the review's mutants + M1..M9 die (the 3 gitleaks-dependent ones only when gitleaks is installed: CI must set DPLD_REQUIRE_SCAN=1) and the cure commands are RUN by a test (`git checkout -- <file>` first, then a python one-liner keeping edits; no GNU sed; the new `-m gitleaks` test is ~1 s). The sonar yaml test delta v2 (on db54e13; the delta over the 38-line v1 test) is 163 lines, 31 of 32 mutants die (the survivor T13 only matters on a bad real workflow). A THIRD fresh reviewer (a5174404d55a3357a) is measuring a trimmed version (smaller wins if every mutant still dies) and whether the guard misfires on Windows `core.autocrlf=true` checkouts (this matters for your Windows run). Not ready to apply.
+2. **Your 03:30Z probe order**: sent to the P3 builder: sonar/probe-ab.patch (A = helper on some flagged lines, B = inline realpath+commonpath+raise on others; ONE draft PR to main answers both) + PROBE-AB-NOTE.md (which file:line gets A/B; whether B differs from core's pathguard.py on wip/cloud-sonar-probe, read-only). Not ready yet.
+3. **Your 03:36Z P2 order**: sent to the P2 v2 builder: main v2 = only sites with >= 80% odds (identity.py x2, the S5332 sites); the two likely-staying S8786 rewrites go into an optional patch; the rest listed as 'Sonar will likely keep, accepted with reason' (no suppression comments).
+4. **Your 03:40Z demo_only bug**: new builder (af720ffd002889ae0) confirms on db54e13 (demo_only deleted -> test_except_clause_hierarchy 6 failures), fixes generically with fails-before proof, greps siblings, and runs a CHUNKED no-demo run of the whole suite in the cloud as the no-demo line for RUN ON LAPTOP. Patch: sonar/nodemo-fix.patch, early in the series.
+5. **Real-run fixes v4 stays handover only** (the two core touches not approved; noted). Fresh review of v4 running.
+6. Not run anywhere: full suite on any combined series (the no-demo chunked run will be the first), Windows, any Sonar result.
+APPLY ORDER you gave (03:30Z): P1 v2 (review running) -> sonar yaml delta -> P2 -> crlf v4; plus nodemo-fix early once ready; P3 waits for the probe.
+EGM STEP: P1 v2 = fresh review running; P2 = review 1 done -> v2 build; P3 = review 1 done (3 Major) -> v2 + probe build; crlf v4 / yaml delta v2 = build done -> fresh review 3 running; real-run v4 = fresh review running; nodemo = build.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7652eeec21645d91 | fresh reviewer P1 v2 | 03:17 | running | report |
+| a75929772685cf304 | P3 v2 + probe A/B + probe-ab.patch builder | 03:11 | running | patches |
+| ae184ee748e1ae95d | P2 v2 builder (split by odds) | 03:20 | running | patches |
+| a425d1049580d6b03 | fresh reviewer real-run fixes v4 | 03:28 | running | report |
+| a5174404d55a3357a | fresh reviewer crlf v4 + yaml delta v2 | 03:31 | running | report |
+| af720ffd002889ae0 | no-demo (demo_only deleted) bug builder + chunked run | 03:33 | running | nodemo-fix.patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| crlf v4 / yaml delta v2 | review 3 | pending | size + Windows | no | clean + small |
+| P1 v2 | review 2 | pending | fresh read | no | clean |
+| real-run v4 | review 3 | pending | core touches | no | clean (handover) |
+| nodemo | build 1 | - | new | no | review |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| crlf-guard-v4 + sonar yaml delta v2 | built, pushed (apply on db54e13) |
+| real-run v4 | pushed, review running |
+
 ## 2026-11-13 03:28Z / 08:58 IST - P2 reviewed (code correct, 2 of 4 regex issues likely STAY: v2 building); real-run fixes v4 built (2 core touches: your approval needed before it ever leaves handover); 5 agents
 FAILED / UNCERTAIN first:
 1. **P2 (sonar-p2-regex-http-bug.patch): fresh review: no regression, but my '11 of 11' was overstated.** Reviewer's honest odds (read from Sonar's public analyzer source, not run): S8786 identity.py x2 about 80% clear each; S8786 run_real_check.py:116 about 15% (will likely stay); S8786 scrub_n8n_export.py:102 about 25% (will likely stay: a leading repetition in a partial-match regex is reported whether or not it is possessive, and a look-behind does not stop it; the OLD pattern had the same look-behind and was flagged at baseline); S5332 x4 f-string sites about 90% clear; server.py:492 about 85%; S2583 about 65%; S8703 about 50% (closed engine). Fix designed (one mandatory char before the repetition, equivalence verified: 0 differences on 1.5M+ cases): P2 v2 builder running (ae184ee748e1ae95d). Undocumented behaviour changes of P2 to put in the PR text: `feed.py --url` (undocumented) now refuses a URL without a port, /leads/, 127.0.0.2, long-form IPv6 and remote hosts. DO NOT apply P2 v1 if you can wait for v2.
