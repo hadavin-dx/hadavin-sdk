@@ -1,0 +1,300 @@
+hadavin_sdk: /home/user/build/ER-sonarpath4-head/src/hadavin_sdk/__init__.py
+| input | target | result | exception | leaks path/data in message | message (trunc 110) |
+|---|---|---|---|---|---|
+| dotdot .. | pathguard.component | REFUSED | PathRefused | none | 'x: not a plain name' |
+| dotdot .. | pathguard.join | REFUSED | PathRefused | none | 'x: not a plain name' |
+| dotdot .. | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| dotdot .. | pathguard.operator_file | REFUSED | PathRefused | none | 'x: not a file' |
+| dotdot .. | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: not a plain name' |
+| dotdot .. | hashing.hash_files | REFUSED | ConfigError | none | 'path escapes its folder: ..' |
+| dotdot .. | secrets_file._fetch | REFUSED | ConfigError | none | 'path escapes its folder: ..' |
+| dotdot .. | local_dir._object | REFUSED | PathRefused | none | 'audit object: not a plain name' |
+| dotdot .. | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| dotdot a/../../outside/secret.txt | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| dotdot a/../../outside/secret.txt | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| dotdot a/../../outside/secret.txt | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| dotdot a/../../outside/secret.txt | pathguard.operator_file | ACCEPTED |  | none | '' |
+| dotdot a/../../outside/secret.txt | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| dotdot a/../../outside/secret.txt | hashing.hash_files | REFUSED | ConfigError | name-as-given,'outside' | 'path escapes its folder: ../outside/secret.txt' |
+| dotdot a/../../outside/secret.txt | secrets_file._fetch | REFUSED | ConfigError | name-as-given,'outside' | 'path escapes its folder: ../outside/secret.txt' |
+| dotdot a/../../outside/secret.txt | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| dotdot a/../../outside/secret.txt | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| dotdot embedded x/../real.txt | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| dotdot embedded x/../real.txt | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| dotdot embedded x/../real.txt | pathguard.inside | ACCEPTED |  | none | '' |
+| dotdot embedded x/../real.txt | pathguard.operator_file | ACCEPTED |  | none | '' |
+| dotdot embedded x/../real.txt | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| dotdot embedded x/../real.txt | hashing.hash_files | ACCEPTED |  | none | '' |
+| dotdot embedded x/../real.txt | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'sub/../real.txt': the file is readable by every user or writable by others; mount it 0400 or 0440" |
+| dotdot embedded x/../real.txt | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| dotdot embedded x/../real.txt | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| absolute /etc/passwd | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| absolute /etc/passwd | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| absolute /etc/passwd | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| absolute /etc/passwd | pathguard.operator_file | ACCEPTED |  | none | '' |
+| absolute /etc/passwd | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| absolute /etc/passwd | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'path escapes its folder: /etc/passwd' |
+| absolute /etc/passwd | secrets_file._fetch | REFUSED | ConfigError | name-as-given | 'path escapes its folder: /etc/passwd' |
+| absolute /etc/passwd | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| absolute /etc/passwd | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| absolute outside file | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| absolute outside file | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| absolute outside file | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| absolute outside file | pathguard.operator_file | ACCEPTED |  | none | '' |
+| absolute outside file | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| absolute outside file | hashing.hash_files | REFUSED | ConfigError | tmpdir,name-as-given,'outside' | 'path escapes its folder: /tmp/hostile-zfy1nyjs/outside/secret.txt' |
+| absolute outside file | secrets_file._fetch | REFUSED | ConfigError | tmpdir,name-as-given,'outside' | 'path escapes its folder: /tmp/hostile-zfy1nyjs/outside/secret.txt' |
+| absolute outside file | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| absolute outside file | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| link inside base -> outside (file) | pathguard.component | ACCEPTED |  | none | '' |
+| link inside base -> outside (file) | pathguard.join | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| link inside base -> outside (file) | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| link inside base -> outside (file) | pathguard.operator_file | ACCEPTED |  | none | '' |
+| link inside base -> outside (file) | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: path escapes its folder' |
+| link inside base -> outside (file) | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'path escapes its folder: link_out.txt' |
+| link inside base -> outside (file) | secrets_file._fetch | REFUSED | ConfigError | name-as-given | 'path escapes its folder: link_out.txt' |
+| link inside base -> outside (file) | local_dir._object | ACCEPTED |  | none | '' |
+| link inside base -> outside (file) | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| link inside base -> outside (dir)/secret | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| link inside base -> outside (dir)/secret | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| link inside base -> outside (dir)/secret | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| link inside base -> outside (dir)/secret | pathguard.operator_file | ACCEPTED |  | none | '' |
+| link inside base -> outside (dir)/secret | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| link inside base -> outside (dir)/secret | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'path escapes its folder: dir_out/secret.txt' |
+| link inside base -> outside (dir)/secret | secrets_file._fetch | REFUSED | ConfigError | name-as-given | 'path escapes its folder: dir_out/secret.txt' |
+| link inside base -> outside (dir)/secret | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| link inside base -> outside (dir)/secret | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| relative link -> outside | pathguard.component | ACCEPTED |  | none | '' |
+| relative link -> outside | pathguard.join | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| relative link -> outside | pathguard.inside | REFUSED | PathRefused | none | 'x: path escapes its folder' |
+| relative link -> outside | pathguard.operator_file | ACCEPTED |  | none | '' |
+| relative link -> outside | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: path escapes its folder' |
+| relative link -> outside | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'path escapes its folder: rel_link_out.txt' |
+| relative link -> outside | secrets_file._fetch | REFUSED | ConfigError | name-as-given | 'path escapes its folder: rel_link_out.txt' |
+| relative link -> outside | local_dir._object | ACCEPTED |  | none | '' |
+| relative link -> outside | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| link inside base -> inside (file) | pathguard.component | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | pathguard.join | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | pathguard.inside | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | pathguard.operator_file | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: a link is not replaced' |
+| link inside base -> inside (file) | hashing.hash_files | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'link_in.txt': the file is readable by every user or writable by others; mount it 0400 or 0440" |
+| link inside base -> inside (file) | local_dir._object | ACCEPTED |  | none | '' |
+| link inside base -> inside (file) | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| link inside base -> inside (dir)/f | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| link inside base -> inside (dir)/f | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| link inside base -> inside (dir)/f | pathguard.inside | ACCEPTED |  | none | '' |
+| link inside base -> inside (dir)/f | pathguard.operator_file | ACCEPTED |  | none | '' |
+| link inside base -> inside (dir)/f | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| link inside base -> inside (dir)/f | hashing.hash_files | ACCEPTED |  | none | '' |
+| link inside base -> inside (dir)/f | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'dir_in/f.txt': the file is readable by every user or writable by others; mount it 0400 or 0440" |
+| link inside base -> inside (dir)/f | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| link inside base -> inside (dir)/f | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| NUL | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| NUL | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| NUL | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| NUL | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| NUL | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| NUL | hashing.hash_files | REFUSED | ConfigError | none | 'path has a backslash or NUL character' |
+| NUL | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| NUL | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| NUL | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| control char \x01 | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char \x01 | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char \x01 | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char \x01 | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char \x01 | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| control char \x01 | hashing.hash_files | REFUSED | PathRefused | none | 'path: contains a control character' |
+| control char \x01 | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| control char \x01 | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| control char \x01 | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| control char newline | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char newline | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char newline | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char newline | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| control char newline | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| control char newline | hashing.hash_files | REFUSED | PathRefused | none | 'path: contains a control character' |
+| control char newline | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| control char newline | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| control char newline | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| DEL | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| DEL | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| DEL | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| DEL | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| DEL | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| DEL | hashing.hash_files | REFUSED | PathRefused | none | 'path: contains a control character' |
+| DEL | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| DEL | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| DEL | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| RLO U+202E | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| RLO U+202E | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| RLO U+202E | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| RLO U+202E | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| RLO U+202E | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| RLO U+202E | hashing.hash_files | REFUSED | PathRefused | none | 'path: contains a control character' |
+| RLO U+202E | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| RLO U+202E | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| RLO U+202E | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| zero width U+200B | pathguard.component | REFUSED | PathRefused | none | 'x: contains a control character' |
+| zero width U+200B | pathguard.join | REFUSED | PathRefused | none | 'x: contains a control character' |
+| zero width U+200B | pathguard.inside | REFUSED | PathRefused | none | 'x: contains a control character' |
+| zero width U+200B | pathguard.operator_file | REFUSED | PathRefused | none | 'x: contains a control character' |
+| zero width U+200B | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a control character' |
+| zero width U+200B | hashing.hash_files | REFUSED | PathRefused | none | 'path: contains a control character' |
+| zero width U+200B | secrets_file._fetch | REFUSED | PathRefused | none | 'path: contains a control character' |
+| zero width U+200B | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a control character' |
+| zero width U+200B | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| trailing dot | pathguard.component | REFUSED | PathRefused | none | 'x: ends with a dot or space' |
+| trailing dot | pathguard.join | REFUSED | PathRefused | none | 'x: ends with a dot or space' |
+| trailing dot | pathguard.inside | ACCEPTED |  | none | '' |
+| trailing dot | pathguard.operator_file | ACCEPTED |  | none | '' |
+| trailing dot | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: ends with a dot or space' |
+| trailing dot | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: name.' |
+| trailing dot | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'name.' not found in the mounted folder" |
+| trailing dot | local_dir._object | REFUSED | PathRefused | none | 'audit object: ends with a dot or space' |
+| trailing dot | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| trailing space | pathguard.component | REFUSED | PathRefused | none | 'x: ends with a dot or space' |
+| trailing space | pathguard.join | REFUSED | PathRefused | none | 'x: ends with a dot or space' |
+| trailing space | pathguard.inside | ACCEPTED |  | none | '' |
+| trailing space | pathguard.operator_file | ACCEPTED |  | none | '' |
+| trailing space | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: ends with a dot or space' |
+| trailing space | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: name ' |
+| trailing space | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'name ' not found in the mounted folder" |
+| trailing space | local_dir._object | REFUSED | PathRefused | none | 'audit object: ends with a dot or space' |
+| trailing space | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| device CON | pathguard.component | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device CON | pathguard.join | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device CON | pathguard.inside | ACCEPTED |  | none | '' |
+| device CON | pathguard.operator_file | ACCEPTED |  | none | '' |
+| device CON | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: reserved device name' |
+| device CON | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: CON' |
+| device CON | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'CON' not found in the mounted folder" |
+| device CON | local_dir._object | REFUSED | PathRefused | none | 'audit object: reserved device name' |
+| device CON | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| device con.txt | pathguard.component | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device con.txt | pathguard.join | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device con.txt | pathguard.inside | ACCEPTED |  | none | '' |
+| device con.txt | pathguard.operator_file | ACCEPTED |  | none | '' |
+| device con.txt | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: reserved device name' |
+| device con.txt | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: con.txt' |
+| device con.txt | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'con.txt' not found in the mounted folder" |
+| device con.txt | local_dir._object | REFUSED | PathRefused | none | 'audit object: reserved device name' |
+| device con.txt | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| device COM1 | pathguard.component | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device COM1 | pathguard.join | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device COM1 | pathguard.inside | ACCEPTED |  | none | '' |
+| device COM1 | pathguard.operator_file | ACCEPTED |  | none | '' |
+| device COM1 | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: reserved device name' |
+| device COM1 | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: COM1' |
+| device COM1 | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'COM1' not found in the mounted folder" |
+| device COM1 | local_dir._object | REFUSED | PathRefused | none | 'audit object: reserved device name' |
+| device COM1 | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| device NUL | pathguard.component | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device NUL | pathguard.join | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device NUL | pathguard.inside | ACCEPTED |  | none | '' |
+| device NUL | pathguard.operator_file | ACCEPTED |  | none | '' |
+| device NUL | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: reserved device name' |
+| device NUL | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: NUL' |
+| device NUL | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'NUL' not found in the mounted folder" |
+| device NUL | local_dir._object | REFUSED | PathRefused | none | 'audit object: reserved device name' |
+| device NUL | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| device LPT¹ | pathguard.component | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device LPT¹ | pathguard.join | REFUSED | PathRefused | none | 'x: reserved device name' |
+| device LPT¹ | pathguard.inside | ACCEPTED |  | none | '' |
+| device LPT¹ | pathguard.operator_file | ACCEPTED |  | none | '' |
+| device LPT¹ | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: reserved device name' |
+| device LPT¹ | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: LPT¹' |
+| device LPT¹ | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'LPT¹' not found in the mounted folder" |
+| device LPT¹ | local_dir._object | REFUSED | PathRefused | none | 'audit object: reserved device name' |
+| device LPT¹ | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| 5000-byte name | pathguard.component | REFUSED | PathRefused | none | 'x: too long' |
+| 5000-byte name | pathguard.join | REFUSED | PathRefused | none | 'x: too long' |
+| 5000-byte name | pathguard.inside | REFUSED | PathRefused | none | 'x: too long' |
+| 5000-byte name | pathguard.operator_file | REFUSED | PathRefused | none | 'x: too long' |
+| 5000-byte name | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: too long' |
+| 5000-byte name | hashing.hash_files | REFUSED | PathRefused | none | 'path: too long' |
+| 5000-byte name | secrets_file._fetch | REFUSED | PathRefused | none | 'path: too long' |
+| 5000-byte name | local_dir._object | REFUSED | PathRefused | none | 'audit object: too long' |
+| 5000-byte name | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| 256-byte name | pathguard.component | REFUSED | PathRefused | none | 'x: too long' |
+| 256-byte name | pathguard.join | REFUSED | PathRefused | none | 'x: too long' |
+| 256-byte name | pathguard.inside | ACCEPTED |  | none | '' |
+| 256-byte name | pathguard.operator_file | REFUSED | OSError | tmpdir,name-as-given | "[Errno 36] File name too long: '/tmp/hostile-zfy1nyjs/base/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" |
+| 256-byte name | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: too long' |
+| 256-byte name | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' |
+| 256-byte name | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" |
+| 256-byte name | local_dir._object | REFUSED | PathRefused | none | 'audit object: too long' |
+| 256-byte name | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| 255-byte name | pathguard.component | ACCEPTED |  | none | '' |
+| 255-byte name | pathguard.join | ACCEPTED |  | none | '' |
+| 255-byte name | pathguard.inside | ACCEPTED |  | none | '' |
+| 255-byte name | pathguard.operator_file | ACCEPTED |  | none | '' |
+| 255-byte name | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: too long' |
+| 255-byte name | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' |
+| 255-byte name | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" |
+| 255-byte name | local_dir._object | ACCEPTED |  | none | '' |
+| 255-byte name | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| colon a:b.json | pathguard.component | REFUSED | PathRefused | none | 'x: contains a colon' |
+| colon a:b.json | pathguard.join | REFUSED | PathRefused | none | 'x: contains a colon' |
+| colon a:b.json | pathguard.inside | ACCEPTED |  | none | '' |
+| colon a:b.json | pathguard.operator_file | ACCEPTED |  | none | '' |
+| colon a:b.json | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a colon' |
+| colon a:b.json | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: a:b.json' |
+| colon a:b.json | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'a:b.json' not found in the mounted folder" |
+| colon a:b.json | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a colon' |
+| colon a:b.json | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| colon vault:token | pathguard.component | REFUSED | PathRefused | none | 'x: contains a colon' |
+| colon vault:token | pathguard.join | REFUSED | PathRefused | none | 'x: contains a colon' |
+| colon vault:token | pathguard.inside | ACCEPTED |  | none | '' |
+| colon vault:token | pathguard.operator_file | ACCEPTED |  | none | '' |
+| colon vault:token | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a colon' |
+| colon vault:token | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: vault:token' |
+| colon vault:token | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'vault:token' not found in the mounted folder" |
+| colon vault:token | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a colon' |
+| colon vault:token | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| backslash | pathguard.component | REFUSED | PathRefused | none | 'x: contains a separator' |
+| backslash | pathguard.join | REFUSED | PathRefused | none | 'x: contains a separator' |
+| backslash | pathguard.inside | ACCEPTED |  | none | '' |
+| backslash | pathguard.operator_file | ACCEPTED |  | none | '' |
+| backslash | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a separator' |
+| backslash | hashing.hash_files | REFUSED | ConfigError | none | 'path has a backslash or NUL character' |
+| backslash | secrets_file._fetch | REFUSED | ConfigError | none | "secret 'a\\\\b' not found in the mounted folder" |
+| backslash | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a separator' |
+| backslash | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| windows-illegal char ? | pathguard.component | REFUSED | PathRefused | none | 'x: contains a character Windows does not allow' |
+| windows-illegal char ? | pathguard.join | REFUSED | PathRefused | none | 'x: contains a character Windows does not allow' |
+| windows-illegal char ? | pathguard.inside | ACCEPTED |  | none | '' |
+| windows-illegal char ? | pathguard.operator_file | ACCEPTED |  | none | '' |
+| windows-illegal char ? | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: contains a character Windows does not allow' |
+| windows-illegal char ? | hashing.hash_files | REFUSED | ConfigError | name-as-given | 'not a file: a?b' |
+| windows-illegal char ? | secrets_file._fetch | REFUSED | ConfigError | name-as-given | "secret 'a?b' not found in the mounted folder" |
+| windows-illegal char ? | local_dir._object | REFUSED | PathRefused | none | 'audit object: contains a character Windows does not allow' |
+| windows-illegal char ? | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |
+| empty | pathguard.component | REFUSED | PathRefused | none | 'x: not a plain name' |
+| empty | pathguard.join | REFUSED | PathRefused | none | 'x: not a plain name' |
+| empty | pathguard.inside | ACCEPTED |  | none | '' |
+| empty | pathguard.operator_file | REFUSED | PathRefused | none | 'x: not a file' |
+| empty | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: not a plain name' |
+| empty | hashing.hash_files | REFUSED | ConfigError | none | 'not a file: ' |
+| empty | secrets_file._fetch | REFUSED | ConfigError | none | "secret '' is not a regular file" |
+| empty | local_dir._object | REFUSED | PathRefused | none | 'audit object: not a plain name' |
+| empty | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| dot | pathguard.component | REFUSED | PathRefused | none | 'x: not a plain name' |
+| dot | pathguard.join | REFUSED | PathRefused | none | 'x: not a plain name' |
+| dot | pathguard.inside | ACCEPTED |  | none | '' |
+| dot | pathguard.operator_file | REFUSED | PathRefused | none | 'x: not a file' |
+| dot | k1b.atomic_write | REFUSED | PathRefused | none | 'output file: not a plain name' |
+| dot | hashing.hash_files | REFUSED | ConfigError | none | 'not a file: .' |
+| dot | secrets_file._fetch | REFUSED | ConfigError | none | "secret '.' is not a regular file" |
+| dot | local_dir._object | REFUSED | PathRefused | none | 'audit object: not a plain name' |
+| dot | score.load_answers | REFUSED | ConfigError | none | 'answers file is missing or not valid JSON' |
+| plain ok | pathguard.component | ACCEPTED |  | none | '' |
+| plain ok | pathguard.join | ACCEPTED |  | none | '' |
+| plain ok | pathguard.inside | ACCEPTED |  | none | '' |
+| plain ok | pathguard.operator_file | ACCEPTED |  | none | '' |
+| plain ok | k1b.atomic_write | ACCEPTED |  | none | '' |
+| plain ok | hashing.hash_files | ACCEPTED |  | none | '' |
+| plain ok | secrets_file._fetch | ACCEPTED |  | none | '' |
+| plain ok | local_dir._object | ACCEPTED |  | none | '' |
+| plain ok | score.load_answers | ACCEPTED(guard passed; later stage refused) | ConfigError | none | 'answers file needs a non-empty cases object' |

@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:49Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package is clean; no laptop run. Part 6 c7eb5c79 round 12: 0 Blocker, 4 Major (design 1, codebase 3), no fail-open; the evidence runner has not reported (no RESULTS.md yet), so every fail-before claim is still the builder's. Part 2 82dd69c1 batch 12 builder has not pushed. SONAR-PATH abb3e90a round 4: design 0B/3M, codebase 0B/4M (two mutant rows no longer match the source, label rule inconsistent, false docstring, tripwire limits); the reviewer ran nothing and the runner (a861acad) is still writing.
+- Reviewers read code only; nothing is proven by them.
+
+**LEAD ACTIONS:** your 04:45Z command executed: broad-except decision sent to the Part 2 builder; Part 6 batch 13 builder started (a7978edf resumed) with the named-tuple plus surprise-test rule, no per-file ignores, one shared subprocess helper. Both reports (design r12, codebase r12) and the resolve report goldfish_review_report-r12.md are pushed. SONAR-PATH: waiting for the runner, then resolve and batch 5; PR READY only after a clean round.
+**LIVE ITEMS (4):** a7978edf P6 batch 13 builder; a805b93d P2 batch 12 builder; ab0c9e9a P6 evidence runner c7eb5c79; a861acad SONAR-PATH evidence runner abb3e90a. Closed: aa314440, add576c8, aff9acdd.
+**ROUNDS (WHY):** P6 round 13 after batch 13 (mode-safety, no cap); P2 round 12; SONAR-PATH round 5 after batch 5 (security).
+**FINISHED SINCE LAST BLOCK:** P6 r12 design and codebase reviews saved; P6 r12 resolve; SONAR-PATH r4 codebase review saved; ledger rows PDBANNER-r12-1..4, SONARPATH-r4-4..7.
+**EGM STEP PER PACKAGE:** P6 step 3 (batch 13 build) with step 4 runner on c7eb5c79 pending; P2 step 3; SONAR-PATH step 4 (runner) then 6.
+**LANE SONAR-PATH:** abb3e90a; batch 5 pending the runner.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:44Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
