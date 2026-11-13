@@ -1,159 +1,18 @@
-commit 46d3093346d0ad48f5ecc92201f544c527de36b2
-Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
-
-    Cold-reader review: facts, contradictions, wording; command output, numbers, test citations
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit dbf3f4dc2d498b031a47ab062cbfaf0614b1f337
-Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
-
-    Say that the n8n numbers are one published run and that runs can differ
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 1db544a6b949ebfab0ad1a3caefea81447916cc3
-Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
-
-    Fix two section references that point at headings that do not exist
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit f1ba4ad972b115c4c279928d4483233be35fd92a
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Cross-check numbers and names against the code: fix four sentences, the 55 s overrun and the body-cap sentence
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 22e1a4492a5965c88de4e06297745bcca2e0fcfc
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Review fixes: stage-copy note, replay count, run figures, collect flags
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 18e494a59bcc7d6b70953476963e87bd5356782a
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Recount the collected test total in versions.md
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit ce0b97543b8100944471ac2e2973bbcac69c3496
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Correct sentences about tests found wrong by a search of tests/
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit dff91661a464c7825315d2c58fedc4a0d2adb0d5
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Review fixes of the contract and probe sentences
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 55dfc71e6fd2c019ba64550e20e47190607c297b
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Soften or source unbacked sentences in contract, n8n recipe, real services and code docstrings
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 19043f73a98650a58fcc4503247d71553fa08257
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Review fixes: licence sentence, reminders, slow-sender, masking, n8n file count
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 2880c80f4ff842dcfccffe4282e4991d446e7102
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Soften or source unbacked sentences in docs/tests, limits, settings and portal
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 5f22cd73f61695138122772182b7cb3c57e27b49
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Review fixes: README timing sentence, versions.md notes
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 616f8c42d44e6c5089d51d06d06fc24bd4288cac
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Soften or source unbacked sentences in README, SECURITY and versions.md
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit b4375bd69b47351bacc78277efd0b7ada033601e
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Review fixes of the first docs change
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 567198183dbdfd6d69e495ff3b1796726539a06e
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Fix start_all.ps1 empty-value check, tighten one assertion, unify two comments
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-
-commit 04ad414f06b203f06417c71ac9221cb142bb7bf9
-Author: claims-series <noreply@anthropic.com>
-Commit: x <x@example.test>
-
-    Fix false and stale sentences in the docs and workflow comments
-    
-    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
-    
-    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+11471ec Round-1 review fixes: false sentences, receipt number, crash command, 'the author', dated results removed
+46d3093 Cold-reader review: facts, contradictions, wording; command output, numbers, test citations
+dbf3f4d Say that the n8n numbers are one published run and that runs can differ
+1db544a Fix two section references that point at headings that do not exist
+f1ba4ad Cross-check numbers and names against the code: fix four sentences, the 55 s overrun and the body-cap sentence
+22e1a44 Review fixes: stage-copy note, replay count, run figures, collect flags
+18e494a Recount the collected test total in versions.md
+ce0b975 Correct sentences about tests found wrong by a search of tests/
+dff9166 Review fixes of the contract and probe sentences
+55dfc71 Soften or source unbacked sentences in contract, n8n recipe, real services and code docstrings
+19043f7 Review fixes: licence sentence, reminders, slow-sender, masking, n8n file count
+2880c80 Soften or source unbacked sentences in docs/tests, limits, settings and portal
+5f22cd7 Review fixes: README timing sentence, versions.md notes
+616f8c4 Soften or source unbacked sentences in README, SECURITY and versions.md
+b4375bd Review fixes of the first docs change
+5671981 Fix start_all.ps1 empty-value check, tighten one assertion, unify two comments
+04ad414 Fix false and stale sentences in the docs and workflow comments
+tree after git am onto f3c39cf8: 74480f88d8aac8c09d4197257dd724a879de5675 (equal to the build tree); combined patch sha256 644c75309f18d79c555c23d396b0dbd36ac048f268aff4b52946561baed28d4b; 17 commits, trailer on 17 of 17

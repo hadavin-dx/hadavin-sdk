@@ -1,7 +1,7 @@
 From b4375bd69b47351bacc78277efd0b7ada033601e Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 03/16] Review fixes of the first docs change
+Subject: [PATCH 03/17] Review fixes of the first docs change
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
 

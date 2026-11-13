@@ -1,7 +1,7 @@
 From 46d3093346d0ad48f5ecc92201f544c527de36b2 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 13:20:37 +0000
-Subject: [PATCH 16/16] Cold-reader review: facts, contradictions, wording;
+Subject: [PATCH 16/17] Cold-reader review: facts, contradictions, wording;
  command output, numbers, test citations
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

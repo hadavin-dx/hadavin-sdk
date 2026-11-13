@@ -1,7 +1,7 @@
 From 18e494a59bcc7d6b70953476963e87bd5356782a Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 11/16] Recount the collected test total in versions.md
+Subject: [PATCH 11/17] Recount the collected test total in versions.md
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
 

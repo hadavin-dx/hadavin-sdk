@@ -4,11 +4,11 @@
 
 Text only, apart from two small behaviour changes and one comment change listed below. Every sentence of the changed text (README, SECURITY, versions.md, contract.md, docs/*.md, workflow comments, and the docstrings that make a promise) that states a number, a guarantee, a command output or a test result was looked up in the code and the tests. Sentences that did not match were rewritten to what the code does. Sentences that could not be proved from this repository (results of earlier runs, outside facts) were deleted. A sentence that says "no test checks" or "read from the code" says in itself that it is not backed by a test.
 
-This is a series of 16 commits, 31 files, 490 insertions and 432 deletions. Each commit says what it changes. Of the 31 files, 12 are documentation, 4 are workflow files (comments only), 15 are code files (comments and docstrings only, plus the two behaviour changes below).
+This is a series of 17 commits, 41 files, 571 insertions and 528 deletions. Each commit says what it changes. Of the 41 files, 12 are documentation, 6 are workflow or settings files (comments only: four workflow files, `.coderabbit.yaml`, `requirements-semgrep.in`), and 23 are code files (comments and docstrings only, plus the two behaviour changes below).
 
 | Kind of change | What was done |
 |---|---|
-| False or out-of-date sentences | rewritten to what the code does (for example a reaper pass can overrun by more than 55 s because the CRM copy and reminder parts add their own time; a send timeout above 9 s is accepted but has no effect; the exit codes of the desk) |
+| False or out-of-date sentences | rewritten to what the code does (for example a reaper pass can overrun by more than 55 s because the CRM copy and reminder parts add their own time; a send timeout above 9 s is accepted but has no effect; the exit codes of the desk; a repeated request does use up a receipt number and can start a due follow-up; the crash-script command needs `PYTHONPATH=src:.`) |
 | Sentences about tests | every "no test checks ...", "not tested" and "tests/x.py checks ..." was searched against `tests/`: wrong denials were corrected (a test for a restart on one port exists; `tests/test_portal_api.py::test_foreign_host_is_refused_on_every_route` checks that a refused Host does not count) and citations that said more than the test asserts were narrowed |
 | Numbers and names | a script and readers compared every backticked name, path, route, constant, default, exit code and number with the code; a handful were wrong and are fixed |
 | What a command prints | the Linux commands named in the docs were run as written and the sentences about what they print were corrected; the commands that need Windows were not run on Windows |
@@ -32,7 +32,7 @@ The other code files differ from main only in docstrings and comments (checked: 
 
 ## Checks
 
-Results are filled in from the final tree (main f3c39cf8 plus the 16 commits, applied with `git am`):
+Results are filled in from the final tree (main f3c39cf8 plus the 17 commits, applied with `git am`):
 
 * RESULTS-PLACEHOLDER
 

@@ -1,0 +1,35 @@
+== gitleaks dir
+[90m1:48PM[0m [32mINF[0m [1mscanned ~3351545 bytes (3.35 MB) in 547ms[0m
+[90m1:48PM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+== gitleaks git (all history)
+[90m1:48PM[0m [32mINF[0m [1mscanned ~3729944 bytes (3.73 MB) in 856ms[0m
+[90m1:48PM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+== gitleaks git f3c39cf..HEAD
+[90m1:48PM[0m [32mINF[0m [1mscanned ~387533 bytes (387.53 KB) in 277ms[0m
+[90m1:48PM[0m [32mINF[0m [1mno leaks found[0m
+rc=0
+== ruff check
+
+Found 1 error.
+rc=1
+== ruff format --check
+159 files already formatted
+rc=0
+== mypy linux
+Success: no issues found in 28 source files
+rc=0
+== mypy win32
+Success: no issues found in 28 source files
+rc=0
+== bandit
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+rc=0
+== check_schema
+PASS the unique index is absent in the mutant
+RESULT ALL PASS
+rc=0

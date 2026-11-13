@@ -95,3 +95,4 @@ Tree /tmp/v8work, nothing committed. Rule used: a dated or measured number stays
 - Finding 8 (one line in README "Words used here" tying author, project owner, project lead, repository owner, licence holder) is still not added: "repository owner" is not defined anywhere in the tree.
 - Many comment lines in sonar.yml, lint.yml, codeql.yml and semgrep.yml were already longer than 120 characters before this round; only my new lines were kept short.
 - Not run: the full suite; test files other than those named; no commit, no push.
+- Second batch (test_crm_hubspot, test_infra, test_real_check_dry, test_hubspot_probe, test_clock_steps, test_n8n_proof_result, test_portal_mode), run with GIT_CONFIG_GLOBAL=/dev/null under unshare: 254 passed in 350.53s.

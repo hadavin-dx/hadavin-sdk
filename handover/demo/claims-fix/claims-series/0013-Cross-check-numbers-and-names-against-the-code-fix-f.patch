@@ -1,7 +1,7 @@
 From f1ba4ad972b115c4c279928d4483233be35fd92a Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 13/16] Cross-check numbers and names against the code: fix
+Subject: [PATCH 13/17] Cross-check numbers and names against the code: fix
  four sentences, the 55 s overrun and the body-cap sentence
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

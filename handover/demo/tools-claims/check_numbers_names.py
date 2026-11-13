@@ -52,6 +52,7 @@ except Exception as e:  # noqa: BLE001
 rows: list[tuple[str, str, str, str, str]] = []  # loc, claim, where, verdict, note
 # Rows the script cannot judge but a person checked by hand (claim text -> reason). They print as OK-explained, never silently.
 EXPLAINED = {
+    "/nope": "an address the test sends on purpose: tests/test_http.py (GET and POST /nope) expects 404",
     "/health": "the doc says the desk has NO page at /health",
     "/fake/...": "placeholder: the dots stand for the demo servers' own addresses",
     "/review/...": "placeholder for the review routes (see the routes table)",
