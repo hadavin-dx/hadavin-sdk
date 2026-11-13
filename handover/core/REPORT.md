@@ -1,4 +1,6 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+QUEUE DONE, idle by order (17:32Z core lead): sweep: 0 agents running, 0 test processes, 0 out-of-memory events; FROZEN block below; ASK on F1/F2 waits for the lead.
+
 ## STATUS 17:30Z (core lead): FROZEN. QUEUE DONE except the open defects below; idle by order after this block
 FINAL on core-fix-on-frozen.patch (sha256 a29c7f83..., tree 49d3c859): evidence in handover/core/fix/EVF-EVIDENCE.md, review in handover/core/review/core-fix-on-frozen-review-r1.md, README in handover/core/fix/README.md.
 FAILED / OPEN (first):
