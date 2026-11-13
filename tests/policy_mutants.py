@@ -3675,8 +3675,8 @@ M = [
         NTOOL,
         "        for reason in self.syntax_errors:\n            unresolved_edge(reasons, reason)\n",
         "        for reason in self.syntax_errors:\n            pass\n",
-        "test_a_change_under_tests_lists_every_test_when_the_check_cannot_read_something_and_nothing_otherwise",
-        "which nothing reaches, listed",
+        "test_a_file_under_tests_that_does_not_parse_is_the_only_reason_and_is_named_once",
+        "the only unreadable file did not give exactly its own reason",
         test_file=NOTES_TEST,
     ),
     mutant(

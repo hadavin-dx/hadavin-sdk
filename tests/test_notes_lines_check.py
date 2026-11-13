@@ -1957,6 +1957,23 @@ def test_a_change_under_tests_lists_every_test_when_the_check_cannot_read_someth
     )
 
 
+def test_a_file_under_tests_that_does_not_parse_is_the_only_reason_and_is_named_once():
+    files = {"tests/__init__.py": "", "tests/test_d.py": _B17_TESTS, "tests/broken.py": "def (:\n"}
+    tree = _Tree(files)
+    sigs = nlc._sigs_for(tree)
+    reasons = sigs.tree_state(sigs.module("tests/test_d.py"))[0]
+    assert reasons == ["tests/broken.py: the file does not parse"], (
+        f"the only unreadable file did not give exactly its own reason: {reasons}"
+    )
+    # every test is listed for a change of a file that nothing reaches
+    assert _b17(_B17_TESTS, {"tests/broken.py": "def (:\n"}) == _B17_BOTH, "not every test listed"
+    ok = _Tree({k: v for k, v in files.items() if k != "tests/broken.py"})
+    clean = nlc._sigs_for(ok)
+    assert clean.tree_state(clean.module("tests/test_d.py"))[0] == [], (
+        "a readable tree gave a reason"
+    )
+
+
 def _b17_units(source, extra=None, rel="tests/test_d.py"):
     files = {**_B17_BASE, rel: source, **(extra or {})}
     return sorted(nlc.units_of(rel, source, _Tree(files)))

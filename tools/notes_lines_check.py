@@ -1113,7 +1113,8 @@ class _Signatures:
             *(i.rel for i in self.inits(mod.rel)),
         ]
         paths = self._with_run_time_reach(paths)
-        reasons: list[str] = list(self.syntax_errors)
+        # the files that do not parse are merged once, after every file is read (the loop below the walk)
+        reasons: list[str] = []
         for rel in sorted(paths):
             if rel.endswith(".py"):
                 m = self.module(rel)
