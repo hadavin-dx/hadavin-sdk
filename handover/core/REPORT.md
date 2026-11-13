@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+18:50Z. EV5 runner a6d8392f: group A finished rc=1: 4 failed, 2942 passed, 5 skipped (runner-measured, from the raw log). Failed: 3 x tests/test_scrub_n8n_export.py linear-time scan of 1 MB (patterns URL, _LOCAL_BROKEN, _clean; timing tests, ran while group B and hostile runs shared the machine) and 1 x tests/test_sonar_p2_feed_optional.py::test_feed_calls_the_configured_desk_address (cause UNKNOWN). I do NOT call any of them a flake: the runner must re-run them alone; if they fail alone they are defects. Group B not finished yet (earlier log showed 1 F); fail-before runs started. Mail pass aee26a5b: still running, no report. Reviewer a31190d2 done (7 Majors). R6 builder NOT started yet by choice: I batch all findings (reviewer, EV5, mail pass) into one brief; start as soon as the mail pass and EV5 report (expected within about 20-30 min). ASK: none.
+
+## STATUS (core lead)
 Fresh whole-patch reviewer a31190d2 DONE: r5 NOT CLEAN, 0 Blockers, 7 Majors, 4 Minors, 2 Nits (saved handover/core/review/core-fix-on-frozen-r5-review.md). I checked 4 claims in the code myself and all hold: REPLY_MAX_BYTES defined twice (1 MiB then 4 MiB), class names printed in n8n_api.py and demo_only/burst.py + portal_demo.py, two exit-code pairs share a number. The reviewer did not run pytest or the closed-stdin probe. Still running: EV5 runner a6d8392f (suite showed F marks, causes unknown), mail pass aee26a5b. Plan: wait for those two, then ONE R6 builder batch for all Majors (round 6 of the same family; honest: each round's fresh reviewer finds new siblings). ASK: none.
 
 ## STATUS (core lead)
