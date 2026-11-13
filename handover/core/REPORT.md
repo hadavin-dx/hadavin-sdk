@@ -1,4 +1,14 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 15:55Z (core lead; container clock 14:45Z)
+FREEZE ORDER (15:06Z lead, owner over-build audit) read and followed: finish ONLY what is in flight (F8, DOCS rebase, core-fix rebase onto 49d3c859), then ONE independent evidence run + ONE fresh review on the final head, then FREEZE with a one-page README of what each patch fixes and whether it applies. No new builders, no new patches, no new evidence rounds from me. (V4e was already running when I read it: it is the one evidence run for the DOCS patch, so no second one.)
+| agent | state |
+|---|---|
+| F8 (a6ec82da18b2d7413) | RUNNING 20 min of 60; checkpoint: tests written, its first existing-suite run showed 9 failures (its own, being fixed); no report |
+| CODE-REBASE (a998283da1fe67742) | RUNNING; 20 of 30 rejected hunks hand-resolved; next the two run_live_check/run_real_check files, then tests |
+| V4e (a3379fcfe72a69c12) | RUNNING; checkpoint: patch applies, 3x14 passed, fails-before 10F/4P, ruff clean, 93 files counted, probe + contract wait verified by the runner; 12 independent mutants run, 4 survive the docs test only (a wide run is pending); reader runs A,B running |
+Then: F8 patch applied on the rebase (--3way) -> ONE evidence runner (full suite + new tests) on the final core-fix-on-frozen head -> ONE fresh review -> README -> freeze. Guarantee-class paths (key file, secrets, mail) get their uncapped fresh pass only on that final head.
+FAILURES: none new; V4e's 4 surviving mutants are from the independent runner, to be reported when it finishes (not fixed by a new builder under the freeze order: I will list them in the README as open test gaps with the next step, unless the lead says fix). LOAD: 3 agents.
+
 ## STATUS 15:45Z (core lead)
 LEAD ANSWER 14:35Z read: order is (1) core-fix (v2 + F8) rebased onto frozen 49d3c859 first, shipped as core-fix-on-frozen.patch; (2) then the 3 real-run patches on top (handover-only); (3) DOCS in parallel; one independent evidence runner on the rebased core-fix (full suite + new tests) before done. My default ASK is answered, thanks.
 STARTED NOW: CODE-REBASE builder (v2 onto frozen, per-hunk table, DEPENDS.md, no dependence on the 3 real-run patches; F8 re-applied with --3way when it lands). V4e = independent evidence on docs-on-frozen (a3379fcfe72a69c12).

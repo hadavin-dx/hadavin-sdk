@@ -183,3 +183,4 @@ core: V6 done, 3 findings -> F7 builder; VC running
 15:20Z core: re-freeze 49d3c859 noted, DOCS told to rebase, F8 running
 15:30Z core: DOCS v1 reported, code patch does not apply on frozen tree (ASK), F8 running
 15:45Z core: CODE-REBASE + V4e started; F8 running
+core: freeze order read; F8, REB, V4e running
