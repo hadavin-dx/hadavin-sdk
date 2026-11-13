@@ -1,0 +1,11 @@
+# apply matrix (git apply, real apply in order, fresh clone at db54e13); P1=v3.2 P2=v2.1 P3=path-helper-v3 D=v2.2-delta
+order [P1 P2 P3 D]: all applied
+order [P2 P1 P3 D]: all applied
+order [P1 P3 P2 D]: all applied
+order [P3 P1 P2 D]: all applied
+order [P2 P3 P1 D]: all applied
+order [P3 P2 P1 D]: all applied
+order [P2 D P1 P3]: all applied
+order [P2 D P3 P1]: all applied
+order [P2 D]: all applied
+D alone on db54e13: git apply --check passes (new file only; its tests need P2 to pass)

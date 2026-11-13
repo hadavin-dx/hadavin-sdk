@@ -1,0 +1,9 @@
+# test_reserve_covers_its_items x20, final stack, 2 CPU-hog processes, 2026-11-13T05:33:45Z
+alone: 0 failed of 20
+
+real	0m6.453s
+user	0m5.386s
+sys	0m0.475s
+.                                                                        [100%]
+1 passed in 0.03s
+6 CPU hogs on 4 cores: single test 0 failed of 20; neighbour 3-file set 0 failed of 5

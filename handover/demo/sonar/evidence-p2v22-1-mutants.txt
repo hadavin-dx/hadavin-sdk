@@ -1,0 +1,11 @@
+# mutants M01 M04 M06 M08 M09 M10 M26 vs tests/test_sonar_p2_gaps.py only (stack: P1 v3.2 + P2 v2.1 + delta)
+M01 changed!=1 -> !=0 KILLED | 6 failing: test_a_sent_result_moves_the_stage_and_frees_the_copy_wait, test_c_nudge_result_with_no_row_logs_changed_0, test_c_one_row_logs_no_warning_even_when_the_stage_d
+M04 rows picks result[1] KILLED | 3 failing: test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move[failed], test_c_one_row_logs_no_warning_even_when_the_stage_did_not_move[sent], test_c_one_row_l
+M06 swallow every OperationalError KILLED | 2 failing: test_a_database_error_that_is_not_a_lock_answer_propagates[error0], test_a_database_error_that_is_not_a_lock_answer_propagates[error1]
+M08 state != failed KILLED | 2 failing: test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait[pending], test_a_result_that_is_not_sent_leaves_the_stage_and_the_copy_wait[unknown]
+M09 hide rc KILLED | 1 failing: test_c_stale_token_logs_changed_0
+M10 followup warn hidden KILLED | 1 failing: test_c_nudge_result_with_no_row_logs_changed_0
+M26 listening text uses https KILLED | 1 failing: test_d_the_listening_line_is_exactly_http_host_port
+# new tests on the real code (stack)
+............                                                             [100%]
+12 passed in 1.45s

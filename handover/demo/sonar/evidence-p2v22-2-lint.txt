@@ -1,0 +1,24 @@
+# lint on final stack P1 v3.2 + P2 v2.1 + v2.2 delta, 2026-11-13T05:23:26Z
+ruff 0.17.4
+--- ruff check
+All checks passed!
+rc=0
+--- ruff format --check
+152 files already formatted
+rc=0
+--- mypy --platform linux
+Success: no issues found in 27 source files
+rc=0
+--- mypy --platform win32
+Success: no issues found in 27 source files
+rc=0
+--- bandit -ll -r src tools scripts
+[manager]	WARNING	Test in comment: scheme is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: checked is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: in is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: LiveSettings is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: https is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: or is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: loopback is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: http is not a test name or id, ignoring
+done
