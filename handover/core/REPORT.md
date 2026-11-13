@@ -1,5 +1,27 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:57Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Nothing new has been verified since 05:52Z. Part 6 batch 15 is only part 1 pushed (38168e73: empty-list split, Digest to end of line, helper contract, docstring); B12 killed on the head is NOT yet shown.
+- Part 2 batch 13: only items A and B pushed (7c58e1ac); the rest is uncommitted in the builder's worktree and untested. Builder asked to finish and report once (message sent).
+- Q8c-1 B17 and SONAR-PATH batch 6: builders still working; no head change (dcf64b36, 622027cc).
+- The 05:58Z lead evidence (469/470 mutants, B17 survived; B12 survived at dd827d79) still stands as the open finding for both.
+
+**LEAD ACTIONS:** Q-R5-1 (operator-typed links) and the laptop tool list from the 05:52Z block are still open.
+
+**LIVE ITEMS:** a592bb13 Q8c-1 B17; a805b93d Part 2 batch 13; ac09a2ce SONAR batch 6; a8d58542 SONAR runner; a3ea530e Part 6 runner; a7978edf Part 6 batch 15. 6 live.
+
+**ROUNDS (WHY):** unchanged: Part 6 r15, SONAR r6, Part 2 r13 follow when builders report.
+
+**FINISHED SINCE LAST BLOCK:** nothing closed.
+
+**EGM STEP PER PACKAGE:** Q8c-1 build; Part 6 build (batch 15) + runner; SONAR build (batch 6) + runner; Part 2 build (batch 13).
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none new.
+
 ## 05:52Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

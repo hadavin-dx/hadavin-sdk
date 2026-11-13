@@ -1,0 +1,2 @@
+O1 strict test_mode_banner rc=2 1 error in 1.57s
+O1 strict test_demo_only_guard rc=2 1 error in 0.77s

@@ -90,3 +90,4 @@
 05:35Z CORE: Part 2 r12 resolved, batch13 started; Part 6 batch14 + SONAR batch5 building; 4 agents live
 05:44Z CORE: SONAR r5 resolved (batch6), Part6 r14 reviewing, Part2 batch13; 7 agents live
 05:52Z CORE: B17 builder + Part6 batch15 + SONAR batch6 + Part2 batch13 live; 6 agents; rebase fault repaired
+05:57Z CORE: no head closed; Part6 batch15 part1 pushed; 6 agents live
