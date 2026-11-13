@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:40Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- SONAR-PATH batch 4 landed as abb3e90a (builder report, unverified): no full suite run (cloud limit); builder baseline for fail-before was origin/main src plus the new pathguard.py (99 failed / 121 passed in 5 files), because pure main has no pathguard module so tests fail by ImportError; 36 tests renamed after the real run; mutant table 167 of 167 good (builder-run); the `_guarded` latest-assignment plant not added; no SonarCloud claim. Round 4 reviewers (design, codebase) and a runner are now live on snapshot /home/user/build/snap/sonarpath-abb3e90a/ (diff vs main 29 files, 0 under handover/, my grep: 0 suppression markers on added lines).
+- Part 2 (a805b93d) and Part 6 (a7978edf) batch 12 builders have not pushed. Part 2 82dd69c1 and Part 6 06ed4b4c are NOT clean; no laptop run.
+- Open decision for you (unchanged): broad `except Exception` sites in Part 2/Part 6; I recommend named tuple plus surprise-error test.
+
+**LEAD ACTIONS:** none new from LEAD-ORDERS (newest is 04:25Z). pathguard.py is 245 lines (was 273); the colon-in-operator-typed-names refusal is dropped per the round 3 decision: operator-typed names use containment only. The PR text must state the fail-before counts once the runner confirms them.
+**LIVE ITEMS (5):** a805b93d P2 batch 12 builder; a7978edf P6 batch 12 builder; SONAR-PATH r4: a86d6c02 design review, aff9acdd codebase review, a861acad evidence runner. Closed: a982868e, a909a11d, a2432ae7, a6fe5106, aac377ea.
+**ROUNDS (WHY):** SONAR-PATH round 4 (security); P2 round 12 and P6 round 12 after their builders.
+**FINISHED SINCE LAST BLOCK:** P2 runner evidence committed (385 focused pass 3.12 and 3.13; 91 of 94 rows killed, 3 allowed crashes, 0 survived; one hostile probe served: equal copy dict, handed to the builder); SONAR-PATH batch 4 snapshot.
+**EGM STEP PER PACKAGE:** SONAR-PATH result review (round 4 running); P2 and P6 build batch 12.
+**LANE SONAR-PATH:** agents a86d6c02, aff9acdd, a861acad; EGM step result review round 4; chain A-D not complete (no draft PR yet, no SonarCloud claim).
+**RUN ON LAPTOP:** none (no clean final head).
+
 ## 04:33Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
