@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:30Z / Part 6 round 8 RESOLVED (batch 9 brief written); masking follows main exactly
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 07bfda12: round 8 NOT clean (0 true Blocker, 2 doc-contradicts-code items, many Majors). Still no full pytest or complete banner_mutants on this head: RUN ON LAPTOP is yours (02:30Z command, accepted, about 60-70 min). Nothing is proven by a clean round on any lane.
+- Part 2 round 8 not clean; batch 9 builder still working. Q8c-1 runner a7e31a96 still not reported (over the 8-minute rule, let finish).
+- Masking: I read main redact.py 401-405 (BEARER 12+, BASIC 8+) and k1b/redaction.py:36: SCHEME there is a prose sentence, not a pattern list, so I claim no equivalence from it. Batch 9 pins main's two rules with the 12 and 8 minimums.
+
+**LEAD ACTIONS**: none new; thank you for the 02:30Z answers. If a push gets GH013 I tell you at once (none so far).
+
+**LIVE ITEMS (agents)**: a7e31a96 Q8c-1 runner; ad39b1c1 Q8c-1 nits builder; a37e6e83 Part 2 batch 9 builder; a773a83b Part 6 cloud runner; Part 6 batch 9 builder launching now (6th with one more to follow). Disk 83% used, 6.8 GB free (was 96%).
+
+**ROUNDS (WHY)**: Part 6 round 9 required: mode-safety path has no cap; seal, page, mutant-table, masker and guard-minor classes need fixing at the choke point (report: handover/reviews/PD-banner/goldfish_review_report-r8.md).
+
+**FINISHED SINCE LAST BLOCK**: Part 6 r8 resolve report written (19+ findings, 5 fix classes, 1 fix brief).
+
+**EGM STEP PER PACKAGE**: Part 2 (PD-bind): step 6 resolve done, batch 9 building, then step 5 round 9. Part 6 (PD-banner): step 6 resolve done, batch 9 builder next, runner a773a83b at step 4. Q8c-1: step 5 r17 clean, runner (4) pending, nits builder (3). 
+
+
 ## 02:22Z (07:52 IST) / Part 6 batch 8 PUSHED (07bfda12): reviewers and a cloud-limited runner started
 
 **FAILED / UNCERTAIN FIRST**
