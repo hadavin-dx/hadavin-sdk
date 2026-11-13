@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:57Z / Part 6 batch 9 PUSHED (dd827d79); Part 2 r9 design review in (0 Blocker, 3 Major); Q8c-1 code-only branch pushed
+
+**FAILED / UNCERTAIN FIRST**
+- RUN ON LAPTOP: hadavin-sdk dd827d79e00bea6da81e757e0fa0746bbbd3449d pytest -q full + banner_mutants complete (wip/cloud-pd-banner; handover-files check exit 0). Also RUN ON LAPTOP: hadavin-sdk 83cdb7a293b7d5ba7d79bedaf3c8990fe99c4ee4 pytest -q full + bind_mutants complete (Part 2), and hadavin-sdk dcf64b36b094c153bf4f865b1fcba5971f4cf9fb pytest -q full + complete mutant tables (policy_mutants, mutation_runner_mutants) + all five tests/test_policy_changelog.py plant tests (core/q8c1-notes-check; two plant tests did not finish in 8 minutes in the cloud).
+- Part 2 round 9, design reviewer: NOT clean. 0 Blocker, 3 Major, 4 Minor, 1 Nit (ledger PDBIND-r9-1..4): (M1) the depth-limit level judges atoms by type only, so a datetime with a foreign tzinfo or a Path with a real object in a slot at level 9 reads as plain (fail-open); (M2) a Runtime held for on_decided is checked by class pin and 3 attributes, an instance attribute shadows a pinned method (fail-open); (M3) the pre-authentication cost bound is per held object, not per request. Codebase reviewer and cloud runner for Part 2 still running. Round 10 will be required.
+- Part 6 batch 9 builder admissions: no full pytest, no complete table; 32 of its 60 new/changed tests fail on 07bfda12 and 28 are pins; an "id compare" mutant is equivalent and has no row; the guard keeps its own copy of main's BEARER 12+ and BASIC 8+ (a test compares with core); Python 2 pycs not covered; its own slip (a scripted edit cut the tail of banner_mutants.py) was restored. Nothing proven yet: reviewers and runner just started.
+- Q8c-1 code-only branch core/q8c1-notes-check dcf64b36: one squashed commit (the lane's 63 wip commits are tangled with handover files); 22 of 26 files equal c5aa1c26, 4 differ because main moved; gates: handover-files exit 0, ruff, format, bandit exit 0, gitleaks on its own commit exit 0, 333 focused passed; the policy and changelog test group timed out. FACT for you: gitleaks over the FULL history of main exits 1 with 1920 findings (1901 in handover/ logs, 19 elsewhere, not looked at one by one): that is not from this branch.
+- Hazard found by two agents: the shared venvs have an editable install pointing at another worktree, so a runner can test the wrong source. New briefs set PYTHONPATH to the worktree and check the module path.
+- Q8c-1 runner a7e31a96 still silent (over 70 min).
+
+**LEAD ACTIONS**: please read the three RUN ON LAPTOP lines above (laptop is already on 07bfda12 for Part 6; it is now superseded by dd827d79). Decide if the 19 non-handover gitleaks findings on main need an owner look. No GH013.
+
+**LIVE ITEMS (agents)**: a7e31a96 Q8c-1 runner (silent); aee2c503 Part 2 r9 codebase reviewer; abd6af72 Part 2 cloud runner; aa687227 Part 6 r9 design reviewer; a91e4eee Part 6 r9 codebase reviewer; ab8e69ea Part 6 cloud runner; a51ea641 SONAR-PATH fix builder. 7 agents.
+
+**LANE SONAR-PATH**: A plan with rung table done; B siblings in the fix brief; C tests building; D branch core/k1b-path-confinement not yet. EGM step 3 (batch of round 1 fixes), then evidence and two fresh reviewers.
+
+**ROUNDS (WHY)**: Part 2 r9 then r10 (money path, no cap); Part 6 r9 running (mode-safety, no cap); SONAR-PATH r2 (security, no cap).
+
+**FINISHED SINCE LAST BLOCK**: Part 2 batch 9 and Part 6 batch 9 builders closed; Q8c-1 code-only branch builder closed; Part 2 r9 design reviewer closed.
+
+**EGM STEP PER PACKAGE**: Part 2: step 5 (r9 reviews, one of two in) plus step 4 runner. Part 6: step 5 plus step 4 (r9 started). Q8c-1: nits and code-only branch done (step 3); laptop evidence is the next step. SONAR-PATH: step 3.
+
+
 ## 02:54Z / Part 2 batch 9 PUSHED (83cdb7a2); round 9 reviewers and cloud runner started
 
 **FAILED / UNCERTAIN FIRST**
