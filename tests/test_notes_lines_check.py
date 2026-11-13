@@ -1957,21 +1957,62 @@ def test_a_change_under_tests_lists_every_test_when_the_check_cannot_read_someth
     )
 
 
-def test_a_file_under_tests_that_does_not_parse_is_the_only_reason_and_is_named_once():
+def test_a_tree_with_one_file_that_does_not_parse_has_exactly_that_one_reason():
     files = {"tests/__init__.py": "", "tests/test_d.py": _B17_TESTS, "tests/broken.py": "def (:\n"}
-    tree = _Tree(files)
-    sigs = nlc._sigs_for(tree)
+    sigs = nlc._sigs_for(_Tree(files))
     reasons = sigs.tree_state(sigs.module("tests/test_d.py"))[0]
     assert reasons == ["tests/broken.py: the file does not parse"], (
         f"the only unreadable file did not give exactly its own reason: {reasons}"
     )
-    # every test is listed for a change of a file that nothing reaches
+    # a change of a file that nothing reaches lists every test
     assert _b17(_B17_TESTS, {"tests/broken.py": "def (:\n"}) == _B17_BOTH, "not every test listed"
-    ok = _Tree({k: v for k, v in files.items() if k != "tests/broken.py"})
-    clean = nlc._sigs_for(ok)
-    assert clean.tree_state(clean.module("tests/test_d.py"))[0] == [], (
-        "a readable tree gave a reason"
+
+
+def test_control_a_tree_that_can_be_read_has_no_reason():
+    # control: the same tree without the broken file gives no reason (it kills no mutant by itself)
+    files = {"tests/__init__.py": "", "tests/test_d.py": _B17_TESTS}
+    sigs = nlc._sigs_for(_Tree(files))
+    assert sigs.tree_state(sigs.module("tests/test_d.py"))[0] == [], "a readable tree gave a reason"
+
+
+def test_a_file_that_does_not_parse_and_is_read_during_the_walk_is_named_when_the_loader_carries_no_paths():
+    # a loader with no `.files`: the module is first read inside the walk (by `_cross_checks`), after the walk began
+    broken = "tests/broken.py"
+    source = "from tests.broken import thing\n" + _B17_TESTS
+    files = {"tests/__init__.py": "", "tests/test_x.py": source, broken: "def (:\n"}
+    sigs = nlc._sigs_for(lambda rel: files.get(rel, ""))
+    reasons = sigs.tree_state(sigs.module("tests/test_x.py"))[0]
+    named = f"{broken}: the file does not parse"
+    assert reasons.count(named) == 1, (
+        f"the file that does not parse was read during the walk but is not named once: {reasons}"
     )
+    assert "tests/test_x.py: it imports tests.broken, which is not in the tree" in reasons, reasons
+
+
+def test_pin_the_first_five_reasons_in_walk_order_then_the_count_of_the_rest():
+    # pin: the files that do not parse come after the reasons of the walk, and only five reasons are shown
+    files = {"tests/__init__.py": "", "tests/test_d.py": _B17_TESTS}
+    files.update({f"tests/a{i}.py": f"from tests.nowhere{i} import x\n" for i in range(1, 5)})
+    files.update({"tests/b1.py": "def (:\n", "tests/b2.py": "def (:\n", "tests/b3.py": "def (:\n"})
+    load = _Tree(files)
+    sigs = nlc._sigs_for(load)
+    sigs.module("tests/test_d.py")
+    reasons = nlc._tree_reasons(load)
+    assert len(reasons) == 7, reasons
+    expected = (
+        "every test is listed because the check cannot read part of the tests tree: "
+        + "; ".join(
+            [
+                *(
+                    f"tests/a{i}.py: it imports tests.nowhere{i}, which is not in the tree"
+                    for i in range(1, 5)
+                ),
+                "tests/b3.py: the file does not parse",  # the files are read last name first
+            ]
+        )
+        + " (and 2 more)"
+    )
+    assert nlc._listed_because(reasons) == expected, nlc._listed_because(reasons)
 
 
 def _b17_units(source, extra=None, rel="tests/test_d.py"):

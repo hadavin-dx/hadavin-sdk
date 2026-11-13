@@ -1113,14 +1113,14 @@ class _Signatures:
             *(i.rel for i in self.inits(mod.rel)),
         ]
         paths = self._with_run_time_reach(paths)
-        # the files that do not parse are merged once, after every file is read (the loop below the walk)
+        # empty on purpose: the merge after the walk is the only source of syntax errors
         reasons: list[str] = []
         for rel in sorted(paths):
             if rel.endswith(".py"):
                 m = self.module(rel)
                 if m is None:
                     continue
-                for reason in (*m.unresolved, *self.path_folders(m)[1]):
+                for reason in self.path_folders(m)[1]:
                     unresolved_edge(reasons, reason)
                 self._cross_checks(m, reasons)
                 if kind_of(rel) == "test":
@@ -2137,13 +2137,15 @@ def check(
         r for r in _tree_reasons(old_load) if r not in _tree_reasons(new_load)
     ]
     if bad and reasons:
-        shown = "; ".join(reasons[:5]) + (
-            f" (and {len(reasons) - 5} more)" if len(reasons) > 5 else ""
-        )
-        bad.insert(
-            0, f"every test is listed because the check cannot read part of the tests tree: {shown}"
-        )
+        bad.insert(0, _listed_because(reasons))
     return bad
+
+
+def _listed_because(reasons: list[str]) -> str:
+    """The first line of a report when every test is listed: the first five reasons in the order the tree walk found
+    them, then the count of the rest."""
+    shown = "; ".join(reasons[:5]) + (f" (and {len(reasons) - 5} more)" if len(reasons) > 5 else "")
+    return f"every test is listed because the check cannot read part of the tests tree: {shown}"
 
 
 def _tree_reasons(load: Loader) -> list[str]:
