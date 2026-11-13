@@ -1,2 +1,4 @@
 O1 strict test_mode_banner rc=2 1 error in 1.57s
 O1 strict test_demo_only_guard rc=2 1 error in 0.77s
+O1 strict test_banner_mutant_table rc=1 3 failed, 19 passed in 69.33s (0:01:09)
+O1 strict test_changelog_numbers rc=2 1 error in 0.64s
