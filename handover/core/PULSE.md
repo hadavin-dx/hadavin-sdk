@@ -124,3 +124,4 @@ A run2 ~95%; B2 sets in progress
 11:30Z B2 done, summary.md pushed, lane done
 11:34Z survivor triage: 3 builders started
 T3 done: P2 P4 P10 equivalent (verified by me)
+11:40Z T1 T2 drafts exist, running

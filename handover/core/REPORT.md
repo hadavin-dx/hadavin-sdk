@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:40Z (17:10 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-T1 | builder: R20, N20, why R20 survived | LEAD 11:33Z order | 11:32Z / 17:02 | hard stop 12:30Z (about 50 min); report expected about 11:55-12:05Z | 1 of 1 | running; has a draft survivor-tests-T1.patch. Raw numbers in its logs (builder output, not yet checked by me): R20 with the full refusals file = 143 passed (survives, as in B2); N20 with the full refusals file = 1 failed, 142 passed (the full file does kill N20); new test on unmutated = 1 passed, on R20 mutant = 1 failed. No cause for the R20 difference reported yet | wait for report |
+| TRI-T2 | builder: K6, K10, C9, pair run | LEAD order | 11:32Z / 17:02 | hard stop 12:30Z; report about 11:55-12:05Z | 1 of 1 | running; has a draft survivor-tests-T2.patch. Builder logs (unchecked by me): pair K6+K10 on full refusals file = 3 failed, 140 passed, on the selection = 3 failed, 70 passed (3 failures include its own new tests, so the pair result needs its report to read); its first draft leaked a failure into the unmutated run and it re-ran (run2 logs) | wait for report |
+| TRI-EV | evidence runner for proofs | order | after T1, T2 | about 12:10Z | n/a | not started | start when T1 and T2 report |
+| TRI-T3 | P2, P4, P10 | | | DONE | | all 3 EQUIVALENT (11:36Z block) | none |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+Verdicts so far: P2, P4, P10 EQUIVALENT. R20, N20, K6, K10, C9 pending the builders' reports; I give no verdict from raw logs.
+
+ASK: none.
+
+
 ## REPORT 11:36Z (17:06 IST) CORE lead (container clock `date -u` shows 11:30Z at writing; I use the container clock from here)
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
