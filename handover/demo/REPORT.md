@@ -1,6 +1,13 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 15:07Z - SUITE DONE on frozen tree 49d3c859: 12 of 12 chunks exit 0, 3879 passed, 4 skipped, 0 failed; PR-body suite line FILLED; QUEUE DONE, idle by order
+**RESULT:** `tools-claims/c19/` holds the 12 chunk logs and the 12 `.done` files (each holds the pytest exit code, all 0); the 92 test files appear once each; sum 3879 passed, 4 skipped, 0 failed, 0 errors. Run on 3.12 in `/tmp/e19-312` (mode 755 copy of the git am result), loopback only, gpgsign off, `DPLD_REQUIRE_SCAN=1`. Earlier first-am-tree run: 3878 passed, 4 skipped (the +1 is the test count difference of the earlier tree; numbers are not claimed beyond the logs). 3.13 was not re-run on the final tree (one full run per release head, 15:07Z order).
+**PR BODY:** `claims-fix/claims-pr-body.md`: 0 placeholders left; counts 19 commits, 41 files, 602 insertions, 547 deletions; tree 49d3c85938fe5323a3378a49195d3b8da434b3ca; head 36dbb1060c3c5023e918344449730c5a56960a75; the Checks section lists the commands and results; the weak-test line carries the mutation result. PR NOT opened (draft text).
+**LOAD:** 0 agents, 0 shells, nothing running. **Queue (ORDERS.md 14:36Z and 15:07Z): finish suite, fill the line, push, README commands run, guard-file list: all done. Not done by order: no third freeze, no more sweeps, no 14:36Z "last skim" (superseded by 15:07Z "no more sweeps").**
+**FAILURES AND RETRIES (new):** none. **Totals line: 0 failed tests in the frozen-tree runs; earlier today F55 and F61 environmental, F62 real defect (ruff, fixed), F63 checker blind spot, F65 text defect (fixed), F67 tool 503, F68 explained, F69/F70/F71 machine restarts, 0 flakes, F45 unexplained (probably a restart), semgrep blocked in the sandbox (F48).**
+**QUEUE DONE, idle by order**
+
 ## 2026-11-13 15:04Z - STATUS: chunked suite 8 of 12 done, 0 failures; chunk 08 running; PR-body suite line still waits for ALL.done
 **LOAD:** 0 agents; 1 shell (chunked suite on tree 49d3c859); chunks done 8 of 12; passed so far 2849; chunks with a failure line: 0. Waiting by bounded checks (owner standing order); no third freeze, no new sweeps (15:07Z order); PR DRAFT TEXT. Restarts F69-F71 explained. Totals: 0 failed tests in the frozen-tree runs so far; F45 unexplained; semgrep blocked (F48).
 
