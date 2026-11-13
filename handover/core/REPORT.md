@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:02Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 304c3bd3 NOT clean. Round 10: 0 Blocker, 6 Major (hook contents mutable after the seal = fail-open; Runtime members _evidence/_kinds unsealed; seal leaks per build; vacuous tick test; CHANGELOG:270 contradiction; and the runner found mutant B98 "mro not compared" SURVIVES on 304c3bd3 though killed on 83cdb7a2: the kill was lost in batch 10). Runner raw: focused tests 376 passed, 1 skipped on 3.12 and 3.13; 98 mutant rows run, 93 killed, 4 crash (counted good), 1 survived (B98); fail-before on 83cdb7a2 = 12 failed, 289 passed, 1 skipped (builder's number confirmed). Full suite, 244-row table and 3.14 NOT run. No laptop run requested.
+- SONAR-PATH 9602b4ca NOT clean. Round 3: 1 Blocker (CHANGELOG:12 claims score/replay used to follow links silently; false on main, hash_files confined first), 9 Major (eight "equivalent" mutant entries are observable; six converted sites with no row; test labels do not match asserts; CHANGELOG claims without tests; exceptions table validators not enforced; R10/R11 copied at four sites; undisclosed change that operator-typed names now get R3/R6/R7/R12). No SonarCloud analysis exists for 9602b4ca; nothing is claimed cleared. Runner a5cd050d still running.
+- Part 6 cdbe1445 NOT final; builder ab741cc2 on batch 11 has not pushed. Do not retarget the laptop.
+
+**LEAD ACTIONS:** none pending from the 03:55Z order except: Part 2 round 11 fresh reviews will run after batch 11; no laptop request for 304c3bd3 until a fresh round has 0 Blocker and 0 Major. fail-before re-measured by the runner with git worktree at 83cdb7a2 (raw lines in handover/evidence/PD-bind/304c3bd3/RESULTS.md).
+**LIVE ITEMS (4):** P2 batch 11 builder aa049db0; SONAR-PATH batch 4 builder a982868e; SONAR-PATH runner a5cd050d; P6 batch 11 builder ab741cc2. Finished and closed: a1b9b30a, a3654df8, a0dc0020.
+**ROUNDS (WHY):** P2 round 11 (fail-open Major; no cap); SONAR-PATH round 4 (security; no cap); P6 round 11.
+**FINISHED SINCE LAST BLOCK:** P2 codebase review saved, evidence saved, resolve report r10 written; SONAR-PATH codebase review saved, resolve report r4 written; ledger PDBIND-r10-5..10 and SONARPATH-r3-6..10 added (OPEN).
+**EGM STEP PER PACKAGE:** P2: 6 (resolve done, fix batch 11 building). SONAR-PATH: 6 (resolve done, batch 4 building). P6: 3 (batch 11 building).
+**LANE SONAR-PATH:** a982868e (builder), a5cd050d (runner); EGM step 6 to 3; A done, B in batch 4 (one guard per site, same pattern), C not started (code-only core/k1b-path-confinement branch and draft PR by the lead, after a fresh round with 0 Blocker and 0 Major), D not started (SonarCloud gate on the real PR, pending).
+**RUN ON LAPTOP:** none (no final heads).
+
+
 ## 03:57Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
