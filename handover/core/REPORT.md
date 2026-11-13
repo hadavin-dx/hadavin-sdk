@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:01Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| E2 | clean rerun: test_no_placeholders with TMPDIR out / in tree | settle the open one | 13:01Z | done | 1 | DONE (runner's numbers, handover/core/evidence/realrun-v6/E1/E2-RESULTS.md): the test passed in 9 of 9 alone-runs (4 outside, 4 inside, 1 other in-tree folder name). NOT reproduced alone. The runner could not prove a clean tree (tree has the uncommitted patch test files; no baseline copy), and it observed the test lists files with git ls-files and an in-tree TMPDIR is not git-ignored, so a file written there by ANOTHER test earlier in a full run could fail it: this is a hypothesis, not shown | next: one full-suite run with in-tree TMPDIR is expensive (45 min); instead E3 greps which tests write marker text into TMPDIR; decision below |
+| R4 | review of F4 | independent read | 13:09Z | 13:30Z | round 1 of 2 | RUNNING | read |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| D1, C6 | full suite + docs patch; flakiness | proof | 12:33-12:38Z | 13:10-13:30Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: T2 test_no_placeholders: earlier in-tree failure not reproduced in 13 runs (4 E1 + 9 E2); cause UNEXPLAINED, root cause proven: no. I withdraw "environment" for T2; the recipe (TMPDIR outside the tree) still stands because T1 is proven. Totals today: failures with proven cause 1 (T1); unexplained 2 (B2-first, T2-earlier); real defects found by agents are in the F1-F4 fix lanes.
+ASK: 1. T2 stays UNEXPLAINED unless you want a 45-minute full-suite run with in-tree TMPDIR to catch it. Default if no answer in 10 min: no, not worth a slot; recipe unchanged.
+
+
 ## REPORT (container clock 13:00Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
