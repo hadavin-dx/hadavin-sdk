@@ -1,6 +1,35 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:59Z / 07:29 IST - SINGLE-PROCESS RUN 2390 PASSED / 0 FAILED (about 80%); CRLF (Windows checkout) emulation DONE: one real risk, fixed by .gitattributes; two builders running (D1-D6 fixes, CRLF guard patch)
+FAILED / UNCERTAIN first:
+1. Single-process run of 2db3926 (the final claim you require): NOT finished: 2390 passed, 0 failed at 01:58Z; no restart since about 01:10Z; ETA about 02:05Z. Until it ends: chunked green only.
+2. CRLF emulation (Linux, no real Windows; skips/CRLF-EMULATION.md): measured: with the repo .gitattributes and core.autocrlf=true 226 files stay LF and only the two .ps1 files are CRLF (as intended); with the attribute overridden all 228 text files become CRLF. Worst case (every text file CRLF): gitleaks dir reports 1 finding = the sonar.projectKey line (sonar-project.properties:4); tests/test_hygiene.py 14 passed, 1 failed (test_hygiene_scan_public: the same finding; its message says only 'gitleaks dir reported findings', nothing about CRLF); test_gitleaks_exceptions.py 44/44, test_codeant_hygiene.py 7/7, the git-grep hygiene scan unaffected. A hand-saved CRLF sonar file: git add warns 'CRLF will be replaced by LF', nothing staged, gitleaks git finds nothing, gitleaks dir flags the working copy. So the Windows risk is REAL only if a checkout converts the file (autocrlf=true and no attribute): .gitattributes (`* text=auto eol=lf`) prevents it. A builder makes a small guard patch (a clear CRLF message in the test failure + a fast test for CRLF in the allowlisted files), tests failing on a CRLF copy.
+3. Correction to my Q5 table: reset.ps1 IS executed on Windows (tests/test_reset_scripts.py runs it via powershell; 23 of 26 tests run there); start_all.ps1 and the other .ps1 uses are text-only. NEVER-RAN.md lists what only a Windows run can show (12 rows + a PowerShell command block, NOT TESTED BY ME): gaps with no test at all: SO_EXCLUSIVEADDRUSE/allow_reuse_address, the reset.ps1 'did not stop in time' exit 5 branch, real msvcrt.locking, the Windows lock-file installs. The Windows skip count (29) stays unreconciled (11 certain skips; the other 18 cannot be tied to a test list): run the Windows command with -rs and keep the SKIPPED lines.
+4. Q4b (fixes for the 6 real-run-script findings D1-D6): builder running; its first file (tests failing on the OLD code) exists; any core change will be flagged before it is proposed.
+5. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13 tests.
+READY TO APPLY NOW: Semgrep v4 (own PR); versions.md fix (optional). Nothing else pending on pr-3-tests.
+NEEDS FROM LEAD: QUESTIONS-FOR-LEAD.md (10 items).
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| single-process run (shell) | whole suite of 2db3926 in one pytest process | 01:42:49 | 2390 passed, 0 failed | /tmp/work/full2db-b.txt -> INT-3 update |
+| Q4b builder (sonnet) | fixes + tests for D1-D6 | 01:54 | running | real-run/real-run-fixes.patch + FIXES.md |
+| C1 builder (sonnet) | CRLF guard patch | 01:59 | running | skips/crlf-guard.patch |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 2, shells 2, containers 0, heavy pytest 1, load about 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | single-process run | chunked 3138 passed 0 failed | the lead requires one process | no | run ends green |
+| real-run scripts | Q4b | 6 findings | class-level fix rule | no | fixes reviewed |
+| CRLF risk | C1 | 1 real risk (guarded by .gitattributes) | make the failure explain itself | no | patch reviewed |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| NEVER-RAN list | done (12 rows; Q5 correction) |
+| CRLF emulation | done (above) |
+
 ## 2026-11-13 01:59Z / 07:29 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0

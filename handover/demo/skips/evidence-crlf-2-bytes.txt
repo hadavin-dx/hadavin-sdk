@@ -1,0 +1,16 @@
+crlf-A sonar-project.properties CRs=0
+crlf-B sonar-project.properties CRs=14
+crlf-A .gitleaks.toml CRs=0
+crlf-B .gitleaks.toml CRs=110
+crlf-A exceptions.txt CRs=0
+crlf-B exceptions.txt CRs=31
+crlf-A patterns.txt CRs=0
+crlf-B patterns.txt CRs=9
+crlf-A requirements-dev.txt CRs=0
+crlf-B requirements-dev.txt CRs=407
+crlf-A tests/test_hygiene.py CRs=0
+crlf-B tests/test_hygiene.py CRs=480
+crlf-A docs/tests.md CRs=0
+crlf-B docs/tests.md CRs=129
+crlf-A scripts/reset.ps1 CRs=53
+crlf-B scripts/reset.ps1 CRs=53

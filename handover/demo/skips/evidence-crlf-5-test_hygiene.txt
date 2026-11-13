@@ -1,0 +1,110 @@
+...F...........                                                          [100%]
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-637/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+        assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+        # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+        exe = _gitleaks_exe()
+        if not exe and not os.environ.get(REQUIRE_SCAN_ENV):
+            pytest.skip(
+                f"no gitleaks program on PATH (set {GITLEAKS_ENV}); set {REQUIRE_SCAN_ENV}=1 to make this a failure"
+            )
+        assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+        ids = [r["id"] for r in tomllib.loads(toml.read_text(encoding="utf-8")).get("rules", [])]
+        report = tmp_path / "canary-report.json"  # reports go outside the repo
+        common = ["--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
+        fmt = ["--report-format", "json", "--report-path", str(report)]
+        subprocess.run([exe, "dir", *common, *fmt, str(canary)], check=False)  # noqa: S603
+        found = {x["RuleID"] for x in json.loads(report.read_text(encoding="utf-8") or "[]")}
+        assert set(ids) <= found, f"gitleaks custom rules that did not fire on their canary: {sorted(set(ids) - found)}"
+        for rule, key in hygiene.RULE_CANARY.items():  # one canary per rule, alone in its own file
+            single = tmp_path / f"single-{rule}"
+            single.mkdir()
+            (single / "one.txt").write_text(f"x {hygiene.CANARIES[key]} y" + chr(10), encoding="utf-8")
+            subprocess.run([exe, "dir", *common, *fmt, str(single)], check=False)  # noqa: S603
+            got = {x["RuleID"] for x in json.loads(report.read_text(encoding="utf-8") or "[]")}
+            assert rule in got, f"rule {rule} did not find its own canary"
+        assert set(hygiene.RULE_CANARY) == set(ids), "every custom rule needs an entry in RULE_CANARY"
+        # the vendor host home: allowed for host/url rules in constants.py only, never in another file, never for e-mail
+        home = tmp_path / "home"
+        (home / "src" / "lead_desk").mkdir(parents=True)
+        host = "api." + "vendor-x" + ".com"
+        mail = "a" + "@" + "b-x" + ".org"
+        (home / "src" / "lead_desk" / "constants.py").write_text(
+            f'U = "https://{host}"' + chr(10) + f'M = "{mail}"' + chr(10), encoding="utf-8"
+        )
+        (home / "other.py").write_text(f'U = "https://{host}"' + chr(10), encoding="utf-8")
+        subprocess.run([exe, "dir", *common, *fmt, str(home)], check=False)  # noqa: S603
+        hits = {
+            (x["File"].replace(chr(92), "/").rsplit("/", 1)[-1], x["RuleID"])
+            for x in json.loads(report.read_text(encoding="utf-8"))
+        }
+        assert hits == {
+            ("other.py", "hardcoded-url"),
+            ("other.py", "hardcoded-hostname"),
+            ("constants.py", "hardcoded-email"),
+        }, hits
+        tree = tmp_path / "tree"  # the tracked files only: `dir` mode would also scan caches and virtual environments
+        for rel in _git(REPO, "ls-files").splitlines():
+            if (REPO / rel).is_file():
+                (tree / rel).parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(REPO / rel, tree / rel)
+        # The history scan only runs when DPLD_REQUIRE_SCAN=1 (CI). A history scan can report
+        # literals that are no longer in the tree, so otherwise only the tree is scanned and a warning says so.
+        scans = [("dir", tree), ("git", REPO)] if os.environ.get(REQUIRE_SCAN_ENV) else [("dir", tree)]
+        if len(scans) == 1:
+            warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+        for sub, target in scans:  # from the root of the scanned folder with ".", exactly like lint.yml: the path rules in
+            # .gitleaks.toml start with ^ and need paths relative to the root (an absolute temp path would never match them)
+            p = subprocess.run([exe, sub, *common, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False)  # noqa: S603
+>           assert p.returncode == 0, f"gitleaks {sub} reported findings (values are redacted)"
+E           AssertionError: gitleaks dir reported findings (values are redacted)
+E           assert 1 == 0
+E            +  where 1 = CompletedProcess(args=['/tmp/work/gl/gitleaks', 'dir', '--no-banner', '--redact', '--ignore-gitleaks-allow', '--config...ned ~3027493 bytes (3.03 MB) in 373ms\x1b[0m\n\x1b[90m1:57AM\x1b[0m \x1b[33mWRN\x1b[0m \x1b[1mleaks found: 1\x1b[0m\n').returncode
+
+tests/test_hygiene.py:195: AssertionError
+----------------------------- Captured stderr call -----------------------------
+[90m1:57AM[0m [32mINF[0m [1mscanned ~654 bytes (654 bytes) in 9.12ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 13[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~16 bytes (16 bytes) in 1.99ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~40 bytes (40 bytes) in 2.29ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 2[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~12 bytes (12 bytes) in 2.64ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~21 bytes (21 bytes) in 2.86ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~24 bytes (24 bytes) in 2.21ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 2[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~37 bytes (37 bytes) in 3.39ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[90m1:57AM[0m [32mINF[0m [1mscanned ~78 bytes (78 bytes) in 3.79ms[0m
+[90m1:57AM[0m [33mWRN[0m [1mleaks found: 3[0m
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 14 passed in 13.97s
+exit=1
