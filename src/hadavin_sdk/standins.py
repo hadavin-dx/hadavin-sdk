@@ -54,7 +54,7 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
 
 The pins are taken EAGERLY: ``pin_all`` runs when the approvals receiver is imported (it imports the modules of four
 stand-ins, the models, the config and the cards, and pins them with the detector list, ``Approvals``, the model rows,
-``Route``, ``Card`` and ``RunState``: 20 of the 22 keys of ``_PINNED_KEYS``), so a change made after that import is
+``Route``, ``Card`` and ``RunState``: 20 of the 23 keys of ``_PINNED_KEYS``; the other three are pinned by their own module: the fake secret provider, ``Hooks`` and ``Runtime``), so a change made after that import is
 seen. The core ``Runtime`` pins itself as ``runtime/agent_loop.py`` is loaded (its last line), and
 ``FakeSecretProvider`` is pinned by its own module: the repo's secrets rule (``tests/test_repo_rules.py``, "in any
 spelling ... lazy inside a function") does not let anything reachable from approvals import the secret holders, so
@@ -149,7 +149,7 @@ _LEAF_CLASSES: tuple[tuple[str, str], ...] = ((_MODELS, "RunState"),)
 
 # Every class the guard trusts, pinned EAGERLY (``pin_all`` when the receiver is imported, ``pin_module`` when a module
 # the approvals side cannot import is loaded): the five stand-ins, the detector list, ``Approvals``, the model
-# rows and ``Card`` (``_DATA_CLASSES``), ``RunState`` and the core ``Runtime``. None is pinned "at the first question"
+# rows and ``Card`` (``_DATA_CLASSES``), ``RunState``, the ``Hooks`` and the core ``Runtime``. None is pinned "at the first question"
 # any more except as the fallback for a class whose module never called ``pin_module``.
 _PINNED_KEYS = (
     *_ALLOWED,
@@ -287,10 +287,10 @@ def pin_module(module: str) -> None:
 
 def pin_all() -> None:
     """Pin every class of ``_PINNED_KEYS`` whose module is loaded, now (called when the approvals receiver is
-    imported): the five stand-ins, the detector list, ``Approvals``, the model rows, ``Card``, ``RunState``. Two
+    imported): the five stand-ins, the detector list, ``Approvals``, the model rows, ``Card``, ``RunState`` (``Hooks`` is not pinned here: see below). Two
     modules are NOT imported here, and each pins its own class as it is created (``pin_module``, the last line of
     the module): ``actions/secrets.py`` (``FakeSecretProvider``: the repo rule says nothing reachable from approvals
-    may import the secret holders) and ``runtime/agent_loop.py`` (``Runtime``). A class whose module is not loaded
+    may import the secret holders) and ``runtime/agent_loop.py`` (``Runtime`` and ``Hooks``). A class whose module is not loaded
     and did not pin itself is left for the first question (fail closed)."""
     # plain imports (not importlib) so that the modules exist to be pinned; done here, inside the function, because
     # the approvals package must not import them itself (they are not imported at the top: a circle)
@@ -636,9 +636,13 @@ class Scan:
     kept (``_kept``) so that an identity cannot be reused by another object while the scan lives. Make a new ``Scan``
     for every request: an answer is never kept between requests."""
 
-    __slots__ = ("_answers", "_budget", "_kept")
+    __slots__ = ("_answers", "_budget", "_kept", "_most", "heaviest")
 
     def __init__(self) -> None:
+        # the object whose reading used the most of the budget so far (None until one is read): when the budget runs
+        # out, the object that crossed the limit may be a small one asked about last, and it is not the cause
+        self.heaviest: object | None = None
+        self._most = 0
         self._budget = _Budget()
         self._answers: dict[int, str] = {}
         self._kept: list[object] = []
@@ -649,10 +653,13 @@ class Scan:
         if got is not None:
             return got
         budget = self._budget
+        before = budget.left
         budget.over = budget.real_seen = (
             False  # the labels belong to one object; the nodes left are shared
         )
         answer = _answer(obj, budget)
+        if before - budget.left > self._most:
+            self._most, self.heaviest = before - budget.left, obj
         self._kept.append(obj)
         self._answers[id(obj)] = answer
         return answer

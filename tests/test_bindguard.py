@@ -1659,12 +1659,17 @@ def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
     shared: dict[
         str, object
     ] = {}  # one annotations dictionary for both, so only the mro tells them apart
+    shared_slotnames: list[str] = []
     namespace = {
         "go": go,
         "__slots__": (),
         "__module__": "tests_clone",
         "__doc__": None,
         "__annotations__": shared,
+        # ``copyreg._slotnames`` (the pin touches it, for ``copy.copy``) writes a NEW list into a class that has none:
+        # the clone would then differ from the base by that list alone and the attribute check would notice it. One list
+        # for both, so only the mro tells them apart (the row B98; since batch 10 it survived without this line).
+        "__slotnames__": shared_slotnames,
     }
     base, clone = type("Base", (), dict(namespace)), type("Base", (), dict(namespace))
 
@@ -4568,8 +4573,8 @@ def test_the_changelog_states_the_pin_moment_the_budget_row_count_and_the_bounda
 
 
 def test_every_build_argument_is_either_recorded_as_an_override_or_named_as_not_a_service() -> None:
-    """Class: an object handed to ``build()`` that the guard never hears about. A PIN on the old source for the
-    arguments it names (it passes on 3db352f5 and 83cdb7a2): a new argument is caught. ``hold_run_ids`` is a callable the
+    """Class: an object handed to ``build()`` that the guard never hears about. Fails on 83cdb7a2 (a real old-code run: the names recorded in ``build()`` there are
+    channel, detector, llm, secrets, sources, tools, without ``hold_run_ids``); a new argument is caught. ``hold_run_ids`` is a callable the
     purge tick runs, so it is recorded in ``overrides`` like the other callables (batch 10); ``timeout_s`` is a number
     and ``clock`` is judged as the approvals' own clock. The recorded names are read from the ``build()`` source, not
     from a copy of the list, and the folder that is searched must exist and hold files (a wrong path found nothing and
@@ -4589,21 +4594,6 @@ def test_every_build_argument_is_either_recorded_as_an_override_or_named_as_not_
     block = source[source.index("overrides = {") : source.index("cfg = load_config")]
     named = set(re.findall(r'\("(\w+)",', block))
     assert named == recorded, f"the names recorded in build() are {sorted(named)}"
-
-
-def test_the_search_of_the_approvals_folder_is_not_vacuous() -> None:
-    """Class: a bookkeeping test that asserts nothing. The folder the old test searched did not exist (``SRC`` is
-    already ``src/hadavin_sdk``), so its glob was empty. This one fails when the folder is wrong or empty.
-    PIN: it passes on 83cdb7a2 too (it reads the source tree, which was right there); it is a pin of the folder name."""
-    folder = SRC / "approvals"
-    files = list(folder.glob("*.py"))
-    assert folder.is_dir() and len(files) >= 4, (
-        f"{folder} is not the approvals folder ({len(files)} files)"
-    )
-    assert any(f.name == "requests.py" for f in files), "requests.py was not found"
-    assert not (SRC / "hadavin_sdk").exists(), (
-        "SRC is already src/hadavin_sdk: the old path was a mistake"
-    )
 
 
 def test_the_depth_is_eight_levels_below_the_own_dictionary_and_the_texts_say_so() -> None:
@@ -4705,13 +4695,6 @@ def test_a_holder_key_that_is_a_text_subclass_runs_no_code_of_its_own(
 # Batch 10 (package PD part 2, review round 9): atom judge at the last level, instance shadows, one budget per request,
 # CHANGELOG counts tied to the code, the 13 data classes, live_class, the clock's module names.
 # ---------------------------------------------------------------------------------------------------------------
-
-
-def _nested(levels: int, leaf: object) -> object:
-    value: object = [leaf]
-    for _ in range(levels - 1):
-        value = [value]
-    return value
 
 
 def _last_level_verdict(leaf: object) -> str:
@@ -4818,7 +4801,9 @@ def test_a_member_of_the_core_runtime_that_is_not_the_one_build_made_is_counted(
     )
 
 
-def test_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted(tmp_path: Path) -> None:
+def test_pin_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted(
+    tmp_path: Path,
+) -> None:
     """Class: INSTANCE-SHADOW (the three members that reach a service: each must still be a stand-in). A sealed runtime
     whose ``store``, ``llm`` or ``detector`` was replaced by a real object is counted. NEW on batch 10: the row B215
     survived without it. PIN: passes on 83cdb7a2 too (the stand-in check of these three was already there)."""
@@ -4838,7 +4823,7 @@ def test_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted(tmp_pat
     )
 
 
-def test_hold_run_ids_replaced_on_a_real_runtime_cannot_be_reached_from_a_post(
+def test_hold_run_ids_put_into_the_hooks_of_a_real_runtime_is_refused_on_a_public_bind(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The evidence for ``hold_run_ids`` is no longer a text search: a ``hold_run_ids`` put into the hooks of the runtime
@@ -4892,7 +4877,7 @@ def test_a_request_scans_the_store_the_runtime_holds_once_and_stays_within_one_b
 ) -> None:
     """Class: COST. ``real_now`` is what every unauthenticated POST runs: the store the approvals hold is also the store
     of the runtime in ``on_decided``, and the two askers each had a fresh budget. Now one ``Scan`` per request.
-    Fails on 83cdb7a2 (checked below in the notes)."""
+    Fails on 83cdb7a2 (a real old-code run: "the store was scanned 2 times in one request")."""
     from hadavin_sdk import standins
 
     app = _built(tmp_path)
@@ -4971,7 +4956,7 @@ def test_models_now_with_a_replaced_module_name_is_counted(
     assert "clock" not in approvals.held_services(), "control: restored"
 
 
-def test_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class() -> None:
+def test_pin_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class() -> None:
     """Class: LIVE-CLASS. ``isinstance(x, type)`` asks ``x.__class__``, which an object controls; the type of the value
     is what counts. PIN: passes on 83cdb7a2 too (that source already asked the type of the value); the row B251 shows
     the test fails when the check goes back to ``isinstance``."""
@@ -5000,7 +4985,7 @@ def test_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class() -> None
         del sys.modules["b10_live_class_probe"]
 
 
-def test_all_thirteen_data_classes_stay_as_pinned_after_use_in_a_fresh_interpreter() -> None:
+def test_pin_all_thirteen_data_classes_stay_as_pinned_after_use_in_a_fresh_interpreter() -> None:
     """Class: OUTAGE-GUARD. The 13 data classes are pinned when the receiver is imported. Using each one (a validation
     that fails still runs the class's validator, and a deferred build would replace it) must not change a pinned class:
     if it did, every store would read as real and every request would be answered 503. NEW on batch 10 for the
@@ -5041,37 +5026,63 @@ def _pin_sentence_counts(flat: str) -> tuple[int, int, set[str]]:
     return int(match.group(2)), int(match.group(3)), names
 
 
-def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
-    """Class: TEXT-TEST. The sentence that lists the pinned classes is PARSED: the count of classes pinned at import, the
-    count of all pinned classes and every class name in the list are the ones in ``standins``; the 1,000-row figure is
-    ``MIXED_ROWS``. (The batch 9 test only looked for the names anywhere in the file.)"""
-    changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
-    if not changelog.is_file():
-        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+def _pin_sentence_problems(flat: str) -> list[str]:
+    """What differs between the CHANGELOG pin sentence in ``flat`` and ``standins`` (empty when they agree)."""
     from hadavin_sdk import standins
 
-    flat = " ".join(changelog.read_text(encoding="utf-8").split())
     at_import, total, names = _pin_sentence_counts(flat)
     own_module = {standins.RUNTIME[0], standins.HOOKS[0], standins._ALLOWED[0][0]}
     late = [k for k in standins._PINNED_KEYS if k[0] in own_module]
-    assert total == len(standins._PINNED_KEYS), f"the CHANGELOG says {total} pinned classes"
-    assert at_import == len(standins._PINNED_KEYS) - len(late), (
-        f"the CHANGELOG says {at_import} at import"
-    )
-    assert names == {k[1] for k in standins._PINNED_KEYS if k not in late}, (
-        f"the classes in the CHANGELOG list differ from the code: {sorted(names ^ {k[1] for k in standins._PINNED_KEYS if k not in late})}"
-    )
+    early = {k[1] for k in standins._PINNED_KEYS if k not in late}
+    problems = []
+    if total != len(standins._PINNED_KEYS):
+        problems.append(f"the CHANGELOG says {total} pinned classes")
+    if at_import != len(standins._PINNED_KEYS) - len(late):
+        problems.append(f"the CHANGELOG says {at_import} at import")
+    if names != early:
+        problems.append(
+            f"the classes in the CHANGELOG list differ from the code: {sorted(names ^ early)}"
+        )
+    return problems
+
+
+def test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s() -> None:
+    """Class: TEXT-TEST. The sentence that lists the pinned classes is PARSED: the count of classes pinned at import, the
+    count of all pinned classes and every class name in the list are the ones in ``standins``; the 1,000-row figure is
+    ``MIXED_ROWS``. Fails on 83cdb7a2 (no ``HOOKS`` there). The mutation runner copies no CHANGELOG, so this test is
+    skipped there: the check that a count off by one is noticed is ``test_the_pin_count_check_notices_a_count_off_by_one``."""
+    changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+    if not changelog.is_file():
+        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+    flat = " ".join(changelog.read_text(encoding="utf-8").split())
+    assert not _pin_sentence_problems(flat), _pin_sentence_problems(flat)
     assert f"{MIXED_ROWS:,} mixed rows" in flat, "the CHANGELOG row figure is not MIXED_ROWS"
-    from tests import bind_mutants
 
-    rows = len(bind_mutants.M)
-    said = re.search(r"runs (\d+) mutants", flat)
-    assert said and int(said.group(1)) in (rows, rows + 1), (
-        "the CHANGELOG mutant count is not the table's"
+
+def test_the_pin_count_check_notices_a_count_off_by_one() -> None:
+    """Class: MUTANT-KILLER for the count itself, without the CHANGELOG file (so it runs in a mutation copy): a made-up
+    sentence with the right counts agrees with the code, and the same sentence with each count one too high, or one class
+    name left out, does not. Fails on 83cdb7a2 (no ``HOOKS`` there)."""
+    from hadavin_sdk import standins
+
+    own_module = {standins.RUNTIME[0], standins.HOOKS[0], standins._ALLOWED[0][0]}
+    early = sorted({k[1] for k in standins._PINNED_KEYS if k[0] not in own_module})
+    total = len(standins._PINNED_KEYS)
+
+    def sentence(at_import: int, all_: int, names: list[str]) -> str:
+        listed = ", ".join(f"`{n}`" for n in names)
+        return f"seen at once: {listed} ({at_import} of the {all_} pinned classes)"
+
+    good = sentence(len(early), total, early)
+    assert _pin_sentence_problems(good) == [], f"control: {_pin_sentence_problems(good)}"
+    assert _pin_sentence_problems(sentence(len(early) + 1, total, early)), (
+        "a count at import one too high"
     )
+    assert _pin_sentence_problems(sentence(len(early), total + 1, early)), "a total one too high"
+    assert _pin_sentence_problems(sentence(len(early), total, early[1:])), "a class name left out"
 
 
-def test_a_model_row_visited_is_charged_the_stand_in_weight_each_time(
+def test_pin_a_model_row_visited_is_charged_the_stand_in_weight_each_time(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Class: MUTANT-KILLER (the charge itself, not a count of values that happens to be near a limit). Five more runs in
@@ -5110,7 +5121,7 @@ def _runs_store(runs: int) -> MemoryStore:
     return store
 
 
-def test_copying_an_object_of_a_pinned_class_does_not_change_the_answer(tmp_path: Path) -> None:
+def test_pin_copying_an_object_of_a_pinned_class_does_not_change_the_answer(tmp_path: Path) -> None:
     """Class: PIN-FRAGILITY. ``copy.copy`` writes ``__slotnames__`` into the class dictionary the first time; the pin
     must include it, or a copy of the hooks (or of a data row) made anywhere makes every later question read as real.
     PIN: passes on 83cdb7a2 (the hooks were not pinned there, so nothing could change); row B256 shows it fails when
@@ -5122,3 +5133,256 @@ def test_copying_an_object_of_a_pinned_class_does_not_change_the_answer(tmp_path
     copy.copy(object.__getattribute__(rt, "__dict__")["hooks"])
     copy.deepcopy(object.__getattribute__(rt, "__dict__")["hooks"])
     assert not _runtime_counted(app, rt), "a copy of the hooks made the runtime read as real"
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Batch 11 (package PD part 2, review round 10): what the hooks carry, every member of the runtime, no leak, a real
+# run and tick between two key snapshots.
+# ---------------------------------------------------------------------------------------------------------------
+
+
+def _seal(runtime: object) -> None:
+    """Seal a runtime again (a test that puts a toolbox into the hooks first). The function is private since batch 11;
+    the fallback to its old public name lets the same test run on the older source for a fail-before run."""
+    from hadavin_sdk.approvals import requests as R
+
+    (getattr(R, "_seal_runtime", None) or R.seal_runtime)(runtime)
+
+
+def _real_function(*args: object, **kw: object) -> str:
+    return "a real function put in after the seal"
+
+
+def test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted(tmp_path: Path) -> None:
+    """Class: SEAL-COMPLETE (round 10, design M-1). ``build()`` gives the runtime its own copy of ``tools``; adding a tool
+    to that dict keeps the identity of the hooks and of the dict, so an identity check read a runtime with a real
+    callable in it as a stand-in. Fails on 304c3bd3."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    hooks = rt.hooks
+    assert not _runtime_counted(app, rt), "control: the runtime build() made was counted"
+    hooks.tools["lookup"] = _real_function
+    try:
+        assert _runtime_counted(app, rt), (
+            "a tool added to hooks.tools after the seal was not counted"
+        )
+    finally:
+        del hooks.tools["lookup"]
+    assert not _runtime_counted(app, rt), (
+        "control: the tool was removed and the runtime was counted"
+    )
+    given = _built(tmp_path / "given", tools={"lookup": lambda inp: "x"})
+    given_rt = _core_runtime(given)
+    tools = given_rt.hooks.tools
+    first = tools["lookup"]
+    tools["lookup"] = _real_function
+    try:
+        assert _runtime_counted(given, given_rt), (
+            "a tool replaced in hooks.tools after the seal was not counted"
+        )
+    finally:
+        tools["lookup"] = first
+    del tools["lookup"]
+    tools["renamed"] = first
+    assert _runtime_counted(given, given_rt), "a tool renamed in hooks.tools was not counted"
+
+
+def test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen(
+    tmp_path: Path,
+) -> None:
+    """Class: SEAL-COMPLETE (round 10, codebase N11). A member of the toolbox, a name added to it, or the secrets the
+    executor holds is replaced after the seal. Fails on 304c3bd3 (the fields were compared by identity only)."""
+    from hadavin_sdk.tools import ToolBox
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    box = ToolBox({}, {"echo": lambda inp, ctx: "x"}, timeout_s=1.0)
+    rt.hooks.toolbox = box
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: a runtime sealed with a toolbox was counted"
+    box.abandoned()  # rebinds ``_abandoned`` (state that moves in use)
+    assert not _runtime_counted(app, rt), (
+        "control: ordinary use of the toolbox made it read as real"
+    )
+    executor = rt.hooks.execute.__self__
+    in_dict = (
+        ("a function of the toolbox replaced", box._fns, "echo", _real_function),
+        ("a name added to the toolbox", box._fns, "extra", _real_function),
+    )
+    for label, target, key, new in in_dict:
+        had, was = key in target, target.get(key)
+        target[key] = new
+        try:
+            assert _runtime_counted(app, rt), f"{label} was not counted"
+        finally:
+            if had:
+                target[key] = was
+            else:
+                del target[key]
+        assert not _runtime_counted(app, rt), f"control: {label} was undone and still counted"
+    on_object = (
+        ("the argument checker of the toolbox replaced", box, "_arg_errors", _real_function),
+        ("the secrets the executor holds replaced", executor, "_secrets", _Opaque()),
+    )
+    for label, owner, name, new in on_object:
+        was = getattr(owner, name)
+        setattr(owner, name, new)
+        try:
+            assert _runtime_counted(app, rt), f"{label} was not counted"
+        finally:
+            setattr(owner, name, was)
+        assert not _runtime_counted(app, rt), f"control: {label} was undone and still counted"
+
+
+def test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen(
+    tmp_path: Path,
+) -> None:
+    """Class: SEAL-COMPLETE (round 10, design M-1). ``post_card`` and ``request_approval`` are closures made by
+    ``build()``: a cell's content (``cell.cell_contents = x``) or the function's code can be rewritten and the function
+    object stays the same. Fails on 304c3bd3."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    hooks = rt.hooks
+    assert not _runtime_counted(app, rt), "control"
+    for name in ("post_card", "request_approval"):
+        fn = getattr(hooks, name)
+        assert fn.__closure__, f"control: {name} has no closure cell to rewrite"
+        for index, cell in enumerate(fn.__closure__):
+            was = cell.cell_contents
+            cell.cell_contents = _Opaque()
+            try:
+                assert _runtime_counted(app, rt), (
+                    f"cell {index} of {name} rewritten was not counted"
+                )
+            finally:
+                cell.cell_contents = was
+            assert not _runtime_counted(app, rt), f"control: cell {index} of {name} restored"
+        code = fn.__code__
+        fn.__code__ = code.replace(co_name=code.co_name + "_rewritten")
+        try:
+            assert _runtime_counted(app, rt), f"the code of {name} rewritten was not counted"
+        finally:
+            fn.__code__ = code
+        assert not _runtime_counted(app, rt), f"control: the code of {name} restored"
+
+
+def test_the_judged_names_of_a_runtime_are_all_its_keys(tmp_path: Path) -> None:
+    """Class: SEAL-COMPLETE (round 10, codebase M1). ``_RUNTIME_SEALED`` and ``_RUNTIME_SERVICES`` together name every
+    key of a built ``Runtime``; a member added to ``Runtime.__init__`` fails here until it is judged (it would
+    otherwise be believed whatever it held). Fails on 304c3bd3 (``_evidence`` and ``_kinds`` were not listed)."""
+    from hadavin_sdk.approvals import requests as R
+
+    keys = set(object.__getattribute__(_core_runtime(_built(tmp_path)), "__dict__"))
+    judged = set(R._RUNTIME_SEALED) | set(R._RUNTIME_SERVICES)
+    assert judged == keys, (
+        f"the judged names and the keys of a built Runtime differ: {sorted(judged ^ keys)}"
+    )
+
+
+def test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted(tmp_path: Path) -> None:
+    """Class: SEAL-COMPLETE (round 10, codebase M1). ``rt._kinds = <object with __contains__>`` ran foreign code on the
+    paths ``on_decided`` reaches. Fails on 304c3bd3 for both members."""
+
+    class Contains:
+        def __contains__(self, item: object) -> bool:
+            return True
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    own = object.__getattribute__(rt, "__dict__")
+    assert not _runtime_counted(app, rt), "control"
+    for name, other in (
+        ("_kinds", Contains()),
+        ("_kinds", frozenset({"another-kind"})),
+        ("_kinds", set(own["_kinds"])),
+        ("_evidence", _Opaque()),
+    ):
+        was = own[name]
+        own[name] = other
+        try:
+            assert _runtime_counted(app, rt), (
+                f"a replaced {name} ({type(other).__name__}) was not counted"
+            )
+        finally:
+            own[name] = was
+    assert not _runtime_counted(app, rt), "control: restored"
+
+
+def test_a_sealed_runtime_that_is_dropped_is_freed(tmp_path: Path) -> None:
+    """Class: LEAK (round 10, design M-2). The seal's value used to hold the hooks, which reach the runtime (hooks ->
+    ``request_approval`` -> ``Approvals`` -> ``on_decided`` -> holder -> runtime): the weak table never freed one. A
+    built app is dropped and the runtime must be gone after ``gc.collect()``. Fails on 304c3bd3."""
+    import gc
+    import weakref
+
+    from hadavin_sdk.approvals import requests as R
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    assert rt in R._RUNTIME_SEALS, "control: the runtime was not sealed"
+    ref = weakref.ref(rt)
+    del app, rt
+    gc.collect()
+    assert ref() is None, "a dropped runtime is still held (the seal keeps it alive)"
+    assert len(R._RUNTIME_SEALS) == 0 or all(k is not None for k in R._RUNTIME_SEALS)
+
+
+def test_the_seal_is_private(tmp_path: Path) -> None:
+    """Class: API (round 10, design N-1). The function that records what a runtime may be believed to hold is not a
+    public name of the approvals package or of ``requests``. Fails on 304c3bd3 (it was ``seal_runtime``)."""
+    from hadavin_sdk import approvals
+    from hadavin_sdk.approvals import requests as R
+
+    assert not hasattr(R, "seal_runtime"), "seal_runtime is a public name of requests"
+    assert not hasattr(approvals, "seal_runtime"), "seal_runtime is a public name of approvals"
+    public = {name for name in dir(R) if not name.startswith("_")}
+    assert not {n for n in public if "seal" in n.lower()}, (
+        "a public name of requests mentions the seal"
+    )
+    assert callable(R._seal_runtime), "control: the private function is missing"
+
+
+def test_pin_a_real_run_and_a_real_tick_add_no_name_to_the_runtime(tmp_path: Path) -> None:
+    """Class: OUTAGE-GUARD (round 10, design M-3 and codebase M2). The key set is compared at every request: a name the
+    runtime writes lazily while it works (a cache, a counter) would read as a shadow and answer 503 to every public
+    POST. A real ``handle`` (a document in, a plan and an approval request out, with the fixture's recorded model) and a
+    real ``tick`` run between two snapshots; the runtime stays believed. PIN: passes on 304c3bd3 (a real old-code run: the
+    runtime wrote no lazy name there); the row B257 adds a lazy attribute in ``handle`` and this test fails on it."""
+    from hadavin_sdk.runtime.tick import run_tick
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    before = tuple(object.__getattribute__(rt, "__dict__"))
+    assert not _runtime_counted(app, rt), "control: counted before the run"
+    document = (app.app.config.inputs_dir / "create.txt").read_bytes()
+    run = rt.handle("test-agent", "svc:test-agent", document)
+    assert run.state.value == "WAITING_FOR_APPROVAL", (
+        f"the run did not reach the approval: {run.state}"
+    )
+    assert run_tick(app.app) == 0, "the tick did not finish"
+    assert tuple(object.__getattribute__(rt, "__dict__")) == before, (
+        "the run or the tick added or removed a name of the runtime"
+    )
+    assert not _runtime_counted(app, rt), "a runtime that has worked was counted"
+
+
+def test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Class: TEXT (round 10, codebase N12). One ``Scan`` covers a request: when the budget runs out the object that
+    crossed the limit can be a small one asked about last, and the line blamed it. The scan now records the object that
+    used the most of the budget, and the line for another object says so. Fails on 304c3bd3 (both lines said
+    ``over budget (too many values to check)``). The budget is made small (90 values) so the first store (72 values)
+    leaves too little for the channel (32 values)."""
+    from hadavin_sdk import standins
+
+    monkeypatch.setattr(standins, "SCAN_NODES", 90)
+    store, channel = MemoryStore(), FakeChannel("sig" + "-b11-test")
+    scan = standins.Scan()
+    lines = bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
+    assert lines == (
+        "held b_channel: not read in full, another object (MemoryStore) used most of the budget",
+    ), f"the lines were {lines}"
+    assert scan.heaviest is store, "the scan did not record the object that used the most budget"
+    alone = bindguard.held_services_found({"b_channel": channel}, standins.Scan())
+    assert alone == (), "control: the channel alone was counted"

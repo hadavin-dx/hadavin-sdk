@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import logging
 import weakref
+from collections import deque
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
-from types import FunctionType, MappingProxyType
+from types import FunctionType, MappingProxyType, MethodType
 from typing import Any
 
 from hadavin_sdk import standins
@@ -56,60 +57,209 @@ _RUNTIME_SERVICES = (
 )  # the attributes of a core ``Runtime`` that reach a service: each must be one of the core's own stand-ins
 
 # The other members ``Runtime.__init__`` writes, each believed only while it is the very object ``build()`` put there
-# (identity, taken at the end of ``build()`` by ``seal_runtime``). One line each: a member that is not listed is not
+# (identity, taken at the end of ``build()`` by ``_seal_runtime``). One line each: a member that is not listed is not
 # compared, so every row of ``tests/bind_mutants.py`` that drops one line is killed by a test that replaces that member.
+# Together with ``_RUNTIME_SERVICES`` these are ALL the keys of a built ``Runtime`` (a test compares the two lists with
+# the key set of a built runtime, so a member added to ``Runtime.__init__`` fails that test until it is listed here).
 _RUNTIME_SEALED = (
     "registry",
     "audit",
     "limits",
     "agents",
     "hooks",
+    "_evidence",
+    "_kinds",
 )
 
-# runtime -> (instance keys, {member: object}, agents as a frozenset, the hooks' own (name, value) pairs, the hooks
-# class). Weak: a runtime that is gone leaves nothing. Written by ``seal_runtime`` (``build()``) only.
+# What a seal holds is DERIVED DATA only, never a strong reference to an object that can reach the runtime (the hooks
+# reach it through ``request_approval`` -> ``Approvals`` -> ``on_decided`` -> the holder -> the runtime). Each object
+# is written down as a "mark" (``_mark``): a weak reference when Python allows one, the plain value for text and
+# numbers, the exact class for a container, and (id, class) for an object that cannot be weakly referenced.
+_MARK_ATOM, _MARK_WEAK, _MARK_KIND, _MARK_ID, _MARK_STRONG = 0, 1, 2, 3, 4
+_ATOM_KINDS: tuple[type, ...] = (str, int, float, bool, bytes, type(None))
+_STATE_KINDS: tuple[type, ...] = (
+    set,
+    frozenset,
+    deque,
+)  # change in place while the server works: the class counts
+_WALK_DEPTH = 4  # levels entered below a hook field (functions, cells, bound methods, dicts, lists)
+_WALK_NODES = 5_000  # objects written down per runtime; more reads as changed (fail closed)
+
+# runtime -> (instance keys, {member: mark} (the agents' own set is held as it is: text only, it reaches nothing), the
+# agents as a frozenset copy, the stored kinds, the marks
+# of the hooks' own (name, value) walk, the hooks class). Weak, and its value holds no strong reference to a hook,
+# a closure cell or the runtime itself: a runtime that is gone is collected (tested with ``gc``).
+# Written by ``_seal_runtime`` (``build()``) only.
 _RUNTIME_SEALS: weakref.WeakKeyDictionary[object, tuple] = weakref.WeakKeyDictionary()
 
 
-def seal_runtime(runtime: object) -> None:
+def _mark(obj: object) -> tuple:
+    """One object written down so it can be recognised later without holding it: see ``_MARK_*``."""
+    kind = type(obj)
+    if any(kind is k for k in _ATOM_KINDS):
+        return (_MARK_ATOM, obj)
+    if any(kind is k for k in _STATE_KINDS) or kind is dict or kind is list or kind is tuple:
+        return (_MARK_KIND, kind)  # its content is walked; the container itself may be rebuilt
+    try:
+        return (_MARK_WEAK, weakref.ref(obj))
+    except (
+        TypeError
+    ):  # no ``__weakref__`` slot (``Approvals``): the object is kept alive by the app, id and class
+        return (_MARK_ID, (id(obj), kind))
+
+
+def _mark_matches(mark: tuple, obj: object) -> bool:
+    """True when ``obj`` is the very object (or, for a container, the very class) ``mark`` was made from. Text and
+    numbers are compared by exact class and value (builtin comparison only: no foreign ``__eq__`` runs)."""
+    tag, held = mark
+    kind = type(obj)
+    if tag == _MARK_ATOM:
+        return kind is type(held) and (obj is held or obj == held)
+    if tag == _MARK_KIND:
+        return kind is held
+    if tag == _MARK_WEAK:
+        return held() is obj
+    if tag == _MARK_STRONG:
+        return held is obj
+    return held == (id(obj), kind)
+
+
+def _walk(obj: object, out: list, depth: int, entered: bool) -> None:
+    """Append to ``out`` (in a fixed order) every object whose identity must not change after ``build()``: ``obj``
+    itself and what it carries that is code or points to code. A function: its code, its defaults and the contents of
+    its closure cells (a cell's content can be rewritten: ``cell.cell_contents = x``); a bound method: its function and
+    its object; a dict, list or tuple: its keys and items. ``entered``: the instance dictionary of this object is walked
+    too (a hook field itself and the object of a bound method: the ``ToolBox`` and the ``Executor``), without the
+    values that change in use (text, numbers, sets, deques). Objects met deeper (a channel in a closure cell) are
+    written down by identity only: their own state moves in use and is judged where they are held. Exact classes only,
+    read with the builtin methods, so no foreign code runs."""
+    out.append(obj)
+    if depth >= _WALK_DEPTH or len(out) > _WALK_NODES:
+        return
+    kind = type(obj)
+    if kind is FunctionType:
+        out.append(obj.__code__)
+        out.append(obj.__defaults__)
+        out.append(obj.__kwdefaults__)
+        for item in obj.__defaults__ or ():
+            _walk(item, out, depth + 1, False)
+        for cell in obj.__closure__ or ():
+            try:
+                content = cell.cell_contents
+            except ValueError:  # an empty cell
+                content = _EMPTY_CELL
+            _walk(content, out, depth + 1, False)
+    elif kind is MethodType:
+        _walk(obj.__func__, out, depth + 1, False)
+        _walk(obj.__self__, out, depth + 1, True)
+    elif kind is dict:
+        for key, value in dict.items(obj):
+            out.append(key)
+            _walk(value, out, depth + 1, False)
+    elif kind is list or kind is tuple:
+        for item in list.__iter__(obj) if kind is list else tuple.__iter__(obj):
+            _walk(item, out, depth + 1, False)
+    elif entered:
+        own = _instance_dict(obj)
+        if own is not None:
+            for key, value in dict.items(own):
+                out.append(key)
+                if not any(type(value) is k for k in _ATOM_KINDS + _STATE_KINDS):
+                    _walk(value, out, depth + 1, False)
+
+
+_EMPTY_CELL = object()  # what ``_walk`` writes for a closure cell that holds nothing
+
+
+def _instance_dict(obj: object) -> dict | None:
+    try:
+        own = object.__getattribute__(obj, "__dict__")
+    except AttributeError:
+        return None
+    return own if type(own) is dict else None
+
+
+def _walk_fields(fields: dict, out: list) -> None:
+    """``_walk`` of the instance dictionary of a ``Hooks``: each field is entered (``entered=True``)."""
+    out.append(fields)
+    for name, value in dict.items(fields):
+        out.append(name)
+        _walk(value, out, 1, True)
+
+
+def _marks_of(fields: dict) -> tuple[tuple, ...]:
+    out: list = []
+    _walk_fields(fields, out)
+    return tuple(_mark(o) for o in out)
+
+
+def _marks_match(marks: tuple[tuple, ...], fields: dict) -> bool:
+    out: list = []
+    _walk_fields(fields, out)
+    return (
+        len(out) == len(marks)
+        and len(out) <= _WALK_NODES
+        and all(_mark_matches(m, o) for m, o in zip(marks, out, strict=True))
+    )
+
+
+def _seal_runtime(runtime: object) -> None:
     """Record what ``build()`` made a ``Runtime`` hold: the names its ``__init__`` wrote (its instance dictionary keys),
-    the identity of every member in ``_RUNTIME_SEALED`` and of every field of its ``hooks``, and its agents. A runtime
-    that is not sealed (made by hand) is never believed (``_runtime_ok``). Called by ``app.build`` once the runtime
-    is complete."""
+    a mark of every member in ``_RUNTIME_SEALED`` and, for its ``hooks``, a mark of every field AND of what each field
+    carries (``_walk``: the keys and the item identities of ``tools``, the members of the toolbox, the code and the
+    closure cells of ``post_card`` and ``request_approval``), and its agents. A runtime that is not sealed (made by hand)
+    is never believed (``_runtime_ok``). Private: only ``app.build`` calls it, once the runtime is complete."""
     own = object.__getattribute__(runtime, "__dict__")
     hooks = dict.get(own, "hooks")
+    agents = dict.get(own, "agents")
     _RUNTIME_SEALS[runtime] = (
         frozenset(dict.keys(own)),
-        {name: dict.get(own, name) for name in _RUNTIME_SEALED},
-        frozenset(set.__iter__(dict.get(own, "agents"))),
-        tuple(dict.items(object.__getattribute__(hooks, "__dict__"))),
+        {
+            name: (_MARK_STRONG, dict.get(own, name))
+            if name == "agents"
+            else _mark(dict.get(own, name))
+            for name in _RUNTIME_SEALED
+            if name != "_kinds"
+        },
+        frozenset(set.__iter__(agents)),
+        dict.get(own, "_kinds"),
+        _marks_of(object.__getattribute__(hooks, "__dict__")),
         type(hooks),
     )
 
 
 def _hooks_unchanged(hooks: object, sealed: tuple) -> bool:
-    """The hooks are the very object ``build()`` made: exact class (pinned), the same fields holding the same objects
-    (identity), so a ``hold_run_ids``, ``execute`` or ``post_card`` put in later is not the wiring ``build()`` made."""
-    if type(hooks) is not sealed[4] or not standins.is_pinned_instance(hooks, standins.HOOKS):
+    """The hooks are the very object ``build()`` made: exact class (pinned), the same field names holding the same
+    objects, and what the fields carry unchanged since the seal (``_walk``): a ``hold_run_ids``, ``execute`` or
+    ``post_card`` put in later, a tool added to or replaced in ``hooks.tools``, a member of the toolbox replaced, the
+    code of a hook function or the content of one of its closure cells rewritten, is not the wiring ``build()``
+    made. What stays outside this model (code in the same process that rewrites a module, ``sys.modules``, the guard
+    itself or uses ``object.__setattr__`` on a sealed object) is listed in the CHANGELOG."""
+    if type(hooks) is not sealed[5] or not standins.is_pinned_instance(hooks, standins.HOOKS):
         return False
-    fields = object.__getattribute__(hooks, "__dict__")
-    if type(fields) is not dict:
-        return False
-    now = tuple(dict.items(fields))
-    if len(now) != len(sealed[3]):
-        return False
-    return all(
-        type(k) is str and k == name and v is was
-        for (k, v), (name, was) in zip(now, sealed[3], strict=True)
+    fields = _instance_dict(hooks)
+    return fields is not None and _marks_match(sealed[4], fields)
+
+
+def _kinds_unchanged(kinds: object, was: object) -> bool:
+    """``Runtime._kinds`` is a ``frozenset`` of text made from the config: believed while it is an exact ``frozenset`` of
+    exact ``str`` that equals the one ``build()`` sealed (builtin comparison only: an object with its own
+    ``__contains__`` is refused)."""
+    return (
+        type(kinds) is frozenset
+        and type(was) is frozenset
+        and all(type(k) is str for k in frozenset.__iter__(kinds))
+        and frozenset.__eq__(kinds, was) is True
     )
 
 
 def _runtime_ok(runtime: object, scan: standins.Scan | None = None) -> bool:
     """True only for a runtime ``build()`` made and sealed: an instance of exactly the core's ``Runtime`` class,
     unchanged since it was pinned (``standins.is_pinned_instance``, pinned when its module is loaded), whose instance
-    dictionary holds exactly the names ``__init__`` wrote (an ``rt.on_decided = f`` or ``rt.tick = f`` on the instance
+    dictionary holds exactly the names ``__init__`` wrote (an ``rt.on_decided = f`` or ``rt.extra = f`` (any extra name) on the instance
     would shadow the pinned class method: such a key, or a missing one, is refused), whose ``registry``, ``audit``,
-    ``limits``, ``agents`` and ``hooks`` are the objects ``build()`` put there, and whose ``store``, ``llm`` and
+    ``limits``, ``agents``, ``hooks`` and ``_evidence`` are the objects ``build()`` put there (and ``_kinds`` the same
+    set of names), whose hooks carry what ``build()`` gave them (``_hooks_unchanged``), and whose ``store``, ``llm`` and
     ``detector`` are each one of the core's own stand-ins (a runtime made by hand with a real store or model is real).
     ``scan`` is the request's one scan (see ``standins.Scan``). An ``Approvals`` made by hand does not get this belief
     at all (see ``_holder_ok``)."""
@@ -128,12 +278,14 @@ def _runtime_ok(runtime: object, scan: standins.Scan | None = None) -> bool:
         ):
             return False
         members = sealed[1]
-        if not all(dict.get(own, name) is members[name] for name in _RUNTIME_SEALED):
+        if not all(_mark_matches(members[name], dict.get(own, name)) for name in members):
             return False
         agents = dict.get(own, "agents")
         if type(agents) is not set or not all(type(a) is str for a in set.__iter__(agents)):
             return False
         if frozenset(set.__iter__(agents)) != sealed[2]:
+            return False
+        if not _kinds_unchanged(dict.get(own, "_kinds"), sealed[3]):
             return False
         if not _hooks_unchanged(dict.get(own, "hooks"), sealed):
             return False

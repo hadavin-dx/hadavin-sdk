@@ -122,7 +122,7 @@ def serve(
     Only an ``on_decided`` made by ``make_on_decided`` (with an empty holder or, for approvals made by ``build()``,
     the core runtime in it) and a ``clock`` that is ``models.now`` or a ``fixed_clock`` of a plain ``datetime`` (no
     ``tzinfo`` or ``datetime.UTC``) are trusted as not holding a service. A refusal line shows
-    only a plain word (an identifier of at most 40 characters) for a held name, a class name or an operator-config
+    only a plain word (an ASCII identifier of at most 40 characters) for a held name, a class name or an operator-config
     name, and a fixed label for anything else."""
     if type(approvals) is not Approvals:
         raise BindRefused(

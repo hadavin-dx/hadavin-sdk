@@ -1,6 +1,6 @@
 """The mutants of the public-bind refusal and the shared loopback check (named B1 and up; the runner prints the count; the
-numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147 and B224 do not exist (removed with a reason in the
-change that removed them: B85 had the same killer and the same effect as B84; B224 was merged away in batch 9, no row of that name was kept; B221, B230 and B231 were merged into B31 and B210 in batch 10, see the comment above B210), and the rows are not in number order), run by the mutation runner
+numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147, B224 and B253 do not exist (removed with a reason in the
+change that removed them: B85 had the same killer and the same effect as B84; B224 was merged away in batch 9, no row of that name was kept; B253 was never made, its number was skipped in batch 10 and no row of that name is in the git history), and the rows are not in number order), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
 of the assertion MESSAGE). Not collected by pytest. Run from the repo root:
@@ -29,6 +29,7 @@ RQ = "src/hadavin_sdk/approvals/requests.py"
 DF = "src/hadavin_sdk/defaults.py"
 SI = "src/hadavin_sdk/standins.py"
 SEC = "src/hadavin_sdk/actions/secrets.py"
+AL = "src/hadavin_sdk/runtime/agent_loop.py"
 INJ = "src/hadavin_sdk/guard/injection.py"
 SCAN = "tools/server_scan.py"
 T_NG = "tests/test_netguard.py"
@@ -1908,16 +1909,16 @@ M = [
         "test_a_stand_in_holding_a_datetime_with_a_foreign_tzinfo_reads_as_real",
         "was trusted by",
     ),
-    # B230 (a clock set after the start) and B231 (the clock of build) made the SAME edit as B210 (the one line in
-    # ``_is_core_clock`` that judges a fixed clock's moment), and B221 the same edit as B31 (the host-characters check):
-    # one edit, one row. Their tests (``test_a_clock_swapped_in_after_the_start_is_answered_503_and_never_runs``,
-    # ``test_the_clock_of_build_is_judged_like_the_clock_set_later``, ``test_a_refusal_text_cannot_imitate_a_line_of_its_own``)
-    # are pins of that edit, not separate proofs: they go through the same line.
+    # B221, B230 and B231 make the SAME edit as B31 and B210 (the host-characters check; the one line of ``_is_core_clock``
+    # that judges a fixed clock's moment). They are kept as rows of their own because each names a different killer:
+    # the lookalike-letter test, the clock-swapped-after-the-start test and the clock-of-build test must each fail on
+    # that edit by itself, so each is a real killer and not a pin that merely goes through the same line.
     #
-    # Nine rows of the serve-slot table (every slot of ``Approvals`` is read at the start of ``serve``) are equivalent by
-    # reading the code: ``_audit_sink`` and ``_registry`` are read by the same loop and each is pinned by B200 and B207;
-    # the other slots are read by the same ``for slot in Approvals.__slots__`` loop, so a row that drops one slot's read
-    # changes nothing the loop does not repeat. The 3.14 check of B158 is in the CHANGELOG.
+    # Nine rows of the serve-slot table are equivalent by reading the code: the loop over ``Approvals.__slots__`` at
+    # the start of ``serve`` reads every slot, but each of the other nine slots is also read by ``held_services``,
+    # ``config`` or ``config_facts``, so a row that drops one slot's read from the loop changes nothing; only the loop
+    # reads ``_audit_sink`` and ``_registry`` (they are pinned by B200 and B207). The 3.14 check of B158 is in the
+    # CHANGELOG.
     mutant(
         "B210 a clock made by fixed_clock is believed whatever its tzinfo",
         RQ,
@@ -1969,7 +1970,7 @@ M = [
         "        return all(standins.is_stand_in(dict.get(own, name), scan) for name in _RUNTIME_SERVICES)\n",
         "        return True\n",
         T_BG,
-        "test_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted",
+        "test_pin_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted",
         "a replaced store was not counted",
     ),
     mutant(
@@ -2005,7 +2006,7 @@ M = [
         "            if not (\n                budget.charge(STAND_IN_WEIGHT)\n                and budget.class_ok(key)\n                and _data_state_ok(value, key)\n            ):",
         "            if not (budget.class_ok(key) and _data_state_ok(value, key)):",
         T_BG,
-        "test_a_model_row_visited_is_charged_the_stand_in_weight_each_time",
+        "test_pin_a_model_row_visited_is_charged_the_stand_in_weight_each_time",
         "five more model rows were not charged",
     ),
     mutant(
@@ -2183,8 +2184,8 @@ M = [
     mutant(
         "B244 the hooks of a runtime are not compared by identity",
         RQ,
-        '    "agents",\n    "hooks",\n)',
-        '    "agents",\n)',
+        '    "hooks",\n    "_evidence",\n',
+        '    "_evidence",\n',
         T_BG,
         "test_a_member_of_the_core_runtime_that_is_not_the_one_build_made_is_counted",
         "a replaced hooks was not counted",
@@ -2201,8 +2202,8 @@ M = [
     mutant(
         "B246 the fields of the hooks are not compared",
         RQ,
-        "    return all(\n        type(k) is str and k == name and v is was\n        for (k, v), (name, was) in zip(now, sealed[3], strict=True)\n    )\n",
-        "    return True\n",
+        "    return fields is not None and _marks_match(sealed[4], fields)\n",
+        "    return fields is not None\n",
         T_BG,
         "test_a_member_of_the_core_runtime_that_is_not_the_one_build_made_is_counted",
         "replaced was not counted",
@@ -2213,13 +2214,13 @@ M = [
         '            ("hold_run_ids", hold_run_ids),\n',
         "",
         T_BG,
-        "test_hold_run_ids_replaced_on_a_real_runtime_cannot_be_reached_from_a_post",
+        "test_hold_run_ids_put_into_the_hooks_of_a_real_runtime_is_refused_on_a_public_bind",
         "hold_run_ids given to build() was not recorded",
     ),
     mutant(
         "B248 build does not seal the runtime it made",
         APP,
-        "    seal_runtime(\n        runtime\n    )  # what the guard may believe about this runtime: the objects it holds right now\n",
+        "    _seal_runtime(\n        runtime\n    )  # what the guard may believe about this runtime: the objects it holds right now\n",
         "",
         T_BG,
         "test_a_function_or_a_name_put_on_the_core_runtime_instance_is_counted",
@@ -2249,7 +2250,7 @@ M = [
         "        cls if issubclass(type(cls), type) else None\n",
         "        cls if isinstance(cls, type) else None\n",
         T_BG,
-        "test_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class",
+        "test_pin_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class",
         "was taken as a class",
     ),
     mutant(
@@ -2258,7 +2259,7 @@ M = [
         "            if cls is not None:\n                _class_ok(key)\n\n\ndef is_pinned_instance",
         '            if cls is not None and key[1] != "Plan":\n                _class_ok(key)\n\n\ndef is_pinned_instance',
         T_BG,
-        "test_all_thirteen_data_classes_stay_as_pinned_after_use_in_a_fresh_interpreter",
+        "test_pin_all_thirteen_data_classes_stay_as_pinned_after_use_in_a_fresh_interpreter",
         "not pinned at import",
     ),
     mutant(
@@ -2285,8 +2286,181 @@ M = [
         "    with contextlib.suppress(Exception):\n        copyreg._slotnames(cls)  # type: ignore[attr-defined]\n",
         "",
         T_BG,
-        "test_copying_an_object_of_a_pinned_class_does_not_change_the_answer",
+        "test_pin_copying_an_object_of_a_pinned_class_does_not_change_the_answer",
         "a copy of the hooks made the runtime read as real",
+    ),
+    mutant(
+        "B258 the evidence of a runtime is not compared",
+        RQ,
+        '    "_evidence",\n    "_kinds",\n',
+        '    "_kinds",\n',
+        T_BG,
+        "test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted",
+        "a replaced _evidence",
+    ),
+    mutant(
+        "B259 the stored kinds of a runtime are not compared",
+        RQ,
+        '        if not _kinds_unchanged(dict.get(own, "_kinds"), sealed[3]):\n            return False\n',
+        "",
+        T_BG,
+        "test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted",
+        "a replaced _kinds",
+    ),
+    mutant(
+        "B260 a member of the runtime that is not listed is believed",
+        RQ,
+        '    "_evidence",\n    "_kinds",\n)',
+        '    "_evidence",\n)',
+        T_BG,
+        "test_the_judged_names_of_a_runtime_are_all_its_keys",
+        "the judged names and the keys",
+    ),
+    mutant(
+        "B261 the items of a dict a hook holds are not walked",
+        RQ,
+        "            out.append(key)\n            _walk(value, out, depth + 1, False)\n    elif kind is list or kind is tuple:",
+        "            out.append(key)\n    elif kind is list or kind is tuple:",
+        T_BG,
+        "test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted",
+        "a tool replaced in hooks.tools",
+    ),
+    mutant(
+        "B262 the keys of a dict a hook holds are not written down",
+        RQ,
+        "            out.append(key)\n            _walk(value, out, depth + 1, False)\n    elif kind is list or kind is tuple:",
+        "            _walk(value, out, depth + 1, False)\n    elif kind is list or kind is tuple:",
+        T_BG,
+        "test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted",
+        "a tool renamed in hooks.tools",
+    ),
+    mutant(
+        "B263 the closure cells of a hook function are not walked",
+        RQ,
+        "        for cell in obj.__closure__ or ():\n",
+        "        for cell in ():\n",
+        T_BG,
+        "test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen",
+        "rewritten was not counted",
+    ),
+    mutant(
+        "B264 the code of a hook function is not written down",
+        RQ,
+        "        out.append(obj.__code__)\n",
+        "",
+        T_BG,
+        "test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen",
+        "the code of post_card rewritten",
+    ),
+    mutant(
+        "B265 the object of a bound method is not walked",
+        RQ,
+        "        _walk(obj.__self__, out, depth + 1, True)\n",
+        "",
+        T_BG,
+        "test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen",
+        "the secrets the executor holds replaced",
+    ),
+    mutant(
+        "B266 the members of the toolbox are not walked",
+        RQ,
+        "    elif entered:\n        own = _instance_dict(obj)\n",
+        "    elif False:\n        own = _instance_dict(obj)\n",
+        T_BG,
+        "test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen",
+        "a function of the toolbox replaced",
+    ),
+    mutant(
+        "B267 the fields of the hooks are not entered",
+        RQ,
+        "        _walk(value, out, 1, True)\n",
+        "        _walk(value, out, 1, False)\n",
+        T_BG,
+        "test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen",
+        "was not counted",
+    ),
+    mutant(
+        "B268 the seal holds the hooks strongly (a leak)",
+        RQ,
+        "        return (_MARK_WEAK, weakref.ref(obj))\n",
+        "        return (_MARK_WEAK, lambda held=obj: held)\n",
+        T_BG,
+        "test_a_sealed_runtime_that_is_dropped_is_freed",
+        "still held",
+    ),
+    mutant(
+        "B269 the seal is a public name again",
+        RQ,
+        "def _seal_runtime(runtime: object) -> None:",
+        "def seal_runtime(runtime: object) -> None:\n    _seal_runtime(runtime)\n\n\ndef _seal_runtime(runtime: object) -> None:",
+        T_BG,
+        "test_the_seal_is_private",
+        "public name",
+    ),
+    mutant(
+        "B257 the runtime writes a lazy name while it handles a document",
+        AL,
+        "        agent = self.registry.agents[agent_id]\n        extra = {}",
+        "        agent = self.registry.agents[agent_id]\n        self._lazy_name = True\n        extra = {}",
+        T_BG,
+        "test_pin_a_real_run_and_a_real_tick_add_no_name_to_the_runtime",
+        "added or removed a name",
+    ),
+    mutant(
+        "B221 a lookalike letter in a bind text is shown",
+        BG,
+        '    if not all(c in _HOST_CHARS for c in head):\n        return "(unreadable)"\n',
+        "",
+        T_BG,
+        "test_a_refusal_text_cannot_imitate_a_line_of_its_own",
+        "was shown as",
+    ),
+    mutant(
+        "B230 a clock put in after the start is not judged by its tzinfo",
+        RQ,
+        "    return moment is not _NONE and standins.plain_datetime(moment)",
+        "    return moment is not _NONE and type(moment) is datetime",
+        T_BG,
+        "test_a_clock_swapped_in_after_the_start_is_answered_503_and_never_runs",
+        "a hostile-tzinfo clock was served after the start",
+    ),
+    mutant(
+        "B231 a clock given to build is not judged by its tzinfo",
+        RQ,
+        "    return moment is not _NONE and standins.plain_datetime(moment)",
+        "    return moment is not _NONE and type(moment) is datetime",
+        T_BG,
+        "test_the_clock_of_build_is_judged_like_the_clock_set_later",
+        "a build(clock=...) with a foreign tzinfo was not counted",
+    ),
+    # B270 and B272 change the CHECK in the test file (the mutation runner copies no CHANGELOG.md, so the CHANGELOG test
+    # is skipped there): the check must notice a count that is off by one.
+    mutant(
+        "B270 the check of the CHANGELOG total of pinned classes is dropped",
+        T_BG,
+        "    if total != len(standins._PINNED_KEYS):\n",
+        "    if False:\n",
+        T_BG,
+        "test_the_pin_count_check_notices_a_count_off_by_one",
+        "a total one too high",
+    ),
+    mutant(
+        "B272 the check of the CHANGELOG count of classes pinned at import is dropped",
+        T_BG,
+        "    if at_import != len(standins._PINNED_KEYS) - len(late):\n",
+        "    if False:\n",
+        T_BG,
+        "test_the_pin_count_check_notices_a_count_off_by_one",
+        "a count at import one too high",
+    ),
+    mutant(
+        "B271 an object read after the budget ran out is blamed for it",
+        BG,
+        "                        if crossed is None or crossed is obj\n",
+        "                        if True\n",
+        T_BG,
+        "test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it",
+        "the lines were",
     ),
     mutant(
         "B235 a build argument is added that the guard does not know",

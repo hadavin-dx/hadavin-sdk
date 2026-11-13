@@ -158,7 +158,12 @@ def held_services_found(
                 if (
                     answer == VERDICT_OVER_BUDGET
                 ):  # a size outage, named apart from "a real service"
-                    label = f"held {name}: over budget (too many values to check)"
+                    crossed = scan.heaviest if scan is not None else None
+                    label = (
+                        f"held {name}: over budget (too many values to check)"
+                        if crossed is None or crossed is obj
+                        else f"held {name}: not read in full, another object ({_word_or_unreadable(type(crossed).__name__)}) used most of the budget"
+                    )
         except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in
             label, counts = "held (unreadable)", True  # a fixed label: the object is hostile
         if counts:
