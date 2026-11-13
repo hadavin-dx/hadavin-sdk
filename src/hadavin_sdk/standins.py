@@ -82,7 +82,17 @@ from types import ModuleType
 
 SCAN_DEPTH = 4  # nesting of detector lists
 SCAN_DEPTH_VALUES = 8  # container levels entered in a held instance (its own dict is 1)
-SCAN_NODES = 100_000  # values looked at in one instance; more than this reads as real
+SCAN_NODES = (
+    100_000  # values looked at in one question (every walk, shared members charged at every visit)
+)
+STAND_IN_WEIGHT = (
+    50  # nodes charged for each stand-in or data row visited (its class shape is compared, a scan)
+)
+VERDICT_STAND_IN = "stand-in"
+VERDICT_REAL = "real"
+VERDICT_OVER_BUDGET = (
+    "over budget"  # more than SCAN_NODES would be read: not scanned further, read as real
+)
 
 # (module, class name): the only classes that count, written here and nowhere else
 _ALLOWED: tuple[tuple[str, str], ...] = (
@@ -118,6 +128,8 @@ _DATA_CLASSES: tuple[tuple[str, str], ...] = (
     ("hadavin_sdk.config", "Route"),
     ("hadavin_sdk.approvals.cards", "Card"),
 )
+# the one data class that is a plain dataclass (not pydantic): all its state is its ``__dict__``, which is scanned
+_DATACLASS_KEYS: frozenset[tuple[str, str]] = frozenset({("hadavin_sdk.approvals.cards", "Card")})
 # plain values that are NOT entered (an enum member holds its own class): the state of a run
 _LEAF_CLASSES: tuple[tuple[str, str], ...] = ((_MODELS, "RunState"),)
 
@@ -137,8 +149,20 @@ _ATOM_TYPES: tuple[type, ...] = (
     type(threading.Lock()),  # held by MemoryStore and FakeLLM; it holds no code
 )
 _PLAIN_CONTAINERS: tuple[type, ...] = (dict, list, tuple, set, frozenset, deque)
-# the keys an enum member's own dictionary holds (Python 3.12 and later)
-_ENUM_MEMBER_KEYS = ("_value_", "_name_", "__objclass__", "_sort_order_")
+
+
+def _own_enum_member_keys() -> frozenset[str]:
+    """The keys a member of an enum holds in its own dictionary on THIS interpreter, read from a member of a
+    throw-away enum made now (a new key in a later Python version cannot make every ``Run`` read as real)."""
+    import enum
+
+    class _Probe(enum.Enum):
+        A = "a"
+
+    return frozenset(object.__getattribute__(_Probe.A, "__dict__"))
+
+
+_ENUM_MEMBER_KEYS: frozenset[str] = _own_enum_member_keys()
 _DEFAULT_FACTORIES: tuple[object, ...] = (list, dict, set, int, float, Decimal)
 
 # (module, name) -> pin taken at the first question; _SEEN names the keys that were pinned (a key that was seen
@@ -148,7 +172,7 @@ _SEEN: frozenset[tuple[str, str]] = frozenset()
 _PIN_LOCK = threading.Lock()
 
 
-def _live_class(key: tuple[str, str]) -> type | None:
+def live_class(key: tuple[str, str]) -> type | None:
     """The class the module really holds under that name now, or None (module not imported, not a plain module,
     name missing or not a class). The module's own dictionary is read, never ``getattr``."""
     module = sys.modules.get(key[0])
@@ -199,7 +223,7 @@ def _class_ok(key: tuple[str, str]) -> bool:
     """The listed class (as found now under ``key``) has not changed since it was pinned (it is pinned now when
     first seen). That ``kind`` IS this class is decided by the caller, by identity, in ``_stand_in_key``."""
     global _SEEN
-    cls = _live_class(key)
+    cls = live_class(key)
     if cls is None:
         return False
     pin = _PINNED.get(key)
@@ -221,7 +245,7 @@ def pin_module(module: str) -> None:
     for key in _PINNED_KEYS:
         if key[0] == module:
             with contextlib.suppress(Exception):
-                if _live_class(key) is not None:
+                if live_class(key) is not None:
                     _class_ok(key)
 
 
@@ -241,7 +265,7 @@ def pin_all() -> None:
     _ = (channel, injection, fake, memory)  # imported so that their classes exist to be pinned
     for key in _PINNED_KEYS:
         with contextlib.suppress(Exception):  # the lazy path pins it at the first question
-            cls = _live_class(key)
+            cls = live_class(key)
             if cls is not None:
                 _class_ok(key)
 
@@ -250,7 +274,7 @@ def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
     """True when ``obj`` is an instance of exactly the class found under ``key`` and that class is unchanged since
     it was pinned. Never raises."""
     try:
-        cls = _live_class(key)
+        cls = live_class(key)
         return cls is not None and type(obj) is cls and _class_ok(key)
     except Exception:  # noqa: BLE001 - anything unreadable is not the pinned class
         return False
@@ -289,15 +313,78 @@ def _values(container: object, limit: int) -> tuple[object, ...] | None:
     return ()
 
 
-def _classes(keys: tuple[tuple[str, str], ...]) -> tuple[type, ...]:
-    found = (_live_class(key) for key in keys)
-    return tuple(c for c in found if c is not None)
+class _Budget:
+    """The one budget of one question: ``left`` nodes for every walk (the values of the instance, the detector
+    list, the members of a list of detectors), charged at EVERY visit (a member shared a thousand times is charged a
+    thousand times), and the per-question memory of which listed classes were already compared (``ok``: a local of
+    this question, never module state, so a patch made between two questions is always seen)."""
+
+    __slots__ = ("left", "ok", "over")
+
+    def __init__(self) -> None:
+        self.left = SCAN_NODES
+        self.ok: dict[tuple[str, str], bool] = {}
+        self.over = False  # set when the budget ran out (the answer is then "real", reported as over budget)
+
+    def charge(self, nodes: int) -> bool:
+        self.left -= nodes
+        if self.left < 0:
+            self.over = True
+            return False
+        return True
+
+    def class_ok(self, key: tuple[str, str]) -> bool:
+        """``_class_ok`` once per class per question (a list of 100,000 references to one class costs one shape
+        comparison, not 100,000)."""
+        got = self.ok.get(key)
+        if got is None:
+            got = self.ok[key] = _class_ok(key)
+        return got
+
+
+def _no_instance_state(value: object, kind: type) -> bool:
+    """True when an instance of the allowlisted plain type ``kind`` carries no state outside what the scan reads:
+    the type has no instance dictionary (a builtin container or atom), or its dictionary is a plain empty ``dict``
+    (``Counter`` is pure Python and has one: ``store.stats.client = RealClient()`` would hide there). Every plain
+    type goes through this one helper, so a type added to an allowlist cannot skip it. ``kind`` is the exact
+    allowlisted type (identity was judged by the caller), so reading its ``__dictoffset__`` runs no foreign code."""
+    if kind.__dictoffset__ == 0:
+        return True
+    own = object.__getattribute__(value, "__dict__")
+    return type(own) is dict and not dict.__len__(own)
+
+
+def _data_state_ok(value: object, key: tuple[str, str]) -> bool:
+    """True when a data row (a pydantic model, or the one plain dataclass ``Card``: all its state is its ``__dict__``) keeps nothing in the slots the scan of ``__dict__`` does not read:
+    ``__pydantic_extra__`` and ``__pydantic_private__`` are None or empty, ``__pydantic_fields_set__`` is a plain
+    ``set`` of ``str``."""
+    if key in _DATACLASS_KEYS:
+        return True
+    for name in ("__pydantic_extra__", "__pydantic_private__"):
+        got = object.__getattribute__(value, name)
+        if got is not None and not (type(got) is dict and not dict.__len__(got)):
+            return False
+    fields = object.__getattribute__(value, "__pydantic_fields_set__")
+    return type(fields) is set and all(type(f) is str for f in set.__iter__(fields))
+
+
+def _read(container: object, budget: _Budget) -> tuple[object, ...] | None:
+    """``_values`` with what is left of the budget; a container bigger than that sets ``budget.over``."""
+    got = _values(container, budget.left)
+    if got is None:
+        budget.over = True
+    return got
+
+
+def _classes(keys: tuple[tuple[str, str], ...]) -> tuple[tuple[tuple[str, str], type], ...]:
+    found = ((key, live_class(key)) for key in keys)
+    return tuple((key, c) for key, c in found if c is not None)
 
 
 def _stand_in_key(kind: type) -> tuple[str, str] | None:
     """The key of the listed class that ``kind`` IS (identity), or None."""
     for key in (*_ALLOWED, _DETECTOR_LIST):
-        cls = _live_class(key)
+        cls = live_class(key)
         if cls is not None and kind is cls:
             return key
     return None
@@ -318,40 +405,54 @@ def _enum_member_ok(value: object, cls: type) -> bool:
 
 
 def _entered(
-    value: object, data: tuple[type, ...], leaf: tuple[type, ...], limit: int
+    value: object,
+    data: tuple[tuple[tuple[str, str], type], ...],
+    leaf: tuple[type, ...],
+    budget: _Budget,
 ) -> tuple[object, ...] | None:
     """What to enter inside ``value``: ``()`` for a plain atom, the values of a plain container, a data object or a
-    pinned stand-in; ``None`` when the value is not plain data (it reads as real) or is bigger than ``limit``. Every
-    class is compared by identity (``_is_one_of``)."""
+    pinned stand-in; ``None`` when the value is not plain data (it reads as real) or is bigger than what is left of
+    the budget. Every class is compared by identity (``_is_one_of``). A stand-in or a data row is charged
+    ``STAND_IN_WEIGHT`` nodes (its class is compared against its pin, once per question)."""
     kind = type(value)
     if _is_one_of(kind, _ATOM_TYPES):
-        return ()
+        return () if _no_instance_state(value, kind) else None
     if _is_one_of(kind, leaf):
         return () if _enum_member_ok(value, kind) else None
-    if _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter:
-        return _values(value, limit)
+    plain = _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter
     if kind is defaultdict:
         factory = value.default_factory  # type: ignore[attr-defined]
-        return _values(value, limit) if any(factory is f for f in _DEFAULT_FACTORIES) else None
-    if _is_one_of(kind, data):
-        return _values(object.__getattribute__(value, "__dict__"), limit)
+        plain = any(factory is f for f in _DEFAULT_FACTORIES)
+        if not plain:
+            return None
+    if plain:
+        return _read(value, budget) if _no_instance_state(value, kind) else None
+    for key, cls in data:
+        if kind is cls:
+            if not (
+                budget.charge(STAND_IN_WEIGHT)
+                and budget.class_ok(key)
+                and _data_state_ok(value, key)
+            ):
+                return None
+            return _read(object.__getattribute__(value, "__dict__"), budget)
     key = _stand_in_key(kind)
-    if key is not None and _class_ok(key):
-        return _values(object.__getattribute__(value, "__dict__"), limit)
+    if key is not None:
+        if not (budget.charge(STAND_IN_WEIGHT) and budget.class_ok(key)):
+            return None
+        return _read(object.__getattribute__(value, "__dict__"), budget)
     return None
 
 
-def _holds_real(own: object) -> bool:
+def _holds_real(own: object, budget: _Budget) -> bool:
     """True when the values of ``own`` (an instance dict) are not all plain data (see the module text), or when
-    a container left unexplored after ``SCAN_DEPTH_VALUES`` levels holds anything but plain atoms, or when more
-    than ``SCAN_NODES`` values would be read. The instance's own dictionary is level 1. A container is charged
-    (its size) each time it is entered, before it is copied."""
-    budget = SCAN_NODES
-    data, leaf = _classes(_DATA_CLASSES), _classes(_LEAF_CLASSES)
-    first = _values(own, budget)
-    if first is None:
+    a container left unexplored after ``SCAN_DEPTH_VALUES`` levels holds anything but plain atoms, or when the
+    budget runs out. The instance's own dictionary is level 1. A container is charged (its size) each time it is
+    entered, before it is copied."""
+    data, leaf = _classes(_DATA_CLASSES), tuple(c for _, c in _classes(_LEAF_CLASSES))
+    first = _read(own, budget)
+    if first is None or not budget.charge(len(first)):
         return True
-    budget -= len(first)
     level: list[tuple[object, ...]] = [first]
     for _ in range(SCAN_DEPTH_VALUES):
         nxt: list[tuple[object, ...]] = []
@@ -359,8 +460,10 @@ def _holds_real(own: object) -> bool:
             for value in values:
                 inner = _entered(value, data, leaf, budget)
                 if inner is None:
+                    # None is "not plain" or "bigger than what is left": the second is the over-budget outage
                     return True
-                budget -= len(inner)
+                if not budget.charge(len(inner)):
+                    return True
                 if inner:
                     nxt.append(inner)
         level = nxt
@@ -368,38 +471,50 @@ def _holds_real(own: object) -> bool:
     return any(not _is_one_of(type(v), _ATOM_TYPES) for values in level for v in values)
 
 
-def _instance_ok(obj: object) -> bool:
+def _instance_ok(obj: object, budget: _Budget) -> bool:
     # no instance dictionary is an error here, and an error reads as "not a stand-in"
-    return not _holds_real(object.__getattribute__(obj, "__dict__"))
+    return not _holds_real(object.__getattribute__(obj, "__dict__"), budget)
 
 
-def _check(obj: object, depth: int, seen: frozenset[int]) -> bool:
+def _check(obj: object, depth: int, seen: frozenset[int], budget: _Budget) -> bool:
     kind = type(obj)
     key = _stand_in_key(kind)
     if key is None:
         return False
+    if not budget.charge(STAND_IN_WEIGHT):  # every visit is charged, a shared member at each visit
+        return False
     if key != _DETECTOR_LIST:
-        return _class_ok(key) and _instance_ok(obj)
+        return budget.class_ok(key) and _instance_ok(obj, budget)
     if depth >= SCAN_DEPTH or id(obj) in seen:
         return False
-    if not (_class_ok(_DETECTOR_LIST) and _instance_ok(obj)):
+    if not (budget.class_ok(_DETECTOR_LIST) and _instance_ok(obj, budget)):
         return False
     members = dict.get(object.__getattribute__(obj, "__dict__"), "detectors")
     if type(members) is not tuple:
         return False
-    return all(_check(m, depth + 1, seen | {id(obj)}) for m in tuple.__iter__(members))
+    inner = seen | {id(obj)}
+    return all(_check(m, depth + 1, inner, budget) for m in tuple.__iter__(members))
+
+
+def verdict(obj: object) -> str:
+    """``VERDICT_STAND_IN``, ``VERDICT_REAL`` or ``VERDICT_OVER_BUDGET`` (the structure is bigger than
+    ``SCAN_NODES``: read as real, and named apart so a person sees the outage is size, not a service). Never raises."""
+    budget = _Budget()
+    try:
+        if _check(obj, 0, frozenset(), budget):
+            return VERDICT_STAND_IN
+    except Exception:  # noqa: BLE001 - anything unreadable is not a stand-in (fail closed)
+        return VERDICT_REAL
+    return VERDICT_OVER_BUDGET if budget.over else VERDICT_REAL
 
 
 def is_stand_in(obj: object) -> bool:
     """True only for an instance of one of the core's own stand-in classes, or of a detector list (``AnyOf``)
     whose members all are (see the module text for everything that is checked). Never raises."""
-    try:
-        return _check(obj, 0, frozenset())
-    except Exception:  # noqa: BLE001 - anything unreadable is not a stand-in (fail closed)
-        return False
+    return verdict(obj) == VERDICT_STAND_IN
 
 
 def registered() -> frozenset[type]:
     """The five stand-in classes as they are found now (a class whose module is not imported is left out)."""
-    found = (_live_class(key) for key in _ALLOWED)
+    found = (live_class(key) for key in _ALLOWED)
     return frozenset(c for c in found if c is not None)

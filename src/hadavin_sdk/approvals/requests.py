@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable, Mapping
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from types import FunctionType, MappingProxyType
 from typing import Any
 
+from hadavin_sdk import standins
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
 from hadavin_sdk.bindguard import config_services, held_services_found
@@ -33,8 +34,10 @@ RESEND_AFTER = timedelta(seconds=60)  # more than 2x a channel call's timeout
 
 def make_on_decided(holder: dict[str, Any]) -> OnDecided:
     """The one ``on_decided`` function the core builds (``build()`` uses it): it hands a recorded decision to the
-    runtime kept in ``holder["rt"]``. The bind guard recognises it by its code and its closure (one cell, a plain
-    dict); any other callable given as ``on_decided`` can close over anything, so it is counted as held."""
+    runtime kept in ``holder["rt"]``. The bind guard recognises it by its code, its closure (one cell, a plain dict)
+    AND what the dict holds (see ``_holder_ok``): the factory is public, so a function made by it is believed only
+    while its holder is empty or holds the core's own runtime; any other callable, or a holder with anything else
+    in it, can reach anything, so it is counted as held."""
 
     def on_decided(run_id: str, status: str, decision: ApprovalDecision | None) -> object:
         return holder["rt"].on_decided(run_id, status, decision)
@@ -43,14 +46,87 @@ def make_on_decided(holder: dict[str, Any]) -> OnDecided:
 
 
 _ON_DECIDED_CODE = make_on_decided({}).__code__
+_RUNTIME_KEY = ("hadavin_sdk.runtime.agent_loop", "Runtime")
+_RUNTIME_PIN: list[type] = []  # the core runtime class, taken the first time it is seen loaded
+
+
+def _core_runtime_class() -> type | None:
+    """The core's ``Runtime`` class, found in its module's own dictionary (never ``getattr``) and kept the first
+    time it is seen: a class put under that name later is not it. None while its module is not loaded."""
+    if _RUNTIME_PIN:
+        return _RUNTIME_PIN[0]
+    found = standins.live_class(_RUNTIME_KEY)
+    if found is not None:
+        _RUNTIME_PIN.append(found)
+    return found
+
+
+def _holder_ok(holder: object) -> bool:
+    """True only for a plain ``dict`` that is empty, or whose one key is the text ``rt`` and whose value is an
+    instance of exactly the core's runtime class (identity, never ``isinstance`` or ``==``)."""
+    if type(holder) is not dict:
+        return False
+    size = dict.__len__(holder)
+    if size == 0:
+        return True
+    if size != 1:
+        return False
+    (key,) = dict.keys(holder)
+    if type(key) is not str or key != "rt":
+        return False
+    cls = _core_runtime_class()
+    return cls is not None and type(dict.get(holder, "rt")) is cls
+
+
+def _one_cell(func: object, code: object) -> object | None:
+    """The one closure cell's content of a function made from ``code`` (identity of the code), else the marker
+    ``_NONE``. Never raises (an empty cell is a ``ValueError``)."""
+    try:
+        if type(func) is not FunctionType or func.__code__ is not code:
+            return _NONE
+        cells = func.__closure__
+        if cells is None or len(cells) != 1:
+            return _NONE
+        return cells[0].cell_contents
+    except Exception:  # noqa: BLE001 - anything unreadable is not the core's function
+        return _NONE
+
+
+_NONE = object()
 
 
 def _is_core_on_decided(func: object) -> bool:
-    """True only for a function made by ``make_on_decided`` (identity of its code; its closure is one plain dict)."""
-    if type(func) is not FunctionType or func.__code__ is not _ON_DECIDED_CODE:
-        return False
-    cells = func.__closure__
-    return cells is not None and len(cells) == 1 and type(cells[0].cell_contents) is dict
+    """True only for a function made by ``make_on_decided`` (identity of its code) whose holder is judged by
+    ``_holder_ok``."""
+    return _holder_ok(_one_cell(func, _ON_DECIDED_CODE))
+
+
+def fixed_clock(moment: datetime) -> Callable[[], datetime]:
+    """A clock that always answers ``moment`` (tests move time with it). The bind guard recognises it by its code
+    and its closure (one cell, an exact ``datetime``), so a test can use a fake clock and still be served."""
+
+    def clock() -> datetime:
+        return moment
+
+    return clock
+
+
+_EPOCH = datetime(2000, 1, 1, tzinfo=UTC)  # only to make the factory's code object
+_FIXED_CLOCK_CODE = fixed_clock(_EPOCH).__code__
+
+
+def _is_core_clock(func: object) -> bool:
+    """True only for ``models.now`` or a clock made by ``fixed_clock`` (exact ``datetime`` inside). Any other
+    callable is run before the signature is checked (``receive``) and can hold anything, so it is counted."""
+    if func is now:
+        return True
+    return type(_one_cell(func, _FIXED_CLOCK_CODE)) is datetime
+
+
+# Only ``app.build`` holds this: an ``Approvals`` made with it counts as built by ``build()`` (its audit sink and
+# registry are not named as held). Python cannot hide a module name from code in the same process; the point is that
+# the claim is no longer a plain argument value (``overrides={}``) that any caller can write.
+_BUILD_TOKEN = object()
 
 
 WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approving. "
@@ -118,6 +194,8 @@ class Approvals:
         detector: Detector | None = None,
         config: Config | None = None,
         overrides: Mapping[str, object] | None = None,
+        *,
+        _built_by: object = None,
     ) -> None:
         self._store, self._audit_sink, self._registry, self._channel = (
             store,
@@ -134,9 +212,8 @@ class Approvals:
         self._config = config
         self._overrides = MappingProxyType(dict(overrides or {}))
         self._config_facts = config_services(config) if config is not None else ()
-        self._hand_built = (
-            overrides is None
-        )  # ``build()`` always passes its overrides (possibly none)
+        # only ``build()`` holds the token: an object made with ``overrides={}`` from outside is hand-built
+        self._hand_built = _built_by is not _BUILD_TOKEN
 
     @property
     def store(self) -> Store:
@@ -169,7 +246,7 @@ class Approvals:
     @clock.setter
     def clock(
         self, value: Callable[[], datetime]
-    ) -> None:  # tests move time; the bind guard does not read it
+    ) -> None:  # tests move time; the bind guard judges the clock it holds at every question
         object.__setattr__(self, "_clock", value)
 
     def __setattr__(self, name: str, value: object) -> None:
@@ -211,7 +288,8 @@ class Approvals:
         channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
         counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
         also name their audit sink and registry: nothing says those are stand-ins. ``on_decided`` is named unless it
-        is the function ``make_on_decided`` builds (``clock`` is still not read: see the CHANGELOG)."""
+        is the function ``make_on_decided`` builds with an empty holder or the core runtime in it, and ``clock`` is named
+        unless it is ``models.now`` or a ``fixed_clock``."""
         # read through the same accessors the runtime uses (``self.channel`` and so on), never through the private
         # slots: a replaced accessor and the slot behind it cannot give two answers
         held: dict[str, object] = dict(self.overrides)
@@ -219,7 +297,7 @@ class Approvals:
         for name, obj in live.items():
             # a given object and a different one now in its place are both counted (neither hides the other)
             if name in held and held[name] is not obj:
-                held[f"{name} (given to build)"] = held[name]
+                held[f"{name}_given_to_build"] = held[name]
             held[name] = obj
         if self._hand_built:
             held["audit"], held["registry"] = self.audit, self.registry
@@ -227,6 +305,8 @@ class Approvals:
             self.on_decided
         ):  # a callable run after a valid signature can hold anything
             held["on_decided"] = self.on_decided
+        if not _is_core_clock(self.clock):  # ``receive`` runs it before the signature is checked
+            held["clock"] = self.clock
         return held
 
     def real_now(self) -> tuple[str, ...]:

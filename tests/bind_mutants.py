@@ -617,7 +617,7 @@ M = [
     mutant(
         "B62 an override hidden by the object now in its place",
         RQ,
-        '                held[f"{name} (given to build)"] = held[name]',
+        '                held[f"{name}_given_to_build"] = held[name]',
         "                pass",
         T_BG,
         "test_an_override_and_a_different_object_now_in_its_place_are_both_counted",

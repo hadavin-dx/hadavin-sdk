@@ -21,7 +21,7 @@ from hadavin_sdk.actions.executor import Executor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.approvals import Approvals, Channel
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.requests import make_on_decided, summary
+from hadavin_sdk.approvals.requests import _BUILD_TOKEN, make_on_decided, summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
@@ -197,6 +197,7 @@ def build(
         summary_detector,
         config=cfg,
         overrides=overrides,
+        _built_by=_BUILD_TOKEN,
     )
 
     def post_card(card: Card) -> Delivery:

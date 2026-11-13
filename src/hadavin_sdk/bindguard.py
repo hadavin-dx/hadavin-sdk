@@ -45,7 +45,7 @@ from hadavin_sdk.netguard import (
     is_loopback_literal,
     parse_ip_literal,
 )
-from hadavin_sdk.standins import is_stand_in
+from hadavin_sdk.standins import VERDICT_OVER_BUDGET, VERDICT_STAND_IN, verdict
 
 _LOG = logging.getLogger("hadavin_sdk.bindguard")
 
@@ -71,7 +71,7 @@ def is_stand_in_object(obj: object) -> bool:
     """True only for an object whose exact class is one of the core's own stand-ins (looked up by module and
     name, pinned, instance scanned: see ``hadavin_sdk.standins``), or a detector list (``AnyOf``) whose entries all
     are. Anything else, including a subclass or a class of the same name, is real. Never raises."""
-    return is_stand_in(obj)
+    return verdict(obj) == VERDICT_STAND_IN
 
 
 def config_services(config: Config) -> tuple[str, ...]:
@@ -90,7 +90,7 @@ def config_services(config: Config) -> tuple[str, ...]:
       reach the outside, and an entry that cannot be read as a host counts too (fail closed)."""
     stand_ins = stand_in_kinds()
     found = [
-        f"backends.{cap}: {s.kind}"
+        f"backends.{cap}: {_word_or_unreadable(s.kind)}"
         for cap, s in config.backends.entries()
         if (cap, s.kind) not in stand_ins
     ]
@@ -102,10 +102,10 @@ def config_services(config: Config) -> tuple[str, ...]:
             and is_loopback_literal(parts.hostname)
         )
         if not local:
-            found.append(f"system {name}")
-    found += [f"source {name}" for name in config.sources]
-    found += [f"tools:{module}" for module in config.tool_modules]
-    found += [f"checks:{module}" for module in config.check_modules]
+            found.append(f"system {_name_or_unreadable(name)}")
+    found += [f"source {_name_or_unreadable(name)}" for name in config.sources]
+    found += [f"tools:{_name_or_unreadable(module)}" for module in config.tool_modules]
+    found += [f"checks:{_name_or_unreadable(module)}" for module in config.check_modules]
     found += [
         f"egress {_shown(host)}"
         for host in sorted(config.egress_hosts)
@@ -147,9 +147,15 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
                 if counted_if_not_empty
                 else f"held {name}: {_word_or_unreadable(type(obj).__name__)}"
             )
-            counts = (
-                not _is_empty_mapping(obj) if counted_if_not_empty else not is_stand_in_object(obj)
-            )
+            if counted_if_not_empty:
+                counts = not _is_empty_mapping(obj)
+            else:
+                answer = verdict(obj)
+                counts = answer != VERDICT_STAND_IN
+                if (
+                    answer == VERDICT_OVER_BUDGET
+                ):  # a size outage, named apart from "a real service"
+                    label = f"held {name}: over budget (too many values to check)"
         except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in
             label, counts = "held (unreadable)", True  # a fixed label: the object is hostile
         if counts:
@@ -181,17 +187,29 @@ def _shown(bind: object) -> str:
     return bind if len(bind) <= limit else bind[:limit] + "..."
 
 
-_WORD_MAX_CHARS = 40  # a name of a held object or of its class, as written in a refusal line
-
-
 def _is_plain_word(text: object) -> bool:
-    """True for exact text that is printable and at most ``_WORD_MAX_CHARS`` characters: the only text of a held
-    object's key that is written to a refusal line (anything else gets a fixed label, so no hostile text is logged)."""
-    return type(text) is str and text.isprintable() and len(text) <= _WORD_MAX_CHARS
+    """True for exact text that is a Python identifier of at most ``BIND_WORD_MAX_CHARS`` characters: the only text of
+    a held object's key or class name that is written to a refusal line (anything else gets a fixed label, so no
+    hostile text, and no text that reads like another part of the line, such as ``channel: FakeChannel``, is
+    logged)."""
+    return type(text) is str and text.isidentifier() and len(text) <= defaults.BIND_WORD_MAX_CHARS
 
 
 def _word_or_unreadable(text: object) -> str:
     return text if _is_plain_word(text) else "(unreadable)"  # type: ignore[return-value]
+
+
+def _is_plain_name(text: object) -> bool:
+    """The second explicit rule, for names an operator wrote in the config (a system or source name, a module name):
+    parts split at ``.`` or ``-`` are each an identifier or a number, at most ``BIND_WORD_MAX_CHARS`` characters
+    (no space, colon or other punctuation, so a name cannot imitate the structure of the line)."""
+    if not (type(text) is str and 0 < len(text) <= defaults.BIND_WORD_MAX_CHARS):
+        return False
+    return all(part.isidentifier() or part.isdigit() for part in text.replace("-", ".").split("."))
+
+
+def _name_or_unreadable(text: object) -> str:
+    return text if _is_plain_name(text) else "(unreadable)"  # type: ignore[return-value]
 
 
 def reason_problem(reason: object) -> str | None:

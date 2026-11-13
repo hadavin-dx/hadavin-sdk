@@ -25,7 +25,7 @@ from hadavin_sdk import bindguard, netguard
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals import Approvals, FakeChannel
 from hadavin_sdk.approvals.receiver import PATH, serve
-from hadavin_sdk.approvals.requests import make_on_decided
+from hadavin_sdk.approvals.requests import _BUILD_TOKEN, make_on_decided
 from hadavin_sdk.backends.table import DEMO_ONLY, IN_PROCESS, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.bindguard import (
     BindRefused,
@@ -584,6 +584,7 @@ def _Approvals(config: Config | None, held: dict[str, object] | None = None) -> 
         make_on_decided({}),
         config=config,
         overrides=held if held is not None or config is None else {},
+        _built_by=_BUILD_TOKEN if config is not None else None,
     )
 
 
@@ -694,6 +695,7 @@ class _Built:
             detector=built.detector,
             config=self.config,
             overrides=built.overrides,
+            _built_by=_BUILD_TOKEN,
         )
 
 
@@ -772,6 +774,7 @@ def _by_hand(app: object, channel: object, **extra: object) -> Approvals:
         app.registry,  # type: ignore[attr-defined]
         channel,  # type: ignore[arg-type]
         make_on_decided({}),
+        _built_by=_BUILD_TOKEN,
         **extra,  # type: ignore[arg-type]
     )
 
@@ -1525,7 +1528,7 @@ def test_an_override_and_a_different_object_now_in_its_place_are_both_counted(
     app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-given"))
     a = app.approvals  # type: ignore[attr-defined]
     object.__setattr__(a, "_channel", FakeChannel("sig" + "-b4-now"))
-    assert "held channel (given to build): _RealChannel" in real_services(
+    assert "held channel_given_to_build: _RealChannel" in real_services(
         app.config, a.held_services()
     ), (  # type: ignore[attr-defined]
         "an overridden object was hidden by the object now in its place"
@@ -2535,7 +2538,7 @@ def test_the_seven_pinned_classes_hold_no_class_level_mutable_value() -> None:
 
     from hadavin_sdk import standins
 
-    classes = [standins._live_class(key) for key in standins._PINNED_KEYS]
+    classes = [standins.live_class(key) for key in standins._PINNED_KEYS]
     assert all(classes) and len(classes) == 7
     for cls in classes:
         for base in cls.__mro__:  # type: ignore[union-attr]
@@ -3189,7 +3192,7 @@ def test_every_plain_data_class_keeps_all_its_state_in_the_instance_dictionary()
     from hadavin_sdk import standins
 
     for key in standins._DATA_CLASSES:
-        cls = standins._live_class(key)
+        cls = standins.live_class(key)
         assert cls is not None, key
         assert all(
             "__slots__" not in vars(base)
@@ -3288,6 +3291,7 @@ def _approvals_with(app: object, on_decided: object) -> Approvals:
         detector=built.detector,
         config=app.config,  # type: ignore[attr-defined]
         overrides=built.overrides,
+        _built_by=_BUILD_TOKEN,
     )
 
 
