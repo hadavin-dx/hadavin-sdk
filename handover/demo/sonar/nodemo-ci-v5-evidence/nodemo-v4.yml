@@ -1,0 +1,207 @@
+# Client-copy check: the same repository with the demo_only/ folder deleted, as a client copy is cut. Deleting demo_only/ must
+# leave the build and the tests green; nothing else in CI runs without it (lint.yml and sonar.yml set DPLD_REQUIRE_DEMO=1).
+# Rules for this file are those of lint.yml: every Action pinned to a full commit SHA, read-only permissions, no secrets,
+# GitHub-hosted runner, no pull request text inside a run: step, versions and URLs through env:.
+name: no-demo
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  no-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60  # same as lint.yml until the first real run shows the duration
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      # same checksum as in lint.yml (SHA-256 of gitleaks_8.30.1_linux_x64.tar.gz from the release's checksums file)
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+      # The run must really execute the tests. Every chunk of the last step is a separate pytest run that writes its own
+      # result file (--junitxml); the job reads the counts from those files and never from the text pytest prints, so a test
+      # that prints a fake summary, calls os._exit(0) or deletes a log cannot make it green: a chunk whose process died or
+      # was stopped early leaves no valid result file and the job is red. Checks, in the order they run:
+      #  1. every chunk: pytest exit code 0, a valid result file, 0 failures, 0 errors, and the file's own numbers agree
+      #     with the test cases listed in it;
+      #  2. passed + skipped + xfailed summed over the 9 chunks equals the number of tests `pytest --collect-only` finds
+      #     for the same files (an expected failure, "xfail", is a skip in the junit file with its own type: it is counted
+      #     separately, neither as passed nor against the skip budget);
+      #  3. skips. A skip whose reason names demo_only (a test file that conftest.py replaces by one placeholder, a test that
+      #     reaches the folder at run time, the named rows of test_except_clause_hierarchy.py) is expected here, because the
+      #     folder is gone; any other skip is not. MAX_UNEXPLAINED_SKIPPED limits the others (measured: 0 on
+      #     both stacks, so 2 is the margin for a platform or Python difference on the runner).
+      #  4. a floor that does not depend on which optional patch is in the stack. How many test files import `support` (and so
+      #     become one placeholder skip each) differs with the stack: tests/test_hygiene.py and tests/test_no_placeholders.py
+      #     are real tests when nodemo-optional-hygiene-repo is applied and placeholders when it is not (16 tests of
+      #     about a thousand on this stack, more on a stack with a bigger test_hygiene.py). So the floor is a share of what pytest collects: passed must be at least MIN_PASSED_PERCENT
+      #     percent of collected (rounded up). Measured 2026-11-13, Python 3.12 locally, the no-demo copy:
+      #       shipped stack (P1 v3.2, P2 v2.1, nodemo-fix-v3, isort):    880 passed, 83 skipped, 963 collected (91.4 % passed)
+      #       with nodemo-optional-hygiene-repo-v4 on top:               898 passed, 81 skipped, 979 collected (91.7 % passed)
+      #     MIN_PASSED_PERCENT sits 6 points under the lower of the two shares. Skips are 1 minus that share, so one
+      #     number bounds both. If a change moves the share (it adds test files that need the demo, or removes tests), the
+      #     failure message says which number to edit, and that is the only edit: no absolute test count lives in this file.
+      MIN_PASSED_PERCENT: "85"
+      MAX_UNEXPLAINED_SKIPPED: "2"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0 (same pin as lint.yml)
+        with:
+          python-version: "3.12"
+
+      - name: Install gitleaks (release binary, checksum checked)
+        run: |
+          curl --proto '=https' --proto-redir '=https' --tlsv1.2 -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check -
+          mkdir "${RUNNER_TEMP}/gitleaks"
+          tar -xzf gitleaks.tar.gz -C "${RUNNER_TEMP}/gitleaks" gitleaks
+          rm gitleaks.tar.gz
+
+      - name: Install the pinned dev tools (hashes are checked)
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
+
+      - name: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
+        run: |
+          git rm -r -q demo_only
+          if [[ -e demo_only ]]; then echo "demo_only/ is still there"; exit 1; fi
+
+      - name: Ruff (lint and format) without demo_only/
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Tests without demo_only/ (9 chunks, one pytest at a time; counts read from each chunk's junit file)
+        env:
+          GITLEAKS_BIN: ${{ runner.temp }}/gitleaks/gitleaks
+          DPLD_REQUIRE_SCAN: "1"
+          # DPLD_REQUIRE_DEMO is deliberately NOT set: it would stop the run because the folder is gone
+        # No `shell:` key: GitHub runs this as `bash -e {0}`, WITHOUT pipefail. The pytest exit code is therefore taken
+        # from PIPESTATUS right after each pipe to tee, never from the pipe's own status.
+        run: |
+          out="${RUNNER_TEMP}/nodemo"
+          rm -rf "$out"
+          mkdir "$out"
+          # The test files pytest would collect under tests/ (python_files = test_*.py and *_test.py, any depth), from git so
+          # that an untracked cache file never counts. -z and core.quotepath=off keep names with non-ASCII bytes intact.
+          mapfile -d '' -t tracked < <(git -c core.quotepath=off ls-files -z -- tests)
+          files=()
+          for f in "${tracked[@]}"; do
+            name="${f##*/}"
+            if [[ "$name" == test_*.py || "$name" == *_test.py ]]; then files+=("$f"); fi
+          done
+          if [[ "${#files[@]}" -lt 9 ]]; then echo "too few test files found: ${#files[@]}"; exit 1; fi
+          # how many tests exist in this copy: pytest's own count for the files below, and for the whole tests/ folder
+          # (the two must agree, so no collectable file is left out of the chunks)
+          count_collected() {
+            python -u -m pytest --collect-only -q -p no:cacheprovider "$@" | tee "${out}/collect.txt"
+            rc=${PIPESTATUS[0]}
+            if [[ "$rc" -ne 0 ]]; then echo "collecting the tests failed with exit code ${rc}"; exit 1; fi
+            n=$(sed -nE 's/^([0-9]+) tests? collected in [0-9.]+s.*$/\1/p' "${out}/collect.txt" | tail -n 1)
+            if [[ -z "$n" ]]; then echo "no 'N tests collected' line from pytest (does addopts or a plugin change the output?)"; exit 1; fi
+          }
+          count_collected "${files[@]}"
+          collected="$n"
+          count_collected tests
+          if [[ "$n" -ne "$collected" ]]; then
+            echo "pytest collects ${n} tests under tests/ but only ${collected} from the ${#files[@]} files this job runs"
+            exit 1
+          fi
+          : > "${out}/exit-codes.txt"
+          for i in 0 1 2 3 4 5 6 7 8; do
+            chunk=()
+            for ((j = i; j < ${#files[@]}; j += 9)); do chunk+=("${files[j]}"); done
+            echo "== chunk ${i}: ${#chunk[@]} files"
+            python -u -m pytest -q -p no:cacheprovider --junitxml="${out}/chunk-${i}.xml" -o junit_family=xunit2 "${chunk[@]}" | tee "${out}/chunk-${i}.log"
+            rc=${PIPESTATUS[0]}
+            echo "${i} ${rc}" >> "${out}/exit-codes.txt"
+          done
+          python - "$out" "${MIN_PASSED_PERCENT}" "${MAX_UNEXPLAINED_SKIPPED}" "${collected}" <<'PY'
+          import re
+          import sys
+          import xml.etree.ElementTree as ET  # the files are written by the pytest of this job, nothing from outside
+
+          out, min_percent, max_other, collected = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+          CHUNKS = 9
+          EDIT = "edit MIN_PASSED_PERCENT / MAX_UNEXPLAINED_SKIPPED in the env: block of .github/workflows/nodemo.yml"
+
+
+          def red(message: str) -> None:
+              sys.exit(f"RED: {message}")
+
+
+          codes = {}
+          for line in open(f"{out}/exit-codes.txt", encoding="utf-8").read().splitlines():
+              m = re.fullmatch(r"([0-9]+) (-?[0-9]+)", line)
+              if not m:
+                  red(f"malformed exit-code line {line!r}")
+              codes[int(m.group(1))] = int(m.group(2))
+          if sorted(codes) != list(range(CHUNKS)):
+              red(f"exit codes for chunks {sorted(codes)}, expected 0..{CHUNKS - 1}")
+
+          passed = failed = skipped = xfailed = 0
+          unexplained: list[str] = []
+          placeholders = 0
+          for n in range(CHUNKS):
+              if codes[n] != 0:
+                  red(f"chunk {n}: pytest exit code {codes[n]} (see chunk-{n}.log in the step output above)")
+              try:
+                  root = ET.parse(f"{out}/chunk-{n}.xml").getroot()
+              except (OSError, ET.ParseError) as error:
+                  red(f"chunk {n}: no valid junit result file ({error}): pytest was killed, stopped early or the file was removed")
+              suites = [root] if root.tag == "testsuite" else root.findall("testsuite")
+              if len(suites) != 1:
+                  red(f"chunk {n}: {len(suites)} testsuite elements in the junit file, expected 1")
+              suite = suites[0]
+              try:
+                  tests, bad_f, bad_e, skips = (int(suite.attrib[k]) for k in ("tests", "failures", "errors", "skipped"))
+              except (KeyError, ValueError) as error:
+                  red(f"chunk {n}: junit testsuite without usable counts ({error!r})")
+              cases = suite.findall("testcase")
+              chunk_xfail = chunk_skip = 0
+              for case in cases:
+                  skip = case.find("skipped")
+                  if skip is None:
+                      continue
+                  if skip.get("type") == "pytest.xfail":
+                      chunk_xfail += 1
+                      continue
+                  chunk_skip += 1
+                  placeholders += case.get("name") == "needs-demo-only"
+                  reason = skip.get("message") or ""
+                  if "demo_only" not in reason:
+                      unexplained.append(f"{case.get('classname')}::{case.get('name')}: {reason}")
+              if len(cases) != tests or chunk_skip + chunk_xfail != skips:
+                  red(f"chunk {n}: the junit file's counts disagree with its own test cases (tests={tests} cases={len(cases)} skipped={skips} listed={chunk_skip + chunk_xfail})")
+              passed += tests - skips - bad_f - bad_e
+              failed += bad_f + bad_e
+              skipped += chunk_skip
+              xfailed += chunk_xfail
+          floor = -(-collected * min_percent // 100)
+          print(
+              "TOTAL (no demo_only/):", {"passed": passed, "failed": failed, "skipped": skipped, "xfailed": xfailed},
+              "collected:", collected, "| placeholder files:", placeholders,
+              "| unexplained skips:", len(unexplained), "of", max_other,
+              f"| floor: {floor} ({min_percent}% of collected) | passed share: {100 * passed / max(collected, 1):.1f}%",
+          )
+          if failed:
+              red("tests failed in the no-demo copy")
+          if passed + skipped + xfailed != collected:
+              red(f"{passed + skipped + xfailed} tests reported but {collected} collected: a chunk lost tests")
+          if len(unexplained) > max_other:
+              listing = "; ".join(unexplained[:5])
+              red(f"{len(unexplained)} skips that do not name demo_only, the limit is {max_other}: {listing}. If these skips are intended, {EDIT}")
+          if passed < floor:
+              red(
+                  f"only {passed} of {collected} tests passed, the floor is {floor} ({min_percent}%): tests are being skipped that should run. "
+                  f"A test file that imports `support`/`demo_only` or has a test with an `env` argument becomes ONE placeholder skip "
+                  f"(conftest.py _NEEDS_DEMO), and a PR that removes many tests lowers the share. If that is intended, {EDIT}"
+              )
+          PY

@@ -1,0 +1,52 @@
+biggest 54 test_real_check_dry.py
+### [H] import-support-biggest: TOTAL (no demo_only/): {'passed': 823, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 904 | test files: 89 run for real: 15 (floor 14 ) placeholders: 74 became: 1 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 769 (85% of collected) | passed share: 91.0% || RESULT RED || RED: 1 test files ran for real on the base branch and are only a placeholder skip now (the limit is 0): tests/test_real_check_dry.py. A file with `import support`/`demo_only` or a test with an `env` argument becomes ONE placeholder skip (conftest.py _NEEDS_DEMO) and none of its tests runs in a client copy. If the file really needs the demo, edit MIN_PASSED_PERCENT / MIN_REAL_TEST_FILES / MAX_BECAME_PLACEHOLDER_FILES / MAX_UNEXPLAINED_SKIPPED / MAX_ENV_SKIPPED in the env: block of .github/workflows/nodemo.yml
+converted approx 78
+### [H] placeholder-convert-60: TOTAL (no demo_only/): {'passed': 469, 'failed': 0, 'skipped': 82, 'xfailed': 0} collected: 551 | test files: 89 run for real: 14 (floor 14 ) placeholders: 75 became: 2 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 469 (85% of collected) | passed share: 85.1% || RESULT RED || RED: 2 test files ran for real on the base branch and are only a placeholder skip now (the limit is 0): tests/test_env_numbers.py, tests/test_real_check_dry.py. A file with `import support`/`demo_only` or a test with an `env` argument becomes ONE placeholder skip (conftest.py _NEEDS_DEMO) and none of its tests runs in a client copy. If the file really needs the demo, edit MIN_PASSED_PERCENT / MIN_REAL_TEST_FILES / MAX_BECAME_PLACEHOLDER_FILES / MAX_UNEXPLAINED_SKIPPED / MAX_ENV_SKIPPED in the env: block of .github/workflows/nodemo.yml
+### [H] module-importorskip: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 87, 'xfailed': 0} collected: 974 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 1 of 3 | floor: 828 (85% of collected) | passed share: 91.2% || RESULT GREEN
+### [H] module-skip-allow: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 87, 'xfailed': 0} collected: 974 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 1 of 3 | floor: 828 (85% of collected) | passed share: 91.2% || RESULT GREEN
+biggest 54 test_real_check_dry.py
+### [H] collect_ignore-biggest-nodemo-file: pytest finds 903 tests when it is given tests/ and 974 when it is given the 89 test files this job runs. || Test files with tests found only under tests/ (they would not run here): none || Test files with tests found only from the file list: tests/test_real_check_dry.py || RESULT RED
+### [H] python_files-extended: pytest finds 975 tests when it is given tests/ and 974 when it is given the 89 test files this job runs. || Test files with tests found only under tests/ (they would not run here): tests/check_x.py || Test files with tests found only from the file list: none || RESULT RED
+### [H] skip-3: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 89, 'xfailed': 0} collected: 977 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 3 of 3 | floor: 831 (85% of collected) | passed share: 90.9% || RESULT GREEN
+### [H] skip-4: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 90, 'xfailed': 0} collected: 978 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 4 of 3 | floor: 832 (85% of collected) | passed share: 90.8% || RESULT RED || RED: 4 skips that are not expected here, the limit is 3: tests.test_zz_sk::test_0: flaky on ci; tests.test_zz_sk::test_1: flaky on ci; tests.test_zz_sk::test_2: flaky on ci; tests.test_zz_sk::test_3: flaky on ci. If these skips are intended, edit MIN_PASSED_PERCENT / MIN_REAL_TEST_FILES / MAX_BECAME_PLACEHOLDER_FILES / MAX_UNEXPLAINED_SKIPPED / MAX_ENV_SKIPPED in the env: block of .github/workflows/nodemo.yml
+### [H] env-skip-reasons: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 88, 'xfailed': 0} collected: 976 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 2 of 6 | unexplained skips: 0 of 3 | floor: 830 (85% of collected) | passed share: 91.0% || RESULT GREEN
+### [H] env-skip-7: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 93, 'xfailed': 0} collected: 981 | test files: 90 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 7 of 6 | unexplained skips: 0 of 3 | floor: 834 (85% of collected) | passed share: 90.5% || RESULT RED || RED: 7 skips for environment reasons, the limit is 6; the known reasons are in ENV_SKIPS of the script. If that is intended, edit MIN_PASSED_PERCENT / MIN_REAL_TEST_FILES / MAX_BECAME_PLACEHOLDER_FILES / MAX_UNEXPLAINED_SKIPPED / MAX_ENV_SKIPPED in the env: block of .github/workflows/nodemo.yml
+error: the following file has changes staged in the index:
+    tests/test_sonar_p2_feed_optional.py
+(use --cached to keep the file, or -f to force removal)
+Traceback (most recent call last):
+  File "/tmp/work/nd5/drv/mycases.py", line 52, in <module>
+    main(stack, sys.argv[3:], dict({"NORUFF": "1"}, **({"GITHUB_BASE_REF": "base"} if mode == "pr" else {})))
+  File "/tmp/work/nd5/drv/mycases.py", line 38, in main
+    CASES[n](r)
+  File "/tmp/work/rv37-main/drv/cases.py", line 161, in f
+    sh(r,f"git rm -q tests/{fn}"); tot+=n
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/rv37-main/drv/cases.py", line 6, in sh
+    def sh(repo, cmd): subprocess.run(cmd,shell=True,cwd=repo,check=True)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command 'git rm -q tests/test_sonar_p2_feed_optional.py' returned non-zero exit status 1.
+biggest 54 test_real_check_dry.py
+### [H] import-support-biggest: TOTAL (no demo_only/): {'passed': 823, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 904 | test files: 89 run for real: 15 (floor 14 ) placeholders: 74 became: n/a | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 769 (85% of collected) | passed share: 91.0% || RESULT GREEN
+converted approx 78
+### [H] placeholder-convert-60: TOTAL (no demo_only/): {'passed': 469, 'failed': 0, 'skipped': 82, 'xfailed': 0} collected: 551 | test files: 89 run for real: 14 (floor 14 ) placeholders: 75 became: n/a | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 469 (85% of collected) | passed share: 85.1% || RESULT GREEN
+error: the following file has changes staged in the index:
+    tests/test_sonar_p2_feed_optional.py
+(use --cached to keep the file, or -f to force removal)
+Traceback (most recent call last):
+  File "/tmp/work/nd5/drv/mycases.py", line 52, in <module>
+    main(stack, sys.argv[3:], dict({"NORUFF": "1"}, **({"GITHUB_BASE_REF": "base"} if mode == "pr" else {})))
+  File "/tmp/work/nd5/drv/mycases.py", line 38, in main
+    CASES[n](r)
+  File "/tmp/work/rv37-main/drv/cases.py", line 161, in f
+    sh(r,f"git rm -q tests/{fn}"); tot+=n
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/rv37-main/drv/cases.py", line 6, in sh
+    def sh(repo, cmd): subprocess.run(cmd,shell=True,cwd=repo,check=True)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command 'git rm -q tests/test_sonar_p2_feed_optional.py' returned non-zero exit status 1.
+BATCH2-DONE

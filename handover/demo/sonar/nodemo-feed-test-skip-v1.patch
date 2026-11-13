@@ -1,0 +1,15 @@
+diff --git a/tests/test_sonar_p2_feed_optional.py b/tests/test_sonar_p2_feed_optional.py
+index 374f14c..1261101 100644
+--- a/tests/test_sonar_p2_feed_optional.py
++++ b/tests/test_sonar_p2_feed_optional.py
+@@ -47,6 +47,10 @@ def _run_feed(monkeypatch: pytest.MonkeyPatch, argv: list[str], **env: str) -> l
+     return opened
+ 
+ 
++@pytest.mark.skipif(
++    not (REPO / "demo_only" / "canned_leads.json").is_file(),
++    reason="feed.py reads demo_only/canned_leads.json, and the demo_only folder is not here",
++)
+ def test_feed_calls_the_configured_desk_address(monkeypatch: pytest.MonkeyPatch) -> None:
+     assert _run_feed(monkeypatch, ["--source", "form", "--index", "1"], DESK_PORT="8123") == [
+         "http" + "://127.0.0.1:8123/leads"

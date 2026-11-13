@@ -1,0 +1,43 @@
+### [H] clean: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 86, 'xfailed': 0} collected: 974 | test files: 89 run for real: 16 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 828 (85% of collected) | passed share: 91.2% || RESULT GREEN
+biggest 54 test_real_check_dry.py
+### [H] import-support-biggest: RESULT RED
+biggest 54 test_real_check_dry.py
+### [H] env-arg-added-to-biggest: TOTAL (no demo_only/): {'passed': 823, 'failed': 0, 'skipped': 81, 'xfailed': 0} collected: 904 | test files: 89 run for real: 15 (floor 14 ) placeholders: 74 became: 1 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 769 (85% of collected) | passed share: 91.0% || RESULT RED || RED: 1 test files ran for real on the base branch and are only a placeholder skip now (the limit is 0): tests/test_real_check_dry.py. A file with `import support`/`demo_only` or a test with an `env` argument becomes ONE placeholder skip (conftest.py _NEEDS_DEMO) and none of its tests runs in a client copy. If the file really needs the demo, edit MIN_PASSED_PERCENT / MIN_REAL_TEST_FILES / MAX_BECAME_PLACEHOLDER_FILES / MAX_UNEXPLAINED_SKIPPED / MAX_ENV_SKIPPED in the env: block of .github/workflows/nodemo.yml
+converted approx 78
+### [H] placeholder-convert-60: RESULT RED
+biggest 54 test_real_check_dry.py
+### [H] remove-biggest-test-file: TOTAL (no demo_only/): {'passed': 823, 'failed': 0, 'skipped': 80, 'xfailed': 0} collected: 903 | test files: 88 run for real: 15 (floor 14 ) placeholders: 73 became: 0 | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 768 (85% of collected) | passed share: 91.1% || RESULT GREEN
+### [H] module-importorskip: RESULT RED
+### [H] module-skip-allow: RESULT RED
+biggest 54 test_real_check_dry.py
+### [H] collect_ignore-biggest-nodemo-file: RESULT RED
+### [H] python_files-extended: RESULT RED
+### [H] skip-3: RESULT RED
+### [H] skip-4: RESULT RED
+### [H] env-skip-reasons: RESULT RED
+### [H] env-skip-7: RESULT RED
+### [H] clean: TOTAL (no demo_only/): {'passed': 888, 'failed': 0, 'skipped': 86, 'xfailed': 0} collected: 974 | test files: 89 run for real: 16 (floor 14 ) placeholders: 73 became: n/a | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 828 (85% of collected) | passed share: 91.2% || RESULT GREEN
+biggest 54 test_real_check_dry.py
+### [H] import-support-biggest: RESULT RED
+converted approx 78
+### [H] placeholder-convert-60: RESULT RED
+biggest 54 test_real_check_dry.py
+### [H] remove-biggest-test-file: TOTAL (no demo_only/): {'passed': 823, 'failed': 0, 'skipped': 80, 'xfailed': 0} collected: 903 | test files: 88 run for real: 15 (floor 14 ) placeholders: 73 became: n/a | environment skips: 0 of 6 | unexplained skips: 0 of 3 | floor: 768 (85% of collected) | passed share: 91.1% || RESULT GREEN
+error: the following file has changes staged in the index:
+    tests/test_sonar_p2_feed_optional.py
+(use --cached to keep the file, or -f to force removal)
+Traceback (most recent call last):
+  File "/tmp/work/nd5/drv/mycases.py", line 52, in <module>
+    main(stack, sys.argv[3:], {"GITHUB_BASE_REF": "base"} if mode == "pr" else {})
+  File "/tmp/work/nd5/drv/mycases.py", line 38, in main
+    CASES[n](r)
+  File "/tmp/work/rv37-main/drv/cases.py", line 161, in f
+    sh(r,f"git rm -q tests/{fn}"); tot+=n
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/rv37-main/drv/cases.py", line 6, in sh
+    def sh(repo, cmd): subprocess.run(cmd,shell=True,cwd=repo,check=True)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command 'git rm -q tests/test_sonar_p2_feed_optional.py' returned non-zero exit status 1.
+BATCH1-DONE
