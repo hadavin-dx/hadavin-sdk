@@ -1,6 +1,25 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 07:53Z / 13:23 IST - 07:53Z block: NO READY lines (no read has landed); feed-constants delta files exist but the builder has not reported; Sonar on 3598120 still analysing (the 3 issues shown are the PRE-push state); 6 agents
+FAILED / UNCERTAIN first:
+1. **Reads status (all four STILL RUNNING; I send READY with sha256 only on a CLEAN line):** (a) **N1/N2 pins delta read (abf917f227d1256e3, since 07:45)**: not back; sonar-p2-optional-gaps-delta.patch sha256 e846de70aa0e75314c36afa02c2bb0e33cea81b892fa305f33f16b79d5fc5ba8 (test-only, 1 new file, 33 tests): NO READY. (b) **P3 minors/risky fresh SECURITY read (a6b5a673bb7ac733f, since 07:38, 15 min)**: not back; minors sha256 32012347a603f5c297e0816631cb20a8efae8df7bfcff88c7e3b25bcc6e358ac, risky sha256 db815b9f9f084617265d1d6e1b6f4eadb1be1ba224b77112e6ce6c4ff2464d5a: NO READY; it must also state whether either could re-open a Sonar site. (c) **nodemo CI job v4 fourth read (a3bcf273436cc2333, since 07:04, 49 min: long because it re-runs 9-chunk job variants on a loaded box and ~15 hostile cases x 2 stacks)**: not back; nodemo-ci-job-v4.patch sha256 70991164d3ad6a35ac32976bccc08334d002ea1afc18ba584f1b19283a911625: NO READY. (d) **nodemo optional hygiene v5 (af4a6ce8b5ccafb9a, builder, since 06:14, 99 min)**: not reported; no final file in the handover folder: NOT READY and NOT read; v4 stays dead (conflicts with the pushed crlf v7.1).
+2. **FEED-CONSTANTS contingent delta (builder a19c4b5e59313b529, started 07:45, 8 min): FILES EXIST but the builder has NOT reported: not vouched for.** sonar/sonar-p2-feed-constants-delta.patch (244 lines, 188 added) + evidence-p2feedconst-1 (fails-before), -2 (behaviour old vs new), -3 (mutants), -4 (30 runs), -5 (gates), -6 (apply matrix) are in the builder's folder; I have NOT read them and do not report their numbers; fresh read follows its report. NOT to be pushed (your order): it is the lever if feed.py:50 stays open.
+3. **SONAR/CI on 3598120 (public API, 07:52Z): the quality gate still shows ERROR (new_security_rating) with the same 3 issues (python:S8786 scrub:108, run_real_check:117; pythonsecurity:S8703 feed:50): this is the PRE-push analysis: the 'Build and analyze' and `lint` checks on 3598120 are still in_progress: the new reading is not in yet. I do not claim the optional pair cleared or did not clear them.**
+4. **WHAT IS READY (unchanged, from earlier blocks, all pushed or pushable):** pushed by you: crlf v7.1, P2 v2.2/v2.3, P1 v3.2.1/v3.2.2, optional pair, P3 FINAL, flaky413. NOT yet pushed and read CLEAN: yaml-trimmed-v2 sha256 2590a42fd30e77581ac8e17af8dbb522b0a95502b2f64d8492dbef45e9098360 (read file skips/REVIEW-crlf-v5-yaml-trimmed-fresh.md; applies on 3598120: checked 07:29Z on b573c41, re-checked on the head below), semgrep v5.1 sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 (own PR after the stack).
+5. Not run anywhere: full suite WITH demo present, Windows run (the `< NUL` command line is in the 07:12Z block), Sonar of anything beyond f3d9dca (your read of 3598120 pending), real-run v6 (handover-only, partial files, no report yet).
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a19c4b5e59313b529 | feed-constants CONTINGENT delta builder | 07:45 | running (files exist, no report) | patch + report |
+| abf917f227d1256e3 | fresh read p2 optional gaps delta (33 tests) | 07:45 | running | CLEAN / NOT |
+| a6b5a673bb7ac733f | fresh SECURITY read P3 minors + risky | 07:38 | running | CLEAN / NOT x2 + re-open statement |
+| a3bcf273436cc2333 | fresh fourth read nodemo CI job v4 | 07:04 | running | CLEAN / NOT |
+| a2ba5c6b98ca99516 | real-run v6 + desk-address-required-v6 builder | 05:53 | running (partial files) | patches |
+| af4a6ce8b5ccafb9a | nodemo optional hygiene v5 builder | 06:14 | running | v5 patch |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6.
+
 ## 2026-11-13 07:45Z / 13:15 IST - 07:42Z command: head now 3598120 (optional pair pushed); feed-constants contingent delta BUILDING (do-not-push); N1/N2 pins delta BUILT (33 tests; fresh read running); P3 minors/risky fresh security read running; 6 agents
 FAILED / UNCERTAIN first:
 1. **Head check: pr-3-tests = 3598120 (feed.py: desk address from the configuration only, no --url option (S8703)) on 2b3f6a8 (Sonar P2: linear address regexes (the two S8786)) on b573c41. `git apply --check` on 3598120: OK for sonar-p2-optional-gaps-delta (below) and sonar-p3-final-v2-minors (below); the optional pair is already in the head (so 'already exists' conflicts for them are expected).** Sonar's reading of this head is yours (~18 min): I do not know it; if feed:50 stays open the contingent delta below is the next lever.
