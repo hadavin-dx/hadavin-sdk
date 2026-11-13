@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:40Z / 07:10 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
+FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
+Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
+Machine facts (read now): Q1 post-chunk steps finished: none yet
+Recent pushes (last 20 min): 5d9249d6 demo: evidence-sg-22: real Semgrep (local rule) on the 2db3926 folders with --strict: exit 0, ~100% p | 47f1aac0 demo: report block 01:36 Z (Q5 done; semgrep v4/body v3 in progress) | 8301b35c Lead command 01:34Z | 974b2649 demo: semgrep v3 (wording for main) and APPLY-LIST | c03dc0a5 demo: report block 01:32 Z (cadence order; standing queue running) | 91bec160 demo: automatic heartbeat block | 6378f53f demo: PR text review #2-#4 saved | f8b0920b Lead: owner cadence order (report every 5 min, lead command every 6 min)
+TABLE 1 - LIVE ITEMS: see the last hand-written block below (agents: PR-text verifier D-PR, Semgrep patch v3 builder S3, Semgrep PR body drafter D-SG, skips table Q5, dry-run checks Q4; shell: chunked run + post-chunk checks).
+TABLE 2 - ROUNDS: unchanged since the last hand-written block.
+TABLE 3 - FINISHED SINCE LAST BLOCK: see "Recent pushes" above.
+
 ## 2026-11-13 01:36Z / 07:06 IST - Q5 SKIP TABLE DONE; Semgrep PR body v2 reviewed (1 Major: the patch states an unparsable-file result as fact without saved output) -> patch v4 + body v3 in progress; chunk 7 of 10 running (chunks 0-6 green)
 FAILED / UNCERTAIN first:
 1. Q1 (pr-3-tests 2db3926, chunked): chunks 0-6 exit 0 = 2269 passed, 1 skipped, 0 failed; chunk 7: 189 passed, 0 failed so far; chunks 8-9 + post steps (ruff, mypy x2, bandit, hygiene+gitleaks, gitleaks dir/git, restart x5, node-off) still ahead. No verdict yet.
