@@ -1,0 +1,21 @@
+# evidence-m2-4: v2 sha256 1d282af053aac93e5a8a2001e794ad587785f223c2eff3ef6de4e65ca40c0568
+base f5fe824
+A v2 alone --check: OK
+B stack(8) then v2: OK (plain git apply, 9 patches)
+C v2 then stack(8): OK (plain git apply, 9 patches)
+D stack(8), semgrep, v2: OK (plain git apply, 10 patches)
+E stack(8), v2, semgrep: OK (plain git apply, 10 patches)
+F semgrep then v2: OK (plain git apply, 2 patches)
+G v2 then semgrep: OK (plain git apply, 2 patches)
+## clean tracked tree: f5fe824 + v2, committed in a scratch clone, gitleaks 8.30.1 with CI flags
+[90m12:29AM[0m [32mINF[0m [1mscanned ~2878933 bytes (2.88 MB) in 322ms[0m
+[90m12:29AM[0m [32mINF[0m [1mno leaks found[0m
+dir exit=0
+[90m12:29AM[0m [32mINF[0m [1mUnknown SCM platform. Use --platform to include links in findings.[0m [36mhost=[0m
+[90m12:29AM[0m [32mINF[0m [1m15 commits scanned.[0m
+[90m12:29AM[0m [32mINF[0m [1mscanned ~2906644 bytes (2.91 MB) in 494ms[0m
+[90m12:29AM[0m [32mINF[0m [1mno leaks found[0m
+git exit=0
+## literal scan CI form on clean tree
+0
+## hygiene.py scan of the new test file in a tracked tree: see evidence-m2-3 (0 lines)

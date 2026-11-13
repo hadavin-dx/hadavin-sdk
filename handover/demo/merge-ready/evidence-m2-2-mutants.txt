@@ -1,0 +1,113 @@
+# evidence-m2-2: mutants against tests/test_gitleaks_exceptions.py (v2), pytest on that file only, GITLEAKS_BIN=gl 8.30.1, DPLD_REQUIRE_SCAN=1; each mutant edits exceptions.txt or .gitleaks.toml in a scratch tree of f5fe824 and is restored after. 17 mutants, each must fail >= 1 test. Unmutated: 41 passed.
+=== MUTANT M1-exc-value-class (exceptions.txt)
+> ^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[a-z0-9-]+$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other project, letters and digits]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other project, letters only]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[key twice, joined]
+5 failed, 36 passed in 17.31s
+=== MUTANT M2-exc-no-end-anchor (exceptions.txt)
+> ^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[key twice, joined]
+3 failed, 38 passed in 16.78s
+=== MUTANT M3-exc-any-file (exceptions.txt)
+> ^[^:]+:[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other character at the dot of the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[text after the file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other folder and name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[readme]
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_in_a_sub_folder_is_reported_by_the_literal_scan
+6 failed, 35 passed in 15.56s
+=== MUTANT M4-exc-drop-start-anchor (exceptions.txt)
+> (sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_in_a_sub_folder_is_reported_by_the_literal_scan
+2 failed, 39 passed in 14.51s
+=== MUTANT M5-exc-dot-in-file-name (exceptions.txt)
+> ^(sonar-project.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other character at the dot of the file name]
+1 failed, 40 passed in 14.57s
+=== MUTANT M6-toml-no-end-anchor (.gitleaks.toml)
+> regexes = ['''^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[space and text suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[trailing blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dot suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[key twice, space between]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[CRLF line ending]
+7 failed, 34 passed in 14.03s
+=== MUTANT M7-toml-value-class (.gitleaks.toml)
+> regexes = ['''^sonar\.projectKey=hadavin-dx_[a-z0-9-]+$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other project, letters and digits]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+3 failed, 38 passed in 13.89s
+=== MUTANT M8-toml-any-properties-path (.gitleaks.toml)
+> paths = ['''.*sonar-project\.properties$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+1 failed, 40 passed in 13.17s
+=== MUTANT M9-toml-case-insensitive (.gitleaks.toml)
+> regexes = ['''(?i)^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case value]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[capital first letter]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[lower-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case name]
+4 failed, 37 passed in 14.00s
+=== MUTANT M10-toml-no-start-anchor (.gitleaks.toml)
+> regexes = ['''sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text before the name]
+1 failed, 40 passed in 23.83s
+=== MUTANT M11-toml-dot-in-name (.gitleaks.toml)
+> regexes = ['''^sonar.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot]
+1 failed, 40 passed in 44.69s
+=== MUTANT M12-toml-dot-in-path (.gitleaks.toml)
+> paths = ['''(^|[/\\])sonar-project.properties$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot of the file name]
+1 failed, 40 passed in 16.31s
+=== MUTANT M13-toml-path-no-start (.gitleaks.toml)
+> paths = ['''sonar-project\.properties$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+1 failed, 40 passed in 12.72s
+=== MUTANT M14-toml-path-no-end (.gitleaks.toml)
+> paths = ['''(^|[/\\])sonar-project\.properties''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text after the file name]
+1 failed, 40 passed in 12.65s
+=== MUTANT M15-toml-whole-file-path-no-regex (.gitleaks.toml)
+> paths = ['''sonar-project\.properties''']  (regexes and condition removed)
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other project, letters and digits]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[space and text suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[trailing blank]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dot suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case value]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[capital first letter]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[lower-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other character at the dot]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[spaces around the equals sign]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text before the name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[key twice, space between]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[CRLF line ending]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text after the file name]
+18 failed, 23 passed in 12.76s
+=== MUTANT M16-toml-regexTarget-line (.gitleaks.toml)
+> regexTarget = "line"  # the matched text only
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_is_allowed
+FAILED tests/test_gitleaks_exceptions.py::test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank]
+2 failed, 39 passed in 12.85s
+=== MUTANT M17-toml-regexTarget-secret (.gitleaks.toml)
+> regexTarget = "secret"  # the matched text only
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_is_allowed
+FAILED tests/test_gitleaks_exceptions.py::test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank]
+2 failed, 39 passed in 12.58s
+
+SURVIVORS: none (all 17 killed). M14 (path without end anchor) was first cut by my own 115 s timeout and re-run; the file was restored with git checkout.

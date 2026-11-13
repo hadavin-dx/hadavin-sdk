@@ -1,0 +1,217 @@
+# evidence-m2-1: detector measurement, builder M2, 2026-11-13. gitleaks 8.30.1 (CI binary), repo .gitleaks.toml of f5fe824, tools/hygiene.py git-grep with patterns.txt of f5fe824.
+# Made-up values built at run time from random.Random(20261113) (second experiment: 20261114): lowercase letters+digits, or random lowercase words joined by hyphens, or one repeated 'a'. Only the first 6 characters and lengths are printed. Scripts: measure.py, measure2.py (scratch, not shipped).
+# Each line: 'a=b' then the test line, written as bytes with LF, in a scratch git repo with all files added (git add .).
+# gitleaks command: gitleaks dir --no-banner --redact --ignore-gitleaks-allow --config <cfg> --report-format json . (cwd = scratch repo). 'repo cfg' = the repo's .gitleaks.toml; 'no allowlist' = same file with the global sonar allowlist cut off.
+# repo scan = git grep -n -o -I -E -f patterns.txt; pattern 9 is [A-Za-z0-9+/=_-]{40,}; the number in [] is the length of the matched run.
+
+######## EXPERIMENT 1: raw rows (135 plants + the real key line, id 000)
+id | file | line shape | tail | N after prefix | total | first6 | tail entropy | gitleaks(repo cfg) | gitleaks(no allowlist) | repo scan (run length)
+001 | cfg.txt | keyvalue-sonar | random | 20 | 31 | lbixa3.. | 3.82 | generic-api-key(ent4.03) | generic-api-key(ent4.03) | [42]
+002 | notes.properties | keyvalue-sonar | random | 20 | 31 | t61qd5.. | 3.98 | generic-api-key(ent4.35) | generic-api-key(ent4.35) | [42]
+003 | x_api_key.txt | keyvalue-sonar | random | 20 | 31 | 720w83.. | 4.22 | generic-api-key(ent4.48) | generic-api-key(ent4.48) | [42]
+004 | cfg.txt | keyvalue-x_api_key | random | 20 | 31 | yupn0u.. | 3.92 | generic-api-key(ent4.35) | generic-api-key(ent4.35) | [41]
+005 | notes.properties | keyvalue-x_api_key | random | 20 | 31 | i7n5td.. | 3.88 | generic-api-key(ent4.11) | generic-api-key(ent4.11) | [41]
+006 | x_api_key.txt | keyvalue-x_api_key | random | 20 | 31 | i7wpcn.. | 3.82 | generic-api-key(ent4.26) | generic-api-key(ent4.26) | [41]
+007 | cfg.txt | prose | random | 20 | 31 | ensx5t.. | 4.12 | - | - | -
+008 | notes.properties | prose | random | 20 | 31 | t1whkc.. | 3.82 | - | - | -
+009 | x_api_key.txt | prose | random | 20 | 31 | vb9fga.. | 4.12 | - | - | -
+010 | cfg.txt | keyvalue-sonar | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [42]
+011 | notes.properties | keyvalue-sonar | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [42]
+012 | x_api_key.txt | keyvalue-sonar | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [42]
+013 | cfg.txt | keyvalue-x_api_key | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [41]
+014 | notes.properties | keyvalue-x_api_key | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [41]
+015 | x_api_key.txt | keyvalue-x_api_key | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | [41]
+016 | cfg.txt | prose | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | -
+017 | notes.properties | prose | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | -
+018 | x_api_key.txt | prose | repeated-a | 20 | 31 | aaaaaa.. | -0.0 | - | - | -
+019 | cfg.txt | keyvalue-sonar | hyphen-words | 20 | 31 | pdwper.. | 3.92 | - | - | [42]
+020 | notes.properties | keyvalue-sonar | hyphen-words | 20 | 31 | ktgqlf.. | 3.58 | - | - | [42]
+021 | x_api_key.txt | keyvalue-sonar | hyphen-words | 20 | 31 | zsk-zb.. | 3.68 | - | - | [42]
+022 | cfg.txt | keyvalue-x_api_key | hyphen-words | 20 | 31 | plfel-.. | 3.88 | - | - | [41]
+023 | notes.properties | keyvalue-x_api_key | hyphen-words | 20 | 31 | news-f.. | 3.88 | - | - | [41]
+024 | x_api_key.txt | keyvalue-x_api_key | hyphen-words | 20 | 31 | knnem-.. | 3.92 | - | - | [41]
+025 | cfg.txt | prose | hyphen-words | 20 | 31 | lbs-bx.. | 3.58 | - | - | -
+026 | notes.properties | prose | hyphen-words | 20 | 31 | acl-jv.. | 3.78 | - | - | -
+027 | x_api_key.txt | prose | hyphen-words | 20 | 31 | uqxjaz.. | 3.68 | - | - | -
+028 | cfg.txt | keyvalue-sonar | random | 30 | 41 | 7q2x4a.. | 4.17 | generic-api-key(ent4.61) | generic-api-key(ent4.61) | [52]
+029 | notes.properties | keyvalue-sonar | random | 30 | 41 | qnpsgz.. | 4.17 | generic-api-key(ent4.46) | generic-api-key(ent4.46) | [52]
+030 | x_api_key.txt | keyvalue-sonar | random | 30 | 41 | tg8d63.. | 4.08 | generic-api-key(ent4.31) | generic-api-key(ent4.31) | [52]
+031 | cfg.txt | keyvalue-x_api_key | random | 30 | 41 | z6dzvk.. | 4.19 | generic-api-key(ent4.45) | generic-api-key(ent4.45) | [51]
+032 | notes.properties | keyvalue-x_api_key | random | 30 | 41 | dq047m.. | 4.23 | generic-api-key(ent4.50) | generic-api-key(ent4.50) | [51]
+033 | x_api_key.txt | keyvalue-x_api_key | random | 30 | 41 | 2dsf7p.. | 4.12 | generic-api-key(ent4.49) | generic-api-key(ent4.49) | [51]
+034 | cfg.txt | prose | random | 30 | 41 | u7akze.. | 4.26 | - | - | [41]
+035 | notes.properties | prose | random | 30 | 41 | np4uig.. | 4.22 | - | - | [41]
+036 | x_api_key.txt | prose | random | 30 | 41 | 26dsl7.. | 4.17 | - | - | [41]
+037 | cfg.txt | keyvalue-sonar | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [52]
+038 | notes.properties | keyvalue-sonar | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [52]
+039 | x_api_key.txt | keyvalue-sonar | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [52]
+040 | cfg.txt | keyvalue-x_api_key | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [51]
+041 | notes.properties | keyvalue-x_api_key | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [51]
+042 | x_api_key.txt | keyvalue-x_api_key | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [51]
+043 | cfg.txt | prose | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [41]
+044 | notes.properties | prose | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [41]
+045 | x_api_key.txt | prose | repeated-a | 30 | 41 | aaaaaa.. | -0.0 | - | - | [41]
+046 | cfg.txt | keyvalue-sonar | hyphen-words | 30 | 41 | klrbqy.. | 4.22 | - | - | [52]
+047 | notes.properties | keyvalue-sonar | hyphen-words | 30 | 41 | amgml-.. | 3.96 | - | - | [52]
+048 | x_api_key.txt | keyvalue-sonar | hyphen-words | 30 | 41 | kyxnmv.. | 4.19 | - | - | [52]
+049 | cfg.txt | keyvalue-x_api_key | hyphen-words | 30 | 41 | unq-sn.. | 3.83 | - | - | [51]
+050 | notes.properties | keyvalue-x_api_key | hyphen-words | 30 | 41 | pqdzgi.. | 3.8 | - | - | [51]
+051 | x_api_key.txt | keyvalue-x_api_key | hyphen-words | 30 | 41 | vzibfo.. | 4.08 | - | - | [51]
+052 | cfg.txt | prose | hyphen-words | 30 | 41 | hkyhwg.. | 3.78 | - | - | [41]
+053 | notes.properties | prose | hyphen-words | 30 | 41 | phgeen.. | 4.1 | - | - | [41]
+054 | x_api_key.txt | prose | hyphen-words | 30 | 41 | gdizh-.. | 3.54 | - | - | [41]
+055 | cfg.txt | keyvalue-sonar | random | 40 | 51 | ueyi0r.. | 4.38 | generic-api-key(ent4.65) | generic-api-key(ent4.65) | [62]
+056 | notes.properties | keyvalue-sonar | random | 40 | 51 | ex7a42.. | 4.37 | generic-api-key(ent4.65) | generic-api-key(ent4.65) | [62]
+057 | x_api_key.txt | keyvalue-sonar | random | 40 | 51 | 6wble9.. | 4.27 | generic-api-key(ent4.43) | generic-api-key(ent4.43) | [62]
+058 | cfg.txt | keyvalue-x_api_key | random | 40 | 51 | wi4mq4.. | 4.28 | generic-api-key(ent4.46) | generic-api-key(ent4.46) | [61]
+059 | notes.properties | keyvalue-x_api_key | random | 40 | 51 | jnkybs.. | 4.52 | generic-api-key(ent4.68) | generic-api-key(ent4.68) | [61]
+060 | x_api_key.txt | keyvalue-x_api_key | random | 40 | 51 | c46hq0.. | 4.57 | generic-api-key(ent4.62) | generic-api-key(ent4.62) | [61]
+061 | cfg.txt | prose | random | 40 | 51 | 9y53ue.. | 4.29 | - | - | [51]
+062 | notes.properties | prose | random | 40 | 51 | zxdtss.. | 4.45 | - | - | [51]
+063 | x_api_key.txt | prose | random | 40 | 51 | jdzujb.. | 4.53 | - | - | [51]
+064 | cfg.txt | keyvalue-sonar | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [62]
+065 | notes.properties | keyvalue-sonar | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [62]
+066 | x_api_key.txt | keyvalue-sonar | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [62]
+067 | cfg.txt | keyvalue-x_api_key | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [61]
+068 | notes.properties | keyvalue-x_api_key | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [61]
+069 | x_api_key.txt | keyvalue-x_api_key | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [61]
+070 | cfg.txt | prose | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [51]
+071 | notes.properties | prose | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [51]
+072 | x_api_key.txt | prose | repeated-a | 40 | 51 | aaaaaa.. | -0.0 | - | - | [51]
+073 | cfg.txt | keyvalue-sonar | hyphen-words | 40 | 51 | hktcct.. | 4.33 | - | - | [62]
+074 | notes.properties | keyvalue-sonar | hyphen-words | 40 | 51 | mazv-d.. | 4.08 | - | - | [62]
+075 | x_api_key.txt | keyvalue-sonar | hyphen-words | 40 | 51 | iidtvg.. | 3.98 | - | - | [62]
+076 | cfg.txt | keyvalue-x_api_key | hyphen-words | 40 | 51 | rcjzda.. | 3.98 | - | - | [61]
+077 | notes.properties | keyvalue-x_api_key | hyphen-words | 40 | 51 | vepn-i.. | 4.06 | - | - | [61]
+078 | x_api_key.txt | keyvalue-x_api_key | hyphen-words | 40 | 51 | rdrvlf.. | 3.85 | - | - | [61]
+079 | cfg.txt | prose | hyphen-words | 40 | 51 | lpkibz.. | 4.2 | - | - | [51]
+080 | notes.properties | prose | hyphen-words | 40 | 51 | hdsg-g.. | 4.1 | - | - | [51]
+081 | x_api_key.txt | prose | hyphen-words | 40 | 51 | jbqqy-.. | 4.2 | - | - | [51]
+082 | cfg.txt | keyvalue-sonar | random | 50 | 61 | dzysuj.. | 4.49 | generic-api-key(ent4.66) | generic-api-key(ent4.66) | [72]
+083 | notes.properties | keyvalue-sonar | random | 50 | 61 | fuh86y.. | 4.74 | generic-api-key(ent4.84) | generic-api-key(ent4.84) | [72]
+084 | x_api_key.txt | keyvalue-sonar | random | 50 | 61 | oc662w.. | 4.66 | generic-api-key(ent4.89) | generic-api-key(ent4.89) | [72]
+085 | cfg.txt | keyvalue-x_api_key | random | 50 | 61 | n9c1ku.. | 4.54 | generic-api-key(ent4.70) | generic-api-key(ent4.70) | [71]
+086 | notes.properties | keyvalue-x_api_key | random | 50 | 61 | ky4vfu.. | 4.58 | generic-api-key(ent4.77) | generic-api-key(ent4.77) | [71]
+087 | x_api_key.txt | keyvalue-x_api_key | random | 50 | 61 | 42eqaj.. | 4.52 | generic-api-key(ent4.72) | generic-api-key(ent4.72) | [71]
+088 | cfg.txt | prose | random | 50 | 61 | rbelxy.. | 4.71 | - | - | [61]
+089 | notes.properties | prose | random | 50 | 61 | 1qwosc.. | 4.51 | - | - | [61]
+090 | x_api_key.txt | prose | random | 50 | 61 | zv6qky.. | 4.66 | - | - | [61]
+091 | cfg.txt | keyvalue-sonar | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [72]
+092 | notes.properties | keyvalue-sonar | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [72]
+093 | x_api_key.txt | keyvalue-sonar | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [72]
+094 | cfg.txt | keyvalue-x_api_key | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [71]
+095 | notes.properties | keyvalue-x_api_key | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [71]
+096 | x_api_key.txt | keyvalue-x_api_key | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [71]
+097 | cfg.txt | prose | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [61]
+098 | notes.properties | prose | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [61]
+099 | x_api_key.txt | prose | repeated-a | 50 | 61 | aaaaaa.. | -0.0 | - | - | [61]
+100 | cfg.txt | keyvalue-sonar | hyphen-words | 50 | 61 | skg-mm.. | 4.11 | - | - | [72]
+101 | notes.properties | keyvalue-sonar | hyphen-words | 50 | 61 | pvmmes.. | 4.19 | - | - | [72]
+102 | x_api_key.txt | keyvalue-sonar | hyphen-words | 50 | 61 | ltr-sp.. | 4.26 | - | - | [72]
+103 | cfg.txt | keyvalue-x_api_key | hyphen-words | 50 | 61 | whg-yt.. | 4.25 | - | - | [71]
+104 | notes.properties | keyvalue-x_api_key | hyphen-words | 50 | 61 | csrk-a.. | 4.0 | - | - | [71]
+105 | x_api_key.txt | keyvalue-x_api_key | hyphen-words | 50 | 61 | qvkcyb.. | 4.41 | - | - | [71]
+106 | cfg.txt | prose | hyphen-words | 50 | 61 | xye-hk.. | 4.17 | - | - | [61]
+107 | notes.properties | prose | hyphen-words | 50 | 61 | pizerh.. | 4.16 | - | - | [61]
+108 | x_api_key.txt | prose | hyphen-words | 50 | 61 | sbflux.. | 4.25 | - | - | [61]
+109 | cfg.txt | keyvalue-sonar | random | 60 | 71 | 313axk.. | 4.59 | generic-api-key(ent4.75) | generic-api-key(ent4.75) | [82]
+110 | notes.properties | keyvalue-sonar | random | 60 | 71 | a50617.. | 4.65 | generic-api-key(ent4.72) | generic-api-key(ent4.72) | [82]
+111 | x_api_key.txt | keyvalue-sonar | random | 60 | 71 | lk63zs.. | 4.8 | generic-api-key(ent4.89) | generic-api-key(ent4.89) | [82]
+112 | cfg.txt | keyvalue-x_api_key | random | 60 | 71 | m486ig.. | 4.79 | generic-api-key(ent4.86) | generic-api-key(ent4.86) | [81]
+113 | notes.properties | keyvalue-x_api_key | random | 60 | 71 | i3nufz.. | 4.65 | generic-api-key(ent4.81) | generic-api-key(ent4.81) | [81]
+114 | x_api_key.txt | keyvalue-x_api_key | random | 60 | 71 | 1yp3i4.. | 4.81 | generic-api-key(ent4.86) | generic-api-key(ent4.86) | [81]
+115 | cfg.txt | prose | random | 60 | 71 | 9vuqqp.. | 4.58 | - | - | [71]
+116 | notes.properties | prose | random | 60 | 71 | cx4vwj.. | 4.7 | - | - | [71]
+117 | x_api_key.txt | prose | random | 60 | 71 | aah5eu.. | 4.82 | - | - | [71]
+118 | cfg.txt | keyvalue-sonar | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [82]
+119 | notes.properties | keyvalue-sonar | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [82]
+120 | x_api_key.txt | keyvalue-sonar | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [82]
+121 | cfg.txt | keyvalue-x_api_key | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [81]
+122 | notes.properties | keyvalue-x_api_key | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [81]
+123 | x_api_key.txt | keyvalue-x_api_key | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [81]
+124 | cfg.txt | prose | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [71]
+125 | notes.properties | prose | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [71]
+126 | x_api_key.txt | prose | repeated-a | 60 | 71 | aaaaaa.. | -0.0 | - | - | [71]
+127 | cfg.txt | keyvalue-sonar | hyphen-words | 60 | 71 | hggn-m.. | 4.16 | - | - | [82]
+128 | notes.properties | keyvalue-sonar | hyphen-words | 60 | 71 | mcgm-b.. | 4.19 | - | - | [82]
+129 | x_api_key.txt | keyvalue-sonar | hyphen-words | 60 | 71 | emkjor.. | 4.34 | - | - | [82]
+130 | cfg.txt | keyvalue-x_api_key | hyphen-words | 60 | 71 | jpxtnl.. | 4.27 | - | - | [81]
+131 | notes.properties | keyvalue-x_api_key | hyphen-words | 60 | 71 | uilw-a.. | 4.22 | - | - | [81]
+132 | x_api_key.txt | keyvalue-x_api_key | hyphen-words | 60 | 71 | ebxzwi.. | 4.29 | - | - | [81]
+133 | cfg.txt | prose | hyphen-words | 60 | 71 | wfvqzj.. | 4.35 | - | - | [71]
+134 | notes.properties | prose | hyphen-words | 60 | 71 | ljd-pk.. | 4.2 | - | - | [71]
+135 | x_api_key.txt | prose | hyphen-words | 60 | 71 | ksraou.. | 4.14 | - | - | [71]
+000 | sonar-project.properties | keyvalue-sonar | real key | 29 | 40 | duplic.. | 3.91 | - | generic-api-key(ent4.10) | [51]
+
+######## EXPERIMENT 1: summary (3 file names per row)
+SUMMARY: per (line shape, tail kind, N chars after prefix): over 3 file names cfg.txt/notes.properties/x_api_key.txt
+gitleaks reported = count of 3 files with a finding (rule); repo scan = count of 3 with a run >=40 chars (run length)
+keyvalue-sonar       hyphen-words  N=20  gitleaks 0/3   repo-scan 3/3 run-len [42] entropy [3.58, 3.68, 3.92]
+keyvalue-sonar       hyphen-words  N=30  gitleaks 0/3   repo-scan 3/3 run-len [52] entropy [3.96, 4.19, 4.22]
+keyvalue-sonar       hyphen-words  N=40  gitleaks 0/3   repo-scan 3/3 run-len [62] entropy [3.98, 4.08, 4.33]
+keyvalue-sonar       hyphen-words  N=50  gitleaks 0/3   repo-scan 3/3 run-len [72] entropy [4.11, 4.19, 4.26]
+keyvalue-sonar       hyphen-words  N=60  gitleaks 0/3   repo-scan 3/3 run-len [82] entropy [4.16, 4.19, 4.34]
+keyvalue-sonar       random        N=20  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [42] entropy [3.82, 3.98, 4.22]
+keyvalue-sonar       random        N=30  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [52] entropy [4.08, 4.17]
+keyvalue-sonar       random        N=40  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [62] entropy [4.27, 4.37, 4.38]
+keyvalue-sonar       random        N=50  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [72] entropy [4.49, 4.66, 4.74]
+keyvalue-sonar       random        N=60  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [82] entropy [4.59, 4.65, 4.8]
+keyvalue-sonar       repeated-a    N=20  gitleaks 0/3   repo-scan 3/3 run-len [42] entropy [-0.0]
+keyvalue-sonar       repeated-a    N=30  gitleaks 0/3   repo-scan 3/3 run-len [52] entropy [-0.0]
+keyvalue-sonar       repeated-a    N=40  gitleaks 0/3   repo-scan 3/3 run-len [62] entropy [-0.0]
+keyvalue-sonar       repeated-a    N=50  gitleaks 0/3   repo-scan 3/3 run-len [72] entropy [-0.0]
+keyvalue-sonar       repeated-a    N=60  gitleaks 0/3   repo-scan 3/3 run-len [82] entropy [-0.0]
+keyvalue-x_api_key   hyphen-words  N=20  gitleaks 0/3   repo-scan 3/3 run-len [41] entropy [3.88, 3.92]
+keyvalue-x_api_key   hyphen-words  N=30  gitleaks 0/3   repo-scan 3/3 run-len [51] entropy [3.8, 3.83, 4.08]
+keyvalue-x_api_key   hyphen-words  N=40  gitleaks 0/3   repo-scan 3/3 run-len [61] entropy [3.85, 3.98, 4.06]
+keyvalue-x_api_key   hyphen-words  N=50  gitleaks 0/3   repo-scan 3/3 run-len [71] entropy [4.0, 4.25, 4.41]
+keyvalue-x_api_key   hyphen-words  N=60  gitleaks 0/3   repo-scan 3/3 run-len [81] entropy [4.22, 4.27, 4.29]
+keyvalue-x_api_key   random        N=20  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [41] entropy [3.82, 3.88, 3.92]
+keyvalue-x_api_key   random        N=30  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [51] entropy [4.12, 4.19, 4.23]
+keyvalue-x_api_key   random        N=40  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [61] entropy [4.28, 4.52, 4.57]
+keyvalue-x_api_key   random        N=50  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [71] entropy [4.52, 4.54, 4.58]
+keyvalue-x_api_key   random        N=60  gitleaks 3/3 ['generic-api-key']  repo-scan 3/3 run-len [81] entropy [4.65, 4.79, 4.81]
+keyvalue-x_api_key   repeated-a    N=20  gitleaks 0/3   repo-scan 3/3 run-len [41] entropy [-0.0]
+keyvalue-x_api_key   repeated-a    N=30  gitleaks 0/3   repo-scan 3/3 run-len [51] entropy [-0.0]
+keyvalue-x_api_key   repeated-a    N=40  gitleaks 0/3   repo-scan 3/3 run-len [61] entropy [-0.0]
+keyvalue-x_api_key   repeated-a    N=50  gitleaks 0/3   repo-scan 3/3 run-len [71] entropy [-0.0]
+keyvalue-x_api_key   repeated-a    N=60  gitleaks 0/3   repo-scan 3/3 run-len [81] entropy [-0.0]
+prose                hyphen-words  N=20  gitleaks 0/3   repo-scan 0/3 run-len [] entropy [3.58, 3.68, 3.78]
+prose                hyphen-words  N=30  gitleaks 0/3   repo-scan 3/3 run-len [41] entropy [3.54, 3.78, 4.1]
+prose                hyphen-words  N=40  gitleaks 0/3   repo-scan 3/3 run-len [51] entropy [4.1, 4.2]
+prose                hyphen-words  N=50  gitleaks 0/3   repo-scan 3/3 run-len [61] entropy [4.16, 4.17, 4.25]
+prose                hyphen-words  N=60  gitleaks 0/3   repo-scan 3/3 run-len [71] entropy [4.14, 4.2, 4.35]
+prose                random        N=20  gitleaks 0/3   repo-scan 0/3 run-len [] entropy [3.82, 4.12]
+prose                random        N=30  gitleaks 0/3   repo-scan 3/3 run-len [41] entropy [4.17, 4.22, 4.26]
+prose                random        N=40  gitleaks 0/3   repo-scan 3/3 run-len [51] entropy [4.29, 4.45, 4.53]
+prose                random        N=50  gitleaks 0/3   repo-scan 3/3 run-len [61] entropy [4.51, 4.66, 4.71]
+prose                random        N=60  gitleaks 0/3   repo-scan 3/3 run-len [71] entropy [4.58, 4.7, 4.82]
+prose                repeated-a    N=20  gitleaks 0/3   repo-scan 0/3 run-len [] entropy [-0.0]
+prose                repeated-a    N=30  gitleaks 0/3   repo-scan 3/3 run-len [41] entropy [-0.0]
+prose                repeated-a    N=40  gitleaks 0/3   repo-scan 3/3 run-len [51] entropy [-0.0]
+prose                repeated-a    N=50  gitleaks 0/3   repo-scan 3/3 run-len [61] entropy [-0.0]
+prose                repeated-a    N=60  gitleaks 0/3   repo-scan 3/3 run-len [71] entropy [-0.0]
+
+######## EXPERIMENT 2: why were some not reported? digit / entropy probe, gitleaks with the repo config minus the sonar allowlist
+case | total len | first6 of value | digit in value | gitleaks 8.30.1 (repo config minus the sonar allowlist)
+N=30 random letters only, no hyphen, no digit | 41 | hadavi.. | no | not reported
+N=30 random letters+digits, no hyphen | 41 | hadavi.. | yes | generic-api-key ent4.39
+N=30 hyphen words, no digit | 41 | hadavi.. | no | not reported
+N=30 hyphen words, exactly one digit at the end | 41 | hadavi.. | yes | generic-api-key ent4.32
+N=30 repeated a with one digit at the end | 41 | hadavi.. | yes | not reported
+N=30 repeated a, no digit | 41 | hadavi.. | no | not reported
+N=40 random letters only, no hyphen, no digit | 51 | hadavi.. | no | not reported
+N=40 random letters+digits, no hyphen | 51 | hadavi.. | yes | generic-api-key ent4.65
+N=40 hyphen words, no digit | 51 | hadavi.. | no | not reported
+N=40 hyphen words, exactly one digit at the end | 51 | hadavi.. | yes | generic-api-key ent4.10
+N=40 repeated a with one digit at the end | 51 | hadavi.. | yes | not reported
+N=40 repeated a, no digit | 51 | hadavi.. | no | not reported
+N=50 random letters only, no hyphen, no digit | 61 | hadavi.. | no | not reported
+N=50 random letters+digits, no hyphen | 61 | hadavi.. | yes | generic-api-key ent4.94
+N=50 hyphen words, no digit | 61 | hadavi.. | no | not reported
+N=50 hyphen words, exactly one digit at the end | 61 | hadavi.. | yes | generic-api-key ent4.28
+N=50 repeated a with one digit at the end | 61 | hadavi.. | yes | not reported
+N=50 repeated a, no digit | 61 | hadavi.. | no | not reported
+real key, 8 replaced by x (no digit) | 40 | hadavi.. | no | not reported
+real key unchanged | 40 | hadavi.. | yes | generic-api-key ent4.10
+real key, 8 replaced by x, one other digit added | 41 | hadavi.. | yes | generic-api-key ent4.12

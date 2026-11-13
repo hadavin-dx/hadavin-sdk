@@ -1,0 +1,39 @@
+# evidence-m2-3: gates on f5fe824 + v2 (git add -N)
+## ruff
+All checks passed!
+136 files already formatted
+## mypy
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+## bandit
+Files skipped (0):
+## literal scan whole repo (CI form)
+0
+## literal scan on the new test file only
+0
+## bandit -ll (summary lines; the 9 'High' are confidence counts of Low-severity items, filtered out by -ll)
+	No issues identified.
+## pytest WITH gitleaks (GITLEAKS_BIN, DPLD_REQUIRE_SCAN=1): test_hygiene + new
+........................................................                 [100%]
+56 passed in 27.69s
+## pytest WITHOUT gitleaks on PATH, no env (expect skips)
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:144: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:369: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:416: no gitleaks program on PATH (set GITLEAKS_BIN)
+SKIPPED [23] tests/test_gitleaks_exceptions.py:124: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+30 passed, 26 skipped in 6.43s
+## which gitleaks:
+none
+## WITH DPLD_REQUIRE_SCAN=1 but no gitleaks (expect failures)
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[other folder and name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[readme]
+23 failed, 18 passed in 0.57s
+## GITLEAKS_BIN=bare name resolved on PATH (shutil.which) 
+..                                                                       [100%]
+2 passed, 39 deselected in 1.25s
+## no git on PATH: skip
+sss                                                                      [100%]
+=========================== short test summary info ============================
+SKIPPED [3] tests/test_gitleaks_exceptions.py:104: no git program on PATH (the scans read tracked files)
+3 skipped, 38 deselected in 0.11s
