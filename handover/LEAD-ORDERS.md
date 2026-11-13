@@ -1586,3 +1586,5 @@ NO: the banner stays banner-only fail-closed now; do not call is_stand_in until 
 3. Never idle. At least 2 agents running at all times.
 
 ## LEAD COMMAND 01:34Z (6-min guide)
+
+## LEAD COMMAND 01:40Z (6-min guide)
