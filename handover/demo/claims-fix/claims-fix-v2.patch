@@ -1,0 +1,166 @@
+diff --git a/README.md b/README.md
+index b907165..4e2cb51 100644
+--- a/README.md
++++ b/README.md
+@@ -11,7 +11,7 @@
+ 7. What is not claimed: that this works with any real CRM or mail system, that it suits production, or anything about load beyond what `docs/limits.md` states. It is not software to install for your business.
+ 8. Who it is for: a business owner who wants to see the idea working, and a RevOps person or n8n freelancer who wants to read the code, the tests and the n8n workflows.
+ 9. Licence: all rights reserved; you may read the code and run it on your own computer to evaluate it (see "Licence" at the end). Not legal advice.
+-10. Made by the founder of Hadavin (hadavin.com), an AI studio, with AI coding tools, and reviewed by the author.
++10. Made by the founder of Hadavin (hadavin.com), an AI studio, with AI coding tools, and read through by the author. No review record is kept in this repository.
+ 
+ ## What you will see
+ 
+@@ -85,7 +85,7 @@ Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh sc
+ 
+ If PowerShell refuses to run the scripts at all (a policy set by your organisation), start the two programs by hand instead, each in its own window with `PYTHONPATH` set as in `contract.md`, "Run commands": `python -m demo_only.fakes_server --outbox keyed --port 8766` and `python -m lead_desk.server`.
+ 
+-You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk answers 404 for `/` and `/health` on purpose: it has no such pages. On Windows, starting again on the same port right after a stop can fail for about two minutes (the operating system keeps the port closed for a while). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
++You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk has no page at `/` or `/health` and answers 404 for an address it does not know (`tests/test_http.py` checks this for other unknown addresses; `/` and `/health` were not tested separately). On Windows, starting again on the same port right after a stop can fail for a while (the operating system keeps the port closed for a time; how long was not measured here). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
+ 
+ The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data` (or `RESET_STOP_WAIT_SECONDS`, which both `scripts/reset.sh` and `scripts/reset.ps1` check before they stop or delete anything, is not a whole number from 0 to 999 without a leading zero; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
+ 
+@@ -101,12 +101,12 @@ Claimed, for this demo setup only:
+ 
+ Not claimed:
+ 
+-* Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
++* Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, from the author's own run; no log is shipped, so the result cannot be checked from this repository); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
+ * Production fitness, a legal opinion, a guarantee of any kind.
+ * The same person with two email addresses is two leads; two people sharing one address are one lead.
+ * The desk is for one computer and one process, has no login, and listens on this computer only unless you change that. No penetration test was done.
+ * Masking in the portal is on screen only: lead names, email addresses and phone numbers are hidden on the page by default (the switch "Hide names and email addresses"; its state lasts for the browser tab's session), the search does not look in names or email addresses while they are hidden, and the answer the page reads from the desk still carries every value, names included (see `docs/portal.md`).
+-* Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped.
++* Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped, so these figures cannot be re-checked from this repository.
+ * The desk's time stamps use the computer's clock, so a clock that jumps by 30 seconds or more can make the desk ask again for a follow-up that was still being sent (`docs/limits.md`, item 5).
+ * The full list, with test names, is in `docs/limits.md`.
+ 
+@@ -117,7 +117,7 @@ They are off in the desk itself; the demo start scripts switch on the lead flow.
+ * **Approval mode** (`DESK_LATER_MODE=approval`): a repeat that brings new details can be approved or denied by a person picked from a list of approvers. Approving or denying only records that choice: the approver is a name picked from the list and is not verified, and nothing is executed by it. Off by default; then a repeat is only listed. The reply shapes are in `contract.md`, the settings in `docs/settings.md`.
+ * **Lead owner, lead stage and reminder** (`DESK_LEADFLOW_FILE`): each new lead gets an owner from a short list, can be moved forward through named lead stages, and one reminder email is sent when a lead is still before the "reminder until" step after the wait (the follow-up state is not looked at). Only leads created while the feature is on are covered (`docs/limits.md`). Off when the setting is unset or is the word `off`. The demo start scripts switch it on with `demo_only/leadflow.json`; set `DESK_LEADFLOW_FILE=off` to turn it off there.
+ 
+-> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; the only values the desk writes are the lead status values named in that file's stage list. **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
++> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; when it is on, the stage copy to the CRM sends the lead status value named in that file's stage list and, when a lead has an owner, the owner id; `tests/test_lead_crm_copy.py` has a check that the request body holds only these two properties. **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
+ 
+ * **Not in this demo:** handling of later messages by an AI step (the desk never rewrites or summarises a later message), and suggested replies.
+ 
+@@ -127,7 +127,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ ## Tests and more commands
+ 
+-The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The full run takes about 20 minutes, and it needs a git clone (some tests read the list of tracked files with git).
++The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (`docs/tests.md`, which says no log is shipped); it has not been timed on the current set, which is larger. The tests need a git clone (some tests read the list of tracked files with git).
+ 
+ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
+ 
+diff --git a/SECURITY.md b/SECURITY.md
+index 109f8cd..43dbb2d 100644
+--- a/SECURITY.md
++++ b/SECURITY.md
+@@ -6,8 +6,8 @@ reachable by other people. Do not put real customer data into it.
+ 
+ ## Reporting a problem
+ 
+-Send a report by e-mail to sales@hadavin.com (it reaches the author), or use GitHub's
+-private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository.
++Send a report by e-mail to sales@hadavin.com (the address of the studio that publishes this demo; this repository cannot show who reads it), or try GitHub's
++private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository (it works only if the owner has switched it on; this repository cannot show that).
+ Please do not describe the problem in a public place first.
+ 
+ ## Supported versions and answer time
+@@ -16,7 +16,7 @@ Only the latest state of the `main` branch is supported. Reports are answered on
+ 
+ ## What is and is not covered
+ 
+-* There are no secrets in this repository and none are needed: with the default settings the demo makes no call to
++* No secret is meant to be in this repository and none is needed. Two checks look for secrets: the job in `.github/workflows/lint.yml` runs a secret scanner over the files and over the whole history, and `tests/test_hygiene.py` scans too. No scan result is stored in this repository, and a scan can miss a secret. With the default settings the demo makes no call to
+   any real service and talks only to demo servers on the same computer. These settings, each off by default, send
+   traffic to a real service over the network, and each needs a secret that you keep in a file outside the repository:
+   `DESK_QUALIFIER=live_claude` (a real AI model; key file, prices and spend caps; `docs/settings.md`, "Live model step"),
+diff --git a/docs/limits.md b/docs/limits.md
+index 918fc7c..677c3c9 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -138,7 +138,7 @@ The copy of a lead's stage (and owner) to the CRM is tried again, not given up a
+ 
+ ## Which CRM stage things the desk touches
+ 
+-> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; the only values the desk writes are the lead status values named in that file's stage list. **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
++> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; the desk writes the lead status value named in that file's stage list and, when the lead's owner has a CRM owner id, that owner id (`tests/test_lead_crm_copy.py` checks that the HubSpot request body holds these two properties and nothing else). **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
+ 
+ A CRM keeps several different "stage" fields. The desk writes only one of them, and only when a lead stage file (`DESK_LEADFLOW_FILE`) is switched on.
+ 
+diff --git a/versions.md b/versions.md
+index 434e684..c06c306 100644
+--- a/versions.md
++++ b/versions.md
+@@ -5,16 +5,16 @@ The versions the demo was run with, on a Windows computer (Python and the Window
+ ## Runtime
+ | Item | Value | How read |
+ |---|---|---|
+-| Python used on the Windows computer | 3.13.3 (MSC v.1943, 64 bit) | `python --version` |
++| Python used on the Windows computer | 3.13.3 (MSC v.1943, 64 bit) | `python --version`, run by the author; no log is shipped |
+ | Python required | 3.12 or newer (`requires-python`). 3.12 is the lowest version the package allows; the full test suite was run on 2026-11-12 on earlier commits of this repository (not on the commit that holds this file): Windows with Python 3.13 reported 2449 passed, 15 skipped; Linux with Python 3.12 (a container) reported 2462 passed, 2 skipped; no test failed on either. These are run results of those earlier commits; no log of either run is shipped and they were not repeated on this commit. The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits were made after those runs, including a Semgrep workflow, a lock file and test files, and these counts do not cover them. The one measured fact for this commit: `python -m pytest --collect-only -q` (collection only, no test run; Linux, Python 3.12.3, no network) prints one line per test file, in the form `tests/test_workflow_run_flags.py: 10` (that is its last line), 91 lines in all, and the counts on them add up to 3726 (added up by hand from those lines; the command prints no total). This is a count of listed tests, not a run result. | pyproject.toml |
+-| SQLite library | 3.49.1 (needs 3.24 or newer for `ON CONFLICT ... DO UPDATE`) | `sqlite3.sqlite_version` |
++| SQLite library | 3.49.1 in the author's run (no log is shipped). The desk's SQL uses `ON CONFLICT ... DO UPDATE` (in `src/lead_desk/desk.py`), which SQLite supports from version 3.24; the code does not check the version | `sqlite3.sqlite_version` |
+ | Runtime dependencies | none (Python standard library only) | pyproject.toml |
+ 
+ ## n8n (demo only)
+ | Item | Value | How read |
+ |---|---|---|
+-| n8n | 2.46.6, regular mode (no queue), one process, SQLite inside n8n | the n8n runs, once |
+-| Node.js | 24.22.2 | same runs |
++| n8n | 2.46.6, regular mode (no queue), one process, SQLite inside n8n | the author's n8n runs, once; no log is shipped |
++| Node.js | 24.22.2 | same runs; no log is shipped |
+ 
+ This is the single home of the n8n version; the README and `docs/n8n-recipe.md` point here. n8n is not part of this repository and not a dependency of the desk. Not checked: that anyone else's n8n install matches these numbers ; the recipe is not claimed to work on other versions.
+ 
+@@ -34,12 +34,12 @@ The live step has only been run against the local stand-in server.
+ | `actions/cache` (used in `sonar.yml`) | v4.3.0 |
+ | `SonarSource/sonarqube-scan-action` (used in `sonar.yml`) | v8.4.0 |
+ 
+-The commit SHAs in the rows above the `actions/cache` and `SonarSource/sonarqube-scan-action` rows, and the gitleaks download checksum in `lint.yml`, were checked against the upstream repositories on 2026-11-12: each tag resolves to the pinned commit, and the gitleaks 8.30.1 archive matches the checksum. The `actions/cache` and `SonarSource/sonarqube-scan-action` rows were added afterwards from the comments in `sonar.yml`; their pins were not part of that check.
++The commit SHAs in the rows above the `actions/cache` and `SonarSource/sonarqube-scan-action` rows, and the gitleaks download checksum in `lint.yml`, were checked by the author against the upstream repositories on 2026-11-12 (each tag resolving to the pinned commit, and the gitleaks 8.30.1 archive matching the checksum); no log of that check is shipped and it was not repeated here. The comment in `lint.yml` says where the checksum was copied from. The `actions/cache` and `SonarSource/sonarqube-scan-action` rows were added afterwards from the comments in `sonar.yml`; their pins were not part of that check.
+ 
+ ## Development tools (pinned with hashes, installed with `pip install --require-hashes`)
+-Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requirements-dev.txt` (the authority: Linux x86_64, Python 3.12.16, made in the throwaway container `python:3.12-slim` with `pip-compile --generate-hashes --allow-unsafe --strip-extras`, pip-tools 7.6.2, a build helper that is not itself pinned) and `requirements-dev-win.txt` (Windows, Python 3.13; made with uv 0.12.21: `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`). The only difference is `colorama` (a Windows-only transitive of pytest), which is in the Windows file and not in the Linux file. Neither file works on the other OS.
++Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requirements-dev.txt` (the authority: Linux x86_64; its header records `pip-compile` run with Python 3.12 and the command `pip-compile --allow-unsafe --generate-hashes --strip-extras`; the exact Python patch version 3.12.16, the tool version pip-tools 7.6.2 and the throwaway container `python:3.12-slim` are from the author's records and are written in no file of this repository; the build tool is not itself pinned) and `requirements-dev-win.txt` (Windows, Python 3.13; made with `uv` (the header records this command but not the uv version; 0.12.21 is from the author's records): `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`). The only difference is `colorama` (a Windows-only transitive of pytest), which is in the Windows file and not in the Linux file. Each file is made for one operating system (the `--python-platform` setting in the Windows file's header; `colorama` only in the Windows file); installing either file on the other operating system was not tried.
+ 
+-| Package | Version | Licence (as `pip-licenses` reads it, see below) | Used for |
++| Package | Version | Licence (as the author's `pip-licenses` scan read it; the raw output is not shipped, see below) | Used for |
+ |---|---|---|---|
+ | pytest | 9.2.0 | MIT | tests |
+ | ruff | 0.17.4 | MIT | lint and format; rules E, F, W, I, S, PLR2004 |
+@@ -54,24 +54,24 @@ Direct pins live in `requirements-dev.in`. Two lock files, same versions: `requi
+ | pathspec 1.1.1 | | **MPL-2.0** (classifier) | transitive of mypy. MPL-2.0 is file-level copyleft, not GPL, AGPL, SSPL or BUSL; used only as a development tool and not shipped. |
+ 
+ ### Browser tests (optional, a separate lock)
+-`requirements-browser.in` lists one direct pin: `playwright==1.63.0`. Two lock files made with uv 0.11.32, each with hashes and each held to the pins of the matching development lock (`-c`), so installing it after the development lock changes no development pin: `requirements-browser.txt` (`uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt`) and `requirements-browser-win.txt` (the same with `--python-version 3.13 --python-platform windows`, `-c requirements-dev-win.txt` and `-o requirements-browser-win.txt`). `--exclude-newer` ignores any release uploaded after that date, so the same command gives the same lock later. Install: `pip install --require-hashes -r requirements-browser.txt` after `requirements-dev.txt`. The checks in `.github/workflows/lint.yml` do not install it (no browser job yet).
++`requirements-browser.in` lists one direct pin: `playwright==1.63.0`. Two lock files made with `uv` (the files do not record the uv version; the comment in `requirements-coverage.in` names uv 0.11.32 for the coverage lock, and that the same version made these two was not checked), each with hashes and each held to the pins of the matching development lock (`-c`), so installing it after the development lock changes no development pin: `requirements-browser.txt` (`uv pip compile requirements-browser.in --generate-hashes --python-version 3.12 --python-platform linux --no-strip-extras --exclude-newer 2026-11-12 -c requirements-dev.txt -o requirements-browser.txt`) and `requirements-browser-win.txt` (the same with `--python-version 3.13 --python-platform windows`, `-c requirements-dev-win.txt` and `-o requirements-browser-win.txt`). `--exclude-newer` ignores any release uploaded after that date, so the same command gives the same lock later. Install: `pip install --require-hashes -r requirements-browser.txt` after `requirements-dev.txt`. The checks in `.github/workflows/lint.yml` do not install it (no browser job yet).
+ 
+-Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So the bot's check of dependencies for known vulnerabilities no longer reads these two files; it still reads `requirements-browser.in`, which names `playwright==1.63.0`, but not the three packages that only the lock lists (greenlet, pyee; typing-extensions is also in the development lock).
++Side effect of the review-tool settings: `.codeant/configuration.json` lists both browser lock files (`requirements-browser.txt`, `requirements-browser-win.txt`) among the files its review bot skips, next to the two development locks, because their content is hash lines. So, going by that settings file, the bot's check of dependencies for known vulnerabilities no longer reads these two files; the bot itself was not run or checked here. The settings file does not skip `requirements-browser.in`, which names `playwright==1.63.0`, but that file does not name the packages that only the lock files list (greenlet and pyee; typing-extensions is also listed only in locks, which are skipped).
+ 
+-Secret-scan allowance for the browser lock files: the entry in `.gitleaks.toml` accepts a 64-character hash line only in a file named `requirements-browser.txt` or `requirements-browser-win.txt` at the repository root (`paths = ['''^requirements-browser(-win)?\.txt$''']`). The secret scan in `tests/test_hygiene.py` runs from the repository root, so the path is relative and a copy in a sub-folder is not allowed: a planted hash line in a file of that name inside a sub-folder is reported by `gitleaks` (tried with gitleaks 8.30.1 on this tree: one finding), and the second check in the same test (the pattern list minus `exceptions.txt`, which is also root-anchored) reports it as well.
++Secret-scan allowance for the browser lock files: the entry in `.gitleaks.toml` accepts a 64-character hash line only in a file named `requirements-browser.txt` or `requirements-browser-win.txt` at the repository root (`paths = ['''^requirements-browser(-win)?\.txt$''']`). The secret scan in `tests/test_hygiene.py` runs from the repository root, so the path is relative and a copy in a sub-folder is not allowed: a planted hash line in a file of that name inside a sub-folder is reported by `gitleaks` (the author tried this once with gitleaks 8.30.1: one finding; no log is shipped and `gitleaks` was not run here), and the second check, the pattern list minus `exceptions.txt`, which is also root-anchored, reports it as well (the test `test_exceptions_narrow` in `tests/test_hygiene.py` plants such a file in a sub-folder and expects it to be reported).
+ 
+-| Package | Version | Licence (the package's own metadata) | Used for |
++| Package | Version | Licence (the package's own metadata, as read by the author; no log is shipped) | Used for |
+ |---|---|---|---|
+ | playwright | 1.63.0 | Apache-2.0 | drives the browser in the browser tests |
+ | greenlet 3.5.6, pyee 13.0.1 | | MIT AND PSF-2.0 (greenlet), MIT (pyee classifier) | transitive of playwright |
+ | typing-extensions 4.16.0 | | PSF-2.0 | transitive of pyee; the same pin as in the development lock |
+ 
+-These licences were read from the installed packages' metadata on 2026-11-12; the full licence scan described below was not repeated for this file. Playwright's package also contains a bundled Node program (its driver) with its own third-party notices; those were not examined.
++These licences were read by the author from the installed packages' metadata on 2026-11-12 (no log is shipped); the full licence scan described below was not repeated for this file. Playwright's package also contains a bundled Node program (its driver) with its own third-party notices; those were not examined.
+ 
+-Licences were scanned on 2026-11-12 with `pip-licenses` 5.5.5 (`--from=mixed`: the package's own licence field, and its Trove classifier where the field is empty), once for each lock file, each installed with `--require-hashes` into a clean environment: `requirements-dev-win.txt` into a Python 3.13.3 environment on Windows (19 packages, all listed above), and `requirements-dev.txt` into the `python:3.12-slim` container (Python 3.12.16, 18 packages: the same minus `colorama`). `pip-licenses` itself is installed separately for the scan and is not in either lock file. In both runs every package matched this table, `ast-serialize` and `librt` are MIT, and the only copyleft-family licence is `pathspec` (MPL-2.0, file-level, development tool only, not shipped). The scan reads each package's own metadata, not its project page. The raw outputs are kept with the author's records and are not shipped.
++Licences were scanned on 2026-11-12 with `pip-licenses` 5.5.5 (`--from=mixed`: the package's own licence field, and its Trove classifier where the field is empty), once for each lock file, each installed with `--require-hashes` into a clean environment: `requirements-dev-win.txt` into a Python 3.13.3 environment on Windows (19 packages, all listed above; `requirements-dev-win.txt` has 19 pinned lines, counted here), and `requirements-dev.txt` into the `python:3.12-slim` container (Python 3.12.16, 18 packages: the same minus `colorama`; `requirements-dev.txt` has 18 pinned lines, counted here). `pip-licenses` itself is installed separately for the scan and is not in either lock file. In both runs every package matched this table, `ast-serialize` and `librt` are MIT, and the only copyleft-family licence is `pathspec` (MPL-2.0, file-level, development tool only, not shipped). The scan reads each package's own metadata, not its project page. The raw outputs are kept with the author's records and are not shipped, so the scan results in this paragraph and in the licence columns are the author's statements and could not be re-checked here (the packages are not installed in this tree).
+ 
+ ## Not checked
+-- Windows restart on a fixed port: `SO_EXCLUSIVEADDRUSE` plus TIME_WAIT (about 2 minutes) may make a restart bind fail, and the conflicting bind may raise `PermissionError` (WSAEACCES) instead of `EADDRINUSE`. The tests avoid it by using port 0 (the system picks a free port).
+-- The hashes in `requirements-dev.txt` are for all files PyPI listed when it was made; `requirements-dev.txt` verified by a successful `pip install --require-hashes` in a clean `python:3.12-slim` container (Linux x86_64, Python 3.12.16, SQLite 3.46.1). `requirements-dev-win.txt` verified by `pip install --require-hashes` into a throwaway venv on the Windows laptop (Python 3.13.3). Not tested: other Linux architectures, the GitHub CI runner image.
++- Windows restart on a fixed port: `SO_EXCLUSIVEADDRUSE` plus TIME_WAIT (the short wait after a connection closes; its length was not measured here) may make a restart bind fail, and the conflicting bind may raise `PermissionError` (WSAEACCES) instead of `EADDRINUSE`. The tests avoid it by using port 0 (the system picks a free port).
++- The lock files were made with the hash option (`--generate-hashes` in the headers), which by the tools' documentation lists the files PyPI offered for each pinned version when the file was made; that was not re-checked here (no network). The author reports a successful `pip install --require-hashes` of `requirements-dev.txt` in a clean `python:3.12-slim` container (Linux x86_64, Python 3.12.16, SQLite 3.46.1) and of `requirements-dev-win.txt` into a throwaway venv on the Windows laptop (Python 3.13.3); these are the author's own runs, no log is shipped, and they were not repeated here. Not tested: other Linux architectures, the GitHub CI runner image.
+ - bandit B101 on tests: tests are excluded from bandit, so not relevant.
+ - gitleaks is a separate program (version and checksum pinned in `.github/workflows/lint.yml`), not part of the lock files. pre-commit and exiftool are not used.

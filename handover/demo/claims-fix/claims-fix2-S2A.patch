@@ -1,0 +1,79 @@
+diff --git a/README.md b/README.md
+index b907165..4e2cb51 100644
+--- a/README.md
++++ b/README.md
+@@ -11,7 +11,7 @@
+ 7. What is not claimed: that this works with any real CRM or mail system, that it suits production, or anything about load beyond what `docs/limits.md` states. It is not software to install for your business.
+ 8. Who it is for: a business owner who wants to see the idea working, and a RevOps person or n8n freelancer who wants to read the code, the tests and the n8n workflows.
+ 9. Licence: all rights reserved; you may read the code and run it on your own computer to evaluate it (see "Licence" at the end). Not legal advice.
+-10. Made by the founder of Hadavin (hadavin.com), an AI studio, with AI coding tools, and reviewed by the author.
++10. Made by the founder of Hadavin (hadavin.com), an AI studio, with AI coding tools, and read through by the author. No review record is kept in this repository.
+ 
+ ## What you will see
+ 
+@@ -85,7 +85,7 @@ Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh sc
+ 
+ If PowerShell refuses to run the scripts at all (a policy set by your organisation), start the two programs by hand instead, each in its own window with `PYTHONPATH` set as in `contract.md`, "Run commands": `python -m demo_only.fakes_server --outbox keyed --port 8766` and `python -m lead_desk.server`.
+ 
+-You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk answers 404 for `/` and `/health` on purpose: it has no such pages. On Windows, starting again on the same port right after a stop can fail for about two minutes (the operating system keeps the port closed for a while). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
++You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk has no page at `/` or `/health` and answers 404 for an address it does not know (`tests/test_http.py` checks this for other unknown addresses; `/` and `/health` were not tested separately). On Windows, starting again on the same port right after a stop can fail for a while (the operating system keeps the port closed for a time; how long was not measured here). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
+ 
+ The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data` (or `RESET_STOP_WAIT_SECONDS`, which both `scripts/reset.sh` and `scripts/reset.ps1` check before they stop or delete anything, is not a whole number from 0 to 999 without a leading zero; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
+ 
+@@ -101,12 +101,12 @@ Claimed, for this demo setup only:
+ 
+ Not claimed:
+ 
+-* Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
++* Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, from the author's own run; no log is shipped, so the result cannot be checked from this repository); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
+ * Production fitness, a legal opinion, a guarantee of any kind.
+ * The same person with two email addresses is two leads; two people sharing one address are one lead.
+ * The desk is for one computer and one process, has no login, and listens on this computer only unless you change that. No penetration test was done.
+ * Masking in the portal is on screen only: lead names, email addresses and phone numbers are hidden on the page by default (the switch "Hide names and email addresses"; its state lasts for the browser tab's session), the search does not look in names or email addresses while they are hidden, and the answer the page reads from the desk still carries every value, names included (see `docs/portal.md`).
+-* Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped.
++* Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped, so these figures cannot be re-checked from this repository.
+ * The desk's time stamps use the computer's clock, so a clock that jumps by 30 seconds or more can make the desk ask again for a follow-up that was still being sent (`docs/limits.md`, item 5).
+ * The full list, with test names, is in `docs/limits.md`.
+ 
+@@ -117,7 +117,7 @@ They are off in the desk itself; the demo start scripts switch on the lead flow.
+ * **Approval mode** (`DESK_LATER_MODE=approval`): a repeat that brings new details can be approved or denied by a person picked from a list of approvers. Approving or denying only records that choice: the approver is a name picked from the list and is not verified, and nothing is executed by it. Off by default; then a repeat is only listed. The reply shapes are in `contract.md`, the settings in `docs/settings.md`.
+ * **Lead owner, lead stage and reminder** (`DESK_LEADFLOW_FILE`): each new lead gets an owner from a short list, can be moved forward through named lead stages, and one reminder email is sent when a lead is still before the "reminder until" step after the wait (the follow-up state is not looked at). Only leads created while the feature is on are covered (`docs/limits.md`). Off when the setting is unset or is the word `off`. The demo start scripts switch it on with `demo_only/leadflow.json`; set `DESK_LEADFLOW_FILE=off` to turn it off there.
+ 
+-> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; the only values the desk writes are the lead status values named in that file's stage list. **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
++> **WARNING: this write can start automations in the CRM you connect.** When lead stages are on, the desk writes the contact's lead status field (in HubSpot `hs_lead_status`). Any automation that watches that field (a workflow, sequence, lead rotation, scoring rule, notification, integration or report) may react to our write, for example by emailing the contact, creating a task, changing the owner or sending a chat alert. The desk neither sees nor controls those automations, and it does not know what the automations of the CRM's owner do. The feature is OFF unless `DESK_LEADFLOW_FILE` is set to a file; when it is on, the stage copy to the CRM sends the lead status value named in that file's stage list and, when a lead has an owner, the owner id; `tests/test_lead_crm_copy.py` has a check that the request body holds only these two properties. **Required before you point this at a real CRM:** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off, and the first test uses one made-up contact. The desk has no sign-in, so any program that can reach its port could cause this write (the step route) or create contacts and send mail (`POST /leads`, the review routes). With any real service set (a real CRM, the real mail sender or the live AI step) the desk therefore starts only on a loopback address and refuses any other `DESK_BIND`.
+ 
+ * **Not in this demo:** handling of later messages by an AI step (the desk never rewrites or summarises a later message), and suggested replies.
+ 
+@@ -127,7 +127,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ ## Tests and more commands
+ 
+-The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The full run takes about 20 minutes, and it needs a git clone (some tests read the list of tracked files with git).
++The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. A full run was last timed at 16 minutes 33 seconds on an earlier, smaller set of tests (`docs/tests.md`, which says no log is shipped); it has not been timed on the current set, which is larger. The tests need a git clone (some tests read the list of tracked files with git).
+ 
+ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
+ 
+diff --git a/SECURITY.md b/SECURITY.md
+index 109f8cd..43dbb2d 100644
+--- a/SECURITY.md
++++ b/SECURITY.md
+@@ -6,8 +6,8 @@ reachable by other people. Do not put real customer data into it.
+ 
+ ## Reporting a problem
+ 
+-Send a report by e-mail to sales@hadavin.com (it reaches the author), or use GitHub's
+-private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository.
++Send a report by e-mail to sales@hadavin.com (the address of the studio that publishes this demo; this repository cannot show who reads it), or try GitHub's
++private vulnerability reporting: the "Report a vulnerability" button on the Security tab of this repository (it works only if the owner has switched it on; this repository cannot show that).
+ Please do not describe the problem in a public place first.
+ 
+ ## Supported versions and answer time
+@@ -16,7 +16,7 @@ Only the latest state of the `main` branch is supported. Reports are answered on
+ 
+ ## What is and is not covered
+ 
+-* There are no secrets in this repository and none are needed: with the default settings the demo makes no call to
++* No secret is meant to be in this repository and none is needed. Two checks look for secrets: the job in `.github/workflows/lint.yml` runs a secret scanner over the files and over the whole history, and `tests/test_hygiene.py` scans too. No scan result is stored in this repository, and a scan can miss a secret. With the default settings the demo makes no call to
+   any real service and talks only to demo servers on the same computer. These settings, each off by default, send
+   traffic to a real service over the network, and each needs a secret that you keep in a file outside the repository:
+   `DESK_QUALIFIER=live_claude` (a real AI model; key file, prices and spend caps; `docs/settings.md`, "Live model step"),
