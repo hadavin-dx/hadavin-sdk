@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:25Z / 07:55 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
+FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
+Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
+Machine facts (read now): Q1 post-chunk steps finished: 1-ruff-check:exit=0, 10-nodeoff:exit=0, 2-ruff-format:exit=0, 3-mypy-linux:exit=0, 4-mypy-win32:exit=0, 5-bandit:exit=0, 6-hygiene-gitleaks:exit=0, 7-gitleaks-dir:exit=0, 8-gitleaks-git:exit=0, 9-restart-test-1:exit=0, 9-restart-test-2:exit=0, 9-restart-test-3:exit=0, 9-restart-test-4:exit=0, 9-restart-test-5:exit=0
+Recent pushes (last 20 min): e653f43c Lead command 02:30Z | 9c39e32f demo: automatic heartbeat block | 52b8fc60 demo: automatic heartbeat block | 3af43f47 demo: automatic heartbeat block | 43c0fb26 Lead command 02:16Z | e159feb5 demo: real-run fixes v2 patch + evidence (handover only) | 484f223d demo: report block 02:08 Z: URGENT sonar.yml invalid YAML; A/B paper; apply order | 01602c29 demo: sonar-yaml-fix.patch corrected (both files)
+TABLE 1 - LIVE ITEMS: see the last hand-written block below (agents: PR-text verifier D-PR, Semgrep patch v3 builder S3, Semgrep PR body drafter D-SG, skips table Q5, dry-run checks Q4; shell: chunked run + post-chunk checks).
+TABLE 2 - ROUNDS: unchanged since the last hand-written block.
+TABLE 3 - FINISHED SINCE LAST BLOCK: see "Recent pushes" above.
+
 ## 2026-11-13 02:21Z / 07:51 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
