@@ -1,5 +1,17 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:01Z / 16:31 IST  HEARTBEAT 12
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| E | Evidence runner: PR #14 edadd00 full suite once -v + F7/C1/whitespace/bytes cases | evidence for the current head | 10:44Z / 16:14 | at 10:59Z: 2735 passed, 0 FAILED, 184 skipped, 0 ERROR (about 79 percent of 3686); the next file test_real_check_dry takes ~170 s alone; ends about 11:06Z / 16:36 (cap 11:07Z) | run 1 of 1 | running; F7 rerun table hostile-f7-rerun-edadd00.md already pushed | when E ends: copy its log, fill summary.md row; report E result to you |
+| C2 | Evidence runner: hang hunt, full suite on main 61ded9e (run 2 of the same suite, with -u and junitxml) | clean main run and summary line | 10:44:53Z / 16:14 | at 10:59Z: 2467 passed, 0 FAILED, 182 skipped, 0 ERROR (about 72 percent); ends about 11:08Z | retry 1 (run 1 had no summary line) | running | write hang-hunt.md |
+| D | Evidence runner PR #14 d5b4451 | stale head | 10:25Z | reported 10:57Z | 1 of 1 | closed | none |
+| me | supervision, summary.md | keep it all watched | 09:37Z | cap 11:07Z / 16:37 | n/a | running | at 11:07Z final block with whatever finished |
+
+ASK:
+1. E and C2 may end a few minutes after the 11:07Z cap (both are at 72-79 percent, with the 170-second test file still ahead). Default: I wait for both up to 11:12Z (bounded), then report any unfinished run as partial with its last test name. Please say if the cap is hard.
+FACTS: no failures, errors or hangs in either valid run so far (0 FAILED, 0 ERROR lines).
+
 ## 2026-11-13 10:55Z / 16:25 IST  HEARTBEAT 11
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
