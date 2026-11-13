@@ -1,5 +1,14 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:10Z / 16:40 IST  HEARTBEAT 15 (ORDER 6: agent F started)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| F | Evidence runner: PR #14 head 6b1fe49 full suite once -v (basetemp inside TMPDIR, log outside git until it ends) + F7/C1/whitespace/bytes cases + the new cases (stateful `__fspath__`, lone surrogate) + the repo's new tests alone | evidence for the current PR #14 head | 11:09Z / 16:39 | suite about 20 min, ends about 11:30Z / 17:00; hard stop 11:50Z (cap 11:55Z) | first try, run 1 of 1 | running | I check progress-F.txt at 11:20Z |
+| E, D, C2, A, B | earlier agents | - | - | - | - | all closed (E: edadd00 3681 passed, 0 failed) | none |
+
+ASK: none.
+Heads: E's numbers are for edadd00 and are now stale; the current head is 6b1fe49 (F).
+
 ## 2026-11-13 11:07Z / 16:37 IST  HEARTBEAT 14 (E reported; cap reached; all agents closed)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
