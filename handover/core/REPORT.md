@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:44Z (07:14 IST) / no change since 01:39Z: Part 6 batch 8 builder started; Part 2 batch 8 and Q8c-1 not reported
+
+**FAILED / UNCERTAIN FIRST**
+- No change since 01:39Z. Nothing new proven: Part 6 builder claims (10760 passed, 225 of 225) still not independently run; runner evidence for 41c84695 incomplete (slots). Part 2 batch 8 box (to about 01:49Z) and Q8c-1 builder not reported; Q8c-1 full suite still waiting for a slot (priority 1). Heads: pd-bind=3db352f5 pd-banner=41c84695 q8c1-b16=37cd5157.
+- Open question to the lead (from 01:39Z block): slot order, Q8c-1 versus Part 2 builder mutant runs.
+
+**LEAD ACTIONS**: slot question only; no new order seen after the 01:30Z cadence order.
+
+**LIVE ITEMS** (3 agents): abb52410 Part 2 batch 8 (full pytest, bind rows, stage rows running); a35e15e9 Q8c-1 (suite queued); a509d177 Part 6 batch 8 builder (started 01:40Z, classes A-F, box 60 min, to about 02:40Z).
+
+**ROUNDS (WHY)**: Part 6 round 8 after batch 8 (mode-safety, no cap); Part 2 round 8 after its batch 8 (security, no cap); Q8c-1 round 17 after the push.
+
+**FINISHED SINCE LAST BLOCK (01:39Z)**: nothing.
+
 ## 01:39Z (07:09 IST) / Part 6 round 7 resolved: 5 Major, round 8 needed; runner on 41c84695 INCOMPLETE; slots are the bottleneck
 
 **FAILED / UNCERTAIN FIRST**
