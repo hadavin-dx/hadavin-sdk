@@ -1,5 +1,12 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 15:58Z: ENV PROBE DONE (handover/demo/N8N-ENV-PROBE.md)
+- LOAD: no agent, no job. Scratch folders deleted (disk free back to the earlier level).
+- RESULT: the Linux assumptions CHECK OUT with four fixes: Node 24.22.2 from npm (machine default is Node 22, n8n 2.46.6 refuses it); install and rebuild isolated-vm under Node 24; N8N_LISTEN_ADDRESS=127.0.0.1 (no IPv6); N8N_RUNNERS_BROKER_PORT=5780 (N8N_PORT=5679 collides with the broker default 5679). Then readiness 200 at 8 s, 5780 listens, ports free after killing the group.
+- Other: Docker client only, no daemon; Postgres 16.15 server installed; Docker Hub/ghcr/npm/pypi reachable; idle load about 0; disk is tight (install 3.0 GB).
+- ASK: none (default: wait for the rerun brief). FAILURES: F72 the first three start attempts failed for the reasons above (all explained). 
+- QUEUE DONE, idle by order.
+
 ## REPORT 15:47Z: ENV PROBE RUNNING (N8N-ENV-PROBE.md follows within ~10 min)
 - LOAD: no agent. One shell job (isolated-vm rebuild attempt) only. Nothing stuck.
 - DONE so far: basics, network, registry, postgres manifest, 2-min idle vmstat, n8n 2.46.6 installed in scratch (6 min), start tried 3 times.
