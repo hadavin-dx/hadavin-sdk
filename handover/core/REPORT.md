@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:42Z / quiet tick: 5 builders working, nothing pushed by them yet
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 runner a7e31a96 is 54 min in with no report (rule: 8 min per run). I sent it a status request: finish, or stop and mark the rest RUN ON LAPTOP.
+- Still no clean round on any lane. No new branch heads since 02:42Z minus 5 min: pd-bind 3db352f5, pd-banner 07bfda12, q8c1-b16 c5aa1c26, sonar-path ddf1d584; core/q8c1-notes-check does not exist on origin yet.
+
+**LEAD ACTIONS**: none. No new lead command (last read 02:55Z order, already acted on). No GH013.
+
+**LIVE ITEMS**: a7e31a96, a37e6e83 (Part 2 b9), a69287e2 (Part 6 b9), a51ea641 (SONAR-PATH fix), a14748c3 (Q8c-1 code-only branch). 5 of 6 minimum.
+
+**ROUNDS (WHY)**: unchanged (Part 6 r9, Part 2 r9, SONAR-PATH r2).
+
+**FINISHED SINCE LAST BLOCK**: nothing new.
+
+**EGM STEP PER PACKAGE**: Part 2 step 3, Part 6 step 3, Q8c-1 step 3 (code-only branch), SONAR-PATH step 3.
+
+
 ## 02:37Z / New SONAR-PATH lane started; Q8c-1 nits pushed; Part 6 batch 9 and Part 2 batch 9 building
 
 **FAILED / UNCERTAIN FIRST**
