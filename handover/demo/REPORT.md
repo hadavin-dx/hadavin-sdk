@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 00:24Z / 05:54 IST - RUN C2 (fixed stack, chunked): 7 OF 10 CHUNKS DONE, 2228 PASSED, 0 FAILED SO FAR; the 8 files that failed in run B are in chunks 7-9 (running now); NOTHING NEW READY TO APPLY UNTIL THEY PASS
+FAILED / UNCERTAIN first:
+1. NO VERDICT YET. Run C2 is the fixed runtime stack (f5fe824 + speed + codeant2-desk f0084b2f0a7f + portal-log + demo-only + tests-hardening + fakes-body + standins-body + hang-fix-v2), run in 10 contiguous chunks of the alphabetical test-file order (79 files; one output + exit file per chunk; resumable because the container was restarted again at 00:05Z; GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1 so the 3 gitleaks tests run). Done: chunks 0-6 all exit 0: 112 + 624 + 275 + 124 + 307 + 320 (1 skipped) + 466 = 2228 passed, 0 failed, 0 errors, 1 skipped (chunk 6 took 6:40: browser tests). Chunk 7 started 00:22:15Z (15 passed so far); chunks 8-9 follow. The 6 reaper/SIGTERM tests and the 2 `book_problem` tests that FAILED in run B (test_server_main_reaper, test_stall_eviction, test_claim_checks_and_crm_mode, test_later_approval) are in these chunks or already passed: test_claim_checks_and_crm_mode and test_later_approval are in chunks 1-3 and PASSED (0 failures there). The `test_server_main_reaper` / `test_stall_eviction` ones are the decisive ones still ahead. ETA about 00:40Z.
+2. Caveat of the chunked method: the files run in the same order but in separate pytest processes, so cross-file pollution through process-wide state is NOT exercised; the earlier un-chunked run A on pristine f5fe824 was 2988 passed in one process. If C2 is green I will say 'green in chunks'; the lead decides whether one more un-chunked full run is needed (about 22 min; a container restart can kill it).
+3. Merge-readiness (lead order 00:12Z): builder M1 built `merge-ready/MERGE-READINESS-2-4.md` + `merge-ready-hygiene.patch` (committed negative test for the sonar-key exception + detector-gap docs note). Fresh review (no shell): 4 Majors: the docs note OVERCLAIMS ('gitleaks does not report lowercase 40+ after hadavin-dx_' is false: gitleaks DOES flag the real key; the planted values were low-entropy), missing planting variants (CRLF, pure blanks, key twice, spaces around `=`; text-mode line endings differ Windows/Linux), 3 mutant gaps (`\.`->`.`, whole-file path allowlist, regexTarget line/secret), the second-key gitleaks half untested. Builder M2 is fixing it into merge-ready-hygiene-v2.patch (measurements first, then reword to only what was measured). Findings also in the checklist: PRs #2 (pr-1-code) and #3 (pr-2-demo-folder) are NOT green alone (gitleaks git 325 findings, pytest finds no tests: only #4's content fixes it): merge as a stack; branch protection may block merging #2 with red CI: question for the owner. Real GitHub CI not visible from here.
+4. Not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install, Playwright on Windows.
+READY TO APPLY NOW: nothing new. (Semgrep patch `semgrep-on-head.patch` unchanged, own PR.) The runtime set (8 patches in my order: speed, desk f0084b2f..., portal-log, demo-only, tests-hardening, fakes-body, standins-body, hang-fix-v2) is waiting for C2 chunks 7-9.
+NEEDS FROM LEAD: nothing new (Semgrep `concurrency:` yes/no still open; hang guard yes/no covered by your 00:12Z answer: 'only if C2 is green').
+
+TABLE 1 - LIVE ITEMS (load 1.8)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| run C2 (nohup chunks) | full fixed stack in 10 chunks | 00:06 | 18 min | 00:40 | running chunk 7 of 10; 0 failures | /tmp/work/c2chunk-*.txt -> integration/INT-2b.md update | chunk 7: 15 passed |
+| M2 | merge-ready patch v2 (measure the gap, variants, mutants, Windows, checklist) | 00:19 | 5 min | 01:05 | running | merge-ready-hygiene-v2.patch + evidence-m2 | started |
+Totals: agents 1, shells 1, containers 0, heavy pytest 1 (chunk) + 1 focused (M2), load 1.8 of 4.
+Flags: none; each chunk has its own 25-min timeout.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt runtime | 5 (gate: run C2) | R1 5M, R2 4M, R3 3M, R4 0B/0M/5N, run B 8 fail (1 cause), delta 0B/0M/2N | `main` refusal vs monkeypatched names | the full run is the gate | no | C2 green |
+| merge-ready patch (lead order) | 2 (build v2) | R1 4M | overclaim in a docs note; thin variants/mutants | Majors real | no | fresh review clean |
+| hang guard v2, Semgrep, security, layout | done | - | - | - | YES | - |
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (00:01Z)
+| item | result |
+|---|---|
+| lead answer 00:12Z | core-touch shape approved; C2 gate; Semgrep own PR; merge-readiness order |
+| M1 build + review | patch + checklist built (7c115b4b); review 4 Majors (46637bf0) |
+| run C2 chunks 0-6 | 2228 passed, 0 failed |
+
 ## 2026-11-13 00:01Z / 05:31 IST - RUN B FINAL: **8 FAILED, all from ONE root cause in the runtime set's new `main` refusal**; builder 10c-2d's fix reviewed clean by delta; RUN C2 (full suite of the FIXED stack) STARTED 23:58Z from the start; Semgrep patch unchanged and clean
 FAILED / UNCERTAIN first:
 1. INT-2b run B (stack with the OLD codeant2-desk patch): **8 failed, 3082 passed, 6 skipped, 22:13 min** (not 2: the last 6 came at 90%-98%): test_claim_checks_and_crm_mode::test_other_value_error_is_not_exit_4 and test_later_approval::test_main_loads_approvers_and_refuses_bad_ones (AttributeError: 'function' object has no attribute 'book_problem'); test_server_main_reaper::test_main_runs_reaper_while_serving and ::test_main_reaper_sends_and_frees_lock ('timed out waiting for the desk was built and the reaper started'); test_stall_eviction::test_sigterm_stops_like_ctrl_c, ::test_sigterm_handler_before_listening, ::test_second_signal_is_harmless, ::test_sigterm_stuck_reaper_is_logged ('timed out waiting for the SIGTERM handler was installed'). My reading (NOT yet confirmed): the six timeouts are the same AttributeError raised inside the thread that runs `main`, so the desk is never built/the handler never installed. Builder 10c-2d's fix names the first two; the six others were found ONLY by the full run. Pristine f5fe824 (run A): 2988 passed, 0 failed.
