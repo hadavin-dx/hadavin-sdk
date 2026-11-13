@@ -1,5 +1,35 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:15Z block (lead core session)
+
+**FAILED/UNCERTAIN FIRST**
+- Independent runners found defects the reviewers did not: Part 2 83cdb7a2 bind_mutants B153 SURVIVES, and a Runtime with an instance-level execute/handle/extra function is NOT counted so serve on 0.0.0.0 is served (ledger PDBIND-r9-10, r9-11). Part 6 dd827d79 banner_mutants B12 SURVIVES (killer cannot tell the mutant) and deepcopy of a built App raises before any banner call (PDBANNER-r9-11). Both were sent to the batch 10 builders as facts.
+- Not run in the cloud (limits): full pytest, Python 3.14, the other 106 Part 2 rows, a single-run complete banner_mutants.
+- Runner slip recorded: shell had cloud keys set (names only read); runs repeated with them unset.
+- SONAR-PATH runner a4ffc3a3 has written RESULTS.md but is still running: no ledger rows yet. SonarCloud not seen clean (needs the draft PR).
+
+**LEAD ACTIONS**
+- Part 2 and Part 6 round 9 resolves pushed; batch 10 builders running; SONAR-PATH r2 resolved (file r3) and batch 3 builder running.
+- Addenda sent to aa234f9b (Part 2) and ab741cc2 (Part 6).
+
+**LIVE ITEMS (agents by id)**
+aa234f9b Part 2 b10 builder (started 03:08Z); ab741cc2 Part 6 b10 builder (03:10Z); a73b09c1 SONAR-PATH b3 builder (03:11Z); a4ffc3a3 SONAR-PATH runner. Finished: abd6af72, ab8e69ea, a91e4eee, a4e6c725, aa1d7d31; a7e31a96 stopped.
+
+**ROUNDS (WHY)**
+Part 2 r9 and Part 6 r9 not clean (money and mode-safety, no cap); SONAR-PATH r2 not clean (9 Majors in proof and text, no escape found).
+
+**FINISHED SINCE LAST BLOCK**
+Part 2 and Part 6 evidence runner results saved and committed with ledger rows; Part 6 resolve and SONAR-PATH resolve reports; three builders launched.
+
+**EGM STEP PER PACKAGE**
+Part 2: resolve done, b10 build. Part 6: resolve done, b10 build. SONAR-PATH: resolve done (r3 file), b3 build. Q8c-1: code-only dcf64b36 waiting for the laptop.
+**LANE SONAR-PATH:** agents a73b09c1 (builder), a4ffc3a3 (runner); EGM step = build after round 2 resolve; A, B, C done, D branch not yet pushed as core/k1b-path-confinement.
+
+RUN ON LAPTOP: hadavin-sdk dcf64b36b094c153bf4f865b1fcba5971f4cf9fb (Linux Docker, py313+py312, Postgres, CI flags) FIRST
+RUN ON LAPTOP: hadavin-sdk dd827d79e00bea6da81e757e0fa0746bbbd3449d SECOND (will be superseded by Part 6 batch 10)
+RUN ON LAPTOP: Part 2 and SONAR-PATH: none until their batches are final.
+
+
 ## 03:08Z block (lead core session, hadavin-sdk-da)
 
 **FAILED/UNCERTAIN FIRST**
