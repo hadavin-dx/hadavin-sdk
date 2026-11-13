@@ -1,6 +1,35 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:13Z / 06:43 IST - FULL RUN ATTEMPT 2 ALSO KILLED BY A CONTAINER RESTART (322 passed / 0 failed in 4.5 min); SWITCHED TO THE RESUMABLE CHUNKED DRIVER ON THE 2db3926 TREE (started 01:11:12Z); Semgrep delta review started
+FAILED / UNCERTAIN first:
+1. **Still no verdict on 2db3926.** Attempt 2 of the un-chunked run (started 00:52:56Z) died at 00:57:31Z after 322 tests (322 PASSED, 0 FAILED) with another container restart; the container was down about 13 minutes and came back at ~01:10Z (restart log: 23:05, 23:58, ~00:05, ~00:51, ~00:57; the gaps between restarts are now shorter than the 22 minutes an un-chunked run needs: I have NO un-chunked pass of 2db3926 and I cannot promise one while this continues). So I started the same tree (/tmp/work/h3, pr-3-tests 2db3926, 80 test files) in the RESUMABLE chunked driver (10 chunks of 8 files, one pytest process per chunk, an .exit file per finished chunk; after a restart I relaunch and it skips finished chunks): same flags (`-v -o faulthandler_timeout=300 -rs`, GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1, Node + Playwright). The previous chunked run of the stack (C2, f5fe824 + the batch-3 patches) took about 25 minutes wall and was 3094 passed / 0 failed. ETA about 01:40Z if no restart interrupts it. I will ALSO retry the un-chunked run afterwards if restarts stop (tell me if you prefer one over the other).
+2. Semgrep delta review (the +22-line test and the workflow concurrency line of semgrep-on-2db3926.patch): started 01:11Z (fresh reviewer; it applies the patch on its own clone and runs test_nosemgrep_form + the `cancel-in-progress: true` mutant): result not in yet.
+3. Not run anywhere: PowerShell/Windows, real GitHub CI, a real n8n, Python 3.13, Windows lock install; the lints/restart-test/node-off/hygiene pass on the 2db3926 tree waits for the chunks to finish (one heavy thing at a time).
+READY TO APPLY NOW: nothing new (batch 3 is applied; Semgrep own PR: semgrep-on-2db3926.patch sha256 0964d5cdbc9e..., delta review pending).
+NEEDS FROM LEAD: (1) confirm the browser-lock anchor vs the semgrep anchor (S3 could not see your tightened line); (2) chunked-green vs un-chunked: because of the restarts please say if chunked is acceptable for the final gate.
+
+TABLE 1 - LIVE ITEMS (load ~1)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| h3 chunked driver (nohup) | full suite of 2db3926 in 10 resumable chunks | 01:11:12 | 2 min | 01:40 | running chunk 0 | /tmp/work/h3chunk-*.txt/.exit -> integration/INT-3-2db3926.md | chunk 0 started |
+| rev sg-delta | review of the Semgrep delta (workflow expression + 22-line test + mutant) | 01:11 | 2 min | 01:35 | running | report | started |
+Totals: agents 1, shells 1, containers 0, heavy pytest 1 (+1 light from the reviewer), load ~1.
+Flags: the long un-chunked run is not feasible at the current restart frequency; chunked is the fallback (resumable).
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| batch 3 on head 2db3926 | gate: full run | C2 chunked on f5fe824+stack: 3094 passed, 0 failed; lead's Windows run 252 passed/29 skipped; un-chunked attempts 1-2 killed by restarts at 1909 and 322 tests (0 failures in either) | container restarts | the final gate must complete | no | chunked green (or un-chunked if possible) + lints |
+| Semgrep for 2db3926 | 5 (delta review) | R1-R4 clean; delta: workflow expression + test | - | the delta is new code | no | delta review clean |
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (00:55Z)
+| item | result |
+|---|---|
+| full run attempt 2 | killed by a restart at 322 passed / 0 failed |
+| chunked driver on h3 | started 01:11:12Z |
+| Semgrep delta reviewer | started 01:11Z |
+
 ## 2026-11-13 00:55Z / 06:25 IST - UN-CHUNKED FULL RUN ON 2db3926: ATTEMPT 1 KILLED BY A CONTAINER RESTART AT 1909 PASSED / 0 FAILED; ATTEMPT 2 STARTED 00:52:56Z; Semgrep patch for 2db3926 ready
 FAILED / UNCERTAIN first:
 1. **No verdict on 2db3926 yet.** Un-chunked full run (fresh clone /tmp/work/h3 of pr-3-tests 2db3926 verified, no git operations in it; `python -u -m pytest tests -v -o faulthandler_timeout=300 -rs`; GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1; Node 22 + Playwright 1.63.0 + chromium 1243): ATTEMPT 1 started 00:42:37Z; **killed by a container restart (the 4th) at ~00:51:22Z after 1909 tests: 1909 PASSED, 0 FAILED, 0 ERROR** (no hang; the saved partial output is /tmp/work/full2db-attempt1-killed.txt). ATTEMPT 2 started 00:52:56Z from the start (as you said: rerun if a restart kills it); ETA about 01:16Z. Restarts have hit at 23:05, 23:58, ~00:05 and ~00:51: if it dies again I will rerun immediately and tell you.
