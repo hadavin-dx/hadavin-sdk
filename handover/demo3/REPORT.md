@@ -1,5 +1,28 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:10Z / 18:40 IST  HEARTBEAT 49 (Q3b final; REV-3b round 2 saved; B3c, Q3c, Q10 started)
+**Idle (`vmstat`, 13:04Z): user 21, system 13, idle 47, IO-wait 19, free RAM about 9 GB** (it swings between 3 and 55 percent as runs start and end; I start agents only when a measurement shows above 30 percent).
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof | 12:31Z | ~13:20Z | xdist run 2 started 13:02:34Z (run 1 done) | running |
+| Q2b | fuzz seeds 7001-7005 + extra generators | 12:49Z | ~14:00Z | seed 7003 campaign b (40000 cases) | running |
+| Q6b | cold reader tests/real-services docs | 12:37Z | ~13:25Z | docs/tests.md coverage variant | running |
+| Q8b | mutation check identity.py + claim logic | 12:49Z | ~13:50Z | 5 of 40 mutants done, last I05 KILLED | running |
+| B2 | BUILDER lane3-fix-2 | 12:43Z | ~13:30Z | patched test family running | running |
+| B1b | BUILDER lane3-fix-1 round 2 | 12:58Z | ~13:35Z | patch lane3-fix-1-r2.patch and notes written 13:02-13:03Z (sha256 3850d88a...f31ee, draft: its final report is not in yet) | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 ROUND-1 suites | 12:52Z | ~13:25Z | running | running |
+| E4b | EVIDENCE RUNNER independent proof of lane3-fix-3 round 2 | 13:01Z | ~13:25Z | running | running |
+| **B3c** (new) | BUILDER: applies the 4 MINOR findings of REV-3b to lane3-fix-3 (name limit tested directly, docstring, skip style, neighbour test only if it adds a kill) -> lane3-fix-3-r3.patch | 13:06Z | ~13:30Z; stop 13:50Z | starting | running |
+| **Q3c** (new) | crash soak in BLIND mail mode: reads what the docs promise, reproduces the 4 of 30 failing blind rounds, 300 rounds new seed 20261115, classifies each violation A (documented guarantee broken), B (documented non-guarantee), C (undocumented), and fixes the harness so crash points fire | 13:03Z | ~14:00Z; stop 14:20Z | starting | running |
+| **Q10** (new) | flake chase for the 2 unexplained `E` marks: tests/test_fakes_body_before_answer.py x60 on PR #12's head and on f3c39cf8, 3 in parallel, with a CPU hog, plus 20 lockstep starts | 13:04Z | ~13:40Z; stop 14:00Z | starting | running |
+| Q3b, REV-3b, Q3, Q4 | reported, closed | - | - | see below | closed |
+**Q3b RESULT (crash soak 2, seed 20261114, 5 leads per round, evidence/crash-soak-b.md):** **300 rounds, 0 violations, 0 hangs, 0 harness errors** (12:49:28Z-13:02:57Z); every round: 5 leads (duplicates through two doors and exact replays included), 5 mails, 5 follow-ups sent; check_invariants.py exit 0 in 300 of 300; rounds 1-150 one kill each, rounds 151-300 (150 double-kill rounds) two kills, the second during recovery. **Gap (the agent's own): 35 of the 46 recovery kills armed at a crash point never fired, so the desk was SIGKILLed instead: the second kill is mostly a plain SIGKILL; a clean round's book is not kept, only counts and the checker result.** Q3c fixes the harness gap for its own run.
+**REV-3b RESULT (fresh independent round 2 on lane3-fix-3-r2, security path; evidence/review-lane3-fix-3-r2.md): no BLOCKER, no MAJOR, 4 MINOR;** all five survivors and the two author mutants (B1 length counted in bytes, B2 only ValueError caught) are killed by its trace; the M15 kill by a real input (lone surrogate U+D800) holds on 3.12 and 3.13 by its reading. Minors: the 255-character name test goes through the real realpath (Windows 260-character limit, unproven) -> test `_new_name` directly; docstring omits B2 and does not say B1 and B2 are the author's own mutants; skips use `os.name` where the repo uses `sys.platform == "win32"`; one note. Neighbouring survivors by reasoning: only Windows-only or equivalent ones (low confidence). **Stop rule: a fresh pass found no blocker and no major, so the security-path stop condition holds; the minors are applied by B3c and re-proved by the mutants (no third review round needed unless E4b or the re-proof finds something).**
+
+ASK:
+1. Pipeline status per patch: lane3-fix-3: builder done, fresh review done (0 blocker, 0 major), minors in B3c, evidence run E4b on r2 and a re-proof on r3 to come, then `egm:egm-drift-report`; lane3-fix-1: round 2 builder B1b nearly done, then evidence run and two fresh reviewers (round 2 of cap 2); lane3-fix-2: builder B2 (running), then evidence, reviewers, resolve. OK? Default: yes.
+2. Q3c may find that blind mode's `unknown` follow-ups contradict a document. If it does, a builder patch follows the same hour (not parked), as ordered.
+
 ## 2026-11-13 13:06Z / 18:36 IST  HEARTBEAT 48 (B3b reported: round 2 of lane3-fix-3; fresh reviewer and evidence runner started)
 **Idle (`vmstat`, 13:01Z): user 31, system 12, IDLE 41 percent, IO-wait 16, free RAM about 10 GB.** Above 30 percent again: I started the two items the pipeline needs (one fresh read-only reviewer and one one-core evidence runner).
 | id | what it does | since | expected end | real progress now | state |

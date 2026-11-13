@@ -79,3 +79,8 @@ E4 | reported 13:01Z closed: lane3-fix-3 round 1: all 5 survivors killed, sha ok
 B3b | reported 13:01Z closed: lane3-fix-3-r2.patch (393 passed 2 skipped; M15 real gap proven by a real input)
 REV-3b | agent a50a99..: fresh egm:egm-implementation-readiness round 2 on lane3-fix-3-r2 | 13:03Z | ~13:20Z | running
 E4b | agent a77229..: independent proof of lane3-fix-3-r2 | 13:03Z | ~13:25Z | running
+Q3b | reported 13:02Z closed: 300 rounds 0 violations; 35 of 46 recovery point kills never fired
+REV-3b | reported 13:08Z closed: 0 blocker 0 major 4 minor (saved review-lane3-fix-3-r2.md)
+B3c | agent a7bcc5..: lane3-fix-3 r3 minors | 13:06Z | ~13:30Z stop 13:50Z | running
+Q3c | agent ab9f5d..: blind-mail soak | 13:03Z | ~14:00Z stop 14:20Z | running
+Q10 | agent a38c40..: flake chase PR12 E marks | 13:04Z | ~13:40Z stop 14:00Z | running
