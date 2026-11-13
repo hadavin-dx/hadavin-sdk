@@ -55,7 +55,7 @@ _LISTEN_BUILD_FIRST = _LISTEN_ASK_FIRST.replace(_ASK, "") + _ASK
 
 
 def mutant(name, file, old, new, test_file, killer, expect, **kw):
-    pin = test_file.removesuffix(".py") + "::" + killer
+    pin = kw.pop("pinned", None) or test_file.removesuffix(".py") + "::" + killer
     return Mutant(
         name, file, old, new, expect, test_file=test_file, only_test=killer, pinned=pin, **kw
     )
@@ -1560,11 +1560,11 @@ M = [
     mutant(
         "B172 the on_decided of the approvals is not counted",
         RQ,
-        "        if not _is_core_on_decided(self.on_decided):",
-        "        if False:",
+        "        if not _is_core_on_decided(\n",
+        "        if False and not _is_core_on_decided(\n",
         T_BG,
         "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
-        "DID NOT RAISE",
+        "a server was built before the refusal",
     ),
     mutant(
         "B173 any plain function that closes over a dict is the core's on_decided",
@@ -1573,7 +1573,7 @@ M = [
         "    if type(func) is not FunctionType:",
         T_BG,
         "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
-        "DID NOT RAISE",
+        "a server was built before the refusal",
     ),
     mutant(
         "B174 the closure of the core's on_decided may hold anything",
@@ -1582,7 +1582,7 @@ M = [
         "    return cells is not None and len(cells) == 1",
         T_BG,
         "test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind",
-        "DID NOT RAISE",
+        "a server was built before the refusal",
     ),
     mutant(
         "B175 serve lets an unreadable approvals object raise another error than BindRefused",
@@ -1603,6 +1603,7 @@ M = [
         T_BG,
         "test_every_slot_deleted_with_the_object_level_call_is_answered_503",
         "was still served",
+        pinned="tests/test_bindguard::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_audit_sink]",
     ),
     mutant(
         "B177 the secrets module does not pin its own stand-in",

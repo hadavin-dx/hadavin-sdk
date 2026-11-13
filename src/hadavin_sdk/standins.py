@@ -81,9 +81,7 @@ from pathlib import Path
 from types import ModuleType
 
 SCAN_DEPTH = 4  # nesting of detector lists
-SCAN_DEPTH_VALUES = (
-    8  # levels of containers entered inside a held instance (own dictionary = level 1)
-)
+SCAN_DEPTH_VALUES = 8  # container levels entered in a held instance (its own dict is 1)
 SCAN_NODES = 100_000  # values looked at in one instance; more than this reads as real
 
 # (module, class name): the only classes that count, written here and nowhere else

@@ -2962,6 +2962,18 @@ def _spoof_class(target: type) -> type:
     return Meta("Spoof", (), {})
 
 
+def _spoof_empty(target: type, member: bool = False) -> object:
+    """An instance of such a class that holds nothing: only the class is false. With ``member`` it also lists itself
+    as a member of an enum with its own value, so every check below the class judgement passes."""
+    cls = _spoof_class(target)
+    value = cls()
+    if member:
+        cls.__members__ = {"x": value}  # type: ignore[attr-defined]
+        value._value_ = "x"  # type: ignore[attr-defined]
+        value.__objclass__ = cls  # type: ignore[attr-defined]
+    return value
+
+
 def _spoof(target: type) -> object:
     """An instance of such a class that holds a real client."""
     value = _spoof_class(target)()
@@ -3009,6 +3021,11 @@ def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_model_row(
         _assert_every_host_refuses(
             tmp_path, _spoof(target), "a held class that fakes equality passed as a model row"
         )
+        _assert_every_host_refuses(
+            tmp_path,
+            _spoof_empty(target),
+            "an empty instance of a class that fakes equality passed as a model row",
+        )
 
 
 def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_the_run_state(
@@ -3018,6 +3035,11 @@ def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_the_run_stat
 
     _assert_every_host_refuses(
         tmp_path, _spoof(RunState), "a held class that fakes equality passed as the run state"
+    )
+    _assert_every_host_refuses(
+        tmp_path,
+        _spoof_empty(RunState, member=True),
+        "a class that fakes equality and lists itself as a member passed as the run state",
     )
 
 

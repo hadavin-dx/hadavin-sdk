@@ -114,7 +114,11 @@ def serve(
     is no longer an exact ``Approvals`` (a swapped ``__class__``), an ``Approvals`` class that changed since it was
     pinned, and a missing slot (answered 503 too); the private slots are set once by ``__setattr__`` and cannot be
     deleted by ``__delattr__``, and a person who writes or deletes them with ``object.__setattr__`` or
-    ``object.__delattr__`` is caught by that request check."""
+    ``object.__delattr__`` is caught by that request check (every slot is read, so each deleted slot is answered 503).
+    Every class the guard judges is compared by identity, never by ``==`` or hash. A value too big to read within the
+    budget counts as real (the public bind is refused). Only ``on_decided`` made by ``make_on_decided`` is trusted
+    as not holding a service; ``clock`` is not read. A refusal line shows only a short plain word for a name and a
+    fixed label for anything else."""
     if type(approvals) is not Approvals:
         raise BindRefused(
             "serve needs an Approvals made by the core (not a subclass or a look-alike): the guard cannot trust "
