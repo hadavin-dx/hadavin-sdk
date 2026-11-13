@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead, one line)
+R3 builder a804cecf and evidence runner a6382a93 both still running; no failures; see their checkpoints (R3: tests and fail-before next; EV2: hostile stage). ASK: none.
+
+## STATUS (core lead, one line)
 R3 builder a804cecf: running, no checkpoint file yet (started 19:20Z, box ends ~20:20Z). Evidence runner a6382a93: running, hostile stage (EV2 logs full-A/B, failbefore, lint exist; no result yet). Nothing failed. ASK: none.
 
 ## STATUS 19:20Z (core lead)
