@@ -1,0 +1,15 @@
+K1 pieces unsorted	killed	1 failed, 66 passed, 70 deselected in 47.69s
+K2 any usefixtures	killed	1 failed, 24 passed, 70 deselected in 45.51s
+K3 monkeypatch param not required	killed	1 failed, 63 passed, 70 deselected in 45.31s
+K4 any non-None tempdir	killed	1 failed, 54 passed, 70 deselected in 49.91s
+K5 patch order ignored	killed	1 failed, 52 passed, 70 deselected in 52.37s
+K6 fold: format dropped	SURVIVED	72 passed, 70 deselected in 46.22s
+K7 fold: percent dropped	killed	1 failed, 45 passed, 70 deselected in 44.12s
+K8 fold: names unresolved	killed	1 failed, 46 passed, 70 deselected in 43.22s
+K9 fold: attributes unresolved	killed	1 failed, 48 passed, 70 deselected in 43.46s
+K10 placeholders not stripped	SURVIVED	72 passed, 70 deselected in 43.99s
+K11 monkeypatch rebind unchecked	killed	1 failed, 64 passed, 70 deselected in 43.01s
+K12 run line is the dry flag	killed	1 failed, 2 passed, 70 deselected in 43.99s
+K13 scan ignores bytes	killed	1 failed, 13 passed, 70 deselected in 44.58s
+K14 usefixtures param default accepted	killed	1 failed, 26 passed, 70 deselected in 41.87s
+K15 tmp folder names not derived	killed	1 failed, 56 passed, 70 deselected in 42.38s

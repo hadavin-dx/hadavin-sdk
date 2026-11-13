@@ -1,0 +1,12 @@
+S1 scan ignores bytes	killed	1 failed, 13 passed, 70 deselected in 41.56s
+S2 scan no glued join	SURVIVED	72 passed, 70 deselected in 43.03s
+S3 scan skips class attrs	killed	1 failed, 14 passed, 70 deselected in 39.54s
+S4 scan decorator any constant	killed	1 failed, 24 passed, 70 deselected in 51.27s
+S5 scan setattr None ok	killed	1 failed, 54 passed, 70 deselected in 43.95s
+S6 scan setattr anywhere	killed	1 failed, 34 passed, 70 deselected in 48.25s
+S7 scan child check off	killed	1 failed, 36 passed, 70 deselected in 48.32s
+S8 scan default param ok	killed	1 failed, 26 passed, 70 deselected in 41.16s
+S9 scan async not handled	killed	1 failed, 20 passed, 70 deselected in 44.78s
+S10 scan rebind check off	killed	1 failed, 33 passed, 70 deselected in 50.31s
+S11 scan keep-alone helper off	killed	1 failed, 19 passed, 70 deselected in 56.21s
+S12 scan docstrings counted	killed	1 failed, 40 passed, 70 deselected in 56.40s

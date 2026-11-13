@@ -1,0 +1,12 @@
+[
+["P1 hubspot: blank allowed through the required check","src/lead_desk/crm_hubspot.py","if not env.get(\"DESK_HUBSPOT_BASE_URL\", \"\").strip():","if \"DESK_HUBSPOT_BASE_URL\" not in env:"],
+["P2 hubspot: absent falls back to the vendor","src/lead_desk/crm_hubspot.py","kw: dict[str, Any] = {\"base_url\": env[\"DESK_HUBSPOT_BASE_URL\"]}","kw: dict[str, Any] = {\"base_url\": env.get(\"DESK_HUBSPOT_BASE_URL\") or \"https://api.hubapi.com\"}"],
+["P3 live: blank allowed through the required check","src/lead_desk/config.py","if not e.get(\"DESK_LIVE_BASE_URL\", \"\").strip():","if \"DESK_LIVE_BASE_URL\" not in e:"],
+["P4 live: absent falls back to the provider","src/lead_desk/config.py","kw: dict[str, Any] = {\"base_url\": e[\"DESK_LIVE_BASE_URL\"]}","kw: dict[str, Any] = {\"base_url\": e.get(\"DESK_LIVE_BASE_URL\") or LIVE_DEFAULT_BASE_URL}"],
+["P5 hubspot dataclass default restored","src/lead_desk/crm_hubspot.py","    base_url: str  # no default","    base_url: str = \"https://api.hubapi.com\"  # no default"],
+["P6 live dataclass default restored","src/lead_desk/config.py","    base_url: str  # no default","    base_url: str = LIVE_DEFAULT_BASE_URL  # no default"],
+["P7 hubspot percent check removed","src/lead_desk/crm_hubspot.py","if \"%\" in parts.netloc:","if False:"],
+["P8 live percent check removed","src/lead_desk/config.py","if \"%\" in parts.netloc:","if False:"],
+["P9 vendor constant imported in crm_hubspot (sibling tripwire)","src/lead_desk/crm_hubspot.py","    HUBSPOT_HOST_SUFFIXES,","    HUBSPOT_BASE_URL,\n    HUBSPOT_HOST_SUFFIXES,"],
+["P10 desk process: refusal swallowed (exit 0 path) - hubspot required check disabled","src/lead_desk/crm_hubspot.py","raise SettingRefused(\n                \"DESK_HUBSPOT_BASE_URL is required","pass\n            raise SettingRefused(\n                \"DESK_HUBSPOT_BASE_URL is required"]
+]

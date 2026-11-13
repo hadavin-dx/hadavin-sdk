@@ -1,0 +1,29 @@
+C1 live multi-line check removed	killed	1 failed, 75 passed in 6.18s
+C2 hubspot short key says 'no key' again	killed	1 failed, 76 passed in 8.32s
+C3 hubspot accepts blanks	killed	1 failed, 73 passed in 1.17s
+C4 hubspot min length off by one	killed	1 failed, 73 passed in 0.53s
+C5 smtp ascii check off	killed	1 failed, 74 passed in 2.06s
+C6 smtp message holds the secret	killed	1 failed, 77 passed in 2.45s
+C7 live message holds the path	killed	1 failed, 78 passed in 3.83s
+C8 hubspot message holds the key	killed	1 failed, 76 passed in 2.16s
+C9 live empty and multi order swapped	SURVIVED	85 passed in 4.50s
+N1 db folder check off	killed	1 failed, 3 passed in 0.42s
+N2 special file check off (real)	killed	1 failed, 14 passed in 15.83s
+N3 config pipe check off	killed	1 failed, 23 passed in 15.51s
+N4 blank result check off	killed	1 failed, 7 passed in 0.14s
+N5 same-file check off	killed	1 failed, 9 passed in 0.18s
+N6 result pipe check off	killed	1 failed, 13 passed in 0.31s
+N7 live key pipe check off	killed	1 failed, 24 passed in 15.21s
+N8 live ledger pipe check off	killed	1 failed, 24 passed in 20.19s
+N9 leads cap off	killed	1 failed, 54 passed in 3.07s
+N10 runs cap off	killed	1 failed, 58 passed in 0.46s
+N11 parser echoes argparse text	killed	1 failed, 63 passed in 0.30s
+N12 setting names not translated	SURVIVED	85 passed in 4.02s
+N13 no-terminal text without slot	killed	1 failed, 69 passed in 0.46s
+N14 type text echoes the value	SURVIVED	85 passed in 13.79s
+N15 is_special_file always false	killed	1 failed in 0.18s
+N16 folder_part always false	killed	1 failed, 1 passed in 0.11s
+N17 same_file no realpath fallback	killed	1 failed, 2 passed in 0.12s
+N18 named files omit the config	killed	1 failed, 9 passed in 0.28s
+N19 named files only _FILE	killed	1 failed, 9 passed in 0.31s
+N20 result checked after question order (dir test off)	SURVIVED	85 passed in 6.46s
