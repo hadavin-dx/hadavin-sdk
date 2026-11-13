@@ -1,0 +1,13 @@
+# files planted (made-up values). cfg.txt and notes.properties: lowercase 40+ chars after a hadavin-dx_-shaped prefix. control-detectable.txt: a made-up mixed-case 40-char value after the same key name, no prefix
+ 66 cfg.txt
+ 53 control-detectable.txt
+ 75 notes.properties
+194 total
+## real gitleaks 8.30.1 (CI binary), dir ., repo config, redacted
+8.30.1
+[90m12:12AM[0m [32mINF[0m [1mscanned ~194 bytes (194 bytes) in 10.9ms[0m
+[90m12:12AM[0m [33mWRN[0m [1mleaks found: 1[0m
+reported: [('control-detectable.txt', 'generic-api-key', 1)]
+## tools/hygiene.py pipeline (patterns.txt minus exceptions.txt), file:line:matched-text (text cut to 14 chars)
+cfg.txt:1:hadavin-dx_qwe...(51 chars)
+notes.properties:2:projectKey=had...(58 chars)

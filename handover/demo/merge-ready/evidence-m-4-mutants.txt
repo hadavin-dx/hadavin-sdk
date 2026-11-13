@@ -1,0 +1,45 @@
+=== MUTANT M1-exc-value-class (exceptions.txt)
+> ^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[a-z0-9-]+$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other project]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[dash suffix]
+3 failed, 23 passed in 7.58s
+=== MUTANT M2-exc-no-end-anchor (exceptions.txt)
+> ^(sonar-project\.properties|\.gitleaks\.toml):[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[equals suffix]
+2 failed, 24 passed in 8.20s
+=== MUTANT M3-exc-any-file (exceptions.txt)
+> ^[^:]+:[0-9]+:projectKey=hadavin-dx_[d]uplicate-proof-lead-desk-n8n$
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[look-alike file name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[other folder and name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_the_literal_scan[readme]
+FAILED tests/test_gitleaks_exceptions.py::test_the_exact_line_in_a_sub_folder_is_reported_by_the_literal_scan
+4 failed, 22 passed in 10.01s
+=== MUTANT M4-toml-no-end-anchor (.gitleaks.toml)
+> regexes = ['''^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[equals suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[space suffix]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dot suffix]
+4 failed, 22 passed in 9.16s
+=== MUTANT M5-toml-value-class (.gitleaks.toml)
+> regexes = ['''^sonar\.projectKey=hadavin-dx_[a-z0-9-]+$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[last character changed]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[dash suffix]
+2 failed, 24 passed in 9.85s
+=== MUTANT M6-toml-any-properties-path (.gitleaks.toml)
+> paths = ['''.*sonar-project\.properties$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[look-alike file name]
+1 failed, 25 passed in 10.47s
+=== MUTANT M7-toml-case-insensitive (.gitleaks.toml)
+> regexes = ['''(?i)^sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case value]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[capital first letter]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[lower-case name]
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[upper-case name]
+4 failed, 22 passed in 9.14s
+=== MUTANT M8-toml-no-start-anchor (.gitleaks.toml)
+> regexes = ['''sonar\.projectKey=hadavin-dx_duplicate-proof-lead-desk-n8n$''']
+FAILED tests/test_gitleaks_exceptions.py::test_a_near_miss_is_reported_by_gitleaks[text before the name]
+1 failed, 25 passed in 9.77s

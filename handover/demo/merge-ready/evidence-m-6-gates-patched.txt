@@ -1,0 +1,24 @@
+# patched f5fe824 clean clone
+## gitleaks dir (before any tool cache)
+[90m12:12AM[0m [32mINF[0m [1mno leaks found[0m
+EXIT=0
+## gitleaks git
+[90m12:12AM[0m [32mINF[0m [1mno leaks found[0m
+EXIT=0
+## literal scan on tracked+intent-to-add
+0
+## ruff
+All checks passed!
+136 files already formatted
+## mypy
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+## bandit
+	No issues identified.
+	Total issues (by severity):
+		Medium: 0
+		High: 0
+## pytest hygiene + new + docs-reading tests
+tests/test_gitleaks_exceptions.py 
+.........................................                                [100%]
+41 passed in 21.74s

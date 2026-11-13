@@ -1,0 +1,8 @@
+A mine alone: OK (plain git apply, 1 patches)
+B stack(8) then mine: OK (plain git apply, 9 patches)
+C mine then stack(8): OK (plain git apply, 9 patches)
+D stack(8), semgrep, mine: OK (plain git apply, 10 patches)
+E stack(8), mine, semgrep: OK (plain git apply, 10 patches)
+F semgrep then mine: OK (plain git apply, 2 patches)
+G mine then semgrep: OK (plain git apply, 2 patches)
+H stack(8) alone, then semgrep (baseline, no mine): OK (plain git apply, 9 patches)

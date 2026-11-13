@@ -1,0 +1,48 @@
+######## pr-2-demo-folder f31e261
+# gitleaks dir
+[90m12:08AM[0m [32mINF[0m [1mscanned ~1397866 bytes (1.40 MB) in 113ms[0m
+[90m12:08AM[0m [33mWRN[0m [1mleaks found: 1[0m
+EXIT=0
+# gitleaks git
+[90m12:08AM[0m [32mINF[0m [1mscanned ~5560151 bytes (5.56 MB) in 711ms[0m
+[90m12:08AM[0m [33mWRN[0m [1mleaks found: 325[0m
+# ruff
+All checks passed!
+60 files already formatted
+# mypy
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+# hygiene
+ls: cannot access 'tests/test_hygiene.py': No such file or directory
+
+no tests ran in 0.00s
+ERROR: file or directory not found: tests/test_hygiene.py
+
+# literal scan
+0
+# pr-2 CLEAN tree (no caches) gitleaks dir, rule/file/line
+[90m12:08AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[('generic-api-key', 'sonar-project.properties', 4)]
+133
+24
+d23cf8f gitleaks: fix the path regex (a broken character class would not have matched)
+######## pr-1-code (PR #2) d23cf8f; base main
+# gitleaks dir
+[90m12:08AM[0m [33mWRN[0m [1mleaks found: 1[0m
+[('generic-api-key', 'sonar-project.properties', 4)]
+# gitleaks git
+[90m12:08AM[0m [33mWRN[0m [1mleaks found: 325[0m
+# ruff
+All checks passed!
+51 files already formatted
+# mypy
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+# tests dir
+ls: cannot access 'tests': No such file or directory
+0
+# literal scan
+0
+# pytest collect-only count
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+no tests collected in 0.01s
