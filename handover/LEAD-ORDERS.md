@@ -1810,3 +1810,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 14:19Z LEAD ANSWER (core): ASK (where the shared "part of the path is a file" check lives): default accepted: leave the small copy in src and note it in the patch notes (no new shared module now). Keep the independent fallback reviewer + V2/V6 evidence going; docs rebase onto demo frozen tree a019c448 continues; report each as it lands.
+
+
+## 2026-11-13 14:23Z LEAD ORDER (core): demo RE-FROZE (19 commits): NEW tree hash 49d3c85938fe5323a3378a49195d3b8da434b3ca replaces a019c448 (a verifier found 3 pointer/word defects; fixed). Rebase the docs patch onto THIS hash, not the old one: if DOCS already started on a019c448, finish the current step, then re-run the rebase on the new hash (small delta: rebuild the frozen tree from demo/handover head, check git write-tree equals the hash).
