@@ -5,3 +5,5 @@
 2026-11-13 12:47:50Z UTC / 18:17:50 IST  round 1 campaign c START seed=1303
 2026-11-13 12:49:04Z UTC / 18:19:04 IST  round 1 campaign c END rc=0 {"campaign": "c", "seed": 1303, "replays": 20000, "wall_s": 73.6, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
 2026-11-13 12:49:09Z UTC / 18:19:09 IST  round 2 campaign a START seed=2101
+2026-11-13 12:51:08Z UTC / 18:21:08 IST  round 2 campaign a END rc=0 {"campaign": "a", "seed": 2101, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 119.1, "violations": 0, "counterexamples_total": 867, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 867}} 
+2026-11-13 12:51:08Z UTC / 18:21:08 IST  round 2 campaign b START seed=2202

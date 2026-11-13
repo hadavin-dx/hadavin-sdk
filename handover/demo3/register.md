@@ -60,3 +60,12 @@ Q2b | agent a9f4ab..: fuzz seeds 7001-7005 + 7 extra generators | 12:49Z | ~14:0
 Q3b | agent afb32a..: crash soak seed 20261114, 5 leads/round, double kill in 151-300 | 12:49Z | ~13:40Z stop 14:20Z | running
 Q8b | agent a5a33c..: mutation of identity.py + claim logic | 12:49Z | ~13:50Z stop 14:20Z | running
 B3 | agent ada279..: lane3-fix-3 tests-only patch for Q8 survivors | 12:49Z | ~13:30Z stop 14:00Z | running
+B1 | reported 12:50Z closed: lane3-fix-1 (10 of 11 findings patched)
+B3 | reported 12:51Z closed: lane3-fix-3 tests-only
+Q3 | reported 12:52Z closed: 300 rounds 0 violations 0 hangs
+Q8 | reported 12:52Z closed: 34 mutants 29 killed 5 survived
+E3 | agent a25177..: lane3-fix-1 full suites | 12:52Z | ~13:25Z | running
+E4 | agent afcb3f..: lane3-fix-3 mutant proof | 12:52Z | ~13:20Z | running
+REV-1a | agent ae1e1c..: egm:egm-codebase-details on lane3-fix-1 | 12:51Z | ~13:10Z | running
+REV-1b | agent a07d07..: egm:egm-comprehension on lane3-fix-1 | 12:51Z | ~13:10Z | running
+REV-3 | agent a4b680..: egm:egm-implementation-readiness on lane3-fix-3 | 12:53Z | ~13:15Z | running

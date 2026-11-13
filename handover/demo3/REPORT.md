@@ -1,5 +1,32 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:55Z / 18:25 IST  HEARTBEAT 44 (CPU now saturated: idle 6 percent: no new agents; Q3, Q8, B1, B3 reported)
+**Idle measurement (`vmstat 1 3`, 12:52Z): user 63, system 16, IDLE 6 percent, IO-wait 14, free RAM 11.3 GB, 17 pytest processes.** Your throttle rule (stop starting at idle below 30 percent) now applies: I start no new agent until idle is above 30 percent again. Q3 and Q8 ended, which frees about a core and some disk.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof (serial first) | 12:31Z | serial ~12:58Z; xdist ~13:50Z | serial 3518 passed, 0 FAILED (about 91 percent) | running |
+| Q2 | identity fuzz, round 2 (seed 2202) | 12:31Z | ~13:30Z | running | running |
+| Q2b | fuzz second seed set 7001-7005 + extra generators | 12:49Z | ~14:00Z | seed 7001 campaign b (40000 cases) | running |
+| Q3b | crash soak 2 (seed 20261114, 5 leads, double kill in 151-300) | 12:49Z | ~13:35Z | 75 rounds, 0 violations, 0 hangs | running |
+| Q4 | load numbers vs docs | 12:31Z | pass 1 ~13:30Z | measuring (NOISY) | running |
+| Q6b | cold reader tests/real-services/hubspot docs | 12:37Z | ~13:25Z | part B ended 12:51Z, part C running | running |
+| Q8b | mutation check identity.py + claim logic | 12:49Z | ~13:50Z | starting | running |
+| B2 | BUILDER lane3-fix-2 (settings validation and docs) | 12:43Z | ~13:30Z | building | running |
+| E3 | EVIDENCE RUNNER: full suites on f3c39cf8 + lane3-fix-1 and on f3c39cf8 + claims stack + lane3-fix-1 | 12:52Z | ~13:25Z; stop 14:00Z | running | running |
+| E4 | EVIDENCE RUNNER: lane3-fix-3 proof (every surviving mutant applied against the old and the new tests, in a private worktree) | 12:52Z | ~13:20Z | running | running |
+| REV-1a | independent reviewer `egm:egm-codebase-details` on lane3-fix-1 (technical accuracy), round 1 of cap 2 | 12:51Z | ~13:10Z | reading | running |
+| REV-1b | independent reviewer `egm:egm-comprehension` on lane3-fix-1 (naive reader), round 1 of cap 2 | 12:51Z | ~13:10Z | reading | running |
+| REV-3 | independent reviewer `egm:egm-implementation-readiness` on lane3-fix-3 (path confinement is a security path: NO round cap), round 1 | 12:53Z | ~13:15Z | reading | running |
+**Q3 RESULT (crash soak, real desk + demo fakes, master seed 20261113; evidence/crash-soak.md): 300 rounds, 0 violations, 0 hangs.** (Its report has the harness description and exact commands.)
+**Q8 RESULT (mutation check of tools/pathconfine.py; evidence/mutation-pathconfine.md):** 34 mutants, 0 invalid, **29 KILLED, 5 SURVIVED, score 29/34 = 85.3 percent**; baseline 378 passed, 1 skipped, 99 s; worktree clean afterwards. Survivors: M03 (drop `text = str.__str__(text)`: no test uses a str subclass that answers differently on a later call), M08 (`len(text) > MAX_PATH_CHARS` -> `>=`: no test uses exactly 4096 characters), M20 (`len(name) > MAX_NAME_CHARS` -> `>=`: no 255-character new name test), M11 (commonpath's ValueError counted as inside: Q8 says "equivalent on Linux, only reachable with another Windows drive"), M15 (ValueError dropped from the `_resolve` except: Q8 says "equivalent in practice because NUL is refused earlier"). **Disagreement between two agents, shown plainly: Q8 judges M11 and M15 equivalent on Linux; builder B3 judged all five REAL test gaps (M11 and M15 reached by patching os.path functions, and one direct call `_inside("relative/x", "/base")` is a real input).** The independent reviewer REV-3 is asked exactly this question.
+**B1 RESULT (lane3-fix-1 prose patch; evidence/lane3-fix-1-notes.md):** 10 of 11 findings reproduced and patched (prose only). Dropped: "/ and /health 404" (README line 88 already says it); the receipt_id skip is by design (schema AUTOINCREMENT: every repeat uses a number). New test file tests/test_docs_claims_lane3.py with 9 tests: on BASE 8 failed, 1 passed (the passing one checks the port fact); first failure "limits.md must quote the words the desk prints for exit code 1"; patched: 9 passed, also on the claims stack; 17 doc-related test files plus test_hygiene: 1412 passed, 71 skipped. Patch evidence/lane3-fix-1.patch, sha256 67597283f3459496bdb148bf870b3eddd618be4f5ef67144c06ee7c68f8ccf27, applies to f3c39cf8 and after the claims stack with no hunk overlap. Not patched: the phrase "sender cannot be reached" in the docstring of server.py and a comment in constants.py (product code, outside a prose patch). Not run by B1: the full suite (E3 does it).
+**B3 RESULT (lane3-fix-3 tests-only patch; evidence/lane3-fix-3-notes.md):** one new test file tests/test_path_confinement_lane3.py (82 lines, 8 tests); unmutated tree: 8 passed; each of the five mutants applied alone makes a test fail; tests/test_path_confinement.py + the new file: 386 passed, 1 skipped; applies to f3c39cf8 and to the claims stack; sha256 9084e0d849c9b59efa38fe0a357522df0b854aaf5418a882da0231276e0c6073. B3 made no product-code change.
+**MY SLIP (told to you now):** B1 and B3 ran `ruff` (and B1 `bandit`) on their own files although the owner's rule says CI-class checks run only on GitHub CI; my briefs for B1 and B3 did not repeat that rule explicitly (E3 and E4 briefs do). Their results ("clean") are NOT counted as CI evidence; GitHub CI is the judge. No other agent ran them.
+
+ASK:
+1. Idle is 6 percent: your throttle says no new agents; I obey. If you want the lowest-value running agent stopped to make room, my suggestion is Q2 (round 2 of the original fuzz seeds, since Q2b runs new seeds); default: keep all.
+2. The independent reviews are running: lane3-fix-1 (cap 2 rounds), lane3-fix-3 (security path, no cap). After them: `egm:egm-resolve` (Opus 5.5 planning skill) is called through the Skill tool by me, then fixes by a builder, then a fresh reviewer round, then `egm:egm-drift-report`. Default: as written.
+
 ## 2026-11-13 12:50Z / 18:20 IST  HEARTBEAT 43 (order of 12:50Z: throttle on idle, start more; 4 agents added; 13 running)
 **Idle measurement (`vmstat 1 3`, 12:48Z):** CPU user 32, system 14, **idle 45 percent**, IO-wait 8, disk writes 33 MB/s, free RAM 11.9 GB. Throttle rule applied as ordered: new agents only while idle stays above 30 percent and free RAM above 3 GB. I started 4 agents (all one core or light), so I expect idle near 30 percent in a few minutes and start no more until the next measurement.
 | id | what it does | since | expected end | real progress now | state |

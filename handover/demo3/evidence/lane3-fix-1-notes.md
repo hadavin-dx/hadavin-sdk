@@ -48,3 +48,7 @@ Hunk overlap with the claims stack: the stack touches README.md at lines 11, 85-
 * Cold-reader item F2 (workflow files hold `"active": true` while the recipe says the flag is ignored) and the n8n jargon lists (cold reader section 4) were not in the assigned finding list; not patched here. The wording items are a wider rewrite and need their own EGM pass.
 * Windows: no way to check ports given (not tried; the README says so). n8n was not installed, so nothing about n8n's screen was verified; the "settings page" for the API key is stated with "menu names were not compared".
 * The README lines about HTML/portal content were not seen in a browser by either reader or me.
+
+## Existing tests (patched tree, before the final format fix of the new test file, which changed no assertion)
+Command: `pytest <17 test files that mention limits.md, n8n-recipe, README or .md> tests/test_hygiene.py -p no:xdist --basetemp=$TMPDIR/bt2` with a private TMPDIR. Result: `1412 passed, 71 skipped in 380.72s`, exit 0. The 71 skips are the repository's own skips (browser, scanner tools not installed here, etc.); I did not list them. The 9 new tests were re-run after the format fix: `9 passed`.
+Not run: the full suite (about 20 minutes on this shared machine).

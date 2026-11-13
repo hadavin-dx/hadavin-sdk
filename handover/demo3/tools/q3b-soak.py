@@ -294,7 +294,6 @@ class Round:
             for ki in range(k):
                 if ki == 1:
                     # q3b: second kill lands DURING the restart's recovery (desk just spawned, not waited for)
-                    self.start_desk_nowait()
                     dly = r.uniform(0.0, 1.5)
                     mode = r.choice(["recovery-time", "recovery-time", "recovery-point"])
                     kinfo = {"kill": 2, "type": mode, "point": None, "delay_s": round(dly, 3)}
@@ -364,7 +363,10 @@ class Round:
                 MY_PIDS.discard(self.desk.pid)
                 self.kills.append(kinfo)
                 self.restarts += 1
-                self.start_desk()
+                if k == 2:
+                    self.start_desk_nowait()  # q3b: kill 2 hits this restart's recovery
+                else:
+                    self.start_desk()
             # resend ALL leads and replays, in a new random order, patiently
             order = plan[:]
             r.shuffle(order)

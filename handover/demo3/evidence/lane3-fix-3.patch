@@ -1,0 +1,88 @@
+diff --git a/tests/test_path_confinement_lane3.py b/tests/test_path_confinement_lane3.py
+new file mode 100644
+index 0000000..fb5a753
+--- /dev/null
++++ b/tests/test_path_confinement_lane3.py
+@@ -0,0 +1,82 @@
++"""Lane 3 gaps in tests/test_path_confinement.py found by mutating tools/pathconfine.py (M03, M08, M11, M15, M20).
++Each test below fails on its mutant. Made-up data only; private temporary folders."""
++
++from __future__ import annotations
++
++import os
++from pathlib import Path
++
++import pytest
++
++import tools.pathconfine as pc
++
++
++class _LyingStr(str):
++    """A str subclass that answers differently from a real str (M03: the text must be turned into an exact str)."""
++
++    def strip(self, *args: object) -> str:  # a faulty answer: "this is blank"
++        return ""
++
++
++def test_m03_a_str_subclass_cannot_change_the_answer(tmp_path: Path) -> None:
++    (tmp_path / "a.txt").write_text("x", encoding="utf-8")
++    text = _LyingStr(str(tmp_path / "a.txt"))
++    assert pc._text(text, "f") == str(tmp_path / "a.txt")
++    assert type(pc._text(text, "f")) is str
++    assert pc.confine_existing(text, what="f", roots=[tmp_path]) == (tmp_path / "a.txt").resolve()
++
++
++def test_m08_path_length_boundary_uses_the_constant() -> None:
++    edge = "a" * pc.MAX_PATH_CHARS
++    assert pc._text(edge[:-1], "f") == edge[:-1]  # MAX-1 accepted
++    assert pc._text(edge, "f") == edge  # exactly MAX accepted
++    with pytest.raises(pc.PathRefused, match="path too long"):
++        pc._text(edge + "a", "f")  # MAX+1 refused
++
++
++def test_m11_inside_answers_not_inside_when_commonpath_raises() -> None:
++    assert pc._inside("relative/x", os.path.realpath(os.sep + "base")) is False  # mixes relative and absolute
++    assert pc._inside(os.path.realpath(os.sep + "base" + os.sep + "x"), "relative") is False
++
++
++def test_m11_public_functions_refuse_when_the_containment_check_raises(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    (tmp_path / "a.txt").write_text("x", encoding="utf-8")
++
++    def boom(_paths: object) -> str:
++        raise ValueError("Can't mix absolute and relative paths")
++
++    monkeypatch.setattr(pc.os.path, "commonpath", boom)
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine(tmp_path / "a.txt", what="f", roots=[tmp_path])
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine_existing(tmp_path / "a.txt", what="f", roots=[tmp_path])
++
++
++@pytest.mark.parametrize("func", ["confine", "confine_existing", "confine_anywhere"])
++def test_m15_a_value_error_while_resolving_is_a_clean_refusal(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, func: str
++) -> None:
++    real_realpath = os.path.realpath
++    target = str(tmp_path / "a.txt")
++
++    def boom(text: str) -> str:
++        if text == target:  # only the argument fails; the allowed folders still resolve
++            raise ValueError("embedded null byte")  # a plain ValueError, not a PathRefused
++        return real_realpath(text)
++
++    monkeypatch.setattr(pc.os.path, "realpath", boom)
++    kwargs: dict[str, object] = {} if func == "confine_anywhere" else {"roots": [tmp_path]}
++    with pytest.raises(pc.PathRefused, match="cannot be resolved") as info:
++        getattr(pc, func)(target, what="--f", **kwargs)
++    assert type(info.value) is pc.PathRefused  # not a bare ValueError traceback
++    assert "--f" in str(info.value)
++
++
++def test_m20_new_name_length_boundary_uses_the_constant(tmp_path: Path) -> None:
++    for length in (pc.MAX_NAME_CHARS - 1, pc.MAX_NAME_CHARS):
++        name = "a" * length
++        assert pc.confine(tmp_path / name, what="f", roots=[tmp_path]) == tmp_path.resolve() / name
++    with pytest.raises(pc.PathRefused, match="not usable as the name of a new file"):
++        pc.confine(tmp_path / ("a" * (pc.MAX_NAME_CHARS + 1)), what="f", roots=[tmp_path])
