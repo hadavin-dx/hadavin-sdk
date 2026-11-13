@@ -1,0 +1,127 @@
+diff --git a/tests/test_identity_claims_lane3.py b/tests/test_identity_claims_lane3.py
+new file mode 100644
+index 0000000..7527797
+--- /dev/null
++++ b/tests/test_identity_claims_lane3.py
+@@ -0,0 +1,121 @@
++"""Tests for the identity key, the length limits and the claim token, written after the Q8b mutation check.
++Each test fails when the guard it names is changed. Made-up data only (example.test addresses)."""
++
++from __future__ import annotations
++
++import unicodedata
++
++import pytest
++from support import lead, sql
++
++from lead_desk import identity
++from lead_desk.constants import COMPANY_MAX, EMAIL_MAX, MESSAGE_MAX, NAME_MAX, PHONE_MAX
++
++DOMAIN = "@example.test"
++LIMITED = (("name", NAME_MAX), ("phone", PHONE_MAX), ("company", COMPANY_MAX), ("message", MESSAGE_MAX))
++
++
++def email_of_length(n: int) -> str:
++    """A lower-case address of exactly n characters."""
++    return "a" * (n - len(DOMAIN)) + DOMAIN
++
++
++def key_of(email: str) -> str | None:
++    return identity.check_payload(lead(email=email)).email_key
++
++
++# -- the email key is strip plus lower case, and nothing else
++def test_key_is_lower_not_casefold() -> None:
++    sharp, long_s = "straße" + DOMAIN, "straſe" + DOMAIN
++    assert key_of(sharp) == sharp  # lower() leaves the sharp s alone (casefold() would write ss)
++    assert key_of(long_s) == long_s  # and leaves the long s alone (casefold() would write s)
++    assert key_of(sharp) != key_of("strasse" + DOMAIN)
++    assert key_of(long_s) != key_of("strase" + DOMAIN)
++    assert key_of("staın" + DOMAIN) != key_of("stain" + DOMAIN)  # dotless i differs under lower and casefold
++
++
++def test_sharp_s_and_ss_are_two_leads(env) -> None:
++    rig = env.rig()
++    first = rig.desk.process("form", "k1", lead(email="straße" + DOMAIN))
++    second = rig.desk.process("form", "k2", lead(email="strasse" + DOMAIN))
++    assert (first.body["verdict"], second.body["verdict"]) == ("new", "new")
++    assert first.body["lead_id"] != second.body["lead_id"]
++    assert rig.leads() == 2
++
++
++def test_key_is_not_unicode_normalised() -> None:
++    wide, ligature = "ａda" + DOMAIN, "ﬁsh" + DOMAIN  # full-width a, the fi ligature
++    for odd, plain in ((wide, "ada" + DOMAIN), (ligature, "fish" + DOMAIN)):
++        assert unicodedata.normalize("NFKC", odd) == plain  # the compatibility form really maps to the plain one
++        assert key_of(odd) == odd  # but the key keeps it as it is
++        assert key_of(odd) != key_of(plain)
++
++
++def test_compat_forms_are_two_leads(env) -> None:
++    rig = env.rig()
++    plain = rig.desk.process("form", "n1", lead(email="ada" + DOMAIN))
++    wide = rig.desk.process("form", "n2", lead(email="ａda" + DOMAIN))
++    assert (plain.body["verdict"], wide.body["verdict"]) == ("new", "new")
++    assert plain.body["lead_id"] != wide.body["lead_id"]
++    assert rig.leads() == 2
++
++
++# -- exact length limits
++def test_email_limit_is_254_inclusive() -> None:
++    assert EMAIL_MAX == 254
++    ok = identity.check_payload(lead(email=email_of_length(EMAIL_MAX)))
++    assert (ok.kind, ok.email_key) == ("ok", email_of_length(EMAIL_MAX))
++    over = identity.check_payload(lead(email=email_of_length(EMAIL_MAX + 1)))
++    assert (over.kind, over.reason) == ("review", "invalid_email")
++
++
++@pytest.mark.parametrize(("field", "limit"), LIMITED)
++def test_field_limit_is_inclusive(field: str, limit: int) -> None:
++    at_limit = identity.check_payload(lead(**{field: "x" * limit}))
++    assert (at_limit.kind, getattr(at_limit, field)) == ("ok", "x" * limit)
++    over = identity.check_payload(lead(**{field: "x" * (limit + 1)}))
++    assert (over.kind, over.reason) == ("review", f"bad_field:{field}")
++
++
++@pytest.mark.parametrize(("field", "limit"), LIMITED)
++def test_padded_value_is_measured_trimmed(field: str, limit: int) -> None:
++    padded = "   " + "x" * limit + "   "
++    assert len(padded) > limit
++    got = identity.check_payload(lead(**{field: padded}))
++    assert (got.kind, getattr(got, field)) == ("ok", "x" * limit)
++    over = identity.check_payload(lead(**{field: "   " + "x" * (limit + 1) + "   "}))
++    assert (over.kind, over.reason) == ("review", f"bad_field:{field}")
++
++
++# -- the write-once verdict and the claim token (calls the desk's own private steps a second time)
++def test_second_decider_leaves_verdict(env) -> None:
++    """The loser of a race reaches _decide_once after the winner committed. The earlier check in _process hides this
++    guard, so the test calls the transaction again by hand, as the loser would."""
++    rig = env.rig()
++    reply = rig.desk.process("form", "w1", lead(email="ada" + DOMAIN))
++    rid = reply.body["receipt_id"]
++    before = rig.query("SELECT outcome, outcome_lead_id, differing_fields, decided_at FROM receipts")
++    assert before[0][:2] == ("new", reply.body["lead_id"])
++    rec, decided_here = rig.desk._decide_once(rid)
++    assert decided_here is False
++    assert rec["outcome"] == "new"
++    assert rig.query("SELECT outcome, outcome_lead_id, differing_fields, decided_at FROM receipts") == before
++    assert rig.leads() == 1
++
++
++def test_token_of_other_lead_is_not_used(env) -> None:
++    rig = env.rig()
++    a = rig.desk.process("form", "t1", lead(email="ada" + DOMAIN)).body["lead_id"]
++    b = rig.desk.process("form", "t2", lead(email="bob" + DOMAIN)).body["lead_id"]
++    assert rig.desk._claim(None, a)  # this thread now holds the token of lead a: attempts 1
++    sql(rig, "UPDATE followups SET attempts=7 WHERE lead_id=?", (b,))
++    assert rig.desk._take_token(b) == 7  # lead b has no token here: its own stored value, not the token of lead a
++
++
++def test_own_token_is_used_once(env) -> None:
++    rig = env.rig()
++    a = rig.desk.process("form", "u1", lead(email="ada" + DOMAIN)).body["lead_id"]
++    assert rig.desk._claim(None, a)
++    sql(rig, "UPDATE followups SET attempts=9 WHERE lead_id=?", (a,))
++    assert rig.desk._take_token(a) == 1  # the value the claim wrote, not the changed row
++    assert rig.desk._take_token(a) == 9  # the token is spent: the next ask reads the row

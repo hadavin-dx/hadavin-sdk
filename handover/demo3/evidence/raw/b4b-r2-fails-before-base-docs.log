@@ -1,0 +1,80 @@
+................FFFFF                                                    [100%]
+=================================== FAILURES ===================================
+_____________ test_docs_name_the_letters[README, Not claimed list] _____________
+
+place = 'README, Not claimed list'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+>       assert text, f"{place}: the line with the claim was not found; the anchor words were removed"
+E       AssertionError: README, Not claimed list: the line with the claim was not found; the anchor words were removed
+E       assert ''
+
+tests/test_email_case_rule.py:136: AssertionError
+_________ test_docs_name_the_letters[README, definition of Same lead] __________
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+        assert text, f"{place}: the line with the claim was not found; the anchor words were removed"
+        for letter in letters:
+>           assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
+E           AssertionError: README, definition of Same lead must name 'ß': the desk keeps it apart from its capital
+E           assert 'ß' in '* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of spaces and lower-cased, nothing more.'
+
+tests/test_email_case_rule.py:138: AssertionError
+___________________ test_docs_name_the_letters[contract.md] ____________________
+
+place = 'contract.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+>       assert text, f"{place}: the line with the claim was not found; the anchor words were removed"
+E       AssertionError: contract.md: the line with the claim was not found; the anchor words were removed
+E       assert ''
+
+tests/test_email_case_rule.py:136: AssertionError
+__________________ test_docs_name_the_letters[docs/limits.md] __________________
+
+place = 'docs/limits.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+>       assert text, f"{place}: the line with the claim was not found; the anchor words were removed"
+E       AssertionError: docs/limits.md: the line with the claim was not found; the anchor words were removed
+E       assert ''
+
+tests/test_email_case_rule.py:136: AssertionError
+___________________________ test_tests_page_lists_it ___________________________
+
+    def test_tests_page_lists_it() -> None:
+        text = (REPO / "docs/tests.md").read_text(encoding="utf-8")
+>       assert "tests/test_email_case_rule.py" in text, "docs/tests.md must list tests/test_email_case_rule.py"
+E       AssertionError: docs/tests.md must list tests/test_email_case_rule.py
+E       assert 'tests/test_email_case_rule.py' in '# Crash points, promises and tests\n\nThis page holds the detail behind the short summary in the README.\n\n## How to...\n* **UNKNOWN**: the desk is not sure whether a follow-up email left; it does not resend, and a person must check.\n\n'
+
+tests/test_email_case_rule.py:144: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, Not claimed list]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[contract.md]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[docs/limits.md]
+FAILED tests/test_email_case_rule.py::test_tests_page_lists_it - AssertionErr...
+5 failed, 16 passed in 2.22s

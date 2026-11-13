@@ -117,3 +117,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B1c | closed 13:50Z: lane3-fix-1-r3.patch sha256 0c45bbfe4c87a54d180ff086b37de530e367dcb346e173b67516f4e99ce53a52; new test 14 passed on patched, 12 failed on base, 11 failed on r2; hygiene 20 passed 4 skipped; 774 passed 31 skipped across 11 files; 0 lines >120; git apply --check clean on base and after stack/fix-3/fix-5. Not tried: Windows steps, n8n | | | closed |
 | REV-1e | fresh egm-comprehension on lane3-fix-1-r3 | 13:51Z | ~14:10Z | running |
 | REV-1f | fresh egm-codebase-details on lane3-fix-1-r3 | 13:51Z | ~14:10Z | running |
+| REV-3c | closed 13:58Z: 0 blocker, 1 major (2 lines >120, fixed by lane lead in lane3-fix-3-r4.patch sha256 520ff284c018a2cc21852c2978bf77efcc2cfc7292a6aa1b3e3932b1bcab81f0; 413 passed 6 skipped incl. old path-confinement tests and hygiene), 4 minors (2 fixed) | | | closed, needs one fresh pass on r4 |
+| REV-1e | closed: 0 blocker, 5 major, 11 minor (n8n start/owner-account order/step naming, receipt wording, burst counts reference) | | | closed |
+| REV-1f | closed: 0 blocker, 0 major, 9 minor | | | closed |
+| B1d | BUILDER lane3-fix-1 round 4 (5 majors + 20 minors from r3 reviews) | 14:00Z | ~14:30Z; stop 14:35Z | running |
+| REV-3d | fresh egm-codebase-details on lane3-fix-3-r4 (security path, no cap) | 14:00Z | ~14:15Z | running |
