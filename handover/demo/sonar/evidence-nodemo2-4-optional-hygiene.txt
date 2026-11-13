@@ -20,3 +20,12 @@ SKIPPED [1] tests/conftest.py:45: needs the demo_only folder, which is not here
 106 passed in 32.79s
 == counts for the two named files only (hygiene + placeholders)
 A (no demo, no .git):
+
+== fails-before: the OLD optional patch (v1, REPO from __file__ only) on the same stack, demo deleted, no .git
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_no_control_characters_in_markdown - subpro...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - RuntimeError: git gr...
+FAILED tests/test_hygiene.py::test_sh_blobs_no_cr - subprocess.CalledProcessE...
+FAILED tests/test_hygiene.py::test_no_tracked_file_holds_a_raw_direction_control_character
+FAILED tests/test_hygiene.py::test_sh_scripts_and_workflow_run_blocks_use_double_brackets_for_tests
+5 failed, 56 passed, 1 skipped in 3.30s

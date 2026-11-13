@@ -1,0 +1,2 @@
+RUN 1 (concurrent with ruff/mypy): 1 failed (test_reserve_covers_its_items, open-file count), 926 passed, 1 skipped
+RUN 2 (alone, after the lint fixes):

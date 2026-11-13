@@ -34,3 +34,6 @@ optional first, then P1v3 alone:
 error: patch failed: tests/test_hygiene.py:15
 error: tests/test_hygiene.py: patch does not apply
   P1v3 FAILS after optional-v2 (same lines of tests/test_hygiene.py): apply P1 first
+
+nodemo-ci-job.patch (adds one new file .github/workflows/nodemo.yml): applies on db54e13 alone, and as the 7th patch of the final stack
+(P1v3, P2v2, P3v2, nodemo-fix-v2, optional-v2, isort, ci-job) with git apply, no conflicts; git diff of that stack equals the stack built in the scratch tree.

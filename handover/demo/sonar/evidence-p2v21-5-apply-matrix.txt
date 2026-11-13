@@ -1,0 +1,21 @@
+M => OK
+M R => OK
+M F => OK
+M R F => OK
+M F R => OK
+M P1 P3 => OK
+P1 M P3 => OK
+P3 P1 M => OK
+P3 M P1 => OK
+P1 P3 M => OK
+M P3 P1 => OK
+P1 P3 M R F => OK
+P1 M R P3 F => OK
+P3 P1 M F R => OK
+M P1 P3 F R => OK
+P3 P1 M R F => OK
+R M => OK
+  FAIL at F
+F M => FAIL
+  FAIL at M
+M M => FAIL

@@ -1,0 +1,63 @@
+### GATES (demo present)
+All checks passed!
+150 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+		Medium: 0
+		High: 0
+		Medium: 0
+		High: 9
+### DEMO PRESENT, affected files (DPLD_REQUIRE_DEMO=1, DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1)
+........................................................................ [ 85%]
+........................                                                 [100%]
+168 passed in 46.23s
+### NO DEMO, chunked, via the job steps of nodemo.yml
+#### STEP: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
+#### rc = 0
+#### STEP: Ruff (lint and format) without demo_only/
+All checks passed!
+141 files already formatted
+#### rc = 0
+#### STEP: Tests without demo_only/ (9 chunks, one pytest at a time; 0 failed, passed above the floor)
+== chunk 0: 10 files
+sssssss.s..............ss......................................s.s...... [ 84%]
+.....ss......                                                            [100%]
+71 passed, 14 skipped in 1.25s
+== chunk 1: 10 files
+sssssssss.............                                                   [100%]
+13 passed, 9 skipped in 0.45s
+== chunk 2: 9 files
+ssss.............sss                                                     [100%]
+13 passed, 7 skipped in 2.20s
+== chunk 3: 9 files
+s.sss...................s                                                [100%]
+20 passed, 5 skipped in 2.02s
+== chunk 4: 9 files
+ss......ssssss                                                           [100%]
+6 passed, 8 skipped in 0.16s
+== chunk 5: 9 files
+sssssssss                                                                [100%]
+9 skipped in 0.18s
+== chunk 6: 9 files
+s....................................................................... [ 11%]
+........................................................................ [ 23%]
+........................................................................ [ 35%]
+........................................................................ [ 46%]
+...................................................................sssss [ 58%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 93%]
+......................................s                                  [100%]
+608 passed, 7 skipped in 36.54s
+== chunk 7: 9 files
+s...........ss............ss................ss....s..................... [ 45%]
+........................................................................ [ 90%]
+...........sssss                                                         [100%]
+147 passed, 13 skipped in 6.18s
+== chunk 8: 9 files
+ss............................................................ssssss     [100%]
+60 passed, 8 skipped in 26.07s
+TOTAL (no demo_only/): {'passed': 938, 'failed': 0, 'error': 0, 'skipped': 80}
+#### rc = 0
+### JOB EXIT 0
+FINISHED

@@ -1,3 +1,67 @@
-== job steps as written in nodemo.yml, run locally with a driver that executes each run: block under bash -e -o pipefail (NOT run on a GitHub runner); python 3.13; venv from requirements-dev.txt with --require-hashes --only-binary=:all:, no playwright; gitleaks 8.30.1
+== job steps as written in nodemo.yml, run locally with a driver that executes each run: block under bash -e -o pipefail (NOT run on a GitHub runner); python 3.13; venv from requirements-dev.txt (--require-hashes --only-binary=:all:), no playwright; gitleaks 8.30.1
 
-== 1. final stack incl. optional patch
+== 1. final stack incl. optional patch (expect exit 0, 0 failed)
+exit code of the job: 0
+#### STEP: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
+#### rc = 0
+#### STEP: Ruff (lint and format) without demo_only/
+#### rc = 0
+#### STEP: Tests without demo_only/ (9 chunks, one pytest at a time; 0 failed, passed above the floor)
+TOTAL (no demo_only/): {'passed': 938, 'failed': 0, 'error': 0, 'skipped': 80}
+#### rc = 0
+
+== 2. without the optional patch (the floor must hold for both)
+exit code of the job: 0
+#### STEP: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
+#### rc = 0
+#### STEP: Ruff (lint and format) without demo_only/
+#### rc = 0
+#### STEP: Tests without demo_only/ (9 chunks, one pytest at a time; 0 failed, passed above the floor)
+TOTAL (no demo_only/): {'passed': 876, 'failed': 0, 'error': 0, 'skipped': 82}
+#### rc = 0
+
+== 3. negative: typo in a product row path (smtp_outbox.py -> smtp_outbx.py, line 49)
+exit code of the job: 1
+#### STEP: Ruff (lint and format) without demo_only/
+#### rc = 0
+#### STEP: Tests without demo_only/ (9 chunks, one pytest at a time; 0 failed, passed above the floor)
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[src/lead_desk/smtp_outbx.py::SmtpOutbox.send]
+TOTAL (no demo_only/): {'passed': 936, 'failed': 2, 'error': 0, 'skipped': 80}
+tests failed in the no-demo copy
+#### rc = 1
+
+== 4. negative: conftest regression that skips every demo-looking file (the test of the demo regex replaced by `if True:`)
+exit code of the job: 1
+#### STEP: Delete demo_only/ (git rm, so git sees the same tree a client copy has)
+#### rc = 0
+#### STEP: Ruff (lint and format) without demo_only/
+#### rc = 0
+#### STEP: Tests without demo_only/ (9 chunks, one pytest at a time; 0 failed, passed above the floor)
+TOTAL (no demo_only/): {'passed': 0, 'failed': 0, 'error': 0, 'skipped': 83}
+only 0 passed, the floor is 800: tests are being skipped that should run
+#### rc = 1
+message printed:
+only 0 passed, the floor is 800: tests are being skipped that should run
+
+== 5. negative: without nodemo-ruff-isort.patch (pyproject.toml as db54e13)
+exit code of the job: 1
+21 + from demo_only import fake_model_server
+   - from demo_only import fake_model_server
+22 | | from demo_only import fake_hubspot as fh
+19 + from demo_only import fake_hubspot as fh
+   - from demo_only import fake_hubspot as fh
+19 | |     AI_STEP_NOTE,
+Found 27 errors.
+#### rc = 1
+
+== 6. negative: without nodemo-fix-v2.patch (tests/test_except_clause_hierarchy.py as db54e13)
+exit code of the job: 1
+FAILED tests/test_except_clause_hierarchy.py::test_handler_order_is_exactly_as_listed[demo_only/fake_smtp_tls.py::FakeSmtp._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_imap.py::FakeImap._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_no_class_is_named_twice_or_hidden_by_an_earlier_handler[demo_only/fake_smtp_tls.py::FakeSmtp._serve]
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_imap.py::FakeImap._serve[0][0]]
+FAILED tests/test_except_clause_hierarchy.py::test_shortened_clause_still_catches_the_names_it_lost[demo_only/fake_smtp_tls.py::FakeSmtp._serve[0][0]]
+TOTAL (no demo_only/): {'passed': 938, 'failed': 6, 'error': 0, 'skipped': 74}
+tests failed in the no-demo copy
+#### rc = 1
