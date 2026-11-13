@@ -1,1 +1,3 @@
 ok  KILLED       X12 the file is not flushed to disk before the rename  [test_atomic_write_flushes_the_file_to_disk_before_the_rename]
+ok  KILLED       S-score _read_json reads an unguarded name  [test_site_score_read_json_refuses_a_file_name_with_a_control]
+ok  KILLED       S-score _recorded_digest reads an unguarded name  [test_site_score_recorded_digest_does_not_read_a_file_behind_]
