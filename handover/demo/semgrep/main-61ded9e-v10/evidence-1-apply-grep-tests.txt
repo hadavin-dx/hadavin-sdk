@@ -1,0 +1,7 @@
+git apply --check on clean 61ded9e: OK
+files: 9; under src/: 0
+added lines with noqa|nosec|NOSONAR|type: ignore|pragma|pylint: disable|fmt: off|fmt: skip: 0
+added lines holding the word nosem (docs, test data, workflow message): 64
+........................................................................ [ 54%]
+.............................................................            [100%]
+133 passed in 10.89s

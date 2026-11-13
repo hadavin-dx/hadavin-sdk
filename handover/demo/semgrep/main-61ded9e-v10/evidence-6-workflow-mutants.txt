@@ -1,0 +1,162 @@
+baseline NEW v10:
+114 passed in 1.46s
+baseline OLD v9 file:
+93 passed in 1.15s
+== persist-credentials true
+NEW v10: 3 failed, 111 passed in 2.17s
+OLD v9: 3 failed, 90 passed in 1.53s
+restored byte-identical
+== PR title in run
+NEW v10: 13 failed, 101 passed in 2.25s
+OLD v9: 13 failed, 80 passed in 1.44s
+restored byte-identical
+== head_ref in run
+NEW v10: 13 failed, 101 passed in 2.68s
+OLD v9: 13 failed, 80 passed in 1.53s
+restored byte-identical
+== ref_name in run
+NEW v10: 13 failed, 101 passed in 2.46s
+OLD v9: 13 failed, 80 passed in 1.52s
+restored byte-identical
+== base_ref in run
+NEW v10: 13 failed, 101 passed in 2.12s
+OLD v9: 13 failed, 80 passed in 1.78s
+restored byte-identical
+== strict removed
+NEW v10: 4 failed, 110 passed in 2.13s
+OLD v9: 4 failed, 89 passed in 1.73s
+restored byte-identical
+== severity WARNING
+NEW v10: 2 failed, 112 passed in 2.98s
+OLD v9: 2 failed, 91 passed in 2.35s
+restored byte-identical
+== retry also on exit 1
+NEW v10: 2 failed, 112 passed in 2.43s
+OLD v9: 2 failed, 91 passed in 1.95s
+restored byte-identical
+== GITHUB_TOKEN env
+NEW v10: 1 failed, 113 passed in 2.58s
+OLD v9: 1 failed, 92 passed in 1.76s
+restored byte-identical
+== no-deps removed
+NEW v10: 2 failed, 112 passed in 2.02s
+OLD v9: 2 failed, 91 passed in 1.76s
+restored byte-identical
+== continue-on-error step
+NEW v10: 1 failed, 113 passed in 2.44s
+OLD v9: 1 failed, 92 passed in 1.85s
+restored byte-identical
+== continue-on-error job
+NEW v10: 1 failed, 113 passed in 2.39s
+OLD v9: 1 failed, 92 passed in 1.87s
+restored byte-identical
+== extra pack p/ci
+NEW v10: 6 failed, 108 passed in 2.58s
+OLD v9: 2 failed, 91 passed in 1.94s
+restored byte-identical
+== self-hosted
+NEW v10: 8 failed, 106 passed in 2.65s
+OLD v9: 4 failed, 89 passed in 1.99s
+restored byte-identical
+== metrics removed
+NEW v10: 2 failed, 112 passed in 2.41s
+OLD v9: 2 failed, 91 passed in 1.78s
+restored byte-identical
+== folder tools dropped
+NEW v10: 2 failed, 112 passed in 1.69s
+OLD v9: 2 failed, 91 passed in 1.47s
+restored byte-identical
+== job id-token write
+NEW v10: 1 failed, 113 passed in 1.97s
+OLD v9: 1 failed, 92 passed in 1.93s
+restored byte-identical
+== timeout 360
+NEW v10: 2 failed, 112 passed in 1.75s
+OLD v9: 2 failed, 91 passed in 1.82s
+restored byte-identical
+== R1 step if skips scan
+NEW v10: 1 failed, 113 passed in 2.19s
+OLD v9: 93 passed in 1.89s
+restored byte-identical
+== R2 job if false
+NEW v10: 1 failed, 113 passed in 2.29s
+OLD v9: 93 passed in 2.23s
+restored byte-identical
+== R3 extra action step
+NEW v10: 1 failed, 113 passed in 2.88s
+OLD v9: 93 passed in 1.94s
+restored byte-identical
+== R4 --config=
+NEW v10: 6 failed, 108 passed in 2.21s
+OLD v9: 1 failed, 92 passed in 1.81s
+restored byte-identical
+== R5 --exclude=src
+NEW v10: 6 failed, 108 passed in 2.25s
+OLD v9: 1 failed, 92 passed in 1.66s
+restored byte-identical
+== R6 defaults shell sh
+NEW v10: 1 failed, 113 passed in 2.23s
+OLD v9: 93 passed in 1.88s
+restored byte-identical
+== R7 step shell sh
+NEW v10: 1 failed, 113 passed in 2.45s
+OLD v9: 93 passed in 1.98s
+restored byte-identical
+== R8 matrix
+NEW v10: 1 failed, 113 passed in 2.36s
+OLD v9: 93 passed in 1.87s
+restored byte-identical
+== R9 cache pip
+NEW v10: 1 failed, 113 passed in 2.63s
+OLD v9: 93 passed in 2.39s
+restored byte-identical
+== R10 python 3.9
+NEW v10: 3 failed, 111 passed in 2.32s
+OLD v9: 93 passed in 1.87s
+restored byte-identical
+== R11 working-directory
+NEW v10: 1 failed, 113 passed in 2.56s
+OLD v9: 93 passed in 1.21s
+restored byte-identical
+== R12 job env
+NEW v10: 1 failed, 113 passed in 1.51s
+OLD v9: 93 passed in 1.71s
+restored byte-identical
+== R13 push dev
+NEW v10: 2 failed, 112 passed in 1.75s
+OLD v9: 93 passed in 1.52s
+restored byte-identical
+== R14 pr nothing
+NEW v10: 2 failed, 112 passed in 3.20s
+OLD v9: 93 passed in 2.29s
+restored byte-identical
+== R15 install || true
+NEW v10: 2 failed, 112 passed in 2.43s
+OLD v9: 93 passed in 2.01s
+restored byte-identical
+== R16 step timeout 1
+NEW v10: 1 failed, 113 passed in 2.64s
+OLD v9: 93 passed in 2.19s
+restored byte-identical
+== R17 container
+NEW v10: 1 failed, 113 passed in 2.60s
+OLD v9: 93 passed in 1.94s
+restored byte-identical
+== R18 workflow_dispatch
+NEW v10: 2 failed, 112 passed in 2.53s
+OLD v9: 93 passed in 1.83s
+restored byte-identical
+== R19 -c file
+NEW v10: 6 failed, 108 passed in 2.47s
+OLD v9: 2 failed, 91 passed in 2.18s
+restored byte-identical
+== R20 second job needs
+NEW v10: 1 failed, 113 passed in 2.51s
+OLD v9: 1 failed, 92 passed in 2.17s
+restored byte-identical
+== R21 --exclude-rule
+NEW v10: 6 failed, 108 passed in 2.46s
+OLD v9: 2 failed, 91 passed in 2.14s
+restored byte-identical
+after
+114 passed in 2.52s
