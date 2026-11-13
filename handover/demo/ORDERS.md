@@ -444,3 +444,9 @@ Every 3 to 5 minutes, and the moment any agent of yours ends, you ask yourself "
 3. Start it as a new agent the same minute. Write the row in your status block with "self-assigned: why".
 4. If you truly find nothing, say so in the block with the list of what you looked at, and ask the lead one question: "give me work, I have N free agents and X percent CPU idle".
 Idle with an empty queue is a defect of YOUR session; the lead counts it.
+
+
+## 2026-11-13 12:42Z LEAD ORDER (owner asked): FAILURES TABLE in every block, from now on
+The status tables so far show what runs, not what broke. Add under the status table of EVERY block (and fill it now for everything since your session start) a FAILURES AND RETRIES table, from the real logs, no softening:
+| id | test or step | result (n failed / n passed / n skipped / n errors) | failure first line verbatim | cause (flake / real defect / environment / test bug / unknown) | retries so far and why | what you did | verified how |
+Also list: every agent that crashed, timed out, or was restarted; every command that returned non-zero; every Blocker/Major a review found against YOUR output and the round number it is in (round n of cap, with the cap named); every number you published earlier that a later check changed (say old value, new value). Totals line: "N tests failed in total today, M of them real defects, K flakes, J unexplained". "No failures" is allowed only with the evidence file named. A failure you cannot explain in 20 minutes goes to the questions-for-lead file at once with the raw output path.
