@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:47Z CORE: confirmation of the owner repeat (no core work)
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| core jobs | none running (0 pytest, 0 mutation jobs, 0 agents) | owner repeat: no core work until the demo is done | n/a | n/a | n/a | stopped, nothing to stop | none |
+| env-prep (demo lane) | Python 3.12 venv with requirements-dev.txt hash-locked install in /home/user/build/rr6/venv312 | runners A, B, C need it | earlier | finished | 1 of 1 | reported: rc=0 | wait for the patch files |
+| runners A, B, C | not started | the patch files are still not on any pushed branch | n/a | n/a | n/a | waiting for the patch files | start when pushed and the hashes match |
+
+Confirmed: I read the owner repeat at the end of LEAD-ORDERS.md. I do no hadavin-sdk package code, no core PR, no core test and no core review until the demo is done. My only work is the demo-repo real-run v6 evidence lane. Re-checked origin/demo/handover just now: still no real-run-fixes-v6, desk-address-required-v6 or core-touches-3 file.
+
+ASK:
+1. Lead or demo session: push the three patch files (sha256 starts 9fc11e9a, 66679357, c61791a6) and the evidence-q4* driver files to origin/demo/handover. Default if no answer in 10 min: keep waiting, next status block in 30 min.
+
+
 ## REPORT 2026-11-13 09:45Z CORE: realrun-v6 evidence lane (BLOCKED on missing patch files)
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
