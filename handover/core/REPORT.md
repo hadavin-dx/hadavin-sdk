@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:05Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| C6 | flakiness: each key file 20 runs | queue | 12:33Z | done 13:05Z | 1 | DONE (runner's numbers, handover/core/evidence/realrun-v6/C6/): test_real_run_v6 (74 tests) 20/20 passed; test_take_script_refusals (143) 20/20; test_core_key_readers (12) 20/20; test_start_prompt_hardening (129) 20/20; demo_folder_guard + no_placeholders with TMPDIR outside 20/20; same two files with TMPDIR inside the tree: 0 of 20 passed, always the same one test (test_demo_folder_guard...stops_the_run_in_ci, ModuleNotFoundError: No module named 'support'). No flaky test found. test_no_placeholders passed 20/20 inside the tree too, so my earlier "second in-tree failure" is not reproduced in 33 runs in total (E1 4, E2 9, C6 20): UNEXPLAINED. Caveat from the runner: runs 2-20 of take_script ran in 2 parallel lanes, so it measured pass/fail under load, not timing | none |
+| R4 / F4b | review of F4 done; round 2 fix builder | resolve | 13:09Z / 13:05Z | 14:10Z | round 2 of 2 | F4b RUNNING | V4b |
+| V1, V3 | evidence for F1, F3 | proof | 12:58Z, 13:03Z | 13:45Z, 13:50Z | 1 | RUNNING | read |
+| F2 | builder | fix order | 12:45Z | 13:45Z | 1 | RUNNING | V2 |
+| D1 | full suite + docs patch | docs patch safe? | 12:38Z | 13:25Z (late; load) | 1 | RUNNING about 66% | compare to 3978 passed |
+
+FAILURES AND RETRIES: T1 now proven in 24 runs (4 + 20): in-tree TMPDIR always fails that one test, outside always passes. T2 unexplained, 0 failures in 33 later runs. Totals today: 2 unexplained (B2-first, T2-earlier), 1 environment with proof (T1), 0 flakes found, real defects in the F-lanes.
+LOAD: 5 agents + D1 on 4 cores.
+ASK: none.
+
+
 ## REPORT (container clock 13:01Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
