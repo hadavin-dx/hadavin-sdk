@@ -127,9 +127,27 @@ def test_r6_a_trailing_dot_or_space_is_refused():
 
 def test_r7_a_reserved_device_name_is_refused():
     names = (
-        "con", "CON", "Con.txt", "prn", "aux.json", "NUL", "nul.tar.gz", "COM0", "COM1", "com9.log", "LPT1", "lpt9",
-        "LPT0.x", "CONIN$", "conout$", "CLOCK$", "COM\u00b9", "lpt\u00b2.txt", "COM\u00b3", "con .txt",
-    )  # fmt: skip
+        "con",
+        "CON",
+        "Con.txt",
+        "prn",
+        "aux.json",
+        "NUL",
+        "nul.tar.gz",
+        "COM0",
+        "COM1",
+        "com9.log",
+        "LPT1",
+        "lpt9",
+        "LPT0.x",
+        "CONIN$",
+        "conout$",
+        "CLOCK$",
+        "COM\u00b9",
+        "lpt\u00b2.txt",
+        "COM\u00b3",
+        "con .txt",
+    )
     for name in names:
         _must_refuse("R7", repr(name), _comp, name)
 
@@ -523,12 +541,12 @@ def test_atomic_write_creates_its_temp_file_exclusively(tmp_path, monkeypatch):
     monkeypatch.setattr(atomic.secrets, "token_hex", lambda n: "0" * (2 * n))
     squatter = tmp_path / f".r.txt.{'0' * 16}.tmp"
     squatter.write_text("someone else's file", encoding="utf-8")
-    try:
-        atomic_write(tmp_path, "r.txt", "mine")
-    except FileExistsError:
-        pass
-    else:
-        raise AssertionError("the temp file was reused: O_EXCL missing")
+    with pytest.raises(
+        pathguard.PathRefused, match="temp file: the name is already in use"
+    ) as caught:
+        atomic_write(tmp_path, "r.txt", "mine")  # O_EXCL: the temp name is never reused
+    assert caught.value.rule == "R13"
+    assert str(tmp_path) not in str(caught.value), "the refusal text must not hold the path"
     assert squatter.read_text(encoding="utf-8") == "someone else's file"
     assert not (tmp_path / "r.txt").exists()
 
@@ -659,25 +677,6 @@ def test_random_names_never_change_anything_outside_the_base(tmp_path):
 
 
 # ---------------------------------------------------------------- behaviour through the real callers (score and replay)
-
-
-def test_the_guard_scope_files_have_no_suppression_comment():
-    root = Path(__file__).resolve().parents[1] / "src" / "hadavin_sdk"
-    files = [
-        root / "pathguard.py",
-        root / "cli.py",
-        root / "config.py",
-        root / "audit" / "signer.py",
-        *sorted((root / "k1b").glob("*.py")),
-    ]
-    banned = ("NOSONAR", "# noqa", "# nosec", "type: ignore", "# pragma: no cover")
-    hits = [
-        f"{f.name}: {b}"
-        for f in files
-        for b in banned
-        if b in f.read_text(encoding="utf-8") and (f.name == "pathguard.py" or b == "NOSONAR")
-    ]
-    assert hits == [], f"suppression comments in the touched files: {hits}"
 
 
 def test_r10_a_value_error_from_resolve_is_refused_as_r10(tmp_path, monkeypatch):

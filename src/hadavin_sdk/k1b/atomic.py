@@ -30,10 +30,17 @@ def atomic_write(base: Path, name: str, text: str) -> None:
     # the unresolved name: join() resolved a link to its target
     if os.path.islink(Path(base) / name):
         raise pathguard.PathRefused("R8", "output file: a link is not replaced")
+    if final.is_dir():  # a folder is never replaced; the text must not hold the path
+        raise pathguard.PathRefused("R13", "output file: a folder is not replaced")
     tmp = pathguard.join(final.parent, f".{name}.{secrets.token_hex(8)}.tmp", what="temp file")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
-    fd = os.open(tmp, flags, 0o666)  # the umask removes what the operator's setting removes
+    try:
+        fd = os.open(tmp, flags, 0o666)  # the umask removes what the operator's setting removes
+    except (
+        FileExistsError
+    ):  # the existing file is left alone; the OS text holds the path, so it is not passed on
+        raise pathguard.PathRefused("R13", "temp file: the name is already in use") from None
     try:
         f = os.fdopen(fd, "w", encoding="utf-8", errors="backslashreplace", newline="\n")
     except BaseException:

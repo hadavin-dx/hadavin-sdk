@@ -139,12 +139,13 @@ def key_path(path: Path, base: Path | None = None) -> Path:
     """The real location of `path` when it lies inside `base` (default: the key folder, created 0700 if
     missing); else ValueError. The file itself must not be a symlink, and its folder must already exist."""
     folder = (base or key_dir()).expanduser()
+    target = Path(path).expanduser()
+    # the shape of both paths is checked before any folder is made: a NUL or control character in the key folder
+    # (or one of its parents) is refused here, not after mkdir
+    pathguard.operator_text(folder, what="key folder")
+    pathguard.operator_text(target, what="key file")
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     folder = folder.resolve(strict=True)
-    target = Path(path).expanduser()
-    pathguard.operator_text(
-        target, what="key file"
-    )  # a NUL or control character: refused before any resolve
     if target.is_symlink():
         raise ValueError(f"{path} is a symlink: a key file is never used through one")
     real: Path | None

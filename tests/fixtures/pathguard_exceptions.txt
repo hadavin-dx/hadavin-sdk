@@ -1,44 +1,82 @@
-# Unguarded file operations the tripwire (tests/test_pathguard_tripwire.py) accepts, one line per function:
-# file | function | origin | reason
+# Unguarded file operations the tripwire (tests/test_pathguard_tripwire.py) accepts.
+# file | function | call | count | origin | validator | reason
+# count: the exact number of unguarded hits of that call in that function: a new hit in a listed function fails the test.
 # origin: operator (typed by the person), config (a path in the config file), fixed (a constant of ours, or not a file),
-# package (a file shipped inside the package), checked (validated by the caller or by a check the scan cannot follow).
-src/hadavin_sdk/actions/executor.py | Executor._caller.call | fixed | a network opener (the method is named open); not a file; scheme and host are checked above it
-src/hadavin_sdk/actions/secrets_vault.py | VaultProvider.call | fixed | a network opener (the method is named open); not a file
-src/hadavin_sdk/llm/common.py | post_json | fixed | a network opener (the method is named open); not a file
-src/hadavin_sdk/tools.py | ToolContext.fetch | fixed | a network opener (the method is named open); not a file
-src/hadavin_sdk/runtime/agent_loop.py | Runtime.handle | fixed | the store's heartbeat method is named touch; a database row, not a file
-src/hadavin_sdk/app.py | _tls_context | checked | the path is confined(cfg.root, ca_file) on the line before it is read
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink._entries | checked | index.jsonl is a fixed name under the folder LocalDirSink.__init__ checked with pathguard.operator_dir
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink._fsync_dir | checked | opens a folder of ours (root or objects) read-only to make an entry durable
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | checked | index.jsonl is a fixed name under the folder LocalDirSink.__init__ checked with pathguard.operator_dir
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | checked | the object path comes from LocalDirSink._object (pathguard.join); objects is a fixed name under the checked folder; the temp name is made by tempfile
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink.write_outcome | checked | outbox is a fixed name under the checked folder; the file names come from pathguard.join
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | checked | the listing of outbox (a fixed name under the checked folder); every name from it goes through pathguard.join before it is used
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink.verify_object | checked | the path comes from LocalDirSink._object (pathguard.join)
-src/hadavin_sdk/audit/local_dir.py | LocalDirSink.events | checked | the path comes from LocalDirSink._object (pathguard.join)
-src/hadavin_sdk/audit/signer.py | key_path | operator | creates the key folder (HADAVIN_KEY_DIR or ~/.hadavin) 0700; the operator's own folder; the key path itself is checked by pathguard.inside below it
-src/hadavin_sdk/audit/signer.py | _create | checked | the path is the return value of key_path (pathguard.inside); the file is created exclusively
-src/hadavin_sdk/audit/signer.py | generate_key | checked | the paths are the return values of key_path (pathguard.inside)
-src/hadavin_sdk/config.py | _read_yaml | checked | root/config.yaml and root/egress.yaml: fixed names under the folder load_config checked with pathguard.operator_dir
-src/hadavin_sdk/evals.py | gate | checked | the golden and input files are confined(cfg.golden_dir or cfg.inputs_dir, name); qualified.jsonl is a fixed name under cfg.root, the operator's config folder
-src/hadavin_sdk/guard/judge.py | <module> | package | the judge prompt shipped inside the package, read at import
-src/hadavin_sdk/guard/judge.py | qualify | config | the golden file the caller passes (confined to golden_dir by the evals gate that calls it)
-src/hadavin_sdk/llm/fake.py | FakeLLM.chat | fixed | the file name is a SHA-256 hex digest plus a counter made here (no data-derived text); the folder is the recording folder the caller names (a fake model for tests and demos)
-src/hadavin_sdk/registry.py | Registry.prompt | checked | the path comes from Registry._prompt_path, which uses confined
-src/hadavin_sdk/registry.py | Registry.prompt_sha256 | checked | the path comes from Registry._prompt_path, which uses confined
-src/hadavin_sdk/registry.py | Registry.golden_sha256 | checked | the golden and input files are confined(golden_dir or inputs_dir, name); judge.jsonl is a fixed name under golden_dir
-src/hadavin_sdk/registry.py | _yaml | checked | callers pass fixed names under the config folder load_config checked
-src/hadavin_sdk/registry.py | load_registry | config | lists fixed folders (actions, tools) under the config folder load_config checked; names are used only as agent and action ids
-src/hadavin_sdk/registry.py | _load_tools | config | lists a fixed folder (tools) under the config folder load_config checked; names are used only as ids
-src/hadavin_sdk/replay_records.py | read_records | checked | a fixed file name (FILE) under the folder the caller passes (the config folder that load_config checked)
-src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | checked | qualified.jsonl is a fixed name under cfg.root, the config folder load_config checked
-src/hadavin_sdk/runtime/agent_loop.py | _check_golden_refs | checked | the golden file is confined to golden_dir; each input_ref is confined to inputs_dir
-src/hadavin_sdk/store/migrate.py | _migration_files | package | the migrations folder shipped inside the package
-src/hadavin_sdk/store/migrate.py | _scan | package | migration files shipped inside the package, or a folder a test passes
-src/hadavin_sdk/store/migrate.py | migrate | package | migration files shipped inside the package
-src/hadavin_sdk/store/migration_numbers.py | list_migration_files | package | the migrations folder shipped inside the package, or a folder the migration-number check is given
-src/hadavin_sdk/store/migration_numbers.py | check_migration_numbers | package | the migrations folder shipped inside the package, or a folder the migration-number check is given
-src/hadavin_sdk/store/migration_numbers.py | read_files | package | files from list_migration_files
-src/hadavin_sdk/store/migration_numbers.py | released_problems | package | files from list_migration_files
-src/hadavin_sdk/tools.py | module_sha256 | package | module files found by import machinery for a tool module the operator named in config
-src/hadavin_sdk/tools.py | load_tool_module | package | module files found by import machinery for a tool module the operator named in config
+# package (a file shipped inside the package), checked (validated by a function the scan cannot follow).
+# validator: the function that checks the path ("-" only for fixed and package); the test finds it in the package, and for
+# "checked" rows also finds a call to it in the same file.
+src/hadavin_sdk/actions/executor.py | Executor._caller.call | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
+src/hadavin_sdk/actions/secrets_vault.py | VaultProvider.call | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
+src/hadavin_sdk/app.py | _tls_context | .read_text | 1 | checked | confined | the path is confined(cfg.root, ca_file) on the line before it is read
+src/hadavin_sdk/audit/chain.py | _Db.memory | sqlite3.connect | 1 | fixed | - | sqlite3 ":memory:" is a database in memory, not a file
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | .exists | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | .read_bytes | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | .stat | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | open | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._entries | .exists | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._entries | .read_text | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._fsync_dir | os.open | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | .mkdir | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | .read_bytes | 1 | checked | _object | the path comes from _object(), which joins the key with pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | .unlink | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | os.link | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink._write | tempfile.mkstemp | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.events | .read_text | 1 | checked | _object | the path comes from _object(), which joins the key with pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | .exists | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | .glob | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | os.replace | 1 | checked | join | both names are pathguard.join results written inline in the call
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.verify_object | .read_bytes | 1 | checked | _object | the path comes from _object(), which joins the key with pathguard.join
+src/hadavin_sdk/audit/local_dir.py | LocalDirSink.write_outcome | .mkdir | 1 | checked | operator_dir | the folder and index.jsonl are the ones __init__ checked with operator_dir; the names inside are fixed or come from pathguard.join
+src/hadavin_sdk/audit/signer.py | _create | .unlink | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
+src/hadavin_sdk/audit/signer.py | _create | os.open | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
+src/hadavin_sdk/audit/signer.py | generate_key | .exists | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
+src/hadavin_sdk/audit/signer.py | generate_key | .unlink | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
+src/hadavin_sdk/audit/signer.py | key_path | .is_symlink | 1 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
+src/hadavin_sdk/audit/signer.py | key_path | .mkdir | 1 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
+src/hadavin_sdk/audit/signer.py | key_path | .resolve | 2 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
+src/hadavin_sdk/config.py | _read_yaml | .exists | 1 | operator | operator_dir | the config folder root is checked by operator_dir in load_config; the file names are fixed
+src/hadavin_sdk/config.py | _read_yaml | .read_text | 1 | operator | operator_dir | the config folder root is checked by operator_dir in load_config; the file names are fixed
+src/hadavin_sdk/evals.py | gate | .exists | 1 | config | confined | the golden and input files go through confined(); qualified.jsonl is a fixed name under the config root
+src/hadavin_sdk/evals.py | gate | .read_bytes | 2 | config | confined | the golden and input files go through confined(); qualified.jsonl is a fixed name under the config root
+src/hadavin_sdk/evals.py | gate | .stat | 1 | config | confined | the golden and input files go through confined(); qualified.jsonl is a fixed name under the config root
+src/hadavin_sdk/evals.py | gate | open | 1 | config | confined | the golden and input files go through confined(); qualified.jsonl is a fixed name under the config root
+src/hadavin_sdk/guard/judge.py | <module> | .read_text | 1 | package | - | judge_prompt.md ships inside the package next to this file
+src/hadavin_sdk/k1b/atomic.py | atomic_write | os.path.islink | 1 | checked | join | the same name was joined with pathguard.join on the lines above; this is the check for a link the join resolved
+src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_dir | 1 | operator | operator_dir | the case folder is checked by operator_dir; names under it come from a listing and are joined
+src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_file | 1 | operator | operator_dir | the case folder is checked by operator_dir; names under it come from a listing and are joined
+src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_symlink | 2 | operator | operator_dir | the case folder is checked by operator_dir; names under it come from a listing and are joined
+src/hadavin_sdk/k1b/replay.py | outputs_files | .is_file | 1 | checked | join | rdir is a pathguard.join result; the entries are listed under it
+src/hadavin_sdk/k1b/score.py | _check_layout | .is_file | 1 | checked | operator_dir | out is checked by outputs_dir/operator_dir on the line before the listing
+src/hadavin_sdk/llm/common.py | post_json | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
+src/hadavin_sdk/registry.py | Registry.golden_sha256 | .is_file | 2 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
+src/hadavin_sdk/registry.py | Registry.golden_sha256 | .read_bytes | 2 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
+src/hadavin_sdk/registry.py | Registry.prompt | .read_text | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
+src/hadavin_sdk/registry.py | Registry.prompt_sha256 | .read_bytes | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
+src/hadavin_sdk/registry.py | _cross_check | .is_file | 1 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
+src/hadavin_sdk/registry.py | _load_tools | .glob | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _load_tools | .is_dir | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _load_tools | .is_file | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _yaml | .exists | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | _yaml | .read_text | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/registry.py | load_registry | .glob | 1 | config | operator_dir | files under the config folder root, which load_config checked with operator_dir; the names are fixed
+src/hadavin_sdk/replay_records.py | read_records | .exists | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/replay_records.py | read_records | .read_bytes | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/runtime/agent_loop.py | _check_golden_refs | .is_file | 1 | checked | confined | the path is registry.golden_path(), which goes through confined
+src/hadavin_sdk/runtime/agent_loop.py | _check_golden_refs | .read_text | 1 | checked | confined | the path is registry.golden_path(), which goes through confined
+src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .exists | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/runtime/agent_loop.py | qualified_runs | .read_bytes | 1 | config | operator_dir | a fixed file name under the config folder root, which load_config checked with operator_dir
+src/hadavin_sdk/store/migrate.py | _migration_files | .glob | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migrate.py | _scan | .read_text | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migrate.py | migrate | .read_text | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | check_ledger | .is_file | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | check_migration_numbers | .is_symlink | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | check_migration_numbers | os.scandir | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | list_migration_files | os.scandir | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | read_files | .read_text | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | released_problems | .is_file | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/migration_numbers.py | released_problems | .read_bytes | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
+src/hadavin_sdk/store/postgres.py | ca_file | tempfile.mkstemp | 1 | fixed | - | mkstemp makes a new private file in the OS temp folder; no operator path is read
+src/hadavin_sdk/tools.py | ToolContext.fetch | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
+src/hadavin_sdk/tools.py | _module_files | .is_file | 3 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
+src/hadavin_sdk/tools.py | load_tool_module | .read_bytes | 1 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own
+src/hadavin_sdk/tools.py | module_sha256 | .read_bytes | 1 | config | _module_files | the module name is checked part by part with isidentifier before any path is built; sys.path entries are the process own

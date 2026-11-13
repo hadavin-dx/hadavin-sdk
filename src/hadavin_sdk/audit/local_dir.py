@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import tempfile
 import threading
@@ -20,6 +21,8 @@ from pathlib import Path
 from hadavin_sdk import pathguard
 from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
 from hadavin_sdk.models import AuditEvent
+
+_LOG = logging.getLogger(__name__)
 
 
 class LocalDirSink:
@@ -33,6 +36,7 @@ class LocalDirSink:
         self._lock = threading.Lock()
         # Last resort when even the outbox folder cannot be written: kept in memory for reconcile.
         self._pending: list[AuditEvent] = []
+        self.refused_events = 0  # outcomes dropped because the event id is not one plain file name
 
     def _object(self, key: str) -> Path:
         """``objects/<key>``. The key is data-derived (an event id, or a line of ``index.jsonl``), so it goes through
@@ -114,7 +118,7 @@ class LocalDirSink:
         except DuplicateEvent:
             raise
         except pathguard.PathRefused as exc:  # an event id that is not one plain file name
-            raise AuditUnavailable(f"intent {event.event_id!r}: refused ({exc.rule})") from None
+            raise AuditUnavailable(f"intent: event id refused ({exc.rule})") from None
         except OSError as exc:
             raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
 
@@ -124,6 +128,13 @@ class LocalDirSink:
             return self._write(event)
         except DuplicateEvent:
             return f"{event.event_id}.json"
+        except (
+            pathguard.PathRefused
+        ):  # an id that is not one plain file name: it can never be written, so it is not kept
+            self.refused_events += 1
+            if self.refused_events == 1:  # once, and never the id: it is the refused text
+                _LOG.warning("audit outcome dropped: its event id is not one plain file name")
+            return None
         except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
             try:
                 self.outbox.mkdir(parents=True, exist_ok=True)
@@ -162,9 +173,12 @@ class LocalDirSink:
             try:
                 event = AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))
             except ValueError:
-                corrupt = pathguard.join(self.outbox, "corrupt", what="audit outbox folder")
-                corrupt.mkdir(exist_ok=True)
-                os.replace(path, pathguard.join(corrupt, listed, what="audit outbox file"))
+                try:  # a "corrupt" folder that is a link, or a name that is refused: the file stays for a person
+                    corrupt = pathguard.join(self.outbox, "corrupt", what="audit outbox folder")
+                    corrupt.mkdir(exist_ok=True)
+                    os.replace(path, pathguard.join(corrupt, listed, what="audit outbox file"))
+                except (pathguard.PathRefused, OSError):
+                    pass
                 continue
             try:
                 self._write(event)

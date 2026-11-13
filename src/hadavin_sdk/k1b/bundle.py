@@ -128,8 +128,8 @@ def _no_surrogates(case: str, rel: str, obj: Any) -> None:
     if isinstance(obj, str):
         try:
             obj.encode("utf-8")
-        except UnicodeEncodeError as exc:
-            raise _fail(case, f"{rel} holds an invalid character") from exc
+        except UnicodeEncodeError:
+            raise _fail(case, f"{rel} holds an invalid character") from None
     elif isinstance(obj, dict):
         for k, v in obj.items():
             _no_surrogates(case, rel, k)
@@ -206,7 +206,10 @@ def load_bundle(path: Path) -> Bundle:
         path = pathguard.operator_dir(path, what="bundle folder")
     except pathguard.PathRefused as exc:
         raise _fail(case, str(exc)) from None
-    man_path = pathguard.join(path, "manifest.json", what="bundle file")
+    try:
+        man_path = pathguard.join(path, "manifest.json", what="bundle file")
+    except pathguard.PathRefused as exc:  # a manifest that is a link out of the folder
+        raise _fail(case, str(exc)) from None
     if not man_path.is_file():
         raise _fail(case, "manifest.json is missing")
     manifest = _keys(case, "manifest.json", _load_json(case, path, "manifest.json"), {"files"})
@@ -283,8 +286,8 @@ def load_bundle(path: Path) -> Bundle:
                     continue
                 try:
                     rec = strict_json_loads(raw)
-                except (ValueError, RecursionError) as exc:
-                    raise _fail(case, f"{rel} has a line that is not valid JSON") from exc
+                except (ValueError, RecursionError):
+                    raise _fail(case, f"{rel} has a line that is not valid JSON") from None
                 rec = _keys(case, rel, rec, {"ts", "level", "message", "service"})
                 _no_surrogates(case, rel, rec)
                 _scan(case, rel, rec, alert_time)
@@ -358,12 +361,9 @@ def load_bundle(path: Path) -> Bundle:
 
 def load_bundles(root: Path) -> list[Bundle]:
     """Every ``case-NNN`` folder under ``root``, in sorted case order. Any bad bundle refuses the whole set."""
-    try:
-        root = pathguard.operator_dir(root, what="bundles folder")
-    except pathguard.PathRefused as exc:
-        if exc.rule in ("R10", "R11"):  # missing, not a folder, cannot be resolved
-            raise ConfigError("bundles folder does not exist") from None
-        raise
+    root = pathguard.operator_dir(
+        root, what="bundles folder", unusable="bundles folder does not exist"
+    )
     # each name from the listing goes through pathguard.component; load_bundle then checks the case-NNN shape
     names = sorted(
         pathguard.component(p.name, what="bundle folder")

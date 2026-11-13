@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.guard import runmap
 from hadavin_sdk.guard.injection import injection_check
 from hadavin_sdk.llm.common import ANSWER_TOOL
@@ -99,6 +100,7 @@ class JudgeDetector:
 
 def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]:
     """``(passed, n)`` over ``{"text": ..., "injection": bool}`` lines; a judge error fails its case."""
+    golden = pathguard.operator_file(golden, what="judge golden file")
     cases = [
         json.loads(line) for line in golden.read_text(encoding="utf-8").splitlines() if line.strip()
     ]

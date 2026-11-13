@@ -19,22 +19,39 @@ def export(tmp_path, cfg_dir):
 def _replay(cfg_dir, export, *extra, bundles=None, out=None, usd="5"):
     return cli.main(
         [
-            "--config", str(cfg_dir), "replay", "test-agent",
-            "--bundles", str(bundles or export["bundles"]),
-            "--cause-list", str(export["cause"]),
-            "--max-usd", usd, "--out", str(out or export["out"]), *extra,
+            "--config",
+            str(cfg_dir),
+            "replay",
+            "test-agent",
+            "--bundles",
+            str(bundles or export["bundles"]),
+            "--cause-list",
+            str(export["cause"]),
+            "--max-usd",
+            usd,
+            "--out",
+            str(out or export["out"]),
+            *extra,
         ]
-    )  # fmt: skip
+    )
 
 
 def _score(cfg_dir, export):
     return cli.main(
         [
-            "--config", str(cfg_dir), "score", "--outputs", str(export["out"]),
-            "--answers", str(export["answers"]), "--cause-list", str(export["cause"]),
-            "--bundles", str(export["bundles"]),
+            "--config",
+            str(cfg_dir),
+            "score",
+            "--outputs",
+            str(export["out"]),
+            "--answers",
+            str(export["answers"]),
+            "--cause-list",
+            str(export["cause"]),
+            "--bundles",
+            str(export["bundles"]),
         ]
-    )  # fmt: skip
+    )
 
 
 def test_end_to_end_replay_then_score(cfg_dir, export, capsys):

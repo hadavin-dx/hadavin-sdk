@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.config import ConfigError, confined
 
 
@@ -15,14 +16,25 @@ def hash_files(root: Path, rel_paths: list[str]) -> str:
     may not contain a backslash or NUL. Paths are named by their canonical form, so ``a/b``, ``./a/b`` and
     ``a//b`` are one entry.
     """
-    base = Path(root).resolve()
+    # the folder the caller names: shape checked, the resolved path is what is used below
+    base = pathguard.operator_dir(root, what="hash folder", unusable="hash folder does not exist")
     entries: dict[str, str] = {}
     for rel in rel_paths:
         if chr(92) in rel or chr(0) in rel:
             raise ConfigError("path has a backslash or NUL character")
-        path = confined(root, rel)
-        if not path.is_file():
-            raise ConfigError(f"not a file: {rel}")
+        found = confined(base, rel)
+        try:
+            path = pathguard.join(
+                base,
+                *found.relative_to(base).parts,
+                what="hash file",
+                must_exist=True,
+                kind="file",
+            )
+        except pathguard.PathRefused as exc:
+            if exc.rule in ("R10", "R11"):  # missing, or not a file
+                raise ConfigError(f"not a file: {rel}") from None
+            raise
         try:
             digest = hashlib.sha256(path.read_bytes()).hexdigest()
         except OSError as exc:

@@ -71,6 +71,13 @@ def _diagnosis_dict(d: Diagnosis) -> dict[str, Any]:
     return out
 
 
+def _run_dir(out: Path, run_index: int) -> Path:
+    """``out/run<N>``, checked again for every write: a run folder swapped for a link to another folder since the last
+    write is refused (R8) before the next file is written. A swap between this check and the write itself is outside the
+    threat model (see ``pathguard``)."""
+    return pathguard.join(out, f"run{run_index}", what="run folder", must_exist=True, kind="dir")
+
+
 def _write_json(base: Path, name: str, obj: Any) -> None:
     """Write ``base/name`` as JSON. ``base`` is a folder already validated; the name (a case id or a fixed name) goes
     through ``pathguard`` inside ``atomic_write``."""
@@ -137,12 +144,13 @@ def _replay(
             "k1b.redact is false: client data would go to the model unmasked. Pass "
             "--i-know-data-is-already-masked only if the bundles are already masked"
         )
-    try:
-        out = pathguard.operator_dir(out, what="replay output folder", must_exist=False)
-    except pathguard.PathRefused as exc:
-        if exc.rule == "R11":  # it exists and is a file
-            raise ConfigError("replay output folder exists and is not empty") from exc
-        raise
+    out = pathguard.operator_dir(
+        out,
+        what="replay output folder",
+        must_exist=False,
+        unusable="replay output folder exists and is not empty",
+        unusable_rules=("R11",),  # it exists and is a file
+    )
     if out.exists() and any(out.iterdir()):
         raise ConfigError("replay output folder exists and is not empty")
     cause = load_cause_list(cause_list_dir)
@@ -242,7 +250,7 @@ def _replay(
                 issue_cases["unreadable"].append(b.case_id)
             if record.get("converted") == "uncited":
                 issue_cases["uncited"].append(b.case_id)
-            _write_json(rdir, f"{b.case_id}.json", record)
+            _write_json(_run_dir(out, run_index), f"{b.case_id}.json", record)
             counts[o.status] += 1
             counts["unreadable"] += o.status == "ok" and diag is None
             counts["hard_check_a"] += len(o.hard_check_a)
@@ -276,7 +284,7 @@ def _replay(
             "sdk_version": __version__,
             "temperature": "provider default",
         }
-        _write_json(rdir, "run.json", meta)
+        _write_json(_run_dir(out, run_index), "run.json", meta)
         runs.append(meta)
 
     result = stop or "complete"
@@ -287,12 +295,13 @@ def _replay(
 
 
 def _mark_failed(out_arg: Path, exc: BaseException) -> None:
-    """Write ``FAILED.txt`` into a non-empty output folder; a folder that cannot be validated is left alone."""
+    """Write ``FAILED.txt`` into the output folder, empty or not (the folder exists: ``_replay`` made it). A folder that
+    cannot be validated is left alone."""
     try:
         out = pathguard.operator_dir(out_arg, what="replay output folder", must_exist=False)
     except pathguard.PathRefused:
         return
-    if out.is_dir() and any(out.iterdir()):
+    if out.is_dir():
         atomic_write(out, "FAILED.txt", f"replay did not finish: {type(exc).__name__}\n")
 
 
@@ -306,5 +315,11 @@ def replay(*args: Any, **kwargs: Any) -> ReplayResult:
         BaseException
     ) as exc:  # includes Ctrl-C and a refusal (PathRefused is a ConfigError) after output exists
         if progress.output_created:  # a refusal before the folder exists wrote nothing: no marker
-            _mark_failed(kwargs["out"], exc)
+            try:
+                _mark_failed(kwargs["out"], exc)
+            except (
+                OSError,
+                ConfigError,
+            ) as second:  # the original error is the one the caller must see; this one is a note
+                exc.add_note(f"FAILED.txt was not written ({type(second).__name__})")
         raise

@@ -10,6 +10,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.config import Route
 from hadavin_sdk.models import Reply
 
@@ -20,7 +21,10 @@ class UnknownRecording(KeyError):
 
 class FakeLLM:
     def __init__(self, recorded_dir: Path, routes: dict[str, Route]) -> None:
-        self.recorded_dir = Path(recorded_dir)
+        # the recording folder (config or a test): shape checked, the resolved path is used
+        self.recorded_dir = pathguard.operator_dir(
+            recorded_dir, what="recording folder", must_exist=False
+        )
         self.routes = routes
         self.calls: list[dict[str, Any]] = []
         self._attempts: Counter[str] = Counter()
@@ -42,7 +46,7 @@ class FakeLLM:
             self._attempts[digest] += 1
             attempt = self._attempts[digest]
             self.calls.append({"route": route, "tools": tools, "messages": messages})
-        path = self.recorded_dir / f"{digest}-{attempt}.json"
+        path = pathguard.join(self.recorded_dir, f"{digest}-{attempt}.json", what="recording")
         if not path.is_file():
             raise UnknownRecording(path.name)
         data = json.loads(path.read_text(encoding="utf-8"))

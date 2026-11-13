@@ -12,6 +12,8 @@ import shutil
 import pytest
 
 from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.hashing import hash_files
+from hadavin_sdk.k1b.replay import outputs_files
 from hadavin_sdk.k1b.score import score
 from tests.k1b_support import (
     cause,
@@ -49,7 +51,7 @@ def _link(target, link, *, directory):
         pytest.skip("symlinks unavailable")
 
 
-def test_a_clean_outputs_folder_still_scores(tmp_path):
+def test_control_a_clean_outputs_folder_still_scores(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     assert score(out, answers, cause_dir, bundles).runs[0].hits == 2
 
@@ -76,7 +78,8 @@ def test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_mis
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     digest = out / "outputs.sha256"
     other = tmp_path / "other.sha256"
-    other.write_text("0" * 64 + "\n", encoding="utf-8")
+    # the TRUE digest of these outputs: an outside file that is trusted would make the outputs read as unchanged
+    other.write_text(hash_files(out, outputs_files(out)) + "\n", encoding="utf-8")
     if digest.exists():
         digest.unlink()
     _link(other, digest, directory=False)
@@ -85,7 +88,7 @@ def test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_mis
     assert result.warnings == [], "an outside digest file was reported as missing"
 
 
-def test_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash(tmp_path):
+def test_pin_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash(tmp_path):
     out, answers, cause_dir, bundles = _fixture(tmp_path)
     with pytest.raises(ConfigError, match="outputs folder: contains a control character"):
         score(type(out)(str(out) + "\x00x"), answers, cause_dir, bundles)

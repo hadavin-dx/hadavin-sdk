@@ -254,14 +254,11 @@ def score_cmd(audit, args) -> int:
     ``score_report`` ``failed``; a crash leaves ``started`` alone."""
     from hadavin_sdk.k1b.atomic import atomic_write
     from hadavin_sdk.k1b.report import render_score_report
-    from hadavin_sdk.k1b.score import REPORT_DIR, audit_result, score
+    from hadavin_sdk.k1b.score import REPORT_DIR, audit_result, outputs_dir, score
 
-    try:  # the operator's own --outputs folder: its shape is checked; the report folder name is ours
-        outputs = pathguard.operator_dir(args.outputs, what="outputs folder")
-    except pathguard.PathRefused as exc:
-        if exc.rule in ("R10", "R11"):  # missing, not a folder, cannot be resolved
-            raise ConfigError("outputs folder does not exist") from None
-        raise
+    outputs = outputs_dir(
+        args.outputs
+    )  # the operator's own --outputs folder: shape checked; the report name is ours
     report_dir = pathguard.join(outputs, REPORT_DIR, what="score report folder")
     if report_dir.exists() and (not report_dir.is_dir() or any(report_dir.iterdir())):
         raise ConfigError("score report folder exists and is not empty")

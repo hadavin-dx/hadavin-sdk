@@ -102,7 +102,11 @@ def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
         real = pathguard.operator_file(
             path, what="answers file"
         )  # the operator's own --answers file
-        raw = real.read_bytes()
+        # the last check before the read: the name joined to its folder again, strictly, as a file
+        target = pathguard.join(
+            real.parent, real.name, what="answers file", must_exist=True, kind="file"
+        )
+        raw = target.read_bytes()
         data = strict_json_loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError):  # PathRefused is a ValueError
         raise ConfigError("answers file is missing or not valid JSON") from None
@@ -163,7 +167,10 @@ def _recorded_digest(out: Path) -> str | None:
         sha_file = pathguard.join(out, "outputs.sha256", what="replay digest file")
         if not sha_file.is_file():
             return None
-        return sha_file.read_text(encoding="utf-8").strip()
+        target = pathguard.join(
+            out, "outputs.sha256", what="replay digest file", must_exist=True, kind="file"
+        )
+        return target.read_text(encoding="utf-8").strip()
     except (OSError, ValueError):  # PathRefused is a ValueError
         return ""
 
@@ -196,20 +203,18 @@ def _record(base: Path, case_id: str, ordinal: int) -> dict[str, Any]:
     return rec
 
 
-def _outputs_dir(out: Path | str) -> Path:
-    """The operator's ``--outputs`` folder: shape checked, resolved. Callers use only the returned path."""
-    try:
-        return pathguard.operator_dir(out, what="outputs folder")
-    except pathguard.PathRefused as exc:
-        if exc.rule in ("R10", "R11"):  # missing, not a folder, cannot be resolved
-            raise ConfigError("outputs folder does not exist") from None
-        raise
+def outputs_dir(out: Path | str) -> Path:
+    """The operator's ``--outputs`` folder: shape checked, resolved. Callers (``score`` and the command line) use only
+    the returned path."""
+    return pathguard.operator_dir(
+        out, what="outputs folder", unusable="outputs folder does not exist"
+    )
 
 
 def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
     """Refuse a folder that is not exactly ``run1..runK`` with every case file and ``run.json``."""
     # re-checked here because this function lists the folder itself (the caller's check is not trusted across functions)
-    out = pathguard.operator_dir(_outputs_dir(out), what="outputs folder")
+    out = pathguard.operator_dir(outputs_dir(out), what="outputs folder")
     names = {p.name for p in out.iterdir()}
     if "FAILED.txt" in names:
         raise ConfigError("outputs folder holds FAILED.txt: the replay did not finish")
@@ -240,7 +245,7 @@ def score(out: Path, answers_path: Path, cause_dir: Path, bundles_dir: Path) -> 
         )
     case_ids = sorted(answers)
     set_sha = bundle_set_sha256(bundles_dir, [bundles[c] for c in case_ids])
-    out = _outputs_dir(
+    out = outputs_dir(
         out
     )  # checked once; every read below uses this returned path, not the argument
     runs = _check_layout(out, case_ids)

@@ -52,16 +52,16 @@ def _load(directory: Path, name: str, limit: int) -> tuple[frozenset[str], str]:
         ValueError,
         RecursionError,
         RuntimeError,
-    ) as exc:  # missing file, bad UTF-8, bad JSON
-        raise ConfigError(f"cause list: {name} is missing or not valid JSON") from exc
+    ):  # missing file, bad UTF-8, bad JSON
+        raise ConfigError(f"cause list: {name} is missing or not valid JSON") from None
     if not isinstance(data, list) or not all(isinstance(v, str) for v in data):
         raise ConfigError(f"cause list: {name} must be a list of strings")
     values = [norm(v) for v in data]
     try:
         for v in values:
             v.encode("utf-8")
-    except UnicodeEncodeError as exc:  # a lone surrogate would crash later writes
-        raise ConfigError(f"cause list: {name} has an invalid character") from exc
+    except UnicodeEncodeError:  # a lone surrogate would crash later writes
+        raise ConfigError(f"cause list: {name} has an invalid character") from None
     if not 1 <= len(values) <= limit:
         raise ConfigError(f"cause list: {name} must hold 1 to {limit} entries, has {len(values)}")
     if "" in values:

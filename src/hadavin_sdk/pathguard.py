@@ -1,4 +1,4 @@
-"""One place that decides whether a file name or a folder path is safe to use.
+"""The shared rules for a file name or a folder path, used by the file operations listed by the package tripwire test.
 
 Class of bug this closes: a containment check copied per caller (``config.confined``, ``causelist._inside``,
 ``signer.key_path``), so a rule added to one was missing from the others, and most file operations had no check at all.
@@ -16,9 +16,9 @@ Threat model, stated plainly: the attacker is operator-typed or data-derived TEX
 changes the operator's folder while we run, so a swap between the check and the use is NOT claimed to be closed.
 Callers use ONLY the returned path afterwards, never the original text.
 
-Rules (each has one test and one mutant): R1 empty or dot, R2 separator, R3 colon, R4 control or invisible character,
+Rules (each has one test and one mutant): R1 empty or dot, R2 separator, R3 colon, R4 control or invisible character (the ranges are CONTROL_RANGES),
 R5 length, R6 trailing dot or space, R7 Windows device name, R8 escape, R9 absolute or drive-relative names (refused by R2
-and R3), R10 cannot be resolved, R11 wrong type, R12 a character Windows does not allow in a name. R6, R7 and R12 apply to
+and R3), R10 cannot be resolved, R11 wrong type, R12 a character Windows does not allow in a name, R13 a write target or temp name that cannot be used (a folder, or a temp name already taken). R6, R7 and R12 apply to
 data-derived names (``component``, ``join``) only, not to ``inside`` or the operator checks. The text of a refusal names
 the argument (the ``what`` words) and the problem, never the value and never the rule number; the number is in
 ``PathRefused.rule``. Refuse, never repair: no rule changes the text of a name. Case-insensitive disks,
@@ -51,17 +51,35 @@ _DEVICE_NAMES = frozenset(
     {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "CLOCK$"}
     | {f"{prefix}{n}" for prefix in ("COM", "LPT") for n in _DIGITS}
 )
-# C0 (U+0000-U+001F), DEL, C1 (U+0080-U+009F), the Arabic letter mark (U+061C), zero-width characters and the left and
-# right marks (U+200B-U+200F), line and paragraph separators (U+2028, U+2029), bidirectional embeddings (U+202A-U+202E),
-# isolates (U+2066-U+2069) and the byte order mark (U+FEFF): they reorder or hide printed text. A raw string, so the
-# escapes are read by the regex engine, not pasted into this file.
-_CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f\u061c\u200b-\u200f\u2028-\u202e\u2066-\u2069\ufeff]")
+# Characters that hide or reorder printed text, one named range per line (first, last code point). Built with ``chr()`` so no
+# such character is written into this file. A test and a mutant exist for every line.
+CONTROL_RANGES = (
+    ("C0 controls and NUL", 0x0000, 0x001F),
+    ("DEL and C1 controls", 0x007F, 0x009F),
+    ("soft hyphen", 0x00AD, 0x00AD),
+    ("combining grapheme joiner", 0x034F, 0x034F),
+    ("Arabic letter mark", 0x061C, 0x061C),
+    ("Mongolian vowel separator", 0x180E, 0x180E),
+    ("zero-width and direction marks", 0x200B, 0x200F),
+    ("line and paragraph separators and bidirectional embeddings", 0x2028, 0x202E),
+    ("word joiner, invisible operators, isolates and deprecated format characters", 0x2060, 0x206F),
+    ("variation selectors", 0xFE00, 0xFE0F),
+    ("byte order mark", 0xFEFF, 0xFEFF),
+    ("interlinear annotation", 0xFFF9, 0xFFFB),
+    ("tag characters", 0xE0000, 0xE007F),
+    ("variation selectors supplement", 0xE0100, 0xE01EF),
+)
+_CONTROL = re.compile(
+    "["
+    + "".join(f"{re.escape(chr(lo))}-{re.escape(chr(hi))}" for _, lo, hi in CONTROL_RANGES)
+    + "]"
+)
 # Characters Windows does not allow in a file name (the colon is R3). Refused on every system, as PathRefused.
 _WINDOWS_INVALID = re.compile(r'[<>"|?*]')
 
 
 class PathRefused(ConfigError):
-    """A path or name was refused. ``rule`` is R1 to R12. The text names the argument and the problem, never the value."""
+    """A path or name was refused. ``rule`` is R1 to R13. The text names the argument and the problem, never the value."""
 
     def __init__(self, rule: str, message: str) -> None:
         super().__init__(message)
@@ -180,13 +198,27 @@ def join(
     return real
 
 
-def _operator(path: Path | str, what: str, kind: str, must_exist: bool) -> Path:
-    text = str(path)
-    _check_text(text, what)
-    real = _resolve(Path(path), what, strict=must_exist)
-    if must_exist or real.exists():
-        _check_kind(real, kind, what)
-    return real
+def _operator(
+    path: Path | str,
+    what: str,
+    kind: str,
+    must_exist: bool,
+    unusable: str | None,
+    unusable_rules: tuple[str, ...],
+) -> Path:
+    try:
+        text = str(path)
+        _check_text(text, what)
+        real = _resolve(Path(path), what, strict=must_exist)
+        if must_exist or real.exists():
+            _check_kind(real, kind, what)
+        return real
+    except PathRefused as exc:
+        if (
+            unusable is not None and exc.rule in unusable_rules
+        ):  # the one place that words "missing or wrong type"
+            raise ConfigError(unusable) from None
+        raise
 
 
 def operator_text(path: Path | str, *, what: str) -> None:
@@ -195,21 +227,38 @@ def operator_text(path: Path | str, *, what: str) -> None:
     _check_text(str(path), what)
 
 
-def operator_dir(path: Path | str, *, what: str, must_exist: bool = True) -> Path:
+def operator_dir(
+    path: Path | str,
+    *,
+    what: str,
+    must_exist: bool = True,
+    unusable: str | None = None,
+    unusable_rules: tuple[str, ...] = ("R10", "R11"),
+) -> Path:
     """A folder the operator typed: shape checked (no control characters, not too long, resolves, is a folder). There
     is no outer base, so nothing "contains" it. ``must_exist=False`` is for a folder the command will create: a path
-    that does not exist yet is accepted, one that exists must still be a folder. Returns the resolved path."""
-    return _operator(path, what, "dir", must_exist)
+    that does not exist yet is accepted, one that exists must still be a folder. ``unusable`` is the plain message a
+    caller wants (as a ``ConfigError``) when the path is missing, cannot be resolved or is the wrong type (rules in
+    ``unusable_rules``): the one place that mapping lives. Returns the resolved path."""
+    return _operator(path, what, "dir", must_exist, unusable, unusable_rules)
 
 
-def operator_file(path: Path | str, *, what: str, must_exist: bool = True) -> Path:
+def operator_file(
+    path: Path | str,
+    *,
+    what: str,
+    must_exist: bool = True,
+    unusable: str | None = None,
+    unusable_rules: tuple[str, ...] = ("R10", "R11"),
+) -> Path:
     """A file the operator typed: shape checked as for ``operator_dir``, and it must exist and be a file. Returns the
     resolved path. ``must_exist=False`` is for a caller that reads the file next and reports a missing one in its own
     words: only the shape is checked (and the type, when the path exists)."""
-    return _operator(path, what, "file", must_exist)
+    return _operator(path, what, "file", must_exist, unusable, unusable_rules)
 
 
 __all__ = [
+    "CONTROL_RANGES",
     "MAX_COMPONENT_BYTES",
     "MAX_PATH_CHARS",
     "MAX_WRITE_NAME_BYTES",

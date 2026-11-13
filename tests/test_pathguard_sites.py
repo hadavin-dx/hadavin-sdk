@@ -26,16 +26,11 @@ BAD_TEXTS = ["a" + chr(code) + "b" for code in (0x00, 0x1F, 0x7F, 0x85, 0x202E, 
 def _refused(rule: str, fn, *args, **kwargs) -> PathRefused:
     """``fn`` must raise ``PathRefused`` with ``rule``; any other outcome is an assertion failure (so a mutant that lets
     the value through to the file system is reported as a failed check, not as a crash)."""
-    refused: PathRefused | None = None
-    outcome = "DID NOT RAISE"
-    try:
+    with pytest.raises(
+        PathRefused
+    ) as caught:  # any other error, or none, fails here with pytest's own message
         fn(*args, **kwargs)
-    except PathRefused as exc:
-        refused = exc
-    except Exception as other:  # noqa: BLE001
-        outcome = type(other).__name__
-    # the asserts sit outside the handler so the first error line is ours, not a chained earlier error
-    assert refused is not None, f"not refused: {outcome}"
+    refused = caught.value
     assert refused.rule == rule, f"wrong rule {refused.rule}, wanted {rule}"
     assert isinstance(refused, ConfigError)
     assert isinstance(refused, ValueError)
@@ -218,16 +213,18 @@ def test_site_bundle_load_bundle_refuses_a_long_case_id_at_load(tmp_path):
 def test_site_score_outputs_folder_nul_and_missing(tmp_path):
     from hadavin_sdk.k1b import score as score_mod
 
-    _refused("R4", score_mod._outputs_dir, str(tmp_path) + NUL)
+    _refused("R4", score_mod.outputs_dir, str(tmp_path) + NUL)
     with pytest.raises(ConfigError, match="outputs folder does not exist"):
-        score_mod._outputs_dir(tmp_path / "missing")
+        score_mod.outputs_dir(tmp_path / "missing")
 
 
 def test_site_score_answers_file_nul_is_a_config_error(tmp_path):
+    from hadavin_sdk.k1b.causelist import CauseList
     from hadavin_sdk.k1b.score import load_answers
 
+    cause = CauseList(frozenset(), frozenset(), "0" * 64, "0" * 64)
     with pytest.raises(ConfigError, match="answers file"):
-        load_answers(Path(str(tmp_path / "a.json") + NUL), None)  # type: ignore[arg-type]
+        load_answers(Path(str(tmp_path / "a.json") + NUL), cause)
 
 
 def test_site_score_check_layout_rechecks_its_own_folder(tmp_path):
@@ -281,7 +278,7 @@ def test_site_local_dir_root_nul_and_event_id(tmp_path):
     assert not (tmp_path / "evil.json").exists()
 
 
-def test_site_config_root_and_golden_dir_nul(tmp_path):
+def test_pin_site_config_root_nul(tmp_path):
     from hadavin_sdk.config import load_config
 
     _refused("R4", load_config, Path(str(tmp_path) + NUL))
@@ -384,14 +381,8 @@ def test_vault_kubernetes_token_path_with_a_nul_is_a_config_error():
 
     vault = fake_vault()
     settings = _settings(vault, auth="kubernetes", role="hadavin", jwt_path="jwt" + NUL)
-    try:
+    with pytest.raises(ConfigError, match="cannot read"):
         make("secrets", settings).get("db")
-    except ConfigError as exc:
-        assert "cannot read" in str(exc)
-    except Exception as other:  # noqa: BLE001
-        raise AssertionError(f"not refused: {type(other).__name__}") from None
-    else:
-        raise AssertionError("not refused: DID NOT RAISE")
 
 
 def test_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):

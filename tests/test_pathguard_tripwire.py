@@ -33,10 +33,69 @@ from pathlib import Path
 
 import pytest
 
+from hadavin_sdk import pathguard
+
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "hadavin_sdk"
 FIX = Path(__file__).resolve().parent / "fixtures"
 
+# One line per banned name, so a test (and a mutant) can remove exactly one. "first": the first argument is the path;
+# "two": the first two arguments are paths; "all": every argument; "dir": the ``dir=`` keyword (absent means the system
+# folder, which is a file operation on a folder nobody checked: it must be listed); "fd": a file descriptor that must come
+# from ``os.open`` or ``tempfile.mkstemp`` in the same function (the path of that call is checked on its own).
+BANNED_CALLS = {
+    "open": "first",
+    "io.open": "first",
+    "builtins.open": "first",
+    "codecs.open": "first",
+    "gzip.open": "first",
+    "os.open": "first",
+    "os.remove": "first",
+    "os.unlink": "first",
+    "os.listdir": "first",
+    "os.scandir": "first",
+    "os.walk": "first",
+    "os.makedirs": "first",
+    "os.mkdir": "first",
+    "os.rmdir": "first",
+    "os.removedirs": "first",
+    "os.link": "two",
+    "os.symlink": "two",
+    "os.chmod": "first",
+    "os.chown": "first",
+    "os.utime": "first",
+    "os.truncate": "first",
+    "os.stat": "first",
+    "os.lstat": "first",
+    "os.readlink": "first",
+    "os.replace": "two",
+    "os.rename": "two",
+    "os.fdopen": "fd",
+    "os.path.exists": "first",
+    "os.path.lexists": "first",
+    "os.path.isfile": "first",
+    "os.path.isdir": "first",
+    "os.path.islink": "first",
+    "os.path.ismount": "first",
+    "os.path.getsize": "first",
+    "os.path.getmtime": "first",
+    "os.path.getatime": "first",
+    "os.path.getctime": "first",
+    "os.path.realpath": "first",
+    "os.path.samefile": "two",
+    "tempfile.mkstemp": "dir",
+    "tempfile.mkdtemp": "dir",
+    "tempfile.NamedTemporaryFile": "dir",
+    "tempfile.TemporaryFile": "dir",
+    "tempfile.TemporaryDirectory": "dir",
+    "tempfile.SpooledTemporaryFile": "dir",
+    "sqlite3.connect": "first",
+}
+# every call of a name that starts with one of these (``shutil.copy``, ``glob.glob``, ...)
+BANNED_PREFIXES = {
+    "shutil.": "all",
+    "glob.": "first",
+}
 BANNED_METHODS = {
     "read_bytes",
     "read_text",
@@ -53,23 +112,108 @@ BANNED_METHODS = {
     "symlink_to",
     "hardlink_to",
     "chmod",
+    "lchmod",
+    "exists",
+    "is_file",
+    "is_dir",
+    "is_symlink",
+    "is_mount",
+    "stat",
+    "lstat",
+    "resolve",
+    "samefile",
+    "readlink",
+    "walk",
+    "owner",
+    "group",
+}
+# A method name alone also matches other objects (``match.group(1)``, ``ast.walk(tree)``, ``deps.resolve(name)``,
+# ``store.touch(run_id)``). For these names the call is taken as the ``Path`` method only when its arguments have the shape
+# ``pathlib`` gives it: (most positional arguments, the keyword names allowed). Any other shape is not a path call.
+PATH_METHOD_SHAPE = {
+    "resolve": (1, {"strict"}),
+    "group": (0, set()),
+    "owner": (0, {"follow_symlinks"}),
+    "walk": (0, {"top_down", "on_error", "follow_symlinks"}),
+    "touch": (2, {"mode", "exist_ok"}),
+    "exists": (0, {"follow_symlinks"}),
+    "is_file": (0, {"follow_symlinks"}),
+    "is_dir": (0, {"follow_symlinks"}),
+    "stat": (0, {"follow_symlinks"}),
 }
 # ``Path.replace(target)`` and ``Path.rename(target)`` take ONE argument; ``str.replace(old, new)`` takes two or more.
 BANNED_ONE_ARG = {"replace", "rename"}
 GUARD_FUNCTIONS = {"join", "inside", "operator_dir", "operator_file", "confined"}
 ORIGINS = {"operator", "config", "fixed", "package", "checked"}
-OS_ONE_PATH = {
-    "open",
-    "remove",
-    "listdir",
-    "scandir",
-    "walk",
-    "makedirs",
-    "mkdir",
-    "rmdir",
-    "unlink",
+# a module name that an ``import`` or ``from ... import`` may be written with: the dotted name it stands for
+MODULES = {
+    "os",
+    "os.path",
+    "posixpath",
+    "ntpath",
+    "shutil",
+    "tempfile",
+    "io",
+    "sqlite3",
+    "builtins",
+    "glob",
+    "codecs",
+    "gzip",
 }
-OS_TWO_PATHS = {"replace", "rename"}
+_CANON = {"posixpath": "os.path", "ntpath": "os.path"}
+FD_SOURCES = {"os.open", "tempfile.mkstemp"}
+
+
+def _canon(dotted: str) -> str:
+    head, _, rest = dotted.partition(".")
+    for long, short in _CANON.items():
+        if dotted == long or dotted.startswith(long + "."):
+            return short + dotted[len(long) :]
+    return dotted if not rest else head + "." + rest
+
+
+def _aliases(tree: ast.Module) -> dict[str, str]:
+    """name -> dotted module or function it stands for, from every ``import`` in the file (``import os as _o`` maps
+    ``_o`` to ``os``; ``from os import replace as r`` maps ``r`` to ``os.replace``; ``from os import path`` maps
+    ``path`` to ``os.path``). Imports inside functions count for the whole file (a wider net, never a narrower one)."""
+    found: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                found[a.asname or a.name.split(".")[0]] = (
+                    a.name if a.asname else a.name.split(".")[0]
+                )
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            for a in node.names:
+                found[a.asname or a.name] = f"{node.module}.{a.name}"
+    return {k: _canon(v) for k, v in found.items()}
+
+
+def _dotted(node: ast.AST, aliases: dict[str, str]) -> str | None:
+    """The dotted name a call target stands for (``os.path.exists``, ``shutil.copy``, ``open``), after alias
+    resolution; ``__import__("os").replace`` is read as ``os.replace``. ``None`` when it is not a plain dotted name."""
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "__import__"
+    ):
+        if (
+            node.args
+            and isinstance(node.args[0], ast.Constant)
+            and isinstance(node.args[0].value, str)
+        ):
+            root = node.args[0].value
+        else:
+            return None
+    elif isinstance(node, ast.Name):
+        root = aliases.get(node.id, node.id)
+    else:
+        return None
+    return _canon(".".join([root, *reversed(parts)]))
 
 
 def _is_guard_call(node: ast.AST | None) -> bool:
@@ -88,68 +232,111 @@ def _is_guard_call(node: ast.AST | None) -> bool:
 
 
 def _own_nodes(scope: ast.AST):
-    """Every node of ``scope`` except the insides of nested functions (they are scopes of their own)."""
+    """Every node of ``scope`` except the insides of nested functions (they are scopes of their own). A lambda is NOT a
+    scope of its own: its body is part of the function around it, so a banned call inside a lambda is seen."""
     todo = list(ast.iter_child_nodes(scope))
     while todo:
         node = todo.pop()
         yield node
-        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda):
+        if not isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             todo.extend(ast.iter_child_nodes(node))
 
 
-def _assignments(func: ast.AST) -> dict[str, list[tuple[int, bool]]]:
-    """name -> [(line, assigned from a pathguard call)], for plain-name targets (also ``with ... as``, ``for``, walrus)."""
-    found: dict[str, list[tuple[int, bool]]] = {}
+def _is_fd_source(node: ast.AST | None, aliases: dict[str, str]) -> bool:
+    return isinstance(node, ast.Call) and _dotted(node.func, aliases) in FD_SOURCES
 
-    def add(target: ast.AST, line: int, guarded: bool) -> None:
+
+def _assignments(func: ast.AST, aliases: dict[str, str]) -> dict[str, list[tuple[int, str]]]:
+    """name -> [(line, kind)] for plain-name targets (also ``with ... as``, ``for``, walrus). kind is ``guard`` (assigned
+    from a pathguard call), ``fd`` (assigned from ``os.open`` or the first item of ``tempfile.mkstemp``) or ``other``."""
+    found: dict[str, list[tuple[int, str]]] = {}
+
+    def add(target: ast.AST, line: int, kind: str) -> None:
         if isinstance(target, ast.Name):
-            found.setdefault(target.id, []).append((line, guarded))
+            found.setdefault(target.id, []).append((line, kind))
         elif isinstance(target, ast.Tuple | ast.List):
-            for t in target.elts:
-                add(t, line, False)
+            for i, t in enumerate(target.elts):
+                add(t, line, "fd" if kind == "fd-tuple" and i == 0 else "other")
+
+    def kind_of(value: ast.AST | None) -> str:
+        if _is_guard_call(value):
+            return "guard"
+        if isinstance(value, ast.Call):
+            name = _dotted(value.func, aliases)
+            if name == "os.open":
+                return "fd"
+            if name == "tempfile.mkstemp":
+                return "fd-tuple"
+        return "other"
 
     for node in _own_nodes(func):
         if isinstance(node, ast.Assign):
             for t in node.targets:
-                add(t, node.lineno, _is_guard_call(node.value))
+                add(t, node.lineno, kind_of(node.value))
         elif (isinstance(node, ast.AnnAssign) and node.value is not None) or isinstance(
             node, ast.NamedExpr
         ):
-            add(node.target, node.lineno, _is_guard_call(node.value))
+            add(node.target, node.lineno, kind_of(node.value))
         elif isinstance(node, ast.For | ast.AsyncFor | ast.comprehension):
-            add(node.target, node.target.lineno, False)
+            add(node.target, node.target.lineno, "other")
         elif isinstance(node, ast.With | ast.AsyncWith):
             for item in node.items:
                 if item.optional_vars is not None:
-                    add(item.optional_vars, node.lineno, False)
+                    add(item.optional_vars, node.lineno, "other")
+        elif isinstance(
+            node, ast.Lambda
+        ):  # a parameter of a lambda shadows the name of the function around it
+            for a in [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]:
+                add(ast.Name(id=a.arg), node.lineno, "other")
     return found
 
 
-def _guarded(arg: ast.AST, line: int, assigned: dict[str, list[tuple[int, bool]]]) -> bool:
+def _guarded(
+    arg: ast.AST, line: int, assigned: dict[str, list[tuple[int, str]]], want: str
+) -> bool:
     if not isinstance(arg, ast.Name):
         return False
-    earlier = [(ln, ok) for ln, ok in assigned.get(arg.id, []) if ln <= line]
-    return bool(earlier) and max(earlier)[1]
+    earlier = [(ln, k) for ln, k in assigned.get(arg.id, []) if ln <= line]
+    return bool(earlier) and max(earlier)[1] == want
 
 
-def _banned(call: ast.Call) -> tuple[str, list[ast.AST]] | None:
-    """(printed name, the path arguments that must be guarded) when ``call`` is a banned file operation."""
+def _path_shaped(attr: str, call: ast.Call) -> bool:
+    shape = PATH_METHOD_SHAPE.get(attr)
+    if shape is None:
+        return True
+    most, keywords = shape
+    return (
+        len(call.args) <= most
+        and all(isinstance(a, ast.Constant) for a in call.args)
+        and all(kw.arg in keywords for kw in call.keywords)
+    )
+
+
+def _banned(call: ast.Call, aliases: dict[str, str]) -> tuple[str, str, list[ast.AST]] | None:
+    """(printed name, kind of argument wanted, the path arguments) when ``call`` is a banned file operation."""
     f = call.func
-    if isinstance(f, ast.Name) and f.id == "open":
-        return "open", call.args[:1]
+    dotted = _dotted(f, aliases)
+    if dotted is not None:
+        how = BANNED_CALLS.get(dotted)
+        if how is None:
+            for prefix, h in BANNED_PREFIXES.items():
+                if dotted.startswith(prefix):
+                    how = h
+        if how == "first":
+            return dotted, "guard", call.args[:1]
+        if how == "two":
+            return dotted, "guard", call.args[:2]
+        if how == "all":
+            return dotted, "guard", list(call.args)
+        if how == "dir":
+            return dotted, "guard", [kw.value for kw in call.keywords if kw.arg == "dir"]
+        if how == "fd":
+            return dotted, "fd", call.args[:1]
     if isinstance(f, ast.Attribute):
-        if (
-            isinstance(f.value, ast.Name)
-            and f.value.id == "os"
-            and f.attr in OS_ONE_PATH | OS_TWO_PATHS
-        ):
-            return f"os.{f.attr}", call.args[:2] if f.attr in OS_TWO_PATHS else call.args[:1]
-        if isinstance(f.value, ast.Name) and f.value.id == "shutil":
-            return f"shutil.{f.attr}", list(call.args)
-        if f.attr in BANNED_METHODS:
-            return f".{f.attr}", [f.value]
+        if f.attr in BANNED_METHODS and _path_shaped(f.attr, call):
+            return f".{f.attr}", "guard", [f.value]
         if f.attr in BANNED_ONE_ARG and len(call.args) == 1 and not call.keywords:
-            return f".{f.attr}", [f.value]
+            return f".{f.attr}", "guard", [f.value]
     return None
 
 
@@ -174,17 +361,18 @@ def _scopes(tree: ast.Module):
 def scan_hits(source: str, filename: str) -> list[tuple[str, str, int, str]]:
     """Every banned call whose path is not guarded, as (file, function, line, call)."""
     tree = ast.parse(source, filename=filename)
+    aliases = _aliases(tree)
     hits = []
     for qualname, scope in _scopes(tree):
-        assigned = _assignments(scope)
+        assigned = _assignments(scope, aliases)
         for node in _own_nodes(scope):
-            found = _banned(node) if isinstance(node, ast.Call) else None
+            found = _banned(node, aliases) if isinstance(node, ast.Call) else None
             if found is None:
                 continue
-            name, args = found
-            if not args or not all(_guarded(a, node.lineno, assigned) for a in args):
+            name, want, args = found
+            if not args or not all(_guarded(a, node.lineno, assigned, want) for a in args):
                 hits.append((filename, qualname, node.lineno, name))
-    return hits
+    return sorted(hits, key=lambda h: (h[1], h[2], h[3]))
 
 
 def scan_source(source: str, filename: str) -> list[str]:
@@ -202,20 +390,28 @@ def _targets() -> list[Path]:
     return sorted(p for p in SRC.rglob("*.py") if p.name != "pathguard.py" or p.parent != SRC)
 
 
-def _exception_rows() -> list[tuple[str, str, str, str]]:
-    rows = []
-    for number, line in enumerate(EXCEPTIONS.read_text(encoding="utf-8").splitlines(), 1):
+Row = tuple[
+    str, str, str, int, str, str, str
+]  # file, function, call, count, origin, validator, reason
+
+
+def parse_rows(text: str, name: str = EXCEPTIONS.name) -> list[Row]:
+    rows: list[Row] = []
+    for number, line in enumerate(text.splitlines(), 1):
         if not line.strip() or line.startswith("#"):
             continue
         parts = [p.strip() for p in line.split(" | ")]
-        assert len(parts) == 4 and all(parts), (
-            f"{EXCEPTIONS.name}:{number}: need file | function | origin | reason"
+        assert len(parts) == 7 and all(parts), (
+            f"{name}:{number}: need file | function | call | count | origin | validator | reason"
         )
-        assert parts[2] in ORIGINS, (
-            f"{EXCEPTIONS.name}:{number}: origin must be one of {sorted(ORIGINS)}"
-        )
-        rows.append((parts[0], parts[1], parts[2], parts[3]))
+        assert parts[3].isdigit() and int(parts[3]) >= 1, f"{name}:{number}: count must be a number"
+        assert parts[4] in ORIGINS, f"{name}:{number}: origin must be one of {sorted(ORIGINS)}"
+        rows.append((parts[0], parts[1], parts[2], int(parts[3]), parts[4], parts[5], parts[6]))
     return rows
+
+
+def _exception_rows() -> list[Row]:
+    return parse_rows(EXCEPTIONS.read_text(encoding="utf-8"))
 
 
 def _all_hits() -> list[tuple[str, str, int, str]]:
@@ -225,31 +421,117 @@ def _all_hits() -> list[tuple[str, str, int, str]]:
     return hits
 
 
+def compare(rows: list[Row], hits: list[tuple[str, str, int, str]]) -> list[str]:
+    """Problems between the listed rows and the hits: a hit with no row, a row with no hit, and a count that is not
+    exact in either direction (one more hit in a listed function is a new, unreviewed file operation)."""
+    found: dict[tuple[str, str, str], int] = {}
+    for f, fn, _, call in hits:
+        found[(f, fn, call)] = found.get((f, fn, call), 0) + 1
+    listed: dict[tuple[str, str, str], int] = {}
+    problems = []
+    for f, fn, call, count, *_ in rows:
+        if (f, fn, call) in listed:
+            problems.append(f"{f} | {fn} | {call}: listed twice")
+        listed[(f, fn, call)] = count
+    for key, n in sorted(found.items()):
+        if key not in listed:
+            problems.append(f"{key[0]} | {key[1]} | {key[2]}: {n} hit(s), not listed")
+        elif listed[key] != n:
+            problems.append(
+                f"{key[0]} | {key[1]} | {key[2]}: {n} hit(s), the list says {listed[key]}"
+            )
+    for key, n in sorted(listed.items()):
+        if key not in found:
+            problems.append(f"{key[0]} | {key[1]} | {key[2]}: listed ({n}) but no hit is left")
+    return problems
+
+
 def test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason():
-    listed = {(f, fn) for f, fn, _, _ in _exception_rows()}
-    problems = [
-        f"{f}:{line}: {call} in {fn}: not guarded and not listed in {EXCEPTIONS.name}"
-        for f, fn, line, call in _all_hits()
-        if (f, fn) not in listed
-    ]
+    problems = compare(_exception_rows(), _all_hits())
     assert problems == [], "unchecked paths:\n" + "\n".join(problems)
 
 
-def test_every_listed_exception_still_matches_a_hit_so_the_list_cannot_go_stale():
-    hit_pairs = {(f, fn) for f, fn, _, _ in _all_hits()}
-    stale = [f"{f} | {fn}" for f, fn, _, _ in _exception_rows() if (f, fn) not in hit_pairs]
-    assert stale == [], "listed exceptions with no unguarded file operation left:\n" + "\n".join(
-        stale
+def test_the_comparator_refuses_one_more_hit_in_a_listed_function():
+    rows: list[Row] = [("a.py", "f", ".read_text", 1, "fixed", "-", "x")]
+    one = [("a.py", "f", 3, ".read_text")]
+    assert compare(rows, one) == []
+    assert (
+        compare(rows, one + [("a.py", "f", 9, ".read_text")]) != []
+    )  # a second hit of the same call
+    assert (
+        compare(rows, one + [("a.py", "f", 9, ".stat")]) != []
+    )  # another call in the same function
+    assert compare(rows, []) != []  # a row with no hit
+    assert compare(rows + rows, one) != []  # a duplicate row
+
+
+def _known_functions() -> set[str]:
+    names = set(pathguard.__all__)
+    for path in SRC.rglob("*.py"):
+        names |= {
+            n.name
+            for n in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+    return names
+
+
+def _called_names(path: Path) -> set[str]:
+    out = set()
+    for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        if isinstance(n, ast.Call):
+            out.add(n.func.attr if isinstance(n.func, ast.Attribute) else getattr(n.func, "id", ""))
+    return out
+
+
+def validator_problems(rows: list[Row], known: set[str], root: Path = ROOT) -> list[str]:
+    problems = []
+    for f, fn, call, _, origin, validator, _ in rows:
+        where = f"{f} | {fn} | {call}"
+        if origin in ("fixed", "package"):
+            if validator != "-":
+                problems.append(f"{where}: a {origin} row has no validator (write -)")
+            continue
+        if validator == "-" or validator not in known:
+            problems.append(f"{where}: validator {validator!r} is not a function of the package")
+        elif origin == "checked" and validator not in _called_names(root / f):
+            problems.append(f"{where}: {validator} is never called in {f}")
+    return problems
+
+
+def test_every_listed_row_names_a_validator_that_exists_and_is_called():
+    assert validator_problems(_exception_rows(), _known_functions()) == []
+
+
+def test_the_validator_check_refuses_a_missing_or_uncalled_validator(tmp_path):
+    (tmp_path / "m.py").write_text("def f(p):\n    return p\n", encoding="utf-8")
+    known = {"f", "operator_dir"}
+    base: Row = ("m.py", "g", ".read_text", 1, "checked", "f", "x")
+    assert validator_problems([base], known, tmp_path) != []  # defined but never called in m.py
+    assert (
+        validator_problems([("m.py", "g", ".read_text", 1, "config", "nope", "x")], known, tmp_path)
+        != []
     )
-
-
-def test_the_exception_list_has_no_duplicate_rows():
-    keys = [(f, fn) for f, fn, _, _ in _exception_rows()]
-    assert len(keys) == len(set(keys)), "a function is listed twice"
+    assert (
+        validator_problems([("m.py", "g", ".read_text", 1, "operator", "-", "x")], known, tmp_path)
+        != []
+    )
+    assert (
+        validator_problems([("m.py", "g", ".read_text", 1, "fixed", "f", "x")], known, tmp_path)
+        != []
+    )
+    assert (
+        validator_problems([("m.py", "g", ".read_text", 1, "fixed", "-", "x")], known, tmp_path)
+        == []
+    )
+    (tmp_path / "m.py").write_text(
+        "def f(p):\n    return p\n\n\ndef g(p):\n    return f(p)\n", encoding="utf-8"
+    )
+    assert validator_problems([base], known, tmp_path) == []
 
 
 def test_nothing_in_the_listed_exceptions_names_a_file_that_is_gone():
-    for f, _, _, _ in _exception_rows():
+    for f, *_ in _exception_rows():
         assert (ROOT / f).is_file(), f"{f} is listed but does not exist"
 
 
@@ -308,3 +590,79 @@ def test_one_line_plants_are_caught(code):
 )
 def test_one_line_good_code_passes(code):
     assert scan_source(code, "plant.py") == [], code
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import os\n\n\ndef f(p):\n    os.stat(p)\n",
+        "import os\n\n\ndef f(p):\n    os.path.exists(p)\n",
+        "import os\n\n\ndef f(p):\n    os.path.islink(p)\n",
+        "import os\n\n\ndef f(p, q):\n    os.link(p, q)\n",
+        "import os\n\n\ndef f(p, q):\n    os.symlink(p, q)\n",
+        "import tempfile\n\n\ndef f(p):\n    tempfile.mkstemp(dir=p)\n",
+        "import sqlite3\n\n\ndef f(p):\n    sqlite3.connect(p)\n",
+        "def f(p):\n    p.exists()\n",
+        "def f(p):\n    p.is_file()\n",
+        "def f(p):\n    p.is_dir()\n",
+        "def f(p):\n    p.is_symlink()\n",
+        "def f(p):\n    p.stat()\n",
+        "def f(p):\n    p.lstat()\n",
+        "def f(p):\n    p.resolve()\n",
+        "def f(p):\n    p.readlink()\n",
+        "def f(p):\n    p.samefile(p)\n",
+        "import os as o\n\n\ndef f(p):\n    o.remove(p)\n",
+        "from os import remove as rm\n\n\ndef f(p):\n    rm(p)\n",
+        "from os.path import exists as ex\n\n\ndef f(p):\n    ex(p)\n",
+        "import shutil as sh\n\n\ndef f(p):\n    sh.rmtree(p)\n",
+        "def f(p):\n    g = lambda: p.read_text()\n    return g()\n",
+        "def f(p):\n    __import__('os').remove(p)\n",
+        "def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    return (lambda q: q.read_text())(p)\n",
+    ],
+)
+def test_each_gap_in_the_first_scan_is_now_reported(code):
+    assert scan_source(code, "gap.py"), code
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import os\n\n\ndef f(p):\n    os.listdir(p)\n",
+        "import os\n\n\ndef f(p):\n    os.scandir(p)\n",
+        "import os\n\n\ndef f(p):\n    os.walk(p)\n",
+        "import shutil\n\n\ndef f(p, q):\n    shutil.copy(p, q)\n",
+        "import glob\n\n\ndef f(p):\n    glob.glob(p)\n",
+        "import io\n\n\ndef f(p):\n    io.open(p)\n",
+        "def f(p):\n    p.glob('*')\n",
+        "def f(p):\n    p.rglob('*')\n",
+        "def f(p):\n    p.iterdir()\n",
+        "from pathlib import Path as P\n\n\ndef f(p):\n    P(p).read_text()\n",
+        "def f(p):\n    return [q.read_text() for q in p]\n",
+        "def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    p.read_text()\n",
+    ],
+)
+def test_pin_the_first_scan_already_reported_these_and_still_does(code):
+    assert scan_source(code, "gap.py"), code
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "import os as o\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    o.remove(p)\n",
+        "from os import remove as rm\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    rm(p)\n",
+        "import os\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    os.stat(p)\n",
+        "import os\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    os.link(p, p)\n",
+        "def f(a, n):\n    p = pathguard.join(a, n, what='x')\n    return [q for q in p.iterdir()]\n",
+        "def f(a, n):\n    p = pathguard.join(a, n, what='x')\n    return (lambda: p.read_text())()\n",
+        "def f(m):\n    return m.group(1)\n",
+        "import ast\n\n\ndef f(t):\n    return ast.walk(t)\n",
+        "def f(d, name):\n    return d.resolve(name)\n",
+    ],
+)
+def test_pin_the_guarded_twin_of_each_gap_passes(code):
+    assert scan_source(code, "twin.py") == [], code
+
+
+@pytest.mark.parametrize("code", ["def f(s, i):\n    s.touch(i)\n"])
+def test_a_method_named_touch_on_a_non_path_name_is_not_a_hit(code):
+    assert scan_source(code, "twin.py") == [], code

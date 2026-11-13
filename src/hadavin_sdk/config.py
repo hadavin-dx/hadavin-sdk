@@ -539,6 +539,8 @@ def load_config(config_dir: Path | None = None) -> Config:
                 # Operator config: relative to the config folder and allowed to lie beside it (``../golden``), so it is
                 # NOT confined to the config folder; the shape is checked. Each file read from it later is confined
                 # to it (``confined(cfg.golden_dir, ...)``).
+                if not isinstance(raw[key], str):
+                    raise ConfigError(f"{key} must be a folder name written as text")
                 raw[key] = pathguard.operator_dir(root / raw[key], what=key, must_exist=False)
         raw["backends"] = parse_backends(raw.get("backends"), root)
         return Config(**raw, egress_hosts=frozenset(egress), root=root)
