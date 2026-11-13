@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 00:01Z / 05:31 IST - RUN B FINAL: **8 FAILED, all from ONE root cause in the runtime set's new `main` refusal**; builder 10c-2d's fix reviewed clean by delta; RUN C2 (full suite of the FIXED stack) STARTED 23:58Z from the start; Semgrep patch unchanged and clean
+FAILED / UNCERTAIN first:
+1. INT-2b run B (stack with the OLD codeant2-desk patch): **8 failed, 3082 passed, 6 skipped, 22:13 min** (not 2: the last 6 came at 90%-98%): test_claim_checks_and_crm_mode::test_other_value_error_is_not_exit_4 and test_later_approval::test_main_loads_approvers_and_refuses_bad_ones (AttributeError: 'function' object has no attribute 'book_problem'); test_server_main_reaper::test_main_runs_reaper_while_serving and ::test_main_reaper_sends_and_frees_lock ('timed out waiting for the desk was built and the reaper started'); test_stall_eviction::test_sigterm_stops_like_ctrl_c, ::test_sigterm_handler_before_listening, ::test_second_signal_is_harmless, ::test_sigterm_stuck_reaper_is_logged ('timed out waiting for the SIGTERM handler was installed'). My reading (NOT yet confirmed): the six timeouts are the same AttributeError raised inside the thread that runs `main`, so the desk is never built/the handler never installed. Builder 10c-2d's fix names the first two; the six others were found ONLY by the full run. Pristine f5fe824 (run A): 2988 passed, 0 failed.
+2. 10c-2d result: fix = `book_problem` as a module-level function in desk.py, `main` calls `desk_module.book_problem` (the `Desk.book_problem` classmethod is dropped); the two named tests pass unchanged (raw fails-before/passes-after), 1 new test, docs wording fixed, 14 test files that monkeypatch `server.*` checked; delta review: 0 Blocker/0 Major/2 Nits (REVIEW-codeant5-rt-delta.md); core-touch shape changed (classmethod -> module function): PLEASE re-approve it for the PR text. Its own focused run was cut off at ~85%: run C2 closes that.
+3. Container restarted twice (23:05Z, 23:58Z): the INT-2b runner agent died at the second restart while run C was at 50% (1573 passed, 0 failed, not yet at the tests that failed in B). I restarted the FULL run myself as run C2 (tree /tmp/work/int2b-c: f5fe824 + speed + codeant2-desk f0084b2f0a7f + portal-log + demo-only + tests-hardening + fakes-body + standins-body + hang-fix-v2; GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1; unbuffered): 73 passed, 0 failed at 23:59:45, file mtime fresh; ETA about 00:21Z. No verdict on the runtime set until it ends. Evidence so far pushed: integration/INT-2b.md + evidence-int2b-* (b9191d79).
+4. Core PRs 97 and 71 (hadavin-sdk main: ed96c756 #71 pglast guard test, e5aa9457 #97 CI guard): they touch hadavin-sdk only; my patches target the DEMO repo (hadavin-dx/duplicate-proof-lead-desk-n8n, whose main is still a0b97a4 and pr-3-tests still f5fe824): nothing to rebase unless pr-3-tests moves; I re-check apply of all patch sets the moment the head or main changes.
+5. Not run anywhere: PowerShell/Windows, a real n8n, Python 3.13, Windows lock install.
+READY TO APPLY NOW: Semgrep: semgrep/semgrep-on-head.patch (sha256 7c8633cad5216c78...; unchanged, clean; own PR). NOT READY: runtime set (7 patches; wait for run C2 + a last check), hang-guard v2 (optional; reviewed clean; its full-run verdict comes with C2).
+NEEDS FROM LEAD: (1) re-approve the core-touch shape (module function `book_problem` in desk.py + `desk_module.book_problem` call in `main`); (2) Semgrep `concurrency:` yes/no; (3) hang guard yes/no.
+
+TABLE 1 - LIVE ITEMS (load 0.3)
+| id | purpose | started UTC | running for | expected end | state | must produce | last progress |
+|---|---|---|---|---|---|---|---|
+| run C2 (me) | full unbuffered suite of the FIXED stack (7 patches + hang-fix-v2), with gitleaks | 23:58 | 2 min | 00:21 | running; 73 passed, 0 failed; mtime 23:59:45 | /tmp/work/c2run.txt -> integration/evidence-int2b-C2-* + INT-2b.md update | test_clock_steps (slow tests) |
+Totals: agents 0 (runner lost to the restart; no builder open), shells 1 (nohup pytest), containers 0, heavy pytest 1, load 0.3 of 4.
+Flags: none; the run C2 stays within the 45-min timeout.
+
+TABLE 2 - ROUNDS
+| package | round now | findings per round | class of problem | WHY another round | stop rule says stop? | what ends loop |
+|---|---|---|---|---|---|---|
+| CodeAnt runtime | 5 (fix reviewed; gate = run C2) | R1 5M, R2 4M, R3 3M, R4 0B/0M/5N, run B: 8 failures (1 cause), delta 0B/0M/2N | a new core call in `main` broke tests that replace names `main` uses | the full run is the gate: not green yet | no | run C2 all green |
+| hang guard v2, Semgrep, security, layout | done | - | - | - | YES: clean | - |
+Waste check: no review round is waste; but 4 review rounds + 5 focused runs missed 8 failures that the 22-minute full run found at once: from now on the full run of the complete stack is the gate BEFORE a set is declared ready.
+
+TABLE 3 - FINISHED SINCE LAST BLOCK (23:42Z)
+| item | result |
+|---|---|
+| 10c-2d fix + delta review | fixed + clean (eaf5f778) |
+| INT-2b run B | final: 8 failed (one cause), 3082 passed, 22:13 |
+| INT-2b run C (runner) | died at the container restart at 50%: 1573 passed, 0 failed |
+| run C2 | started by me 23:58Z |
+
 ## 2026-11-12 23:42Z / 05:12 IST - RUN B (stack) AT 70%: **TWO REAL FAILURES, both in the runtime set** (not in the hang guard); builder 10c-2d fixing both; NOTHING NEW IS READY TO APPLY
 FAILED / UNCERTAIN first:
 1. INT-2b run B (f5fe824 + speed + six codeant2 + hang-fix-v2, unbuffered, `-v`): 2165 PASSED, **2 FAILED**, 0 hang, at 70% after 13 min (file mtime fresh):
