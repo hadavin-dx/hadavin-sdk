@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:31Z (07:01 IST) / Part 6 batch 7 landed (head 41c84695); runner and 2 reviewers starting; my 01:24Z block was 7 min old (cadence breach, admitted)
+
+**FAILED / UNCERTAIN FIRST**
+- Cadence breach: the last block was 01:24Z, this one is 01:31Z; I was busy snapshotting Part 6 and did not write at 01:29Z. From now a block every 5 minutes by `date -u`.
+- Part 6 batch 7 builder says (its own words, NOT verified by me): pushed 41c84695 to wip/cloud-pd-banner; full pytest 10760 passed 1 skipped; stage 37/37; banner table 225/225 (214 killed, 11 intended crashes). It admits: 7 new tests pass on the old code (pins, not fail-before proofs); six groups of old mutant rows still share one killer and one expect (reasons written without re-reading all six killers); did not rewrite overclaiming old test names or remove one duplicate scenario near old test_mode_banner.py lines 489-490; used core.excludesFile=/dev/null instead of an empty HOME (deviation from my brief). Issue 3 stays banner-only as the lead decided.
+- Part 2 batch 8 and Q8c-1 builder have not reported; Q8c-1 full suite still queued; lane heads pd-bind 07de0091, q8c1-b16 37cd5157 unchanged.
+
+**LEAD ACTIONS**: none. Cadence order read; applied.
+
+**LIVE ITEMS** (agents: abb52410 Part 2 batch 8, a35e15e9 Q8c-1; starting now: Part 6 round 7 runner and two reviewers = 5 agents)
+- Part 6 round 7 on 41c84695: snapshot made (/home/user/build/snap/pdbanner-41c84695, handover-files check rc=0); runner and reviewers launching.
+- Part 2 batch 8 (abb52410): full pytest, bind rows, stage rows running; box to about 01:49Z.
+- Q8c-1 (a35e15e9): full suite queued behind the 3 busy slots, then bandit, push, snapshot, runner, round 17.
+
+**ROUNDS (WHY)**: Part 6 round 7 (mode-safety, no cap); Part 2 round 8 waits for batch 8 (security, no cap); Q8c-1 round 17 waits for the push.
+
+**FINISHED SINCE LAST BLOCK (01:24Z)**: Part 6 batch 7 builder handed back (a075c8b2 closed).
+
 ## 01:24Z (06:54 IST) / plants run finished (5 passed); batches 7 and 8 not reported; slots measured (all 3 busy, 1 job waiting)
 
 **FAILED / UNCERTAIN FIRST**
