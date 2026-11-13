@@ -1,0 +1,10 @@
+>       assert "1 passed" in _pytest_in(good, good, name).stdout
+FAILED tests/test_client_copy.py::test_a_client_copy_without_git_skips_a_lost_scan_loudly_and_fails_it_under_the_ci_setting
+FAILED tests/test_client_copy.py::test_only_a_file_below_this_repositorys_demo_folder_counts_as_the_missing_demo
+FAILED tests/test_client_copy.py::test_with_the_demo_present_a_missing_demo_file_is_a_failure_never_a_skip
+FAILED tests/test_client_copy.py::test_a_loader_that_leaks_the_import_error_fails_in_a_client_copy
+FAILED tests/test_client_copy.py::test_the_tests_that_may_not_skip_a_missing_demo_exist_and_name_real_tests
+FAILED tests/test_client_copy.py::test_a_git_that_refuses_the_folder_says_why_in_gits_own_words
+FAILED tests/test_client_copy.py::test_a_damaged_demo_folder_is_named_not_left_as_an_empty_dict
+FAILED tests/test_client_copy.py::test_a_path_is_the_missing_demo_only_when_it_really_lies_below_this_repositorys_demo_folder
+8 failed, 21 passed in 0.85s

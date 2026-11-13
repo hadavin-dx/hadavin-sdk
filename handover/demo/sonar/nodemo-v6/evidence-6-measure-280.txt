@@ -1,0 +1,1237 @@
+...FF................................................................... [ 17%]
+..............................FF...F..................FFFFF............. [ 34%]
+..........................................................F..........F.F [ 52%]
+FF......F.....FFF......F......F..........F.F...F...F.................... [ 69%]
+........................................................................ [ 87%]
+..............................................s......                    [100%]
+==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_codeant_demo_only.py _______________
+tests/test_codeant_demo_only.py:10: in <module>
+    from test_portal_demo import wired
+<frozen importlib._bootstrap>:1369: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1340: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:935: in _load_unlocked
+    ???
+../../civenv/lib/python3.13/site-packages/_pytest/assertion/rewrite.py:185: in exec_module
+    exec(co, module.__dict__)
+tests/test_portal_demo.py:74: in <module>
+    LONG_ROWS = ROWS_MAX + 5
+                ^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for +: 'type' and 'int'
+_________________ ERROR collecting tests/test_codeant_fakes.py _________________
+tests/test_codeant_fakes.py:152: in <module>
+    class _BarrierFields(fh.HubspotState):
+                         ^^^^^^^^^^^^^^^
+E   AttributeError: type object 'Dummy' has no attribute 'HubspotState'
+__________________ ERROR collecting tests/test_portal_demo.py __________________
+tests/test_portal_demo.py:74: in <module>
+    LONG_ROWS = ROWS_MAX + 5
+                ^^^^^^^^^^^^
+E   TypeError: unsupported operand type(s) for +: 'type' and 'int'
+________________ ERROR collecting tests/test_reminder_email.py _________________
+tests/test_reminder_email.py:30: in <module>
+    AFTER = DEMO_LEADFLOW["nudge_after_seconds"]  # 90
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'nudge_after_seconds'
+_________________ ERROR collecting tests/test_smtp_provider.py _________________
+tests/test_smtp_provider.py:396: in <module>
+    (b"\xef\xbb\xbf" + PW.encode() + b"\r\n", None),  # a byte-order mark that some text editors add is accepted
+                       ^^^^^^^^^
+E   AttributeError: type object 'Dummy' has no attribute 'encode'
+=================================== FAILURES ===================================
+_______________ test_dry_run_survives_a_wall_clock_step[-120.0] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1a7e1fde10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f1a7e032900>
+delta = -120.0
+
+    @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+    def test_dry_run_survives_a_wall_clock_step(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], delta: float
+    ) -> None:
+        _step_clock(monkeypatch, delta, after=0.5)
+>       code = rrc.main(["--dry-fakes", "--assume-yes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_clock_steps.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:842: in _run
+    fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:166: in __init__
+    made = make_cert(self._private, self.HOST)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ownstub.Dummy object at 0x7f1a7d5c1010>
+a = (PosixPath('/tmp/real-dry-n0v4u52a/fakes'), 'localhost'), k = {}
+
+>   def __init__(self, *a, **k): raise RuntimeError("STUB demo_only used")
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: STUB demo_only used
+
+../stubplug/ownstub.py:7: RuntimeError
+_______________ test_dry_run_survives_a_wall_clock_step[3600.0] ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1a7d5fe7a0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f1a7e04d590>
+delta = 3600.0
+
+    @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+    def test_dry_run_survives_a_wall_clock_step(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], delta: float
+    ) -> None:
+        _step_clock(monkeypatch, delta, after=0.5)
+>       code = rrc.main(["--dry-fakes", "--assume-yes"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_clock_steps.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:829: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:842: in _run
+    fakes = DryFakes(Path(tempfile.mkdtemp(prefix="real-dry-")), a.dry_port_base, a.dry_smtp_script)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:166: in __init__
+    made = make_cert(self._private, self.HOST)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ownstub.Dummy object at 0x7f1a7d5dd310>
+a = (PosixPath('/tmp/real-dry-97ups8mg/fakes'), 'localhost'), k = {}
+
+>   def __init__(self, *a, **k): raise RuntimeError("STUB demo_only used")
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: STUB demo_only used
+
+../stubplug/ownstub.py:7: RuntimeError
+________________ test_seeded_demo_addresses_end_in_example_com _________________
+
+    def test_seeded_demo_addresses_end_in_example_com() -> None:
+        """HubSpot refuses a `.test` address (probe 2026-11-11), so every made-up address the demo can send on to a real CRM
+        ends in example.com: the canned people, the recorded-reply keys, the proof flow and the load driver."""
+>       canned = json.loads((REPO / "demo_only" / "canned_leads.json").read_text(encoding="utf-8"))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_infra.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/canned_leads.json'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/canned_leads.json'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_____________________ test_loader_supplies_demo_approvers ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_loader_supplies_demo_appr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1a7d505710>
+
+    def test_loader_supplies_demo_approvers(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+>       people, label = loader.load_approvers(Config(later_mode="approval"))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_later_approval.py:463: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/loader.py:116: in load_approvers
+    return read_approvers(Path(str(fakes.__file__)).resolve().parent / "approvers.json")
+                                   ^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <module 'demo_only.fakes' (<ownstub.Finder object at 0x7f1a7e5b56a0>)>
+n = '__file__'
+
+    def __getattr__(self, n):
+>       if n.startswith("__"): raise AttributeError(n)
+                               ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: __file__. Did you mean: '__name__'?
+
+../stubplug/ownstub.py:12: AttributeError
+__________ test_demo_launchers_name_the_demo_file_and_the_off_switch ___________
+
+    def test_demo_launchers_name_the_demo_file_and_the_off_switch() -> None:
+        ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+        sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+        assert ps.index("DESK_LEADFLOW_FILE") < ps.index("python -c")  # before the first helper call
+        assert sh.index("DESK_LEADFLOW_FILE") < sh.index("python -c")
+        assert "-cne 'off'" in ps and "demo_only/leadflow.json" in ps and "reminder@example.test" in ps
+        assert '!= off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]' in sh and "export DESK_NUDGE_TO" in sh
+>       assert (REPO / "demo_only" / "leadflow.json").is_file()
+E       AssertionError: assert False
+E        +  where False = is_file()
+E        +    where is_file = ((PosixPath('/tmp/work/nd6/cc2') / 'demo_only') / 'leadflow.json').is_file
+
+tests/test_lead_step_route.py:433: AssertionError
+____ test_crash_window_kills_process_and_a_restart_loses_nothing[ai_after] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces0')
+window = 'ai_after'
+
+    @pytest.mark.parametrize("window", ["ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after"])
+    def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path, window: str) -> None:
+        """A subprocess desk core (no HTTP) dies at the window; a second process on the same lead book finishes the lead:
+        one CRM row, at most one email (a keyed fake sender, so exactly one)."""
+        script = tmp_path / "child.py"
+        script.write_text(
+            "import sys, json\n"
+            "from pathlib import Path\n"
+            "from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\n"
+            "from lead_desk.config import Config\n"
+            "from lead_desk.desk import Desk\n"
+            "from lead_desk.trace import CrashWindows\n"
+            "tmp = Path(sys.argv[1]); flag = tmp / 'flag'\n"
+            "(tmp / 'r.json').write_text('{}')\n"
+            "cfg = Config(db_path=tmp / 'd.sqlite3', port=0, replies_path=tmp / 'r.json')\n"
+            "state = tmp / 'state.json'\n"
+            "crm, ob = FakeCrm(), KeyedOutbox()\n"
+            "if state.exists():\n"
+            "    s = json.loads(state.read_text()); crm.rows = s['crm']; ob.messages = s['ob']\n"
+            "w = CrashWindows(flag)\n"
+            "d = Desk(cfg, w.crm(crm), w.outbox(ob), w.qualifier(RecordedQualifier(tmp / 'r.json')))\n"
+            "d.startup()\n"
+            "def save():\n"
+            "    state.write_text(json.dumps({'crm': crm.rows, 'ob': ob.messages}))\n"
+            "import lead_desk.contract\n"
+            "orig_put, orig_send = crm.put, ob.send\n"
+            "def put(*a):\n"
+            "    r = orig_put(*a); save(); return r\n"
+            "def send(*a, **k):\n"
+            "    r = orig_send(*a, **k); save(); return r\n"
+            "crm.put, ob.send = put, send\n"
+            "if sys.argv[2] == 'first':\n"
+            "    d.handle('form', 's1', {'name': 'Ada', 'email': 'ada@example.test'})\n"
+            "if sys.argv[2] != 'first':\n"
+            "    d.reap_once(); d.reap_once()\n"
+            "rows = d._conn().execute('SELECT state, crm_done FROM followups').fetchall()\n"
+            "print(json.dumps({'rows': rows, 'crm': len(crm.rows), 'ob': len(ob.messages)}))\n",
+            encoding="utf-8",
+        )
+        from support import child_env
+    
+        env_vars = child_env()
+        (tmp_path / "flag").write_text(window, encoding="utf-8")
+        first = subprocess.run(  # noqa: S603
+            [sys.executable, str(script), str(tmp_path), "first"],
+            capture_output=True,
+            text=True,
+            env=env_vars,
+            timeout=60,
+            check=False,
+        )
+>       assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces0/child.py", line 3, in <module>
+E             from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+E         ModuleNotFoundError: No module named 'demo_only'
+E         
+E       assert (1 == 137)
+E        +  where 1 = CompletedProcess(args=['/tmp/work/civenv/bin/python', '/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces0... demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\nModuleNotFoundError: No module named \'demo_only\'\n').returncode
+
+tests/test_live_claude.py:535: AssertionError
+_ test_crash_window_kills_process_and_a_restart_loses_nothing[crm_before_put] __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces1')
+window = 'crm_before_put'
+
+    @pytest.mark.parametrize("window", ["ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after"])
+    def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path, window: str) -> None:
+        """A subprocess desk core (no HTTP) dies at the window; a second process on the same lead book finishes the lead:
+        one CRM row, at most one email (a keyed fake sender, so exactly one)."""
+        script = tmp_path / "child.py"
+        script.write_text(
+            "import sys, json\n"
+            "from pathlib import Path\n"
+            "from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\n"
+            "from lead_desk.config import Config\n"
+            "from lead_desk.desk import Desk\n"
+            "from lead_desk.trace import CrashWindows\n"
+            "tmp = Path(sys.argv[1]); flag = tmp / 'flag'\n"
+            "(tmp / 'r.json').write_text('{}')\n"
+            "cfg = Config(db_path=tmp / 'd.sqlite3', port=0, replies_path=tmp / 'r.json')\n"
+            "state = tmp / 'state.json'\n"
+            "crm, ob = FakeCrm(), KeyedOutbox()\n"
+            "if state.exists():\n"
+            "    s = json.loads(state.read_text()); crm.rows = s['crm']; ob.messages = s['ob']\n"
+            "w = CrashWindows(flag)\n"
+            "d = Desk(cfg, w.crm(crm), w.outbox(ob), w.qualifier(RecordedQualifier(tmp / 'r.json')))\n"
+            "d.startup()\n"
+            "def save():\n"
+            "    state.write_text(json.dumps({'crm': crm.rows, 'ob': ob.messages}))\n"
+            "import lead_desk.contract\n"
+            "orig_put, orig_send = crm.put, ob.send\n"
+            "def put(*a):\n"
+            "    r = orig_put(*a); save(); return r\n"
+            "def send(*a, **k):\n"
+            "    r = orig_send(*a, **k); save(); return r\n"
+            "crm.put, ob.send = put, send\n"
+            "if sys.argv[2] == 'first':\n"
+            "    d.handle('form', 's1', {'name': 'Ada', 'email': 'ada@example.test'})\n"
+            "if sys.argv[2] != 'first':\n"
+            "    d.reap_once(); d.reap_once()\n"
+            "rows = d._conn().execute('SELECT state, crm_done FROM followups').fetchall()\n"
+            "print(json.dumps({'rows': rows, 'crm': len(crm.rows), 'ob': len(ob.messages)}))\n",
+            encoding="utf-8",
+        )
+        from support import child_env
+    
+        env_vars = child_env()
+        (tmp_path / "flag").write_text(window, encoding="utf-8")
+        first = subprocess.run(  # noqa: S603
+            [sys.executable, str(script), str(tmp_path), "first"],
+            capture_output=True,
+            text=True,
+            env=env_vars,
+            timeout=60,
+            check=False,
+        )
+>       assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces1/child.py", line 3, in <module>
+E             from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+E         ModuleNotFoundError: No module named 'demo_only'
+E         
+E       assert (1 == 137)
+E        +  where 1 = CompletedProcess(args=['/tmp/work/civenv/bin/python', '/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces1... demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\nModuleNotFoundError: No module named \'demo_only\'\n').returncode
+
+tests/test_live_claude.py:535: AssertionError
+__ test_crash_window_kills_process_and_a_restart_loses_nothing[crm_after_put] __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces2')
+window = 'crm_after_put'
+
+    @pytest.mark.parametrize("window", ["ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after"])
+    def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path, window: str) -> None:
+        """A subprocess desk core (no HTTP) dies at the window; a second process on the same lead book finishes the lead:
+        one CRM row, at most one email (a keyed fake sender, so exactly one)."""
+        script = tmp_path / "child.py"
+        script.write_text(
+            "import sys, json\n"
+            "from pathlib import Path\n"
+            "from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\n"
+            "from lead_desk.config import Config\n"
+            "from lead_desk.desk import Desk\n"
+            "from lead_desk.trace import CrashWindows\n"
+            "tmp = Path(sys.argv[1]); flag = tmp / 'flag'\n"
+            "(tmp / 'r.json').write_text('{}')\n"
+            "cfg = Config(db_path=tmp / 'd.sqlite3', port=0, replies_path=tmp / 'r.json')\n"
+            "state = tmp / 'state.json'\n"
+            "crm, ob = FakeCrm(), KeyedOutbox()\n"
+            "if state.exists():\n"
+            "    s = json.loads(state.read_text()); crm.rows = s['crm']; ob.messages = s['ob']\n"
+            "w = CrashWindows(flag)\n"
+            "d = Desk(cfg, w.crm(crm), w.outbox(ob), w.qualifier(RecordedQualifier(tmp / 'r.json')))\n"
+            "d.startup()\n"
+            "def save():\n"
+            "    state.write_text(json.dumps({'crm': crm.rows, 'ob': ob.messages}))\n"
+            "import lead_desk.contract\n"
+            "orig_put, orig_send = crm.put, ob.send\n"
+            "def put(*a):\n"
+            "    r = orig_put(*a); save(); return r\n"
+            "def send(*a, **k):\n"
+            "    r = orig_send(*a, **k); save(); return r\n"
+            "crm.put, ob.send = put, send\n"
+            "if sys.argv[2] == 'first':\n"
+            "    d.handle('form', 's1', {'name': 'Ada', 'email': 'ada@example.test'})\n"
+            "if sys.argv[2] != 'first':\n"
+            "    d.reap_once(); d.reap_once()\n"
+            "rows = d._conn().execute('SELECT state, crm_done FROM followups').fetchall()\n"
+            "print(json.dumps({'rows': rows, 'crm': len(crm.rows), 'ob': len(ob.messages)}))\n",
+            encoding="utf-8",
+        )
+        from support import child_env
+    
+        env_vars = child_env()
+        (tmp_path / "flag").write_text(window, encoding="utf-8")
+        first = subprocess.run(  # noqa: S603
+            [sys.executable, str(script), str(tmp_path), "first"],
+            capture_output=True,
+            text=True,
+            env=env_vars,
+            timeout=60,
+            check=False,
+        )
+>       assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces2/child.py", line 3, in <module>
+E             from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+E         ModuleNotFoundError: No module named 'demo_only'
+E         
+E       assert (1 == 137)
+E        +  where 1 = CompletedProcess(args=['/tmp/work/civenv/bin/python', '/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces2... demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\nModuleNotFoundError: No module named \'demo_only\'\n').returncode
+
+tests/test_live_claude.py:535: AssertionError
+___ test_crash_window_kills_process_and_a_restart_loses_nothing[send_before] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces3')
+window = 'send_before'
+
+    @pytest.mark.parametrize("window", ["ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after"])
+    def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path, window: str) -> None:
+        """A subprocess desk core (no HTTP) dies at the window; a second process on the same lead book finishes the lead:
+        one CRM row, at most one email (a keyed fake sender, so exactly one)."""
+        script = tmp_path / "child.py"
+        script.write_text(
+            "import sys, json\n"
+            "from pathlib import Path\n"
+            "from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\n"
+            "from lead_desk.config import Config\n"
+            "from lead_desk.desk import Desk\n"
+            "from lead_desk.trace import CrashWindows\n"
+            "tmp = Path(sys.argv[1]); flag = tmp / 'flag'\n"
+            "(tmp / 'r.json').write_text('{}')\n"
+            "cfg = Config(db_path=tmp / 'd.sqlite3', port=0, replies_path=tmp / 'r.json')\n"
+            "state = tmp / 'state.json'\n"
+            "crm, ob = FakeCrm(), KeyedOutbox()\n"
+            "if state.exists():\n"
+            "    s = json.loads(state.read_text()); crm.rows = s['crm']; ob.messages = s['ob']\n"
+            "w = CrashWindows(flag)\n"
+            "d = Desk(cfg, w.crm(crm), w.outbox(ob), w.qualifier(RecordedQualifier(tmp / 'r.json')))\n"
+            "d.startup()\n"
+            "def save():\n"
+            "    state.write_text(json.dumps({'crm': crm.rows, 'ob': ob.messages}))\n"
+            "import lead_desk.contract\n"
+            "orig_put, orig_send = crm.put, ob.send\n"
+            "def put(*a):\n"
+            "    r = orig_put(*a); save(); return r\n"
+            "def send(*a, **k):\n"
+            "    r = orig_send(*a, **k); save(); return r\n"
+            "crm.put, ob.send = put, send\n"
+            "if sys.argv[2] == 'first':\n"
+            "    d.handle('form', 's1', {'name': 'Ada', 'email': 'ada@example.test'})\n"
+            "if sys.argv[2] != 'first':\n"
+            "    d.reap_once(); d.reap_once()\n"
+            "rows = d._conn().execute('SELECT state, crm_done FROM followups').fetchall()\n"
+            "print(json.dumps({'rows': rows, 'crm': len(crm.rows), 'ob': len(ob.messages)}))\n",
+            encoding="utf-8",
+        )
+        from support import child_env
+    
+        env_vars = child_env()
+        (tmp_path / "flag").write_text(window, encoding="utf-8")
+        first = subprocess.run(  # noqa: S603
+            [sys.executable, str(script), str(tmp_path), "first"],
+            capture_output=True,
+            text=True,
+            env=env_vars,
+            timeout=60,
+            check=False,
+        )
+>       assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces3/child.py", line 3, in <module>
+E             from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+E         ModuleNotFoundError: No module named 'demo_only'
+E         
+E       assert (1 == 137)
+E        +  where 1 = CompletedProcess(args=['/tmp/work/civenv/bin/python', '/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces3... demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\nModuleNotFoundError: No module named \'demo_only\'\n').returncode
+
+tests/test_live_claude.py:535: AssertionError
+___ test_crash_window_kills_process_and_a_restart_loses_nothing[send_after] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces4')
+window = 'send_after'
+
+    @pytest.mark.parametrize("window", ["ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after"])
+    def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path, window: str) -> None:
+        """A subprocess desk core (no HTTP) dies at the window; a second process on the same lead book finishes the lead:
+        one CRM row, at most one email (a keyed fake sender, so exactly one)."""
+        script = tmp_path / "child.py"
+        script.write_text(
+            "import sys, json\n"
+            "from pathlib import Path\n"
+            "from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\n"
+            "from lead_desk.config import Config\n"
+            "from lead_desk.desk import Desk\n"
+            "from lead_desk.trace import CrashWindows\n"
+            "tmp = Path(sys.argv[1]); flag = tmp / 'flag'\n"
+            "(tmp / 'r.json').write_text('{}')\n"
+            "cfg = Config(db_path=tmp / 'd.sqlite3', port=0, replies_path=tmp / 'r.json')\n"
+            "state = tmp / 'state.json'\n"
+            "crm, ob = FakeCrm(), KeyedOutbox()\n"
+            "if state.exists():\n"
+            "    s = json.loads(state.read_text()); crm.rows = s['crm']; ob.messages = s['ob']\n"
+            "w = CrashWindows(flag)\n"
+            "d = Desk(cfg, w.crm(crm), w.outbox(ob), w.qualifier(RecordedQualifier(tmp / 'r.json')))\n"
+            "d.startup()\n"
+            "def save():\n"
+            "    state.write_text(json.dumps({'crm': crm.rows, 'ob': ob.messages}))\n"
+            "import lead_desk.contract\n"
+            "orig_put, orig_send = crm.put, ob.send\n"
+            "def put(*a):\n"
+            "    r = orig_put(*a); save(); return r\n"
+            "def send(*a, **k):\n"
+            "    r = orig_send(*a, **k); save(); return r\n"
+            "crm.put, ob.send = put, send\n"
+            "if sys.argv[2] == 'first':\n"
+            "    d.handle('form', 's1', {'name': 'Ada', 'email': 'ada@example.test'})\n"
+            "if sys.argv[2] != 'first':\n"
+            "    d.reap_once(); d.reap_once()\n"
+            "rows = d._conn().execute('SELECT state, crm_done FROM followups').fetchall()\n"
+            "print(json.dumps({'rows': rows, 'crm': len(crm.rows), 'ob': len(ob.messages)}))\n",
+            encoding="utf-8",
+        )
+        from support import child_env
+    
+        env_vars = child_env()
+        (tmp_path / "flag").write_text(window, encoding="utf-8")
+        first = subprocess.run(  # noqa: S603
+            [sys.executable, str(script), str(tmp_path), "first"],
+            capture_output=True,
+            text=True,
+            env=env_vars,
+            timeout=60,
+            check=False,
+        )
+>       assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces4/child.py", line 3, in <module>
+E             from demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier
+E         ModuleNotFoundError: No module named 'demo_only'
+E         
+E       assert (1 == 137)
+E        +  where 1 = CompletedProcess(args=['/tmp/work/civenv/bin/python', '/tmp/pytest-of-root/pytest-8055/test_crash_window_kills_proces4... demo_only.fakes import FakeCrm, KeyedOutbox, RecordedQualifier\nModuleNotFoundError: No module named \'demo_only\'\n').returncode
+
+tests/test_live_claude.py:535: AssertionError
+____________________ test_mutant_desk_accepts_no_approvers _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1a7d697a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8055/test_mutant_desk_accepts_no_ap0')
+
+    def test_mutant_desk_accepts_no_approvers(monkeypatch: pytest.MonkeyPatch, tmp_path: Any) -> None:
+        la, _, _, weaken = _later_mutants()
+        weaken(
+            monkeypatch,
+            Desk,
+            "__init__",
+            (re.escape('if config.later_mode == "approval" and not config.approvers:'), "if False:"),
+        )
+        with pytest.raises(_FAILS):
+>           la.test_approver_settings_are_checked(tmp_path)
+
+tests/test_mutants_more.py:499: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_later_approval.py:440: in test_approver_settings_are_checked
+    mk_desk(tmp_path, later_mode="approval")
+tests/edge_case_helpers.py:26: in mk_desk
+    crm if crm is not None else FakeCrm(),
+                                ^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ownstub.Dummy object at 0x7f1a7d3a6710>, a = (), k = {}
+
+>   def __init__(self, *a, **k): raise RuntimeError("STUB demo_only used")
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   RuntimeError: STUB demo_only used
+
+../stubplug/ownstub.py:7: RuntimeError
+_____________ test_demo_data_holds_no_name_derived_request_number ______________
+
+    def test_demo_data_holds_no_name_derived_request_number() -> None:
+        """The demo's own request numbers are opaque (ui-<epoch>-<n>, or burst-<n>): never a name or an address."""
+        import re
+    
+        from demo_only import portal_demo
+    
+>       assert re.fullmatch(portal_demo.REF_PREFIX_RE.pattern, "ui-1730000000000")
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: type object 'Dummy' has no attribute 'pattern'
+
+tests/test_portal_layout.py:227: AttributeError
+____________ test_demo_state_splits_follow_up_emails_from_reminders ____________
+
+    def test_demo_state_splits_follow_up_emails_from_reminders() -> None:
+        import pathlib
+    
+>       text = (pathlib.Path(__file__).resolve().parents[1] / "demo_only" / "portal_demo.py").read_text(encoding="utf-8")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_lead_pages.py:97: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.py'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.py'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_ test_proof_panel_compares_follow_ups_only_and_shows_reminders_on_their_own_line _
+
+    def test_proof_panel_compares_follow_ups_only_and_shows_reminders_on_their_own_line() -> None:
+>       out = _proof({"sent": 1, "count": 2, "followups": 1, "reminders": 1})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_lead_pages.py:501: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:490: in _proof
+    run = subprocess.run(  # noqa: S603
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = 30, check = True
+popenargs = (['/opt/node22/bin/node', '/tmp/work/nd6/cc2/tests/portal_proof_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"sent": 1, "count": 2, "followups": 1, "reminders": 1}'],)
+kwargs = {'text': True, 'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/opt/node22/bin/node', '/tmp/work/nd6/cc2/tests/portal_proof_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"sent": 1, "count": 2, "followups": 1, "reminders": 1}']' returned non-zero exit status 1.
+
+/usr/local/lib/python3.13/subprocess.py:578: CalledProcessError
+_ test_proof_panel_still_flags_a_real_difference_and_an_older_fakes_server_works _
+
+    def test_proof_panel_still_flags_a_real_difference_and_an_older_fakes_server_works() -> None:
+>       assert _proof({"sent": 2, "count": 3, "followups": 1, "reminders": 2})["mismatch"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_lead_pages.py:508: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_lead_pages.py:490: in _proof
+    run = subprocess.run(  # noqa: S603
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = 30, check = True
+popenargs = (['/opt/node22/bin/node', '/tmp/work/nd6/cc2/tests/portal_proof_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"sent": 2, "count": 3, "followups": 1, "reminders": 2}'],)
+kwargs = {'text': True, 'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['/opt/node22/bin/node', '/tmp/work/nd6/cc2/tests/portal_proof_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"sent": 2, "count": 3, "followups": 1, "reminders": 2}']' returned non-zero exit status 1.
+
+/usr/local/lib/python3.13/subprocess.py:578: CalledProcessError
+____ test_one_name_for_the_hide_switch_and_calm_wording_for_a_missing_time _____
+
+    def test_one_name_for_the_hide_switch_and_calm_wording_for_a_missing_time() -> None:
+>       text = _portal_text() + (PORTAL_DIR.parent.parent.parent / "demo_only" / "portal_demo.js").read_text(
+            encoding="utf-8"
+        )
+
+tests/test_portal_mode.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_______________ test_layout_rules_and_wording_are_in_the_source ________________
+
+    def test_layout_rules_and_wording_are_in_the_source() -> None:
+        """Source-text and CSS-text checks: they prove the rule or word is there, not how a browser draws it.
+        Each fails when its rule or word is removed."""
+        css, needs_css = _read("src/lead_desk/portal/app.css"), _read("src/lead_desk/portal/pages/needs.css")
+        # the log table fits its card at 1100: slimmer rail and margin, Received stacks its two lines
+        assert "@media (max-width: 1200px)" in css and "grid-template-columns: 208px" in css
+        assert ".log-when { flex-direction: column;" in css
+        assert ".leads-out .table td:last-child" in css  # the leads table keeps its last-change time on one line
+        # the needs cards: each starts at the top, no stretched empty band
+        assert ".needs-list, body .needs-list { align-items: start; }" in needs_css
+        # one name for the demo data, no jargon
+        portal = _read("src/lead_desk/portal/portal.js")
+        assert NO_EXTENSION_LINE in portal and "SAMPLE" not in portal and "demo tools are not installed" not in portal
+        assert "keyed outbox" not in _read("src/lead_desk/portal_api.py")
+        # the Needs tile: one nowrap link, no repeated list of kinds; the empty activity card is a real empty state
+        ov = _read("src/lead_desk/portal/pages/overview.js")
+        assert (
+            "'class': 'nowrap'" in ov
+            and "Review these" in ov
+            and "emptyState({ heading: P.stale() ? 'No requests were decided" in ov
+        )
+        # the donut legend percentages add up to 100 (largest remainder)
+        assert "pcts[i]" in portal and "Math.round(100 * p.value / total)" not in portal
+        # the personal hide switch is a muted line, not an amber settings row
+        data = _read("src/lead_desk/portal/pages/data.js")
+        assert "accessRow(hideSwitchOn()" not in data and "data-hide-note" in data
+        # one label for the CRM row of the drawer, and the CRM strip flags rows beyond this desk's leads
+>       demo = _read("demo_only/portal_demo.js")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:150: in _read
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+____________________ test_words_and_chips_are_in_the_source ____________________
+
+    def test_words_and_chips_are_in_the_source() -> None:
+        """Source-text checks: they prove the words and rules are there, not how a browser draws them."""
+>       portal, demo = _read("src/lead_desk/portal/portal.js"), _read("demo_only/portal_demo.js")
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:150: in _read
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+___________ test_the_crm_strip_flags_entries_beyond_this_desks_leads ___________
+
+    @needs_node
+    def test_the_crm_strip_flags_entries_beyond_this_desks_leads() -> None:
+        """Renders the real demo extension. 36 entries beside 30 leads are flagged, so they do not read as a duplicate."""
+>       same = _demo_strip({"count": 30, "new": 30})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:238: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:225: in _demo_strip
+    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = True, timeout = 60, check = True
+popenargs = (['node', '/tmp/work/nd6/cc2/tests/portal_demo_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"count": 30, "new": 30}'],)
+kwargs = {'text': True, 'stdout': -1, 'stderr': -1}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['node', '/tmp/work/nd6/cc2/tests/portal_demo_probe.js', '/tmp/work/nd6/cc2/demo_only/portal_demo.js', '{"count": 30, "new": 30}']' returned non-zero exit status 1.
+
+/usr/local/lib/python3.13/subprocess.py:578: CalledProcessError
+___________ test_chip_wording_and_needs_page_text_are_in_the_source ____________
+
+    def test_chip_wording_and_needs_page_text_are_in_the_source() -> None:
+        """Source-text checks (the word or rule exists, not how a browser draws it); each fails when its word is removed."""
+        needs, leads = _read("src/lead_desk/portal/pages/needs.js"), _read("src/lead_desk/portal/pages/leads.js")
+        log, ov = _read("src/lead_desk/portal/pages/log.js"), _read("src/lead_desk/portal/pages/overview.js")
+        portal, api = _read("src/lead_desk/portal/portal.js"), _read("src/lead_desk/portal_api.py")
+>       demo = _read("demo_only/portal_demo.js")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:361: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:150: in _read
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_________________ test_pause_flag_sources_and_new_layout_rules _________________
+
+    def test_pause_flag_sources_and_new_layout_rules() -> None:
+        """Source-text and CSS-text checks (the rule exists, not how a browser draws it); each fails when removed."""
+        portal, ov = _read("src/lead_desk/portal/portal.js"), _read("src/lead_desk/portal/pages/overview.js")
+        needs, leads = _read("src/lead_desk/portal/pages/needs.js"), _read("src/lead_desk/portal/pages/leads.js")
+>       data, demo = _read("src/lead_desk/portal/pages/data.js"), _read("demo_only/portal_demo.js")
+                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:494: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:150: in _read
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+____________________ test_one_way_to_say_an_email_was_sent _____________________
+
+    def test_one_way_to_say_an_email_was_sent() -> None:
+        """Badges, KPI and buttons say Sent / not sent; sentences say 'was sent' and 'may already have been sent'."""
+        texts = _portal_text() + _read("src/lead_desk/portal_api.py") + _read("contract.md") + _read("README.md")
+>       texts += _read("demo_only/portal_demo.js") + "".join(_read(f"docs/{n}") for n in ("limits.md", "settings.md"))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_mode.py:711: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_mode.py:150: in _read
+    return (Path(__file__).resolve().parents[1] / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+__________ test_no_size_range_starts_one_pixel_after_another_one_ends __________
+
+    def test_no_size_range_starts_one_pixel_after_another_one_ends() -> None:
+        """`(min-width: 861px)` next to `(max-width: 860px)` leaves the widths between 860 and 861 px in neither block (a
+        window with a half pixel, for example by zoom: Chromium rounds the window width, other engines may not). A range
+        from the next pixel is written `(width > 860px)` instead. No browser needed: the style sheets are read as text."""
+        css = "\n".join(p.read_text(encoding="utf-8") for p in sorted((Path(__file__).parents[1] / "src").rglob("*.css")))
+>       css += (Path(__file__).parents[1] / "demo_only" / "portal_demo.css").read_text(encoding="utf-8")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_phone_layout.py:184: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.css'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.css'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+____ test_one_verb_for_the_email_going_out_and_one_phrase_for_the_crm_wait _____
+
+    def test_one_verb_for_the_email_going_out_and_one_phrase_for_the_crm_wait() -> None:
+>       texts = _portal_js() + _read("src/lead_desk/portal_api.py") + _read("demo_only/portal_demo.js")
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_wording_and_masking.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_wording_and_masking.py:21: in _read
+    return (ROOT / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_ test_a_page_that_cannot_load_keeps_its_rows_dimmed_and_disables_its_controls _
+
+    def test_a_page_that_cannot_load_keeps_its_rows_dimmed_and_disables_its_controls() -> None:
+        leads = _read("src/lead_desk/portal/pages/leads.js")
+        assert "hideBox.disabled = !ok" in leads and "out.classList.add('is-stale')" in leads
+        assert "heading: 'The lead list is not available'" in leads
+        assert "P.stale() ? 'No requests were decided in the '" in _read("src/lead_desk/portal/pages/overview.js")
+>       assert "P.stale() ? h('span', { 'class': 'faint' }, 'Last known values')" in _read("demo_only/portal_demo.js")
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_portal_wording_and_masking.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_portal_wording_and_masking.py:21: in _read
+    return (ROOT / rel).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/work/nd6/cc2/demo_only/portal_demo.js'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/work/nd6/cc2/demo_only/portal_demo.js'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[-120.0]
+FAILED tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[3600.0]
+FAILED tests/test_infra.py::test_seeded_demo_addresses_end_in_example_com - F...
+FAILED tests/test_later_approval.py::test_loader_supplies_demo_approvers - At...
+FAILED tests/test_lead_step_route.py::test_demo_launchers_name_the_demo_file_and_the_off_switch
+FAILED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[ai_after]
+FAILED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[crm_before_put]
+FAILED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[crm_after_put]
+FAILED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[send_before]
+FAILED tests/test_live_claude.py::test_crash_window_kills_process_and_a_restart_loses_nothing[send_after]
+FAILED tests/test_mutants_more.py::test_mutant_desk_accepts_no_approvers - Ru...
+FAILED tests/test_portal_layout.py::test_demo_data_holds_no_name_derived_request_number
+FAILED tests/test_portal_lead_pages.py::test_demo_state_splits_follow_up_emails_from_reminders
+FAILED tests/test_portal_lead_pages.py::test_proof_panel_compares_follow_ups_only_and_shows_reminders_on_their_own_line
+FAILED tests/test_portal_lead_pages.py::test_proof_panel_still_flags_a_real_difference_and_an_older_fakes_server_works
+FAILED tests/test_portal_mode.py::test_one_name_for_the_hide_switch_and_calm_wording_for_a_missing_time
+FAILED tests/test_portal_mode.py::test_layout_rules_and_wording_are_in_the_source
+FAILED tests/test_portal_mode.py::test_words_and_chips_are_in_the_source - Fi...
+FAILED tests/test_portal_mode.py::test_the_crm_strip_flags_entries_beyond_this_desks_leads
+FAILED tests/test_portal_mode.py::test_chip_wording_and_needs_page_text_are_in_the_source
+FAILED tests/test_portal_mode.py::test_pause_flag_sources_and_new_layout_rules
+FAILED tests/test_portal_mode.py::test_one_way_to_say_an_email_was_sent - Fil...
+FAILED tests/test_portal_phone_layout.py::test_no_size_range_starts_one_pixel_after_another_one_ends
+FAILED tests/test_portal_wording_and_masking.py::test_one_verb_for_the_email_going_out_and_one_phrase_for_the_crm_wait
+FAILED tests/test_portal_wording_and_masking.py::test_a_page_that_cannot_load_keeps_its_rows_dimmed_and_disables_its_controls
+25 failed, 387 passed, 1 skipped, 5 errors in 20.50s
