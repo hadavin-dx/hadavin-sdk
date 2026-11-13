@@ -1,0 +1,76 @@
+##### SET A: N3 = nodemo-optional-hygiene-repo-v4 (handover/sonar), crlf = crlf-guard-v7.patch
+sha256 C7 58dbdcd5eb3fa5a3 /tmp/demo-push/handover/demo/skips/crlf-guard-v7.patch
+sha256 P1d 2fde683248e59355 /tmp/demo-lead/handover/demo/sonar/sonar-p1-quickwins-v3.2.1-delta.patch
+sha256 P1dd b9c941027ac7238c /tmp/demo-push/handover/demo/sonar/sonar-p1-quickwins-v3.2.2-delta.patch
+sha256 P2d 28dc41e1712f34c3 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-http-bug-v2.2-delta.patch
+sha256 P2R cd90556febef99c9 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-optional.patch
+sha256 P2F fbf0e4938791a183 /tmp/demo-lead/handover/demo/sonar/sonar-p2-feed-optional.patch
+sha256 FL bfdb7b1dba157d44 /tmp/demo-lead/handover/demo/sonar/flaky413-fix.patch
+sha256 N3 ffedede3ef00a8ee /tmp/demo-lead/handover/demo/sonar/nodemo-optional-hygiene-repo-v4.patch
+sha256 G fac20b0311503b87 /tmp/demo-lead/handover/demo/semgrep/semgrep-on-db54e13-v5.1.patch
+sha256 T 2590a42fd30e7758 /tmp/demo-lead/handover/demo/merge-ready/sonar-yaml-test-trimmed-v2.patch
+C7 alone: OK
+P1d alone: OK
+P1dd alone: OK
+P2d alone: OK
+P2R alone: OK
+P2F alone: OK
+FL alone: OK
+N3 alone: OK
+G alone: OK
+T alone: OK
+C7 N3 FAIL (1, 'N3', 'error: patch failed: tests/test_hygiene.py:42')
+N3 C7 FAIL (1, 'C7', 'error: patch failed: tests/test_hygiene.py:41')
+pairs total 90 ok 88 fail 2
+total 1200 fail 1200
+('N3', 'error: patch failed: tests/test_hygiene.py:42') 604 P2d,C7,G,P1d,FL,N3,P2R,P1dd,T,P2F
+('C7', 'error: patch failed: tests/test_hygiene.py:41') 596 P2d,P1d,P2F,T,N3,P1dd,P2R,G,FL,C7
+
+##### SET B: N3 = nodemo-optional-hygiene-repo-v5 (snapshot of /tmp/work/sn-v5 file, sha256 575a3ccde5a7a7ac; not in handover), crlf = crlf-guard-v7.patch
+sha256 C7 58dbdcd5eb3fa5a3 /tmp/demo-push/handover/demo/skips/crlf-guard-v7.patch
+sha256 P1d 2fde683248e59355 /tmp/demo-lead/handover/demo/sonar/sonar-p1-quickwins-v3.2.1-delta.patch
+sha256 P1dd b9c941027ac7238c /tmp/demo-push/handover/demo/sonar/sonar-p1-quickwins-v3.2.2-delta.patch
+sha256 P2d 28dc41e1712f34c3 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-http-bug-v2.2-delta.patch
+sha256 P2R cd90556febef99c9 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-optional.patch
+sha256 P2F fbf0e4938791a183 /tmp/demo-lead/handover/demo/sonar/sonar-p2-feed-optional.patch
+sha256 FL bfdb7b1dba157d44 /tmp/demo-lead/handover/demo/sonar/flaky413-fix.patch
+sha256 G fac20b0311503b87 /tmp/demo-lead/handover/demo/semgrep/semgrep-on-db54e13-v5.1.patch
+sha256 T 2590a42fd30e7758 /tmp/demo-lead/handover/demo/merge-ready/sonar-yaml-test-trimmed-v2.patch
+sha256 N5 575a3ccde5a7a7ac /tmp/work/b15-14955/h/nodemo-optional-hygiene-repo-v5.snapshot.patch
+C7 alone: OK
+P1d alone: OK
+P1dd alone: OK
+P2d alone: OK
+P2R alone: OK
+P2F alone: OK
+FL alone: OK
+G alone: OK
+T alone: OK
+N5 alone: OK
+pairs total 90 ok 90 fail 0
+total 1200 fail 0
+
+##### SET C: as SET A but crlf = crlf-guard-v7-keepgit.patch (the fallback: _git untouched, one new noqa)
+sha256 C7 692402bc06802450 /tmp/demo-push/handover/demo/skips/crlf-guard-v7-keepgit.patch
+sha256 P1d 2fde683248e59355 /tmp/demo-lead/handover/demo/sonar/sonar-p1-quickwins-v3.2.1-delta.patch
+sha256 P1dd b9c941027ac7238c /tmp/demo-push/handover/demo/sonar/sonar-p1-quickwins-v3.2.2-delta.patch
+sha256 P2d 28dc41e1712f34c3 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-http-bug-v2.2-delta.patch
+sha256 P2R cd90556febef99c9 /tmp/demo-lead/handover/demo/sonar/sonar-p2-regex-optional.patch
+sha256 P2F fbf0e4938791a183 /tmp/demo-lead/handover/demo/sonar/sonar-p2-feed-optional.patch
+sha256 FL bfdb7b1dba157d44 /tmp/demo-lead/handover/demo/sonar/flaky413-fix.patch
+sha256 N3 ffedede3ef00a8ee /tmp/demo-lead/handover/demo/sonar/nodemo-optional-hygiene-repo-v4.patch
+sha256 G fac20b0311503b87 /tmp/demo-lead/handover/demo/semgrep/semgrep-on-db54e13-v5.1.patch
+sha256 T 2590a42fd30e7758 /tmp/demo-lead/handover/demo/merge-ready/sonar-yaml-test-trimmed-v2.patch
+C7 alone: OK
+P1d alone: OK
+P1dd alone: OK
+P2d alone: OK
+P2R alone: OK
+P2F alone: OK
+FL alone: OK
+N3 alone: OK
+G alone: OK
+T alone: OK
+pairs total 90 ok 90 fail 0
+total 1200 fail 0
+ALLDONE

@@ -1,0 +1,23 @@
+### gates on 9c53207 + crlf-guard-v7 (sha256 58dbdcd5eb3fa5a3); venv /tmp/work/civenv: ruff 0.17.4, mypy 2.4.1 , bandit 1.9.4, Python 3.13.18
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+151 files already formatted
+$ mypy --platform linux
+Success: no issues found in 27 source files
+$ mypy --platform win32
+Success: no issues found in 27 source files
+$ bandit -ll -r src tools scripts -c pyproject.toml
+		Low: 9
+		Medium: 0
+		High: 0
+rc=0
+
+### ruff S603/S607 suppression comments in tests/test_hygiene.py (grep -c noqa, lines carrying one)
+9c53207 (base): lines with noqa = 8; lines with 'noqa: S603' = 7; lines with a noqa S607 = 2
+v6: lines with noqa = 10; lines with 'noqa: S603' = 9; lines with a noqa S607 = 2
+v7: lines with noqa = 7; lines with 'noqa: S603' = 7; lines with a noqa S607 = 1
+
+### ruff with the noqa comments stripped (S603/S607 live?), file copied alone into a folder with this pyproject.toml
+v6 stripped: 11 S603/S607 findings
+v7 stripped: 8 S603/S607 findings

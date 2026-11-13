@@ -1,0 +1,25 @@
+### real clone (git clone -c core.autocrlf=true, 26ca762 + crlf-guard-v7 committed as the base commit, global git config empty, git 2.43.0); file sonar-project.properties; guard rc 1 = fails (CR found), 0 = passes
+line end \r\n unstaged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=0 guard rc=0
+line end \r\n unstaged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r\n unstaged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=0 guard rc=0
+line end \r\n unstaged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=0 guard rc=0
+line end \r\n staged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=14 guard rc=1
+line end \r\n staged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r\n staged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=14 guard rc=1
+line end \r\n staged (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=0 guard rc=0
+line end \r\n committed (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=14 guard rc=1
+line end \r\n committed (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r\n committed (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=14 guard rc=1
+line end \r\n committed (i/lf w/crlf, commit made: no) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=0 guard rc=0
+line end \r unstaged (i/lf w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=0 guard rc=0
+line end \r unstaged (i/lf w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r unstaged (i/lf w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=0 guard rc=0
+line end \r unstaged (i/lf w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=0 guard rc=0
+line end \r staged (i/-text w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=14 guard rc=1
+line end \r staged (i/-text w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r staged (i/-text w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=14 guard rc=1
+line end \r staged (i/-text w/-text, commit made: no) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=14 guard rc=1
+line end \r committed (i/-text w/-text, commit made: yes) | before: CR=14 guard rc=1 | cure: git checkout -- sonar-project.properti | after: CR=14 guard rc=1
+line end \r committed (i/-text w/-text, commit made: yes) | before: CR=14 guard rc=1 | cure: python3 -c "import sys, pathlib; p = p | after: CR=0 guard rc=0
+line end \r committed (i/-text w/-text, commit made: yes) | before: CR=14 guard rc=1 | cure: git restore sonar-project.properties | after: CR=14 guard rc=1
+line end \r committed (i/-text w/-text, commit made: yes) | before: CR=14 guard rc=1 | cure: rm sonar-project.properties && git che | after: CR=14 guard rc=1

@@ -1,0 +1,35 @@
+### whole tests/test_hygiene.py on 9c53207 + crlf-guard-v7 (sha256 761917d3ddd43f92), gitleaks 8.30.1, DPLD_REQUIRE_SCAN=1, after git add -A; GIT_CONFIG_GLOBAL file sets core.autocrlf
+$ GIT_CONFIG_GLOBAL=<autocrlf=false> pytest tests/test_hygiene.py -q
+........................                                                 [100%]
+24 passed in 35.41s
+$ GIT_CONFIG_GLOBAL=<autocrlf=true> pytest tests/test_hygiene.py -q
+........................                                                 [100%]
+24 passed in 30.64s
+$ new tests only, verbose (autocrlf=true)
+tests/test_hygiene.py::test_the_secret_scan_files_have_no_carriage_return PASSED [ 11%]
+tests/test_hygiene.py::test_the_guard_names_every_bad_file_says_what_to_do_and_refuses_an_empty_list PASSED [ 22%]
+tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf-unstaged] PASSED [ 33%]
+tests/test_hygiene.py::test_every_cure_in_the_message_works[crlf-staged] PASSED [ 44%]
+tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr-unstaged] PASSED [ 55%]
+tests/test_hygiene.py::test_every_cure_in_the_message_works[lone-cr-staged] PASSED [ 66%]
+tests/test_hygiene.py::test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy PASSED [ 77%]
+tests/test_hygiene.py::test_a_gitleaks_that_crashes_on_either_copy_fails_the_premise[clean-copy] PASSED [ 88%]
+tests/test_hygiene.py::test_a_gitleaks_that_crashes_on_either_copy_fails_the_premise[crlf-copy] PASSED [100%]
+======================= 9 passed, 15 deselected in 3.63s =======================
+### real clone: git clone -c core.autocrlf=true --no-checkout, checkout 26ca762, apply crlf-guard-v7, git add -A; global git config empty (repo config autocrlf=true)
+true
+i/lf w/lf attr/text eol=lf exceptions.txt
+i/lf w/lf attr/text=auto eol=lf sonar-project.properties
+........................                                                 [100%]
+24 passed in 27.28s
+### FINAL: whole tests/test_hygiene.py on 9c53207 + crlf-guard-v7 (sha256 58dbdcd5eb3fa5a3) after git add -A, gitleaks 8.30.1, DPLD_REQUIRE_SCAN=1
+$ GIT_CONFIG_GLOBAL=<core.autocrlf=false> pytest tests/test_hygiene.py -q
+........................                                                 [100%]
+24 passed in 21.11s
+$ GIT_CONFIG_GLOBAL=<core.autocrlf=true> pytest tests/test_hygiene.py -q
+........................                                                 [100%]
+24 passed in 21.07s
+### FINAL real clone: git clone -c core.autocrlf=true --no-checkout, checkout 26ca762, apply crlf-guard-v7 (sha256 58dbdcd5eb3fa5a3), git add -A; global git config empty
+core.autocrlf=true
+........................                                                 [100%]
+24 passed in 20.34s

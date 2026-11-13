@@ -1,0 +1,52 @@
+Note: switching to '26ca76242cc057b4df59fddcdb445d6b76ff8902'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+apply sonar-p1-quickwins-v3.2.1-delta.patch
+apply sonar-p1-quickwins-v3.2.2-delta.patch
+apply sonar-p2-regex-http-bug-v2.2-delta.patch
+apply sonar-p2-regex-optional.patch
+apply sonar-p2-feed-optional.patch
+apply flaky413-fix.patch
+apply nodemo-optional-hygiene-repo-v5.snapshot.patch
+apply semgrep-on-db54e13-v5.1.patch
+apply sonar-yaml-test-trimmed-v2.patch
+apply crlf-guard-v7.patch
+30
+$ ruff check .
+All checks passed!
+$ ruff format --check .
+159 files already formatted
+$ mypy --platform linux
+Success: no issues found in 27 source files
+$ mypy --platform win32
+Success: no issues found in 27 source files
+$ bandit -ll -r src tools scripts -c pyproject.toml
+		Low: 9
+		Medium: 0
+		High: 0
+		Low: 0
+		Medium: 0
+		High: 9
+bandit rc=0
+--- autocrlf=false: hygiene + test files touched by the stack
+........................................................................ [ 95%]
+...........                                                              [100%]
+227 passed in 79.02s (0:01:19)
+--- autocrlf=true: hygiene + test files touched by the stack
+........................................................................ [ 95%]
+...........                                                              [100%]
+227 passed in 81.60s (0:01:21)

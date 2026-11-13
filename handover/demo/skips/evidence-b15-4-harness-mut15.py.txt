@@ -1,0 +1,134 @@
+import sys, os, subprocess, shutil, json
+W = "/tmp/work/b15-14955/mutwork"; SRC = "/tmp/work/b15-14955/w9"
+T = "tests/test_hygiene.py"
+KSEL = "secret_scan_files or names_every_bad or every_cure or reports_a_carriage or crashes"
+# F (reviewer-F, 30) and G (builder, 23) of v6: reuse the old definitions, then patch the ones whose text moved in v7
+ns = {}
+src = open("/tmp/work/rv25-main/mutf.py").read().split("tag=sys.argv")[0].replace("from mut import *", "")
+exec(compile(src, "mutf", "exec"), ns)
+F = [[m[0], "F", m[1], m[3], m[4]] for m in ns["M"]]
+ns2 = {}
+src2 = open("/tmp/work/b13-14803/mut13.py").read()
+a = src2.index("T = \"tests/test_hygiene.py\""); b = src2.index("ALL = F + G")
+exec(compile(src2[a:b].replace("F = [", "F_ = ["), "g", "exec"), ns2)
+G = [[m[0], "G", m[2], m[4], m[5]] for m in ns2["G"]]
+PY = "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n').replace(b'\\\\r', b'\\\\n'))"
+SCAN = 'return [n for n in names if b"\\r" in (root / n).read_bytes()]'
+CURE1 = 'Cure 1 works only if you have not run git add or git commit on the file, and it throws away your edits to the "\n    "file: `git checkout -- <file>`. After git add or git commit cure 1 does nothing (the CR stays): use cure 2. "'
+A = [
+ ("A1", "cure appends a newline", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n').replace(b'\\\\r', b'\\\\n') + b'\\\\n')"),
+ ("A2", "cure strips the final newline", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n').replace(b'\\\\r', b'\\\\n').rstrip())"),
+ ("A3", "cure turns a lone CR into a space", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n').replace(b'\\\\r', b' '))"),
+ ("A4", "cure doubles newlines", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n\\\\n').replace(b'\\\\r', b'\\\\n'))"),
+ ("A5", "cure: read_text/write_text (right on Linux)", PY, "p.write_text(p.read_text())"),
+ ("A6", "cure 1: git checkout -- . (wider)", "`git checkout -- <file>`", "`git checkout -- .`"),
+ ("A7", "cure 1: git restore", "`git checkout -- <file>`", "`git restore <file>`"),
+ ("A8", "cure 1: git checkout HEAD -- file", "`git checkout -- <file>`", "`git checkout HEAD -- <file>`"),
+ ("A9", "scan reads only the first line", SCAN, 'return [n for n in names if b"\\r" in (root / n).read_bytes().split(b"\\n")[0]]'),
+ ("A10", "scan reads only first 100 bytes", SCAN, 'return [n for n in names if b"\\r" in (root / n).read_bytes()[:100]]'),
+ ("A11", "scan: only a CR at the very end", SCAN, 'return [n for n in names if (root / n).read_bytes().endswith((b"\\r\\n", b"\\r"))]'),
+ ("A12", "guard checks tests/ not repo", "bad = _scan_files_with_cr(REPO)", "bad = _scan_files_with_cr(REPO / 'tests')"),
+ ("A13", "message prints the list repr", "f\"{', '.join(bad)}: {CRLF_HINT}\"", "f\"{bad}: {CRLF_HINT}\""),
+ ("A14", "guard asserts bad is a list (always true)", "assert not bad, f\"", "assert isinstance(bad, list), f\""),
+ ("A15", "cure tests run cures in REPO not the tree", "_run(tree, sys.executable", "_run(REPO, sys.executable"),
+ ("A16", "cure test: bytes compared to itself", "assert (tree / name).read_bytes() == (REPO / name).read_bytes().replace(b\"\\r\", b\"\"), cure", "assert (tree / name).read_bytes() == (tree / name).read_bytes(), cure"),
+ ("A17", "planted .gitattributes is -text", '"* text=auto eol=lf\\n*.txt text eol=lf\\n"', '"* -text\\n"'),
+ ("A18", "planted .gitattributes is the stricter '* text eol=lf'", '"* text=auto eol=lf\\n*.txt text eol=lf\\n"', '"* text eol=lf\\n"'),
+ ("A19", "weak plant: CR only appended at EOF", "(tree / name).write_bytes(lf.replace(b\"\\n\", line_end))", "(tree / name).write_bytes(lf + line_end)"),
+ ("A21", "premise accepts any non-zero as found", "assert rc == (1 if found else 0)", "assert (rc != 0) if found else rc == 0"),
+ ("A22", "premise: exit 2 counts as found, exit 1 as clean", "assert rc == (1 if found else 0)", "assert rc in ((1, 2) if found else (0, 1))"),
+ ("A23", "premise: one dir for both copies", 'tmp_path / str(len(line_end))', 'tmp_path / "t"'),
+ ("A24", "crash test: fake not installed", "    monkeypatch.setattr(subprocess, \"run\", fake)\n", "    pass\n"),
+ ("A25", "crash test fake returns 1 on the other copy", "else int(has_cr))", "else 1)"),
+ ("A26", "crash test expects looser text", 'match="exit code 2"', 'match="exit code"'),
+ ("A27", "LF_ONLY adds patterns.txt", 'LF_ONLY_FILES = ("sonar-project.properties", "exceptions.txt")', 'LF_ONLY_FILES = ("sonar-project.properties", "exceptions.txt", "patterns.txt")'),
+ ("A28", "LF_ONLY order swapped (equivalent)", 'LF_ONLY_FILES = ("sonar-project.properties", "exceptions.txt")', 'LF_ONLY_FILES = ("exceptions.txt", "sonar-project.properties")'),
+ ("A29", "ls-files uses -z", '_git(root, "ls-files").splitlines()', '_git(root, "ls-files", "-z").splitlines()'),
+ ("A30", "empty-list assert weakened", 'assert "sonar-project.properties" in names,', 'assert "exceptions.txt" in names or names,'),
+ ("A31", "HINT_PHRASES any()", "assert all(p in msg for p in HINT_PHRASES.split(\"|\")), msg", "assert any(p in msg for p in HINT_PHRASES.split(\"|\")), msg"),
+ ("A32", "cures regex: only >=1 cure", 'assert [c.split()[0] for c in cures] == ["git", "python"], cures', 'assert len(cures) >= 1, cures'),
+ ("A34", "cure 2 missing space before <file>", "\" <file>`\"", "\"<file>`\""),
+ ("A35", "cure 2 reads sys.argv[2]", "sys.argv[1]", "sys.argv[2]"),
+ ("A36", "nested sub file never added (untracked)", "    _git(tree, \"add\", \".\")\n    assert _scan_files_with_cr(tree)", "    assert _scan_files_with_cr(tree)"),
+ ("A37", "guard test: pytest.raises accepts any exception", "with pytest.raises(AssertionError) as exc:", "with pytest.raises(Exception) as exc:"),
+ ("B1", "cure deletes lone CRs", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n').replace(b'\\\\r', b''))"),
+ ("B2", "cure joins lines", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r', b'').replace(b'\\\\n', b''))"),
+ ("B3", "cure deletes all CR bytes only", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r', b''))"),
+ ("B4", "cure writes empty file", PY, "p.write_bytes(b'')"),
+ ("B5", "cure CRLF only", PY, "p.write_bytes(p.read_bytes().replace(b'\\\\r\\\\n', b'\\\\n'))"),
+ ("B6", "cure 1 is a no-op (git status)", "`git checkout -- <file>`", "`git status -- <file>`"),
+ ("B7", "guard assert emptied", "    bad = _scan_files_with_cr(REPO)\n    assert not bad, f\"{', '.join(bad)}: {CRLF_HINT}\"", "    bad = _scan_files_with_cr(REPO)\n    assert isinstance(bad, list), f\"{', '.join(bad)}: {CRLF_HINT}\""),
+ ("B8", "guard: empty list returned", SCAN, 'return [n for n in names if b"\\r" in (root / n).read_bytes()][:0]'),
+ ("B9", "scan ignores CRs followed by LF", SCAN, 'return [n for n in names if b"\\r" in (root / n).read_bytes().replace(b"\\r\\n", b"")]'),
+ ("B10", "scan flags a file name suffix", "if n in LF_ONLY_FILES]", "if any(n.endswith(x) for x in LF_ONLY_FILES)]"),
+ ("B11", "planted tree always staged", '    if staged:\n        _git(tree, "add", ".")\n    return tree', '    _git(tree, "add", ".")\n    return tree'),
+ ("B12", "guard_message first line only", "return str(exc.value)", "return str(exc.value).splitlines()[0]"),
+ ("B13", "cure order check reversed-reversed (equivalent)", 'assert [c.split()[0] for c in cures] == ["git", "python"], cures', 'assert [c.split()[0] for c in cures] == ["python", "git"][::-1], cures'),
+ ("B14", "premise: tree not planted with CRLF", '((b"\\n", False), (CRLF, True))', '((b"\\n", False), (b"\\n", True))'),
+ ("B15", "premise: gitleaks run on the real repo", "_run(tree, *cmd, check=False)", "_run(REPO, *cmd, check=False)"),
+ ("B16", "premise: skip instead of fail under REQUIRE", "    assert exe, f\"gitleaks binary not found", "    if not exe: pytest.skip('x')\n    assert exe, f\"gitleaks binary not found"),
+ ("B17", "premise: skip ignores REQUIRE env", "if not exe and not os.environ.get(REQUIRE_SCAN_ENV):\n        pytest.skip(\n            f\"no gitleaks program on PATH (set", "if not exe:\n        pytest.skip(\n            f\"no gitleaks program on PATH (set"),
+]
+A = [[a[0], "rv33", a[1], a[2], a[3]] for a in A]
+# adapt v6 F/G patterns that moved in v7
+ADAPT = {
+ "F1": ('file: `git checkout -- <file>`. After git add or git commit cure 1 does nothing (the CR stays): use cure 2. "', 'file. After git add or git commit cure 1 does nothing (the CR stays): use cure 2. "'),
+ "F13": ('    (tree / ".gitattributes").write_text("* text=auto eol=lf\\n*.txt text eol=lf\\n", encoding="utf-8")\n', ''),
+ "F16": ("_run(tree, *cmd, check=False)", "_run(Path.cwd(), *cmd, check=False)"),
+ "F17": ('py -3 on "\n    "Windows if python is not found', 'windows "\n    "if python is not found'),
+ "F20": ('and it throws away your edits to the "\n    "file: ', 'and it is "\n    "file: '),
+ "F23": ('afterwards): "\n', 'afterwards): `sed -i x <file>` "\n'),
+ "G22": ("2 if has_cr == crash_on_cr else int(has_cr)", "0 if has_cr == crash_on_cr else int(has_cr)"),
+}
+for m in F + G:
+    if m[0] in ADAPT: m[3], m[4] = ADAPT[m[0]]
+C = [
+ ("C1", "v7", "hint reverts to the v6 claim: cure 1 on every system", CURE1, 'Cure 1, on every system, throws away your edits to the file: `git checkout -- <file>`. "'),
+ ("C2", "v7", "hint says cure 1 also works after git add (keeps the restriction sentence)", "cure 1 does nothing (the CR stays): use cure 2. ", "cure 1 works as well. "),
+ ("C3", "v7", "hint drops 'run it again afterwards'", "; if you had run git add or git commit, run it again afterwards", ""),
+ ("C4", "v7", "hint adds a third cure: rm then checkout", 'afterwards): "\n', 'afterwards): `rm <file>` "\n'),
+ ("C5", "v7", "staged plant is not staged (git add skipped)", '    if staged:\n        _git(tree, "add", ".")\n', '    if staged:\n        pass\n'),
+ ("C6", "v7", "staged case no longer expects cure 1 to fail (test weakened)", 'if staged and argv[0] == "git":', 'if False:'),
+ ("C7", "v7", "hint drops 'Cure 2 works in every state'", "Cure 2 works in every state, keeps", "Cure 2 keeps"),
+ ("C8", "v7", "hint drops 'only if you have not run git add' (keeps 'does nothing')", "Cure 1 works only if you have not run git add or git commit on the file, and it throws", "Cure 1 throws"),
+ ("C9", "v7", "_run: check defaults to False", "check: bool = True", "check: bool = False"),
+ ("C10", "v7", "bad-file test: mid-file shape removed", 'b"a\\nb" + CRLF + b"c\\n", ', ''),
+ ("C11", "v7", "premise test: crlf-copy crash case dropped (test weakened)", '[False, True], ids=["clean-copy", "crlf-copy"]', '[False], ids=["clean-copy"]'),
+ ("C12", "v7", "cure test: staged case dropped (test weakened)", '[False, True], ids=["unstaged", "staged"]', '[False], ids=["unstaged"]'),
+ ("C13", "v7", "plant check before the cure dropped", '        assert _scan_files_with_cr(tree) == [name], "the plant must hold a CR before the cure"\n', ''),
+ ("C14", "v7", "hint offers git restore as cure 1 (works unstaged only)", "`git checkout -- <file>`", "`git restore -- <file>`"),
+ ("C15", "v7", "planted .gitattributes only '*.txt' line", '"* text=auto eol=lf\\n*.txt text eol=lf\\n"', '"*.txt text eol=lf\\n"'),
+]
+C = [[c[0], c[1], c[2], c[3], c[4]] for c in C]
+C.insert(0, ["C0", "v7", "UNMUTATED baseline (must be SURVIVED)", "import shlex", "import shlex"])
+ALL = [m for m in F + G + A + C if m[0] not in ("A14", "B16", "B17")]
+
+def run_one(m, which=("false", "true")):
+    mid, srcn, desc, old, new = m
+    f = os.path.join(W, T); base = open(os.path.join(SRC, T), "rb").read().decode()
+    olds = old if isinstance(old, list) else [old]; news = new if isinstance(new, list) else [new]
+    if any(base.count(x) != 1 for x in olds): return "BAD-PATTERN(%s)" % [base.count(x) for x in olds]
+    t = base
+    for x, y in zip(olds, news): t = t.replace(x, y)
+    open(f, "wb").write(t.encode())
+    res = []
+    for a in which:
+        env = dict(os.environ, PATH="/tmp/work/civenv/bin:/tmp/work/gl:" + os.environ["PATH"], DPLD_REQUIRE_SCAN="1", GITLEAKS_BIN="/tmp/work/gl/gitleaks", GIT_CONFIG_GLOBAL=f"/tmp/work/b15-14955/h/gc-{a}")
+        p = subprocess.run(["python", "-m", "pytest", T, "-q", "-x", "-p", "no:cacheprovider", "-k", KSEL], cwd=W, env=env, capture_output=True, text=True, timeout=600)
+        fl = [l for l in p.stdout.splitlines() if l.startswith("FAILED") or l.startswith("ERROR")][:1]
+        res.append(("KILLED " + (fl[0][7:100] if fl else "(rc %d)" % p.returncode)) if p.returncode else "SURVIVED")
+    open(f, "wb").write(base.encode())
+    return res
+
+if __name__ == "__main__":
+    sel = sys.argv[1:]
+    if os.path.exists(W): shutil.rmtree(W)
+    shutil.copytree(SRC, W, symlinks=True)
+    out = []
+    for m in ALL:
+        if sel and m[0] not in sel and not (sel == ["BASELINE"]): continue
+        r = run_one(m)
+        if isinstance(r, str): v = r; print(m[0], m[1], m[2], "=>", v, flush=True); out.append([m[0], m[1], m[2], v, r]); continue
+        v = "KILLED" if all(x.startswith("KILLED") for x in r) else ("KILLED only autocrlf=true" if r[1].startswith("KILLED") else ("KILLED only autocrlf=false" if r[0].startswith("KILLED") else "SURVIVED"))
+        print(m[0], m[1], m[2], "=>", v, "|", r[0][:70] if v != "SURVIVED" else "", flush=True); out.append([m[0], m[1], m[2], v, r])
+    json.dump(out, open("/tmp/work/b15-14955/h/mut15-%s.json" % ("-".join(sel) or "all"), "w"), indent=1)
