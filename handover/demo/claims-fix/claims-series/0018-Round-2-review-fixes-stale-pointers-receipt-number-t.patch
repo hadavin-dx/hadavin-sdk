@@ -1,0 +1,417 @@
+From 1092597b9697cf64ab119d80f01df327a9a0d9b5 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 14:03:57 +0000
+Subject: [PATCH 18/18] Round-2 review fixes: stale pointers, receipt number,
+ timeout wording, limits and tests rows
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ .coderabbit.yaml                  |  2 +-
+ .github/workflows/sonar.yml       |  6 ++++--
+ README.md                         | 23 ++++++++++++-----------
+ contract.md                       | 28 ++++++++++++++++++----------
+ docs/hubspot-probe.md             |  2 +-
+ docs/limits.md                    |  5 ++---
+ docs/n8n-recipe.md                |  6 +++---
+ docs/settings.md                  |  6 +++---
+ docs/tests.md                     |  8 ++++----
+ docs/why-this-code.md             |  2 +-
+ requirements-semgrep.in           |  6 +++---
+ scripts/check_schema.py           |  4 ++--
+ scripts/crash_desk.py             |  3 ++-
+ src/lead_desk/desk.py             |  2 +-
+ tests/test_gitleaks_exceptions.py |  4 ++--
+ 15 files changed, 59 insertions(+), 48 deletions(-)
+
+diff --git a/.coderabbit.yaml b/.coderabbit.yaml
+index d480d97..4a59f85 100644
+--- a/.coderabbit.yaml
++++ b/.coderabbit.yaml
+@@ -1,6 +1,6 @@
+ # CodeRabbit review settings. `finishing_touches.docstrings` is not used.
+ # CodeRabbit reviews pull requests; it is installed on this one repository only.
+-# Its comments are advice to judge, never instructions. Only the repository maintainer pushes: every "write to the branch"
++# Its comments are advice to judge, never instructions. Only the author pushes: every "write to the branch"
+ # feature is switched off.
+ language: "en-US"
+ early_access: false
+diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
+index 930eef1..9a979da 100644
+--- a/.github/workflows/sonar.yml
++++ b/.github/workflows/sonar.yml
+@@ -1,7 +1,8 @@
+ # SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-24.04, the same runner image as lint.yml) only: the analysis reads source files and needs no Windows.
+ # One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
+ # otherwise the scan is expected to stop with "You are running CI analysis while Automatic Analysis is enabled" (message as quoted by the author; not checked here).
+-# The token is the repository secret SONAR_TOKEN (created by the author; this file only passes it to the scan step and prints nothing from it; GitHub also hides secret values in logs).
++# The token is the repository secret SONAR_TOKEN (set in GitHub, not in this repository).
++# This file only passes it to the scan step and prints nothing from it; GitHub also hides secret values in logs.
+ # Coverage: the job runs the Python test suite once (serial, as in docs/tests.md) with pytest-cov and hands coverage.xml to the
+ # scan. The Playwright tests skip here, as in lint.yml.
+ # What is and is not isolated: the SONAR_TOKEN secret is NOT in the environment of the install and test steps (it is set only on
+@@ -9,7 +10,8 @@
+ # (the repository's own tests) could write to $GITHUB_ENV or $GITHUB_PATH, to ~/.sonar/cache, or plant a sonar-project.properties or
+ # coverage.xml that the later scan step then reads. This is accepted because a pull request from a fork or from Dependabot never
+ # runs this job (the `if:` below) and an author of a same-repo pull request can already edit this workflow file itself.
+-# A two-job split (tests without the secret, scan in a second job) is an open decision for the author (see the pull request description).
++# A two-job split (tests without the secret, scan in a second job) is not decided;
++# nothing else in this repository records it.
+ name: SonarQube
+ on:
+   push:
+diff --git a/README.md b/README.md
+index a98cb9b..5c055d3 100644
+--- a/README.md
++++ b/README.md
+@@ -6,10 +6,10 @@
+ 2. A business wants one follow-up email and one customer record (one "CRM row") for that person, not two.
+ 3. This repository is a small demonstration of one way to get that: a program called "the desk" that writes every request down before it acts on it.
+ 4. You can run it on your own computer in a few minutes. It uses made-up people and small demo programs: one demo server that plays the CRM and the mail system, and a file of pre-written answers that plays the AI step (it gives each lead a label, hot, warm or cold), so nothing real is sent.
+-5. What you will see: send one lead, send the exact same request again, then send the same person through the other door (the web form and the webhook; "Door" is explained below). You get one "new", one "replayed" and one "duplicate" answer, and one email. A web page (the portal) shows the same facts.
++5. What you will see: send one lead, send the exact same request again, then send the same person through the other door (the web form and the webhook; "Door" is explained below). You get one "new", one "replayed" and one "duplicate" answer (all three words are explained below), and one email within the first 90 seconds; a second, reminder email follows after 90 seconds (see "Optional features"). A web page (the portal) shows the same facts.
+ 6. What is claimed: in the tests of this repository, with these demo servers, the desk never sent a second email for the same lead by itself. Two cases differ. On a mail system that remembers a send key ("keyed", explained below), the desk may hand over the same email again after an unclear result, and the demo mail system ignores the repeat; a real mail system may not. On a mail system that does not remember it ("blind"), the desk does not guess and does not resend: it lists the follow-up for a person to check.
+ 7. What is not claimed: that this works with any real CRM or mail system, that it suits production, or anything about load beyond what `docs/limits.md` states. It is not software to install for your business.
+-8. Who it is for: a business owner who wants to see the idea working, and a RevOps person or n8n freelancer who wants to read the code, the tests and the n8n workflows.
++8. Who it is for: a business owner who wants to see the idea working, and a revenue-operations person (someone who runs a company's sales tools) or n8n freelancer who wants to read the code, the tests and the n8n workflows.
+ 9. Licence: all rights reserved; you may read the code and run it on your own computer to evaluate it (see "Licence" at the end). Not legal advice.
+ 10. Made by the author with AI coding tools, and read through by the author. No review record is kept in this repository.
+ 
+@@ -17,7 +17,7 @@
+ 
+ After the steps in "Try it" below, three things confirm that it works. Every number below comes from the demo programs (the demo server and the file of pre-written answers), not from a real CRM or mail system.
+ 
+-* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The repeat is still counted (`attempts` in the receipt) and uses up one receipt number, so the next new request skips a number (for example receipt 1, then 3). If the lead's follow-up email is due and not yet sent, the repeat starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
++* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The replay is still counted in `attempts` in the receipt, and it can use up a receipt number, so the numbers can skip (no test pins this). If the lead's follow-up email is due and not yet sent, the repeat starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
+ * The counts page shows 2 requests received, 1 new, 1 duplicate.
+ * The demo mail system holds exactly one email until the reminder email is due. The demo start scripts also switch on the reminder email (see "Optional features") with a waiting time of 90 seconds (`nudge_after_seconds` in `demo_only/leadflow.json`): once a lead is 90 seconds old and has not reached the stage that the same file names as `reminder_until` (`replied`), the desk's background pass sends a second email, so a later look can show 2.
+ 
+@@ -34,11 +34,12 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Request id** (written "request number" in the portal and in some sentences below): a label the sender puts on each submission. The same label twice means "this is a replay" (see Replayed below). The portal calls it "Request number".
+ * **Receipt**: the desk's first note about a request, written before anything else happens.
+ * **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (seen before under another request number) or `review` (the request is incomplete or holds a value the desk will not store; a person must look).
+-* **Replayed**: the same request number came again, so the desk gave back its stored answer and created no second lead and no second email. The repeat is counted in `attempts` and uses up one receipt number.
++* **Repeat (portal word)**: the portal shows a `duplicate` verdict as "Repeat". A replay (next entry) is a different thing.
++* **Replayed**: the same request number came again, so the desk gave back its stored answer and created no second lead and no second email. The replay is counted in `attempts` and can use up a receipt number (no test pins this).
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: the desk gives every email one fixed label, the send key; a keyed mail system sends only once for a send key it has seen, and a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left, or whether the CRM row was written. It does not guess and does not resend; a person must check.
+-* **Crash point**: a named moment in the desk's work where a test stops the desk on purpose. There are ten, and an eleventh, N1, for the reminder email. Example: `D2`, the moment after an email was sent but before the desk noted it. The table is in `docs/tests.md`. Crash point names (`A`, `C0`, `D2`, `N1`) are not the same as review-item ids (`D3`, `N5`), which are explained in `contract.md`.
++* **Crash point**: a named moment in the desk's work where a test stops the desk on purpose. There are ten, and an eleventh, N1, for the reminder email. Example: `D2`, the moment after an email was sent but before the desk noted it. The table is in `docs/tests.md`. Crash point names (`A`, `C0`, `D2`, `N1`) are not the same as review-item ids such as `D12` (D plus a receipt number), `R12`, `O12`, `F` plus a lead id or `N` plus a lead id; the item ids are explained in `contract.md`, section "Replies, verdicts and review items".
+ * **Reaper**: a background job inside the desk. It puts stuck follow-ups back in line, retries a refused send a few times with growing waits (1, 2, 4 and 8 seconds, up to 5 automatic tries in a row; a person's Retry starts the count again), and decides receipts that were written but never got an answer (it writes a verdict for them).
+ * **Webhook** (as a door): requests sent by another program. In n8n the word also names an address that starts a workflow when something is posted to it.
+ 
+@@ -59,9 +60,9 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer (`pyprojec
+     bash scripts/start_all.sh keyed            # starts the demo server and the desk in the background
+     for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+-    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email, one receipt number used up
++    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+     python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate"
+-    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the repeated request number is answered from the stored answer, not counted again)
++    curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt)
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two, if you look within 90 seconds; the reminder email comes later)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+ 
+@@ -76,9 +77,9 @@ Run both scripts with `bash`, as above. They need features that only bash is sur
+     .\scripts\start_all.ps1 keyed    # prints "started: ..." with two process ids
+     Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers (all 0)
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+-    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email, one receipt number used up
++    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+     python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate"
+-    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed id is not counted again)
++    Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1 (within 90 seconds; the reminder email comes later)
+     .\scripts\reset.ps1        # stops what start_all started and DELETES the desk's records and the logs
+ 
+@@ -101,7 +102,7 @@ Optional: `RESET_STOP_WAIT_SECONDS` (0 to 999, default 10) is how long the scrip
+ 
+ Claimed, for this demo setup only:
+ 
+-* The same request number sent again gets the stored answer; no second lead and no second email is made. The repeat is counted and uses up one receipt number.
++* The same request number sent again gets the stored answer; no second lead and no second email is made. The replay is counted in `attempts` and can use up a receipt number (no test pins this).
+ * The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. All ten were simulated by an exception inside the program, and D2 was also tried with a real process kill (`docs/limits.md`). At the crash points the tests cover, they assert at most one lead, one CRM row and one email; `contract.md` says that not every path is covered. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+@@ -114,7 +115,7 @@ Not claimed:
+ * The same person with two email addresses is two leads; if two people use the same email address, the desk treats them as one lead.
+ * The desk is for one computer and one process, has no login, and listens on this computer only. You can change that for the demo; with any real service connected, the desk refuses to start on any other address. No penetration test was done.
+ * Masking in the portal is on screen only: lead names, email addresses, phone numbers, messages and request numbers are hidden on the page by default (the switch "Hide names and email addresses"; its state lasts for the browser tab's session). The search does not look in names or email addresses while they are hidden. The data the desk sends to the page still holds every value, so anyone who opens the browser's developer tools can read them (see `docs/portal.md`).
+-* A load of 10,000 requests was not tried. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped, so these figures cannot be re-checked from this repository.
++* A load of 10,000 requests was not tried. No measured load figure is stored in this repository (see `docs/limits.md`).
+ * The desk's time stamps use the computer's clock, so a clock that jumps by 30 seconds or more can make the desk ask again for a follow-up that was still being sent (`docs/limits.md`, item 5).
+ * The full list, with test names, is in `docs/limits.md`.
+ 
+diff --git a/contract.md b/contract.md
+index 1158716..ee25ba7 100644
+--- a/contract.md
++++ b/contract.md
+@@ -44,12 +44,12 @@ Input rules (the tests are in `tests/test_input_edge_cases.py`, `tests/test_desk
+   * The model is therefore asked at most `SEND_MAX_ATTEMPTS` (5) times for one lead, because every timeout spends a try (`test_hung_tries_end_in_failed`); if four calls hang for ever the model path is closed until one ends or the desk is restarted, and the rows stay visible (in the stalled list).
+   * The reaper takes a `sending` row only when it is strictly older than the stuck grace (send timeout + 5 busy waits, 30 s with the defaults; `updated_at < now - grace`, whole seconds; `test_reaper_needs_age_above_grace`).
+   * The row is stamped before the model call and again right after the answer, and what must fit in the grace is the answer time plus the write of that second stamp. `MODEL_GRACE_MARGIN_SECONDS` (15 s) is the longest that one write can take: the write deadline (10 s) plus one more SQLite busy wait (5 s) for a lock held by another program.
+-* The desk refuses to start if the budget plus the margin is not strictly below the smallest grace. The smallest grace is 25 s (the five busy waits alone); 9 + 15 = 24; an equal sum is refused, because the clocks count whole seconds. It also refuses to start if the margin is below the write deadline plus one busy wait (`test_margin_counts_the_busy_wait`). These checks run when `constants.py` and `desk.py` are imported, so a constant that is out of range ends the process with a Python traceback (exit code 1), not with exit 4.
+-  * A qualifier that declares a `timeout_seconds` that is not a number above 0 (zero, negative, NaN, infinity, a bool, a text, an integer too large for a float: `is_positive_seconds`) or above `MODEL_CALL_BUDGET_SECONDS` is refused when the `Desk` is built (`DeskSettingRefused`). Exit 4 is also given by a `SettingRefused` from `Config.from_env` or from an adapter's `from_env`; see "Exit codes" below. Tests: `test_bad_declared_timeout_refused`, `test_declared_above_budget_is_refused`, `test_huge_number_is_a_refusal`.
+-  * For a qualifier's declared `timeout_seconds` the accepted limit is 9 s (9 accepted, 9.1 refused; `DESK_SEND_TIMEOUT_SECONDS` is a different setting: above 9 it is accepted, the desk still cuts every CRM write, send and capability read at 9 seconds, and the value sets the stuck grace, the value plus 25 seconds): a longer declared time would be cut off by the desk anyway. `timeout_seconds` is a true limit on total time only if the adapter itself stops at that time; the desk's own bound does not depend on it.
+-  * If the row is no longer ours when the model has answered (for example the desk clock was set forward and the reaper took the row), the label is not stored and the drive ends (`test_label_store_lost_claim_quiet`); the label write itself is guarded by `state='sending' AND attempts=<token>`, so a drive that lost its claim stores nothing (`test_label_store_needs_the_claim`).
+-  * A lock on the stamp or on the label write AFTER the model answered discards the answer and leaves the try USED UP (`internal:ModelAnswerLost`; a give-back would ask the model again without a bound, because a give-back does not count as a try), so the 5-try cap bounds the model calls (`test_locked_stamp_cannot_ask_for_ever`, `test_model_stamp_lock_spends_the_try`, `test_answer_lost_real_lock_keeps_try`; both writes, the stamp and the label write, are tested through the real retry loop); a lock on the first stamp, before the model is asked, still gives the try back.
+-  * If the row is later put back by the reaper, no send was started, so the portal card says nothing was sent (`ambiguous_prior` 0), not "the email may have left" (`test_answer_lost_card_not_email_left`); the "email may have left" wording stays for a row whose send may have started (`test_may_have_left_card_stays`).
++  * The desk refuses to start if the budget plus the margin is not strictly below the smallest grace. The smallest grace is 25 s (the five busy waits alone); 9 + 15 = 24; an equal sum is refused, because the clocks count whole seconds. It also refuses to start if the margin is below the write deadline plus one busy wait (`test_margin_counts_the_busy_wait`). These checks run when `constants.py` and `desk.py` are imported, so a constant that is out of range ends the process with a Python traceback (exit code 1), not with exit 4.
++    * A qualifier that declares a `timeout_seconds` that is not a number above 0 (zero, negative, NaN, infinity, a bool, a text, an integer too large for a float: `is_positive_seconds`) or above `MODEL_CALL_BUDGET_SECONDS` is refused when the `Desk` is built (`DeskSettingRefused`). Exit 4 is also given by a `SettingRefused` from `Config.from_env` or from an adapter's `from_env`; see "Exit codes" below. Tests: `test_bad_declared_timeout_refused`, `test_declared_above_budget_is_refused`, `test_huge_number_is_a_refusal`.
++    * For a qualifier's declared `timeout_seconds` the accepted limit is 9 s (9 accepted, 9.1 refused; `DESK_SEND_TIMEOUT_SECONDS` is a different setting: above 9 it is accepted, the desk still cuts every CRM write, send and capability read at 9 seconds, and the value sets the stuck grace, the value plus 25 seconds): a longer declared time would be cut off by the desk anyway. `timeout_seconds` is a true limit on total time only if the adapter itself stops at that time; the desk's own bound does not depend on it.
++    * If the row is no longer ours when the model has answered (for example the desk clock was set forward and the reaper took the row), the label is not stored and the drive ends (`test_label_store_lost_claim_quiet`); the label write itself is guarded by `state='sending' AND attempts=<token>`, so a drive that lost its claim stores nothing (`test_label_store_needs_the_claim`).
++    * A lock on the stamp or on the label write AFTER the model answered discards the answer and leaves the try USED UP (`internal:ModelAnswerLost`; a give-back would ask the model again without a bound, because a give-back does not count as a try), so the 5-try cap bounds the model calls (`test_locked_stamp_cannot_ask_for_ever`, `test_model_stamp_lock_spends_the_try`, `test_answer_lost_real_lock_keeps_try`; both writes, the stamp and the label write, are tested through the real retry loop); a lock on the first stamp, before the model is asked, still gives the try back.
++    * If the row is later put back by the reaper, no send was started, so the portal card says nothing was sent (`ambiguous_prior` 0), not "the email may have left" (`test_answer_lost_card_not_email_left`); the "email may have left" wording stays for a row whose send may have started (`test_may_have_left_card_stays`).
+ * (5) A follow-up stuck in `sending` is put back by the reaper once it is older than send timeout + 5 busy waits (5 s + 5 x 5 s = 30 s with the defaults; strictly older, in whole seconds) without a restart; a restart does the same at once. The rule has exceptions, in this order.
+   * (a) A row that never sent anything (the CRM step not finished, `crm_done` not 1, or no send mark, `send_started` 0) goes back to `pending` whatever the sender's mode, or to `failed` when it has already used its automatic tries (`SEND_MAX_ATTEMPTS`, 5; a person's Retry still starts it); it needs no capability read.
+   * (b) Only a row whose send may have started follows the sender's mode: keyed -> `pending` (`failed` at the cap), blind -> `unknown`; while the sender's capability cannot be read such a row is left as it is.
+@@ -88,7 +88,7 @@ There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo ro
+ * The canned leads file is `demo_only/canned_leads.json`: a JSON array of lead payloads (the payload shape of the HTTP table, made-up data), one per canned person. `test_demo_adapters` checks every canned lead email has a `replies.json` entry. `canned_leads.json` entries are payloads only: they carry NO `source` / `source_ref`; the scripts and tests that post them build the envelope with `source` = `form` or `webhook` (the envelope values of the HTTP table) and `source_ref` = `canned-<i>` where `<i>` is the position in the array (starting at 1). `RecordedQualifier` loading rules (fail loud): a missing `replies.json` or malformed JSON makes the constructor raise (never a silent empty mapping); a key with no entry answers `warm`; an entry whose value is not `hot`, `warm` or `cold` raises a `KeyError`-class error that names the bad label. `demo_only/fakes.py`, `fakes_server.py` and `burst.py` hold the fake CRM, the fake outbox, the recorded AI step, the fake servers and the burst script. `demo_only/approvers.json`: `{"label": "...", "approvers": [{"id","name"}, ...]}` (made-up approvers for approval mode; `label` optional), read through `loader.load_approvers` only (`DESK_APPROVERS_FILE` replaces it).
+ 
+ ## Server and reply flush
+-The server writes the reply, calls `wfile.flush()` and `connection.shutdown(SHUT_WR)`, and only then runs `desk.run_followup`, so a client that reads until close is not kept waiting for the follow-up. `allow_reuse_address = (os.name != "nt")`; on Windows `SO_EXCLUSIVEADDRUSE` is set in `server_bind` under `if sys.platform == "win32":`. Windows limit (a restart on the same fixed port is tested: tests/test_portal_api.py (test_real_process_restart_x20 on every system, test_restart_same_port_portal_open not on Windows) stop and start the desk 20 times on one port and check every start binds and answers; no test makes the Windows PermissionError or the TIME_WAIT failure happen): a restart on the same fixed port can fail for a while (TIME_WAIT, the wait after a connection closes; its length was not measured here) and the conflicting bind can raise `PermissionError` instead of `EADDRINUSE`; the code catches `OSError` broadly, tests use port 0, and the launcher's 5 second bind retry may not outlast TIME_WAIT on Windows.
++The server writes the reply, calls `wfile.flush()` and `connection.shutdown(SHUT_WR)`, and only then runs `desk.run_followup`, so a client that reads until close is not kept waiting for the follow-up. `allow_reuse_address = (os.name != "nt")`; on Windows `SO_EXCLUSIVEADDRUSE` is set in `server_bind` under `if sys.platform == "win32":`. Windows limit (a restart on the same fixed port is tested: tests/test_portal_api.py (test_real_process_restart_x20 on every system, test_restart_same_port_portal_open not on Windows) stop and start the desk 20 times on one port and check every start binds and answers; no test makes the Windows PermissionError or the TIME_WAIT failure happen): a restart on the same fixed port can fail for a while (TIME_WAIT, the wait after a connection closes; its length was not measured here) and the conflicting bind can raise `PermissionError` instead of `EADDRINUSE`; the code catches `OSError` broadly, most tests use port 0, and the launcher's 5 second bind retry may not outlast TIME_WAIT on Windows.
+ 
+ ## Follow-up drive: who makes which claim
+ One private method `Desk._send_claimed(lead_id)` does the send and the recording of its result (send with `send_key=lead_id`, record the result) AFTER a won claim. The crash points `D1` and `D2` are inside it. Exactly two kinds of caller claim, and neither calls the other. Automatic drivers (`run_followup`, the reaper through `run_followup`, the start-up sweep, `handle`) claim only `('pending',)`; a person's `retry` claims `('pending','failed')` and starts the automatic count at 1:
+@@ -128,7 +128,15 @@ Pages for a person (the pages only read; the buttons write: Retry, the answers,
+ * Files are read once, when `portal_api` is first imported; symbolic links, files that resolve outside the portal folder and files over `STATIC_FILE_MAX_BYTES` are left out, and the folder name `demo/` is reserved for the extension: a file of the portal folder under that name is never served.
+ * Any other method on these routes is 405. `/api/demo/<rest>` goes to the demo extension (GET and POST only, any other method is 405; 404 when none is installed or when the desk does not run the demo adapters; a POST body must be `application/json`, else 400 `{"error":"bad_body"}`; a body over `DEMO_BODY_MAX` bytes is 413 `{"error":"too_large"}` and is not handed on; a body that stalls is 408 `{"error":"request_timeout","receipt_id":null}`).
+ * The extension is loaded before the socket is bound (in `make_server`), so a broken extension should leave nothing listening. `test_broken_extension_leaves_no_socket` in `tests/test_portal_api.py` makes the loader raise, expects `make_server` to raise, and then binds the same port. That test shows only that no socket is left after the failure; it does not check the order of the two steps. The same file also tests the loader alone; the same check through `server.main` or a real process is not made.
+-* The failed-follow-up card (the list calls the kind "Follow-up failed") has the title "The follow-up email was not sent" for the reasons `refused`, `unreachable` and `internal:*` (and for `crash_while_sending` when `ambiguous_prior` is 0, see below); the reasons a person's own choice leaves (`person: not sent`: after the email question, "Follow-up failed; a person marked the email as not sent", Retry sends it now, with a reminder to check the mail system first; after the CRM question (the row's `crm_done` is 0 again), "Follow-up failed; a person marked the CRM entry as missing", Retry asks the CRM again and then sends the email; `person: crm row present`: "Follow-up not finished; the CRM entry is confirmed", Retry goes straight to the email) have their own words and never say the email may have left (the reminder to check the mail system is the only hedge); `crash_while_sending` with `ambiguous_prior` 0 (the row never reached the send) shows the card "The follow-up email was not sent" with "The desk stopped or was held up before it tried to send."; any other reason (`ambiguous`, others), and any other failed follow-up whose row carries `ambiguous_prior` (an earlier send may have been sent; a person-choice reason keeps its own card, because the person's words are checked first), shows "Follow-up did not finish", because the email may have been sent, and Retry cannot cause a second email only on a keyed outbox (a keyed mail system sends once per send key).
++* The failed-follow-up card (the list calls the kind "Follow-up failed"):
++  * Title "The follow-up email was not sent" for the reasons `refused`, `unreachable` and `internal:*` (and for `crash_while_sending` when `ambiguous_prior` is 0, see below).
++  * The reasons a person's own choice leaves have their own words and never say the email may have left (the reminder to check the mail system is the only hedge):
++    * `person: not sent`, after the email question: "Follow-up failed; a person marked the email as not sent", Retry sends it now, with a reminder to check the mail system first.
++    * `person: not sent`, after the CRM question (the row's `crm_done` is 0 again): "Follow-up failed; a person marked the CRM entry as missing", Retry asks the CRM again and then sends the email.
++    * `person: crm row present`: "Follow-up not finished; the CRM entry is confirmed", Retry goes straight to the email.
++  * `crash_while_sending` with `ambiguous_prior` 0 (the row never reached the send) shows the card "The follow-up email was not sent" with "The desk stopped or was held up before it tried to send."
++  * Any other reason (`ambiguous`, others), and any other failed follow-up whose row carries `ambiguous_prior` (an earlier send may have been sent), shows "Follow-up did not finish", because the email may have been sent. A person-choice reason keeps its own card, because the person's words are checked first.
++  * Retry cannot cause a second email only on a keyed outbox (a keyed mail system sends once per send key).
+ * Every reply, JSON or file, carries `Content-Security-Policy` (no inline script or style, no `data:`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-origin` and `Cache-Control: no-store`.
+ * In approval mode the desk also decides a later message through `POST /review/D<n>/resolve` (this route is open to any program that can reach the desk; there is no sign-in, the approver id is a name picked from the approvers list, not verified).
+ * Masking rule for each value on a page (one rule, every screen): name, email address, phone and message are masked while the switch is on; Company is NOT masked (it is a business name, shown as it is in the table, in the lead panel Facts and in the later-message differences, and it is searched while names are masked); the request number is masked too, with its own eye button (a request number is data the sender chose, so it is treated as personal until shown on purpose; its copy button copies the masked text while hiding is on), and the search never looks at request numbers or names while masked (`tests/test_portal_layout.py` and `tests/test_portal_wording_and_masking.py` check the search through the JSON route, with no browser; the on-screen masking is checked by tests that need the optional browser lock and are skipped without it).
+@@ -274,7 +282,7 @@ These rules are part of this contract. Where one differs from a table row above,
+   * Both are information only: they never change `ok`. The reaper loop catches every exception from a pass (including ones that are not `Exception`) and goes on with the next pass; a reaper that is not running shows as `reaper_running: false` on a desk that was started with one.
+ - Review list: a request number that comes again with a different payload keeps its first answer (`payload_matches:false`) and adds a D item `D<receipt_id>`, kind `replay_payload_differs`, reason `same request number, different payload`, informational (retry and resolve answer 409 `not_actionable`). If the receipt is also a duplicate with new information there is still ONE D item (kind `duplicate_with_new_info`). In approval mode (`DESK_LATER_MODE=approval`) a `duplicate_with_new_info` item is decided through resolve (check order step 3a); retry still answers 409 `not_actionable`, and a `replay_payload_differs` item can never be decided.
+ - Review item and retry/resolve ids: a number with a leading zero (R0012) or more than 18 characters is 404 `not_found` (an item has exactly one id).
+-- `Desk.process` catches direct input that JSON cannot write (mixed-type keys, a set, a date, a 4301-digit number): 400 `bad_envelope`, counted in `rejected_envelopes` instead of raising (the guard is in `Desk._process`; `tests/test_desk_http_edge_cases.py` sends deep nesting straight to `Desk.process`; `test_deeply_nested_json_is_bad_envelope` in `tests/test_input_edge_cases.py` sends 5000 levels of square brackets as the `payload` field and checks the reply 400 `bad_envelope`, one rejected envelope and no stored receipt; that payload is a list, not an object, and the test does not say which check gave the reply; the test in `tests/test_followup_edge_cases.py` for input that cannot be written as JSON checks mixed-type keys, a set, a number of 4401 digits and a plain object; no test uses a date). `Desk.review`, `lead` and `counts` answer through the error shell (500 `internal` or 503 `busy` as bodies) instead of raising; `lead` of an id with a control character or lone surrogate is 404.
++- `Desk.process` catches direct input that JSON cannot write (mixed-type keys, a set, a date, a 4401-digit number): 400 `bad_envelope`, counted in `rejected_envelopes` instead of raising (the guard is in `Desk._process`; `tests/test_desk_http_edge_cases.py` sends deep nesting straight to `Desk.process`; `test_deeply_nested_json_is_bad_envelope` in `tests/test_input_edge_cases.py` sends 5000 levels of square brackets as the `payload` field and checks the reply 400 `bad_envelope`, one rejected envelope and no stored receipt; that payload is a list, not an object, and the test does not say which check gave the reply; the test in `tests/test_followup_edge_cases.py` for input that cannot be written as JSON checks mixed-type keys, a set, a number of 4401 digits and a bare `object()` instance; no test uses a date). `Desk.review`, `lead` and `counts` answer through the error shell (500 `internal` or 503 `busy` as bodies) instead of raising; `lead` of an id with a control character or lone surrogate is 404.
+ - Adapters: a reply is read up to `constants.REPLY_MAX_BYTES` (1 MiB; longer is an error, treated as unclear like any bad reply); a 3xx answer is an error and is never followed.
+ 
+ ### Schema and migration
+@@ -316,7 +324,7 @@ These rules are part of this contract. Where one differs from a table row above,
+ - A `pending` or `sending` row stamped later than now (the clock was set back) is set to now by the reaper, then ages normally. An open receipt stamped in the future counts its age from the first reaper pass that saw it open.
+ 
+ ### Reaper, gates and load
+-- Start-up: `Desk.startup()` raises RuntimeError when called twice, after the desk served or drove anything, or after a `retry`, `resolve` or `_claim` call. With `start_background()` called first (the order the server uses), start-up does not drive pending follow-ups and counts no try; the reaper drives each one when it is due (a new row after 2 s, a retried row after its backoff), so serving starts at once.
++- Start-up: `Desk.startup()` raises RuntimeError when called twice, after the desk served or drove anything, or after a `retry`, `resolve` or `_claim` call. With `start_background()` called first (the order the server uses), start-up does not drive pending follow-ups and counts no try; the reaper drives each one when it is due (a new row after `PENDING_GRACE_SECONDS`, 2 s in `src/lead_desk/gate.py`, a retried row after its backoff), so serving starts at once.
+ - The reaper reads the sender's capability again only when a `sending` row is stuck, after a wrong-mode reply, or at most every 30 s (`gate.OUTBOX_REFRESH_SECONDS`); no requeue decision is made when the capability could not be read (start-up leaves such rows `sending` for the reaper).
+ - A reaper pass stops starting new drives after `gate.REAPER_PASS_SECONDS` (10 real seconds); a drive that has started runs to its end, and so do the two capability reads at the start of the pass, so the drive part of a pass can overrun (about 55 s at the very worst with the defaults, `gate.py` comment; the CRM copy part and the reminder part that follow in the same pass each have their own 2.5 s clock, checked between calls, and add their own time on top); the rows not started are still due and come first in the next pass.
+ - Write gate: one per resolved lead-book path (`gate.gate_for`), so desks on different books do not wait for each other. It is not re-entrant: nothing may ask for it while holding it (`Desk._write` is never nested). It has two lines: request writes first, drive and reaper writes second (`FairGate.acquire(timeout, low)`). A wait for the gate that runs out is NOT tried again (no new ticket at the tail). All tries of one write share one deadline (`gate.WRITE_DEADLINE_SECONDS` = 10 s); a whole `process` call has one deadline (`gate.REQUEST_DEADLINE_SECONDS` = 15 s) that includes the in-flight wait.
+diff --git a/docs/hubspot-probe.md b/docs/hubspot-probe.md
+index bd296a8..1cf9203 100644
+--- a/docs/hubspot-probe.md
++++ b/docs/hubspot-probe.md
+@@ -9,7 +9,7 @@ account with no workflows and a throw-away owner is the safe place.
+ 
+ What it does, in order (7 calls on the normal path, never more than 8 including retries):
+ 
+-1. Checks whether the contact property `dpld_tag` exists (a test tag; the script fills it in on the new contact only when the account already has it; the desk's own contact property is a different one, `hadavin_lead_id`, see `docs/real-services.md`).
++1. Checks whether the contact property `dpld_tag` exists (`dpld` is short for duplicate-proof lead desk, the project name; it is a test tag; the script fills it in on the new contact only when the account already has it; the desk's own contact property is a different one, `hadavin_lead_id`, see `docs/real-services.md`).
+ 2. Reads up to 10 owners; prints the count and the last 4 characters of each id.
+ 3. Creates ONE contact with a made-up address `probe-<random>@example.com`.
+ 4. Sets the first owner on it (by email), in its own call.
+diff --git a/docs/limits.md b/docs/limits.md
+index c32b539..5b4daee 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -27,7 +27,7 @@ This page holds the detail behind the section "What is claimed, and what is not"
+   shorter or longer time. The AI step is a set of pre-written replies; nothing is said about real AI behaviour.
+ * **Live model step.** The desk can ask a real AI model for a label (hot, warm or cold), but only when you set `DESK_QUALIFIER=live_claude`, name a key file
+   and set a price, a cost cap per run and a cost cap in total (both in US dollars; see `docs/settings.md`). Out of the box (the default `recorded` setting, which means pre-written replies) no model is called and nothing leaves
+-  the computer. The live step was run only against a local stand-in server; no real provider was called while this was written.
++  the computer. The live step was run only against the local demo model server (`demo_only/fake_model_server.py`).
+ * **Every call to the AI step, the CRM and the mail system is cut off by the desk after a short time** (`Desk._bounded`). The call runs in a helper thread. The desk waits for it at most `MODEL_CALL_BUDGET_SECONDS` (9 s) for the AI step, and at most `min(send_timeout_seconds, 9 s)` for a CRM write, a send or a read of the keyed or blind setting. A call that is late is abandoned, not stopped: it keeps running until it ends on its own. Its late answer is thrown away and never reaches the desk's records, and the background job carries on with other rows. Tests: `test_reaper_survives_hung_model`, `test_hung_model_spends_the_try`, `test_late_answer_writes_nothing`, `test_blind_send_timeout_is_unknown`, `test_keyed_send_timeout_same_key`, `test_blind_crm_timeout_is_unknown`, `test_late_send_writes_nothing`, `test_late_crm_put_writes_nothing`. What a time-out does to a follow-up:
+   * AI step: the time-out uses up one of the 5 automatic tries (`internal:ModelTimeout`). A person's Retry starts the count again at try 1, so one lead can be tried more than 5 times in all.
+   * Keyed send or keyed CRM write: it is asked again later with the same key.
+@@ -57,7 +57,7 @@ This page holds the detail behind the section "What is claimed, and what is not"
+   put back at the next start; the ten crash points cover it). A client that sends bytes slowly but steadily can hold a connection
+   place until the header or body deadline ends; this costs availability only (`tests/test_slow_sender.py` drips bytes and checks the 408 at the deadline, and checks that a connection closed for room after its body was read but before the desk acts leaves nothing stored; that nothing is stored after a 408 is not tested here) and is deliberate (`tests/test_stall_eviction.py` checks that a steadily sending client is not closed early).
+ * Do not let another program send mail under the same send key (the lead's id): the desk assumes it is the only sender for that key.
+-* A crash is simulated inside the program (the test raises an exception at the point) for all ten crash points and for the eleventh, N1 (the reminder email, `tests/test_reminder_email.py`). A real process kill (the desk process ends at once, no clean-up) at a NAMED crash point was done only at D2: twice with the demo mail system over HTTP (keyed and blind), and once with a real mail catcher process that receives mail over SMTP (blind sender).
++* A crash is simulated inside the program (the test raises an exception at the point) for all ten crash points and for the eleventh, N1 (the reminder email, `tests/test_reminder_email.py`). A real process kill (the desk process ends at once, no clean-up) at a NAMED crash point was done only at D2: twice with the demo mail system over HTTP (keyed and blind), and once with a real mail catcher process that receives mail over SMTP (blind sender); the tests are `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind) and the test next to it in the same file whose name starts with `test_crash_d2_subprocess_with_` (blind SMTP sender).
+ * Loads of 10,000 requests were not run. The desk is for one computer and one process. There is no login: it listens on this computer only unless you change `DESK_BIND`, and then anyone who can reach that address can read the desk's records (see "The portal and the desk process" below).
+ * No run result is stored in this repository: no count of passed or skipped tests and no result of the checks in `.github/workflows/lint.yml`. `versions.md` gives only the number of test files (92); no count of collected tests is stored. A test run skips the tests that need another operating system, a tool that is not installed, or the load measurement; the reasons are listed in `docs/tests.md` and `python -m pytest -q -rs` prints them.
+ * This repository does not claim anything about what happens if n8n crashes before the request reaches the desk, or about other n8n versions or set-ups.
+@@ -88,7 +88,6 @@ Rules of the desk's records (the database refuses these, for a database created
+ * A connection the desk received can be answered 503 `busy` (database lock wait over). A 503 from a lock wait may have left an open receipt; a 503 from the connection limit does not (it is written at accept time in `src/lead_desk/server.py`, before the request is read, without calling the desk). In both cases send the same request number again. `tests/test_http.py::test_ten_parallel` checks that only one email is sent for the lead (the burst command itself only counts the answers it got: it prints how many answers of each status came back and whether the number of 200, 201 and 202 answers equals the number expected; it does not read the mail count).
+ * The demo HubSpot server (`demo_only/fake_hubspot.py`, made-up data) reads a request body before it answers, so a late body is not reset on Windows. The exception is a Content-Length that is negative, not a plain number, longer than 7 digits or above 1 MiB: it answers 400 at once WITHOUT reading the body (reading would mean reading until the client stops); a client that really sends more than 1 MiB may therefore see a connection reset instead of the 400. A 5000-digit Content-Length is such a 400 (a digit string that long cannot be turned into a number by Python). Tests: `tests/test_codeant_fakes.py`.
+ * A request body shorter than the Content-Length it announced: the desk answers 408 `request_timeout` when the body has not fully arrived 10 seconds after the headers ended (`BODY_READ_DEADLINE_SECONDS`) if the sender keeps the connection open, or 400 if the sender closes it; the 408 and the 400 are both counted in `rejected_envelopes` when the stall or close happens in the body of `POST /leads`; a stall while the headers are still arriving gets 408 but is not counted. A Content-Length over the size cap, however long the number, is answered 413 straight away; this holds for the decision body of `POST /review/<id>/resolve` too (after the Host and Origin check). Two different Content-Length values in one request are answered 400. A request target that cannot be parsed is answered 400.
+-* **Known gaps in these figures.** The larger bursts depend on the machine and were not repeated for every version of the desk or with every sender retry rule; treat them as indications for the machine they ran on.
+ 
+ ## The portal and the desk process
+ 
+diff --git a/docs/n8n-recipe.md b/docs/n8n-recipe.md
+index 0607be5..d040883 100644
+--- a/docs/n8n-recipe.md
++++ b/docs/n8n-recipe.md
+@@ -15,13 +15,13 @@ The `proof` workflow has a manual start and a web-call start; the web-call start
+ ## 0. Before you start
+ 
+ * n8n version: none is recorded in this repository (`versions.md`, section "n8n (demo only)"). The workflows are not claimed to work on any n8n version.
+-* n8n needs an owner account on first start. Use your own business e-mail in YOUR n8n only (it is the account e-mail; the leads and addresses in the workflows are made up). The runs used its free community licence; whether the workflows here also run
+-  without it is not checked (they use only the Webhook, Edit Fields, HTTP Request, Code and Manual Trigger nodes).
++* n8n needs an owner account on first start. Use your own business e-mail in YOUR n8n only (it is the account e-mail; the leads and addresses in the workflows are made up). Whether the workflows here also run
++  without n8n's free community licence is not checked (they use only the Webhook, Edit Fields, HTTP Request, Code and Manual Trigger nodes).
+   Never commit the e-mail, the password or the key anywhere.
+ * Start the demo servers and the desk first (README, "Try it"). From the same computer, n8n reaches them at the host and
+   ports from the settings table in `docs/settings.md`. **If n8n runs in Docker, `localhost` inside the container is the container, not
+   your computer.** The desk listens on this computer only (`DESK_BIND`). The desk answers 403 `forbidden_host` to any `Host` name it does not know (anything but `127.0.0.1`, `localhost`, `[::1]`): if n8n reaches the desk under another name, list that name in `DESK_ALLOWED_HOSTS` (`docs/settings.md`).
+-* **n8n's port.** The demo ran n8n on port 5679 (n8n's own default is 5678). `scripts/n8n_api.py` (setting `N8N_URL`, default `http://127.0.0.1:5679`) and the sending box of the `proof` workflow (its URL is `http://127.0.0.1:5679/webhook/desk-form`) expect that port, so start n8n with `N8N_PORT=5679` to evaluate the workflows.
++* **n8n's port.** The shipped files expect n8n on port 5679 (n8n's own default is 5678). `scripts/n8n_api.py` (setting `N8N_URL`, default `http://127.0.0.1:5679`) and the sending box of the `proof` workflow (its URL is `http://127.0.0.1:5679/webhook/desk-form`) expect that port, so start n8n with `N8N_PORT=5679` to evaluate the workflows.
+ 
+ ## 1. The desk workflows (n8n in front of the desk)
+ 
+diff --git a/docs/settings.md b/docs/settings.md
+index 9eb2ab3..ee128aa 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -69,13 +69,13 @@ How reminders behave: a lead is reminded once when `nudge_after_seconds` have pa
+ 
+ The default addresses below end in `example.test`, a name reserved for examples. They are used only on the mail step, which never passes an address to a CRM. Give any made-up address of a lead that goes into a real CRM a real domain such as `example.com`.
+ 
+-* `DESK_SMTP_HOST` (default `127.0.0.1`; must be a loopback IP address: the desk makes no name lookup, refuses a name and refuses any address that is not this computer's. The desk cannot tell what listens there: a real mail relay or a tunnel to a real server on `127.0.0.1` is the owner's responsibility, and the demo banner would then be wrong), `DESK_SMTP_PORT` (default 2525), `DESK_SMTP_FROM` (default `desk@example.test`), `DESK_SMTP_MESSAGE_ID_DOMAIN` (default `example.test`), `DESK_SMTP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender). It has no practical effect: it is used only when a send is made without a time limit, and the desk always gives one. The real wait is `DESK_SEND_TIMEOUT_SECONDS`, and the whole deadline is capped at 9 seconds (`CALL_DEADLINE_MAX_SECONDS`).
++* `DESK_SMTP_HOST` (default `127.0.0.1`; must be a loopback IP address: the desk makes no name lookup, refuses a name and refuses any address that is not this computer's. The desk cannot tell what listens there: a real mail relay or a tunnel to a real server on `127.0.0.1` is the responsibility of whoever runs that relay or tunnel, and the demo banner would then be wrong), `DESK_SMTP_PORT` (default 2525), `DESK_SMTP_FROM` (default `desk@example.test`), `DESK_SMTP_MESSAGE_ID_DOMAIN` (default `example.test`), `DESK_SMTP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender). It has no practical effect: it is used only when a send is made without a time limit, and the desk always gives one. The real wait is `DESK_SEND_TIMEOUT_SECONDS`, and the whole deadline is capped at 9 seconds (`CALL_DEADLINE_MAX_SECONDS`).
+ 
+ `DESK_OUTBOX=smtp_provider`:
+ 
+ * Required: `DESK_SMTPP_HOST` (lower-cased by the desk), `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`. Optional: `DESK_SMTPP_SECURITY` (`starttls`, the default: start plain, then switch to encryption; or `ssl`: encrypted from the start) and `DESK_SMTPP_PORT` (default 587 for `starttls`, 465 for `ssl`).
+ * `DESK_SMTPP_PASSWORD_FILE`: the path of a one-line file of at most 4096 bytes; never the password itself.
+-* `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS` (your own inboxes, comma separated), `DESK_SMTPP_MESSAGE_ID_DOMAIN` (default `example.invalid`), `DESK_SMTPP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender; a smaller `DESK_SEND_TIMEOUT_SECONDS` wins and a larger one is ignored: the sender never waits longer than `DESK_SEND_TIMEOUT_SECONDS`).
++* `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS` (your own inboxes, comma separated), `DESK_SMTPP_MESSAGE_ID_DOMAIN` (default `example.invalid`), `DESK_SMTPP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender; the mail sender waits for the smaller of this value and the desk's call time limit, which is `DESK_SEND_TIMEOUT_SECONDS` cut at 9 seconds; `src/lead_desk/smtp_provider.py` takes the minimum of the two).
+ * `DESK_SMTPP_MAX_SENDS`: required hard cap, counted in memory, so restarting the desk resets the count to 0: the cap does not protect against a restart loop.
+ * `DESK_SMTPP_STATS_FILE` (optional): a file where the desk writes its send counts for run scripts; the desk never reads it back. `DESK_SMTPP_CA_FILE` (optional, no default): a file of extra trusted certificate authorities (the organisations whose certificates are accepted); checking the mail server's certificate stays on.
+ 
+@@ -149,6 +149,6 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+   * **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`).
+   * Over-cleaning by design (it cleans more than needed): an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+-* `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
++* `DPLD_*` names belong to this project (DPLD stands for duplicate-proof lead desk, the repository name). `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (the workflows `lint.yml` and `sonar.yml` both set it to 1 for their test step, so a lost folder stops the run there). Without it a missing folder skips each such test file as one item and the other files still run.
+diff --git a/docs/tests.md b/docs/tests.md
+index c43a8e5..9cbdd44 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -113,18 +113,18 @@ The table below says which tests show each promise. "Tests named" means the test
+ 
+ | # | Promise, in plain words | Tests that show it |
+ |---|---|---|
+-| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`; no second lead and no second email. The repeat is counted in the receipt (`attempts`, asserted as 22 after 21 repeats in `test_replay_same_source_ref`) and uses up one receipt number (no test pins the skipped number); a repeat of a `new` request starts the lead's follow-up when it is `pending` and due (`_pending_and_due` in `src/lead_desk/desk.py`). | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
++| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`; no second lead and no second email. The repeat is counted in the receipt (`attempts`, asserted as 22 after 21 repeats in `test_replay_same_source_ref`) and can use up a receipt number (no test pins this); a repeat of a `new` request starts the lead's follow-up when it is `pending` and due (`_pending_and_due` in `src/lead_desk/desk.py`). | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
+ | P2 | A duplicate never reaches the AI step: the demo AI's call counter does not go up for it. | `test_dedupe_before_ai` |
+ | P3 | A submission with no name, no email, an invalid email or a wrongly typed field goes to the review list with a reason and gets no follow-up. | `test_incomplete_to_review` |
+ | P4 | Stopped at each crash point and restarted: in these tests no run produced more than one lead, more than one CRM row or more than one email (see the crash-point table for what a blind CRM or mail system does). A wrong "not sent" answer by a person can cause a second email on a blind mail system. | `test_crash_resume_each_point` and `test_crash_resume_after_*` in `tests/test_flow.py`: together they stop the desk at each of the ten crash points, with keyed and with blind mail systems (C0 and C1 also with keyed and blind CRMs); real kills: `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind, demo mail over HTTP), `test_crash_d2_subprocess_with_*` in `tests/test_http.py` (real mail catcher) |
+-| P5 | Ten requests with different request numbers and the same email, fired at once straight at the desk by a script: one new lead, nine duplicates, one email; the counts match the number the script says it sent. Larger bursts are reported separately in `docs/limits.md` (measurements, not part of the test run). | `tests/test_http.py::test_ten_parallel`, `test_reconcile_counts` |
++| P5 | Ten requests with different request numbers and the same email, fired at once straight at the desk by a script: one new lead, nine duplicates, one email; the counts match the number the script says it sent. A larger burst can be run with the measurement test described in `docs/limits.md`, "Load and limits"; no result of it is stored here. | `tests/test_http.py::test_ten_parallel`, `test_reconcile_counts` |
+ | P6 | On a blind mail system, a send that may or may not have happened is marked UNKNOWN, listed for a person and never resent by the desk; Retry is refused for it. Retry pressed twice at once on a failed follow-up gives one email, also on a blind system. | `test_unknown_blind`, `test_failed_retry`, `test_retry_twice_concurrent` |
+ | P7 | A later message never changes the first record: the lead's first details stay exactly as they arrived, however many later messages come and whatever they say. | `test_later_first_record_untouched`, `test_dupe_diff_first_untouched`, `test_write_once_triggers` |
+ | P8 | The lead panel lists the later messages from the same email address, newest first by receipt number, the order in which the desk wrote the receipts (so a message whose clock time is earlier can come first; the newest 50; the total is always shown): when each arrived, how long after the first message, and each field that is new or different, with the text exactly as it was sent except white space at the very start and end (spaces, tabs and line breaks; the rule is Python's `strip()` in `src/lead_desk/identity.py`, which also removes other Unicode white space, but the test only uses space, tab, newline and carriage return), which is removed by the same rule as for the first record. | `test_later_values_word_for_word`, `test_later_seconds_after_first`, `test_later_lower_receipt_number`, `test_later_order_by_receipt_number`, `test_later_burst_ten_each_own_values`, `test_lead_detail_lists_at_most_the_cap`, `test_later_reply_size_is_bounded`, `test_time_after_first_words` |
+ | P9 | The desk does not rewrite or summarise later messages, and no AI step runs for them: the list is the record. | `test_later_messages_never_call_the_ai`, `test_later_reply_keys_are_fixed`, `test_dedupe_before_ai` |
+-| P10 | Lead names, email addresses, phone numbers, messages and request numbers are masked on screen by default, in the lead list and in the lead panel, for the first record and for every later message. While they are masked, the search does not look in names or email addresses (it matches the company and the lead number only; a request number is not searched while masked), and a hint line next to the search box says names and addresses are searchable after hiding is turned off (the placeholder itself reads "Company or lead number" while they are masked). Switching "Hide names and email addresses" OFF shows them and allows searching by name and by email address; switching it back ON masks the list and an open panel straight away and clears a search that was typed. The browser keeps the choice only while the tab stays open (session storage), so a new session starts masked. The small eye button beside a masked value shows that one value only, for 30 seconds at most, and does not turn on searching by name or address. On the demo controls page the lead pick list and the retry list show neutral labels ("Lead 1") or hidden names while masking is on. Companies, lead owners and approver names are not masked (read from the `mask` function in `src/lead_desk/portal/portal.js`, which masks only the fields email (and email_key), phone, message and name; request numbers go through a separate function in the same file; no test checks that companies and lead owners show on screen while masking is on (the leads table test reads only the column title "Lead owner"); one test, the approve-and-deny drawer test in `tests/test_portal_lead_pages.py`, does check that the approver's name shows in the "Approved by" line). The desk's log lines are meant to carry no email address, phone number or message: a test walks the `log.<level>(...)` calls in `src/lead_desk/*.py` and checks what each one prints (other loggers, `print()` and the folders `scripts`, `demo_only`, `load_tools` and `tools` are not covered by it), and another test runs later messages and a failed read with test values and finds none of them in the log or the error output. Masking is on screen only: the answer the page reads from the desk (visible in the browser's developer tools) still carries every value, and anyone who can reach the desk can ask it to search by name or email address. | the browser tests listed in "Browser tests" above and `test_personal_hidden_rule`, `test_reveal_one_value_rules`, `test_later_panel_rules_in_the_source`, `test_leads_email_search_needs_reveal`, `test_name_search_needs_reveal`, `test_demo_pick_lists_neutral`, `test_log_calls_carry_no_values`, `test_later_messages_log_no_values` |
++| P10 | Lead names, email addresses, phone numbers, messages and request numbers are masked on screen by default, in the lead list and in the lead panel, for the first record and for every later message. <br>- While they are masked, the search does not look in names or email addresses (it matches the company and the lead number only; a request number is not searched while masked), and a hint line next to the search box says names and addresses are searchable after hiding is turned off (the placeholder itself reads "Company or lead number" while they are masked). <br>- Switching "Hide names and email addresses" OFF shows them and allows searching by name and by email address; switching it back ON masks the list and an open panel straight away and clears a search that was typed. <br>- The browser keeps the choice only while the tab stays open (session storage), so a new session starts masked. <br>- The small eye button beside a masked value shows that one value only, for 30 seconds at most, and does not turn on searching by name or address. <br>- On the demo controls page the lead pick list and the retry list show neutral labels ("Lead 1") or hidden names while masking is on. <br>- Companies, lead owners and approver names are not masked.<br>- Source of that: the `mask` function in `src/lead_desk/portal/portal.js` masks only the fields email (and email_key), phone, message and name; request numbers go through a separate function in the same file.<br>- No test checks that companies and lead owners show on screen while masking is on (the leads table test reads only the column title "Lead owner").<br>- One test, the approve-and-deny drawer test in `tests/test_portal_lead_pages.py`, does check that the approver's name shows in the "Approved by" line. <br>- The desk's log lines are meant to carry no email address, phone number or message: a test walks the `log.<level>(...)` calls in `src/lead_desk/*.py` and checks what each one prints (other loggers, `print()` and the folders `scripts`, `demo_only`, `load_tools` and `tools` are not covered by it).<br>- Another test runs later messages and a failed read with test values and finds none of them in the log or the error output. <br>- Masking is on screen only: the answer the page reads from the desk (visible in the browser's developer tools) still carries every value, and anyone who can reach the desk can ask it to search by name or email address. | the browser tests listed in "Browser tests" above and `test_personal_hidden_rule`, `test_reveal_one_value_rules`, `test_later_panel_rules_in_the_source`, `test_leads_email_search_needs_reveal`, `test_name_search_needs_reveal`, `test_demo_pick_lists_neutral`, `test_log_calls_carry_no_values`, `test_later_messages_log_no_values` |
+ 
+-The desk answers 404 for an address it does not know: `tests/test_http.py` checks `/nope`; `/health` and a plain request for `/` are not tested, and one odd request whose path is `/` (`tests/test_server_hardening.py`) gets 404. The promises P1 to P10 are about the desk. What n8n did is reported separately in `docs/n8n-recipe.md`, section 4. Also tested, not a headline promise: odd input and requests (`tests/test_input_edge_cases.py`: half-character escapes, deeply nested JSON, `HEAD`, `OPTIONS` and malformed requests get a JSON answer, an email that grows when lower-cased, two drives of one new lead at once).
++The desk answers 404 for an address it does not know: `tests/test_http.py` checks `/nope`; `/health` and a plain request for `/` are not tested, and one odd request whose path is `/` (`tests/test_server_hardening.py`) gets 404. The promises P1 to P10 are about the desk. What to know when the desk sits behind n8n (no n8n run result is stored) is in `docs/n8n-recipe.md`, section 4. Also tested, not a headline promise: odd input and requests (`tests/test_input_edge_cases.py`: half-character escapes, deeply nested JSON, `HEAD`, `OPTIONS` and malformed requests get a JSON answer, an email that grows when lower-cased, two drives of one new lead at once).
+ 
+ What `/counts` adds up: `received = new + duplicate + review + open` ("open" is a request the desk has received but not yet decided). Some counters live only in the desk's memory and start again at 0 after a restart (for example the count of refused requests is an in-memory number in `src/lead_desk/desk.py`; no test restarts the desk to check it), and the database refuses to change or delete receipts, leads and sent follow-ups. The details, with test names, are in `docs/limits.md` ("Counters and database rules").
+ 
+diff --git a/docs/why-this-code.md b/docs/why-this-code.md
+index 7cc1c41..3f5896a 100644
+--- a/docs/why-this-code.md
++++ b/docs/why-this-code.md
+@@ -34,5 +34,5 @@ The desk talks to three things through three interfaces in `src/lead_desk/contra
+ 5. For a CRM kind, add its entry to `CRM_FIELDS_SENT` in `portal_api.py`, which says which lead fields it is sent and drives the data page
+ 6. The interface adapters that talk to the demo servers live in `src/lead_desk/adapters.py` and the demo servers themselves in `demo_only/`; a real kind goes in its own module under `src/lead_desk/` and should not import from `demo_only/` (`test_no_demo_only_outside_loader` in `tests/test_hygiene.py` fails when any `.py`, `.sql`, `.md`, `.txt` or `.toml` file under `src/` other than `loader.py` contains the text `demo_only`).
+ 
+-This demo ships adapters for one CRM service (HubSpot) and one AI service (`live_claude`, which calls one vendor's API); mail has the vendor-neutral `smtp_provider` kind. The tests run these kinds against demo servers only; the one real-service try was the separate probe script (`docs/hubspot-probe.md`), which made a few calls to a free HubSpot account. No second CRM or AI service is built here. (IMAP counting is not one of the three interfaces: the real-services script uses it to count mails in your mailboxes.)
++This demo ships adapters for one CRM service (HubSpot) and one AI service (`live_claude`, which calls one vendor's API); mail has the vendor-neutral `smtp_provider` kind. The tests run these kinds against demo servers only; `scripts/hubspot_probe.py` is a separate script that you run yourself against a free HubSpot account (`docs/hubspot-probe.md`); no run of it is recorded here. No second CRM or AI service is built here. (IMAP counting is not one of the three interfaces: the real-services script uses it to count mails in your mailboxes.)
+ 
+diff --git a/requirements-semgrep.in b/requirements-semgrep.in
+index aaeb7d5..adb3f4f 100644
+--- a/requirements-semgrep.in
++++ b/requirements-semgrep.in
+@@ -1,12 +1,12 @@
+ # Input for requirements-semgrep.txt (the pinned, hash-checked Semgrep install of .github/workflows/semgrep.yml).
+ # The lockfile is for linux x86_64 and Python 3.12 only (the CI runner); it has no autogenerated header on purpose.
+-# Regenerate it from the repository root (relative paths below), in a linux container, with the command that made it:
++# Regenerate it from the repository root (relative paths below), in a linux container, with this command:
+ #   docker run --rm -v "$PWD":/w -w /w python:3.12-slim sh -c "pip install uv==0.13.8 && uv pip compile requirements-semgrep.in --exclude-newer 2026-11-12 --python-platform x86_64-manylinux_2_34 --python-version 3.12 --generate-hashes --no-header -o requirements-semgrep.txt"
+-# --exclude-newer 2026-11-12 is the day of the first lock run: it stops later releases of the other packages from moving the lock.
++# --exclude-newer 2026-11-12 is a fixed date: it stops later releases of the other packages from moving the lock.
+ # To bump Semgrep: change the pin below, set --exclude-newer to today's date, rerun, READ the lock diff (every package may move),
+ # run `python -m pytest tests/test_hygiene.py -q` (new package names or hashes may need a line in exceptions.txt),
+ # then read the first scan result (docs/tests.md, "Semgrep": status of the scan).
+ # This lock needs the gitleaks `cwd=target` change in tests/test_hygiene.py (the scan runs from the repository root) to be in place first.
+-# Who bumps: the repository owner, when a Semgrep security advisory appears or about once a quarter.
++# Who bumps: the author, when a Semgrep security advisory appears.
+ # Dependabot does NOT cover this file (.github/dependabot.yml asks for GitHub Actions only).
+ semgrep==1.185.0
+diff --git a/scripts/check_schema.py b/scripts/check_schema.py
+index 74a15ad..6b027e1 100644
+--- a/scripts/check_schema.py
++++ b/scripts/check_schema.py
+@@ -1,5 +1,5 @@
+-"""Self-check: load schema.sql into sqlite3 (stdlib) and fire the triggers and constraints it
+-lists (no CI log is shipped).
++"""Self-check: load schema.sql into sqlite3 (stdlib) and fire each trigger and constraint
++named in this script once.
+ 
+ Run: python scripts/check_schema.py   (prints one line per check, exits 1 if any check fails)
+ Made-up data only. Not a test suite; the tests are in tests/.
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index ada619a..3b04223 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -1,6 +1,7 @@
+ """Run the desk so that it can be stopped on purpose at one named moment (used to try the crash recovery by hand).
+ 
+-Run from the repository root:  PYTHONPATH=src:. python scripts/crash_desk.py   (on Windows: set PYTHONPATH=src;. first)
++Run from the repository root:  PYTHONPATH=src:. python scripts/crash_desk.py
++(in PowerShell, first: $env:PYTHONPATH = "src;.")
+ It starts the normal desk with the shared crash hook. Nothing happens until you create the flag file; its content is
+ one point name from lead_desk.hooks.ALL_HOOK_POINTS. The next time the desk reaches that point it prints
+ "simulate crash" and ends the process at once with exit code 137 (like a power cut), and the flag file is removed.
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index bc8c23a..ac06ade 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -1351,7 +1351,7 @@ class Desk:
+             try:
+                 canon = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+             except (RecursionError, TypeError, ValueError, OverflowError):
+-                # nested so deeply, or holding something JSON cannot write (a set, a date, mixed-type keys, a 4301-digit
++                # nested so deeply, or holding something JSON cannot write (a set, a date, mixed-type keys, a 4401-digit
+                 # number): not a request the desk can store, the same answer as the server's
+                 self.note_rejected_envelope()
+                 return Reply(HTTP_BAD_REQUEST, {"error": "bad_envelope", "receipt_id": None})
+diff --git a/tests/test_gitleaks_exceptions.py b/tests/test_gitleaks_exceptions.py
+index 8e01fa4..b11f2af 100644
+--- a/tests/test_gitleaks_exceptions.py
++++ b/tests/test_gitleaks_exceptions.py
+@@ -4,8 +4,8 @@ and by gitleaks. Values are built from the repository's own key and from a fixed
+ key-shaped literal in this file. Files are written as bytes, so the line endings are the same on every system.
+ 
+ Which scan is asserted for which variant is set by the two sets below (no run result is stored in docs/tests.md):
+-a value after `sonar.projectKey=` is asserted for gitleaks only if it holds a digit and is not one
+-repeated character; a letters-only second project key is asserted for the literal scan alone (ONLY_LITERAL_SCAN).
++a second project key made of letters and digits is asserted for both scans; one made of letters only is
++asserted for the literal scan alone (ONLY_LITERAL_SCAN).
+ 
+ The two sets below are one-directional on purpose: a variant listed in ONLY_GITLEAKS is not asserted to pass the
+ literal scan, and one in ONLY_LITERAL_SCAN is not asserted to pass gitleaks, because a stricter scan is a harmless
+-- 
+2.43.0
+

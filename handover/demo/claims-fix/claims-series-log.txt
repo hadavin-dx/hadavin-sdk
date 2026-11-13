@@ -1,18 +1,7 @@
-11471ec Round-1 review fixes: false sentences, receipt number, crash command, 'the author', dated results removed
-46d3093 Cold-reader review: facts, contradictions, wording; command output, numbers, test citations
-dbf3f4d Say that the n8n numbers are one published run and that runs can differ
-1db544a Fix two section references that point at headings that do not exist
-f1ba4ad Cross-check numbers and names against the code: fix four sentences, the 55 s overrun and the body-cap sentence
-22e1a44 Review fixes: stage-copy note, replay count, run figures, collect flags
-18e494a Recount the collected test total in versions.md
-ce0b975 Correct sentences about tests found wrong by a search of tests/
-dff9166 Review fixes of the contract and probe sentences
-55dfc71 Soften or source unbacked sentences in contract, n8n recipe, real services and code docstrings
-19043f7 Review fixes: licence sentence, reminders, slow-sender, masking, n8n file count
-2880c80 Soften or source unbacked sentences in docs/tests, limits, settings and portal
-5f22cd7 Review fixes: README timing sentence, versions.md notes
-616f8c4 Soften or source unbacked sentences in README, SECURITY and versions.md
-b4375bd Review fixes of the first docs change
-5671981 Fix start_all.ps1 empty-value check, tighten one assertion, unify two comments
-04ad414 Fix false and stale sentences in the docs and workflow comments
-tree after git am onto f3c39cf8: 74480f88d8aac8c09d4197257dd724a879de5675 (equal to the build tree); combined patch sha256 644c75309f18d79c555c23d396b0dbd36ac048f268aff4b52946561baed28d4b; 17 commits, trailer on 17 of 17
+FROZEN SERIES (candidate for lead): main f3c39cf8 + 18 commits
+head commit (build tree): 1092597b9697cf64ab119d80f01df327a9a0d9b5
+tree hash (build tree == git am result): a019c44835f26e0ef314129d7d92a047eb67d1b8
+combined patch sha256: 7e147d3a0f9cfde7722f1abb84705fcb0e4eec430aa851090692cd84af708921
+git diff --shortstat f3c39cf8: 41 files changed, 601 insertions(+), 546 deletions(-)
+trailer Co-Authored-By on 18 of 18 commits
+full suite 3.12 on this exact tree: running (log f18-full-312.log); result follows in REPORT.md

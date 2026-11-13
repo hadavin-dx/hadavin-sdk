@@ -1,7 +1,7 @@
 From 2880c80f4ff842dcfccffe4282e4991d446e7102 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 06/17] Soften or source unbacked sentences in docs/tests,
+Subject: [PATCH 06/18] Soften or source unbacked sentences in docs/tests,
  limits, settings and portal
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

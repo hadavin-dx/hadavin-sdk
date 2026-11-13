@@ -1,7 +1,7 @@
 From 11471ec1b10dcb76376bf8e76510bf42a5aaf6fe Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 13:47:49 +0000
-Subject: [PATCH 17/17] Round-1 review fixes: false sentences, receipt number,
+Subject: [PATCH 17/18] Round-1 review fixes: false sentences, receipt number,
  crash command, 'the author', dated results removed
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>

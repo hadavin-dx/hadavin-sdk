@@ -1,7 +1,7 @@
 From 55dfc71e6fd2c019ba64550e20e47190607c297b Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 08/17] Soften or source unbacked sentences in contract, n8n
+Subject: [PATCH 08/18] Soften or source unbacked sentences in contract, n8n
  recipe, real services and code docstrings
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

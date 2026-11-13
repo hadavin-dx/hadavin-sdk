@@ -1,7 +1,7 @@
 From dff91661a464c7825315d2c58fedc4a0d2adb0d5 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 09/17] Review fixes of the contract and probe sentences
+Subject: [PATCH 09/18] Review fixes of the contract and probe sentences
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
 

@@ -1,7 +1,7 @@
 From 04ad414f06b203f06417c71ac9221cb142bb7bf9 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 01/17] Fix false and stale sentences in the docs and workflow
+Subject: [PATCH 01/18] Fix false and stale sentences in the docs and workflow
  comments
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

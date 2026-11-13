@@ -1,7 +1,7 @@
 From dbf3f4dc2d498b031a47ab062cbfaf0614b1f337 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 13:20:37 +0000
-Subject: [PATCH 15/17] Say that the n8n numbers are one published run and that
+Subject: [PATCH 15/18] Say that the n8n numbers are one published run and that
  runs can differ
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
