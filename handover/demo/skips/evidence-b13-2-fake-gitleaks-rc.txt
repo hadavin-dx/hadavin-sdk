@@ -1,0 +1,11 @@
+### premise test (exit-code check) against fake gitleaks programs (GITLEAKS_BIN=fake script), final v6 vs the min patch's form (G4: (rc == 1) is found); plus the in-repo fake-run test
+final  fake=crash-on-clean  -> 1 failed, 20 deselected in 0.10s
+final  fake=always2  -> 1 failed, 20 deselected in 0.08s
+final  fake=always0  -> 1 failed, 20 deselected in 0.08s
+final  fake=always1  -> 1 failed, 20 deselected in 0.06s
+final  in-repo fake-run test (test_a_gitleaks_that_crashes...) -> 1 passed, 20 deselected in 0.04s
+G4  fake=crash-on-clean  -> 1 passed, 20 deselected in 0.12s
+G4  fake=always2  -> 1 failed, 20 deselected in 0.07s
+G4  fake=always0  -> 1 failed, 20 deselected in 0.08s
+G4  fake=always1  -> 1 failed, 20 deselected in 0.07s
+G4  in-repo fake-run test (test_a_gitleaks_that_crashes...) -> 1 failed, 20 deselected in 0.08s

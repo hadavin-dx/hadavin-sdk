@@ -1,0 +1,32 @@
+### BEFORE: P1 v3.2 + v3.2.1, plus a workflow whose only job is 'uses:' (a reusable-workflow call, valid for GitHub), pinned by SHA
+        """A source distribution runs the package's build script at install time; wheels do not (SonarCloud rule
+        githubactions:S8541). The `=` spelling is the one sonar.yml uses (no finding there); --require-hashes stays."""
+>       for cmd in (c for c in _run_commands(path) if re.search(r"\bpip3?\s+install\b", c)):
+                               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_workflow_run_flags.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = PosixPath('/tmp/work/b13-14803/D/.github/workflows/call.yml')
+
+    def _run_commands(path: Path) -> list[str]:
+        """Every shell command line of every `run:` step in one workflow file (a line that ends in a backslash is joined
+        with the next one, so a command that is split over lines is one command)."""
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        lines: list[str] = []
+        for job in doc["jobs"].values():
+>           for step in job["steps"]:
+                        ^^^^^^^^^^^^
+E           KeyError: 'steps'
+
+tests/test_workflow_run_flags.py:27: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_workflow_run_flags.py::test_a_download_in_a_workflow_is_https_only_and_modern_tls[call.yml]
+FAILED tests/test_workflow_run_flags.py::test_a_pip_install_in_a_workflow_takes_wheels_only_with_hashes[call.yml]
+2 failed, 154 passed in 3.68s
+### plain db54e13 (no P1 at all) + a job 'uses: ./.github/workflows/lint.yml' (local reusable workflow, not SHA-pinned)
+E           AssertionError: call.yml
+E           assert ['not pinned ...ows/lint.yml'] == []
+E             
+E             Left contains one more item: 'not pinned by full SHA: ./.github/workflows/lint.yml'
+E             Use -v to get more diff

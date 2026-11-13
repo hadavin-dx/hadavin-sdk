@@ -1,0 +1,6 @@
+F9 reviewer-F safety assert weakened => KILLED | KILLED tests/test_hygiene.py::test_the_guard_names_every_bad_file_says_what_to_d
+F25 reviewer-F guard_message leaks REPO patch (v5 form) => SURVIVED | 
+G1 E6 guard matches the base name only (a nested file of the same name is flagged) => SURVIVED | 
+G2 E16 hint drops 'or a lone CR' => SURVIVED | 
+G3 E15/N16 bad files joined with a space => KILLED | KILLED tests/test_hygiene.py::test_the_guard_names_every_bad_file_says_what_to_d
+G10 N8 message without the file names => KILLED | KILLED tests/test_hygiene.py::test_the_guard_names_every_bad_file_says_what_to_d

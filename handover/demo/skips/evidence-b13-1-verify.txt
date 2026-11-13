@@ -1,0 +1,20 @@
+=== db54e13 tree=B global=gcF autocrlf(effective)=false
+.....................                                                    [100%]
+21 passed in 25.54s
+
+=== db54e13 tree=B global=gcT autocrlf(effective)=true
+.....................                                                    [100%]
+21 passed in 25.25s
+
+=== 2db3926 tree=A2 global=gcF autocrlf(effective)=false
+.....................                                                    [100%]
+21 passed in 17.92s
+
+=== 2db3926 tree=A2 global=gcT autocrlf(effective)=true
+.....................                                                    [100%]
+21 passed in 17.66s
+
+=== db54e13-real-clone-autocrlf-true tree=R global=none autocrlf(effective)=true
+.....................                                                    [100%]
+21 passed in 18.55s
+

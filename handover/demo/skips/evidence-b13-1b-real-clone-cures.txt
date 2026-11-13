@@ -1,0 +1,25 @@
+core.autocrlf (repo config) = true; HEAD db54e13 + v6 applied (index)
+--- sonar-project.properties planted crlf: sonar-project.properties CR bytes: 14 bytes: 883
+E       AssertionError: sonar-project.properties: this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, the repository stores LF (.gitattributes). Replace <file> with the path of the file. Cure 1, on every system, 
+1 failed, 20 deselected in 0.04s
+cure git: sonar-project.properties CR bytes: 0 bytes: 869 identical to the LF original: yes
+cure py: sonar-project.properties CR bytes: 0 bytes: 869 identical to the LF original: yes
+--- sonar-project.properties planted lonecr: sonar-project.properties CR bytes: 14 bytes: 869
+E       AssertionError: sonar-project.properties: this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, the repository stores LF (.gitattributes). Replace <file> with the path of the file. Cure 1, on every system, 
+1 failed, 20 deselected in 0.04s
+cure git: sonar-project.properties CR bytes: 0 bytes: 869 identical to the LF original: yes
+cure py: sonar-project.properties CR bytes: 0 bytes: 869 identical to the LF original: yes
+--- exceptions.txt planted crlf: exceptions.txt CR bytes: 31 bytes: 2245
+E       AssertionError: exceptions.txt: this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, the repository stores LF (.gitattributes). Replace <file> with the path of the file. Cure 1, on every system, throws awa
+1 failed, 20 deselected in 0.04s
+cure git: exceptions.txt CR bytes: 0 bytes: 2214 identical to the LF original: yes
+cure py: exceptions.txt CR bytes: 0 bytes: 2214 identical to the LF original: yes
+--- exceptions.txt planted lonecr: exceptions.txt CR bytes: 31 bytes: 2214
+E       AssertionError: exceptions.txt: this file holds a carriage return (Windows line endings, CRLF, or a lone CR); if it is a text file, the repository stores LF (.gitattributes). Replace <file> with the path of the file. Cure 1, on every system, throws awa
+1 failed, 20 deselected in 0.04s
+cure git: exceptions.txt CR bytes: 0 bytes: 2214 identical to the LF original: yes
+cure py: exceptions.txt CR bytes: 0 bytes: 2214 identical to the LF original: yes
+M  docs/tests.md
+M  tests/test_hygiene.py
+guard on the restored tree:
+1 passed, 20 deselected in 0.03s

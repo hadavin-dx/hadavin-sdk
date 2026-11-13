@@ -1,0 +1,155 @@
+### apply matrix on db54e13 with the FINAL crlf-guard-v6.patch sha256 2d032787d57326e7 and the FINAL v3.2.2 delta sha256 b9c941027ac7238c; git apply --cached on a temp index; chain P1 < P1d < P1dd enforced in random orders
+## each alone
+C alone: OK
+P1 alone: OK
+P1d alone: FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1dd alone: FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P2 alone: OK
+P3 alone: OK
+N1 alone: OK
+N2 alone: OK
+N3 alone: OK
+N4 alone: OK
+G alone: OK
+T alone: OK
+
+## all 132 ordered pairs
+C P1 OK
+C P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+C P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+C P2 OK
+C P3 OK
+C N1 OK
+C N2 OK
+C N3 OK
+C N4 OK
+C G OK
+C T OK
+P1 C OK
+P1 P1d OK
+P1 P1dd OK
+P1 P2 OK
+P1 P3 OK
+P1 N1 OK
+P1 N2 OK
+P1 N3 OK
+P1 N4 OK
+P1 G OK
+P1 T OK
+P1d C FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d P1 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d P1dd FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d P2 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d P3 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d N1 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d N2 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d N3 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d N4 FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d G FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1d T FAIL (0, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P1dd C FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd P1 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd P1d FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd P2 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd P3 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd N1 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd N2 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd N3 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd N4 FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd G FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P1dd T FAIL (0, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P2 C OK
+P2 P1 OK
+P2 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P2 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P2 P3 OK
+P2 N1 OK
+P2 N2 OK
+P2 N3 OK
+P2 N4 OK
+P2 G OK
+P2 T OK
+P3 C OK
+P3 P1 OK
+P3 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+P3 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+P3 P2 OK
+P3 N1 OK
+P3 N2 OK
+P3 N3 OK
+P3 N4 OK
+P3 G OK
+P3 T OK
+N1 C OK
+N1 P1 OK
+N1 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+N1 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+N1 P2 OK
+N1 P3 OK
+N1 N2 OK
+N1 N3 OK
+N1 N4 OK
+N1 G OK
+N1 T OK
+N2 C OK
+N2 P1 OK
+N2 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+N2 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+N2 P2 OK
+N2 P3 OK
+N2 N1 OK
+N2 N3 OK
+N2 N4 OK
+N2 G OK
+N2 T OK
+N3 C OK
+N3 P1 OK
+N3 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+N3 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+N3 P2 OK
+N3 P3 OK
+N3 N1 OK
+N3 N2 OK
+N3 N4 OK
+N3 G OK
+N3 T OK
+N4 C OK
+N4 P1 OK
+N4 P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+N4 P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+N4 P2 OK
+N4 P3 OK
+N4 N1 OK
+N4 N2 OK
+N4 N3 OK
+N4 G OK
+N4 T OK
+G C OK
+G P1 OK
+G P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+G P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+G P2 OK
+G P3 OK
+G N1 OK
+G N2 OK
+G N3 OK
+G N4 OK
+G T OK
+T C OK
+T P1 OK
+T P1d FAIL (1, 'P1d', 'error: tests/test_raw_bidi_chars.py: does not exist in index')
+T P1dd FAIL (1, 'P1dd', 'error: tests/test_workflow_run_flags.py: does not exist in index')
+T P2 OK
+T P3 OK
+T N1 OK
+T N2 OK
+T N3 OK
+T N4 OK
+T G OK
+
+## 2000 random full orders of all 12 (seed 13)
+total 2000 fail 0
+## 1000 random full orders (seed 99)
+total 1000 fail 0
+## 2db3926: C alone
+C alone: OK

@@ -1,0 +1,9 @@
+### v3.2.2 delta: new test and mutants (tree = db54e13 + P1 v3.2 + v3.2.1 + delta)
+real code: 1 passed, 7 deselected in 0.55s
+mutant steps expression = job["steps"]: 1 failed, 7 deselected in 0.04s
+mutant steps expression = job.get("steps", []): 1 failed, 7 deselected in 0.05s
+mutant steps expression = job.get("steps") or [{}]: 1 passed, 7 deselected in 0.04s
+mutant: stop reading at the first job without steps: 1 failed, 7 deselected in 0.06s
+restored: 1 passed, 7 deselected in 0.04s
+whole tests of the two P1 files: 154 passed in 3.69s
+(survivor 'or [{}]' is equivalent: a step {} has no run key)

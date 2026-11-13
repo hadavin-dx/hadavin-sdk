@@ -1,0 +1,9 @@
+### v6, no gitleaks on PATH, DPLD_REQUIRE_SCAN unset: the premise test skips (names the variable), the other 5 new tests run
+....s.                                                                   [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_hygiene.py:320: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+5 passed, 1 skipped, 15 deselected in 0.22s
+### same with DPLD_REQUIRE_SCAN=1 and no gitleaks: the premise test must FAIL
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy
+1 failed, 20 deselected in 0.07s

@@ -1,0 +1,11 @@
+### gates on the final 12-patch stack on db54e13:  46 files changed, 4327 insertions(+), 98 deletions(-)
+## ruff check
+All checks passed!
+## ruff format --check
+156 files already formatted
+## mypy --platform linux
+Success: no issues found in 28 source files
+## mypy --platform win32
+Success: no issues found in 28 source files
+## bandit -ll -r src tools scripts: exit code (baseline db54e13 alone also exit 0, 9 Low)
+0

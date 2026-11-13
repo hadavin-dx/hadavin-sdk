@@ -1,0 +1,40 @@
+### scope claim, measured 2026-11-13: db54e13 (no v6), one file kind at a time turned to CRLF in a clean clone; gitleaks 8.30.1; icon.png and the two .ps1 show CR by design
+== none: files with CR: ./src/lead_desk/portal/icon.png ./scripts/start_all.ps1 ./scripts/reset.ps1 
+gitleaks dir rc=0
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=0 
+== toml: files with CR: ./src/lead_desk/portal/icon.png ./scripts/start_all.ps1 ./scripts/reset.ps1 ./.gitleaks.toml 
+gitleaks dir rc=0
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=0 
+== patterns: files with CR: ./src/lead_desk/portal/icon.png ./patterns.txt ./scripts/start_all.ps1 ./scripts/reset.ps1 
+gitleaks dir rc=0
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=0 
+== exceptions: files with CR: ./src/lead_desk/portal/icon.png ./scripts/start_all.ps1 ./scripts/reset.ps1 ./exceptions.txt 
+gitleaks dir rc=0
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=2636 
+== reqs: files with CR: ./src/lead_desk/portal/icon.png ./requirements-dev.in ./requirements-coverage.txt ./requirements-dev-win.txt ./requirements-browser.in ./scripts/start_all.ps1 ./scripts/reset.ps1 ./requirements-coverage.in ./requirements-browser.txt ./requirements-browser-win.txt ./requirements-dev.txt 
+gitleaks dir rc=0
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=0 
+== sonar: files with CR: ./src/lead_desk/portal/icon.png ./scripts/start_all.ps1 ./scripts/reset.ps1 ./sonar-project.properties 
+gitleaks dir rc=1
+hygiene.pipeline findings: 0
+lint.yml literal-scan step: git grep rc=0 lines=2636 left=0 
+
+### tests/test_hygiene.py + tests/test_gitleaks_exceptions.py (59 tests) in the same clones, DPLD_REQUIRE_SCAN=1, gitleaks on PATH, autocrlf=false:
+== none
+59 passed in 44.10s
+== toml
+59 passed in 33.96s
+== patterns
+59 passed in 35.51s
+== exceptions
+59 passed in 33.66s
+== reqs
+59 passed in 34.24s
+== sonar
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+1 failed, 58 passed in 33.99s
