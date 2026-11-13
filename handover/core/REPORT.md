@@ -1,4 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 14:02Z (core lead)
+V4d DONE (independent, F4d head): docs test 16 passed x3; 20-file run 1566 passed/30 skipped (builder said 1563/33, same total 1596, which 3 differ unknown); ruff clean; fails-before 5 failed/11 passed (matches). MUTATIONS: 6 killed, 3 SURVIVED, all in docs/settings.md: M6 workflow value `1`->`0`, M7 the "(H:MM:SS)" clause removed, M8 "(even `0`...)" removed. Root cause proven: the test checks the two workflow files, not those sentences. Not fixed yet on purpose: the docs rebase onto the demo claims series (waiting for the frozen hash) may replace settings.md; the 3 survivors go into the rebase brief as required tests (fix-dont-defer: I will fix them there, not drop them). If the hash does not arrive by 14:30Z I fix them on the F4d tree. Evidence: fix/V4d-evidence.md.
+Running: V6 (ac5e8e218b86693bc), COMBINE (adf3d950396c0b38a). Waiting: docs rebase. FAILURES: V4d-1 3 surviving mutants (test gap, cause proven). Totals unchanged otherwise. LOAD: 2 agents; heavy slots 0 of 3.
+
 ## STATUS 13:55Z (core lead)
 | row | what | state |
 |---|---|---|
