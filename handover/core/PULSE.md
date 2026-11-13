@@ -77,3 +77,4 @@
 04:33Z P2 r11 resolved (0B/8M, possible fail-open to prove); batch 12 builders live for P2 and P6
 04:37Z P2 runner a909a11d reported on 82dd69c1: 385 focused pass 3.12+3.13; 94 mutant rows 91 killed 3 crash 0 survived; 1 hostile case served (equal copy dict); RESULTS.md committed
 04:40Z SONAR-PATH batch 4 landed abb3e90a; r4 reviewers+runner live; P2/P6 batch 12 building
+04:44Z SONAR-PATH r4 design 0B/3M; codebase review + runner live
