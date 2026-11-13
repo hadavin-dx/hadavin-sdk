@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 01:54Z / 07:24 IST - Q4 DRY-RUN CHECKS DONE: 6 REAL DOC-vs-SCRIPT FINDINGS (D1 medium) -> fix builder started; single-process run 2098 passed / 0 failed (about 70%); review map + versions.md fix patch pushed
+FAILED / UNCERTAIN first:
+1. Q4 (real-run scripts, synthetic data, local fakes only, no live call): 224 case results over 2 passes (identical exit codes and output), 0 unexpected failures, but 8 cases DISAGREE with the docs (D1-D6): D1 (MEDIUM): a missing, two-line or too-short HubSpot key file is NOT checked at start (the key file is opened at the first CRM call, crm_hubspot.py:254), contradicting docs/settings.md:3, :82, :116: after answering y, run_real_check.py ran about 75 s and ended exit 3 with a misleading 'unknown number of contacts, archive by hand' note (these y runs went only to 127.0.0.1:1); D2: DESK_DB_PATH=:memory: passes run_real_check's checks and the y/N question, then exits 3 and leaves desk-1.log in the cwd (the desk itself refuses with exit 4); D3: a non-UTF-8 config prints a byte value and its position against the 'never prints a value' claim; D4: run_live_check.py prints a traceback (EOFError) with no terminal; D5: run_live_check.py exits 0 even when every call failed or the key file is bad; D6: --dry-fakes leaves a real-dry-* folder (14 entries) in TMPDIR each run. Everything else matched: 14 required-name refusals, 22 bad-setting refusals, host and key refusals, y/N, --dry-fakes (exit 0, ALL CHECKS HOLD, about 35 s), the hubspot_probe stub modes, reset.sh exits 2/3/4/6, desk exit 4; no made-up key text appeared in any output. NOT run: PowerShell scripts (no pwsh), real paths. Fix builder Q4b started (script-level fixes + tests that fail on the old code; any core src change is flagged for your approval).
+2. Single-process run of 2db3926: 2098 passed, 0 failed at 01:53Z (about 70%); no restart since about 01:10Z; ETA about 02:05Z.
+3. Stale doc found by the review map and confirmed by me: versions.md still says the browser-lock secret-scan allowance is 'interim, in any folder'; your .gitleaks.toml is already anchored (I proved a nested copy IS reported: 1 finding): patch merge-ready/versions-md-allowance.patch (versions.md only; applies on 2db3926; Semgrep v4 still applies after it): your call.
+4. Review map of PR #4 (pr-text/REVIEW-MAP-PR4.md, 142 rows): read first: the 9 src Python files (only desk.py and server.py change runtime behaviour), then n8n_api.py/http_guard.py/scrub_n8n_export.py, the allowlists, the locks, sonar.yml. Risk points: sonar.yml runs repository test code in the job holding the Sonar token (accepted risk stated in the file); CodeAnt skips the browser locks.
+5. Not run anywhere: PowerShell/Windows full suite, real GitHub CI, a real n8n, Python 3.13 tests.
+READY TO APPLY NOW: Semgrep v4 (own PR); versions.md fix (optional). Nothing else pending on pr-3-tests.
+NEEDS FROM LEAD: answers to QUESTIONS-FOR-LEAD.md (10 items); whether D1-D6 fixes are wanted on pr-3-tests (D1 may need a core change: I will say so before building).
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| single-process run (shell) | whole suite of 2db3926 in one pytest process | 01:42:49 | 2098 passed, 0 failed | /tmp/work/full2db-b.txt -> INT-3 update |
+| Q4b builder (sonnet) | fixes + tests for D1-D6 | 01:54 | running | real-run/real-run-fixes.patch + FIXES.md |
+| never-ran builder (sonnet) | what only a Windows run can show (list + commands) | 01:54 | running | skips/NEVER-RAN.md |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 2, shells 2, containers 0, heavy pytest 1, load about 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | single-process run | chunked 3138 passed 0 failed | the lead requires one process | no | run ends green |
+| real-run scripts | Q4 -> Q4b | 6 doc-vs-script findings | class-level fix rule | no | fixes reviewed |
+| PR #2-#4 descriptions, Semgrep texts | done | - | - | YES | lead answers + pastes |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| Q4 dry-run checks | done: D1-D6 (DRY-RUN-CHECKS.md, run-dry-checks.sh) |
+| PR #4 review map | done (REVIEW-MAP-PR4.md + list-rows.tsv) |
+| versions.md stale paragraph | found + patch (verified) |
+
 ## 2026-11-13 01:53Z / 07:23 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
