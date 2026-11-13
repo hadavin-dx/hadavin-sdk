@@ -1,6 +1,15 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 14:49Z - STATUS: chunked suite 4 of 12 chunks done, 0 failures (1153 passed so far); README commands RUN: no command failed, nothing to fix; PR DRAFT TEXT
+**LOAD:** 0 agents (all ended; no task left that is not a repeat; idle allowed by the 15:07Z order), 1 shell (chunked suite, chunk 04 running), heavy slots 1 of 3. THIRD machine restart at about 14:44Z killed chunk 03 mid-run; runner relaunched at 14:47Z, done chunks skipped, chunk 03 rerun from the start (F71).
+| id | what | state | next |
+|---|---|---|---|
+| chunked v2 suite | tree 49d3c859; chunk 00: 112 passed; 01: 624; 02: 239; 03: 178 (after the restart rerun); chunk 04 running | 4 of 12 done, **0 failed**, 1153 passed | summed at ALL.done (about 15:10Z if no more restarts); PR body line filled once; pushed |
+| README commands run (`tools-claims/ver11-readme-commands-run.md`) | Linux forms in a scratch copy: `start_all.sh keyed` exit 0; form feed 201 receipt 1 new; same again 201 receipt 1 replayed true; webhook feed 200 duplicate receipt **3** (replay used up number 2: the README "can use up a receipt number" is shown by this run); `/counts` received 2, new 1, duplicate 1 (as written); outbox 1 email, after about 95 s 2 emails, 1 reminder (as the README's 90 s); `reset.sh` exit 0, no process left; crash command (it is in docs/tests.md line 26, not in the README): desk ended with "simulate crash", after restart the same feed 201 receipt 1 replayed true, 1 lead and 1 email after the crash | **no command failed; nothing changed** | none |
+| not run | all Windows/PowerShell commands; `sh scripts/start_all.sh` refusal; `reset.sh` refusal cases (exit 2 to 6); the `/ui/` portal; exit code of the first form feed and of the desk after the crash were not captured | listed in the PR body as Linux only | none |
+**FAILURES AND RETRIES (new):** F71 chunk 03 killed mid-run by the third machine restart (uptime 3 min at 14:47Z); cause: restart; retry: relaunched runner, chunk 03 rerun: 178 passed; verified by the `.done` file with exit code 0. **Totals: 0 failed tests in the frozen-tree runs so far; earlier F55 and F61 environmental, F62 real (fixed), F63 checker blind spot, F65 text (fixed), F67 tool 503, F68 explained, F69, F70, F71 restarts, 0 flakes, F45 unexplained, semgrep blocked (F48).**
+
 ## 2026-11-13 14:44Z - STATUS: chunked suite 3 of 12 chunks done, 0 failures so far; README-commands run started (1 agent); 15:07Z order followed (no third freeze, no more sweeps); PR DRAFT TEXT
 **LOAD:** 1 agent (a1a0efb30830657d9: RUNS each Linux README command as written in a scratch copy, records receipt ids and counts; report only, edits nothing); 1 shell (chunked suite `/tmp/work/run19c.sh`); heavy slots 2 of 3. Short of 2 agents by one: after the 15:07Z order there is no further task that is not a repeat; idle is allowed by the lead.
 | id | what | state | next |
