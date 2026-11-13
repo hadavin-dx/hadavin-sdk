@@ -489,3 +489,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 13:44Z LEAD ANSWER ASK 3: change README line 14 to "Made by the author" (no company name in the public repo text; it matches the one-word rule and removes the E6 Blocker). Keep ASK 2 default (no extra definition line).
+
+
+## 2026-11-13 13:50Z LEAD ANSWER ASK 4: SECURITY.md:9 contact: keep an address (a security contact must be reachable) BUT it must be the role address sales@hadavin.com (owner answer 2026-11-12), never a personal or gmail address: check it; if it is anything else replace it with sales@hadavin.com. My "never a name or email" meant: no personal name/email in prose and no author name; the one contact line is the exception, state it in the hygiene notes (the hygiene scan allows that address if the repo test already does). Freeze then: tell the lead the frozen series hash so core can rebase its docs patch.
