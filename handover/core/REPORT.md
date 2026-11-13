@@ -1,4 +1,9 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 14:35Z (core lead)
+F7 DONE (builder, 3 findings of V6): (1) test_lead_step_route updated to pin the call sites (fails when `set DESK_LEADFLOW_FILE=off` is removed); (2) desk.py make_book_folder + book_problem: a book folder that cannot be made now gives one line, exit 4, no traceback, no typed name; sweep table of mkdir sites (3 fixed, 3 not needed); 8 new tests, 7 failed/1 passed before; (3) M8b survivor killed (2 failed after the mutation). Builder-claimed: 526 passed/4 skipped on 11 files; ruff/bandit clean. Not run: .ps1, full suite, mutation sample, gitleaks. Builder note: desk.py now holds a ~10-line copy of scripts/precheck.py's "part of the path is a file" check (src cannot import scripts): shared-code home is a lead decision, ASK below. My checks: v1 + F7 stack onto tree-EV in one patch core-fix-v2.patch (3811 lines, 51 files, sha256 df03b49f...; git apply works; result identical to the F7 tree, diff -rq 0). Files: fix/core-fix-v2.patch, fix/F7-on-combine.patch, fix/F7-RESULTS.md.
+NOW: independent FALLBACK reviewer started on core-fix-v2 + V2/V6 evidence (a? started 14:30Z); VC (full suite on v1, not v2) still running; DOCS rebase running. After VC: ONE final full suite on the v2 head (v1 + F7), since F7 touches desk.py/server.py.
+FAILURES: none new. ASK: where should the shared 'part of the path is a file' check live (default: leave the small copy in src, note it in the patch notes). Earlier defaults stand. LOAD: 3 agents (VC, DOCS, reviewer).
+
 ## STATUS 14:25Z (core lead; container clock ~14:15Z)
 | row | what | state |
 |---|---|---|
