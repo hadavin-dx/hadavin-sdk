@@ -1,6 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 14:00Z - STATUS; round 2 (cap 2) reports both in (comprehension 1 Blocker + 9 Major, codebase-details 1 Blocker + 5 Major, same stale-pointer class); b7 done and verified (10 TRUE, 1 FALSE fixed); b8 working on the rest; ASK 4 already satisfied
+**LOAD:** 4 cores, 15 GB RAM; agents running: 1 builder (b8 a200e5d41bc52413a); background shells: 1 (candidate full suite 3.12, about 40 percent); heavy slots 1 of 3. Next agents start the minute b8 ends (fresh verifier of the b8 rows, a last read of the PR body).
+| id | what | why | round | state | next |
+|---|---|---|---|---|---|
+| af8b7a891895fa771 `egm:egm-codebase-details` | round 2 | item 2 | **round 2 of cap 2** | done: 1 Blocker (README:117 says load figures came from one Windows computer; limits.md says none is stored) + 5 Major (the PR body Checks placeholder, tests.md P5 row stale, why-this-code.md "the one real-service try", n8n-recipe port/licence, README receipt number "1, then 3" without a test, README:41 ids) + 5 Nit; saved `tools-claims/egm-codebase-details-r2-report.md` | fixed by b7 (README:117, n8n) and b8 (rest); the Checks line when the suite ends |
+| ac7b6e91d78c2771d b7 / ab177773a0fccf23a verifier | b7 applied the second verifier's 7 rows + person words; the third fresh verifier checked them | re-verify | fix round 3 | done: 10 TRUE, 1 FALSE (`n8n-recipe.md:18` inverted "without" -> "with"; I fixed it), 1 UNPROVEN (a note's claim, not text) (`tools-claims/ver3.md`) | none |
+| a200e5d41bc52413a b8 | all round-2 comprehension findings except the b7 ones + the codebase-details extras: tests.md P5/:127, README replay/repeat/duplicate words, sonar.yml dead pointer, review-item id examples, long paragraphs split, DPLD expanded, receipt number wording, stand-in -> demo server in limits.md:30, crash_desk.py PowerShell form, "a new row after 2 s" | round 2 fixes | fix round | running | verifier |
+| candidate full suite 3.12 | final-tree suite from a mode-755 copy, gpgsign off, `DPLD_REQUIRE_SCAN=1` | item 3 | run 1 on the (nearly) final tree | about 40 percent | it covers the tree before the round-2 fixes: I rerun the docs-reading tests on the final tree and the full suite once more if time allows (cap 14:30Z) |
+**ASK 4 (SECURITY.md address): satisfied: `SECURITY.md:9` already holds sales@hadavin.com; the hygiene scan already passed with it (gitleaks and test_hygiene on the candidate). No change.**
+**FAILURES AND RETRIES (new):**
+| id | test or step | result | failure first line verbatim | cause | retries | what I did | verified how |
+|---|---|---|---|---|---|---|---|
+| F65 | third verifier on b7 rows | 1 FALSE of 11 | n/a | real text defect (inverted word) | fix round 3 | fixed | rereading the line |
+| F66 | brief for b8 written to the wrong folder (my command changed folder first) | b8 refused (file not found) | n/a | my slip | 1 | moved the file out of the tree (it was an untracked file in the work tree; it never reached a commit), relaunched | `git status` clean of untracked files |
+**Totals line: 6 tests failed in total today in my own runs before F55 (F7, F8, F10, F27, F40, F41); F55 and F61 environment (explained); F62 real defect (ruff); F63 checker blind spot; F65 text defect; 0 flakes; F45 unexplained (a full run that died silently); semgrep blocked (F48).**
+
 ## 2026-11-13 13:53Z - STATUS; round 2 (cap 2) of the egm reviewers: comprehension is back with 1 Blocker (the PR body Checks line, filled when the suite ends) + 9 Major; two builders fixing; codebase-details round 2 still running; 3.12 pre-fix suite finished
 **LOAD:** 4 cores, 15 GB RAM; agents running: 3 (builders b7 ac7b6e91d78c2771d and b8 a3f3b4e84731a9119, `egm:egm-codebase-details` round 2 af8b7a891895fa771); background shells: 1 (full suite 3.12 on the freeze candidate); heavy slots 1 of 3.
 | id | what it does | why | round | state | next action |
