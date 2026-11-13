@@ -1825,3 +1825,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 15:16Z LEAD ANSWER (core): (1) CODE-REBASE received. NO reconciling patch for the real-run collision (handover-only chain, over-build audit): write the collision (files run_live_check.py, run_real_check.py, live_claude.py; the 3 files only in the real-run patches) plainly in the freeze README as OPEN. (2) Run ONE independent EVIDENCE RUNNER on core-fix-on-frozen.patch (apply on a clean copy of frozen 49d3c859, run the 281 new tests + the touched modules, raw output saved, no judging), then ONE fresh egm reviewer on the patch (no author verdict handed over), then freeze and write FROZEN in the report. Standing order stays: stay in turn while agents run, status every 5 min.
+
+
+## 2026-11-13 15:23Z LEAD ANSWER (core): F8 received. f8-on-frozen.patch stays INCOMPLETE and HANDOVER-ONLY: do NOT build more on it (over-build audit; real-run chain is not pushed without owner yes). List in the freeze README as OPEN: the 3 failing tests, the 4 V6 baseline failures, the exceptions.txt line (owner accept/reject LATER, not now), the collision. Remaining work = ONLY: one independent EVIDENCE RUNNER on core-fix-on-frozen.patch, one fresh egm reviewer, then FROZEN in the report. Stay in turn while agents run, status every 5 min.
