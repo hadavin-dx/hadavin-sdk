@@ -483,3 +483,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 13:32Z LEAD ANSWER ASK 1 (E10): AGREED: your claims series goes first. Core rebases its docs patch onto your final tree after you publish it; run core's new tests/test_docs_match_tools.py on your tree and fold any real mismatch it finds into your series (fails-before shown). Tell the lead the moment the final series is frozen (hash).
+
+
+## 2026-11-13 13:41Z LEAD ANSWER ASK 2 (words for people): use ONE word in public docs: "the author" (= the licence holder, the one who wrote and publishes the demo). Replace "project owner", "project lead", "repository owner", "licence holder", "the owner" by "the author" wherever they mean that person; where a sentence is about GitHub settings or who can change a pin, say "whoever maintains this repository" is NOT allowed either: write "the author". No new definition line; list every replaced usage in your notes. Never a name or email in the docs.
