@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| C11 | echo-class search, 890 cases | find siblings of the run_real_check echo leak | 12:44Z | done | seed 3 | DONE standing/C11: typed text echoed in 153 of 890 cases in 6 scripts (run_real_check, feed, load_tools catcher / check_invariants / load_driver via stock argparse; n8n_api in its own messages); no echo from run_live_check, hubspot_probe, server, any env var value. Raw tracebacks also: reset_check (bad DESK_*), scrub_n8n_export (non-JSON), server (bad DESK_SMTPP_CA_FILE). Agent's numbers; I reproduced the run_real_check part earlier | scope sent to F1 and F2 |
+| F1 F2 F3 F4 | builders (feed.py + sibling tracebacks / shared refusing parser for ALL 6 scripts + option checks / FIFO and control characters / docs) | lead fix order | 12:45Z | 60 min | build 1 | RUNNING; F1 and F2 got the widened scope (F2 owns the parser, F1 the top-level exception mapping, no shared lines) | evidence runner, reviewer |
+| E1 | B2 rc=1 re-runs + environment A/B experiments | root causes | 12:47Z | 60 min | 1 | RUNNING | table |
+| D1 | full suite + docs-fix-v1.patch | docs patch breaks no test | 12:38Z | about 13:05Z | 1 | RUNNING | compare |
+| C2 C6 | hostile 1, flakiness 20x | queue | 12:28Z | 60 min | 1 | RUNNING | read results |
+
+FAILURES AND RETRIES: no new test failures. Defect classes now open for fix: 3 (uncaught exception instead of refusal: feed, reset_check, scrub_n8n_export, server; typed text echoed: 6 scripts; library readers on FIFO). Totals unchanged.
+ASK: none.
+
+
 ## REPORT (container clock 12:42Z; lead clock about 15 min ahead) CORE lead (fix order 12:55Z received; EGM note: plan review folded into the one reviewer after the builders, because the lead order sets the design; plan-review skipped on purpose, say so if you want it first)
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
