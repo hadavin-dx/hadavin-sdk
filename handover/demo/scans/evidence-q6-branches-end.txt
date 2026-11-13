@@ -1,0 +1,8 @@
+origin a0b97a4a6ee7
+origin/cfg-review-tools 30b555d72aa1
+origin/cfg-sonar 53daf3787cb7
+origin/initial-code 43110e75b8ad
+origin/main a0b97a4a6ee7
+origin/pr-1-code d23cf8f0c470
+origin/pr-2-demo-folder f31e2619ad51
+origin/pr-3-tests 2db392650e8b

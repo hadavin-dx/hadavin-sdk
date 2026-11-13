@@ -1,0 +1,8 @@
+origin a0b97a4a6ee7 ci: SonarQube Cloud scan (Linux) and project settings (#6)
+origin/cfg-review-tools 30b555d72aa1 Add CodeAnt and DeepSource config files
+origin/cfg-sonar 53daf3787cb7 ci(sonar): scan whole repo (missing folders stopped the scan), skip Dependabot, same checkout pin as lint, concurrency group
+origin/initial-code 43110e75b8ad portal: route ids from the address bar cannot reach Object.prototype
+origin/main a0b97a4a6ee7 ci: SonarQube Cloud scan (Linux) and project settings (#6)
+origin/pr-1-code d23cf8f0c470 gitleaks: fix the path regex (a broken character class would not have matched)
+origin/pr-2-demo-folder f31e2619ad51 Merge pr-1-code into pr-2-demo-folder
+origin/pr-3-tests 2db392650e8b Batch 3: CodeAnt runtime set (8 patches: speed fake fix, desk book check, portal log, demo-only, tests hardening, fake bodies, stand-in bodies, stop guard) and merge-readiness hygiene tests v3

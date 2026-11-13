@@ -1,0 +1,10 @@
+### HEAD a0b97a4a6ee7  2026-11-13T01:27:04Z
+$ gitleaks dir . --no-banner   (cwd=archive; .gitleaks.toml: none)
+[90m1:27AM[0m [32mINF[0m [1mscanned ~27462 bytes (27.46 KB) in 23.5ms[0m
+[90m1:27AM[0m [33mWRN[0m [1mleaks found: 1[0m
+exit=1
+$ gitleaks git . --no-banner   (cwd=worktree detached at a0b97a4a6ee7)
+[90m1:27AM[0m [32mINF[0m [1m20 commits scanned.[0m
+[90m1:27AM[0m [32mINF[0m [1mscanned ~5668933 bytes (5.67 MB) in 526ms[0m
+[90m1:27AM[0m [33mWRN[0m [1mleaks found: 2[0m
+exit=1

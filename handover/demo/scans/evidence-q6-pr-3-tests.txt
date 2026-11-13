@@ -1,0 +1,23 @@
+### pr-3-tests 2db392650e8b  2026-11-13T01:28:55Z
+$ gitleaks dir . --no-banner   (cwd=archive; .gitleaks.toml: present)
+[90m1:28AM[0m [32mINF[0m [1mscanned ~2969154 bytes (2.97 MB) in 368ms[0m
+[90m1:28AM[0m [32mINF[0m [1mno leaks found[0m
+exit=0 (flags added: --redact -r <json> -f json; findings by rule: none)
+$ gitleaks git . --no-banner   (cwd=worktree detached at 2db392650e8b)
+[90m1:28AM[0m [32mINF[0m [1m20 commits scanned.[0m
+[90m1:28AM[0m [32mINF[0m [1mscanned ~5668933 bytes (5.67 MB) in 771ms[0m
+[90m1:28AM[0m [32mINF[0m [1mno leaks found[0m
+exit=0 (flags added: --redact -r <json> -f json; top rules: none)
+$ python -c 'hygiene.pipeline(REPO, patterns.txt, exceptions.txt)'   (tools/hygiene.py has no CLI entry point; same call test_hygiene makes)
+
+FINDINGS 0
+exit=0
+$ GITLEAKS_BIN=/tmp/work/gl/gitleaks DPLD_REQUIRE_SCAN=1 python -m pytest -q -p no:cacheprovider -rs tests/test_hygiene.py
+...............                                                          [100%]
+15 passed in 14.92s
+exit=0
+$ ruff check . ; ruff format --check .  (ruff 0.16.9)
+All checks passed!
+check exit=0
+145 files already formatted
+format exit=0

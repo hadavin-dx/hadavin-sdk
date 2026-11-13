@@ -1,0 +1,10 @@
+### cfg-review-tools 30b555d72aa1  2026-11-13T01:28:20Z
+$ gitleaks dir . --no-banner   (cwd=archive; .gitleaks.toml: none)
+[90m1:28AM[0m [32mINF[0m [1mscanned ~24918 bytes (24.92 KB) in 12.6ms[0m
+[90m1:28AM[0m [32mINF[0m [1mno leaks found[0m
+exit=0 (flags added: --redact -r <json> -f json; findings by rule: none)
+$ gitleaks git . --no-banner   (cwd=worktree detached at 30b555d72aa1)
+[90m1:28AM[0m [32mINF[0m [1m20 commits scanned.[0m
+[90m1:28AM[0m [32mINF[0m [1mscanned ~5668933 bytes (5.67 MB) in 475ms[0m
+[90m1:28AM[0m [33mWRN[0m [1mleaks found: 2[0m
+exit=1 (flags added: --redact -r <json> -f json; top rules: generic-api-key(2))

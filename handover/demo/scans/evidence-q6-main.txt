@@ -1,0 +1,10 @@
+### main a0b97a4a6ee7  2026-11-13T01:28:41Z
+$ gitleaks dir . --no-banner   (cwd=archive; .gitleaks.toml: none)
+[90m1:28AM[0m [32mINF[0m [1mscanned ~27462 bytes (27.46 KB) in 13.9ms[0m
+[90m1:28AM[0m [33mWRN[0m [1mleaks found: 1[0m
+exit=1 (flags added: --redact -r <json> -f json; findings by rule: generic-api-key(1))
+$ gitleaks git . --no-banner   (cwd=worktree detached at a0b97a4a6ee7)
+[90m1:28AM[0m [32mINF[0m [1m20 commits scanned.[0m
+[90m1:28AM[0m [32mINF[0m [1mscanned ~5668933 bytes (5.67 MB) in 472ms[0m
+[90m1:28AM[0m [33mWRN[0m [1mleaks found: 2[0m
+exit=1 (flags added: --redact -r <json> -f json; top rules: generic-api-key(2))
