@@ -54,11 +54,13 @@ def make_on_decided(holder: dict[str, Any]) -> OnDecided:
 _ON_DECIDED_CODE = make_on_decided({}).__code__
 
 
+# the attributes of a core ``Runtime`` that reach a service: each must be one of the core's own
+# stand-ins
 _RUNTIME_SERVICES = (
     "store",
     "llm",
     "detector",
-)  # the attributes of a core ``Runtime`` that reach a service: each must be one of the core's own stand-ins
+)
 
 # The other members ``Runtime.__init__`` writes. ``registry``, ``audit``, ``limits``, ``hooks`` and ``_evidence`` are each
 # believed only while they are the very object ``build()`` put there (identity, recorded at the end of ``build()`` by
@@ -91,19 +93,20 @@ _MARK_ATOM, _MARK_WEAK, _MARK_KIND, _MARK_ID, _MARK_STRONG, _MARK_SLOT, _MARK_DI
     5,
     6,
 )
-_DIGEST_KEY = secrets.token_bytes(
-    16
-)  # per process: a digest of a recorded text is not comparable across processes
+# per process: a digest of a recorded text is not comparable across processes
+_DIGEST_KEY = secrets.token_bytes(16)
 _ATOM_KINDS: tuple[type, ...] = (str, int, float, bool, bytes, type(None))
+# change in place while the server works: the class counts, the content is not read
 _STATE_KINDS: tuple[type, ...] = (
     set,
     frozenset,
     deque,
-)  # change in place while the server works: the class counts, the content is not read
-_WALK_DEPTH = 4  # levels entered below a hook field (functions, cells, bound methods, dicts, lists)
-_WALK_NODES = (
-    5_000  # objects written down per runtime; more is refused at build and read as changed later
 )
+_WALK_DEPTH = 4  # levels entered below a hook field (functions, cells, bound methods, dicts, lists)
+# objects one walk may write down or compare. A runtime has two walks, each with its own count: the hooks, and the four
+# members (``limits``, ``audit``, ``registry``, ``_evidence``) together, so up to 10,000 objects per runtime. More in one
+# walk is refused at build and read as changed later.
+_WALK_NODES = 5_000
 
 # runtime -> (instance keys, {member: mark} (the agents' own set is held as it is: text only, it reaches nothing), the
 # agents as a frozenset copy, the stored kinds, the marks of the hooks' own (name, value) walk, the hooks class, the
@@ -139,9 +142,8 @@ def _mark(obj: object) -> tuple:
         return (_MARK_KIND, kind)  # its content is walked; the container itself may be rebuilt
     try:
         return (_MARK_WEAK, weakref.ref(obj))
-    except (
-        TypeError
-    ):  # no ``__weakref__`` slot (``Approvals``): the object is kept alive by the app, id and class
+    # no ``__weakref__`` slot (``Approvals``): the object is kept alive by the app, id and class
+    except TypeError:
         return (_MARK_ID, (id(obj), kind))
 
 
@@ -164,9 +166,8 @@ def _mark_matches(mark: tuple, obj: object) -> bool:
     if tag == _MARK_DIGEST:
         return kind is held[0] and _digest(obj) == held[1]
     if tag == _MARK_WEAK:
-        target = (
-            held()
-        )  # a reference that is dead answers None: it must not match a ``None`` found there now
+        # a reference that is dead answers None: it must not match a ``None`` found there now
+        target = held()
         return target is not None and target is obj
     if tag == _MARK_STRONG:
         return held is obj
@@ -325,7 +326,7 @@ def _member_fields(obj: object, w: _Walk, depth: int, deep: bool) -> None:
             w.ident(value)
         else:
             w.add(value)
-            if w.decide(lambda: kind in _ENTER_KINDS):
+            if w.decide(lambda k=kind: any(k is e for e in _ENTER_KINDS)):
                 _member_fields(value, w, depth + 1, deep=False)
 
 
@@ -546,9 +547,8 @@ def _seal_over_budget(func: object, built: bool) -> bool:
         if not built or type(holder) is not dict or dict.__len__(holder) != 1:
             return False
         key = next(dict.__iter__(holder))
-        if (
-            type(key) is not str or key != "rt"
-        ):  # an exact text only: a key of a subclass runs its own ``__eq__``
+        # an exact text only: a key of a subclass runs its own ``__eq__``
+        if type(key) is not str or key != "rt":
             return False
         runtime = dict.__getitem__(holder, key)
         sealed = _RUNTIME_SEALS.get(runtime)
@@ -591,9 +591,8 @@ def fixed_clock(moment: datetime) -> Callable[[], datetime]:
 
 # a moment only to make the factory's code object
 _FIXED_CLOCK_CODE = fixed_clock(datetime.min.replace(tzinfo=UTC)).__code__
-_NOW_CODE = (
-    now.__code__
-)  # ``models.now`` is the same function object after ``now.__code__ = ...``: its code is pinned
+# ``models.now`` is the same function object after ``now.__code__ = ...``: its code is pinned
+_NOW_CODE = now.__code__
 # the two names ``models.now`` reads from its module (``datetime.now(UTC)``): pinned by identity too, so a replaced
 # ``models.datetime`` or ``models.UTC`` (foreign code run before the signature is checked) is seen. Read from the
 # function's own globals dictionary with the builtin ``dict.get``.
@@ -798,9 +797,8 @@ class Approvals:
             held[name] = obj
         if self._hand_built:
             held["audit"], held["registry"] = self.audit, self.registry
-        if not _is_core_on_decided(
-            self.on_decided, not self._hand_built, scan
-        ):  # a callable run after a valid signature can hold anything
+        # a callable run after a valid signature can hold anything
+        if not _is_core_on_decided(self.on_decided, not self._hand_built, scan):
             over = _seal_over_budget(self.on_decided, not self._hand_built)
             held["seal_over_budget" if over else "on_decided"] = self.on_decided
         if not _is_core_clock(self.clock):  # ``receive`` runs it before the signature is checked
@@ -811,9 +809,8 @@ class Approvals:
         """What these approvals reach that is real, now: the facts of the config frozen at construction, and the held
         objects as they are at this moment. The receiver asks this at every request on a bind other computers can
         reach with no reason given (called as ``Approvals.real_now(a)``, so a subclass cannot answer for itself)."""
-        scan = (
-            standins.Scan()
-        )  # ONE budget for the whole request, and an object looked at twice is read once
+        # ONE budget for the whole request, and an object looked at twice is read once
+        scan = standins.Scan()
         return self.config_facts + held_services_found(Approvals.held_services(self, scan), scan)
 
     def __deepcopy__(self, memo: object) -> object:

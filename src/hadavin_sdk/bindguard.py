@@ -162,9 +162,8 @@ def held_services_found(
             else:
                 answer = verdict(obj, scan)
                 counts = answer != VERDICT_STAND_IN
-                if (
-                    answer == VERDICT_OVER_BUDGET
-                ):  # a size outage, named apart from "a real service"
+                # a size outage, named apart from "a real service"
+                if answer == VERDICT_OVER_BUDGET:
                     crossed = scan.heaviest if scan is not None else None
                     label = (
                         f"held {name}: over budget (too many values to check)"
@@ -251,9 +250,8 @@ def reason_problem(reason: object) -> str | None:
     after trimming, printable, at most ``BIND_REASON_MAX_CHARS``); otherwise the sentence that says why not. The
     reason is written to the log at WARNING; it is not an audit record."""
     limit = defaults.BIND_REASON_MAX_CHARS
-    if (
-        type(reason) is not str
-    ):  # exact type: a ``str`` subclass would run its own ``strip`` and ``isprintable``
+    # exact type: a ``str`` subclass would run its own ``strip`` and ``isprintable``
+    if type(reason) is not str:
         return "allow_public_bind_reason must be text"
     text = reason.strip()
     if len(text) < defaults.BIND_REASON_MIN_CHARS:

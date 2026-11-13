@@ -227,9 +227,8 @@ def live_class(key: tuple[str, str]) -> type | None:
     if type(module) is not ModuleType:
         return None
     cls = dict.get(vars(module), key[1])
-    return (
-        cls if issubclass(type(cls), type) else None
-    )  # the type of the value, never its own ``__class__``
+    # the type of the value, never its own ``__class__``
+    return cls if issubclass(type(cls), type) else None
 
 
 _CLASS_ANNOTATIONS = vars(type)[
@@ -241,9 +240,8 @@ def _touch_annotations(cls: type) -> None:
     """Python 3.12 and 3.13 add an empty ``__annotations__`` to a class dictionary the first time it is read, and
     3.12 fills some entries lazily: read it now, through ``type``'s own descriptor, so the pin includes it. The same
     for ``__slotnames__`` (see below)."""
-    with contextlib.suppress(
-        *READ_ERRORS
-    ):  # a class without one (3.14 reads it differently) is fine
+    # a class without one (3.14 reads it differently) is fine
+    with contextlib.suppress(*READ_ERRORS):
         _CLASS_ANNOTATIONS.__get__(cls)
     # ``copy.copy`` and ``pickle`` of an instance write ``__slotnames__`` (a list of text) into the class dictionary the
     # first time: a harmless entry the standard library adds, so it is written now and the pin includes it
@@ -324,6 +322,7 @@ def pin_all() -> None:
     from hadavin_sdk.llm import fake
     from hadavin_sdk.store import memory
 
+    # imported so that their classes exist to be pinned
     _ = (
         channel,
         injection,
@@ -332,7 +331,7 @@ def pin_all() -> None:
         models,
         config,
         cards,
-    )  # imported so that their classes exist to be pinned
+    )
     for key in _PINNED_KEYS:
         with contextlib.suppress(*READ_ERRORS):  # the lazy path pins it at the first question
             cls = live_class(key)
@@ -469,9 +468,8 @@ def _data_state_ok(value: object, key: tuple[str, str]) -> bool:
     """True when a data row (a pydantic model, or the one plain dataclass ``Card``: all its state is its ``__dict__``) keeps nothing in the slots the scan of ``__dict__`` does not read:
     ``__pydantic_extra__`` and ``__pydantic_private__`` are None or empty, ``__pydantic_fields_set__`` is a plain
     ``set`` of ``str``."""
-    if (
-        key in _DATACLASS_KEYS
-    ):  # all its state is its ``__dict__`` (read), but its slots are checked as well
+    # all its state is its ``__dict__`` (read), but its slots are checked as well
+    if key in _DATACLASS_KEYS:
         return not _has_slots(value)
     for name in ("__pydantic_extra__", "__pydantic_private__"):
         got = object.__getattribute__(value, name)

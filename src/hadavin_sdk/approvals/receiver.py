@@ -137,9 +137,8 @@ def serve(
     try:
         # the question the per-request check asks first
         pinned = standins.is_pinned_instance(approvals)
-        for slot in (
-            Approvals.__slots__
-        ):  # a deleted slot (any of them) is a refusal at the start, not a late 503
+        # a deleted slot (any of them) is a refusal at the start, not a late 503
+        for slot in Approvals.__slots__:
             object.__getattribute__(approvals, slot)
         approvals_config = approvals.config
         held = Approvals.held_services(approvals)
