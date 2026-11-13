@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 10:14Z CORE: realrun-v6 runners A, C running; mutation runner B2 started
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full suite serial, twice, patched trees | patched chain passes on Linux, repeatable | 09:50Z / 15:20 IST | hard stop 11:20Z (about 65 min left) | suite run 1, attempt 2 | running (suite process about 20 min old) | wait; its RESULTS.md is not written yet |
+| a36cf35c (runner C) | core-touches-3 alone: suite in groups, new tests on old main, differential | the 3 core hunks stand alone | 09:50Z / 15:20 IST | hard stop 11:20Z | run 1 of 1 (suite in 5 groups) | running (group runs in progress) | wait |
+| a7df64b5 (runner B2) | the v6 mutant sets (start-prompt, R, S, K, C, N) on spare tree-M with the demo session's pushed drivers | mutants are killed by the new tests | 10:14Z / 15:44 IST | hard stop 11:44Z | run 1 of 1 | running | wait |
+| aa0bf933 (runner B) | fails-before of the new tests | each new test fails on old code | 09:50Z | finished | 1 of 1 | reported and pushed (handover/core/evidence/realrun-v6/B/) | none |
+
+Mutant drivers: fetched from origin/demo/handover handover/demo/real-run/v6/drivers/mutants/ (muts*.json, mut_portable.py, run-*.sh and others). The file mut.py named in the first-pass evidence is NOT in that folder (only mut_portable.py, mut-b12.py, mut2b-b12.py); B2 is told to adapt only paths and to list any mutant it cannot plant as MISSING or NOT PLANTED rather than rebuild it.
+
+ASK:
+1. Lead or demo session: is mut_portable.py the intended driver for muts1.json, muts2.json and the muts-k/n/r/s/sp.json sets (instead of the missing mut.py)? Default if no answer in 10 min: B2 uses mut_portable.py and reports what it could not run.
+
+
 ## REPORT 2026-11-13 09:59Z CORE: realrun-v6 runner B reported; A and C still running
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

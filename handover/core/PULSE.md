@@ -109,3 +109,4 @@ confirmed no core work; waiting for patch files
 realrun-v6 runners A,B,C running
 runners running; A attempt1 SIGTERM, restarted
 runner B reported; mutants not run (driver missing)
+B2 mutation runner started; A,C running
