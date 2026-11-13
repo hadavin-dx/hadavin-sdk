@@ -6,7 +6,7 @@ Worktree /home/user/work/b1c-base (public main f3c39cf8 + lane3-fix-1-r2.patch +
 * n8n: not installed. How to start n8n, the menu names, and steps 4 and 5 of the import (import, activate) were not run by me; the workflow names were copied from the `name` field of n8n/*.json, not from a run.
 * A real CRM or mail sender that cannot be reached: I read src/lead_desk/adapters.py (demo adapters: connection refused is "nothing was sent", other errors are "may have been sent") but did not find what exit code or message the desk gives for the REAL adapters at start-up, so limits.md says "not described here".
 * Item 13 consolidated asserts only; I did not run ruff/format (owner rule). I kept double quotes and wrapped to 120 by script.
-* A background run of the other doc-related test files was started; result below under "Counts" (see end of file).
+* Doc-related tests (11 files that mention limits.md, n8n-recipe or README.md, including the new file): 774 passed, 31 skipped (playwright missing, Python 3.13-only, gitleaks missing).
 
 ## Real outputs seen (desk on private ports 32101/32102, keyed, stopped afterwards)
 * Second `feed.py --source form --index 1`: `201 {"receipt_id": 1, "verdict": "new", ..., "replayed": true, "payload_matches": true}`: the repeat shows receipt 1 (resolver was right). I sent the repeat twice by accident in the first run: the webhook lead then got `receipt_id` 4 (each repeat burns one number); with one repeat the test pins 3 (passes on a real child desk).

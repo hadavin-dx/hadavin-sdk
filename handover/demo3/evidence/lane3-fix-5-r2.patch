@@ -124,7 +124,7 @@ index 353043b..ef53148 100644
          s.bind((HOST, 0))
 diff --git a/tests/test_reset_ps_width.py b/tests/test_reset_ps_width.py
 new file mode 100644
-index 0000000..4528a67
+index 0000000..b33ee16
 --- /dev/null
 +++ b/tests/test_reset_ps_width.py
 @@ -0,0 +1,173 @@
@@ -254,7 +254,7 @@ index 0000000..4528a67
 +    func = text[start : text.index("\n}\n", start) + 3]
 +    bash = shutil.which("bash")
 +    assert bash is not None
-+    env = {"PATH": f"{stubs}:/usr/bin:/bin"}
++    env = {"PATH": str(stubs) + os.pathsep + os.environ.get("PATH", "")}
 +    done = subprocess.run(
 +        [bash, "-c", func + '\nproc_args "$1"', "bash", pid], env=env, capture_output=True, text=True, timeout=30, check=False
 +    )

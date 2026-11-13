@@ -114,3 +114,6 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | Q8b | closed 13:31Z, report mutation-identity-claims.md | | | closed |
 | E4b | closed 13:41Z, evidence/lane3-fix-3-r2-evidence.md (r2+r3 same: new file alone 15 passed 1 skipped; old+new 393 passed 2 skipped; 5 q8 survivors killed by new file; hand mutant d killed by old file) | | | closed |
 | REV-3c | fresh egm-codebase-details on lane3-fix-3-r3 | 13:42Z | ~14:00Z | running |
+| B1c | closed 13:50Z: lane3-fix-1-r3.patch sha256 0c45bbfe4c87a54d180ff086b37de530e367dcb346e173b67516f4e99ce53a52; new test 14 passed on patched, 12 failed on base, 11 failed on r2; hygiene 20 passed 4 skipped; 774 passed 31 skipped across 11 files; 0 lines >120; git apply --check clean on base and after stack/fix-3/fix-5. Not tried: Windows steps, n8n | | | closed |
+| REV-1e | fresh egm-comprehension on lane3-fix-1-r3 | 13:51Z | ~14:10Z | running |
+| REV-1f | fresh egm-codebase-details on lane3-fix-1-r3 | 13:51Z | ~14:10Z | running |
