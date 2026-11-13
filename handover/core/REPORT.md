@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:59Z CORE: realrun-v6 runners (about 10 min in; no results yet)
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full suite serial, twice, tree-A1 then tree-A2 | patched chain passes on Linux, repeatable | 09:50Z / 15:20 IST | hard stop 11:20Z (90 min) | run 1 attempt 2 of the first suite run (attempt 1 got SIGTERM, exit 143, at 238 s; see ASK 1) | running (suite process alive, about 4 min in) | wait; read RESULTS.md at its report |
+| aa0bf933 (runner B) | fails-before of the new tests on unpatched main, then the shipped mutant sets on tree-M | each new test really fails on old code; mutants killed | 09:50Z / 15:20 IST | hard stop 11:20Z | batch 1 of its plan (logs still empty, batch markers written) | running | wait |
+| a36cf35c (runner C) | core-touches-3 alone: suite once, new tests on unpatched main, core differential | the 3 core hunks stand alone | 09:50Z / 15:20 IST | hard stop 11:20Z | run 1 of 1 | running (new-tests and differential logs written, suite process alive) | wait |
+
+ASK:
+1. Runner A's first suite attempt was killed by SIGTERM (exit 143) at 238 s, not by the runner and not by me. Three runners share 4 cores and possibly a process-cleanup step (another runner's "kill only your own process" could have hit it, or a timeout wrapper). I do not know the cause. Default: runner A restarted, I watch whether it happens again; if so I serialize the runners (A first, then B, then C) and say so here.
+
+
 ## REPORT 2026-11-13 09:50Z CORE: realrun-v6 runners A, B, C started (core paused; demo lane only)
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
