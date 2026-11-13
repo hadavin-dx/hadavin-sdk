@@ -3602,8 +3602,8 @@ M: list[Mutant] = [
         "V80",
         "Issue 2 of 3d: a driver error before the commit that is not a file's own is raised as the raw error (exit 3)",
         MIG,
-        "                    raise _driver_error_before_commit(e, step[0]) from e\n",
-        "                    raise\n",
+        "\n                    raise _driver_error_before_commit(e, step[0]) from e\n",
+        "\n                    raise\n",
         (
             k(
                 T_VERIFY_PG,
@@ -3619,7 +3619,7 @@ M: list[Mutant] = [
         "V81",
         "Issue 2 of 3d: every driver error while a file runs is taken as the file's own (a lost connection stays raw)",
         MIG,
-        "                    if running_a_file and _is_a_files_own_error(e):\n",
+        "                    if running_a_file and _is_a_files_own_error(e, db):\n",
         "                    if running_a_file:\n",
         k(T_VERIFY_PG, "test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2"),
     ),
@@ -3627,7 +3627,7 @@ M: list[Mutant] = [
         "V82",
         "Issue 2 of 3d: a file's own error is turned into the refusal of a driver error (the file text is lost)",
         MIG,
-        "                    if running_a_file and _is_a_files_own_error(e):\n",
+        "                    if running_a_file and _is_a_files_own_error(e, db):\n",
         "                    if False:\n",
         k(T_VERIFY_PG, "test_a_files_own_error_is_raised_as_it_is"),
     ),
@@ -3686,8 +3686,234 @@ M: list[Mutant] = [
         '        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        outside =',
         '        ext = it.extension if (it.extension and not it.extension_family_owned) else ""\n        if it.extension:\n            continue\n        outside =',
         (
-            k(T_MX, "test_c8_an_object_that_is_an_extension_member_is_still_judged[no-roles]"),
-            k(T_MX, "test_c8_an_object_that_is_an_extension_member_is_still_judged[with-roles]"),
+            k(
+                T_MX,
+                "test_c8_an_object_that_is_an_extension_member_is_still_judged[O01-select-other/C8/no-roles]",
+            ),
+            k(
+                T_MX,
+                "test_c8_an_object_that_is_an_extension_member_is_still_judged[O01-select-other/C8/with-roles]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V88",
+        "Issue 1 of batch 4: the two session-ending codes of class 25 (25P03, 25P04) are taken as a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CODES = ("25P03", "25P04")\n',
+        "_NOT_A_FILES_OWN_CODES = ()\n",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[25P03-False]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[25P04-False]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is_refused_with_exit_2",
+            ),
+        ),
+    ),
+    Mutant(
+        "V89",
+        "Issue 1 of batch 4: the usable-connection check is left out of the classifier (a dead session with a file-like code is the file's own)",
+        MIG,
+        "    return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR) and _connection_is_usable(db)\n",
+        "    return bool(code) and not code.startswith(_NOT_A_FILES_OWN_ERROR)\n",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[closed]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[broken]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[unknown_status]",
+            ),
+            k(
+                T_VERIFY_PG,
+                "test_a_real_files_own_error_leaves_the_connection_usable_and_is_the_files_own",
+            ),
+        ),
+    ),
+    Mutant(
+        "V90",
+        "Issue 7 of batch 4: a lost connection at step 5 gets the wording of a failed deferred check",
+        MIG,
+        "                        if not _is_a_files_own_error(e, db):\n",
+        "                        if False:\n",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_a_connection_lost_at_a_statement_the_runner_sends_itself_gives_exit_2_and_keeps_nothing[SET CONSTRAINTS ALL IMMEDIATE]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V91",
+        'Issue 7 of batch 4: the flag "a file is running" is not cleared after the file (a later error with a file-like code stays raw)',
+        MIG,
+        "                        running_a_file = False\n",
+        "                        pass\n",
+        (
+            k(
+                T_VERIFY_PG,
+                "test_an_error_of_the_runner_after_the_last_file_is_never_taken_as_the_files_own",
+            ),
+        ),
+    ),
+    Mutant(
+        "V92",
+        "Issue 7 of batch 4: SQLSTATE class 08 is left out of the classes that are never a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")\n',
+        '_NOT_A_FILES_OWN_CLASSES = ("53", "57", "58", "XX")\n',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[08006-False]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V93",
+        "Issue 7 of batch 4: SQLSTATE class 53 is left out of the classes that are never a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")\n',
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "57", "58", "XX")\n',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[53300-False]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V94",
+        "Issue 7 of batch 4: SQLSTATE class 57 is left out of the classes that are never a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")\n',
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "58", "XX")\n',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[57P01-False]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V95",
+        "Issue 7 of batch 4: SQLSTATE class 58 is left out of the classes that are never a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")\n',
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "XX")\n',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[58030-False]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V96",
+        "Issue 7 of batch 4: SQLSTATE class XX is left out of the classes that are never a file's own error",
+        MIG,
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58", "XX")\n',
+        '_NOT_A_FILES_OWN_CLASSES = ("08", "53", "57", "58")\n',
+        (
+            k(
+                T_VERIFY_PG,
+                "test_the_classifier_knows_which_sqlstates_are_not_a_files_own[XX000-False]",
+            ),
+        ),
+    ),
+    Mutant(
+        "V97",
+        "Issue 1 of batch 4: a connection whose transaction state is UNKNOWN counts as usable",
+        MIG,
+        " and db.info.transaction_status != TransactionStatus.UNKNOWN\n",
+        " and True\n",
+        k(
+            T_VERIFY_PG,
+            "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[unknown_status]",
+        ),
+    ),
+    Mutant(
+        "V98",
+        "Issue 1 of batch 4: a closed connection counts as usable",
+        MIG,
+        "        not db.closed and not db.broken and",
+        "        True and not db.broken and",
+        k(
+            T_VERIFY_PG,
+            "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[closed]",
+        ),
+    ),
+    Mutant(
+        "V99",
+        "Issue 1 of batch 4: a broken connection counts as usable",
+        MIG,
+        "not db.closed and not db.broken and",
+        "not db.closed and True and",
+        k(
+            T_VERIFY_PG,
+            "test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own[broken]",
+        ),
+    ),
+    Mutant(
+        "V100",
+        "Issue 4 of batch 4: a finding names the schema where the object's name belongs (the finding names the wrong object)",
+        VERIFY,
+        "            return Problem(\n                kind,\n                it.schema,\n                it.name,\n                sub,\n                role,",
+        "            return Problem(\n                kind,\n                it.schema,\n                it.schema,\n                sub,\n                role,",
+        k(
+            T_MX,
+            "test_c6b_a_trigger_that_defers_itself_again_is_applied_and_reported[O01-select-other/C6b/with-roles]",
+        ),
+    ),
+    Mutant(
+        "V101",
+        "Issue 2 of batch 4: the strict reading of rule O8 is ON by default (a schema owned outside the family at the start is refused)",
+        MIG,
+        "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START = False",
+        "ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START = True",
+        k(
+            T_VERIFY,
+            "test_the_strict_reading_of_rule_o8_is_off_by_default",
+        ),
+    ),
+    Mutant(
+        "V102",
+        "Issue 2 of batch 4: the switch is ignored (a schema owner that changed during the run is dropped when the strict reading is off)",
+        MIG,
+        "        if ENFORCE_O8_FOR_THE_SCHEMA_OWNED_OUTSIDE_THE_FAMILY_AT_THE_START\n        or not (",
+        "        if not (",
+        k(
+            T_VERIFY,
+            "test_the_owner_of_the_schema_of_the_run_must_not_change_and_the_strict_reading_is_a_named_switch[admin_x-admin_x-None-True]",
+        ),
+    ),
+    Mutant(
+        "V103",
+        "Issue 8 of batch 4: the code writes a longer sentence only where the short form 'has {right}' is quoted (the checker must see it)",
+        VERIFY,
+        '                    else f"has {self.right}"\n',
+        '                    else f"has now {self.right}"\n',
+        (
+            k(
+                T_VERIFY,
+                "test_a_sentence_the_changelog_quotes_but_the_code_does_not_write_is_found",
+            ),
+            k(
+                T_VERIFY,
+                "test_every_sentence_form_the_changelog_quotes_is_in_the_code_and_is_what_a_line_says",
+            ),
         ),
     ),
 ]

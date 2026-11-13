@@ -93,6 +93,9 @@ class _Db:
 
     # a connection inside the transaction of the run (a file that ended it is made by a test of its own)
     info = types.SimpleNamespace(transaction_status=psycopg.pq.TransactionStatus.INTRANS)
+    # a real connection always has these two flags; the classifier of a file's own error reads them (batch 4b, Issue 1)
+    closed = False
+    broken = False
 
     def __init__(
         self,

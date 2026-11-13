@@ -515,6 +515,131 @@ def test_a_connection_lost_at_any_step_before_the_commit_gives_exit_2_and_keeps_
         tp._drop_roles(runtime)
 
 
+# Issue 7 of round 14: the statements that `migrate` sends itself and that no named function wraps. Each is the first
+# statement of its kind on the run's connection that holds the marker text.
+_INLINE_STATEMENTS = [
+    RECIPE_TIMEOUTS[0],  # the recipe limits
+    "server_version_num",  # the version read
+    "SELECT current_schema()",  # the identity read
+    "CREATE TABLE IF NOT EXISTS schema_migrations",  # the ledger table
+    "SELECT version FROM schema_migrations",  # the ledger read
+    "INSERT INTO schema_migrations",  # the ledger write after a file
+    "SET CONSTRAINTS ALL IMMEDIATE",  # step 5
+]
+
+
+@pytest.mark.parametrize("marker", _INLINE_STATEMENTS)
+def test_a_connection_lost_at_a_statement_the_runner_sends_itself_gives_exit_2_and_keeps_nothing(
+    marker, mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 7 of round 14. The earlier test ends the session before each named step; this one ends it just before one of
+    the statements that `migrate` sends inline (the limits, the version read, the identity read, the ledger table, the
+    ledger read, the ledger write, step 5). Each gives exit 2 "kept nothing", never exit 3 and never the wording of a
+    failed deferred check; the ledger is empty. Together with the named steps this is the whole list that the CHANGELOG
+    means by "every step before the commit". Killed by: V80 (every cell) and V90 (the step-5 wording)."""
+    seen = {"conn": None, "done": False}
+    mrun.after_call[1] = lambda conn: seen.update(conn=conn)
+    real = psycopg.Connection.execute
+
+    def ends_the_session_first(self, query, *a, **kw):
+        if not seen["done"] and self is seen["conn"] and marker in str(query):
+            seen["done"] = True
+            with psycopg.connect(DSN, autocommit=True) as adm:
+                adm.execute("SELECT pg_terminate_backend(%s)", (self.info.backend_pid,))
+            time.sleep(0.2)
+        return real(self, query, *a, **kw)
+
+    monkeypatch.setattr(psycopg.Connection, "execute", ends_the_session_first)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    _out, err = capsys.readouterr()
+    assert seen["done"], f"no statement with {marker!r} was sent: the cell tests nothing"
+    assert err.startswith("refused: migrate stopped and kept nothing"), err
+    assert "Run migrate again" in err and "failed:" not in err
+    assert "a deferred check or trigger failed" not in err, err
+    monkeypatch.setattr(psycopg.Connection, "execute", real)
+    assert _ledger_of(mrun.dsn) == []
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
+def test_a_connection_lost_at_any_read_of_pg_roles_gives_exit_2_and_keeps_nothing(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 7 of round 14, the `pg_roles` marker. The independent evidence run injected a lost connection at the second
+    statement that names `pg_roles` and got a raw `OperationalError` (exit 3). Traced now: that statement is the TEST
+    helper's own (`plain_role_connect` runs `ensure_plain_role` on its own connection before `migrate` has one), not a
+    statement of `migrate`. Here the injection is limited to the run's own connection (the first one `migrate` opens,
+    after the helper has finished), so every read of `pg_roles` that `migrate` sends on it is counted and each, one at a
+    time, is made to fail: every one gives exit 2, nothing kept. There is no hole in the runner for this marker."""
+    seen = {"conn": None, "count": 0, "fail_at": 0, "hit": False}
+    mrun.after_call[1] = lambda conn: seen.update(conn=conn)
+    real = psycopg.Connection.execute
+
+    def counts_or_fails(self, query, *a, **kw):
+        if self is seen["conn"] and "pg_roles" in str(query):
+            seen["count"] += 1
+            if seen["count"] == seen["fail_at"]:
+                seen["hit"] = True
+                raise psycopg.OperationalError("made-up: connection lost")
+        return real(self, query, *a, **kw)
+
+    monkeypatch.setattr(psycopg.Connection, "execute", counts_or_fails)
+    assert mig.migrate(mrun.dsn) == REAL_FILES  # counting run
+    total = seen["count"]
+    assert total >= 8, f"only {total} reads of pg_roles were counted: the cell tests too little"
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        adm.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(mrun.schema)))
+        adm.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(mrun.schema)))
+    for n in range(1, total + 1):
+        mrun.calls = 0
+        seen.update(count=0, fail_at=n, hit=False)
+        assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2, f"read {n} of {total}"
+        _out, err = capsys.readouterr()
+        assert seen["hit"], f"read {n} was never reached"
+        assert err.startswith("refused: migrate stopped and kept nothing"), (n, err)
+        assert "failed:" not in err, (n, err)
+        assert _ledger_of(mrun.dsn) == [], n
+    seen["fail_at"] = 0
+    monkeypatch.setattr(psycopg.Connection, "execute", real)
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
+def test_a_failure_to_connect_at_the_start_is_the_one_exit_3_before_any_step(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 7 of round 14, `connect()` and its `SET TIME ZONE` sit outside the steps: a connection that cannot be made
+    at all is exit 3 ("failed"), nothing ran and nothing was kept. This is pinned as the intended outcome (the claim
+    "exit 2 at every step" starts after the connection is open). The test passes on the old code too: it pins a
+    behaviour that was already right and has no branch of its own to plant a fault in."""
+
+    def cannot_connect():
+        raise psycopg.OperationalError("made-up: the server is not reachable")
+
+    mrun.before_call[1] = cannot_connect
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 3
+    _out, err = capsys.readouterr()
+    assert err.startswith("failed: OperationalError"), err
+    assert "made-up: the server" not in err
+    assert _ledger_of(mrun.dsn) == []
+
+
+def test_an_error_of_the_runner_after_the_last_file_is_never_taken_as_the_files_own(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 7 of round 14. After the last file the runner's own statements run (the grants, the default-EXECUTE revoke).
+    An error with a SQLSTATE that a file's text could also cause (here 42704, a missing object) must not be left raw
+    because the flag "a file is running" was never cleared: it is the runner's, so exit 2, nothing kept. Killed by: V91."""
+
+    def a_missing_object(db, *a, **kw):
+        raise pge.UndefinedObject("made-up: a role that is not there")
+
+    monkeypatch.setattr(mig, "_revoke_default_execute", a_missing_object)
+    assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+    _out, err = capsys.readouterr()
+    assert err.startswith("refused: migrate stopped and kept nothing"), err
+    assert "42704" in err and "failed:" not in err, err
+    assert _ledger_of(mrun.dsn) == []
+
+
 def test_a_connection_lost_while_a_file_runs_is_refused_with_exit_2(
     mrun, cfg_dir, monkeypatch, capsys
 ):
@@ -578,10 +703,10 @@ def test_a_bug_before_the_commit_stays_loud_and_a_files_own_error_stays_its_own(
     with pytest.raises(RuntimeError, match="a bug in the runner"):
         mig.migrate(mrun.dsn)
     monkeypatch.undo()
-    assert mig._is_a_files_own_error(pge.SyntaxError("x")) is True
-    assert mig._is_a_files_own_error(pge.AdminShutdown("x")) is False
-    assert mig._is_a_files_own_error(pge.QueryCanceled("x")) is False
-    assert mig._is_a_files_own_error(psycopg.OperationalError("lost")) is False
+    assert mig._is_a_files_own_error(pge.SyntaxError("x"), _UsableConnection()) is True
+    assert mig._is_a_files_own_error(pge.AdminShutdown("x"), _UsableConnection()) is False
+    assert mig._is_a_files_own_error(pge.QueryCanceled("x"), _UsableConnection()) is False
+    assert mig._is_a_files_own_error(psycopg.OperationalError("lost"), _UsableConnection()) is False
 
 
 def test_a_saved_transaction_timeout_stops_the_check_and_migrate_refuses_with_exit_2(
@@ -665,6 +790,160 @@ def test_a_role_saved_transaction_timeout_gives_exit_2_wherever_it_strikes(
             )
     assert _ledger_of(mrun.dsn) == []
     assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
+def test_a_session_ended_by_the_idle_in_transaction_timeout_while_a_file_runs_is_refused_with_exit_2(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 1 of round 14 (batch 4), the class "the server ends the session, not the file", shown on PostgreSQL 16. The
+    role saves `idle_in_transaction_session_timeout` (SQLSTATE 25P03, a FATAL error of class 25 that ends the session).
+    The runner waits longer than the limit just before the first file runs, so the file's statement is the first one to
+    meet the dead session. That is not the file's own error: exit 2, nothing kept, never the raw driver error (exit 3).
+    The same class on PostgreSQL 17 is `transaction_timeout` (25P04), see the PG17-only test below. Killed by: V88 and V89."""
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+        adm.execute(
+            sql.SQL("ALTER ROLE {} SET idle_in_transaction_session_timeout = '150ms'").format(
+                sql.Identifier(helper.PLAIN_ROLE)
+            )
+        )
+    real = mig._refuse_unusual_strings
+    seen = {"n": 0}
+
+    def waits(saved):
+        seen["n"] += 1
+        time.sleep(
+            0.6
+        )  # longer than the limit: the server ends the session while the runner thinks
+        return real(saved)
+
+    monkeypatch.setattr(mig, "_refuse_unusual_strings", waits)
+    try:
+        assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+        _out, err = capsys.readouterr()
+        assert seen["n"] == 1, "the wait never ran: the cell tests nothing"
+        assert err.startswith("refused: migrate stopped and kept nothing"), err
+        assert "25P03" in err and "failed:" not in err, err
+        assert _ledger_of(mrun.dsn) == []
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as adm:
+            adm.execute(
+                sql.SQL("ALTER ROLE {} RESET idle_in_transaction_session_timeout").format(
+                    sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
+    monkeypatch.setattr(mig, "_refuse_unusual_strings", real)
+    assert mig.migrate(mrun.dsn) == REAL_FILES
+
+
+@pytest.mark.parametrize(
+    ("code", "own"),
+    [
+        ("25P03", False),  # idle-in-transaction timeout (PostgreSQL 16 errcodes.txt)
+        (
+            "25P04",
+            False,
+        ),  # transaction timeout (PostgreSQL 17; the code is psycopg's `TransactionTimeout`)
+        (
+            "25001",
+            True,
+        ),  # active_sql_transaction: a file's own error (e.g. VACUUM inside the transaction)
+        ("25P02", True),  # in_failed_sql_transaction: a file's own error
+        ("42601", True),
+        ("22012", True),
+        ("23505", True),
+        ("08006", False),
+        ("53300", False),
+        ("57P01", False),
+        ("58030", False),
+        ("XX000", False),
+    ],
+)
+def test_the_classifier_knows_which_sqlstates_are_not_a_files_own(code, own):
+    """Issue 1 of round 14: the one classifier. A usable connection is checked in the next test; here the connection is
+    a stand-in that is usable, so only the SQLSTATE decides. Class 25 is not excluded as a whole (25001 and 25P02 are a
+    file's own errors); the two session-ending codes are named. Killed by: V88."""
+    e = psycopg.errors.lookup(code)("made-up")
+    assert mig._is_a_files_own_error(e, _UsableConnection()) is own
+
+
+class _UsableConnection:
+    closed = False
+    broken = False
+
+    class info:
+        transaction_status = psycopg.pq.TransactionStatus.INERROR
+
+
+@pytest.mark.parametrize("state", ["closed", "broken", "unknown_status"])
+def test_the_classifier_never_calls_an_error_on_a_dead_connection_the_files_own(state):
+    """Issue 1 of round 14: whatever the SQLSTATE says (here a syntax error, which would be a file's own), an error that
+    leaves the connection unusable is not the file's own: the session is gone. Killed by: V89."""
+    conn = _UsableConnection()
+    if state == "closed":
+        conn.closed = True
+    elif state == "broken":
+        conn.broken = True
+    else:
+
+        class info:
+            transaction_status = psycopg.pq.TransactionStatus.UNKNOWN
+
+        conn.info = info
+    assert mig._is_a_files_own_error(pge.SyntaxError("x"), conn) is False
+
+
+def test_a_real_files_own_error_leaves_the_connection_usable_and_is_the_files_own(mrun):
+    """Issue 1 of round 14: on a real server the connection after a file's own error (a division by zero) is usable, and
+    after a session-ending termination it is not. Both measured, so the stand-ins above say what the driver says."""
+    with psycopg.connect(DSN, autocommit=True) as c:
+        with pytest.raises(pge.DivisionByZero) as own, c.transaction():
+            c.execute("SELECT 1/0")
+        assert mig._is_a_files_own_error(own.value, c) is True
+    c = psycopg.connect(DSN, autocommit=True)
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        adm.execute("SELECT pg_terminate_backend(%s)", (c.info.backend_pid,))
+    time.sleep(0.2)
+    with pytest.raises(psycopg.OperationalError) as lost:
+        c.execute("SELECT 1")
+    assert mig._is_a_files_own_error(lost.value, c) is False
+    c.close()
+
+
+def test_pg17_a_role_saved_transaction_timeout_that_strikes_inside_a_file_gives_exit_2(
+    mrun, cfg_dir, monkeypatch, capsys
+):
+    """Issue 1 of round 14, the PostgreSQL 17 case (25P04). THIS TEST IS UNRUN ON ANY SERVER HERE: it is a visible skip
+    below 17 (only PostgreSQL 16 is installed), and it is listed UNRUN in the CHANGELOG until the CI job on 17 runs it.
+    The role saves a `transaction_timeout` that is longer than the steps before the first file and shorter than a
+    `pg_sleep` inside the first file, so the timeout strikes while the file runs (the earlier test of this kind set 1 ms,
+    which strikes before any file). Exit 2, nothing kept. Killed by: V88 and V89 (once it runs on 17)."""
+    if mrun_server_version() < 170000:
+        pytest.skip(
+            "UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); "
+            "the PostgreSQL 16 form of the same class is the idle-in-transaction test above"
+        )
+    with psycopg.connect(DSN, autocommit=True) as adm:
+        helper.ensure_plain_role(adm)
+        adm.execute(
+            sql.SQL("ALTER ROLE {} SET transaction_timeout = '3s'").format(
+                sql.Identifier(helper.PLAIN_ROLE)
+            )
+        )
+    _plant(monkeypatch, mrun.tmp, "0006_slow.sql", "SELECT pg_sleep(8);\n")
+    try:
+        assert _cli_migrate(cfg_dir, monkeypatch, mrun.dsn) == 2
+        _out, err = capsys.readouterr()
+        assert err.startswith("refused: migrate stopped and kept nothing"), err
+        assert "25P04" in err and "failed:" not in err, err
+        assert _ledger_of(mrun.dsn) == []
+    finally:
+        with psycopg.connect(DSN, autocommit=True) as adm:
+            adm.execute(
+                sql.SQL("ALTER ROLE {} RESET transaction_timeout").format(
+                    sql.Identifier(helper.PLAIN_ROLE)
+                )
+            )
 
 
 def mrun_server_version() -> int:
