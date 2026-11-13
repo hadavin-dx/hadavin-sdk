@@ -1,5 +1,18 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 09:39Z / 15:09 IST  HEARTBEAT 1 (ORDER 1 started on GO)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner agent (Sonnet): full product suite on Linux, PR #12 head 8d65577 and main 61ded9e, each twice, Python 3.12, hash-locked install, no browser tests | gives lead pass/fail evidence for PR #12 vs main | 09:39Z / 15:09 | ~10:45Z / 16:15 (about 65 min) | run 0 of 4; no retry yet | running (setting up copies and venvs) | check progress-A.txt at 09:50Z |
+| B | Evidence runner agent (Sonnet): hostile inputs on PR #12 changes (UNC paths, hard links, foreign `tools` package, n8n_api import order, fake model server path options) | gives lead raw input/output proof for the path-confinement changes | 09:39Z / 15:09 | ~10:10Z / 15:40 (about 30 min) | case group 0 of 5 | running | check progress-B.txt at 09:50Z |
+| lead-me | this session: supervision, register, commits to demo/lane3 | keeps both agents watched | 09:37Z / 15:07 | until both report (90 min cap: 11:07Z / 16:37 IST) | n/a | running | heartbeat by 09:49Z |
+
+ASK:
+1. Python: the machine default is 3.13; the lock is for 3.12, so I use /usr/bin/python3.12 for the venvs. Default if no answer in 10 min: keep this.
+2. Playwright/Chromium: not installed (docs/tests.md says browser tests then skip, ~113 skipped); order allows only the hash-locked pip install, so I skip the browser lock. Default: keep skipped, record the skip count.
+3. The clock in this container reads 09:37Z while your message says 09:40Z; I use the container clock (`date -u`). Default: keep.
+4. I run the main copy and the PR copy at the same time (2 heavy runs, serial inside each copy). Default: keep.
+
 ## 2026-11-13 09:36Z / 15:06 IST  EGM SETUP PROOF (partial: dry run NOT done, needs a session reload)
 FAILED / NOT DONE (first):
 - Dry run (egm-review-loop with reviewers design and style) NOT run. The Skill and Agent lists of this running session were read at session start, before the install, so this session's Skill tool lists no egm:* skills and its Agent tool lists no egm:* agent types. I cannot reload them from inside the session (/plugin reload is a typed slash command). Needed from lead/owner: reload plugins or start a new session on branch demo/lane3, then I run the dry run. I did not substitute a general-purpose agent.
