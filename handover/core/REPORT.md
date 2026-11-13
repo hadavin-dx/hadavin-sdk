@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:33Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| V4c | independent evidence for the round-3 docs head + apply check | proof | 13:33Z | done 13:33Z | 1 | DONE (runner's numbers; handover/core/fix/V4c-evidence.md): fails-before 11 passed / 2 failed (count sentence 3993 vs 3995; repeated-request sentence missing); after 13 passed (switch set and unset); 20 doc-reading files 1560 passed, 0 failed, 33 skipped; collector 3995 tests in 97 files; dmesg out-of-memory lines 1 before / 1 after (the same old line, so no new kill); mutants: 7 of 8 killed, 1 SURVIVED (MH: desk.py "or True" on the _pending_and_due call: the docs test only checks the source text, but tests/test_desk_http_edge_cases.py::test_replays_cannot_burn_the_cap kills it in a 20-file run: 1 failed, 179 passed; this is R5 minor 6, being worded in F4d); apply check: docs-combined.patch applies to a fresh copy of the patched base with no differences to the builder's tree; added lines over 100 columns in the combined patch: 90 (43 in the test file), over 120: 42 (all md/yml/example files, no .py) | V4d on the F4d head |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 13:55Z | 1 | RUNNING (about 70%) | read |
+| F4d | final docs builder | resolve | 13:40Z | 14:15Z | round 3 | RUNNING | V4d |
+| F6 | builder writer-side opens + wrappers | open classes | 13:18Z | 14:20Z | 1 | RUNNING | COMBINE |
+| done | F1 F1b F2 F3 F4 F4b F4c D1 E1 E2 C6 R4 R5 V1 V3 V4 V4b V4c | | | | | DONE | |
+
+FAILURES AND RETRIES: none new test failures. Totals unchanged. 3 agents running.
+ASK: 1. Added lines over 120 columns (42, in markdown/yml/example files): ruff does not check those files; the repo has no line limit for prose. Default if no answer in 10 min: leave prose lines as they are.
+
+
 ## REPORT (container clock 13:32Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
