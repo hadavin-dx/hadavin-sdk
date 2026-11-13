@@ -4,3 +4,4 @@
 13:58Z full suite started on final head
 14:08Z full suite ~45%
 14:12Z fix: noqa wording, held ports; targeted 256 passed; full suite -n 4 starting (serial 21 min does not fit before 14:35)
+14:20Z proof loop under -n2/-n4 running until 14:28; then final full -n4

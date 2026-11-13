@@ -47,7 +47,7 @@ index f324dfe..77cc777 100644
  What it would show: the number of CRM contacts per lead id, the desk's own count of calls and creates, and the number of mails that reached your mailboxes per lead, after a crash and with repeats through both doors. What it would NOT show: that mail would reach a stranger's inbox (no spam-folder, SPF or DKIM claim: it counts what arrived in your two mailboxes and their spam folders; one message per lead is allowed across both mailboxes together), that the CRM's own e-mail de-duplication did not hide something (the evidence would be the desk's own counts plus the different-address case), or anything about volumes beyond the free plan's limits. After a hard crash a mail that was in flight is recorded `unknown` on purpose: the table shows how many of those arrived.
  
 diff --git a/docs/tests.md b/docs/tests.md
-index 1cb6c1c..e8d83aa 100644
+index 1cb6c1c..961f29c 100644
 --- a/docs/tests.md
 +++ b/docs/tests.md
 @@ -23,7 +23,17 @@ The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the
@@ -78,7 +78,7 @@ index 1cb6c1c..e8d83aa 100644
  
  **Run it on your own computer** from the repository root, in a Python 3.12 virtual environment, with network access (the rules are downloaded): on Linux x86_64 `pip install --require-hashes --only-binary=:all: --no-deps -r requirements-semgrep.txt`, anywhere else `pip install semgrep==1.185.0` (the version pinned in `requirements-semgrep.in`), then `semgrep scan --metrics=off --strict --error --severity ERROR --config p/python --config p/javascript src scripts load_tools tools n8n`. The job adds `--disable-version-check` (no check for a newer Semgrep); on your computer you may leave it out.
  
-@@ -75,11 +85,14 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
+@@ -75,11 +85,15 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
  
  * **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
  * **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
@@ -88,6 +88,7 @@ index 1cb6c1c..e8d83aa 100644
 -* **No full run without Node was done on this commit.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
 -* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of this commit (2516 tests; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
 +* **Current counts (commit f3c39cf8, the main branch before the changes in this patch; Linux, Python 3.12.3, one serial process, run as the user root, the administrator user on Linux, which matters for one test; Node was on the path, because none of the 200 skip reasons names Node):** `python -m pytest -q` gave **3683 passed and 200 skipped** (3883 tests in all, exit code 0) in 21 minutes 24 seconds; with coverage (`--cov`) the same counts in 23 minutes 14 seconds and a line rate of 0.9352 in `coverage.xml` (93.52 percent of the code lines were run by the tests). Reported by the author from earlier run notes, not re-measured for this text; the raw logs are not in this repository.
++* **A full run with the first version of this documentation patch (reported by the author, from a separate evidence run, not re-measured here):** commit f3c39cf8 plus that version, which added 6 tests in `tests/test_docs_tests_md_lane3.py`: **3689 passed and 200 skipped** in 20 minutes 22 seconds, exit code 0 (3683 + 6 = 3689). The later version of that test file holds 8 tests, and `tests/test_run_commands_lane3.py` holds 2 more; those were run alone, not in a full run, so 3689 is not the count for the latest text.
 +* **Why 200 tests are skipped, in plain words:** 166 are the browser tests, skipped because the Playwright package is not installed (22 in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 113 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`; see the Playwright steps above); 30 need the `gitleaks` secret-scanning program, which is not installed (24 in `test_gitleaks_exceptions.py`, 2 in `test_gitleaks_semgrep_lock.py`, 4 in `test_hygiene.py`; set `GITLEAKS_BIN` or put `gitleaks` on the path, and `DPLD_REQUIRE_SCAN=1` turns that skip into a failure); and four single tests: 1 is the load measurement, which runs only when `LEAD_DESK_LOAD_N` is set (`test_server_hardening.py`); 1 runs only on Windows (`test_stall_eviction.py`); 1 needs a user who is not root, because root can read a file with no permissions (`test_n8n_api_url.py`); and 1 needs Python 3.13, where `ntpath.isreserved` exists (`test_path_confinement.py`). 166 + 30 + 1 + 1 + 1 + 1 = 200.
 +* **The 196 browser and gitleaks tests were run separately, on the same commit, and passed (reported by the author, not re-measured here):** 166 + 30 = 196. With Playwright 1.63.0 and Chromium installed, the ten test files that use the browser (`test_mode_safety.py`, `test_portal_browser.py`, `test_portal_drawer_long_name.py`, `test_portal_layout.py`, `test_portal_lead_pages.py`, `test_portal_long_values.py`, `test_portal_look.py`, `test_portal_phone_layout.py`, `test_portal_wording_and_masking.py`, `test_stage_confirm_browser.py`) gave 241 passed, none skipped; with `gitleaks` 8.30.1 installed, the three gitleaks files (`test_hygiene.py` 24, `test_gitleaks_exceptions.py` 44, `test_gitleaks_semgrep_lock.py` 4) gave 72 passed, none skipped. The numbers 241 and 72 are whole-file totals: they also count tests that already ran in the full run, so they do not add up to 196. A full run on Python 3.13.18 (same commit, still without Playwright and gitleaks) gave 3684 passed and 199 skipped: the test that needs Python 3.13 passed there.
 +* **Older counts (history only, NOT the current count; results of earlier commits that are not in this repository's history, no log shipped): counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and the browser lock files (`requirements-browser.txt` and `requirements-browser-win.txt`), with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
@@ -98,7 +99,7 @@ index 1cb6c1c..e8d83aa 100644
  
  ## Quality checks and what to do when a check fails
  
-@@ -93,7 +106,7 @@ The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports
+@@ -93,7 +107,7 @@ The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports
  
  ## What each promise rests on
  
@@ -107,7 +108,7 @@ index 1cb6c1c..e8d83aa 100644
  
  | Point | What had happened | Keyed mail system | Blind mail system |
  |---|---|---|---|
-@@ -110,7 +123,9 @@ The desk was stopped on purpose at each of ten crash points and restarted; nine
+@@ -110,7 +124,9 @@ The desk was stopped on purpose at each of ten crash points and restarted; nine
  
  The portal tests that run in Node (`tests/test_portal_mode.py`, the proof-panel probe in `tests/test_portal_lead_pages.py`) skip when `node` is not installed; GitHub's Ubuntu runners ship Node, so they should run in CI, but no CI run has been seen. The browser tests need Playwright, which `lint.yml` does not install, so they skip in CI and run only on a computer where you install it.
  
@@ -120,10 +121,10 @@ index 1cb6c1c..e8d83aa 100644
  The table below says which tests show each promise. "Tests named" means the tests exist and are named here; it is not a run result.
 diff --git a/tests/test_docs_tests_md_lane3.py b/tests/test_docs_tests_md_lane3.py
 new file mode 100644
-index 0000000..f09b399
+index 0000000..6e2642d
 --- /dev/null
 +++ b/tests/test_docs_tests_md_lane3.py
-@@ -0,0 +1,160 @@
+@@ -0,0 +1,163 @@
 +"""Pin facts that docs/tests.md, docs/real-services.md, contract.md and the README state about the scripts.
 +
 +Each test reads text files only; nothing slow is run. These statements were wrong in an earlier version of the docs;
@@ -164,7 +165,7 @@ index 0000000..f09b399
 +
 +
 +def test_by_hand_steps_name_one_window_per_command() -> None:
-+    # `src:[.]` with a bracket, not a backslash: the characters c:\. would be read by the hygiene test as a path
++    # the dot is written in brackets: a backslash before it would look like a Windows drive path to the hygiene test
 +    step1 = _line("docs/tests.md", "1. Window 1, the demo server:")
 +    assert re.search(r"PYTHONPATH=src:[.] python -m demo_only\.fakes_server --outbox keyed --port 8766", step1)
 +    step2 = _line("docs/tests.md", "2. Window 2, the desk:")
@@ -246,6 +247,9 @@ index 0000000..f09b399
 +    assert "**3683 passed and 200 skipped**" in cur and "3883 tests in all" in cur
 +    assert "the administrator user on Linux" in cur and "none of the 200 skip reasons names Node" in cur
 +    assert "93.52 percent of the code lines" in cur and "not re-measured" in cur
++    full = _line("docs/tests.md", "* **A full run with the first version of this documentation patch")
++    assert "**3689 passed and 200 skipped**" in full and "3683 + 6 = 3689" in full
++    assert "not the count for the latest" in full
 +    why = _line("docs/tests.md", "* **Why 200 tests are skipped")
 +    assert "166 + 30 + 1 + 1 + 1 + 1 = 200" in why
 +    for reason in (

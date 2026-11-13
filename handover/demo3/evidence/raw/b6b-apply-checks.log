@@ -1,18 +1,7 @@
-## git apply --check on f3c39cf8 (clean worktree)
-lane3-fix-6-r2 rc=0
-lane3-fix-6b rc=0
-## both together on f3c39cf8 (6-r2 then 6b: 6b touches other files)
-6b after 6-r2 rc=0
-## on f3c39cf8 + claims-stack-on-f3c39cf8.patch
-claims stack applied rc=0
-error: patch failed: README.md:129
-error: README.md: patch does not apply
-error: patch failed: docs/tests.md:75
-error: docs/tests.md: patch does not apply
-6-r2 on stack rc=1
-6b on stack rc=0
-r2-for-stack on base+stack rc=0
-6b on base+stack rc=0
 r2 on f3c39cf8 rc=0
 6b on f3c39cf8 rc=0
-r2-for-stack on plain base rc=1 (expected non-zero: it is for base+stack)
+6b after r2 rc=0
+stack applied rc=0
+r2 (plain) on base+stack rc=1 (non-zero: stack edits the same lines)
+r2-for-stack on base+stack rc=0
+6b on base+stack rc=0

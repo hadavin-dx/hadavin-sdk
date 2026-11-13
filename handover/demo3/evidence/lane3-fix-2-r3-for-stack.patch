@@ -1,5 +1,5 @@
 diff --git a/contract.md b/contract.md
-index b2b1cd3..88c3679 100644
+index b2b1cd3..9127e15 100644
 --- a/contract.md
 +++ b/contract.md
 @@ -128,7 +128,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
@@ -25,7 +25,7 @@ index b2b1cd3..88c3679 100644
 -* (9) The listening line, then serve. When the accept loop gets no file handle (EMFILE or ENFILE) it pauses `ACCEPT_PAUSE_SECONDS` (0.05 s) instead of spinning.
 +* (2) The settings are read and checked (`Config.from_env`, then the public-bind check): exit 4 for a setting the desk refuses (a bad number, a `DESK_BIND` that can never be an address, a `DESK_DB_PATH` that is empty, a bad `DESK_LIVE*` value, a `DESK_LIVE_LEDGER_PATH` that names a folder). The `DESK_HUBSPOT*` and `DESK_SMTPP*` settings are read in step 7. Nothing is made on disk yet.
 +* (3) The lead-book path is checked by `desk.book_problem` (exit 4): `:memory:` (every request thread opens its own connection, so a private memory book would be empty for every thread but the first), a folder instead of a file, a part of the path that is a file where a folder must be, or a part of the path the system will not let the desk look at (no permission). The messages name `DESK_DB_PATH` and never hold the path. `main` runs this BEFORE the lock step, so a refused start leaves no `.lock` file; `Desk` repeats it when it is built.
-+* (4) The folder of the lead book is made if it is missing (exit 4 if it cannot be made, for example no permission).
++* (4) The folder of the lead-book file is made if it is missing (exit 4 if it cannot be made, for example no permission).
 +* (5) The lock file (exit 2: "another desk is using this database", or the lock file cannot be opened).
 +* (6) The approvers file (approval mode only) and the leadflow file (only when `DESK_LEADFLOW_FILE` is set) are read (exit 4 for a bad file or a bad reminder setting).
 +* (7) The demo adapters are loaded (exit 1 if `/fake/info` cannot be read: "cannot reach the demo servers"; exit 4 for a replies file that cannot be read, or a bad adapter setting), then every kind that holds a key or password file is asked to read it once (`check_secret_files`, exit 4 for a file that is missing, unreadable, too long, not UTF-8 text, of several lines or too short; the message names the setting, never the path or the key). A bad key file is therefore reported only once the demo servers are reachable.
@@ -708,7 +708,7 @@ index 81b0e27..f04f140 100644
  def env(tmp_path: Path) -> Iterator[Env]:
      e = Env(tmp_path)
 diff --git a/tests/test_env_numbers.py b/tests/test_env_numbers.py
-index a17426f..d5b00dc 100644
+index a17426f..5d61623 100644
 --- a/tests/test_env_numbers.py
 +++ b/tests/test_env_numbers.py
 @@ -34,6 +34,7 @@ import pytest
@@ -719,7 +719,26 @@ index a17426f..d5b00dc 100644
  from lead_desk.config import Config  # noqa: E402
  from lead_desk.constants import CAP_COUNT_MAX, SIZE_CAP_BYTES_MAX, STALL_SECONDS_MAX  # noqa: E402
  from lead_desk.crm_hubspot import HubspotSettings  # noqa: E402
-@@ -344,14 +345,45 @@ def test_an_out_of_range_setting_ends_the_desk_with_exit_4_naming_it(
+@@ -127,6 +128,18 @@ def test_a_bad_port_in_the_fakes_url_is_a_named_refusal() -> None:
+         Config.from_env({"DESK_FAKES_URL": "http://127.0.0.1:notaport"})
+ 
+ 
++def test_a_yes_no_word_other_than_yes_or_no_is_a_named_refusal() -> None:
++    from lead_desk.envnum import env_yes_no  # the helper did not exist before this fix round
++
++    with pytest.raises(ValueError, match="X must be yes or no"):
++        env_yes_no({"X": "ys"}, "X")
++
++
++def test_a_bind_that_can_never_bind_is_a_named_refusal_in_the_setting() -> None:
++    with pytest.raises(ValueError, match="DESK_BIND must be an IP address or a host name"):
++        Config.from_env({"DESK_BIND": "[::1"})  # was accepted, then failed at the bind (exit 5)
++
++
+ def _run_desk(tmp_path: Path, extra: dict[str, str]) -> subprocess.CompletedProcess[str]:
+     env = {**os.environ, "PYTHONPATH": str(REPO / "src"), "DESK_DB_PATH": str(tmp_path / "d.sqlite3"), "DESK_PORT": "0"}
+     env.update(extra)
+@@ -344,14 +357,45 @@ def test_an_out_of_range_setting_ends_the_desk_with_exit_4_naming_it(
      assert "Traceback" not in out
  
  
@@ -790,10 +809,10 @@ index 7b9d857..848e588 100644
  
 diff --git a/tests/test_settings_lane3.py b/tests/test_settings_lane3.py
 new file mode 100644
-index 0000000..90f0d7b
+index 0000000..ff84f41
 --- /dev/null
 +++ b/tests/test_settings_lane3.py
-@@ -0,0 +1,738 @@
+@@ -0,0 +1,740 @@
 +"""A bad setting stops the start (docs/settings.md, line 3): exit code 4, the setting named, no traceback, and never a
 +path, key or password in the text. Cases found by a cold reader who followed the documents literally: a DESK_BIND
 +that is no address, an empty or unmakeable DESK_DB_PATH, a broken or missing DESK_REPLIES_PATH file, and key or
@@ -1180,7 +1199,7 @@ index 0000000..90f0d7b
 +    order = [
 +        (2, "settings are read and checked"),
 +        (3, "desk.book_problem"),
-+        (4, "folder of the lead book is made"),
++        (4, "folder of the lead-book file is made"),
 +        (5, "lock file"),
 +        (6, "approvers file"),
 +        (7, "demo adapters are loaded"),
@@ -1238,7 +1257,9 @@ index 0000000..90f0d7b
 +
 +
 +# ---------------------------------------------------------------------------------------------- DESK_REPLIES_PATH
-+@pytest.mark.parametrize("content", [None, "{not json", "[1, 2]", ""], ids=["missing", "broken", "not-object", "empty"])
++@pytest.mark.parametrize(
++    "content", [None, "{not json", "[1, 2]", ""], ids=["missing", "broken", "not-object", "empty"]
++)
 +def test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4(
 +    tmp_path: Path, fakes_url: str, content: str | None
 +) -> None:

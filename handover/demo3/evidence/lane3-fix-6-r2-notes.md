@@ -37,3 +37,8 @@ Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Worktree /home/user/work/b6b-base
 - Soak numbers come only from `crash-soak-blind.md`; I did not re-run the soak.
 - README.md:99 and docs/tests.md:97 still say that only D2 is a real process kill: true for the tests; I added a clause in tests.md (:116 paragraph) that the soak ended the whole process at other points; README:99 untouched (it speaks about the tests).
 - `docs/limits.md:24-26` untouched. The start-up message text `see scripts/start_all` is product code, not changed.
+
+## Update after the coordinator's E8 message (14:4xZ)
+- A fourth failure found by my own affected-files run: `tests/test_hygiene.py` flagged my test comment (it held the characters that look like a Windows drive path). Reworded; hygiene plus the new file: 28 passed, 4 skipped (`raw/b6b-final-new-and-hygiene.log`). The earlier affected run (`raw/b6b-affected-patched.log`, 1 failed, 759 passed, 70 skipped) is that same failure and is superseded.
+- E8 (`e8-fix-6-report.md`) confirms for the r1 patch: 3689 passed, 200 skipped, 20 min 22 s, exit 0. Added to docs/tests.md as "A full run with the first version of this patch", labelled reported-not-re-measured and "not the count for the latest text" (r2 has 8 tests in the new file instead of 6, plus 2 in `test_run_commands_lane3.py`; run alone only). Mutation proof now 61 of 61 pins. E8's command checks (crash_desk exit 137, dry-fakes exit 0) agree with my own experiments; mine are in `raw/b6b-facts.txt`.
+- Final patches: `lane3-fix-6-r2.patch` (plain f3c39cf8), `lane3-fix-6-r2-for-stack.patch` (base + claims stack), `lane3-fix-6b.patch` (both).
