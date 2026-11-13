@@ -1,2 +1,2 @@
-14:30Z start; tree applied
-14:40Z item 2 (one demo server) done outside tests.md/README tail
+B6c progress
+14:30Z start; worktree b6c-base made, r2+6b applied
