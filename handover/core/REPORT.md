@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:17Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No change since 06:13Z: all four heads are unchanged (Part 6 20c369f0, Part 2 e75037b6, SONAR-PATH 622027cc, Q8c-1 dcf64b36). Nothing is clean; nothing new is verified. B17 and B12 are still unproven killed on a head.
+- Open: laptop tool list (05:52Z block); Q-R5-1; SONAR ids= class fix not yet reported.
+
+**LEAD ACTIONS:** none new.
+
+**LIVE ITEMS:** ac09a2ce SONAR batch 6 (34 min); a3ea530e Part 6 runner (33); a592bb13 Q8c-1 B17 (31); a7978edf Part 6 batch 15 (26); adecceff Part 2 finisher (18). 5 running. Builders reach the 60-minute time box at about 06:32Z to 06:50Z; a checkpoint note is requested then.
+
+**ROUNDS (WHY):** none started; waiting for builder pushes.
+
+**FINISHED SINCE LAST BLOCK:** nothing closed.
+
+**EGM STEP PER PACKAGE:** unchanged.
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none new.
+
 ## 06:13Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
