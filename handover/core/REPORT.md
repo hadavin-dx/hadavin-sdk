@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead)
+R5 BUILDER STARTED (agent a6c708de, sonnet, 60 min box, ends about 18:55Z lead clock): fixes R4-01..15 + F1 + F2 on a copy tree-R5, no full suite, deliverables /home/user/build/rr6/out/R5/. Only agent running. Next: R5 report -> ONE final evidence run + fresh reviewer (+ mail-path pass again only if the mail files changed; F1/F2/F5 touch them, so yes). ASK: stop at r4 with the findings listed as OPEN, or continue? I continue unless told otherwise.
+
 ## STATUS (core lead) WHOLE-PATCH REVIEW OF r4 DONE: NOT CLEAN, 7 MAJORS; EV4 runner STOPPED; R5 builder next
 Saved: handover/core/review/core-fix-on-frozen-r4-review.md (fresh fallback reviewer a79edc55; 0 Blockers, 7 Majors, 7 Minors, 1 Nit; it could not check whether new tests fail on old code, did a shallow docs pass, no Windows, no full suite).
 FIRST, MY OWN SLIP: R4-01 is a regression I caused. My item B told the builder to cap the check_invariants log files like --facts (16 MiB); a real request log line is ~566 bytes, so a load run above ~29,600 requests (the load driver plans up to 100,000) is now refused (PROBED: 60,000 rows refused, 30,000 accepted). I should have asked what a documented run produces before choosing the cap. Fix: use the load-run cap, test with a realistic row count.
