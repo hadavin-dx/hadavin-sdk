@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:24Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F4c | builder docs round 3 | close V4b survivor + contract.md:303 | 13:19Z | done 13:24Z | round 3 | DONE (builder's claims, unverified; handover/core/fix/F4c-fix.patch): the repeat sentence (code: desk.py _verdict_reply ~1284, _pending_and_due ~1416; a repeat of a NEW request can start a due follow-up, an earlier repeat does nothing, cap 5 tries) now stands on README (3 places), docs/tests.md P1, contract.md:178; 2 new tests (fail on baseline text: AssertionError: README.md); the load_tools prose "20 seconds" was already true (seq 1 20 x sleep 1), test only fails on a mutant 20 -> 30 (builder says so); collector count 3995 tests in 97 files; 20 doc files 1560 passed 33 skipped; ruff clean. Builder says it did not run the full suite | V4c, R5 |
+| docs-combined | ONE patch F4+F4b+F4c vs the patched base (14 files, 606 lines, sha256 2aaf06f46f1f) | one thing to hand over | 13:24Z | | | BUILT by me and apply-checked: git apply onto a fresh copy of the patched base, result identical to the builder's tree (only a cache folder differs). handover/core/fix/docs-F4-F4b-F4c-combined.patch | V4c re-checks |
+| V4c | independent evidence for round 3 + apply check | proof | 13:24Z | 14:05Z | 1 | RUNNING | read |
+| R5 | round-2 review of the whole docs patch (fallback reviewer: general-purpose agent with the egm persona file; egm:* types not registered) | independent read | 13:24Z | 13:55Z | round 2 of 2 | RUNNING | read, resolve |
+| F1b, F6 | builders (F1 round 2; writer-side + wrappers) | resolve / open classes | 13:19Z, 13:18Z | 14:20Z | | RUNNING | V1b, V6 |
+| V2, V3 | evidence for F2, F3 | proof | 13:11Z, 13:03Z | 13:55Z, 13:45Z | 1 | RUNNING | read |
+| done | F1 F2 F3 F4 F4b D1 E1 E2 C6 R4 V1 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: none new. My slip: my first combined patch was empty (git diff against a commit id that does not exist in that tree) and then too small (new file missing); I caught both by checking the line count and applying it to a fresh copy before using it. Totals unchanged: failures with proven cause 1 (T1); unexplained 2 (B2-first, T2-earlier); flakes 0; crashed agents 0.
+LOAD: 6 agents running (V2, V3, V4c, R5, F1b, F6), load about 2.5 before the two new ones.
+ASK: none new.
+
+
 ## REPORT (container clock 13:23Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
