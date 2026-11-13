@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT 16:00Z: DOCKER PROBE DONE (handover/demo/DOCKER-PROBE.md)
+- LOAD: no agent, no job; dockerd killed, scratch deleted.
+- RESULT: dockerd STARTS (first try, root, default overlayfs, ready 1 s). Tag pull hit Docker Hub 429 twice; pull by digest worked on try 3 (9 s): harness must retry. postgres:16 by digest = linux/amd64, 638 MB on disk; container ran, pg_isready over TCP ok in 2 s, psql 16.16. Free disk 4.2 G -> 3.5 G with the image (n8n install needs 3 G).
+- ASK: send the harness branch name when it exists (g12e.py etc. are not readable from here, so no call list). Default: native-Postgres switch not needed.
+- QUEUE DONE, idle by order.
+
 ## REPORT 15:58Z: ENV PROBE DONE (handover/demo/N8N-ENV-PROBE.md)
 - LOAD: no agent, no job. Scratch folders deleted (disk free back to the earlier level).
 - RESULT: the Linux assumptions CHECK OUT with four fixes: Node 24.22.2 from npm (machine default is Node 22, n8n 2.46.6 refuses it); install and rebuild isolated-vm under Node 24; N8N_LISTEN_ADDRESS=127.0.0.1 (no IPv6); N8N_RUNNERS_BROKER_PORT=5780 (N8N_PORT=5679 collides with the broker default 5679). Then readiness 200 at 8 s, 5780 listens, ports free after killing the group.
