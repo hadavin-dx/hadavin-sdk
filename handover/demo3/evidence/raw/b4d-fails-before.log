@@ -1,0 +1,35 @@
+......................FF...                                              [100%]
+=================================== FAILURES ===================================
+____ test_remedy_names_what_the_list_shows[README, definition of Same lead] ____
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(REMEDY_PLACES))
+    def test_remedy_names_what_the_list_shows(place: str) -> None:
+        """The remedy names the entries as the portal shows them (small letters), not the capital spellings."""
+        text = _line(*REMEDY_PLACES[place])
+        for words in SCREEN_FORMS:
+>           assert words in text, f"{place}: the remedy must hold {words!r}; the Leads list lower-cases every address"
+E           AssertionError: README, definition of Same lead: the remedy must hold '`straße@…` next to `strasse@…`'; the Leads list lower-cases every address
+E           assert '`straße@…` next to `strasse@…`' in '* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of blank characte... such as `straße@…` and `STRASSE@…`, `ıstanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them.'
+
+tests/test_email_case_rule.py:196: AssertionError
+____________ test_remedy_names_what_the_list_shows[docs/limits.md] _____________
+
+place = 'docs/limits.md'
+
+    @pytest.mark.parametrize("place", sorted(REMEDY_PLACES))
+    def test_remedy_names_what_the_list_shows(place: str) -> None:
+        """The remedy names the entries as the portal shows them (small letters), not the capital spellings."""
+        text = _line(*REMEDY_PLACES[place])
+        for words in SCREEN_FORMS:
+>           assert words in text, f"{place}: the remedy must hold {words!r}; the Leads list lower-cases every address"
+E           AssertionError: docs/limits.md: the remedy must hold '`straße@…` next to `strasse@…`'; the Leads list lower-cases every address
+E           assert '`straße@…` next to `strasse@…`' in "* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join...tanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them. Tests: `tests/test_email_case_rule.py`."
+
+tests/test_email_case_rule.py:196: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_remedy_names_what_the_list_shows[README, definition of Same lead]
+FAILED tests/test_email_case_rule.py::test_remedy_names_what_the_list_shows[docs/limits.md]
+2 failed, 25 passed in 2.44s
+EXIT_CODE=1

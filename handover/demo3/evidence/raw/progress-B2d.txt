@@ -1,1 +1,2 @@
 start 14:32Z worktree ready
+14:37Z code + docs + new tests written (tests/test_one_secret_rule_and_path_walk.py); fails-before on r3 recorded raw/b2d-fails-on-r3.txt; next: update old tests, class tests, full run

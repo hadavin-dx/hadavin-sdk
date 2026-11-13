@@ -1,0 +1,300 @@
+.FFF.FFFFFFFFFFFFFFF..                                                   [100%]
+=================================== FAILURES ===================================
+________________ test_by_hand_steps_name_one_window_per_command ________________
+
+    def test_by_hand_steps_name_one_window_per_command() -> None:
+        # the dot is written in brackets: a backslash before it would look like a Windows drive path to the hygiene test
+        step1 = _line("docs/tests.md", "1. Window 1, the demo server:")
+        assert re.search(r"PYTHONPATH=src:[.] python -m demo_only\.fakes_server --outbox keyed --port 8766", step1)
+        step2 = _line("docs/tests.md", "2. Window 2, the desk:")
+        assert re.search(r"PYTHONPATH=src:[.] python -m lead_desk\.server", step2)
+>       crash = _line("docs/tests.md", "**Crash demo (instead of step 2).**")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_run_and_counts.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rel = 'docs/tests.md', start = '**Crash demo (instead of step 2).**'
+
+    def _line(rel: str, start: str) -> str:
+        """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
+        found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
+>       assert len(found) == 1, (rel, start, len(found))
+E       AssertionError: ('docs/tests.md', '**Crash demo (instead of step 2).**', 0)
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_docs_run_and_counts.py:22: AssertionError
+____________________ test_start_up_outcomes_match_the_code _____________________
+
+    def test_start_up_outcomes_match_the_code() -> None:
+        para = _line("docs/tests.md", "What happens when something is missing")
+        shown = r"not running, the desk prints `cannot reach the demo servers[^`]*`"
+>       assert re.search(shown + r" \(there is one demo server program[^)]*\) and ends with exit code 1", para)
+E       AssertionError: assert None
+E        +  where None = <function search at 0x7ffaadb19300>(('not running, the desk prints `cannot reach the demo servers[^`]*`' + ' \\(there is one demo server program[^)]*\\) and ends with exit code 1'), 'What happens when something is missing (seen on Linux with Python 3.12.3, on private ports, written in `raw/b6b-facts...src:.` (the `:.` adds the repository folder, where `demo_only` is) is written in every command above except `feed.py`.')
+E        +    where <function search at 0x7ffaadb19300> = re.search
+
+tests/test_docs_run_and_counts.py:57: AssertionError
+__________________ test_windows_powershell_form_is_given_once __________________
+
+    def test_windows_powershell_form_is_given_once() -> None:
+        para = _line("docs/tests.md", "On Windows PowerShell, run")
+        assert "$env:PYTHONPATH = 'src;.'" in para
+        assert "'src;.'" in _read("scripts/start_all.ps1")
+>       readme = _line("README.md", "To start the desk and its demo server by hand")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_run_and_counts.py:73: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rel = 'README.md', start = 'To start the desk and its demo server by hand'
+
+    def _line(rel: str, start: str) -> str:
+        """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
+        found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
+>       assert len(found) == 1, (rel, start, len(found))
+E       AssertionError: ('README.md', 'To start the desk and its demo server by hand', 0)
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_docs_run_and_counts.py:22: AssertionError
+_______________ test_documented_soak_flag_exists_in_the_checker ________________
+
+    def test_documented_soak_flag_exists_in_the_checker() -> None:
+        checker = _read("load_tools/check_invariants.py")
+        assert re.search(r'add_argument\(\s*"--max-unknown"', checker)
+        assert re.search(r"DEFAULT_MAX_UNKNOWN = \(?\s*0\b", checker)
+        assert "crash_while_sending" in _read("src/lead_desk/desk.py")
+        para = _line("docs/tests.md", "**Blind mail system, many follow-ups at once.**")
+        for must in (
+            "cannot recognise a repeated send",
+            "`crash_while_sending`",
+            "`--max-unknown N`, default 0",
+            "`--max-unknown 100000`, which allows any number",
+            "a blind mail system and a keyed CRM",
+            "It ran 300 rounds.",
+            "385 stops in all: 229 at a named crash point",
+            "156 by SIGKILL",
+            "9154 leads",
+            "197 follow-ups ended UNKNOWN, all in 70 of the 300 rounds",
+            "Of the 9154 leads, 54 had no email (all 54 were UNKNOWN) and 9100 had exactly 1 email",
+            "includes the 143 UNKNOWN follow-ups whose email had left",
+            "no lead had 2 emails",
+            "failed in those 70 rounds and passed in the other 230",
+            "not in this repository",
+        ):
+>           assert must in para, must
+E           AssertionError: a blind mail system and a keyed CRM
+E           assert 'a blind mail system and a keyed CRM' in '**Blind mail system, many follow-ups at once.** The table above describes ONE follow-up, which is why most rows say "...pository, so you cannot reproduce these numbers from here; the figures are as reported by the author, not re-measured.'
+
+tests/test_docs_run_and_counts.py:115: AssertionError
+_______ test_documented_counts_are_the_measured_ones_not_the_stale_ones ________
+
+    def test_documented_counts_are_the_measured_ones_not_the_stale_ones() -> None:
+        cur = _line("docs/tests.md", "* **Current counts (commit f3c39cf8")
+        assert "**3683 passed and 200 skipped**" in cur and "3883 tests in all" in cur
+>       assert "the administrator user on Linux" in cur and "none of the 200 skipped tests gives Node" in cur
+E       AssertionError: assert ('the administrator user on Linux' in '* **Current counts (commit f3c39cf8, the main branch before the changes in this patch; Linux, Python 3.12.3, one seri...Reported by the author from earlier run notes, not re-measured for this text; the raw logs are not in this repository.' and 'none of the 200 skipped tests gives Node' in '* **Current counts (commit f3c39cf8, the main branch before the changes in this patch; Linux, Python 3.12.3, one seri...Reported by the author from earlier run notes, not re-measured for this text; the raw logs are not in this repository.')
+
+tests/test_docs_run_and_counts.py:126: AssertionError
+__________________ test_dry_run_people_count_is_the_real_one ___________________
+
+    def test_dry_run_people_count_is_the_real_one() -> None:
+        doc = _line("docs/real-services.md", "`scripts/run_real_check.py` runs the same desk")
+>       assert "8 invented people plus the twin" in doc
+E       assert '8 invented people plus the twin' in '`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail ac..."y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.'
+
+tests/test_docs_run_and_counts.py:162: AssertionError
+______________ test_there_is_one_demo_server_and_the_docs_say_so _______________
+
+    def test_there_is_one_demo_server_and_the_docs_say_so() -> None:
+        starter = _read("scripts/start_all.sh")
+        assert len(re.findall(r"^python -m demo_only\.fakes_server", starter, re.MULTILINE)) == 1
+        assert "cannot reach the demo servers" in _read("src/lead_desk/server.py")
+>       words = _line("README.md", "* **Demo server**")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_run_and_counts.py:182: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rel = 'README.md', start = '* **Demo server**'
+
+    def _line(rel: str, start: str) -> str:
+        """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
+        found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
+>       assert len(found) == 1, (rel, start, len(found))
+E       AssertionError: ('README.md', '* **Demo server**', 0)
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_docs_run_and_counts.py:22: AssertionError
+_______ test_crash_demo_steps_are_complete_and_137_is_a_real_process_end _______
+
+    def test_crash_demo_steps_are_complete_and_137_is_a_real_process_end() -> None:
+>       para = _line("docs/tests.md", "**Crash demo (instead of step 2).**")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_run_and_counts.py:192: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rel = 'docs/tests.md', start = '**Crash demo (instead of step 2).**'
+
+    def _line(rel: str, start: str) -> str:
+        """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
+        found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
+>       assert len(found) == 1, (rel, start, len(found))
+E       AssertionError: ('docs/tests.md', '**Crash demo (instead of step 2).**', 0)
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_docs_run_and_counts.py:22: AssertionError
+______ test_only_d2_is_a_real_end_in_the_tests_and_the_soak_is_kept_apart ______
+
+    def test_only_d2_is_a_real_end_in_the_tests_and_the_soak_is_kept_apart() -> None:
+        readme = _line("README.md", "* The desk was stopped at ten named crash points")
+>       assert "only one (D2) is a real process end in the test suite" in readme
+E       AssertionError: assert 'only one (D2) is a real process end in the test suite' in '* The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. Of the ...ne CRM row and one email. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.'
+
+tests/test_docs_run_and_counts.py:216: AssertionError
+__ test_the_soak_paragraph_defines_its_words_and_the_checks_match_the_checker __
+
+    def test_the_soak_paragraph_defines_its_words_and_the_checks_match_the_checker() -> None:
+        para = _line("docs/tests.md", "**Blind mail system, many follow-ups at once.**")
+        for must in (
+            "a soak test is one long run that stops and restarts the desk again and again",
+            "a soak script that is not in this repository",
+            "the command-line option `--max-unknown N`",
+            "That failure is expected on a blind mail system, because the default allows no UNKNOWN follow-up at all",
+            "it does not show that the desk is faulty",
+            "(the operating system ends the process from outside)",
+            "Check 1 is that every request has a receipt",
+            "check 2 is that every follow-up is in a final state",
+            "check 3 is that the emails in the demo server's outbox match the follow-ups",
+            "check 4 is that the CRM rows match the leads",
+            "checks 5 to 7, on model calls, rejection rate and waiting time",
+        ):
+>           assert must in para, must
+E           AssertionError: a soak test is one long run that stops and restarts the desk again and again
+E           assert 'a soak test is one long run that stops and restarts the desk again and again' in '**Blind mail system, many follow-ups at once.** The table above describes ONE follow-up, which is why most rows say "...pository, so you cannot reproduce these numbers from here; the figures are as reported by the author, not re-measured.'
+
+tests/test_docs_run_and_counts.py:242: AssertionError
+________ test_old_and_new_counts_are_kept_apart_and_the_total_is_a_sum _________
+
+    def test_old_and_new_counts_are_kept_apart_and_the_total_is_a_sum() -> None:
+>       bullet = _line("docs/tests.md", "* **Expected total with these documentation tests:")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_docs_run_and_counts.py:252: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rel = 'docs/tests.md'
+start = '* **Expected total with these documentation tests:'
+
+    def _line(rel: str, start: str) -> str:
+        """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
+        found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
+>       assert len(found) == 1, (rel, start, len(found))
+E       AssertionError: ('docs/tests.md', '* **Expected total with these documentation tests:', 0)
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_docs_run_and_counts.py:22: AssertionError
+_______________ test_eight_files_and_ten_files_are_not_mixed_up ________________
+
+    def test_eight_files_and_ten_files_are_not_mixed_up() -> None:
+        text = _read("docs/tests.md")
+        ten = sorted(
+            p.name for p in (ROOT / "tests").glob("test_*.py") if "play" + "wright" in p.read_text(encoding="utf-8").lower()
+        )
+        assert "test_portal_mode.py" not in ten
+        old = _line("docs/tests.md", "* **Older record, history only")
+>       assert "are not a subset of the ten browser files" in old
+E       AssertionError: assert 'are not a subset of the ten browser files' in '* **Older record, history only: skips reported without Playwright (eight test files, commit 0841f36 plus the browser ... and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).'
+
+tests/test_docs_run_and_counts.py:271: AssertionError
+_ test_real_services_text_matches_the_script_and_uses_one_name_for_each_thing __
+
+    def test_real_services_text_matches_the_script_and_uses_one_name_for_each_thing() -> None:
+        doc = _line("docs/real-services.md", "`scripts/run_real_check.py` runs the same desk")
+>       assert "so the default real run has 12 people and 13 leads" in doc
+E       assert 'so the default real run has 12 people and 13 leads' in '`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail ac..."y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.'
+
+tests/test_docs_run_and_counts.py:283: AssertionError
+___________ test_no_private_names_and_no_review_words_in_public_text ___________
+
+    def test_no_private_names_and_no_review_words_in_public_text() -> None:
+        banned = ("b6b", "lane3", "raw/", "this patch", "documentation patch", "private ports", "(not tried here)")
+        for name, text in _public_docs().items():
+            for word in banned:
+>               assert word not in text, (name, word)
+E               AssertionError: ('README.md', '(not tried here)')
+E               assert '(not tried here)' not in '# duplicate...a problem.\n'
+E                 
+E                 '(not tried here)' is contained here:
+E                 ?           ^^^^^
+E                   .` prefix (not tried here). The steps in "Try it" differ: there you set `PYTHONPATH=src` and `scripts/start_all.sh` sets `src:.` itself. The longer version, with the crash demo, is in `docs/tests.md`, "How to run the tests".
+E                 ?           ^^^^^^^^^^^^^^^^^^^^^
+E                   
+E                   ## Where to read more...
+E                 
+E                 ...Full output truncated, use '-vv' to show
+
+tests/test_docs_run_and_counts.py:309: AssertionError
+__________________ test_by_hand_intro_has_needs_and_os_facts ___________________
+
+    def test_by_hand_intro_has_needs_and_os_facts() -> None:
+        text = _read("docs/tests.md")
+>       assert "\n### Running the desk by hand\n" in text
+E       AssertionError: assert '\n### Running the desk by hand\n' in '# Crash points, promises and tests\n\nThis page holds the detail behind the short summary in the README.\n\n## How to...\n* **UNKNOWN**: the desk is not sure whether a follow-up email left; it does not resend, and a person must check.\n\n'
+
+tests/test_docs_run_and_counts.py:315: AssertionError
+__ test_start_all_extra_settings_are_named_and_the_by_hand_commands_lack_them __
+
+    def test_start_all_extra_settings_are_named_and_the_by_hand_commands_lack_them() -> None:
+        para = _line("docs/tests.md", "`bash scripts/start_all.sh`")
+>       assert "`DESK_LEADFLOW_FILE`" in para and "`DESK_NUDGE_TO`" in para
+E       assert ('`DESK_LEADFLOW_FILE`' in "`bash scripts/start_all.sh` (Linux, macOS) or `scripts\\start_all.ps1` (PowerShell) start the demo server and the des...ves. The desk's message names `scripts/start_all` without an ending: the files are `start_all.sh` and `start_all.ps1`.")
+
+tests/test_docs_run_and_counts.py:338: AssertionError
+_ test_contract_run_commands_name_the_scripts_and_point_to_the_powershell_form _
+
+    def test_contract_run_commands_name_the_scripts_and_point_to_the_powershell_form() -> None:
+        para = _line("contract.md", "There is no build-system.")
+>       assert "The `start_all` scripts set `PYTHONPATH=src:.`" in para
+E       AssertionError: assert 'The `start_all` scripts set `PYTHONPATH=src:.`' in 'There is no build-system. Scripts set `PYTHONPATH=src:.` (and run from the repo root): `PYTHONPATH=src:. python -m le...portlib.resources` from the `lead_desk` package, so it is found relative to the package wherever `src` is on the path.'
+
+tests/test_docs_run_and_counts.py:350: AssertionError
+________________________ test_small_wording_fixes_stay _________________________
+
+    def test_small_wording_fixes_stay() -> None:
+        text = _read("docs/tests.md")
+>       assert "this lock" not in text and "on the browser lock files (history only" in text
+E       AssertionError: assert ('this lock' not in '# Crash poi...t check.\n\n'
+E         
+E         'this lock' is contained here:
+E         ?                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_docs_run_and_counts.py:358: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs_run_and_counts.py::test_by_hand_steps_name_one_window_per_command
+FAILED tests/test_docs_run_and_counts.py::test_start_up_outcomes_match_the_code
+FAILED tests/test_docs_run_and_counts.py::test_windows_powershell_form_is_given_once
+FAILED tests/test_docs_run_and_counts.py::test_documented_soak_flag_exists_in_the_checker
+FAILED tests/test_docs_run_and_counts.py::test_documented_counts_are_the_measured_ones_not_the_stale_ones
+FAILED tests/test_docs_run_and_counts.py::test_dry_run_people_count_is_the_real_one
+FAILED tests/test_docs_run_and_counts.py::test_there_is_one_demo_server_and_the_docs_say_so
+FAILED tests/test_docs_run_and_counts.py::test_crash_demo_steps_are_complete_and_137_is_a_real_process_end
+FAILED tests/test_docs_run_and_counts.py::test_only_d2_is_a_real_end_in_the_tests_and_the_soak_is_kept_apart
+FAILED tests/test_docs_run_and_counts.py::test_the_soak_paragraph_defines_its_words_and_the_checks_match_the_checker
+FAILED tests/test_docs_run_and_counts.py::test_old_and_new_counts_are_kept_apart_and_the_total_is_a_sum
+FAILED tests/test_docs_run_and_counts.py::test_eight_files_and_ten_files_are_not_mixed_up
+FAILED tests/test_docs_run_and_counts.py::test_real_services_text_matches_the_script_and_uses_one_name_for_each_thing
+FAILED tests/test_docs_run_and_counts.py::test_no_private_names_and_no_review_words_in_public_text
+FAILED tests/test_docs_run_and_counts.py::test_by_hand_intro_has_needs_and_os_facts
+FAILED tests/test_docs_run_and_counts.py::test_start_all_extra_settings_are_named_and_the_by_hand_commands_lack_them
+FAILED tests/test_docs_run_and_counts.py::test_contract_run_commands_name_the_scripts_and_point_to_the_powershell_form
+FAILED tests/test_docs_run_and_counts.py::test_small_wording_fixes_stay - Ass...
+18 failed, 4 passed in 0.37s

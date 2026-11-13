@@ -1,0 +1,6 @@
+README.md remedy ſ pair reverted to capitals: 1 failed, 26 passed in 2.38s
+README.md small-letters sentence removed: 1 failed, 26 passed in 2.42s
+docs/limits.md remedy ſ pair reverted to capitals: 1 failed, 26 passed in 2.41s
+docs/limits.md small-letters sentence removed: 1 failed, 26 passed in 2.40s
+README pointer removed (no test pins it: expect pass): 27 passed in 2.37s
+pointer removed: 1 failed, 27 passed in 2.43s

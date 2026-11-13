@@ -1,0 +1,2 @@
+b6c mutation proof (removal of one pinned literal from its doc, run test_docs_run_and_counts.py, 172 literals incl. older pins)
+mutated 172 survived 0; 55 literals are code/regex strings not found in docs (not mutated)

@@ -1,3 +1,30 @@
+## HEARTBEAT 62 (14:38Z / IST = UTC+5:30)
+
+FAILURES AND RETRIES (first):
+- B2c final full suite FAILED once (builder's own wording test); fixed, only a targeted rerun followed; B2d must give a green full suite on the final head.
+- A1 plan item in the fix-6 resolve was WRONG (measured by B6b); corrected in docs.
+- REV-1f resolve was done inline, not through the Skill tool (departure from the rule, recorded).
+- Register times were guessed earlier; corrected (clock-correction row).
+- New reviews: REV-4d found 1 major (remedy names capital spellings the portal never shows); REV-5c found 1 major (reset.ps1 sibling of the stale-pid bug) and 6 minors. Both sent back to builders (B4d, B5e).
+- Still unexplained: E3b three cut runs; xdist port-43217 flake (cause by reading; not reproduced); 2 `E` marks of PR #12 run.
+- Totals: failures today include the above; real defects open: fix-8 (B8 building), fix-5 ps1 sibling (B5e).
+
+| Item | State |
+|---|---|
+| B8 fix-8 dotted domain (Q-19) | running (stop 14:50Z) |
+| E9 fix-6 r2 full suite | running |
+| B6c fix-6 r3 | running |
+| B2d fix-2 r4 | running |
+| B1f fix-1 r6 | running |
+| E10 fix-5 r4 serial + xdist | running |
+| B4d fix-4 r4 | running (stop 15:10Z) |
+| B5e fix-5 r5 | running (stop 15:15Z) |
+| REV-4d, REV-5c | closed |
+| B7b | not launched (3 minors) |
+
+ASK list: ss/dotless-i rule (docs only, default kept); xdist in CI (report only); PR #12 E marks; run the 4 remaining skips?; Q8 vs B3 M11; D10 "sender" word. Q-19 ANSWERED (fix-8 running).
+Load: idle CPU 86 percent, free RAM 14262 MB (proc/stat 5 s sample, 14:38Z). 8 agents running.
+
 ## HEARTBEAT 61 (14:26Z / 19:56 IST)
 
 FAILURES AND RETRIES (first):
