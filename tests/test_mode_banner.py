@@ -872,7 +872,7 @@ def test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error() -> No
 def test_tool_specs_has_no_default_so_forgetting_it_is_an_error() -> None:
     cfg = _fake_config("demo", [("llm", "fake")])
     with refused(TypeError, "banner_from_config called without tool_specs"):
-        mb.banner_from_config(cfg)  # type: ignore[call-arg]
+        mb.banner_from_config(cfg, overridden=())  # type: ignore[call-arg]
     with refused(TypeError, "_services_in called without tool_specs"):
         mb._services_in(cfg)  # type: ignore[call-arg]
 

@@ -1121,63 +1121,63 @@ M = [
         "    if kind := _magic_kind(data):",
         "    if False:",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('zip', '504b0304', '.png')",
+        "first bytes of zip (504b0304) in a file ending '.png'",
     ),
     gd(
         "G43 an empty or spanned zip is not recognised",
         'd[:4] in (b"PK\\x03\\x04", b"PK\\x05\\x06", b"PK\\x07\\x08")',
         'd[:4] == b"PK\\x03\\x04"',
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('zip', '504b0506', '.png')",
+        "first bytes of zip (504b0506) in a file ending '.png'",
     ),
     gd(
         "G44 an ELF file is not recognised",
         '    ("ELF", lambda d: d[:4] == b"\\x7fELF"),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('ELF', '7f454c46', '.png')",
+        "first bytes of ELF (7f454c46) in a file ending '.png'",
     ),
     gd(
         "G45 a gzip file is not recognised",
         '    ("gzip", lambda d: d[:2] == b"\\x1f\\x8b"),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('gzip', '1f8b0800', '.png')",
+        "first bytes of gzip (1f8b0800) in a file ending '.png'",
     ),
     gd(
         "G46 a bzip2 file is not recognised",
         '    (\n        "bzip2",\n        lambda d: (\n            d[:3] == b"BZh"\n            and len(d) > 3\n            and 0x31 <= d[3] <= 0x39\n            and d[4:10] in (b"1AY&SY", b"\\x17rE8P\\x90")\n        ),\n    ),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('bzip2', '425a6839', '.png')",
+        "first bytes of bzip2 (425a6839) in a file ending '.png'",
     ),
     gd(
         "G47 an xz file is not recognised",
         '    ("xz", lambda d: d[:6] == b"\\xfd7zXZ\\x00"),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('xz', 'fd377a58', '.png')",
+        "first bytes of xz (fd377a58) in a file ending '.png'",
     ),
     gd(
         "G48 a tar file is not recognised",
         '    ("tar", lambda d: len(d) > 262 and d[257:262] == b"ustar"),\n',
         "",
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('tar', '61616161', '.png')",
+        "first bytes of tar (61616161) in a file ending '.png'",
     ),
     gd(
         "G49 compiled Python from version 3000 is not recognised",
         '3000 <= int.from_bytes(d[:2], "little") < 4000',
         '3001 <= int.from_bytes(d[:2], "little") < 4000',
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('compiled Python', 'b80b0d0a', '.png')",
+        "first bytes of compiled Python (b80b0d0a) in a file ending '.png'",
     ),
     gd(
         "G50 compiled Python up to version 3999 is not recognised",
         '3000 <= int.from_bytes(d[:2], "little") < 4000',
         '3000 <= int.from_bytes(d[:2], "little") < 3999',
         "test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending",
-        "('compiled Python', '9f0f0d0a', '.png')",
+        "first bytes of compiled Python (9f0f0d0a) in a file ending '.png'",
     ),
     gd(
         "G51 a .gz ending is not refused",
@@ -1516,6 +1516,7 @@ M = [
         "        if True:\n            note = words.overridden_note",
         "test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim",
         "a banner with a real service, or a pilot or live one, claims made-up data",
+        crash="ValueError",
     ),
     mb(
         "N7 the detector override is not a known override",
@@ -1523,6 +1524,7 @@ M = [
         'OVERRIDES = ("tools", "sources", "channel", "llm", "secrets", "hold_run_ids")',
         "test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so",
         "build override not known to the mode banner: detector",
+        crash="ValueError",
     ),
     mutant(
         "N8 an empty mapping counts as an override",
@@ -1810,7 +1812,9 @@ SAME_ASSERT: dict[str, str] = {}
 # so their `expect` is the interpreter's or library's own message or the code's own error text. Pinned here by name: a row
 # that crashes on purpose must be listed, and the table test refuses a row outside this set whose `expect` reads like an
 # interpreter message. The set is derived in the test from the rows that declare `crash=`; both must be this set.
-CRASH_ROWS = frozenset({"B5", "B7", "B13", "B34", "B43", "B44", "B52", "B53", "B54", "B62"})
+CRASH_ROWS = frozenset(
+    {"B5", "B7", "B13", "B34", "B43", "B44", "B52", "B53", "B54", "B62", "N6", "N7"}
+)
 
 
 def non_unique_rows(root=ROOT, rows=None):

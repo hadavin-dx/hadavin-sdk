@@ -210,7 +210,7 @@ def test_pin_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_i
         f"crash rows not pinned: {sorted(declared - set(bm.CRASH_ROWS))}; pinned but not crash rows: "
         f"{sorted(set(bm.CRASH_ROWS) - declared)}"
     )
-    assert len(bm.CRASH_ROWS) == 10, (
+    assert len(bm.CRASH_ROWS) == 12, (
         "the pinned crash set changed size: update the CHANGELOG figure with it"
     )
     assert interpreter_text_problems() == []

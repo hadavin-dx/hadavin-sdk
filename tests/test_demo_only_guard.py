@@ -904,17 +904,13 @@ def test_a_file_over_the_size_cap_is_a_hit_and_is_not_read(
     ], "a file over the cap was opened"
     monkeypatch.undo()
     # a file that grew after the size check is still bounded
-    real_stat = Path.stat
+    real_info = g._stat_info
 
-    def small_stat(self: Path, *args: object, **kwargs: object):
-        got = real_stat(self, *args, **kwargs)
-        if self.name != "big.py" or kwargs.get("follow_symlinks") is False:
-            return got
-        fields = {k: getattr(got, k) for k in dir(got) if k.startswith("st_")}
-        fields["st_size"] = 5
-        return type("FakeStat", (), fields)()
+    def small_info(full: Path | str) -> tuple[str, int]:
+        kind, size = real_info(full)
+        return (kind, 5) if str(full).endswith("big.py") else (kind, size)
 
-    monkeypatch.setattr(Path, "stat", small_stat)
+    monkeypatch.setattr(g, "_stat_info", small_info)
     assert g.scan(repo, _cfg(max_file_bytes=100)) == [
         "src/pkg/big.py: file-too-large (over 100 bytes; it is not read)"
     ], "a_file_over_the_size_cap_is_a_hit_and_is_not_read: check 4"
