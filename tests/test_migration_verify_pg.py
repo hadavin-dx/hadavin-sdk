@@ -17,7 +17,7 @@ psycopg = require_module("psycopg")  # with the DSN set a missing driver FAILS (
 from psycopg import sql
 from psycopg.conninfo import make_conninfo
 
-from hadavin_sdk.errors import ConfigError
+from hadavin_sdk.errors import AppliedNotVerifiedError, ConfigError
 from hadavin_sdk.store import migration_verify as v
 from hadavin_sdk.store.migrate import GRANTS
 from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
@@ -651,13 +651,13 @@ def test_a_failed_cloud_sign_in_at_the_start_is_refused_with_exit_2_and_keeps_no
     """Round 17 group 3 (b): a sign-in that fails before any connection exists (an SDK error, here a stand-in client that has no credentials) gives
     exit 2 with the connection-specific sentence, nothing kept and none of the SDK's words; on 140a1268 it was exit 3.
     Killed by V122 (the refusal prints the SDK's own words) and V123 (the refusal is not worded for the connection); the
-    two channels of the refusal are checked here too (round 18 group 1; V130 raises it from inside the `except` block)."""
+    two channels of the refusal are checked here too (round 18 group 1; V132 raises it from inside the `except` block)."""
     from botocore.exceptions import NoCredentialsError
 
     from hadavin_sdk.store import postgres as pg
-    from tests.test_migration_verify import _a_cloud_sdk_whose_token_request_fails
+    from tests.fixtures.cloud_sdk import a_cloud_sdk_whose_token_request_fails
 
-    _a_cloud_sdk_whose_token_request_fails(monkeypatch, NoCredentialsError())
+    a_cloud_sdk_whose_token_request_fails(monkeypatch, NoCredentialsError())
     monkeypatch.setattr(pg, "conninfo_to_dict", lambda dsn: {"host": "made-up", "user": "made-up"})
     with pytest.raises(ConfigError) as seen:  # a ConfigError is exit 2 in `cli.main`
         mig.migrate(
@@ -720,7 +720,7 @@ def test_an_address_the_sign_in_cannot_use_is_refused_with_exit_2_before_any_con
 def test_a_refused_connection_keeps_no_driver_error_on_either_channel(mrun, monkeypatch):
     """Round 18 group 1 (the sibling of the sign-in error in the same function): the driver's error for a connection that
     cannot be made holds the host and the user in its words; the refusal must not keep it on `__cause__` or `__context__`.
-    Killed by V131 (the refusal is built inside the `except` block again). On aac26d60 `__cause__` held it."""
+    Killed by V133 (the refusal is built inside the `except` block again). On aac26d60 `__cause__` held it."""
     words = "made-up-host-words"
 
     def refuse(*args, **kwargs):
@@ -734,6 +734,35 @@ def test_a_refused_connection_keeps_no_driver_error_on_either_channel(mrun, monk
     assert seen.value.__cause__ is None and seen.value.__context__ is None
     assert seen.value.__suppress_context__ is False
     assert _ledger_of(mrun.dsn) == []
+
+
+def test_a_connection_refused_in_step_8_on_a_real_server_keeps_no_driver_error_on_either_channel(
+    mrun, monkeypatch
+):
+    """Round 19 group 1, on a real server: the files are committed on the first connection, the second connection (step 8) is
+    refused by an injected driver error that holds host and user words. The failure report is exit 5 ("applied, not
+    verified"), the files are in the ledger, and neither channel nor the printed traceback holds the words. Tested on the
+    unguarded body. Killed by V149, V150 and V151. On 6a25ae5d `__cause__` held the driver error."""
+    from tests.fixtures.channels import assert_no_channel
+
+    words = "made-up-host-words"
+    real = mig.connect
+    count = {"n": 0}
+
+    def second_one_is_refused(*args, **kwargs):
+        count["n"] += 1
+        if count["n"] == 2:
+            raise psycopg.OperationalError(words)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(mig, "connect", second_one_is_refused)
+    with pytest.raises(AppliedNotVerifiedError) as seen:
+        getattr(mig.migrate, "__wrapped__", mig.migrate)(
+            mrun.dsn
+        )  # the body, without the guard of group 2
+    assert seen.value.could_not_run == "OperationalError" and words not in str(seen.value)
+    assert_no_channel(seen.value, words)
+    assert _ledger_of(mrun.dsn) == REAL_FILES
 
 
 def test_an_address_that_cannot_be_reached_is_refused_with_exit_2_with_a_real_driver_error():

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import ast
 import json
-import traceback
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -27,39 +26,12 @@ import pytest
 from hadavin_sdk import errors
 from hadavin_sdk.store import postgres as pg
 from hadavin_sdk.store.protocol import StoreUnavailable
-from tests.test_migration_verify import _a_cloud_sdk_whose_token_request_fails
+from tests.fixtures.channels import assert_no_channel
+from tests.fixtures.cloud_sdk import a_cloud_sdk_whose_token_request_fails
 
 # Made-up words that stand for an account name (not secret-shaped).
 WORDS = "made-up-account-words"
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def everything_kept(err: BaseException) -> list[BaseException]:
-    """`err` and every error reachable from it through `__cause__` and `__context__` (what a log handler could walk)."""
-    seen: list[BaseException] = []
-    todo = [err]
-    while todo:
-        e = todo.pop()
-        if e is None or any(e is s for s in seen):
-            continue
-        seen.append(e)
-        todo += [e.__cause__, e.__context__]
-    return seen
-
-
-def assert_no_channel(err: BaseException, *words: str) -> None:
-    """The refusal holds no other error on any channel, and none of `words` is in anything it keeps or prints."""
-    assert err.__cause__ is None, "the refusal keeps the error it was made from (`from <error>`)"
-    assert err.__context__ is None, (
-        "the refusal was raised inside an `except` block (`__context__` is set)"
-    )
-    assert err.__suppress_context__ is False, (
-        "`from None` hides the error from the printed traceback only"
-    )
-    assert everything_kept(err) == [err]
-    shown = "".join(traceback.format_exception(err)) + "".join(str(e) for e in everything_kept(err))
-    for word in words:
-        assert word not in shown, shown
 
 
 def raised(call, kind: type[BaseException] = Exception) -> BaseException:
@@ -107,7 +79,7 @@ def test_a_failed_sign_in_of_any_kind_leaves_no_trace_of_the_sdk_error(monkeypat
     On aac26d60 the library types were converted but kept on `__context__`, and the other types came out raw (exit 3)."""
     error = ERRORS[which]()
     if step == "token-is-asked-for":
-        _a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
+        a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
     else:
         import boto3
 
@@ -129,7 +101,7 @@ def test_an_interrupt_during_the_sign_in_is_not_turned_into_a_refusal(monkeypatc
     """Round 18 group 2: the conversion takes `Exception`, never `BaseException` (a Ctrl-C or an exit must still stop the
     process as itself). Control for the catch: passes on aac26d60 too (it caught two library types only)."""
     if step == "token-is-asked-for":
-        _a_cloud_sdk_whose_token_request_fails(monkeypatch, signal())
+        a_cloud_sdk_whose_token_request_fails(monkeypatch, signal())
     else:
         import boto3
 
@@ -290,7 +262,7 @@ def test_a_failed_sign_in_while_the_store_is_built_is_the_sign_in_refusal_and_no
         **named,
     )
     deps = SimpleNamespace(resolve=lambda name: DSN)
-    _a_cloud_sdk_whose_token_request_fails(monkeypatch, RuntimeError(WORDS))
+    a_cloud_sdk_whose_token_request_fails(monkeypatch, RuntimeError(WORDS))
     no_connection(monkeypatch)
     err = raised(lambda: pg.build(settings, deps))
     assert isinstance(err, errors.SignInError), f"came out as {type(err).__name__}"
@@ -325,7 +297,7 @@ def raises_inside_handlers(source: str, functions: set[str]) -> list[str]:
 @pytest.mark.parametrize("path", sorted(CHOKE_POINTS))
 def test_the_choke_points_raise_no_new_error_inside_an_except_block(path):
     """Round 18 group 1: the structure that keeps `__context__` empty, checked in the source. A `raise` of a new error inside
-    an `except` block of these functions fails here. Killed by V130, V131 and V134 (a raise put back inside the block)."""
+    an `except` block of these functions fails here. Killed by V130 and V134 (a raise put back inside the block; V131 to V133 are killed by the behaviour tests, and this test fails for them as well)."""
     text = (ROOT / path).read_text(encoding="utf-8")
     assert raises_inside_handlers(text, CHOKE_POINTS[path]) == []
 

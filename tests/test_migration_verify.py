@@ -15,6 +15,7 @@ import pytest
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.store import migration_verify as v
 from hadavin_sdk.store.migrate import GRANTS
+from tests.fixtures.cloud_sdk import a_cloud_sdk_whose_token_request_fails
 from tests.test_migration_steps import harness  # noqa: F401  (the fixture: `migrate` on made-up files and a stub)
 
 DSN = os.environ.get(
@@ -1510,17 +1511,6 @@ def test_connect_with_the_iam_sign_in_runs_one_statement_and_adds_only_the_passw
     assert seen["kwargs"]["password"] == made_up
 
 
-def _a_cloud_sdk_whose_token_request_fails(monkeypatch, error):
-    """The real sign-in helper (`store/auth_aws.py`) on a stand-in client whose token request raises `error`."""
-    import boto3
-
-    class Rds:
-        def generate_db_auth_token(self, **kwargs):
-            raise error
-
-    monkeypatch.setattr(boto3, "client", lambda service, **kwargs: Rds())
-
-
 @pytest.mark.parametrize("which", ["no-credentials", "refused-request"])
 def test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_words(
     monkeypatch, which
@@ -1542,7 +1532,7 @@ def test_a_failed_cloud_sign_in_is_a_plain_refusal_that_prints_none_of_the_sdks_
             {"Error": {"Code": "AccessDenied", "Message": words}}, "GenerateDbAuthToken"
         )
     )
-    _a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
+    a_cloud_sdk_whose_token_request_fails(monkeypatch, error)
 
     def no_connection(*args, **kwargs):
         raise AssertionError("a connection was tried after the sign-in failed")
