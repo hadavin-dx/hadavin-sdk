@@ -1,2 +1,3 @@
 sdk /home/user/build/E-work/eq-tree/src/hadavin_sdk/__init__.py
 BASELINE: 1 failed, 825 passed in 30.37s failed: 1
+EQ[0] k1b/bundle.py: mutated -> 2 failed, 824 passed in 28.70s | failed 2 | same failures as baseline: False | new failures: ['FAILED tests/test_pathguard_batch3.py::test_every_equivalent_mutant_still_names_text_that_exists_and_gives_its_argument']
