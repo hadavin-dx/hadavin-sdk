@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:14Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 batch 13 builder a7978edf first stopped with nothing committed; resumed, it has now pushed e51ae85f to wip/cloud-pd-banner (my own check: 0 suppression markers on added lines vs origin/main; pyproject.toml differs from main by one line). Everything else it claims is UNVERIFIED: it is still finishing the 3.13/3.12 per-file runs, the new mutant rows (R13*), bandit and the dd827d79 fail-before.
+- ESCALATE (lead): `ruff` S603 fires once at tools/fixed_run.py:30 (the shared subprocess helper). Not suppressed. Options: (1) one per-file ignore, (2) literal command lists per call site, (3) inline marker. You refused per-file ignores before; I recommend (2) unless you rule otherwise.
+- The masker now hides some rows main showed (mixed letters+digits short Bearer/Basic tokens, per your 04:55Z rule). It also hides `bypass=true x`. Stricter than main, never weaker; exact rows will be in the next report.
+- cli.py and tools.py carry 10 old broad catches from main with noqa: BLE001, outside Part 2/6; not touched.
+- Not done on any lane: no laptop run until a fresh round finds 0 Blocker and 0 Major.
+
+**LEAD ACTIONS:** S603 ruling needed (above). Nothing else.
+
+**LIVE ITEMS:** a7978edf Part 6 batch 13 (finishing runs); a805b93d Part 2 batch 12 (box ends ~05:33Z); ac09a2ce SONAR-PATH batch 5 (box ends ~05:53Z).
+
+**ROUNDS (WHY):** Part 6 round 13 follows batch 13 (mode-safety, no cap). Part 2 round 12 after batch 12. SONAR-PATH round 5 after batch 5 (security, no cap).
+
+**FINISHED SINCE LAST BLOCK:** Part 6 e51ae85f pushed.
+
+**EGM STEP PER PACKAGE:** Part 6: fix batch 13 done-pending-runs, next snapshot + fresh reviewers + one runner. Part 2: fix batch 12. SONAR-PATH: fix batch 5.
+
+**LANE SONAR-PATH:** batch 5 building; real OSError (Errno 36) class fix is in its brief; no SonarCloud finding claimed cleared.
+
+**RUN ON LAPTOP:** none yet.
+
 ## 05:08Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
