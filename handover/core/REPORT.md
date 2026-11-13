@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 10:16Z CORE: realrun-v6 runner C reported; my brief had a TMPDIR error
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| a36cf35c (runner C) | core-touches-3 alone | the 3 core hunks stand alone | 09:50Z / 15:20 IST | finished about 10:25Z | 1 of 1 | reported; files in handover/core/evidence/realrun-v6/C/ | none |
+| ac0e1771 (runner A) | full suite serial, twice | patched chain passes on Linux | 09:50Z / 15:20 IST | hard stop 11:20Z | suite run 1, attempt 2 | running; I sent it a correction (see failure 1) | wait |
+| a7df64b5 (runner B2) | v6 mutant sets on tree-M | mutants killed | 10:14Z / 15:44 IST | hard stop 11:44Z | 1 of 1 | running; same correction sent | wait |
+
+Runner C results (core-touches-3 alone on main 61ded9e; its own numbers, not judged):
+- FAILURE 1, my mistake: my brief told runners to put TMPDIR inside the tree (tree/.tmp-run). Runner C found two tests fail only because of that: test_demo_folder_guard::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci and test_no_placeholders::test_no_placeholder_text_ships. Re-run of both files with TMPDIR outside the tree: 3 passed. Not compared on unpatched main, so "caused by the folder" rests on that rerun. Runners A and B2 got a correction (TMPDIR outside the tree; A re-runs those two files for run 1 and reports both results).
+- Full suite in 5 file groups (one single run was aborted at about 7%, rc 143, as too slow): 3417 passed, 2 failed (the two above), 198 skipped, about 1212 s, no hang, no error, all 90 test files run. The 198 skips are not split by reason (browser tests not separated).
+- Patch's new tests on unpatched main (only tests/test_core_key_readers.py copied): 7 failed, 5 passed. The 5 passes are the two "identical to the old rule on 1512 files" equality pins and three "no message holds the key text" cases, regression guards. Matches the demo's evidence file (7/5).
+- Core differential (1512 key files per reader): hubspot only-old 0, only-new 0; smtp only-old 0, only-new 0; live only OLD accepts 97, only NEW 0; "no difference outside the allowed ones"; identical to the demo's file.
+- Not run: Windows; lint and security scanners (excluded by order); the 2 failing tests on unpatched main.
+
+ASK:
+1. Mutant driver question from the last block (mut_portable.py instead of mut.py) still open. Default: B2 uses mut_portable.py and reports what it could not run.
+2. Runner A re-run of two files will make its summary two numbers; no decision needed unless you want them merged.
+
+
 ## REPORT 2026-11-13 10:14Z CORE: realrun-v6 runners A, C running; mutation runner B2 started
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

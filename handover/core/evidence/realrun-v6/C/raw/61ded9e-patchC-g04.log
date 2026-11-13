@@ -1,0 +1,21 @@
+........................................................................ [ 14%]
+........................................................................ [ 29%]
+........................................................................ [ 43%]
+........................................................................ [ 58%]
+........................................................................ [ 72%]
+....................................ssssssssssssss...................... [ 87%]
+............s..................................................          [100%]
+============================= slowest 8 durations ==============================
+3.01s call     tests/test_smtp_provider.py::test_any_doubt_after_the_text_started_is_ambiguous[silent_after_text]
+2.41s call     tests/test_sonar_p2_regex_optional.py::test_run_real_check_address_pattern_finds_the_same_addresses
+1.52s call     tests/test_stall_eviction.py::test_idle_sockets_closed_at_deadline
+1.23s call     tests/test_slow_sender.py::test_slow_request_line_closed
+1.21s call     tests/test_stall_eviction.py::test_dripping_crowd_is_not_evicted_live
+1.01s call     tests/test_slow_sender.py::test_stall_gives_the_same_408[header]
+1.01s call     tests/test_slow_sender.py::test_slow_body_closed_with_408
+1.01s call     tests/test_slow_sender.py::test_stall_gives_the_same_408[resolve]
+=========================== short test summary info ============================
+SKIPPED [14] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+480 passed, 15 skipped in 79.68s (0:01:19)
+rc=0 wall=80s

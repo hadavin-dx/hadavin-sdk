@@ -110,3 +110,4 @@ realrun-v6 runners A,B,C running
 runners running; A attempt1 SIGTERM, restarted
 runner B reported; mutants not run (driver missing)
 B2 mutation runner started; A,C running
+runner C reported; TMPDIR correction sent to A and B2

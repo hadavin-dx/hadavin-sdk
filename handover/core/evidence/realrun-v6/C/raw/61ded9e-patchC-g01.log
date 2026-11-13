@@ -1,0 +1,25 @@
+........................................................................ [ 13%]
+......................................ss...................sssssssssssss [ 27%]
+sssssssss............................................................... [ 41%]
+..................................................................s..... [ 55%]
+..s.......ss............................................................ [ 68%]
+........................................................................ [ 82%]
+........................................................................ [ 96%]
+...................                                                      [100%]
+============================= slowest 8 durations ==============================
+10.05s call     tests/test_infra.py::test_connection_pragmas_and_busy_503
+10.03s call     tests/test_later_approval.py::test_decision_busy_is_503
+6.95s call     tests/test_hygiene.py::test_hygiene_scan_public
+6.03s call     tests/test_http.py::test_second_desk_refuses_to_start
+5.24s call     tests/test_ledger_and_bind_retry.py::test_port_taken_for_good_exits_with_its_own_code
+3.07s call     tests/test_http.py::test_reply_does_not_wait_for_send
+2.04s call     tests/test_later_approval.py::test_oversize_decision_body_is_413_before_any_body_byte_is_read
+1.75s teardown tests/test_http.py::test_review_and_envelope_errors
+=========================== short test summary info ============================
+SKIPPED [24] tests/test_gitleaks_exceptions.py:145: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:150: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:344: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:533: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:580: no gitleaks program on PATH (set GITLEAKS_BIN)
+495 passed, 28 skipped in 106.02s (0:01:46)
+rc=0 wall=107s
