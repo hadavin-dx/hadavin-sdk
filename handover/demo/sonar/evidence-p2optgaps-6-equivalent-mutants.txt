@@ -1,0 +1,17 @@
+== exhaustive equivalence of the surviving single-place guard mutants vs the real MAIL (alphabet 10 tokens, len<=6, 1,111,111 texts; sub output and match spans)
+M6 texts 1111111 diffs 0
+M10 texts 1111111 diffs 0
+M10both DIFF listed a@example.com.evil.test a@example.com.evil.test <>
+M10both DIFF listed a@example.com.x a@example.com.x <>
+M10both DIFF 'a@example.com.a'
+M10both DIFF 'a@example.com.-'
+M10both DIFF 'a@example.com.example.'
+M10both texts 1111111 diffs 216
+M6first texts 1111111 diffs 0
+M10first texts 1111111 diffs 0
+M10both DIFF listed a@example.com.evil.test a@example.com.evil.test <>
+M10both DIFF listed a@example.com.x a@example.com.x <>
+M10both DIFF 'a@example.com.a'
+M10both DIFF 'a@example.com.-'
+M10both DIFF 'a@example.com.example.'
+M10both texts 1111111 diffs 216

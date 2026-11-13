@@ -1,0 +1,6 @@
+ruff/mypy/hygiene on tree b573c41 + R + F + gaps (git add -A done before; DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1 at /tmp/work/gl)
+All checks passed!
+157 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+pytest hygiene + 3 optional files + test_scrub_n8n_export + test_real_check_dry: 390 passed in 252 s (loaded machine)

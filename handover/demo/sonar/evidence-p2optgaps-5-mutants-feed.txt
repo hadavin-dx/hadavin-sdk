@@ -1,0 +1,14 @@
+KILLED   F1 re-add --url option with config default | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_parser_defines_exactly_the_known_options
+KILLED   F2 --url accepted via parse_known_args | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_source_adds_only_the_known_arguments
+KILLED   F3 hidden --url (SUPPRESS) used | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_parser_defines_exactly_the_known_options
+KILLED   F4 url uses getattr(args,'url') | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_main_reads_only_known_attributes_of_its_argum
+KILLED   F5 new --host option overrides host (OTHER OPTION) | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_main_reads_only_known_attributes_of_its_argum
+SURVIVED F6 skip target_host (raw bind) | 33 passed in 0.87s
+SURVIVED F7 port hardcoded | 33 passed in 0.78s
+SURVIVED F8 literal address | 33 passed in 0.94s
+SURVIVED F9 wrong path | 33 passed in 0.71s
+SURVIVED F10 config ignored (always default bind) | 33 passed in 0.97s
+SURVIVED F11 url built before parse (equivalent) | 33 passed in 0.85s
+SURVIVED F12 url from --source (argument into address) | 33 passed in 0.85s
+SURVIVED F13 docstring line dropped (doc only; equivalent) | 33 passed in 0.94s
+KILLED   F14 add_argument('--url') with required=False store_true | FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_parser_defines_exactly_the_known_options

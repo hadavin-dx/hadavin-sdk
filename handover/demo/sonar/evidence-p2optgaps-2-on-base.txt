@@ -1,0 +1,13 @@
+== new tests on b573c41 WITHOUT the optional patches
+>               assert not any(word == low.strip("-") for word in ADDRESS_WORDS), node.value
+E               AssertionError: --url
+E               assert not True
+E                +  where True = any(<generator object test_feed_main_has_no_address_like_string_constant_next_to_args.<locals>.<genexpr> at 0x7f09a8df7ae0>)
+
+tests/test_sonar_p2_optional_gaps.py:216: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_parser_defines_exactly_the_known_options
+FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_source_adds_only_the_known_arguments
+FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_main_reads_only_known_attributes_of_its_arguments
+FAILED tests/test_sonar_p2_optional_gaps.py::test_feed_main_has_no_address_like_string_constant_next_to_args
+4 failed, 29 passed in 1.41s

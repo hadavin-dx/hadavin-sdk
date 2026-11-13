@@ -1,0 +1,39 @@
+base b573c41 (git archive); each patch git apply --check then apply, in order
+OK: sonar-p2-optional-gaps-delta
+OK: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+OK: sonar-p2-optional-gaps-delta sonar-p2-regex-optional sonar-p2-feed-optional
+OK: sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p2-regex-optional
+OK: sonar-p2-regex-optional sonar-p2-optional-gaps-delta sonar-p2-feed-optional
+OK: sonar-p2-feed-optional sonar-p2-regex-optional sonar-p2-optional-gaps-delta
+OK: sonar-p2-optional-gaps-delta sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-regex-http-bug-v2.2-delta sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p2-regex-http-bug-v2.2-delta
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-optional-gaps-delta sonar-p2-regex-http-bug-v2.2-delta sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p2-regex-http-bug-v2.3-delta.patch in: sonar-p2-regex-http-bug-v2.3-delta sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at sonar-p2-regex-http-bug-v2.3-delta.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p2-regex-http-bug-v2.3-delta
+FAIL at sonar-p2-regex-http-bug-v2.3-delta.patch in: sonar-p2-optional-gaps-delta sonar-p2-regex-http-bug-v2.3-delta sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p1-quickwins-v3.2.1-delta.patch in: sonar-p1-quickwins-v3.2.1-delta sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at sonar-p1-quickwins-v3.2.1-delta.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p1-quickwins-v3.2.1-delta
+FAIL at sonar-p1-quickwins-v3.2.1-delta.patch in: sonar-p2-optional-gaps-delta sonar-p1-quickwins-v3.2.1-delta sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p1-quickwins-v3.2.2-delta.patch in: sonar-p1-quickwins-v3.2.2-delta sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at sonar-p1-quickwins-v3.2.2-delta.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p1-quickwins-v3.2.2-delta
+FAIL at sonar-p1-quickwins-v3.2.2-delta.patch in: sonar-p2-optional-gaps-delta sonar-p1-quickwins-v3.2.2-delta sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p3-final.patch in: sonar-p3-final sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at sonar-p3-final.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p3-final
+FAIL at sonar-p3-final.patch in: sonar-p2-optional-gaps-delta sonar-p3-final sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at nodemo-optional-hygiene-repo.patch in: nodemo-optional-hygiene-repo sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta
+FAIL at nodemo-optional-hygiene-repo.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta nodemo-optional-hygiene-repo
+FAIL at nodemo-optional-hygiene-repo.patch in: sonar-p2-optional-gaps-delta nodemo-optional-hygiene-repo sonar-p2-feed-optional sonar-p2-regex-optional
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta sonar-p2-regex-http-bug-v2.2-delta sonar-p2-regex-http-bug-v2.3-delta sonar-p1-quickwins-v3.2.1-delta sonar-p1-quickwins-v3.2.2-delta sonar-p3-final nodemo-optional-hygiene-repo
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-regex-http-bug-v2.2-delta sonar-p2-regex-http-bug-v2.3-delta sonar-p1-quickwins-v3.2.1-delta sonar-p1-quickwins-v3.2.2-delta sonar-p3-final nodemo-optional-hygiene-repo sonar-p2-optional-gaps-delta sonar-p2-feed-optional sonar-p2-regex-optional
+--- for comparison, the dependency-free ones without G:
+FAIL at sonar-p2-regex-http-bug-v2.2-delta.patch in: sonar-p2-regex-http-bug-v2.2-delta sonar-p2-regex-http-bug-v2.3-delta sonar-p1-quickwins-v3.2.1-delta sonar-p1-quickwins-v3.2.2-delta sonar-p3-final nodemo-optional-hygiene-repo
+
+== disjointness: patches in the folder that touch tests/test_sonar_p2_optional_gaps.py:
+sonar-p2-optional-gaps-delta.patch
+== files touched by the new patch:
+diff --git a/tests/test_sonar_p2_optional_gaps.py b/tests/test_sonar_p2_optional_gaps.py
+== On b573c41 the deltas v2.2/v2.3/v3.2.1/v3.2.2/p3-final are ALREADY IN the branch (reverse check ok for v2.3, v3.2.1, v3.2.2, p3-final) so they fail forward there with or without this patch (see the comparison line).
+f3d9dca chain [nodemo-optional-hygiene-repo sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta]: FAIL at nodemo-optional-hygiene-repo
+f3d9dca chain [sonar-p2-regex-optional sonar-p2-feed-optional sonar-p2-optional-gaps-delta nodemo-optional-hygiene-repo]: FAIL at nodemo-optional-hygiene-repo
+f3d9dca chain [sonar-p2-regex-optional nodemo-optional-hygiene-repo sonar-p2-feed-optional sonar-p2-optional-gaps-delta]: FAIL at nodemo-optional-hygiene-repo

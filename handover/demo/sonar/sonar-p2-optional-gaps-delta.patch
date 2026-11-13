@@ -1,0 +1,222 @@
+diff --git a/tests/test_sonar_p2_optional_gaps.py b/tests/test_sonar_p2_optional_gaps.py
+new file mode 100644
+index 0000000..5729e23
+--- /dev/null
++++ b/tests/test_sonar_p2_optional_gaps.py
+@@ -0,0 +1,216 @@
++"""Sonar fixes, optional patches, gap tests (delta). Test-only: no code is changed.
++
++Pins what the first two optional test files left open:
++ - the address pattern `run_real_check._ADDRESS` ends the domain at a semicolon, exactly as the old pattern did;
++ - the scrub pattern `scrub_n8n_export.MAIL` lets only the three made-up names through (not the org name), and keeps its
++   end guards (a longer name that merely starts with an allowed one is replaced);
++ - `scripts/feed.py` has exactly the options --source, --index, --all (and -h) and `main` never reads a `url`-named,
++   host-named or address-named value from its parsed arguments.
++The old patterns are the oracle: every text is compared by replaced output AND every match span. Made-up data only."""
++
++from __future__ import annotations
++
++import argparse
++import ast
++import importlib
++import itertools
++import re
++import sys
++from pathlib import Path
++
++import pytest
++
++from tools import scrub_n8n_export as scrub
++
++REPO = Path(__file__).resolve().parents[1]
++sys.path.insert(0, str(REPO / "scripts"))
++rrc = importlib.import_module("run_real_check")
++feed = importlib.import_module("feed")
++
++AT = "@"
++DOT = "."
++EX = "example" + DOT
++
++# the patterns as they were before the optional patches (the oracle)
++OLD_ADDRESS = re.compile(r"[^\s,;:<>\"']+@[^\s,;<>\"']+")
++OLD_MAIL = re.compile(
++    r"(?<![\w.%+-])[\w.%+-]+[@＠](?!(?:[\w-]+\.)*example\.(?:com|test|invalid)(?![\w-]|\.[\w-]))[\w.-]+"
++)
++
++
++def _verdicts(old: re.Pattern[str], new: re.Pattern[str], text: str) -> None:
++    assert old.sub("<>", text) == new.sub("<>", text), text
++    assert [m.span() for m in old.finditer(text)] == [m.span() for m in new.finditer(text)], text
++
++
++def _exhaustive(old: re.Pattern[str], new: re.Pattern[str], alphabet: list[str], longest: int) -> int:
++    seen = 0
++    for n in range(longest + 1):
++        for parts in itertools.product(alphabet, repeat=n):
++            _verdicts(old, new, "".join(parts))
++            seen += 1
++    return seen
++
++
++# ---- _ADDRESS: the semicolon ends the domain ---------------------------------------------------------------------
++def test_address_domain_stops_at_a_semicolon() -> None:
++    assert rrc._ADDRESS.sub("<>", "a" + AT + "b" + DOT + "c;d") == "<>;d"
++    # the second address after the semicolon is its own match
++    assert rrc._ADDRESS.sub("<>", "a" + AT + "b;c" + AT + "d") == "<>;<>"
++    assert [m.group() for m in rrc._ADDRESS.finditer("p" + AT + "q;r" + AT + "s;")] == ["p" + AT + "q", "r" + AT + "s"]
++    assert rrc._ADDRESS.sub("<>", "p" + AT + "q;") == "<>;"  # nothing of the tail is eaten
++
++
++@pytest.mark.parametrize(
++    "text",
++    [
++        "a" + AT + "b;c",
++        "a;b" + AT + "c",
++        ";" + AT + ";",
++        "a" + AT + ";",
++        "a" + AT + "b;" + AT + "c",
++        "a" + AT + "b;c" + AT + "d;e",
++        "mail a" + AT + "b" + DOT + "test;b" + AT + "c" + DOT + "test; done",
++    ],
++)
++def test_address_matches_the_old_pattern_where_a_semicolon_is_near(text: str) -> None:
++    _verdicts(OLD_ADDRESS, rrc._ADDRESS, text)
++
++
++def test_address_differential_over_a_small_alphabet_with_all_separators() -> None:
++    alphabet = ["a", AT, ";", ":", " ", "'"]
++    assert _exhaustive(OLD_ADDRESS, rrc._ADDRESS, alphabet, 6) > 50_000
++
++
++# ---- MAIL: allow list and end guards -----------------------------------------------------------------------------
++def _replaced(text: str) -> bool:
++    return scrub.MAIL.sub("<>", text) != text
++
++
++@pytest.mark.parametrize("name", ["example" + DOT + tld for tld in ("com", "test", "invalid")])
++def test_scrub_leaves_only_the_three_made_up_names_alone(name: str) -> None:
++    assert not _replaced("a" + AT + name)
++    assert not _replaced("a" + AT + "sub" + DOT + name)
++    assert not _replaced("a" + AT + name + DOT)  # a trailing dot ends the name
++    assert not _replaced("a" + AT + name + ";")
++    assert not _replaced("a" + AT + name + " b")
++
++
++@pytest.mark.parametrize("tld", ["org", "net", "io", "co", "edu", "local", "example"])
++def test_scrub_replaces_any_other_top_level_name(tld: str) -> None:
++    assert scrub.MAIL.sub("<>", "a" + AT + EX + tld) == "<>"
++    assert scrub.MAIL.sub("<>", "a" + AT + "sub" + DOT + EX + tld) == "<>"
++    assert scrub.MAIL.sub("<>", "a" + AT + EX + tld + DOT) == "<>"
++
++
++@pytest.mark.parametrize(
++    "tail",
++    [DOT + "evil" + DOT + "test", DOT + "x", "-x", "x", "_x", DOT + "-", "-", "_"],
++)
++def test_scrub_replaces_a_longer_name_that_starts_with_an_allowed_one(tail: str) -> None:
++    for tld in ("com", "test", "invalid"):
++        text = "a" + AT + EX + tld + tail
++        assert _replaced(text), text
++        _verdicts(OLD_MAIL, scrub.MAIL, text)
++        text = "a" + AT + "sub" + DOT + EX + tld + tail
++        assert _replaced(text), text
++        _verdicts(OLD_MAIL, scrub.MAIL, text)
++
++
++def test_scrub_end_guard_cases_against_the_old_pattern() -> None:
++    fronts = ["", "sub" + DOT, "a" + DOT + "b" + DOT, "x-", EX + "x" + DOT, "not"]
++    names = [EX + tld for tld in ("com", "test", "invalid", "org", "net", "comx", "tes", "invali")]
++    tails = ["", DOT, "-x", DOT + "x", "x", "_", ";", ",", " ", "\n", "é", DOT + DOT, DOT + "-", "-" + DOT, "＠", AT]
++    for front, name, tail in itertools.product(fronts, names, tails):
++        for local in ("a", "a" + DOT + "b", "a+b%c"):
++            for at in (AT, "＠"):
++                _verdicts(OLD_MAIL, scrub.MAIL, local + at + front + name + tail)
++                _verdicts(OLD_MAIL, scrub.MAIL, "x " + local + at + front + name + tail + " y" + AT + front + name)
++
++
++def test_scrub_differential_over_tokens_including_an_unlisted_name() -> None:
++    alphabet = ["a", AT, DOT, "-", EX, "com", "org", "test", "invalid", ";"]
++    assert _exhaustive(OLD_MAIL, scrub.MAIL, alphabet, 5) > 100_000
++
++
++# ---- feed.py: no option and no argument value can reach the request address ---------------------------------------
++FEED_SOURCE = (REPO / "scripts" / "feed.py").read_text(encoding="utf-8")
++FEED_TREE = ast.parse(FEED_SOURCE)
++ADDRESS_WORDS = ("url", "uri", "host", "address", "addr", "port", "origin", "endpoint", "target", "server", "bind")
++
++
++def _build_parser(monkeypatch: pytest.MonkeyPatch) -> argparse.ArgumentParser:
++    """Run `main` with `ArgumentParser.parse_args` replaced by a recorder, to read the parser it builds."""
++    seen: list[argparse.ArgumentParser] = []
++
++    def record(self: argparse.ArgumentParser, args: object = None, namespace: object = None) -> object:
++        seen.append(self)
++        raise SystemExit(0)
++
++    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", record)
++    monkeypatch.setattr(argparse.ArgumentParser, "parse_known_args", record)
++    monkeypatch.chdir(REPO)
++    with pytest.raises(SystemExit):
++        feed.main([])
++    assert len(seen) == 1
++    return seen[0]
++
++
++def test_feed_parser_defines_exactly_the_known_options(monkeypatch: pytest.MonkeyPatch) -> None:
++    parser = _build_parser(monkeypatch)
++    strings = sorted(s for action in parser._actions for s in action.option_strings)
++    assert strings == ["--all", "--help", "--index", "--source", "-h"]
++    dests = sorted(action.dest for action in parser._actions)
++    assert dests == ["all", "help", "index", "source"]
++    assert not parser._subparsers
++
++
++def _main_function() -> ast.FunctionDef:
++    for node in FEED_TREE.body:
++        if isinstance(node, ast.FunctionDef) and node.name == "main":
++            return node
++    raise AssertionError("feed.main not found")
++
++
++def test_feed_source_adds_only_the_known_arguments() -> None:
++    """Same check on the source, so a conditional or late `add_argument` is seen even if it does not run."""
++    added: list[str] = []
++    for node in ast.walk(FEED_TREE):
++        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr.startswith("add_"):
++            assert node.func.attr == "add_argument", ast.dump(node.func)
++            added += [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str)]
++    assert sorted(added) == ["--all", "--index", "--source"]
++    for node in ast.walk(FEED_TREE):
++        if isinstance(node, ast.Attribute) and node.attr in ("parse_known_args", "parse_intermixed_args"):
++            raise AssertionError("feed.py must use parse_args (unknown options are refused)")
++
++
++def test_feed_main_reads_only_known_attributes_of_its_arguments() -> None:
++    reads: set[str] = set()
++    for node in ast.walk(_main_function()):
++        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "args":
++            reads.add(node.attr)
++        if (
++            isinstance(node, ast.Call)
++            and isinstance(node.func, ast.Name)
++            and node.func.id
++            in (
++                "getattr",
++                "vars",
++                "setattr",
++                "hasattr",
++            )
++        ):
++            names = [a for a in node.args if isinstance(a, ast.Name) and a.id == "args"]
++            assert not names, "dynamic access to the parsed arguments: " + ast.dump(node)
++        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "__getattribute__":
++            raise AssertionError("dynamic access")
++    assert reads <= {"all", "index", "source"}, reads
++
++
++def test_feed_main_has_no_address_like_string_constant_next_to_args() -> None:
++    """No `"url"`, `"host"` ... string is used in `main` at all (it would be a getattr or a Namespace key)."""
++    for node in ast.walk(_main_function()):
++        if isinstance(node, ast.Constant) and isinstance(node.value, str):
++            low = node.value.lower()
++            assert not any(word == low.strip("-") for word in ADDRESS_WORDS), node.value

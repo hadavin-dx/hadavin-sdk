@@ -1,0 +1,34 @@
+SURVIVED A1 drop lookbehind | 33 passed in 0.77s | 
+SURVIVED A2 put @ back in repeated class | 33 passed in 0.72s | 
+KILLED   A3 first char excludes @ | 1 failed, 8 passed in 0.15s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_differential_over_a_small_alphabet_with_all_separato
+KILLED   A4 domain excludes @ | 1 failed, 8 passed in 0.08s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_differential_over_a_small_alphabet_with_all_separato
+KILLED   A5 domain also excludes colon | 1 failed, 8 passed in 0.13s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_differential_over_a_small_alphabet_with_all_separato
+KILLED   A6 domain may be empty (+ -> *) | 1 failed, 4 passed in 0.08s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_matches_the_old_pattern_where_a_semicolon_is_near[a@
+KILLED   A7 lookbehind uses domain class | 1 failed, 8 passed in 0.09s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_differential_over_a_small_alphabet_with_all_separato
+KILLED   A8 local part may be empty (first char optional) | 1 failed, 5 passed in 0.08s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_matches_the_old_pattern_where_a_semicolon_is_near[a@
+KILLED   A9 local drops quote from class | 1 failed, 8 passed in 0.09s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_differential_over_a_small_alphabet_with_all_separato
+KILLED   A10 positive lookbehind | 1 failed in 0.12s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_domain_stops_at_a_semicolon
+KILLED   A11 domain drops semicolon | 1 failed in 0.08s | FAILED tests/test_sonar_p2_optional_gaps.py::test_address_domain_stops_at_a_semicolon
+SURVIVED A12 lazy local | 33 passed in 1.07s | 
+SURVIVED M1 drop lookbehind | 33 passed in 1.10s | 
+KILLED   M2 local first char class loses + | 1 failed, 28 passed in 0.41s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_differential_over_tokens_including_an_unlisted_name
+KILLED   M3 full-width @ removed | 1 failed, 27 passed in 0.27s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_end_guard_cases_against_the_old_pattern
+KILLED   M4 drop 'invalid' | 1 failed, 11 passed in 0.26s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_leaves_only_the_three_made_up_names_alone[example.inva
+KILLED   M5 drop guard in label (?!example..) | 1 failed, 9 passed in 0.24s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_leaves_only_the_three_made_up_names_alone[example.com]
+SURVIVED M6 drop end guard after allowed name (inner) | 33 passed in 1.00s | 
+KILLED   M7 domain class loses dash | 1 failed, 21 passed in 0.41s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_replaces_a_longer_name_that_starts_with_an_allowed_one
+SURVIVED M8 domain + instead of ++ AND no change (equiv) | 33 passed in 0.85s | 
+KILLED   M9 negative lookahead -> positive | 1 failed, 9 passed in 0.30s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_leaves_only_the_three_made_up_names_alone[example.com]
+SURVIVED M10 allowed ending (?![\w-]|\.[\w-]) -> (?![\w-]) | 33 passed in 0.88s | 
+SURVIVED M11 label ++ -> + (equivalent expected) | 33 passed in 0.85s | 
+SURVIVED M12 group *+ -> * (equivalent expected) | 33 passed in 0.85s | 
+SURVIVED M13 local possessive -> greedy (equivalent expected) | 33 passed in 0.80s | 
+KILLED   M14 domain min 0 (++ -> *+) | 1 failed, 27 passed in 0.43s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_end_guard_cases_against_the_old_pattern
+SURVIVED M15 allowed list adds 'org' | 33 passed in 0.80s | 
+KILLED   M15b allowed list adds 'org' in BOTH places | 1 failed, 12 passed in 0.36s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_replaces_any_other_top_level_name[org]
+SURVIVED M15c allowed list adds 'org' in the final place only | 33 passed in 0.82s | 
+KILLED   M16 allowed list adds 'net' in both places | 1 failed, 13 passed in 0.22s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_replaces_any_other_top_level_name[net]
+KILLED   M6b drop end guard in BOTH places | 1 failed, 19 passed in 0.30s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_replaces_a_longer_name_that_starts_with_an_allowed_one
+SURVIVED M6c drop end guard in the final place only | 33 passed in 0.86s | 
+KILLED   M10b allowed ending (?![\w-]) only in BOTH places | 1 failed, 19 passed in 0.23s | FAILED tests/test_sonar_p2_optional_gaps.py::test_scrub_replaces_a_longer_name_that_starts_with_an_allowed_one
+SURVIVED M10c allowed ending (?![\w-]) only in the final place | 33 passed in 0.71s | 
