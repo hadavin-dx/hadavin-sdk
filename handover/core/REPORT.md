@@ -1,4 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 13:45Z (core lead; container clock ~13:41Z)
+| row | what | state |
+|---|---|---|
+| V2 | evidence for F2 (full suite, AF env) | DONE: 1 failed, 4103 passed, 4 skipped (baseline 3978 passed). Fails-before 106 failed/20 passed (builder said 109/32, wrong). 8 of 8 mutants killed. 25 hostile inputs: 0 traceback, 0 echo. Raw: out/V2 -> fix/V2-evidence.md |
+| F2b | fix for V2's one failure | DONE (my own one-comment edit): run_live_check.py:192 lacked the `# wall-clock:` marker. Patch fix/F2b-marker.patch. Rerun test_clock_steps + test_cli_refusals: 155 passed. Full suite not rerun (goes in COMBINE) |
+| F4d | docs round 3 (3 Majors from review r2) | DONE by builder: 20-file run 1563 passed/33 skipped; ruff clean; fails-before 5 failed/11 passed. Patch fix/F4d-fix.patch. Builder-claimed only, not yet independently run |
+| V4d | evidence for F4d | RUNNING (a00c629d38900f1fc, started 13:41Z, ends 14:25Z at latest) |
+| F6 | writer-side opens + wrapper scripts | RUNNING (ab973ce38e4fb45ea, started ~13:19Z, 60 min stop) |
+| COMBINE | F1+F1b+F2(+F2b)+F3+F6 into core-fix-v1.patch | WAITS for F6 |
+| docs rebase | on demo claims series | WAITS for the frozen hash from the lead (13:33Z order) |
+Done earlier: F1, F1b, F3, F4, F4b, F4c, D1, E1, E2, C6, R4, R5, V1, V3, V4, V4b, V4c.
+FAILURES AND RETRIES (new rows)
+| id | step | result | first line | cause | root cause proven? | what I did |
+|---|---|---|---|---|---|---|
+| V2-1 | full suite tests/test_clock_steps.py::test_wall_clock_is_only_used_for_calendar_stamps | 1 failed/4103 passed/4 skipped | scripts/run_live_check.py:192 ... no `# wall-clock:` marker | real defect in my F2 patch | yes: the old tree has no datetime.now there; after the marker 155 passed on 2 files | F2b patch |
+| F4d-1 | builder's 20-file run | 1 failed first | test_hygiene_scan_public: clock text looks like an address | test bug (new text matched repo patterns) | yes: fixed regex, then 1563 passed | builder fixed |
+Totals today: failed 2 more (V2-1 real, F4d-1 test bug); earlier totals unchanged: proven 1, unexplained 2 (B2-first rc=1, T2-earlier). Numbers changed: F2 builder's fails-before 109/32 -> measured 106/20. Crashed agents 0.
+LOAD: 2 agents running (F6, V4d); load avg 0.7; RAM 13 GB free; heavy slots 0 of 3. Free: ~3 cores.
+ASK (defaults apply in 10 min): exit code 3 for "desk cannot be reached" (keep 3); fallback reviewer label OK (yes); T2 in-tree TMPDIR full run (no); 42 over-120-column prose lines (leave). Also: V2 found 93 added lines over 100 columns in F2 files; repo limit is 120, ruff passes (leave).
+Next: V4d, F6 -> V6; then COMBINE + one evidence run + independent review.
+
 
 ## REPORT (container clock 13:33Z) CORE lead
 

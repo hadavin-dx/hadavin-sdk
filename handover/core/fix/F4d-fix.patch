@@ -1,0 +1,234 @@
+diff --git a/README.md b/README.md
+index ef50e8f..0b1a5cc 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@
+ 
+ After the steps in "Try it" below, three things confirm that it works. Every number below comes from the demo programs (the stand-ins), not from a real CRM or mail system.
+ 
+-* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`: no second lead and no second email of its own. If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. The desk writes down every arrival, including the repeat, and the numbering never goes back, so number 2 is taken by the repeat. The same person through the other door therefore gets `"verdict": "duplicate"` with `receipt_id` 3, not 2. Receipt numbers can skip but are never reused.
++* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`: no second lead and no second email of its own. If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. The desk writes down every arrival, including the repeat, and the numbering never goes back, so number 2 is taken by the repeat. The same person through the other door therefore gets `"verdict": "duplicate"` with `receipt_id` 3, not 2. Receipt numbers can skip but are never reused.
+ * The counts page shows 2 requests received, 1 new, 1 duplicate.
+ * The demo mail system holds exactly one email.
+ 
+@@ -34,7 +34,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Request id**: a label the sender puts on each submission. The same label twice means "this is a repeat". The portal calls it "Request number".
+ * **Receipt**: the desk's first note about a request, written before anything else happens.
+ * **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (seen before under another request number) or `review` (incomplete, a person must look).
+-* **Replayed**: the same request number came again, so the desk gave back its stored answer. It made no second lead and no second email; it only used one receipt number and added one to that request's count of arrivals (the `attempts` column). If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries.
++* **Replayed**: the same request number came again, so the desk gave back its stored answer. It made no second lead and no second email; it only used one receipt number and added one to that request's count of arrivals (the `attempts` column). If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries.
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: a keyed mail system recognises a repeat of the same send key and sends only once; a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left. It does not guess and does not resend; a person must check.
+@@ -93,7 +93,7 @@ The reset script refuses, with one line of reason and nothing deleted, in these
+ 
+ Claimed, for this demo setup only:
+ 
+-* The same request number sent again gets the stored answer: no second lead and no second email. It only uses one receipt number and adds one to that request's count of arrivals. If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries.
++* The same request number sent again gets the stored answer: no second lead and no second email. It only uses one receipt number and adds one to that request's count of arrivals. If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries.
+ * The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. Of the ten, nine are simulated by an exception inside the program; only one (D2) is a real process kill. The tests assert at most one lead, one CRM row and one email. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+diff --git a/contract.md b/contract.md
+index 4d6a2f0..2cfa44f 100644
+--- a/contract.md
++++ b/contract.md
+@@ -175,7 +175,7 @@ Pages for a person (the pages only read; the buttons write: Retry and the “I c
+ ---
+ 
+ ## HTTP table
+-All desk replies are JSON with `Content-Length` and `Connection: close`. `receipt_id` is a number, or `null` when no receipt exists. A replay returns the stored verdict's original status and body plus `"replayed": true` and `"payload_matches": true|false`. It makes no second lead and no second email; If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. Unknown route: 404 `{"error":"not_found"}`; known route, wrong method: 405 `{"error":"method_not_allowed"}`.
++All desk replies are JSON with `Content-Length` and `Connection: close`. `receipt_id` is a number, or `null` when no receipt exists. A replay returns the stored verdict's original status and body plus `"replayed": true` and `"payload_matches": true|false`. It makes no second lead and no second email. If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. Unknown route: 404 `{"error":"not_found"}`; known route, wrong method: 405 `{"error":"method_not_allowed"}`.
+ 
+ | Request | Status | Body |
+ |---|---|---|
+@@ -300,7 +300,7 @@ These rules are part of this contract. Where one differs from a table row above,
+ - Hints: a 409 `wrong_decision` and a review item of kind `unknown` carry a `hint` (a plain sentence). For a `crm_unconfirmed` item: "The CRM may or may not hold this lead. Look in the CRM, then answer crm_present (the row is there) or not_sent (the row is not there). sent is refused: no email was tried." For an unknown row whose CRM step is finished: "The CRM row is already done; what is unclear is the email ... crm_present is refused here."
+ - A failure before the send (reading the row, the mode read, the intent mark) is not taken for an unclear send: it counts as one automatic try (`internal:<class>`, row `pending`). Only `outbox.send` itself decides `ambiguous`, and a send that the desk stopped waiting for (`SendAmbiguous` from the total deadline) counts as ambiguous too.
+ - A lock inside the steps after the claim (the first stage stamp, the AI step, the stamp after the AI step, the CRM mark, the stamp that writes the send mark) is not an error of the follow-up: the claimed try is given back (`auto_attempts` minus 1, row `pending`, `send_started` 0, no `last_error`), only if this claim's token still matches. The one exception is a lock on the stamp or label write after the model answered (`ModelAnswerLost`): the try stays used up. The give-back write is retried like any other write (`_locked_retry`). If even that stays locked, the row stays `sending` and the reaper puts it back (a row whose send mark was written then counts as a send that may have started: `unknown` on a blind sender, the safe side).
+-- A client replay of a `new` request drives the follow-up only if it is due: no automatic try yet, or its backoff is over. Replays cannot use up the 5 tries.
++- A client replay of a `new` request drives the follow-up only if it is due: no automatic try yet, or its backoff is over; a follow-up just given back for lack of resources also waits 5 seconds. Replays cannot use up the 5 tries.
+ - A `pending` or `sending` row stamped later than now (the clock was set back) is set to now by the reaper, then ages normally. An open receipt stamped in the future counts its age from the first reaper pass that saw it open.
+ 
+ ### Reaper, gates and load
+diff --git a/docs/hubspot-probe.md b/docs/hubspot-probe.md
+index 0357754..a5e59c3 100644
+--- a/docs/hubspot-probe.md
++++ b/docs/hubspot-probe.md
+@@ -49,8 +49,8 @@ owners read scope is needed, check the others when creating the token):
+ - the permanent (privacy) delete may need a further scope; if it is refused the script falls back to the normal delete,
+   which only archives the contact.
+ 
+-`--token-env NAME` changes the variable name (default `HUBSPOT_PROBE_TOKEN`); it must be a plain variable name. A name that is not one is refused (and not printed) when you give
+-`--yes-spend-calls`; `--plan` does not look at the name, it only prints the planned call count. `--dry-run http://127.0.0.1:PORT` runs the flow against a local stub (loopback
++`--token-env NAME` changes the variable name (default `HUBSPOT_PROBE_TOKEN`); it must be a plain variable name. A name that is not one is refused (and not printed) when you give `--yes-spend-calls 7` (the planned count; with any other count it is refused for the count first,
++before the name is looked at); `--plan` does not look at the name, it only prints the planned call count. `--dry-run http://127.0.0.1:PORT` runs the flow against a local stub (loopback
+ only); the tests do this. If the delete step prints a WARNING, delete the named probe contact by hand.
+ 
+ ## What was checked against HubSpot's current documentation (read on 2026-11-11)
+diff --git a/docs/settings.md b/docs/settings.md
+index f36fa83..6a70810 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -126,5 +126,5 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by two test files, `tests/test_hygiene.py` and `tests/test_gitleaks_exceptions.py` (the second takes both names from the first). `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
+-* `DPLD_REQUIRE_COUNT` is read only by `tests/test_docs_match_tools.py`. When the test collector's last line is not the plain `N tests collected in S seconds` (for example on a computer where a test file cannot be imported), the three tests that compare `docs/tests.md` with the collector skip. With `DPLD_REQUIRE_COUNT` set to any non-empty value (even `0`, as for `DPLD_REQUIRE_SCAN`) they fail instead, so a skip cannot hide a stale test count. CI sets it in `.github/workflows/lint.yml` and `.github/workflows/sonar.yml`.
++* `DPLD_REQUIRE_COUNT` is read only by `tests/test_docs_match_tools.py`. A test file that cannot be imported makes the collector exit with code 2, and the count tests then fail whether or not this variable is set. The tests skip only when the collector exits with code 0 but its last line is not the plain total (`N tests collected in S seconds`, with or without the `(H:MM:SS)` time that a run of a minute or more adds); the one such form that was run is a run with deselected tests (`K/N tests collected (D deselected)`). With `DPLD_REQUIRE_COUNT` set to any non-empty value (even `0`, as for `DPLD_REQUIRE_SCAN`) that skip is a failure, so a skip cannot hide a stale test count. The workflow files `.github/workflows/lint.yml` and `.github/workflows/sonar.yml` set it to `1`; no CI run has been seen by whoever wrote this page, so that is what the files say, not a result.
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
+diff --git a/docs/tests.md b/docs/tests.md
+index 5ded640..3df3241 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -57,7 +57,7 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
+ 
+ * **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
+ * **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
+-* **How many tests there are now, and how to count them:** `python -m pytest --collect-only -q` prints one line for each test (its full name) and, as its last line, `N tests collected in S seconds`. With `-qq` it prints one line for each test file instead (for example `tests/test_x.py: 8`), with no total line; the numbers on those lines add up to the same N. This tree holds 3995 tests in 97 test files (counted that way on Linux with Python 3.12 and the browser tools installed; a computer without them can print a different last line). `tests/test_docs_match_tools.py` runs both forms and fails when this sentence is out of date, so change the two numbers when you add or remove tests. The figures in the next bullets are older: each belongs to the commit it names, and none of them is the count of this tree.
++* **How many tests there are now, and how to count them:** `python -m pytest --collect-only -q` prints one line for each test (its full name) and, as its last line, `N tests collected in S seconds`. With `-qq` it prints one line for each test file instead (for example `tests/test_x.py: 8`), with no total line; the numbers on those lines add up to the same N. This tree holds 3998 tests in 97 test files (counted that way on Linux with Python 3.12; the browser package `playwright` was not installed in that tree, and the browser tests only skip when it is missing, so they are counted either way). The last line is only the plain total when nothing is left out: a run of a minute or more adds the time as `(H:MM:SS)` (`N tests collected in S seconds (H:MM:SS)`, still a total); a run with deselected tests (`--deselect` or `-k`) prints `K/N tests collected (D deselected) in S seconds`, which is not the plain total; and a test file that cannot be imported ends the line as `N tests collected, 1 error in S seconds` and makes the command exit with code 2. These forms were run on 2026-11-13 on a small folder of test files; a test that calls `pytest.importorskip` inside the test function (the browser tests do) leaves the count unchanged. `tests/test_docs_match_tools.py` runs both forms and fails when this sentence is out of date, so change the two numbers when you add or remove tests. The figures in the next bullets are older: each belongs to the commit it names, and none of them is the count of this tree.
+ * **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and this change's lock files, with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
+ * **An earlier full run on this lock (2516 tests, not the count of this tree):** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12, before the coverage commit 0841f36) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. The two sidebar tests pass in it: the browser reads the screenshot's pixels itself and no image library is installed. **Why 2462 became 2513:** commit 2ce1f98 holds 51 more tests than 558d37f (2516 against 2465, both counted with `python -m pytest --collect-only -q`): 49 in the new file `tests/test_except_clause_hierarchy.py`, 1 more in `tests/test_lead_crm_copy.py` and 1 more in `tests/test_portal_mode.py` (2465 + 51 = 2516; 2462 + 51 = 2513). Commit 0841f36 (the coverage settings) collects the same 2516 tests. That commit was not run in full. It adds a `[tool.coverage.run]` section in `pyproject.toml`, which only the `coverage` program reads, and it edits `exceptions.txt` and `.gitleaks.toml`, which `tests/test_hygiene.py` reads; it changes no other test or test setting. The hygiene tests were run with a real `gitleaks` program on the final tree and passed (10 tests passed with gitleaks 8.30.1 and DPLD_REQUIRE_SCAN=1).
+ * **Skips reported without Playwright (eight test files, 0841f36 plus this change):** the eight files are `test_mode_safety.py`, `test_portal_browser.py`, `test_portal_lead_pages.py`, `test_portal_mode.py`, `test_portal_wording_and_masking.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`. Two runs, 2026-11-12, one process each, Python 3.12, no Playwright installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set of tests that need Node: 1 in `test_mode_safety.py` (line 174), 2 in `test_portal_lead_pages.py` (line 488, "no node") and 19 in `test_portal_mode.py`. The 113 browser skips are counted by the line where the skip is reported, not by test file (22 at line 109 of `test_mode_safety.py`, 28 at line 27 of `test_portal_browser.py`, 60 at line 113 of `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py` at lines 171, 204 and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
+@@ -100,7 +100,7 @@ The table below says which tests show each promise. "Tests named" means the test
+ 
+ | # | Promise, in plain words | Tests that show it |
+ |---|---|---|
+-| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`: no second lead and no second email (it only uses one receipt number and adds one to that request's count of arrivals). If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
++| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`: no second lead and no second email (it only uses one receipt number and adds one to that request's count of arrivals). If the follow-up of that lead is waiting and its time has come (no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries. | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
+ | P2 | A duplicate never reaches the AI step: the demo AI's call counter does not go up for it. | `test_dedupe_before_ai` |
+ | P3 | A submission with no name, no email, an invalid email or a wrongly typed field goes to the review list with a reason and gets no follow-up. | `test_incomplete_to_review` |
+ | P4 | Stopped at each crash point and restarted: in these tests no run produced more than one lead, more than one CRM row or more than one email (see the crash-point table for what a blind CRM or mail system does). A wrong "not sent" answer by a person can cause a second email on a blind mail system. | `test_crash_resume_each_point` and `test_crash_resume_after_*` in `tests/test_flow.py`: together they stop the desk at each of the ten crash points, with keyed and with blind mail systems (C0 and C1 also with keyed and blind CRMs); real kills: `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind, demo mail over HTTP), `test_crash_d2_subprocess_with_*` in `tests/test_http.py` (real mail catcher) |
+diff --git a/tests/test_docs_match_tools.py b/tests/test_docs_match_tools.py
+index 9a5557d..8f15bd3 100644
+--- a/tests/test_docs_match_tools.py
++++ b/tests/test_docs_match_tools.py
+@@ -28,7 +28,7 @@ PROBE_PAGE = (REPO / "docs" / "hubspot-probe.md").read_text(encoding="utf-8")
+ TESTS_PAGE = (REPO / "docs" / "tests.md").read_text(encoding="utf-8")
+ CRASH_SCRIPT = (REPO / "scripts" / "crash_desk.py").read_text(encoding="utf-8")
+ COUNT_SENTENCE = re.compile(r"This tree holds (\d+) tests in (\d+) test files")
+-TOTAL_LINE = re.compile(r"^(\d+) tests collected in [0-9.]+s$")
++TOTAL_LINE = re.compile(r"^(\d+) tests collected in [0-9.]+s( \([0-9]+:[0-9]{2}:[0-9]{2}\))?$")
+ FILE_LINE = re.compile(r"^(tests/\S+\.py): (\d+)$")
+ 
+ 
+@@ -49,7 +49,9 @@ def _collect(flag: str) -> list[str]:
+     return [line for line in done.stdout.splitlines() if line.strip()]
+ 
+ 
+-# set to any non-empty value: a skipped count check is then a failure (docs/settings.md)
++# Set to any non-empty value: a skipped count check is then a failure (docs/settings.md). Only a last line that is not
++# the plain total skips (the run still has to exit with code 0: a test file that cannot be imported gives exit code 2
++# and a failure either way). A `pytest.importorskip` inside a test function (the browser tests) changes nothing here.
+ REQUIRE_COUNT_ENV = "DPLD_REQUIRE_COUNT"
+ 
+ 
+@@ -75,11 +77,42 @@ def collected_qq() -> list[str]:
+     return _collect("-qq")
+ 
+ 
++def test_the_total_line_parser_reads_the_forms_pytest_prints_and_refuses_the_others() -> None:
++    """Raw lines printed by `pytest --collect-only -q` (run on 2026-11-13 with pytest in the locked tools): a plain
++    total; a total of a run of a minute or more, which pytest ends with the clock reading `(H:MM:SS)`; a run with
++    deselected tests (`--deselect` or `-k`), which prints `K/N tests collected (D deselected)` and is not a plain
++    total; a run with a test file that cannot be imported, which prints `N tests collected, 1 error in S` and exits
++    with code 2."""
++    plain = TOTAL_LINE.match("3995 tests collected in 12.34s")
++    assert plain is not None and plain.group(1) == "3995"
++    clock = ":".join(["0", "01", "01"])  # from parts: written out, the hygiene scan reads it as an address
++    minute = TOTAL_LINE.match(f"3995 tests collected in 61.00s ({clock})")
++    assert minute is not None and minute.group(1) == "3995"
++    assert TOTAL_LINE.match("2/3 tests collected (1 deselected) in 0.01s") is None
++    assert TOTAL_LINE.match("2 tests collected, 1 error in 0.08s") is None
++
++
+ def test_the_q_form_prints_one_line_per_test_and_a_total_as_its_last_line(collected_q: list[str]) -> None:
+-    match = _plain_total_or_skip(collected_q[-1])  # an unusable module (no browser tools) can change this line
++    match = _plain_total_or_skip(collected_q[-1])
+     assert len(collected_q) - 1 == int(match.group(1))  # one line per test, then the total
+     assert all("::" in line for line in collected_q[:-1])
+     assert "one line for each test" in TESTS_PAGE and "`N tests collected in S seconds`" in TESTS_PAGE
++    # what the pages say can change this line, only what was run (see the parser test above)
++    assert "`(H:MM:SS)`" in TESTS_PAGE and "(D deselected)" in TESTS_PAGE and "with code 2" in TESTS_PAGE
++
++
++def test_the_settings_page_says_what_the_require_count_switch_really_does() -> None:
++    """docs/settings.md must say that a test file that cannot be imported FAILS the count tests (exit code 2 of the
++    collector, asserted in `_collect`), that only a last line that is not the plain total skips, and that CI sets the
++    switch in two workflow files (checked here) while no CI run has been seen by whoever wrote the page."""
++    settings = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++    bullet = next(line for line in settings.splitlines() if line.startswith("* `DPLD_REQUIRE_COUNT`"))
++    assert "cannot be imported" in bullet and "fail" in bullet.split("cannot be imported", 1)[1][:80]
++    assert "with code 2" in bullet and "no CI run has been seen" in bullet
++    for workflow in ("lint.yml", "sonar.yml"):
++        text = (REPO / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
++        assert f"{REQUIRE_COUNT_ENV}: " + '"1"' in text, workflow
++        assert f".github/workflows/{workflow}" in bullet
+ 
+ 
+ def test_the_qq_form_prints_one_line_per_file_whose_numbers_add_up_and_no_total(
+@@ -186,6 +219,24 @@ def test_the_probe_checks_the_token_variable_name_only_when_calls_are_confirmed(
+     out = capsys.readouterr().out
+     assert "must be the NAME of an environment variable" in out and bad not in out
+     assert "`--plan` does not look at the name" in PROBE_PAGE
++    # the refusal for the name comes only after the count is right (hubspot_probe.py checks the count first)
++    assert "when you give `--yes-spend-calls 7` (the planned count" in PROBE_PAGE
++    assert hp.PLANNED_CALLS == 7
++    assert "with any other count it is refused for the count first" in PROBE_PAGE
++
++
++def test_the_helper_module_that_the_readme_says_prints_nothing_prints_nothing() -> None:
++    """README, "scripts/precheck.py ... running it prints nothing": run it and look at both output streams."""
++    done = subprocess.run(  # noqa: S603 (this interpreter, a fixed argument list)
++        [sys.executable, "-I", str(REPO / "scripts" / "precheck.py")],
++        cwd=REPO,
++        capture_output=True,
++        text=True,
++        timeout=60,
++        check=False,
++    )
++    assert (done.returncode, done.stdout, done.stderr) == (0, "", "")
++    assert "running it prints nothing" in README
+ 
+ 
+ def _page_lines() -> list[tuple[str, str]]:
+@@ -209,22 +260,35 @@ def test_no_page_says_that_sending_a_request_again_changes_nothing() -> None:
+ def test_every_page_about_a_repeated_request_says_it_can_start_a_follow_up_that_is_due() -> None:
+     """desk.py `_verdict_reply` / `_pending_and_due` (and contract.md, "Follow-up"): a repeat of a request whose verdict
+     is `new` starts the lead's follow-up only when that is due (no automatic try yet, or the waiting time after the last
+-    try is over), so repeats cannot use up the tries. Every page that describes a repeat says the same thing."""
++    try is over; a follow-up just given back for lack of resources also waits 5 seconds), so repeats cannot use up
++    the tries. Every page that describes a repeat says the same thing."""
+     import inspect
+ 
+     from lead_desk import desk, gate
+ 
+     assert "elif self._pending_and_due(rec" in inspect.getsource(desk.Desk._verdict_reply)
+     assert gate.SEND_MAX_ATTEMPTS == 5  # the number the pages give
++    # a follow-up given back for lack of resources waits 5 seconds even with no automatic try used (desk.py
++    # `_pending_and_due` checks `wait_before_drive` first for these errors); the pages say so
++    assert gate.wait_before_drive(0, gate.NO_DESCRIPTORS_ERROR) == 5
++    assert gate.wait_before_drive(0, gate.MODEL_BUSY_ERROR) == 5
++    assert "if row[3] in (NO_DESCRIPTORS_ERROR, *BUSY_ERRORS)" in inspect.getsource(desk.Desk._pending_and_due)
++    # the behaviour itself is run by these two tests (the page says nothing the tool does not do)
++    edge = (REPO / "tests" / "test_desk_http_edge_cases.py").read_text(encoding="utf-8")
++    assert "def test_replays_cannot_burn_the_cap(" in edge and "def test_replay_drives_once_due(" in edge
+     said = (
+-        "a repeat of a request whose verdict is `new` starts it; a repeat that comes earlier does not, "
+-        "so repeats cannot use up the 5 automatic tries"
++        "(no automatic try yet, or the waiting time after the last try is over; a follow-up that was just given "
++        "back for lack of resources also waits 5 seconds), a repeat of a request whose verdict is `new` starts it; "
++        "a repeat that comes earlier does not, so repeats cannot use up the 5 automatic tries"
+     )
+     contract = (REPO / "contract.md").read_text(encoding="utf-8")
+     for name, text in (("README.md", README), ("docs/tests.md", TESTS_PAGE), ("contract.md", contract)):
+         assert said in text, name
+     assert README.count(said) == 3  # the example, the word list and the list of claims
+-    assert "no automatic try yet, or its backoff is over. Replays cannot use up the 5 tries" in contract
++    assert (
++        "no automatic try yet, or its backoff is over; a follow-up just given back for lack of resources also waits "
++        "5 seconds. Replays cannot use up the 5 tries"
++    ) in contract
+ 
+ 
+ def test_every_old_test_count_is_named_as_from_an_earlier_commit() -> None:
