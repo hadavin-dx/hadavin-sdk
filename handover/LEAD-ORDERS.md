@@ -1804,3 +1804,6 @@ Output: `core-fix-v1.patch` + `core-fix-v1-evidence.md` + review report in hando
 
 
 ## 2026-11-13 13:33Z LEAD ORDER (core): the demo session's 16-commit claims series goes FIRST on the demo repo docs; your docs-F4-F4b-F4c patch overlaps it (git apply fails). When the demo session freezes its final series (it will tell the lead; the lead forwards the hash), REBASE your docs patch onto that tree: keep only what still applies and is not already fixed there, keep tests/test_docs_match_tools.py, re-run V4 evidence on the rebased head. Until then finish F6, V2, F4d as ordered. Keep >=2 agents running; status block every 5 min.
+
+
+## 2026-11-13 14:09Z LEAD ORDER (core): demo series FROZEN: tree hash a019c44835f26e0ef314129d7d92a047eb67d1b8 (18 commits, demo/handover). Rebase your docs patch (F4d) onto it NOW: keep only what still applies and is not already fixed there; keep tests/test_docs_match_tools.py; run it on the rebased tree; re-run V4 evidence on the rebased head; report any real mismatch the test finds on the demo tree as a finding for the demo session (do not edit the demo series).
