@@ -10,6 +10,517 @@ pytest in a copy without the folder passes for a clean product and fails for one
 the folder, and the copy imports its own code, never the original checkout. (That CI runs the scan
 is checked in tests/test_demo_only_guard_ci.py.)"""
 
+# Fail-before table (real runs, batch 15). Each test of this file was run on two old heads, in worktrees where
+# the files of this head's tests (and `tools/fixed_run.py`) were copied in; the raw junit results are the source.
+# A name that starts with `test_pin_` PASSES on both old heads (it keeps a behaviour from breaking and is not proof of a
+# fix); any other name that is new since an old head FAILS on that head or on the other one, and the table says which
+# (a test that was already in the old head's own file is not new there: it PASSES, as it did before). A test of the program starter
+# cannot run on the old tree (the old heads have no such file). Only the first failing line is shown.
+# test_this_repository_is_clean_and_the_scan_is_not_vacuous
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_folder_name_is_in_the_settings_file_only
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_clean_product_passes_even_though_the_folder_holds_fake_ids
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_product_code_that_names_the_folder_is_a_hit_with_file_and_line_only
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_fake_record_id_in_product_code_is_a_hit_and_the_id_is_not_printed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_table_name_and_listed_phrases_are_not_hits_but_a_path_or_a_longer_word_is
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_listed_phrase_that_no_product_file_holds_is_a_stale_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_folder_inside_a_product_root_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_missing_product_root_is_a_hit_not_a_silent_pass
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_loader_may_name_the_folder_and_nothing_else_may
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fake_id
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_stale_loader_entry_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_ignored_files_and_binary_endings_are_skipped
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_file_type_is_read_not_only_a_list_of_endings
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_that_is_not_text_and_not_a_known_binary_ending_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_other_product_folders_are_scanned_too
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_settings_of_this_repository_scan_every_product_folder
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_symlink_under_a_product_root_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_product_root_that_is_itself_a_symlink_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_exempt_files_are_exactly_the_guard_itself_and_each_is_skipped_whole
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_repository_that_has_the_folder_needs_the_copy_run_marker
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_if_present_does_nothing_without_a_folder_and_runs_with_one
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_property_a_hit_is_reported_exactly_where_it_was_planted
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_good_settings_load
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bad_setting_stops_the_guard
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_folder_name_that_is_a_path_stops_the_guard
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_pattern_that_matches_the_empty_text_stops_the_guard
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_exit_codes_clean_dirty_and_required_folder_missing
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_script_runs_as_a_program_on_this_repository
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_has_no_folder_and_nothing_else_is_lost
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_clean_product_passes_in_a_copy_without_the_folder
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_product_that_reaches_into_the_folder_fails_in_the_copy
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_really_has_no_folder
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_scan_refuses_a_folder_that_is_not_a_git_checkout
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_is_scanned_whether_it_is_added_to_git_or_not
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_imports_the_copy_even_if_the_original_is_on_the_import_path
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_fails_when_the_package_comes_from_somewhere_else
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_without_a_package_to_check_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_searched_as_bytes
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_a_path
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_compiled_or_packed_file_in_a_product_folder_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_binary_is_searched_as_bytes_in_utf8_and_both_utf16_orders
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_submodule_whose_folder_is_missing_is_still_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_archive_ending_is_refused_like_a_zip
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_name_is_found_as_utf32_in_a_binary_and_in_a_text_ending
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_over_the_size_cap_is_a_hit_and_is_not_read
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_settings_file_checks_the_size_cap_the_copy_exclusions_and_the_child_environment
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_hit_is_printed_with_control_characters_escaped_and_never_as_a_workflow_command
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_child_gets_only_the_allowed_environment_names
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_holds_exactly_the_tracked_files_whatever_their_names
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_does_not_depend_on_the_git_variables_of_the_caller
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_folder_that_a_loader_entry_names_is_still_a_folder_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_byte_patterns_are_built_once_for_a_whole_scan
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_full_width_product_root_that_is_the_folder_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_marks_table_covers_every_default_ending_and_each_real_sample_passes
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_foreign_file_with_a_picture_font_or_pdf_ending_is_a_hit_for_every_ending
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_ending_with_no_known_mark_cannot_be_listed_in_the_settings
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_entry_is_gone_only_when_the_system_says_no_such_file
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tracked_file_in_a_folder_that_cannot_be_entered_is_a_hit_not_a_skip
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_marker_must_be_an_empty_regular_file
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_exempt_file_must_not_be_a_link_and_the_size_cap_still_applies
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_modes_exclude_each_other_and_pytest_arguments_need_a_copy_run_flag
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_them
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_samples_cover_exactly_the_kinds_the_guard_lists
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_first_byte_kind_is_a_hit_by_kind_under_an_unmarked_and_a_marked_ending
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_all_four_mach_o_magic_values_are_hits
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_pe_header_that_cannot_say_is_not_called_a_pe_file_and_one_far_in_is_found
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_unmarked_ending_that_is_not_utf8_is_a_hit_and_is_not_searched_and_a_nul_file_is_read_as_text
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_webp_ttf_and_otf_with_wrong_first_bytes_are_hits_and_with_the_right_ones_pass
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_svg_is_text_it_is_read_and_a_binary_one_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_exempt_file_that_is_a_binary_is_a_hit_by_kind
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_docstring_states_that_the_first_512_bytes_decide_and_appended_data_is_not_looked_at
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_refuses_a_tracked_symlink_that_is_absolute_or_leaves_the_copy_or_enters_the_folder
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_path_swapped_for_a_link_after_the_check_is_refused_not_copied_through
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_copy_run_does_not_start_when_the_scan_has_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_entry_that_cannot_be_inspected_is_a_hit_or_present_never_absent
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_if_present_and_require_do_not_take_an_unreadable_folder_for_a_missing_one
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_the_person_running_the_guard_ignores_for_themselves_is_still_scanned
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_two_chained_links_cannot_lead_the_copy_run_out_of_the_copy
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_copied
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_without_the_walk_flags_a_link_anywhere_on_the_path_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_that_vanishes_at_any_point_of_the_scan_is_never_a_traceback
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_in_a_product_folder_is_looked_at_with_one_lstat
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_bzip2_needs_a_level_from_1_to_9
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_bzip2_needs_a_block_or_end_of_stream_mark
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file_and_an_unusual_name
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_git_message_hides_names_with_key_or_token
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_stated_ones
+#     dd827d79: FAILS: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
+#     c7eb5c79: FAILS: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
+# test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_shows_it
+#     dd827d79: FAILS: AssertionError: a 17 character Basic token with a dash stayed visible
+#     c7eb5c79: FAILS: AssertionError: a 17 character Basic token with a dash stayed visible
+# test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole
+#     dd827d79: FAILS: AssertionError: the quoted authorization value was not hidden whole
+#     c7eb5c79: FAILS: AssertionError: the quoted authorization value was not hidden whole
+# test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters
+#     dd827d79: FAILS: AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
+#     c7eb5c79: FAILS: AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
+# test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word
+#     dd827d79: FAILS: AssertionError: a hidden-side value stayed visible, bypass=abc123: 'bypass=abc123 tail'
+#     c7eb5c79: FAILS: AssertionError: a hidden-side value stayed visible, bypass=abc123: 'bypass=abc123 tail'
+# test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits
+#     dd827d79: FAILS: AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
+#     c7eb5c79: FAILS: AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
+# test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+#     dd827d79: FAILS: AssertionError: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a
+#     c7eb5c79: PASSES
+# test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+#     dd827d79: FAILS: AssertionError: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
+#     c7eb5c79: PASSES
+# test_pin_the_colon_form_is_left_alone_by_the_masker
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bearer_token_of_11_characters_stays_visible_as_on_main
+#     dd827d79: FAILS: AssertionError: a 12 character token stayed
+#     c7eb5c79: PASSES
+# test_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line
+#     dd827d79: FAILS: AssertionError: assert 'fatal: autho...1a1a1a1a1a1a1' == 'fatal: autho...den> <hidden>'
+#     c7eb5c79: PASSES
+# test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_is_not_read
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_words
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_link_chain_message_says_too_long_or_looped
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback
+#     dd827d79: FAILS: AssertionError: a bare OSError came out of the copy: OSError(22, 'Invalid argument')
+#     c7eb5c79: PASSES
+# test_a_loader_behind_a_folder_that_became_a_link_is_a_hit
+#     dd827d79: FAILS: AssertionError: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__in
+#     c7eb5c79: PASSES
+# test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit
+#     dd827d79: FAILS: AssertionError: an exempt file behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pk
+#     c7eb5c79: PASSES
+# test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit
+#     dd827d79: FAILS: AssertionError: the marker behind a link was read through it: []
+#     c7eb5c79: PASSES
+# test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes
+#     dd827d79: FAILS: AssertionError: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links can
+#     c7eb5c79: PASSES
+# test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper
+#     dd827d79: FAILS: AssertionError: demo_only_guard.py line 362: a program is started without the helper
+#     c7eb5c79: FAILS: AssertionError: demo_only_guard.py line 400: a program is started without the helper
+# test_a_dashed_scheme_token_of_16_characters_is_hidden
+#     dd827d79: FAILS: AssertionError: a 16 character Basic token with a dash stayed visible
+#     c7eb5c79: FAILS: AssertionError: a 16 character Basic token with a dash stayed visible
+# test_pin_a_dashed_scheme_token_of_15_characters_stays_visible_as_in_the_core
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_dashed_scheme_token_of_13_characters_stays_visible_as_in_the_core
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_end_of_a_value_with_a_quote_that_never_closes_is_the_end_of_the_line
+#     dd827d79: FAILS: AttributeError: module 'tools.demo_only_guard' has no attribute '_value_end'
+#     c7eb5c79: FAILS: AttributeError: module 'tools.demo_only_guard' has no attribute '_value_end'
+# test_the_end_of_a_value_with_a_quote_that_closes_is_after_the_closing_quote
+#     dd827d79: FAILS: AttributeError: module 'tools.demo_only_guard' has no attribute '_value_end'
+#     c7eb5c79: FAILS: AttributeError: module 'tools.demo_only_guard' has no attribute '_value_end'
+# test_a_token_that_an_earlier_pass_already_hid_is_not_hidden_twice_into_the_scheme_word
+#     dd827d79: FAILS: AssertionError: an already hidden token was handled: 'authorization=<hidden> abcdefghijklmn x'
+#     c7eb5c79: PASSES
+# test_pin_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_authorization_digest_with_several_parts_is_hidden_to_the_end_of_its_line
+#     dd827d79: FAILS: AssertionError: a part of a Digest value stayed visible: 'authorization=<hidden> username="a", response="b" ta
+#     c7eb5c79: FAILS: AssertionError: a part of a Digest value stayed visible: 'authorization=<hidden> username="a", response="b" ta
+# test_an_authorization_digest_does_not_hide_the_next_line
+#     dd827d79: FAILS: AssertionError: the Digest hid the next line: 'authorization=<hidden> username="a", response="b"\nnext line=1'
+#     c7eb5c79: FAILS: AssertionError: the Digest hid the next line: 'authorization=<hidden> username="a", response="b"\nnext line=1'
+# test_an_empty_repository_is_refused_with_the_message_for_an_empty_list
+#     dd827d79: FAILS: AssertionError: an empty file list of an empty repository was not refused
+#     c7eb5c79: FAILS: AssertionError: an empty file list of an empty repository was not refused
+# test_a_repository_with_only_files_not_added_is_refused_by_the_tracked_list_and_says_so
+#     dd827d79: FAILS: AssertionError: an empty tracked list was not refused
+#     c7eb5c79: FAILS: AssertionError: an empty tracked list was not refused
+# test_the_copy_run_of_a_repository_with_only_files_not_added_says_which_and_stops
+#     dd827d79: FAILS: FileNotFoundError: [Errno 2] No such file or directory: PosixPath('/tmp/demo-only-guard-42k3786z/copy')
+#     c7eb5c79: FAILS: FileNotFoundError: [Errno 2] No such file or directory: PosixPath('/tmp/demo-only-guard-9kjnkslo/copy')
+# test_pin_a_string_as_the_command_is_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_an_empty_command_is_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_a_text_with_a_nul_character_is_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_an_element_that_is_not_text_or_a_path_is_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_a_tuple_and_a_path_element_are_accepted
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_a_dict_a_set_a_generator_and_a_path_as_the_whole_command_are_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_a_program_that_is_found_on_the_path_runs_and_one_that_is_not_stops_the_caller
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_a_missing_program_is_not_handed_on_as_no_program
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_pin_each_keyword_of_the_list_is_accepted_and_every_other_one_is_refused
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_the_guard_and_the_helper_files_hold_exactly_one_marker_and_it_is_on_the_line_that_starts_the_program
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_every_start_of_a_program_in_tools_tests_and_src_is_the_helper_or_a_listed_follow_up
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_the_sweep_finds_an_alias_a_from_import_and_the_os_calls
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_the_two_loaders_of_the_program_starter_are_the_same
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+# test_a_changed_loader_is_not_the_same_as_the_other_one
+#     dd827d79: cannot run on the old tree (no helper there)
+#     c7eb5c79: cannot run on the old tree (no helper there)
+
 from __future__ import annotations
 
 import importlib
@@ -217,7 +728,6 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     assert hits == [], f"scan hits: {hits}"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
     names = [
         "a.cfg",
@@ -310,7 +820,6 @@ def test_a_product_root_that_is_itself_a_symlink_is_a_hit(tmp_path: Path) -> Non
     assert g.scan(repo, _cfg()) == ["src: symlink-in-product-root"]
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling(
     tmp_path: Path,
 ) -> None:
@@ -331,7 +840,6 @@ def test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit(tmp_path: Pat
     ], "a_file_or_folder_name_that_holds_the_folder_name_is_a_hit: check 1"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Path) -> None:
     for i, spelling in enumerate(
         ["Demo_Only", "demo-only", "demo only", "DEMO-ONLY", "Demo  Only", "demo_-only"]
@@ -1935,21 +2443,18 @@ def _only_the_mark_and_nul_bytes(tmp_path: Path, label: str, raw: bytes, kind: s
     ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such
     # a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "mz", b"MZ" + b"\x00" * 30, "DOS or Windows program")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such
     # a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): it needs the kinds to exist;
     # otherwise a pin that text is not refused)
@@ -1962,7 +2467,6 @@ def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
     # What it guards against (a fault of the code before batch 8): the level byte was not looked
     # at). On purpose, level 0 and ":" are not bzip2: the format has levels 1 to 9, so a file with
@@ -1978,7 +2482,6 @@ def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
         assert (got == "bzip2") == is_bzip2, f"bzip2 level check: {head!r} was read as {got!r}"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
     # What it guards against (a fault of the code before batch 8): the mark after the level byte was
     # not looked at). On purpose, a bad block mark is not bzip2.
@@ -2054,7 +2557,6 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     assert from_guard <= set(nr._tracked()), "the folder walk misses a tracked file"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_git_message_hides_names_with_key_or_token() -> None:
     # What it guards against (a fault of the code before batch 8): the whole first line of git was
     # shown as it came)
@@ -2095,9 +2597,7 @@ def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> 
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> None:
+def test_pin_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> None:
     # letters only: the guard and the core agree (the rows where the guard hides more are in the
     # next test)
     for scheme, core, low in (
@@ -2121,8 +2621,6 @@ def test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table() -> N
             )
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: a stated row differs: 'x Bearer a1b2c3 y' gave 'x Bearer a1b2c3 y'
 def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_stated_ones() -> (
     None
 ):
@@ -2157,8 +2655,6 @@ def test_a_bare_scheme_word_rows_where_the_guard_differs_from_the_core_are_the_s
         assert shown == guard_shows, f"a stated row differs: {line!r} gave {shown!r}"
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a 17 character Basic token with a dash stayed visible
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: a 17 character Basic token with a dash stayed visible
 def test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_shows_it() -> None:
     line = "x Basic abc-defghijklmnop y"
     assert _core("BASIC").search(line) is None, (
@@ -2169,15 +2665,11 @@ def test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_core_sho
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_in_the_core() -> None:
     line = "x Basic abc-defghijk y"
     assert g._hide_secrets(line) == line, "a 12 character Basic token with a dash was hidden"
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the quoted authorization value was not hidden whole
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the quoted authorization value was not hidden whole
 def test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole() -> None:
     shown = g._hide_secrets('authorization=Bearer "abc def" tail')
     assert shown == "authorization=<hidden> tail", (
@@ -2204,7 +2696,6 @@ def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
 def test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters() -> None:
     # what it shows (`authorization=Bearer <token>` of 8, 10 or 11 characters stayed visible; the
     # core hides them)
@@ -2220,7 +2711,6 @@ def test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_ch
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a hidden-side value stayed visible, bypass=abc123: 'bypass=abc123 tail'
 def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() -> None:
     # visible side
     for line in (
@@ -2264,7 +2754,6 @@ def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() 
     assert g._hide_secrets("bypass_" + TOK + "=true") == "bypass_" + TOK + "=<hidden>"
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
 def test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits() -> (
     None
 ):
@@ -2338,7 +2827,6 @@ def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() 
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2369,7 +2857,6 @@ def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on
     assert steps <= 3 * 10000, f"the name check read {steps} characters for a 20000 character line"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds() -> None:
     # what it keeps (also: fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of
     # name characters, with no name of the new code needed): a wide bound only, not a ratio of two
@@ -2384,7 +2871,6 @@ def test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds() ->
     assert took < 5.0, f"a line of 60000 characters took {took:.1f} seconds"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2433,21 +2919,18 @@ def _a_scheme_after_a_secret_name(scheme: str, token: str) -> None:
             assert token not in shown, f"{name}={scheme}: the token stayed visible: {shown!r}"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: authorization=Bearer: the token stayed visible: 'fatal: authorization=<hidden> a1a1a1a1a1a1a1a1a1a1'
 def test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
     # what it shows (the pair step ran first and hid only the word `Bearer`, leaving the token in
     # clear)
     _a_scheme_after_a_secret_name("Bearer", "a1" * 10)
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: authorization=Basic: the token stayed visible: 'fatal: authorization=<hidden> b2b2b2b2b2b2'
 def test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
     # what it shows (the pair step ran first and hid only the word `Basic`, leaving the token in
     # clear)
     _a_scheme_after_a_secret_name("Basic", "b2" * 6)
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
     # pin: only `name=value` pairs are hidden; the colon form is a stated limit (see the comment
     # above `_BEARER`), shown here by behaviour. A made-up value built from parts.
@@ -2458,7 +2941,6 @@ def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
         )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a 12 character token stayed
 def test_a_bearer_token_of_11_characters_stays_visible_as_on_main() -> None:
     # pin: the bearer rule needs 12 or more characters, as on main (`hadavin_sdk.guard.redact`), so
     # a shorter token after a name stays visible; 12 characters are hidden. A made-up token built
@@ -2473,7 +2955,6 @@ def test_a_bearer_token_of_11_characters_stays_visible_as_on_main() -> None:
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert 'fatal: autho...1a1a1a1a1a1a1' == 'fatal: autho...den> <hidden>'
 def test_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line() -> None:
     # what it shows (the line stayed `authorization=<hidden> a1a1...`, the token in clear)
     assert (
@@ -2564,7 +3045,6 @@ def test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_tabl
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -2583,7 +3063,6 @@ def test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     assert target.read_text(encoding="utf-8") == "x\n"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> None:
     # what it shows (no test read the mode of a copy made through `fchmod`, so a wrong mode went
     # unseen)
@@ -2598,7 +3077,6 @@ def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> No
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a bare OSError came out of the copy: OSError(22, 'Invalid argument')
 def test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -2629,7 +3107,6 @@ def _swap_parent_for_link(repo: Path, parent: str, tmp_path: Path) -> None:
     (repo / parent).symlink_to(outside)
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-produc
 def test_a_loader_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
     # what it shows (the loader was read through the swapped folder and passed)
     repo = _tracked_repo(tmp_path / "r", {"src/pkg/loader.py": f"x = '{FOLDER}'\n"})
@@ -2642,7 +3119,6 @@ def test_a_loader_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) ->
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: an exempt file behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-
 def test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
     # what it shows (the exempt file was read through the swapped folder)
     repo = _tracked_repo(tmp_path / "r", {"src/pkg/self.py": "x = 1\n"})
@@ -2655,7 +3131,6 @@ def test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Pa
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the marker behind a link was read through it: []
 def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
     # what it shows (the marker was read through the swapped folder and counted as a regular file)
     repo = _tracked_repo(tmp_path / "r")
@@ -2667,7 +3142,6 @@ def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_pat
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links cannot be followed)', 'docs/l
 def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     tmp_path: Path,
 ) -> None:
@@ -2687,8 +3161,6 @@ def test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
 def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keyword_it_does_not_list() -> (
     None
 ):
@@ -2728,8 +3200,6 @@ def test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_keywor
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
 def test_pin_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_elements_that_are_not_text() -> (
     None
 ):
@@ -2756,8 +3226,6 @@ def test_pin_the_shared_start_of_a_program_refuses_a_string_an_empty_list_and_el
         raise AssertionError(f"a text with a NUL character was run: {bad!r}")
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix. The helper file and the new tests were copied into the old tree.
 def test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one() -> None:
 
     done = fixed_run.run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
@@ -2786,8 +3254,6 @@ def _calls_of(path: Path, names: set[str]) -> list[Any]:
     return out
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: demo_only_guard.py line 362: a program is started without the helper
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: demo_only_guard.py line 400: a program is started without the helper
 def test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper() -> None:
     import ast
 
@@ -2808,7 +3274,6 @@ def test_the_guard_and_the_repo_scan_start_programs_only_through_the_one_helper(
 
 # -- batch 15: the limits of the line masker, the empty file list, the one program starter
 # ---------------------------
-# fail-before: the rows below are real runs on dd827d79 and c7eb5c79 in the table "fail-before runs" of batch 15 (see the
 # CHANGELOG); a test that needs the guard code of this branch cannot say more than that there.
 def test_a_dashed_scheme_token_of_16_characters_is_hidden() -> None:
     assert g._hide_secrets("x Basic abc-defghijklmno y") == "x Basic <hidden> y", (
@@ -2846,7 +3311,7 @@ def test_a_token_that_an_earlier_pass_already_hid_is_not_hidden_twice_into_the_s
     )
 
 
-def test_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it() -> (
+def test_pin_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it() -> (
     None
 ):
     shown = g._hide_secrets("authorization=Bearer   \nnext")

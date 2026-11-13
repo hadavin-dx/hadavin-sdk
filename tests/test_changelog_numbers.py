@@ -3,6 +3,55 @@ the code here, one test per number-bearing sentence. Each number is read from th
 by the code's own rule), and each sentence is found by a pattern with word boundaries, so "five
 passes" is not matched inside "fifteen passes"."""
 
+# Fail-before table (real runs, batch 15). Each test of this file was run on two old heads, in worktrees where
+# the files of this head's tests (and `tools/fixed_run.py`) were copied in; the raw junit results are the source.
+# A name that starts with `test_pin_` PASSES on both old heads (it keeps a behaviour from breaking and is not proof of a
+# fix); any other name that is new since an old head FAILS on that head or on the other one, and the table says which
+# (a test that was already in the old head's own file is not new there: it PASSES, as it did before). A test of the program starter
+# cannot run on the old tree (the old heads have no such file). Only the first failing line is shown.
+# test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists
+#     dd827d79: FAILS: AssertionError: the CHANGELOG does not state a number of masker passes
+#     c7eb5c79: PASSES
+# test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_their_patterns
+#     dd827d79: FAILS: AssertionError: assert None
+#     c7eb5c79: PASSES
+# test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changelog_names
+#     dd827d79: FAILS: AssertionError: the CHANGELOG does not say 'Three listings of the tracked files'
+#     c7eb5c79: PASSES
+# test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its_two_interpreters
+#     dd827d79: FAILS: AssertionError: assert None
+#     c7eb5c79: PASSES
+# test_pin_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_changelog_names_four_product_folders_and_the_settings_list_them
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_changelog_names_the_exact_error_types_the_banner_reads_and_the_card_delivery_catches
+#     dd827d79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+#     c7eb5c79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+# test_the_changelog_counts_the_read_error_sites_as_the_source_has_them
+#     dd827d79: FAILS: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the test
+#     c7eb5c79: FAILS: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the test
+# test_the_changelog_states_the_log_rule_of_each_path_of_the_banner
+#     dd827d79: FAILS: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
+#     c7eb5c79: FAILS: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
+# test_pin_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_and_by_the_function
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_changelog_says_what_the_masker_is_compared_with
+#     dd827d79: FAILS: AssertionError: the CHANGELOG does not name what the masker is compared with
+#     c7eb5c79: FAILS: AssertionError: the CHANGELOG does not name what the masker is compared with
+# test_every_example_of_the_masker_paragraph_gives_the_stated_result_in_the_masker_and_the_core
+#     dd827d79: FAILS: AssertionError: examples whose result is not the stated one (input, masker, core changes it): [('Bearer a1b2c3
+#     c7eb5c79: FAILS: AssertionError: examples whose result is not the stated one (input, masker, core changes it): [('Bearer a1b2c3
+# test_every_example_of_the_claim_table_is_written_in_the_masker_paragraph
+#     dd827d79: FAILS: ValueError: not enough values to unpack (expected 1, got 0)
+#     c7eb5c79: FAILS: ValueError: not enough values to unpack (expected 1, got 0)
+# test_the_masker_text_does_not_say_it_is_the_core_or_that_it_only_hides_more
+#     dd827d79: FAILS: ValueError: substring not found
+#     c7eb5c79: FAILS: ValueError: substring not found
+
 from __future__ import annotations
 
 import importlib.util
@@ -27,7 +76,6 @@ def count_of(phrase_after: str) -> list[int]:
     return [inverse[w.lower()] for w in found]
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not state a number of masker passes
 def test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists() -> None:
     said = count_of(r"passes\b")
     assert said, "the CHANGELOG does not state a number of masker passes"
@@ -36,7 +84,6 @@ def test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists() ->
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert None
 def test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_their_patterns() -> (
     None
 ):
@@ -56,7 +103,6 @@ def test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_t
     assert token + "a" not in g._hide_secrets(f"x Bearer {token}a")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the CHANGELOG does not say 'Three listings of the tracked files'
 def test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changelog_names() -> None:
     # the number is the length of the table that the listing test compares, not a literal typed here
     count = WORD[len(LISTING_FILES)].capitalize()
@@ -74,7 +120,6 @@ def test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changel
     assert "is only checked to hold every tracked file" in CHANGELOG
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert None
 def test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its_two_interpreters() -> (
     None
 ):
@@ -102,7 +147,6 @@ def test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its
         assert g._PYC_MAGIC_MAX == table[sys.version_info[:2]]
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code() -> None:
     assert g.MAX_FILE_BYTES == 8 * 1024 * 1024
     assert re.search(r"\b8 MiB\b", CHANGELOG)
@@ -113,7 +157,6 @@ def test_pin_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code(
     assert g._magic_kind(b"\x00" * 512 + b"PK\x03\x04") == ""
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_changelog_names_four_product_folders_and_the_settings_list_them() -> None:
     assert re.search(
         r"\bover four product folders \(`src`, `templates`, `tools`, `demos`\)", CHANGELOG
@@ -124,7 +167,6 @@ def test_pin_the_changelog_names_four_product_folders_and_the_settings_list_them
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: the CHANGELOG does not list READ_ERRORS as the code has it: (the old head has only the private `_READ_ERRORS`, read below)
 def test_the_changelog_names_the_exact_error_types_the_banner_reads_and_the_card_delivery_catches() -> (
     None
 ):
@@ -148,8 +190,6 @@ def _and_list(kinds: tuple[type, ...]) -> str:
     return ", ".join(names[:-1]) + " and " + names[-1]
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the tests
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the source has 0 `except READ_ERRORS` sites; update the CHANGELOG, the docstrings and the tests
 def test_the_changelog_counts_the_read_error_sites_as_the_source_has_them() -> None:
     sites = sum(
         (ROOT / "src/hadavin_sdk" / name).read_text(encoding="utf-8").count("except READ_ERRORS")
@@ -164,8 +204,6 @@ def test_the_changelog_counts_the_read_error_sites_as_the_source_has_them() -> N
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the log rule is not in the CHANGELOG: `banner_or_unconfirmed` logs a warning on every call
 def test_the_changelog_states_the_log_rule_of_each_path_of_the_banner() -> None:
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     for phrase in (
@@ -177,8 +215,6 @@ def test_the_changelog_states_the_log_rule_of_each_path_of_the_banner() -> None:
         assert phrase in text, f"the log rule is not in the CHANGELOG: {phrase}"
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_and_by_the_function(
     tmp_path, monkeypatch, caplog
 ) -> None:
@@ -203,7 +239,6 @@ def test_pin_a_banner_that_cannot_be_built_is_logged_on_every_call_by_the_app_an
     )
 
 
-# fail-before: not run on the old heads (it reads the CHANGELOG text of this head only); it fails when the sentence is removed.
 def test_the_changelog_says_what_the_masker_is_compared_with() -> None:
     text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     assert "the core redactor `hadavin_sdk.guard.redact`" in text, (
@@ -253,7 +288,6 @@ def _masker_paragraph() -> str:
     return para
 
 
-# fail-before: it cannot run on the old heads (the paragraph and the claim table are new); it fails when a claim and the code differ.
 def test_every_example_of_the_masker_paragraph_gives_the_stated_result_in_the_masker_and_the_core() -> (
     None
 ):

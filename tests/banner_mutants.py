@@ -1972,14 +1972,14 @@ M = [
         "R9D4 a bare bearer scheme word is not hidden",
         "    return _hide_shaped_scheme_token(_hide_group(_BEARER, line))\n",
         "    return line\n",
-        "test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
+        "test_pin_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
         "Bearer 12: the guard and the core disagree",
     ),
     gd(
         "R9D5 a bare basic scheme word is not hidden",
         "    return _hide_group(_BASIC, line)\n",
         "    return line\n",
-        "test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
+        "test_pin_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table",
         "basic 8: the guard and the core disagree",
     ),
     gd(
@@ -2172,7 +2172,7 @@ M = [
         "    def __deepcopy__(self, memo: dict) -> App:",
         "    def _not_deepcopy(self, memo: dict) -> App:",
         T_MB,
-        "test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well",
+        "test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well",
         "an app of plain parts was deep-copied",
     ),
     ap(
@@ -2425,7 +2425,7 @@ M = [
         '        if not isinstance(stage, str):\n            raise TypeError("the config of this app has no stage text to read")\n',
         "",
         T_MB,
-        "test_pin_a_stage_that_is_not_text_is_an_error_that_names_it",
+        "test_a_stage_that_is_not_text_is_an_error_that_names_it",
         "a stage of None was not refused",
     ),
     ap(
@@ -2603,7 +2603,7 @@ M = [
         "R15D7 a scheme word with no token swallows the white space after it",
         "if stop > tail and line[tail:stop] != _HIDDEN:",
         "if line[tail:stop] != _HIDDEN:",
-        "test_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it",
+        "test_pin_an_authorization_scheme_word_with_nothing_after_it_keeps_the_white_space_after_it",
         "white space after a bare scheme word",
     ),
     gd(

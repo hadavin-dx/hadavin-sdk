@@ -9,6 +9,559 @@ default; a value nobody checked (stage, bare string, odd name, name with a reser
 refused; the page script never hides, half paints or throws, refuses a self-contradicting banner,
 never parses HTML and falls back to the same words as the Python fallback."""
 
+# Fail-before table (real runs, batch 15). Each test of this file was run on two old heads, in worktrees where
+# the files of this head's tests (and `tools/fixed_run.py`) were copied in; the raw junit results are the source.
+# A name that starts with `test_pin_` PASSES on both old heads (it keeps a behaviour from breaking and is not proof of a
+# fix); any other name that is new since an old head FAILS on that head or on the other one, and the table says which
+# (a test that was already in the old head's own file is not new there: it PASSES, as it did before). A test of the program starter
+# cannot run on the old tree (the old heads have no such file). Only the first failing line is shown.
+# test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_demo_with_no_stand_ins_still_says_nothing_real_is_connected
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_service_is_named_and_made_up_data_is_never_claimed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_names_come_from_the_caller_and_repeats_are_shown_once_in_order
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_key_without_a_shown_name_is_read_as_component_and_the_key
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_unknown_stage_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_names_that_are_not_a_mapping_are_refused_with_a_type_error
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_name_that_could_change_the_sentence_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_character_is_not
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_service_key_that_is_not_text_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_property_the_made_up_claim_never_appears_next_to_a_real_service
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_banner_from_config_reads_the_stage_and_both_lists_from_the_config
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_property_every_config_entry_lands_in_exactly_one_group
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_stage_of_the_config_is_checked_like_any_other_stage
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_no_new_module_keeps_its_own_loopback_list
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_paints_exactly_what_python_wrote
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_text_that_is_not_plain_text_is_not_painted_as_given
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_painter_never_throws_and_never_leaves_the_page_blank
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_fallback_has_the_same_words_as_the_python_fallback
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_lists_are_the_python_lists
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_markup_in_the_text_is_shown_as_text_never_parsed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_script_has_no_way_to_parse_html_or_load_anything
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_endpoints_on_this_machine_keep_the_demo_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_loaded_demo_config_with_an_outside_system_gets_the_real_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_property_any_outside_endpoint_in_any_stage_never_gets_the_made_up_sentence
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_banner_is_checked_against_what_it_claims_before_it_leaves
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failed_last_resort_write_never_leaves_the_banner_hidden
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failed_append_leaves_words_on_the_screen_never_an_empty_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_name_is_matched_as_a_whole_word_only
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_tool_specs_has_no_default_so_forgetting_it_is_an_error
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_tool_hosts_on_this_machine_or_none_keep_the_demo_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_tool_modules_without_the_manifests_count_as_one_real_service
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_tools_of_a_real_registry_are_what_the_banner_reads
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_words_state_what_is_checked_and_not_a_false_premise
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failed_page_write_keeps_non_empty_text
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_odd_url_is_shown_as_leaving_this_machine
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_shared_normaliser_treats_these_as_this_machine
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_banner_uses_the_shared_loopback_names_and_normaliser_not_a_copy
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_source_host_the_app_uses_comes_from_the_shared_endpoint_function
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_config_with_an_outside_egress_host_or_source_gets_the_real_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_config_that_lost_an_endpoint_field_raises_and_is_never_read_as_nothing
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_names_in_follows_the_table
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_page_and_python_agree_on_every_row_of_the_name_table
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_url_and_a_bare_host_give_the_same_answer_for_every_spelling
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tool_spec_without_hosts_or_with_odd_hosts_raises_naming_the_tool
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_tool_modules_with_no_spec_at_all_count_as_one_real_service_like_none
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_loopback_names_are_pinned_by_content
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_banner_is_at_least_as_strict_as_the_tool_client_on_urls_and_hosts
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_port_that_is_not_digits_or_text_after_a_bracket_is_not_this_machine
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_empty_name_is_never_in_a_text
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_limits_are_stated_in_words
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_service_name_may_not_hold_the_made_up_claim_of_the_words_in_use
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_names_are_checked_in_the_formatted_names_part_of_the_text_only
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failing_attribute_write_never_leaves_the_old_words_on_screen
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failing_tone_attribute_alone_still_replaces_the_old_words_and_clears_the_mode
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failing_mode_attribute_leaves_the_not_confirmed_tone_with_its_text
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_trusts_the_tone_it_is_given_and_python_checks_the_sentences
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_nothing_connected_list_is_pinned_by_content
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_kind_added_to_the_prod_gate_table_later_still_reads_as_a_real_service
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_configured_tool_module_that_no_manifest_accounts_for_counts_as_one_real_service
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_type_of_a_system_base_url_is_text_and_another_type_reads_as_real
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_banner_is_never_more_lenient_than_the_tool_client_on_40_urls_and_20_hosts
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_words_of_a_name_check_are_required_not_defaulted
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_egress_hosts_may_be_any_list_like_collection_and_a_bare_text_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tag_longer_than_the_page_script_shows_is_refused_in_python
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_key_words_of_another_language_are_reserved_in_names
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_generator_for_tool_modules_is_refused_like_egress_hosts
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_generator_for_the_backend_entries_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_bytearray_a_memoryview_and_a_subclass_with_its_own_iteration_are_not_read_by_accident
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_order
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner_it_is_added
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_an_unknown_or_oddly_typed_override_list_is_refused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_sentence
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_failed_text_write_never_leaves_the_old_made_up_claim_or_a_stale_mode
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_and_601
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names
+#     dd827d79: FAILS: AssertionError: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text':
+#     c7eb5c79: PASSES
+# test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_banner_from_config_has_no_default_for_overridden
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_banner_or_unconfirmed_has_no_default_for_overridden
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_overridden_none_raises_a_value_error_in_banner_from_config
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_page_lists_of_overrides_and_the_note_words_agree_with_python
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_blank_set_is_what_python_strip_and_javascript_trim_both_call_white_space
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page
+#     dd827d79: FAILS: AssertionError: painted a forged text 'The mode of this system could not be confirmed. Treat everything here a
+#     c7eb5c79: PASSES
+# test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_replaced_connected_part_reads_unconfirmed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not
+#     dd827d79: FAILS: AssertionError: Regex pattern did not match.
+#     c7eb5c79: PASSES
+# test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well
+#     dd827d79: FAILS: AssertionError: an app of plain parts was deep-copied
+#     c7eb5c79: PASSES
+# test_pin_the_recorded_names_cannot_be_laundered
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_normal_production_tick_keeps_its_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_an_object_first_set_on_a_part_after_build_reads_unconfirmed
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_not_connectivity_reasons_say_what_was_checked
+#     dd827d79: FAILS: AssertionError: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
+#     c7eb5c79: PASSES
+# test_banner_for_has_no_default_for_overridden
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_banner_or_unconfirmed_with_none_logs_no_warning
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names
+#     dd827d79: FAILS: AssertionError: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}
+#     c7eb5c79: PASSES
+# test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_line_is_the_plain_fallback
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_forged_tag_on_an_unconfirmed_banner_is_painted_as_the_pages_own_tag
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_guard_and_the_banner_modules_say_what_they_compare_in_their_docstrings
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_overrides_are_exactly_the_objects_and_callables_handed_to_build
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_no_object
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_tool_spec_deleted_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a deleted tool spec left a made-up banner
+#     c7eb5c79: PASSES
+# test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a deleted tool spec was not seen
+#     c7eb5c79: PASSES
+# test_the_address_of_a_system_changed_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a host added after build left a made-up banner
+#     c7eb5c79: PASSES
+# test_config_sources_cleared_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: cleared sources left a made-up banner
+#     c7eb5c79: PASSES
+# test_a_config_source_replaced_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced config source was not seen
+#     c7eb5c79: PASSES
+# test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a function replaced: the banner stayed made-up
+#     c7eb5c79: PASSES
+# test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced contract was not seen
+#     c7eb5c79: PASSES
+# test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type
+#     dd827d79: FAILS: AssertionError: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
+#     c7eb5c79: PASSES
+# test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too
+#     dd827d79: FAILS: AssertionError: the outer catch-all did not warn: ['mode banner: the app could not be read']
+#     c7eb5c79: PASSES
+# test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page
+#     dd827d79: FAILS: AssertionError: painted demo with overridden missing
+#     c7eb5c79: PASSES
+# test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet
+#     dd827d79: FAILS: AssertionError: the page painted demo with overridden missing
+#     c7eb5c79: PASSES
+# test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts
+#     dd827d79: FAILS: AssertionError: config.systems['fixture-records'] is not among the connected parts
+#     c7eb5c79: PASSES
+# test_a_named_container_that_is_missing_stops_the_reading_and_names_it
+#     dd827d79: FAILS: AssertionError: config.systems was missing and the parts were read all the same
+#     c7eb5c79: PASSES
+# test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on
+#     dd827d79: FAILS: AssertionError: assert 'demo' == 'unconfirmed'
+#     c7eb5c79: PASSES
+# test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer
+#     dd827d79: FAILS: AssertionError: () was accepted as the names of the overrides
+#     c7eb5c79: PASSES
+# test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call
+#     dd827d79: FAILS: AssertionError: assert 'demo' == 'unconfirmed'
+#     c7eb5c79: PASSES
+# test_pin_the_banner_of_a_real_app_is_the_same_after_an_agent_run
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a tool spec without hosts: nothing was logged at warning level
+#     c7eb5c79: PASSES
+# test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_named_error_in_reading_the_app_is_logged_at_warning_level_whatever_the_name_of_the_log_helper
+#     dd827d79: FAILS: AssertionError: logged below warning: ['DEBUG', 'DEBUG']
+#     c7eb5c79: PASSES
+# test_a_replaced_agent_entry_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced agent was not seen
+#     c7eb5c79: PASSES
+# test_a_replaced_principal_entry_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced principal was not seen
+#     c7eb5c79: PASSES
+# test_a_replaced_chain_entry_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced chain was not seen
+#     c7eb5c79: PASSES
+# test_a_replaced_system_entry_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced system was not seen
+#     c7eb5c79: PASSES
+# test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a replaced manifest of an agent was not seen
+#     c7eb5c79: PASSES
+# test_a_stage_changed_after_build_reads_unconfirmed
+#     dd827d79: FAILS: AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+#     c7eb5c79: PASSES
+# test_a_stage_that_is_not_text_is_an_error_that_names_it
+#     dd827d79: FAILS: AttributeError: 'App' object has no attribute '_stage'
+#     c7eb5c79: PASSES
+# test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it
+#     dd827d79: FAILS: AssertionError: a toolbox without an attribute dictionary was not refused
+#     c7eb5c79: PASSES
+# test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it
+#     dd827d79: FAILS: AssertionError: a per-agent tool entry that is a list was not refused
+#     c7eb5c79: PASSES
+# test_pin_the_demo_stage_is_one_of_the_stages
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in
+#     dd827d79: FAILS: AssertionError: a tool spec without hosts: the app was not sealed as unreadable (it was sealed with tuple)
+#     c7eb5c79: PASSES
+# test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner
+#     dd827d79: FAILS: AssertionError: App._known_overrides (reads the parts): a bug of an unnamed type was turned into a banner
+#     c7eb5c79: FAILS: AssertionError: App._known_overrides (reads the parts): a bug of an unnamed type was turned into a banner
+# test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner
+#     dd827d79: FAILS: AssertionError: App.mode_banner (the outer catch): a bug of an unnamed type was turned into a banner
+#     c7eb5c79: FAILS: AssertionError: App.mode_banner (the outer catch): a bug of an unnamed type was turned into a banner
+# test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner
+#     dd827d79: FAILS: AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
+#     c7eb5c79: FAILS: AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
+# test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner
+#     dd827d79: FAILS: AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
+#     c7eb5c79: FAILS: AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
+# test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_named_read_error_still_reads_unconfirmed_at_every_site
+#     dd827d79: FAILS: TypeError: unreadable
+#     c7eb5c79: PASSES
+# test_the_list_of_read_errors_holds_no_type_that_takes_every_error
+#     dd827d79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+#     c7eb5c79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+# test_the_list_of_read_errors_holds_no_type_that_takes_an_error_nobody_named
+#     dd827d79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+#     c7eb5c79: FAILS: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+# test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer
+#     dd827d79: FAILS: AssertionError: a bug of an unnamed type in the endpoint of a source was turned into an answer
+#     c7eb5c79: PASSES
+# test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card
+#     dd827d79: FAILS: AssertionError: a bug in the channel was reported as an undelivered card
+#     c7eb5c79: FAILS: AssertionError: a bug in the channel was reported as an undelivered card
+# test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything
+#     dd827d79: FAILS: AssertionError: a catch of every error is back: ['hadavin_sdk.app:174', 'hadavin_sdk.app:191', 'hadavin_sdk.ap
+#     c7eb5c79: FAILS: AssertionError: a catch of every error is back: ['hadavin_sdk.app:295', 'hadavin_sdk.app:312', 'hadavin_sdk.ap
+
 from __future__ import annotations
 
 import ast
@@ -149,7 +702,6 @@ def test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refus
         mb.BannerWords(tag_by_mode={"demo": "D"})
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real() -> None:
     # `overridden=()` is given in every call, so only the missing lists can make the call fail (a
     # missing `overridden` raises a TypeError too, which let the mutant row B12 survive on dd827d79)
@@ -170,7 +722,6 @@ def test_an_unknown_stage_is_refused() -> None:
             _b(mode)
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident() -> None:
     for bad in ["crm", b"crm", None, 5, {"crm": "CRM"}, {"crm"}, frozenset({"crm"})]:
         for kwargs in (
@@ -266,7 +817,6 @@ def test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python() -> 
 
 # -- property test, seeded: only the safety property is asserted, never the rule that produces the
 # text -------------
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_property_the_made_up_claim_never_appears_next_to_a_real_service() -> None:
     rng = Seeded(20261112)
     good = ["crm", "mail", "ai", "store", "Chat", "x.y", "a-b", "z_9"]
@@ -391,7 +941,6 @@ def test_the_stage_of_the_config_is_checked_like_any_other_stage() -> None:
         _banner(_fake_config("canary", [("llm", "fake")]))
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry() -> None:
     for old in ("banner_for", "services_in", "stand_ins_in"):
         assert not hasattr(mb, old), f"the old public name {old!r} is still in the module"
@@ -530,7 +1079,6 @@ def test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed() -> None
     _unconfirmed(_paint(GOOD_DEMO | {"tone": "real", "real": ["x"], "text": "x"}, "throwing-list"))
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given() -> None:
     real = {
@@ -1146,7 +1694,6 @@ NAME_TABLE = [
 ]
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_names_in_follows_the_table() -> None:
     for text, name, expected in NAME_TABLE:
         assert mb.names_in(text, name) is expected, (
@@ -1155,7 +1702,6 @@ def test_pin_names_in_follows_the_table() -> None:
     assert mb.names_in("anything", "") is False
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_the_page_and_python_agree_on_every_row_of_the_name_table() -> None:
     for text, name, expected in NAME_TABLE:
@@ -1942,7 +2488,6 @@ def test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_r
         raise AssertionError("the tools of an agent as a generator were read")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused() -> None:
     # partly a pin: the service lists as generators were read on the older code (that part is a
     # proof); names and reserved_words were refused already (those parts only pin)
@@ -2036,7 +2581,6 @@ def test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_an_unknown_or_oddly_typed_override_list_is_refused() -> None:
     # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8;
     # it was not run against the code before batch 8): the keyword `overridden` did not exist
@@ -2071,7 +2615,6 @@ def test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so(
     assert "made-up" not in shown["text"], "an app with handed-in objects claimed made-up data"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one() -> None:
     # written with the fix of an earlier round (a pin: it passes on 07bfda12, the code of batch 8;
     # it was not run against the code before batch 8): no such function
@@ -2216,7 +2759,6 @@ def test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_an
         raise AssertionError("a text of 601 code points was accepted by Python")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted() -> (
     None
@@ -2238,7 +2780,6 @@ def test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_
         _unconfirmed(seen, f"painted odd unconfirmed {bad!r}")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text': 'Every record here is made
 @needs_node
 def test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names() -> (
     None
@@ -2321,7 +2862,6 @@ def test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one(
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner(
     tmp_path: Path,
 ) -> None:
@@ -2355,7 +2895,6 @@ def test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner(
         )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_banner_from_config_has_no_default_for_overridden() -> None:
     # What it guards against (a fault of the code before batch 8): the keyword had the default `()`)
     with pytest.raises(TypeError, match="overridden"):
@@ -2363,7 +2902,6 @@ def test_pin_banner_from_config_has_no_default_for_overridden() -> None:
         raise AssertionError("banner_from_config without overridden was accepted")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_banner_or_unconfirmed_has_no_default_for_overridden() -> None:
     # What it guards against (a fault of the code before batch 8): the keyword had the default `()`)
     with pytest.raises(TypeError, match="overridden"):
@@ -2371,7 +2909,6 @@ def test_pin_banner_or_unconfirmed_has_no_default_for_overridden() -> None:
         raise AssertionError("banner_or_unconfirmed without overridden was accepted")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_overridden_none_raises_a_value_error_in_banner_from_config() -> None:
     # What it guards against (a fault of the code before batch 8): None was read as none): the rule
     # itself
@@ -2381,7 +2918,6 @@ def test_pin_overridden_none_raises_a_value_error_in_banner_from_config() -> Non
     assert raised.type is ValueError
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner() -> None:
     # What it guards against (a fault of the code before batch 8): None was read as none): the
     # words, and the screen call
@@ -2430,7 +2966,6 @@ def test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_wi
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_page_lists_of_overrides_and_the_note_words_agree_with_python() -> None:
     # What it guards: a pin (passes on 07bfda12) (fails only on the code before batch 8: the page
     # had no such lists)
@@ -2472,7 +3007,6 @@ def _blank_set_of_python() -> set[int]:
     return {cp for lo, hi in mb.BLANK_RANGES for cp in range(lo, hi + 1)}
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set() -> None:
     # What it guards: a pin (passes on 07bfda12) (fails only on the code before batch 8: the sets
     # did not exist as lists)
@@ -2506,7 +3040,6 @@ def test_the_blank_set_is_what_python_strip_and_javascript_trim_both_call_white_
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: painted a forged text 'The mode of this system could not be confirmed. Treat everything here as real. Every record here
 @needs_node
 def test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page() -> (
     None
@@ -2569,7 +3102,6 @@ def test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagree
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once() -> (
     None
@@ -2660,7 +3192,6 @@ def _each_replaced_part() -> list:
     return cases
 
 
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_replaced_connected_part_reads_unconfirmed(tmp_path: Path) -> None:
     # new feature (fails on old code for the cases the fingerprint did not hold: hooks other than
     # the tools dict, the store of the runtime, the channel, a new Hooks; the cases the old
@@ -2671,7 +3202,6 @@ def test_pin_every_replaced_connected_part_reads_unconfirmed(tmp_path: Path) -> 
         assert app.mode_banner()["tone"] == "unconfirmed", f"{label}: the banner stayed made-up"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (a source's own attributes and a replaced entry with a reused id were not seen)
     from types import SimpleNamespace
@@ -2698,7 +3228,6 @@ def test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed(tmp_p
     assert app3.mode_banner()["tone"] == "demo", "a changing counter read as a new part"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused(
     tmp_path: Path,
 ) -> None:
@@ -2727,7 +3256,6 @@ def test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused
     assert app.mode_banner()["tone"] == "unconfirmed", "a replaced source passed as the old part"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -2779,7 +3307,6 @@ def test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raise
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: Regex pattern did not match.
 def test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not(
     tmp_path: Path,
 ) -> None:
@@ -2799,8 +3326,7 @@ def test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_othe
         copy.deepcopy(app)
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well(tmp_path: Path) -> None:
+def test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well(tmp_path: Path) -> None:
     # what it shows (an app of plain parts was copied, and whether the copy read known depended on
     # how the standard library copies a sentinel object): one rule for every app
     import copy
@@ -2820,7 +3346,6 @@ def test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well(tmp_p
         raise AssertionError("an app of plain parts was deep-copied")
 
 
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_recorded_names_cannot_be_laundered(tmp_path: Path) -> None:
     # what it shows (`overridden` was not part of the sealed value and `seal` was public)
     from hadavin_sdk.app import App
@@ -2838,7 +3363,6 @@ def test_pin_the_recorded_names_cannot_be_laundered(tmp_path: Path) -> None:
     assert not hasattr(App, "seal") and not hasattr(app, "seal"), "the public `seal` is back"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_normal_production_tick_keeps_its_banner(tmp_path: Path) -> None:
     # no false unconfirmed: the banner of a sealed app that holds a configured source survives two
     # ticks (the source's own attributes are the ones the seal reads: its list of namespaces and its
@@ -2860,7 +3384,6 @@ def test_pin_a_normal_production_tick_keeps_its_banner(tmp_path: Path) -> None:
     assert app.mode_banner() == before, "the banner changed after two ticks"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_an_object_first_set_on_a_part_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it keeps: a part that makes a client lazily, after build, reads as changed. That is the
     # safe side (the banner says unconfirmed, never made-up); a part that must do this must create
@@ -2895,7 +3418,6 @@ def test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default(tmp_
     assert "clock" not in default.overridden, "build recorded the default clock as an override"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
 def test_the_not_connectivity_reasons_say_what_was_checked() -> None:
     # what it shows (the reasons were plain claims): the full text of each reason, so a reason
     # cannot be swapped for a bare claim, and a new parameter on the list needs its own reason
@@ -2958,7 +3480,6 @@ def test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and
         _unconfirmed(_paint({**base, "overridden": bad}), f"painted overridden={bad!r}")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__te
 @needs_node
 def test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names() -> (
     None
@@ -2990,7 +3511,6 @@ def test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fal
     assert "Another sentence" not in str(seen["lines"]), "the reworded sentence was painted"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_line_is_the_plain_fallback() -> (
     None
@@ -3007,7 +3527,6 @@ def test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_lin
         )
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @needs_node
 def test_pin_a_forged_tag_on_an_unconfirmed_banner_is_painted_as_the_pages_own_tag() -> None:
     # what it shows (the tag as given was painted): the tag of an unconfirmed banner is the page's
@@ -3075,7 +3594,6 @@ def _sealed_with(tmp_path: Path, name: str, change) -> object:
     return app
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a deleted tool spec left a made-up banner
 def test_a_tool_spec_deleted_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (the manifests are a mutable dict inside a frozen record, so a deleted real host
     # was not seen and the banner said made-up while the toolbox could still reach the host)
@@ -3087,7 +3605,6 @@ def test_a_tool_spec_deleted_after_build_reads_unconfirmed(tmp_path: Path) -> No
     assert app.mode_banner()["tone"] == "unconfirmed", "a deleted tool spec left a made-up banner"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a deleted tool spec was not seen
 def test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows: a deletion that leaves the lists of services equal is caught by the entries,
     # not the lists
@@ -3099,7 +3616,6 @@ def test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed(tmp_pa
     assert app.mode_banner()["tone"] == "unconfirmed", "a deleted tool spec was not seen"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a host added after build left a made-up banner
 def test_the_address_of_a_system_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (a field of a system of the config is not read as a part): only the lists of
     # services the banner reads change here (no entry of a container is replaced), so this is the
@@ -3116,7 +3632,6 @@ def test_the_address_of_a_system_changed_after_build_reads_unconfirmed(tmp_path:
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: cleared sources left a made-up banner
 def test_config_sources_cleared_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (`Config.sources` is a dict inside a frozen record; clearing it removed a real
     # source)
@@ -3130,7 +3645,6 @@ def test_config_sources_cleared_after_build_reads_unconfirmed(tmp_path: Path) ->
     assert app.mode_banner()["tone"] == "unconfirmed", "cleared sources left a made-up banner"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced config source was not seen
 def test_a_config_source_replaced_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows: the lists of services stay equal here (both sources read as real), so only the
     # entries show it
@@ -3144,7 +3658,6 @@ def test_a_config_source_replaced_after_build_reads_unconfirmed(tmp_path: Path) 
     assert app.mode_banner()["tone"] == "unconfirmed", "a replaced config source was not seen"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a function replaced: the banner stayed made-up
 def test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (the toolbox's dicts of specs and callables were plain data)
     def add(a) -> None:
@@ -3166,7 +3679,6 @@ def test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed(tmp_pa
         assert app.mode_banner()["tone"] == "unconfirmed", f"{label}: the banner stayed made-up"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced contract was not seen
 def test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # what it shows (the contracts, which name the system an action is sent to, were plain data)
     import copy
@@ -3186,7 +3698,6 @@ def _warnings(caplog: pytest.LogCaptureFixture) -> list:
     return [r for r in caplog.records if r.levelno >= logging.WARNING]
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
 def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -3222,7 +3733,6 @@ def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
     assert "a typo" not in seen[0].getMessage(), "the message of the error was logged"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the outer catch-all did not warn: ['mode banner: the app could not be read']
 def test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -3253,7 +3763,6 @@ def test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_to
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: painted demo with overridden missing
 @needs_node
 def test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page() -> None:
     # what it shows (the page read a missing or null `overridden` as "none" and painted made-up or
@@ -3286,7 +3795,6 @@ def test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page
         )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: the page painted demo with overridden missing
 @needs_node
 def test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet() -> None:
     # Python: None is "not known" and the banner is the unconfirmed one (banner_or_unconfirmed;
@@ -3333,7 +3841,6 @@ def _with_real_toolbox(app) -> None:
     app.config.sources["src1"] = SimpleNamespace(kind="made-up")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: config.systems['fixture-records'] is not among the connected parts
 def test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts(
     tmp_path: Path,
 ) -> None:
@@ -3357,7 +3864,6 @@ def test_a_real_built_app_lists_every_named_container_entry_in_its_connected_par
         assert wanted in labels, f"{wanted} is not among the connected parts"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: config.systems was missing and the parts were read all the same
 def test_a_named_container_that_is_missing_stops_the_reading_and_names_it(tmp_path: Path) -> None:
     # what it shows (a container that was not a mapping was skipped without a word)
     cases = (
@@ -3389,7 +3895,6 @@ def test_a_named_container_that_is_missing_stops_the_reading_and_names_it(tmp_pa
         raise AssertionError("a toolbox without its functions was read all the same")
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert 'demo' == 'unconfirmed'
 def test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on(
     tmp_path: Path,
 ) -> None:
@@ -3403,7 +3908,6 @@ def test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_
     assert app.mode_banner()["tone"] == "unconfirmed"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: () was accepted as the names of the overrides
 def test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer(
     tmp_path: Path,
 ) -> None:
@@ -3424,7 +3928,6 @@ def test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: assert 'demo' == 'unconfirmed'
 def test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call(tmp_path: Path) -> None:
     # what it shows (`_seal(())` on a hand-made app gave it the made-up banner)
     import dataclasses
@@ -3469,7 +3972,6 @@ def _live_app(live_cfg_dir: Path, fake_system):
     return app
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_banner_of_a_real_app_is_the_same_after_an_agent_run(tmp_path: Path) -> None:
     # the fake system is started here, not by a fixture of conftest.py: the mutation runner runs
     # without conftest files
@@ -3527,7 +4029,6 @@ def _unreadable_shapes() -> dict:
     }
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a tool spec without hosts: nothing was logged at warning level
 def test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -3567,7 +4068,6 @@ def test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirm
         assert len(logged) >= 1, f"{label}: nothing was logged at warning level"
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too(tmp_path: Path) -> None:
     # what it keeps: where the deep copy of a built app already raised a TypeError (the app holds a
     # lock that cannot be copied); the refusal in words only makes the reason clear
@@ -3582,8 +4082,7 @@ def test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too(tmp_path: Pat
         raise AssertionError("a built app was deep-copied")
 
 
-# fail-before: the version of batch 11 of this test is in the history (commit 06ed4b4c, named `..._whatever_the_name_of_the_log_helper`); it raised a NameError, which the banner no longer swallows. This one raises a named error type and is run on the old heads in the table of batch 15.
-def test_pin_a_named_error_in_reading_the_app_is_logged_at_warning_level_whatever_the_name_of_the_log_helper(
+def test_a_named_error_in_reading_the_app_is_logged_at_warning_level_whatever_the_name_of_the_log_helper(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import logging
@@ -3618,7 +4117,6 @@ def _entry_change_is_seen(tmp_path: Path, name: str, change) -> str:
     return app.mode_banner()["tone"]
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced agent was not seen
 def test_a_replaced_agent_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # killer of the row that drops the agents from the seal
     import copy
@@ -3631,7 +4129,6 @@ def test_a_replaced_agent_entry_after_build_reads_unconfirmed(tmp_path: Path) ->
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced principal was not seen
 def test_a_replaced_principal_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     import copy
 
@@ -3643,7 +4140,6 @@ def test_a_replaced_principal_entry_after_build_reads_unconfirmed(tmp_path: Path
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced chain was not seen
 def test_a_replaced_chain_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     import copy
 
@@ -3655,7 +4151,6 @@ def test_a_replaced_chain_entry_after_build_reads_unconfirmed(tmp_path: Path) ->
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced system was not seen
 def test_a_replaced_system_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     import copy
 
@@ -3667,7 +4162,6 @@ def test_a_replaced_system_entry_after_build_reads_unconfirmed(tmp_path: Path) -
     )
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: a replaced manifest of an agent was not seen
 def test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     def prepare(a) -> None:
         a.registry.tools["test-agent"] = {"lookup": _tool_spec("lookup", ())}
@@ -3684,7 +4178,6 @@ def test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed(tmp_
 
 # -- batch 12 (r11 fixes)
 # ----------------------------------------------------------------------------------------------------
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it FAILS on both, first failing line: a stage changed after build (demo to pilot) was read as 'quiet'
 def test_a_stage_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
     # The stage text `config.environment` decides the mode and the tag of the banner. A forced
     # change of it (the config is read-only for normal code, so this goes round it with
@@ -3698,8 +4191,7 @@ def test_a_stage_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
         )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-def test_pin_a_stage_that_is_not_text_is_an_error_that_names_it(tmp_path: Path) -> None:
+def test_a_stage_that_is_not_text_is_an_error_that_names_it(tmp_path: Path) -> None:
     app = _sealed_app(tmp_path, "nostage")
     for value in (None, 5, b"demo", ["demo"]):
         object.__setattr__(app.config, "environment", value)
@@ -3709,7 +4201,6 @@ def test_pin_a_stage_that_is_not_text_is_an_error_that_names_it(tmp_path: Path) 
         assert tone == "unconfirmed", f"a stage of {value!r} read as {tone!r}"
 
 
-# fail-before (real run, batch 12): it FAILS on dd827d79 (a toolbox without an attribute dictionary was not refused) and PASSES on 06ed4b4c, which already refuses; it is the killer of row R12C1, shown by the row run
 def test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it(
     tmp_path: Path,
 ) -> None:
@@ -3725,7 +4216,6 @@ def test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it(
     assert app.mode_banner()["tone"] == "unconfirmed", "that toolbox left a made-up banner"
 
 
-# fail-before (real run, batch 12): it FAILS on dd827d79 (a per-agent tool entry that is a list was not refused) and PASSES on 06ed4b4c, which already refuses; it is the killer of row R12C2, shown by the row run
 def test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it(
     tmp_path: Path,
 ) -> None:
@@ -3736,14 +4226,12 @@ def test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it(
     assert app.mode_banner()["tone"] == "unconfirmed", "that entry left a made-up banner"
 
 
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_demo_stage_is_one_of_the_stages() -> None:
     # replaces the import-time check (a branch that could not run): a stage rename that leaves
     # "demo" out fails here
     assert mb._DEMO_STAGE in STAGES, f"the demo stage {mb._DEMO_STAGE!r} is not in {STAGES}"
 
 
-# fail-before (real run on dd827d79, batch 12): it FAILS there, first failing line: module 'hadavin_sdk.app' has no attribute '_UNREADABLE'
 def test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -3851,9 +4339,7 @@ def _a_bug_is_not_turned_into_a_banner(
     raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
 
 
-# fail-before: on c7eb5c79 and dd827d79 each of these sites caught `Exception`, so the bug was
 # swallowed
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: App._known_overrides (reads the parts): a bug of an unnamed type was turned into a banner
 def test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner(
     tmp_path, monkeypatch
 ) -> None:
@@ -3862,19 +4348,16 @@ def test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner(
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: App.mode_banner (the outer catch): a bug of an unnamed type was turned into a banner
 def test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner(
     tmp_path, monkeypatch
 ) -> None:
     _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App.mode_banner (the outer catch)")
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
 def test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner(tmp_path, monkeypatch) -> None:
     _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "banner_or_unconfirmed")
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
 def test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner(
     tmp_path, monkeypatch
 ) -> None:
@@ -3883,15 +4366,12 @@ def test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner(
     )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner(tmp_path, monkeypatch) -> None:
     _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App._seal (reads the app at build)")
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: TypeError: unreadable (a named error leaves the site there)
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 @pytest.mark.parametrize("site", sorted(SURPRISE_SITES))
-def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
+def test_a_named_read_error_still_reads_unconfirmed_at_every_site(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
 ) -> None:
     # the other side of the rule above: each error in `READ_ERRORS` is an unreadable banner, shown
@@ -3911,15 +4391,12 @@ def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
         monkeypatch.undo()  # the next error type starts from an untouched app
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there on a missing name, first failing line: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'. That is not a behaviour result (the old head keeps the private name).
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there on a missing name, first failing line: AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'. That is not a behaviour result (the old head keeps the private name).
 def test_the_list_of_read_errors_holds_no_type_that_takes_every_error() -> None:
     assert mb.READ_ERRORS == NAMED_READ_ERRORS, (
         f"READ_ERRORS is not the five named types: {mb.READ_ERRORS}"
     )
 
 
-# fail-before: see the two lines above the test before this one; the same missing name on the old heads, so not a behaviour result.
 def test_the_list_of_read_errors_holds_no_type_that_takes_an_error_nobody_named() -> None:
     # Independent of the test before it: it reads the list itself and does not compare it with the
     # five types.
@@ -3927,8 +4404,6 @@ def test_the_list_of_read_errors_holds_no_type_that_takes_an_error_nobody_named(
     assert not wide, f"READ_ERRORS holds a type that takes every error: {wide}"
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: a bug of an unnamed type in the endpoint of a source was turned into an answer
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there (that head already named the five types at this site), so it fixes nothing there; row R14C1 shows it kills the broad catch.
 def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
     monkeypatch,
 ) -> None:
@@ -3942,8 +4417,6 @@ def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine(
     monkeypatch,
 ) -> None:
@@ -3958,11 +4431,9 @@ def test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving
         )
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a bug in the channel was reported as an undelivered card
 def test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # fail-before: on c7eb5c79 and dd827d79 `post_card` caught `Exception`
     from hadavin_sdk.approvals.cards import Card
     from hadavin_sdk.approvals.channel import FakeChannel
 
@@ -3986,7 +4457,6 @@ def test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_
         assert done.ok is False and done.reason == kind.__name__, f"{kind.__name__}: {done}"
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: a catch of every error is back: ['hadavin_sdk.app:295', 'hadavin_sdk.app:312', 'hadavin_sdk.app:471']
 def test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything() -> None:
     import ast
     import inspect

@@ -3,6 +3,88 @@ replaces EVERY occurrence of a row's search text, so a row whose text occurs twi
 places at once and can be killed for a reason that is not its own; a text that is not found is an
 error at run time. `non_unique_rows` finds both, and a planted duplicate proves that it does."""
 
+# Fail-before table (real runs, batch 15). Each test of this file was run on two old heads, in worktrees where
+# the files of this head's tests (and `tools/fixed_run.py`) were copied in; the raw junit results are the source.
+# A name that starts with `test_pin_` PASSES on both old heads (it keeps a behaviour from breaking and is not proof of a
+# fix); any other name that is new since an old head FAILS on that head or on the other one, and the table says which
+# (a test that was already in the old head's own file is not new there: it PASSES, as it did before). A test of the program starter
+# cannot run on the old tree (the old heads have no such file). Only the first failing line is shown.
+# test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once
+#     dd827d79: FAILS: AssertionError: assert [('J1b an unc... times'), ...] == []
+#     c7eb5c79: FAILS: AssertionError: assert [('B25 a sour... times'), ...] == []
+# test_the_table_has_no_loose_expectation_left
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_planted_duplicate_or_missing_search_text_or_repeated_label_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_no_row_has_a_generic_or_shortened_expectation
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_no_row_changes_nothing
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_no_row_has_a_bare_type_a_did_not_raise_a_mid_comparison_fragment_or_an_unexplained_shared_assert
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_same_assert_entry_names_a_group_that_exists_and_has_a_reason
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_planted_shapes_are_each_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_interpreter_message
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_the_changelog_states_the_row_count_of_the_table
+#     dd827d79: FAILS: AssertionError: the CHANGELOG does not say that the table has 366 rows
+#     c7eb5c79: FAILS: AssertionError: the CHANGELOG does not say that the table has 366 rows
+# test_pin_every_expectation_is_in_the_first_assert_of_a_plain_killer_or_the_row_was_run
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_row_listed_as_run_for_a_later_assert_still_has_its_expectation_in_a_later_assert
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_planted_killer_whose_expectation_belongs_to_its_second_assert_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_expectation_of_a_row_is_made_of_text_its_killer_can_print
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_static_check
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file
+#     dd827d79: FAILS: AssertionError: src/hadavin_sdk/app.py: the line of an equivalent mutation is not there once: '
+#     c7eb5c79: PASSES
+# test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_three_loose_expectations_and_a_short_one_are_each_reported
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+# test_pin_a_focused_run_names_a_word_that_matches_nothing_and_a_row_outside_the_list
+#     dd827d79: PASSES
+#     c7eb5c79: PASSES
+
 from __future__ import annotations
 
 import re
@@ -11,7 +93,6 @@ from pathlib import Path
 from tests import banner_mutants as bm
 
 
-# fail-before (real run on c7eb5c79, batch 13): it FAILS there, first failing line: AssertionError: assert [('B25 a sour... times'), ...] == [] (new rows whose search text is not in the old files)
 def test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once() -> None:
     assert bm.non_unique_rows() == []
 
@@ -240,7 +321,6 @@ def test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported() 
 # PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported() -> None:
     from collections import Counter
 
@@ -256,7 +336,6 @@ def test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_report
 # PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file() -> None:
     """A renamed or removed killer left its row naming a test that is not there (R9A4 did, found by
     running it); the run then reports an error for the row only when someone runs that row. Checked
@@ -289,7 +368,6 @@ def _rows_in_the_text_of_the_table() -> list[str]:
     raise AssertionError("the list M was not found in the table file")
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table() -> None:
     labels = [name.split(" ", 1)[0] for name in _rows_in_the_text_of_the_table()]
     assert len(labels) == len(set(labels)), "a label is used twice"
@@ -298,8 +376,6 @@ def test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_tab
     )
 
 
-# fail-before (real run on dd827d79, batch 14): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 337 rows
-# fail-before (real run on c7eb5c79, batch 14): it FAILS there, first failing line: AssertionError: the CHANGELOG does not say that the table has 337 rows
 def test_the_changelog_states_the_row_count_of_the_table() -> None:
     text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"the table has {bm.ROW_COUNT} rows" in text, (
@@ -672,19 +748,20 @@ def expectation_in_first_assert(rows=None, root=None, listed=None) -> list[tuple
     return wrong
 
 
-# fail-before: it cannot run on the old heads (the checker is new in this file); the old heads have no such check.
-def test_every_expectation_is_in_the_first_assert_of_a_plain_killer_or_the_row_was_run() -> None:
+def test_pin_every_expectation_is_in_the_first_assert_of_a_plain_killer_or_the_row_was_run() -> (
+    None
+):
     assert expectation_in_first_assert() == []
 
 
-def test_every_row_listed_as_run_for_a_later_assert_still_has_its_expectation_in_a_later_assert() -> (
+def test_pin_every_row_listed_as_run_for_a_later_assert_still_has_its_expectation_in_a_later_assert() -> (
     None
 ):
     found = {label for label, _ in expectation_in_first_assert(rows=bm.M, listed=frozenset())}
     assert found == LATER_ASSERT_RUN, sorted(found ^ LATER_ASSERT_RUN)
 
 
-def test_a_planted_killer_whose_expectation_belongs_to_its_second_assert_is_reported(
+def test_pin_a_planted_killer_whose_expectation_belongs_to_its_second_assert_is_reported(
     tmp_path: Path,
 ) -> None:
     (tmp_path / "t.py").write_text(
@@ -703,12 +780,10 @@ def test_a_planted_killer_whose_expectation_belongs_to_its_second_assert_is_repo
     ]
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_expectation_of_a_row_is_made_of_text_its_killer_can_print() -> None:
     assert expectation_nowhere_in_killer() == []
 
 
-# fail-before (real run on dd827d79, batch 12): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported(
     tmp_path: Path,
 ) -> None:
@@ -725,7 +800,6 @@ def test_pin_a_planted_expectation_that_no_string_of_the_killer_can_print_is_rep
     ]
 
 
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both, because the code it checks is the checker in this same new test file. A pin, not proof of a fix.
 def test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_static_check() -> None:
     labels = {m.name.split(" ", 1)[0] for m in bm.M}
     assert set(COMPUTED_EXPECT) <= labels, sorted(set(COMPUTED_EXPECT) - labels)
@@ -741,8 +815,7 @@ def test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_stat
     assert not seen_statically, f"these rows no longer need an entry: {sorted(seen_statically)}"
 
 
-# fail-before (batch 13): cannot fail on old code. It reads `bm.EQUIVALENT`, a table that exists only in this new file, so a pin (same new file).
-def test_pin_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file() -> None:
+def test_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file() -> None:
     assert bm.EQUIVALENT, "the list of equivalent mutations is empty"
     for (path, text), why in bm.EQUIVALENT.items():
         source = (Path(bm.ROOT) / path).read_text(encoding="utf-8")
@@ -752,7 +825,6 @@ def test_pin_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the
         assert len(why.split()) >= 10, f"{path}: {text!r} has no reason"
 
 
-# fail-before (real run on dd827d79 and on 06ed4b4c, batch 12): it PASSES on both, because the code it checks is the checker in this same new test file. A pin, not proof of a fix.
 def test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_reported(
     tmp_path: Path,
 ) -> None:
@@ -767,7 +839,6 @@ def test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_repo
     ]
 
 
-# fail-before (batch 13): cannot fail on old code, because the checker it tests is in this same new file. A pin.
 def test_pin_three_loose_expectations_and_a_short_one_are_each_reported(tmp_path: Path) -> None:
     (tmp_path / "t.py").write_text(
         "def test_k():\n    assert False, 'the message of the killer'\n", encoding="utf-8"
@@ -801,8 +872,6 @@ def test_pin_three_loose_expectations_and_a_short_one_are_each_reported(tmp_path
     assert reported == {"Z5", "Z6", "Z7", "Z8", "Z9"}, reported
 
 
-# fail-before (real run on dd827d79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
-# fail-before (real run on c7eb5c79, batch 14): it PASSES there. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_focused_run_names_a_word_that_matches_nothing_and_a_row_outside_the_list() -> None:
     names = ["R1A one", "R2B two"]
     assert bm.focus_problems(["R1A"], ["R1A one"], names) == []
