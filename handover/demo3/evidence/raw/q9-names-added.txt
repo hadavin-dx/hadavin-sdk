@@ -1,0 +1,3 @@
+428 tokens; 2 not found
+('contract.md:76', 'ALLOW_ANY_BASE_URL', 'CAPS not in code/tests')
+('docs/hubspot-probe.md:4', 'MISSING_SCOPES', 'CAPS not in code/tests')
