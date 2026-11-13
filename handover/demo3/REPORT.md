@@ -1,3 +1,23 @@
+## HEARTBEAT 65 (15:04Z / IST = UTC+5:30) - FREEZE, 2 agents left
+
+FAILURES AND RETRIES (first):
+- fix-2 r4 (B2d) closed: full suite 3809 passed, 237 skipped, 0 failed; tests were written after the code; r6 variant checked by 193 tests only; applies only AFTER fix-1 r6; no independent review of r4 (freeze). Throwaway system user b2dtest left in the sandbox.
+- fix-4 r4 (B4d) closed: 3711 passed, 200 skipped; portal not rendered in a browser (node lower-casing run instead).
+- E10 closed: fix-5 r4 serial 3734 passed; xdist 20 of 20 passed (96 each); the old port flake is still NOT reproduced, so not proven gone.
+- fix-5: REV-5c major (reset.ps1 sibling) still open until B5e r5 reports; its full suite is at about 27 percent.
+- fix-6 r3 (B6c): suite 3705 passed, 200 skipped, rc 0; report not in yet.
+- Unexplained still: E3b three cut runs; 2 `E` marks of PR #12 run; register times guessed more than once.
+- Totals: no test failure today left unexplained except the above open items; real defects open: fix-5 ps1 sibling (B5e).
+
+| Agent | State |
+|---|---|
+| B6c fix-6 r3 | running; suite green; report pending |
+| B5e fix-5 r5 | running; full suite ~27 percent |
+| all others | closed |
+
+ASK list: xdist in CI (report only); PR #12 E marks; the 4 remaining skips; Q8 vs B3 M11; D10 "sender" word; address label over 63 chars / IP literal / dots before @ (docs say not checked).
+Load: idle CPU 78 percent, free RAM 14707 MB (15:04Z). 2 agents running.
+
 ## HEARTBEAT 64 (15:01Z / IST = UTC+5:30) - FREEZE, waiting for 5 agents
 
 FAILURES AND RETRIES (first):
