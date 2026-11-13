@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:49Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| C2 | hostile inputs seed 1, 130 cases (65 run_real_check, 53 run_live_check, 16 precheck functions) | queue | 12:28Z | done | seed 1 | DONE standing/C2: exit 2 x86, 0 x16, 3 x10, 124 x6 (self-test needs about 65 s under load; reruns with 240 s timeout rc 0 in 36-68 s: not a hang), 10 hung up at the start question (no answer typed); **1 traceback of 130** (precheck.is_special_file(None), library misuse), 0 secrets printed; findings: dry-smtp-script accepts any text, --dry-port-base 99999999 OverflowError text, LiveCapReached text on read-only ledger, run_dir.mkdir after the start question outside the refusal try (static read, NOT run), key-file size limit differs between the two scripts | items 6/7/5/1 sent to builder F2; NEEDS-CODE item 10 |
+| F1-F4 | builders | fix order | 12:45Z | about 13:45Z | build 1 | RUNNING | evidence, review |
+| E1 | evidence: root causes | fix order | 12:47Z | about 13:45Z | 1 | RUNNING | table |
+| D1 | full suite + docs patch | docs patch safe? | 12:38Z | about 13:08Z | 1 | RUNNING | compare |
+| C6 | flakiness 20x | queue | 12:33Z | 13:30Z | 1 | RUNNING | read results |
+
+FAILURES AND RETRIES: C2's six rc 124 were timeouts of my brief's 30 s limit (cause proven by 5 reruns with 240 s: rc 0), not product failures; its run 1 had a bad config (never passed the vendor-address check), so run 2 is the record. No new test failures. Totals unchanged.
+ASK: none.
+
+
 ## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
