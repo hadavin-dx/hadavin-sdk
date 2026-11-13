@@ -2,6 +2,20 @@
 
 ## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
 
+**Correction:** the C11 agent said its report listed all 890 cases in table.md; that file does not exist (my check of out/C11). The cases are in results.json and results2.json (pushed with the two harness scripts under standing/C11/); RESULTS.md has the summary. The counts (153 of 890) are the agent's, unchecked by me beyond the run_real_check cases I reproduced.
+
+| id | state |
+|---|---|
+| F1 F2 F3 F4 | RUNNING (builders, 60 min from 12:45Z container) |
+| E1 | RUNNING |
+| D1 | RUNNING (full suite, about 13:05Z) |
+| C2 C6 | RUNNING |
+
+FAILURES AND RETRIES: unchanged. ASK: none.
+
+
+## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
+
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
 | C11 | echo-class search, 890 cases | find siblings of the run_real_check echo leak | 12:44Z | done | seed 3 | DONE standing/C11: typed text echoed in 153 of 890 cases in 6 scripts (run_real_check, feed, load_tools catcher / check_invariants / load_driver via stock argparse; n8n_api in its own messages); no echo from run_live_check, hubspot_probe, server, any env var value. Raw tracebacks also: reset_check (bad DESK_*), scrub_n8n_export (non-JSON), server (bad DESK_SMTPP_CA_FILE). Agent's numbers; I reproduced the run_real_check part earlier | scope sent to F1 and F2 |
