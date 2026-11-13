@@ -5989,8 +5989,14 @@ def test_an_unnamed_error_type_comes_out_of_the_receiver_recheck(
     monkeypatch.setattr(standins, "is_pinned_instance", _raiser(_Unnamed))
     with pytest.raises(_Unnamed):
         receiver._recheck(approvals)
-    with pytest.raises(_Unnamed):
+    outcome = "serve did not raise the unnamed error of its first read"
+    try:
         serve(approvals, config=cfg, host=ALL_ZEROS, port=0)
+    except BindRefused:
+        outcome = "an unnamed error in the first read of serve was turned into a refusal"
+    except _Unnamed:
+        outcome = ""
+    assert not outcome, outcome
 
 
 def test_an_unnamed_error_type_comes_out_of_the_refusal_log(

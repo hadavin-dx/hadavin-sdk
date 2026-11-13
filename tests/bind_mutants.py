@@ -2686,7 +2686,7 @@ M = [
         "test_a_governing_plain_value_changed_after_the_seal_is_counted",
         "changed and was not counted",
         pinned="tests/test_bindguard::test_a_governing_plain_value_changed_after_the_seal_is_count"
-        "ed[spec-name-other]",
+        "ed[spec-name-another_name]",
     ),
     mutant(
         "B293 every plain value is taken for one that moves in use",
@@ -2779,6 +2779,7 @@ M = [
         RC,
         "    except standins.READ_ERRORS:  # any error while reading is a refusal of the one type",
         "test_an_unnamed_error_type_comes_out_of_the_receiver_recheck",
+        expect="was turned into a refusal",
     ),
     unnamed(
         "B305 the runtime check answers not-the-runtime for any error",
