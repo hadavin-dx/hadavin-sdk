@@ -183,3 +183,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-1f | egm-codebase-details fix-1 r5 (fresh) | 14:5xZ | | running |
 | REV-2c | egm-codebase-details fix-2 r3 (fresh, product code) | 14:5xZ | | running |
 | REV-2d | egm-design fix-2 r3 (fresh, product code) | 14:5xZ | | running |
+| REV-2d | closed 14:5xZ: fix-2 r3 design review 0 blocker, 3 major (settings.md:96 false after read_secret_file; secret-file rule 3 copies + live kind imports smtp kind; ENOTDIR parent walk missing for stats/ledger), 5 minor; saved evidence/review-lane3-fix-2-r3-design.md; waiting REV-2c then resolve | | | closed |

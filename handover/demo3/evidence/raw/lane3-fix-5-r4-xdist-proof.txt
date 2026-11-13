@@ -1,0 +1,21 @@
+run 1 -n 2 rc=0 96 passed in 30.18s
+run 1 -n 4 rc=0 96 passed in 17.29s
+run 2 -n 2 rc=0 96 passed in 32.13s
+run 2 -n 4 rc=0 96 passed in 19.79s
+run 3 -n 2 rc=0 96 passed in 34.02s
+run 3 -n 4 rc=0 96 passed in 18.92s
+run 4 -n 2 rc=0 96 passed in 29.69s
+run 4 -n 4 rc=0 96 passed in 16.16s
+run 5 -n 2 rc=0 96 passed in 29.27s
+run 5 -n 4 rc=0 96 passed in 15.54s
+run 6 -n 2 rc=0 96 passed in 29.07s
+run 6 -n 4 rc=0 96 passed in 15.47s
+run 7 -n 2 rc=0 96 passed in 28.84s
+run 7 -n 4 rc=0 96 passed in 15.45s
+run 8 -n 2 rc=0 96 passed in 28.88s
+run 8 -n 4 rc=0 96 passed in 15.35s
+run 9 -n 2 rc=0 96 passed in 29.20s
+run 9 -n 4 rc=0 96 passed in 15.29s
+run 10 -n 2 rc=0 96 passed in 29.07s
+run 10 -n 4 rc=0 96 passed in 15.25s
+done
