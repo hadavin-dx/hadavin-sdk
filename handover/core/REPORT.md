@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:08Z (07:38 IST) / Part 2 batch 8 evidence green but round 8 NOT clean; batch 9 builder started; lead 02:12Z order (cloud limits, restart cause)
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 3db352f5: independent runner all green (full 10866 passed 2 skipped; bind mutants 198/198; stage 37/37; lint, bandit, gitleaks, handover check exit 0; probes found no bypass) BUT round 8 reviewers (reading) found 2 Blocker + 7 Major, resolve report written (goldfish_review_report-r8.md, Round 9 required). Runner facts: 13 of 38 new cases pass on old code (builder said 14 of 37), 2 Counter tests have no killing mutant row, 7 serve-slot cases killed only by B175, row B197 took about 8 min and 7.9 GB.
+- RESTART CAUSE (measured, not guessed): memory is fine (16 GB total, 9 GB free, load 5), no OOM line in dmesg (only SYN-flood notes on loopback ports from the test servers), 10 pytest processes, 2 Postgres checkpointers, no chromium/node. DISK is the finding: / is 97 percent full, only 1.5 GB free of the allowance, and about 150 scratch folders from my finished runners sit in /home/user/build, about 100 of them Python environments of roughly 280 MB each (an estimated 28 GB; a full du timed out). A full disk can kill writes (Postgres, pytest, git) and may be why runs die. Uptime of the container is 1 h 40 min (it restarted about 00:24Z). I tried to delete the finished environments; the safety check blocked the script and I did not work around it. OWNER/LEAD ACTION: please run on the container, or approve me to delete by exact name (list in /tmp/del.txt is NOT written, ask me and I list them): the old finished-runner environments (every folder named venv-* , B-*-venv, ER-*-venv, EV-*, RB-* except the 6 in use).
+- Q8c-1 runner a7e31a96 (full pytest already about 20 min in, which exceeds the new 8-minute rule: I let it finish rather than kill it) not reported. Part 6 builder a509d177 not reported.
+
+**LEAD ACTIONS** (02:12Z order): 1 full suites of final heads go to the laptop: none ready yet; the Part 2 final head does not exist (batch 9 running). When it does I will write "RUN ON LAPTOP: hadavin-sdk <sha> full pytest and complete bind_mutants". 2 cause: above. 3 max 2 heavy processes: told the batch 9 builder; the 3 jobs now running (Q8c-1 runner, Part 6 builder suite, and queued ones) are the last under the old rule.
+
+**LIVE ITEMS** (4): a509d177 Part 6 batch 8 builder; a7e31a96 Q8c-1 runner; a37e6e83 Part 2 batch 9 builder (new, 75 min box, own venv, no full runs). Heads: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: Part 2 r8 closed not clean, r9 after batch 9 (security path, no cap). Part 6 r7 not clean. Q8c-1 r17 clean (reviews), runner pending.
+
+**FINISHED SINCE LAST BLOCK**: Part 2 runner a572d86b report; resolve r8 (Opus) done; builder briefed.
+
 ## 01:59Z (07:29 IST) / lead REPLAY block A-F read and acted on
 
 **FAILED / UNCERTAIN FIRST**
