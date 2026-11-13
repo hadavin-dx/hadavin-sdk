@@ -136,10 +136,12 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
     for name, obj in items:
         if obj is None:
             continue
+        if not _is_plain_word(name):
+            # a fixed label: nothing is called on a hostile key again
+            found.append("held (unreadable)")
+            continue
         try:
             counted_if_not_empty = name in _COUNTED_WHEN_NOT_EMPTY
-            if not _is_plain_word(name):
-                raise ValueError("a key that is not a short plain word")  # fixed label below
             label = (
                 f"held {name}"
                 if counted_if_not_empty
@@ -149,8 +151,7 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
                 not _is_empty_mapping(obj) if counted_if_not_empty else not is_stand_in_object(obj)
             )
         except Exception:  # noqa: BLE001 - an object or a key that cannot be read is not a stand-in
-            # a fixed label: the key is hostile, so nothing is called on it again (not even ``_shown``)
-            label, counts = "held (unreadable)", True
+            label, counts = "held (unreadable)", True  # a fixed label: the object is hostile
         if counts:
             found.append(label)
     return tuple(found)

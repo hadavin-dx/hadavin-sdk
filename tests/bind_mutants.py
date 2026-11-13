@@ -413,7 +413,7 @@ M = [
     mutant(
         "B39 the receiver builds its own server instead of calling listen",
         RC,
-        "    return listen(\n        config,\n        host,\n        port,\n        Handler,\n        allow_public_bind_reason=allow_public_bind_reason,\n        held=Approvals.held_services(approvals),\n        frozen=approvals.config_facts,\n    )",
+        "    return listen(\n        config,\n        host,\n        port,\n        Handler,\n        allow_public_bind_reason=allow_public_bind_reason,\n        held=held,\n        frozen=frozen,\n    )",
         "    import http.server\n\n    return http.server.ThreadingHTTPServer((host, port), Handler)",
         T_BG,
         "test_only_listen_creates_a_server_socket",
@@ -440,8 +440,8 @@ M = [
     mutant(
         "B43 the receiver does not pass what the approvals hold",
         RC,
-        "        held=Approvals.held_services(approvals),\n",
-        "        held={},\n",
+        "        held = Approvals.held_services(approvals)\n",
+        "        held = {}\n",
         T_BG,
         "test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_refused",
         "a server was built before the refusal",
@@ -599,8 +599,8 @@ M = [
     mutant(
         "B60 the start check forgets the frozen config facts",
         RC,
-        "        frozen=approvals.config_facts,",
-        "        frozen=(),",
+        "        frozen = approvals.config_facts\n",
+        "        frozen = ()\n",
         T_BG,
         "test_what_the_config_said_at_construction_is_kept_when_its_lists_are_emptied",
         "a server was built before the refusal",
@@ -1385,8 +1385,8 @@ M = [
     mutant(
         "B153 a hostile text key is shown again in its own handler",
         BG,
-        '            label, counts = "held (unreadable)", True\n',
-        '            label, counts = f"held {_shown(name)}", True\n',
+        '            found.append("held (unreadable)")\n',
+        '            found.append(f"held {_shown(name)}")\n',
         T_BG,
         "test_a_hostile_text_key_gets_a_fixed_label_and_nothing_is_called_on_it_again",
         "no text for this key",
