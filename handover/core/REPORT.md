@@ -1,5 +1,29 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:13Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package has a clean head. Part 6 moved to 20c369f0 (batch 15, more parts pushed); its B12-killed proof and runner result are still missing. SONAR-PATH 622027cc, Part 2 e75037b6 and Q8c-1 dcf64b36 are unchanged; builders still working.
+- Not run anywhere yet: the laptop tool list from the 05:52Z block (trivy, semgrep, pip-audit, zizmor, stale-ignore, demo_only_guard, notes_lines_check).
+
+**LEAD ACTIONS (answer to the 06:15Z gitleaks ruling):**
+1. Fingerprint, no key text: rule `aws-access-token`, file `handover/evidence/sonar-path/622027cc/raw/t313g/junit/test_no_hardcoded_values.xml`, line 1, in commit d308aaf4 on core/cloud-handover. The file is deleted in the next commit; the old commit stays in history.
+2. Handover and evidence branches are NEVER merged to main (stated here as asked).
+3. Class fix, done: my commit step now stops on a gitleaks failure, and no longer adds junit or xml files or anything under handover/evidence/**/raw/ (summaries and RESULTS.md only). 992 raw files were committed earlier and remain in history; I did not remove them.
+4. Cause found: tests/test_no_hardcoded_values.py builds its planted values from parts, but pytest prints each value as the test id, so junit and logs carry the key-shaped text. Sent to SONAR-PATH builder ac09a2ce as a batch 6 item: explicit ids= on that test, a sibling sweep, and a check that collection prints no key-shaped string (shown failing on the old file). Not done yet.
+
+**LIVE ITEMS:** ac09a2ce SONAR batch 6; a3ea530e Part 6 runner; a592bb13 Q8c-1 B17; a7978edf Part 6 batch 15; adecceff Part 2 finisher. 5 running.
+
+**ROUNDS (WHY):** none started; waiting for builder pushes.
+
+**FINISHED SINCE LAST BLOCK:** nothing closed.
+
+**EGM STEP PER PACKAGE:** unchanged.
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none new.
+
 ## 06:07Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
