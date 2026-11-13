@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/final-venv/bin/python
+rootdir: /home/user/work/f-final
+configfile: pyproject.toml
+collecting ... collected 379 items / 369 deselected / 10 selected
+
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[DEL] PASSED [ 10%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[a C0 control character] PASSED [ 20%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[a C1 control character] PASSED [ 30%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[a new line] PASSED [ 40%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[ideographic space] PASSED [ 50%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[no-break space] PASSED [ 60%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[zero-width joiner] PASSED [ 70%]
+tests/test_path_confinement.py::test_the_sqlite_uri_check_decides_like_confine_existing_for_the_same_real_file[zero-width space] PASSED [ 80%]
+tests/test_path_confinement.py::test_the_sqlite_uri_is_built_from_the_checked_text_not_from_a_second_look_at_the_object PASSED [ 90%]
+tests/test_path_confinement.py::test_a_lone_surrogate_is_a_plain_refusal_not_a_unicode_error PASSED [100%]
+
+====================== 10 passed, 369 deselected in 0.10s ======================

@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 11:13Z / 16:43 IST  HEARTBEAT 16 (ORDER 7 received; G waits for F)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| F | Evidence runner: PR #14 head 6b1fe49 full suite once -v + F7/new cases | evidence for the previous head (same logic as c14a514 except the second delta) | 11:09Z / 16:39 | suite ends about 11:30Z / 17:00; hard stop 11:50Z | run 1 of 1 | running (job 2 done 11:09Z; suite running) | when F reports, start G |
+| G | NOT STARTED: Evidence runner on the NEW head c14a514e5e84bd2be9b40a1a4b4320c06f1d8a83: only tests/test_path_confinement.py plus the F7/C1/whitespace/bytes/surrogate/stateful-fspath cases, no full suite; passed/failed/skipped | evidence for the second review-fix delta (2 files) | starts when F ends | about 5-10 min | round 0 | waiting for F (order 7 says let F finish first) | start G the moment F reports |
+| others | A, B, C2, D, E closed | - | - | - | - | closed | none |
+
+ASK:
+1. G is light (one test file, about a minute or two), so it could run now beside F without any machine strain; the order says to wait for F. Default: wait for F, as ordered.
+
 ## 2026-11-13 11:10Z / 16:40 IST  HEARTBEAT 15 (ORDER 6: agent F started)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
