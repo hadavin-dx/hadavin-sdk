@@ -42,3 +42,7 @@ Q5 | agent ac29a8..: cold reader README | 12:31Z | ~13:15Z | now | running
 Q6 | agent ae462c..: cold reader n8n+limits | 12:31Z | ~13:20Z | now | running
 Q7 | starting: 196 tests under 3.13 | | | |
 Q8 | queued: mutation on pathconfine | | | |
+Q5 | reported 12:34Z closed (no failure; unclear points listed)
+Q5b | agent a77adc..: cold reader settings/portal/why-this-code/contract/SECURITY | 12:34Z | ~13:25Z | running
+Q7 | agent aa5a44..: 196 tests under 3.13 | 12:32Z | ~13:00Z | running
+Q8 | agent a101c8..: mutation on pathconfine | 12:34Z | ~13:35Z | running

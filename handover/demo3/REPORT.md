@@ -1,5 +1,28 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:33Z / 18:03 IST  HEARTBEAT 37 (standing rule read; 8 agents running; Q5 reported; Q5b and Q8 started)
+**Load now (measured):** loadavg 5.03 1.49 0.90 (1, 5, 15 min; it was 0.0 at 12:31Z, so the queue is ramping up), 4 cores, 6 pytest processes, 8 agents running. Heavy slots: 3 of 3 expected in use within minutes (Q1 serial suite, Q3 desk soak, Q7 browser tests; Q4 load driver and Q2 fuzz are one core each). Free RAM about 15 GB.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof (serial suite, then -n 3) | 12:31Z | serial ~12:55Z; xdist ~13:50Z; stop 14:20Z | serial run started 12:31:56Z | running |
+| Q2 | identity fuzz (100k variants, 200k pairs, 20k replays, fixed seeds) | 12:31Z | ~13:30Z, then new seeds | extracting identity rules | running |
+| Q3 | crash soak, 300 rounds, real desk + fakes | 12:31Z | ~13:30Z | building the harness | running |
+| Q4 | load numbers vs docs claims (writes END when pass 1 is done) | 12:31Z | pass 1 ~13:30Z | started 12:31:54Z; the burst measurement (`test_measure_burst`) is running (80 percent of a core) | running (numbers marked NOISY while the others run) |
+| Q5 | cold reader README | 12:31Z | done 12:34Z | **reported**: no failure on Linux; first lead "new", repeat 201 `replayed: true`, other door "duplicate" (HTTP 200, not stated in README), counts 2 received 1 new 1 duplicate, outbox 1, reset ok; unclear: Code-button steps, "numbers all 0" ignores other count fields, receipt_id jumps 1 to 3, no way given to check ports 8765/8766 are free (`ss` not installed), `curl` not listed in "You need"; `/` and `/health` return 404; portal only fetched with curl; jargon list; evidence/cold-reader-readme.md | closed |
+| Q5b | cold reader 2: docs/settings.md (every setting vs code), docs/portal.md (every page URL), docs/why-this-code.md, contract.md, SECURITY.md (every checkable claim) | 12:33Z | ~13:25Z; stop 14:20Z | starting | running |
+| Q6 | cold reader: docs/n8n-recipe.md + docs/limits.md claims | 12:31Z | ~13:20Z | part B started 12:33Z | running |
+| Q7 | the 196 formerly skipped browser and gitleaks tests under Python 3.13, BASE and STACK | 12:32Z | ~13:00Z; stop 13:15Z | started 12:32:39Z | running |
+| Q8 | mutation check: 30 single-change mutants of tools/pathconfine.py vs tests/test_path_confinement.py (private worktree, restored after each) | 12:33Z | ~13:35Z; stop 14:20Z | starting | running |
+Shells: only the agents' own (their progress files list them). Containers: none.
+
+STANDING RULE (12:32Z): read. When an agent ends I start the next of its kind (Q5 -> Q5b done); every 3-5 minutes I look at sibling branches for reports to cross-check. Seen on the sibling branches right now: demo/handover has a numbers-names check script with pass 1 and claims-fix-v4d/v5 and a 13-commit series (cb29f8d8); core/cloud-handover has a load table. Next self-assigned: when a slot frees, Q9 = cross-check of the demo session's numbers-names script (run it against f3c39cf8, compare with my measured numbers: 3883 collected, 3683 passed, 200 skipped, 92 test files).
+
+ASK:
+1. Q4 numbers are NOISY because everything starts at once (default stays: no idle).
+2. Q1's xdist run needs a throwaway venv install of pytest-xdist (in no lock file); default yes, never enters the repo.
+3. Q5 used Python 3.13.18 (README says 3.12 or newer); Q5b and Q6 use 3.12. OK.
+4. Q3 and Q4 use private port ranges (18000-18999, 19000-19999); Q6 20000-20999; Q5b 21000-21999; the README's own ports 8765/8766 are used by whichever cold reader runs the quick start: a clash is recorded, not fixed.
+
 ## 2026-11-13 12:32Z / 18:02 IST  LOAD TABLE + HEARTBEAT 36 (ORDER 11 standing queue started; load order answered)
 **(1) Running agents (6 of 6 queue agents, all started 12:31Z / 18:01 IST, seconds ago, so progress is "setting up")**
 | id | task | since | expected end | real progress |
