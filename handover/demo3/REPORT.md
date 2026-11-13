@@ -1,5 +1,27 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:03Z / 18:33 IST  HEARTBEAT 47 (E4 reported; CPU idle 4 percent: nothing new started)
+**Idle (`vmstat`, 12:59Z): user 70, system 13, IDLE 4 percent, IO-wait 13, free RAM about 10 GB.** Throttle rule: below 30 percent idle I start nothing. Q2 stopped on my order (12:57:47Z).
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof | 12:31Z | xdist run 1 ~13:15Z | serial done (3683 passed, 200 skipped, 0 failed); xdist -n 3 running since 12:54:42Z | running |
+| Q2b | fuzz seeds 7001-7005 + extra generators | 12:49Z | ~14:00Z | seed 7002 campaign b (40000 cases) | running |
+| Q3b | crash soak 2 | 12:49Z | ~13:20Z | 225 of 300 rounds, 0 violations, 0 hangs | running |
+| Q6b | cold reader tests/real-services docs | 12:37Z | ~13:25Z | coverage variant of docs/tests.md running | running |
+| Q8b | mutation check identity.py + claim logic | 12:49Z | ~13:50Z | running | running |
+| B2 | BUILDER lane3-fix-2 | 12:43Z | ~13:30Z | "patched family run in progress" (12:57:45Z); lane3-fix-2.patch exists | running |
+| B1b | BUILDER lane3-fix-1 round 2 | 12:58Z | ~13:35Z | fresh desk and burst command verified (12:58:28Z) | running |
+| B3b | BUILDER lane3-fix-3 round 2 (security path) | 12:58Z | ~13:35Z | experiments started 12:57:41Z | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 round-1 suites | 12:52Z | ~13:25Z | running | running |
+| Q4 | load numbers vs docs | 12:31Z | - | first pass ended; report evidence/load-claims.md is being written | finishing |
+| E4 | EVIDENCE RUNNER lane3-fix-3 mutant proof | 12:52Z | done 13:01Z | **reported** | closed |
+**E4 RESULT (independent proof of lane3-fix-3 round 1; evidence/lane3-fix-3-evidence.md): no mutant still survives with the patch.** sha256 of the patch matches (9084e0d8...c6073). The new file alone: 8 passed; old file + new file: 386 passed, 1 skipped. results.jsonl still has 34 mutants and exactly 5 survivors (M03, M08, M11, M15, M20), no new ones; each `old` text occurs exactly once; each survives the ORIGINAL tests (378 passed) and is KILLED with the patch, by the five new tests; the new file alone kills them too; of the 29 mutants Q8 had already marked killed, 3 also fail in the new file alone (the other 26 pass there because the original file kills them); the worktree stayed clean after every mutant.
+**One failure in this step (told plainly):** E4's first run of the combined test files with TMPDIR inside the worktree gave **11 failed**; E4 calls it its own setup slip; the re-run with TMPDIR outside the repo gave the 386 passed. Cause proven by that experiment (same tests, only the temp folder moved): harness error, not a product defect and not a test defect. (This is the same family as the basetemp error of heartbeat 40: the repo's path confinement refuses folders outside, or inside the worktree, of the allowed roots; I will tell every runner brief that TMPDIR must be a private folder OUTSIDE the worktree and basetemp INSIDE TMPDIR.)
+
+ASK:
+1. Q4's report is the only evidence for the doc claims of limits and burst (numbers NOISY because the machine is saturated): do you want a quiet re-measurement at the end of the queue (every other agent stopped for 10 minutes)? Default: yes, as the last item before 14:30Z, if you do not object.
+2. Idle 4 percent for several minutes: all running agents are useful; the next stop candidates are Q8b and Q2b, if you want room for the evidence runs of the three patches. Default: keep.
+
 ## 2026-11-13 13:00Z / 18:30 IST  HEARTBEAT 46 (round 1 reviews in; egm-resolve done; round-2 builders B1b and B3b started; Q2 told to stop)
 **Idle (`vmstat`, 12:57Z): user 44, system 15, IDLE 19 percent, IO-wait 21, free RAM 10.4 GB.** Below 30 percent: no NEW test-load agents. B1b and B3b are one-core editors and fix agents (the owner asked for fixes); to make room I told the lowest-value agent, Q2 (round 2 of the original seeds), to finish its current campaign and stop.
 | id | what it does | since | expected end | real progress now | state |
