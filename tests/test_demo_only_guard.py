@@ -857,8 +857,10 @@ def test_a_file_over_the_size_cap_is_a_hit_and_is_not_read(
         == [
             "src/pkg/big.py: file-too-large (over 100 bytes; it is not read)"  # the name inside is not reported: not read
         ]
-    )
-    assert g.scan(repo, _cfg(max_file_bytes=1000)) == ["src/pkg/big.py:1: names-demo-only-folder"]
+    ), "a_file_over_the_size_cap_is_a_hit_and_is_not_read: check 1"
+    assert g.scan(repo, _cfg(max_file_bytes=1000)) == [
+        "src/pkg/big.py:1: names-demo-only-folder"
+    ], "a_file_over_the_size_cap_is_a_hit_and_is_not_read: check 2"
     real_open = Path.open
 
     def no_big(self: Path, *args: object, **kwargs: object):
@@ -885,7 +887,7 @@ def test_a_file_over_the_size_cap_is_a_hit_and_is_not_read(
     monkeypatch.setattr(Path, "stat", small_stat)
     assert g.scan(repo, _cfg(max_file_bytes=100)) == [
         "src/pkg/big.py: file-too-large (over 100 bytes; it is not read)"
-    ]
+    ], "a_file_over_the_size_cap_is_a_hit_and_is_not_read: check 4"
 
 
 def test_the_settings_file_checks_the_size_cap_the_copy_exclusions_and_the_child_environment(

@@ -49,9 +49,12 @@ def weak_expectations(rows=None) -> list[tuple[str, str]]:
         generic = (
             e in GENERIC_EXPECTATIONS
             or "did not match" in e
-            or e.startswith("AssertionError: (")
-            or (e.startswith("assert ") and len(e) < 30)  # a bare comparison of two short values
             or (e.startswith("AssertionError: ") and len(e) < 24)
+            or e.startswith(
+                ("AssertionError: (", "assert")
+            )  # a printed tuple or comparison, not a message
+            or "] ==" in e
+            or "== [" in e
             or "..." in e  # pytest shortened the line: what hides behind the dots is not checked
         )
         if generic:

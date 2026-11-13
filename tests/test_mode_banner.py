@@ -119,7 +119,9 @@ def test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real() -> 
 
 def test_names_come_from_the_caller_and_repeats_are_shown_once_in_order() -> None:
     b = _b("pilot", ["b", "a", "b"], names={"a": "Alpha", "b": "Beta"})
-    assert b.real == ("Beta", "Alpha")
+    assert b.real == ("Beta", "Alpha"), (
+        "names_come_from_the_caller_and_repeats_are_shown_once_in_ord: check 1"
+    )
 
 
 def test_a_key_without_a_shown_name_is_read_as_component_and_the_key() -> None:
@@ -880,10 +882,16 @@ def test_tool_modules_without_the_manifests_count_as_one_real_service() -> None:
     cfg.tool_modules = ["some_mod"]
     assert _services(cfg, None)[0] == (mb.TOOL_MODULES,), "no spec at all with a tool module"
     real, _ = mb._services_in(cfg, None)  # None: the caller could not read the manifests
-    assert real == (mb.TOOL_MODULES,)
-    assert mb.banner_from_config(cfg, tool_specs=None).tone == "real"
+    assert real == (mb.TOOL_MODULES,), (
+        "tool_modules_without_the_manifests_count_as_one_real_service: check 2"
+    )
+    assert mb.banner_from_config(cfg, tool_specs=None).tone == "real", (
+        "tool_modules_without_the_manifests_count_as_one_real_service: check 3"
+    )
     cfg.tool_modules = []
-    assert mb._services_in(cfg, None)[0] == ()  # no module configured: nothing hidden by None
+    assert mb._services_in(cfg, None)[0] == (), (
+        "tool_modules_without_the_manifests_count_as_one_real_service: check 4"
+    )  # no module configured: nothing hidden by None
     with pytest.raises(TypeError, match="tool_specs"):
         mb._services_in(cfg, ["not", "a", "mapping"])  # type: ignore[arg-type]
 

@@ -119,7 +119,7 @@ M = [
         "out.setdefault(shown, None)",
         "out[shown + str(len(out))] = None",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "assert ('Beta0', 'Alpha1', 'Beta2') == ('Beta', 'Alpha')",
+        "repeats_are_shown_once_in_ord: check 1",
     ),
     mb(
         "B4 a real service is also listed as a stand-in",
@@ -163,14 +163,14 @@ M = [
         "return tuple(out)",
         "return tuple(sorted(out))",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "assert ('Alpha', 'Beta') == ('Beta', 'Alpha')",
+        "repeats_are_shown_once_in_ord: check 1",
     ),
     mb(
         "B9 the names from the caller are ignored",
         'shown = names.get(key, f"component {key}")',
         "shown = key",
         "test_names_come_from_the_caller_and_repeats_are_shown_once_in_order",
-        "assert ('b', 'a') == ('Beta', 'Alpha')",
+        "repeats_are_shown_once_in_ord: check 1",
     ),
     mb(
         "B9b an unnamed key is shown as the bare key",
@@ -777,7 +777,7 @@ M = [
         "        if modules:\n            found.append(TOOL_MODULES)",
         "        if False:\n            found.append(TOOL_MODULES)",
         "test_tool_modules_without_the_manifests_count_as_one_real_service",
-        "assert () == ('tool-modules',)",
+        "tool_modules_without_the_manifests_count_as_one_real_service: check 2",
     ),
     mb(
         "B33 a tool host on this machine is counted as real",
@@ -1247,7 +1247,7 @@ M = [
         "    if len(data) > cfg.max_file_bytes:",
         "    if False:",
         "test_a_file_over_the_size_cap_is_a_hit_and_is_not_read",
-        "-only-folder'] == ['src/pkg/big",
+        "a_file_over_the_size_cap_is_a_hit_and_is_not_read: check 4",
     ),
     gd(
         "G60 a control character in a hit is printed as it is",
@@ -1338,7 +1338,7 @@ M = [
         "        if not (repo / rel).is_file() and rel not in gitlinks:",
         "        if not (repo / rel).is_file():",
         "test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit",
-        "that exists)'] == []",
+        "a_submodule_that_is_listed_as_exempt_is_not_a_second_hit: check 1",
     ),
     gd(
         "G73 a product root is compared without the shared folding",
