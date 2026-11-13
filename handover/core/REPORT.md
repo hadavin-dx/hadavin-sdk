@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:26Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| V3 | independent evidence for F3 | proof | 13:03Z | done 13:26Z | 1 | DONE (runner's numbers; handover/core/fix/V3-evidence.md): fails-before 39 failed / 3 passed (the 3 are accept-plain pins), twice; after 42 passed x3; 71 existing files run one by one: V3 3175 passed 0 failed 130 skipped, V3old the same numbers, per-test lists identical (zero tests differ); 30 files not run; mutants 8 of 8 killed; 45 hostile cases: every FIFO/symlink-to-FIFO/directory/NUL case refused with no hang, no Traceback, no echo; bandit 0 issues; old tree: all 10 FIFO cases hang, /dev/zero as live key file killed by the kernel (exit -9). **GAP FOUND IN F3: the live model key reader (live_claude.py _read_key) has no size cap: a 100 MB file of NUL characters is ACCEPTED (peak about 233 MB).** F2 already adds one shared SECRET_FILE_MAX_BYTES (4096) for live, HubSpot and SMTP with a bounded read, so the two patches overlap on this function; I will prove the gap closed on the COMBINED tree, not assume it | combine step |
+| COMBINE (next) | merge F1+F1b+F2+F3+F6 (+F4 docs separately) into ONE tree, resolve overlaps (live_claude.py, feed.py, run_real_check.py, smtp_provider.py), one core-fix-v1.patch | the lead's output | to start when F1b and F6 report | about 14:30Z | | WAITING for F1b, F6 | then ONE evidence runner (full suite + all new test files + 100 MB NUL-file test + 20 hostile) and an independent reviewer |
+| V4c, R5 | evidence for docs round 3; round-2 docs review | proof / read | 13:33Z | 14:05Z, 13:55Z | | RUNNING | read |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 13:55Z | 1 | RUNNING | read |
+| F1b, F6 | builders | | 13:19Z, 13:18Z | 14:20Z | | RUNNING | combine |
+| done | F1 F2 F3 F4 F4b F4c D1 E1 E2 C6 R4 V1 V3 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: V3 gap above is a real defect in the new F3 patch (live key reader unbounded), root cause proven: yes (runner's hostile run, both trees accept 100 MB). It is NOT filed as a limitation: the F2 cap is the fix and the combined-tree test must show it. Ruff: line length 100 fails for the runner (366 E501 on 9 files), the repo's own 120 passes: same repo-setting issue as before. Totals: failures with proven cause 1 (T1); unexplained 2; flakes 0; crashed agents 0; defects found in my builders' output by runners: F1 (3 hostile + 2 survivors), F3 (1 gap), F4 (1 survivor + 3 majors).
+LOAD: 5 agents running.
+ASK: none new.
+
+
 ## REPORT (container clock 13:24Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |

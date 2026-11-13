@@ -165,3 +165,4 @@ V4b done; F4c and F6 started
 V1 done: 1 traceback 2 hangs 2 survivors; F1b started
 status 5 agents running
 F4c done; docs-combined built; V4c, R5 started
+V3 done: live key reader gap; combine planned
