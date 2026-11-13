@@ -116,3 +116,18 @@ Files: pr2/pr3/pr4-user-description-v4.md (older kept).
 | 80 | supersedes row 22: d23cf8f: ruff "All checks passed!", format "51 files already formatted", mypy linux and win32 "no issues found in 26 source files" (head has [tool.mypy] in pyproject.toml) | my re-run in a detached worktree, ruff/mypy from /tmp/work/int2-venv/bin | verified |
 | 81 | f31e261: ruff "All checks passed!", format "60 files already formatted", mypy linux and win32 "no issues found in 26 source files" | same | verified |
 | 82 | CodeRabbit and DeepSource defined once in #4 ("an automatic code-review tool") | text | done |
+
+## v5 + pr4-A update (lead's rule: no sentence stays unless measured)
+Files: pr2/pr3/pr4-user-description-v5.md, pr4-A-user-description.md (older kept). [UNVERIFIED] count in all v5 and pr4-A files: 0 (grep).
+| # | statement | how verified | result |
+|---|---|---|---|
+| 83 | removed as not measured: "no hang was ever shown to come from the desk code", "earlier heads ... 0 failures", "grew past the planned size", "GitHub may change the base by itself", "may need a new push", "Python 3.13" and "whole suite on Windows" in Not run | - | removed |
+| 84 | "a close with the body unread can reset the reply" now attributed: "the reason given in the code" | server.py L914 comment (pr-3-tests) | verified (quote) |
+| 85 | "a late body was reset on Windows" now "the reason given in the commit" | subject of 40d5668 | verified (quote) |
+| 86 | single-process Linux run of 2db3926 | /tmp/work/full2db-b.exit absent at 02:01:51Z; full2db-b.txt at about 80% | marker kept unless filled later (see row 92) |
+| 87 | Windows figure 3096 passed / 45 skipped / 0 failed (22 min 30 s) | the lead's own sentence (coordinator message, 01:46Z answers); not reproduced here | quoted as the maintainer's run |
+| 88 | fake CRM reads the body before it answers | `git diff 2db3926~1 2db3926 -- demo_only/fake_hubspot.py`: `_send` reads `self.rfile.read(n)` first (body over 1 MiB or bad length: not read) | verified (upgrades row 49) |
+| 89 | pr4-A: main...pr-3-tests = 226 files (src 38, tests 117 incl. 24 portal fixtures, demo_only 15, scripts 14, docs 8, load_tools 5, tools 3, n8n 3, .github 4, root 18, .codeant 1) | `git diff --name-only main...pr-3-tests` + top-dir count | verified |
+| 90 | pr4-A part contents (adapters, db, portal, start/reset scripts, feeder, check tools, hygiene scan, .coderabbit.yaml, .codeant) | `git ls-tree` of src/lead_desk, scripts, tools, load_tools, n8n, docs on pr-3-tests; root file list | verified (names read; behaviour taken from file names and docs) |
+| 91 | pr4-A "workflow files set lint and CodeQL for PRs into main, SonarQube for every PR" | rows 16-17 | verified (files) |
+| 92 | single-process Linux run of 2db3926: 3138 passed, 3 skipped, 0 failed, 1218.48 s (20 min 18 s); same 3 skips as the chunked run | /tmp/work/full2db-b.exit `exit=0` 02:03:08Z; last summary line of /tmp/work/full2db-b.txt; started 01:42:49Z (.start) | verified: [FILL] replaced in v5 #4 and pr4-A |

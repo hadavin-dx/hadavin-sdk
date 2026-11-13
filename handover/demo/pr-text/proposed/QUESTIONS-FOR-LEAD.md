@@ -14,3 +14,12 @@
 8. The 325 history findings: the reviewer's reason ("the first commits contained lock-file hash lines before the allowlist") is WRONG. Measured: gitleaks `git` reads all branches of the clone; with #2's older .gitleaks.toml it flags the lock files added on pr-3-tests (requirements-coverage.txt 131, requirements-browser.txt 91, -win 91 long-hex-token), 10 hostname-like names and 2 SonarQube-key lines. v2 says this. What GitHub's lint (its own checkout) would see on #2 is a different question: not measured.
 9. integration/INT-3-2db3926.md is not in my copy of the handover folder (not pulled). I verified the same figures from /tmp/work/h3chunk-*.txt and /tmp/work/h3post-*.txt instead.
 10. MERGE ORDER (v3 texts state both ways, recommend neither): (A) one merge into main: #4 into #3's branch, then #3 into #2's branch, then #2 into main; lint and CodeQL then check the whole tree once, on #2. (B) #2 into main, then retarget #3 to main and merge, then the same for #4; each part runs lint and CodeQL when its base becomes main. Which one do you (the maintainer) want? If you pick one, the PR texts can name it.
+
+## ANSWERED by the lead (01:46Z), applied in v5 and pr4-A
+1 approved: the five extra core touches are named as plain facts in v5 #4 and pr4-A (exclusive = stage-copy call only); no approval markers.
+2 CodeAnt and 142 files: no claim anywhere (v5 also drops "grew past the planned size": now "the third part now also holds the later fixes").
+3 Branch protection: dropped (the optional line was not added); all retarget speculation removed ("GitHub may change the base", "may need a new push").
+4 Sonar split: "Splitting them into two jobs is still an open owner decision."
+5 Windows: the lead's exact sentence is used in v5 #4 and pr4-A; 252/29 dropped. Its leading words "On Windows:" are mine.
+6 [FILL]: see VERIFY row 86.
+10 Merge order: open for the maintainer; pr4-A covers option A (retarget #4 to main, close #2 and #3).

@@ -1,6 +1,37 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:04Z / 07:34 IST - **VERDICT: pr-3-tests 2db3926 SINGLE-PROCESS FULL RUN GREEN: 3138 passed, 3 skipped, 0 failed, 0 errors, 20 min 18 s, exit 0** (same totals as the chunked run); PR descriptions v5 + option-A description done (no marker left); D1-D6 script fixes built (review running); CRLF guard patch reviewed (1 Major, being fixed)
+FAILED / UNCERTAIN first:
+1. NOTHING FAILED in the final claim. The un-chunked run: fresh clone of pr-3-tests 2db3926 (verified, no git operations in it), ONE pytest process, python -u, `-o faulthandler_timeout=300 -rs`, GITLEAKS_BIN + DPLD_REQUIRE_SCAN=1 (the gitleaks tests ran), Node 22 + Playwright 1.63.0: started 01:42:49Z, finished 02:03:08Z: 3138 passed, 3 skipped (n8n file-permission test as root; load-measurement test; Windows-only stall test), 0 failed, 0 errors, 1218.48 s, exit 0. Evidence pushed: integration/INT-3-2db3926.md (section SINGLE-PROCESS RUN) + evidence-int3-2db3926-SINGLE-PROCESS-full.txt/.exit (4d48ef8f). Your Windows run on the same head: 3096 passed, 45 skipped, 0 failed. Still not run anywhere: PowerShell beyond your Windows run, real GitHub CI, a real n8n, Python 3.13 tests.
+2. The Q4b fixes (D1-D6, real-run scripts) change scripts that run on your laptop in the REAL run: a fresh reviewer (no round cap on safety paths) is reading them; NOT public until you say so. Builder's admissions: only one pass of run-dry-checks.sh (114 cases, 0 FAIL); the DESK itself still opens the HubSpot key file at its first CRM call, not at start (docs/settings.md:82 now says so: a core change would be needed to change it: your call); one existing test pinned the old exit 0 and now expects 3; five self-tests now pass --keep; 288 real-dry-* folders sit in /tmp from older runs.
+3. CRLF guard patch: review 0 Blocker, 1 MAJOR: the hint 'git add --renormalize .' does NOT cure the failure (it only re-stages the index; the scan reads the working copy): the builder is MEASURING what cures it (checkout of the file, stripping the CR, ...) and rewriting the hint; nits (a .bat/.cmd comment; root-level files only; history-scan hint inspects the working copy).
+4. Descriptions v5 (drafter): 0 [UNVERIFIED], the maintainer's answers applied (five core touches as plain facts; no CodeAnt/142 claim; branch protection and retarget wording dropped; Windows sentence word for word; your single-process numbers in place of the marker); removed as not measured: 'no hang shown', 'earlier heads 0 failures', 'grew past the planned size', and the Python 3.13 / whole-Windows-suite 'not run' lines; pr4-A-user-description.md = the description of the full tree (226 files) into main if you retarget #4 and close #2/#3. A fresh final read of v5 is pending.
+READY TO APPLY NOW: 1) merge-ready/versions-md-allowance.patch, 2) semgrep/semgrep-on-2db3926-v4.patch (sha256 60e3627316527b54c04fe46fddf02fb55bac4fe8478b1a6adda9d8d50e6f4ac9). Not ready: crlf-guard (Major being fixed), real-run fixes (review).
+NEEDS FROM LEAD: A or B (the paper P-AB is running); whether the desk should check the key file at START (core change) or only the scripts.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| P-AB (opus) | A/B PR stack paper + carry-over checklist | 02:01 | running | pr-stack/AB-PAPER.md |
+| rev Q4b (sonnet) | review of the real-run script fixes | 02:04 | running | report |
+| C1 builder (sonnet) | CRLF guard v2 (measure the cure) | 02:03 | running | skips/crlf-guard-v2.patch |
+| heartbeat loop | 5-minute block guarantee | 01:33 | running | blocks |
+Totals: agents 3, shells 1, containers 0, heavy pytest 0, load low.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| batch 3 final claim | DONE | chunked 3138 / single-process 3138 / Windows 3096: 0 failed | none | YES | lead applies the two patches above |
+| descriptions | v5 | R1-R4 fixed; v5 applies the lead's answers | final read | no | fresh read, then the lead pastes |
+| real-run script fixes | Q4b review 1 | built | safety path: no cap | no | review clean, then the lead's go |
+| CRLF guard | round 2 | 1 Major (advice) | fix | no | v2 reviewed |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| single-process full run of 2db3926 | GREEN 3138 passed / 3 skipped / 0 failed |
+| descriptions v5 + option A text | done, pushed with this block |
+| Q4b D1-D6 fixes | built (13 new tests fail on the old code) |
+| CRLF guard review | done (1 Major) |
+
 ## 2026-11-13 02:00Z / 07:30 IST - REPLAY BLOCK ACTED ON, ITEM BY ITEM (below); single-process run 2527 passed / 0 failed
 FAILED / UNCERTAIN first: the single-process run of 2db3926 is not finished (2527 passed, 0 failed so far; ETA about 02:05Z): [FILL] in #4 stays until it ends. D1 may need a core change: the lead decided SCRIPT-level fixes (so none expected). The A/B paper's evidence (CodeAnt findings per PR, the file-count limit) comes from the public GitHub API: not yet read.
 ITEMS (one line each):
