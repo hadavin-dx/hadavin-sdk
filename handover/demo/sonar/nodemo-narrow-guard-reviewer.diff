@@ -1,0 +1,65 @@
+diff --git a/tests/test_except_clause_hierarchy.py b/tests/test_except_clause_hierarchy.py
+index 33a0be0..25db9c2 100644
+--- a/tests/test_except_clause_hierarchy.py
++++ b/tests/test_except_clause_hierarchy.py
+@@ -106,6 +106,26 @@ PASSES_THROUGH = [
+ ]
+ 
+ 
++DEMO_DIR = "demo_only"
++
++
++def _present(rows: list[tuple[object, ...]]) -> list[object]:
++    """The rows as pytest params. Only a row about a file under demo_only/ can be skipped, and only when that whole
++    folder was deleted (a client copy). A product row, a typo in a path, or one demo file missing while the folder is
++    there is not skipped: it runs and fails with FileNotFoundError."""
++    demo_gone = not (REPO / DEMO_DIR).is_dir()
++    return [
++        pytest.param(
++            *r,
++            id=_ids([r])[0],
++            marks=pytest.mark.skipif(
++                demo_gone and str(r[0]).startswith(DEMO_DIR + "/"), reason=f"{r[0]}: {DEMO_DIR}/ was removed"
++            ),
++        )
++        for r in rows
++    ]
++
++
+ def _ids(rows: list[tuple[object, ...]]) -> list[str]:
+     return [f"{r[0]}::{r[1]}" + "".join(f"[{x}]" for x in r[2:4] if isinstance(x, int)) for r in rows]
+ 
+@@ -149,13 +169,13 @@ def _classes(handler: ast.ExceptHandler, path: str) -> list[type[BaseException]]
+     return found
+ 
+ 
+-@pytest.mark.parametrize(("path", "function"), list(HANDLERS), ids=_ids(list(HANDLERS)))
++@pytest.mark.parametrize(("path", "function"), _present(list(HANDLERS)))
+ def test_handler_order_is_exactly_as_listed(path: str, function: str) -> None:
+     seen = [[ast.unparse(h.type) if h.type else "" for h in t.handlers] for t in _tries(path, function)]
+     assert seen == HANDLERS[(path, function)]
+ 
+ 
+-@pytest.mark.parametrize(("path", "function"), list(HANDLERS), ids=_ids(list(HANDLERS)))
++@pytest.mark.parametrize(("path", "function"), _present(list(HANDLERS)))
+ def test_no_class_is_named_twice_or_hidden_by_an_earlier_handler(path: str, function: str) -> None:
+     for t in _tries(path, function):
+         earlier: list[type[BaseException]] = []
+@@ -170,7 +190,7 @@ def test_no_class_is_named_twice_or_hidden_by_an_earlier_handler(path: str, func
+             earlier += mine
+ 
+ 
+-@pytest.mark.parametrize(("path", "function", "t", "h"), RERAISE_BEFORE_EXCEPTION, ids=_ids(RERAISE_BEFORE_EXCEPTION))
++@pytest.mark.parametrize(("path", "function", "t", "h"), _present(RERAISE_BEFORE_EXCEPTION))
+ def test_memory_and_send_errors_are_handed_back_before_except_exception(
+     path: str, function: str, t: int, h: int
+ ) -> None:
+@@ -195,7 +215,7 @@ def test_the_two_senders_have_exactly_the_six_bare_re_raise_handlers() -> None:
+     assert sorted(found) == sorted(listed)
+ 
+ 
+-@pytest.mark.parametrize(("path", "function", "t", "h", "must_catch"), STILL_CAUGHT, ids=_ids(STILL_CAUGHT))
++@pytest.mark.parametrize(("path", "function", "t", "h", "must_catch"), _present(STILL_CAUGHT))
+ def test_shortened_clause_still_catches_the_names_it_lost(
+     path: str, function: str, t: int, h: int, must_catch: list[type[BaseException]]
+ ) -> None:
