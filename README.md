@@ -41,6 +41,13 @@ What this release does and does not promise, in one place.
 - Every read is an audit event (principal, tool, `inputs_hash`, `output_hash`, `rows`) and a `tool_calls` row a client can review. Nothing of one client is kept in a process-global cache.
 - Kubernetes is the only built read-source kind; a second one is an SDK edit (trigger K5-ITO).
 
+## Running the tests
+
+Install with `uv sync --group test` (the parallel runner `pytest-xdist` is only in that group). Run
+`pytest -q -n 3 -m "not live and not perf"` for the fast parallel run, as CI does. Run the timing (perf)
+tests on their own, without `-n`: `pytest -q -m perf`. Mixing perf tests into a parallel run on a busy
+machine can give a false timing alarm. On a 2-core machine use `-n 2`.
+
 ## Licence
 
 Proprietary. Copyright (c) 2026 Hadavin. All rights reserved. See [LICENSE](LICENSE). Viewing this repository
