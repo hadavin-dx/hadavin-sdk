@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:47Z / quiet tick: lead confirmed 5 agents are fine; waiting for builder pushes
+
+**FAILED / UNCERTAIN FIRST**
+- Q8c-1 runner a7e31a96 is 59 min in; my status request got no reply yet. Still no clean round on any lane. No builder has pushed since the last block (heads: pd-bind 3db352f5, pd-banner 07bfda12, q8c1-b16 c5aa1c26, sonar-path ddf1d584).
+
+**LEAD ACTIONS**: lead says 5 agents is fine if each has a purpose; add one reviewer agent per package-round the moment a batch is pushed. Doing that. No GH013.
+
+**LIVE ITEMS**: a7e31a96, a37e6e83, a69287e2, a51ea641, a14748c3 (purposes as in the 02:37Z block).
+
+**ROUNDS (WHY)**: unchanged.  **FINISHED SINCE LAST BLOCK**: nothing.
+**EGM STEP PER PACKAGE**: Part 2, Part 6, Q8c-1 code-only branch, SONAR-PATH: all at step 3 (building).
+
+
 ## 02:42Z / quiet tick: 5 builders working, nothing pushed by them yet
 
 **FAILED / UNCERTAIN FIRST**
