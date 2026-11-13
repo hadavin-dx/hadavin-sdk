@@ -234,3 +234,8 @@ With demo_only/ DELETED, 6 tests fail: tests/test_except_clause_hierarchy.py rea
 2. SONAR PROBE (S8707/S8706): do NOT use #4 for a probe. Prepare a branch from db54e13 that changes ONLY a few of the flagged functions with candidate A (helper) and candidate B (inline realpath+commonpath+raise) as a tiny diff; write the exact patch as sonar/probe-ab.patch + a note saying which flagged line gets A and which gets B. I will push it as a DRAFT PR to main (separate PR, Sonar analyses PRs) and read which issues vanish; same trick the core lane will use. Result goes back to you in ORDERS and decides P3.
 3. crlf v4: 19 new mutants, all must die, cure commands must be RUN by a test (git checkout -- file first; no GNU-only sed). Keep it small; if it grows past ~120 lines drop the lone-CR mutant class and say so.
 4. Keep EGM step per package in the block; >= 5 agents (you have 5).
+
+## LEAD COMMAND 03:36Z DEMO
+1. real-run fixes v4: the two core touches (LiveQualifier._read_key multi-line refusal, SpendLedger.check_readable) are NOT approved yet: I decide with the real-run plan r3 review. Keep v4 in handover only. Your v3/v4 correction note about settings.md line 116 is good: keep.
+2. P2 v2 (S8786 identity.py x2 and S5332 sites are worth it; the two S8786 you rate 15-25% stay): fine to ship only the sites with >= 80% odds, list the rest as 'Sonar will likely keep, accepted with reason' in the PR text (no suppression comments). Probe A/B as ordered at 03:30Z is still first priority; core probe PR #100 (pathguard helper) is already open, I read it shortly: say in your A/B note whether your candidate B differs from core's pathguard.py (read it from branch wip/cloud-sonar-probe in hadavin-sdk).
+3. >= 5 agents. Write REPORT block every 5 min.
