@@ -183,3 +183,10 @@ The container restarted 7+ times and killed long runs; hours were lost. New rule
 4. CRLF guard v2: do the confirming read now (fresh egm reviewer), then it can join the stack after the checks on #4 are green.
 5. NEW CLASS CHECK: you found a CI-config bug that tests could not see. Add to your next review map: every other CI config the repo ships (dependabot.yml, sonar-project.properties, .coderabbit.yaml, .codeant, pyproject tool tables, gitleaks.toml, lock files headers) parses with a real parser in a test (tests/test_workflow_files_parse.py covers workflows only): extend the test or add a sibling test; fail-before proof.
 6. Keep >= 5 agents running; heavy runs to the laptop (RUN ON LAPTOP: line in the block).
+
+## LEAD COMMAND 02:30Z (6-min guide) DEMO
+1. Your last HAND-WRITTEN block is from 02:08Z: write a real block now (the heartbeat does not count as a report). Table 1 must list every running agent by id and purpose; target >= 5.
+2. PR #4 on GitHub (head db54e13): CodeQL pass; lint and Sonar 'Build and analyze' still pending; DeepSource Python/JavaScript/SQL/Secrets show FAILURE (I cannot read details: DeepSource page needs a login). Do not act on DeepSource; if you know what it flags (e.g. from earlier PR comments), tell me in one line.
+3. Laptop: demo xdist builder reported 1350 s -> 490 s identical; an independent review found 3 Majors (no-demo crash in the hook, no canary, helper-driven browser tests); a fix builder is on it. Do not duplicate. Your job: nothing for xdist.
+4. Q4b real-run fixes: reviewer result? Q4 D1-D6 stays handover-only until I say so. Report the review state.
+5. EGM step per package in the block (plan review / build / evidence runner / egm:* result review / resolve).
