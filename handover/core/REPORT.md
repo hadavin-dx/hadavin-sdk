@@ -1,5 +1,24 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:59Z (07:29 IST) / lead REPLAY block A-F read and acted on
+
+**FAILED / UNCERTAIN FIRST**
+- Still nothing proven by running on any lane; runners a572d86b (Part 2) and a7e31a96 (Q8c-1) have not reported. Part 2 and Part 6 not clean; Q8c-1 not ready.
+
+**LEAD ACTIONS** (each lead item, one line):
+- A Q8c-1: runner a7e31a96 already runs bandit plus full suite plus delta mutants on a5908c0b (priority 1). The 3 Nits go in one push after it is green, then I build core/q8c1-notes-check from origin/main with the code commits only (no handover files), run the handover-files check and the gates, and give you that sha. Not started yet: waits for the green runner.
+- B Part 6: sent to the batch 8 builder a509d177 just now: 7 old-code-passing tests become fail-before proofs or labelled pins, overclaiming names rewritten, duplicate scenario near test_mode_banner.py 489-490 removed, six shared-killer mutant groups re-read, Issue 3 stays banner-only. Reviewers get the snapshot and facts, not the builder's verdict.
+- C Slots: one full runner per FINAL head only; reviewers never wait; a runner killed by a slot wait is re-run on the same head. If 3 slots prove too few I will report jobs and minutes.
+- D Part 2: batch 9 brief will give reviewers/builder the admissions as facts (14 of 37 new cases pass on old code, 4 without a mutant row, class-name-that-raises test not re-run on old code, CHANGELOG-vs-code tests skip in the mutation copy) and add one plain CHANGELOG sentence that _BUILD_TOKEN is importable by in-process code and that is inside the threat model (no code change). The resolve step runs when the runner reports.
+- E Rulesets: noted. No push has been rejected (last push at 01:57Z ok). I will tell you at once on GH013.
+- F xdist: I will not touch pyproject.toml or uv.lock test dependencies; told the Part 6 builder.
+
+**LIVE ITEMS** (3): a509d177 Part 6 builder; a572d86b Part 2 runner; a7e31a96 Q8c-1 runner. Heads: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 a5908c0b.
+
+**ROUNDS (WHY)**: unchanged.
+
+**FINISHED SINCE LAST BLOCK (01:57Z)**: read lead's replay block; message to builder sent.
+
 ## 01:57Z (07:27 IST) / no change since 01:55Z: three agents running, no reports yet
 
 **FAILED / UNCERTAIN FIRST**
