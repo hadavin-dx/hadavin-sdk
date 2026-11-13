@@ -5958,27 +5958,124 @@ def test_a_field_removed_at_the_very_end_of_the_walk_is_counted(tmp_path: Path) 
     assert _runtime_counted(app, rt), "a name removed at the end of the walk was not counted"
 
 
-def test_a_value_that_moves_in_use_on_a_hook_object_is_not_a_change(tmp_path: Path) -> None:
-    """Class: WALK-REACH, atom/state skip: text, numbers, sets and deques on an entered object (a counter a tool keeps)
-    change in use; they are a slot, not an identity."""
+def _toolbox_with_a_spec() -> tuple[Any, Any]:
+    """A real ``ToolBox`` with one real ``ToolSpec`` (made-up name and host), and the spec."""
+    from hadavin_sdk.tools import ToolBox, ToolSpec
+
+    spec = ToolSpec(
+        name="echo_b13",
+        function="demo_mod:echo",
+        description="made-up",
+        input_schema={},
+        side_effect="none",
+        hosts=("example.invalid",),
+    )
+    return ToolBox({"echo_b13": spec}, {"echo_b13": lambda: "x"}, timeout_s=1.0), spec
+
+
+def test_pin_a_counter_and_a_set_of_a_toolbox_that_move_in_use_are_not_a_change(
+    tmp_path: Path,
+) -> None:
+    """Class: PLAIN-VALUES, the NOT-compared list (``_MOVES_IN_USE``): ``ToolBox._active`` and ``ToolBox._abandoned``
+    change while the server works, so any plain value is accepted there. PIN: the same behaviour on the old tree."""
     app = _built(tmp_path)
     rt = _core_runtime(app)
-
-    class Tool:
-        def __init__(self) -> None:
-            self.calls = 0
-            self.seen: set[str] = set()
-
-        def run(self) -> None:
-            self.calls += 1
-            self.seen.add(str(self.calls))
-
-    tool = Tool()
-    _fields(rt.hooks)["tools"]["counter"] = tool.run
+    box, _spec = _toolbox_with_a_spec()
+    _fields(rt.hooks)["toolbox"] = box
     _seal(rt)
-    for _ in range(3):
-        tool.run()
-    assert not _runtime_counted(app, rt), "a counter that moved in use made the runtime counted"
+    assert not _runtime_counted(app, rt), "control: sealed"
+    _fields(box)["_active"] = 7
+    _fields(box)["_abandoned"] = {object()}
+    assert not _runtime_counted(app, rt), "a field named as moving in use made the runtime counted"
+
+
+@pytest.mark.parametrize(
+    ("where", "field", "value"),
+    [
+        ("box", "timeout_s", 99.0),
+        ("box", "_max_concurrent", 10_000),
+        ("box", "_fetch_ceiling", 1),
+        ("spec", "cluster_http", True),
+        ("spec", "name", "another_name"),
+        ("spec", "function", "other_mod:other"),
+        ("spec", "max_output_bytes", 1),
+        ("executor", "timeout_s", 99.0),
+        ("evidence", "max_tool_calls_per_run", 41),
+        ("evidence", "fetch_ceiling_bytes", 1),
+        ("evidence", "max_concurrent_tool_calls", 400),
+        ("scrub", "min_secret", 5),
+    ],
+)
+def test_a_governing_plain_value_changed_after_the_seal_is_counted(
+    tmp_path: Path, where: str, field: str, value: object
+) -> None:
+    """Class: PLAIN-VALUES (round 12, issue 2): a number, a bool or a text that governs a limit, the evidence, the scrub
+    or a tool is compared by value (text by keyed digest). Fails on 54c3d8a2 (any plain value was accepted)."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    box, spec = _toolbox_with_a_spec()
+    _fields(rt.hooks)["toolbox"] = box
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: sealed"
+    target = {
+        "box": box,
+        "spec": spec,
+        "executor": rt.hooks.execute.__self__,
+        "evidence": rt._evidence,
+        "scrub": _fields(rt._evidence)["scrub"],
+    }[where]
+    assert field in _fields(target), f"control: {where} has no field {field}"
+    assert _fields(target)[field] != value, "control: the value is already the new one"
+    _fields(target)[field] = value
+    assert _runtime_counted(app, rt), f"{where}.{field} changed and was not counted"
+
+
+def test_a_tool_spec_host_list_is_judged_by_its_contents(tmp_path: Path) -> None:
+    """Class: PLAIN-VALUES: inside a tool's specification a container is judged by what it holds (as ``hooks.tools``
+    is): a host list rebuilt with the same hosts is the same governing value, a host list with another host is not."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    box, spec = _toolbox_with_a_spec()
+    _fields(rt.hooks)["toolbox"] = box
+    _seal(rt)
+    _fields(spec)["hosts"] = ("example.invalid",)
+    assert not _runtime_counted(app, rt), "the same hosts in a new tuple were counted"
+    _fields(spec)["hosts"] = ("other.invalid",)
+    assert _runtime_counted(app, rt), "another host was not counted"
+
+
+@pytest.mark.parametrize(
+    ("member", "field"),
+    [
+        ("registry", "agents"),
+        ("registry", "principals"),
+        ("registry", "chains"),
+        ("registry", "contracts"),
+        ("registry", "tools"),
+        ("audit", "_pending"),
+        ("_evidence", "https_ports"),
+    ],
+)
+@pytest.mark.parametrize("how", ["equal copy", "different"])
+def test_a_whole_container_of_a_member_replaced_after_the_seal_is_counted(
+    tmp_path: Path, member: str, field: str, how: str
+) -> None:
+    """Class: WHOLE-CONTAINER (round 12, issue 1): a dict, list or tuple held by a field of ``registry``, ``audit``,
+    ``limits`` or ``_evidence`` is marked by identity and class, so an equal copy of it is a change too. Fails on
+    54c3d8a2 (the mark was the class only)."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    fields = _fields(_fields(rt)[member])
+    old = fields[field]
+    assert type(old) in (dict, list, tuple), f"control: {member}.{field} is a {type(old).__name__}"
+    assert not _runtime_counted(app, rt), "control: sealed"
+    if how == "equal copy":
+        new = type(old)(list(old)) if type(old) is tuple else type(old)(old)
+        assert new is not old, "control: the copy is the same object"
+    else:
+        new = type(old)([object()]) if type(old) is not dict else {"x": object()}
+    fields[field] = new
+    assert _runtime_counted(app, rt), f"{member}.{field} replaced ({how}) and was not counted"
 
 
 def test_a_global_name_a_hook_function_reads_is_not_seen_to_change(tmp_path: Path) -> None:

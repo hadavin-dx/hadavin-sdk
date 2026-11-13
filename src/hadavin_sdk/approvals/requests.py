@@ -29,7 +29,9 @@ from hadavin_sdk.models import (
     now,
 )
 from hadavin_sdk.registry import Registry
+from hadavin_sdk.scrub_settings import ScrubSettings
 from hadavin_sdk.store.protocol import StaleState, Store
+from hadavin_sdk.tools import ToolSpec
 
 OnDecided = Callable[[str, str, ApprovalDecision | None], object]
 _LOG = logging.getLogger("hadavin_sdk.approvals")
@@ -197,17 +199,49 @@ class _Walk:
                 raise _Changed
         self.pos += 1
 
-    def slot(self, obj: object) -> None:
-        """Write down (or check) that a field holds a value that moves in use: any text, number, ``None``, set or deque."""
+    def ident(self, obj: object) -> None:
+        """A container held directly by a field: written down as (identity, class), not by class only, so a whole
+        container replaced by another of the same class (an equal copy too) is a change. Its content is not read."""
         if self.pos >= _WALK_NODES:
             raise _Over
         if self.marks is None:
-            self.out.append((_MARK_SLOT, None))
-        elif self.pos >= len(self.marks) or not (
-            self.marks[self.pos][0] == _MARK_SLOT and _is_slot_value(obj)
-        ):
+            self.out.append((_MARK_ID, (id(obj), type(obj))))
+        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], obj):
             raise _Changed
         self.pos += 1
+
+    def plain(self, obj: object, moves: bool) -> None:
+        """A plain value (text, number, bool, ``None``, set, frozenset, deque) held directly by a field of an entered
+        object. It is written down by value (text and bytes as a keyed digest; a set, frozenset or deque as
+        (identity, class)), unless the field is named in ``_MOVES_IN_USE`` as one that changes while the server works:
+        then any plain value is accepted there (a slot)."""
+        if self.pos >= _WALK_NODES:
+            raise _Over
+        if self.marks is None:
+            if moves:
+                self.out.append((_MARK_SLOT, None))
+            elif any(type(obj) is k for k in _STATE_KINDS):
+                self.out.append((_MARK_ID, (id(obj), type(obj))))
+            else:
+                self.out.append(_mark(obj))
+        elif self.pos >= len(self.marks) or not _mark_matches(self.marks[self.pos], obj):
+            raise _Changed
+        self.pos += 1
+
+    def decide(self, choose: Callable[[], bool]) -> bool:
+        """A yes or no taken when the seal is written and read back, unchanged, when it is compared: the live object
+        never answers it (its class is compared right after, by ``_member_fields``)."""
+        if self.pos >= _WALK_NODES:
+            raise _Over
+        if self.marks is None:
+            answer = choose()
+            self.out.append((_MARK_ATOM, answer))
+        else:
+            if self.pos >= len(self.marks) or self.marks[self.pos][0] != _MARK_ATOM:
+                raise _Changed
+            answer = self.marks[self.pos][1]
+        self.pos += 1
+        return answer is True
 
     def done(self) -> None:
         if self.marks is not None and self.pos != len(self.marks):
@@ -251,6 +285,10 @@ def _walk(obj: object, w: _Walk, depth: int, entered: bool) -> None:
             _walk(item, w, depth + 1, False)
     elif entered:
         _member_fields(obj, w, depth + 1, deep=True)
+    elif w.decide(lambda: kind in _ENTER_KINDS):
+        # a tool's specification or the scrub settings: their fields govern what a tool may reach, so they are read from
+        # a fresh depth (the objects hold plain values, tuples and dicts only: nothing nests without end)
+        _member_fields(obj, w, 1, deep=True)
 
 
 _EMPTY_CELL = object()  # what ``_walk`` writes for a closure cell that holds nothing
@@ -275,14 +313,34 @@ def _member_fields(obj: object, w: _Walk, depth: int, deep: bool) -> None:
         w.add(own)
         return
     w.add(_FIELDS_MARK)
+    moving = _moving_fields(type(obj)) if w.marks is None else frozenset()
     for key, value in dict.items(own):
         w.add(key)
+        kind = type(value)
         if _is_slot_value(value):
-            w.slot(value)
+            w.plain(value, type(key) is str and key in moving)
         elif deep:
             _walk(value, w, depth, False)
+        elif kind is dict or kind is list or kind is tuple:
+            w.ident(value)
         else:
             w.add(value)
+            if w.decide(lambda: kind in _ENTER_KINDS):
+                _member_fields(value, w, depth + 1, deep=False)
+
+
+# Exact classes whose own fields are read (compared) when one is met inside a hook or a member: the scrub settings
+# (redaction) and a tool's specification (its name, function, hosts, ports, secret names and limits).
+_ENTER_KINDS: tuple[type, ...] = (ScrubSettings, ToolSpec)
+# Fields that change while the server works (a counter, a set of threads that were given up): any plain value is
+# accepted there. Every other plain field of an entered object is compared by value. Keyed by (module, class name).
+_MOVES_IN_USE: dict[tuple[str, str], frozenset[str]] = {
+    ("hadavin_sdk.tools", "ToolBox"): frozenset({"_active", "_abandoned"}),
+}
+
+
+def _moving_fields(kind: type) -> frozenset[str]:
+    return _MOVES_IN_USE.get((kind.__module__, kind.__qualname__), frozenset())
 
 
 _FIELDS_MARK = object()  # separates the class of an entered object from its fields
