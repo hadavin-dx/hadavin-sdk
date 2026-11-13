@@ -2,6 +2,25 @@
 
 ## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
 
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F1 | builder: uncaught exceptions to refusals (feed.py, reset_check, scrub_n8n_export, server CA file) | lead fix order | 12:45Z | about 13:45Z | build 1 of 2 (non-security cap) | RUNNING | evidence runner, reviewer |
+| F2 | builder: one shared refusing parser for 6 scripts + option checks | same | 12:45Z | about 13:45Z | build 1 | RUNNING | same |
+| F3 | builder: library readers on FIFO, control characters | same | 12:45Z | about 13:45Z | build 1 | RUNNING | same |
+| F4 | builder: doc mismatches | same | 12:45Z | about 13:45Z | build 1 | RUNNING | same |
+| E1 | evidence: B2 baseline re-runs, TMPDIR A/B | root causes | 12:47Z | about 13:45Z | 1 | RUNNING (19 files so far) | table |
+| D1 | full suite + docs-fix-v1.patch | docs patch breaks no test | 12:38Z | about 13:08Z | 1 | RUNNING at [ 39%] | compare with 3978/0/4 |
+| C2 C6 | hostile 1, flakiness 20x | queue | 12:28Z | 13:30Z | 1 | RUNNING | read results |
+
+LOAD 12:47Z: load average 4.49 4.60 2.93 on 4 cores (full). 7 agents + D1.
+
+**FAILURES AND RETRIES:** no new test failures since the 12:4xZ table; no agent crashed or restarted since the harness stopped my watcher (12:3xZ). Non-zero commands since then: none of mine (C11 hand-back had a missing table.md, corrected). Reviews against my output: none (round 0 of cap 2). Numbers changed: none new. Open root causes: B2 rc=1 UNKNOWN (E1 running), TMPDIR cause partly shown (E1 A/B running).
+Totals: 2 distinct tests failed today (environment, partly shown), 0 real test failures, 0 flakes shown, 1 unexplained. 
+ASK: none.
+
+
+## REPORT (container clock 12:47Z; lead clock about 15 min ahead) CORE lead
+
 **Correction:** the C11 agent said its report listed all 890 cases in table.md; that file does not exist (my check of out/C11). The cases are in results.json and results2.json (pushed with the two harness scripts under standing/C11/); RESULTS.md has the summary. The counts (153 of 890) are the agent's, unchecked by me beyond the run_real_check cases I reproduced.
 
 | id | state |
