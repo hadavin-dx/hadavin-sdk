@@ -147,6 +147,19 @@ def test_only_clean_and_the_slack_block_call_the_card_sanitisers():
             }:
                 bad.append(f"{rel}:{n.lineno}")
     assert not bad, bad
+    # Q8b: the last step of a card text and the one function that feeds a card, each name with its own allowed files
+    allowed_by_name = {
+        "defang_domains": {"approvals/gate.py", "approvals/channel.py"},
+        "redact_for_people": {"approvals/channel.py", "approvals/slack_channel.py"},
+    }
+    for path in ROOT.rglob("*.py"):
+        rel = path.relative_to(ROOT).as_posix()
+        for n in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if isinstance(n, ast.Call) and rel not in allowed_by_name.get(
+                _callee_name(n.func), {rel}
+            ):
+                bad.append(f"{rel}:{n.lineno} {_callee_name(n.func)}")
+    assert not bad, bad
 
 
 # ---- M-2 ---------------------------------------------------------------------------------------------------------------------------------

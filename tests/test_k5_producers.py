@@ -152,6 +152,7 @@ REDACTORS = {
     "redact_layered",
     "safe_head",
     "clean",
+    "redact_for_people",
 }
 
 
