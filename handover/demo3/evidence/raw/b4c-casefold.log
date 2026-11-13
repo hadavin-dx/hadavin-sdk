@@ -1,0 +1,172 @@
+# casefold
+F.FF........F.F.F.FFFF...                                                [100%]
+=================================== FAILURES ===================================
+______ test_split_pairs_differ[stra\xdfe@example.com-STRASSE@example.com] ______
+
+small = 'straße@example.com', capitals = 'STRASSE@example.com'
+
+    @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
+    def test_split_pairs_differ(small: str, capitals: str) -> None:
+        msg = "the key rule changed: change the code and README, docs/limits.md, contract.md and docs/tests.md together"
+>       assert normalise_email(small) != normalise_email(capitals), f"{small} and {capitals} now give one key; {msg}"
+E       AssertionError: straße@example.com and STRASSE@example.com now give one key; the key rule changed: change the code and README, docs/limits.md, contract.md and docs/tests.md together
+E       assert 'strasse@example.com' != 'strasse@example.com'
+E        +  where 'strasse@example.com' = normalise_email('straße@example.com')
+E        +  and   'strasse@example.com' = normalise_email('STRASSE@example.com')
+
+tests/test_email_case_rule.py:60: AssertionError
+________ test_split_pairs_differ[\u017fam@example.com-SAM@example.com] _________
+
+small = 'ſam@example.com', capitals = 'SAM@example.com'
+
+    @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
+    def test_split_pairs_differ(small: str, capitals: str) -> None:
+        msg = "the key rule changed: change the code and README, docs/limits.md, contract.md and docs/tests.md together"
+>       assert normalise_email(small) != normalise_email(capitals), f"{small} and {capitals} now give one key; {msg}"
+E       AssertionError: ſam@example.com and SAM@example.com now give one key; the key rule changed: change the code and README, docs/limits.md, contract.md and docs/tests.md together
+E       assert 'sam@example.com' != 'sam@example.com'
+E        +  where 'sam@example.com' = normalise_email('ſam@example.com')
+E        +  and   'sam@example.com' = normalise_email('SAM@example.com')
+
+tests/test_email_case_rule.py:60: AssertionError
+_____ test_first_capital_splits[stra\xdfe@example.com-StraSSe@example.com] _____
+
+small = 'straße@example.com', capitals = 'StraSSe@example.com'
+
+    @pytest.mark.parametrize(("small", "capitals"), OTHER_CASES)
+    def test_first_capital_splits(small: str, capitals: str) -> None:
+>       assert normalise_email(small) != normalise_email(capitals), f"{small} and {capitals} now give one key"
+E       AssertionError: straße@example.com and StraSSe@example.com now give one key
+E       assert 'strasse@example.com' != 'strasse@example.com'
+E        +  where 'strasse@example.com' = normalise_email('straße@example.com')
+E        +  and   'strasse@example.com' = normalise_email('StraSSe@example.com')
+
+tests/test_email_case_rule.py:67: AssertionError
+___________________________ test_other_rare_letters ____________________________
+
+    def test_other_rare_letters() -> None:
+        """docs/limits.md names µ, ŉ, ǰ and a Greek final sigma before a full stop as more letters that split."""
+        for letter in "µŉǰ":
+>           assert _splits(letter), f"{letter!r} now joins its capital form: change docs/limits.md"
+E           AssertionError: 'µ' now joins its capital form: change docs/limits.md
+E           assert False
+E            +  where False = _splits('µ')
+
+tests/test_email_case_rule.py:104: AssertionError
+___ test_desk_two_leads_two_mails[stra\xdfe@example.com-STRASSE@example.com] ___
+
+env = <conftest.Env object at 0x7fc47dbc8680>, small = 'straße@example.com'
+capitals = 'STRASSE@example.com'
+
+    @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
+    def test_desk_two_leads_two_mails(env, small: str, capitals: str) -> None:
+        """The cost of the rule on the real desk: two `new` answers, two leads, two follow-ups, two emails received."""
+        answers, leads, news, rows, mails = _desk_run(env, small, capitals, 2)
+>       assert answers == [(201, "new"), (201, "new")], f"expected two new leads, got {answers}"
+E       AssertionError: expected two new leads, got [(201, 'new'), (200, 'duplicate')]
+E       assert [(201, 'new')... 'duplicate')] == [(201, 'new'), (201, 'new')]
+E         
+E         At index 1 diff: (200, 'duplicate') != (201, 'new')
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:139: AssertionError
+_____ test_desk_two_leads_two_mails[\u017fam@example.com-SAM@example.com] ______
+
+env = <conftest.Env object at 0x7fc47dbce870>, small = 'ſam@example.com'
+capitals = 'SAM@example.com'
+
+    @pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
+    def test_desk_two_leads_two_mails(env, small: str, capitals: str) -> None:
+        """The cost of the rule on the real desk: two `new` answers, two leads, two follow-ups, two emails received."""
+        answers, leads, news, rows, mails = _desk_run(env, small, capitals, 2)
+>       assert answers == [(201, "new"), (201, "new")], f"expected two new leads, got {answers}"
+E       AssertionError: expected two new leads, got [(201, 'new'), (200, 'duplicate')]
+E       assert [(201, 'new')... 'duplicate')] == [(201, 'new'), (201, 'new')]
+E         
+E         At index 1 diff: (200, 'duplicate') != (201, 'new')
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:139: AssertionError
+_____________ test_docs_name_the_letters[README, Not claimed list] _____________
+
+place = 'README, Not claimed list'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+>       assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+E       AssertionError: the code now splits only ['ı']: change all places that name ßıſ
+E       assert ['ı'] == ['ß', 'ı', 'ſ']
+E         
+E         At index 0 diff: 'ı' != 'ß'
+E         Right contains 2 more items, first extra item: 'ı'
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:167: AssertionError
+_________ test_docs_name_the_letters[README, definition of Same lead] __________
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+>       assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+E       AssertionError: the code now splits only ['ı']: change all places that name ßıſ
+E       assert ['ı'] == ['ß', 'ı', 'ſ']
+E         
+E         At index 0 diff: 'ı' != 'ß'
+E         Right contains 2 more items, first extra item: 'ı'
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:167: AssertionError
+___________________ test_docs_name_the_letters[contract.md] ____________________
+
+place = 'contract.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+>       assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+E       AssertionError: the code now splits only ['ı']: change all places that name ßıſ
+E       assert ['ı'] == ['ß', 'ı', 'ſ']
+E         
+E         At index 0 diff: 'ı' != 'ß'
+E         Right contains 2 more items, first extra item: 'ı'
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:167: AssertionError
+__________________ test_docs_name_the_letters[docs/limits.md] __________________
+
+place = 'docs/limits.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+>       assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+E       AssertionError: the code now splits only ['ı']: change all places that name ßıſ
+E       assert ['ı'] == ['ß', 'ı', 'ſ']
+E         
+E         At index 0 diff: 'ı' != 'ß'
+E         Right contains 2 more items, first extra item: 'ı'
+E         Use -v to get more diff
+
+tests/test_email_case_rule.py:167: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_split_pairs_differ[stra\xdfe@example.com-STRASSE@example.com]
+FAILED tests/test_email_case_rule.py::test_split_pairs_differ[\u017fam@example.com-SAM@example.com]
+FAILED tests/test_email_case_rule.py::test_first_capital_splits[stra\xdfe@example.com-StraSSe@example.com]
+FAILED tests/test_email_case_rule.py::test_other_rare_letters - AssertionErro...
+FAILED tests/test_email_case_rule.py::test_desk_two_leads_two_mails[stra\xdfe@example.com-STRASSE@example.com]
+FAILED tests/test_email_case_rule.py::test_desk_two_leads_two_mails[\u017fam@example.com-SAM@example.com]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, Not claimed list]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[contract.md]
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[docs/limits.md]
+10 failed, 15 passed in 22.38s
+
+
+EXIT_CODE=1

@@ -1,0 +1,28 @@
+# readme_def-phrase
+...................F.....                                                [100%]
+=================================== FAILURES ===================================
+_________ test_docs_name_the_letters[README, definition of Same lead] __________
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+        for letter in letters:
+            assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
+>       assert PHRASE.search(text), f"{place} must say that the two spellings are a different lead"
+E       AssertionError: README, definition of Same lead must say that the two spellings are a different lead
+E       assert None
+E        +  where None = <built-in method search of re.Pattern object at 0x7f1b21794bc0>('* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of blank characte... such as `straße@…` and `STRASSE@…`, `ıstanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them.')
+E        +    where <built-in method search of re.Pattern object at 0x7f1b21794bc0> = re.compile('different\\s+lead').search
+
+tests/test_email_case_rule.py:171: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
+1 failed, 24 passed in 2.42s
+
+
+EXIT_CODE=1
