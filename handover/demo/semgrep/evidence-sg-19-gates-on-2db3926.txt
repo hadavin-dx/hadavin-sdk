@@ -1,0 +1,21 @@
+All checks passed!
+147 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+/bin/bash: line 22: bandit: command not found
+........................................................................ [ 57%]
+.....................................................                    [100%]
+125 passed in 62.95s (0:01:02)
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+=========================== short test summary info ============================
+FAILED tests/test_nosemgrep_form.py::test_semgrep_workflow_never_cancels_a_push_to_main
+1 failed, 62 passed in 0.61s
+0964d5cdbc9e8abd0d84a27c4317acdc963802e153be5b0bacd11cbff2922656  semgrep-on-2db3926.patch
+mutant cancel-in-progress: true -> 1 failed; apply --check OK on 2db3926; lock a791abb7e447 1130 lines; gitleaks dir/git on clean clone: no leaks; 4 files together 125 passed
