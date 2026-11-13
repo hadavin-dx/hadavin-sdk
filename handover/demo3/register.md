@@ -76,3 +76,6 @@ B1b | agent aeb061..: lane3-fix-1 round 2 builder | 12:58Z | ~13:35Z stop 14:00Z
 B3b | agent a266bb..: lane3-fix-3 round 2 builder | 12:58Z | ~13:35Z stop 14:00Z | running
 Q2 | told 12:57Z to finish its campaign and stop
 E4 | reported 13:01Z closed: lane3-fix-3 round 1: all 5 survivors killed, sha ok; one setup slip (11 failed with TMPDIR inside worktree)
+B3b | reported 13:01Z closed: lane3-fix-3-r2.patch (393 passed 2 skipped; M15 real gap proven by a real input)
+REV-3b | agent a50a99..: fresh egm:egm-implementation-readiness round 2 on lane3-fix-3-r2 | 13:03Z | ~13:20Z | running
+E4b | agent a77229..: independent proof of lane3-fix-3-r2 | 13:03Z | ~13:25Z | running

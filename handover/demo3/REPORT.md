@@ -1,5 +1,26 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:06Z / 18:36 IST  HEARTBEAT 48 (B3b reported: round 2 of lane3-fix-3; fresh reviewer and evidence runner started)
+**Idle (`vmstat`, 13:01Z): user 31, system 12, IDLE 41 percent, IO-wait 16, free RAM about 10 GB.** Above 30 percent again: I started the two items the pipeline needs (one fresh read-only reviewer and one one-core evidence runner).
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof | 12:31Z | xdist run 1 ~13:15Z | xdist -n 3 running since 12:54:42Z | running |
+| Q2b | fuzz seeds 7001-7005 + extra generators | 12:49Z | ~14:00Z | seed 7002 campaign d | running |
+| Q3b | crash soak 2 | 12:49Z | ~13:10Z | 275 of 300 rounds, 0 violations, 0 hangs | running |
+| Q6b | cold reader tests/real-services docs | 12:37Z | ~13:25Z | docs/tests.md coverage variant running | running |
+| Q8b | mutation check identity.py + claim logic | 12:49Z | ~13:50Z | running | running |
+| B2 | BUILDER lane3-fix-2 | 12:43Z | ~13:30Z | patched test family running | running |
+| B1b | BUILDER lane3-fix-1 round 2 (cap 2) | 12:58Z | ~13:35Z | desk and burst verified 12:58:28Z; writing changes | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 round 1 suites | 12:52Z | ~13:25Z | running (round 2 gets its own run) | running |
+| **REV-3b** (new) | FRESH independent reviewer `egm:egm-implementation-readiness`, round 2 on lane3-fix-3-r2 (security path, no cap): did not see round 1 or the author's notes | 13:03Z | ~13:20Z | reading | running |
+| **E4b** (new) | EVIDENCE RUNNER: independent proof of lane3-fix-3-r2: every survivor mutant against old and new tests, four extra hand-made mutants, order dependence (forward and reversed), TMPDIR outside the worktree | 13:03Z | ~13:25Z | starting | running |
+| B3b | BUILDER lane3-fix-3 round 2 | 12:58Z | done 13:01Z | **reported** (below) | closed |
+**B3b RESULT (round 2 of lane3-fix-3, security path; evidence/lane3-fix-3-r2-notes.md; patch evidence/lane3-fix-3-r2.patch, sha256 5cbcb2c3bac4b5bd8c00667abbab559daf441b7f45adbfbf11b0cedeaab680e3, tests only):** nothing failed; Python 3.12 only (3.13 not run). **Experiments:** T1: a lone surrogate U+D800 in the path REACHES the `ValueError` branch (`os.path.realpath` raises UnicodeEncodeError; all three public functions answer `PathRefused "cannot be resolved"`), so **mutant M15 is a REAL test gap with a real input, not "equivalent in practice" as agent Q8 judged**; a mock-free twin test was added and the mock kept (`boom(text, *a, **k)`); T5b (working folder deleted, relative path) is deterministic and gives PathRefused: added (skipped on Windows); T5c and T5d mutants are killed by the ORIGINAL tests: no new tests; T2 Windows-drive test added (skipped here, untried on Windows); T3 renames done; T5a multi-byte (`"é" * MAX`) test added. **Proof:** every new test FAILS on its mutant (M15: 6 failed, B1: 4, B2: 3) and passes unmutated; the five round-1 survivors M03, M08, M11, M15, M20 all FAIL against the renamed tests; unmutated tests/test_path_confinement.py + new file: **393 passed, 2 skipped**; the patch applies to a fresh f3c39cf8, after the claims stack and after lane3-fix-1. Not covered: Windows, Python 3.13.
+
+ASK:
+1. Q8 judged M11 and M15 "equivalent" and B3 judged them real gaps; B3b's experiment settles M15 (a real input reaches it). M11 stays reachable only through a direct call of `_inside("relative/x", "/base")` and a mock; that is how the tests cover it. OK? Default: yes.
+2. Q3b ends in about 5 minutes (275 of 300 rounds, 0 violations).
+
 ## 2026-11-13 13:03Z / 18:33 IST  HEARTBEAT 47 (E4 reported; CPU idle 4 percent: nothing new started)
 **Idle (`vmstat`, 12:59Z): user 70, system 13, IDLE 4 percent, IO-wait 13, free RAM about 10 GB.** Throttle rule: below 30 percent idle I start nothing. Q2 stopped on my order (12:57:47Z).
 | id | what it does | since | expected end | real progress now | state |

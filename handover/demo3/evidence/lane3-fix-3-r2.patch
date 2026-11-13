@@ -1,0 +1,138 @@
+diff --git a/tests/test_path_confinement_lane3.py b/tests/test_path_confinement_lane3.py
+new file mode 100644
+index 0000000..83b0d5d
+--- /dev/null
++++ b/tests/test_path_confinement_lane3.py
+@@ -0,0 +1,132 @@
++"""Extra tests for tools/pathconfine.py, found by changing the code on purpose (mutation run Q8).
++Mutant ids (M03, M08, M11, M15, M20, B1) appear only in the docstrings. Each test fails on its mutant.
++Made-up data only; private temporary folders."""
++
++from __future__ import annotations
++
++import os
++from pathlib import Path
++
++import pytest
++
++import tools.pathconfine as pc
++
++
++class _LyingStr(str):
++    """A str subclass that answers differently from a real str."""
++
++    def strip(self, *args: object) -> str:  # a faulty answer: "this is blank"
++        return ""
++
++
++def test_a_str_subclass_cannot_answer_differently_on_a_later_call(tmp_path: Path) -> None:
++    """Mutant M03: the text is no longer turned into an exact str."""
++    (tmp_path / "a.txt").write_text("x", encoding="utf-8")
++    text = _LyingStr(str(tmp_path / "a.txt"))
++    assert pc._text(text, "f") == str(tmp_path / "a.txt")
++    assert type(pc._text(text, "f")) is str
++    assert pc.confine_existing(text, what="f", roots=[tmp_path]) == (tmp_path / "a.txt").resolve()
++
++
++def test_a_path_of_exactly_the_maximum_length_is_accepted() -> None:
++    """Mutant M08: the limit is compared with >= instead of >."""
++    edge = "a" * pc.MAX_PATH_CHARS
++    assert pc._text(edge[:-1], "f") == edge[:-1]  # one below the maximum
++    assert pc._text(edge, "f") == edge  # exactly the maximum
++    with pytest.raises(pc.PathRefused, match="path too long"):
++        pc._text(edge + "a", "f")  # one above the maximum
++
++
++def test_the_path_length_limit_counts_characters_not_bytes() -> None:
++    """Mutant B1: the length is taken in bytes (len(os.fsencode(text))) instead of characters."""
++    text = "\u00e9" * pc.MAX_PATH_CHARS  # two bytes per character in UTF-8
++    assert pc._text(text, "f") == text
++    with pytest.raises(pc.PathRefused, match="path too long"):
++        pc._text(text + "\u00e9", "f")
++
++
++def test_a_containment_check_that_cannot_decide_says_not_inside() -> None:
++    """Mutant M11: _inside lets the ValueError of os.path.commonpath escape or answers True."""
++    assert pc._inside("relative/x", os.path.realpath(os.sep + "base")) is False  # mixes relative and absolute
++    assert pc._inside(os.path.realpath(os.sep + "base" + os.sep + "x"), "relative") is False
++
++
++def test_a_containment_check_that_raises_makes_the_public_functions_refuse(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """Mutant M11 through the public functions (commonpath replaced by one that raises)."""
++    (tmp_path / "a.txt").write_text("x", encoding="utf-8")
++
++    def boom(_paths: object) -> str:
++        raise ValueError("Can't mix absolute and relative paths")
++
++    monkeypatch.setattr(pc.os.path, "commonpath", boom)
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine(tmp_path / "a.txt", what="f", roots=[tmp_path])
++    with pytest.raises(pc.PathRefused, match="outside the allowed folders"):
++        pc.confine_existing(tmp_path / "a.txt", what="f", roots=[tmp_path])
++
++
++@pytest.mark.skipif(os.name != "nt", reason="needs a second drive: untried on this (Linux) machine")
++def test_a_path_on_another_drive_is_not_inside() -> None:
++    """Mutant M11 with the one realistic real cause: commonpath raises for two drives (Windows only)."""
++    assert pc._inside("C:\\x", "D:\\") is False
++    assert pc._inside("D:\\x", "C:\\") is False
++
++
++@pytest.mark.skipif(os.name == "nt", reason="a lone surrogate in a path is only refused this way by POSIX realpath")
++@pytest.mark.parametrize("func", ["confine", "confine_existing", "confine_anywhere"])
++def test_a_path_with_a_lone_surrogate_is_a_plain_refusal(tmp_path: Path, func: str) -> None:
++    """Mutant M15, real input: os.path.realpath raises UnicodeEncodeError (a ValueError) for U+D800."""
++    target = str(tmp_path) + "/a" + chr(0xD800) + "b"
++    kwargs: dict[str, object] = {} if func == "confine_anywhere" else {"roots": [tmp_path]}
++    with pytest.raises(pc.PathRefused, match="cannot be resolved") as info:
++        getattr(pc, func)(target, what="--f", **kwargs)
++    assert type(info.value) is pc.PathRefused
++    assert "--f" in str(info.value)
++
++
++@pytest.mark.parametrize("func", ["confine", "confine_existing", "confine_anywhere"])
++def test_a_path_that_cannot_be_resolved_is_a_plain_refusal(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, func: str
++) -> None:
++    """Mutant M15, deterministic fallback: realpath is made to raise a plain ValueError for the argument."""
++    real_realpath = os.path.realpath
++    target = str(tmp_path / "a.txt")
++
++    def boom(text: str, *args: object, **kwargs: object) -> str:
++        if text == target:  # only the argument fails; the allowed folders still resolve
++            raise ValueError("embedded null byte")  # a plain ValueError, not a PathRefused
++        return real_realpath(text)
++
++    monkeypatch.setattr(pc.os.path, "realpath", boom)
++    kwargs: dict[str, object] = {} if func == "confine_anywhere" else {"roots": [tmp_path]}
++    with pytest.raises(pc.PathRefused, match="cannot be resolved") as info:
++        getattr(pc, func)(target, what="--f", **kwargs)
++    assert type(info.value) is pc.PathRefused  # not a bare ValueError traceback
++    assert "--f" in str(info.value)
++
++
++@pytest.mark.skipif(os.name == "nt", reason="deleting the working folder is not possible on Windows")
++@pytest.mark.parametrize("func", ["confine", "confine_existing", "confine_anywhere"])
++def test_a_relative_path_after_the_working_folder_was_deleted_is_a_plain_refusal(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, func: str
++) -> None:
++    """Mutant B2: _resolve catches only ValueError, so the OSError of os.getcwd escapes."""
++    gone = tmp_path / "gone"
++    gone.mkdir()
++    monkeypatch.chdir(gone)
++    gone.rmdir()
++    kwargs: dict[str, object] = {} if func == "confine_anywhere" else {"roots": [tmp_path]}
++    with pytest.raises(pc.PathRefused, match="cannot be resolved") as info:
++        getattr(pc, func)("rel/x.txt", what="--f", **kwargs)
++    assert type(info.value) is pc.PathRefused
++
++
++def test_a_new_name_of_exactly_the_maximum_length_is_accepted(tmp_path: Path) -> None:
++    """Mutant M20: the name limit is compared with >= instead of >."""
++    for length in (pc.MAX_NAME_CHARS - 1, pc.MAX_NAME_CHARS):
++        name = "a" * length
++        assert pc.confine(tmp_path / name, what="f", roots=[tmp_path]) == tmp_path.resolve() / name
++    with pytest.raises(pc.PathRefused, match="not usable as the name of a new file"):
++        pc.confine(tmp_path / ("a" * (pc.MAX_NAME_CHARS + 1)), what="f", roots=[tmp_path])
