@@ -1,1 +1,2 @@
 e9 started 14:26 UTC; tree applied r2+6b
+e9 checkpoint 14:30 UTC: full run in progress
