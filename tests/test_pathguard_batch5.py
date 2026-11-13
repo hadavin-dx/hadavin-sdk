@@ -71,9 +71,7 @@ def _only_a_refusal(label: str, call, secrets: list[str]) -> str:
     except PathRefused as exc:
         text = str(exc)
         assert text.split(": ", 1)[-1] in FIXED, f"{label}: unexpected refusal text {text[:80]!r}"
-        assert exc.__cause__ is None and (exc.__context__ is None or exc.__suppress_context__), (
-            label
-        )
+        assert exc.__cause__ is None and exc.__context__ is None, label
         assert not any(s and s in text for s in secrets), f"{label}: the path is in the text"
         return exc.rule
     except (
@@ -95,7 +93,7 @@ def test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_poi
     name = "a" * length
     for label, call in _calls(tmp_path, (name,)):
         rule = _only_a_refusal(f"{label} L={length}", call, [str(tmp_path), name[:40]])
-        if length > pathguard.MAX_COMPONENT_BYTES and label != "inside":
+        if length > pathguard.MAX_COMPONENT_BYTES:
             assert rule, f"{label} L={length}: a name over 255 bytes was accepted"
 
 

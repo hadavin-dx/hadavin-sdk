@@ -167,28 +167,91 @@ _KEY_SHAPES = (
 _LONG_RUN = re.compile(r"[A-Za-z0-9]{28,}")
 
 
-def _key_shaped(text: str) -> bool:
-    if any(shape.search(text.replace(AWS_DOC_KEY, "")) for shape in _KEY_SHAPES):
-        return True
-    return any(len(set(run)) >= 8 for run in _LONG_RUN.findall(text))
+def _shapes_of(text: str) -> list[str]:
+    """Which secret shapes ``text`` has: ``key`` (key-shaped or a long mixed run), ``account-number`` (12 digits), ``arn``."""
+    shapes = []
+    bare = text.replace(AWS_DOC_KEY, "")
+    if any(shape.search(bare) for shape in _KEY_SHAPES) or any(
+        len(set(run)) >= 8 for run in _LONG_RUN.findall(bare)
+    ):
+        shapes.append("key")
+    if PATTERNS["account-id"].search(text):
+        shapes.append("account-number")
+    if PATTERNS["arn"].search(text):
+        shapes.append("arn")
+    return shapes
 
 
-class _Names:
-    def __init__(self) -> None:
-        self.ids: list[str] = []
+def _fold(node: ast.AST) -> str | None:
+    """The text a literal expression builds (a constant, ``a + b``, ``a * 3``), or None for anything else."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.BinOp):
+        left, right = _fold(node.left), _fold(node.right)
+        if isinstance(node.op, ast.Add) and left is not None and right is not None:
+            return left + right
+        if isinstance(node.op, ast.Mult) and left is not None:
+            count = node.right.value if isinstance(node.right, ast.Constant) else None
+            return left * count if isinstance(count, int) and 0 <= count < 10_000 else None
+    return None
 
-    def pytest_collection_modifyitems(self, items) -> None:
-        self.ids = [item.nodeid for item in items]
 
-
-def test_no_test_name_carries_a_key_shaped_string():
-    """pytest prints a parameter value as part of the test name, so a planted fake key in a parameter list lands in logs and
-    reports (a secret scanner reads those). Every such parameter needs an explicit readable id."""
-    names = _Names()
-    code = pytest.main(
-        ["--collect-only", "-q", "-p", "no:cacheprovider", str(Path(__file__).parent)],
-        plugins=[names],
+def _is_param_call(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "param"
     )
-    assert code == 0 and len(names.ids) > 1000, (code, len(names.ids))
-    bad = [name.split("[")[0] for name in names.ids if _key_shaped(name)]
-    assert bad == [], f"{len(bad)} test names carry a key-shaped string: {bad[:5]}"
+
+
+def _literals(node: ast.AST):
+    """Every literal text under ``node`` that pytest would print in a test id: not inside ``pytest.param(..., id=...)``."""
+    if _is_param_call(node) and any(k.arg == "id" for k in node.keywords):
+        return
+    text = _fold(node)
+    if text is not None:
+        yield node.lineno, text
+        return
+    for child in ast.iter_child_nodes(node):
+        yield from _literals(child)
+
+
+def key_shaped_test_ids(root: Path) -> list[str]:
+    """``file:line: shape`` for each parametrize in ``root`` that has no ``ids=`` and a literal value of a secret shape
+    (never the text itself). Values that come from a variable or a function call are not seen by this scan."""
+    hits = []
+    for path in sorted(root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            is_parametrize = (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "parametrize"
+                and len(node.args) >= 2
+            )
+            if not is_parametrize or any(k.arg == "ids" for k in node.keywords):
+                continue
+            for line, text in _literals(node.args[1]):
+                hits += [f"{path.relative_to(root)}:{line}: {shape}" for shape in _shapes_of(text)]
+    return hits
+
+
+def test_no_literal_parameter_of_a_secret_shape_is_printed_in_a_test_name():
+    """pytest prints a parameter value as part of the test name, so a planted fake key, account number or ARN in a parameter
+    list lands in logs and reports. Every such parameter needs an explicit readable ``ids=`` or ``pytest.param(id=)``."""
+    hits = key_shaped_test_ids(Path(__file__).parent)
+    assert hits == [], f"{len(hits)} parameters would be printed: {hits[:8]}"
+
+
+def test_control_the_scan_sees_a_planted_value_and_ignores_one_with_an_id(tmp_path):
+    parts = "AKIA" + "ABCDEFGHIJKLMNOP"
+    planted = f'import pytest\n\n@pytest.mark.parametrize("v", [("{parts}")])\ndef test_x(v): ...\n'
+    (tmp_path / "test_a.py").write_text(planted, encoding="utf-8")
+    assert key_shaped_test_ids(tmp_path) == ["test_a.py:3: key"]
+    (tmp_path / "test_a.py").write_text(
+        planted.replace('[("', '[pytest.param("').replace('")]', '", id="plant")]'),
+        encoding="utf-8",
+    )
+    assert key_shaped_test_ids(tmp_path) == []
+    (tmp_path / "test_a.py").write_text(planted.replace("]", '], ids=["plant"]'), encoding="utf-8")
+    assert key_shaped_test_ids(tmp_path) == []

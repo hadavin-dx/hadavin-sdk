@@ -78,6 +78,5 @@ src/hadavin_sdk/store/migration_numbers.py | released_problems | .is_file | 1 | 
 src/hadavin_sdk/store/migration_numbers.py | released_problems | .read_bytes | 1 | package | - | the migrations folder shipped inside the package (a repo test passes its own folders)
 src/hadavin_sdk/store/postgres.py | ca_file | tempfile.mkstemp | 1 | fixed | - | mkstemp makes a new private file in the OS temp folder; no operator path is read
 src/hadavin_sdk/tools.py | ToolContext.fetch | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
-src/hadavin_sdk/tools.py | _module_files | .is_file | 3 | config | isidentifier | the module name is checked part by part with isidentifier and a length limit that leaves room for .py before any path is built; sys.path entries are the process own
 src/hadavin_sdk/tools.py | load_tool_module | .read_bytes | 1 | config | isidentifier | the module name is checked part by part with isidentifier and a length limit that leaves room for .py before any path is built; sys.path entries are the process own
 src/hadavin_sdk/tools.py | module_sha256 | .read_bytes | 1 | config | isidentifier | the module name is checked part by part with isidentifier and a length limit that leaves room for .py before any path is built; sys.path entries are the process own

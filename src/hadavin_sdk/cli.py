@@ -260,14 +260,22 @@ def score_cmd(audit, args) -> int:
         args.outputs
     )  # the operator's own --outputs folder: shape checked; the report name is ours
     report_dir = pathguard.join(outputs, REPORT_DIR, what="score report folder")
-    if report_dir.exists() and (not report_dir.is_dir() or any(report_dir.iterdir())):
+    try:
+        report_dir = pathguard.operator_dir(
+            report_dir, what="score report folder", must_exist=False
+        )
+    except pathguard.PathRefused as exc:  # it exists and is not a folder
+        raise pathguard.mapped(exc, R11="score report folder exists and is not empty") from None
+    if pathguard.has_entries(report_dir, what="score report folder"):
         raise ConfigError("score report folder exists and is not empty")
     res = score(outputs, args.answers, args.cause_list, args.bundles)
     run_id = new_id("k1b")
     ref = {"object_ref": res.answers_sha256, "inputs_hash": res.outputs_digest}
     audit.emit("score_report", run_id, **ref, result="started")
     try:
-        report_dir.mkdir(exist_ok=True)
+        pathguard.operator_dir(
+            report_dir, what="score report folder", must_exist=False, create_mode=0o777
+        )
         atomic_write(report_dir, "score-report.md", render_score_report(res))
     except Exception as exc:
         audit.emit_outcome(

@@ -82,7 +82,9 @@ def _glued_cases():
 GLUED = list(_glued_cases())
 
 
-@pytest.mark.parametrize(("arn", "sep", "key"), GLUED)
+@pytest.mark.parametrize(
+    ("arn", "sep", "key"), GLUED, ids=[f"glued-{n}" for n in range(len(GLUED))]
+)  # the ARNs hold an account number: ids by position
 def test_class_a_no_credential_glued_to_an_arn_reaches_the_stored_map(arn, sep, key):
     mapping: dict[str, str] = {}
     text = runmap.redact_untrusted(f"ran {arn}{sep}{key}={TOKEN} ok", mapping)
@@ -114,7 +116,10 @@ GCP = "projects/my-proj-123456/locations/us/functions/f1"
 AZ = "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/rg/providers/p/x"
 
 
-@pytest.mark.parametrize("ident", [GCP, AZ, *list(_arns())[::17]])
+IDENTS = [GCP, AZ, *list(_arns())[::17]]
+
+
+@pytest.mark.parametrize("ident", IDENTS, ids=[f"ident-{n}" for n in range(len(IDENTS))])
 @pytest.mark.parametrize("sep", [";", ",", ")", "=", "'", "；", " "])
 def test_class_a_gcp_azure_and_arn_tails_stop_at_the_identifier(ident, sep):
     mapping: dict[str, str] = {}
@@ -532,10 +537,12 @@ VALUES = [
 ]
 
 
-@pytest.mark.parametrize("value", VALUES)
+@pytest.mark.parametrize("value", VALUES, ids=[f"value-{n}" for n in range(len(VALUES))])
 @pytest.mark.parametrize("sep", ["", "*", "+", "@", "-", "/", ":", "\u200b", "\u2060", ";", ","])
 @pytest.mark.parametrize("key", ["token", "password", "api_key", "secret"])
-@pytest.mark.parametrize("arn", list(_arns())[::23])
+@pytest.mark.parametrize(
+    "arn", list(_arns())[::23], ids=[f"arn-{n}" for n in range(len(list(_arns())[::23]))]
+)
 def test_class_a_many_values_x_separators_x_keys_never_reach_the_model_or_the_map(
     arn, key, sep, value
 ):

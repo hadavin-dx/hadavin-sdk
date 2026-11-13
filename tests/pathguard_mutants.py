@@ -23,10 +23,12 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST = "tests/test_pathguard.py"
 PIN = "tests/test_pathguard::"
 PG = "src/hadavin_sdk/pathguard.py"
+PT = "src/hadavin_sdk/pathtext.py"
 AT = "src/hadavin_sdk/k1b/atomic.py"
 CFG = "src/hadavin_sdk/config.py"
 B3 = "tests/test_pathguard_batch3.py"
 B6 = "tests/test_pathguard_batch6.py"
+B7 = "tests/test_pathguard_batch7.py"
 HF = "src/hadavin_sdk/hashing.py"
 SF = "src/hadavin_sdk/actions/secrets_file.py"
 
@@ -65,7 +67,7 @@ SEP = 'if "/" in name or "\\\\" in name:'
 M = [
     mutant(
         "R1 empty and dot names accepted",
-        PG,
+        PT,
         '    if name in ("", ".", ".."):',
         "    if name in ():",
         "test_pin_r1_empty_and_dot_names_are_refused",
@@ -73,7 +75,7 @@ M = [
     ),
     mutant(
         "R2 a separator is accepted",
-        PG,
+        PT,
         "    " + SEP,
         "    if False:",
         "test_pin_r2_a_separator_is_refused_on_every_os",
@@ -81,7 +83,7 @@ M = [
     ),
     mutant(
         "R3 a colon is accepted",
-        PG,
+        PT,
         '    if ":" in name:',
         "    if False:",
         "test_pin_r3_a_colon_is_refused_on_every_os",
@@ -89,7 +91,7 @@ M = [
     ),
     mutant(
         "R4a a control character in a name is accepted",
-        PG,
+        PT,
         "    if _CONTROL.search(name):",
         "    if False:",
         "test_pin_r4_a_control_character_is_refused_in_a_name",
@@ -97,7 +99,7 @@ M = [
     ),
     mutant(
         "R4b a control character in an operator path is accepted",
-        PG,
+        PT,
         "    if _CONTROL.search(text):",
         "    if False:",
         "test_pin_r4_a_control_character_is_refused_in_an_operator_path",
@@ -105,23 +107,23 @@ M = [
     ),
     mutant(
         "R5a a name over 255 bytes is accepted",
-        PG,
-        "    if _size(name) > MAX_COMPONENT_BYTES:",
+        PT,
+        "    if name_bytes(name) > MAX_COMPONENT_BYTES:",
         "    if False:",
         "test_pin_r5_a_name_over_255_utf8_bytes_is_refused",
         "R5 not refused",
     ),
     mutant(
-        "R5b a path over 4096 characters is accepted",
-        PG,
-        "    if _size(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):",
-        "    if any(_size(p) > MAX_COMPONENT_BYTES for p in parts):",
-        "test_pin_r5_a_path_over_4096_characters_is_refused",
+        "R5b a path over 4095 bytes is accepted",
+        PT,
+        "    if name_bytes(text) > MAX_PATH_BYTES or any(\n        name_bytes(p) > MAX_COMPONENT_BYTES for p in PurePath(text).parts\n    ):",
+        "    if False or any(\n        name_bytes(p) > MAX_COMPONENT_BYTES for p in PurePath(text).parts\n    ):",
+        "test_pin_r5_a_path_over_4095_bytes_is_refused",
         "R5 not refused",
     ),
     mutant(
         "R6 a trailing dot or space is accepted",
-        PG,
+        PT,
         '    if name[-1] in ". ":',
         "    if False:",
         "test_pin_r6_a_trailing_dot_or_space_is_refused",
@@ -129,7 +131,7 @@ M = [
     ),
     mutant(
         "R7a a device name is accepted",
-        PG,
+        PT,
         '    if name.split(".", 1)[0].rstrip(" ").upper() in _DEVICE_NAMES:',
         "    if False:",
         "test_pin_r7_a_reserved_device_name_is_refused",
@@ -137,7 +139,7 @@ M = [
     ),
     mutant(
         "R7b the superscript COM and LPT forms are accepted",
-        PG,
+        PT,
         '"0123456789\\u00b9\\u00b2\\u00b3"',
         '"0123456789"',
         "test_pin_r7_a_reserved_device_name_is_refused",
@@ -153,7 +155,7 @@ M = [
     ),
     mutant(
         "R9 a rooted or UNC backslash name is accepted",
-        PG,
+        PT,
         "    " + SEP,
         '    if "/" in name:',
         "test_pin_r9_absolute_drive_rooted_and_unc_names_are_refused",
@@ -162,8 +164,8 @@ M = [
     mutant(
         "R10 a NUL in a path is not turned into a refusal",
         PG,
-        "    except (OSError, RuntimeError, ValueError, TypeError):",
-        "    except (OSError, RuntimeError, TypeError):",
+        "_SYSTEM_ERRORS = (OSError, ValueError, TypeError, RecursionError)",
+        "_SYSTEM_ERRORS = (OSError, TypeError, RecursionError)",
         "test_pin_r10_a_value_error_from_resolve_is_refused_as_r10",
         "R10 not refused",
     ),
@@ -194,16 +196,16 @@ M = [
     mutant(
         "X2 the temp file is not removed after a failed rename",
         AT,
-        "        os.replace(tmp, final)\n    except OSError as exc:\n        tmp.unlink(missing_ok=True)\n",
-        "        os.replace(tmp, final)\n    except OSError as exc:\n",
+        "        tmp.unlink(missing_ok=True)\n        raise failure\n",
+        "        raise failure\n",
         "test_atomic_write_removes_its_temp_file_when_the_rename_fails",
         "left after a failed rename",
     ),
     mutant(
         "X3 join does not check each name (the component call)",
         PG,
-        "    for name in names:\n        _check_name(name, what)\n    _check_text(str(base), what)",
-        "    _check_text(str(base), what)",
+        "    for name in names:\n        check_name(name, what)\n    check_text(str(base), what)",
+        "    check_text(str(base), what)",
         "test_pin_join_applies_component_to_every_name",
         "component not applied",
     ),
@@ -233,7 +235,7 @@ M = [
     ),
     mutant(
         "R12 a Windows-invalid character in a name is accepted",
-        PG,
+        PT,
         "    if _WINDOWS_INVALID.search(name):",
         "    if False:",
         "test_pin_windows_invalid_characters_are_refused_in_a_name_r12",
@@ -243,8 +245,8 @@ M = [
     mutant(
         "R4c join does not check a control character in the base",
         PG,
-        "    for name in names:\n        _check_name(name, what)\n    _check_text(str(base), what)\n",
-        "    for name in names:\n        _check_name(name, what)\n",
+        "    for name in names:\n        check_name(name, what)\n    check_text(str(base), what)\n",
+        "    for name in names:\n        check_name(name, what)\n",
         "test_pin_a_control_character_in_the_base_is_refused_not_only_in_the_names",
         "wrong rule",
         SITES,
@@ -252,7 +254,7 @@ M = [
     mutant(
         "R4d inside does not check a control character in the base",
         PG,
-        "    _check_text(str(base), what)\n    return _within(\n        _resolve(",
+        "    check_text(str(base), what)\n    return _within(\n        _resolve(",
         "    return _within(\n        _resolve(",
         "test_pin_inside_checks_the_base_text_too",
         "wrong rule",
@@ -260,16 +262,16 @@ M = [
     ),
     mutant(
         "R4f the explicit control check does not rely on resolve (3.13)",
-        PG,
-        '    if _CONTROL.search(text):\n        raise _refuse("R4", what, "contains a control character")\n    parts =',
-        "    parts =",
+        PT,
+        '    if _CONTROL.search(text):\n        raise refuse("R4", what, "contains a control character")\n    if name_bytes(text)',
+        "    if name_bytes(text)",
         "test_pin_the_nul_is_refused_even_when_resolve_would_not_raise",
         "DID NOT RAISE",
         SITES,
     ),
     mutant(
         "R4g the C1 and invisible characters are not in the control set",
-        PG,
+        PT,
         '    + "".join(f"{re.escape(chr(lo))}-{re.escape(chr(hi))}" for _, lo, hi in CONTROL_RANGES)',
         '    + "".join(f"{re.escape(chr(lo))}-{re.escape(chr(hi))}" for _, lo, hi in CONTROL_RANGES[:1])',
         "test_pin_every_public_function_refuses_a_control_character_explicitly",
@@ -278,7 +280,7 @@ M = [
     ),
     mutant(
         "R-pickle PathRefused loses its rule through pickle",
-        PG,
+        PT,
         "        return (PathRefused, (self.rule, str(self)))",
         "        return (ConfigError, (str(self),))",
         "test_pin_pathrefused_keeps_its_rule_through_copy_and_pickle",
@@ -306,7 +308,7 @@ M = [
     site(
         "S-bundle the case-id length is not checked at load",
         "src/hadavin_sdk/k1b/bundle.py",
-        '    if len(f"{case}.json".encode()) > pathguard.MAX_WRITE_NAME_BYTES:',
+        '    if pathguard.name_bytes(f"{case}.json") > pathguard.MAX_WRITE_NAME_BYTES:',
         "    if False:",
         "test_site_bundle_load_bundle_refuses_a_long_case_id_at_load",
         "Regex pattern did not match",
@@ -484,12 +486,12 @@ def _range_rows():
     for i, (label, lo, hi) in enumerate(RANGES):
         line = f'    ("{label}", 0x{lo:04X}, 0x{hi:04X}),\n'
         killer = f"test_pin_r4_range_{i:02d}"
-        rows.append(b3(f"R4-{i:02d} the range is dropped: {label}", PG, line, "", killer))
+        rows.append(b3(f"R4-{i:02d} the range is dropped: {label}", PT, line, "", killer))
         if hi > lo:
             rows.append(
                 b3(
                     f"R4-{i:02d} the range ends one early: {label}",
-                    PG,
+                    PT,
                     line,
                     f'    ("{label}", 0x{lo:04X}, 0x{hi - 1:04X}),\n',
                     killer,
@@ -498,7 +500,7 @@ def _range_rows():
             rows.append(
                 b3(
                     f"R4-{i:02d} the range starts one late: {label}",
-                    PG,
+                    PT,
                     line,
                     f'    ("{label}", 0x{lo + 1:04X}, 0x{hi:04X}),\n',
                     killer,
@@ -511,28 +513,28 @@ M += _range_rows()
 M += [
     b3(
         "R6a a trailing dot is accepted",
-        PG,
+        PT,
         '    if name[-1] in ". ":',
         '    if name[-1] in " ":',
         "test_pin_r6_a_trailing_dot_is_refused",
     ),
     b3(
         "R6b a trailing space is accepted",
-        PG,
+        PT,
         '    if name[-1] in ". ":',
         '    if name[-1] in ".":',
         "test_pin_r6_a_trailing_space_is_refused",
     ),
     b3(
         "R7c the part before the LAST dot decides, not the first",
-        PG,
+        PT,
         '    if name.split(".", 1)[0].rstrip(" ").upper() in _DEVICE_NAMES:',
         '    if name.rsplit(".", 1)[0].rstrip(" ").upper() in _DEVICE_NAMES:',
         "test_pin_r7_the_part_before_the_first_dot_decides",
     ),
     b3(
         "R7d spaces before the dot hide a device name",
-        PG,
+        PT,
         '    if name.split(".", 1)[0].rstrip(" ").upper() in _DEVICE_NAMES:',
         '    if name.split(".", 1)[0].upper() in _DEVICE_NAMES:',
         "test_pin_r7_spaces_before_the_dot_do_not_hide_a_device_name",
@@ -540,7 +542,7 @@ M += [
     b3(
         "R5c join does not check the base text",
         PG,
-        "    _check_text(str(base), what)\n    root = _resolve(base, what, strict=False)\n    return _within(root, root.joinpath",
+        "    check_text(str(base), what)\n    root = _resolve(base, what, strict=False)\n    return _within(root, root.joinpath",
         "    root = _resolve(base, what, strict=False)\n    return _within(root, root.joinpath",
         "test_pin_r5_join_refuses_a_wide_base_text_that_resolves_short",
         "DID NOT RAISE",
@@ -548,14 +550,14 @@ M += [
     b3(
         "R5d join does not check the joined path",
         PG,
-        "    _check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if not real",
+        "    check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if not real",
         "    real = _resolve(path, what, strict=must_exist)\n    if not real",
         "test_pin_r5_join_refuses_a_long_joined_path_when_base_and_names_are_short",
     ),
     b3(
         "R5e inside does not check the base text",
         PG,
-        "    _check_text(str(base), what)\n    return _within(\n        _resolve(",
+        "    check_text(str(base), what)\n    return _within(\n        _resolve(",
         "    return _within(\n        _resolve(",
         "test_pin_r5_inside_refuses_a_long_base_text",
         "DID NOT RAISE",
@@ -563,7 +565,7 @@ M += [
     b3(
         "R5f inside does not check the path text (shared tail)",
         PG,
-        "    _check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if not real",
+        "    check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if not real",
         "    real = _resolve(path, what, strict=must_exist)\n    if not real",
         "test_pin_r5_inside_refuses_a_long_path_text",
         "DID NOT RAISE",
@@ -571,23 +573,23 @@ M += [
     b3(
         "R5g the operator check does not check the text",
         PG,
-        "    _check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
+        "    check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
         "    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
         "test_pin_r5_operator_dir_refuses_a_long_text",
         "DID NOT RAISE",
     ),
     b3(
         "R5i the text check does not check the length",
-        PG,
-        '    if _size(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):\n        raise _refuse("R5", what, "too long")\n\n\ndef _within',
-        "\n\ndef _within",
+        PT,
+        '    if name_bytes(text) > MAX_PATH_BYTES or any(\n        name_bytes(p) > MAX_COMPONENT_BYTES for p in PurePath(text).parts\n    ):\n        raise refuse("R5", what, "too long")\n',
+        "    pass\n",
         "test_pin_r5_operator_dir_refuses_a_long_text",
     ),
     b3(
         "R10b a RuntimeError from resolve (a symlink loop on 3.12) escapes",
         PG,
-        "    except (OSError, RuntimeError, ValueError, TypeError):",
-        "    except (OSError, ValueError, TypeError):",
+        "        if not str(exc).startswith(_LOOP_TEXT):\n            raise\n",
+        "        raise\n",
         "test_pin_r10_a_runtime_error_from_resolve_is_refused_as_r10",
         "Symlink loop",
         allow_crash=True,
@@ -611,8 +613,8 @@ M += [
     b3(
         "X7 a folder is replaced, not refused",
         AT,
-        '    if final.is_dir():  # a folder is never replaced; the text must not hold the path\n        raise pathguard.PathRefused("R13", "output file: a folder is not replaced")\n',
-        "",
+        '        raise pathguard.PathRefused("R13", "output file: a folder is not replaced")\n',
+        "        pass\n",
         "test_atomic_write_onto_a_folder_is_a_refusal_with_no_path_in_the_text",
         "IsADirectoryError",
         allow_crash=True,
@@ -621,8 +623,8 @@ M += [
     b3(
         "X8 a taken temp name raises the raw OS error",
         AT,
-        '        raise pathguard.PathRefused("R13", "temp file: the name is already in use") from None',
-        "        raise",
+        '        failure = pathguard.PathRefused("R13", "temp file: the name is already in use")',
+        "        failure = FileExistsError()",
         "test_atomic_write_with_a_taken_temp_name_leaves_the_existing_file_untouched",
         "FileExistsError",
         allow_crash=True,
@@ -646,8 +648,8 @@ M += [
     b3(
         "X11 the temp file stays when the rename is interrupted",
         AT,
-        "    except BaseException:\n        tmp.unlink(missing_ok=True)\n        raise\n\n\ndef _without_path",
-        "    except Exception:\n        tmp.unlink(missing_ok=True)\n        raise\n\n\ndef _without_path",
+        "    except BaseException:\n        tmp.unlink(missing_ok=True)\n        raise\n    if failure is not None:",
+        "    except Exception:\n        tmp.unlink(missing_ok=True)\n        raise\n    if failure is not None:",
         "test_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted",
         ".tmp",
     ),
@@ -1063,24 +1065,24 @@ M += [
     b4(
         "X-atomic an error of the open keeps the path",
         AT,
-        "        raise _without_path(exc) from None\n    try:\n        f = os.fdopen",
-        "        raise\n    try:\n        f = os.fdopen",
+        "        failure = _without_path(exc)\n    if failure is not None:\n        raise failure\n    try:\n        f = os.fdopen",
+        "        failure = exc\n    if failure is not None:\n        raise failure\n    try:\n        f = os.fdopen",
         "test_atomic_write_errors_carry_no_path",
         "assert",
     ),
     b4(
         "X-atomic an error of the rename keeps the path",
         AT,
-        "        tmp.unlink(missing_ok=True)\n        raise _without_path(exc) from None\n    except BaseException:",
-        "        tmp.unlink(missing_ok=True)\n        raise\n    except BaseException:",
+        "        failure = _without_path(exc)\n    except BaseException:",
+        "        failure = exc\n    except BaseException:",
         "test_atomic_write_rename_error_carries_no_path",
         "assert",
     ),
     b4(
         "R5j the whole-path limit counts characters, not bytes",
-        PG,
-        "    if _size(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):",
-        "    if len(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):",
+        PT,
+        "    if name_bytes(text) > MAX_PATH_BYTES or any(",
+        "    if len(text) > MAX_PATH_BYTES or any(",
         "test_pin_r5_the_whole_path_limit_counts_bytes_not_characters",
         "DID NOT RAISE",
         test_file=B3,
@@ -1129,8 +1131,8 @@ M += [
     b3(
         "A the wrap catches only a missing file",
         PG,
-        "    except (OSError, RuntimeError, ValueError, TypeError):",
-        "    except FileNotFoundError:",
+        "_SYSTEM_ERRORS = (OSError, ValueError, TypeError, RecursionError)",
+        "_SYSTEM_ERRORS = (FileNotFoundError,)",
         "test_pin_an_error_while_asking_if_a_path_exists_is_a_refusal_in_words",
         "denied",
         test_file="tests/test_pathguard_batch6.py",
@@ -1140,7 +1142,7 @@ M += [
     b3(
         "R4f a typed path text is not checked for a control character",
         PG,
-        "    _check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
+        "    check_text(str(path), what)\n    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
         "    real = _resolve(path, what, strict=must_exist)\n    if must_exist",
         "test_pin_r4_a_control_character_is_refused_in_an_operator_path",
         "the rule was R10",
@@ -1149,8 +1151,8 @@ M += [
     b3(
         "D the event id is not checked (a bad id is written as a file name)",
         "src/hadavin_sdk/audit/local_dir.py",
-        '                pathguard.component(name, what="audit event id")',
-        "                pass",
+        '            pathguard.component(f"{event.event_id}.json", what="audit event id")',
+        "            pass",
         "test_an_outcome_with_a_bad_event_id_is_dropped_and_counted",
         "assert",
         test_file="tests/test_pathguard_batch5.py",
@@ -1197,8 +1199,8 @@ M += [
     b3(
         "A the symlink check of a key file lets the error of the system out (3.12)",
         "src/hadavin_sdk/audit/signer.py",
-        '    except (OSError, ValueError):\n        raise ValueError("the key file path cannot be checked',
-        '    except ValueError:\n        raise ValueError("the key file path cannot be checked',
+        "    except (OSError, ValueError):\n        linked = None",
+        "    except ValueError:\n        linked = None",
         "test_a_key_file_check_that_raises_an_oserror_is_a_value_error_with_no_path",
         "File name too long",
         test_file="tests/test_pathguard_batch6.py",
@@ -1280,9 +1282,9 @@ M += [
     ),
     b3(
         "B a name over 255 bytes inside a typed path is not refused by length",
-        PG,
-        "    if _size(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):",
-        "    if _size(text) > MAX_PATH_BYTES:",
+        PT,
+        "        name_bytes(p) > MAX_COMPONENT_BYTES for p in PurePath(text).parts",
+        "        False for p in PurePath(text).parts",
         "test_pin_a_name_over_255_bytes_in_the_middle_of_a_typed_path_is_refused_by_length",
         "'R10' ==",
         test_file=B6,
@@ -1290,8 +1292,8 @@ M += [
     b3(
         "C the refusal of an error of the system is raised inside the except block (context kept)",
         PG,
-        '        refusal = _refuse("R10", what, "cannot be resolved")\n    raise refusal',
-        '        raise _refuse("R10", what, "cannot be resolved")',
+        '        refusal = refuse("R10", what, "cannot be resolved")\n    raise refusal',
+        '        raise refuse("R10", what, "cannot be resolved")',
         "test_pin_an_error_of_the_system_is_a_fixed_refusal_with_no_cause_no_context_and_no_path",
         "still reachable",
         test_file=B6,
@@ -1299,8 +1301,8 @@ M += [
     b3(
         "E a value that is not a path raises a TypeError",
         PG,
-        "    except (OSError, RuntimeError, ValueError, TypeError):",
-        "    except (OSError, RuntimeError, ValueError):",
+        "_SYSTEM_ERRORS = (OSError, ValueError, TypeError, RecursionError)",
+        "_SYSTEM_ERRORS = (OSError, ValueError, RecursionError)",
         "test_pin_a_value_that_is_not_a_path_is_a_refusal_not_a_typeerror",
         "TypeError",
         test_file=B6,
@@ -1309,13 +1311,13 @@ M += [
         crash_type="TypeError",
     ),
     b3(
-        "E an id whose temp name is refused is not rejected up front",
+        "N2 the id check tests the outbox name, not the object name",
         "src/hadavin_sdk/audit/local_dir.py",
-        '                f".tmp-{event.event_id}",\n',
-        "",
-        "test_an_id_whose_temp_name_is_refused_is_rejected_up_front_with_the_id_refusal",
+        '            pathguard.component(f"{event.event_id}.json", what="audit event id")',
+        '            pathguard.component(f".tmp-{event.event_id}", what="audit event id")',
+        "test_an_id_ending_in_a_dot_is_usable_because_only_the_object_name_is_checked",
         "assert",
-        test_file=B6,
+        test_file=B7,
     ),
     b3(
         "E the intent text says event id for every refusal",
@@ -1347,6 +1349,239 @@ M += [
 ]
 
 
+def b7(name, file, old, new, killer, expect="DID NOT RAISE", test_file=B7, **kw):
+    return mutant(name, file, old, new, killer, expect, test_file, **kw)
+
+
+_LIMIT = "test_a_typed_path_of_4095_bytes_is_accepted_and_4096_is_refused"
+_EACH = "test_pin_each_listed_error_of_the_system_is_a_refusal_with_no_cause_no_context_no_value"
+_SYS = "_SYSTEM_ERRORS = (OSError, ValueError, TypeError, RecursionError)"
+_KEYERR = "    except (ValueError, OSError, TypeError):\n        unreadable"
+M += [
+    b7(
+        "R5k the whole-path limit is 4096, not 4095",
+        PT,
+        "MAX_PATH_BYTES = 4095",
+        "MAX_PATH_BYTES = 4096",
+        "test_the_limit_is_4095_because_the_system_counts_the_closing_nul",
+        "4096",
+    ),
+    b7(
+        "R5l a path of exactly 4095 bytes is refused (off by one, too strict)",
+        PT,
+        "    if name_bytes(text) > MAX_PATH_BYTES or any(",
+        "    if name_bytes(text) >= MAX_PATH_BYTES or any(",
+        _LIMIT,
+        "PathRefused",
+        pinned="",
+        allow_crash=True,
+        crash_type="PathRefused",
+    ),
+    b7(
+        "R5m a path of 4096 bytes is accepted (off by one, too lax)",
+        PT,
+        "    if name_bytes(text) > MAX_PATH_BYTES or any(",
+        "    if name_bytes(text) > MAX_PATH_BYTES + 1 or any(",
+        _LIMIT,
+        pinned="",
+    ),
+    b7(
+        "R5n the resolved path is not measured again",
+        PG,
+        "    real = _os(lambda: Path(path).resolve(strict=strict), what)\n    check_text(str(real), what)\n",
+        "    real = _os(lambda: Path(path).resolve(strict=strict), what)\n",
+        "test_a_link_that_leads_to_a_path_over_the_limit_is_refused_after_resolving",
+    ),
+    b7(
+        "R5o a name over 255 bytes that appears only after resolving is accepted",
+        PG,
+        "    real = _os(lambda: Path(path).resolve(strict=strict), what)\n    check_text(str(real), what)\n",
+        "    real = _os(lambda: Path(path).resolve(strict=strict), what)\n",
+        "test_a_link_that_leads_to_a_name_over_255_bytes_is_refused_after_resolving",
+    ),
+    b7(
+        "M2 the tool module path is not measured whole (first form)",
+        "src/hadavin_sdk/tools.py",
+        'own = pathguard.join(root, *parts, "__init__.py", what="tool module")',
+        'own = root.joinpath(*parts, "__init__.py")',
+        "test_a_tool_module_path_is_measured_whole_before_the_file_is_asked_about",
+        "PathRefused",
+        allow_crash=True,
+        crash_type="ConfigError",
+    ),
+    b7(
+        "M2 the tool module file form (name plus .py) is not measured",
+        "src/hadavin_sdk/tools.py",
+        'own = pathguard.join(root, *parts[:-1], f"{parts[-1]}.py", what="tool module")',
+        'own = root.joinpath(*parts[:-1], f"{parts[-1]}.py")',
+        "test_a_tool_module_part_that_fits_a_name_but_not_with_py_is_a_config_error",
+        "DID NOT RAISE",
+        test_file=B6,
+        pinned="",
+    ),
+    b7(
+        "N8 a RuntimeError that is not a symlink loop is turned into a refusal",
+        PG,
+        "        if not str(exc).startswith(_LOOP_TEXT):\n            raise\n",
+        "        if False:\n            raise\n",
+        "test_a_surprise_runtimeerror_is_not_hidden_as_a_path_refusal",
+        "PathRefused",
+        allow_crash=True,
+        crash_type="PathRefused",
+    ),
+    b7(
+        "N8 a RecursionError is not turned into a refusal",
+        PG,
+        _SYS,
+        "_SYSTEM_ERRORS = (OSError, ValueError, TypeError)",
+        _EACH,
+        "RecursionError",
+        pinned="",
+        allow_crash=True,
+        crash_type="RecursionError",
+    ),
+    b7(
+        "N8 an OSError is not turned into a refusal",
+        PG,
+        _SYS,
+        "_SYSTEM_ERRORS = (ValueError, TypeError, RecursionError)",
+        _EACH,
+        "no right",
+        pinned="",
+        allow_crash=True,
+        crash_type="OSError",
+    ),
+    b7(
+        "N8 the refusal of the loop text is raised inside the except block",
+        PG,
+        '    except RuntimeError as exc:\n        if not str(exc).startswith(_LOOP_TEXT):\n            raise\n        refusal = refuse("R10", what, "cannot be resolved")\n',
+        '    except RuntimeError as exc:\n        if not str(exc).startswith(_LOOP_TEXT):\n            raise\n        raise refuse("R10", what, "cannot be resolved")\n',
+        _EACH,
+        "assert",
+        pinned="",
+    ),
+    b7(
+        "N6 a TypeError from the key path is not turned into the fixed text",
+        "src/hadavin_sdk/audit/signer.py",
+        _KEYERR,
+        "    except (ValueError, OSError):\n        unreadable",
+        "test_a_key_path_that_is_not_a_valid_path_is_one_fixed_text_with_no_context",
+        "TypeError",
+        pinned="",
+        allow_crash=True,
+        crash_type="TypeError",
+    ),
+    b7(
+        "N6 a ValueError from the key path is not turned into the fixed text",
+        "src/hadavin_sdk/audit/signer.py",
+        _KEYERR,
+        "    except (OSError, TypeError):\n        unreadable",
+        "test_a_nul_in_a_home_name_is_the_fixed_text_for_a_path_that_is_not_valid",
+        "Regex pattern did not match",
+    ),
+    b7(
+        "N11 the home-folder refusal is raised inside the except block",
+        "src/hadavin_sdk/audit/signer.py",
+        '        unreadable = "the key file or folder path cannot be read (home folder not found)"',
+        '        raise ValueError("the key file or folder path cannot be read (home folder not found)")',
+        "test_a_key_path_with_a_home_folder_that_cannot_be_found_has_no_cause_and_no_context",
+        "assert",
+    ),
+    b7(
+        "N11 the open error of atomic_write is raised inside the except block",
+        AT,
+        "        failure = _without_path(exc)\n    if failure is not None:\n        raise failure\n    try:\n        f = os.fdopen",
+        "        raise _without_path(exc)\n    if failure is not None:\n        raise failure\n    try:\n        f = os.fdopen",
+        "test_a_failed_temp_file_open_leaves_no_cause_and_no_context",
+        "assert",
+    ),
+    b7(
+        "N11 the rename error of atomic_write is raised inside the except block",
+        AT,
+        "    except OSError as exc:\n        failure = _without_path(exc)\n    except BaseException:",
+        "    except OSError as exc:\n        tmp.unlink(missing_ok=True)\n        raise _without_path(exc)\n    except BaseException:",
+        "test_a_failed_replace_leaves_no_cause_no_context_and_no_temp_file",
+        "assert",
+    ),
+    b7(
+        "N10 the folder test of atomic_write can raise",
+        AT,
+        "    if os.path.isdir(\n        final\n    ):",
+        "    if final.is_dir():",
+        "test_a_target_name_that_is_a_folder_is_refused_even_when_the_folder_test_raises",
+        "OSError",
+        allow_crash=True,
+        crash_type="OSError",
+    ),
+    b7(
+        "N14 has_entries lets the error of the system out with its path",
+        PG,
+        "    return _os(lambda: path.exists() and any(path.iterdir()), what)",
+        "    return path.exists() and any(path.iterdir())",
+        "test_an_error_while_looking_into_a_folder_is_a_refusal_with_no_path",
+        "PermissionError",
+        allow_crash=True,
+        crash_type="PermissionError",
+    ),
+    b7(
+        "N14 the folder made by operator_dir lets the error of the system out",
+        PG,
+        "    _os(lambda: real.mkdir(mode=create_mode, parents=True, exist_ok=True), what)",
+        "    real.mkdir(mode=create_mode, parents=True, exist_ok=True)",
+        "test_pin_a_folder_that_cannot_be_made_under_a_regular_file_is_a_refusal_with_no_path",
+        "NotADirectoryError",
+        allow_crash=True,
+        crash_type="NotADirectoryError",
+    ),
+    b7(
+        "N7 the key file name is not checked as one plain name",
+        "src/hadavin_sdk/audit/signer.py",
+        '    pathguard.component(\n        target.name, what="key file name"\n    )',
+        "    pass",
+        "test_a_key_file_name_with_a_rule_broken_is_refused_by_name",
+        pinned="",
+    ),
+    b7(
+        "N14 the score report folder is made without the shared check",
+        "src/hadavin_sdk/cli.py",
+        '        pathguard.operator_dir(\n            report_dir, what="score report folder", must_exist=False, create_mode=0o777\n        )',
+        "        report_dir.mkdir(exist_ok=True)",
+        "test_a_report_folder_that_turns_into_a_file_before_it_is_made_is_a_refusal_with_no_path",
+        "PathRefused",
+        allow_crash=True,
+        crash_type="FileExistsError",
+    ),
+    b7(
+        "N14 the replay output folder is made without the shared check",
+        "src/hadavin_sdk/k1b/replay.py",
+        '    out = pathguard.operator_dir(\n        out, what="replay output folder", must_exist=False, create_mode=0o777\n    )',
+        "    out.mkdir(parents=True, exist_ok=True)",
+        "test_an_output_folder_that_turns_into_a_file_is_a_refusal_in_words_with_no_path",
+        "PathRefused",
+        allow_crash=True,
+        crash_type="FileExistsError",
+    ),
+    b7(
+        "N14 a replay run folder is made without the shared check",
+        "src/hadavin_sdk/k1b/replay.py",
+        '        pathguard.operator_dir(rdir, what="run folder", must_exist=False, create_mode=0o777)',
+        "        rdir.mkdir()",
+        "test_a_run_folder_that_turns_into_a_file_is_a_refusal_in_words_with_no_path",
+        "PathRefused",
+        allow_crash=True,
+        crash_type="FileExistsError",
+    ),
+    b7(
+        "M1 the vault sign-in refusal prints the typed path",
+        "src/hadavin_sdk/actions/secrets_vault.py",
+        '(refused: {exc.rule})"',
+        '(refused: {exc.rule}) {settings.jwt_path}"',
+        "test_vault_kubernetes_token_path_the_rules_refuse_prints_no_part_of_it",
+        "assert",
+        test_file="tests/test_p4b_secrets.py",
+    ),
+]
+
 EQUIVALENT = [
     (
         "k1b/bundle.py",
@@ -1367,6 +1602,21 @@ EQUIVALENT = [
         "k1b/atomic.py",
         'getattr(os, "O_BINARY", 0)',
         "O_BINARY is 0 on every system except Windows, so the flag cannot change a Linux or macOS run; the Windows effect (no newline translation) cannot be run here.",
+    ),
+    (
+        "tools.py",
+        'init = pathguard.join(root, *parts[:i], "__init__.py", what="tool module")',
+        "the path of a parent package's ``__init__.py`` is a prefix of the first join's path (the whole module path plus ``__init__.py``), and that join already refused every name and every length this one could refuse; no input reaches this call with a refusal that the first join did not give.",
+    ),
+    (
+        "audit/signer.py",
+        "    except (ValueError, OSError, TypeError):\n        unreadable",
+        "member OSError only: no input was found that makes ``Path(..).expanduser()`` raise an OSError (tried a NUL, a 300-byte user name, a missing home); the member is kept as a guard for a platform that does, and the ValueError and TypeError members have their own rows.",
+    ),
+    (
+        "audit/signer.py",
+        "    except (OSError, ValueError):\n        linked = None",
+        "member ValueError only: ``Path.is_symlink`` already turns a ValueError (a NUL) into False on 3.12 and 3.13, so the member never sees one; the OSError member has its own row.",
     ),
 ]
 

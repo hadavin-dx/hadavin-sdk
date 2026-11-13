@@ -346,6 +346,7 @@ def test_anthropic_says_which_errors_are_worth_another_attempt():
         "arn:aws-cn:iam::" + "1" * 12 + ":role/ops",
         "arn:aws-us-gov:lambda:us-gov-x-1:" + "2" * 12 + ":function:f",
     ],
+    ids=["s3-no-account", "china-partition", "gov-partition"],
 )
 def test_an_arn_is_masked_with_or_without_an_account(arn):
     out = redact(f"see {arn} now")
@@ -468,6 +469,7 @@ def test_a_prompt_attack_filter_must_screen_text():
             "AZURERESOURCE",
         ),
     ],
+    ids=["gcp-resource", "azure-resource"],
 )
 def test_other_clouds_resource_ids_are_masked(text, label):
     out = redact(text)

@@ -25,22 +25,30 @@ def atomic_write(base: Path, name: str, text: str) -> None:
     """Write ``text`` to ``base/name`` (UTF-8, ``\\n`` line ends, unencodable characters as backslash escapes). A name that
     is already a link is refused: the link is not replaced and its target is not written through it."""
     final = pathguard.join(base, name, what="output file")
-    if len(name.encode("utf-8", errors="surrogatepass")) > pathguard.MAX_WRITE_NAME_BYTES:
+    if pathguard.name_bytes(name) > pathguard.MAX_WRITE_NAME_BYTES:
         raise pathguard.PathRefused("R5", "output file: too long")
     # the unresolved name: join() resolved a link to its target
     if os.path.islink(Path(base) / name):
         raise pathguard.PathRefused("R8", "output file: a link is not replaced")
-    if final.is_dir():  # a folder is never replaced; the text must not hold the path
+    if os.path.isdir(
+        final
+    ):  # never raises (an error reads as "not a folder"; the open below then fails without a path)
+        # a folder is never replaced; the text must not hold the path
         raise pathguard.PathRefused("R13", "output file: a folder is not replaced")
     tmp = pathguard.join(final.parent, f".{name}.{secrets.token_hex(8)}.tmp", what="temp file")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     flags |= getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_BINARY", 0)
+    failure: Exception | None = (
+        None  # raised below, outside the ``except`` block: no cause and no context (a path)
+    )
     try:
         fd = os.open(tmp, flags, 0o600)  # owner only: replay outputs can hold case data
     except FileExistsError:  # the existing file is left alone
-        raise pathguard.PathRefused("R13", "temp file: the name is already in use") from None
+        failure = pathguard.PathRefused("R13", "temp file: the name is already in use")
     except OSError as exc:
-        raise _without_path(exc) from None
+        failure = _without_path(exc)
+    if failure is not None:
+        raise failure
     try:
         f = os.fdopen(fd, "w", encoding="utf-8", errors="backslashreplace", newline="\n")
     except BaseException:
@@ -54,11 +62,13 @@ def atomic_write(base: Path, name: str, text: str) -> None:
             os.fsync(f.fileno())
         os.replace(tmp, final)
     except OSError as exc:
-        tmp.unlink(missing_ok=True)
-        raise _without_path(exc) from None
+        failure = _without_path(exc)
     except BaseException:
         tmp.unlink(missing_ok=True)
         raise
+    if failure is not None:
+        tmp.unlink(missing_ok=True)
+        raise failure
 
 
 def _without_path(exc: OSError) -> OSError:

@@ -530,7 +530,11 @@ def test_configured_key_label_wins_and_make_sets_it(tmp_path, monkeypatch):
     assert json.loads(anchor.bodies[0])["key_label"] == "audit-2026"
 
 
-@pytest.mark.parametrize("bad", ["arn:aws:kms:x y", "a" * 65, "", "k/ey"])
+@pytest.mark.parametrize(
+    "bad",
+    ["arn:aws:kms:x y", "a" * 65, "", "k/ey"],
+    ids=["arn-with-space", "65-characters", "empty", "slash"],
+)
 def test_key_label_must_be_plain(bad):
     from pydantic import ValidationError
 
@@ -549,6 +553,7 @@ def test_key_label_must_be_plain(bad):
         "vault-transit:transit/audit:v1",
         "team-123456789012",
     ],
+    ids=["aws-kms-arn", "azure-key-url", "gcp-resource-path", "vault-transit", "team-account-id"],
 )
 def test_key_label_refuses_arn_url_path_and_account_id_shapes(bad):
     from pydantic import ValidationError

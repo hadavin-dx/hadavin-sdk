@@ -200,7 +200,7 @@ def load_bundle(path: Path) -> Bundle:
         raise _fail(case, "folder name must look like case-001")
     # The case id becomes a file name (``<case>.json``) in replay and score. Refuse here, before anything is written,
     # a case id that ``atomic_write`` could not write (one constant, shared with it).
-    if len(f"{case}.json".encode()) > pathguard.MAX_WRITE_NAME_BYTES:
+    if pathguard.name_bytes(f"{case}.json") > pathguard.MAX_WRITE_NAME_BYTES:
         raise _fail(case, "case id too long to write as a file")
     try:
         path = pathguard.operator_dir(path, what="bundle folder")

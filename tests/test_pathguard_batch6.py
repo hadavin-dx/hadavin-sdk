@@ -31,6 +31,7 @@ LABELLED = (
     "test_pathguard_batch4",
     "test_pathguard_batch5",
     "test_pathguard_batch6",
+    "test_pathguard_batch7",
     "test_pathguard_callers",
     "test_pathguard_sites",
     "test_pathguard_tripwire",
@@ -97,10 +98,11 @@ def test_a_tool_module_part_that_fits_a_name_but_not_with_py_is_a_config_error(s
     else:
         with pytest.raises(ConfigError, match="cannot be found"):
             tools._module_files(text)
-    for last in (size,):  # the last part is the one that becomes ``<part>.py``
-        with pytest.raises(ConfigError) as caught:
-            tools._module_files("b." + "a" * last)
-        assert "File name too long" not in str(caught.value)
+    with pytest.raises(
+        ConfigError
+    ) as caught:  # the last part is the one that becomes ``<part>.py``
+        tools._module_files("b." + "a" * size)
+    assert "File name too long" not in str(caught.value)
 
 
 @pytest.mark.parametrize("size", range(248, 258))
@@ -255,12 +257,18 @@ def test_an_outcome_over_the_path_limit_is_kept_in_memory_not_dropped(tmp_path):
     assert sink.refused_events == 0 and sink._pending == [event]
 
 
-def test_an_id_whose_temp_name_is_refused_is_rejected_up_front_with_the_id_refusal(tmp_path):
-    """``.tmp-<id>`` ends with the id: an id ending in a dot or a space passes as ``<id>.json`` but not as the temp name."""
+def test_an_id_ending_in_a_dot_or_space_is_decided_the_same_way_by_both_writers(tmp_path):
+    """One helper decides "id refused" from the name the object store really uses (``<id>.json``): ``abc.`` makes the valid
+    name ``abc..json``, so BOTH writers keep it; the outbox names are checked only on the fallback path."""
+    from hadavin_sdk.audit.protocol import AuditUnavailable
+
     sink = LocalDirSink(tmp_path / "aud")
-    for bad in ("abc.", "abc "):
-        assert sink.write_outcome(_event(bad)) is None
-    assert sink.refused_events == 2 and sink._pending == []
+    assert sink.write_intent(_event("abc.")) == "abc..json"
+    assert sink.write_outcome(_event("abd ")) == "abd .json"
+    assert sink.refused_events == 0 and sink._pending == []
+    with pytest.raises(AuditUnavailable, match=r"event id refused"):
+        sink.write_intent(_event("c?d"))
+    assert sink.write_outcome(_event("c?d")) is None and sink.refused_events == 1
 
 
 def test_the_intent_text_says_event_id_only_for_an_id_refusal(tmp_path):

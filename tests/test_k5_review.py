@@ -69,6 +69,7 @@ def test_review_storable_drops_an_original_that_carries_a_secret():
         "job ran arn:aws:lambda:us-east-1:123456789012:function:billing?token={t}",
         "see https://svc.example.com/path?token={t} from 10.0.0.5",
     ],
+    ids=["arn-then-token", "url-token-and-ip"],
 )
 def test_review_no_secret_reaches_the_stored_map_or_the_model(tmp_path, line):
     k5_tools.RESULTS["app"] = line.format(t=TOKEN)

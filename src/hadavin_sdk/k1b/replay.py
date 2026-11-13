@@ -148,7 +148,7 @@ def _replay(
         out = pathguard.operator_dir(out, what="replay output folder", must_exist=False)
     except pathguard.PathRefused as exc:  # it exists and is a file
         raise pathguard.mapped(exc, R11="replay output folder exists and is not empty") from None
-    if out.exists() and any(out.iterdir()):
+    if pathguard.has_entries(out, what="replay output folder"):
         raise ConfigError("replay output folder exists and is not empty")
     cause = load_cause_list(cause_list_dir)
     bundles: list[Bundle] = load_bundles(bundles_dir)
@@ -156,7 +156,9 @@ def _replay(
     agent = registry.agents[agent_id]
     system = registry.prompt(agent_id) + "\n\n" + loop.SYSTEM_PROMPT
     max_steps = min(cfg.k1b.max_steps, agent.max_steps)
-    out.mkdir(parents=True, exist_ok=True)
+    out = pathguard.operator_dir(
+        out, what="replay output folder", must_exist=False, create_mode=0o777
+    )
     if progress is not None:
         progress.output_created = True
 
@@ -170,7 +172,7 @@ def _replay(
     ] = {}  # masked once per case, reused for every run
     for run_index in range(1, k + 1):
         rdir = pathguard.join(out, f"run{run_index}", what="run folder")
-        rdir.mkdir()
+        pathguard.operator_dir(rdir, what="run folder", must_exist=False, create_mode=0o777)
         counts = dict.fromkeys(_COUNT_KEYS, 0)
         run_usd = Decimal(0)
         issue_cases: dict[str, list[str]] = {k: [] for k in _ISSUES}

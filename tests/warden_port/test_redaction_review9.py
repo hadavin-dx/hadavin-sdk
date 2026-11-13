@@ -49,6 +49,7 @@ def test_a_cookie_in_any_written_form_is_masked_and_restored(form):
         f"upstream sent Bearer 123456789012.{S}",
         '{"authorization":"Basic AKIA' + "QWERTYUI" + f'+{S}=="}}',
     ],
+    ids=["bearer-dash", "bearer-uuid", "bearer-number", "basic-key-like"],
 )
 def test_a_token_whose_start_was_masked_is_masked_whole(text):
     """Ninth review: BEARER and BASIC still stopped at `<`, so the part after a masked start went out in clear."""

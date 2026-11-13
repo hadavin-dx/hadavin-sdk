@@ -21,12 +21,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from hadavin_sdk import pathguard
+from hadavin_sdk import pathguard, pathtext
 from hadavin_sdk.config import ConfigError, confined
 from hadavin_sdk.k1b import atomic
 from hadavin_sdk.k1b.atomic import atomic_write
 from hadavin_sdk.pathguard import PathRefused
 from tests.conftest import make_cfg
+from tests.fixtures.pathsize import path_of_bytes
 from tests.test_k1b_replay import HAPPY, Env, ScriptedLLM
 from tests.test_pathguard_callers import _fixture, _link
 from tests.test_pathguard_sites import _refused
@@ -174,13 +175,17 @@ def test_pin_r5_operator_file_refuses_a_long_text():
     _refused("R5", pathguard.operator_file, LONG, what="n")
 
 
-def test_pin_r5_a_path_at_the_limit_is_not_refused_for_length(tmp_path):
-    room = (
-        pathguard.MAX_PATH_BYTES - len(str(tmp_path)) - 1
-    )  # names of 200 bytes: one name may not pass 255
-    text = str(tmp_path) + "/" + "/".join("a" * 200 for _ in range(room // 201))
-    text += "/" + "a" * (room - (room // 201) * 201 - 1)
-    pathguard._check_text(text, "n")  # exactly the limit: allowed
+def test_pin_r5_a_path_of_exactly_4095_bytes_is_allowed_and_4096_is_refused(tmp_path):
+    """PATH_MAX is 4096 counting the closing NUL: 4095 is the longest path, 4096 is refused (the text only, no system call)."""
+    base = str(tmp_path)
+    pathtext.check_text(path_of_bytes(base, pathguard.MAX_PATH_BYTES), "n")
+    assert len(path_of_bytes(base, pathguard.MAX_PATH_BYTES).encode()) == 4095
+    with pytest.raises(PathRefused) as refused:
+        pathtext.check_text(path_of_bytes(base, pathguard.MAX_PATH_BYTES + 1), "n")
+    assert (
+        refused.value.rule == "R5"
+        and len(path_of_bytes(base, pathguard.MAX_PATH_BYTES + 1).encode()) == 4096
+    )
 
 
 # ------------------------------------------------------------------ the rest of the choke point
@@ -224,7 +229,7 @@ def test_pin_r5_the_whole_path_limit_counts_bytes_not_characters():
     )  # 2,430 characters, 7,230 bytes in UTF-8, no name over 255 bytes
     assert len(text) < pathguard.MAX_PATH_BYTES < len(text.encode())
     with pytest.raises(PathRefused) as refused:
-        pathguard._check_text(text, "n")
+        pathtext.check_text(text, "n")
     assert refused.value.rule == "R5"
 
 
@@ -250,13 +255,13 @@ def test_atomic_write_with_a_taken_temp_name_leaves_the_existing_file_untouched(
     assert str(exc) == "temp file: the name is already in use" and str(tmp_path) not in str(exc)
     assert taken.read_text(encoding="utf-8") == "not ours"
     assert not (tmp_path / "r.txt").exists()
-    assert exc.__cause__ is None and exc.__suppress_context__
+    assert exc.__cause__ is None and exc.__context__ is None
 
 
 def test_atomic_write_checks_the_temp_path_length_not_only_the_final_one(tmp_path, monkeypatch):
     final = pathguard.join(tmp_path, "r.txt", what="n")
     monkeypatch.setattr(
-        pathguard, "MAX_PATH_BYTES", len(str(final)) + 3
+        pathtext, "MAX_PATH_BYTES", len(str(final)) + 3
     )  # the final path fits, the temp one does not
     _refused("R5", atomic_write, tmp_path, "r.txt", "x")
     assert list(tmp_path.iterdir()) == []

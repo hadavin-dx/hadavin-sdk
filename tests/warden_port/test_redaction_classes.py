@@ -12,8 +12,12 @@ import pytest
 from hadavin_sdk.guard.redact import redact
 from tests.warden_port.privacy_corpus import KEPT, MASKED
 
+_CASES = [(k, t) for k, texts in MASKED.items() for t in texts]
 
-@pytest.mark.parametrize(("kind", "text"), [(k, t) for k, texts in MASKED.items() for t in texts])
+
+@pytest.mark.parametrize(
+    ("kind", "text"), _CASES, ids=[f"{k}-{n}" for n, (k, _t) in enumerate(_CASES)]
+)
 def test_every_listed_class_is_masked(kind, text):
     out = redact(text)
     kinds = {p.strip("<>").rsplit("_", 1)[0] for p in out.mapping}

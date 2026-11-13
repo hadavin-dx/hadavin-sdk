@@ -106,7 +106,7 @@ def test_pin_r5_a_name_over_255_utf8_bytes_is_refused():
     _must_refuse("R5", "128 two-byte letters", _comp, "\u00e9" * 128)
 
 
-def test_pin_r5_a_path_over_4096_characters_is_refused(tmp_path):
+def test_pin_r5_a_path_over_4095_bytes_is_refused(tmp_path):
     long_tail = ["d" * 200] * 21  # 4200 characters once joined
     _must_refuse("R5", "join", pathguard.join, tmp_path, *long_tail, what="x")
     _must_refuse(

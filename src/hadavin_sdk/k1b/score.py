@@ -160,8 +160,9 @@ def classify(
 
 
 def _recorded_digest(out: Path) -> str | None:
-    """The digest the replay wrote (``out/outputs.sha256``), ``None`` when absent, ``""`` when unreadable (counts as
-    changed; a file that leaves the folder through a link is refused by ``pathguard`` and is unreadable too)."""
+    """The digest the replay wrote (``out/outputs.sha256``). ``None`` (absent) when the file is missing, is a folder, or
+    cannot be resolved (a symlink loop, no right to look: rule R10); ``""`` (unreadable, counts as changed) when
+    ``pathguard`` refuses it for any other rule (a link that leaves the folder, a name over 255 bytes) or it cannot be read."""
     try:
         target = pathguard.join(
             out, "outputs.sha256", what="replay digest file", must_exist=True, kind="file"

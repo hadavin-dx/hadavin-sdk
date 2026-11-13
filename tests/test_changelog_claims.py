@@ -233,7 +233,7 @@ def test_atomic_write_os_errors_carry_no_path_and_no_chain(tmp_path, monkeypatch
     with pytest.raises(PermissionError) as caught:
         atomic_write(tmp_path, "f.txt", "x")
     assert "secret-folder-name" not in str(caught.value) and str(tmp_path) not in str(caught.value)
-    assert caught.value.__cause__ is None and caught.value.__suppress_context__
+    assert caught.value.__cause__ is None and caught.value.__context__ is None
     assert [p.name for p in tmp_path.iterdir()] == []  # the temp file is removed
 
 
@@ -472,7 +472,7 @@ def test_the_entry_names_the_link_to_another_folder_case_and_the_vault_risk():
     text = bullet("R3, R6, R7 and R12 apply to")
     for claim in (
         "a link pointing into a different folder is refused",
-        "a link whose target stays in the same folder is read",
+        "the link's target must lie inside the link's own folder, subfolders included",
         "/run/secrets.d/1/key",
         "without `must_exist` or `kind`",
         "nothing here says that any SonarCloud finding is cleared",
@@ -490,20 +490,36 @@ def test_the_entry_names_the_link_to_another_folder_case_and_the_vault_risk():
 
 
 def test_the_sweep_sites_the_entry_counts_are_the_ones_in_the_source():
-    """Each of the 13 sites named in the sweep sentence is a place where a derived name is built (text search)."""
+    """The 13 sites in 10 files named in the sweep sentence: each is a place where a derived name is built, found by a text
+    search of its file (a site that is built twice in one file is listed once per site, with how many times the text occurs)."""
     src = Path(pathguard.__file__).parent
-    names = {
-        "k1b/replay.py": 'f"{b.case_id}.json"',
-        "k1b/score.py": 'f"{case_id}.json"',
-        "k1b/bundle.py": 'f"{case}.json".encode()',
-        "audit/local_dir.py": 'f".tmp-{event.event_id}"',
-        "evals.py": 'f"{agent_id}.jsonl"',
-        "registry.py": 'f"{agent_id}.yaml"',
-        "tools.py": 'with_suffix(".py")',
-        "llm/fake.py": 'f"{digest}-{attempt}.json"',
-        "audit/anchors.py": 'f"{PREFIX}{seq:012d}.json"',
-    }
-    missing = [f for f, text in names.items() if text not in (src / f).read_text(encoding="utf-8")]
+    sites = [  # (site, file, text, at least this many times in the file)
+        ("replay output name", "k1b/replay.py", 'f"{b.case_id}.json"', 1),
+        ("atomic_write temp name", "k1b/atomic.py", 'f".{name}.{secrets.token_hex(8)}.tmp"', 1),
+        ("score read name", "k1b/score.py", 'f"{case_id}.json"', 1),
+        ("bundle write limit", "k1b/bundle.py", 'f"{case}.json"', 1),
+        ("LocalDirSink object name", "audit/local_dir.py", 'key = f"{event.event_id}.json"', 1),
+        ("LocalDirSink outbox temp name", "audit/local_dir.py", 'f".tmp-{event.event_id}"', 1),
+        (
+            "LocalDirSink outbox final name",
+            "audit/local_dir.py",
+            'self.outbox, f"{event.event_id}.json"',
+            1,
+        ),
+        ("evals golden name", "evals.py", 'f"{agent_id}.jsonl"', 1),
+        ("registry golden name", "registry.py", 'f"{agent_id}.jsonl"', 1),
+        ("registry tools file", "registry.py", 'f"{agent_id}.yaml"', 1),
+        ("tool module file", "tools.py", 'f"{parts[-1]}.py"', 1),
+        ("llm.fake recording", "llm/fake.py", 'f"{digest}-{attempt}.json"', 1),
+        ("audit anchor name", "audit/anchors.py", 'f"{PREFIX}{seq:012d}.json"', 1),
+    ]
+    assert len(sites) == 13 and len({file for _, file, _, _ in sites}) == 10
+    assert "13 sites in 10 files" in ENTRY
+    missing = [
+        name
+        for name, file, text, least in sites
+        if (src / file).read_text(encoding="utf-8").count(text) < least
+    ]
     assert not missing, missing
 
 
@@ -708,6 +724,7 @@ def test_control_the_backslash_is_written_once_in_the_rules():
 # marker it had on origin/main, stated here so a new one cannot be added).
 REWRITTEN = {
     "src/hadavin_sdk/pathguard.py",
+    "src/hadavin_sdk/pathtext.py",
     "src/hadavin_sdk/k1b/atomic.py",
     "src/hadavin_sdk/k1b/score.py",
     "src/hadavin_sdk/k1b/replay.py",

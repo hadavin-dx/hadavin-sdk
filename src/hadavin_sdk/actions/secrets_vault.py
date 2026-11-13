@@ -185,9 +185,18 @@ def connect(settings, **kw: Any) -> VaultProvider:
                     what="vault sign-in token file",
                 )
                 jwt = jwt_file.read_text(encoding="utf-8").strip()
-            except (OSError, UnicodeDecodeError, pathguard.PathRefused) as exc:
+            except (
+                pathguard.PathRefused
+            ) as exc:  # the typed path is operator text: a refusal prints no part of it
                 raise ConfigError(
-                    f"vault kubernetes sign-in: cannot read {settings.jwt_path} ({type(exc).__name__})"
+                    f"vault kubernetes sign-in: cannot read the sign-in token file (refused: {exc.rule})"
+                ) from None
+            except (
+                OSError,
+                UnicodeDecodeError,
+            ) as exc:  # the path passed the shape rules (no control character)
+                raise ConfigError(
+                    f"vault kubernetes sign-in: cannot read {str(settings.jwt_path)!r} ({type(exc).__name__})"
                 ) from None
             payload = {"role": settings.role, "jwt": jwt}
             return _login_with(p, settings.auth_mount or "kubernetes", payload)

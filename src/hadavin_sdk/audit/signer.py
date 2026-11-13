@@ -143,18 +143,22 @@ def key_dir() -> Path:
 def key_path(path: Path, base: Path | None = None) -> Path:
     """The real location of `path` when it lies inside `base` (default: the key folder, created 0700 if
     missing); else ValueError. The file itself must not be a symlink, and its folder must already exist."""
+    unreadable = ""  # the refusal is raised outside the ``except`` blocks: no cause and no context (they hold the path)
     try:  # ``~name`` for a user that does not exist raises RuntimeError; a NUL raises ValueError: fixed text, no value
         folder = (base or key_dir()).expanduser()
         target = Path(path).expanduser()
     except RuntimeError:
-        raise ValueError(
-            "the key file or folder path cannot be read (home folder not found)"
-        ) from None
+        unreadable = "the key file or folder path cannot be read (home folder not found)"
     except (ValueError, OSError, TypeError):
-        raise ValueError("the key file or folder path cannot be read (not a valid path)") from None
+        unreadable = "the key file or folder path cannot be read (not a valid path)"
+    if unreadable:
+        raise ValueError(unreadable)
     # the shape of the key FILE and of the key folder is checked before any folder is made (a NUL, a control character
     # or a name too long is refused here, not after mkdir); the folder is then made and resolved with every error of the
     # system turned into a fixed refusal with no path (``create_mode``)
+    pathguard.component(
+        target.name, what="key file name"
+    )  # R1 to R7 and R12: a key file is one plain name
     try:  # shape only; a link that leaves its folder is refused below, with its own words
         pathguard.inside(target.parent, target, what="key file")
     except pathguard.PathRefused as exc:
@@ -164,7 +168,9 @@ def key_path(path: Path, base: Path | None = None) -> Path:
     try:  # a name too long for the system makes this check itself raise; it is a refusal, with no path in the text
         linked = target.is_symlink()
     except (OSError, ValueError):
-        raise ValueError("the key file path cannot be checked (too long or not valid)") from None
+        linked = None
+    if linked is None:
+        raise ValueError("the key file path cannot be checked (too long or not valid)")
     if linked:
         raise ValueError("the key file is a symlink: a key file is never used through one")
     real: Path | None

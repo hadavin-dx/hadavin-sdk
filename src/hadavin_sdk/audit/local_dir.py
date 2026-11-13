@@ -127,12 +127,10 @@ class LocalDirSink:
 
     @staticmethod
     def _id_refused(event: AuditEvent) -> bool:
+        """True when the id is not usable as the object name ``_write`` really uses (``<id>.json``). The same test serves
+        both writers. The outbox names (``.tmp-<id>``, ``<id>.json``) are checked only on the fallback path."""
         try:
-            for name in (
-                f"{event.event_id}.json",
-                f".tmp-{event.event_id}",
-            ):  # the outbox names both
-                pathguard.component(name, what="audit event id")
+            pathguard.component(f"{event.event_id}.json", what="audit event id")
         except pathguard.PathRefused:
             return True
         return False

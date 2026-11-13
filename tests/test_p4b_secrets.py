@@ -78,8 +78,19 @@ def test_vault_kubernetes_signs_in_with_the_service_account_token(vault, tmp_pat
 
 def test_vault_kubernetes_without_a_readable_token_file_is_a_config_error(vault, tmp_path):
     settings = _settings(vault, auth="kubernetes", role="hadavin", jwt_path=tmp_path / "gone")
-    with pytest.raises(ConfigError, match="cannot read .*gone \\(FileNotFoundError\\)"):
+    with pytest.raises(ConfigError, match="cannot read .*gone.? \\(FileNotFoundError\\)"):
         make("secrets", settings).get("db")
+
+
+def test_vault_kubernetes_token_path_the_rules_refuse_prints_no_part_of_it(vault, tmp_path):
+    """A typed path with a control character is refused by shape; the message gives the rule and none of the text."""
+    bad = tmp_path / ("zq" + chr(7) + "zq")
+    settings = _settings(vault, auth="kubernetes", role="hadavin", jwt_path=bad)
+    with pytest.raises(ConfigError) as info:
+        make("secrets", settings).get("db")
+    text = str(info.value)
+    assert "refused: R4" in text and "zq" not in text and str(tmp_path) not in text
+    assert info.value.__cause__ is None and info.value.__suppress_context__
 
 
 def test_gcp_fetch_is_bounded_with_no_retry():

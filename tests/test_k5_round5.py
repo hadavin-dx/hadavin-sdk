@@ -451,6 +451,7 @@ def test_m1_a_very_short_secret_is_not_scrubbed_it_would_shred_text():
     ["127.0.0.1", "10.0.0.5", "169.254.169.254", "::1", "[fe80::1]", "localhost", "foo.localhost",
      "metadata.google.internal", "metadata", "instance-data", "2130706433", "0x7f.1",
      "127.1", "017700000001"],
+    ids=['h0', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12', 'h13'],
 )  # fmt: skip
 def test_m2_hosts_that_are_ip_literals_loopback_or_metadata_are_refused(host):
     spec = tools_mod.ToolSpec(**{**TOOL, "hosts": [host]})

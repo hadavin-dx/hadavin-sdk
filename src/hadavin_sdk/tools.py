@@ -259,14 +259,17 @@ def _module_files(module: str) -> list[tuple[str, Path]]:
         )
     for entry in sys.path:
         root = Path(entry or ".")
-        leaf = root.joinpath(*parts)
-        # Python prefers a package directory to a module file of the same name
-        own = leaf / "__init__.py" if (leaf / "__init__.py").is_file() else leaf.with_suffix(".py")
-        if not own.is_file():
-            continue
+        # every path goes through ``pathguard.join``: the WHOLE path is measured (R5), not only each part
+        own = pathguard.join(root, *parts, "__init__.py", what="tool module")
+        if (
+            not own.is_file()
+        ):  # Python prefers a package directory to a module file of the same name
+            own = pathguard.join(root, *parts[:-1], f"{parts[-1]}.py", what="tool module")
+            if not own.is_file():
+                continue
         files = []
         for i in range(1, len(parts)):
-            init = root.joinpath(*parts[:i]) / "__init__.py"
+            init = pathguard.join(root, *parts[:i], "__init__.py", what="tool module")
             if init.is_file():
                 files.append((".".join(parts[:i]), init))
         return [*files, (module, own)]

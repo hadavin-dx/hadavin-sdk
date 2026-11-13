@@ -103,6 +103,16 @@ def test_the_endpoint_never_comes_from_the_environment(monkeypatch):
         ("apac.amazon.contract-model-v1:0", "amazon"),
         ("us.meta.contract-model-v1:0", "meta"),
     ],
+    ids=[
+        "profile-arn",
+        "in-prefix",
+        "global-prefix",
+        "no-prefix",
+        "openai",
+        "xai",
+        "apac-amazon",
+        "us-meta",
+    ],
 )
 def test_the_family_is_read_through_any_geography_prefix(model, fam):
     assert family(model) == fam
