@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 06:42Z (core lead)
+**FAILED/UNCERTAIN FIRST**
+- Nothing here is verified by a runner yet. Every count below is builder-claimed until a RESULTS file exists.
+- Part 6 (banner): head is still 20c369f0 (batch 15). Round 15 found 0 Blocker, 9 Major in total (design 4, codebase 5), all about wording and test scope, none a runtime defect. Round 16 is required. The runner af6574fd has NOT reported, so I have not run the resolve step yet. B12 ("the lists get a default again"): builder claims it is killed at 20c369f0 in a 47-row targeted run; the 60-row sample, the all-rows run and 34 test files were not run. NOT yet shown by a runner.
+- Q8c-1 B17: head is still 7712c26e. The builder claims B17 is now killed (496 passed on 3.13; 3.12 had 3 environment failures that passed on a private venv). Review: 0 Blocker, 0 Major. The equivalence claim was overstated (the loader mode with no `.files` was untested). Builder a592bb13 is making ONE fix push; no new SHA until it is pushed.
+- Part 2 (bindguard): finisher adecceff has pushed 3f52ed8c, d29790a2 and 4dd7ce1e (head 4dd7ce1e) on wip/cloud-pd-bind: mutant rows run, old-tree numbers in two docstrings, seal cost re-measured. Still to report by the finisher: ruff format, bandit, suppression count, 3.12 run, other test files. Not claimed complete.
+- SONAR-PATH: head is still 4398e3bd. Round 6 found 0 Blocker, 3 Major, 18 nit items. Batch 7 sent to ac09a2ce; no new SHA until pushed. No `PR READY`.
+**LEAD ACTIONS**
+1. Your 06:40Z rule (bare scheme word + token, 16 characters): taken into the Part 6 batch 16 brief (rows 15 shown / 16 hidden, one mutant, no wider scheme list, probe cell count updated). Not built yet.
+2. Still open: confirm the `bypass=0` / `bypass=1` wording (core shows or hides?); pathguard.py 234 vs 220 (batch 7 splits into a second module, or reports two options).
+3. RUN ON LAPTOP (nothing new yet): after the Q8c-1 fix push, `hadavin-sdk <new sha> HADAVIN_POLICY_FULL_RENEWAL_RUN=1 pytest tests/test_policy_changelog.py -k plant` and `python tests/policy_mutants.py "the files that do not parse are merged"`.
+**LIVE ITEMS**: adecceff (Part 2 finisher), af6574fd (Part 6 r15 runner), a592bb13 (Q8c-1 fix push), ac09a2ce (SONAR batch 7).
+**ROUNDS (WHY)**: Part 6 and SONAR are uncapped (mode-safety, security). Q8c-1 is one fix push (0B/0M, ORDER 256).
+**FINISHED SINCE LAST BLOCK**: SONAR r6 resolve report and batch 7 brief; Part 6 r15 codebase and design reviews saved; Part 2 pushed three commits (see above).
+**EGM STEP PER PACKAGE**: Part 2 build (finisher), then round 13; Part 6 r15 evidence pending, then resolve and batch 16; SONAR batch 7 build, then round 7; Q8c-1 fix push.
+**LANE SONAR-PATH**: no new push; nothing claimed.
+
 ## REPORT 06:35Z (core lead)
 **FAILED/UNCERTAIN FIRST**
 - Part 2 builder a805b93d is INCOMPLETE at e75037b6 (about 65 mutant rows with no result, old-tree runs, cost, format/bandit/suppression count, 3.12 not done). Finisher adecceff is running. No claim of done.
