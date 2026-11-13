@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 09:52Z / 15:22 IST  HEARTBEAT 3 (B reported)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner agent (Sonnet): full suite, Python 3.12, no browser tests; main 61ded9e and PR #12 8d65577 | pass/fail evidence for PR #12 vs main | 09:39Z / 15:09 | run1 ends ~10:00Z, run2 ends ~10:25Z / 15:55 IST (about 33 min left) | run 1 of 2 per head; no retry, no hang so far | running | at 10:00Z read progress-A.txt; when done write evidence/summary.md (numbers table on top) |
+| B | Evidence runner agent (Sonnet): hostile-input pass on PR #12 changes | raw input/output for path-confinement changes | 09:39Z / 15:09 | done 09:49Z | 5 of 5 case groups, no retry | reported (stopped, no processes left) | none; evidence/hostile.md and raw logs pushed |
+| lead-me | register, supervision, pushes to demo/lane3 | keeps A watched | 09:37Z / 15:07 | 90 min cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:02Z |
+
+ASK: none.
+B's report (raw, from the agent, not my verdict; details and exact inputs in evidence/hostile.md): unexpected first: (1) foreign `tools` package with same function names used silently by load_tools/catcher.py on main and PR12; (2) `python -m demo_only.fake_model_server --help` traceback on PR12 (main prints help) when another project's `tools` is first on path; (3) `python tools/scrub_n8n_export.py` double traceback with foreign `tools`, main and PR12; (4) scripts/n8n_api.py fails with foreign `tools` first and repo on PYTHONPATH, and on PR12 only gives `ImportError: cannot import name 'ROOTS_ENV'` when an already-imported foreign `tools` lacks it; (5) hard links inside a confined root pass on main and PR12, a write through one changed the outside file; (6) ntpath helper: `\??\UNC\...` not refused, `readonly_sqlite_uri` accepts empty and NUL text; (7) `LEAD_DESK_PATH_ROOTS=/` allows `--key-file /etc/hostname` on PR12. Worked on PR12: all other UNC/mixed forms refused; all `..`, absolute and symlink escapes for the three server options exit 2 (main starts the server every time); `check_invariants.read_book` raises clean InputError (main AttributeError). Not run: real Windows, SQLite on a network share, mapped drive.
+
 ## 2026-11-13 09:51Z / 15:21 IST  HEARTBEAT 2
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
