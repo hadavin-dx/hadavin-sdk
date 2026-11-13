@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+18:42Z: no agent has reported a result yet. EV5 evidence runner a6d8392f: full suite still running; the live progress logs already show F marks (group A about 53 percent, 2 F; group B about 19 percent, 1 F). Which tests failed and why is UNKNOWN until the runner finishes; I will not call them flakes until it re-runs them alone. Hostile-input runs in progress. Fresh whole-patch reviewer a31190d2: running, has created scratch files (tmp-REV5), no report. Third mail/secrets/TLS pass aee26a5b: running, no report. Only these 3 agents running. ASK: none.
+
+## STATUS (core lead)
 18:37Z: three agents still running, none has reported a result. EV5 evidence runner a6d8392f: apply matrix done, lint done, full-suite groups A and B and hostile-input runs in progress (last own checkpoint 18:33Z). Fresh whole-patch reviewer a31190d2: no report yet, state unknown beyond running. Third mail/secrets/TLS pass aee26a5b: no report yet. No findings to state yet; nothing failed that I can verify. Only these 3 agents running. ASK: none.
 
 ## STATUS (core lead)
