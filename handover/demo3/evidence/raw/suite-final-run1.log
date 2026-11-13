@@ -295,4 +295,4 @@ tests/test_desk_edge_cases.py::test_failed_only_after_cap PASSED         [  7%]
 tests/test_desk_edge_cases.py::test_backoff_is_waited PASSED             [  7%]
 tests/test_desk_edge_cases.py::test_blind_crm_concurrent_once PASSED     [  7%]
 tests/test_desk_edge_cases.py::test_blind_crm_retry_once PASSED          [  7%]
-tests/test_desk_edge_cases.py::test_burst_distinct_emails 
+tests/test_desk_edge_cases.py::test_burst_distinct_emails EXIT_CODE=0 WALL_SECONDS=1127

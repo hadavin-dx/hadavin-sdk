@@ -208,4 +208,4 @@ tests/test_crm_hubspot.py::test_slow_answer_inside_budget_is_ok_and_beyond_it_is
 tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx] PASSED [  5%]
 tests/test_crm_hubspot.py::test_5xx_is_unclear_and_the_retry_is_safe[r5xx_after_store] PASSED [  5%]
 tests/test_crm_hubspot.py::test_429_waits_the_named_seconds_then_succeeds PASSED [  5%]
-tests/test_crm_hubspot.py::test_429_uses_the_backoff_without_retry_after_and_gives_up_busy PASSED [  5%]
+tests/test_crm_hubspot.py::test_429_uses_the_backoff_without_retry_after_and_gives_up_busy PASSED [  5%]EXIT_CODE=0 WALL_SECONDS=1121

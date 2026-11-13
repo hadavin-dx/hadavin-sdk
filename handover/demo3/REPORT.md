@@ -1,5 +1,20 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:47Z / 16:17 IST  HEARTBEAT 10 (ORDER 5: agent E started on edadd00)
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| D | Evidence runner: PR #14 d5b4451 full suite | stale head evidence | 10:25Z / 15:55 | run 1 ended 10:43Z: exit code 0, 1127 s, 0 FAILED in the recovered log | run 1 of 1 (run 2 cancelled by order 5; I messaged D) | finishing: F7 rerun table and suite-pr14.md | read D report |
+| E | Evidence runner: edadd00 full suite once with -v, basetemp inside TMPDIR, log kept outside git until pytest ends; F7 rows plus C1 / whitespace / bytes cases on tools/pathconfine.py | evidence for the current PR #14 head | 10:42Z / 16:12 | suite ends about 11:03Z / 16:33; hard stop 11:05Z (cap 11:07Z) | first try, run 1 of 1 | running | I read progress-E.txt about 10:55Z |
+| C2 | Evidence runner: hang hunt full -v on main 61ded9e | names hangs; is the clean main run | 10:25Z / 15:55 | at 10:44Z 3226 passed, 0 FAILED, 183 skipped (about 91 percent); should end ~10:50Z | first try | running (log orphaned, my copy loop R1 keeps it) | write hang-hunt.md |
+| R1 | my copy loop for orphaned logs | keeps raw logs | 10:35Z | D copy ended; C2 copy ends with its pytest | n/a | running | final copy before it ends |
+| me | ORDER 4 | explained 56 F | 10:28Z | done 10:37Z | n/a | reported (evidence/failures.md) | none |
+
+ASK:
+1. Order 5 says start E when D run 1 ends. D run 1 was 97 percent done when I started E (10:42Z), because E needs about 20 min and the cap is 11:07Z; 3 heavy runs (D end, C2, E) stayed within the limit. Default: keep E running.
+2. "New C1/whitespace/bytes cases": I could not see a list of them in ORDERS.md, so E derives them from `git diff d5b4451 edadd00` (tools/pathconfine.py and tests/test_path_confinement.py) and probes C1 control characters U+0080-U+009F, leading/trailing/inner and non-breaking whitespace, and bytes paths (plain, with NUL, non-UTF-8). Please send the exact cases if you want others. Default: keep.
+3. D's recovered log lost its last ~3 percent of lines (my copy loop ran every 15 s; the process ended between copies). The exit code 0 survived. Default: report as is, do not rerun d5b4451 (stale).
+FACTS: D run 1 on stale d5b4451: exit code 0, 1127 s. Lesson applied: E and later runs write logs outside the git folder until finished.
+
 ## 2026-11-13 10:37Z / 16:07 IST  HEARTBEAT 9 (ORDER 4 answered: evidence/failures.md)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
