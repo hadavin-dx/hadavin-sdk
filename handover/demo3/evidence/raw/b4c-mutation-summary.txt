@@ -1,0 +1,13 @@
+base docs + new test | exit 1 | 7 failed, 18 passed in 2.50s
+normalise_email casefold | exit 1 | 10 failed, 15 passed in 22.38s
+readme_def: letter ſ removed | exit 1 | 1 failed, 24 passed in 2.43s
+readme_def: phrase removed | exit 1 | 1 failed, 24 passed in 2.42s
+readme_notclaimed: letter ſ removed | exit 1 | 1 failed, 24 passed in 2.43s
+readme_notclaimed: phrase removed | exit 1 | 1 failed, 24 passed in 2.43s
+limits_bullet: letter ſ removed | exit 1 | 1 failed, 24 passed in 2.43s
+limits_bullet: phrase removed | exit 1 | 1 failed, 24 passed in 2.43s
+contract: letter ſ removed | exit 1 | 1 failed, 24 passed in 2.43s
+contract: phrase removed | exit 1 | 1 failed, 24 passed in 2.52s
+limits other-forms sentence changed | exit 1 | 1 failed, 24 passed in 2.51s
+limits Kelvin/U+0130 sentence changed | exit 1 | 1 failed, 24 passed in 2.61s
+README anchor on two lines | exit 1 | 1 failed, 24 passed in 2.41s

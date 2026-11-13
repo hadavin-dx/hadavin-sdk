@@ -1,0 +1,24 @@
+# other-forms
+......................F..                                                [100%]
+=================================== FAILURES ===================================
+_________________ test_limits_sentences_are_there[other_forms] _________________
+
+pinned = ('docs/limits.md', 'Other address forms stay separate leads', ('xn--', 'brackets', '64', '254'))
+
+    @pytest.mark.parametrize("pinned", [OTHER_FORMS_LINE, REFUSED_LINE], ids=["other_forms", "refused_letters"])
+    def test_limits_sentences_are_there(pinned: tuple[str, str, tuple[str, ...]]) -> None:
+        """The two sentences of docs/limits.md that test_other_forms_stay_apart and test_refused_letters stand behind."""
+        path, anchor, words = pinned
+        text = _line(path, anchor)
+        for word in words:
+>           assert word in text, f"{path}: the line {anchor!r} must hold {word!r}"
+E           AssertionError: docs/limits.md: the line 'Other address forms stay separate leads' must hold 'xn--'
+E           assert 'xn--' in '* Other address forms stay separate leads, and the desk accepts them (each is tested): a domain with non-ASCII letter...m]`). There is no 64-character limit on the part before the `@`; only the whole address is limited, to 254 characters.'
+
+tests/test_email_case_rule.py:180: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_limits_sentences_are_there[other_forms]
+1 failed, 24 passed in 2.51s
+
+
+EXIT_CODE=1

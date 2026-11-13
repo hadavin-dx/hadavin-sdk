@@ -1,0 +1,17 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/work/final-venv/bin/python
+rootdir: /home/user/work/e3b-stack
+configfile: pyproject.toml
+collecting ... collected 9 items
+
+tests/test_docs_claims_lane3.py::test_exit_code_1_uses_the_words_the_desk_prints PASSED [ 11%]
+tests/test_docs_claims_lane3.py::test_readme_counts_line_matches_the_real_counts_of_a_fresh_desk PASSED [ 22%]
+tests/test_docs_claims_lane3.py::test_readme_demo_and_burst_bullet_match_a_real_replay PASSED [ 33%]
+tests/test_docs_claims_lane3.py::test_premise_workflow_files_carry_the_default_ports_each PASSED [ 44%]
+tests/test_docs_claims_lane3.py::test_the_recipe_names_the_ports_each_workflow_file_needs PASSED [ 55%]
+tests/test_docs_claims_lane3.py::test_premise_example_lead_matches_readme_demo_lead PASSED [ 66%]
+tests/test_docs_claims_lane3.py::test_the_recipe_says_to_reset_and_start_everything_again PASSED [ 77%]
+tests/test_docs_claims_lane3.py::test_the_recipe_import_steps_match_the_script PASSED [ 88%]
+tests/test_docs_claims_lane3.py::test_readme_port_check_explains_000_and_404 PASSED [100%]
+
+============================== 9 passed in 1.82s ===============================

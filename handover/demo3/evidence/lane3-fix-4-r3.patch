@@ -1,0 +1,264 @@
+diff --git a/README.md b/README.md
+index b907165..7b674e1 100644
+--- a/README.md
++++ b/README.md
+@@ -25,7 +25,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ 
+ ## Words used here
+ 
+-* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of spaces and lower-cased, nothing more.
++* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of blank characters (spaces, tabs and other white space) and lower-cased, nothing more. The lower-casing is Python's `lower()`. It joins a capital letter and its small letter for ordinary letters (a-z, and é, ü, ö, ç were checked), but not for some rare letters. Three examples, each of these pairs is a different lead: `straße@example.com` and `STRASSE@example.com` (`ß` is the German sharp s; its capital form is `SS`), `ıstanbul@example.com` and `ISTANBUL@example.com` (`ı` is the Turkish dotless i; its capital form is the ordinary `I`), and `ſam@example.com` and `SAM@example.com` (`ſ` is the old long s, which looks like an f without the crossbar). A first capital (`Istanbul@example.com`) or mixed case (`StraSSe@example.com`) is also a different lead from the `ı` or `ß` spelling. The same person then gets two leads and two follow-up emails (in this demo, two entries in the stand-in mail system). Further examples are `µ`, `ŉ` and `ǰ`. A stricter way of ignoring capitals (Python's `casefold()`) would join the `ß` and `ſ` pairs but not the `ı` pair; the desk does not use it. This is rare: it needs one of these letters, written both ways. To find such pairs, switch off "Hide names and email addresses" in the portal and look in the Leads list for two entries that are the same address written two ways, such as `straße@…` and `STRASSE@…`, `ıstanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them.
+ * **Follow-up**: the one email sent for a new lead, plus the CRM row that goes with it.
+ * **CRM**: the customer-record system where a lead is stored as a row.
+ * **Demo stand-ins**: small programs in this repository (`demo_only/`) that play the CRM, the mail system and the AI step and only count what they receive. Some of their web addresses and settings still contain the word `fake`.
+@@ -94,7 +94,7 @@ The reset script refuses, with one line of reason and nothing deleted, in these
+ Claimed, for this demo setup only:
+ 
+ * The same request number sent again gets the stored answer and changes nothing.
+-* The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
++* The same email under a different request number is a duplicate (same lead, see **Same lead**): no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. Of the ten, nine are simulated by an exception inside the program; only one (D2) is a real process kill. The tests assert at most one lead, one CRM row and one email. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+ * The desk does not send a follow-up twice by itself. An unconfirmed send is listed for a person. A person who answers "not sent" wrongly on a blind mail system can cause a second email.
+@@ -103,7 +103,7 @@ Not claimed:
+ 
+ * Anything about a real CRM, a real mail system or a real AI model. Only `scripts/hubspot_probe.py` touched a real service (one free HubSpot account, logs not shipped); everything else, including the desk's HubSpot adapter, ran against stand-ins. The "keyed" mail system is a simulation; a real provider may remember a send key for a shorter or longer time.
+ * Production fitness, a legal opinion, a guarantee of any kind.
+-* The same person with two email addresses is two leads; two people sharing one address are one lead.
++* The same person with two email addresses is two leads; two people sharing one address are one lead. Not claimed either: that the same address in capitals is always the same lead. It is, with rare exceptions: `ß`, `ı` and `ſ` (and some other rare letters) written in capitals make a different lead (see **Same lead** above).
+ * The desk is for one computer and one process, has no login, and listens on this computer only unless you change that. No penetration test was done.
+ * Masking in the portal is on screen only: lead names, email addresses and phone numbers are hidden on the page by default (the switch "Hide names and email addresses"; its state lasts for the browser tab's session), the search does not look in names or email addresses while they are hidden, and the answer the page reads from the desk still carries every value, names included (see `docs/portal.md`).
+ * Loads of 10,000 requests were not run. The measured figures in `docs/limits.md` come from one Windows computer, were tried by the author, and depend on the machine; their raw logs are not shipped.
+diff --git a/contract.md b/contract.md
+index d24f76c..9dd3d08 100644
+--- a/contract.md
++++ b/contract.md
+@@ -249,7 +249,7 @@ These rules are part of this contract. Where one differs from a table row above,
+   * The receipt stays open, is added to the desk's poke list so the reaper tries it again at every pass (it does not wait for `stall_seconds`), shows as stalled in the review list, and is counted in `/counts` as `decide_transient_errors` (in memory, 0 after a restart); the request itself gets an error reply (500), so a sender that repeats the SAME request number is correct and safe.
+   * A broken database constraint (`sqlite3.IntegrityError`) is not transient: the receipt gets verdict `review` with reason `internal_unstorable:integrity` (plain `internal_unstorable` for an unstorable value such as a surrogate), and `/counts` counts it in `decide_integrity_errors` (in memory); while that counter is above 0, `/counts` `ok` is false.
+   * The review hint for `internal_error` says the same fault came up again and again, a person must look at the desk log and fix the cause, and the lead can then be sent again with a new request number.
+-- Email: an apostrophe is allowed before the @ (o'brien@example.com); every other exclusion stands. A character that lower-cases to ASCII (the Kelvin sign U+212A gives k; U+0130 gives i plus a mark) is refused: verdict `review`, reason `invalid_email`. Other non-ASCII letters are accepted (the key is their lower-case form). The desk does not normalise to NFC: two spellings of one mailbox stay two leads, which can split a mailbox but never merge two.
++- Email: an apostrophe is allowed before the @ (o'brien@example.com); every other exclusion stands. A character that lower-cases to ASCII (the Kelvin sign U+212A gives k; U+0130 gives i plus a mark) is refused: verdict `review`, reason `invalid_email`. Other non-ASCII letters are accepted (the key is their lower-case form, Python's `lower()`, not `casefold()`): `ß`, `ı` and `ſ` written in capitals (`STRASSE`, `ISTANBUL`, `SAM`) give a different lead from `straße`, `ıstanbul`, `ſam`, so one person can get two leads and two follow-ups; a first capital or mixed case differs too, and some other rare letters behave the same way (`README.md`, Same lead; `docs/limits.md`; `tests/test_email_case_rule.py`). The desk does not normalise to NFC: two spellings of one mailbox stay two leads, which can split a mailbox but never merge two.
+ - POST /leads: 503 `{"error":"busy","receipt_id":null}` is also answered when 32 requests are already inside the desk and no place frees up within 5 s. No receipt is written then, so the client can send the same request again. A 503 `busy` that comes after the receipt was written leaves the receipt open; the reaper decides it at its next pass (it does not wait for `stall_seconds`) and the client may send the same request number again (a replay of the open receipt). "No open receipt after a 503" holds only for a 503 that comes before the receipt was written.
+ - Follow-up send results: a reply that came back with the wrong mode is `unknown` / `mode_mismatch`.
+   * A refused or unreachable sender (nothing sent), an unclear end on a KEYED sender (sending again is safe), a CRM that failed, or an AI step that failed puts the follow-up back to `pending` (last_error `refused` / `unreachable` / `ambiguous` / `internal:<class>`). `attempts` counts the claims (the starts of a try) and is never lowered, because it is the ownership token; the automatic tries that set the cap are counted in `auto_attempts`, which a give-back lowers.
+diff --git a/docs/limits.md b/docs/limits.md
+index b249bba..34deb3f 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -23,6 +23,8 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   The licence text has not been reviewed by a lawyer.
+ * The same person with two email addresses is two leads: `ada+sales@example.com` and `a.da@example.com` are different leads.
+   Two people sharing one address are one lead.
++* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join (a-z and é, ü, ö, ç were checked and are safe). Some rare letters do not. Three examples, each pair is a different lead: `straße@example.com` and `STRASSE@example.com` (`ß` is the German sharp s; its capital form is `SS`), `ıstanbul@example.com` and `ISTANBUL@example.com` (`ı` is the Turkish dotless i; its capital form is the ordinary `I`), and `ſam@example.com` and `SAM@example.com` (`ſ` is the old long s, which looks like an f without the crossbar). The first-capital and mixed-case spellings (`Istanbul@example.com`, `StraSSe@example.com`) also differ from the `ı` and `ß` spellings. The same person gets two leads and two follow-up emails (in this demo, two entries in the stand-in mail system, which the tests count). Some other rare letters behave the same way (for example `µ`, `ŉ`, `ǰ`, and a Greek final sigma `ς` followed by a full stop and another letter, such as `οδος.x@example.com` and `ΟΔΟΣ.X@example.com`). A stricter way of ignoring capitals (Python's `casefold()`) would join the `ß` and `ſ` pairs but not the `ı` pair; the desk does not use it. The Kelvin sign (U+212A) and the dotted capital I (U+0130) are refused and put on the review list, not split. What to do: switch off "Hide names and email addresses" in the portal and look in the Leads list for two entries that are the same address written two ways, such as `straße@…` and `STRASSE@…`, `ıstanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them. Tests: `tests/test_email_case_rule.py`.
++* Other address forms stay separate leads, and the desk accepts them (each is tested): a domain with non-ASCII letters and the same domain as punycode (`ada@xü.example.com` and `ada@xn--x-eha.example.com`); a comment in brackets (`ada(sales)@example.com` and `ada@example.com`); a domain in square brackets (`ada@[example.com]`). There is no 64-character limit on the part before the `@`; only the whole address is limited, to 254 characters.
+ * A real mail system or CRM was not tested (except by the one probe in `docs/hubspot-probe.md`). The keyed mail system is a simulation; a real provider may remember a send key for a
+   shorter or longer time. The AI step is a set of pre-written replies; nothing is said about real AI behaviour.
+ * **Live model step.** The desk can ask a real AI model for a label, but only when you set `DESK_QUALIFIER=live_claude`, name a key file
+diff --git a/docs/tests.md b/docs/tests.md
+index 16bac04..17666c8 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -128,7 +128,7 @@ The table below says which tests show each promise. "Tests named" means the test
+ | P9 | The desk does not rewrite or summarise later messages, and no AI step runs for them: the list is the record. | `test_later_messages_never_call_the_ai`, `test_later_reply_keys_are_fixed`, `test_dedupe_before_ai` |
+ | P10 | Lead names, email addresses, phone numbers, messages and request numbers are masked on screen by default, in the lead list and in the lead panel, for the first record and for every later message. While they are masked, the search does not look in names or email addresses (it matches the company and the lead number only; a request number is not searched while masked), and its placeholder says names and addresses are searchable after hiding is turned off. Switching "Hide names and email addresses" OFF shows them and allows searching by name and by email address; switching it back ON masks the list and an open panel straight away and clears a search that was typed. The choice is kept for the browser tab's session only (session storage), so a new session starts masked. The small eye button beside a masked value shows that one value only, for 30 seconds at most, and does not turn on searching by name or address. On the demo controls page the lead pick list and the retry list show neutral labels ("Lead 1") or hidden names while masking is on. Companies, lead owners and approver names stay visible. No log line of the desk prints an email address, phone number or message: every log call in the code is checked, and a test runs later messages and a failed read with test values and finds none of them in the log or the error output. Masking is on screen only: the answer the page reads from the desk (visible in the browser's developer tools) still carries every value, and anyone who can reach the desk can ask it to search by name or email address. | the browser tests listed in "Browser tests" below and `test_personal_hidden_rule`, `test_reveal_one_value_rules`, `test_later_panel_rules_in_the_source`, `test_leads_email_search_needs_reveal`, `test_name_search_needs_reveal`, `test_demo_pick_lists_neutral`, `test_log_calls_carry_no_values`, `test_later_messages_log_no_values` |
+ 
+-The promises P1 to P10 are about the desk. What n8n did is reported separately below. Also tested, not a headline promise: odd input and requests (`tests/test_input_edge_cases.py`: half-character escapes, deeply nested JSON, `HEAD`, `OPTIONS` and malformed requests get a JSON answer, an email that grows when lower-cased, two drives of one new lead at once).
++The promises P1 to P10 are about the desk. What n8n did is reported separately below. Also tested, not a headline promise: odd input and requests (`tests/test_input_edge_cases.py`: half-character escapes, deeply nested JSON, `HEAD`, `OPTIONS` and malformed requests get a JSON answer, an email that grows when lower-cased, two drives of one new lead at once). `tests/test_email_case_rule.py` pins which letters make two leads out of one address written in capitals (`ß`, `ı`, `ſ`), what that costs on the real desk (two leads, two follow-ups), and that the four documents say so.
+ 
+ What `/counts` adds up: `received = new + duplicate + review + open`. Some counters live only in the desk's memory and start again at 0 after a restart, and the database refuses to change or delete receipts, leads and sent follow-ups. The details, with test names, are in `docs/limits.md` ("Counters and database rules").
+ 
+diff --git a/tests/test_email_case_rule.py b/tests/test_email_case_rule.py
+new file mode 100644
+index 0000000..0f6ab67
+--- /dev/null
++++ b/tests/test_email_case_rule.py
+@@ -0,0 +1,188 @@
++"""Which email addresses become one lead, and which letters the desk cannot join when they are written in capitals.
++
++The desk makes the lead key with Python's `lower()` (identity.normalise_email). A few letters do not turn back into
++the same small letter after capitals: ß (capital SS), ı (capital I) and ſ (capital S), among rarer ones. The key tests
++here fail if the code changes (for example to `casefold()`); whoever makes them pass must also change the documents:
++README.md (the definition of Same lead and the Not claimed list), docs/limits.md, contract.md and docs/tests.md.
++The document tests fail if one of those places stops naming the three letters or the phrase "different lead", or if
++the docs/limits.md sentences on other address forms and on the refused letters are removed.
++Made-up data only (example.com)."""
++
++from __future__ import annotations
++
++import re
++import time
++
++import pytest
++from support import REPO, call, lead, post_lead
++
++from lead_desk.constants import EMAIL_MAX
++from lead_desk.identity import check_payload, normalise_email
++
++DOMAIN = "@example.com"
++# (lower-case spelling, capitals spelling): the pairs that the desk keeps as two leads
++SPLIT_PAIRS = [
++    ("straße" + DOMAIN, "STRASSE" + DOMAIN),  # ß, the German sharp s; its capital is SS
++    ("ıstanbul" + DOMAIN, "ISTANBUL" + DOMAIN),  # ı, the Turkish dotless i; its capital is I
++    ("ſam" + DOMAIN, "SAM" + DOMAIN),  # ſ (U+017F), the old long s; its capital is S
++]
++# one address spelled two ways that still gives one key (the letters checked and found safe)
++SAME_PAIRS = [
++    ("émile" + DOMAIN, "ÉMILE" + DOMAIN),
++    ("müller" + DOMAIN, "MÜLLER" + DOMAIN),
++    ("özil" + DOMAIN, "ÖZIL" + DOMAIN),
++    ("françois" + DOMAIN, "FRANÇOIS" + DOMAIN),
++    ("ada" + DOMAIN, "ADA@" + "example.com".upper()),  # the capital domain is built here, not typed
++]
++# a first capital or mixed case is also a different lead from the ß or ı spelling
++OTHER_CASES = [("straße" + DOMAIN, "StraSSe" + DOMAIN), ("ıstanbul" + DOMAIN, "Istanbul" + DOMAIN)]
++LETTERS = "ßıſ"
++PHRASE = re.compile(r"different\s+lead")
++DOC_PLACES = {  # name -> (file, words that appear in exactly one line of that file: the line holding the claim)
++    "README, definition of Same lead": ("README.md", "means the same email address"),
++    "README, Not claimed list": ("README.md", "the same address in capitals"),
++    "docs/limits.md": ("docs/limits.md", "Email addresses written in capitals"),
++    "contract.md": ("contract.md", "not `casefold()`"),
++}
++# two more sentences of docs/limits.md that are pinned: (anchor, words the line must hold)
++OTHER_FORMS_LINE = ("docs/limits.md", "Other address forms stay separate leads", ("xn--", "brackets", "64", "254"))
++REFUSED_LINE = ("docs/limits.md", "The Kelvin sign (U+212A)", ("U+212A", "U+0130", "refused", "review list"))
++
++
++def _splits(letter: str) -> bool:
++    """True when the desk gives the letter and its capital form two different keys."""
++    return normalise_email(letter + DOMAIN) != normalise_email(letter.upper() + DOMAIN)
++
++
++@pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
++def test_split_pairs_differ(small: str, capitals: str) -> None:
++    msg = "the key rule changed: change the code and README, docs/limits.md, contract.md and docs/tests.md together"
++    assert normalise_email(small) != normalise_email(capitals), f"{small} and {capitals} now give one key; {msg}"
++    for email in (small, capitals):  # both are valid addresses, so each one becomes a lead of its own
++        assert check_payload({"name": "Ada", "email": email}).kind == "ok", f"{email} should be accepted"
++
++
++@pytest.mark.parametrize(("small", "capitals"), OTHER_CASES)
++def test_first_capital_splits(small: str, capitals: str) -> None:
++    assert normalise_email(small) != normalise_email(capitals), f"{small} and {capitals} now give one key"
++
++
++@pytest.mark.parametrize(("small", "capitals"), SAME_PAIRS)
++def test_safe_letters_one_key(small: str, capitals: str) -> None:
++    assert normalise_email(small) == normalise_email(capitals), f"{small} and {capitals} now give two keys"
++
++
++def test_casefold_claim() -> None:
++    """The documents say case folding would join the ß and ſ pairs but not the ı pair."""
++    joined = [s for s, c in SPLIT_PAIRS if s.casefold() == c.casefold()]
++    assert joined == [SPLIT_PAIRS[0][0], SPLIT_PAIRS[2][0]], f"casefold joins {joined}: the documents say ß and ſ only"
++
++
++def test_other_forms_stay_apart() -> None:
++    """The short list in docs/limits.md: each form is accepted and is its own lead."""
++    plain = "ada" + DOMAIN
++    forms = {
++        "domain with non-ASCII letters": "ada@xü.example.com",
++        "the same domain as punycode": "ada@xn--x-eha.example.com",
++        "comment in brackets": "ada(sales)" + DOMAIN,
++        "domain in square brackets": "ada@[example.com]",
++    }
++    keys = {normalise_email(plain)}
++    for what, email in forms.items():
++        assert check_payload({"name": "Ada", "email": email}).kind == "ok", f"{what} is no longer accepted"
++        keys.add(normalise_email(email))
++    assert len(keys) == len(forms) + 1, "two of these forms now give one key: change docs/limits.md"
++    room = EMAIL_MAX - len(DOMAIN)
++    for size, kind in ((65, "ok"), (room, "ok"), (room + 1, "review")):  # no 64-character limit before the @
++        got = check_payload({"name": "Ada", "email": "a" * size + DOMAIN}).kind
++        assert got == kind, f"{size} characters before the @ gave {got}, docs/limits.md says {kind}"
++
++
++def test_other_rare_letters() -> None:
++    """docs/limits.md names µ, ŉ, ǰ and a Greek final sigma before a full stop as more letters that split."""
++    for letter in "µŉǰ":
++        assert _splits(letter), f"{letter!r} now joins its capital form: change docs/limits.md"
++    small, capitals = "οδος.x" + DOMAIN, "ΟΔΟΣ.X" + DOMAIN
++    assert normalise_email(small) != normalise_email(capitals), "the Greek final sigma now joins: change docs/limits.md"
++
++
++def test_refused_letters() -> None:
++    """The Kelvin sign and the dotted capital I are refused (verdict review), not split into two leads."""
++    for email in ("\u212a" + DOMAIN, "\u0130stanbul" + DOMAIN):
++        assert check_payload({"name": "Ada", "email": email}).kind == "review", f"{email!r} is no longer refused"
++
++
++SEND_WAIT_SECONDS = 10  # the most the tests wait for the desk to send the follow-ups
++
++
++def _desk_run(env, first: str, second: str, expected_sent: int) -> tuple[list[tuple[int, str]], int, int, int, int]:
++    """Two requests, then wait (at most SEND_WAIT_SECONDS) until `expected_sent` follow-ups are `sent`.
++    Returns the two answers, the number of leads, `new` from /counts, the follow-up rows and the emails the stand-in
++    mail system received."""
++    rig = env.rig()
++    base = env.serve(rig)
++    answers = [post_lead(base, "form", f"r{i}", lead(email=e)) for i, e in enumerate((first, second), 1)]
++    stop = time.monotonic() + SEND_WAIT_SECONDS
++    sent = "SELECT count(*) FROM followups WHERE state = 'sent'"
++    while time.monotonic() < stop and rig.query(sent)[0][0] < expected_sent:
++        time.sleep(0.05)
++    counts = call(base, "GET", "/counts")
++    assert counts[0] == 200, f"/counts answered {counts[0]}"
++    rows = int(rig.query("SELECT count(*) FROM followups")[0][0])
++    return [(a[0], a[1]["verdict"]) for a in answers], rig.leads(), counts[1]["new"], rows, rig.outbox.count
++
++
++@pytest.mark.parametrize(("small", "capitals"), SPLIT_PAIRS)
++def test_desk_two_leads_two_mails(env, small: str, capitals: str) -> None:
++    """The cost of the rule on the real desk: two `new` answers, two leads, two follow-ups, two emails received."""
++    answers, leads, news, rows, mails = _desk_run(env, small, capitals, 2)
++    assert answers == [(201, "new"), (201, "new")], f"expected two new leads, got {answers}"
++    assert (leads, news, rows) == (2, 2, 2), f"expected 2 leads, 2 new, 2 follow-ups, got {leads}, {news}, {rows}"
++    assert mails == 2, f"the stand-in mail system received {mails} emails for {small} and {capitals}, expected 2"
++
++
++def test_desk_plain_capitals_one_lead(env) -> None:
++    """The control: ordinary capitals are one lead, so the second request is a duplicate and one email goes out."""
++    answers, leads, news, rows, mails = _desk_run(env, *SAME_PAIRS[0], 1)
++    assert answers == [(201, "new"), (200, "duplicate")], f"expected new then duplicate, got {answers}"
++    got = (leads, news, rows, mails)
++    assert got == (1, 1, 1, 1), f"expected 1 lead, 1 new, 1 row, 1 email, got {got}"
++
++
++def _line(path: str, anchor: str) -> str:
++    """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
++    lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
++    assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
++    return lines[0]
++
++
++def _place_text(name: str) -> str:
++    return _line(*DOC_PLACES[name])
++
++
++@pytest.mark.parametrize("place", sorted(DOC_PLACES))
++def test_docs_name_the_letters(place: str) -> None:
++    """Each place names every letter the code splits, and says a different lead results."""
++    letters = [c for c in LETTERS if _splits(c)]
++    assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
++    text = _place_text(place)
++    for letter in letters:
++        assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
++    assert PHRASE.search(text), f"{place} must say that the two spellings are a different lead"
++
++
++@pytest.mark.parametrize("pinned", [OTHER_FORMS_LINE, REFUSED_LINE], ids=["other_forms", "refused_letters"])
++def test_limits_sentences_are_there(pinned: tuple[str, str, tuple[str, ...]]) -> None:
++    """The two sentences of docs/limits.md that test_other_forms_stay_apart and test_refused_letters stand behind."""
++    path, anchor, words = pinned
++    text = _line(path, anchor)
++    for word in words:
++        assert word in text, f"{path}: the line {anchor!r} must hold {word!r}"
++
++
++def test_tests_page_lists_it() -> None:
++    text = (REPO / "docs/tests.md").read_text(encoding="utf-8")
++    assert "tests/test_email_case_rule.py" in text, "docs/tests.md must list tests/test_email_case_rule.py"
++    line = next(x for x in text.splitlines() if "tests/test_email_case_rule.py" in x)
++    for letter in LETTERS:
++        assert letter in line, f"docs/tests.md must name {letter!r} next to the test file"

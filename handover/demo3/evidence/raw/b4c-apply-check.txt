@@ -1,0 +1,2 @@
+plain apply --check rc=0
+for-stack apply --check on stack tree rc=0

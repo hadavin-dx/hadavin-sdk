@@ -1,0 +1,28 @@
+# readme_notclaimed-phrase
+..................F......                                                [100%]
+=================================== FAILURES ===================================
+_____________ test_docs_name_the_letters[README, Not claimed list] _____________
+
+place = 'README, Not claimed list'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+        for letter in letters:
+            assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
+>       assert PHRASE.search(text), f"{place} must say that the two spellings are a different lead"
+E       AssertionError: README, Not claimed list must say that the two spellings are a different lead
+E       assert None
+E        +  where None = <built-in method search of re.Pattern object at 0x7f11f61dcbc0>('* The same person with two email addresses is two leads; two people sharing one address are one lead. Not claimed eit...s: `ß`, `ı` and `ſ` (and some other rare letters) written in capitals make a separate entry (see **Same lead** above).')
+E        +    where <built-in method search of re.Pattern object at 0x7f11f61dcbc0> = re.compile('different\\s+lead').search
+
+tests/test_email_case_rule.py:171: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, Not claimed list]
+1 failed, 24 passed in 2.43s
+
+
+EXIT_CODE=1

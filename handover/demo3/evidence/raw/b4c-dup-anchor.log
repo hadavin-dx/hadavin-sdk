@@ -1,0 +1,39 @@
+# dup-anchor
+...................F.....                                                [100%]
+=================================== FAILURES ===================================
+_________ test_docs_name_the_letters[README, definition of Same lead] __________
+
+place = 'README, definition of Same lead'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+>       text = _place_text(place)
+               ^^^^^^^^^^^^^^^^^^
+
+tests/test_email_case_rule.py:168: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_email_case_rule.py:160: in _place_text
+    return _line(*DOC_PLACES[name])
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'README.md', anchor = 'means the same email address'
+
+    def _line(path: str, anchor: str) -> str:
+        """The one line of the document that holds the anchor words. Fails unless exactly one line holds them."""
+        lines = [x for x in (REPO / path).read_text(encoding="utf-8").splitlines() if anchor in x]
+>       assert len(lines) == 1, f"{path}: {len(lines)} lines hold {anchor!r}, expected exactly 1; the anchor words moved"
+E       AssertionError: README.md: 2 lines hold 'means the same email address', expected exactly 1; the anchor words moved
+E       assert 2 == 1
+E        +  where 2 = len(['* **Lead**: a person who asked to be contacted. **Same lead** means the same email address, trimmed of blank charact...bul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them.', 'Note: it means the same email address.'])
+
+tests/test_email_case_rule.py:155: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[README, definition of Same lead]
+1 failed, 24 passed in 2.41s
+
+
+EXIT_CODE=1

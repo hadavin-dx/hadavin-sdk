@@ -1,0 +1,24 @@
+# refused
+.......................F.                                                [100%]
+=================================== FAILURES ===================================
+_______________ test_limits_sentences_are_there[refused_letters] _______________
+
+pinned = ('docs/limits.md', 'The Kelvin sign (U+212A)', ('U+212A', 'U+0130', 'refused', 'review list'))
+
+    @pytest.mark.parametrize("pinned", [OTHER_FORMS_LINE, REFUSED_LINE], ids=["other_forms", "refused_letters"])
+    def test_limits_sentences_are_there(pinned: tuple[str, str, tuple[str, ...]]) -> None:
+        """The two sentences of docs/limits.md that test_other_forms_stay_apart and test_refused_letters stand behind."""
+        path, anchor, words = pinned
+        text = _line(path, anchor)
+        for word in words:
+>           assert word in text, f"{path}: the line {anchor!r} must hold {word!r}"
+E           AssertionError: docs/limits.md: the line 'The Kelvin sign (U+212A)' must hold 'U+0130'
+E           assert 'U+0130' in "* Email addresses written in capitals: the desk lower-cases an address with Python's `lower()`. Ordinary letters join...tanbul@…` and `ISTANBUL@…`, `ſam@…` and `SAM@…`. The desk does not merge them. Tests: `tests/test_email_case_rule.py`."
+
+tests/test_email_case_rule.py:180: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_limits_sentences_are_there[refused_letters]
+1 failed, 24 passed in 2.61s
+
+
+EXIT_CODE=1

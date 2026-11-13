@@ -1,0 +1,25 @@
+# contract-letter
+....................F....                                                [100%]
+=================================== FAILURES ===================================
+___________________ test_docs_name_the_letters[contract.md] ____________________
+
+place = 'contract.md'
+
+    @pytest.mark.parametrize("place", sorted(DOC_PLACES))
+    def test_docs_name_the_letters(place: str) -> None:
+        """Each place names every letter the code splits, and says a different lead results."""
+        letters = [c for c in LETTERS if _splits(c)]
+        assert letters == list(LETTERS), f"the code now splits only {letters}: change all places that name {LETTERS}"
+        text = _place_text(place)
+        for letter in letters:
+>           assert letter in text, f"{place} must name {letter!r}: the desk keeps it apart from its capital"
+E           AssertionError: contract.md must name 'ſ': the desk keeps it apart from its capital
+E           assert 'ſ' in "- Email: an apostrophe is allowed before the @ (o'brien@example.com); every other exclusion stands. A character that ...does not normalise to NFC: two spellings of one mailbox stay two leads, which can split a mailbox but never merge two."
+
+tests/test_email_case_rule.py:170: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_email_case_rule.py::test_docs_name_the_letters[contract.md]
+1 failed, 24 passed in 2.43s
+
+
+EXIT_CODE=1
