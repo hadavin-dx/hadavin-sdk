@@ -50,9 +50,43 @@ except Exception as e:  # noqa: BLE001
     print(f"<!-- Config() failed: {e} -->", file=sys.stderr)
 
 rows: list[tuple[str, str, str, str, str]] = []  # loc, claim, where, verdict, note
+# Rows the script cannot judge but a person checked by hand (claim text -> reason). They print as OK-explained, never silently.
+EXPLAINED = {
+    "/health": "the doc says the desk has NO page at /health",
+    "/fake/...": "placeholder: the dots stand for the demo servers' own addresses",
+    "/review/...": "placeholder for the review routes (see the routes table)",
+    "POST /review/...": "placeholder for the review routes (see the routes table)",
+    "POST /crm/v3/objects/contacts/gdpr-delete": "HubSpot's address; used by scripts/hubspot_probe.py (string built from parts)",
+    "POST /webhook/proof-run": "n8n adds the /webhook/ prefix; the path proof-run is in n8n/proof.json",
+    "/webhook/proof-run": "n8n adds the /webhook/ prefix; the path proof-run is in n8n/proof.json",
+    "result.json": "the report file name written by scripts/run_real_check.py (also in scripts/real-run.env.example)",
+    "cfg.txt": "an example name in the hygiene test text, not a repository file",
+    "x_api_key.txt": "an example name in the hygiene test text, not a repository file",
+    "sqlite3.sqlite_version": "attribute of the Python standard library module",
+    "ALLOW_ANY_BASE_URL": "suffix after the DESK_LIVE_ prefix (config.py)",
+    "MESSAGE_ID_DOMAIN": "suffix after a DESK_SMTP_ or DESK_SMTPP_ prefix; found in smtp_outbox.py and smtp_provider.py",
+    "MAX_SENDS": "suffix after a prefix; found in smtp_provider.py and run_real_check.py",
+    "STATS_FILE": "suffix after a prefix; found in smtp_provider.py, crm_hubspot.py and run_real_check.py",
+    "KEY_FILE": "suffix after a prefix; found in config.py and run_real_check.py",
+    "BASE_URL": "suffix after a prefix; found in config.py and crm_hubspot.py",
+    "MAX_429_RETRIES": "suffix after a prefix; found in crm_hubspot.py",
+    "MISSING_SCOPES": "an error word of the HubSpot service, quoted from the author's probe run",
+    "N8N_PORT": "n8n's own setting name (docs/n8n-recipe.md names it as n8n's)",
+    "PLAYWRIGHT_BROWSERS_PATH": "Playwright's own setting name",
+    "DESK_SMTP_HOST default 127.0.0.1": "dataclass default in smtp_outbox.py (Config().bind), not a Config field",
+    "DESK_SMTP_FROM default desk@example.test": "dataclass default of the sender in smtp_outbox.py",
+    "DESK_SMTP_MESSAGE_ID_DOMAIN default example.test": "dataclass default in smtp_outbox.py",
+    "DESK_SMTP_TIMEOUT_SECONDS default 5.0": "dataclass default Config().send_timeout_seconds = 5.0 in smtp_outbox.py",
+    "DESK_SMTPP_MESSAGE_ID_DOMAIN default example.invalid": "dataclass default in smtp_provider.py (line 87)",
+    "DESK_SMTPP_TIMEOUT_SECONDS default 5.0": "dataclass default Config().send_timeout_seconds in smtp_provider.py (line 88)",
+}
 
 
 def add(loc, claim, where, verdict, note=""):
+    if verdict in ("MISMATCH", "CANNOT-TELL") and claim in EXPLAINED:
+        verdict, note = "OK-explained", EXPLAINED[claim]
+    if verdict == "MISMATCH" and "MAX_HANDLER_THREADS" in claim and (" ~ 4 files" in claim or " ~ 10 s" in claim):
+        verdict, note = "OK-explained", "the number belongs to the neighbouring item (4 files per thread; 10 s deadlines), not to MAX_HANDLER_THREADS (1024)"
     rows.append((loc, claim.replace("|", "/")[:150], where, verdict, note))
 
 
@@ -106,7 +140,7 @@ for doc in DOCS:
                 continue
             if re.match(r"^[\w./\-]+\.(?:py|md|yml|json|sh|ps1|txt|toml|js|html)$", tok) and "/" not in tok:
                 base = tok
-                hits = [p for p in list(code_text) + list(test_text) + DOCS if os.path.basename(p) == base]
+                hits = [p for p in list(code_text) + list(test_text) + DOCS if os.path.basename(p) == base] + ([base] if os.path.exists(base) else [])
                 add(loc, tok, "file name anywhere in tree", "OK" if hits else "MISMATCH", "" if hits else "no file of that name")
                 continue
             # routes
@@ -164,7 +198,7 @@ for doc in DOCS:
             else:
                 add(loc, f"{env} default {dv}", "Config field of that name", "CANNOT-TELL", "no Config field of that name")
 
-order = {"MISMATCH": 0, "CANNOT-TELL": 1, "OK-tests-only": 2, "OK": 3}
+order = {"MISMATCH": 0, "CANNOT-TELL": 1, "OK-tests-only": 2, "OK-explained": 3, "OK": 4}
 rows.sort(key=lambda r: (order[r[3]], r[0]))
 from collections import Counter
 
