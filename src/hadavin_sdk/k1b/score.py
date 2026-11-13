@@ -20,6 +20,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from hadavin_sdk import pathguard
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.hashing import hash_files
 from hadavin_sdk.k1b.bundle import Bundle, bad_citations, bundle_set_sha256, load_bundles
@@ -164,7 +165,8 @@ def _recorded_digest(sha_file: Path) -> str | None:
 
 def _read_json(path: Path, what: str) -> Any:
     try:
-        return strict_json_loads(path.read_bytes().decode("utf-8-sig"))
+        target = pathguard.join(path.parent, path.name, what=what, must_exist=True, kind="file")
+        return strict_json_loads(target.read_bytes().decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError) as exc:
         raise ConfigError(f"{what} is missing or not valid JSON") from exc
 
