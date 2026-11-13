@@ -1,0 +1,5 @@
+== v2 tests on CRLF sonar file ==
+E       AssertionError: sonar-project.properties: this file has Windows line endings (CRLF); the repository stores LF (.gitattributes); save it with LF, or discard your edits to it with: git checkout -- <file>
+E           AssertionError: gitleaks dir reported findings (values are redacted); files: ['sonar-project.properties']
+E             sonar-project.properties: this file has Windows line endings (CRLF); the repository stores LF (.gitattributes); save it with LF, or discard your edits to it with: git checkout -- <file>
+2 failed in 10.64s

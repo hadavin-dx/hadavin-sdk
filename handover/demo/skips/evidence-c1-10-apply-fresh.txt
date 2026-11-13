@@ -1,0 +1,7 @@
+v2 alone on fresh 2db3926:
+OK
+crlf-guard-v2.patch then semgrep-on-2db3926-v4.patch: OK
+semgrep-on-2db3926-v4.patch then crlf-guard-v2.patch: OK
+crlf-guard-v2.patch then versions-md-allowance.patch: OK
+versions-md-allowance.patch then crlf-guard-v2.patch: OK
+v2+semgrep then versions-md rc=0

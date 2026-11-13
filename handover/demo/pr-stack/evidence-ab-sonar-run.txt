@@ -1,0 +1,24 @@
+{
+  "id": 43339136504,
+  "name": ".github/workflows/sonar.yml",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "failure",
+  "head_sha": "2db392650e8b7ced5db7f66ca48b1c058bf5891c",
+  "path": ".github/workflows/sonar.yml",
+  "run_attempt": 1,
+  "display_title": "Batch 3: CodeAnt runtime set (8 patches: speed fake fix, desk book ch…",
+  "jobs_url": "https://api.github.com/repos/hadavin-dx/duplicate-proof-lead-desk-n8n/actions/runs/43339136504/jobs"
+}
+-- jobs of run 43339136504
+{
+  "total_count": 0,
+  "jobs": []
+}
+-- check-suites 2db3926
+sonarqubecloud queued null runs=0
+coderabbitai completed skipped runs=1
+deepsource-io completed skipped runs=12
+codeant-ai queued null runs=0
+github-actions completed failure runs=0
+-- annotations via check-suite of actions

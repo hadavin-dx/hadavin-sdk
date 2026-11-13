@@ -1,0 +1,23 @@
+$ python3 -I checklist.py  (PR, author, final-tree status) -> count
+(1, 'github-advanced-security[bot]', 'MOVED') 1
+(1, 'github-advanced-security[bot]', 'SAME') 1
+(2, 'codeant-ai[bot]', 'CHANGED') 7
+(2, 'codeant-ai[bot]', 'MOVED') 3
+(2, 'codeant-ai[bot]', 'SAME') 2
+(2, 'deepsource-io[bot]', 'CHANGED') 2
+(2, 'deepsource-io[bot]', 'SAME') 7
+(2, 'github-advanced-security[bot]', 'SAME') 1
+(3, 'codeant-ai[bot]', 'MOVED') 1
+(3, 'codeant-ai[bot]', 'SAME') 1
+(3, 'deepsource-io[bot]', 'CHANGED') 1
+(3, 'deepsource-io[bot]', 'MOVED') 10
+(3, 'deepsource-io[bot]', 'SAME') 8
+(4, 'codeant-ai[bot]', 'CHANGED') 1
+(4, 'codeant-ai[bot]', 'MOVED') 1
+(4, 'codeant-ai[bot]', 'SAME') 1
+(4, 'deepsource-io[bot]', 'BLANK-LINE') 3
+(4, 'deepsource-io[bot]', 'MOVED') 66
+(4, 'deepsource-io[bot]', 'SAME') 144
+TOTAL rows 261: {'MOVED': 82, 'SAME': 165, 'CHANGED': 11, 'BLANK-LINE': 3}
+outdated(position null): 0
+body says addressed/resolved/fixed: 0

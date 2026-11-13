@@ -1,0 +1,201 @@
+== check-runs 43110e7
+CodeQL | completed | failure | github-advanced-security
+CodeRabbit | completed | skipped | coderabbitai
+analyze (python) | completed | success | github-actions
+analyze (javascript-typescript) | completed | success | github-actions
+lint | completed | success | github-actions
+analyze (actions) | completed | success | github-actions
+-- statuses
+pending
+== check-runs d23cf8f
+SonarCloud Code Analysis | completed | failure | sonarqubecloud
+DeepSource: VB.NET | completed | skipped | deepsource-io
+DeepSource: Perl | completed | skipped | deepsource-io
+DeepSource: Helm | completed | skipped | deepsource-io
+DeepSource: Erlang | completed | skipped | deepsource-io
+CodeQL | completed | success | github-advanced-security
+DeepSource: Dart | completed | skipped | deepsource-io
+DeepSource: Apex | completed | skipped | deepsource-io
+DeepSource: CSS | completed | skipped | deepsource-io
+DeepSource: Elixir | completed | skipped | deepsource-io
+DeepSource: Groovy | completed | skipped | deepsource-io
+DeepSource: Objective-C | completed | skipped | deepsource-io
+DeepSource: PowerShell | completed | skipped | deepsource-io
+DeepSource: Lua | completed | skipped | deepsource-io
+CodeRabbit | completed | skipped | coderabbitai
+Build and analyze | completed | success | github-actions
+analyze (actions) | completed | success | github-actions
+analyze (python) | completed | success | github-actions
+analyze (javascript-typescript) | completed | success | github-actions
+lint | completed | failure | github-actions
+-- statuses
+failure
+DeepSource: Secrets success
+DeepSource: Terraform success
+DeepSource: Shell success
+DeepSource: JavaScript failure
+DeepSource: C# success
+DeepSource: PHP success
+DeepSource: Kotlin success
+DeepSource: Ruby success
+DeepSource: Rust success
+DeepSource: Ansible success
+DeepSource: Java success
+DeepSource: Docker success
+DeepSource: Go success
+DeepSource: Scala success
+DeepSource: Swift success
+DeepSource: C & C++ success
+DeepSource: SQL failure
+DeepSource: Python failure
+== check-runs f31e261
+SonarCloud Code Analysis | completed | success | sonarqubecloud
+DeepSource: VB.NET | completed | skipped | deepsource-io
+DeepSource: Perl | completed | skipped | deepsource-io
+DeepSource: Helm | completed | skipped | deepsource-io
+DeepSource: Erlang | completed | skipped | deepsource-io
+DeepSource: Dart | completed | skipped | deepsource-io
+DeepSource: Apex | completed | skipped | deepsource-io
+DeepSource: CSS | completed | skipped | deepsource-io
+DeepSource: Elixir | completed | skipped | deepsource-io
+DeepSource: Groovy | completed | skipped | deepsource-io
+DeepSource: Objective-C | completed | skipped | deepsource-io
+DeepSource: PowerShell | completed | skipped | deepsource-io
+DeepSource: Lua | completed | skipped | deepsource-io
+CodeRabbit | completed | skipped | coderabbitai
+Build and analyze | completed | success | github-actions
+-- statuses
+failure
+DeepSource: SQL success
+DeepSource: Secrets success
+DeepSource: Docker success
+DeepSource: Terraform success
+DeepSource: JavaScript failure
+DeepSource: PHP success
+DeepSource: Ruby success
+DeepSource: Go success
+DeepSource: Ansible success
+DeepSource: Shell success
+DeepSource: Kotlin success
+DeepSource: Java success
+DeepSource: C# success
+DeepSource: C & C++ success
+DeepSource: Rust success
+DeepSource: Scala success
+DeepSource: Swift success
+DeepSource: Python failure
+== check-runs 2db3926
+DeepSource: VB.NET | completed | skipped | deepsource-io
+DeepSource: Perl | completed | skipped | deepsource-io
+DeepSource: Helm | completed | skipped | deepsource-io
+DeepSource: Erlang | completed | skipped | deepsource-io
+DeepSource: Dart | completed | skipped | deepsource-io
+DeepSource: Apex | completed | skipped | deepsource-io
+DeepSource: CSS | completed | skipped | deepsource-io
+DeepSource: Elixir | completed | skipped | deepsource-io
+DeepSource: Groovy | completed | skipped | deepsource-io
+DeepSource: Objective-C | completed | skipped | deepsource-io
+DeepSource: PowerShell | completed | skipped | deepsource-io
+CodeRabbit | completed | skipped | coderabbitai
+DeepSource: Lua | completed | skipped | deepsource-io
+-- statuses
+failure
+DeepSource: Ansible success
+DeepSource: Rust success
+DeepSource: Terraform success
+DeepSource: C & C++ success
+DeepSource: PHP success
+DeepSource: Shell success
+DeepSource: SQL success
+DeepSource: C# success
+DeepSource: Docker success
+DeepSource: Secrets failure
+DeepSource: Scala success
+DeepSource: Java success
+DeepSource: Kotlin success
+DeepSource: JavaScript failure
+DeepSource: Ruby success
+DeepSource: Swift success
+DeepSource: Go success
+DeepSource: Python failure
+== check-runs a0b97a4
+SonarCloud Code Analysis | completed | neutral | sonarqubecloud
+DeepSource: VB.NET | completed | skipped | deepsource-io
+DeepSource: Perl | completed | skipped | deepsource-io
+DeepSource: Helm | completed | skipped | deepsource-io
+DeepSource: Erlang | completed | skipped | deepsource-io
+DeepSource: Dart | completed | skipped | deepsource-io
+DeepSource: Apex | completed | skipped | deepsource-io
+DeepSource: CSS | completed | skipped | deepsource-io
+DeepSource: Elixir | completed | skipped | deepsource-io
+DeepSource: Groovy | completed | skipped | deepsource-io
+DeepSource: Objective-C | completed | skipped | deepsource-io
+DeepSource: PowerShell | completed | skipped | deepsource-io
+DeepSource: Lua | completed | skipped | deepsource-io
+Build and analyze | completed | success | github-actions
+-- statuses
+success
+DeepSource: Python success
+DeepSource: Terraform success
+DeepSource: Shell success
+DeepSource: PHP success
+DeepSource: Secrets success
+DeepSource: Ansible success
+DeepSource: Docker success
+DeepSource: Scala success
+DeepSource: Java success
+DeepSource: C# success
+DeepSource: Ruby success
+DeepSource: Kotlin success
+DeepSource: Rust success
+DeepSource: JavaScript success
+DeepSource: Go success
+DeepSource: SQL success
+DeepSource: Swift success
+DeepSource: C & C++ success
+== workflow runs (last 30)
+.github/workflows/sonar.yml | push | pr-3-tests | 2db3926 | failure | 2026-11-13T00:42:05Z
+.github/workflows/sonar.yml | push | pr-3-tests | f5fe824 | failure | 2026-11-12T22:42:16Z
+.github/workflows/sonar.yml | push | pr-3-tests | 40d5668 | failure | 2026-11-12T22:25:47Z
+.github/workflows/sonar.yml | push | pr-3-tests | 5947364 | failure | 2026-11-12T22:20:19Z
+.github/workflows/sonar.yml | push | pr-3-tests | 0841f36 | failure | 2026-11-12T20:54:05Z
+SonarQube | pull_request | pr-3-tests | 2ce1f98 | success | 2026-11-12T20:50:46Z
+SonarQube | pull_request | pr-3-tests | 558d37f | success | 2026-11-12T20:12:01Z
+SonarQube | pull_request | pr-2-demo-folder | f31e261 | success | 2026-11-12T20:11:56Z
+SonarQube | pull_request | pr-1-code | d23cf8f | success | 2026-11-12T20:11:55Z
+lint | pull_request | pr-1-code | d23cf8f | failure | 2026-11-12T20:11:55Z
+codeql | pull_request | pr-1-code | d23cf8f | success | 2026-11-12T20:11:55Z
+SonarQube | pull_request | pr-3-tests | b29bb1f | success | 2026-11-12T19:48:08Z
+SonarQube | pull_request | pr-2-demo-folder | 51abd28 | success | 2026-11-12T19:48:05Z
+lint | pull_request | pr-1-code | d71284f | failure | 2026-11-12T19:48:03Z
+codeql | pull_request | pr-1-code | d71284f | success | 2026-11-12T19:48:03Z
+SonarQube | pull_request | pr-1-code | d71284f | success | 2026-11-12T19:48:03Z
+SonarQube | push | main | a0b97a4 | success | 2026-11-12T19:40:58Z
+SonarQube | pull_request | cfg-sonar | 53daf37 | success | 2026-11-12T19:34:19Z
+SonarQube | pull_request | cfg-sonar | 7ec367b | success | 2026-11-12T19:33:07Z
+codeql | pull_request | pr-1-code | ca6edf0 | success | 2026-11-12T17:36:57Z
+lint | pull_request | pr-1-code | ca6edf0 | failure | 2026-11-12T17:36:57Z
+codeql | pull_request | initial-code | 43110e7 | success | 2026-11-12T17:24:37Z
+lint | pull_request | initial-code | 43110e7 | success | 2026-11-12T17:24:37Z
+codeql | pull_request | initial-code | 0efcf3a | success | 2026-11-12T16:56:39Z
+lint | pull_request | initial-code | 0efcf3a | success | 2026-11-12T16:56:39Z
+== branch protection main (unauth)
+{
+  "protected": false,
+  "protection": {
+    "enabled": false,
+    "required_status_checks": {
+      "enforcement_level": "off",
+      "contexts": [],
+      "checks": []
+    }
+  }
+}
+== rulesets (unauth)
+[
+
+]
+
+[
+
+]

@@ -1,0 +1,71 @@
+$ git diff --stat origin/main...origin/pr-3-tests | tail -1
+ 226 files changed, 58211 insertions(+), 4 deletions(-)
+$ git diff --name-only origin/main...origin/pr-3-tests | wc -l
+226
+$ git merge-base origin/main origin/pr-3-tests
+a0b97a4a6ee75331190194c583d58c0ae6c9c23c
+$ git log --oneline origin/main..origin/pr-3-tests | wc -l
+17
+2db3926 Batch 3: CodeAnt runtime set (8 patches: speed fake fix, desk book check, portal log, demo-only, tests hardening, fake bodies, stand-in bodies, stop guard) and merge-readiness hygiene tests v3
+f5fe824 CodeAnt security nits patch (scrub spaces after localhost, netloc/port shape check, traceback classes), reviewed clean
+40d5668 tests: the n8n_api stand-in servers read the request body before answering (a late body was reset on Windows: flaky ConnectionAbortedError)
+5947364 Batch 2: CodeAnt security set (gitleaks root-relative scan, scripts, n8n proof, docs), browser tests without Pillow (docs and deps v4), layout fixes, limits note
+0841f36 Batch 2a: Sonar coverage (separate hashed lock, coverage.xml, reviewed 3 rounds clean)
+2ce1f98 Batch 1: drift doc fixes, portal JS fixes, retry fixes, demo-only cosmetics, gitleaks allowlist v2 (exact key, narrow)
+558d37f Merge pr-2-demo-folder into pr-3-tests
+f31e261 Merge pr-1-code into pr-2-demo-folder
+d23cf8f gitleaks: fix the path regex (a broken character class would not have matched)
+177b8b7 gitleaks: allow the SonarQube project key (an identifier, not a secret) for the built-in generic-api-key rule, one file, one line
+b29bb1f Merge pr-2-demo-folder into pr-3-tests (quality-tool settings from main)
+51abd28 Merge pr-1-code into pr-2-demo-folder (quality-tool settings from main)
+d71284f hygiene: allow the SonarQube project key (an identifier, not a secret) in sonar-project.properties
+ac93153 Merge main into pr-1-code: quality-tool settings reach the stack; drop the unused Automatic Analysis file; docs say the Sonar scan is now CI-based
+bee6fff Add the tests
+1ca303a Add the demo-only folder and the portal fixtures
+ca6edf0 Add the desk code, scripts, docs and workflows
+$ git diff --stat origin/main...origin/pr-1-code | tail -1
+ 86 files changed, 19298 insertions(+)
+$ git diff --stat origin/main...origin/pr-2-demo-folder | tail -1
+ 125 files changed, 24001 insertions(+)
+$ git diff --stat origin/pr-2-demo-folder...origin/pr-3-tests | tail -1
+ 142 files changed, 34370 insertions(+), 164 deletions(-)
+$ git diff --name-only origin/main...origin/pr-3-tests | cut -d/ -f1 | sort | uniq -c
+      1 .codeant
+      1 .coderabbit.yaml
+      1 .gitattributes
+      4 .github
+      1 .gitignore
+      1 .gitleaks.toml
+      1 contract.md
+     15 demo_only
+      8 docs
+      1 exceptions.txt
+      5 load_tools
+      3 n8n
+      1 patterns.txt
+      1 pyproject.toml
+      1 requirements-browser-win.txt
+      1 requirements-browser.in
+      1 requirements-browser.txt
+      1 requirements-coverage.in
+      1 requirements-coverage.txt
+      1 requirements-dev-win.txt
+      1 requirements-dev.in
+      1 requirements-dev.txt
+     14 scripts
+      1 sonar-project.properties
+     38 src
+    117 tests
+      3 tools
+      1 versions.md
+$ git diff --stat origin/initial-code origin/pr-3-tests | tail -1
+ 95 files changed, 5513 insertions(+), 271 deletions(-)
+$ git ls-tree -r origin/main --name-only
+.codeant/configuration.json
+.codeant/instructions.json
+.deepsource.toml
+.github/workflows/sonar.yml
+LICENSE
+README.md
+SECURITY.md
+sonar-project.properties

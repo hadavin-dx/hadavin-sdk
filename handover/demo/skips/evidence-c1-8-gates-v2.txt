@@ -1,0 +1,6 @@
+All checks passed!
+145 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+..............................................................           [100%]
+62 passed in 27.29s

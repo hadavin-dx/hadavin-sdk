@@ -1,0 +1,90 @@
+== lint/codeql/sonar runs: duration (run_started_at -> updated_at)
+43304317368 SonarQube pull_request pr-3-tests@2ce1f98 success 72s
+43297887446 SonarQube pull_request pr-3-tests@558d37f success 60s
+43297873352 SonarQube pull_request pr-2-demo-folder@f31e261 success 66s
+43297870147 SonarQube pull_request pr-1-code@d23cf8f success 70s
+43297870133 lint pull_request pr-1-code@d23cf8f failure 10s
+43297870124 codeql pull_request pr-1-code@d23cf8f success 71s
+43293870758 SonarQube pull_request pr-3-tests@b29bb1f success 72s
+43293860862 SonarQube pull_request pr-2-demo-folder@51abd28 success 56s
+43293854299 lint pull_request pr-1-code@d71284f failure 18s
+43293854078 codeql pull_request pr-1-code@d71284f success 63s
+43293854071 SonarQube pull_request pr-1-code@d71284f success 70s
+43292651621 SonarQube push main@a0b97a4 success 41s
+43291523292 SonarQube pull_request cfg-sonar@53daf37 success 36s
+43291313048 SonarQube pull_request cfg-sonar@7ec367b success 43s
+43271316341 codeql pull_request pr-1-code@ca6edf0 success 72s
+43271315815 lint pull_request pr-1-code@ca6edf0 failure 24s
+43269123659 codeql pull_request initial-code@43110e7 success 85s
+43269123651 lint pull_request initial-code@43110e7 success 991s
+43264126203 codeql pull_request initial-code@0efcf3a success 64s
+43264126026 lint pull_request initial-code@0efcf3a success 977s
+== jobs/steps of lint run 43297870133
+Set up job | success | 1s
+Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 1s
+Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | success | 1s
+Install gitleaks (release binary, checksum checked) | success | 0s
+Gitleaks on the tree and on the history (matches are redacted, no report file is written) | failure | 1s
+Install the pinned dev tools (hashes are checked) | skipped | 0s
+Ruff (lint and format) | skipped | 0s
+Mypy (both platform branches of the typed code) | skipped | 0s
+Bandit (src, tools and scripts) | skipped | 0s
+Schema check | skipped | 0s
+Hardcoded-literal scan (patterns.txt minus exceptions.txt) | skipped | 0s
+Canary guard (fails loudly if the scanner canary test is missing) | skipped | 0s
+Tests | skipped | 0s
+Post Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | skipped | 0s
+Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 0s
+Complete job | success | 0s
+== jobs/steps of lint run 43293854299
+Set up job | success | 3s
+Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 5s
+Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | success | 0s
+Install gitleaks (release binary, checksum checked) | success | 0s
+Gitleaks on the tree and on the history (matches are redacted, no report file is written) | failure | 1s
+Install the pinned dev tools (hashes are checked) | skipped | 0s
+Ruff (lint and format) | skipped | 0s
+Mypy (both platform branches of the typed code) | skipped | 0s
+Bandit (src, tools and scripts) | skipped | 0s
+Schema check | skipped | 0s
+Hardcoded-literal scan (patterns.txt minus exceptions.txt) | skipped | 0s
+Canary guard (fails loudly if the scanner canary test is missing) | skipped | 0s
+Tests | skipped | 0s
+Post Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | skipped | 0s
+Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 0s
+Complete job | success | 0s
+== jobs/steps of lint run 43271315815
+Set up job | success | 0s
+Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 2s
+Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | success | 0s
+Install gitleaks (release binary, checksum checked) | success | 0s
+Gitleaks on the tree and on the history (matches are redacted, no report file is written) | success | 1s
+Install the pinned dev tools (hashes are checked) | success | 7s
+Ruff (lint and format) | success | 0s
+Mypy (both platform branches of the typed code) | success | 3s
+Bandit (src, tools and scripts) | success | 1s
+Schema check | success | 0s
+Hardcoded-literal scan (patterns.txt minus exceptions.txt) | success | 3s
+Canary guard (fails loudly if the scanner canary test is missing) | failure | 0s
+Tests | skipped | 0s
+Post Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | skipped | 0s
+Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 0s
+Complete job | success | 0s
+== jobs/steps of lint run 43269123651 (PR #1, initial-code@43110e7)
+runner=GitHub Actions 1000002483 labels=["ubuntu-24.04"]
+Set up job | success | 1s
+Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 2s
+Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | success | 0s
+Install gitleaks (release binary, checksum checked) | success | 0s
+Gitleaks on the tree and on the history (matches are redacted, no report file is written) | success | 2s
+Install the pinned dev tools (hashes are checked) | success | 9s
+Ruff (lint and format) | success | 0s
+Mypy (both platform branches of the typed code) | success | 4s
+Bandit (src, tools and scripts) | success | 1s
+Schema check | success | 0s
+Hardcoded-literal scan (patterns.txt minus exceptions.txt) | success | 6s
+Canary guard (fails loudly if the scanner canary test is missing) | success | 0s
+Tests | success | 958s
+Post Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 | success | 0s
+Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 | success | 0s
+Complete job | success | 0s

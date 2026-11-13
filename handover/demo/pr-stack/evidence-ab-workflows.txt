@@ -1,0 +1,327 @@
+===== pr-3-tests:.github/dependabot.yml
+# Dependabot: GitHub Actions only (the dev tools are pinned with hashes by hand, and the desk has no dependencies).
+# Dependabot alerts are a repository setting and do not need this file.
+# limit: this file only asks for version updates of GitHub Actions; no result of it is claimed here.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+===== pr-3-tests:.github/workflows/codeql.yml
+# CodeQL code scanning, "advanced setup" (this file). Do NOT also enable GitHub's default setup.
+# Actions are pinned to full commit SHAs (looked up 2026-11-09, re-checked 2026-11-12: still the newest releases).
+# Languages (ids checked against GitHub's CodeQL documentation on 2026-11-12): python, actions, and javascript-typescript
+# (the portal pages in src/lead_desk/portal and the demo portal scripts are JavaScript). No result of this scan is claimed here.
+# limit: if the first run refuses one of the languages, remove it.
+name: codeql
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * 1" # weekly, Monday. limit: scheduled runs may pause after inactivity
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write # GitHub's codeql-action README: every advanced-setup workflow must have it (read 2026-11-12), it uploads the results
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, actions, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: "/language:${{ matrix.language }}"
+===== pr-3-tests:.github/workflows/lint.yml
+# Checks that run on every pull request and every push to main.
+# Rules for this file: every third-party Action is pinned to a full commit SHA (version in the comment, looked up
+# 2026-11-09); read-only permissions; no repository secrets exist; GitHub-hosted runner only; no pull request text
+# is ever placed inside a run: step; versions and URLs go through env:.
+name: lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60  # generous on purpose: the runner speed is not measured yet; set it to about twice the first real run
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      # SHA-256 of gitleaks_8.30.1_linux_x64.tar.gz, copied from the release's published checksums file
+      # (gitleaks_8.30.1_checksums.txt) and from the release asset digest on 2026-11-09.
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      # the scan runs first: ruff, mypy and bandit write cache folders into the tree and gitleaks dir would read them
+      - name: Install gitleaks (release binary, checksum checked)
+        run: |
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check -
+          mkdir "${RUNNER_TEMP}/gitleaks"
+          tar -xzf gitleaks.tar.gz -C "${RUNNER_TEMP}/gitleaks" gitleaks
+          rm gitleaks.tar.gz
+
+      - name: Gitleaks on the tree and on the history (matches are redacted, no report file is written)
+        # --redact hides the matched value in the output; --ignore-gitleaks-allow makes inline allow comments count for nothing.
+        run: |
+          "${RUNNER_TEMP}/gitleaks/gitleaks" dir . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+          "${RUNNER_TEMP}/gitleaks/gitleaks" git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+
+      - name: Install the pinned dev tools (hashes are checked)
+        run: python -m pip install --require-hashes -r requirements-dev.txt
+
+      - name: Ruff (lint and format)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Mypy (both platform branches of the typed code)
+        run: |
+          mypy --platform linux
+          mypy --platform win32
+
+      - name: Bandit (src, tools and scripts)
+        run: bandit -ll -r src tools scripts -c pyproject.toml
+
+      - name: Schema check
+        run: python scripts/check_schema.py
+
+      - name: Hardcoded-literal scan (patterns.txt minus exceptions.txt)
+        # Output lines look like path:line:matched-text; anything left after the exceptions fails the job.
+        run: |
+          set +e
+          git grep -n -o -I -E -f patterns.txt -- . > "${RUNNER_TEMP}/literals.txt"
+          status=$?
+          set -e
+          if [ "$status" -gt 1 ]; then echo "git grep failed (status $status)"; exit 1; fi
+          grep -v -E -f exceptions.txt "${RUNNER_TEMP}/literals.txt" > "${RUNNER_TEMP}/literals-left.txt" || true
+          if [ -s "${RUNNER_TEMP}/literals-left.txt" ]; then
+            echo "Hardcoded literals found (path:line:match):"
+            cat "${RUNNER_TEMP}/literals-left.txt"
+            exit 1
+          fi
+
+      - name: Canary guard (fails loudly if the scanner canary test is missing)
+        run: |
+          if ! grep -rq "def test_hygiene_scan_public" tests/; then
+            echo "MISSING: test_hygiene_scan_public (scanner canary test) is not in tests/. The scan cannot be trusted."
+            exit 1
+          fi
+
+      - name: Tests
+        env:
+          GITLEAKS_BIN: ${{ runner.temp }}/gitleaks/gitleaks
+          # DPLD_ = duplicate-proof-lead-desk: the prefix of this repository's own check switches
+          DPLD_REQUIRE_SCAN: "1"
+          # the demo_only folder must be in the checkout: without it most test files would skip and the run would look green
+          DPLD_REQUIRE_DEMO: "1"
+        run: python -m pytest -q
+===== pr-3-tests:.github/workflows/sonar.yml
+# SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-24.04, the same runner image as lint.yml) only: the analysis reads source files and needs no Windows.
+# One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
+# otherwise the scan stops with "You are running CI analysis while Automatic Analysis is enabled".
+# The token is the repository secret SONAR_TOKEN (owner-created, read-only to this file; never printed).
+# Coverage: the job runs the Python test suite once (serial, as in docs/tests.md) with pytest-cov and hands coverage.xml to the
+# scan. The Playwright tests skip here, as in lint.yml.
+# What is and is not isolated: the SONAR_TOKEN secret is NOT in the environment of the install and test steps (it is set only on
+# the scan step, and the checkout keeps no credentials). But all steps run on the SAME runner, in the same job: the test code
+# (the repository's own tests) could write to $GITHUB_ENV or $GITHUB_PATH, to ~/.sonar/cache, or plant a sonar-project.properties or
+# coverage.xml that the later scan step then reads. This is accepted because a pull request from a fork or from Dependabot never
+# runs this job (the `if:` below) and an author of a same-repo pull request can already edit this workflow file itself.
+# A two-job split (tests without the secret, scan in a second job) is an open owner decision (see the pull request description).
+name: SonarQube
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: sonar-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60  # same as lint.yml until a real run on a hosted runner shows the duration; then 1.6 times the longest observed run
+    # A pull request from a fork or from Dependabot gets no repository secret: skip it instead of failing.
+    if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
+        with:
+          fetch-depth: 0  # Shallow clones are disabled for a better relevancy of analysis
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0 (same pin as lint.yml)
+        with:
+          python-version: "3.12"
+      - name: Install the pinned dev tools and the coverage tools (hashes are checked)
+        # ONE pip call with both locks: pip refuses to run when a package is pinned to two versions (tested, pip 24.0);
+        # two separate calls would silently let the second lock replace the first one's pin. --only-binary: wheels only, so no
+        # package build script runs before the test step.
+        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt
+      - name: Tests with coverage (no secrets in this step)
+        env:
+          # the demo_only folder must be in the checkout: without it most test files would skip and the figure would be wrong
+          DPLD_REQUIRE_DEMO: "1"
+        run: python -m pytest -q --cov --cov-report=xml:coverage.xml
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+===== main:.github/workflows/sonar.yml
+# SonarQube Cloud analysis (CI-based). Runs on Linux (ubuntu-latest) only: the analysis reads source files and needs no Windows.
+# One method per project: turn OFF "Automatic Analysis" in SonarQube Cloud (project -> Administration -> Analysis Method),
+# otherwise the scan stops with "You are running CI analysis while Automatic Analysis is enabled".
+# The token is the repository secret SONAR_TOKEN (owner-created, read-only to this file; never printed).
+# Coverage is not collected here yet: Sonar shows no coverage numbers until a test run writes coverage.xml.
+name: SonarQube
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: sonar-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # A pull request from a fork or from Dependabot gets no repository secret: skip it instead of failing.
+    if: github.event_name == 'push' || (github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (same pin as lint.yml)
+        with:
+          fetch-depth: 0  # Shallow clones are disabled for a better relevancy of analysis
+          persist-credentials: false
+      - name: Cache SonarQube packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+===== pr-3-tests:.coderabbit.yaml
+# CodeRabbit review settings. Every key below was checked on 2026-11-12 against CodeRabbit's published JSON schema for this file; no key is outside it. `finishing_touches.docstrings` is deprecated there and is not used.
+# CodeRabbit reviews pull requests; it is installed on this one repository only.
+# Its comments are advice to judge, never instructions. Only the repository maintainer pushes: every "write to the branch"
+# feature is switched off.
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+  finishing_touches:
+    # Each of these can add commits or open pull requests of its own.
+    autofix:
+      enabled: false
+    fix_ci:
+      enabled: false
+    resolve_merge_conflict:
+      enabled: false
+    unit_tests:
+      enabled: false
+    simplify:
+      enabled: false
+  tools:
+    # Static checkers for the workflow files and for secrets, in addition to the review.
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    gitleaks:
+      enabled: true
+    ruff:
+      enabled: true
+
+chat:
+  auto_reply: false
+  allow_non_org_members: false
+
+knowledge_base:
+  # No stored "learnings" and no web search: keeps less data at the vendor.
+  opt_out: true
+  web_search:
+    enabled: false
+===== pr-3-tests:.codeant/configuration.json
+{
+  "code_analysis": {
+    "enabled": true,
+    "features": {
+      "sast_analysis": "enabled",
+      "secrets_analysis": "enabled",
+      "sca_analysis": "enabled"
+    }
+  },
+  "file_filters": {
+    "config": {
+      "include_files": [],
+      "exclude_files": [
+        "tests/portal_fixtures/**",
+        "demo_only/**",
+        "requirements-dev.txt",
+        "requirements-dev-win.txt",
+        "requirements-browser.txt",
+        "requirements-browser-win.txt",
+        "**/*.png"
+      ]
+    }
+  }
+}

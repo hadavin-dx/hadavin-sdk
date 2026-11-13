@@ -1,0 +1,12 @@
+pulls/1/comments 2
+pulls/1/reviews 2
+issues/1/comments 5
+pulls/2/comments 22
+pulls/2/reviews 11
+issues/2/comments 5
+pulls/3/comments 21
+pulls/3/reviews 2
+issues/3/comments 6
+pulls/4/comments 216
+pulls/4/reviews 12
+issues/4/comments 7

@@ -1,0 +1,15 @@
+(0) fresh CRLF: CR lines=14
+ M sonar-project.properties
+2 failed in 10.52s
+(a) git checkout -- file:
+CR lines=0
+2 passed in 11.63s
+(b) sed -i 's/\r$//' file:
+CR lines=0
+2 passed in 11.50s
+(c) git add --renormalize . :
+CR lines=14
+2 failed in 10.77s
+(d) rm file; git checkout -- file:
+CR lines=0
+2 passed in 11.64s

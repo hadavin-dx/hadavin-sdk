@@ -1,0 +1,86 @@
+[
+  {
+    "id": 5878582521,
+    "node_id": "PRR_kwDOVsJ0j88AAAABXmQM-Q",
+    "user": {
+      "login": "github-advanced-security[bot]",
+      "id": 62310815,
+      "node_id": "MDM6Qm90NjIzMTA4MTU=",
+      "avatar_url": "https://avatars.githubusercontent.com/in/57789?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/github-advanced-security%5Bbot%5D",
+      "html_url": "https://github.com/apps/github-advanced-security",
+      "followers_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/followers",
+      "following_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/following{/other_user}",
+      "gists_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/subscriptions",
+      "organizations_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/orgs",
+      "repos_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/repos",
+      "events_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/received_events",
+      "type": "Bot",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "",
+    "state": "COMMENTED",
+    "html_url": "https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/1#pullrequestreview-5878582521",
+    "pull_request_url": "https://api.github.com/repos/hadavin-dx/duplicate-proof-lead-desk-n8n/pulls/1",
+    "author_association": "NONE",
+    "is_copilot_code_review": false,
+    "copilot_code_review_effort": null,
+    "_links": {
+      "html": {
+        "href": "https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/1#pullrequestreview-5878582521"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/hadavin-dx/duplicate-proof-lead-desk-n8n/pulls/1"
+      }
+    },
+    "submitted_at": "2026-11-12T16:57:31Z",
+    "commit_id": "0efcf3a7f3cf4ca880345069fc7732b0ef3d4214"
+  },
+  {
+    "id": 5878584825,
+    "node_id": "PRR_kwDOVsJ0j88AAAABXmQV-Q",
+    "user": {
+      "login": "github-advanced-security[bot]",
+      "id": 62310815,
+      "node_id": "MDM6Qm90NjIzMTA4MTU=",
+      "avatar_url": "https://avatars.githubusercontent.com/in/57789?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/github-advanced-security%5Bbot%5D",
+      "html_url": "https://github.com/apps/github-advanced-security",
+      "followers_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/followers",
+      "following_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/following{/other_user}",
+      "gists_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/subscriptions",
+      "organizations_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/orgs",
+      "repos_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/repos",
+      "events_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/github-advanced-security%5Bbot%5D/received_events",
+      "type": "Bot",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "",
+    "state": "COMMENTED",
+    "html_url": "https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/1#pullrequestreview-5878584825",
+    "pull_request_url": "https://api.github.com/repos/hadavin-dx/duplicate-proof-lead-desk-n8n/pulls/1",
+    "author_association": "NONE",
+    "is_copilot_code_review": false,
+    "copilot_code_review_effort": null,
+    "_links": {
+      "html": {
+        "href": "https://github.com/hadavin-dx/duplicate-proof-lead-desk-n8n/pull/1#pullrequestreview-5878584825"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/hadavin-dx/duplicate-proof-lead-desk-n8n/pulls/1"
+      }
+    },
+    "submitted_at": "2026-11-12T16:57:41Z",
+    "commit_id": "0efcf3a7f3cf4ca880345069fc7732b0ef3d4214"
+  }
+]

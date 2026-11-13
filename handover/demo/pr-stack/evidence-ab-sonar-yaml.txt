@@ -1,0 +1,10 @@
+$ git show origin/pr-3-tests:.github/workflows/sonar.yml | python3 -c 'yaml.safe_load'
+            "mapping values are not allowed here",
+            self.get_mark())
+yaml.scanner.ScannerError: mapping values are not allowed here
+  in "/tmp/work/sonar-pr-3-tests.yml", line 45, column 71
+
+line 45:
+        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt -r requirements-coverage.txt
+$ main sonar.yml parses:
+YAML OK
