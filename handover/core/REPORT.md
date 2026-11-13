@@ -1,5 +1,28 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:27Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 batch 15 pushed as 20c369f0 (builder-claimed, unverified): 47 targeted mutant rows good including B12; the 60-row sample and an all-rows run were NOT run on this head; 34 test files outside its 54-file set not run; about 85 added lines still over 100 columns (strings, code, tables; comments rewrapped); 9 sibling direct program starts not moved to the helper (listed in FOLLOW_UP_DIRECT_STARTS: that is a deferral I will have the builder fix or justify). The lead's claim "bypass=true stays visible" does not match the core as the builder found it: the core hides bypass=true, the masker hides bypass=0 and bypass=1 where the core does not. Round 15 started (runner af6574fd, reviewers a54db384 design and a969e991 codebase).
+- I stopped the old Part 6 runner (a3ea530e) because it was running on the stale head 8c814fe6; its orphaned scripts (scratch folder er14) were still running after the stop, so I killed those processes (all from its working folder) and removed its four worktrees. Its partial raw output is not evidence for 20c369f0.
+- SONAR-PATH 4398e3bd: round 6 running (runner a4ec29ae, reviewers a32f547b, af1b0cc1); nothing verified yet.
+- Part 2 e75037b6: about 65 mutant rows still have no result; finisher adecceff running (a805b93d is finished and superseded).
+- Q8c-1 dcf64b36: B17 killing test not yet pushed (a592bb13, 40 min in).
+
+**LEAD ACTIONS:** (1) bypass=true wording conflict above: please confirm the masker keeps the stated rule while hiding bypass=0 and bypass=1 (hides more than the core). (2) pathguard.py 234 vs 220 lines. (3) Q-R5-1. (4) laptop tool list from 05:52Z.
+
+**LIVE ITEMS:** SONAR r6: a4ec29ae, a32f547b, af1b0cc1. Part 6 r15: af6574fd, a54db384, a969e991. Q8c-1: a592bb13. Part 2: adecceff. 8 running.
+
+**ROUNDS (WHY):** SONAR round 6 and Part 6 round 15, both because batches changed code on security/mode-safety paths.
+
+**FINISHED SINCE LAST BLOCK:** Part 6 batch 15 and SONAR batch 6 builder reports received and snapshotted.
+
+**EGM STEP PER PACKAGE:** SONAR: result review r6. Part 6: result review r15. Part 2, Q8c-1: build.
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none yet.
+
 ## 06:22Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
