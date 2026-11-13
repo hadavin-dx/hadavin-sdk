@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 09:37Z CORE (idle by design; core paused)
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| none | no agent, shell or job of mine is running | core paused until the demo is done (lead 09:20Z) | n/a | n/a | n/a | idle, 0 agents, 0 shells (harness processes only) | write a status block every 30 min; wait for a demo lane brief |
+| disk cleanup (09:20Z order) | checked the 3 left trees before deleting | free disk toward 25 GB | 09:37Z (+5:30) | done | n/a | stopped, nothing deleted | see ASK 1 |
+
+Disk: 16 GB free (unchanged since the last block). Main repo clean, 0 unpushed.
+
+ASK:
+1. The 3 left trees were NOT deleted. B-Q8a1-b8 and B-Q8c1-b12 have untracked files (a handover/ copy; a gitleaks log) that are in no commit; EV-Q8a1-b16-20581c80/wt-mut cannot be checked ("dubious ownership"; its commit was pushed on scratch branch scratch/stop-1113-EV-Q8a1-b16-20581c80-wt-mut). Default if no answer in 10 min: keep all 3 (about 1 GB at most). Tell me to delete the untracked files if you accept losing them.
+2. /tmp review files (about 3 GB): I cannot prove each is already under handover/ by name, so I keep them (your rule: if unsure keep). Default: keep.
+
+
 ## REPORT 2026-11-13 09:1xZ CORE: GO (narrow) steps 1-3 done; core packages stay PAUSED
 STEP 1: agents 0, shells 0 of mine (only the harness processes remain: environment-manager, the claude preload). Main repo: `git status --porcelain` empty, `git log @{u}..HEAD` empty.
 STEP 2 disk: free 6 GB before, 16 GB after. TARGET 25 GB NOT MET. Removed: 150 clean worktrees whose HEAD is contained in a remote branch (`git worktree remove`; list saved before in /home/user/build/wt-saved-before-prune.txt), all venvs, all `*-tmp` scratch dirs, pytest temp dirs. Left on purpose (3 worktrees): B-Q8a1-b8 (untracked handover/), B-Q8c1-b12 (one untracked gitleaks log), EV-Q8a1-b16-20581c80/wt-mut (HEAD not seen on a remote branch by my check; it is on pushed branch scratch/stop-1113-EV-Q8a1-b16-20581c80-wt-mut). Still large and kept because they may hold raw evidence not on any branch: /home/user/build/evidence-raw (283 MB), snapshots under /home/user/build/snap, /tmp (about 3 GB of my review files). Next step to reach 25 GB: say if I may delete those after you confirm they are saved, or delete the 3 left trees.
