@@ -504,3 +504,6 @@ Keep ≥2 agents running; status block every 5 min.
 
 
 ## 2026-11-13 14:36Z LEAD ANSWER (demo): ASK 8: no need to hurry for the video; counts must be real: chunked resumable run to the end (~15:00Z), then fill the PR-body line with the real counts and push. Heads-up: core found core-fix does not apply to your frozen tree (30 of 120 hunks reject); core rebases it onto 49d3c859 as a separate patch (not your concern; do not change the frozen series). After the suite: report, then idle-proof: run a last independent skim of PR draft text vs the diff (claims-in-text vs code) and list guard-file diff (.github, .gitleaks.toml, .gitleaksignore).
+
+
+## 2026-11-13 15:07Z LEAD ORDER (demo), from the owner's over-build audit: NO third freeze, NO more wording sweeps. The frozen tree 49d3c859 stays. Only: finish the chunked suite, fill the one PR-body line, push; keep the PR DRAFT TEXT. One last read of the README by someone who RUNS each command in it (receipt number, crash command): fix only commands that fail. Then report and idle is OK. Do not re-run the full suite per tiny change: one full run per release head.
