@@ -1,5 +1,23 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:40Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 batch 10 landed (head cdbe1445, fast-forward from dd827d79, no GH013). Nothing is verified independently yet; every number below is the builder's own report.
+- Builder says NOT proven: no full suite (cloud limit), no browser (page tests run in node with a stand-in page), no Windows run. Freed-id reuse cannot be observed, so there is no mutant row for it (id comparison would be an equivalent mutant; a weakref liveness pin test is used instead). The warn-once tests fail on old code only because _WARNED does not exist there; the WARNING level is proven only by row R10A12.
+- Builder slips (found and fixed by it): row R9A4 named a killer that no longer existed; row J1b survived after the page change (new killer added; a table test now checks every killer name exists).
+- Builder claims fail-before: 36 new or changed tests, 23 fail on old code, 13 pass on old and are renamed test_pin_*. Unverified until the runner re-measures.
+- copy.deepcopy of a built App raises (lock); builder added App.__deepcopy__ refusing in words. copy.copy stays "known"; dataclasses.replace gives "unconfirmed".
+
+**LEAD ACTIONS:** snapshot /home/user/build/snap/pdbanner-cdbe1445/ (DIFF, DELTA vs dd827d79, FILES, files/). Launched round 10 for Part 6: runner ac5bb8c95c06f89f2 (cloud-limited: focused tests on 3.12 and 3.13, new and re-pointed mutant rows plus a seed-10 sample of 60, fail-before, hostile probes), reviewers egm-design ab8ca8d3aec9e7500 and egm-codebase-details aca83f68ce5141b91.
+**LIVE ITEMS:** ac5bb8c9 (runner P6), ab8ca8d3 and aca83f68 (reviewers P6 r10), aa234f9b (Part 2 batch 10 builder), a73b09c1 (SONAR-PATH batch 3 builder, widened by the probe result). ab741cc2 finished.
+**ROUNDS (WHY):** Part 6 round 10 (mode-safety, no cap); Part 2 round 10 and SONAR-PATH round 3 pending their builders.
+**FINISHED SINCE LAST BLOCK:** Part 6 batch 10 pushed (cdbe1445).
+**EGM STEP PER PACKAGE:** Part 6: evidence runner and reviewers running (steps 3-4). Part 2: builder (step 1). SONAR-PATH: builder (step 1).
+**LANE SONAR-PATH:** a73b09c1; builder step; A done, B running.
+**RUN ON LAPTOP:** not yet; cdbe1445 only after round 10 is clean and minors are pushed. Then: RUN ON LAPTOP: hadavin-sdk <final sha> full pytest + complete banner_mutants (307 rows) + stage_mutants, Linux Docker py313+py312, Postgres, CI flags.
+
+
 ## 03:36Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
