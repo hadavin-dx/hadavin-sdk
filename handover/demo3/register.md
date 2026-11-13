@@ -138,3 +138,10 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | REV-5c | closed: 0 blocker, 1 major (ruff I001 import style, 2 files), 4 minor, 1 nit; saved evidence/review-lane3-fix-5-r3.md | | | closed; builder B5d next (round 4, security-adjacent so uncapped) |
 | REV-2c | closed: 0 blocker, 1 major (PermissionError from Path.is_dir on chmod 000 parent; LEAD VERIFIED in stdlib source), 6 minor; saved evidence/review-lane3-fix-2-r2-design.md | | | closed; waits for REV-2d + E5, then resolve + B2c |
 | REV-2d | closed: 0 logic blocker, 2 major (E501 x8 lines LEAD VERIFIED by awk; PermissionError same as REV-2c), 5 minor; saved evidence/review-lane3-fix-2-r2-codedetails.md | | | closed; E5 still running; resolve + B2c next |
+| RES-2b | egm-resolve round 2 of fix-2: 11 accepted, 1 contested (.lock left; lockfile.py has no unlink), 0 escalated, 2 declined; saved evidence/resolve-round2-lane3-fix-2.md | | | closed; B2c next |
+| B1d | closed: lane3-fix-1-r4.patch (full diff from f3c39cf8, replaces r3) sha256 df2515f3...; first 12-file run had 1 hygiene failure (4 literals in own test file), fixed; other 10 files not re-run after; n8n/Docker/Windows not tried | | | closed |
+| REV-1g | fresh egm-comprehension on lane3-fix-1-r4 | 13:55Z | ~14:15Z | running |
+| REV-1h | fresh egm-codebase-details on lane3-fix-1-r4 | 13:55Z | ~14:15Z | running |
+| E3c | EVIDENCE RUNNER lane3-fix-1-r4 (hygiene, awk, docs files, apply checks) | 13:55Z | stop 14:35Z | running |
+| B7 | closed: lane3-fix-7.patch (only tests/test_identity_claims_lane3.py, 16 tests, no product code); 7 of 8 Q8b survivors killed, C18 equivalent (alive); own full suite rc=0 3699 passed 200 skipped 1161 s; C03/C19 reached via private steps, no real two-thread race | | | closed |
+| REV-7a | fresh egm-codebase-details on lane3-fix-7 | 13:57Z | ~14:15Z | running |

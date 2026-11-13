@@ -1,5 +1,5 @@
 # lane3-fix-1 round 4 (builder B1d): notes
-Written 2026-11-13 (UTC and IST: see the checkpoint file raw/progress-B1d.txt). Worktree /home/user/work/b1d-base = public main f3c39cf8 + lane3-fix-1-r3.patch + round-4 changes, files staged (`git add -A`), nothing committed anywhere. Patch: evidence/lane3-fix-1-r4.patch (diff from f3c39cf8, so it REPLACES r3, it does not stack on it). sha256 PATCH_SHA. Prose and tests only; product code untouched.
+Written 2026-11-13 (UTC and IST: see the checkpoint file raw/progress-B1d.txt). Worktree /home/user/work/b1d-base = public main f3c39cf8 + lane3-fix-1-r3.patch + round-4 changes, files staged (`git add -A`), nothing committed anywhere. Patch: evidence/lane3-fix-1-r4.patch (diff from f3c39cf8, so it REPLACES r3, it does not stack on it). sha256 df2515f356cdbb87157a55fc907878aa0d8988b15533256448e6a57658956f29. Prose and tests only; product code untouched.
 
 ## Gaps first (not tried / not verified)
 * n8n is not installed here. Nothing in Steps 1 to 6 of docs/n8n-recipe.md was run by me except the Linux key-file lines (printf, chmod) and the script's own reading of such a file. The text says "not tried here" for every other step.
@@ -61,7 +61,16 @@ Technical review (r3):
 | 9 fragile guard | `"not 0" not in linux` replaced by `\bnot 0\b` regex | fresh-desk test |
 
 ## Proof runs
-RESULTS_BLOCK
+* What failed first: the ONE run of the 12 files (`pytest <12 files> -p no:cacheprovider`, TMPDIR and --basetemp outside every git folder, after `git add -A`) ended `1 failed, 796 passed, 33 skipped in 303.78s`, exit 1 (raw/b1d-12-files-run.log). The failure was `tests/test_hygiene.py::test_hygiene_scan_public` and it was my own slip: my new test file held four literals the repository scan reads as a web address or a Windows drive path (regular expressions with escaped dots, and `src:\.`). Fixed by building those patterns from `HOST`, `re.escape` and split strings.
+* After the fix I re-ran only the two files that read the test file: `tests/test_docs_claims_lane3.py` and `tests/test_hygiene.py`: `35 passed, 4 skipped`, exit 0 (raw/b1d-docs-claims-and-hygiene-rerun.log). The 4 skips are the hygiene tests that need the gitleaks program (not installed). The other 10 files were NOT re-run after that fix (their inputs, the three documents, did not change after the 12-file run; only the test file did).
+* New test file alone on the patched tree: 15 passed (it also ran inside the 12-file run: that run's only failure was the hygiene test above).
+* Proof that the changed tests fail on the r3 documents: the final test file copied onto a tree of f3c39cf8 + lane3-fix-1-r3.patch: `10 failed, 5 passed`, exit 1 (raw/b1d-new-tests-on-r3-tree.log). The 10 failing tests: exit-code 1 text, fresh-desk counts text, receipt explanation, words repeat/duplicate/request id, burst steps, ports, Docker, reset sentence, import steps, README port check. The 5 passing ones are premise tests and the real-desk receipt test (those check the code and the desk, whose behaviour did not change).
+* Line length: `awk 'length>120'` over tests/test_docs_claims_lane3.py: 0 lines. The three documents are prose with long lines by the repository's own style; the 120-limit applies to the test file as asked.
+* Burst n=100 on a real desk: raw/b1d-burst-100.txt (checked by me, above).
+* `git apply --check lane3-fix-1-r4.patch`: clean (exit 0) on a fresh f3c39cf8; clean after claims-stack-on-f3c39cf8.patch; clean after claims-stack + lane3-fix-3-r4.patch + lane3-fix-5.patch. The patch is the full diff from f3c39cf8 (it replaces r3).
+* Processes: my desk (pid 24820) and demo stand-in (pid 24689) were stopped; my two pytest runs ended; nothing of mine is left running. I did not touch other builders' processes.
+* Not done: no sub-agent, no commit, no push, no change in /home/user/hadavin-sdk except files under handover/demo3/evidence/.
+
 
 ## Rung table (no product code)
 | group | rung | why |

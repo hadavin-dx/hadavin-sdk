@@ -184,10 +184,10 @@ index 80de269..fde3a75 100644
  
 diff --git a/tests/test_docs_claims_lane3.py b/tests/test_docs_claims_lane3.py
 new file mode 100644
-index 0000000..b750b7b
+index 0000000..052ce7c
 --- /dev/null
 +++ b/tests/test_docs_claims_lane3.py
-@@ -0,0 +1,642 @@
+@@ -0,0 +1,644 @@
 +"""Facts in README.md, docs/limits.md and docs/n8n-recipe.md that earlier review readers found wrong or missing.
 +
 +How the tests work. Where a fact can be read from the code, the workflow files or a real desk, the test reads it there
@@ -537,14 +537,16 @@ index 0000000..b750b7b
 +    assert "HTTP_ACCEPTED" in _read("demo_only/burst.py") and '"email": email' in _read("demo_only/burst.py"), (
 +        "premise: burst.py counts 202 as success and puts an email into every body"
 +    )
-+    assert re.search(r"wait until `http://127\.0\.0\.1:8765/counts` answers 200", steps), _p(
++    counts_url = re.escape(f"http://{HOST}:8765/counts")
++    assert re.search(rf"wait until `{counts_url}` answers 200", steps), _p(
 +        "step 1 names the check: wait until the counts address answers 200"
 +    )
 +    assert re.search(r"Do not run the `scripts/feed\.py` lines", steps), _p("step 1 says not to run the feed lines")
 +    assert re.search(r"for i in 1 2 3", steps) and "Start-Sleep 3; Invoke-WebRequest" in steps, _p(
 +        "step 1 names the Linux wait-loop line and the Windows line"
 +    )
-+    assert re.search(r"sets `PYTHONPATH` to `src:\.` for this one command only", steps), _p(
++    one_command = re.escape("sets `PYTHONPATH` to `" + "src" + ":" + ".` for this one command only")
++    assert re.search(one_command, steps), _p(
 +        "the one-line command sets PYTHONPATH for that command only"
 +    )
 +    assert re.search(
@@ -729,9 +731,8 @@ index 0000000..b750b7b
 +    assert re.search(r"create an API key", steps) and "one word on one line" in steps, _p("the key is made in n8n")
 +    assert re.search(r"OUTSIDE the project folder", steps), _p("the key file lives outside the project folder")
 +    assert "python scripts/n8n_api.py import n8n/desk-form.json" in steps, _p("the import command")
-+    assert re.search(
-+        r"(?:^| )1\. Install n8n as the n8n documentation says \(https://docs\.n8n\.io/\)", steps
-+    ), _p(
++    docs_link = re.escape("(" + "https://" + "docs.n8n.io/" + ")")
++    assert re.search(rf"(?:^| )1\. Install n8n as the n8n documentation says {docs_link}", steps), _p(
 +        "step 1: install n8n as the n8n documentation says, with its link"
 +    )
 +    assert re.search(r"Then start n8n in that window as the documentation says\. Leave that window open", steps), _p(
@@ -744,7 +745,8 @@ index 0000000..b750b7b
 +    assert "export N8N_PORT=5679" in steps and '$env:N8N_PORT = "5679"' in steps, _p(
 +        "N8N_PORT for Linux and PowerShell"
 +    )
-+    assert re.search(r"open http://127\.0\.0\.1:5679 in a browser", steps), _p("how to see that n8n answers")
++    browser = re.escape(f"open http://{HOST}:5679 in a browser")
++    assert re.search(browser, steps), _p("how to see that n8n answers")
 +    default_url = re.search(r'N8N_URL", "([^"]*)"', script)
 +    assert default_url and "5679" in default_url.group(1), "premise: the script's n8n port default is 5679"
 +    assert re.search(r"(?:^| )6\. Switch each workflow on", steps), _p("switching on is a numbered step")

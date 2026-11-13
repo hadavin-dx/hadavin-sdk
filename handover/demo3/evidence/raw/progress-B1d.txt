@@ -3,3 +3,4 @@
 13:40Z docs edited (README, limits, recipe); next: tests
 13:42Z tests pass 15; wrapping long lines, then proof runs
 13:45Z 12-file run started (log priv/b1d-run12b.log)
+13:52Z B1d done: patch sha df2515f3, notes written

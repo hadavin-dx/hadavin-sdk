@@ -1,3 +1,4 @@
 13:38Z E6 started; worktrees ready, patch applied
 13:39Z steps 1,2 done (fix 56 pass; base 7 fail/49 pass); starting xdist
 13:42Z steps 3,4,5 done; starting step 6 full suite (idle 64%)
+13:50Z full suite running, 0 fails so far

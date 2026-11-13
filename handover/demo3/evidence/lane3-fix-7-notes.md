@@ -26,3 +26,6 @@ I03/I04 note: sharp s and long s differ under lower() but merge under casefold()
 - Mutant log: raw copy of runner output in raw/b7-mutants.log.
 - Line length > 120: 0 lines. Hygiene test (after `git add -A`, nothing committed) with the new file: rc=0, 36 passed, 4 skipped.
 - Full suite: see the last section.
+
+## Full suite (one run, final tree, `git add -A` done, nothing committed)
+`pytest -q -p no:cacheprovider tests` rc=0: 3699 passed, 200 skipped in 1161 s (13:33Z to 13:53Z). Raw log: raw/b7-full-suite.log. The skips are the suite's own (portal browser, live and similar tests); I did not look into each skip reason.
