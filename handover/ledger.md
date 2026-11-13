@@ -3308,3 +3308,8 @@
 | PDBIND-r10-7 | major | PD-bind | CHANGELOG:270 says pin taken at first question, contradicts import-time pin | OPEN | handover/reviews/PD-bind/pdbind-304c3bd3-codebase-r10.md |  | 2026-11-13 |
 | PDBIND-r10-8 | major | PD-bind | Hook contents mutable after seal: hooks.tools, toolbox, closures (fail-open) | OPEN | handover/reviews/PD-bind/goldfish_review_report-r10.md |  | 2026-11-13 |
 | PDBIND-r10-9 | major | PD-bind | _RUNTIME_SEALS value references its key: leak per build | OPEN | handover/reviews/PD-bind/goldfish_review_report-r10.md |  | 2026-11-13 |
+| SONARPATH-r3-6 | blocker | sonar-path | CHANGELOG:12 says score/replay used to follow links silently; false on main (hash_files confined first) | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
+| SONARPATH-r3-7 | major | sonar-path | Eight "equivalent" mutant entries are observable (hashing/secrets confined+join, answers join, bundle manifest, local_dir second join, signer inside) | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
+| SONARPATH-r3-8 | major | sonar-path | Converted sites without mutant row or killer (score:227, replay:175/301, bundle:206/369, fake:49) | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
+| SONARPATH-r3-9 | major | sonar-path | Test names/labels do not match assertions (pins vs controls, tautologies, stale citations) | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
+| SONARPATH-r3-10 | major | sonar-path | CHANGELOG claims without tests; R10/R11 mapping copied inline at four sites | OPEN | handover/reviews/sonar-path/sonarpath-9602b4ca-codebase-r3.md |  | 2026-11-13 |
