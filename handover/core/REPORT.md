@@ -1,5 +1,26 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:25Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Runner a34f80e2 on Part 6 63996217 (RESULTS.md, committed): the CI ruff command FAILS (1 error, S603 at tools/fixed_run.py:30); mutant row R13B2 SURVIVED; rows R13A5 and R13A8 are killed by the same first failing line; there are 6 broad-catch sites (not 5) and 24 computed-expect rows (not 20). Fail-before at dd827d79 and c7eb5c79 is partial: two test files fail to import on the old trees (no tools.fixed_run), so their old-code counts are 0 tests run; 126 test files were not run; hypothesis-based tests could not run (no hypothesis in the venvs).
+- Good on the same head: focused tests pass on 3.12 and 3.13; 60 of 60 sampled rows killed; 0 suppression markers on added lines; only tests/** S101 in per-file ignores; bandit clean; guard masker shows nothing more than the core redactor on the probed inputs; a surprise exception propagates at all 6 sites and post_card.
+- Part 6 is NOT clean: round 13 had 0 Blocker, 3 Major. Batch 14 is the fix.
+
+**LEAD ACTIONS:** none new. I applied your 05:20Z S603 ruling (literal lists if 4 or fewer call sites, else one marked helper line with a test; builder must state the call-site count).
+
+**LIVE ITEMS:** a7978edf Part 6 batch 14 (runner facts added); a805b93d Part 2 batch 12 (box ends ~05:33Z); ac09a2ce SONAR-PATH batch 5 (box ends ~05:53Z). Closed: a34f80e2, a5558782, ad1b705a.
+
+**ROUNDS (WHY):** Part 6 round 14 after batch 14 (mode-safety, no cap). Part 2 round 12 and SONAR-PATH round 5 follow their batches.
+
+**FINISHED SINCE LAST BLOCK:** Part 6 round 13 evidence recorded; ledger PDBANNER-r13-1..6.
+
+**EGM STEP PER PACKAGE:** Part 6: batch 14 building. Part 2: batch 12 building. SONAR-PATH: batch 5 building.
+
+**LANE SONAR-PATH:** batch 5 building; no SonarCloud finding claimed cleared.
+
+**RUN ON LAPTOP:** none (no clean round yet).
+
 ## 05:19Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
