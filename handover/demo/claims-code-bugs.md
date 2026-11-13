@@ -14,3 +14,9 @@ Source: claims-fix-v1 stage 1 (builders A, B1, B2), base main c30c3737590de3ea22
 
 ## 3. Not a bug, a choice for the lead: the workflow time-limit comment (`lint.yml:19` vs `sonar.yml:30`)
 * The two comments differed ('about twice the first real run' vs '1.6 times the longest observed run'). Builder B2 made `lint.yml` say 1.6 times, the same rule as `sonar.yml`. Neither number is measured. Say if you prefer the other wording or no number.
+
+## 4. Start-up without a reaper ignores the backoff of a pending follow-up (found 12:50Z by the D11 trace; for the lead to decide; code NOT changed)
+* Where: `src/lead_desk/desk.py:612-616` (`Desk.startup()` step 3: `if not self._background:` it selects every `pending` row and calls `run_followup`), then `_claim` with `_CLAIM_SQL[("pending",)]` at `desk.py:190-194` (`auto_attempts=auto_attempts+1`, no time test).
+* The reaper (`reap_once`, `desk.py:737-744`) and client replays (`_pending_and_due`, `desk.py:1417-1431`) honour the backoff; the reaper-off start-up path does not. The server always starts the reaper first (`server.py:1195-1196`), so production is not affected; a start-up without a reaper (tests, a future caller) spends one try on every pending row, even one whose backoff has not passed, and a send may happen at once.
+* Failing example (reading, not run): pending row, `auto_attempts=1`, `updated_at=now`; `Desk(...).startup()` with no `start_background()` -> `auto_attempts` becomes 2 at once. No test covers it in either mode (D11 found none). Two tests to add if wanted: reaper off -> 2; reaper on -> stays 1 until the clock passes the backoff.
+* Words fixed in contract.md (v8): both start-up sentences now say which mode they describe.
