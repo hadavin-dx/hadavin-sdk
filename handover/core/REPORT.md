@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+21:18Z. R7 builder a87e9554: checkpoint 21:02 in (its words, not yet checked by me against logs): n8n exit-code tests 28 pass, start_all.sh foreign-listener tests with two mutants killed, ProviderSettings repr mutant killed, error-code helper plus class-name guard with mutation proof, 3 stale tests updated. Next for it: check_invariants, portal_demo 6200 rows, announced_length, reset_check FIFO, IMAP-user main tests, docs, suppression table, R5->R6 changed-test list, patches, fail-before, RESULTS.md. No blockers reported. APPLY-MATRIX builder a617bc81: has no checkpoint note yet (started 21:11) but files exist in out/AM (apply_matrix.sh, last-matrix.tsv, mk_mutants.py, mutation-raw.out, run-real-r6.out): working. I have not read its results. Defects new: none. Load 1.6. 2 agents running. ASK: none.
+
+## STATUS (core lead)
 21:12Z. ORDER 269 done: second agent started: APPLY-MATRIX builder a617bc81 (Sonnet, 60-min box, checkpoints to out/AM/checkpoint.md). It builds apply_matrix.sh (3 checkout types x crl/lf patch x plain/--ignore-whitespace, line endings of reset.ps1 and start_all.ps1 checked, recommended commands derived from the matrix, mutation proof that broken line endings make it fail), the README apply text, the EV7 plan file and required_fails.py (lists tests that pass on old code = pin nothing). It does not touch tree-R7 or R7 files. Running: R7 builder a87e9554 + a617bc81 = 2 agents. Result not known yet. ASK: none.
 
 ## STATUS (core lead)
