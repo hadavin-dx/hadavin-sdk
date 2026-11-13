@@ -1,0 +1,12 @@
+MUTANT empty label allowed: KILLED | 1 failed in 0.05s
+MUTANT leading hyphen allowed: KILLED | 1 failed, 6 passed in 0.08s
+MUTANT trailing hyphen allowed: KILLED | 1 failed, 7 passed in 0.05s
+MUTANT unicode dots not split: KILLED | 1 failed, 13 passed in 0.05s
+MUTANT lead email skips the label check: KILLED | 1 failed in 0.04s
+MUTANT plain address skips label check: KILLED | 1 failed, 31 passed in 0.40s
+MUTANT wrong split of the address: SURVIVED | 40 passed in 0.48s
+MUTANT outbox sender: KILLED | 1 failed, 31 passed in 0.40s
+MUTANT outbox recipient: KILLED | 1 failed, 31 passed in 0.42s
+MUTANT reminder address: KILLED | 1 failed, 31 passed in 0.42s
+MUTANT provider settings: KILLED | 1 failed, 36 passed in 0.47s
+MUTANT provider recipient: KILLED | 1 failed, 36 passed in 0.46s

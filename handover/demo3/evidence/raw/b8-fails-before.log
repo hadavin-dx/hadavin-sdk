@@ -1,0 +1,423 @@
+FFF..FFFFFFF.FFF........FFFF.FFFFFFFFFFF                                 [100%]
+=================================== FAILURES ===================================
+______________ test_badly_shaped_domain_goes_to_review[.dom.test] ______________
+
+domain = '.dom.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: .dom.test
+E       assert ('ok', None, 'loc@.dom.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+______________ test_badly_shaped_domain_goes_to_review[a..b.test] ______________
+
+domain = 'a..b.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a..b.test
+E       assert ('ok', None, 'loc@a..b.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+______________ test_badly_shaped_domain_goes_to_review[a.b..test] ______________
+
+domain = 'a.b..test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a.b..test
+E       assert ('ok', None, 'loc@a.b..test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_______________ test_badly_shaped_domain_goes_to_review[..test] ________________
+
+domain = '..test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: ..test
+E       assert ('ok', None, 'loc@..test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_______________ test_badly_shaped_domain_goes_to_review[-a.test] _______________
+
+domain = '-a.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: -a.test
+E       assert ('ok', None, 'loc@-a.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_______________ test_badly_shaped_domain_goes_to_review[a-.test] _______________
+
+domain = 'a-.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a-.test
+E       assert ('ok', None, 'loc@a-.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+______________ test_badly_shaped_domain_goes_to_review[a.-b.test] ______________
+
+domain = 'a.-b.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a.-b.test
+E       assert ('ok', None, 'loc@a.-b.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+______________ test_badly_shaped_domain_goes_to_review[a.b-.test] ______________
+
+domain = 'a.b-.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a.b-.test
+E       assert ('ok', None, 'loc@a.b-.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_______________ test_badly_shaped_domain_goes_to_review[a.test-] _______________
+
+domain = 'a.test-'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a.test-
+E       assert ('ok', None, 'loc@a.test-') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_________________ test_badly_shaped_domain_goes_to_review[a.-] _________________
+
+domain = 'a.-'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a.-
+E       assert ('ok', None, 'loc@a.-') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_______ test_badly_shaped_domain_goes_to_review[a\uff0e\uff0etest.test] ________
+
+domain = 'a．．test.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: a．．test.test
+E       assert ('ok', None, ...a．．test.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_________ test_badly_shaped_domain_goes_to_review[\uff61example.test] __________
+
+domain = '｡example.test'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: ｡example.test
+E       assert ('ok', None, ...example.test') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+_________ test_badly_shaped_domain_goes_to_review[example.test\u3002] __________
+
+domain = 'example.test。'
+
+    @pytest.mark.parametrize("domain", BAD_DOMAINS)
+    def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
+        chk = verdict(domain)
+>       assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
+E       AssertionError: example.test。
+E       assert ('ok', None, ...xample.test。') == ('review', 'i..._email', None)
+E         
+E         At index 0 diff: 'ok' != 'review'
+E         Use -v to get more diff
+
+tests/test_domain_labels.py:57: AssertionError
+____ test_no_accepted_address_has_an_empty_label_or_a_hyphen_at_a_label_end ____
+
+    def test_no_accepted_address_has_an_empty_label_or_a_hyphen_at_a_label_end() -> None:
+        """Fixed-seed fuzz over generated domains: whatever the check accepts has only well-formed labels."""
+        rng = random.Random(8)
+        pieces = ["a", "b", "x1", "-", ".", ".", "..", "-.", ".-", "a-b", "。", "．", "xn--k", "test"]
+        accepted = rejected = 0
+        for _ in range(20000):
+            domain = "".join(rng.choice(pieces) for _ in range(rng.randint(1, 7)))
+            chk = verdict(domain)
+            labels = _labels(domain)
+            well_formed = all(lb and not lb.startswith("-") and not lb.endswith("-") for lb in labels)
+            if chk.kind == "ok":
+                accepted += 1
+>               assert well_formed, f"accepted {domain!r}"
+E               AssertionError: accepted '-...-.a-b'
+E               assert False
+
+tests/test_domain_labels.py:84: AssertionError
+_________________________ test_domain_labels_ok_edges __________________________
+
+    def test_domain_labels_ok_edges() -> None:
+>       assert identity.domain_labels_ok("localhost")  # a one-label host name (a sender may be desk@localhost)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.identity' has no attribute 'domain_labels_ok'
+
+tests/test_domain_labels.py:93: AttributeError
+_______ test_dotted_domain_lead_is_reviewed_and_makes_nothing[.dom.test] _______
+
+env = <conftest.Env object at 0x7fd111cd3500>, domain = '.dom.test'
+
+    @pytest.mark.parametrize("domain", [".dom.test", "a..b.test", "example.test.", "-a.test", "a-.test"])
+    def test_dotted_domain_lead_is_reviewed_and_makes_nothing(env, domain: str) -> None:
+        """Real desk: 202 review, no lead row, no follow-up row, no mail, no qualifier call."""
+        rig = env.rig()
+        r = rig.desk.handle("form", "dom-1", lead(email=f"loc@{domain}"))
+>       assert (r.status, r.body["verdict"], r.body["reason"]) == (202, "review", "invalid_email"), r.body
+                                             ^^^^^^^^^^^^^^^^
+E       KeyError: 'reason'
+
+tests/test_domain_labels.py:104: KeyError
+_______ test_dotted_domain_lead_is_reviewed_and_makes_nothing[a..b.test] _______
+
+env = <conftest.Env object at 0x7fd111c9a660>, domain = 'a..b.test'
+
+    @pytest.mark.parametrize("domain", [".dom.test", "a..b.test", "example.test.", "-a.test", "a-.test"])
+    def test_dotted_domain_lead_is_reviewed_and_makes_nothing(env, domain: str) -> None:
+        """Real desk: 202 review, no lead row, no follow-up row, no mail, no qualifier call."""
+        rig = env.rig()
+        r = rig.desk.handle("form", "dom-1", lead(email=f"loc@{domain}"))
+>       assert (r.status, r.body["verdict"], r.body["reason"]) == (202, "review", "invalid_email"), r.body
+                                             ^^^^^^^^^^^^^^^^
+E       KeyError: 'reason'
+
+tests/test_domain_labels.py:104: KeyError
+________ test_dotted_domain_lead_is_reviewed_and_makes_nothing[-a.test] ________
+
+env = <conftest.Env object at 0x7fd111c9b800>, domain = '-a.test'
+
+    @pytest.mark.parametrize("domain", [".dom.test", "a..b.test", "example.test.", "-a.test", "a-.test"])
+    def test_dotted_domain_lead_is_reviewed_and_makes_nothing(env, domain: str) -> None:
+        """Real desk: 202 review, no lead row, no follow-up row, no mail, no qualifier call."""
+        rig = env.rig()
+        r = rig.desk.handle("form", "dom-1", lead(email=f"loc@{domain}"))
+>       assert (r.status, r.body["verdict"], r.body["reason"]) == (202, "review", "invalid_email"), r.body
+                                             ^^^^^^^^^^^^^^^^
+E       KeyError: 'reason'
+
+tests/test_domain_labels.py:104: KeyError
+________ test_dotted_domain_lead_is_reviewed_and_makes_nothing[a-.test] ________
+
+env = <conftest.Env object at 0x7fd111c994f0>, domain = 'a-.test'
+
+    @pytest.mark.parametrize("domain", [".dom.test", "a..b.test", "example.test.", "-a.test", "a-.test"])
+    def test_dotted_domain_lead_is_reviewed_and_makes_nothing(env, domain: str) -> None:
+        """Real desk: 202 review, no lead row, no follow-up row, no mail, no qualifier call."""
+        rig = env.rig()
+        r = rig.desk.handle("form", "dom-1", lead(email=f"loc@{domain}"))
+>       assert (r.status, r.body["verdict"], r.body["reason"]) == (202, "review", "invalid_email"), r.body
+                                             ^^^^^^^^^^^^^^^^
+E       KeyError: 'reason'
+
+tests/test_domain_labels.py:104: KeyError
+_ test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@.example.test] _
+
+bad = 'desk@.example.test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_sender_recipient_and_reminder_addresses_use_the_same_rule(bad: str) -> None:
+>       assert not identity.plain_address_ok(bad)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.identity' has no attribute 'plain_address_ok'
+
+tests/test_domain_labels.py:116: AttributeError
+_ test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@a..test] _
+
+bad = 'desk@a..test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_sender_recipient_and_reminder_addresses_use_the_same_rule(bad: str) -> None:
+>       assert not identity.plain_address_ok(bad)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.identity' has no attribute 'plain_address_ok'
+
+tests/test_domain_labels.py:116: AttributeError
+_ test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@example.test.] _
+
+bad = 'desk@example.test.'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_sender_recipient_and_reminder_addresses_use_the_same_rule(bad: str) -> None:
+>       assert not identity.plain_address_ok(bad)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.identity' has no attribute 'plain_address_ok'
+
+tests/test_domain_labels.py:116: AttributeError
+_ test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@-a.test] _
+
+bad = 'desk@-a.test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_sender_recipient_and_reminder_addresses_use_the_same_rule(bad: str) -> None:
+>       assert not identity.plain_address_ok(bad)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'lead_desk.identity' has no attribute 'plain_address_ok'
+
+tests/test_domain_labels.py:116: AttributeError
+__________________ test_plain_address_ok_keeps_good_addresses __________________
+
+    def test_plain_address_ok_keeps_good_addresses() -> None:
+        for good in ("desk@example.test", "reminder@localhost", "o'brien@a-b.example.test"):
+>           assert identity.plain_address_ok(good), good
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'lead_desk.identity' has no attribute 'plain_address_ok'
+
+tests/test_domain_labels.py:127: AttributeError
+__ test_provider_sender_and_recipients_use_the_same_rule[desk@.example.test] ___
+
+bad = 'desk@.example.test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_provider_sender_and_recipients_use_the_same_rule(bad: str) -> None:
+        from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
+    
+        good = "a@example.test"
+>       with pytest.raises(SettingRefused, match="plain ASCII addresses"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_domain_labels.py:135: Failed
+_____ test_provider_sender_and_recipients_use_the_same_rule[desk@a..test] ______
+
+bad = 'desk@a..test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_provider_sender_and_recipients_use_the_same_rule(bad: str) -> None:
+        from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
+    
+        good = "a@example.test"
+>       with pytest.raises(SettingRefused, match="plain ASCII addresses"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_domain_labels.py:135: Failed
+__ test_provider_sender_and_recipients_use_the_same_rule[desk@example.test.] ___
+
+bad = 'desk@example.test.'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_provider_sender_and_recipients_use_the_same_rule(bad: str) -> None:
+        from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
+    
+        good = "a@example.test"
+>       with pytest.raises(SettingRefused, match="plain ASCII addresses"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_domain_labels.py:135: Failed
+_____ test_provider_sender_and_recipients_use_the_same_rule[desk@-a.test] ______
+
+bad = 'desk@-a.test'
+
+    @pytest.mark.parametrize("bad", ["desk@.example.test", "desk@a..test", "desk@example.test.", "desk@-a.test"])
+    def test_provider_sender_and_recipients_use_the_same_rule(bad: str) -> None:
+        from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
+    
+        good = "a@example.test"
+>       with pytest.raises(SettingRefused, match="plain ASCII addresses"):
+E       Failed: DID NOT RAISE SettingRefused
+
+tests/test_domain_labels.py:135: Failed
+=========================== short test summary info ============================
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[.dom.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a..b.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a.b..test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[..test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[-a.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a-.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a.-b.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a.b-.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a.test-]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a.-]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[a\uff0e\uff0etest.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[\uff61example.test]
+FAILED tests/test_domain_labels.py::test_badly_shaped_domain_goes_to_review[example.test\u3002]
+FAILED tests/test_domain_labels.py::test_no_accepted_address_has_an_empty_label_or_a_hyphen_at_a_label_end
+FAILED tests/test_domain_labels.py::test_domain_labels_ok_edges - AttributeEr...
+FAILED tests/test_domain_labels.py::test_dotted_domain_lead_is_reviewed_and_makes_nothing[.dom.test]
+FAILED tests/test_domain_labels.py::test_dotted_domain_lead_is_reviewed_and_makes_nothing[a..b.test]
+FAILED tests/test_domain_labels.py::test_dotted_domain_lead_is_reviewed_and_makes_nothing[-a.test]
+FAILED tests/test_domain_labels.py::test_dotted_domain_lead_is_reviewed_and_makes_nothing[a-.test]
+FAILED tests/test_domain_labels.py::test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@.example.test]
+FAILED tests/test_domain_labels.py::test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@a..test]
+FAILED tests/test_domain_labels.py::test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@example.test.]
+FAILED tests/test_domain_labels.py::test_sender_recipient_and_reminder_addresses_use_the_same_rule[desk@-a.test]
+FAILED tests/test_domain_labels.py::test_plain_address_ok_keeps_good_addresses
+FAILED tests/test_domain_labels.py::test_provider_sender_and_recipients_use_the_same_rule[desk@.example.test]
+FAILED tests/test_domain_labels.py::test_provider_sender_and_recipients_use_the_same_rule[desk@a..test]
+FAILED tests/test_domain_labels.py::test_provider_sender_and_recipients_use_the_same_rule[desk@example.test.]
+FAILED tests/test_domain_labels.py::test_provider_sender_and_recipients_use_the_same_rule[desk@-a.test]
+28 failed, 12 passed in 0.26s
+EXIT_CODE=1
+BASE PROBE (behaviour on the old code)
+loc@.dom review
+loc@a..b ok
+loc@-a.test ok
+loc@a-.test ok
+loc@x.test. review
+SmtpSettings(mail_from='desk@.example.test') accepted: desk@.example.test

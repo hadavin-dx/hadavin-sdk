@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/e6-fix
+configfile: pyproject.toml
+plugins: xdist-3.8.0
+created: 2/2 workers
+2 workers [56 items]
+
+........................................................                 [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[abc]
+PASSED tests/test_reset_ps_width.py::test_a_slow_stop_is_refused_with_exit_5_when_the_terminal_width_is_80
+PASSED tests/test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[1 ; touch {marker}]
+PASSED tests/test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[$(touch {marker})]
+PASSED tests/test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[`touch {marker}`]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_database_outside_the_data_folder
+PASSED tests/test_reset_ps_width.py::test_a_desk_that_stops_in_a_few_seconds_is_waited_for_when_the_terminal_width_is_80
+PASSED tests/test_reset_scripts.py::test_reset_still_deletes_a_database_inside_the_data_folder
+PASSED tests/test_reset_scripts.py::test_reset_refuses_when_something_answers_on_the_desk_port
+PASSED tests/test_reset_scripts.py::test_reset_refuses_when_a_process_holds_the_database
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_pid_file_of_another_program
+PASSED tests/test_reset_ps_width.py::test_a_command_line_over_200_characters_with_the_marker_last_is_still_the_desk
+PASSED tests/test_reset_ps_width.py::test_proc_args_asks_ps_with_ww_first_when_the_pid_is_not_a_plain_number
+PASSED tests/test_reset_ps_width.py::test_proc_args_falls_back_to_plain_ps_when_ps_ww_fails
+PASSED tests/test_reset_ps_width.py::test_proc_args_reads_proc_first_and_never_calls_ps_for_a_live_process
+PASSED tests/test_reset_ps_width.py::test_proc_args_asks_ps_when_proc_gives_an_empty_command_line
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[-3]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[1.5]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[ ]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[a]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[abc]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[08]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[09]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[0001]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[1234]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[99999999999999999999]
+PASSED tests/test_reset_scripts.py::test_reset_sh_refuses_when_the_desk_does_not_stop
+PASSED tests/test_reset_scripts.py::test_reset_accepts_a_plain_whole_number_of_seconds[0]
+PASSED tests/test_reset_scripts.py::test_reset_accepts_a_plain_whole_number_of_seconds[1]
+PASSED tests/test_reset_scripts.py::test_reset_accepts_a_plain_whole_number_of_seconds[10]
+PASSED tests/test_reset_scripts.py::test_reset_accepts_a_plain_whole_number_of_seconds[999]
+PASSED tests/test_reset_scripts.py::test_reset_check_answers_one_line_when_the_lock_file_cannot_be_looked_at
+PASSED tests/test_reset_scripts.py::test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop
+PASSED tests/test_reset_scripts.py::test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a_refusal
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env0-LEADFLOW=[demo_only/leadflow.json] NUDGE=[reminder@example.test]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env1-LEADFLOW=[off] NUDGE=[<unset>]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env2-LEADFLOW=[] NUDGE=[<unset>]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env3-LEADFLOW=[x.json] NUDGE=[reminder@example.test]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env4-LEADFLOW=[of] NUDGE=[reminder@example.test]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env5-LEADFLOW=[*] NUDGE=[reminder@example.test]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env6-LEADFLOW=[x.json] NUDGE=[me@example.test]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file[env7-LEADFLOW=[x.json] NUDGE=[]]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing[fakes.pid]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing[desk.pid]
+PASSED tests/test_reset_scripts.py::test_start_all_sh_refuses_an_unknown_mode_before_it_calls_python
+PASSED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh-BASH_VERSION-unset]
+PASSED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[reset.sh-BASH_VERSION-exported]
+PASSED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[start_all.sh-BASH_VERSION-unset]
+PASSED tests/test_reset_scripts.py::test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing[start_all.sh-BASH_VERSION-exported]
+PASSED tests/test_reset_scripts.py::test_the_guard_line_refuses_under_dash_even_without_set_e[reset.sh]
+PASSED tests/test_reset_scripts.py::test_the_guard_line_refuses_under_dash_even_without_set_e[start_all.sh]
+PASSED tests/test_reset_scripts.py::test_reset_sh_deletes_an_empty_pid_file[desk.pid]
+PASSED tests/test_reset_scripts.py::test_reset_sh_deletes_an_empty_pid_file[fakes.pid]
+PASSED tests/test_reset_scripts.py::test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[1+1]
+PASSED tests/test_reset_scripts.py::test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number[$(touch pwned)]
+============================= 56 passed in 17.13s ==============================
