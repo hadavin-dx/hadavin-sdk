@@ -1,0 +1,103 @@
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[spaces]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[space]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[bang]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[comma]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[empty]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[tab]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[empty-part]
+FAIL  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[bad-ipv4] :: Failed: DID NOT RAISE SettingRefused
+FAIL  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[bracketed-ipv4] :: Failed: DID NOT RAISE SettingRefused
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[non-ascii]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[colon]
+PASS  test_a_bind_that_can_never_be_a_name_is_refused_by_the_settings[long]
+PASS  test_every_name_the_system_might_resolve_is_accepted[127.0.0.1]
+PASS  test_every_name_the_system_might_resolve_is_accepted[127.0.0.2]
+PASS  test_every_name_the_system_might_resolve_is_accepted[127.1]
+PASS  test_every_name_the_system_might_resolve_is_accepted[::1]
+PASS  test_every_name_the_system_might_resolve_is_accepted[[::1]]
+PASS  test_every_name_the_system_might_resolve_is_accepted[[fe80::1%eth0]]
+PASS  test_every_name_the_system_might_resolve_is_accepted[fe80::1%eth0]
+PASS  test_every_name_the_system_might_resolve_is_accepted[::]
+PASS  test_every_name_the_system_might_resolve_is_accepted[[::]]
+PASS  test_every_name_the_system_might_resolve_is_accepted[0.0.0.0]
+PASS  test_every_name_the_system_might_resolve_is_accepted[0]
+PASS  test_every_name_the_system_might_resolve_is_accepted[localhost]
+PASS  test_every_name_the_system_might_resolve_is_accepted[LocalHost]
+FAIL  test_every_name_the_system_might_resolve_is_accepted[localhost.] :: lead_desk.envnum.SettingRefused: DESK_BIND must be an IP address or a host name
+FAIL  test_every_name_the_system_might_resolve_is_accepted[desk_web] :: lead_desk.envnum.SettingRefused: DESK_BIND must be an IP address or a host name
+PASS  test_every_name_the_system_might_resolve_is_accepted[my-host.local]
+PASS  test_the_ip_path_and_the_bracket_path_agree_on_a_zone_id
+PASS  test_a_bind_that_is_no_address_ends_the_desk_with_exit_4
+PASS  test_an_empty_db_path_is_refused_by_the_settings[]
+PASS  test_an_empty_db_path_is_refused_by_the_settings[   ]
+PASS  test_an_empty_db_path_ends_the_desk_with_exit_4
+FAIL  test_a_db_path_that_is_an_existing_folder_exits_4_with_no_path_and_no_lock_file :: AssertionError: cannot reach the demo servers (are they running? see scripts/start_all)
+FAIL  test_a_db_path_that_ends_in_a_dot_exits_4 :: AssertionError: cannot reach the demo servers (are they running? see scripts/start_all)
+FAIL  test_a_db_path_whose_parent_is_a_file_exits_4 :: AssertionError: assert 'DESK_DB_PATH sits inside something that is a file' in 'the desk refuses a setting: DES
+FAIL  test_a_db_path_deeper_below_a_file_exits_4_and_the_folder_is_not_made :: AssertionError: assert 'DESK_DB_PATH sits inside something that is a file' in 'the desk refuses a setting: DES
+FAIL  test_book_problem_is_the_one_place_for_the_db_path_rules :: AssertionError: assert (None is not None)
+PASS  test_a_db_folder_that_cannot_be_made_ends_the_desk_with_exit_4_and_no_path
+SKIP  test_an_unwritable_db_parent_exits_4
+PASS  test_a_lock_held_by_another_desk_still_exits_2
+PASS  test_a_lock_file_that_cannot_be_opened_exits_2_as_the_exit_code_tables_say
+PASS  test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4[missing]
+PASS  test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4[broken]
+PASS  test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4[not-object]
+PASS  test_a_missing_or_broken_replies_file_ends_the_desk_with_exit_4[empty]
+FAIL  test_a_damaged_default_replies_file_does_not_blame_a_setting_the_user_did_not_set :: AttributeError: module 'demo_only.fakes' has no attribute 'RepliesFileError'
+PASS  test_a_damaged_replies_file_that_was_set_names_the_setting
+FAIL  test_a_plain_value_error_inside_the_replies_qualifier_is_a_bug_and_is_not_a_setting :: AssertionError: Regex pattern did not match.
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[missing-hubspot]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[missing-live]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[missing-provider]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[short-hubspot]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[short-live]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[short-provider]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[directory-hubspot]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[directory-live]
+PASS  test_a_missing_short_or_wrong_key_file_ends_the_desk_with_exit_4_naming_the_setting[directory-provider]
+FAIL  test_a_kind_without_check_start_starts_and_every_kind_with_it_is_asked_once :: TypeError: check_secret_files() missing 1 required positional argument: 'qualifier'
+FAIL  test_a_check_start_that_refuses_is_a_setting_refusal_with_its_own_text :: TypeError: check_secret_files() missing 1 required positional argument: 'qualifier'
+FAIL  test_main_turns_a_refusing_check_start_into_exit_4_without_a_traceback :: AttributeError: '_Refusing' object has no attribute 'capability'
+FAIL  test_the_three_kinds_that_hold_a_secret_file_have_the_hook[hubspot] :: TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union
+FAIL  test_the_three_kinds_that_hold_a_secret_file_have_the_hook[provider] :: TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union
+FAIL  test_the_three_kinds_that_hold_a_secret_file_have_the_hook[live] :: TypeError: isinstance() arg 2 must be a type, a tuple of types, or a union
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-missing] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-directory] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-short] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-utf16] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-several-lines] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-oversize] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[hubspot-not-utf8] :: AttributeError: 'HubspotCrm' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-missing] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-directory] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-short] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-utf16] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-several-lines] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-oversize] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[provider-not-utf8] :: AttributeError: 'SmtpProviderOutbox' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-missing] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-directory] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-short] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-utf16] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-several-lines] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-oversize] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_no_failing_key_state_puts_a_path_a_file_name_or_key_text_in_the_message[live-not-utf8] :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_after_check_start_the_live_qualifier_holds_no_key :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+FAIL  test_a_key_file_replaced_between_the_start_and_the_first_call_is_the_one_used :: AttributeError: 'LiveQualifier' object has no attribute 'check_start'
+PASS  test_a_good_key_file_starts_the_desk_and_the_key_is_not_printed[hubspot]
+PASS  test_a_good_key_file_starts_the_desk_and_the_key_is_not_printed[live]
+PASS  test_a_good_key_file_starts_the_desk_and_the_key_is_not_printed[provider]
+FAIL  test_a_yes_no_setting_with_another_word_is_refused_not_read_as_no[hubspot] :: Failed: DID NOT RAISE SettingRefused
+FAIL  test_a_yes_no_setting_with_another_word_is_refused_not_read_as_no[live] :: Failed: DID NOT RAISE SettingRefused
+FAIL  test_yes_no_words_that_are_accepted[yes] :: TypeError: 'NoneType' object is not callable
+FAIL  test_yes_no_words_that_are_accepted[YES] :: TypeError: 'NoneType' object is not callable
+FAIL  test_yes_no_words_that_are_accepted[ yes ] :: TypeError: 'NoneType' object is not callable
+FAIL  test_yes_no_words_that_are_accepted[no] :: TypeError: 'NoneType' object is not callable
+FAIL  test_yes_no_words_that_are_accepted[No] :: TypeError: 'NoneType' object is not callable
+FAIL  test_yes_no_words_that_are_accepted[] :: TypeError: 'NoneType' object is not callable
+FAIL  test_a_stats_file_or_ledger_that_is_a_folder_is_refused :: Failed: DID NOT RAISE SettingRefused
+FAIL  test_a_ca_file_that_cannot_be_read_is_refused_with_no_traceback_and_no_path[missing] :: FileNotFoundError: [Errno 2] No such file or directory
+FAIL  test_a_ca_file_that_cannot_be_read_is_refused_with_no_traceback_and_no_path[not-a-certificate] :: ssl.SSLError: [X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4096)
+PASS  test_unreachable_demo_servers_exit_1_with_the_documented_words
+PASS  test_a_plain_value_error_that_is_not_a_setting_is_not_called_a_setting_refusal
