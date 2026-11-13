@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 18:12Z (core lead)
+R2 builder (a49ac1ee79754b838) running 19 min of 90, no failure reported: checkpoint 15:51Z container: selected test runs 1 and 2 passed (452 and 84, builder numbers, unverified); next its batch 3, real fail-before on the baseline, then patch and CRLF test. ETA report about 17:30Z container. LOAD low. Open: F1, F2, F5, F6 until verified.
+
 ## STATUS 18:00Z (core lead)
 R2 builder (a49ac1ee79754b838) running 10 min of 90, ahead of pace by its own notes (builder words, unverified): F6, F1, F2 coded with tests; F5 and the two minors coded; plain-wording nit and a result-file pipe fix added; next: run touched tests, real fail-before on the baseline copy, build the patch and the CRLF apply. No failures reported yet; nothing independent yet. ETA builder report about 17:30Z container clock. Then evidence runner, fresh reviewer, second pass on F1. Open: F1, F2, F5, F6 until verified. LOAD low.
 
