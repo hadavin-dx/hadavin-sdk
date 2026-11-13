@@ -46,37 +46,56 @@ def make_on_decided(holder: dict[str, Any]) -> OnDecided:
 
 
 _ON_DECIDED_CODE = make_on_decided({}).__code__
-_RUNTIME_KEY = ("hadavin_sdk.runtime.agent_loop", "Runtime")
-_RUNTIME_PIN: list[type] = []  # the core runtime class, taken the first time it is seen loaded
 
 
-def _core_runtime_class() -> type | None:
-    """The core's ``Runtime`` class, found in its module's own dictionary (never ``getattr``) and kept the first
-    time it is seen: a class put under that name later is not it. None while its module is not loaded."""
-    if _RUNTIME_PIN:
-        return _RUNTIME_PIN[0]
-    found = standins.live_class(_RUNTIME_KEY)
-    if found is not None:
-        _RUNTIME_PIN.append(found)
-    return found
+_RUNTIME_SERVICES = (
+    "store",
+    "llm",
+    "detector",
+)  # the attributes of a core ``Runtime`` that reach a service
 
 
-def _holder_ok(holder: object) -> bool:
-    """True only for a plain ``dict`` that is empty, or whose one entry under ``rt`` is an
-    instance of exactly the core's runtime class (identity, never ``isinstance`` or ``==``; a one-entry dict under
-    another key has no ``rt`` and is counted)."""
+def _runtime_ok(runtime: object) -> bool:
+    """True only for a runtime the core made: an instance of exactly the core's ``Runtime`` class, unchanged since it
+    was pinned (``standins.is_pinned_instance``, pinned when its module is loaded), whose ``store``, ``llm`` and
+    ``detector`` are each one of the core's own stand-ins (a runtime made by hand with a real store or model is real).
+    Its ``hooks`` are the wiring ``build()`` made (every real object they reach was given to ``build()`` and is named
+    in ``overrides``, or comes from the config, which is counted); an ``Approvals`` made by hand does not get this
+    belief at all (see ``_holder_ok``)."""
+    try:
+        if not standins.is_pinned_instance(runtime, standins.RUNTIME):
+            return False
+        own = object.__getattribute__(runtime, "__dict__")
+        if type(own) is not dict:
+            return False
+        return all(standins.is_stand_in(dict.get(own, name)) for name in _RUNTIME_SERVICES)
+    except Exception:  # noqa: BLE001 - anything unreadable is not the core's runtime
+        return False
+
+
+def _holder_ok(holder: object, built: bool) -> bool:
+    """True only for a plain ``dict`` that is empty, or (only when the ``Approvals`` was made by ``build()``) whose one
+    entry under ``rt`` is a runtime the core made (``_runtime_ok``). The one key is read with the builtin dict
+    methods and compared as an exact ``str`` by identity of its type, never with ``==`` (a key that is a ``str``
+    subclass with its own ``__eq__`` is foreign code); a one-entry dict under another key has no ``rt`` and is counted."""
     if type(holder) is not dict:
         return False
     size = dict.__len__(holder)
     if size == 0:
         return True
-    if size != 1:
+    if size != 1 or not built:
         return False
-    cls = _core_runtime_class()
-    return cls is not None and type(dict.get(holder, "rt")) is cls
+    key = next(dict.__iter__(holder))
+    # ``key`` is an exact ``str`` there: its ``!=`` is the builtin one
+    if type(key) is not str or key != "rt":
+        return False
+    return _runtime_ok(dict.__getitem__(holder, key))
 
 
-def _one_cell(func: object, code: object) -> object | None:
+_NONE = object()  # the marker ``_one_cell`` answers when the function is not made from the code
+
+
+def _one_cell(func: object, code: object) -> object:
     """The one closure cell's content of a function made from ``code`` (identity of the code), else the marker
     ``_NONE``. Never raises (an empty cell is a ``ValueError``)."""
     try:
@@ -90,13 +109,11 @@ def _one_cell(func: object, code: object) -> object | None:
         return _NONE
 
 
-_NONE = object()
-
-
-def _is_core_on_decided(func: object) -> bool:
+def _is_core_on_decided(func: object, built: bool) -> bool:
     """True only for a function made by ``make_on_decided`` (identity of its code) whose holder is judged by
-    ``_holder_ok``."""
-    return _holder_ok(_one_cell(func, _ON_DECIDED_CODE))
+    ``_holder_ok`` (``built``: the ``Approvals`` was made by ``build()``)."""
+    cell = _one_cell(func, _ON_DECIDED_CODE)
+    return cell is not _NONE and _holder_ok(cell, built)
 
 
 def fixed_clock(moment: datetime) -> Callable[[], datetime]:
@@ -109,16 +126,23 @@ def fixed_clock(moment: datetime) -> Callable[[], datetime]:
     return clock
 
 
-_EPOCH = datetime(2000, 1, 1, tzinfo=UTC)  # only to make the factory's code object
-_FIXED_CLOCK_CODE = fixed_clock(_EPOCH).__code__
+# a moment only to make the factory's code object
+_FIXED_CLOCK_CODE = fixed_clock(datetime.min.replace(tzinfo=UTC)).__code__
+_NOW_CODE = (
+    now.__code__
+)  # ``models.now`` is the same function object after ``now.__code__ = ...``: its code is pinned
 
 
 def _is_core_clock(func: object) -> bool:
-    """True only for ``models.now`` or a clock made by ``fixed_clock`` (exact ``datetime`` inside). Any other
-    callable is run before the signature is checked (``receive``) and can hold anything, so it is counted."""
+    """True only for ``models.now`` (its code unchanged since this module was imported) or a clock made by
+    ``fixed_clock`` whose moment is a ``datetime`` ``standins.plain_datetime`` accepts (exact type, ``tzinfo`` None or
+    ``datetime.UTC``: an aware moment calls ``tzinfo.utcoffset`` in ``receive``, so a ``tzinfo`` that is a class with
+    its own code is not believed). Any other callable is run before the signature is checked and can hold anything,
+    so it is counted."""
     if func is now:
-        return True
-    return type(_one_cell(func, _FIXED_CLOCK_CODE)) is datetime
+        return now.__code__ is _NOW_CODE
+    moment = _one_cell(func, _FIXED_CLOCK_CODE)
+    return moment is not _NONE and standins.plain_datetime(moment)
 
 
 # Only ``app.build`` holds this: an ``Approvals`` made with it counts as built by ``build()`` (its audit sink and
@@ -286,8 +310,9 @@ class Approvals:
         channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
         counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
         also name their audit sink and registry: nothing says those are stand-ins. ``on_decided`` is named unless it
-        is the function ``make_on_decided`` builds with an empty holder or the core runtime in it, and ``clock`` is named
-        unless it is ``models.now`` or a ``fixed_clock``."""
+        is the function ``make_on_decided`` builds with an empty holder or (approvals made by ``build()`` only) the core
+        runtime in it (``_runtime_ok``), and ``clock`` is named unless it is ``models.now`` or a ``fixed_clock`` of a
+        plain ``datetime`` (``standins.plain_datetime``)."""
         # read through the same accessors the runtime uses (``self.channel`` and so on), never through the private
         # slots: a replaced accessor and the slot behind it cannot give two answers
         held: dict[str, object] = dict(self.overrides)
@@ -300,7 +325,7 @@ class Approvals:
         if self._hand_built:
             held["audit"], held["registry"] = self.audit, self.registry
         if not _is_core_on_decided(
-            self.on_decided
+            self.on_decided, not self._hand_built
         ):  # a callable run after a valid signature can hold anything
             held["on_decided"] = self.on_decided
         if not _is_core_clock(self.clock):  # ``receive`` runs it before the signature is checked
@@ -326,6 +351,9 @@ class Approvals:
     ) -> tuple[bool, str]:
         """Entry point for a channel callback: the channel verifies the request and names the approver.
         The HTTP receiver passes ``record_only=True``: it records and answers fast; ``tick`` runs the plan."""
+        # ORDER: ``self.clock()`` and ``.timestamp()`` run BEFORE the signature is checked, so on a bind other computers
+        # can reach nothing may be called here that the guard did not judge: the receiver's per-request check
+        # (``real_now``) refuses a clock that is not ``models.now`` or a ``fixed_clock`` of a plain ``datetime``
         d = self.channel.parse_decision(headers, body, self.clock().timestamp())
         if d is None:
             return False, "bad_signature"

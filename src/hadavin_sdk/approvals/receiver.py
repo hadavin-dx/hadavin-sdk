@@ -117,8 +117,11 @@ def serve(
     ``object.__delattr__`` is caught by that request check (every slot is read, so each deleted slot is answered 503).
     Every class the guard judges is compared by identity, never by ``==`` or hash. A value too big to read within the
     budget counts as real (the public bind is refused, and the refusal line says ``over budget``, not ``real``).
-    Only an ``on_decided`` made by ``make_on_decided`` (with an empty holder or the core runtime in it) and a
-    ``clock`` that is ``models.now`` or a ``fixed_clock`` are trusted as not holding a service. A refusal line shows
+    At the start the ``Approvals`` class is compared with its pin too: a method replaced or added after the pin
+    is a ``BindRefused`` ("changed after it was pinned"), not a late 503.
+    Only an ``on_decided`` made by ``make_on_decided`` (with an empty holder or, for approvals made by ``build()``,
+    the core runtime in it) and a ``clock`` that is ``models.now`` or a ``fixed_clock`` of a plain ``datetime`` (no
+    ``tzinfo`` or ``datetime.UTC``) are trusted as not holding a service. A refusal line shows
     only a plain word (an identifier of at most 40 characters) for a held name, a class name or an operator-config
     name, and a fixed label for anything else."""
     if type(approvals) is not Approvals:
@@ -129,6 +132,8 @@ def serve(
     # every attribute of the approvals is read here, inside the one refusal type: an unreadable object (a slot
     # deleted with ``object.__delattr__``, a mapping that raises) is a ``BindRefused``, not some other error
     try:
+        # the question the per-request check asks first
+        pinned = standins.is_pinned_instance(approvals)
         for slot in (
             Approvals.__slots__
         ):  # a deleted slot (any of them) is a refusal at the start, not a late 503
@@ -141,6 +146,10 @@ def serve(
             "serve could not read what the approvals hold (a slot is missing or an object raised): "
             "nothing is served"
         ) from None
+    if not pinned:
+        raise BindRefused(
+            "the Approvals class was changed after it was pinned (a method was replaced or added): nothing is served"
+        )
     if approvals_config is None:
         raise BindRefused(
             "serve needs approvals built with a config (Approvals(..., config=config), or build()); "

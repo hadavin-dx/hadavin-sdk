@@ -26,21 +26,21 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
   (entered; for a dict its keys are judged too), a ``Counter``, a ``defaultdict`` whose factory is one of
   ``list``, ``dict``, ``set``, ``int``, ``float`` or ``Decimal``, and the model types the five stand-ins really hold
   (the literal list ``_DATA_CLASSES``, found in their module dictionaries; each one is judged by exact type and its
-  own attributes are entered; the class of a data type is NOT pinned, because those types hold no code the guard
-  runs). Anything else reads as real: a function, a method, a class, a subclass of dict or list, a ``defaultdict``
+  own attributes are entered; the classes of the data types are pinned too, when the approvals receiver is imported,
+  like the stand-ins). Anything else reads as real: a function, a method, a class, a subclass of dict or list, a ``defaultdict``
   with another factory, ``UserDict``, ``ChainMap``, ``MappingProxyType``, ``SimpleNamespace``, a client or session
   object, an object with ``__enter__``, a generator, an iterator, a ``memoryview`` or a ``bytearray``. A value whose
   type is itself one of the pinned stand-in classes (a nested stand-in) is judged by the same pin and scanned in
   turn. A member of ``RunState`` is a plain value only when it is the real member (identity against
   ``RunState.__members__``) and its own dictionary holds only the enum's own keys. The scan enters
-  ``SCAN_DEPTH_VALUES`` (8) levels of containers (the instance's own attribute dictionary is level 1; an
-  approval request with its steps in a store is six levels) and looks at no more than ``SCAN_NODES`` values,
+  ``SCAN_DEPTH_VALUES`` (8) levels of containers below the instance's own attribute dictionary (a ninth
+  container reads as real; an approval request with its steps in a store is six levels) and looks at no more than ``SCAN_NODES`` values,
   charged when a container is ENTERED and before it is copied (its size is read with the builtin ``__len__``; a
   container bigger than what is left of the budget is not copied and reads as real, so a huge list referenced a
   thousand times costs the size check, not a thousand copies). Both limits FAIL CLOSED: a container that is still
   unexplored after the last level and holds anything but plain atoms (str, int, ...) reads as real, and so does an
   instance that holds more than the budget. ONE budget (``_Budget``) is made per question and charged at every visit
-  (a plain value or container costs 1; a stand-in or a data row costs ``STAND_IN_WEIGHT`` (50)), so a list of a
+  (a plain value or container costs 1; a stand-in or a data row costs ``STAND_IN_WEIGHT`` (20)), so a list of a
   million references to one object cannot cost more than the budget. A value is plain only if it holds no state
   outside what the scan reads: its ``__dict__`` is empty (or it has none), and a ``Counter`` carries no instance
   dictionary entries. A data class (pydantic) is judged by its slots too: ``__pydantic_extra__`` and
@@ -52,7 +52,9 @@ Who may be a stand-in is decided HERE, from two literals, never from what a clas
 * any error while asking reads as "not a stand-in".
 
 The pins are taken EAGERLY: ``pin_all`` runs when the approvals receiver is imported (it imports the modules of four
-stand-ins and pins them with the detector list and ``Approvals``), so a change made after that import is seen.
+stand-ins, the models, the config and the cards, and pins them with the detector list, ``Approvals``, the model rows,
+``Route``, ``Card`` and ``RunState``: 20 of the 22 keys of ``_PINNED_KEYS``), so a change made after that import is
+seen. The core ``Runtime`` pins itself as ``runtime/agent_loop.py`` is loaded (its last line), and
 ``FakeSecretProvider`` is pinned by its own module: the repo's secrets rule (``tests/test_repo_rules.py``, "in any
 spelling ... lazy inside a function") does not let anything reachable from approvals import the secret holders, so
 the receiver does not import ``hadavin_sdk.actions.secrets``, not even lazily. Instead the last line of that module
@@ -82,19 +84,18 @@ import contextlib
 import sys
 import threading
 from collections import Counter, defaultdict, deque
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 
 SCAN_DEPTH = 4  # nesting of detector lists
-SCAN_DEPTH_VALUES = 8  # container levels entered in a held instance (its own dict is 1)
-SCAN_NODES = (
-    100_000  # values looked at in one question (every walk, shared members charged at every visit)
-)
-STAND_IN_WEIGHT = (
-    50  # nodes charged for each stand-in or data row visited (its class shape is compared, a scan)
-)
+# container levels entered below a held instance's own dict (a ninth reads as real)
+SCAN_DEPTH_VALUES = 8
+# values looked at in one question (every walk, shared members charged at every visit)
+SCAN_NODES = 250_000
+# nodes charged for each stand-in or data row visited (on top of what its own fields cost)
+STAND_IN_WEIGHT = 20
 VERDICT_STAND_IN = "stand-in"
 VERDICT_REAL = "real"
 VERDICT_OVER_BUDGET = (
@@ -112,7 +113,9 @@ _ALLOWED: tuple[tuple[str, str], ...] = (
 _DETECTOR_LIST = ("hadavin_sdk.guard.injection", "AnyOf")
 # the approvals object the receiver serves is pinned in the same way (``is_pinned_instance``)
 APPROVALS = ("hadavin_sdk.approvals.requests", "Approvals")
-_PINNED_KEYS = (*_ALLOWED, _DETECTOR_LIST, APPROVALS)
+# the core runtime an ``on_decided`` hands a decision to (pinned when its own module is loaded: the last line of
+# ``runtime/agent_loop.py`` calls ``pin_module``, because the approvals side does not import that module)
+RUNTIME = ("hadavin_sdk.runtime.agent_loop", "Runtime")
 
 # The plain-data types the five stand-ins really hold (found by reading their class bodies and by scanning every
 # stand-in the test suite makes; each is judged by exact type and its own attributes are entered). Reason per
@@ -140,7 +143,21 @@ _DATACLASS_KEYS: frozenset[tuple[str, str]] = frozenset({("hadavin_sdk.approvals
 # plain values that are NOT entered (an enum member holds its own class): the state of a run
 _LEAF_CLASSES: tuple[tuple[str, str], ...] = ((_MODELS, "RunState"),)
 
+# Every class the guard trusts, pinned EAGERLY (``pin_all`` when the receiver is imported, ``pin_module`` when a module
+# the approvals side cannot import is loaded): the five stand-ins, the detector list, ``Approvals``, the model
+# rows and ``Card`` (``_DATA_CLASSES``), ``RunState`` and the core ``Runtime``. None is pinned "at the first question"
+# any more except as the fallback for a class whose module never called ``pin_module``.
+_PINNED_KEYS = (
+    *_ALLOWED,
+    _DETECTOR_LIST,
+    APPROVALS,
+    *_DATA_CLASSES,
+    *_LEAF_CLASSES,
+    RUNTIME,
+)
+
 # Tuples of classes, judged by identity only (``_is_one_of``), never by ``in``
+_PATH_TYPE = type(Path())
 _ATOM_TYPES: tuple[type, ...] = (
     str,
     bytes,
@@ -152,7 +169,7 @@ _ATOM_TYPES: tuple[type, ...] = (
     date,
     datetime,
     timedelta,
-    type(Path()),
+    _PATH_TYPE,
     type(threading.Lock()),  # held by MemoryStore and FakeLLM; it holds no code
 )
 _PLAIN_CONTAINERS: tuple[type, ...] = (dict, list, tuple, set, frozenset, deque)
@@ -186,7 +203,9 @@ def live_class(key: tuple[str, str]) -> type | None:
     if type(module) is not ModuleType:
         return None
     cls = dict.get(vars(module), key[1])
-    return cls if isinstance(cls, type) else None
+    return (
+        cls if issubclass(type(cls), type) else None
+    )  # the type of the value, never its own ``__class__``
 
 
 _CLASS_ANNOTATIONS = vars(type)[
@@ -257,19 +276,29 @@ def pin_module(module: str) -> None:
 
 
 def pin_all() -> None:
-    """Pin the five stand-in classes, the detector list and ``Approvals`` now (called when the approvals receiver
-    is imported). A class whose module is not loaded is left for the first
-    question (fail closed: the first question pins it)."""
+    """Pin every class of ``_PINNED_KEYS`` whose module is loaded, now (called when the approvals receiver is
+    imported): the five stand-ins, the detector list, ``Approvals``, the model rows, ``Card``, ``RunState``. Two
+    modules are NOT imported here, and each pins its own class as it is created (``pin_module``, the last line of
+    the module): ``actions/secrets.py`` (``FakeSecretProvider``: the repo rule says nothing reachable from approvals
+    may import the secret holders) and ``runtime/agent_loop.py`` (``Runtime``). A class whose module is not loaded
+    and did not pin itself is left for the first question (fail closed)."""
     # plain imports (not importlib) so that the modules exist to be pinned; done here, inside the function, because
-    # the approvals package must not import them itself (they are not imported at the top: a circle). The secret
-    # provider's module is NOT imported here: the repo rule says nothing reachable from approvals may import the
-    # secret holders, so ``FakeSecretProvider`` is pinned now only if its module is already loaded, else at the first question
-    from hadavin_sdk.approvals import channel
+    # the approvals package must not import them itself (they are not imported at the top: a circle)
+    from hadavin_sdk import config, models
+    from hadavin_sdk.approvals import cards, channel
     from hadavin_sdk.guard import injection
     from hadavin_sdk.llm import fake
     from hadavin_sdk.store import memory
 
-    _ = (channel, injection, fake, memory)  # imported so that their classes exist to be pinned
+    _ = (
+        channel,
+        injection,
+        fake,
+        memory,
+        models,
+        config,
+        cards,
+    )  # imported so that their classes exist to be pinned
     for key in _PINNED_KEYS:
         with contextlib.suppress(Exception):  # the lazy path pins it at the first question
             cls = live_class(key)
@@ -291,6 +320,40 @@ def _is_one_of(kind: type, types: tuple[type, ...]) -> bool:
     """True when ``kind`` IS one of ``types``: identity only. ``kind`` is the type of a held value, so it can be a
     class with a metaclass that fakes ``__hash__`` and ``__eq__``; ``kind in types`` would run them."""
     return any(kind is t for t in types)
+
+
+def plain_datetime(value: object) -> bool:
+    """True for an EXACT ``datetime`` whose ``tzinfo`` is None or ``datetime.UTC`` (identity). A ``datetime`` is a
+    plain atom, but its ``tzinfo`` is an object: an aware ``datetime`` calls ``tzinfo.utcoffset`` (foreign code when the
+    object is a subclass of ``tzinfo``) on ``.timestamp()``, on a comparison and on arithmetic. Identity only: no
+    ``==``, no ``isinstance``. Used for every ``datetime`` the guard meets (a held clock's moment and a stored value)."""
+    return type(value) is datetime and (value.tzinfo is None or value.tzinfo is UTC)
+
+
+# a ``Path`` has no instance dictionary but slots (``_str``, ``_raw_paths`` ...) that the scan of ``__dict__`` does not
+# read: a slot of a path is plain when it is text, a number, None or a list or tuple of text
+_PATH_SLOT_TYPES: tuple[type, ...] = (str, int, bool, type(None))
+_PATH_SLOT_SEQUENCES: tuple[type, ...] = (list, tuple)
+
+
+def _path_slots_plain(value: object, kind: type) -> bool:
+    """True when every slot of the exact ``Path`` class ``kind`` (found on its mro, read with the object's own
+    getter) is plain. An empty slot is skipped. ``kind`` is exact, so no foreign code runs."""
+    for cls in kind.__mro__:
+        names = cls.__dict__.get("__slots__", ())
+        for name in (names,) if type(names) is str else names:
+            try:
+                got = object.__getattribute__(value, name)
+            except AttributeError:  # a slot that was never set
+                continue
+            if _is_one_of(type(got), _PATH_SLOT_TYPES):
+                continue
+            if _is_one_of(type(got), _PATH_SLOT_SEQUENCES) and all(
+                type(item) is str for item in (got if type(got) is tuple else list.__iter__(got))
+            ):
+                continue
+            return False
+    return True
 
 
 # (builtin type, its own length method, values read per item): a subclass is read with the builtin's method
@@ -326,12 +389,13 @@ class _Budget:
     thousand times), and the per-question memory of which listed classes were already compared (``ok``: a local of
     this question, never module state, so a patch made between two questions is always seen)."""
 
-    __slots__ = ("left", "ok", "over")
+    __slots__ = ("left", "ok", "over", "real_seen")
 
     def __init__(self) -> None:
         self.left = SCAN_NODES
         self.ok: dict[tuple[str, str], bool] = {}
         self.over = False  # set when the budget ran out (the answer is then "real", reported as over budget)
+        self.real_seen = False  # set when, after the budget ran out, a value already read was plainly a real object
 
     def charge(self, nodes: int) -> bool:
         self.left -= nodes
@@ -361,12 +425,20 @@ def _no_instance_state(value: object, kind: type) -> bool:
     return type(own) is dict and not dict.__len__(own)
 
 
+def _has_slots(value: object) -> bool:
+    """True when the exact class of ``value`` (a plain dataclass) or one of its bases declares a slot: state the scan
+    of ``__dict__`` would not read (a future ``__slots__`` on ``Card``)."""
+    return any("__slots__" in vars(c) for c in type(value).__mro__ if c is not object)
+
+
 def _data_state_ok(value: object, key: tuple[str, str]) -> bool:
     """True when a data row (a pydantic model, or the one plain dataclass ``Card``: all its state is its ``__dict__``) keeps nothing in the slots the scan of ``__dict__`` does not read:
     ``__pydantic_extra__`` and ``__pydantic_private__`` are None or empty, ``__pydantic_fields_set__`` is a plain
     ``set`` of ``str``."""
-    if key in _DATACLASS_KEYS:
-        return True
+    if (
+        key in _DATACLASS_KEYS
+    ):  # all its state is its ``__dict__`` (read), but its slots are checked as well
+        return not _has_slots(value)
     for name in ("__pydantic_extra__", "__pydantic_private__"):
         got = object.__getattribute__(value, name)
         if got is not None and not (type(got) is dict and not dict.__len__(got)):
@@ -414,7 +486,7 @@ def _enum_member_ok(value: object, cls: type) -> bool:
 def _entered(
     value: object,
     data: tuple[tuple[tuple[str, str], type], ...],
-    leaf: tuple[type, ...],
+    leaf: tuple[tuple[tuple[str, str], type], ...],
     budget: _Budget,
 ) -> tuple[object, ...] | None:
     """What to enter inside ``value``: ``()`` for a plain atom, the values of a plain container, a data object or a
@@ -423,9 +495,14 @@ def _entered(
     ``STAND_IN_WEIGHT`` nodes (its class is compared against its pin, once per question)."""
     kind = type(value)
     if _is_one_of(kind, _ATOM_TYPES):
+        if kind is datetime:  # its tzinfo is an object that can hold code: see ``plain_datetime``
+            return () if plain_datetime(value) else None
+        if kind is _PATH_TYPE and not _path_slots_plain(value, kind):
+            return None
         return () if _no_instance_state(value, kind) else None
-    if _is_one_of(kind, leaf):
-        return () if _enum_member_ok(value, kind) else None
+    for key, cls in leaf:
+        if kind is cls:
+            return () if budget.class_ok(key) and _enum_member_ok(value, kind) else None
     plain = _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter
     if kind is defaultdict:
         factory = value.default_factory  # type: ignore[attr-defined]
@@ -451,25 +528,47 @@ def _entered(
     return None
 
 
+def _shallow_real(values: tuple[object, ...], data: tuple, leaf: tuple) -> bool:
+    """True when one of ``values`` (already read, so already paid for) is plainly not plain data by its class alone:
+    not an atom, a plain container, a data row, a run state or a stand-in. Nothing is entered and nothing is charged."""
+    for v in values:
+        kind = type(v)
+        if (
+            _is_one_of(kind, _ATOM_TYPES)
+            or _is_one_of(kind, _PLAIN_CONTAINERS)
+            or kind is Counter
+            or kind is defaultdict
+            or any(kind is c for _, c in data)
+            or any(kind is c for _, c in leaf)
+            or _stand_in_key(kind) is not None
+        ):
+            continue
+        return True
+    return False
+
+
 def _holds_real(own: object, budget: _Budget) -> bool:
     """True when the values of ``own`` (an instance dict) are not all plain data (see the module text), or when
     a container left unexplored after ``SCAN_DEPTH_VALUES`` levels holds anything but plain atoms, or when the
     budget runs out. The instance's own dictionary is level 1. A container is charged (its size) each time it is
-    entered, before it is copied."""
-    data, leaf = _classes(_DATA_CLASSES), tuple(c for _, c in _classes(_LEAF_CLASSES))
+    entered, before it is copied. When the budget runs out, the values already read and not yet looked at are
+    checked by class alone (``_shallow_real``, nothing entered, nothing more charged) before the answer is given, so
+    a real object met later in the same level is never named "over budget": ``budget.real_seen`` says so."""
+    data, leaf = _classes(_DATA_CLASSES), _classes(_LEAF_CLASSES)
     first = _read(own, budget)
     if first is None or not budget.charge(len(first)):
         return True
     level: list[tuple[object, ...]] = [first]
     for _ in range(SCAN_DEPTH_VALUES):
         nxt: list[tuple[object, ...]] = []
-        for values in level:
-            for value in values:
+        for li, values in enumerate(level):
+            for vi, value in enumerate(values):
                 inner = _entered(value, data, leaf, budget)
-                if inner is None:
+                if inner is None or not budget.charge(len(inner)):
                     # None is "not plain" or "bigger than what is left": the second is the over-budget outage
-                    return True
-                if not budget.charge(len(inner)):
+                    if budget.over:
+                        rest = (values[vi + 1 :], *level[li + 1 :], *nxt)
+                        budget.real_seen = any(_shallow_real(r, data, leaf) for r in rest)
                     return True
                 if inner:
                     nxt.append(inner)
@@ -512,7 +611,7 @@ def verdict(obj: object) -> str:
             return VERDICT_STAND_IN
     except Exception:  # noqa: BLE001 - anything unreadable is not a stand-in (fail closed)
         return VERDICT_REAL
-    return VERDICT_OVER_BUDGET if budget.over else VERDICT_REAL
+    return VERDICT_OVER_BUDGET if budget.over and not budget.real_seen else VERDICT_REAL
 
 
 def is_stand_in(obj: object) -> bool:

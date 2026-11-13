@@ -18,6 +18,7 @@ from typing import Any, Literal
 
 from pydantic import ValidationError
 
+from hadavin_sdk import standins
 from hadavin_sdk.actions.authorizer import authorize
 from hadavin_sdk.approvals import cards
 from hadavin_sdk.approvals.cards import Card, Delivery
@@ -913,3 +914,9 @@ class Runtime:
             if rb.outcome == "succeeded":
                 return self._to(run, S.ROLLED_BACK, "verify_failed")
         return self._to(run, S.NEEDS_PERSON, "verify_failed")
+
+
+# The bind guard (``hadavin_sdk.standins``, a leaf module) pins ``Runtime`` now, as the class is created: the approvals
+# side must not import this module, so this module tells the guard instead.
+
+standins.pin_module(__name__)

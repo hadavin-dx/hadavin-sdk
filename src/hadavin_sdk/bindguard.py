@@ -179,20 +179,37 @@ def real_services(
     return tuple(dict.fromkeys(frozen + config_services(config) + held_services_found(held)))
 
 
+# the only characters of a host or bind that are written to a refusal line: what an address or a host name is made of
+# (ASCII letters and digits, and ``. : - _ [ ] %``); a space, a comma, a colon-and-word such as ``x, held channel: A``
+# is not a host, so it gets the fixed label instead of imitating another part of the line
+_HOST_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-_[]%")
+
+
 def _shown(bind: object) -> str:
-    """The bind as it is shown in a sentence: only readable text, at most ``BIND_SHOWN_MAX_CHARS`` characters."""
-    if not (isinstance(bind, str) and bind.isprintable()):
+    """The bind or host as it is shown in a sentence: exact text made only of ``_HOST_CHARS`` (read through the
+    first ``BIND_SHOWN_MAX_CHARS`` characters), cut with ``...`` when longer; anything else is ``(unreadable)``. Same
+    rule as ``_is_plain_word``: a plain word or a fixed label, never free text."""
+    if type(bind) is not str:
         return "(unreadable)"
     limit = defaults.BIND_SHOWN_MAX_CHARS
-    return bind if len(bind) <= limit else bind[:limit] + "..."
+    head = bind[:limit]
+    if not all(c in _HOST_CHARS for c in head):
+        return "(unreadable)"
+    return head if len(bind) <= limit else head + "..."
 
 
 def _is_plain_word(text: object) -> bool:
-    """True for exact text that is a Python identifier of at most ``BIND_WORD_MAX_CHARS`` characters: the only text of
+    """True for exact text that is an ASCII Python identifier of at most ``BIND_WORD_MAX_CHARS`` characters (a
+    Cyrillic letter that looks like a Latin one is not ASCII): the only text of
     a held object's key or class name that is written to a refusal line (anything else gets a fixed label, so no
     hostile text, and no text that reads like another part of the line, such as ``channel: FakeChannel``, is
     logged)."""
-    return type(text) is str and text.isidentifier() and len(text) <= defaults.BIND_WORD_MAX_CHARS
+    return (
+        type(text) is str
+        and text.isascii()
+        and text.isidentifier()
+        and len(text) <= defaults.BIND_WORD_MAX_CHARS
+    )
 
 
 def _word_or_unreadable(text: object) -> str:
@@ -203,9 +220,11 @@ def _is_plain_name(text: object) -> bool:
     """The second explicit rule, for names an operator wrote in the config (a system or source name, a module name):
     parts split at ``.`` or ``-`` are each an identifier or a number, at most ``BIND_WORD_MAX_CHARS`` characters
     (no space, colon or other punctuation, so a name cannot imitate the structure of the line)."""
-    if not (type(text) is str and 0 < len(text) <= defaults.BIND_WORD_MAX_CHARS):
+    if not (type(text) is str and text.isascii() and 0 < len(text) <= defaults.BIND_WORD_MAX_CHARS):
         return False
-    return all(part.isidentifier() or part.isdigit() for part in text.replace("-", ".").split("."))
+    # ``isdecimal`` (not ``isdigit``: a superscript digit is a digit but not a number) on ASCII text only
+    parts = text.replace("-", ".").split(".")
+    return all(part.isidentifier() or part.isdecimal() for part in parts)
 
 
 def _name_or_unreadable(text: object) -> str:
@@ -225,8 +244,8 @@ def reason_problem(reason: object) -> str | None:
             f"allow_public_bind_reason must say why, in at least {defaults.BIND_REASON_MIN_CHARS} "
             "characters"
         )
-    if len(text) > limit or not text.isprintable():
-        return f"allow_public_bind_reason must be one printable line of at most {limit} characters"
+    if len(text) > limit or not text.isprintable() or not text.isascii():
+        return f"allow_public_bind_reason must be one printable ASCII line of at most {limit} characters"
     return None
 
 
