@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 10:24Z CORE: container restarted at about 10:22Z; runners A and B2 stopped and resumed
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full suite serial twice | patched chain passes on Linux, repeatable | 09:50Z / 15:20 IST | new hard stop 11:50Z / 17:20 IST | run 1 finished; run 2 attempt 2 (attempt 1 killed at 7% by the restart) | resumed by message, restarting run 2 and the 2-file rerun | read RESULTS.md at its report |
+| a7df64b5 (runner B2) | v6 mutant sets on tree-M | mutants killed by the new tests | 10:14Z / 15:44 IST | new hard stop 11:50Z | chain 1, restarted from first unrecorded mutant (baselines of the unmutated tree passed before the restart) | resumed by message | same |
+| aa0bf933 (runner B), a36cf35c (runner C) | fails-before; core-touches-3 alone | see earlier blocks | 09:50Z | finished | 1 of 1 | reported and pushed | none |
+
+Failure first: the container restart (about 10:22Z) killed runner A's run 2 (7% in) and B2's mutant chain; the harness listed their processes as stopped. Disk survived: all trees, logs and venv are intact; tree-M is byte-equal to B2's start diff (checked with git diff), so no half-planted mutant was left; main repo clean at ea651e5c; 15 GB free. Runner A's run 1 had already finished before the restart: 3779 passed, 2 failed, 198 skipped, 1303 s (the 2 failures are the in-tree TMPDIR ones that runner C also found). Nothing from the killed runs is counted.
+
+ASK:
+1. Mutant driver question still open (mut_portable.py instead of mut.py). Default: B2 keeps using mut_portable.py.
+2. The restart cost about 30 min: I moved the hard stop for A and B2 from 11:20Z to 11:50Z (11:44Z for B2 before). Say if you want a different cap.
+
+
 ## REPORT 2026-11-13 10:16Z CORE: realrun-v6 runner C reported; my brief had a TMPDIR error
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
