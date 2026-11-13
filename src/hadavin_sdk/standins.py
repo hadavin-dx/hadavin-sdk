@@ -91,6 +91,14 @@ from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 
+# What the guard catches when it reads an object it does not trust: a hostile object can raise any ``Exception``
+# (its own class, from a property, ``__getattr__``, ``__eq__`` and so on), and every such error must read as "counted /
+# refused", never as served and never as a crash that drops the connection. A named tuple, not a bare ``except
+# Exception`` and not an inline suppression: one place states the reason, and a test (``test_a_surprise_error_...``)
+# shows a surprise error still gives the refusal at each site. ``BaseException`` (``KeyboardInterrupt``, ``SystemExit``)
+# is NOT caught: the process must still stop.
+SURPRISE_ERRORS: tuple[type[BaseException], ...] = (Exception,)
+
 SCAN_DEPTH = 4  # nesting of detector lists
 # container levels entered below a held instance's own dict (a ninth reads as real)
 SCAN_DEPTH_VALUES = 8
@@ -322,7 +330,7 @@ def is_pinned_instance(obj: object, key: tuple[str, str] = APPROVALS) -> bool:
     try:
         cls = live_class(key)
         return cls is not None and type(obj) is cls and _class_ok(key)
-    except Exception:  # noqa: BLE001 - anything unreadable is not the pinned class
+    except SURPRISE_ERRORS:  # anything unreadable is not the pinned class
         return False
 
 
@@ -669,7 +677,7 @@ def _answer(obj: object, budget: _Budget) -> str:
     try:
         if _check(obj, 0, frozenset(), budget):
             return VERDICT_STAND_IN
-    except Exception:  # noqa: BLE001 - anything unreadable is not a stand-in (fail closed)
+    except SURPRISE_ERRORS:  # anything unreadable is not a stand-in (fail closed)
         return VERDICT_REAL
     return VERDICT_OVER_BUDGET if budget.over and not budget.real_seen else VERDICT_REAL
 

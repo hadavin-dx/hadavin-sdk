@@ -14,6 +14,8 @@ import re
 import socket
 import socketserver
 import tomllib
+import types
+from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from types import MappingProxyType
@@ -4861,17 +4863,6 @@ def test_a_runtime_made_by_hand_with_stand_ins_only_is_not_believed(tmp_path: Pa
     assert _runtime_counted(app, hand), "an unsealed copy of the runtime was believed"
 
 
-def test_the_runtime_stays_believed_after_a_run_and_a_tick(tmp_path: Path) -> None:
-    """Class: outage guard for the instance key set. Work the runtime does must not add a name to it (that would read as
-    a shadow and answer 503 to every request). PIN: passes on 83cdb7a2 too (no key set was compared there)."""
-    app = _built(tmp_path)
-    rt = _core_runtime(app)
-    before = tuple(object.__getattribute__(rt, "__dict__"))
-    assert app.app.runtime.hooks is not None
-    assert tuple(object.__getattribute__(rt, "__dict__")) == before
-    assert not _runtime_counted(app, rt)
-
-
 def test_a_request_scans_the_store_the_runtime_holds_once_and_stays_within_one_budget(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -5142,11 +5133,10 @@ def test_pin_copying_an_object_of_a_pinned_class_does_not_change_the_answer(tmp_
 
 
 def _seal(runtime: object) -> None:
-    """Seal a runtime again (a test that puts a toolbox into the hooks first). The function is private since batch 11;
-    the fallback to its old public name lets the same test run on the older source for a fail-before run."""
+    """Seal a runtime again (a test that puts a toolbox into the hooks first)."""
     from hadavin_sdk.approvals import requests as R
 
-    (getattr(R, "_seal_runtime", None) or R.seal_runtime)(runtime)
+    R._seal_runtime(runtime)
 
 
 def _real_function(*args: object, **kw: object) -> str:
@@ -5324,7 +5314,6 @@ def test_a_sealed_runtime_that_is_dropped_is_freed(tmp_path: Path) -> None:
     del app, rt
     gc.collect()
     assert ref() is None, "a dropped runtime is still held (the seal keeps it alive)"
-    assert len(R._RUNTIME_SEALS) == 0 or all(k is not None for k in R._RUNTIME_SEALS)
 
 
 def test_the_seal_is_private(tmp_path: Path) -> None:
@@ -5386,3 +5375,287 @@ def test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it(
     assert scan.heaviest is store, "the scan did not record the object that used the most budget"
     alone = bindguard.held_services_found({"b_channel": channel}, standins.Scan())
     assert alone == (), "control: the channel alone was counted"
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Batch 12 (package PD part 2, review round 11): the members limits, audit, registry and _evidence, identity before
+# any read, the walk limits, a real tool call and an executed action between two seals.
+# ---------------------------------------------------------------------------------------------------------------
+
+
+def _fields(obj: object) -> dict:
+    return object.__getattribute__(obj, "__dict__")
+
+
+@pytest.mark.parametrize(
+    ("member", "field"),
+    [
+        ("limits", "store"),
+        ("limits", "audit"),
+        ("limits", "registry"),
+        ("audit", "root"),
+        ("audit", "_pending"),
+        ("registry", "agents"),
+        ("registry", "config"),
+        ("_evidence", "scrub"),
+    ],
+)
+def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+    tmp_path: Path, member: str, field: str
+) -> None:
+    """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+    ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+    fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+    members were compared by identity only)."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    owner = _fields(rt)[member]
+    own = _fields(owner)
+    assert not _runtime_counted(app, rt), "control"
+    was = own[field]
+    own[field] = _Opaque()
+    try:
+        assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+    finally:
+        own[field] = was
+    assert not _runtime_counted(app, rt), "control: restored"
+
+
+def test_a_name_added_to_limits_audit_registry_or_evidence_is_counted(tmp_path: Path) -> None:
+    """Class: SEAL-COMPLETE (round 11, issue 1): a new instance name on one of the four members. Fails on 82dd69c1."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    for member in ("limits", "audit", "registry"):
+        own = _fields(_fields(rt)[member])
+        own["a_name_the_class_never_had"] = _Opaque()
+        try:
+            assert _runtime_counted(app, rt), f"a name added to {member} was not counted"
+        finally:
+            del own["a_name_the_class_never_had"]
+    assert not _runtime_counted(app, rt), "control: restored"
+
+
+def _recording_dict_class(calls: list[str]) -> type:
+    class Hostile:
+        @property
+        def __dict__(self) -> dict:  # type: ignore[override]
+            calls.append("dict")
+            return {}
+
+    return Hostile
+
+
+def test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared(
+    tmp_path: Path,
+) -> None:
+    """Class: FOREIGN-CODE-BEFORE-AUTH (round 11, issue 1). A replacement whose class has a ``__dict__`` property: the
+    walk compared fields first and read the instance dictionary of the replacement. Now the object is compared (identity)
+    before anything is read from it. Fails on 82dd69c1 (the call list holds one entry)."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    calls: list[str] = []
+    hostile = _recording_dict_class(calls)()
+    fields = _fields(rt.hooks)
+    for name in ("execute", "post_card", "toolbox", "validate_proposal"):
+        was = fields[name]
+        fields[name] = hostile
+        try:
+            assert _runtime_counted(app, rt), f"hooks.{name} replaced was not counted"
+        finally:
+            fields[name] = was
+    assert calls == [], f"the foreign __dict__ property ran: {calls}"
+    for member in ("limits", "audit", "registry", "_evidence"):
+        own = _fields(rt)
+        was = own[member]
+        own[member] = hostile
+        try:
+            assert _runtime_counted(app, rt), f"{member} replaced was not counted"
+        finally:
+            own[member] = was
+    assert calls == [], f"the foreign __dict__ property ran: {calls}"
+
+
+def test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own(tmp_path: Path) -> None:
+    """Class: FOREIGN-CODE-BEFORE-AUTH (round 11, issue 1). The recorded object stays the same but its ``__class__`` is
+    assigned a subclass with a ``__dict__`` property: the class is compared before the instance dictionary is read.
+    Fails on 82dd69c1."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    executor = rt.hooks.execute.__self__
+    calls: list[str] = []
+
+    class Swapped(type(executor)):  # type: ignore[misc]
+        @property
+        def __dict__(self) -> dict:  # type: ignore[override]
+            calls.append("dict")
+            return {}
+
+    original = type(executor)
+    executor.__class__ = Swapped
+    try:
+        assert _runtime_counted(app, rt), "an executor of a swapped class was not counted"
+    finally:
+        executor.__class__ = original
+    assert calls == [], f"the swapped class ran its __dict__ property: {calls}"
+    assert not _runtime_counted(app, rt), "control: restored"
+
+
+def test_hooks_tools_replaced_by_a_copy_is_judged_by_contents_not_identity(tmp_path: Path) -> None:
+    """Decision (round 11 addendum 1): the runtime reads ``hooks.tools[name]``, so an equal copy of the dict behaves
+    the same and is believed; a copy with another item, another key or one more key is counted."""
+    given = _built(tmp_path, tools={"lookup": lambda inp: "x"})
+    rt = _core_runtime(given)
+    fields = _fields(rt.hooks)
+    first = fields["tools"]
+    fields["tools"] = dict(first)
+    assert not _runtime_counted(given, rt), "an equal copy of hooks.tools was counted"
+    for other in (
+        {"lookup": _real_function},
+        {"renamed": first["lookup"]},
+        {},
+        {**first, "b": first["lookup"]},
+    ):
+        fields["tools"] = other
+        assert _runtime_counted(given, rt), (
+            f"hooks.tools replaced by {sorted(other)} was not counted"
+        )
+    fields["tools"] = first
+
+
+def test_a_real_tool_call_and_an_executed_action_leave_the_runtime_believed(tmp_path: Path) -> None:
+    """Class: OUTAGE-GUARD (round 11, issue 4). A real tool call through ``Runtime._run_tool`` and an approved action
+    through ``Approvals.decide`` -> ``on_decided`` -> ``execute`` (the executor runs and the run ends in the state the
+    fixture gives it) between two seal checks: a lazily made value in the executor, the toolbox or ``validate_proposal``
+    would read as a change and answer 503 to every public request. Verify and rollback are reached by ``execute`` only
+    when the executor's call succeeds; the fixture's call does not, so they are not driven here (named in the report)."""
+    from hadavin_sdk.models import ApprovalDecision
+
+    app = _built(tmp_path, tools={"lookup": lambda inp: "found"})
+    rt = _core_runtime(app)
+    assert not _runtime_counted(app, rt), "control: counted before any work"
+    out = rt._run_tool("lookup", {}, {})
+    assert out.text and not out.error, f"the tool call did not run: {out}"
+    assert not _runtime_counted(app, rt), "a real tool call made the runtime read as changed"
+    document = (app.app.config.inputs_dir / "create.txt").read_bytes()
+    run = rt.handle("test-agent", "svc:test-agent", document)
+    due = app.app.store.list_due_approvals(datetime(2100, 1, 1, tzinfo=UTC))
+    req = next(r for r in due if r.run_id == run.run_id)
+    decision = ApprovalDecision(
+        approval_id=req.approval_id,
+        plan_hash=req.plan_hash,
+        step=req.current_step,
+        decision="approve",
+        approver_id="user:a",
+        channel="fake",
+    )
+    assert app.app.approvals.decide(decision) == (True, "approved")
+    assert app.app.store.get_run(run.run_id).state.value != "WAITING_FOR_APPROVAL", (
+        "the action was not executed"
+    )
+    assert not _runtime_counted(app, rt), "an executed action made the runtime read as changed"
+
+
+def test_a_decision_through_on_decided_adds_no_name_to_the_runtime(tmp_path: Path) -> None:
+    """Class: OUTAGE-GUARD (round 11, issue 4): the lazy-name check also covers ``on_decided`` (a rejected decision)."""
+    from hadavin_sdk.models import ApprovalDecision
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    before = tuple(_fields(rt))
+    document = (app.app.config.inputs_dir / "create.txt").read_bytes()
+    run = rt.handle("test-agent", "svc:test-agent", document)
+    due = app.app.store.list_due_approvals(datetime(2100, 1, 1, tzinfo=UTC))
+    req = next(r for r in due if r.run_id == run.run_id)
+    decision = ApprovalDecision(
+        approval_id=req.approval_id,
+        plan_hash=req.plan_hash,
+        step=req.current_step,
+        decision="reject",
+        approver_id="user:a",
+        channel="fake",
+    )
+    assert app.app.approvals.decide(decision)[0] is True
+    assert tuple(_fields(rt)) == before, "a decision added or removed a name of the runtime"
+    assert not _runtime_counted(app, rt), "a runtime that took a decision was counted"
+
+
+def test_the_seal_refuses_an_object_that_is_not_a_core_runtime() -> None:
+    """Class: API (round 11, issue 4): ``_seal_runtime`` accepts the exact core ``Runtime`` only. Fails on 82dd69c1."""
+    from hadavin_sdk.approvals import requests as R
+
+    class Imposter:
+        pass
+
+    with pytest.raises(TypeError):
+        R._seal_runtime(Imposter())
+
+
+def _seal_cost_walk(rt: object) -> int:
+    from hadavin_sdk.approvals import requests as R
+
+    return len(R._RUNTIME_SEALS[rt][4]) + len(R._RUNTIME_SEALS[rt][6])
+
+
+def test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: LIMITS (round 11, issue 3). ``_WALK_NODES`` is enforced inside the loops and at seal time: a build over
+    the cap raises, and the text says the seal is over budget. Fails on 82dd69c1 (no error at build)."""
+    from hadavin_sdk.approvals import requests as R
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    need = _seal_cost_walk(rt)
+    monkeypatch.setattr(R, "_WALK_NODES", need // 2)
+    with pytest.raises(ValueError, match=r"too many hook objects to check .*over budget"):
+        R._seal_runtime(rt)
+
+
+def test_a_walk_cap_equal_to_the_need_still_seals(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: LIMITS (round 11, issue 3), the edge: exactly the number of objects the walk needs is accepted."""
+    from hadavin_sdk.approvals import requests as R
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    hooks_need = len(R._RUNTIME_SEALS[rt][4])
+    members_need = len(R._RUNTIME_SEALS[rt][6])
+    monkeypatch.setattr(R, "_WALK_NODES", max(hooks_need, members_need))
+    R._seal_runtime(rt)
+    assert not _runtime_counted(app, rt), "a runtime sealed at exactly the cap was counted"
+
+
+def test_a_walk_that_grows_past_the_cap_after_the_seal_says_the_seal_is_over_budget(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Class: LIMITS (round 11, issue 3): the refusal names the cause, not ``on_decided``."""
+    from hadavin_sdk.approvals import requests as R
+
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    monkeypatch.setattr(R, "_WALK_NODES", len(R._RUNTIME_SEALS[rt][4]) - 1)
+    held = _approvals_with(app, make_on_decided({"rt": rt})).held_services()
+    assert "seal_over_budget" in held and "on_decided" not in held, f"the names were {sorted(held)}"
+
+
+def test_a_hook_function_with_an_empty_closure_cell_filled_later_is_counted(tmp_path: Path) -> None:
+    """Class: LIMITS (round 11, issue 3), ``_EMPTY_CELL``: an empty cell and a cell holding ``None`` are not the same."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+
+    def outer() -> object:
+        held = None
+
+        def inner() -> object:
+            return held
+
+        return inner
+
+    cell = types.CellType()  # a cell with nothing in it
+    empty = types.FunctionType(outer().__code__, {}, "late", None, (cell,))
+    _fields(rt.hooks)["tools"]["late"] = empty
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: sealed with an empty cell"
+    cell.cell_contents = None
+    assert _runtime_counted(app, rt), "an empty cell filled with None was not counted"

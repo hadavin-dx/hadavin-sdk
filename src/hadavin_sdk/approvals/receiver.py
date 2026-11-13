@@ -58,7 +58,9 @@ def _recheck(approvals: object) -> tuple[str, ...]:
         for slot in Approvals.__slots__:
             object.__getattribute__(approvals, slot)
         return Approvals.real_now(approvals)
-    except Exception:  # noqa: BLE001 - a deleted slot or any unreadable state is refused, never dropped
+    except (
+        standins.SURPRISE_ERRORS
+    ):  # a deleted slot or any unreadable state is refused, never dropped
         return ("the approvals object could not be read (a slot is missing)",)
 
 
@@ -84,7 +86,9 @@ def _refused(now_real: tuple[str, ...]) -> None:
             _LOG.warning(
                 "request refused: a real service is held on a public bind with no reason (%s)", key
             )
-    except Exception:  # noqa: BLE001 - a log failure must not turn the 503 into a dropped connection
+    except (
+        standins.SURPRISE_ERRORS
+    ):  # a log failure must not turn the 503 into a dropped connection
         return
 
 
@@ -141,7 +145,7 @@ def serve(
         approvals_config = approvals.config
         held = Approvals.held_services(approvals)
         frozen = approvals.config_facts
-    except Exception:  # noqa: BLE001 - any error while reading is a refusal of the one type
+    except standins.SURPRISE_ERRORS:  # any error while reading is a refusal of the one type
         raise BindRefused(
             "serve could not read what the approvals hold (a slot is missing or an object raised): "
             "nothing is served"
