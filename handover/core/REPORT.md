@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 03:36Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Not yet checked by me: the lead reports SonarCloud on draft PR #100 shows 0 open S8707 and a green gate for probe 247caa5a (read by the lead from the Sonar API, not by me). The real SONAR-PATH PR still has to pass the same gate; nothing is claimed cleared for it.
+- Builders have not pushed (heads 83cdb7a2, dd827d79, e29cc269 unchanged).
+
+**LEAD ACTIONS:** read LEAD-ORDERS (03:36Z, 03:45Z). Forwarded the probe result to builder a73b09c1: apply the same pattern to score.py 102/159/161 (remove NOSONAR), hashing.py hash_files, actions/secrets_file.py. Rung statement for pathguard.py: our code, last resort (no library confines a path for Sonar's taint analysis); keep it small.
+**PATTERN FOR THE DEMO SESSION:** route the path through pathguard.join(parent, name, what=..., must_exist=True, kind="file") and open the returned path (probe 247caa5a, PR #100). Lead is telling them too.
+**LIVE ITEMS:** aa234f9b (Part 2 b10), ab741cc2 (Part 6 b10), a73b09c1 (SONAR-PATH b3, widened scope).
+**ROUNDS (WHY):** Part 2 r10, Part 6 r10, SONAR-PATH r3 (fail-open or security paths, no cap).
+**FINISHED SINCE LAST BLOCK:** probe result received and forwarded.
+**EGM STEP PER PACKAGE:** builders running for all three; reviewers and runner start per pushed head.
+**LANE SONAR-PATH:** a73b09c1; EGM builder step; A done, B running (scope widened), C/D pending.
+**RUN ON LAPTOP:** none new.
+
+
 ## 03:31Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
