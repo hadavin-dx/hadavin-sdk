@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:29Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F1b | builder round 2 of the F1 fix | V1 findings | 13:19Z | done 13:29Z | round 2 of 2 | DONE (builder's claims, unverified; handover/core/fix/F1b-fix.patch): all file/JSON loads in scripts/ and tools/ go through src/lead_desk/regfile.py (read_regular_bytes/text, load_json_file 16 MiB cap, one content error FileRefused); switched feed.py, scrub_n8n_export.py, n8n_api.py (key file and import file also hung on a FIFO), run_real_check.py (config and counter files); new tests/test_file_reader_refusals.py 13 tests: before 7 failed / 6 passed (the 6 = 3 survivor tests that target mutants + 3 cases the baseline already refused); after 13 passed; both V1 survivor mutants now killed; neighbours (feed 32, special files 42, scrub 254, take_script 143, real_run_v6 74, env_numbers 354 and others) all passed; ruff clean (repo 120). UNVERIFIED by the builder: test_real_check_dry.py and test_clock_steps.py did not finish (slow real-time files, 16 and 1 dots, no failure, stopped by the builder). The builder changed 3 EXISTING tests to the new error names (test_n8n_api_url.py:506 and :651, test_survivor_r20_config_read.py): behaviour checked (one clean line, no traceback, no path) is the same, but each is a changed oracle: the independent reviewer must read those 3 hunks | COMBINE |
+| COMBINE | one tree: F1+F1b+F2+F3+F6, overlaps resolved, core-fix-v1.patch | output | waiting for F6 | about 14:30Z | | WAITING for F6 only | start the moment F6 reports |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 13:55Z | 1 | RUNNING (full suite) | read |
+| F6 | builder writer-side opens + wrappers | open classes | 13:18Z | 14:20Z | 1 | RUNNING | combine |
+| F4d, V4c | docs final round builder; evidence for the round-3 head | resolve / proof | 13:40Z, 13:33Z | 14:15Z, 14:05Z | | RUNNING | V4d |
+| done | F1 F1b F2 F3 F4 F4b F4c D1 E1 E2 C6 R4 R5 V1 V3 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: none new. Open items I must close: (a) F1b's 2 slow test files unverified (the COMBINE evidence runs them); (b) 3 changed existing tests (reviewer reads them). No new test failures. Totals unchanged.
+LOAD: 4 agents running.
+ASK: none new.
+
+
 ## REPORT (container clock 13:27Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |

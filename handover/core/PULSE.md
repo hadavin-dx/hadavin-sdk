@@ -167,3 +167,4 @@ status 5 agents running
 F4c done; docs-combined built; V4c, R5 started
 V3 done: live key reader gap; combine planned
 R5 3 majors; F4d started
+F1b done; waiting for F6 to combine
