@@ -1,0 +1,20 @@
+# apply matrix on clean db54e13 (git apply --check each step, then apply)
+OK    sg
+OK    sg p1
+OK    p1 sg
+OK    sg yaml
+OK    yaml sg
+OK    sg crlf
+OK    crlf sg
+OK    sg p2
+OK    p2 sg
+OK    sg p3
+OK    p3 sg
+OK    sg nd
+OK    nd sg
+OK    p1 yaml crlf p2 p3 nd sg
+OK    sg nd p3 p2 crlf yaml p1
+OK    p1 sg yaml crlf p2 p3 nd
+OK    nd p3 p2 crlf yaml p1 sg
+OK    yaml p1 sg crlf nd p2 p3
+OK    p3 nd sg p1 p2 yaml crlf
