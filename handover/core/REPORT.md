@@ -1,4 +1,12 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 16:35Z (core lead; freeze order stands)
+| agent | state (builder words, unverified) |
+|---|---|
+| F8 (a6ec82da18b2d7413) | final full run on its evidence set: 2220 passed, 6 skipped, rc=0 (13 min); f8-on-v2.patch written (1561 lines); builder still finishing (RESULTS final cell). Not yet read by me or run by an independent runner. |
+| CODE-REBASE (a998283da1fe67742) | touched-module run finished: 2 failed, 3718 passed, 8 skipped (22 min). Which 2 failed and why: not yet reported (builder will say; I will read the log next). No RESULTS yet. |
+FAILURES AND RETRIES: rebase run 2 failed = UNEXPLAINED until I read the log; root cause proven? no. Others unchanged.
+LOAD: 2 agents. ASK: none new.
+
 ## STATUS 16:27Z (core lead; freeze order stands)
 | agent | state (builder words, unverified) |
 |---|---|
