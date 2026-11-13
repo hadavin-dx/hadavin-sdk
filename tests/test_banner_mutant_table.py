@@ -263,9 +263,125 @@ def test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file()
     assert missing == []
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
+def _rows_in_the_text_of_the_table() -> list[str]:
+    """The row calls of the list `M`, read from the SOURCE TEXT of the table (not from the objects it builds): every call of
+    one of the row helpers at the top level of the list. A row that is built any other way would not be counted, and the
+    count then differs from `len(M)`: the next test compares the two."""
+    import ast
+
+    tree = ast.parse(Path(bm.__file__).read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "M" for t in node.targets):
+            assert isinstance(node.value, ast.List)
+            return [
+                c.args[0].value
+                for c in node.value.elts
+                if isinstance(c, ast.Call) and isinstance(c.args[0], ast.Constant)
+            ]
+    raise AssertionError("the list M was not found in the table file")
 
 
-def test_pin_the_row_count_is_the_number_of_distinct_labels_in_the_table() -> None:
-    labels = [m.name.split(" ", 1)[0] for m in bm.M]
-    assert len(labels) == len(set(labels)) == len(bm.M) and len(labels) >= 300
+def test_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table() -> None:
+    labels = [name.split(" ", 1)[0] for name in _rows_in_the_text_of_the_table()]
+    assert len(labels) == len(set(labels)), "a label is used twice"
+    assert bm.ROW_COUNT == len(labels) == len(bm.M), (
+        f"ROW_COUNT is {bm.ROW_COUNT}, the text of the table holds {len(labels)} rows, M holds {len(bm.M)}"
+    )
+
+
+def test_the_changelog_states_the_row_count_of_the_table() -> None:
+    text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert f"the table has {bm.ROW_COUNT} rows" in text, (
+        f"the CHANGELOG does not say that the table has {bm.ROW_COUNT} rows"
+    )
+
+
+def _prints_a_value(tree, name: str) -> bool:
+    """True when the function `name` (or a function of the file it calls) has an f-string that formats a value: its message
+    is then made at run time, so an `expect` may hold a value (a suffix, a host, a test input) that is in no string."""
+    import ast
+
+    funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    todo, seen = [name], set()
+    while todo:
+        cur = todo.pop()
+        node = funcs.get(cur)
+        if node is None or cur in seen:
+            continue
+        seen.add(cur)
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.FormattedValue):
+                return True
+            if isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
+                todo.append(sub.func.id)
+    return False
+
+
+def _text_pieces(tree, name: str, seen: set[str] | None = None) -> list[str]:
+    """Every string constant (and every literal part of an f-string) in the function `name` of a parsed test file, and in the
+    functions of that file it calls by name (one chain, each once): the places where a killer's message can come from."""
+    import ast
+
+    seen = set() if seen is None else seen
+    if name in seen:
+        return []
+    seen.add(name)
+    funcs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
+    node = funcs.get(name)
+    if node is None:
+        return []
+    pieces: list[str] = []
+    for sub in ast.walk(node):
+        if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
+            pieces.append(sub.value)
+        elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name):
+            pieces += _text_pieces(tree, sub.func.id, seen)
+    return pieces
+
+
+def expectation_nowhere_in_killer(rows=None, root=None) -> list[tuple[str, str]]:
+    """Rows whose `expect` shares no text with the killer's own strings. `expect` is a fragment of the killer's assertion
+    message AS PRINTED, so a literal part of the message must lie inside it (or it inside a literal): a fragment that none
+    of the strings of the killer can have made is never seen in a failure of the killer. Crash rows (the pinned set) expect
+    the text of the interpreter or of the changed code and are left out."""
+    import ast
+
+    base = Path(bm.ROOT if root is None else root)
+    trees: dict[str, object] = {}
+    nowhere = []
+    for m in bm.M if rows is None else rows:
+        label = m.name.split(" ", 1)[0]
+        if label in bm.CRASH_ROWS:
+            continue
+        if m.test_file not in trees:
+            trees[m.test_file] = ast.parse((base / m.test_file).read_text(encoding="utf-8"))
+        pieces = [p.strip() for p in _text_pieces(trees[m.test_file], m.only_test)]
+        if any(len(p) >= 6 and (p in m.expect or m.expect in p) for p in pieces):
+            continue
+        # stated limit: where the message formats a value (an f-string), the fragment may hold that value, which no string
+        # holds; it is then accepted when the fragment is in the test file (data the killer reads) or the killer formats a value
+        text = (base / m.test_file).read_text(encoding="utf-8")
+        if m.expect in text or _prints_a_value(trees[m.test_file], m.only_test):
+            continue
+        nowhere.append((label, m.expect))
+    return nowhere
+
+
+def test_every_expectation_of_a_row_is_made_of_text_its_killer_can_print() -> None:
+    assert expectation_nowhere_in_killer() == []
+
+
+def test_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "t.py").write_text(
+        "def test_k():\n    assert False, f'value {1} was not refused'\n"
+        "def test_plain():\n    assert False, 'the plain message of the killer'\n",
+        encoding="utf-8",
+    )
+    good = bm.mutant("Z1 a", "x.py", "a", "b", "t.py", "test_k", "was not refused")
+    plain_good = bm.mutant("Z2 b", "x.py", "a", "b", "t.py", "test_plain", "plain message of the")
+    bad = bm.mutant("Z3 c", "x.py", "a", "b", "t.py", "test_plain", "a message nobody wrote")
+    assert expectation_nowhere_in_killer(rows=[good, plain_good, bad], root=tmp_path) == [
+        ("Z3", "a message nobody wrote")
+    ]

@@ -207,9 +207,7 @@ def test_ignored_files_and_binary_endings_are_skipped(tmp_path: Path) -> None:
     assert hits == [], f"scan hits: {hits}"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_every_file_type_is_read_not_only_a_list_of_endings(tmp_path: Path) -> None:
     names = [
         "a.cfg",
@@ -301,9 +299,7 @@ def test_a_product_root_that_is_itself_a_symlink_is_a_hit(tmp_path: Path) -> Non
     assert g.scan(repo, _cfg()) == ["src: symlink-in-product-root"]
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling(
     tmp_path: Path,
 ) -> None:
@@ -324,9 +320,7 @@ def test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit(tmp_path: Pat
     ], "a_file_or_folder_name_that_holds_the_folder_name_is_a_hit: check 1"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit(tmp_path: Path) -> None:
     for i, spelling in enumerate(
         ["Demo_Only", "demo-only", "demo only", "DEMO-ONLY", "Demo  Only", "demo_-only"]
@@ -1906,25 +1900,19 @@ def _only_the_mark_and_nul_bytes(tmp_path: Path, label: str, raw: bytes, kind: s
     ], f"{label}: a file of only the mark and NUL bytes was not refused as {kind}"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "mz", b"MZ" + b"\x00" * 30, "DOS or Windows program")
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): the mark is valid UTF-8, so such a file was read as text and passed)
     _only_the_mark_and_nul_bytes(tmp_path, "rar", b"Rar!\x1a\x07\x00" + b"\x00" * 8, "RAR")
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_path: Path) -> None:
     # What it guards against (a fault of the code before batch 8): it needs the kinds to exist; otherwise a pin that text is not refused)
     text = _repo(tmp_path / "text", {**CLEAN, "src/pkg/a.txt": "MZ is fine as text, so is Rar!\n"})
@@ -1936,9 +1924,7 @@ def test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits(tmp_
     )
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
     # What it guards against (a fault of the code before batch 8): the level byte was not looked at). On purpose, level 0 and ":" are not bzip2: the format
     # has levels 1 to 9, so a file with another level byte is not a valid bzip2 file.
@@ -1953,9 +1939,7 @@ def test_pin_bzip2_needs_a_level_from_1_to_9() -> None:
         assert (got == "bzip2") == is_bzip2, f"bzip2 level check: {head!r} was read as {got!r}"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_bzip2_needs_a_block_or_end_of_stream_mark() -> None:
     # What it guards against (a fault of the code before batch 8): the mark after the level byte was not looked at). On purpose, a bad block mark is not bzip2.
     for head, is_bzip2 in (
@@ -2015,9 +1999,7 @@ def test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file
     assert from_guard <= set(nr._tracked()), "the folder walk misses a tracked file"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass() -> None:
     # What it guards against (a fault of the code before batch 8): the whole first line of git was shown as it came)
     line = (
@@ -2048,7 +2030,7 @@ def _core(name: str) -> re.Pattern[str]:
 
 
 def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> None:
-    # new feature (fails on old code: there were no such patterns here)
+    # what it shows (there were no such patterns here)
     assert (
         g._BEARER.pattern == _core("BEARER").pattern and g._BEARER.flags == _core("BEARER").flags
     ), "the guard BEARER pattern differs from the core one"
@@ -2058,7 +2040,7 @@ def test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones() -> 
 
 
 def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -> None:
-    # new feature (fails on old code: a bare scheme word was never hidden)
+    # what it shows (a bare scheme word was never hidden)
     for scheme, core, low in (
         ("Bearer", "BEARER", 12),
         ("basic", "BASIC", 8),
@@ -2079,7 +2061,7 @@ def test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table() -
 
 
 def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
-    # new feature (fails on old code: nothing was hidden, so the 12 and 8 sides fail; the 11 and 7 sides are pins)
+    # what it shows (nothing was hidden, so the 12 and 8 sides fail; the 11 and 7 sides are pins)
     assert "Bearer " + "a" * 11 in g._hide_secrets("Bearer " + "a" * 11), (
         "a bearer token of 11 characters was hidden"
     )
@@ -2098,7 +2080,7 @@ def test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible() -> None:
 
 
 def test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden() -> None:
-    # new feature (fails on old code: only two words were hidden, so a Digest header leaked)
+    # what it shows (only two words were hidden, so a Digest header leaked)
     for scheme in ("Digest", "Basic", "Bearer", "Negotiate", ""):
         line = f"Authorization: {scheme} u1=aaaa, r2=bbbb, n3=cccc"
         shown = g._hide_secrets(line)
@@ -2109,7 +2091,7 @@ def test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is
 
 
 def test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list() -> None:
-    # new feature (fails on old code: quoted values, inner quotes, passwd/pwd/auth/credential were shown or cut)
+    # what it shows (quoted values, inner quotes, passwd/pwd/auth/credential were shown or cut)
     for name in (
         PW,
         TOK,
@@ -2138,7 +2120,7 @@ def test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list()
 
 
 def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() -> None:
-    # new feature (fails on old code: an `@` or `/` inside the password left part of it visible)
+    # what it shows (an `@` or `/` inside the password left part of it visible)
     for cred in ("user:pw", "user:p@ss", "user:p/ss", "user:p@s/s@x", "u"):
         shown = g._hide_secrets(f"fatal: unable to access https://{cred}@host.example/x.git here")
         assert shown == "fatal: unable to access https://<hidden>@host.example/x.git here", (
@@ -2153,9 +2135,7 @@ def test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold() 
     )
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2185,25 +2165,56 @@ def test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on
     assert steps <= 3 * 10000, f"the name check read {steps} characters for a 20000 character line"
 
 
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_the_masker_time_grows_in_proportion_not_in_the_square() -> None:
-    # pin (passes on dd827d79; fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of name characters, with
-    # no name of the new code needed): the best of three timings of a line four times longer is under ten times
-    # the shorter one (linear: about four; quadratic: about sixteen)
+    # what it keeps (also: fails on 07bfda12, whose `[\w.-]*` pattern is quadratic on a long run of name characters, with
+    # no name of the new code needed): a wide bound only, not a ratio of two timings: a line of 60000 characters is hidden in
+    # under 5 seconds (linear: a few milliseconds; quadratic: minutes). The exact check is the count of steps in
+    # `test_pin_the_masker_reads_each_character_a_bounded_number_of_times_whatever_the_line`.
     import time
 
-    def best(n: int) -> float:
-        line = "a-" * n
-        runs = []
-        for _ in range(3):
-            t0 = time.perf_counter()
-            g._hide_secrets(line)
-            runs.append(time.perf_counter() - t0)
-        return min(runs)
+    t0 = time.perf_counter()
+    g._hide_secrets("a-" * 30000)
+    took = time.perf_counter() - t0
+    assert took < 5.0, f"a line of 60000 characters took {took:.1f} seconds"
 
-    short, long_ = best(3000), best(12000)
-    assert long_ < 10 * max(short, 1e-4), (
-        f"a line 4 times longer took {long_ / max(short, 1e-4):.1f} times as long (linear is about 4)"
-    )
+
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_the_masker_reads_each_character_a_bounded_number_of_times_whatever_the_line(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Counted work, not seconds: characters handed to the name pattern plus the calls of the name-character test. Lines with
+    # many `=` and short names (a quadratic pair step would search the whole text before each `=` again), one long name, many
+    # secret-looking names. The bound is 4 reads of a character; a linear pass reads each one about once or twice.
+    steps = 0
+    real_search, real_char = g._SECRET_NAME.search, g._is_name_char
+
+    class Counting:
+        def search(self, text: str):
+            nonlocal steps
+            steps += len(text)
+            return real_search(text)
+
+    def counting_char(c: str) -> bool:
+        nonlocal steps
+        steps += 1
+        return real_char(c)
+
+    monkeypatch.setattr(g, "_SECRET_NAME", Counting())
+    monkeypatch.setattr(g, "_is_name_char", counting_char)
+    for line in (
+        "ab=" * 3000,
+        "a-" * 5000,
+        "a=" * 5000 + "x-" * 5000,
+        f"{TOK}=v " * 2000,
+        "k=" * 5000,
+    ):
+        steps = 0
+        shown = g._hide_secrets(line)
+        assert len(shown) <= 10 * len(line)
+        assert steps <= 4 * len(line), (
+            f"{steps} reads for a line of {len(line)} characters ({line[:12]!r}...)"
+        )
 
 
 def _a_scheme_after_a_secret_name(scheme: str, token: str) -> None:
@@ -2214,24 +2225,58 @@ def _a_scheme_after_a_secret_name(scheme: str, token: str) -> None:
             assert token not in shown, f"{name}={scheme}: the token stayed visible: {shown!r}"
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
-    # proof (fails on dd827d79: the pair step ran first and hid only the word `Bearer`, leaving the token in clear)
+    # what it shows (the pair step ran first and hid only the word `Bearer`, leaving the token in clear)
     _a_scheme_after_a_secret_name("Bearer", "a1" * 10)
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word() -> None:
-    # proof (fails on dd827d79: the pair step ran first and hid only the word `Basic`, leaving the token in clear)
+    # what it shows (the pair step ran first and hid only the word `Basic`, leaving the token in clear)
     _a_scheme_after_a_secret_name("Basic", "b2" * 6)
 
 
-def test_pin_the_colon_form_is_not_read_and_the_docstring_of_the_masker_says_so() -> None:
-    # pin: only `name=value` pairs are hidden; the colon form is a stated limit (it is in the comment above `_BEARER`)
-    text = (ROOT / "tools" / "demo_only_guard.py").read_text(encoding="utf-8")
-    assert "the colon form" in text and "is NOT" in text, "the limit of the masker is not stated"
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
+def test_pin_the_colon_form_is_left_alone_by_the_masker() -> None:
+    # pin: only `name=value` pairs are hidden; the colon form is a stated limit (see the comment above `_BEARER`), shown here
+    # by behaviour. A made-up value built from parts.
+    value = "v1" * 6
+    for line in (f"fatal: {PW}: {value}", f'fatal: "{TOK}": "{value}"', f"fatal: --{PW} {value}"):
+        assert g._hide_secrets(line) == line, (
+            f"the colon form was changed: {g._hide_secrets(line)!r}"
+        )
+
+
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. A pin of the code of batch 10: it keeps that behaviour from breaking and is not proof of a batch 11 fix.
+def test_pin_a_bearer_token_of_11_characters_stays_visible_as_on_main() -> None:
+    # pin: the bearer rule needs 12 or more characters, as on main (`hadavin_sdk.guard.redact`), so a shorter token after a
+    # name stays visible; 12 characters are hidden. A made-up token built from parts.
+    short, long_ = "c3" * 5 + "c", "c3" * 6
+    assert len(short) == 11 and len(long_) == 12
+    assert short in g._hide_secrets(f"fatal: {TOK}=Bearer {short}"), (
+        "an 11 character token was hidden"
+    )
+    assert long_ not in g._hide_secrets(f"fatal: {TOK}=Bearer {long_}"), (
+        "a 12 character token stayed"
+    )
+
+
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. A pin of the code of batch 10: it keeps that behaviour from breaking and is not proof of a batch 11 fix.
+def test_pin_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line() -> None:
+    # what it shows (the line stayed `authorization=<hidden> a1a1...`, the token in clear)
+    assert (
+        g._hide_secrets("fatal: authorization=Bearer " + "a1" * 10)
+        == "fatal: authorization=<hidden> <hidden>"
+    )
+    assert (
+        g._hide_secrets("fatal: authorization=Basic " + "b2" * 6)
+        == "fatal: authorization=<hidden> <hidden>"
+    )
 
 
 def test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders(tmp_path: Path) -> None:
-    # new feature (fails on old code: cafebabf and bfbafeca were not recognised)
+    # what it shows (cafebabf and bfbafeca were not recognised)
     for raw in (b"\xca\xfe\xba\xbf", b"\xbf\xba\xfe\xca"):
         repo = _repo(tmp_path / raw.hex(), CLEAN)
         (repo / "src/pkg/blob.dat").write_bytes(raw + b"\x00" * 20)
@@ -2243,7 +2288,7 @@ def test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders(tmp_path:
 def test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_is_not_read(
     tmp_path: Path,
 ) -> None:
-    # new feature (fails on old code: the range was 3000-3999 only, a fixed number)
+    # what it shows (the range was 3000-3999 only, a fixed number)
     running = int.from_bytes(importlib.util.MAGIC_NUMBER[:2], "little")
     assert 3000 <= running <= g._PYC_MAGIC_MAX
     assert g._PYC_MAGIC_MAX == min(8191, max(3999, running + 1000)), (
@@ -2259,7 +2304,7 @@ def test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_
 def test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_words(
     tmp_path: Path,
 ) -> None:
-    # new feature (fails on old code: os.readlink raised an unhandled OSError when the link had become a file)
+    # what it shows (os.readlink raised an unhandled OSError when the link had become a file)
     dest = tmp_path / "copy"
     dest.mkdir()
     (dest / "plain.txt").write_text("not a link\n", encoding="utf-8")
@@ -2271,7 +2316,7 @@ def test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_
 
 
 def test_the_link_chain_message_says_too_long_or_looped(tmp_path: Path) -> None:
-    # new feature (fails on old code: the text said "loop" for any ELOOP)
+    # what it shows (the text said "loop" for any ELOOP)
     dest = tmp_path / "copy"
     dest.mkdir()
     (dest / "a").symlink_to("b")
@@ -2283,7 +2328,7 @@ def test_the_link_chain_message_says_too_long_or_looped(tmp_path: Path) -> None:
 
 
 def test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit(tmp_path: Path) -> None:
-    # new feature (fails on old code: the file was lstat'ed through the swapped folder and read as a plain file)
+    # what it shows (the file was lstat'ed through the swapped folder and read as a plain file)
     repo = _track(_repo(tmp_path / "r", {**CLEAN, "src/pkg/sub/inner.txt": "plain\n"}))
     outside = tmp_path / "outside"
     outside.mkdir()
@@ -2297,7 +2342,7 @@ def test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit(tmp_path
 
 
 def test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table() -> None:
-    # new feature (fails on old code: the docstring listed 9 kinds, the table has 12)
+    # what it shows (the docstring listed 9 kinds, the table has 12)
     doc = " ".join((g.__doc__ or "").split())
     start = doc.index("first bytes are the mark of one of `MAGIC_KINDS` (") + len(
         "first bytes are the mark of one of `MAGIC_KINDS` ("
@@ -2308,10 +2353,11 @@ def test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_tabl
     )
 
 
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. It is proof of a fix.
 def test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # new feature (fails on old code: os.fchmod was called unguarded, an AttributeError where it is absent (Windows before 3.13))
+    # what it shows (os.fchmod was called unguarded, an AttributeError where it is absent (Windows before 3.13))
     repo = tmp_path / "r"
     (repo / "d").mkdir(parents=True)
     (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
@@ -2319,15 +2365,15 @@ def test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod(
     monkeypatch.delattr(os, "fchmod", raising=False)
     target = tmp_path / "out.sh"
     g._copy_regular(repo, "d/run.sh", target)
-    assert target.read_text(encoding="utf-8") == "x\n"
+    # the mode first: a copy with mode 0 cannot be read by an ordinary user, and a read before the mode would end in a crash
+    # (PermissionError) instead of this assertion
     assert stat.S_IMODE(target.stat().st_mode) == 0o751, "the mode was not copied without fchmod"
+    assert target.read_text(encoding="utf-8") == "x\n"
 
 
-# PIN: this test also passes on dd827d79 (the fail-before run of batch 10 shows it); it keeps a behaviour from breaking and is not proof of a fix
-
-
+# fail-before (real runs, batch 11): on dd827d79 it passes; on cdbe1445 it passes. A pin: it keeps a behaviour from breaking and is not proof of a fix.
 def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> None:
-    # proof (fails on dd827d79: no test read the mode of a copy made through `fchmod`, so a wrong mode went unseen)
+    # what it shows (no test read the mode of a copy made through `fchmod`, so a wrong mode went unseen)
     repo = tmp_path / "r"
     (repo / "d").mkdir(parents=True)
     (repo / "d" / "run.sh").write_text("x\n", encoding="utf-8")
@@ -2339,10 +2385,11 @@ def test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod(tmp_path: Path) -> No
     )
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # proof (fails on dd827d79: a bare OSError came out of `copy_without_folder`)
+    # what it shows (a bare OSError came out of `copy_without_folder`)
     repo = _tracked_repo(tmp_path / "r", {"docs/plain.txt": "x\n"})
     real = g._stat_kind
 
@@ -2369,8 +2416,9 @@ def _swap_parent_for_link(repo: Path, parent: str, tmp_path: Path) -> None:
     (repo / parent).symlink_to(outside)
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_a_loader_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
-    # proof (fails on dd827d79: the loader was read through the swapped folder and passed)
+    # what it shows (the loader was read through the swapped folder and passed)
     repo = _tracked_repo(tmp_path / "r", {"src/pkg/loader.py": f"x = '{FOLDER}'\n"})
     cfg = _cfg(loaders=("src/pkg/loader.py",))
     assert g.scan(repo, cfg) == [], "the control repository is not clean"
@@ -2381,8 +2429,9 @@ def test_a_loader_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) ->
     )
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
-    # proof (fails on dd827d79: the exempt file was read through the swapped folder)
+    # what it shows (the exempt file was read through the swapped folder)
     repo = _tracked_repo(tmp_path / "r", {"src/pkg/self.py": "x = 1\n"})
     cfg = _cfg(exempt_files=("src/pkg/self.py",))
     assert g.scan(repo, cfg) == [], "the control repository is not clean"
@@ -2393,8 +2442,9 @@ def test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Pa
     )
 
 
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. It is proof of a fix.
 def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_path: Path) -> None:
-    # proof (fails on dd827d79: the marker was read through the swapped folder and counted as a regular file)
+    # what it shows (the marker was read through the swapped folder and counted as a regular file)
     repo = _tracked_repo(tmp_path / "r")
     assert g.scan(repo, _cfg()) == [], "the control repository is not clean"
     _swap_parent_for_link(repo, "tools", tmp_path)
@@ -2404,8 +2454,12 @@ def test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit(tmp_pat
     )
 
 
-def test_a_chain_of_links_that_is_too_long_is_named_as_such_in_the_scan(tmp_path: Path) -> None:
-    # proof (fails on dd827d79: the rule said only "a loop of links cannot be followed" for any ELOOP, a long chain included)
+# fail-before (real runs, batch 11): on dd827d79 it FAILS; on cdbe1445 it passes. A pin of the code of batch 10: it keeps that behaviour from breaking and is not proof of a batch 11 fix.
+def test_pin_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes(
+    tmp_path: Path,
+) -> None:
+    # Wording only: the system gives the same error (ELOOP) for a loop and for a chain that is too long, so the rule text names
+    # both causes; this test does not tell the two apart. It fails on dd827d79 because the text there named only a loop.
     repo = _tracked_repo(tmp_path / "r", {"docs/end.txt": "x\n"})
     previous = "end.txt"
     for i in range(45):

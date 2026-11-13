@@ -266,7 +266,10 @@ def _git_env() -> dict[str, str]:
 # Stated limits: only the `name=value` form is read, so the colon form (`password: x`, `"token": "x"`, `--password x`) is NOT
 # hidden here (git's own first error line does not use it; the core redactor is the place for such text). A pair name is
 # looked for to the left of the `=` only.
-# Every step is one pass over the line with no nested repetition, so a very long line costs time in proportion to its length.
+# Stated limit of the bearer rule: a token of 11 characters or fewer after a bearer word stays visible (`token=Bearer` + 11
+# characters is shown), exactly as on main (BEARER needs 12; BASIC needs 8); a test pins the 11/12 border.
+# Five passes over the line (header, bearer, basic, URL, pairs), each with no nested repetition, so a very long line costs
+# time in proportion to its length (a test counts the reads).
 _BEARER = re.compile(r"(?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*)")
 _BASIC = re.compile(r"(?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2})")
 _AUTH_HEADER = re.compile(r"(?i)(authorization:)[^\n]*")
@@ -333,12 +336,33 @@ def _hide_group(pattern: re.Pattern[str], line: str) -> str:
     return pattern.sub(lambda m: m.group(0).replace(m.group(1), _HIDDEN, 1), line)
 
 
+def _hide_header(line: str) -> str:
+    return _AUTH_HEADER.sub(lambda m: m.group(1) + " " + _HIDDEN, line)
+
+
+def _hide_bearer(line: str) -> str:
+    return _hide_group(_BEARER, line)
+
+
+def _hide_basic(line: str) -> str:
+    return _hide_group(_BASIC, line)
+
+
+# The passes of `_hide_secrets`, in this order (the list above the patterns says what each one hides). A test counts them, and
+# the CHANGELOG states the count.
+_MASK_PASSES: tuple[Callable[[str], str], ...] = (
+    _hide_header,
+    _hide_bearer,
+    _hide_basic,
+    _hide_urls,
+    _hide_pairs,
+)
+
+
 def _hide_secrets(line: str) -> str:
-    line = _AUTH_HEADER.sub(lambda m: m.group(1) + " " + _HIDDEN, line)
-    line = _hide_group(_BEARER, line)
-    line = _hide_group(_BASIC, line)
-    line = _hide_urls(line)
-    return _hide_pairs(line)
+    for step in _MASK_PASSES:
+        line = step(line)
+    return line
 
 
 def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
@@ -533,7 +557,9 @@ def _stat_info(full: Path | str) -> tuple[str, int]:
 
 def _parent_is_link(repo: Path, rel: str) -> bool:
     """True when a folder on the way to `rel` (below `repo`) is a link, or cannot be inspected: `os.lstat` of the entry alone
-    reads through such a folder. Each component is looked at with `os.lstat`; it stops at the first one that is not a plain folder."""
+    reads through such a folder. Each component is looked at with `os.lstat`; the walk ends at the first component that is a
+    link or cannot be inspected (True); a component that is gone, or is a file, does not end it (the entry below is then gone
+    or unreachable, which the caller sees from the entry itself)."""
     walked = repo
     for part in rel.split("/")[:-1]:
         walked = walked / part

@@ -486,7 +486,7 @@ OVERRIDES = ("tools", "sources", "channel", "llm", "detector", "secrets", "hold_
 NOT_CONNECTIVITY: dict[str, str] = {
     "config_dir": "a folder that `load_config` reads; the config is what the banner reads; checked: used only there in `build`",
     "agents": "a list of agent names that `Runtime` checks against the registry; checked: no callable or object is handed in",
-    "timeout_s": "a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); checked: it is a number, never a callable or an object that connects",
+    "timeout_s": "a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); the executor reads it only as a timeout; it is typed as a number in the signature of `build` and not checked at run time",
 }
 # The keys of the real services that are not backends. A caller may give each a nicer shown name through `names`.
 EXTERNAL_SYSTEMS = "external-systems"

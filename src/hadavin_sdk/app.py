@@ -73,6 +73,20 @@ _PLAIN_DATA = (
     enum.Enum,
 )
 _PLAIN = object()  # stands for "plain data" in the list of references
+# What `_sealed` holds when `build` could not read the app (a config the banner cannot read, a named container missing): the
+# banner of that app is the unconfirmed one, and `build` itself goes on (the banner never decides whether the app starts).
+_UNREADABLE: tuple = ("the app could not be read when it was built",)
+# The errors that reading an app for the seal can raise (a shape the banner cannot read: a tool spec without hosts, a backend
+# entry without a kind, a named container that is missing or not a mapping, an attribute that is not there).
+_SEAL_ERRORS = (TypeError, ValueError, AttributeError, LookupError, RuntimeError)
+
+
+class _Given(tuple):
+    """The names of the `build` overrides that were given, as `_given_overrides` computed them. `_seal` takes nothing else: a
+    plain tuple, such as `()`, is refused, so a stray call cannot seal an app with an answer of its own. Python has no
+    private methods: code that deliberately calls `_given_overrides` itself can still make one, and that is not supported."""
+
+    __slots__ = ()
 
 
 _WARNED: set[tuple[str, str]] = set()
@@ -118,7 +132,8 @@ class App:
     # (`__deepcopy__`): a built App holds locks and connections that cannot be copied (the standard library raises there
     # already), and a refusal that holds for every App is one rule, not a result that depends on what the copy happens to
     # hold. Chosen over a frozen App because callers set fields (tests, the tick) and a frozen App would break them; the
-    # fingerprint is the smaller change.
+    # fingerprint is the smaller change. If `build` could not read the app, the field holds `_UNREADABLE` (the banner is
+    # then the unconfirmed one and `build` still returns the app).
     _sealed: tuple | None = field(default=None, init=False, repr=False, compare=False)
 
     def _connected_parts(self) -> tuple:
@@ -128,7 +143,7 @@ class App:
         `tools`); the runtime's registry, store, audit, llm, detector and limits; the channel of the approvals; and for each of
         those parts and each source its `__dict__`: the NAMES of its attributes, and the reference of each attribute value that
         is not plain data (text, numbers, lists, dicts, times: a counter that changes during a run must not read as a new
-        part). Nothing deeper is read, except the entries of the containers named at the end of the method. Any error here propagates: `mode_banner` turns it into the unconfirmed banner."""
+        part). Nothing deeper is read, except the entries of the containers named at the end of the method. Any error here propagates: `_seal` seals the app as unreadable and `mode_banner` turns it into the unconfirmed banner."""
         out: list[tuple[str, object]] = []
 
         def add(label: str, obj: object) -> None:
@@ -176,9 +191,12 @@ class App:
         # `build`, so a removed, added or swapped entry is a change of what the app connects to. Containers that fill
         # during a run (counters, queues, caches) are NOT read.
         def members(label: str, container: object) -> None:
-            if isinstance(container, Mapping):
-                for key, value in list(container.items()):
-                    out.append((f"{label}[{key!r}]", value))
+            # a named container that is missing or is not a mapping is an error that names it: it must not drop out of the
+            # seal without a word (a renamed field of the registry or the toolbox would otherwise go unseen)
+            if not isinstance(container, Mapping):
+                raise TypeError(f"{label} is missing or is not a mapping in this app")
+            for key, value in list(container.items()):
+                out.append((f"{label}[{key!r}]", value))
 
         cfg = self.config
         for name in ("systems", "sources"):
@@ -188,19 +206,20 @@ class App:
             members(f"registry.{name}", getattr(reg, name, None))
         tools = getattr(reg, "tools", None)
         members("registry.tools", tools)
-        if isinstance(tools, Mapping):
-            for agent, per_agent in list(tools.items()):
-                members(f"registry.tools[{agent!r}]", per_agent)
+        for agent, per_agent in list(tools.items()):
+            members(f"registry.tools[{agent!r}]", per_agent)
         toolbox = getattr(hooks, "toolbox", None)
         if toolbox is not None:
-            attrs = getattr(toolbox, "__dict__", {})
+            attrs = getattr(toolbox, "__dict__", None)
+            if not isinstance(attrs, dict):
+                raise TypeError("the toolbox of the hooks has no attribute dictionary to read")
             for name in ("specs", "_fns"):
                 members(f"toolbox.{name}", attrs.get(name))
         return tuple(out)
 
     def _banner_services(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
         """The two lists of services the banner is made from (`_services_in` of this config and these tool manifests). Read at
-        `_seal` (an error there stops `build`: a config the banner cannot read is refused at once) and again at every banner
+        `_seal` (an error there seals the app as unreadable: the unconfirmed banner, `build` goes on) and again at every banner
         (an error there is caught by `_known_overrides`: the unconfirmed banner)."""
         return _services_in(self.config, self.registry.tools)
 
@@ -210,12 +229,19 @@ class App:
             "an App cannot be deep-copied: it holds live connections; build another App, or use copy.copy"
         )
 
-    def _seal(self, overridden: tuple[str, ...]) -> None:
-        """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end. Private by
-        name only (Python has no private methods): it is not part of the supported API and the banner never calls it with a
-        value of a caller; a caller that sealed an app with an answer of its own could launder a banner."""
-        self.overridden = overridden
-        self._sealed = (tuple(overridden), self._connected_parts(), self._banner_services())
+    def _seal(self, overridden: _Given) -> None:
+        """Record what was handed to `build` and what the app was made of; `build` calls this once, at the end, with the
+        names `_given_overrides` computed (a `_Given`; any other value, such as `()`, is refused). Private by name: it is not
+        part of the supported API. If the app cannot be read (see `_SEAL_ERRORS`), one warning line names the error type
+        and the app is sealed as unreadable: its banner is the unconfirmed one and `build` still returns it."""
+        if not isinstance(overridden, _Given):
+            raise TypeError("an app is sealed only with the names that build worked out")
+        self.overridden = tuple(overridden)
+        try:
+            self._sealed = (self.overridden, self._connected_parts(), self._banner_services())
+        except _SEAL_ERRORS as exc:
+            _warn_once("the app could not be read when it was built", exc)
+            self._sealed = _UNREADABLE
 
     def _known_overrides(self) -> tuple[str, ...] | None:
         """`overridden` when this app is exactly what `build` sealed (the recorded names equal the sealed names, every
@@ -223,7 +249,12 @@ class App:
         raises: any failure to read the parts is None."""
         try:
             sealed = self._sealed
-            if sealed is None or self.overridden is None or tuple(self.overridden) != sealed[0]:
+            if (
+                sealed is None
+                or sealed is _UNREADABLE
+                or self.overridden is None
+                or tuple(self.overridden) != sealed[0]
+            ):
                 return None
             now_parts = self._connected_parts()
             if len(now_parts) != len(sealed[1]) or any(
@@ -256,14 +287,14 @@ class App:
             return not_confirmed_banner(words)
 
 
-def _given_overrides(**given: object) -> tuple[str, ...]:
+def _given_overrides(**given: object) -> _Given:
     """The names of the `build` overrides that replace something: an object handed in (not None), or a mapping that holds
     at least one entry (an empty `tools={}` or `sources={}` replaces nothing). Names only, in the order of `OVERRIDES`. A
     name `OVERRIDES` does not list is a ValueError here, but this only fires for names passed in: that every `build`
     parameter is either an override or on `NOT_CONNECTIVITY` is checked by a test that reads the signature of `build`."""
     if unknown := sorted(set(given) - set(OVERRIDES)):
         raise ValueError(f"build override not known to the mode banner: {unknown[0]}")
-    return tuple(
+    return _Given(
         n
         for n in OVERRIDES
         if given.get(n) is not None and not (isinstance(given[n], Mapping) and not given[n])
