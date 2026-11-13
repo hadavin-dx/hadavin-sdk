@@ -4,6 +4,19 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| C5 | cold reader on the other docs | queue | 12:33Z | done | 1 | DONE standing/C5: 85 doc-named tests ran together 144 passed, 3 skipped, rc 0; README Linux quickstart and reset/contract rows matched. Findings (agent's words): docs/tests.md:26 says PYTHONPATH=src for scripts/crash_desk.py but it needs src:. (agent saw RuntimeError "the folder demo_only is missing"); I tried it twice (src and src:.) and both stopped at "cannot reach the demo servers" with no RuntimeError, so that finding is NOT reproduced by me (my runs did not start a desk first, so they do not test the claim either way); docs/tests.md says 2516 tests and README "about 20 minutes", collect-only gives 3982 (= 3978 passed + 4 skipped, matches my after-run); load_tools/README has no start-to-finish recipe; n8n steps not run | add to C10 list |
+| C2 C6 C7 C8 | hostile 1, flakiness 20x, hostile 2, demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
+| C9 C10 | K6+K10 and -OO patch; docs-only fix patch | self-assigned | 12:35 / 12:41Z | 45 / 40 min | 1 | RUNNING | read results |
+
+**FAILURES AND RETRIES additions since 12:3xZ:** my background watcher (until-loop waiting for AF) was stopped by the harness at its time limit (status killed); AF had already finished with rc 0, so nothing was lost; no other agent crashed or restarted. No new test failures. C5 item 1 above: not reproduced, unexplained, raw output only in out/C5 (run logs). Totals unchanged: 2 distinct tests failed today (environment), 0 real, 0 flakes, 1 unexplained (B2 first baseline rc=1); C6 pending.
+
+ASK: none.
+
+
+## REPORT (container clock 12:38Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | AF, MD-2 | after-run, mutation files | counts | 12:05-12:40Z | done | 1 | DONE (3978 passed / 101 passed) | none |
 | C1 C3 C4 | cold reader, doc vs code, survivor tests review | queue | 12:28Z | done | 1 | DONE, pushed standing/ | C10 |
 | C2 C5 C6 C7 C8 | hostile 1, other docs, flakiness 20x, hostile 2, demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
