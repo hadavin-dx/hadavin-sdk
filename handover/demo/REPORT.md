@@ -1,6 +1,34 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:21Z / 10:51 IST - **READY TO PUSH: P1 v3.2, P2 v2.1** (both fresh-read CLEAN); semgrep v5.1 as its own PR; 7 agents
+**READY TO PUSH, in this order on db54e13:**
+1. sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c (CLEAN, fifth fresh read)
+2. sonar/sonar-p2-regex-http-bug-v2.1.patch sha256 0645cf551e1f27344266bcd89997825b333e9bd4149139ea4f87a1f106993159 (CLEAN, third fresh read, sonar/REVIEW-p2v21-fresh.md)
+   (nodemo-fix-v2 + nodemo-ruff-isort: core pieces fine, apply any time after P1: v3 of the tests/CI job still in its fresh read; P3 parked; crlf v5 + yaml trimmed-v2: read running)
+   Separate PR after the stack: semgrep/semgrep-on-db54e13-v5.1.patch sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 + pr-text/semgrep-pr-body-v6.md.
+FAILED / UNCERTAIN first:
+1. **P2 v2.1: 'P2 v2.1 CLEAN' (third reader): 0 Blocker/Major, 4 Nits.** Nits: (1) test gaps: 27 reader mutants, only M26 (the `desk listening on ...` line is untested) survives overall; four small tests are suggested, none blocking (unknown/pending results must not move the stage, a non-busy error propagates, the zero-row warning is logged, the listening line): I will fold them into a P2 v2.2 delta (rule: fix, do not defer); (2) evidence-p2v21-3 has no clean 24-file run on the final patch: the reader ran 26 files on P1 v3.1 + P2 v2.1: 1236 passed 1 skipped; (3) **`test_reserve_covers_its_items` (open-file count) did NOT reproduce**: db54e13 alone 20/20 under two CPU-hog processes, the 3-file set 8/8, the patched stack 8/8; it counts the whole process's open files so a leftover thread from an earlier test could change the count; cause NOT proven, so I cannot call it flaky on base with evidence; the patch touches none of db.py/portal_api.py/constants.py. If it fails in your run, send me the output; (4) remaining http:// literals in demo_only/ (excluded by sonar.exclusions), run_real_check.py and n8n_api.py already existed (not a defect of this patch). Verified: 34 differential flow tests (locked DB, commit failure, busy gate, same token twice, stale token, stage already further, no step file, nudge/followup, crash then restart, non-busy errors) identical to db54e13 except the single documented change (commit failure then locked DB on a `sent` result now keeps the copy wait; rows identical); is_write(fn, name) selects copied/failed/record/give_back and the injected fault fires; server MRO: every attribute of _Server resolves as on base except server_bind (now in _ExclusiveBind); daemon_threads/block_on_close preserved; real double bind EADDRINUSE; serve + GET 204 + shutdown + immediate rebind OK; faked win32 order same as base; regex PLAIN_ADDRESS/_EMAIL_RE 0 differences on 599,593 texts; 130 hygiene tests with gitleaks; src imports demo_only only in loader.py (dynamic): with demo_only deleted every lead_desk module imports and mypy src is clean. **Python 3.13.18 only: 3.12 (CI) untested.** Not run: Sonar, CodeQL, CodeRabbit, Windows, full suite.
+2. **P1 v3.2.1 delta (test-only, optional): sixth read running (a4c3b1e106ab36b0e).** Other open: real-run v5 safety read (afd3a7d7745c30316), crlf v5 + yaml trimmed-v2 read (ab2ff104856bc1ffa), probe-ab v3 safety read (a00a7504872aa22f0), nodemo v3 builder (ac09125403a1f310b), start-prompt v2 + desk-address-required (core) (a2f6af4dc21cb8a4c).
+3. **PR text for P2:** undocumented behaviour changes to state: after a locked database with an uncommitted stage move the copy wait is KEPT (the old code freed it); `_EMAIL_RE` gains `^`/`$` (used only with fullmatch); `feed.py` default address built with `desk_origin` (`--url` stays in the main patch; the optional feed patch drops it); `demo_only/portal_demo.py` now imports DESK_SCHEME from lead_desk.urls. Odds of Sonar clearing (judgement, not measured): main alone ~6.5-7 of its 8 issues; with both optionals ~8.5-9 of 11.
+4. Not run anywhere: full suite WITH demo present, Windows autocrlf run, Sonar/Semgrep results of the series.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a4c3b1e106ab36b0e | fresh sixth reader P1 v3.2.1 delta | 05:19 | running | CLEAN / NOT |
+| afd3a7d7745c30316 | fresh safety reader real-run v5 | 05:15 | running | CLEAN / NOT |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a00a7504872aa22f0 | fresh safety reader probe-ab v3 + writes2 | 04:52 | running | SAFE / READING |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6 (+ the P2 v2.2 delta builder starting now).
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P2 v2.1 third read | CLEAN |
+| P1 v3.2.1 delta | built, pushed, read running |
+
 ## 2026-11-13 05:18Z / 10:48 IST - semgrep v5 had ONE FALSE SENTENCE in docs/tests.md (found by the PR-text drafter): fixed as v5.1 (the series sha changes); PR body v6 + claims v6 (71 rows, 0 [UNVERIFIED]) pushed; READY TO PUSH: P1 v3.2 + semgrep v5.1 (separate PR); 7 agents
 FAILED / UNCERTAIN first:
 1. **A false sentence was inside the Semgrep patch itself (v4 and v5, docs/tests.md 'To bump the Semgrep version'): 'Three tools made the lock files: pip-compile (the dev locks), uv 0.11.32 (coverage lock and the two browser locks) and uv 0.13.8 (semgrep lock)'.** The headers show: requirements-dev.txt = pip-compile; requirements-dev-win.txt, requirements-coverage.txt, both browser locks and requirements-semgrep.txt = uv; the uv version is recorded only for the coverage lock (0.11.32, requirements-coverage.in) and the Semgrep lock (0.13.8, requirements-semgrep.in); the browser locks' uv version is written NOWHERE. My own earlier drafts carried that sentence into PR text and through two fresh reads without anyone checking the lock headers: a measured-claims miss. **semgrep/semgrep-on-db54e13-v5.1.patch sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 = v5 + that one sentence rewritten to say exactly what the headers show (nothing else changed): applies on db54e13; with it, 130 tests passed with gitleaks 8.30.1 + DPLD_REQUIRE_SCAN=1 (nosemgrep_form, gitleaks_semgrep_lock, gitleaks_exceptions, workflow_files_parse, hygiene); ruff clean. Apply v5.1, NOT v5.** Not independently re-read (a one-sentence doc change; the fresh read covered the rest).
