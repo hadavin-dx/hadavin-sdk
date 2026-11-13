@@ -1,3 +1,5 @@
 2026-11-13 12:36:22Z UTC / 18:06:22 IST  round 1 campaign a START seed=1101
 2026-11-13 12:38:57Z UTC / 18:08:57 IST  round 1 campaign a END rc=0 {"campaign": "a", "seed": 1101, "variants_sent": 105600, "requests_sent": 108000, "wall_s": 154.8, "violations": 0, "counterexamples_total": 861, "label_counts": {"UNDOCUMENTED (docs say 'lower-cased'; str.lower is not case folding)": 861}} 
 2026-11-13 12:38:57Z UTC / 18:08:57 IST  round 1 campaign b START seed=1202
+2026-11-13 12:47:50Z UTC / 18:17:50 IST  round 1 campaign b END rc=0 {"campaign": "b", "seed": 1202, "pairs": 200000, "requests_sent": 400000, "wall_s": 532.2, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
+2026-11-13 12:47:50Z UTC / 18:17:50 IST  round 1 campaign c START seed=1303

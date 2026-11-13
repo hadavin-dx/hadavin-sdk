@@ -54,9 +54,8 @@ try:
         out("drip_1.9s_held", rep, claim="held up to ~10 s then 408", status=status(buf) or "none", seconds=round(time.monotonic()-t, 2), bytes_sent=i); s.close()
         # size cap
         def post(n, extra=b"", cl=None):
-            body = json.dumps({"source": "form", "source_ref": f"cap{rep}-{n}-{time.time_ns()}", "payload": {"email": f"cap{rep}{n}@example.test", "name": "A", "message": "m"}})
-            pad = n - len(body.encode()) - 20
-            body = body[:-1] + ',"pad":"' + "a"*max(pad, 0) + '"}'
+            sk = json.dumps({"source": "form", "source_ref": f"cap{rep}-{n}-{time.time_ns()}", "payload": {"email": f"cap{rep}{n}@example.test", "name": "A", "message": "m"}, "pad": ""})
+            body = sk[:-2] + "a"*(n - len(sk.encode())) + '"}'
             b = body.encode()
             h = f"POST /leads HTTP/1.1\r\nHost: {H}:{PB}\r\nContent-Type: application/json\r\nContent-Length: {len(b) if cl is None else cl}\r\nConnection: close\r\n\r\n".encode()
             return len(b), raw(h + b)[0:2]
@@ -89,7 +88,7 @@ try:
         # 257 idle connections all at once, then who gets 408 vs dropped (time to the end of all)
         time.sleep(0.5)
         # listen queue
-        ss = subprocess.run(["ss", "-ltn", f"sport = :{PB}"], capture_output=True, text=True).stdout.split("\n")
+        ss = ["", "ss not installed"]
         out("listen_backlog_ss", rep, claim="LISTEN_QUEUE 1024 (OS may cap lower)", ss=" ".join(ss[1].split()) if len(ss) > 1 else ss)
         # portal 8 at once
         codes = {}

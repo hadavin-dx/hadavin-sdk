@@ -1,5 +1,28 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 12:50Z / 18:20 IST  HEARTBEAT 43 (order of 12:50Z: throttle on idle, start more; 4 agents added; 13 running)
+**Idle measurement (`vmstat 1 3`, 12:48Z):** CPU user 32, system 14, **idle 45 percent**, IO-wait 8, disk writes 33 MB/s, free RAM 11.9 GB. Throttle rule applied as ordered: new agents only while idle stays above 30 percent and free RAM above 3 GB. I started 4 agents (all one core or light), so I expect idle near 30 percent in a few minutes and start no more until the next measurement.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q1 | xdist proof (serial first) | 12:31Z | serial ~12:58Z; xdist ~13:50Z | serial 2721 passed, 0 FAILED (about 70 percent) | running |
+| Q2 | identity fuzz, seeds 1101, 1202, ... | 12:31Z | ~13:30Z | campaign b running | running |
+| **Q2b** (new) | the same fuzz harness (copy) with NEW master seeds 7001-7005 and 7 extra generators (mixed-script look-alikes, very long local parts, quoted local parts and comments, Unicode vs punycode domains, trailing dots, uppercase percent-escapes, apostrophes and double spaces) | 12:49Z | ~14:00Z; stop 14:20Z | starting | running |
+| Q3 | crash soak 300 rounds | 12:31Z | ~13:00Z | 225 rounds, 0 violations, 0 hangs (12:48Z) | running |
+| **Q3b** (new) | second crash soak, master seed 20261114, exactly 5 leads per round, 300 rounds, in rounds 151-300 the desk is killed TWICE per round (a second kill during recovery), ports 25000-25999 | 12:49Z | ~13:40Z; stop 14:20Z | starting | running |
+| Q4 | load numbers vs docs | 12:31Z | pass 1 ~13:30Z | measuring (NOISY) | running |
+| Q6b | cold reader tests/real-services/hubspot docs | 12:37Z | ~13:25Z | part B started 12:48:27Z | running |
+| Q8 | mutation check, 30 mutants of tools/pathconfine.py | 12:34Z | ~13:00Z | 28 of 30 mutants done: 24 KILLED, 5 SURVIVED so far (M03, M08, M11, M15, M20) | running |
+| **Q8b** (new) | mutation check of 40 mutants: src/lead_desk/identity.py (20) and the claim logic (20) against tests/test_flow.py, test_claim_ownership.py, test_claim_checks_and_crm_mode.py, test_ai_after_claim.py | 12:49Z | ~13:50Z; stop 14:20Z | starting | running |
+| B1 | BUILDER lane3-fix-1 (Q5, Q6 doc findings) | 12:42Z | ~13:20Z | mid (12:46:51Z) | running |
+| B2 | BUILDER lane3-fix-2 (Q5b findings: settings validation, doc sentences) | 12:43Z | ~13:30Z | started | running |
+| **B3** (new) | BUILDER lane3-fix-3: tests-only patch killing the Q8 survivors (decides per mutant: equivalent or real gap; fails-before proof by applying each mutant; M11 is security-relevant: containment check must say "not inside" when it raises ValueError) | 12:49Z | ~13:30Z; stop 14:00Z | starting | running |
+**Q8 survivors so far (from /home/user/work/q8-logs/results.jsonl; judgement is B3's job):** M03 `text = str.__str__(text)` -> `pass`; M08 `len(text) > MAX_PATH_CHARS` -> `>=` (off by one on the path length limit); **M11 `except ValueError: return False` -> `return True` in the folder-containment helper (security-relevant: an error in the containment check would answer "inside")**; M15 `except (OSError, RuntimeError, ValueError)` -> without ValueError; M20 `len(name) > MAX_NAME_CHARS` -> `>=` (off by one on the name length limit). All five also survived the wider test run ("other passed, quick passed").
+
+ASK:
+1. B3 covers all five Q8 survivors, not only M15 (your item d), because M11 touches the path containment check. Default: yes.
+2. Q3b's double kill per round (second kill during recovery) is beyond your order (b); it is the harsher case. Default: keep.
+3. Throttle: next idle measurement at the next block; I start more only above 30 percent idle.
+
 ## 2026-11-13 12:52Z / 18:22 IST  HEARTBEAT 42 (R1 reported; real CPU vs load average measured)
 **Load, measured properly (`vmstat 1 4`, 12:48Z):** CPU user 13-15 percent, system 7-9 percent, **idle 64-69 percent, IO-wait 11-12 percent**, disk writes 72-83 MB/s, 10-14 thousand context switches per second, free RAM 12 GB. The load average (14.5 / 10.1 / 5.4) is inflated by processes waiting for the disk (the crash soak and the test suites write SQLite files): the 4 cores are about two thirds idle, the DISK is the busy part. So CPU capacity is free; further CPU-light work is fine, further disk-heavy work (more full suites or soaks) would only add IO wait. Agents running: 9 (Q1, Q2, Q3, Q4, Q6b, Q8, B1, B2 and none other).
 | id | what it does | since | expected end | real progress now | state |

@@ -56,3 +56,7 @@ R1 | agent a502a2..: numbers audit (read-only) | 12:42Z | ~13:05Z, stop 13:30Z |
 Q5b | reported 12:41Z closed: 5 fails (bad-value claims, line count, switch wording, extra key, portal pages)
 B2 | agent a5bf93..: lane3-fix-2 settings/docs patch builder | 12:45Z | ~13:30Z stop 14:00Z | running
 R1 | reported 12:47Z closed: 20 rows invalid/unknown, all in the lane's own files
+Q2b | agent a9f4ab..: fuzz seeds 7001-7005 + 7 extra generators | 12:49Z | ~14:00Z stop 14:20Z | running
+Q3b | agent afb32a..: crash soak seed 20261114, 5 leads/round, double kill in 151-300 | 12:49Z | ~13:40Z stop 14:20Z | running
+Q8b | agent a5a33c..: mutation of identity.py + claim logic | 12:49Z | ~13:50Z stop 14:20Z | running
+B3 | agent ada279..: lane3-fix-3 tests-only patch for Q8 survivors | 12:49Z | ~13:30Z stop 14:00Z | running
