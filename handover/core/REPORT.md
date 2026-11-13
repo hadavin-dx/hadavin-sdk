@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:51Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| F4 | builder: doc mismatches | fix order | 12:45Z | done 12:5xZ | build 1 | DONE (builder's claims, unverified): fix.patch (399 lines, 8 doc/script files + new tests/test_docs_match_tools.py, 7 tests; pushed handover/core/fix/F4/); crash_desk PYTHONPATH reproduced by the builder (`src` only: RuntimeError "the folder demo_only is missing"; `src:.` works); docs/tests.md count now 3989 tests in 97 files, pinned by a test against the collector; `-q` vs `-qq` text pinned; replay uses up a receipt number (desk.py:1361 upsert, AUTOINCREMENT) documented and pinned; hubspot-probe --token-env claim corrected; load_tools recipe ran: ALL 7 CHECKS HOLD rc 0; fails-before 5 failed / 2 passed on old text; passes-after 878 passed, 29 skipped, 11 files, ruff clean on 2 files. NOT run by builder: full suite. Note: its tree has 3989 tests, my after-run collected 3982: +7 = its new tests, consistent | V4 evidence |
+| V4 | independent evidence runner for F4: fails-before in old tree, passes-after, ruff, mutants of each doc sentence | proof | 12:51Z | 45 min | 1 | RUNNING (ae8322e1) | then egm reviewer |
+| F1 F2 F3 | builders | fix order | 12:45Z | about 13:45Z | build 1 | RUNNING | same |
+| E1 | root-cause experiments | fix order | 12:47Z | 13:45Z | 1 | RUNNING | table |
+| D1 | full suite + C10 docs patch | docs patch safe? | 12:38Z | about 13:08Z | 1 | RUNNING at [ 56%] | compare |
+| C6 | flakiness 20x | queue | 12:33Z | 13:30Z | 1 | RUNNING | read |
+
+FAILURES AND RETRIES: no new test failures. My slip: I first ran `git stash` in a copy meant for V4 (copy of tree-F4), which failed halfway; I rebuilt both V4 trees from tree-EV and re-applied the patch cleanly. No effect on any evidence. Totals unchanged.
+ASK: none.
+
+
 ## REPORT (container clock 12:49Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
