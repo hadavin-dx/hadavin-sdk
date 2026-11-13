@@ -3,3 +3,5 @@
 2026-11-13 12:38:57Z UTC / 18:08:57 IST  round 1 campaign b START seed=1202
 2026-11-13 12:47:50Z UTC / 18:17:50 IST  round 1 campaign b END rc=0 {"campaign": "b", "seed": 1202, "pairs": 200000, "requests_sent": 400000, "wall_s": 532.2, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
 2026-11-13 12:47:50Z UTC / 18:17:50 IST  round 1 campaign c START seed=1303
+2026-11-13 12:49:04Z UTC / 18:19:04 IST  round 1 campaign c END rc=0 {"campaign": "c", "seed": 1303, "replays": 20000, "wall_s": 73.6, "violations": 0, "counterexamples_total": 0, "label_counts": {}} 
+2026-11-13 12:49:09Z UTC / 18:19:09 IST  round 2 campaign a START seed=2101
