@@ -1,0 +1,447 @@
+smtp_ca:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.14s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.07s pe
+smtp_ca:empty
+  old: rc=0 0.14s | EXC SSLError: [X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4096) | t=0.07
+  new: rc=0 0.14s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.07s pe
+smtp_ca:100MB
+  old: rc=0 0.14s | EXC SSLError: [X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4096) | t=0.08
+  new: rc=0 0.13s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.06s pe
+smtp_ca:valid
+  old: rc=0 0.11s | ok built=SmtpProviderOutbox | t=0.06s peak_rss_mb=113
+  new: rc=0 0.12s | ok built=SmtpProviderOutbox | t=0.06s peak_rss_mb=113
+smtp_ca:ws-only
+  old: rc=0 0.11s | EXC SSLError: [X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4096) | t=0.05
+  new: rc=0 0.12s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.07s pe
+smtp_ca:garbage
+  old: rc=0 0.13s | EXC SSLError: [X509] PEM lib (_ssl.c:4096) | t=0.06s peak_rss_mb=113
+  new: rc=0 0.12s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.06s pe
+smtp_ca:dir
+  old: rc=0 0.13s | EXC IsADirectoryError: [Errno 21] Is a directory | t=0.07s peak_rss_mb=113
+  new: rc=0 0.11s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.05s pe
+smtp_ca:nul-name
+  old: rc=0 0.15s | EXC ValueError: embedded null byte | t=0.07s peak_rss_mb=113
+  new: rc=0 0.13s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.06s pe
+smtp_ca:missing
+  old: rc=0 0.14s | EXC FileNotFoundError: [Errno 2] No such file or directory | t=0.07s peak_rss_mb=113
+  new: rc=0 0.14s | EXC SettingRefused: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates | t=0.07s pe
+live_key:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.16s | EXC LiveTransport: the key file cannot be read | t=0.09s peak_rss_mb=113
+live_key:100MB-NUL
+  old: rc=0 0.33s | ok key_len=104857600 | t=0.25s peak_rss_mb=223
+  new: rc=0 0.15s | EXC LiveTransport: the key file is too large: it must hold only the key | t=0.09s peak_rss_mb=113
+live_key:valid
+  old: rc=0 0.16s | ok key_len=36 | t=0.09s peak_rss_mb=113
+  new: rc=0 0.16s | ok key_len=36 | t=0.09s peak_rss_mb=113
+live_key:empty
+  old: rc=0 0.14s | EXC LiveTransport: the key file holds no key | t=0.08s peak_rss_mb=113
+  new: rc=0 0.17s | EXC LiveTransport: the key file holds no key | t=0.10s peak_rss_mb=113
+live_key:dir
+  old: rc=0 0.12s | EXC LiveTransport: the key file cannot be read | t=0.07s peak_rss_mb=113
+  new: rc=0 0.18s | EXC LiveTransport: the key file cannot be read | t=0.10s peak_rss_mb=113
+hooks_flag:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+hooks_flag:100MB
+  old: rc=0 0.24s | ok returned | t=0.18s peak_rss_mb=213
+  new: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+hooks_flag:dir
+  old: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+  new: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+trace_flag:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.08s | ok returned | t=0.01s peak_rss_mb=113
+trace_flag:100MB
+  old: rc=0 0.24s | ok returned | t=0.19s peak_rss_mb=213
+  new: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+trace_flag:dir
+  old: rc=0 0.06s | ok returned | t=0.01s peak_rss_mb=113
+  new: rc=0 0.07s | ok returned | t=0.01s peak_rss_mb=113
+portal_armed:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.17s | ok None | t=0.11s peak_rss_mb=113
+portal_armed:100MB
+  old: rc=0 0.17s | ok None | t=0.11s peak_rss_mb=113
+  new: rc=0 0.17s | ok None | t=0.11s peak_rss_mb=113
+portal_armed:dir
+  old: rc=0 0.17s | ok None | t=0.11s peak_rss_mb=113
+  new: rc=0 0.21s | ok None | t=0.14s peak_rss_mb=113
+catcher_control:fifo
+  old: rc=None HANG 5.0s | (no output)
+  new: rc=0 0.13s | ok ('ok', 0.0) | t=0.06s peak_rss_mb=113
+catcher_control:100MB
+  old: rc=0 0.36s | ok ('ok', 0.0) | t=0.29s peak_rss_mb=223
+  new: rc=0 0.14s | ok ('ok', 0.0) | t=0.06s peak_rss_mb=113
+catcher_control:dir
+  old: rc=0 0.11s | ok ('ok', 0.0) | t=0.06s peak_rss_mb=113
+  new: rc=0 0.12s | ok ('ok', 0.0) | t=0.07s peak_rss_mb=113
+driver_int:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=0 0.1s | ok None | t=0.04s peak_rss_mb=113
+driver_int:100MB
+  old: rc=0 0.49s | ok None | t=0.43s peak_rss_mb=221
+  new: rc=0 0.1s | ok None | t=0.04s peak_rss_mb=113
+driver_int:dir
+  old: rc=0 0.1s | ok None | t=0.04s peak_rss_mb=113
+  new: rc=0 0.09s | ok None | t=0.04s peak_rss_mb=113
+model_control:fifo
+  old: rc=None HANG 5.0s | (no output)
+  new: rc=0 0.09s | ok ok | t=0.04s peak_rss_mb=113
+model_control:100MB
+  old: rc=0 0.34s | ok ok | t=0.27s peak_rss_mb=220
+  new: rc=0 0.12s | ok ok | t=0.05s peak_rss_mb=113
+model_control:dir
+  old: rc=0 0.12s | ok ok | t=0.05s peak_rss_mb=113
+  new: rc=0 0.09s | ok ok | t=0.04s peak_rss_mb=113
+real_check_smtp_ca:fifo
+  old: rc=1 0.26s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.25s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.2s | refused: CaFileRefused: REAL_IMAP_1_CA_FILE cannot be read as a file of trusted certificates
+real_check_smtp_ca:empty
+  old: rc=1 0.19s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.2s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:empty
+  old: rc=2 0.25s | refused: SSLError
+  new: rc=2 0.26s | refused: CaFileRefused: REAL_IMAP_1_CA_FILE cannot be read as a file of trusted certificates
+real_check_smtp_ca:100MB
+  old: rc=1 0.23s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.26s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:100MB
+  old: rc=2 0.24s | refused: SSLError
+  new: rc=2 0.2s | refused: CaFileRefused: REAL_IMAP_1_CA_FILE cannot be read as a file of trusted certificates
+real_check_smtp_ca:valid
+  old: rc=1 0.2s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.19s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:valid
+  old: rc=1 0.24s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.27s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_smtp_ca:ws-only
+  old: rc=1 0.2s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.21s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:ws-only
+  old: rc=2 0.19s | refused: SSLError
+  new: rc=2 0.28s | refused: CaFileRefused: REAL_IMAP_1_CA_FILE cannot be read as a file of trusted certificates
+real_check_smtp_ca:dir
+  old: rc=1 0.27s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.21s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check_imap_ca:dir
+  old: rc=2 0.2s | refused: IsADirectoryError
+  new: rc=2 0.2s | refused: CaFileRefused: REAL_IMAP_1_CA_FILE cannot be read as a file of trusted certificates
+live_check_closed_stdin
+  old: rc=1 TB 0.14s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.18s | models: 1, calls per model: 36, prices dated 2026-11-04
+live_check:effort-' low'
+  old: rc=1 TB 0.14s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=2 0.19s | refused: --effort: must be one of: low, medium, high, xhigh, max
+live_check:effort-ultra
+  old: rc=1 TB 0.19s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=2 0.16s | refused: --effort: must be one of: low, medium, high, xhigh, max
+live_check:leads-0
+  old: rc=2 0.2s | usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+  new: rc=2 0.2s | refused: --leads, --runs: must each be at least 1
+live_check:leads-huge
+  old: rc=None HANG 5.1s | (no output)
+  new: rc=None HANG 5.09s | (no output)
+live_check:timeout-nan
+  old: rc=2 0.14s | refused: DESK_LIVE_TIMEOUT_SECONDS must be above 0 and at most the desk's AI call budget
+  new: rc=2 0.24s | refused: DESK_LIVE_TIMEOUT_SECONDS must be above 0 and at most the desk's AI call budget
+live_check:timeout-inf
+  old: rc=2 0.22s | refused: DESK_LIVE_TIMEOUT_SECONDS must be above 0 and at most the desk's AI call budget
+  new: rc=2 0.2s | refused: DESK_LIVE_TIMEOUT_SECONDS must be above 0 and at most the desk's AI call budget
+live_check:max-tokens-0
+  old: rc=2 0.15s | refused: DESK_LIVE_MAX_TOKENS must be between 1 and the allowed maximum
+  new: rc=2 0.17s | refused: DESK_LIVE_MAX_TOKENS must be between 1 and the allowed maximum
+live_check:cap-negative
+  old: rc=2 0.17s | refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+  new: rc=2 0.17s | refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+live_check:cap-huge
+  old: rc=2 0.18s | refused: DESK_LIVE_CAP_RUN_USD is outside the allowed range
+  new: rc=2 0.16s | refused: DESK_LIVE_CAP_RUN_USD is outside the allowed range
+live_check:model-ctl
+  old: rc=1 TB 0.14s | models: 2, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.13s | models: 2, calls per model: 36, prices dated 2026-11-04
+live_check:price-date-ctl
+  old: rc=1 TB 0.17s | models: 1, calls per model: 36, prices dated ab
+  new: rc=2 0.16s | refused: --price-date: must be a day written YYYY-MM-DD (for example 2026-01-31)
+live_check:key-file-fifo
+  old: rc=1 TB 0.17s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.2s | models: 1, calls per model: 36, prices dated 2026-11-04
+live_check:key-file-dir
+  old: rc=1 TB 0.2s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.17s | models: 1, calls per model: 36, prices dated 2026-11-04
+live_check:ledger-fifo
+  old: rc=1 TB 0.15s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.13s | models: 1, calls per model: 36, prices dated 2026-11-04
+live_check:ledger-dir
+  old: rc=1 TB 0.14s | models: 1, calls per model: 36, prices dated 2026-11-04
+  new: rc=1 0.18s | models: 1, calls per model: 36, prices dated 2026-11-04
+live_check:base-url-ctl
+  old: rc=2 0.14s | refused: DESK_LIVE_BASE_URL: plain http is allowed for a loopback address only
+  new: rc=2 0.14s | refused: DESK_LIVE_BASE_URL is not a valid address
+check_invariants:--requests=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.11s | INPUT ERROR: --requests: is not a regular file (a pipe, a device or a socket would block): give a fi
+check_invariants:--catcher=fifo
+  old: rc=2 0.11s | INPUT ERROR: --facts: no such file
+  new: rc=2 0.11s | INPUT ERROR: --catcher: is not a regular file (a pipe, a device or a socket would block): give a fil
+check_invariants:--crm=fifo
+  old: rc=2 0.11s | INPUT ERROR: --facts: no such file
+  new: rc=2 0.1s | INPUT ERROR: --crm: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants:--model-log=fifo
+  old: rc=2 0.1s | INPUT ERROR: --facts: no such file
+  new: rc=2 0.11s | INPUT ERROR: --model-log: is not a regular file (a pipe, a device or a socket would block): give a f
+check_invariants:--book=fifo
+  old: rc=2 0.11s | INPUT ERROR: --facts: no such file
+  new: rc=2 0.12s | INPUT ERROR: --book: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants:--facts=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.1s | INPUT ERROR: --facts: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants:--requests=100MB
+  old: rc=2 0.08s | INPUT ERROR: --facts: no such file
+  new: rc=2 0.09s | INPUT ERROR: --facts: no such file
+catcher:--control=fifo(server)
+  old: rc=None HANG 5.0s | LISTENING 127.0.0.1 44391
+  new: rc=2 0.14s | refused: --control: is not a regular file (a pipe, a device or a socket would block): give a file
+catcher:--out=fifo
+  old: rc=None HANG 5.01s | LISTENING 127.0.0.1 44849
+  new: rc=2 0.16s | refused: --out: is not a regular file (a pipe, a device or a socket would block): give a file
+load_driver:--log=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.14s | ERROR: --log: is not a regular file (a pipe, a device or a socket would block): give a file
+load_driver:--facts=fifo
+  old: rc=None HANG 5.0s | (no output)
+  new: rc=2 0.11s | ERROR: --facts: is not a regular file (a pipe, a device or a socket would block): give a file
+load_driver:bad-scenario-huge
+  old: rc=None HANG 5.08s | (no output)
+  new: rc=None HANG 5.04s | (no output)
+load_driver:workers-0
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=None HANG 5.01s | (no output)
+load_driver:workers-huge
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=None HANG 5.01s | (no output)
+fake_model_server:--control-file=fifo(server)
+  old: rc=None HANG 5.01s | fake model listening on port 44639
+  new: rc=2 0.11s | refused: --control-file: is not a regular file (a pipe, a device or a socket would block): give a fi
+fake_model_server:--key-file=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.12s | refused: --key-file: is not a regular file (a pipe, a device or a socket would block): give a file
+fake_model_server:--call-log=fifo
+  old: rc=None HANG 5.01s | fake model listening on port 34511
+  new: rc=2 0.09s | refused: --call-log: is not a regular file (a pipe, a device or a socket would block): give a file
+fake_model_server:--port=0
+  old: rc=None HANG 5.01s | fake model listening on port 35915
+  new: rc=None HANG 5.0s | fake model listening on port 44779
+fake_model_server:--port=-1
+  old: rc=1 TB 0.11s | Traceback (most recent call last):
+  new: rc=1 TB 0.11s | Traceback (most recent call last):
+fake_model_server:--port=70000
+  old: rc=1 TB 0.09s | Traceback (most recent call last):
+  new: rc=1 TB 0.09s | Traceback (most recent call last):
+fake_model_server:--port=999999
+  old: rc=1 TB 0.12s | Traceback (most recent call last):
+  new: rc=1 TB 0.11s | Traceback (most recent call last):
+real_check:dry-port-base=0
+  old: rc=1 1.12s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=2 0.21s | refused: --dry-port-base: must be between 1 and 65531 (the self-test uses 5 ports in a row from it)
+real_check:dry-port-base=-1
+  old: rc=2 1.0s | refused: SettingRefused: DESK_PORT must be between 0 and 65535
+  new: rc=2 0.17s | refused: --dry-port-base: must be between 1 and 65531 (the self-test uses 5 ports in a row from it)
+real_check:dry-port-base=70000
+  old: rc=2 0.51s | refused: OverflowError
+  new: rc=2 0.19s | refused: --dry-port-base: must be between 1 and 65531 (the self-test uses 5 ports in a row from it)
+real_check:dry-port-base=huge
+  old: rc=2 0.55s | refused: OverflowError
+  new: rc=2 0.18s | refused: --dry-port-base: must be between 1 and 65531 (the self-test uses 5 ports in a row from it)
+real_check:dry-smtp-script-ctl
+  old: rc=1 0.85s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=2 0.18s | refused: --dry-smtp-script: is not a known behaviour; use one of: ok, bad_login, no_starttls, rcpt_5
+real_check:config-fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.2s | refused: PathRefused: --config: is not a regular file (a pipe, a device or a socket would block): gi
+real_check:config-dir
+  old: rc=2 0.21s | refused: PathRefused: --config: names a folder, not a file
+  new: rc=2 0.21s | refused: PathRefused: --config: names a folder, not a file
+real_check:config-100MB
+  old: rc=2 0.56s | refused: ValueError: config line 1 is not NAME=VALUE with an upper-case name
+  new: rc=2 0.23s | refused: ValueError: the config file is not UTF-8 text (or is over 1 MiB): save it as plain UTF-8 te
+real_check:config-nul-bytes
+  old: rc=2 0.44s | refused: ValueError: config line 1 is not NAME=VALUE with an upper-case name
+  new: rc=2 0.23s | refused: ValueError: the config file is not UTF-8 text (or is over 1 MiB): save it as plain UTF-8 te
+real_check:config-missing
+  old: rc=2 0.17s | refused: PathRefused: --config: no such file
+  new: rc=2 0.17s | refused: PathRefused: --config: no such file
+real_check:assume-yes-without-dry
+  old: rc=2 0.17s | refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+  new: rc=2 0.27s | refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks
+real_check:config-ctl-chars
+  old: rc=2 0.28s | refused: ValueError: config line 1 is not NAME=VALUE with an upper-case name
+  new: rc=2 0.27s | refused: ValueError: config line 1 is not NAME=VALUE with an upper-case name
+real_check:REAL_RESULT_FILE=fifo
+  old: rc=1 0.26s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=2 0.26s | refused: ValueError: REAL_RESULT_FILE must name a regular file or a new file, not a pipe or a device
+real_check:REAL_PERSONS=huge
+  old: rc=2 0.27s | refused: SettingRefused: REAL_PERSONS must be at most 1000
+  new: rc=2 0.24s | refused: SettingRefused: REAL_PERSONS must be at most 1000
+real_check:DESK_PORT=70000
+  old: rc=2 0.2s | refused: SettingRefused: DESK_PORT must be between 0 and 65535
+  new: rc=2 0.25s | refused: SettingRefused: DESK_PORT must be between 0 and 65535
+real_check:DESK_HUBSPOT_KEY_FILE=fifo
+  old: rc=1 0.26s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.26s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check:DESK_SMTPP_PASSWORD_FILE=fifo
+  old: rc=1 0.23s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.27s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+real_check:DESK_SMTPP_PASSWORD_FILE=dir
+  old: rc=1 0.27s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+  new: rc=1 0.18s | people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+desk_setting:port,DESK_PORT='0'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.1s | 0
+desk_setting:port,DESK_PORT='-1'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.11s | the desk refuses a setting: DESK_PORT must be between 0 and 65535
+desk_setting:port,DESK_PORT='70000'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.14s | the desk refuses a setting: DESK_PORT must be between 0 and 65535
+desk_setting:port,DESK_PORT='99999999'
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.1s | the desk refuses a setting: DESK_PORT must be between 0 and 65535
+desk_setting:port,DESK_PORT='1e999'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.12s | the desk refuses a setting: DESK_PORT is not a number
+desk_setting:port,DESK_PORT='\x1b[0m'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.12s | the desk refuses a setting: DESK_PORT is not a number
+desk_setting:port,DESK_PORT=' 5'
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.12s | 5
+desk_setting:port,DESK_PORT='5 '
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.13s | 5
+desk_setting:data-dir,DESK_DB_PATH=fifo
+  old: rc=2 0.05s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.12s | the desk refuses to start: the lead book path names a pipe, a device or a folder: it must be a regul
+desk_setting:db-path,DESK_DB_PATH=dir
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.11s | /home/user/build/rr6/tmp-EV2/h/art/adir
+desk_setting:no-args
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=2 0.09s | usage: python scripts/desk_setting.py db-path | data-dir | fakes-port | port
+desk_setting:DESK_LIVE_EFFORT=' low'
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.11s | the desk refuses a setting: DESK_LIVE_MODEL is required for the live model
+desk_setting:DESK_LIVE_EFFORT=ultra
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.13s | the desk refuses a setting: DESK_LIVE_MODEL is required for the live model
+feed:--index=huge
+  old: rc=1 TB 0.14s | Traceback (most recent call last):
+  new: rc=2 0.11s | refused: --index: must be a whole number from 1 to 6
+feed:--index=0
+  old: rc=1 TB 0.1s | Traceback (most recent call last):
+  new: rc=2 0.12s | refused: --index: must be a whole number from 1 to 6
+feed:--index=-1
+  old: rc=1 TB 0.15s | Traceback (most recent call last):
+  new: rc=2 0.15s | refused: --index: must be a whole number from 1 to 6
+hubspot_probe:--yes-spend-calls=huge
+  old: rc=2 0.16s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+  new: rc=2 0.16s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+hubspot_probe:--token-env=ctl
+  old: rc=0 0.13s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+  new: rc=0 0.11s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+hubspot_probe:--dry-run=ctl-url
+  old: rc=2 0.13s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+  new: rc=2 0.18s | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+n8n_api:KEY_FILE=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=1 0.13s | cannot read the n8n API key file (not a regular file)
+n8n_api:KEY_FILE=100MB
+  old: rc=1 0.12s | the n8n API key file must hold one word of printable ASCII (no space, second line or control charact
+  new: rc=1 0.14s | the n8n API key file must hold one word of printable ASCII (no space, second line or control charact
+n8n_api:KEY_FILE=dir
+  old: rc=1 0.14s | cannot read the n8n API key file (IsADirectoryError)
+  new: rc=1 0.14s | cannot read the n8n API key file (not a regular file)
+scrub_n8n_export:in=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.1s | refused: in.json: is not a regular file (a pipe, a device or a socket would block): give a file
+scrub_n8n_export:in=100MB
+  old: rc=1 TB 0.26s | Traceback (most recent call last):
+  new: rc=2 0.08s | refused: in.json: cannot be read as a JSON workflow file
+scrub_n8n_export:out=fifo
+  old: rc=1 TB 0.08s | Traceback (most recent call last):
+  new: rc=2 0.07s | refused: out.json: is not a regular file (a pipe, a device or a socket would block): give a file
+scrub_n8n_export:out=dir
+  old: rc=2 0.09s | refused: out.json: names a folder, not a file
+  new: rc=2 0.07s | refused: out.json: names a folder, not a file
+scrub_n8n_export:in=missing
+  old: rc=2 0.08s | refused: in.json: no such file
+  new: rc=2 0.08s | refused: in.json: no such file
+crash_desk:DESK_DB_PATH=fifo
+  old: rc=1 0.3s | crash flag file: /home/user/build/rr6/tmp-EV2/h/art/crash.flag  (write a point name such as D2 into 
+  new: rc=4 0.34s | crash flag file: /home/user/build/rr6/tmp-EV2/h/art/crash.flag  (write a point name such as D2 into 
+reset_check:no-args
+  old: rc=0 0.12s | (no output)
+  new: rc=0 0.11s | (no output)
+feed:--source=ctl
+  old: rc=2 0.13s | usage: feed.py [-h] --source {form,webhook} [--index INDEX] [--all]
+  new: rc=2 0.18s | refused: --source: is not one of the allowed values (see --help)
+desk_setting_live:EFFORT='low'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.12s | 8765
+desk_setting_live:EFFORT=' low'
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.11s | the desk refuses a setting: DESK_LIVE_EFFORT must be one of: low, medium, high, xhigh, max
+desk_setting_live:EFFORT='ultra'
+  old: rc=2 0.03s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.13s | the desk refuses a setting: DESK_LIVE_EFFORT must be one of: low, medium, high, xhigh, max
+desk_setting_live:EFFORT='low\x1b'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.1s | the desk refuses a setting: DESK_LIVE_EFFORT must be one of: low, medium, high, xhigh, max
+desk_setting_live:EFFORT=''
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.1s | the desk refuses a setting: DESK_LIVE_EFFORT and DESK_LIVE_API_VERSION must not be empty
+desk_setting_live:EFFORT='LLLLLLLLLL'
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=4 0.12s | the desk refuses a setting: DESK_LIVE_EFFORT must be one of: low, medium, high, xhigh, max
+desk_setting_live:key-file=fifo
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.12s | 8765
+desk_setting_live:ledger=fifo
+  old: rc=2 0.04s | /home/user/build/rr6/venv-br/bin/python: can't open file '/home/user/build/rr6/tree-old-EV2/scripts/
+  new: rc=0 0.12s | 8765
+check_invariants2:--requests=fifo
+  old: rc=2 0.09s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.07s | INPUT ERROR: --requests: is not a regular file (a pipe, a device or a socket would block): give a fi
+check_invariants2:--catcher=fifo
+  old: rc=2 0.08s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.11s | INPUT ERROR: --catcher: is not a regular file (a pipe, a device or a socket would block): give a fil
+check_invariants2:--crm=fifo
+  old: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.1s | INPUT ERROR: --crm: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants2:--model-log=fifo
+  old: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.09s | INPUT ERROR: --model-log: is not a regular file (a pipe, a device or a socket would block): give a f
+check_invariants2:--book=fifo
+  old: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.09s | INPUT ERROR: --book: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants2:--facts=fifo
+  old: rc=None HANG 5.01s | (no output)
+  new: rc=2 0.1s | INPUT ERROR: --facts: is not a regular file (a pipe, a device or a socket would block): give a file
+check_invariants2:--requests=100MB
+  old: rc=2 0.07s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.07s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): the content cannot be used
+check_invariants2:--catcher=100MB
+  old: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): the content cannot be used
+check_invariants2:--crm=100MB
+  old: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.09s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): the content cannot be used
+check_invariants2:--model-log=100MB
+  old: rc=2 0.09s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): KeyError
+  new: rc=2 0.1s | INPUT ERROR: cannot read the driver facts facts.json (intended_requests): the content cannot be used
+check_invariants2:--facts=100MB
+  old: rc=2 0.44s | INPUT ERROR: cannot read the driver facts big100.pem (intended_requests): JSONDecodeError
+  new: rc=2 0.12s | INPUT ERROR: cannot read the driver facts big100.pem (intended_requests): the file is too big

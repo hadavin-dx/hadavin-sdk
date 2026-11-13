@@ -1,4 +1,9 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead) EVIDENCE RUNNER on r2 patch DONE (saved: handover/core/fix/EV2-EVIDENCE-r2.md, EV2-hostile-table.txt)
+Runner measured (I re-read the two log tails: they match): full suite in a git tree, both groups rc=0: A 1919 passed/4 skipped, B 2296 passed; 0 failed; all 104 test files run. Patches apply cleanly (plain git apply, also on CRLF .ps1 copy); tree equals the builder's tree. Fail-before: 124 failed, 375 passed, 7 collection errors (missing new code) on 18 test files. Lint/format/bandit clean; suppressions +17 noqa, +3 type: ignore (all E402 imports or in new tests), nosec/nosemgrep unchanged. Hostile 149 cases: old 27 hangs + 17 tracebacks; new 3 tracebacks + 5 hang rows. FIFO as SMTP CA, IMAP CA, key file etc: new refuses at once. 100 MB key file refused. Closed stdin: no traceback, but 3 lines not 1 (two cost lines + the stop line), rc=1.
+STILL OPEN IN r2 (runner confirms the reviewer's R2-04 and R2-01; R3 builder fixes these): fake_model_server --port -1/70000 OverflowError; load_driver burst:<huge>/--workers 0 inconclusive. NEW from runner, not in R3 brief yet: run_live_check --leads 99999999999999999999 hangs (memory grows; same on old code); desk_setting accepts DESK_PORT=" 5" and prints a folder path for db-path (uncertain). I will pass both to the R3 builder.
+Not checked by runner: Windows .ps1 run, 4 check_invariants 100 MB cases (its facts file was empty), flakiness (suite ran once), tests ran as root. R3 builder still running (16:22Z checkpoint: tests written).
+
 ## STATUS (core lead, one line)
 R3 builder a804cecf and evidence runner a6382a93 both still running; no failures; see their checkpoints (R3: tests and fail-before next; EV2: hostile stage). ASK: none.
 
