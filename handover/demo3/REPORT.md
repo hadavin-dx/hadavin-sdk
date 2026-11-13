@@ -1,5 +1,16 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:12Z / 15:42 IST  HEARTBEAT 6
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner (Sonnet): full suite, Python 3.12, no browser tests; main 61ded9e and PR #12 8d65577 | pass/fail evidence PR #12 vs main | 09:39Z / 15:09 | run2 of both heads at ~66-71% at 10:10Z; ends ~10:18Z / 15:48 IST (about 6 min left) | run 2 of 2 per head (order says twice; not a retry) | running | when A reports: check suite.md has counts and last 15 lines of every failure; then write evidence/summary.md numbers table on top |
+| B | Evidence runner (Sonnet): hostile-input pass | path-confinement evidence | 09:39Z / 15:09 | done 09:49Z | 5 of 5 groups | reported, closed | none |
+| C | Evidence runner (Sonnet): hang hunt on test_burst_run_logs_every_request, fresh main copy | whether and when the test hangs | 09:53Z / 15:23 | waiting for A; then d2 and full suite c (~20 min); hard stop 11:07Z / 16:37 IST | tasks a, b, d1 done; no retry | waiting for A's run2 to finish | when A ends C starts d2 and c |
+| lead-me | register, supervision, pushes | keeps A and C watched | 09:37Z / 15:07 | cap 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:22Z |
+
+ASK: none.
+RAW FACTS (no verdict): hang hunt so far, from evidence/raw/hang-summary.txt: (a) the test alone 10 of 10 runs exit 0, 2-4 s each; (b) its whole file 5 of 5 exit 0, 10-11 s each; (d1) one core (`taskset -c 0`) 5 of 5 exit 0, 2-4 s each; no hang seen. Suite: run1 and run2 of both heads each show about 56 (main) and 57 (PR12) `F` marks in the progress dots and exit 1; the F counts are the same in run1 and run2 of the same head; the logs still have no pytest summary line until the runs end. Failing test names come from A's suite.md.
+
 ## 2026-11-13 10:00Z / 15:30 IST  HEARTBEAT 5
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|
