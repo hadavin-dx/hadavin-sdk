@@ -1,2 +1,3 @@
 13:37Z 19:07 IST B1d start
 13:39Z burst n=100 run verified; writing docs next; no process of mine left
+13:40Z docs edited (README, limits, recipe); next: tests
