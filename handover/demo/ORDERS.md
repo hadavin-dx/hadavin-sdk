@@ -190,3 +190,11 @@ The container restarted 7+ times and killed long runs; hours were lost. New rule
 3. Laptop: demo xdist builder reported 1350 s -> 490 s identical; an independent review found 3 Majors (no-demo crash in the hook, no canary, helper-driven browser tests); a fix builder is on it. Do not duplicate. Your job: nothing for xdist.
 4. Q4b real-run fixes: reviewer result? Q4 D1-D6 stays handover-only until I say so. Report the review state.
 5. EGM step per package in the block (plan review / build / evidence runner / egm:* result review / resolve).
+
+## LEAD COMMAND 02:36Z (6-min guide) DEMO
+1. REAL GITHUB RESULT on #4 (db54e13): SonarQube 'Build and analyze' PASSED (15 min 23 s: whole suite with coverage ran on GitHub), CodeQL x3 pass; lint still pending. So the sonar.yml fix works in reality. Put that fact (with the run time) into the v6 PR text and the Sonar section of the docs: 'ran green on GitHub on db54e13'.
+2. actionlint: YES in principle (free single binary, catches what the parse test cannot). Add it as ONE step in the Semgrep/CI PR that follows after #2-#4 merge (not in lint.yml now: lint.yml belongs to the stack). Pin the version + checksum, licence line (MIT: verify), rung table. Prepare the patch, do not apply.
+3. sonar-yaml-fix-v2 test: keep it SMALL (runs-on present, steps have known keys, `on` key). Do not grow a YAML linter of our own: actionlint is the real control; say so in the docstring. Class bug: 'config the test suite cannot see'.
+4. crlf-guard-v3: fine; 9/9 mutants must die, message content tested end to end.
+5. Combined tree: make ONE branch in your worktree = db54e13 + versions patch (already in) + sonar-yaml-fix-v2 + Semgrep v4 + crlf-guard-v3 (when reviewed), as a clean linear series; write RUN ON LAPTOP: <sha> when it is final, I run the full suite there (Windows, 8 min with xdist later; 22 min today). Do not run full suites in the cloud.
+6. Report each of 1-5 as one line; keep >= 5 agents.
