@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS (core lead)
+EV4 runner a0470d0a (r4 head) checkpoint: 17:37:26 checkpoint: step2 running . Whole-patch reviewer a79edc55: running, no report yet (no checkpoint file by design). Mail-path second pass a40ebe73: DONE (0 Blockers/Majors; block above). Nothing failed this block. ASK: none.
+
 ## STATUS (core lead) MAIL-PATH SECOND PASS DONE (saved handover/core/review/core-fix-on-frozen-r4-mailpath-review.md)
 Reviewer a40ebe73 (fallback): 0 Blockers, 0 Majors on the TLS trust path. Real loopback handshake: pinned CA connects; another CA refused; wrong host name refused; connect by IP refused; system store not reached; blank/empty setting refused; every file shape refused at once; no path or secret in any message; 9 of 10 mutations caught. NOT checked: Python 3.13, permission-denied (root only), a full SMTP session, an expired certificate handshake.
 FOUND: (F1) docs/settings.md:80,131 and smtp_provider.py:97 say 'extra trusted authorities' but the file REPLACES the system ones: wrong claim, I fix it; (F2) the live model key reader accepts a BOM and a two-line file and fails with the wrong text after the spend is reserved (no leak): fix with a shared reader; F4 an x509 count check no test pins; F5 a caller-given context is not checked (unreachable from settings). I collect these with the whole-patch reviewer's findings into ONE fix batch (R5) after it reports. Still running: EV4 runner a0470d0a, whole-patch reviewer a79edc55. ASK: none.
