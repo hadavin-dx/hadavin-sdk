@@ -1,1 +1,2 @@
 13:38Z E6 started; worktrees ready, patch applied
+13:39Z steps 1,2 done (fix 56 pass; base 7 fail/49 pass); starting xdist

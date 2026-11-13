@@ -1,0 +1,16 @@
+# B1d burst n=100 on a real desk (private ports), 2026-11-13T13:39:12Z
+## b1
+SENT n=100
+STATUS 201=1 200=99
+RETRIES busy503=0 refused=0
+RESULT sent=100 expected=100
+## b2
+SENT n=100
+STATUS 201=1 200=99
+RETRIES busy503=0 refused=0
+RESULT sent=100 expected=100
+## b3
+SENT n=100
+STATUS 200=100
+RETRIES busy503=0 refused=0
+RESULT sent=100 expected=100
