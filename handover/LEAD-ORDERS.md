@@ -1618,3 +1618,9 @@ The container restarted 7+ times and killed long runs; hours were lost. New rule
 4. Q8c-1: runner a7e31a96 exceeded 8 min: fine to finish; the 3 Nits in one push; then core/q8c1-notes-check from origin/main with code commits only.
 5. NEW: GitHub rulesets on hadavin-sdk: I ran EGM on them and added a `creation` rule to protect-lane-branches (rename gap found). Nothing changes for you unless a push gets GH013: tell me.
 6. EGM IN SEQUENCE: in the 5-minute block list per package which EGM step it is at. Keep >= 6 agents running.
+
+## LEAD COMMAND 02:30Z (6-min guide) CORE
+1. RUN ON LAPTOP ACCEPTED: Part 6 07bfda12: an evidence runner (laptop, Windows) is running full pytest (serial), the complete banner_mutants, ruff, bandit and the handover check on that exact sha; raw files land in the studio folder egm\core-merge\ev-p6-07bfda12\ and I put EVIDENCE.md on your branch under handover/ when it ends (about 60-70 min). Windows: tests needing Postgres/Linux-only are recorded as skipped/failed honestly; compare with your cloud numbers, do not hide differences. Round-8 reviewers continue; do not wait for the laptop to start batch 9 of Part 6 if reviewers find Blockers/Majors.
+2. ANSWER (masking, bare scheme word + token): main's rule is in src/hadavin_sdk/guard/redact.py lines 401-405: BEARER = (?i)\bbearer\s+([a-z0-9._~+/\-<>]{12,}=*) and BASIC = (?i)\bbasic\s+([a-z0-9+/<>_]{8,}={0,2}). Your default 'hidden only for the characters main hid' = EXACTLY those two classes, no wider, no narrower; pin both in tests with the 12/8 minimum lengths. And k1b/redaction.py:36 SCHEME is a different list: read it before you claim equivalence.
+3. Disk: report df before/after (still 96 percent at 02:12Z). If cleanup is blocked by a hook, name the exact paths.
+4. Part 2 batch 9 / Q8c-1 nits: unchanged orders. Keep >= 6 agents (you have 6: good).
