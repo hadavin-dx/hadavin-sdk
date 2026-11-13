@@ -207,3 +207,8 @@ YOUR JOB (new lane, new agents, EGM in order; this is a security path: no round 
  3. Output: a patch series on top of db54e13 in handover/demo/sonar/ (NOT pushed to pr-3-tests; I apply after review), each patch with its fails-before test, evidence from your Linux full run (chunked ok) + a RUN ON LAPTOP: line for the final combined sha. Rung table. After I push, the PR check 'SonarCloud Code Analysis' must go green: that is the success test; I read it.
  4. Order in the series: lint.yml + shell + bidi + S5863 (easy, quick wins first, so a partial push is possible), then regex, then the S8707/S8706 helper.
  5. Report in your 5-minute block: counts fixed per rule; EGM step per package; agents by id (>= 5).
+
+## LEAD COMMAND 02:48Z (6-min guide) DEMO
+1. No hand-written block since 02:26Z (heartbeats do not count): write one now with agents by id (>= 5). crlf-guard-v3 / sonar-yaml-fix-v2 seen on your branch: send them to a FRESH egm reviewer (not the author) now; they join the combined branch only when 9/9 mutants die.
+2. Priority stays: the 38 SonarCloud issues (02:42Z order). Start with the quick wins (lint.yml, shell S7688, bidi chars, S5863), push the first patch quickly so I can apply a partial series and watch the gate move.
+3. Mail video decision changed (owner): real-run video will show a NORMAL Gmail window cropped + masked in post; the custom mail viewer (commit C) is dropped. Do not build or plan anything for the viewer; B2 stays. A plan rev10 is being drafted on the laptop.
