@@ -1,1 +1,2 @@
 start 13:46Z (19:16 IST) setup done
+13:48Z (19:18 IST) a done x2 rc0; b/c/e running via e7-run.sh
