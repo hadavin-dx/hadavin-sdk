@@ -1,5 +1,22 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:37Z / 19:07 IST  HEARTBEAT 58 (round 3 reviews of lane3-fix-1 and lane3-fix-3 saved; B1d and REV-3d started)
+Note: the clock times written in HEARTBEAT 57 and in some register rows (13:38-14:00Z) were estimates, not clock reads; this block uses the container clock.
+| id | what it does | state |
+|---|---|---|
+| B2b | BUILDER lane3-fix-2 round 2 (product code) | running, stop 14:15Z |
+| E3b | EVIDENCE RUNNER lane3-fix-1 round 2 suites (numbers cover the round-2 patch; round 4 needs its own run) | running |
+| B5b | BUILDER lane3-fix-5 round 2 | running, stop 14:15Z |
+| B4b | BUILDER lane3-fix-4 round 2 + stack variant | running, stop 14:30Z |
+| B6 | BUILDER lane3-fix-6 docs/tests.md defects | running, stop 14:30Z |
+| B7 | BUILDER lane3-fix-7 tests for Q8b survivors | running, stop 14:30Z |
+| B1d | BUILDER lane3-fix-1 round 4 (5 majors, 20 minors) | running, stop 14:35Z |
+| REV-3d | fresh review of lane3-fix-3-r4 (security path) | running |
+**lane3-fix-1-r3 round 3 reviews:** comprehension 0 blocker, 5 major (n8n start step has no command; owner account comes after the key step; "step 0" vs "section 0" clash; receipt-number wording; burst "counts check" unnamed), 11 minor; technical 0 blocker, 0 major, 9 minor (all sentences of the patch checked against code: 31 correct). B1d is fixing all of them.
+**lane3-fix-3-r3 review (security path):** 0 blocker, 1 major: two lines over 120 characters in the new test file (my awk check had been run on the earlier file only; ruff is CI-only here). Fixed by me in lane3-fix-3-r4.patch (sha256 520ff284c018a2cc21852c2978bf77efcc2cfc7292a6aa1b3e3932b1bcab81f0): 0 lines over 120; 413 passed, 6 skipped (new file + old path-confinement tests + hygiene). A fresh review (REV-3d) now runs on r4; security path has no round cap.
+### FAILURES AND RETRIES: my own slip this block: I did not run the line-length check on the final r3 test file before handing it to review (cost one review major, fixed in r4). No other new failures.
+ASK: same as heartbeat 57 (loc@.dom accepted: product decision; quiet re-measurement; fix-4 stack variant).
+
 ## 2026-11-13 13:40Z / 19:10 IST  HEARTBEAT 57 (Q8b reported; fix-4 resolved; three new builders)
 **Idle (`vmstat`, 13:30Z): IDLE 92%, free RAM about 8 GB.**
 | id | what it does | since | expected end | state |
