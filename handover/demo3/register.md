@@ -137,3 +137,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | E5 | EVIDENCE RUNNER lane3-fix-2-r2 (full suite once, tests fail on f3c39cf8 code) | now | stop 14:35Z | running |
 | REV-5c | closed: 0 blocker, 1 major (ruff I001 import style, 2 files), 4 minor, 1 nit; saved evidence/review-lane3-fix-5-r3.md | | | closed; builder B5d next (round 4, security-adjacent so uncapped) |
 | REV-2c | closed: 0 blocker, 1 major (PermissionError from Path.is_dir on chmod 000 parent; LEAD VERIFIED in stdlib source), 6 minor; saved evidence/review-lane3-fix-2-r2-design.md | | | closed; waits for REV-2d + E5, then resolve + B2c |
+| REV-2d | closed: 0 logic blocker, 2 major (E501 x8 lines LEAD VERIFIED by awk; PermissionError same as REV-2c), 5 minor; saved evidence/review-lane3-fix-2-r2-codedetails.md | | | closed; E5 still running; resolve + B2c next |
