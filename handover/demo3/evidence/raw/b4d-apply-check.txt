@@ -1,0 +1,19 @@
+A r4 plain on f3c39cf8:
+  check lane3-fix-4-r4.patch rc=0
+B r4 plain then fix-8:
+  check lane3-fix-4-r4.patch rc=0
+  check lane3-fix-8.patch rc=0
+C fix-8 then r4 plain:
+  check lane3-fix-8.patch rc=0
+  check lane3-fix-4-r4.patch rc=0
+D stack + for-stack r4:
+  check claims-stack-on-f3c39cf8.patch rc=0
+  check lane3-fix-4-for-stack-r4.patch rc=0
+E stack + for-stack r4 + fix-8:
+  check claims-stack-on-f3c39cf8.patch rc=0
+  check lane3-fix-4-for-stack-r4.patch rc=0
+  check lane3-fix-8.patch rc=0
+F stack + fix-8 + for-stack r4:
+  check claims-stack-on-f3c39cf8.patch rc=0
+  check lane3-fix-8.patch rc=0
+  check lane3-fix-4-for-stack-r4.patch rc=0
