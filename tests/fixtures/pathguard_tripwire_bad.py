@@ -98,6 +98,6 @@ def counts_component_as_a_guard(base, name):
     target.unlink()
 
 
-def counts_operator_text_as_a_guard(path):
-    pathguard.operator_text(path, what="x")
+def discards_the_checked_path_and_reads_the_unchecked_one(path):
+    pathguard.operator_file(path, what="x")
     path.read_text()

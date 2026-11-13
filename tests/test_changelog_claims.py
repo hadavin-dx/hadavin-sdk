@@ -1,5 +1,8 @@
 """The Unreleased pathguard entry in CHANGELOG.md makes claims about the code. Each claim is checked against the code in its
-own test, so the text cannot drift from what runs. The entry is the heading bullet and the indented bullets under it."""
+own test, so the text cannot drift from what runs. The entry is the heading bullet and the indented bullets under it.
+
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 23 control, 12 pin, 32 other. Nothing here says a test "fails on old main".
+"""
 
 from __future__ import annotations
 
@@ -29,7 +32,7 @@ def bullet(start: str) -> str:
     return found[0]
 
 
-def test_the_heading_is_narrow_and_names_the_scan_it_depends_on():
+def test_control_the_heading_is_narrow_and_names_the_scan_it_depends_on():
     assert LINES[START].startswith(
         "- **Path checks: `hadavin_sdk/pathguard.py` holds the rules for the file operations"
     )
@@ -37,23 +40,23 @@ def test_the_heading_is_narrow_and_names_the_scan_it_depends_on():
     assert "tests/fixtures/pathguard_exceptions.txt" in ENTRY
 
 
-def test_the_module_docstring_makes_the_same_narrow_claim():
+def test_pin_the_module_docstring_makes_the_same_narrow_claim():
     first = (pathguard.__doc__ or "").splitlines()[0]
     assert "listed by the package tripwire test" in first
 
 
 @pytest.mark.parametrize("n", range(1, 14))
-def test_every_rule_from_r1_to_r13_is_named_as_a_whole_word(n):
+def test_control_every_rule_from_r1_to_r13_is_named_as_a_whole_word(n):
     assert re.search(rf"\(R{n}\)|\bR{n}\b", bullet("The rules (R1 to R13)")), f"R{n} is not named"
 
 
-def test_the_rule_list_does_not_name_a_rule_that_does_not_exist():
+def test_control_the_rule_list_does_not_name_a_rule_that_does_not_exist():
     text = bullet("The rules (R1 to R13)")
     named = {int(m) for m in re.findall(r"\bR(\d+)\b", text)}
     assert named <= set(range(1, 14))
 
 
-def test_the_numbers_in_the_entry_are_the_numbers_in_the_code():
+def test_pin_the_numbers_in_the_entry_are_the_numbers_in_the_code():
     assert f"at most {pathguard.MAX_COMPONENT_BYTES} bytes" in ENTRY
     assert f"at most {pathguard.MAX_PATH_BYTES} bytes in all" in ENTRY
     assert f"{pathguard.MAX_WRITE_NAME_BYTES} bytes" in ENTRY
@@ -61,7 +64,7 @@ def test_the_numbers_in_the_entry_are_the_numbers_in_the_code():
 
 
 @pytest.mark.parametrize("name", ["con", "aux", "com1"])
-def test_device_names_named_in_the_entry_are_refused(name):
+def test_pin_device_names_named_in_the_entry_are_refused(name):
     assert f"`{name}`" in ENTRY
     with pytest.raises(pathguard.PathRefused):
         pathguard.component(name, what="n")
@@ -71,8 +74,8 @@ def test_device_names_named_in_the_entry_are_refused(name):
     ("rule", "name"),
     [("R3", "a:b"), ("R6", "x."), ("R6", "x "), ("R7", "con"), ("R12", "a?b")],
 )
-def test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join(tmp_path, rule, name):
-    assert rule in bullet("R3, R6, R7 and R12 apply only")
+def test_pin_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join(tmp_path, rule, name):
+    assert rule in bullet("R3, R6, R7 and R12 apply to")
     for call in (
         lambda: pathguard.component(name, what="n"),
         lambda: pathguard.join(tmp_path, name, what="n"),
@@ -83,19 +86,22 @@ def test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join(tmp_path
 
 
 @pytest.mark.parametrize("name", ["vault:token", "con", "x.", "a?b"])
-def test_an_operator_typed_name_is_held_to_containment_only(tmp_path, name):
-    """The names the entry lists are read by ``inside``, ``operator_file``, ``hash_files`` and the secrets reader."""
+def test_a_name_the_caller_typed_is_refused_where_the_join_pattern_reads_it(tmp_path, name):
+    """The entry lists these names: ``inside``, ``operator_file`` and ``config.confined`` still accept them (nothing reads
+    after them), the three flagged reads (``hash_files``, the secrets reader, the answers file) refuse them."""
     from hadavin_sdk.actions.secrets_file import MountedFileProvider
     from hadavin_sdk.hashing import hash_files
 
-    assert f"`{name}`" in bullet("R3, R6, R7 and R12 apply only")
+    assert f"`{name}`" in bullet("R3, R6, R7 and R12 apply to")
     (tmp_path / name).write_text("v", encoding="utf-8")
     (tmp_path / name).chmod(0o400)
     assert pathguard.inside(tmp_path, tmp_path / name, what="n", must_exist=True, kind="file")
     assert pathguard.operator_file(tmp_path / name, what="n")
-    assert len(hash_files(tmp_path, [name])) == 64
-    assert MountedFileProvider(tmp_path, 1).get(name) == "v"
     assert confined(tmp_path, name) == (tmp_path / name).resolve()
+    with pytest.raises(pathguard.PathRefused):
+        hash_files(tmp_path, [name])
+    with pytest.raises(pathguard.PathRefused):
+        MountedFileProvider(tmp_path, 1).get(name)
 
 
 def test_each_message_the_entry_quotes_is_the_message_the_code_gives(tmp_path):
@@ -149,7 +155,7 @@ def test_each_message_the_entry_quotes_is_the_message_the_code_gives(tmp_path):
     )
 
 
-def test_the_signer_says_where_the_key_was_as_typed_and_never_the_resolved_path(tmp_path):
+def test_control_the_signer_says_where_the_key_was_as_typed_and_never_the_resolved_path(tmp_path):
     from types import SimpleNamespace
 
     from hadavin_sdk.audit.signer import build_local
@@ -184,7 +190,9 @@ def test_the_atomic_write_signature_temp_name_mode_and_untouched_taken_name(tmp_
     temp = [Path(p).name for p, _ in seen if Path(p).name.startswith(".f.txt.")]
     assert temp and re.fullmatch(r"\.f\.txt\.[0-9a-f]{16}\.tmp", temp[0]), temp
     assert all(mode == 0o600 for p, mode in seen if Path(p).name.startswith(".f.txt."))
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError, match=r"atomic_write\(\) missing 1 required positional argument: 'text'"
+    ):
         atomic.atomic_write(tmp_path / "f.txt", "x")  # the old two-argument form is gone
 
 
@@ -407,7 +415,13 @@ def test_local_dir_refuses_an_id_drops_the_outcome_and_skips_a_link(tmp_path, ca
     from hadavin_sdk.models import AuditEvent
 
     text = bullet("`LocalDirSink` refuses an event id")
-    for claim in ("is NOT written", "`refused_events`", "a link inside the outbox is skipped"):
+    for claim in (
+        "is NOT written",
+        "`refused_events`",
+        "a link inside the outbox is skipped",
+        "only for such an id",
+        "takes the same outbox path",
+    ):
         assert claim in text, claim
 
     def event(event_id):
@@ -433,7 +447,98 @@ def test_local_dir_refuses_an_id_drops_the_outcome_and_skips_a_link(tmp_path, ca
     assert not (sink.outbox / "corrupt" / "linked.json").exists()
 
 
-def test_a_replay_that_stops_writes_failed_txt_and_never_hides_the_first_error():
+def test_pin_an_error_from_the_operating_system_is_a_fixed_refusal(tmp_path):
+    text = bullet("An error from the operating system while a typed path is checked")
+    for claim in (
+        "R10",
+        "`PathRefused: <argument>: cannot be resolved`",
+        "File name too long",
+        "a NUL",
+        "`signer.key_path`",
+        "`registry`",
+        "at most 252 bytes",
+        "13 sites",
+    ):
+        assert claim in text, claim
+    assert pathguard.MAX_COMPONENT_BYTES == 255
+    with pytest.raises(
+        pathguard.PathRefused, match="^folder: too long$"
+    ):  # over 255 bytes: R5, before the system
+        pathguard.operator_dir(tmp_path / ("a" * 256), what="folder", must_exist=False)
+
+
+def test_the_entry_names_the_link_to_another_folder_case_and_the_vault_risk():
+    """The break for operator-typed files is named in plain words, and so is the weaker Vault form (read from the code)."""
+    text = bullet("R3, R6, R7 and R12 apply to")
+    for claim in (
+        "a link pointing into a different folder is refused",
+        "a link whose target stays in the same folder is read",
+        "/run/secrets.d/1/key",
+        "without `must_exist` or `kind`",
+        "nothing here says that any SonarCloud finding is cleared",
+    ):
+        assert claim in text, claim
+    vault = (Path(pathguard.__file__).parent / "actions" / "secrets_vault.py").read_text(
+        encoding="utf-8"
+    )
+    call = vault[vault.index("pathguard.join(", vault.index("vault sign-in token file") - 200) :][
+        :200
+    ]
+    assert "must_exist" not in call and "kind=" not in call, (
+        "the entry says the vault read is the weaker form"
+    )
+
+
+def test_the_sweep_sites_the_entry_counts_are_the_ones_in_the_source():
+    """Each of the 13 sites named in the sweep sentence is a place where a derived name is built (text search)."""
+    src = Path(pathguard.__file__).parent
+    names = {
+        "k1b/replay.py": 'f"{b.case_id}.json"',
+        "k1b/score.py": 'f"{case_id}.json"',
+        "k1b/bundle.py": 'f"{case}.json".encode()',
+        "audit/local_dir.py": 'f".tmp-{event.event_id}"',
+        "evals.py": 'f"{agent_id}.jsonl"',
+        "registry.py": 'f"{agent_id}.yaml"',
+        "tools.py": 'with_suffix(".py")',
+        "llm/fake.py": 'f"{digest}-{attempt}.json"',
+        "audit/anchors.py": 'f"{PREFIX}{seq:012d}.json"',
+    }
+    missing = [f for f, text in names.items() if text not in (src / f).read_text(encoding="utf-8")]
+    assert not missing, missing
+
+
+def test_what_is_accepted_facts_in_the_entry_are_true(tmp_path):
+    from hadavin_sdk.k1b.atomic import atomic_write
+
+    text = bullet("What is accepted")
+    for claim in (
+        "255 bytes",
+        "`sub/../real.txt`",
+        "joiner and variation",
+        "a link",
+        "22 more bytes",
+    ):
+        assert claim in text, claim
+    name = "n" * pathguard.MAX_COMPONENT_BYTES
+    assert pathguard.component(name, what="n") == name
+    assert pathguard.join(tmp_path, name, what="n").name == name
+    assert pathguard.inside(tmp_path, tmp_path / name, what="n").name == name
+    with pytest.raises(pathguard.PathRefused):
+        atomic_write(tmp_path, name, "x")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "real.txt").write_text("x", encoding="utf-8")
+    assert (
+        pathguard.inside(tmp_path, tmp_path / "sub" / ".." / "real.txt", what="n").name
+        == "real.txt"
+    )
+    with pytest.raises(pathguard.PathRefused):
+        pathguard.join(tmp_path, "sub", "..", "real.txt", what="n")
+    for char in (chr(0x200D), chr(0xFE0F), chr(0xAD)):
+        with pytest.raises(pathguard.PathRefused):
+            pathguard.operator_dir(tmp_path / f"a{char}b", what="n", must_exist=False)
+
+
+def test_control_a_replay_that_stops_writes_failed_txt_and_never_hides_the_first_error():
     """The behaviour is run in ``test_a_failed_replay_writes_the_marker_even_into_an_empty_folder`` and the two tests next to
     it (error, refusal, Ctrl-C, a marker that cannot be written); here the entry's words are tied to them."""
     text = bullet("When `replay` stops after the output folder exists")
@@ -468,10 +573,15 @@ def test_hash_files_fake_llm_judge_and_secrets_folder_go_through_pathguard():
 
 # (file, function, the guard that returns the checked path): the read follows within SPAN lines of the check
 LAST_CHECKS = [
-    ("k1b/score.py", "load_answers", "operator_file"),
+    ("k1b/score.py", "load_answers", "join"),
     ("k1b/score.py", "_recorded_digest", "join"),
-    ("hashing.py", "hash_files", "inside"),
-    ("actions/secrets_file.py", "MountedFileProvider._fetch", "inside"),
+    ("hashing.py", "hash_files", "join"),
+    ("actions/secrets_file.py", "MountedFileProvider._fetch", "join"),
+    ("audit/signer.py", "build_local", "join"),
+    ("audit/signer.py", "load_private_key", "join"),
+    ("audit/signer.py", "load_public_key", "join"),
+    ("guard/judge.py", "qualify", "join"),
+    ("actions/secrets_vault.py", "connect", "join"),
 ]
 SPAN = 14  # the refusal handling and, for the secrets reader, the open flags sit between the check and the read
 
@@ -563,23 +673,23 @@ def test_errors_in_the_cause_list_bundle_and_hashing_checks_have_no_chain(tmp_pa
         assert raised.__suppress_context__ or raised.__context__ is None
 
 
-def test_the_sonar_claim_says_nothing_is_cleared():
+def test_control_the_sonar_claim_says_nothing_is_cleared():
     text = bullet("What this does not claim")
     assert "does not claim that any SonarCloud finding is cleared" in text
     assert not re.search(r"(?<!not )\b(clears|fixes) the SonarCloud", ENTRY)
 
 
-def test_the_entry_states_the_limits_it_knows():
+def test_control_the_entry_states_the_limits_it_knows():
     text = bullet("What this does not claim")
     for limit in ("260 characters", "hard links", "mount points", "junctions"):
         assert limit in text
 
 
-def test_the_entry_does_not_say_for_any_reason_or_everywhere():
+def test_control_the_entry_does_not_say_for_any_reason_or_everywhere():
     assert "for any reason" not in ENTRY and "everywhere" not in ENTRY.lower()
 
 
-def test_the_exception_list_the_entry_names_has_seven_columns_and_a_reason_each():
+def test_control_the_exception_list_the_entry_names_has_seven_columns_and_a_reason_each():
     path = ROOT / "tests" / "fixtures" / "pathguard_exceptions.txt"
     rows = [
         r
@@ -589,7 +699,7 @@ def test_the_exception_list_the_entry_names_has_seven_columns_and_a_reason_each(
     assert rows and all(len(r.split(" | ")) == 7 and r.split(" | ")[6].strip() for r in rows)
 
 
-def test_the_backslash_is_written_once_in_the_rules():
+def test_control_the_backslash_is_written_once_in_the_rules():
     assert "`/` or `\\`" in bullet("The rules (R1 to R13)")
     assert "`\\\\`" not in bullet("The rules (R1 to R13)")
 
@@ -613,6 +723,8 @@ EDITED_BASELINE = {  # file -> {marker: count on origin/main}
     "src/hadavin_sdk/cli.py": {"no" + "qa": 4},
     "src/hadavin_sdk/config.py": {"no" + "qa": 2, "type:" + " ignore": 1, "no" + "sec": 1},
     "src/hadavin_sdk/audit/local_dir.py": {"no" + "qa": 4},
+    "src/hadavin_sdk/registry.py": {},
+    "src/hadavin_sdk/tools.py": {"no" + "qa": 5, "no" + "sec": 2},
     "src/hadavin_sdk/actions/secrets_vault.py": {"no" + "qa": 1},
 }
 MARKERS = (
@@ -634,6 +746,8 @@ def test_the_suppression_bullet_matches_the_files_and_the_counts():
         "audit/local_dir.py",
         "audit/signer.py",
         "actions/secrets_vault.py",
+        "registry.py",
+        "tools.py",
     ):
         assert f"`{name}`" in text, name
     src = ROOT / "src" / "hadavin_sdk"
@@ -653,8 +767,16 @@ def test_the_suppression_bullet_matches_the_files_and_the_counts():
             assert lowered.count(marker) <= allowed.get(marker, 0), f"{rel}: {marker}"
 
 
-def test_every_bullet_of_the_entry_is_named_by_a_claim_test():
+def test_control_every_bullet_of_the_entry_is_named_by_a_claim_test():
     """A new bullet with no test of its own fails here: each bullet must be looked up by ``bullet(...)`` in this file."""
     used = re.findall(r'bullet\(\s*"([^"]+)"', Path(__file__).read_text(encoding="utf-8"))
     missing = [b[:60] for b in BULLETS if not any(b.startswith(f"- **{u}") for u in used)]
     assert missing == []
+
+
+def test_pin_every_range_count_in_the_entry_is_the_length_of_the_code_table():
+    """The count is derived, not typed: every ``<number> ranges`` in the entry must equal ``len(CONTROL_RANGES)``, and the
+    entry must give it at least twice (the rule list and the accepted list)."""
+    counts = [int(n) for n in re.findall(r"\b(\d+) ranges\b", ENTRY)]
+    assert len(counts) >= 2, counts
+    assert set(counts) == {len(pathguard.CONTROL_RANGES)}, (counts, len(pathguard.CONTROL_RANGES))

@@ -363,17 +363,9 @@ def test_refuses_bad_numbers(env, kw):
 def test_refuses_unknown_agent(env):
     with pytest.raises(ConfigError):
         replay(
-            env.reg,
-            ScriptedLLM([]),
-            RegexDetector(0.5),
-            env.audit,
-            agent_id="nope",
-            bundles_dir=env.bundles,
-            cause_list_dir=env.cause,
-            k=1,
-            max_usd=Decimal(1),
-            out=env.out,
-        )
+            env.reg, ScriptedLLM([]), RegexDetector(0.5), env.audit, agent_id="nope",
+            bundles_dir=env.bundles, cause_list_dir=env.cause, k=1, max_usd=Decimal(1), out=env.out,
+        )  # fmt: skip
 
 
 def test_refuses_bad_bundle_and_bad_cause_list(env):
