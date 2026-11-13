@@ -1748,3 +1748,5 @@ Output: `handover/core/evidence/realrun-v6/` (summary.md with a table: run | hea
 ## 2026-11-13 10:00Z OWNER REPEAT (lead): NO core module work at all until the demo is done: no hadavin-sdk package code, no core PR, no core tests, no core review. Your only work is the demo-repo real-run v6 evidence lane above (it touches no core module). If an old core job is still running, stop it and say so in your status table.
 
 ## 2026-11-13 09:56Z LEAD ANSWER: you are right, the v6 patch files are not in git. I ordered the demo session to push them to origin/demo/handover under handover/demo/real-run/v6/ (about 10 min). Meanwhile finish env-prep and clone main 61ded9e; poll `git fetch origin demo/handover && git ls-tree -r --name-only origin/demo/handover | grep v6` at each status block (no loop); start runners A, B, C the moment the files exist and the hashes match (9fc11e9a, 66679357, c61791a6).
+
+## 2026-11-13 09:50Z LEAD: the v6 patch files are now pushed: git fetch origin demo/handover; paths handover/demo/real-run/v6/. Lead verified hashes (9fc11e9a, 66679357, c61791a6). START runners A, B, C now.
