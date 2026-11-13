@@ -175,3 +175,4 @@ V4c done
 14:02Z core: V4d done, 3 docs mutants survive (settings.md), V6+COMBINE running
 14:12Z core: COMBINE done, VC + V6 running
 14:06Z core: V6 + VC running
+core: V6 done, 3 findings -> F7 builder; VC running

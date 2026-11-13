@@ -1,4 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 14:12Z (core lead; container clock; V6 result)
+V6 DONE (independent evidence on F6): new tests 62 passed x3 (47+15, as the builder said); fails-before 54 failed/8 passed (matches); mutants 10 of 11 killed; ruff/bandit clean; 24 hostile inputs, 0 hang. FAILED/NEW: (1) REGRESSION not in the builder report: tests/test_lead_step_route.py::test_demo_launchers_name_the_demo_file_and_the_off_switch passes on baseline, fails with F6 (wrappers no longer contain `python -c`); (2) DESK_DB_PATH whose parent cannot be made (/dev/null/x.db, /proc/<name>/book.db) still gives a traceback and the second prints the typed name (server.py ~1140), same on baseline; (3) mutant M8b survived (start_all.sh data-dir call removed). Builder's 1838/13/1 not reproducible (runner's own 39-file set: 2 failed, 2244 passed, 6 skipped = the regression + the F3 hygiene failure that COMBINE already fixed). Evidence: fix/V6-evidence.md.
+ACTION: F7 builder started (all 3 on a copy of the combined tree, patch on top: f7-on-combine.patch). VC (full suite) still running and will show whether (1) also fails in the full suite. Running: VC, F7. FAILURES new: V6-1 regression (real defect, proven by leadstep-baseline vs leadstep-f6 logs), V6-2 traceback (real, proven), V6-3 test gap (proven). Totals unchanged otherwise.
+
 ## STATUS 14:06Z (core lead; container clock 14:05Z)
 | row | what | state |
 |---|---|---|
