@@ -4182,6 +4182,111 @@ def test_the_changelog_check_notices_a_changed_number_a_changed_list_and_a_hando
     )
 
 
+_BATCH13_SITE_FILES = (
+    "src/hadavin_sdk/standins.py",
+    "src/hadavin_sdk/bindguard.py",
+    "src/hadavin_sdk/approvals/receiver.py",
+    "src/hadavin_sdk/approvals/requests.py",
+    "src/hadavin_sdk/netguard.py",
+    "tools/server_scan.py",
+)
+
+
+def _read_error_site_counts() -> tuple[int, int]:
+    """(places that catch only ``READ_ERRORS``, places that catch only ``ValueError``) in the files of the change."""
+    named = value = 0
+    for name in _BATCH13_SITE_FILES:
+        text = (ROOT / name).read_text(encoding="utf-8")
+        named += len(
+            re.findall(r"except (?:standins\.)?READ_ERRORS\b|suppress\(\s*\*READ_ERRORS", text)
+        )
+        value += len(re.findall(r"except ValueError\b", text))
+    return named, value
+
+
+def _batch13_claim_problems(text: str) -> list[str]:
+    """The sentences of the CHANGELOG about named read errors, the seal's caps and what it compares, against the code.
+    A sentence that was false in batch 12 must be absent; the numbers and lists are the code's."""
+    from hadavin_sdk.approvals import requests as R
+    from hadavin_sdk.config import EvidenceSettings
+
+    flat = " ".join(text.split())
+    named, value = _read_error_site_counts()
+    cap = R._WALK_NODES
+    want = [
+        f"{named} places catch only that list",
+        f"{value} more places catch only `ValueError`",
+        f"Every one of the {named + value} places has a test",
+        f"up to {2 * cap:,} objects per runtime",
+        f"a structure of more than {cap:,} objects in one walk",
+        "RemoteDisconnected",
+        "no strong reference to anything that reaches the runtime",
+        "one level shallower than in batch 11",
+        "`llm`",
+        "an error of any other kind is not caught",
+        "Closed in batch 13",
+        "Not new in batch 12",
+        "`ToolBox._active` and `ToolBox._abandoned`",
+        "a container replaced by another (an equal copy too) IS counted",
+        "the cap is per walk",
+    ]
+    want += [f"`{kind.__name__}`" for kind in standins.READ_ERRORS]
+    want += [
+        f"`{cls.__name__}.{field}`"
+        for (_m, cls_name), fields in R._MOVES_IN_USE.items()
+        for field in fields
+        for cls in [type(cls_name, (), {})]
+    ]
+    settings = object.__getattribute__(EvidenceSettings(), "__dict__")
+    want += [f"`{name}`" for name in settings if name != "scrub"]
+    gone = [
+        "raise nothing that is not caught",
+        "Any error reads as real",
+        "gives a 503 and not a dropped connection).",
+        "items (1) to (3) are the paths that need code already running",
+        "(each has a test that fails on the batch 11 code)",
+        "store, model and detector",
+        "`store`, `model` and `detector`",
+        "5,000 objects per runtime",
+    ]
+    problems = [f"the CHANGELOG does not say {w!r}" for w in want if w not in flat]
+    problems += [f"the CHANGELOG still says {g!r}" for g in gone if g in flat]
+    return problems
+
+
+def test_the_changelog_says_what_the_code_does_about_errors_caps_and_compared_values() -> None:
+    """Class: CHANGELOG-TRUTH (round 12, issue 3): each sentence changed in batch 13 is checked against the code (the
+    count of places that catch only the named kinds, the cap of the walk, the list of named kinds, the fields that move
+    in use, the evidence settings) and each sentence that was false is absent."""
+    changelog = ROOT / "CHANGELOG.md"
+    if not changelog.is_file():  # the mutation runner copies src and tests only
+        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+    problems = _batch13_claim_problems(changelog.read_text(encoding="utf-8"))
+    assert not problems, f"the CHANGELOG and the code differ: {problems}"
+
+
+def test_the_changelog_claim_check_notices_a_wrong_count_a_missing_sentence_and_an_old_false_one() -> (
+    None
+):
+    changelog = ROOT / "CHANGELOG.md"
+    if not changelog.is_file():
+        pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+    text = changelog.read_text(encoding="utf-8")
+    named, _value = _read_error_site_counts()
+    assert _batch13_claim_problems(
+        text.replace(f"{named} places catch only", f"{named + 1} places catch only")
+    ), "a wrong count of places was not noticed"
+    assert _batch13_claim_problems(text.replace("RemoteDisconnected", "a dropped line")), (
+        "a missing sentence was not noticed"
+    )
+    assert _batch13_claim_problems(text + " raise nothing that is not caught"), (
+        "the old false sentence was not noticed"
+    )
+    assert _batch13_claim_problems(text.replace("`restored_hash_key_secret_name`", "`x`")), (
+        "an evidence field left out of the list was not noticed"
+    )
+
+
 def test_every_mutant_row_has_its_own_name_and_number() -> None:
     """Class: MUTANT-KILLER (round 12, issue 4): the runner picks a row by a part of its name, so two rows with one number
     (B270, B271 and B272 were each used twice) make a run of "B270" run both. The number (the first word) and the whole
