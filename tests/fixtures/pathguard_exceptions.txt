@@ -34,9 +34,9 @@ src/hadavin_sdk/audit/signer.py | _create | .unlink | 1 | checked | key_path | t
 src/hadavin_sdk/audit/signer.py | _create | os.open | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
 src/hadavin_sdk/audit/signer.py | generate_key | .exists | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
 src/hadavin_sdk/audit/signer.py | generate_key | .unlink | 1 | checked | key_path | the path is the result of key_path(), which checks the shape and keeps it inside the key folder
-src/hadavin_sdk/audit/signer.py | key_path | .is_symlink | 1 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
-src/hadavin_sdk/audit/signer.py | key_path | .mkdir | 1 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
-src/hadavin_sdk/audit/signer.py | key_path | .resolve | 2 | operator | operator_text | the operator key folder and file: shape checked by operator_text before the folder is made; the real path is then checked by inside
+src/hadavin_sdk/audit/signer.py | key_path | .is_symlink | 1 | operator | operator_dir | the operator key folder: shape checked by operator_dir before the folder is made; the key file is then checked by inside
+src/hadavin_sdk/audit/signer.py | key_path | .mkdir | 1 | operator | operator_dir | the operator key folder: shape checked by operator_dir before the folder is made; the key file is then checked by inside
+src/hadavin_sdk/audit/signer.py | key_path | .resolve | 1 | operator | operator_dir | the operator key folder: shape checked by operator_dir before the folder is made; the key file is then checked by inside
 src/hadavin_sdk/config.py | _read_yaml | .exists | 1 | operator | operator_dir | the config folder root is checked by operator_dir in load_config; the file names are fixed
 src/hadavin_sdk/config.py | _read_yaml | .read_text | 1 | operator | operator_dir | the config folder root is checked by operator_dir in load_config; the file names are fixed
 src/hadavin_sdk/evals.py | gate | .exists | 1 | config | confined | the golden and input files go through confined(); qualified.jsonl is a fixed name under the config root
@@ -50,6 +50,7 @@ src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_file | 1 | operator | operator
 src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_symlink | 2 | operator | operator_dir | the case folder is checked by operator_dir; names under it come from a listing and are joined
 src/hadavin_sdk/k1b/replay.py | outputs_files | .is_file | 1 | checked | join | rdir is a pathguard.join result; the entries are listed under it
 src/hadavin_sdk/k1b/score.py | _check_layout | .is_file | 1 | checked | operator_dir | out is checked by outputs_dir/operator_dir on the line before the listing
+src/hadavin_sdk/k1b/score.py | _check_layout | .iterdir | 1 | checked | operator_dir | out is the result of outputs_dir, which calls operator_dir (the scan cannot follow a call into another function)
 src/hadavin_sdk/llm/common.py | post_json | .open | 1 | fixed | - | a network opener (the method is named open): not a file; the scheme and host are checked by the caller
 src/hadavin_sdk/registry.py | Registry.golden_sha256 | .is_file | 2 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined
 src/hadavin_sdk/registry.py | Registry.golden_sha256 | .read_bytes | 2 | checked | confined | paths come from golden_path()/_prompt_path()/confined(), which go through confined

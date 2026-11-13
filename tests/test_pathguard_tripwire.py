@@ -9,8 +9,8 @@ Inside each function it flags a banned call (``open``, ``os.open``, ``os.replace
 one argument is the ``Path`` method) unless every path argument (the receiver for a method, the first argument for ``open``
 and ``os.*`` calls that take one path, every argument for ``os.replace``, ``os.rename`` and ``shutil.*``) is a plain NAME
 whose latest earlier assignment in the same function is a call ``pathguard.join``, ``pathguard.inside``,
-``pathguard.operator_dir``, ``pathguard.operator_file`` or ``confined``. ``pathguard.component`` and
-``pathguard.operator_text`` do NOT count: they return a string or nothing, not a checked path. That is the only allow rule
+``pathguard.operator_dir``, ``pathguard.operator_file`` or ``confined``. ``pathguard.component``
+does NOT count: it returns a string, not a checked path. That is the only allow rule
 in the code: there is no comment switch.
 
 A hit that is not guarded must be listed, with its reason, in ``tests/fixtures/pathguard_exceptions.txt``: one line per
@@ -25,6 +25,19 @@ not seen; a path built from a guarded one by ``/`` or ``.parent`` is NOT trusted
 cannot see a file operation made through a library call (``json.load(open_file)``, ``yaml.safe_load(path.open())`` is seen
 only as the ``.open``). The two seeded fixtures in ``tests/fixtures`` prove the scan reports bad code and lets good code
 pass.
+
+More limits of the same kind (what the scan cannot see, so a person and the mutant table must): it reads the name, not
+the meaning. A name counts as checked when its latest earlier assignment in the function is one of the validator calls,
+whatever that call was given: a join of the wrong folder, or a ``kind`` that does not fit the read, passes. The
+``validator`` column of the exceptions file is a label for a reader; the scan matches a row by file, function, call and
+count only and does not compare the label with the code. A file operation on an attribute (``self.root``), a subscript
+or any expression that is not a plain name is always a hit, even if the attribute was checked in ``__init__``. A
+function-level check that guards the whole file (for example a loop over names checked before it) is not seen unless the
+read goes through a name assigned from a validator. Calls the tables do not list are not seen. Each of these is covered
+only by the row in ``tests/pathguard_mutants.py`` for the site that matters (for example the ``_check_layout`` row, which
+removes the one remaining guard in that function).
+
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 19 control, 0 pin, 2 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations
@@ -458,7 +471,7 @@ def test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_list
     assert problems == [], "unchecked paths:\n" + "\n".join(problems)
 
 
-def test_the_comparator_refuses_one_more_hit_in_a_listed_function():
+def test_control_the_comparator_refuses_one_more_hit_in_a_listed_function():
     rows: list[Row] = [("a.py", "f", ".read_text", 1, "fixed", "-", "x")]
     one = [("a.py", "f", 3, ".read_text")]
     assert compare(rows, one) == []
@@ -526,7 +539,7 @@ def test_every_listed_row_names_a_validator_that_exists_and_is_called():
     assert validator_problems(_exception_rows(), _known_functions()) == []
 
 
-def test_the_validator_check_refuses_a_missing_or_uncalled_validator(tmp_path):
+def test_control_the_validator_check_refuses_a_missing_or_uncalled_validator(tmp_path):
     (tmp_path / "m.py").write_text("def f(p):\n    return p\n", encoding="utf-8")
     known = {"f", "operator_dir"}
     base: Row = ("m.py", "g", ".read_text", 1, "checked", "f", "x")
@@ -553,12 +566,12 @@ def test_the_validator_check_refuses_a_missing_or_uncalled_validator(tmp_path):
     assert validator_problems([base], known, tmp_path) == []
 
 
-def test_nothing_in_the_listed_exceptions_names_a_file_that_is_gone():
+def test_control_nothing_in_the_listed_exceptions_names_a_file_that_is_gone():
     for f, *_ in _exception_rows():
         assert (ROOT / f).is_file(), f"{f} is listed but does not exist"
 
 
-def test_the_seeded_bad_fixture_is_reported_function_by_function():
+def test_control_the_seeded_bad_fixture_is_reported_function_by_function():
     text = (FIX / "pathguard_tripwire_bad.py").read_text(encoding="utf-8")
     problems = scan_source(text, "bad.py")
     lines = {int(p.split(":")[1]) for p in problems}
@@ -570,7 +583,7 @@ def test_the_seeded_bad_fixture_is_reported_function_by_function():
     assert len(problems) >= 22, problems
 
 
-def test_the_seeded_good_fixture_passes():
+def test_control_the_seeded_good_fixture_passes():
     text = (FIX / "pathguard_tripwire_good.py").read_text(encoding="utf-8")
     assert scan_source(text, "good.py") == []
 
@@ -592,7 +605,6 @@ def test_the_seeded_good_fixture_passes():
         "def f(a):\n    a.write_text('x')\n",
         "def f(a):\n    a.open()\n",
         "def f(a, n):\n    p = pathguard.component(n, what='x')\n    p.read_text()\n",
-        "def f(a, n):\n    pathguard.operator_text(n, what='x')\n    a.read_text()\n",
         "import os\n\n\ndef f(a):\n    os.access(a, 0)\n",
         "import os\n\n\ndef f(a):\n    os.chdir(a)\n",
         "import os\n\n\ndef f(a):\n    os.statvfs(a)\n",
@@ -601,7 +613,7 @@ def test_the_seeded_good_fixture_passes():
         "import logging\n\n\ndef f(a):\n    logging.FileHandler(a)\n",
     ],
 )
-def test_one_line_plants_are_caught(code):
+def test_control_one_line_plants_are_caught(code):
     assert scan_source(code, "plant.py"), code
 
 
@@ -617,7 +629,7 @@ def test_one_line_plants_are_caught(code):
         "def f(a, n):\n    p = confined(a, n)\n    p.read_text()\n",
     ],
 )
-def test_one_line_good_code_passes(code):
+def test_control_one_line_good_code_passes(code):
     assert scan_source(code, "plant.py") == [], code
 
 
@@ -649,7 +661,7 @@ def test_one_line_good_code_passes(code):
         "def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    return (lambda q: q.read_text())(p)\n",
     ],
 )
-def test_each_gap_in_the_first_scan_is_now_reported(code):
+def test_control_each_gap_in_the_first_scan_is_now_reported(code):
     assert scan_source(code, "gap.py"), code
 
 
@@ -670,7 +682,7 @@ def test_each_gap_in_the_first_scan_is_now_reported(code):
         "def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    p.read_text()\n",
     ],
 )
-def test_pin_the_first_scan_already_reported_these_and_still_does(code):
+def test_control_the_first_scan_already_reported_these_and_still_does(code):
     assert scan_source(code, "gap.py"), code
 
 
@@ -688,16 +700,16 @@ def test_pin_the_first_scan_already_reported_these_and_still_does(code):
         "def f(d, name):\n    return d.resolve(name)\n",
     ],
 )
-def test_pin_the_guarded_twin_of_each_gap_passes(code):
+def test_control_the_guarded_twin_of_each_gap_passes(code):
     assert scan_source(code, "twin.py") == [], code
 
 
 @pytest.mark.parametrize("code", ["def f(s, i):\n    s.touch(i)\n"])
-def test_a_method_named_touch_on_a_non_path_name_is_not_a_hit(code):
+def test_control_a_method_named_touch_on_a_non_path_name_is_not_a_hit(code):
     assert scan_source(code, "twin.py") == [], code
 
 
-def test_a_validator_in_another_file_must_exist_there_and_be_called(tmp_path):
+def test_control_a_validator_in_another_file_must_exist_there_and_be_called(tmp_path):
     """The ``name@file.py`` form is read against ``src/hadavin_sdk/<file>``: a missing file or an uncalled name is refused."""
     root = tmp_path
     pkg = root / "src" / "hadavin_sdk"

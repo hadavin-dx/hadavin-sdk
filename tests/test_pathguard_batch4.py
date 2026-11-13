@@ -1,8 +1,7 @@
 """pathguard batch 4: the guard of each converted site that the earlier tests did not pin, the names an operator typed, and
 the text of refusals. Each test names the mutant row of ``tests/pathguard_mutants.py`` that it kills.
 
-Labels come from a real run on origin/main with ``pathguard.py`` added and every caller left as it was (see the PR text): a
-test that fails there has a plain name; one that passes there is ``test_pin_*`` or ``test_control_*``.
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 6 control, 0 pin, 26 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations
@@ -18,8 +17,15 @@ from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.pathguard import PathRefused
 
 CTRL = chr(0x202E)
-# names an operator may type that the data-name rules (R3, R6, R7, R12) would refuse
-OPERATOR_NAMES = ["a?b", "con", "x.", "vault:token", "aux.txt"]
+# names the data-name rules refuse (R12, R7, R6, R3, R7): since the join pattern is used at every flagged read, a name the
+# caller typed is refused too. Each is paired with the words of its refusal.
+OPERATOR_NAMES = {
+    "a?b": "contains a character Windows does not allow",
+    "con": "reserved device name",
+    "x.": "ends with a dot or space",
+    "vault:token": "contains a colon",
+    "aux.txt": "reserved device name",
+}
 
 
 def _link(target, link, *, directory):
@@ -29,36 +35,38 @@ def _link(target, link, *, directory):
         pytest.skip("symlinks unavailable")
 
 
-def test_pin_hash_files_reads_a_name_the_caller_chose_even_with_a_colon_or_device_name(tmp_path):
-    """Mutant S-hashing last check is the full join. On main these names were hashed; they still are."""
+def test_hash_files_refuses_a_name_with_a_colon_device_name_or_trailing_dot(tmp_path):
+    """Mutant S-hashing the last check is the join: these names were hashed on main; now each is refused, with no name echoed."""
     from hadavin_sdk.hashing import hash_files
 
-    for name in OPERATOR_NAMES:
+    for name, words in OPERATOR_NAMES.items():
         (tmp_path / name).write_text("x", encoding="utf-8")
         said = _said(hash_files, tmp_path, [name])
-        assert said == "", f"wrong wording for {name!r}: {said}"
+        assert said == f"PathRefused: hash file: {words}", f"wrong wording for {name!r}: {said}"
 
 
-def test_pin_secrets_file_reads_a_secret_name_the_operator_chose(tmp_path):
+def test_secrets_file_refuses_a_secret_name_with_a_colon_device_name_or_trailing_dot(tmp_path):
     from hadavin_sdk.actions.secrets_file import MountedFileProvider
 
-    for name in OPERATOR_NAMES:
+    for name, words in OPERATOR_NAMES.items():
         (tmp_path / name).write_text("value-1", encoding="utf-8")
         (tmp_path / name).chmod(0o400)
         said = _said(MountedFileProvider(tmp_path, 1).get, name)
-        assert said == "", f"wrong wording for {name!r}: {said}"
+        assert said == f"PathRefused: mounted secret: {words}", (
+            f"wrong wording for {name!r}: {said}"
+        )
 
 
-@pytest.mark.parametrize("name", OPERATOR_NAMES)
-def test_pin_answers_file_name_with_a_colon_or_device_name_is_read(tmp_path, name):
+@pytest.mark.parametrize("name", list(OPERATOR_NAMES))
+def test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused(tmp_path, name):
     from hadavin_sdk.k1b.causelist import load_cause_list
     from hadavin_sdk.k1b.score import load_answers
     from tests.k1b_support import make_cause_list, write_answers
 
     cause = load_cause_list(make_cause_list(tmp_path / "c"))
     path = write_answers(tmp_path / name, {"case-001": ([("api", "bad_deploy")], False)})
-    answers, _sha = load_answers(path, cause)
-    assert "case-001" in answers
+    with pytest.raises(ConfigError, match="^answers file is missing or not valid JSON$"):
+        load_answers(path, cause)
 
 
 def _said(fn, *args, **kwargs) -> str:
@@ -78,7 +86,9 @@ def _said(fn, *args, **kwargs) -> str:
     return ""
 
 
-def test_pin_hash_files_keeps_the_escape_wording_for_a_missing_file_outside_the_folder(tmp_path):
+def test_control_hash_files_keeps_the_escape_wording_for_a_missing_file_outside_the_folder(
+    tmp_path,
+):
     """Mutant S-hashing a file name is not confined: without ``confined`` a missing ``../x`` reads "not a file"."""
     from hadavin_sdk.hashing import hash_files
 
@@ -86,7 +96,7 @@ def test_pin_hash_files_keeps_the_escape_wording_for_a_missing_file_outside_the_
     assert said == "ConfigError: path escapes its folder: ../nope", f"wrong wording: {said}"
 
 
-def test_pin_hash_files_says_not_a_file_for_a_missing_name_and_a_folder(tmp_path):
+def test_control_hash_files_says_not_a_file_for_a_missing_name_and_a_folder(tmp_path):
     """Mutant S-hashing the strict last check is removed: a folder named as a file is then read."""
     from hadavin_sdk.hashing import hash_files
 
@@ -96,7 +106,9 @@ def test_pin_hash_files_says_not_a_file_for_a_missing_name_and_a_folder(tmp_path
         assert said == f"ConfigError: not a file: {name}", f"wrong wording: {said}"
 
 
-def test_pin_secrets_file_keeps_the_escape_wording_for_a_missing_name_outside_the_folder(tmp_path):
+def test_control_secrets_file_keeps_the_escape_wording_for_a_missing_name_outside_the_folder(
+    tmp_path,
+):
     from hadavin_sdk.actions.secrets_file import MountedFileProvider
 
     said = _said(MountedFileProvider(tmp_path, 1).get, "../nope")
@@ -347,7 +359,7 @@ def test_hash_files_read_error_is_raised_without_a_chain(tmp_path, monkeypatch):
     assert caught.value.__cause__ is None and caught.value.__suppress_context__
 
 
-def test_pin_build_local_signer_error_prints_the_key_path_as_typed(tmp_path):
+def test_control_build_local_signer_error_prints_the_key_path_as_typed(tmp_path):
     from hadavin_sdk.audit.signer import build_local
 
     key = tmp_path / "typed-key.pem"
@@ -417,8 +429,7 @@ def _converted_sites() -> list[tuple[str, str, str]]:
                 isinstance(f, ast.Attribute)
                 and isinstance(f.value, ast.Name)
                 and f.value.id == "pathguard"
-                and f.attr
-                in {"inside", "join", "operator_dir", "operator_file", "operator_text", "component"}
+                and f.attr in {"inside", "join", "operator_dir", "operator_file", "component"}
             ):
                 what = next(
                     (
@@ -432,7 +443,7 @@ def _converted_sites() -> list[tuple[str, str, str]]:
     return sites
 
 
-def test_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry():
+def test_control_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry():
     """A site added later without a row fails here. A site is covered when a row for its file (or an EQUIVALENT entry) holds
     the same guard name and the same ``what`` words in the text it replaces."""
     from tests import pathguard_mutants as pm

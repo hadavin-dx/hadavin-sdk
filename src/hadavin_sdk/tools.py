@@ -39,7 +39,7 @@ from urllib.parse import quote, quote_plus, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from hadavin_sdk import defaults
+from hadavin_sdk import defaults, pathguard
 from hadavin_sdk.errors import ConfigError
 from hadavin_sdk.guard import http as http_guard
 from hadavin_sdk.guard import runmap
@@ -47,6 +47,9 @@ from hadavin_sdk.guard.egress import EgressRefused, egress_check
 from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
+MAX_PART_BYTES = (
+    pathguard.MAX_COMPONENT_BYTES
+)  # a module part is a file name: the file system's limit
 Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
 END_MARKER = "<<END TOOL RESULT>>"
 START_MARKER = "<<TOOL RESULT"
@@ -251,8 +254,10 @@ def _module_files(module: str) -> list[tuple[str, Path]]:
     `__init__.py` (a dotted import runs them first) and the module's own file, in import order. The first
     `sys.path` entry that holds the module wins, as it would for an import."""
     parts = module.split(".")
-    if not all(p.isidentifier() for p in parts):
-        raise ConfigError(f"tool module {module!r} is not a dotted module name")
+    if not all(p.isidentifier() and len(p.encode("utf-8")) <= MAX_PART_BYTES for p in parts):
+        raise ConfigError(
+            f"tool module {module!r} is not a dotted module name (each part at most {MAX_PART_BYTES} bytes)"
+        )
     for entry in sys.path:
         root = Path(entry or ".")
         leaf = root.joinpath(*parts)

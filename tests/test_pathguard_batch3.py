@@ -1,8 +1,8 @@
 """pathguard batch 3: every range of rule R4, every part of the other rules, every converted site, and the failure paths.
 
-Test names that start ``test_control_`` or ``test_pin_`` pass on the code before this change on purpose: a control shows
-that the normal case still works, a pin fixes behaviour that was already right. Every other test here failed on the old code
-(the evidence file lists each one).
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 12 control, 42 pin, 44 other. Nothing here says a test "fails on old main".
+A pin or control name on a test that calls ``pathguard`` directly means only the measured result above, not a claim about
+old behaviour: the module is new.
 
 A NUL character makes the operating system itself raise, so a site that lost its guard can still look refused. Where
 that matters the tests use ``CTRL`` (a right-to-left override, U+202E): the file system accepts it, only R4 refuses it.
@@ -91,7 +91,7 @@ for _i in range(len(EXPECTED_RANGES)):
     globals()[f"test_pin_r4_range_{_i:02d}"] = _range_test(_i)
 
 
-def test_r4_there_are_twenty_named_ranges_and_none_overlaps():
+def test_pin_r4_there_are_twenty_named_ranges_and_none_overlaps():
     ranges = pathguard.CONTROL_RANGES
     assert len(ranges) == 20
     assert tuple(ranges) == EXPECTED_RANGES
@@ -120,7 +120,7 @@ def test_pin_r7_spaces_before_the_dot_do_not_hide_a_device_name():
         _refused("R7", pathguard.component, name, what="n")
 
 
-def test_control_r7_a_name_that_only_starts_like_a_device_is_allowed():
+def test_pin_r7_a_name_that_only_starts_like_a_device_is_allowed():
     for name in ("console.txt", "my.con.txt", "auxiliary", "a.con"):
         assert pathguard.component(name, what="n") == name
 
@@ -172,13 +172,9 @@ def test_pin_r5_operator_file_refuses_a_long_text():
     _refused("R5", pathguard.operator_file, LONG, what="n")
 
 
-def test_pin_r5_operator_text_refuses_a_long_text():
-    _refused("R5", pathguard.operator_text, LONG, what="n")
-
-
-def test_control_r5_a_path_at_the_limit_is_not_refused_for_length(tmp_path):
+def test_pin_r5_a_path_at_the_limit_is_not_refused_for_length(tmp_path):
     text = str(tmp_path) + "/" + "a" * (pathguard.MAX_PATH_BYTES - len(str(tmp_path)) - 1)
-    pathguard.operator_text(text, what="n")  # exactly the limit: allowed
+    pathguard._check_text(text, "n")  # exactly the limit: allowed
 
 
 # ------------------------------------------------------------------ the rest of the choke point
@@ -201,11 +197,11 @@ def test_pin_r11_an_existing_file_is_refused_as_a_folder_even_when_it_need_not_e
     _refused("R11", pathguard.operator_dir, file, what="n", must_exist=False)
 
 
-def test_control_r11_a_missing_path_is_accepted_when_it_need_not_exist(tmp_path):
+def test_pin_r11_a_missing_path_is_accepted_when_it_need_not_exist(tmp_path):
     assert pathguard.operator_dir(tmp_path / "later", what="n", must_exist=False).name == "later"
 
 
-def test_mapped_turns_only_the_listed_rules_into_one_plain_message(tmp_path):
+def test_pin_mapped_turns_only_the_listed_rules_into_one_plain_message(tmp_path):
     with pytest.raises(PathRefused) as missing:
         pathguard.operator_dir(tmp_path / "missing", what="n")
     result = pathguard.mapped(missing.value, R10="plain words")
@@ -216,10 +212,12 @@ def test_mapped_turns_only_the_listed_rules_into_one_plain_message(tmp_path):
     assert pathguard.mapped(missing.value, R11="other") is missing.value  # R10 is not listed here
 
 
-def test_r5_the_whole_path_limit_counts_bytes_not_characters():
+def test_pin_r5_the_whole_path_limit_counts_bytes_not_characters():
     text = "/" + "\u20ac" * 1400  # 1,401 characters, 4,201 bytes in UTF-8
     assert len(text) < pathguard.MAX_PATH_BYTES < len(text.encode())
-    _refused("R5", pathguard.operator_text, text, what="n")
+    with pytest.raises(PathRefused) as refused:
+        pathguard._check_text(text, "n")
+    assert refused.value.rule == "R5"
 
 
 # ------------------------------------------------------------------ atomic_write
@@ -298,7 +296,9 @@ def test_atomic_write_flushes_the_file_to_disk_before_the_rename(tmp_path, monke
 def test_pin_atomic_write_still_leaves_its_temp_file_after_a_crash_it_cannot_catch():
     """The documented behaviour: a process killed between the write and the rename leaves ``.name.<hex>.tmp``. The temp
     name carries the ``.tmp`` suffix and 16 random hex characters so a leftover is recognisable and never reused."""
-    assert pathguard.TEMP_EXTRA_BYTES == len(".") + len(".") + 16 + len(".tmp")
+    assert pathguard.MAX_COMPONENT_BYTES - pathguard.MAX_WRITE_NAME_BYTES == len("..") + 16 + len(
+        ".tmp"
+    )
 
 
 # ------------------------------------------------------------------ score, bundle, causelist: converted sites
@@ -387,7 +387,7 @@ def test_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_charac
         bundle_mod._text("case-001", tmp_path, f"a{CTRL}.json")
 
 
-def test_pin_site_bundle_manifest_and_part_files_that_are_links_out_are_refused(tmp_path):
+def test_control_site_bundle_manifest_and_part_files_that_are_links_out_are_refused(tmp_path):
     from hadavin_sdk.k1b.bundle import BundleError, load_bundle
     from tests.k1b_support import make_bundle, write_manifest
 
@@ -410,7 +410,7 @@ def test_pin_site_bundle_manifest_and_part_files_that_are_links_out_are_refused(
         load_bundle(part_case)
 
 
-def test_pin_site_causelist_file_that_is_a_link_out_is_refused(tmp_path):
+def test_control_site_causelist_file_that_is_a_link_out_is_refused(tmp_path):
     from hadavin_sdk.k1b.causelist import load_cause_list
     from tests.k1b_support import make_cause_list
 
@@ -447,7 +447,7 @@ def test_the_hash_folder_is_checked_and_a_missing_one_has_one_plain_message(tmp_
     _refused("R4", hash_files, Path(str(tmp_path) + CTRL), [])
 
 
-def test_pin_hash_files_refuses_a_file_that_is_a_link_out_of_the_folder(tmp_path):
+def test_control_hash_files_refuses_a_file_that_is_a_link_out_of_the_folder(tmp_path):
     from hadavin_sdk.hashing import hash_files
 
     (tmp_path / "outside.txt").write_text("x", encoding="utf-8")
@@ -478,7 +478,7 @@ def test_secrets_folder_is_checked_when_the_provider_is_built(tmp_path):
     _refused("R4", build, SimpleNamespace(dir=str(tmp_path) + CTRL, ttl_s=1), None)
 
 
-def test_pin_secrets_file_refuses_a_name_that_leaves_the_folder(tmp_path):
+def test_control_secrets_file_refuses_a_name_that_leaves_the_folder(tmp_path):
     from hadavin_sdk.actions.secrets_file import MountedFileProvider
 
     outside = tmp_path / "outside"
@@ -510,7 +510,7 @@ def test_judge_qualify_checks_the_golden_file_path(tmp_path):
     _refused("R10", qualify, None, tmp_path / "missing.jsonl")
 
 
-def test_pin_tool_module_names_are_checked_before_any_path_is_built(tmp_path, monkeypatch):
+def test_control_tool_module_names_are_checked_before_any_path_is_built(tmp_path, monkeypatch):
     from hadavin_sdk.tools import module_sha256
 
     (tmp_path / "pkgx").mkdir()
@@ -755,8 +755,7 @@ TOUCHED = [
     "tests/test_pathguard_batch3.py",
     "tests/test_pathguard_batch4.py",
     "tests/test_changelog_claims.py",
-    "tests/test_k1b_cli.py",
-    "tests/test_k1b_replay.py",
+    "tests/test_pathguard_batch5.py",
     "tests/pathguard_mutants.py",
 ]
 
@@ -766,7 +765,7 @@ def suppression_hits(name: str, text: str, tokens: tuple[str, ...]) -> list[str]
     return [f"{name}: {t}" for t in tokens if t in lowered]
 
 
-def test_pin_the_suppression_check_finds_every_spelling_in_a_seeded_line():
+def test_control_the_suppression_check_finds_every_spelling_in_a_seeded_line():
     for seeded in (
         "x = 1  # " + "NO" + "SONAR",
         "x = 1  # " + "No" + "Sonar",
@@ -877,7 +876,7 @@ def test_replay_with_a_control_character_in_the_output_folder_is_refused_and_wri
     assert sorted(p.name for p in env.tmp.iterdir() if p.name.startswith("out")) == []
 
 
-def test_pin_replay_into_an_existing_file_says_the_folder_is_not_usable_in_one_wording(env):
+def test_control_replay_into_an_existing_file_says_the_folder_is_not_usable_in_one_wording(env):
     env.out.write_text("x", encoding="utf-8")
     with pytest.raises(ConfigError, match="^replay output folder exists and is not empty$"):
         env.run(ScriptedLLM([]))
@@ -971,7 +970,7 @@ def test_every_equivalent_mutant_still_names_text_that_exists_and_gives_its_argu
         assert len(argument.split()) >= 8 and "\n" not in argument, f"{rel}: no argument"
 
 
-def test_pin_the_mutant_file_has_no_duplicate_names_and_every_killer_exists():
+def test_control_the_mutant_file_has_no_duplicate_names_and_every_killer_exists():
     from tests import pathguard_mutants
 
     names = [m.name for m in pathguard_mutants.M]
@@ -986,7 +985,7 @@ def test_pin_the_mutant_file_has_no_duplicate_names_and_every_killer_exists():
 # ------------------------------------------------------------------ strict joins before a read (wording stays the same)
 
 
-def test_pin_hash_files_says_not_a_file_for_a_missing_file_and_for_a_folder(tmp_path):
+def test_control_hash_files_says_not_a_file_for_a_missing_file_and_for_a_folder(tmp_path):
     from hadavin_sdk.hashing import hash_files
 
     (tmp_path / "sub").mkdir()

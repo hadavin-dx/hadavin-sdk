@@ -5,12 +5,7 @@ Proof rules (design ``sonar-path-traversal-design.md`` section 6):
 
 * Tests that call ``pathguard`` directly are proven by the mutants in ``tests/pathguard_mutants.py`` (one reverted rule each),
   not by "fails on main": the module does not exist on main.
-* test_pin_* and test_control_* tests call code that exists on main and already passed there (a ``..`` or a symlink out of the folder through
-  ``config.confined``, the pinned wording "escapes" and "outside"). They guard against losing a behaviour.
-* Plain-named tests call code that exists on main and failed there (a behavioural reason, or the new call shape): a NUL in a path (a bare
-  ``ValueError`` on main, now a ``ConfigError``), a run folder or case file that is a link out of the outputs folder (read on
-  main, refused now), a temp file name that is the same every time (random now), and the new ``atomic_write(base, name, text)``
-  call shape. The counts measured on main are in the pull request body.
+* Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 3 control, 31 pin, 15 other. Nothing here says a test "fails on old main".
 
 Each killer below has a distinctive assertion text that the mutant runner pins.
 """
@@ -65,22 +60,22 @@ def _comp(name: str):
 # ---------------------------------------------------------------- R1 to R7: one name
 
 
-def test_r1_empty_and_dot_names_are_refused():
+def test_pin_r1_empty_and_dot_names_are_refused():
     for name in ("", ".", ".."):
         _must_refuse("R1", repr(name), _comp, name)
 
 
-def test_r2_a_separator_is_refused_on_every_os():
+def test_pin_r2_a_separator_is_refused_on_every_os():
     for name in ("a/b", "a\\b", "/", "\\", "a/"):
         _must_refuse("R2", repr(name), _comp, name)
 
 
-def test_r3_a_colon_is_refused_on_every_os():
+def test_pin_r3_a_colon_is_refused_on_every_os():
     for name in ("C:x", "a:b", "NUL:", "a.txt:stream", ":"):
         _must_refuse("R3", repr(name), _comp, name)
 
 
-def test_r4_a_control_character_is_refused_in_a_name():
+def test_pin_r4_a_control_character_is_refused_in_a_name():
     for name in (
         "a\x00b",
         "a\nb",
@@ -94,7 +89,7 @@ def test_r4_a_control_character_is_refused_in_a_name():
         _must_refuse("R4", repr(name), _comp, name)
 
 
-def test_r4_a_control_character_is_refused_in_an_operator_path(tmp_path):
+def test_pin_r4_a_control_character_is_refused_in_an_operator_path(tmp_path):
     for text in ("a\x00b", "a\nb", "a\x7fb"):
         _must_refuse(
             "R4", f"operator_dir {text!r}", pathguard.operator_dir, tmp_path / text, what="x"
@@ -104,28 +99,28 @@ def test_r4_a_control_character_is_refused_in_an_operator_path(tmp_path):
         )
 
 
-def test_r5_a_name_over_255_utf8_bytes_is_refused():
+def test_pin_r5_a_name_over_255_utf8_bytes_is_refused():
     assert _comp("a" * 255) == "a" * 255, "R5 refused a name of exactly 255 bytes"
     assert _comp("\u00e9" * 127) == "\u00e9" * 127, "R5 refused 254 bytes (127 two-byte letters)"
     _must_refuse("R5", "256 ascii", _comp, "a" * 256)
     _must_refuse("R5", "128 two-byte letters", _comp, "\u00e9" * 128)
 
 
-def test_r5_a_path_over_4096_characters_is_refused(tmp_path):
+def test_pin_r5_a_path_over_4096_characters_is_refused(tmp_path):
     long_tail = ["d" * 200] * 21  # 4200 characters once joined
     _must_refuse("R5", "join", pathguard.join, tmp_path, *long_tail, what="x")
     _must_refuse("R5", "inside", pathguard.inside, tmp_path, tmp_path / ("e" * 4100), what="x")
     _must_refuse("R5", "operator_dir", pathguard.operator_dir, tmp_path / ("e" * 4100), what="x")
 
 
-def test_r6_a_trailing_dot_or_space_is_refused():
+def test_pin_r6_a_trailing_dot_or_space_is_refused():
     for name in ("a.", "a ", "a.b.", "x y "):
         _must_refuse("R6", repr(name), _comp, name)
     for name in (".hidden", "a b", "a.b", "a-"):
         assert _comp(name) == name, f"R6 refused a plain name: {name!r}"
 
 
-def test_r7_a_reserved_device_name_is_refused():
+def test_pin_r7_a_reserved_device_name_is_refused():
     names = (
         "con",
         "CON",
@@ -152,7 +147,7 @@ def test_r7_a_reserved_device_name_is_refused():
         _must_refuse("R7", repr(name), _comp, name)
 
 
-def test_r7_names_that_only_look_like_devices_are_allowed():
+def test_pin_r7_names_that_only_look_like_devices_are_allowed():
     for name in (
         "console",
         "com10",
@@ -169,7 +164,7 @@ def test_r7_names_that_only_look_like_devices_are_allowed():
         assert _comp(name) == name, f"R7 refused an ordinary name: {name!r}"
 
 
-def test_a_plain_name_is_returned_unchanged():
+def test_pin_a_plain_name_is_returned_unchanged():
     for name in (
         "run.json",
         "case-001.json",
@@ -184,7 +179,7 @@ def test_a_plain_name_is_returned_unchanged():
 # ---------------------------------------------------------------- R8: containment
 
 
-def test_r8_a_link_out_of_the_base_is_refused(tmp_path):
+def test_pin_r8_a_link_out_of_the_base_is_refused(tmp_path):
     base = tmp_path / "base"
     base.mkdir()
     outside = tmp_path / "outside"
@@ -206,7 +201,7 @@ def test_r8_a_link_out_of_the_base_is_refused(tmp_path):
     _must_refuse("R8", "inside absolute", pathguard.inside, base, outside / "f.txt", what="x")
 
 
-def test_r8_join_refuses_a_link_that_leaves_the_base_even_without_must_exist(tmp_path):
+def test_pin_r8_join_refuses_a_link_that_leaves_the_base_even_without_must_exist(tmp_path):
     base = tmp_path / "base"
     base.mkdir()
     outside = tmp_path / "outside"
@@ -224,7 +219,7 @@ def test_r8_join_refuses_a_link_that_leaves_the_base_even_without_must_exist(tmp
     assert not (outside / "new.json").exists()
 
 
-def test_a_link_that_stays_inside_the_base_is_allowed(tmp_path):
+def test_pin_a_link_that_stays_inside_the_base_is_allowed(tmp_path):
     (tmp_path / "data").mkdir()
     (tmp_path / "data" / "f.txt").write_text("x", encoding="utf-8")
     _link(tmp_path / "data", tmp_path / "alias", directory=True)
@@ -232,7 +227,7 @@ def test_a_link_that_stays_inside_the_base_is_allowed(tmp_path):
     assert got == (tmp_path / "data" / "f.txt").resolve()
 
 
-def test_r9_absolute_drive_rooted_and_unc_names_are_refused(tmp_path):
+def test_pin_r9_absolute_drive_rooted_and_unc_names_are_refused(tmp_path):
     cases = {
         "/etc/passwd": ("R2", "absolute posix"),
         "\\x": ("R2", "rooted"),
@@ -254,7 +249,7 @@ def test_r9_absolute_drive_rooted_and_unc_names_are_refused(tmp_path):
 # ---------------------------------------------------------------- R10, R11
 
 
-def test_r10_a_path_that_cannot_be_resolved_is_refused(tmp_path):
+def test_pin_r10_a_path_that_cannot_be_resolved_is_refused(tmp_path):
     _must_refuse(
         "R10",
         "missing with must_exist",
@@ -272,7 +267,7 @@ def test_r10_a_path_that_cannot_be_resolved_is_refused(tmp_path):
     )
 
 
-def test_r10_a_symlink_loop_is_refused(tmp_path):
+def test_pin_r10_a_symlink_loop_is_refused(tmp_path):
     _link(tmp_path / "loop", tmp_path / "loop")
     _must_refuse(
         "R10", "loop with must_exist", pathguard.join, tmp_path, "loop", what="x", must_exist=True
@@ -282,7 +277,7 @@ def test_r10_a_symlink_loop_is_refused(tmp_path):
     )
 
 
-def test_r11_the_wrong_type_is_refused(tmp_path):
+def test_pin_r11_the_wrong_type_is_refused(tmp_path):
     (tmp_path / "d").mkdir()
     (tmp_path / "f").write_text("x", encoding="utf-8")
     exc = _must_refuse(
@@ -333,7 +328,7 @@ def test_r11_the_wrong_type_is_refused(tmp_path):
 # ---------------------------------------------------------------- how join and the others behave when all is well
 
 
-def test_join_applies_component_to_every_name(tmp_path):
+def test_pin_join_applies_component_to_every_name(tmp_path):
     (tmp_path / "sub").mkdir()
     (tmp_path / "sub" / "file.json").write_text("{}", encoding="utf-8")
     # "sub/file.json" stays inside the base and exists: only the per-name check refuses it
@@ -357,7 +352,7 @@ def test_join_applies_component_to_every_name(tmp_path):
     )
 
 
-def test_join_with_no_names_returns_the_resolved_base_and_empty_names_are_refused(tmp_path):
+def test_pin_join_with_no_names_returns_the_resolved_base_and_empty_names_are_refused(tmp_path):
     assert pathguard.join(tmp_path, what="x") == tmp_path.resolve()
     _must_refuse("R1", "empty name", pathguard.join, tmp_path, "", what="x")
     _must_refuse("R1", "dot name", pathguard.join, tmp_path, ".", what="x")
@@ -375,12 +370,12 @@ def test_join_with_no_names_returns_the_resolved_base_and_empty_names_are_refuse
         "dash-name_1.md",
     ],
 )
-def test_ordinary_names_work(tmp_path, name):
+def test_pin_ordinary_names_work(tmp_path, name):
     got = pathguard.join(tmp_path / "nested" / "deeper", name, what="x")
     assert got == tmp_path.resolve() / "nested" / "deeper" / name
 
 
-def test_the_refusal_text_names_the_argument_and_never_the_value(tmp_path):
+def test_pin_the_refusal_text_names_the_argument_and_never_the_value(tmp_path):
     hostile = "../sekrit-value\x00"
     try:
         pathguard.join(tmp_path, hostile, what="outputs file")
@@ -392,7 +387,7 @@ def test_the_refusal_text_names_the_argument_and_never_the_value(tmp_path):
         raise AssertionError("not refused")
 
 
-def test_operator_dir_accepts_a_folder_that_will_be_created(tmp_path):
+def test_pin_operator_dir_accepts_a_folder_that_will_be_created(tmp_path):
     got = pathguard.operator_dir(tmp_path / "new" / "deeper", what="x", must_exist=False)
     assert got == tmp_path.resolve() / "new" / "deeper"
     assert not got.exists()
@@ -403,7 +398,7 @@ def test_operator_dir_accepts_a_folder_that_will_be_created(tmp_path):
 # ---------------------------------------------------------------- the three old checks now call it
 
 
-def test_pin_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_path):
+def test_control_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_path):
     """REGRESSION: passed on main."""
     base = tmp_path / "base"
     base.mkdir()
@@ -419,7 +414,7 @@ def test_pin_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link(tmp_p
     assert confined(base, "") == base.resolve()
 
 
-def test_pin_confined_does_not_gain_the_windows_name_rules(tmp_path):
+def test_control_confined_does_not_gain_the_windows_name_rules(tmp_path):
     """REGRESSION: twelve other callers pass operator config names; only data-derived names get R6 and R7."""
     assert confined(tmp_path, "aux.md") == tmp_path.resolve() / "aux.md"
     assert confined(tmp_path, "notes.") == tmp_path.resolve() / "notes."
@@ -437,7 +432,7 @@ def test_a_nul_in_the_cause_list_folder_is_a_config_error(tmp_path):
         load_cause_list(Path(str(tmp_path) + "\x00x"))
 
 
-def test_pin_key_path_keeps_the_word_outside_and_its_order(tmp_path):
+def test_control_key_path_keeps_the_word_outside_and_its_order(tmp_path):
     """REGRESSION: tests pin "outside"; the key may not exist yet; a final symlink is refused first."""
     folder = tmp_path / "keys"
     folder.mkdir()
@@ -679,7 +674,7 @@ def test_random_names_never_change_anything_outside_the_base(tmp_path):
 # ---------------------------------------------------------------- behaviour through the real callers (score and replay)
 
 
-def test_r10_a_value_error_from_resolve_is_refused_as_r10(tmp_path, monkeypatch):
+def test_pin_r10_a_value_error_from_resolve_is_refused_as_r10(tmp_path, monkeypatch):
     """The NUL case moved to R4 (explicit check); a ValueError raised by resolve itself is still R10."""
 
     def boom(self, strict=False):
@@ -689,7 +684,7 @@ def test_r10_a_value_error_from_resolve_is_refused_as_r10(tmp_path, monkeypatch)
     _must_refuse("R10", "resolve raises ValueError", pathguard.operator_dir, "plain", what="x")
 
 
-def test_r4_a_nul_in_a_whole_path_is_refused_explicitly(tmp_path):
+def test_pin_r4_a_nul_in_a_whole_path_is_refused_explicitly(tmp_path):
     _must_refuse(
         "R4",
         "NUL in operator folder",

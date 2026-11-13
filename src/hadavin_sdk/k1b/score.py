@@ -99,9 +99,12 @@ class ScoreResult:
 def load_answers(path: Path, cause: CauseList) -> tuple[dict[str, Answer], str]:
     """``answers.json`` (``sealed`` is ignored in lite). Returns the answers and the SHA-256 of the file."""
     try:
-        # the operator's own --answers file: its shape is checked and it is read by its resolved path. One guard: the
-        # operator chose the name, so the name rules (colon, ``con``) do not apply, as before this change
-        real = pathguard.operator_file(path, what="answers file")
+        # the operator's own --answers file: folder and name go through ``pathguard.join`` (one guard) and the
+        # resolved path is read
+        path = Path(path)
+        real = pathguard.join(
+            path.parent, path.name, what="answers file", must_exist=True, kind="file"
+        )
         raw = real.read_bytes()
         data = strict_json_loads(raw.decode("utf-8-sig"))
     except (OSError, ValueError, RecursionError):  # PathRefused is a ValueError
@@ -214,7 +217,7 @@ def outputs_dir(out: Path | str) -> Path:
 def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
     """Refuse a folder that is not exactly ``run1..runK`` with every case file and ``run.json``."""
     # re-checked here because this function lists the folder itself (the caller's check is not trusted across functions)
-    out = pathguard.operator_dir(outputs_dir(out), what="outputs folder")
+    out = outputs_dir(out)
     names = {p.name for p in out.iterdir()}
     if "FAILED.txt" in names:
         raise ConfigError("outputs folder holds FAILED.txt: the replay did not finish")

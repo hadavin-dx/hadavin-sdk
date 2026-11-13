@@ -15,7 +15,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from hadavin_sdk import deferred
+from hadavin_sdk import deferred, pathguard
 from hadavin_sdk.actions.contract import ActionContract, schema_problems
 from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
 from hadavin_sdk.guard.judge import PROMPT_SHA256 as JUDGE_PROMPT_SHA256
@@ -249,10 +249,12 @@ def _load_tools(config: Config, agents: dict, contracts: dict) -> dict[str, dict
         ]
     read_ops: set[str] | None = None
     for agent_id, agent in agents.items():
-        path = folder / f"{agent_id}.yaml"
+        path = pathguard.join(
+            folder, f"{agent_id}.yaml", what="agent tools file"
+        )  # a bad name is refused in words
         if not path.is_file():
             continue
-        where = f"tools/{path.name}"
+        where = f"tools/{agent_id}.yaml"
         specs = parse_manifest(_yaml(path), where)
         if specs and read_ops is None:
             read_ops = read_operations(config.tool_modules, config.tool_module_hashes)

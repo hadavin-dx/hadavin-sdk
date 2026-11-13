@@ -106,7 +106,10 @@ def build_local(settings, deps) -> LocalSigner:
         # Operator config: the operator picks any key file (no outer folder exists, so nothing "contains" it);
         # its shape is checked and the resolved path is what is read.
         try:
-            path = pathguard.operator_file(settings.private_key_path, what="signer key file")
+            typed = Path(settings.private_key_path)
+            path = pathguard.join(
+                typed.parent, typed.name, what="signer key file", must_exist=True, kind="file"
+            )
         except (
             pathguard.PathRefused
         ) as exc:  # a control character or an over-long path is refused as it is
@@ -140,21 +143,28 @@ def key_dir() -> Path:
 def key_path(path: Path, base: Path | None = None) -> Path:
     """The real location of `path` when it lies inside `base` (default: the key folder, created 0700 if
     missing); else ValueError. The file itself must not be a symlink, and its folder must already exist."""
-    folder = (base or key_dir()).expanduser()
-    target = Path(path).expanduser()
-    # the shape of both paths is checked before any folder is made: a NUL or control character in the key folder
-    # (or one of its parents) is refused here, not after mkdir
-    pathguard.operator_text(folder, what="key folder")
-    pathguard.operator_text(target, what="key file")
+    try:  # ``~name`` for a user that does not exist raises RuntimeError; a NUL raises ValueError: one refusal, no text
+        folder = (base or key_dir()).expanduser()
+        target = Path(path).expanduser()
+    except (RuntimeError, ValueError, OSError):
+        raise ValueError(
+            "the key file or folder path cannot be read (home folder not found)"
+        ) from None
+    # the shape of the key folder is checked before any folder is made: a NUL or control character in it (or one of
+    # its parents) is refused here, not after mkdir; the key file's own text is checked by ``inside`` below
+    pathguard.operator_dir(folder, what="key folder", must_exist=False)
     folder.mkdir(mode=0o700, parents=True, exist_ok=True)
     folder = folder.resolve(strict=True)
-    if target.is_symlink():
+    try:  # a name too long for the system makes this check itself raise; it is a refusal, with no path in the text
+        linked = target.is_symlink()
+    except (OSError, ValueError):
+        raise ValueError("the key file path cannot be checked (too long or not valid)") from None
+    if linked:
         raise ValueError("the key file is a symlink: a key file is never used through one")
     real: Path | None
     try:
-        real = pathguard.inside(
-            folder, target.parent.resolve(strict=True) / target.name, what="key file"
-        )
+        parent = pathguard.inside(folder, target.parent, what="key file", must_exist=True)
+        real = pathguard.inside(folder, parent / target.name, what="key file")
     except pathguard.PathRefused as exc:
         if exc.rule != "R8":
             raise
@@ -217,7 +227,10 @@ def generate_key(
 
 def load_private_key(path: Path, passphrase: bytes | None = None) -> ed25519.Ed25519PrivateKey:
     # an operator-chosen key file (no outer folder): shape checked, the resolved path is read
-    real = pathguard.operator_file(path, what="private key file")
+    path = Path(path)
+    real = pathguard.join(
+        path.parent, path.name, what="private key file", must_exist=True, kind="file"
+    )
     return _private_key(real.read_bytes(), passphrase, str(path))
 
 
@@ -231,7 +244,10 @@ def _private_key(pem: bytes, passphrase: bytes | None, source: str) -> ed25519.E
 def load_public_key(path: Path) -> bytes:
     """A PEM public key file as the raw 32 bytes (what `verify_signature` takes)."""
     # operator-chosen file, shape checked
-    real = pathguard.operator_file(path, what="public key file")
+    path = Path(path)
+    real = pathguard.join(
+        path.parent, path.name, what="public key file", must_exist=True, kind="file"
+    )
     key = serialization.load_pem_public_key(real.read_bytes())
     if not isinstance(key, ed25519.Ed25519PublicKey):
         raise TypeError(f"{path} is not an Ed25519 public key")

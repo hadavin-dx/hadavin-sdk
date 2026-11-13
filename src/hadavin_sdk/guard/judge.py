@@ -100,7 +100,10 @@ class JudgeDetector:
 
 def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]:
     """``(passed, n)`` over ``{"text": ..., "injection": bool}`` lines; a judge error fails its case."""
-    golden = pathguard.operator_file(golden, what="judge golden file")
+    golden = Path(golden)
+    golden = pathguard.join(
+        golden.parent, golden.name, what="judge golden file", must_exist=True, kind="file"
+    )
     cases = [
         json.loads(line) for line in golden.read_text(encoding="utf-8").splitlines() if line.strip()
     ]

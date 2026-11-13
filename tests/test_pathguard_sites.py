@@ -2,8 +2,9 @@
 function-level checks). A NUL or other control character in a path an operator typed, or a name that came from data,
 must be refused with ``PathRefused`` (a ``ConfigError``), never reach the file system and never put the value in the text.
 
-Fake paths are built from parts. FAIL-BEFORE: each test below ran on ddf1d584 (see handover evidence); the tests marked
-test_control_* pass on both.
+Fake paths are built from parts.
+
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 3 control, 11 pin, 19 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations
@@ -41,33 +42,32 @@ def _refused(rule: str, fn, *args, **kwargs) -> PathRefused:
 # ---------------------------------------------------------------- the choke point itself
 
 
-def test_every_public_function_refuses_a_control_character_explicitly(tmp_path):
+def test_pin_every_public_function_refuses_a_control_character_explicitly(tmp_path):
     for text in BAD_TEXTS:
         _refused("R4", pathguard.component, text, what="n")
         _refused("R4", pathguard.join, tmp_path, text, what="n")
         _refused("R4", pathguard.inside, tmp_path, str(tmp_path) + "/" + text, what="n")
         _refused("R4", pathguard.operator_dir, str(tmp_path) + "/" + text, what="n")
         _refused("R4", pathguard.operator_file, str(tmp_path) + "/" + text, what="n")
-        _refused("R4", pathguard.operator_text, str(tmp_path) + "/" + text, what="n")
 
 
-def test_a_control_character_in_the_base_is_refused_not_only_in_the_names(tmp_path):
+def test_pin_a_control_character_in_the_base_is_refused_not_only_in_the_names(tmp_path):
     _refused("R4", pathguard.join, str(tmp_path) + NUL, "x", what="n")
 
 
-def test_the_nul_is_refused_even_when_resolve_would_not_raise(tmp_path, monkeypatch):
+def test_pin_the_nul_is_refused_even_when_resolve_would_not_raise(tmp_path, monkeypatch):
     # on Python 3.13 a NUL does not always make resolve() raise: the check must not depend on it
     monkeypatch.setattr(Path, "resolve", lambda self, strict=False: self)
     _refused("R4", pathguard.inside, tmp_path, str(tmp_path / ("a" + NUL)), what="n")
     _refused("R4", pathguard.operator_dir, str(tmp_path / ("a" + NUL)), what="n")
 
 
-def test_windows_invalid_characters_are_refused_in_a_name_r12():
+def test_pin_windows_invalid_characters_are_refused_in_a_name_r12():
     for char in '<>"|?*':
         _refused("R12", pathguard.component, "a" + char + "b", what="n")
 
 
-def test_a_symlink_loop_is_refused_or_fails_at_open_never_escapes(tmp_path):
+def test_pin_a_symlink_loop_is_refused_or_fails_at_open_never_escapes(tmp_path):
     a, b = tmp_path / "a", tmp_path / "b"
     try:
         os.symlink(b, a)
@@ -85,7 +85,7 @@ def test_a_symlink_loop_is_refused_or_fails_at_open_never_escapes(tmp_path):
         real.read_bytes()
 
 
-def test_pathrefused_keeps_its_rule_through_copy_and_pickle():
+def test_pin_pathrefused_keeps_its_rule_through_copy_and_pickle():
     exc = PathRefused("R8", "x: path escapes its folder")
     rebuilt = exc.__reduce__()[0](
         *exc.__reduce__()[1]
@@ -96,24 +96,19 @@ def test_pathrefused_keeps_its_rule_through_copy_and_pickle():
         assert str(clone) == str(exc)
 
 
-def test_the_refusal_text_never_holds_the_value(tmp_path):
+def test_pin_the_refusal_text_never_holds_the_value(tmp_path):
     secret = "tok" + "en-" + "abc"
     exc = _refused("R4", pathguard.component, secret + NUL, what="the name")
     assert secret not in str(exc)
 
 
-def test_operator_file_without_must_exist_checks_shape_only(tmp_path):
+def test_pin_operator_file_without_must_exist_checks_shape_only(tmp_path):
     missing = tmp_path / "nope"
     assert pathguard.operator_file(missing, what="n", must_exist=False) == missing.resolve()
     _refused("R10", pathguard.operator_file, missing, what="n")
     _refused(
         "R11", pathguard.operator_file, tmp_path, what="n", must_exist=False
     )  # exists: not a file
-
-
-def test_operator_text_returns_nothing_and_refuses_a_long_path():
-    assert pathguard.operator_text("fine", what="n") is None
-    _refused("R5", pathguard.operator_text, "a" * (pathguard.MAX_PATH_BYTES + 1), what="n")
 
 
 def test_the_temp_name_is_the_write_name_plus_the_shared_extra(tmp_path, monkeypatch):
@@ -128,11 +123,11 @@ def test_the_temp_name_is_the_write_name_plus_the_shared_extra(tmp_path, monkeyp
     name = "n" * pathguard.MAX_WRITE_NAME_BYTES
     atomic_write(tmp_path, name, "x")
     assert len(seen) == 1
-    assert len(seen[0]) == pathguard.MAX_COMPONENT_BYTES, "temp name is not name + TEMP_EXTRA_BYTES"
-    assert len(seen[0]) - len(name) == pathguard.TEMP_EXTRA_BYTES
+    assert len(seen[0]) == pathguard.MAX_COMPONENT_BYTES, "temp name is not name + 22 bytes"
+    assert len(seen[0]) - len(name) == len(".") + len(".") + 16 + len(".tmp")
 
 
-def test_r10_a_nul_is_r4_and_a_missing_path_is_r10(tmp_path):
+def test_pin_r10_a_nul_is_r4_and_a_missing_path_is_r10(tmp_path):
     _refused("R10", pathguard.inside, tmp_path, tmp_path / "missing", what="n", must_exist=True)
     _refused("R4", pathguard.inside, tmp_path, str(tmp_path / "x") + NUL, what="n", must_exist=True)
 
@@ -226,7 +221,7 @@ def test_site_score_outputs_folder_nul_and_missing(tmp_path):
         score_mod.outputs_dir(tmp_path / "missing")
 
 
-def test_pin_site_score_answers_file_nul_is_a_config_error(tmp_path):
+def test_control_site_score_answers_file_nul_is_a_config_error(tmp_path):
     from hadavin_sdk.k1b.causelist import CauseList
     from hadavin_sdk.k1b.score import load_answers
 
@@ -300,17 +295,13 @@ def test_site_cli_config_flag_nul_is_refused(tmp_path, capsys):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="posix modes")
-def test_every_site_message_names_the_argument_not_the_value(tmp_path):
+def test_pin_every_site_message_names_the_argument_not_the_value(tmp_path):
     exc = _refused("R4", pathguard.operator_dir, str(tmp_path) + NUL, what="outputs folder")
     assert str(exc) == "outputs folder: contains a control character"
 
 
-def test_inside_checks_the_base_text_too(tmp_path):
+def test_pin_inside_checks_the_base_text_too(tmp_path):
     _refused("R4", pathguard.inside, str(tmp_path) + NUL, tmp_path / "x", what="n")
-
-
-def test_operator_text_refuses_a_control_character():
-    _refused("R4", pathguard.operator_text, "a" + NUL + "b", what="n")
 
 
 # ---- sites that need a config folder or a fake vault (self-contained: the mutant runner runs without conftest.py) ----
@@ -393,7 +384,7 @@ def test_vault_kubernetes_token_path_with_a_nul_is_a_config_error():
         make("secrets", settings).get("db")
 
 
-def test_pin_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
+def test_control_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
     """``.tmp-con`` is a fine name and ``con.json`` is a device name: only the guard on the final name stops the write."""
     from hadavin_sdk.audit import LocalDirSink
     from hadavin_sdk.models import AuditEvent

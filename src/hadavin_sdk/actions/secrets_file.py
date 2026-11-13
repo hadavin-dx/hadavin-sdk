@@ -32,14 +32,21 @@ class MountedFileProvider(CachedSecrets):
         self.root = Path(root)
 
     def _fetch(self, name: str) -> str:
-        # ConfigError on `..`, absolute names or links out of the folder. The result is the real path, so
-        # O_NOFOLLOW below refuses a link swapped in after this check.
-        found = confined(self.root, name)
-        # the last check before the open. ``name`` is an operator-chosen secret name, so only containment applies
-        # (``inside``): a name such as ``vault:token`` or ``con`` was readable before and still is.
+        # O_NONBLOCK: a FIFO planted in the folder must not hang the open (S_ISREG below then refuses it).
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+        flags |= getattr(os, "O_BINARY", 0)
+        # ``confined`` folds ``a/../b`` and refuses a name or link that leaves the folder; one guard before the open then
+        # sends every name that is left through ``pathguard.join`` (refuses ``vault:token``, ``con`` or ``key.``). The
+        # result is the real path, so O_NOFOLLOW refuses a link swapped in after this check.
         try:
-            path = pathguard.inside(
-                self.root, found, what="mounted secret", must_exist=True, kind="file"
+            base = pathguard.join(self.root, what="mounted secret folder")
+            found = confined(base, name)
+            path = pathguard.join(
+                base,
+                *found.relative_to(base).parts,
+                what="mounted secret",
+                must_exist=True,
+                kind="file",
             )
         except pathguard.PathRefused as exc:
             raise pathguard.mapped(
@@ -47,9 +54,6 @@ class MountedFileProvider(CachedSecrets):
                 R10=f"secret {name!r} not found in the mounted folder",
                 R11=f"secret {name!r} is not a regular file",
             ) from None
-        # O_NONBLOCK: a FIFO planted in the folder must not hang the open (S_ISREG below then refuses it).
-        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
-        flags |= getattr(os, "O_BINARY", 0)
         try:
             fd = os.open(path, flags)
         except FileNotFoundError:

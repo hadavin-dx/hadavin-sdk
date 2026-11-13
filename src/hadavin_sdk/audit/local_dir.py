@@ -122,19 +122,27 @@ class LocalDirSink:
         except OSError as exc:
             raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
 
+    @staticmethod
+    def _id_refused(event: AuditEvent) -> bool:
+        try:
+            pathguard.component(f"{event.event_id}.json", what="audit event id")
+        except pathguard.PathRefused:
+            return True
+        return False
+
     def write_outcome(self, event: AuditEvent) -> str | None:
         """Never raises: object store, then outbox, then memory (drained by reconcile)."""
-        try:
-            return self._write(event)
-        except DuplicateEvent:
-            return f"{event.event_id}.json"
-        except (
-            pathguard.PathRefused
-        ):  # an id that is not one plain file name: it can never be written, so it is not kept
+        if self._id_refused(event):
+            # an id that is not one plain file name can never be written, so it is not kept. A refusal from the
+            # objects or index folder (for example a link out) is a different case: it takes the outbox path below.
             self.refused_events += 1
             if self.refused_events == 1:  # once, and never the id: it is the refused text
                 _LOG.warning("audit outcome dropped: its event id is not one plain file name")
             return None
+        try:
+            return self._write(event)
+        except DuplicateEvent:
+            return f"{event.event_id}.json"
         except Exception:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
             try:
                 self.outbox.mkdir(parents=True, exist_ok=True)
@@ -165,12 +173,16 @@ class LocalDirSink:
             done += 1
         if not self.outbox.exists():
             return done
+        try:
+            outbox_real = pathguard.join(self.outbox, what="audit outbox folder")
+        except pathguard.PathRefused:
+            return done  # the outbox folder cannot be used: its files are left for a person
         for listed in sorted(p.name for p in self.outbox.glob("*.json")):
             try:  # a name from the listing goes through pathguard; one that cannot is left alone (a person looks)
                 path = pathguard.join(self.outbox, listed, what="audit outbox file")
             except pathguard.PathRefused:
                 continue
-            if path != pathguard.join(self.outbox, what="audit outbox folder") / listed:
+            if path != outbox_real / listed:
                 continue  # a link inside the outbox is left for a person: unlinking would remove its target
             try:
                 event = AuditEvent.model_validate_json(path.read_text(encoding="utf-8"))

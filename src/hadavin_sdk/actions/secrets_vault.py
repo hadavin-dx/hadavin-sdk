@@ -24,6 +24,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from hadavin_sdk import pathguard
@@ -177,8 +178,11 @@ def connect(settings, **kw: Any) -> VaultProvider:
             try:
                 # Operator config: a mounted service-account file, outside any base folder by design; the shape is
                 # checked (a NUL or control character is refused) and the resolved path is read.
-                jwt_file = pathguard.operator_file(
-                    settings.jwt_path, what="vault sign-in token file", must_exist=False
+                typed = Path(settings.jwt_path)
+                jwt_file = pathguard.join(
+                    typed.parent,
+                    typed.name,
+                    what="vault sign-in token file",
                 )
                 jwt = jwt_file.read_text(encoding="utf-8").strip()
             except (OSError, UnicodeDecodeError, pathguard.PathRefused) as exc:

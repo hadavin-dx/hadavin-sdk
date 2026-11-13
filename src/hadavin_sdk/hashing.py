@@ -27,9 +27,12 @@ def hash_files(root: Path, rel_paths: list[str]) -> str:
     for rel in rel_paths:
         if chr(92) in rel or chr(0) in rel:
             raise ConfigError("path has a backslash or NUL character")
+        # ``.``, ``//`` and ``a/../b`` fold away here; a link or ``..`` out of the folder is refused
         found = confined(base, rel)
-        try:  # the last check before the read; ``rel`` is a name the caller chose: containment only (``inside``)
-            path = pathguard.inside(base, found, what="hash file", must_exist=True, kind="file")
+        try:  # one guard before the read: every name that is left goes through ``pathguard.join``
+            path = pathguard.join(
+                base, *found.relative_to(base).parts, what="hash file", must_exist=True, kind="file"
+            )
         except pathguard.PathRefused as exc:
             raise pathguard.mapped(
                 exc, R10=f"not a file: {rel}", R11=f"not a file: {rel}"
