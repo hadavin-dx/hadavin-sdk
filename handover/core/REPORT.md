@@ -1,5 +1,25 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 06:07Z CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package has a clean head. Part 6 moved to 40b83a31 (batch 15, more parts pushed); its B12-killed proof and runner result are still missing. SONAR-PATH stays at 622027cc (batch 6 uncommitted in the builder's tree). Part 2 stays at e75037b6 (finisher running). Q8c-1 stays at dcf64b36 (B17 test not yet pushed).
+- Open since earlier blocks: .gitleaksignore decision (owner-only), Q-R5-1, laptop tool list.
+
+**LEAD ACTIONS:** none new.
+
+**LIVE ITEMS:** ac09a2ce SONAR batch 6; a3ea530e Part 6 runner; a592bb13 Q8c-1 B17; a7978edf Part 6 batch 15; adecceff Part 2 finisher. 5 running.
+
+**ROUNDS (WHY):** none started; waiting for builder pushes.
+
+**FINISHED SINCE LAST BLOCK:** nothing closed.
+
+**EGM STEP PER PACKAGE:** unchanged.
+
+**LANE SONAR-PATH:** not READY.
+
+**RUN ON LAPTOP:** none new.
+
 ## 06:02Z CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

@@ -92,3 +92,4 @@
 05:52Z CORE: B17 builder + Part6 batch15 + SONAR batch6 + Part2 batch13 live; 6 agents; rebase fault repaired
 05:57Z CORE: no head closed; Part6 batch15 part1 pushed; 6 agents live
 06:02Z CORE: gitleaks slip fixed (file removed, ignore entry owner-only); SONAR runner in; 5 agents live
+06:07Z CORE: no clean head; Part6 batch15 at 40b83a31; 5 agents live

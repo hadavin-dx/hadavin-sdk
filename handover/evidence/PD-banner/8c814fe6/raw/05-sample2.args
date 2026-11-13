@@ -1,0 +1,20 @@
+G7 a required folder that is missing does not stop the run
+R10F2 the copy sets the file mode to nothing (chmod)
+R10F7 a chain of links that is too long is called only a loop
+J23a the page does not check the tag is plain text
+G24 a submodule under a product root is not a hit
+R9A6 the clock handed to build is not recorded as an override
+R9D6 the Authorization header is read as one word without a space after the colon (a space after the colon hides nothing)
+B31 a tool manifest host is not counted as real
+R7B2 the timeout parameter is dropped from the not-connectivity list
+R13A6 the words of the banner may fail with any error
+B43 a source that does not build is read as this machine
+R9A5 the seal method is public again
+J21 a failing repair step stops the steps after it
+R9B5 the not-known answer of banner_or_unconfirmed is logged as a warning
+G5 a folder deeper than the product root is not a hit
+J13 the page mode list differs from the stages
+B63 banner_or_unconfirmed logs the error text
+J24 the repair does not empty the element before it writes the not-confirmed words
+G92 a PE file is not recognised
+G8 the copy keeps the folder

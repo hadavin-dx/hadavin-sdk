@@ -1,0 +1,42 @@
+ok  KILLED    B3c the length bound is gone (the 41-character name) | killer=test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_ | expect_in_first=True
+    first: E       AssertionError: a name of 41 characters was not refused
+ok  KILLED    B8 the order of the names is lost | killer=test_names_come_from_the_caller_and_repeats_are_shown_once_in_order | expect_in_first=True
+    first: E       AssertionError: names shown: ('Alpha', 'Beta')
+ok  KILLED    J6 a throwing getter escapes the painter | killer=test_the_painter_never_throws_and_never_leaves_the_page_blank | expect_in_first=True
+    first: E           AssertionError: usable() on its own threw in scenario throwing-getter
+ok  KILLED    J8f tone real is accepted when the text does not name the se | killer=test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given | expect_in_first=True
+    first: E       AssertionError: contradiction #4
+ok  KILLED    G3 the loader files are not exempt | killer=test_a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fake_id | expect_in_first=True
+    first: E       AssertionError: a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fa: check 1
+ok  KILLED    G10 a pattern that matches everything is accepted | killer=test_a_pattern_that_matches_the_empty_text_stops_the_guard | expect_in_first=True
+    first: E       AssertionError: the pattern 'x*' was not refused
+ok  KILLED    G21 a listed phrase is also accepted as part of a path or a  | killer=test_the_table_name_and_listed_phrases_are_not_hits_but_a_path_or_a_lo | expect_in_first=True
+    first: E           AssertionError: DEMO_ONLY/x.json
+ok  KILLED    B23 every address counts as this machine | killer=test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine | expect_in_first=True
+    first: E           AssertionError: bare host 'localhost\x00' read as this machine
+ok  KILLED    B25 a source whose endpoint cannot be worked out is read as  | killer=test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_ma | expect_in_first=True
+    first: E           AssertionError: sources={'k': namespace(kind='unknown-kind', settings={})}: a configured address that leaves this machine was not counted as real
+ok  KILLED    B36 banner_from_config drops the tool specs | killer=test_the_tools_of_a_real_registry_are_what_the_banner_reads | expect_in_first=True
+    first: E       AssertionError: registry tools dropped
+ok  KILLED    B61 a name anywhere in the text counts as shown | killer=test_the_names_are_checked_in_the_formatted_names_part_of_the_text_onl | expect_in_first=True
+    first: E           AssertionError: a name that occurs only after the list was counted as shown
+ok  KILLED    G66 a hit that starts with two colons is printed as it is | killer=test_a_hit_is_printed_with_control_characters_escaped_and_never_as_a_w | expect_in_first=True
+    first: E       AssertionError: a line starting with ::
+ok  KILLED    G87 the three modes can be given together | killer=test_the_modes_exclude_each_other_and_pytest_arguments_need_a_copy_run | expect_in_first=True
+    first: E           AssertionError: the modes ('--require', '--without-folder') were not refused with exit 2 (got "demo_only_guard: 'product_packages' is empty; without a package
+ok  KILLED    N8 an empty mapping counts as an override | killer=test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not | expect_in_first=True
+    first: E       AssertionError: an empty mapping or None was counted as an override
+BAD SURVIVED  J27 the page paints an unconfirmed banner whose text is not  | killer= | expect_in_first=None
+    first: 
+ok  KILLED    R9D9 the name pwd is not a secret name | killer=test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_ | expect_in_first=True
+    first: E               AssertionError: unquoted pwd='abc123': 'fatal: pwd=abc123 tail'
+ok  KILLED    R10A6 the specs of the toolbox are not read as parts | killer=test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed | expect_in_first=True
+    first: E           AssertionError: a spec added: the banner stayed made-up
+ok  KILLED    R10F4 a loader behind a folder that became a link is read th | killer=test_a_loader_behind_a_folder_that_became_a_link_is_a_hit | expect_in_first=True
+    first: E       AssertionError: a loader behind a link was read through it: ['src/pkg: symlink-in-product-root', 'src/pkg/__init__.py: symlink-in-product-root', 'src/pkg/loader.p
+ok  KILLED    R11A3 the principals of the registry are not read as parts | killer=test_a_replaced_principal_entry_after_build_reads_unconfirmed | expect_in_first=True
+    first: E       AssertionError: a replaced principal was not seen
+ok  KILLED    R11C1 the name before an equals sign is looked for from the  | killer=test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of | expect_in_first=True
+    first: E           AssertionError: 13510499 reads for a line of 9000 characters ('ab=ab=ab=ab='...)
+n 20 bad 1
+rc=0

@@ -1,0 +1,1578 @@
+============================= test session starts ==============================
+collecting ... collected 191 items
+
+tests/test_mode_banner.py::test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly PASSED [  0%]
+tests/test_mode_banner.py::test_demo_with_no_stand_ins_still_says_nothing_real_is_connected PASSED [  1%]
+tests/test_mode_banner.py::test_a_real_service_is_named_and_made_up_data_is_never_claimed PASSED [  1%]
+tests/test_mode_banner.py::test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up PASSED [  2%]
+tests/test_mode_banner.py::test_pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone PASSED [  2%]
+tests/test_mode_banner.py::test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real PASSED [  3%]
+tests/test_mode_banner.py::test_names_come_from_the_caller_and_repeats_are_shown_once_in_order PASSED [  3%]
+tests/test_mode_banner.py::test_a_key_without_a_shown_name_is_read_as_component_and_the_key PASSED [  4%]
+tests/test_mode_banner.py::test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen PASSED [  4%]
+tests/test_mode_banner.py::test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refused PASSED [  5%]
+tests/test_mode_banner.py::test_pin_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real PASSED [  5%]
+tests/test_mode_banner.py::test_an_unknown_stage_is_refused PASSED       [  6%]
+tests/test_mode_banner.py::test_pin_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident PASSED [  6%]
+tests/test_mode_banner.py::test_names_that_are_not_a_mapping_are_refused_with_a_type_error PASSED [  7%]
+tests/test_mode_banner.py::test_a_name_that_could_change_the_sentence_is_refused PASSED [  7%]
+tests/test_mode_banner.py::test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_character_is_not PASSED [  8%]
+tests/test_mode_banner.py::test_a_service_key_that_is_not_text_is_refused PASSED [  8%]
+tests/test_mode_banner.py::test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python PASSED [  9%]
+tests/test_mode_banner.py::test_pin_property_the_made_up_claim_never_appears_next_to_a_real_service PASSED [  9%]
+tests/test_mode_banner.py::test_banner_from_config_reads_the_stage_and_both_lists_from_the_config PASSED [ 10%]
+tests/test_mode_banner.py::test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given PASSED [ 10%]
+tests/test_mode_banner.py::test_property_every_config_entry_lands_in_exactly_one_group PASSED [ 11%]
+tests/test_mode_banner.py::test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list PASSED [ 12%]
+tests/test_mode_banner.py::test_the_stage_of_the_config_is_checked_like_any_other_stage PASSED [ 12%]
+tests/test_mode_banner.py::test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry PASSED [ 13%]
+tests/test_mode_banner.py::test_no_new_module_keeps_its_own_loopback_list PASSED [ 13%]
+tests/test_mode_banner.py::test_the_page_paints_exactly_what_python_wrote PASSED [ 14%]
+tests/test_mode_banner.py::test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed PASSED [ 14%]
+tests/test_mode_banner.py::test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given PASSED [ 15%]
+tests/test_mode_banner.py::test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given PASSED [ 15%]
+tests/test_mode_banner.py::test_pin_a_text_that_is_not_plain_text_is_not_painted_as_given PASSED [ 16%]
+tests/test_mode_banner.py::test_the_painter_never_throws_and_never_leaves_the_page_blank PASSED [ 16%]
+tests/test_mode_banner.py::test_the_page_fallback_has_the_same_words_as_the_python_fallback PASSED [ 17%]
+tests/test_mode_banner.py::test_the_page_lists_are_the_python_lists PASSED [ 17%]
+tests/test_mode_banner.py::test_markup_in_the_text_is_shown_as_text_never_parsed PASSED [ 18%]
+tests/test_mode_banner.py::test_the_page_script_has_no_way_to_parse_html_or_load_anything PASSED [ 18%]
+tests/test_mode_banner.py::test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up PASSED [ 19%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value0] PASSED [ 19%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value1] PASSED [ 20%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value2] PASSED [ 20%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[egress_hosts-value3] PASSED [ 21%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[sources-value4] PASSED [ 21%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value5] PASSED [ 22%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[egress_hosts-value6] PASSED [ 23%]
+tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[sources-value7] PASSED [ 23%]
+tests/test_mode_banner.py::test_a_real_loaded_demo_config_with_an_outside_system_gets_the_real_banner PASSED [ 24%]
+tests/test_mode_banner.py::test_property_any_outside_endpoint_in_any_stage_never_gets_the_made_up_sentence PASSED [ 24%]
+tests/test_mode_banner.py::test_a_banner_is_checked_against_what_it_claims_before_it_leaves PASSED [ 25%]
+tests/test_mode_banner.py::test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page PASSED [ 25%]
+tests/test_mode_banner.py::test_a_failed_last_resort_write_never_leaves_the_banner_hidden PASSED [ 26%]
+tests/test_mode_banner.py::test_a_failed_append_leaves_words_on_the_screen_never_an_empty_banner PASSED [ 26%]
+tests/test_mode_banner.py::test_a_real_name_is_matched_as_a_whole_word_only PASSED [ 27%]
+tests/test_mode_banner.py::test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error PASSED [ 27%]
+tests/test_mode_banner.py::test_tool_specs_has_no_default_so_forgetting_it_is_an_error PASSED [ 28%]
+tests/test_mode_banner.py::test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service PASSED [ 28%]
+tests/test_mode_banner.py::test_tool_hosts_on_this_machine_or_none_keep_the_demo_banner PASSED [ 29%]
+tests/test_mode_banner.py::test_tool_modules_without_the_manifests_count_as_one_real_service PASSED [ 29%]
+tests/test_mode_banner.py::test_the_tools_of_a_real_registry_are_what_the_banner_reads PASSED [ 30%]
+tests/test_mode_banner.py::test_the_words_state_what_is_checked_and_not_a_false_premise PASSED [ 30%]
+tests/test_mode_banner.py::test_a_failed_page_write_keeps_non_empty_text PASSED [ 31%]
+tests/test_mode_banner.py::test_an_odd_url_is_shown_as_leaving_this_machine PASSED [ 31%]
+tests/test_mode_banner.py::test_the_shared_normaliser_treats_these_as_this_machine PASSED [ 32%]
+tests/test_mode_banner.py::test_the_banner_uses_the_shared_loopback_names_and_normaliser_not_a_copy PASSED [ 32%]
+tests/test_mode_banner.py::test_the_source_host_the_app_uses_comes_from_the_shared_endpoint_function PASSED [ 33%]
+tests/test_mode_banner.py::test_a_real_config_with_an_outside_egress_host_or_source_gets_the_real_banner PASSED [ 34%]
+tests/test_mode_banner.py::test_a_config_that_lost_an_endpoint_field_raises_and_is_never_read_as_nothing PASSED [ 34%]
+tests/test_mode_banner.py::test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check PASSED [ 35%]
+tests/test_mode_banner.py::test_pin_names_in_follows_the_table PASSED    [ 35%]
+tests/test_mode_banner.py::test_pin_the_page_and_python_agree_on_every_row_of_the_name_table PASSED [ 36%]
+tests/test_mode_banner.py::test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine PASSED [ 36%]
+tests/test_mode_banner.py::test_a_url_and_a_bare_host_give_the_same_answer_for_every_spelling PASSED [ 37%]
+tests/test_mode_banner.py::test_a_tool_spec_without_hosts_or_with_odd_hosts_raises_naming_the_tool PASSED [ 37%]
+tests/test_mode_banner.py::test_tool_modules_with_no_spec_at_all_count_as_one_real_service_like_none PASSED [ 38%]
+tests/test_mode_banner.py::test_the_loopback_names_are_pinned_by_content PASSED [ 38%]
+tests/test_mode_banner.py::test_the_banner_is_at_least_as_strict_as_the_tool_client_on_urls_and_hosts PASSED [ 39%]
+tests/test_mode_banner.py::test_a_port_that_is_not_digits_or_text_after_a_bracket_is_not_this_machine PASSED [ 39%]
+tests/test_mode_banner.py::test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one PASSED [ 40%]
+tests/test_mode_banner.py::test_an_empty_name_is_never_in_a_text PASSED  [ 40%]
+tests/test_mode_banner.py::test_the_limits_are_stated_in_words PASSED    [ 41%]
+tests/test_mode_banner.py::test_a_service_name_may_not_hold_the_made_up_claim_of_the_words_in_use PASSED [ 41%]
+tests/test_mode_banner.py::test_the_names_are_checked_in_the_formatted_names_part_of_the_text_only PASSED [ 42%]
+tests/test_mode_banner.py::test_a_failing_attribute_write_never_leaves_the_old_words_on_screen PASSED [ 42%]
+tests/test_mode_banner.py::test_a_failing_tone_attribute_alone_still_replaces_the_old_words_and_clears_the_mode PASSED [ 43%]
+tests/test_mode_banner.py::test_a_failing_mode_attribute_leaves_the_not_confirmed_tone_with_its_text PASSED [ 43%]
+tests/test_mode_banner.py::test_the_page_trusts_the_tone_it_is_given_and_python_checks_the_sentences PASSED [ 44%]
+tests/test_mode_banner.py::test_the_nothing_connected_list_is_pinned_by_content PASSED [ 45%]
+tests/test_mode_banner.py::test_a_kind_added_to_the_prod_gate_table_later_still_reads_as_a_real_service PASSED [ 45%]
+tests/test_mode_banner.py::test_a_configured_tool_module_that_no_manifest_accounts_for_counts_as_one_real_service PASSED [ 46%]
+tests/test_mode_banner.py::test_the_type_of_a_system_base_url_is_text_and_another_type_reads_as_real PASSED [ 46%]
+tests/test_mode_banner.py::test_the_banner_is_never_more_lenient_than_the_tool_client_on_40_urls_and_20_hosts PASSED [ 47%]
+tests/test_mode_banner.py::test_the_words_of_a_name_check_are_required_not_defaulted PASSED [ 47%]
+tests/test_mode_banner.py::test_egress_hosts_may_be_any_list_like_collection_and_a_bare_text_is_refused PASSED [ 48%]
+tests/test_mode_banner.py::test_a_tag_longer_than_the_page_script_shows_is_refused_in_python PASSED [ 48%]
+tests/test_mode_banner.py::test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed PASSED [ 49%]
+tests/test_mode_banner.py::test_the_key_words_of_another_language_are_reserved_in_names PASSED [ 49%]
+tests/test_mode_banner.py::test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times PASSED [ 50%]
+tests/test_mode_banner.py::test_a_generator_for_tool_modules_is_refused_like_egress_hosts PASSED [ 50%]
+tests/test_mode_banner.py::test_a_generator_for_the_backend_entries_is_refused PASSED [ 51%]
+tests/test_mode_banner.py::test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_refused PASSED [ 51%]
+tests/test_mode_banner.py::test_pin_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused PASSED [ 52%]
+tests/test_mode_banner.py::test_a_bytearray_a_memoryview_and_a_subclass_with_its_own_iteration_are_not_read_by_accident PASSED [ 52%]
+tests/test_mode_banner.py::test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim PASSED [ 53%]
+tests/test_mode_banner.py::test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_order PASSED [ 53%]
+tests/test_mode_banner.py::test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner_it_is_added PASSED [ 54%]
+tests/test_mode_banner.py::test_pin_an_unknown_or_oddly_typed_override_list_is_refused PASSED [ 54%]
+tests/test_mode_banner.py::test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so PASSED [ 55%]
+tests/test_mode_banner.py::test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one PASSED [ 56%]
+tests/test_mode_banner.py::test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_sentence PASSED [ 56%]
+tests/test_mode_banner.py::test_a_failed_text_write_never_leaves_the_old_made_up_claim_or_a_stale_mode PASSED [ 57%]
+tests/test_mode_banner.py::test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too PASSED [ 57%]
+tests/test_mode_banner.py::test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_and_601 PASSED [ 58%]
+tests/test_mode_banner.py::test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted PASSED [ 58%]
+tests/test_mode_banner.py::test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names FAILED [ 59%]
+tests/test_mode_banner.py::test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one PASSED [ 59%]
+tests/test_mode_banner.py::test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner PASSED [ 60%]
+tests/test_mode_banner.py::test_pin_banner_from_config_has_no_default_for_overridden PASSED [ 60%]
+tests/test_mode_banner.py::test_pin_banner_or_unconfirmed_has_no_default_for_overridden PASSED [ 61%]
+tests/test_mode_banner.py::test_pin_overridden_none_raises_a_value_error_in_banner_from_config PASSED [ 61%]
+tests/test_mode_banner.py::test_pin_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner PASSED [ 62%]
+tests/test_mode_banner.py::test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason PASSED [ 62%]
+tests/test_mode_banner.py::test_pin_the_page_lists_of_overrides_and_the_note_words_agree_with_python PASSED [ 63%]
+tests/test_mode_banner.py::test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set PASSED [ 63%]
+tests/test_mode_banner.py::test_the_blank_set_is_what_python_strip_and_javascript_trim_both_call_white_space PASSED [ 64%]
+tests/test_mode_banner.py::test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page FAILED [ 64%]
+tests/test_mode_banner.py::test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted PASSED [ 65%]
+tests/test_mode_banner.py::test_pin_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once PASSED [ 65%]
+tests/test_mode_banner.py::test_pin_every_replaced_connected_part_reads_unconfirmed PASSED [ 66%]
+tests/test_mode_banner.py::test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed PASSED [ 67%]
+tests/test_mode_banner.py::test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused PASSED [ 67%]
+tests/test_mode_banner.py::test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises PASSED [ 68%]
+tests/test_mode_banner.py::test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not FAILED [ 68%]
+tests/test_mode_banner.py::test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well FAILED [ 69%]
+tests/test_mode_banner.py::test_pin_the_recorded_names_cannot_be_laundered PASSED [ 69%]
+tests/test_mode_banner.py::test_pin_a_normal_production_tick_keeps_its_banner PASSED [ 70%]
+tests/test_mode_banner.py::test_pin_an_object_first_set_on_a_part_after_build_reads_unconfirmed PASSED [ 70%]
+tests/test_mode_banner.py::test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default PASSED [ 71%]
+tests/test_mode_banner.py::test_the_not_connectivity_reasons_say_what_was_checked FAILED [ 71%]
+tests/test_mode_banner.py::test_banner_for_has_no_default_for_overridden PASSED [ 72%]
+tests/test_mode_banner.py::test_banner_or_unconfirmed_with_none_logs_no_warning PASSED [ 72%]
+tests/test_mode_banner.py::test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order PASSED [ 73%]
+tests/test_mode_banner.py::test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names FAILED [ 73%]
+tests/test_mode_banner.py::test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_line_is_the_plain_fallback PASSED [ 74%]
+tests/test_mode_banner.py::test_pin_a_forged_tag_on_an_unconfirmed_banner_is_painted_as_the_pages_own_tag PASSED [ 74%]
+tests/test_mode_banner.py::test_the_guard_and_the_banner_modules_say_what_they_compare_in_their_docstrings PASSED [ 75%]
+tests/test_mode_banner.py::test_the_overrides_are_exactly_the_objects_and_callables_handed_to_build PASSED [ 75%]
+tests/test_mode_banner.py::test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_no_object PASSED [ 76%]
+tests/test_mode_banner.py::test_a_tool_spec_deleted_after_build_reads_unconfirmed FAILED [ 76%]
+tests/test_mode_banner.py::test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed FAILED [ 77%]
+tests/test_mode_banner.py::test_the_address_of_a_system_changed_after_build_reads_unconfirmed FAILED [ 78%]
+tests/test_mode_banner.py::test_config_sources_cleared_after_build_reads_unconfirmed FAILED [ 78%]
+tests/test_mode_banner.py::test_a_config_source_replaced_after_build_reads_unconfirmed FAILED [ 79%]
+tests/test_mode_banner.py::test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed FAILED [ 79%]
+tests/test_mode_banner.py::test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed FAILED [ 80%]
+tests/test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type FAILED [ 80%]
+tests/test_mode_banner.py::test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too FAILED [ 81%]
+tests/test_mode_banner.py::test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page FAILED [ 81%]
+tests/test_mode_banner.py::test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet FAILED [ 82%]
+tests/test_mode_banner.py::test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts FAILED [ 82%]
+tests/test_mode_banner.py::test_a_named_container_that_is_missing_stops_the_reading_and_names_it FAILED [ 83%]
+tests/test_mode_banner.py::test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on FAILED [ 83%]
+tests/test_mode_banner.py::test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer FAILED [ 84%]
+tests/test_mode_banner.py::test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call FAILED [ 84%]
+tests/test_mode_banner.py::test_pin_the_banner_of_a_real_app_is_the_same_after_an_agent_run PASSED [ 85%]
+tests/test_mode_banner.py::test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed FAILED [ 85%]
+tests/test_mode_banner.py::test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too PASSED [ 86%]
+tests/test_mode_banner.py::test_a_replaced_agent_entry_after_build_reads_unconfirmed FAILED [ 86%]
+tests/test_mode_banner.py::test_a_replaced_principal_entry_after_build_reads_unconfirmed FAILED [ 87%]
+tests/test_mode_banner.py::test_a_replaced_chain_entry_after_build_reads_unconfirmed FAILED [ 87%]
+tests/test_mode_banner.py::test_a_replaced_system_entry_after_build_reads_unconfirmed FAILED [ 88%]
+tests/test_mode_banner.py::test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed FAILED [ 89%]
+tests/test_mode_banner.py::test_a_stage_changed_after_build_reads_unconfirmed FAILED [ 89%]
+tests/test_mode_banner.py::test_pin_a_stage_that_is_not_text_is_an_error_that_names_it FAILED [ 90%]
+tests/test_mode_banner.py::test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it FAILED [ 90%]
+tests/test_mode_banner.py::test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it FAILED [ 91%]
+tests/test_mode_banner.py::test_pin_the_demo_stage_is_one_of_the_stages PASSED [ 91%]
+tests/test_mode_banner.py::test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in FAILED [ 92%]
+tests/test_mode_banner.py::test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner FAILED [ 92%]
+tests/test_mode_banner.py::test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner FAILED [ 93%]
+tests/test_mode_banner.py::test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner FAILED [ 93%]
+tests/test_mode_banner.py::test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner FAILED [ 94%]
+tests/test_mode_banner.py::test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner PASSED [ 94%]
+tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App._known_overrides (reads the parts)] PASSED [ 95%]
+tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App._seal (reads the app at build)] FAILED [ 95%]
+tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App.mode_banner (the outer catch)] PASSED [ 96%]
+tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[_not_confirmed_that_cannot_fail (the words)] PASSED [ 96%]
+tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[banner_or_unconfirmed] PASSED [ 97%]
+tests/test_mode_banner.py::test_the_list_of_read_errors_holds_no_type_that_takes_every_error FAILED [ 97%]
+tests/test_mode_banner.py::test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer FAILED [ 98%]
+tests/test_mode_banner.py::test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine PASSED [ 98%]
+tests/test_mode_banner.py::test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card FAILED [ 99%]
+tests/test_mode_banner.py::test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything FAILED [100%]
+
+=================================== FAILURES ===================================
+_ test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names _
+
+    @needs_node
+    def test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names() -> (
+        None
+    ):
+        # what it shows (such a banner was replaced by the plain fallback, so the names of the overrides were lost)
+        shown = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=("llm",)).as_dict()
+        expected = (
+            " "
+            + mb.not_confirmed()["text"]
+            + " "
+            + mb.DEFAULT_WORDS.overridden_note.format(names="llm")
+        )
+        for odd in (
+            {**shown, "text": "Every record here is made-up demo data."},
+            {**shown, "tag": "DEMO"},
+        ):
+            seen = _paint(odd)
+>           assert seen["shownTone"] == "unconfirmed" and seen["lines"][1]["text"] == expected, (
+                f"painted odd unconfirmed {odd!r}: {seen['lines']!r}"
+            )
+E           AssertionError: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text': 'Every record here is made-up demo data.', 'standins': '', 'real': [], 'stand_ins': [], 'overridden': ['llm']}: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E           assert ('unconfirmed' == 'unconfirmed'
+E             
+E               unconfirmed and ' The mode of...here as real.' == ' The mode of...ed here: llm.'
+E             
+E             -  The mode of this system could not be confirmed. Treat everything here as real. These parts were supplied by code and are not checked here: llm.
+E             +  The mode of this system could not be confirmed. Treat everything here as real.)
+
+tests/test_mode_banner.py:2211: AssertionError
+_ test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page _
+
+    @needs_node
+    def test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page() -> (
+        None
+    ):
+        # proof (fails on old code: any text that started with the not-confirmed words was painted, suffix and all)
+        words = mb.DEFAULT_WORDS
+        base = mb.banner_from_config(_demo_config(), tool_specs={}, overridden=("llm",)).as_dict()
+        for forged in (
+            words.not_confirmed + " " + words.made_up,
+            words.not_confirmed + " Every record here is made-up demo data.",
+            words.not_confirmed
+            + " These parts were supplied by code and are not checked here: llm. Every record here is made-up demo data.",
+            words.not_confirmed + " ",
+        ):
+            seen = _paint({**base, "text": forged})
+            assert seen["shownTone"] == "unconfirmed" and seen["threw"] == "", f"painted {seen!r}"
+>           assert seen["lines"][1]["text"] == (
+                " " + words.not_confirmed + " " + words.overridden_note.format(names="llm")
+            ), f"painted a forged text {forged!r}: {seen['lines']!r}"
+E           AssertionError: painted a forged text 'The mode of this system could not be confirmed. Treat everything here as real. Every record here is made-up demo data.': [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E           assert ' The mode of...here as real.' == ' The mode of...ed here: llm.'
+E             
+E             -  The mode of this system could not be confirmed. Treat everything here as real. These parts were supplied by code and are not checked here: llm.
+E             +  The mode of this system could not be confirmed. Treat everything here as real.
+
+tests/test_mode_banner.py:2468: AssertionError
+_ test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_copies_of_a_built_app_whi0')
+
+    def test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not(
+        tmp_path: Path,
+    ) -> None:
+        # copy.copy shares every part (known, as documented); dataclasses.replace drops the seal (unconfirmed); copy.deepcopy is
+        # refused in words (a built app holds locks, so the standard library could not copy it either: its own error is about a
+        # lock; ours says what to do). Nothing here can skip: a copy that fails is the assertion.
+        import copy
+        import dataclasses
+    
+        app = _sealed_app(tmp_path, "cp")
+        assert copy.copy(app).mode_banner()["tone"] == "demo", (
+            "a shallow copy shares every part with the original: it stays known"
+        )
+        assert dataclasses.replace(app).mode_banner()["tone"] == "unconfirmed"
+>       with pytest.raises(TypeError, match="cannot be deep-copied"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'cannot be deep-copied'
+E         Actual message: "cannot pickle '_thread.lock' object"
+
+tests/test_mode_banner.py:2729: AssertionError
+____ test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well ____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_pin_a_deep_copy_of_an_app0')
+
+    def test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well(tmp_path: Path) -> None:
+        # what it shows (an app of plain parts was copied, and whether the copy read known depended on how the standard
+        # library copies a sentinel object): one rule for every app
+        import copy
+    
+        from hadavin_sdk.app import App
+    
+        plain = App.__new__(App)
+        slots = len(
+            _sealed_app(tmp_path, "slots")._sealed
+        )  # the real number of seal slots, not a guess
+        plain.__dict__.update({"overridden": (), "_sealed": ((),) * slots})
+        try:
+            copy.deepcopy(plain)
+        except TypeError as exc:
+            assert "cannot be deep-copied" in str(exc), f"the refusal gave another reason: {exc}"
+        else:
+>           raise AssertionError("an app of plain parts was deep-copied")
+E           AssertionError: an app of plain parts was deep-copied
+
+tests/test_mode_banner.py:2751: AssertionError
+____________ test_the_not_connectivity_reasons_say_what_was_checked ____________
+
+    def test_the_not_connectivity_reasons_say_what_was_checked() -> None:
+        # what it shows (the reasons were plain claims): the full text of each reason, so a reason cannot be swapped for a bare
+        # claim, and a new parameter on the list needs its own reason written here
+>       assert mb.NOT_CONNECTIVITY == {
+            "config_dir": "a folder that `load_config` reads; the config is what the banner reads; checked: used only there in `build`",
+            "agents": "a list of agent names that `Runtime` checks against the registry; checked: no callable or object is handed in",
+            "timeout_s": "a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); the executor reads it only as a timeout; it is typed as a number in the signature of `build` and not checked at run time",
+        }
+E       AssertionError: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'timeout_s': 'a number of seconds handed to the executor; checked: it is not called, only compared'} != {'timeout_s': 'a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); the executor reads it only as a timeout; it is typed as a number in the signature of `build` and not checked at run time'}
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           {...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_mode_banner.py:2831: AssertionError
+_ test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names _
+
+    @needs_node
+    def test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names() -> (
+        None
+    ):
+        # what it shows (the page painted the plain fallback, so the names of `overridden` were lost although the
+        # docstring said they were shown): a banner reworded through `words.not_confirmed` keeps its names on the page
+        words = mb.BannerWords(
+            tag_by_mode={"demo": "D", "pilot": "P", "prod": "L"},
+            not_confirmed="Another sentence, not the default.",
+        )
+        shown = mb.banner_from_config(
+            _demo_config(), tool_specs={}, overridden=("tools", "llm"), words=words
+        ).as_dict()
+        assert shown["text"] == "Another sentence, not the default." and shown["overridden"] == [
+            "tools",
+            "llm",
+        ]
+        seen = _paint(shown)
+        assert seen["shownTone"] == "unconfirmed" and seen["threw"] == ""
+        assert seen["mode"] == "", f"the mode of the reworded banner was painted: {seen['mode']!r}"
+        assert seen["lines"][0]["text"] == mb.not_confirmed()["tag"], f"painted {seen['lines']!r}"
+>       assert seen["lines"][1]["text"] == (
+            " "
+            + mb.not_confirmed()["text"]
+            + " "
+            + mb.DEFAULT_WORDS.overridden_note.format(names="tools, llm")
+        ), f"the names of the overrides were not shown: {seen['lines']!r}"
+E       AssertionError: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E       assert ' The mode of...here as real.' == ' The mode of...: tools, llm.'
+E         
+E         -  The mode of this system could not be confirmed. Treat everything here as real. These parts were supplied by code and are not checked here: tools, llm.
+E         +  The mode of this system could not be confirmed. Treat everything here as real.
+
+tests/test_mode_banner.py:2910: AssertionError
+____________ test_a_tool_spec_deleted_after_build_reads_unconfirmed ____________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_tool_spec_deleted_after0')
+
+    def test_a_tool_spec_deleted_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows (the manifests are a mutable dict inside a frozen record, so a deleted real host was not seen
+        # and the banner said made-up while the toolbox could still reach the host)
+        app = _sealed_with(
+            tmp_path, "d1", lambda a: a.registry.tools.update({"agent": {"lookup": _tool_spec()}})
+        )
+        assert app.mode_banner()["tone"] == "real", "the control: a real host is named"
+        del app.registry.tools["agent"]["lookup"]
+>       assert app.mode_banner()["tone"] == "unconfirmed", "a deleted tool spec left a made-up banner"
+E       AssertionError: a deleted tool spec left a made-up banner
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3009: AssertionError
+____ test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed _____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_tool_spec_without_a_hos0')
+
+    def test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows: a deletion that leaves the lists of services equal is caught by the entries, not the lists
+        app = _sealed_with(
+            tmp_path, "d2", lambda a: a.registry.tools.update({"agent": {"q": _tool_spec("q", ())}})
+        )
+        assert app.mode_banner()["tone"] == "demo"
+        del app.registry.tools["agent"]["q"]
+>       assert app.mode_banner()["tone"] == "unconfirmed", "a deleted tool spec was not seen"
+E       AssertionError: a deleted tool spec was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3020: AssertionError
+______ test_the_address_of_a_system_changed_after_build_reads_unconfirmed ______
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_the_address_of_a_system_c0')
+
+    def test_the_address_of_a_system_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows (a field of a system of the config is not read as a part): only the lists of services the
+        # banner reads change here (no entry of a container is replaced), so this is the case of the services check
+        app = _built_app(tmp_path / "d3")
+        app._seal(_given())
+        assert app.mode_banner()["tone"] == "demo"
+        system = next(iter(app.config.systems.values()))
+        object.__setattr__(
+            system, "base_url", "https://api.example.com"
+        )  # the record is frozen: this is a forced change
+>       assert app.mode_banner()["tone"] == "unconfirmed", (
+            "a host added after build left a made-up banner"
+        )
+E       AssertionError: a host added after build left a made-up banner
+E       assert 'real' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + real
+
+tests/test_mode_banner.py:3034: AssertionError
+__________ test_config_sources_cleared_after_build_reads_unconfirmed ___________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_config_sources_cleared_af0')
+
+    def test_config_sources_cleared_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows (`Config.sources` is a dict inside a frozen record; clearing it removed a real source)
+        app = _sealed_with(
+            tmp_path,
+            "d4",
+            lambda a: a.config.sources.update({"s": SimpleNamespace(kind="unknown-kind", settings={})}),
+        )
+        assert app.mode_banner()["tone"] == "real", "the control: an unknown source reads as real"
+        app.config.sources.clear()
+>       assert app.mode_banner()["tone"] == "unconfirmed", "cleared sources left a made-up banner"
+E       AssertionError: cleared sources left a made-up banner
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3049: AssertionError
+_________ test_a_config_source_replaced_after_build_reads_unconfirmed __________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_config_source_replaced_0')
+
+    def test_a_config_source_replaced_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows: the lists of services stay equal here (both sources read as real), so only the entries show it
+        app = _sealed_with(
+            tmp_path,
+            "d5",
+            lambda a: a.config.sources.update({"s": SimpleNamespace(kind="unknown-kind", settings={})}),
+        )
+        assert app.mode_banner()["tone"] == "real"
+        app.config.sources["s"] = SimpleNamespace(kind="other-unknown-kind", settings={})
+>       assert app.mode_banner()["tone"] == "unconfirmed", "a replaced config source was not seen"
+E       AssertionError: a replaced config source was not seen
+E       assert 'real' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + real
+
+tests/test_mode_banner.py:3062: AssertionError
+____ test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed _____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_toolbox_function_or_spe0')
+
+    def test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows (the toolbox's dicts of specs and callables were plain data)
+        def add(a) -> None:
+            a.runtime.hooks.toolbox = SimpleNamespace(
+                specs={"lookup": _tool_spec("lookup", ())}, _fns={"lookup": lambda: None}
+            )
+    
+        for i, (label, change) in enumerate(
+            (
+                ("a function replaced", lambda box: box._fns.update({"lookup": lambda: "other"})),
+                ("a function added", lambda box: box._fns.update({"extra": lambda: None})),
+                ("a spec added", lambda box: box.specs.update({"extra": _tool_spec("extra", ())})),
+                ("a spec removed", lambda box: box.specs.clear()),
+            )
+        ):
+            app = _sealed_with(tmp_path, f"tb{i}", add)
+            assert app.mode_banner()["tone"] == "demo", f"{label}: the control"
+            change(app.runtime.hooks.toolbox)
+>           assert app.mode_banner()["tone"] == "unconfirmed", f"{label}: the banner stayed made-up"
+E           AssertionError: a function replaced: the banner stayed made-up
+E           assert 'demo' == 'unconfirmed'
+E             
+E             - unconfirmed
+E             + demo
+
+tests/test_mode_banner.py:3084: AssertionError
+___ test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed ____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_an_action_contract_replac0')
+
+    def test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # what it shows (the contracts, which name the system an action is sent to, were plain data)
+        import copy
+    
+        app = _sealed_app(tmp_path, "ct1")
+        name = next(iter(app.registry.contracts))
+        app.registry.contracts[name] = copy.copy(app.registry.contracts[name])
+>       assert app.mode_banner()["tone"] == "unconfirmed", "a replaced contract was not seen"
+E       AssertionError: a replaced contract was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3095: AssertionError
+_ test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type __
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_banner_error_is_logged_0')
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f672a12d6e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a234710>
+
+    def test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type(
+        tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # what it shows (an AttributeError, as a typo in the code would raise, made every app
+        # unconfirmed with one debug line; the same banner error is logged once, at warning level, with
+        # its type and never its message)
+        import logging
+    
+        from hadavin_sdk import app as app_mod
+        from hadavin_sdk.app import App
+    
+        monkeypatch.setattr(app_mod, "_WARNED", set(), raising=False)
+    
+        def boom(self) -> tuple:
+            raise AttributeError("a typo")
+    
+        app = _built_app(tmp_path / "w1")
+        monkeypatch.setattr(App, "_connected_parts", boom)
+        with caplog.at_level(logging.DEBUG):
+            first = app.mode_banner()
+            app.mode_banner()
+        assert first["tone"] == "unconfirmed"
+        logged = [r for r in caplog.records if r.getMessage().startswith("mode banner:")]
+        assert logged, "the error that stopped the banner was not logged at all"
+>       assert all(r.levelno == logging.WARNING for r in logged), (
+            f"the banner error was logged below warning level: {[r.levelname for r in logged]}"
+        )
+E       AssertionError: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
+E       assert False
+E        +  where False = all(<generator object test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type.<locals>.<genexpr> at 0x7f6729b89080>)
+
+tests/test_mode_banner.py:3132: AssertionError
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+_ test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_an_error_in_the_services_0')
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f672a12cfc0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a04b790>
+
+    def test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too(
+        tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # what it shows (both catch-alls logged at debug level)
+        import logging
+    
+        from hadavin_sdk import app as app_mod
+        from hadavin_sdk.app import App
+    
+        monkeypatch.setattr(app_mod, "_WARNED", set(), raising=False)
+        stub = _sealed_app(tmp_path, "w2")
+        stub.registry = SimpleNamespace()
+        monkeypatch.setattr(App, "_known_overrides", lambda self: ())
+        with caplog.at_level(logging.DEBUG):
+            assert stub.mode_banner()["tone"] == "unconfirmed"
+>       assert any("AttributeError" in r.getMessage() for r in _warnings(caplog)), (
+            f"the outer catch-all did not warn: {[r.getMessage() for r in caplog.records]}"
+        )
+E       AssertionError: the outer catch-all did not warn: ['mode banner: the app could not be read']
+E       assert False
+E        +  where False = any(<generator object test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too.<locals>.<genexpr> at 0x7f672a102dc0>)
+
+tests/test_mode_banner.py:3159: AssertionError
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:192 mode banner: the app could not be read
+_ test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page _
+
+    @needs_node
+    def test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page() -> None:
+        # what it shows (the page read a missing or null `overridden` as "none" and painted made-up or quiet)
+        for tone_banner in (
+            {
+                "mode": "demo",
+                "tone": "demo",
+                "tag": "DEMO",
+                "text": "t",
+                "standins": "s",
+                "real": [],
+                "stand_ins": ["a"],
+            },
+            {
+                "mode": "pilot",
+                "tone": "quiet",
+                "tag": "PILOT",
+                "text": "None.",
+                "standins": "",
+                "real": [],
+                "stand_ins": [],
+            },
+        ):
+            for label, extra in (("missing", {}), ("null", {"overridden": None})):
+                seen = _paint({**tone_banner, **extra})
+>               _unconfirmed(seen, f"painted {tone_banner['tone']} with overridden {label}")
+
+tests/test_mode_banner.py:3200: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+seen = {'lines': [{'cls': 'mode-banner__tag', 'text': 'DEMO'}, {'cls': 'mode-banner__text', 'text': ' t'}, {'cls': 'mode-banner__standins', 'text': 's'}], 'tone': 'demo', 'mode': 'demo', 'hidden': False, ...}
+why = 'painted demo with overridden missing'
+
+    def _unconfirmed(seen: dict, why: str = "") -> None:
+        assert seen["threw"] == "" and seen["htmlWrites"] == [], why
+>       assert seen["hidden"] is False and seen["tone"] == "unconfirmed" and seen["mode"] == "", why
+E       AssertionError: painted demo with overridden missing
+E       assert (False is False and 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo)
+
+tests/test_mode_banner.py:444: AssertionError
+_ test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet _
+
+    @needs_node
+    def test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet() -> None:
+        # Python: None is "not known" and the banner is the unconfirmed one (banner_or_unconfirmed; banner_from_config raises);
+        # a MISSING answer is a TypeError at the call (the keyword is required). The page refuses made-up and quiet when the
+        # list is missing or null. For a real or unconfirmed banner the page reads a missing list as empty, which is the safe
+        # direction and is not tested here.
+        shown = mb.banner_or_unconfirmed(_demo_config(), tool_specs={}, overridden=None)
+        assert shown["tone"] == "unconfirmed", f"Python read overridden=None as {shown['tone']}"
+        with refused(TypeError, "banner_or_unconfirmed without overridden", match="overridden"):
+            cast("Any", mb.banner_or_unconfirmed)(_demo_config(), tool_specs={})
+        with refused(ValueError, "banner_from_config with overridden=None", match="not known"):
+            mb.banner_from_config(_demo_config(), tool_specs={}, overridden=None)
+        # the page script, in node, on the same two answers (missing and null) for the two tones that claim "nothing real"
+        for tone_mode in ("demo", "pilot"):
+            tone = "demo" if tone_mode == "demo" else "quiet"
+            base = {**GOOD_DEMO, "mode": tone_mode, "tone": tone}
+            assert _paint(base)["shownTone"] == tone, (
+                f"the control: {tone} was not painted with overridden []"
+            )
+            for label, banner in (
+                ("missing", {k: v for k, v in base.items() if k != "overridden"}),
+                ("null", {**base, "overridden": None}),
+            ):
+                seen = _paint(banner)
+>               assert seen["shownTone"] == "unconfirmed", (
+                    f"the page painted {tone} with overridden {label}"
+                )
+E               AssertionError: the page painted demo with overridden missing
+E               assert 'demo' == 'unconfirmed'
+E                 
+E                 - unconfirmed
+E                 + demo
+
+tests/test_mode_banner.py:3231: AssertionError
+_ test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_real_built_app_lists_ev0')
+
+    def test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts(
+        tmp_path: Path,
+    ) -> None:
+        # what it keeps: the labels on a REAL registry, config and toolbox
+        # (the earlier tests used stand-ins), so a renamed field shows here. The per-container proofs are the tests that replace one
+        # entry and expect the unconfirmed banner.
+        app = _built_app(tmp_path / "labels")
+        _with_real_toolbox(app)
+        labels = {label for label, _ in app._connected_parts()}
+        for wanted in (
+            "config.systems['fixture-records']",
+            "config.sources['src1']",
+            "registry.agents['test-agent']",
+            "registry.principals['svc:test-agent']",
+            "registry.chains['chain-abc']",
+            "registry.contracts['lookup_record']",
+            "registry.tools['test-agent']['lookup']",
+            "toolbox.specs['lookup']",
+            "toolbox._fns['lookup']",
+        ):
+>           assert wanted in labels, f"{wanted} is not among the connected parts"
+E           AssertionError: config.systems['fixture-records'] is not among the connected parts
+E           assert "config.systems['fixture-records']" in {'approvals', 'approvals.audit', 'approvals.channel', 'approvals.channel._secret', 'approvals.channel.cards', 'approvals.channel.fail_cards', ...}
+
+tests/test_mode_banner.py:3270: AssertionError
+____ test_a_named_container_that_is_missing_stops_the_reading_and_names_it _____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_named_container_that_is0')
+
+    def test_a_named_container_that_is_missing_stops_the_reading_and_names_it(tmp_path: Path) -> None:
+        # what it shows (a container that was not a mapping was skipped without a word)
+        cases = (
+            ("config", "systems"),
+            ("config", "sources"),
+            ("registry", "agents"),
+            ("registry", "principals"),
+            ("registry", "chains"),
+            ("registry", "contracts"),
+            ("registry", "tools"),
+        )
+        for i, (owner, name) in enumerate(cases):
+            app = _built_app(tmp_path / f"miss{i}")
+            object.__setattr__(getattr(app, owner), name, None)
+            try:
+                app._connected_parts()
+            except TypeError as exc:
+                assert f"{owner}.{name}" in str(exc), f"the error does not name the container: {exc}"
+            else:
+>               raise AssertionError(f"{owner}.{name} was missing and the parts were read all the same")
+E               AssertionError: config.systems was missing and the parts were read all the same
+
+tests/test_mode_banner.py:3293: AssertionError
+_ test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_an_app_sealed_while_a_con0')
+
+    def test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on(
+        tmp_path: Path,
+    ) -> None:
+        # what it shows (the seal raised, so a build with such an app would have stopped)
+        app = _built_app(tmp_path / "miss-seal")
+        object.__setattr__(app.registry, "contracts", None)
+        try:
+            app._seal(_given())
+        except TypeError as exc:
+            raise AssertionError(f"the seal stopped on a missing container: {exc}") from None
+>       assert app.mode_banner()["tone"] == "unconfirmed"
+E       AssertionError: assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3316: AssertionError
+_ test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_plain_tuple_cannot_seal0')
+
+    def test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer(
+        tmp_path: Path,
+    ) -> None:
+        # what it shows (`_seal(())` was accepted again and restored the made-up banner of a tampered app)
+        app = _sealed_app(tmp_path, "launder")
+        app.sources["k"] = object()  # a part added after build
+        assert app.mode_banner()["tone"] == "unconfirmed"
+        for plain in ((), [], ("tools",), None):
+            try:
+                app._seal(plain)
+            except TypeError:
+                pass
+            else:
+>               raise AssertionError(f"{plain!r} was accepted as the names of the overrides")
+E               AssertionError: () was accepted as the names of the overrides
+
+tests/test_mode_banner.py:3333: AssertionError
+_______ test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call _______
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_hand_made_app_is_unconf0')
+
+    def test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call(tmp_path: Path) -> None:
+        # what it shows (`_seal(())` on a hand-made app gave it the made-up banner)
+        import dataclasses
+    
+        from hadavin_sdk.app import App
+    
+        built = _built_app(tmp_path / "hm")
+        by_hand = App(
+            **{
+                f.name: getattr(built, f.name)
+                for f in dataclasses.fields(built)
+                if f.init and f.name != "overridden"
+            }
+        )
+        try:
+            by_hand._seal(())
+        except TypeError:
+            pass
+>       assert by_hand.mode_banner()["tone"] == "unconfirmed"
+E       AssertionError: assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3358: AssertionError
+_ test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_config_the_banner_canno0')
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f672a082b10>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f67292a5370>
+
+    def test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed(
+        tmp_path: Path, caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # what it shows (`build` raised the banner's TypeError or ValueError)
+        import logging
+    
+        from hadavin_sdk import app as app_mod
+        from hadavin_sdk.actions.secrets import FakeSecretProvider
+        from hadavin_sdk.approvals.channel import FakeChannel
+        from hadavin_sdk.registry import load_registry
+        from tests.conftest import qualify
+    
+        for i, (label, shape) in enumerate(_unreadable_shapes().items()):
+            monkeypatch.setattr(app_mod, "_services_in", shape, raising=False)
+            monkeypatch.setattr(app_mod, "_WARNED", set(), raising=False)
+            cfg_dir = make_cfg(tmp_path / f"shape{i}")
+            qualify(load_registry(load_config(cfg_dir)))
+            caplog.clear()
+            with caplog.at_level(logging.DEBUG):
+                try:
+                    app = app_mod.build(
+                        cfg_dir,
+                        ["test-agent"],
+                        channel=FakeChannel(),
+                        secrets=FakeSecretProvider({"fixture-token": "t" * 8}),
+                    )
+                except (TypeError, ValueError) as exc:
+                    raise AssertionError(f"{label}: build stopped on it: {exc}") from None
+            assert app.mode_banner()["tone"] == "unconfirmed", (
+                f"{label}: the banner was not the unconfirmed one"
+            )
+            logged = [
+                r
+                for r in caplog.records
+                if r.levelno >= logging.WARNING and "mode banner" in r.getMessage()
+            ]
+>           assert len(logged) >= 1, f"{label}: nothing was logged at warning level"
+E           AssertionError: a tool spec without hosts: nothing was logged at warning level
+E           assert 0 >= 1
+E            +  where 0 = len([])
+
+tests/test_mode_banner.py:3476: AssertionError
+__________ test_a_replaced_agent_entry_after_build_reads_unconfirmed ___________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_replaced_agent_entry_af0')
+
+    def test_a_replaced_agent_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # killer of the row that drops the agents from the seal
+        import copy
+    
+        def change(a) -> None:
+            a.registry.agents["test-agent"] = copy.copy(a.registry.agents["test-agent"])
+    
+>       assert _entry_change_is_seen(tmp_path, "ag", change) == "unconfirmed", (
+            "a replaced agent was not seen"
+        )
+E       AssertionError: a replaced agent was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3508: AssertionError
+________ test_a_replaced_principal_entry_after_build_reads_unconfirmed _________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_replaced_principal_entr0')
+
+    def test_a_replaced_principal_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        import copy
+    
+        def change(a) -> None:
+            a.registry.principals["user:a"] = copy.copy(a.registry.principals["user:a"])
+    
+>       assert _entry_change_is_seen(tmp_path, "pr", change) == "unconfirmed", (
+            "a replaced principal was not seen"
+        )
+E       AssertionError: a replaced principal was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3520: AssertionError
+__________ test_a_replaced_chain_entry_after_build_reads_unconfirmed ___________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_replaced_chain_entry_af0')
+
+    def test_a_replaced_chain_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        import copy
+    
+        def change(a) -> None:
+            a.registry.chains["chain-abc"] = copy.copy(a.registry.chains["chain-abc"])
+    
+>       assert _entry_change_is_seen(tmp_path, "ch", change) == "unconfirmed", (
+            "a replaced chain was not seen"
+        )
+E       AssertionError: a replaced chain was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3532: AssertionError
+__________ test_a_replaced_system_entry_after_build_reads_unconfirmed __________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_replaced_system_entry_a0')
+
+    def test_a_replaced_system_entry_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        import copy
+    
+        def change(a) -> None:
+            a.config.systems["fixture-records"] = copy.copy(a.config.systems["fixture-records"])
+    
+>       assert _entry_change_is_seen(tmp_path, "sy", change) == "unconfirmed", (
+            "a replaced system was not seen"
+        )
+E       AssertionError: a replaced system was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3544: AssertionError
+___ test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed ____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_replaced_tool_manifest_0')
+
+    def test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        def prepare(a) -> None:
+            a.registry.tools["test-agent"] = {"lookup": _tool_spec("lookup", ())}
+    
+        app = _sealed_with(tmp_path, "tm", prepare)
+        assert app.mode_banner()["tone"] == "demo", "the control"
+        app.registry.tools["test-agent"] = dict(
+            app.registry.tools["test-agent"]
+        )  # the same specs in a new dict
+>       assert app.mode_banner()["tone"] == "unconfirmed", (
+            "a replaced manifest of an agent was not seen"
+        )
+E       AssertionError: a replaced manifest of an agent was not seen
+E       assert 'demo' == 'unconfirmed'
+E         
+E         - unconfirmed
+E         + demo
+
+tests/test_mode_banner.py:3559: AssertionError
+______________ test_a_stage_changed_after_build_reads_unconfirmed ______________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_stage_changed_after_bui0')
+
+    def test_a_stage_changed_after_build_reads_unconfirmed(tmp_path: Path) -> None:
+        # The stage text `config.environment` decides the mode and the tag of the banner. A forced change of it (the config is
+        # read-only for normal code, so this goes round it with `object.__setattr__`) must not keep the made-up banner.
+        for later in (s for s in STAGES if s != "demo"):
+            app = _sealed_app(tmp_path, f"changed-{later}")
+            object.__setattr__(app.config, "environment", later)
+            tone = app.mode_banner()["tone"]
+>           assert tone == "unconfirmed", (
+                f"a stage changed after build (demo to {later}) was read as {tone!r}"
+            )
+E           AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+E           assert 'quiet' == 'unconfirmed'
+E             
+E             - unconfirmed
+E             + quiet
+
+tests/test_mode_banner.py:3573: AssertionError
+_________ test_pin_a_stage_that_is_not_text_is_an_error_that_names_it __________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_pin_a_stage_that_is_not_t0')
+
+    def test_pin_a_stage_that_is_not_text_is_an_error_that_names_it(tmp_path: Path) -> None:
+        app = _sealed_app(tmp_path, "nostage")
+        for value in (None, 5, b"demo", ["demo"]):
+            object.__setattr__(app.config, "environment", value)
+            with refused(TypeError, f"a stage of {value!r}", match="no stage text"):
+>               app._stage()
+                ^^^^^^^^^^
+E               AttributeError: 'App' object has no attribute '_stage'
+
+tests/test_mode_banner.py:3584: AttributeError
+___ test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it ___
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_toolbox_without_an_attr0')
+
+    def test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it(
+        tmp_path: Path,
+    ) -> None:
+        class Slotted:
+            __slots__ = ()
+    
+        app = _sealed_app(tmp_path, "slotted")
+        app.runtime.hooks.toolbox = Slotted()
+>       with refused(
+            TypeError, "a toolbox without an attribute dictionary", match="no attribute dictionary"
+        ):
+
+tests/test_mode_banner.py:3598: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/contextlib.py:148: in __exit__
+    next(self.gen)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exc = <class 'TypeError'>, what = 'a toolbox without an attribute dictionary'
+match = 'no attribute dictionary'
+
+    @contextmanager
+    def refused(exc: type[BaseException], what: str, *, match: str | None = None) -> Iterator[None]:
+        """Expect `exc` (and, with `match`, that text in its message) from the block; fail naming `what` otherwise."""
+        try:
+            yield
+        except exc as error:
+            if match is not None and not re.search(match, str(error)):
+                raise AssertionError(f"{what}: refused, but with another text: {error}") from None
+            return
+>       raise AssertionError(f"{what} was not refused")
+E       AssertionError: a toolbox without an attribute dictionary was not refused
+
+tests/refusal.py:22: AssertionError
+_ test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it __
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_per_agent_tool_entry_th0')
+
+    def test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it(
+        tmp_path: Path,
+    ) -> None:
+        app = _sealed_app(tmp_path, "peragent")
+        app.registry.tools["test-agent"] = ["lookup"]
+>       with refused(TypeError, "a per-agent tool entry that is a list", match=r"registry\.tools\["):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mode_banner.py:3611: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.13/contextlib.py:148: in __exit__
+    next(self.gen)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+exc = <class 'TypeError'>, what = 'a per-agent tool entry that is a list'
+match = 'registry\\.tools\\['
+
+    @contextmanager
+    def refused(exc: type[BaseException], what: str, *, match: str | None = None) -> Iterator[None]:
+        """Expect `exc` (and, with `match`, that text in its message) from the block; fail naming `what` otherwise."""
+        try:
+            yield
+        except exc as error:
+            if match is not None and not re.search(match, str(error)):
+                raise AssertionError(f"{what}: refused, but with another text: {error}") from None
+            return
+>       raise AssertionError(f"{what} was not refused")
+E       AssertionError: a per-agent tool entry that is a list was not refused
+
+tests/refusal.py:22: AssertionError
+_ test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_each_unreadable_shape_sea0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f67291eca50>
+
+    def test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The same three shapes, sealed with `_given()` (no override handed in), so the made-up banner is what an app that CAN be
+        # read gives (the control) and "unconfirmed" can only come from the unreadable seal, not from a recorded override.
+        from hadavin_sdk import app as app_mod
+    
+        # Older heads read the services in `mode_banner` only, so the shape is put in both places;
+        # `_UNREADABLE` is looked up by
+        # name with a default, so a head without it fails on what it stored, not on a missing name.
+        unreadable = getattr(app_mod, "_UNREADABLE", None)
+        for i, (label, shape) in enumerate(_unreadable_shapes().items()):
+            app = _built_app(tmp_path / f"seal{i}")
+            app._seal(_given())
+            assert app.mode_banner()["tone"] == "demo", (
+                f"{label}: the control (a readable app) lost its banner"
+            )
+            with monkeypatch.context() as patch:
+                patch.setattr(mb, "_services_in", shape)
+                patch.setattr(app_mod, "_services_in", shape, raising=False)
+                app._seal(_given())
+                sealed = app._sealed
+                tone = app.mode_banner()["tone"]
+            assert tone == "unconfirmed", f"{label}: an unreadable app read as {tone!r}"
+>           assert unreadable is not None and sealed == unreadable, (
+                f"{label}: the app was not sealed as unreadable (it was sealed with {type(sealed).__name__})"
+            )
+E           AssertionError: a tool spec without hosts: the app was not sealed as unreadable (it was sealed with tuple)
+E           assert (None is not None)
+
+tests/test_mode_banner.py:3647: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+____ test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner ____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_reading_the_part0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a1535c0>
+
+    def test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner(
+        tmp_path, monkeypatch
+    ) -> None:
+>       _a_bug_is_not_turned_into_a_banner(
+            tmp_path, monkeypatch, "App._known_overrides (reads the parts)"
+        )
+
+tests/test_mode_banner.py:3734: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_reading_the_part0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a1535c0>
+site = 'App._known_overrides (reads the parts)'
+
+    def _a_bug_is_not_turned_into_a_banner(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+    ) -> None:
+        app = _sealed_app(tmp_path, "s1")
+        call = SURPRISE_SITES[site](app, monkeypatch, _raise_surprise)
+        try:
+            call()
+        except _Surprise:
+            return  # no banner is returned at all: not a made-up one, not a quiet one, not even an unconfirmed one
+>       raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
+E       AssertionError: App._known_overrides (reads the parts): a bug of an unnamed type was turned into a banner
+
+tests/test_mode_banner.py:3725: AssertionError
+_____ test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner _____
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_the_outer_catch_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a152b70>
+
+    def test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner(
+        tmp_path, monkeypatch
+    ) -> None:
+>       _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "App.mode_banner (the outer catch)")
+
+tests/test_mode_banner.py:3743: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_the_outer_catch_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a152b70>
+site = 'App.mode_banner (the outer catch)'
+
+    def _a_bug_is_not_turned_into_a_banner(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+    ) -> None:
+        app = _sealed_app(tmp_path, "s1")
+        call = SURPRISE_SITES[site](app, monkeypatch, _raise_surprise)
+        try:
+            call()
+        except _Surprise:
+            return  # no banner is returned at all: not a made-up one, not a quiet one, not even an unconfirmed one
+>       raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
+E       AssertionError: App.mode_banner (the outer catch): a bug of an unnamed type was turned into a banner
+
+tests/test_mode_banner.py:3725: AssertionError
+_______ test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner ________
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_banner_or_unconf0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6729266270>
+
+    def test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner(tmp_path, monkeypatch) -> None:
+>       _a_bug_is_not_turned_into_a_banner(tmp_path, monkeypatch, "banner_or_unconfirmed")
+
+tests/test_mode_banner.py:3748: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_banner_or_unconf0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6729266270>
+site = 'banner_or_unconfirmed'
+
+    def _a_bug_is_not_turned_into_a_banner(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+    ) -> None:
+        app = _sealed_app(tmp_path, "s1")
+        call = SURPRISE_SITES[site](app, monkeypatch, _raise_surprise)
+        try:
+            call()
+        except _Surprise:
+            return  # no banner is returned at all: not a made-up one, not a quiet one, not even an unconfirmed one
+>       raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
+E       AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
+
+tests/test_mode_banner.py:3725: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (_Surprise): showing the not-confirmed banner
+______ test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner _______
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_the_words_of_the0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6729266a50>
+
+    def test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner(
+        tmp_path, monkeypatch
+    ) -> None:
+>       _a_bug_is_not_turned_into_a_banner(
+            tmp_path, monkeypatch, "_not_confirmed_that_cannot_fail (the words)"
+        )
+
+tests/test_mode_banner.py:3755: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_a_bug_in_the_words_of_the0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6729266a50>
+site = '_not_confirmed_that_cannot_fail (the words)'
+
+    def _a_bug_is_not_turned_into_a_banner(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+    ) -> None:
+        app = _sealed_app(tmp_path, "s1")
+        call = SURPRISE_SITES[site](app, monkeypatch, _raise_surprise)
+        try:
+            call()
+        except _Surprise:
+            return  # no banner is returned at all: not a made-up one, not a quiet one, not even an unconfirmed one
+>       raise AssertionError(f"{site}: a bug of an unnamed type was turned into a banner")
+E       AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
+
+tests/test_mode_banner.py:3725: AssertionError
+_ test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App._seal (reads the app at build)] _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_pin_a_named_read_error_st1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f672a1d1010>
+site = 'App._seal (reads the app at build)'
+
+    @pytest.mark.parametrize("site", sorted(SURPRISE_SITES))
+    def test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, site: str
+    ) -> None:
+        # the other side of the rule above: each error in `READ_ERRORS` is an unreadable banner, shown
+        # as not confirmed
+        for kind in NAMED_READ_ERRORS:
+    
+            def raise_kind(*_a, _kind=kind, **_k):
+                raise _kind("unreadable")
+    
+            app = _sealed_app(tmp_path, f"s2-{kind.__name__}")
+            call = SURPRISE_SITES[site](app, monkeypatch, raise_kind)
+>           result = call()
+                     ^^^^^^
+
+tests/test_mode_banner.py:3780: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mode_banner.py:3704: in <lambda>
+    return lambda: app._seal(_given())
+                   ^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/app.py:158: in _seal
+    self._sealed = (tuple(overridden), self._connected_parts())
+                                       ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_kind = <class 'TypeError'>
+_a = (App(config=Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.0..., disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7f67291dc1b0>, overridden=()),)
+_k = {}
+
+    def raise_kind(*_a, _kind=kind, **_k):
+>       raise _kind("unreadable")
+E       TypeError: unreadable
+
+tests/test_mode_banner.py:3776: TypeError
+______ test_the_list_of_read_errors_holds_no_type_that_takes_every_error _______
+
+    def test_the_list_of_read_errors_holds_no_type_that_takes_every_error() -> None:
+>       assert mb.READ_ERRORS == NAMED_READ_ERRORS, (
+               ^^^^^^^^^^^^^^
+            f"READ_ERRORS is not the five named types: {mb.READ_ERRORS}"
+        )
+E       AttributeError: module 'hadavin_sdk.mode_banner' has no attribute 'READ_ERRORS'
+
+tests/test_mode_banner.py:3791: AttributeError
+_ test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f67291f8f50>
+
+    def test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer(
+        monkeypatch,
+    ) -> None:
+        monkeypatch.setattr(mb, "source_endpoint", _raise_surprise)
+        try:
+            mb._source_leaves_this_machine(object())
+        except _Surprise:
+            return
+>       raise AssertionError(
+            "a bug of an unnamed type in the endpoint of a source was turned into an answer"
+        )
+E       AssertionError: a bug of an unnamed type in the endpoint of a source was turned into an answer
+
+tests/test_mode_banner.py:3808: AssertionError
+_ test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card _
+
+tmp_path = PosixPath('/home/user/build/er14-scratch/pytest-of-unknown/pytest-35/test_an_error_type_the_channel0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f67297badd0>
+
+    def test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # fail-before: on c7eb5c79 and dd827d79 `post_card` caught `Exception`
+        from hadavin_sdk.approvals.cards import Card
+        from hadavin_sdk.approvals.channel import FakeChannel
+    
+        channel = FakeChannel()
+        app = _built_app(tmp_path / "c1", channel)
+        card = Card(text="a card", blocks=[], display_hash="0" * 64)
+        monkeypatch.setattr(channel, "post_card", _raise_surprise)
+        try:
+            app.runtime.hooks.post_card(card)
+        except _Surprise:
+            pass
+        else:
+>           raise AssertionError("a bug in the channel was reported as an undelivered card")
+E           AssertionError: a bug in the channel was reported as an undelivered card
+
+tests/test_mode_banner.py:3846: AssertionError
+__ test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything __
+
+    def test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything() -> None:
+        import ast
+        import inspect
+    
+        from hadavin_sdk import app as app_mod
+    
+        for module in (app_mod, mb):
+            tree = ast.parse(inspect.getsource(module))
+            bad = [
+                f"{module.__name__}:{h.lineno}"
+                for h in ast.walk(tree)
+                if isinstance(h, ast.ExceptHandler)
+                and (
+                    h.type is None
+                    or (isinstance(h.type, ast.Name) and h.type.id in ("Exception", "BaseException"))
+                )
+            ]
+>           assert not bad, f"a catch of every error is back: {bad}"
+E           AssertionError: a catch of every error is back: ['hadavin_sdk.app:174', 'hadavin_sdk.app:191', 'hadavin_sdk.app:349']
+E           assert not ['hadavin_sdk.app:174', 'hadavin_sdk.app:191', 'hadavin_sdk.app:349']
+
+tests/test_mode_banner.py:3875: AssertionError
+==================================== PASSES ====================================
+_____ test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one _____
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (ValueError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+_____ test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed _____
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+_ test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times _
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+________ test_a_generator_for_tool_modules_is_refused_like_egress_hosts ________
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+_____________ test_a_generator_for_the_backend_entries_is_refused ______________
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+_ test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too _
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+_ test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises _
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+______________ test_pin_a_normal_production_tick_keeps_its_banner ______________
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.tick:tick.py:317 step=reprobe_sources error_kind=RuntimeError message=source scope: source k: scope probe failed (SourceError)
+ERROR    hadavin_sdk.tick:tick.py:317 step=reprobe_sources error_kind=RuntimeError message=source scope: source k: scope probe failed (SourceError)
+_____________ test_banner_or_unconfirmed_with_none_logs_no_warning _____________
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.mode_banner:mode_banner.py:727 mode banner: overridden is not known: showing the not-confirmed banner
+_ test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[banner_or_unconfirmed] _
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (TypeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (ValueError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (AttributeError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (LookupError): showing the not-confirmed banner
+WARNING  hadavin_sdk.mode_banner:mode_banner.py:734 mode banner could not be built (RuntimeError): showing the not-confirmed banner
+=========================== short test summary info ============================
+PASSED tests/test_mode_banner.py::test_demo_with_only_stand_ins_says_made_up_and_lists_the_stand_ins_loudly
+PASSED tests/test_mode_banner.py::test_demo_with_no_stand_ins_still_says_nothing_real_is_connected
+PASSED tests/test_mode_banner.py::test_a_real_service_is_named_and_made_up_data_is_never_claimed
+PASSED tests/test_mode_banner.py::test_pilot_or_live_with_nothing_real_is_quiet_and_not_made_up
+PASSED tests/test_mode_banner.py::test_pilot_or_live_still_lists_the_stand_ins_in_the_quiet_tone
+PASSED tests/test_mode_banner.py::test_a_service_that_is_both_real_and_listed_as_stand_in_counts_as_real
+PASSED tests/test_mode_banner.py::test_names_come_from_the_caller_and_repeats_are_shown_once_in_order
+PASSED tests/test_mode_banner.py::test_a_key_without_a_shown_name_is_read_as_component_and_the_key
+PASSED tests/test_mode_banner.py::test_the_words_can_be_replaced_without_changing_which_sentence_is_chosen
+PASSED tests/test_mode_banner.py::test_the_default_words_have_a_tag_for_every_stage_and_a_missing_one_is_refused
+PASSED tests/test_mode_banner.py::test_pin_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real
+PASSED tests/test_mode_banner.py::test_an_unknown_stage_is_refused
+PASSED tests/test_mode_banner.py::test_pin_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident
+PASSED tests/test_mode_banner.py::test_names_that_are_not_a_mapping_are_refused_with_a_type_error
+PASSED tests/test_mode_banner.py::test_a_name_that_could_change_the_sentence_is_refused
+PASSED tests/test_mode_banner.py::test_a_plain_name_of_the_longest_allowed_length_is_shown_and_one_more_character_is_not
+PASSED tests/test_mode_banner.py::test_a_service_key_that_is_not_text_is_refused
+PASSED tests/test_mode_banner.py::test_a_banner_longer_than_the_page_script_accepts_is_refused_in_python
+PASSED tests/test_mode_banner.py::test_pin_property_the_made_up_claim_never_appears_next_to_a_real_service
+PASSED tests/test_mode_banner.py::test_banner_from_config_reads_the_stage_and_both_lists_from_the_config
+PASSED tests/test_mode_banner.py::test_a_real_kind_in_the_config_is_named_and_the_made_up_sentence_is_never_given
+PASSED tests/test_mode_banner.py::test_property_every_config_entry_lands_in_exactly_one_group
+PASSED tests/test_mode_banner.py::test_an_entry_without_a_kind_is_refused_not_guessed_into_a_list
+PASSED tests/test_mode_banner.py::test_the_stage_of_the_config_is_checked_like_any_other_stage
+PASSED tests/test_mode_banner.py::test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry
+PASSED tests/test_mode_banner.py::test_no_new_module_keeps_its_own_loopback_list
+PASSED tests/test_mode_banner.py::test_the_page_paints_exactly_what_python_wrote
+PASSED tests/test_mode_banner.py::test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed
+PASSED tests/test_mode_banner.py::test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given
+PASSED tests/test_mode_banner.py::test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given
+PASSED tests/test_mode_banner.py::test_pin_a_text_that_is_not_plain_text_is_not_painted_as_given
+PASSED tests/test_mode_banner.py::test_the_painter_never_throws_and_never_leaves_the_page_blank
+PASSED tests/test_mode_banner.py::test_the_page_fallback_has_the_same_words_as_the_python_fallback
+PASSED tests/test_mode_banner.py::test_the_page_lists_are_the_python_lists
+PASSED tests/test_mode_banner.py::test_markup_in_the_text_is_shown_as_text_never_parsed
+PASSED tests/test_mode_banner.py::test_the_page_script_has_no_way_to_parse_html_or_load_anything
+PASSED tests/test_mode_banner.py::test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_made_up
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value0]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value1]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value2]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[egress_hosts-value3]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[sources-value4]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[systems-value5]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[egress_hosts-value6]
+PASSED tests/test_mode_banner.py::test_endpoints_on_this_machine_keep_the_demo_banner[sources-value7]
+PASSED tests/test_mode_banner.py::test_a_real_loaded_demo_config_with_an_outside_system_gets_the_real_banner
+PASSED tests/test_mode_banner.py::test_property_any_outside_endpoint_in_any_stage_never_gets_the_made_up_sentence
+PASSED tests/test_mode_banner.py::test_a_banner_is_checked_against_what_it_claims_before_it_leaves
+PASSED tests/test_mode_banner.py::test_the_page_exports_and_the_fallback_cannot_be_changed_by_a_page
+PASSED tests/test_mode_banner.py::test_a_failed_last_resort_write_never_leaves_the_banner_hidden
+PASSED tests/test_mode_banner.py::test_a_failed_append_leaves_words_on_the_screen_never_an_empty_banner
+PASSED tests/test_mode_banner.py::test_a_real_name_is_matched_as_a_whole_word_only
+PASSED tests/test_mode_banner.py::test_a_tool_specs_that_is_not_a_mapping_is_refused_with_a_type_error
+PASSED tests/test_mode_banner.py::test_tool_specs_has_no_default_so_forgetting_it_is_an_error
+PASSED tests/test_mode_banner.py::test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service
+PASSED tests/test_mode_banner.py::test_tool_hosts_on_this_machine_or_none_keep_the_demo_banner
+PASSED tests/test_mode_banner.py::test_tool_modules_without_the_manifests_count_as_one_real_service
+PASSED tests/test_mode_banner.py::test_the_tools_of_a_real_registry_are_what_the_banner_reads
+PASSED tests/test_mode_banner.py::test_the_words_state_what_is_checked_and_not_a_false_premise
+PASSED tests/test_mode_banner.py::test_a_failed_page_write_keeps_non_empty_text
+PASSED tests/test_mode_banner.py::test_an_odd_url_is_shown_as_leaving_this_machine
+PASSED tests/test_mode_banner.py::test_the_shared_normaliser_treats_these_as_this_machine
+PASSED tests/test_mode_banner.py::test_the_banner_uses_the_shared_loopback_names_and_normaliser_not_a_copy
+PASSED tests/test_mode_banner.py::test_the_source_host_the_app_uses_comes_from_the_shared_endpoint_function
+PASSED tests/test_mode_banner.py::test_a_real_config_with_an_outside_egress_host_or_source_gets_the_real_banner
+PASSED tests/test_mode_banner.py::test_a_config_that_lost_an_endpoint_field_raises_and_is_never_read_as_nothing
+PASSED tests/test_mode_banner.py::test_an_empty_made_up_sentence_is_an_error_not_a_switched_off_check
+PASSED tests/test_mode_banner.py::test_pin_names_in_follows_the_table
+PASSED tests/test_mode_banner.py::test_pin_the_page_and_python_agree_on_every_row_of_the_name_table
+PASSED tests/test_mode_banner.py::test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine
+PASSED tests/test_mode_banner.py::test_a_url_and_a_bare_host_give_the_same_answer_for_every_spelling
+PASSED tests/test_mode_banner.py::test_a_tool_spec_without_hosts_or_with_odd_hosts_raises_naming_the_tool
+PASSED tests/test_mode_banner.py::test_tool_modules_with_no_spec_at_all_count_as_one_real_service_like_none
+PASSED tests/test_mode_banner.py::test_the_loopback_names_are_pinned_by_content
+PASSED tests/test_mode_banner.py::test_the_banner_is_at_least_as_strict_as_the_tool_client_on_urls_and_hosts
+PASSED tests/test_mode_banner.py::test_a_port_that_is_not_digits_or_text_after_a_bracket_is_not_this_machine
+PASSED tests/test_mode_banner.py::test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one
+PASSED tests/test_mode_banner.py::test_an_empty_name_is_never_in_a_text
+PASSED tests/test_mode_banner.py::test_the_limits_are_stated_in_words
+PASSED tests/test_mode_banner.py::test_a_service_name_may_not_hold_the_made_up_claim_of_the_words_in_use
+PASSED tests/test_mode_banner.py::test_the_names_are_checked_in_the_formatted_names_part_of_the_text_only
+PASSED tests/test_mode_banner.py::test_a_failing_attribute_write_never_leaves_the_old_words_on_screen
+PASSED tests/test_mode_banner.py::test_a_failing_tone_attribute_alone_still_replaces_the_old_words_and_clears_the_mode
+PASSED tests/test_mode_banner.py::test_a_failing_mode_attribute_leaves_the_not_confirmed_tone_with_its_text
+PASSED tests/test_mode_banner.py::test_the_page_trusts_the_tone_it_is_given_and_python_checks_the_sentences
+PASSED tests/test_mode_banner.py::test_the_nothing_connected_list_is_pinned_by_content
+PASSED tests/test_mode_banner.py::test_a_kind_added_to_the_prod_gate_table_later_still_reads_as_a_real_service
+PASSED tests/test_mode_banner.py::test_a_configured_tool_module_that_no_manifest_accounts_for_counts_as_one_real_service
+PASSED tests/test_mode_banner.py::test_the_type_of_a_system_base_url_is_text_and_another_type_reads_as_real
+PASSED tests/test_mode_banner.py::test_the_banner_is_never_more_lenient_than_the_tool_client_on_40_urls_and_20_hosts
+PASSED tests/test_mode_banner.py::test_the_words_of_a_name_check_are_required_not_defaulted
+PASSED tests/test_mode_banner.py::test_egress_hosts_may_be_any_list_like_collection_and_a_bare_text_is_refused
+PASSED tests/test_mode_banner.py::test_a_tag_longer_than_the_page_script_shows_is_refused_in_python
+PASSED tests/test_mode_banner.py::test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed
+PASSED tests/test_mode_banner.py::test_the_key_words_of_another_language_are_reserved_in_names
+PASSED tests/test_mode_banner.py::test_a_generator_for_egress_hosts_is_refused_and_the_banner_built_twice_is_unconfirmed_both_times
+PASSED tests/test_mode_banner.py::test_a_generator_for_tool_modules_is_refused_like_egress_hosts
+PASSED tests/test_mode_banner.py::test_a_generator_for_the_backend_entries_is_refused
+PASSED tests/test_mode_banner.py::test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_value_is_refused
+PASSED tests/test_mode_banner.py::test_pin_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused
+PASSED tests/test_mode_banner.py::test_a_bytearray_a_memoryview_and_a_subclass_with_its_own_iteration_are_not_read_by_accident
+PASSED tests/test_mode_banner.py::test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_up_claim
+PASSED tests/test_mode_banner.py::test_no_override_keeps_the_demo_banner_and_the_names_come_out_in_a_fixed_order
+PASSED tests/test_mode_banner.py::test_an_override_in_a_pilot_or_live_banner_is_not_quiet_and_in_a_real_banner_it_is_added
+PASSED tests/test_mode_banner.py::test_pin_an_unknown_or_oddly_typed_override_list_is_refused
+PASSED tests/test_mode_banner.py::test_app_build_records_the_overrides_that_were_given_and_the_banner_says_so
+PASSED tests/test_mode_banner.py::test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one
+PASSED tests/test_mode_banner.py::test_a_real_looking_source_object_handed_to_build_never_yields_the_made_up_sentence
+PASSED tests/test_mode_banner.py::test_a_failed_text_write_never_leaves_the_old_made_up_claim_or_a_stale_mode
+PASSED tests/test_mode_banner.py::test_a_tag_or_text_of_only_white_space_is_not_painted_on_the_page_and_python_refuses_it_too
+PASSED tests/test_mode_banner.py::test_the_length_limit_counts_code_points_on_the_page_and_in_python_at_600_and_601
+PASSED tests/test_mode_banner.py::test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted
+PASSED tests/test_mode_banner.py::test_an_app_made_by_hand_gives_the_unconfirmed_banner_not_the_made_up_one
+PASSED tests/test_mode_banner.py::test_pin_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner
+PASSED tests/test_mode_banner.py::test_pin_banner_from_config_has_no_default_for_overridden
+PASSED tests/test_mode_banner.py::test_pin_banner_or_unconfirmed_has_no_default_for_overridden
+PASSED tests/test_mode_banner.py::test_pin_overridden_none_raises_a_value_error_in_banner_from_config
+PASSED tests/test_mode_banner.py::test_pin_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner
+PASSED tests/test_mode_banner.py::test_every_build_parameter_is_an_override_or_on_the_not_connectivity_list_with_a_reason
+PASSED tests/test_mode_banner.py::test_pin_the_page_lists_of_overrides_and_the_note_words_agree_with_python
+PASSED tests/test_mode_banner.py::test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set
+PASSED tests/test_mode_banner.py::test_the_blank_set_is_what_python_strip_and_javascript_trim_both_call_white_space
+PASSED tests/test_mode_banner.py::test_a_tag_or_text_made_only_of_the_code_points_python_and_the_page_disagreed_on_is_not_painted
+PASSED tests/test_mode_banner.py::test_pin_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once
+PASSED tests/test_mode_banner.py::test_pin_every_replaced_connected_part_reads_unconfirmed
+PASSED tests/test_mode_banner.py::test_pin_a_source_value_replaced_or_changed_in_place_reads_unconfirmed
+PASSED tests/test_mode_banner.py::test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused
+PASSED tests/test_mode_banner.py::test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises
+PASSED tests/test_mode_banner.py::test_pin_the_recorded_names_cannot_be_laundered
+PASSED tests/test_mode_banner.py::test_pin_a_normal_production_tick_keeps_its_banner
+PASSED tests/test_mode_banner.py::test_pin_an_object_first_set_on_a_part_after_build_reads_unconfirmed
+PASSED tests/test_mode_banner.py::test_the_clock_is_an_override_when_given_and_not_when_it_is_the_default
+PASSED tests/test_mode_banner.py::test_banner_for_has_no_default_for_overridden
+PASSED tests/test_mode_banner.py::test_banner_or_unconfirmed_with_none_logs_no_warning
+PASSED tests/test_mode_banner.py::test_the_page_refuses_a_demo_or_quiet_banner_that_lists_overridden_parts_and_any_list_that_is_not_in_the_python_order
+PASSED tests/test_mode_banner.py::test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_line_is_the_plain_fallback
+PASSED tests/test_mode_banner.py::test_pin_a_forged_tag_on_an_unconfirmed_banner_is_painted_as_the_pages_own_tag
+PASSED tests/test_mode_banner.py::test_the_guard_and_the_banner_modules_say_what_they_compare_in_their_docstrings
+PASSED tests/test_mode_banner.py::test_the_overrides_are_exactly_the_objects_and_callables_handed_to_build
+PASSED tests/test_mode_banner.py::test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_no_object
+PASSED tests/test_mode_banner.py::test_pin_the_banner_of_a_real_app_is_the_same_after_an_agent_run
+PASSED tests/test_mode_banner.py::test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too
+PASSED tests/test_mode_banner.py::test_pin_the_demo_stage_is_one_of_the_stages
+PASSED tests/test_mode_banner.py::test_pin_a_bug_in_sealing_the_app_is_not_turned_into_a_banner
+PASSED tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App._known_overrides (reads the parts)]
+PASSED tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App.mode_banner (the outer catch)]
+PASSED tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[_not_confirmed_that_cannot_fail (the words)]
+PASSED tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[banner_or_unconfirmed]
+PASSED tests/test_mode_banner.py::test_pin_every_named_read_error_in_the_endpoint_of_a_source_reads_as_leaving_this_machine
+FAILED tests/test_mode_banner.py::test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names
+FAILED tests/test_mode_banner.py::test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page
+FAILED tests/test_mode_banner.py::test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not
+FAILED tests/test_mode_banner.py::test_pin_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well
+FAILED tests/test_mode_banner.py::test_the_not_connectivity_reasons_say_what_was_checked
+FAILED tests/test_mode_banner.py::test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names
+FAILED tests/test_mode_banner.py::test_a_tool_spec_deleted_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_the_address_of_a_system_changed_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_config_sources_cleared_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_config_source_replaced_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type
+FAILED tests/test_mode_banner.py::test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too
+FAILED tests/test_mode_banner.py::test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page
+FAILED tests/test_mode_banner.py::test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet
+FAILED tests/test_mode_banner.py::test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts
+FAILED tests/test_mode_banner.py::test_a_named_container_that_is_missing_stops_the_reading_and_names_it
+FAILED tests/test_mode_banner.py::test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on
+FAILED tests/test_mode_banner.py::test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer
+FAILED tests/test_mode_banner.py::test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call
+FAILED tests/test_mode_banner.py::test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_agent_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_principal_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_chain_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_system_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_stage_changed_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_pin_a_stage_that_is_not_text_is_an_error_that_names_it
+FAILED tests/test_mode_banner.py::test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it
+FAILED tests/test_mode_banner.py::test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it
+FAILED tests/test_mode_banner.py::test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in
+FAILED tests/test_mode_banner.py::test_a_bug_in_reading_the_parts_of_the_app_is_not_turned_into_a_banner
+FAILED tests/test_mode_banner.py::test_a_bug_in_the_outer_catch_of_the_app_is_not_turned_into_a_banner
+FAILED tests/test_mode_banner.py::test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner
+FAILED tests/test_mode_banner.py::test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner
+FAILED tests/test_mode_banner.py::test_pin_a_named_read_error_still_reads_unconfirmed_at_every_site[App._seal (reads the app at build)]
+FAILED tests/test_mode_banner.py::test_the_list_of_read_errors_holds_no_type_that_takes_every_error
+FAILED tests/test_mode_banner.py::test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_answer
+FAILED tests/test_mode_banner.py::test_an_error_type_the_channel_does_not_name_is_not_reported_as_a_delivered_card
+FAILED tests/test_mode_banner.py::test_one_list_of_read_errors_is_shared_and_no_code_here_catches_everything
+======================= 42 failed, 149 passed in 23.28s ========================
+rc=1
