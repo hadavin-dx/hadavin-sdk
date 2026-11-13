@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 02:54Z / Part 2 batch 9 PUSHED (83cdb7a2); round 9 reviewers and cloud runner started
+
+**FAILED / UNCERTAIN FIRST**
+- RUN ON LAPTOP: hadavin-sdk 83cdb7a293b7d5ba7d79bedaf3c8990fe99c4ee4 pytest -q full + bind_mutants complete (pushed on origin wip/cloud-pd-bind; handover-files check exit 0; gitleaks exit 0). The full suite and the complete 227-row table were NOT run in the cloud.
+- Builder admissions (facts, given to the reviewers): row B57 now has a weak generic expect (the second guard refuses a subclass with another message); 9 of 11 serve-slot mutant rows are judged equivalent by analysis, not run; timings were measured on a busy machine, not CI figures; _BUILD_TOKEN being importable by in-process code is stated as inside the threat model (no code change); 3 tests pass on old code by design (controls or text-only). Builder slips fixed: a call to a non-existent standins.is_stand_in_object was silently swallowed; mutant B197 ran unbounded to 4.8 GB, now bounded.
+- Measured by the builder only (not independent yet): 25 of 285 new or changed tests fail on 3db352f5; changed/new rows 52 of 52 good after fixes; 94-row sample 2 problems (B57, B196) fixed; stage_mutants 37/37; focused 325 passed 1 skipped; ruff, bandit clean.
+- Q8c-1 runner a7e31a96 still silent (over 1 hour). Part 6 batch 9 and the SONAR-PATH builders not reported yet. No clean round on any lane.
+
+**LEAD ACTIONS**: none new. No GH013.
+**LIVE ITEMS**: a7e31a96 (Q8c-1 runner, to be stopped if silent), a69287e2 (Part 6 b9), a51ea641 (SONAR-PATH), a14748c3 (Q8c-1 code-only), a2bfb5cb (Part 2 r9 design reviewer), aee2c503 (Part 2 r9 codebase reviewer), abd6af72 (Part 2 b9 cloud evidence runner). 7 agents. Snapshot: /home/user/build/snap/pdbind-83cdb7a2/.
+**ROUNDS (WHY)**: Part 2 round 9 (money/approval path, no cap) started on the new head; the r8 fix brief had 2 Blocker, 7 Major.
+**FINISHED SINCE LAST BLOCK**: Part 2 batch 9 builder closed.
+**EGM STEP PER PACKAGE**: Part 2: step 5 (result review r9) with step 4 evidence in parallel. Part 6, Q8c-1 code-only, SONAR-PATH: step 3.
+
+
 ## 02:52Z / quiet tick: no push from any builder yet
 
 **FAILED / UNCERTAIN FIRST**
