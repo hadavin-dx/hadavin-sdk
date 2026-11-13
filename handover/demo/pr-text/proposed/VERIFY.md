@@ -97,3 +97,11 @@ Files: pr2/pr3/pr4-user-description-v2.md (v1 kept), QUESTIONS-FOR-LEAD.md (inte
 | 71 | browser minimum = a reviewer's estimate, not in the repo docs | row 32 | wording fixed |
 | 72 | Windows 252/29 figure | dropped from v2 (QUESTIONS item 5) | n/a |
 | 73 | INT-3-2db3926.md | not present in /tmp/demo-push (find) | not read; same figures verified from raw files |
+
+## v3 update (after the third review)
+Files: pr2/pr3/pr4-user-description-v3.md (v1 and v2 kept). Changes: merge order rewritten as two ways A/B without a recommendation (QUESTIONS item 10); terms defined once (CRM, n8n, SonarQube, CodeQL, CodeAnt AI, repository owner); ":memory:" now "database name" with the reason (desk.py MEMORY_BOOK_PROBLEM text); "Batch" labels replaced by commit ids; CodeAnt split rationale dropped; one [FILL: single-process result: the whole suite in one pytest process] marker, chunked result on the line before it with its limit. Script check: no sentence of 35 words or more; no "Batch", "lead's", first person or handover file names.
+| # | statement | how verified | result |
+|---|---|---|---|
+| 74 | 19:46 vs 19:47: both are right, for different branches. ac93153 (main into pr-1-code) 01:16:24+05:30 = 19:46:24Z, used in #2. 51abd28 (into pr-2) 19:47:36Z and b29bb1f (into pr-3) 19:47:37Z, used in #3/#4 | `git log --date=iso-strict` (row 9) | consistent per branch |
+| 75 | way A/B: lint and CodeQL only for base main, SonarQube for every PR | rows 16-17 | verified (files); what GitHub allows for each merge step is not claimed |
+| 76 | GitHub may retarget a PR when its base branch is deleted after merging | GitHub's documented behaviour, not tested on this repo | worded "may" |
