@@ -90,6 +90,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
+from typing import Any, cast
 
 # What the guard catches when it reads an object it does not trust: a hostile object can raise any ``Exception``
 # (its own class, from a property, ``__getattr__``, ``__eq__`` and so on), and every such error must read as "counted /
@@ -235,7 +236,7 @@ def _touch_annotations(cls: type) -> None:
     # ``copy.copy`` and ``pickle`` of an instance write ``__slotnames__`` (a list of text) into the class dictionary the
     # first time: a harmless entry the standard library adds, so it is written now and the pin includes it
     with contextlib.suppress(Exception):
-        copyreg._slotnames(cls)  # type: ignore[attr-defined]
+        cast(Any, copyreg)._slotnames(cls)
 
 
 def _shape(cls: type) -> tuple[object, ...]:
@@ -249,15 +250,18 @@ def _shape(cls: type) -> tuple[object, ...]:
 
 def _same_shape(cls: type, pin: tuple[object, ...]) -> bool:
     """True when the class still has the pinned metaclass, mro and attributes (compared by identity)."""
-    now = _shape(cls)
-    if len(now) != len(pin) or now[0] is not pin[0]:
+    now: tuple[Any, ...] = _shape(cls)
+    pinned: tuple[Any, ...] = pin
+    if len(now) != len(pinned) or now[0] is not pinned[0]:
         return False
-    if len(now[1]) != len(pin[1]) or not all(a is b for a, b in zip(now[1], pin[1], strict=True)):  # type: ignore[arg-type]
+    if len(now[1]) != len(pinned[1]) or not all(
+        a is b for a, b in zip(now[1], pinned[1], strict=True)
+    ):
         return False
-    for was, is_ in zip(pin[2:], now[2:], strict=True):
-        if len(was) != len(is_):  # type: ignore[arg-type]
+    for was, is_ in zip(pinned[2:], now[2:], strict=True):
+        if len(was) != len(is_):
             return False
-        for (kw, vw), (ki, vi) in zip(was, is_, strict=True):  # type: ignore[misc]
+        for (kw, vw), (ki, vi) in zip(was, is_, strict=True):
             if not (type(ki) is str and kw == ki and vw is vi):
                 return False
     return True
@@ -393,11 +397,11 @@ def _values(container: object, limit: int) -> tuple[object, ...] | None:
     kind = type(container)
     for base, length, per in _SIZED:
         if issubclass(kind, base):
-            if length(container) * per > limit:  # type: ignore[operator]
+            if length(container) * per > limit:
                 return None
             if base is dict:
-                return (*dict.keys(container), *dict.values(container))  # type: ignore[arg-type]
-            return tuple(base.__iter__(container))  # type: ignore[attr-defined]
+                return (*dict.keys(cast(dict, container)), *dict.values(cast(dict, container)))
+            return tuple(base.__iter__(cast(Any, container)))
     return ()
 
 
@@ -490,7 +494,7 @@ def _stand_in_key(kind: type) -> tuple[str, str] | None:
 def _enum_member_ok(value: object, cls: type) -> bool:
     """True when ``value`` is a real member of the enum ``cls`` (identity) and its own dictionary holds only the
     enum's own keys (an attribute hung on a member is not plain data)."""
-    members = cls.__members__  # type: ignore[attr-defined]
+    members = cast(Any, cls).__members__
     if not any(value is m for m in members.values()):
         return False
     own = object.__getattribute__(value, "__dict__")
@@ -533,7 +537,7 @@ def _entered(
             return () if budget.class_ok(key) and _enum_member_ok(value, kind) else None
     plain = _is_one_of(kind, _PLAIN_CONTAINERS) or kind is Counter
     if kind is defaultdict:
-        factory = value.default_factory  # type: ignore[attr-defined]
+        factory = cast(defaultdict, value).default_factory
         plain = any(factory is f for f in _DEFAULT_FACTORIES)
         if not plain:
             return None

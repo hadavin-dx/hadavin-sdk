@@ -8,22 +8,26 @@ the only way past a refusal, and no module keeps its own copy of the loopback li
 from __future__ import annotations
 
 import ast
+import asyncio
 import http.server
+import importlib
 import logging
 import re
 import socket
 import socketserver
+import sys
 import tomllib
 import types
 from datetime import UTC, datetime
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 from types import MappingProxyType
+from typing import Any, cast
 
 import pytest
 from tools import server_scan
 
-from hadavin_sdk import bindguard, netguard
+from hadavin_sdk import bindguard, netguard, standins
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals import Approvals, FakeChannel
 from hadavin_sdk.approvals.receiver import PATH, serve
@@ -381,7 +385,7 @@ def test_an_unusable_reason_is_refused_even_when_it_was_not_needed(
         (stand_in_config, LOOP_1),
     ):
         with pytest.raises(BindRefused):
-            require_safe_bind(bind, cfg, allow_public_bind_reason=reason, held={})  # type: ignore[arg-type]
+            require_safe_bind(bind, cfg, allow_public_bind_reason=reason, held={})
 
 
 def test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one(
@@ -424,10 +428,43 @@ def test_a_long_bind_text_is_cut_in_the_refusal(stand_in_config: Config) -> None
 # --- listen: the one place a server socket is made --------------------------------------------------------------
 
 
+_ANYTHING: tuple[type[BaseException], ...] = (
+    BaseException,
+)  # a thread of a test records whatever it raised
+
+
+class _Finished:
+    """What a finished child interpreter left: its exit code and the text it wrote."""
+
+    def __init__(self, returncode: int, stdout: str, stderr: str) -> None:
+        self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
+
+
+def _run_python(args: list[str], timeout: float) -> _Finished:
+    """Run this interpreter with ``args`` (a fixed program of this file) and wait at most ``timeout`` seconds: a child
+    that is still running then is killed. Uses ``asyncio``'s process start (no shell), so no inline suppression is needed."""
+
+    async def go() -> _Finished:
+        proc = await asyncio.create_subprocess_exec(
+            sys.executable,
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            out, err = await asyncio.wait_for(proc.communicate(), timeout)
+        except TimeoutError:
+            proc.kill()
+            await proc.wait()
+            raise
+        return _Finished(proc.returncode or 0, out.decode(), err.decode())
+
+    return asyncio.run(go())
+
+
 class _Quiet(BaseHTTPRequestHandler):
-    def do_POST(self) -> None:  # pragma: no cover - never called
-        self.send_response(204)
-        self.end_headers()
+    def do_POST(self) -> None:
+        raise AssertionError("this handler is never called: the server is only started and stopped")
 
 
 def _no_server(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -500,8 +537,8 @@ def test_listen_picks_the_ipv6_family_for_an_ipv6_address_even_without_ipv6_on_t
     def record(
         self: object, address: tuple, handler: object, bind_and_activate: bool = True
     ) -> None:
-        seen.append((type(self).address_family, address))
-        self.server_address = address  # type: ignore[attr-defined]
+        seen.append((cast(Any, type(self)).address_family, address))
+        cast(Any, self).server_address = address
 
     monkeypatch.setattr(socketserver.TCPServer, "__init__", record)
     real = _with_kind(stand_in_config, "llm", "anthropic")
@@ -550,7 +587,7 @@ def test_listen_refuses_a_name_that_is_not_localhost_even_with_stand_ins(
         None,
     ):
         with pytest.raises(BindRefused):
-            listen(stand_in_config, host, 0, _Quiet, held={})  # type: ignore[arg-type]
+            listen(stand_in_config, host, 0, _Quiet, held={})
 
 
 def test_listen_checks_the_address_the_socket_really_got(
@@ -580,8 +617,8 @@ def _Approvals(config: Config | None, held: dict[str, object] | None = None) -> 
     are the objects ``build()`` would have recorded (the audit sink and registry are not counted then)."""
     return Approvals(
         MemoryStore(),
-        _Opaque(),  # type: ignore[arg-type]
-        _Opaque(),  # type: ignore[arg-type]
+        _Opaque(),
+        _Opaque(),
         FakeChannel("sig" + "-b4-test"),
         make_on_decided({}),
         config=config,
@@ -592,11 +629,11 @@ def _Approvals(config: Config | None, held: dict[str, object] | None = None) -> 
 
 def test_the_receiver_without_a_config_is_a_type_error() -> None:
     with pytest.raises(TypeError):
-        serve(_Approvals(None))  # type: ignore[call-arg, arg-type]
+        serve(_Approvals(None))
     with pytest.raises(TypeError):
-        serve(_Approvals(None), host=ALL_ZEROS)  # type: ignore[call-arg, arg-type]
+        serve(_Approvals(None), host=ALL_ZEROS)
     with pytest.raises(TypeError):
-        serve(_Approvals(None), None)  # type: ignore[misc, arg-type]  # config is keyword-only
+        serve(_Approvals(None), None)  # config is keyword-only
 
 
 def test_the_receiver_refuses_a_public_bind_with_a_real_service_before_any_socket_exists(
@@ -605,7 +642,7 @@ def test_the_receiver_refuses_a_public_bind_with_a_real_service_before_any_socke
     _no_server(monkeypatch)
     cfg = _with_kind(stand_in_config, "llm", "anthropic")
     with pytest.raises(BindRefused):
-        serve(_Approvals(cfg), config=cfg, host=ALL_ZEROS, port=0)  # type: ignore[arg-type]
+        serve(_Approvals(cfg), config=cfg, host=ALL_ZEROS, port=0)
 
 
 def test_the_receiver_refuses_a_config_that_is_not_the_one_the_approvals_were_built_with(
@@ -616,20 +653,20 @@ def test_the_receiver_refuses_a_config_that_is_not_the_one_the_approvals_were_bu
     real = _with_kind(stand_in_config, "llm", "anthropic")
     for held in (real, None):
         with pytest.raises(BindRefused, match="built with"):
-            serve(_Approvals(held), config=stand_in_config, host=ALL_ZEROS, port=0)  # type: ignore[arg-type]
+            serve(_Approvals(held), config=stand_in_config, host=ALL_ZEROS, port=0)
 
 
 def test_the_receiver_starts_and_the_reason_passes_through_it(stand_in_config: Config) -> None:
     real = _with_kind(stand_in_config, "llm", "anthropic")
     appr = _Approvals(real)
-    server = serve(appr, config=real, port=0)  # type: ignore[arg-type]
+    server = serve(appr, config=real, port=0)
     assert server.server_address[0] == LOOP_1
     server.server_close()
     with pytest.raises(BindRefused):
-        serve(appr, config=real, host=ALL_ZEROS, port=0)  # type: ignore[arg-type]
+        serve(appr, config=real, host=ALL_ZEROS, port=0)
     server = serve(
         appr, config=real, host=ALL_ZEROS, port=0, allow_public_bind_reason="proxy in front"
-    )  # type: ignore[arg-type]
+    )
     server.server_close()
 
 
@@ -682,10 +719,10 @@ class _Built:
     app's own parts, its recorded overrides and that config: what is under test is the part the config does not
     say (what ``build()`` was handed)."""
 
-    def __init__(self, app: object) -> None:
+    def __init__(self, app: Any) -> None:
         self.app = app
-        self.config = app.config.model_copy(update={"check_modules": []})  # type: ignore[attr-defined]
-        built = app.approvals  # type: ignore[attr-defined]
+        self.config = app.config.model_copy(update={"check_modules": []})
+        built = app.approvals
         self.store, self.audit, self.registry = built.store, built.audit, built.registry
         self.recorded = built.overrides
         self.approvals = Approvals(
@@ -715,7 +752,7 @@ def _built(tmp_path: Path, **over: object) -> _Built:
         "timeout_s": 0.5,
     }
     kw.update(over)
-    return _Built(build(folder, ["test-agent"], **kw))  # type: ignore[arg-type]
+    return _Built(build(folder, ["test-agent"], **kw))
 
 
 def _stand_in_bind_lands_on_loopback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -728,9 +765,9 @@ def test_a_built_app_with_stand_ins_only_accepts_any_bind(
 ) -> None:
     """CONTROL (passes on the old code too): nothing real is held, so a public bind is not refused."""
     app = _built(tmp_path)
-    assert real_services(app.config, app.approvals.held_services()) == ()  # type: ignore[attr-defined]
+    assert real_services(app.config, app.approvals.held_services()) == ()
     _stand_in_bind_lands_on_loopback(monkeypatch)
-    serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0).server_close()  # type: ignore[attr-defined]
+    serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0).server_close()
 
 
 def _override_cases(tmp_path: Path) -> list[tuple[str, object, str]]:
@@ -752,32 +789,32 @@ def test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind
     obj, shown = {n: (o, t) for n, o, t in _override_cases(tmp_path / "objects")}[name]
     kw = {"channel": FakeChannel("sig" + "-b3-test")} if name != "channel" else {}
     app = _built(tmp_path / "app", **{**kw, name: obj})
-    assert real_services(app.config, {}) == ()  # type: ignore[attr-defined]  # the config alone says "stand-ins"
+    assert real_services(app.config, {}) == ()  # the config alone says "stand-ins"
     assert name in app.recorded, "the override was not recorded on the approvals"
     with monkeypatch.context() as m:
         _no_server(m)
         with pytest.raises(BindRefused, match=re.escape(shown)):
-            serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+            serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)
     _stand_in_bind_lands_on_loopback(monkeypatch)
-    serve(  # type: ignore[attr-defined]
+    serve(
         app.approvals,
         config=app.config,
         host=ALL_ZEROS,
         port=0,
         allow_public_bind_reason="behind our own proxy",
     ).server_close()
-    serve(app.approvals, config=app.config, port=0).server_close()  # type: ignore[attr-defined]
+    serve(app.approvals, config=app.config, port=0).server_close()
 
 
-def _by_hand(app: object, channel: object, **extra: object) -> Approvals:
+def _by_hand(app: Any, channel: object, **extra: object) -> Approvals:
     return Approvals(
-        app.store,  # type: ignore[attr-defined]
-        app.audit,  # type: ignore[attr-defined]
-        app.registry,  # type: ignore[attr-defined]
-        channel,  # type: ignore[arg-type]
+        app.store,
+        app.audit,
+        app.registry,
+        channel,
         make_on_decided({}),
         _built_by=_BUILD_TOKEN,
-        **extra,  # type: ignore[arg-type]
+        **extra,
     )
 
 
@@ -785,21 +822,21 @@ def test_a_real_source_or_tools_dict_handed_in_is_counted_and_an_empty_one_is_no
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path)
-    channel = app.approvals.channel  # type: ignore[attr-defined]
+    channel = app.approvals.channel
     for name, value, shown in (
         ("sources", {"cluster": object()}, "held sources"),
         ("tools", {"lookup": lambda inputs: "x"}, "held tools"),
     ):
-        approvals = _by_hand(app, channel, config=app.config, overrides={name: value})  # type: ignore[attr-defined]
+        approvals = _by_hand(app, channel, config=app.config, overrides={name: value})
         with monkeypatch.context() as m:
             _no_server(m)
             with pytest.raises(BindRefused, match=shown):
-                serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
-    empty = _by_hand(app, channel, config=app.config, overrides={"sources": {}, "tools": {}})  # type: ignore[attr-defined]
+                serve(approvals, config=app.config, host=ALL_ZEROS, port=0)
+    empty = _by_hand(app, channel, config=app.config, overrides={"sources": {}, "tools": {}})
     _stand_in_bind_lands_on_loopback(monkeypatch)
     refusal = ""
     try:
-        serve(empty, config=app.config, host=ALL_ZEROS, port=0).server_close()  # type: ignore[attr-defined]
+        serve(empty, config=app.config, host=ALL_ZEROS, port=0).server_close()
     except BindRefused as exc:
         refusal = str(exc)
     assert not refusal, f"an empty tools or sources mapping was counted: {refusal}"
@@ -810,18 +847,18 @@ def test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_r
 ) -> None:
     """``Approvals(real_channel, ..., config=stand_in)``: the config alone would say "stand-ins only"."""
     app = _built(tmp_path)
-    approvals = _by_hand(app, _RealChannel("sig" + "-b3-real"), config=app.config)  # type: ignore[attr-defined]
+    approvals = _by_hand(app, _RealChannel("sig" + "-b3-real"), config=app.config)
     with monkeypatch.context() as m:
         _no_server(m)
         with pytest.raises(BindRefused, match="held channel: _RealChannel"):
-            serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+            serve(approvals, config=app.config, host=ALL_ZEROS, port=0)
     for held in ({"store": _Opaque()}, {"detector": _RealDetector()}):
-        odd = _by_hand(app, app.approvals.channel, config=app.config)  # type: ignore[attr-defined]
+        odd = _by_hand(app, app.approvals.channel, config=app.config)
         object.__setattr__(odd, "_" + next(iter(held)), next(iter(held.values())))
         with monkeypatch.context() as m:
             _no_server(m)
             with pytest.raises(BindRefused, match="held"):
-                serve(odd, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+                serve(odd, config=app.config, host=ALL_ZEROS, port=0)
 
 
 class _Opaque:
@@ -832,20 +869,20 @@ def test_approvals_built_by_hand_without_a_config_are_refused_and_the_text_says_
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path)
-    approvals = _by_hand(app, app.approvals.channel)  # type: ignore[attr-defined]
+    approvals = _by_hand(app, app.approvals.channel)
     assert approvals.config is None and dict(approvals.overrides) == {}
     with monkeypatch.context() as m:
         _no_server(m)
         for host in (LOOP_1, ALL_ZEROS):
             with pytest.raises(BindRefused, match="built by hand with no config"):
-                serve(approvals, config=app.config, host=host, port=0)  # type: ignore[attr-defined]
+                serve(approvals, config=app.config, host=host, port=0)
 
 
 def test_the_config_and_the_overrides_of_the_approvals_cannot_be_assigned_or_edited(
     tmp_path: Path,
 ) -> None:
     app = _built(tmp_path)
-    approvals = app.approvals  # type: ignore[attr-defined]
+    approvals = app.approvals
     with pytest.raises(AttributeError):
         approvals.config = app.config.model_copy()
     with pytest.raises(AttributeError):
@@ -865,7 +902,7 @@ def test_a_channel_replaced_after_the_build_is_seen_when_the_server_starts(
     with monkeypatch.context() as m:
         _no_server(m)
         with pytest.raises(BindRefused, match="held channel: _RealChannel"):
-            serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+            serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)
 
 
 def test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not() -> None:
@@ -1158,7 +1195,7 @@ def server_sockets(source: str, allowed: tuple[int, int] | None = None) -> list[
         ):
             name = ".run(host=)"
         if name is not None:
-            line = node.lineno
+            line = cast(Any, node).lineno
             if allowed is None or not allowed[0] <= line <= (allowed[1]):
                 found.append(f"{name}@{line}")
     return found
@@ -1342,12 +1379,12 @@ def _post(server: http.server.HTTPServer, *, close: bool = True) -> int:
 
 def test_the_guarded_attributes_of_the_approvals_are_set_once(tmp_path: Path) -> None:
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     for name, value in (
         ("channel", _RealChannel("sig" + "-b4-a")),
         ("store", _Opaque()),
         ("detector", _RealDetector()),
-        ("config", app.config),  # type: ignore[attr-defined]
+        ("config", app.config),
         ("overrides", {}),
     ):
         with pytest.raises(AttributeError):
@@ -1362,9 +1399,9 @@ def test_a_real_channel_put_in_after_the_server_started_answers_503_and_one_log_
     """The bypass of the setter (writing the private slot) is outside what a setter can stop, so the receiver asks
     again at every request on a public bind with no reason."""
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     _stand_in_bind_lands_on_loopback(monkeypatch)
-    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)
     try:  # one server for both requests, closed at the end whatever happens
         assert _post(server, close=False) != 503, "a stand-in server refused its first request"
         object.__setattr__(a, "_channel", _RealChannel("sig" + "-b4-late"))
@@ -1381,8 +1418,8 @@ def test_a_real_channel_put_in_after_the_server_started_answers_503_and_one_log_
 
 def test_a_loopback_bind_does_not_pay_the_recheck(tmp_path: Path) -> None:
     app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-real"))
-    a = app.approvals  # type: ignore[attr-defined]
-    assert _post(serve(a, config=app.config, port=0)) != 503, (  # type: ignore[attr-defined]
+    a = app.approvals
+    assert _post(serve(a, config=app.config, port=0)) != 503, (
         "a loopback bind was refused at the request"
     )
 
@@ -1391,11 +1428,11 @@ def test_a_bind_with_a_reason_does_not_pay_the_recheck(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-real"))
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     _stand_in_bind_lands_on_loopback(monkeypatch)
     server = serve(
         a, config=app.config, host=ALL_ZEROS, port=0, allow_public_bind_reason="proxy in front"
-    )  # type: ignore[attr-defined]
+    )
     assert _post(server) != 503, "a bind with a reason was refused at the request"
 
 
@@ -1436,7 +1473,7 @@ def test_serve_refuses_a_subclass_and_a_look_alike_of_the_approvals(
     for odd in (sub, _Opaque()):
         refusal: str | None = None
         try:
-            serve(odd, config=stand_in_config, host=LOOP_1, port=0)  # type: ignore[arg-type]
+            serve(odd, config=stand_in_config, host=LOOP_1, port=0)
         except BindRefused as exc:
             refusal = str(exc)
         assert refusal is not None, f"the exact-type guard let {type(odd).__name__} through"
@@ -1464,11 +1501,12 @@ def test_emptiness_is_read_by_exact_type_and_an_object_that_raises_counts() -> N
         pass
 
     assert held_services_found({"tools": {}, "sources": {}}) == ()
-    for obj in (Lazy(), Raises(), Sub(), MappingProxyType({})):
+    objects: tuple[object, ...] = (Lazy(), Raises(), Sub(), MappingProxyType({}))
+    for obj in objects:
         assert held_services_found({"tools": obj}) == ("held tools",), type(obj).__name__
     assert held_services_found({"sources": {"a": 1}}) == ("held sources",)
     cyc = AnyOf([])
-    cyc.detectors = (cyc,)  # type: ignore[assignment]
+    cyc.detectors = (cyc,)
     assert held_services_found({"detector": cyc}) == ("held detector: AnyOf",), (
         "an object that raises was passed on or read as a stand-in"
     )
@@ -1476,13 +1514,13 @@ def test_emptiness_is_read_by_exact_type_and_an_object_that_raises_counts() -> N
 
 def test_held_is_required_everywhere_it_decides(stand_in_config: Config) -> None:
     with pytest.raises(TypeError):
-        listen(stand_in_config, LOOP_1, 0, _Quiet)  # type: ignore[call-arg]
+        listen(stand_in_config, LOOP_1, 0, _Quiet)
     with pytest.raises(TypeError):
-        require_safe_bind(LOOP_1, stand_in_config)  # type: ignore[call-arg]
+        require_safe_bind(LOOP_1, stand_in_config)
     with pytest.raises(TypeError):
-        public_bind_problem(LOOP_1, stand_in_config)  # type: ignore[call-arg]
+        public_bind_problem(LOOP_1, stand_in_config)
     with pytest.raises(TypeError):
-        real_services(stand_in_config)  # type: ignore[call-arg]
+        real_services(stand_in_config)
 
 
 def test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_and_registry_are_stand_ins(
@@ -1495,7 +1533,7 @@ def test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_an
         _Opaque(),
         base.channel,
         make_on_decided({}),
-        config=stand_in_config,  # type: ignore[arg-type]
+        config=stand_in_config,
     )
     assert set(by_hand.held_services()) >= {"audit", "registry"}, (
         "a hand-built Approvals did not name its audit sink and registry"
@@ -1528,20 +1566,18 @@ def test_a_mapping_handed_to_build_is_copied_so_emptying_it_later_changes_nothin
     mine.clear()
     _no_server(monkeypatch)
     with pytest.raises(BindRefused, match="held tools"):
-        serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+        serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)
 
 
 def test_an_override_and_a_different_object_now_in_its_place_are_both_counted(
     tmp_path: Path,
 ) -> None:
     app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-given"))
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     object.__setattr__(a, "_channel", FakeChannel("sig" + "-b4-now"))
     assert "held channel_given_to_build: _RealChannel" in real_services(
         app.config, a.held_services()
-    ), (  # type: ignore[attr-defined]
-        "an overridden object was hidden by the object now in its place"
-    )
+    ), "an overridden object was hidden by the object now in its place"
     assert "store" in a.held_services() and "detector" in a.held_services(), (
         "the store or the detector is not named among the held objects"
     )
@@ -1551,7 +1587,7 @@ def test_the_approvals_that_build_made_go_through_serve_with_a_real_override(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """End to end, with no re-assembly: the object ``build()`` returned (its own check module counts, too)."""
-    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-e2e")).app  # type: ignore[attr-defined]
+    app = _built(tmp_path, channel=_RealChannel("sig" + "-b4-e2e")).app
     _no_server(monkeypatch)
     with pytest.raises(BindRefused, match="held channel: _RealChannel"):
         serve(app.approvals, config=app.config, host=ALL_ZEROS, port=0)
@@ -1606,7 +1642,7 @@ class _Home:
         monkeypatch.setattr(standins, "_SEEN", standins._SEEN)
 
     def put(self, cls: type) -> None:
-        self.module.Child = cls  # type: ignore[attr-defined]
+        self.module.__dict__["Child"] = cls
 
 
 def test_a_method_replaced_on_a_base_class_or_changed_bases_read_as_real(
@@ -1675,8 +1711,7 @@ def test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real(
     }
     base, clone = type("Base", (), dict(namespace)), type("Base", (), dict(namespace))
 
-    class Child(base):  # type: ignore[valid-type,misc]
-        pass
+    Child = type("Child", (base,), {})
 
     home = _Home(monkeypatch)
     home.put(Child)
@@ -1719,8 +1754,8 @@ def test_the_class_is_looked_up_in_the_module_dictionary_not_with_getattr(
         pass
 
     home = _Home(monkeypatch, "tests_fake_home_getattr")
-    home.module.__getattr__ = lambda name: Planted  # type: ignore[attr-defined]
-    assert home.module.Child is Planted  # type: ignore[attr-defined]  # only through __getattr__
+    home.module.__dict__["__getattr__"] = lambda name: Planted
+    assert home.module.Child is Planted  # only through __getattr__
     assert not is_stand_in_object(Planted()), (
         "a class found through a module __getattr__ was trusted"
     )
@@ -1795,7 +1830,7 @@ def test_an_instance_with_more_values_than_the_budget_reads_as_real(
 
     fc = FakeChannel("sig" + "-b5-budget")
     assert is_stand_in_object(fc), "control"
-    fc.many = list(range(50))  # type: ignore[attr-defined]
+    fc.many = list(range(50))
     assert is_stand_in_object(fc), "control: plain values within the budget are fine"
     monkeypatch.setattr(standins, "SCAN_NODES", 10)
     assert not is_stand_in_object(fc), (
@@ -1808,7 +1843,7 @@ def test_a_stand_in_that_was_changed_is_read_as_real(monkeypatch: pytest.MonkeyP
         "control: an untouched stand-in is one"
     )
     fc = FakeChannel("sig" + "-b4-inst")
-    fc.post_card = lambda *a: None  # type: ignore[attr-defined]  # a function put on the instance
+    fc.post_card = lambda *a: None  # a function put on the instance
     assert not is_stand_in_object(fc), (
         "a stand-in holding a function of its own was still read as a stand-in"
     )
@@ -1842,10 +1877,10 @@ def test_every_registered_stand_in_is_still_one_when_made_in_the_usual_way(tmp_p
 def test_a_detector_list_is_a_copy_and_cannot_be_changed_in_place() -> None:
     mine = [RegexDetector(0.5)]
     both = AnyOf(mine)
-    mine.append(_RealDetector())  # type: ignore[arg-type]
+    mine.append(_RealDetector())
     assert is_stand_in_object(both), "a list changed later changed the detector list"
     with pytest.raises(AttributeError):
-        both.detectors.append(_RealDetector())  # type: ignore[attr-defined]
+        both.detectors.append(_RealDetector())
 
 
 # --- round 3, class C: the scan has holes by nature, so the bind itself is checked at run time too -----------------
@@ -2063,16 +2098,8 @@ print(json.dumps({"binds": binds, "failed": failed}))
 
 def test_importing_the_package_binds_no_socket() -> None:
     import json
-    import subprocess
-    import sys
 
-    out = subprocess.run(  # noqa: S603 - our own interpreter and our own probe text
-        [sys.executable, "-I", "-c", _RUNTIME_PROBE, str(ROOT)],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        check=False,
-    )
+    out = _run_python(["-I", "-c", _RUNTIME_PROBE, str(ROOT)], 300)
     assert out.returncode == 0 or "bind during import" in out.stderr, out.stderr[-300:]
     assert "bind during import" not in out.stderr, (
         f"a module bound a socket when it was imported: {out.stderr[-300:]}"
@@ -2093,23 +2120,24 @@ def test_the_only_code_that_reaches_a_socket_bind_is_listen(
     would show a different frame first). Paths that no test runs are not covered."""
     import sys
 
-    seen: list[list[tuple[str, str]]] = []
+    seen: list[list[tuple[str, Any]]] = []
     real_bind = socket.socket.bind
 
-    def spy(self: socket.socket, address: object) -> None:
-        frames, f = [], sys._getframe(1)
+    def spy(self: socket.socket, address: Any) -> None:
+        frames: list[tuple[str, Any]] = []
+        f: Any = sys._getframe(1)
         while f is not None and len(frames) < 4:
             frames.append((Path(f.f_code.co_filename).name, f.f_code.co_name))
             f = f.f_back
         seen.append(frames)
-        return real_bind(self, address)  # type: ignore[arg-type]
+        return real_bind(self, address)
 
     monkeypatch.setattr(socket.socket, "bind", spy)
     app = _built(tmp_path)
-    serve(app.approvals, config=app.config, port=0).server_close()  # type: ignore[attr-defined]
+    serve(app.approvals, config=app.config, port=0).server_close()
     real = _built(tmp_path / "real", channel=_RealChannel("sig" + "-b4-rt"))
-    serve(real.approvals, config=real.config, port=0).server_close()  # type: ignore[attr-defined]
-    listen(real.config, LOOP_1, 0, _Quiet, held={}).server_close()  # type: ignore[attr-defined]
+    serve(real.approvals, config=real.config, port=0).server_close()
+    listen(real.config, LOOP_1, 0, _Quiet, held={}).server_close()
     assert len(seen) == 3, "the receiver reached a bind a different number of times than expected"
     expected = [
         ("socketserver.py", "server_bind"),
@@ -2134,13 +2162,13 @@ def test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container
 ) -> None:
     assert is_stand_in_object(_any_of()), "control"
     patched = _any_of()
-    patched.check = lambda text, source: None  # type: ignore[method-assign,assignment]
+    patched.check = lambda text, source: None
     assert not is_stand_in_object(patched), "a function put on the detector list was not noticed"
     with monkeypatch.context() as m:
         m.setattr(AnyOf, "check", lambda self, text, source: None)
         assert not is_stand_in_object(_any_of()), "a patched AnyOf.check was not noticed"
     as_list = _any_of()
-    as_list.detectors = [RegexDetector(0.5)]  # type: ignore[assignment]
+    as_list.detectors = [RegexDetector(0.5)]
     assert not is_stand_in_object(as_list), "a list of detectors was read as a tuple"
 
     class EmptyIter:
@@ -2148,7 +2176,7 @@ def test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container
             return iter(())
 
     empty = _any_of()
-    empty.detectors = EmptyIter()  # type: ignore[assignment]
+    empty.detectors = EmptyIter()
     assert not is_stand_in_object(empty), "a detector holder that iterates as empty was trusted"
 
     class MyTuple(tuple):
@@ -2156,9 +2184,9 @@ def test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container
             return iter(())
 
     sub = _any_of()
-    sub.detectors = MyTuple((_RealDetector(),))  # type: ignore[assignment]
+    sub.detectors = MyTuple((_RealDetector(),))
     assert not is_stand_in_object(sub), "a tuple subclass with a foreign iteration was trusted"
-    mixed = AnyOf([RegexDetector(0.5), _RealDetector()])  # type: ignore[list-item]
+    mixed = AnyOf([RegexDetector(0.5), _RealDetector()])
     assert not is_stand_in_object(mixed)
 
 
@@ -2167,10 +2195,10 @@ def test_a_detector_list_nested_or_cyclic_is_read_without_recursion_errors() -> 
     assert is_stand_in_object(nested), "a list of lists of stand-ins is a stand-in"
     deep: AnyOf = _any_of()
     for _ in range(10):
-        deep = AnyOf([deep])  # type: ignore[list-item]
+        deep = AnyOf([deep])
     assert not is_stand_in_object(deep), "nesting past the depth limit was trusted"
     loop = _any_of()
-    loop.detectors = (loop,)  # type: ignore[assignment]
+    loop.detectors = (loop,)
     assert not is_stand_in_object(loop), "a detector list holding itself was trusted"
 
 
@@ -2191,7 +2219,7 @@ def test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit
     ]
     for value in hidden:
         llm = FakeLLM(tmp_path, {})
-        llm.routes["x"] = value  # type: ignore[assignment]
+        llm.routes["x"] = value
         assert not is_stand_in_object(llm), f"a function inside {value!r} was not noticed"
     for kind in (set, frozenset):
         llm = FakeLLM(tmp_path, {})
@@ -2201,15 +2229,15 @@ def test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit
         llm.calls.append(kind([print]))
         assert not is_stand_in_object(llm)
     store = MemoryStore()
-    store._runs["x"] = (lambda: None,)  # type: ignore[assignment]
+    store._runs["x"] = (lambda: None,)
     assert not is_stand_in_object(store)
     # the limit FAILS CLOSED: a function below the last level that is entered is not seen, but a container left
     # unexplored that holds anything but plain atoms reads as real; plain atoms there are fine
     far = FakeLLM(tmp_path, {})
-    far.routes["x"] = {"k": [(lambda: None,)]}  # type: ignore[assignment]
+    far.routes["x"] = {"k": [(lambda: None,)]}
     assert not is_stand_in_object(far), "a container past the depth limit was trusted"
     atoms = FakeLLM(tmp_path, {})
-    atoms.routes["x"] = {"k": [(1, "two", None)]}  # type: ignore[assignment]
+    atoms.routes["x"] = {"k": [(1, "two", None)]}
     assert is_stand_in_object(atoms), "a plain-data container at the depth limit was refused"
     for obj in (FakeChannel("sig" + "-b5-d"), MemoryStore(), FakeSecretProvider({"a": "b"})):
         assert is_stand_in_object(obj)
@@ -2235,17 +2263,17 @@ def test_an_approvals_refuses_plain_writes_a_class_swap_and_weak_references(tmp_
     import weakref
 
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     with pytest.raises(AttributeError, match="set once"):
-        a.__class__ = SlotSub  # type: ignore[assignment]
+        a.__class__ = SlotSub
     assert type(a) is Approvals
     with pytest.raises(AttributeError, match="set once"):
-        a._channel = _RealChannel("sig" + "-b5-w")  # type: ignore[assignment]
+        a._channel = _RealChannel("sig" + "-b5-w")
     for name in Approvals.__slots__:
         with pytest.raises(AttributeError, match="set once"):
             setattr(a, name, None)
     with pytest.raises(AttributeError, match="set once"):
-        a.brand_new = 1  # type: ignore[attr-defined]
+        a.brand_new = 1
     with pytest.raises(AttributeError):
         _ = a.__dict__
     with pytest.raises(TypeError):
@@ -2259,9 +2287,9 @@ def test_a_class_swapped_with_the_object_level_write_is_answered_503(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     _stand_in_bind_lands_on_loopback(monkeypatch)
-    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+    server = serve(a, config=app.config, host=ALL_ZEROS, port=0)
     object.__setattr__(a, "__class__", SlotSub)
     try:
         with caplog.at_level(logging.WARNING, logger="hadavin_sdk.receiver"):
@@ -2308,7 +2336,7 @@ class _Hostile:
 
 
 def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> None:
-    found = held_services_found({_EqBoomKey(): {}})  # type: ignore[dict-item]
+    found = held_services_found({_EqBoomKey(): {}})
     assert found == ("held (unreadable)",), (
         f"a key whose comparison raises was not counted: {found}"
     )
@@ -2317,10 +2345,10 @@ def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> No
     found = held_services_found(boom)
     assert found == ("held (unreadable)",), found
     unhashable = _Hostile([([1, 2], _Opaque()), (_BoomKey(), _Opaque())])
-    found = held_services_found(unhashable)  # type: ignore[arg-type]
+    found = held_services_found(unhashable)
     assert len(found) == 2 and all(f.startswith("held (unreadable)") for f in found), found
 
-    found = held_services_found({_EqBoomKey(): {}})  # type: ignore[dict-item]
+    found = held_services_found({_EqBoomKey(): {}})
     assert found == ("held (unreadable)",), (
         f"a key whose comparison raises was not counted: {found}"
     )
@@ -2332,17 +2360,18 @@ def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> No
         def __bool__(self) -> bool:
             return True
 
-    assert held_services_found(Raises()) == ("held (unreadable)",)  # type: ignore[arg-type]
+    assert held_services_found(Raises()) == ("held (unreadable)",)
 
 
 def test_a_class_whose_name_raises_when_read_is_counted_with_a_fixed_label() -> None:
     """New test, fails on the old code only if the label read is outside the try (the try is the choke point that
     turns any error while a held object is looked at into a fixed label)."""
 
+    def _raising_name(cls: type) -> str:
+        raise RuntimeError("the name of a class that raises")
+
     class Meta(type):
-        @property
-        def __name__(cls) -> str:  # type: ignore[override]
-            raise RuntimeError("the name of a class that raises")
+        __name__ = property(_raising_name)
 
     odd = Meta("Odd", (), {})
     assert held_services_found({"channel": odd()}) == ("held (unreadable)",), (
@@ -2470,7 +2499,7 @@ class _DictWithCode(dict):
 
 
 class _ListWithCode(list):
-    def __iter__(self):  # type: ignore[no-untyped-def]
+    def __iter__(self):
         return iter(())
 
 
@@ -2532,11 +2561,11 @@ def test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is(tmp_pa
     for shape in sorted(_held_shapes()):
         for make in makers:
             obj = make()
-            obj.extra = _held_shapes()[shape]  # type: ignore[attr-defined]
+            obj.extra = _held_shapes()[shape]
             assert not is_stand_in_object(obj), (
                 f"a held {shape} was trusted by {type(obj).__name__}"
             )
-            obj.extra = [[_held_shapes()[shape]]]  # type: ignore[attr-defined]
+            obj.extra = [[_held_shapes()[shape]]]
             assert not is_stand_in_object(obj), f"a held {shape} inside lists was trusted"
 
 
@@ -2553,7 +2582,7 @@ def test_a_text_or_number_subclass_is_not_a_plain_atom(tmp_path: Path) -> None:
     }.items():
         for make in hosts:
             host = make()
-            host.extra = value  # type: ignore[attr-defined]
+            host.extra = value
             assert not is_stand_in_object(host), (
                 f"{what} was trusted as a plain atom by {type(host).__name__}"
             )
@@ -2565,7 +2594,7 @@ def test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_buil
     from hadavin_sdk import standins
 
     llm = FakeLLM(tmp_path, {})
-    llm.routes[_Plain()] = 1  # type: ignore[index]
+    llm.routes[_Plain()] = 1
     assert not is_stand_in_object(llm), "a foreign object used as a dict key was trusted"
     # ``_values`` never runs a subclass's own iteration or lookup
     assert standins._values(_ListWithCode([1, 2]), 10) == (1, 2), (
@@ -2581,7 +2610,7 @@ def test_a_populated_store_and_the_real_models_still_read_as_stand_ins(tmp_path:
     store = _populated_store()
     store.add_cost(next(iter(store._runs)), Decimal("0.5"))
     assert is_stand_in_object(store), "plain rows of the store's own models were refused"
-    store._runs["x"] = _Plain()  # type: ignore[assignment]
+    store._runs["x"] = _Plain()
     assert not is_stand_in_object(store), "a foreign object among the rows was trusted"
 
 
@@ -2594,14 +2623,14 @@ def test_the_eight_pinned_plain_classes_hold_no_class_level_mutable_value() -> N
     import inspect
     import types
 
-    import hadavin_sdk.runtime.agent_loop  # noqa: F401 - its last line pins ``Runtime``
+    importlib.import_module("hadavin_sdk.runtime.agent_loop")  # its last line pins ``Runtime``
     from hadavin_sdk import standins
 
     keys = (*standins._ALLOWED, standins._DETECTOR_LIST, standins.APPROVALS, standins.RUNTIME)
     classes = [standins.live_class(key) for key in keys]
     assert all(classes) and len(classes) == 8
     for cls in classes:
-        for base in cls.__mro__:  # type: ignore[union-attr]
+        for base in cls.__mro__:
             if base is object:
                 continue
             for name, value in vars(base).items():
@@ -2649,20 +2678,20 @@ def test_a_container_left_unexplored_at_the_depth_limit_reads_as_real(tmp_path: 
     limit = standins.SCAN_DEPTH_VALUES
     llm = FakeLLM(tmp_path, {})
     assert is_stand_in_object(llm), "control"
-    llm.routes = _nested(limit, lambda: None)  # type: ignore[assignment]
+    llm.routes = _nested(limit, lambda: None)
     assert not is_stand_in_object(llm), f"a function {limit} lists down was trusted"
-    llm.routes = _nested(limit, [1, "plain"])  # type: ignore[assignment]
+    llm.routes = _nested(limit, [1, "plain"])
     assert not is_stand_in_object(llm), (
         "a list one level past the limit was trusted (a container left unexplored must fail closed)"
     )
-    llm.routes = _nested(limit - 1, [1, "plain"])  # type: ignore[assignment]
+    llm.routes = _nested(limit - 1, [1, "plain"])
     assert is_stand_in_object(llm), "a plain list at the last level entered was refused"
-    llm.routes = _nested(limit, 1)  # type: ignore[assignment]
+    llm.routes = _nested(limit, 1)
     assert is_stand_in_object(llm), "plain atoms at the depth limit were refused"
-    llm.routes = _nested(limit, _Plain())  # type: ignore[assignment]
+    llm.routes = _nested(limit, _Plain())
     assert not standins.is_stand_in(llm), "a foreign object at the depth limit was trusted"
     # what is entered counts against the node budget (the size is charged when the container is entered)
-    llm.routes = _nested(3, [1] * 50)  # type: ignore[assignment]
+    llm.routes = _nested(3, [1] * 50)
     with pytest.MonkeyPatch.context() as m:
         m.setattr(standins, "SCAN_NODES", 20)
         assert not standins.is_stand_in(llm), "a container past the node budget passed"
@@ -2676,7 +2705,7 @@ def test_a_function_put_in_after_an_earlier_question_is_seen_at_the_next_one(
     llm = FakeLLM(tmp_path, {})
     for _ in range(3):
         assert is_stand_in_object(llm)
-    llm.routes["x"] = {"k": [lambda: None]}  # type: ignore[assignment]
+    llm.routes["x"] = {"k": [lambda: None]}
     assert not is_stand_in_object(llm), "a change inside a held container was not seen"
 
 
@@ -2685,7 +2714,7 @@ def test_a_function_put_in_after_an_earlier_question_is_seen_at_the_next_one(
 
 def test_an_approvals_slot_cannot_be_deleted_or_deleted_and_set_again(tmp_path: Path) -> None:
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     channel = a.channel
     with pytest.raises(AttributeError, match="cannot be deleted"):
         del a._channel
@@ -2695,16 +2724,16 @@ def test_an_approvals_slot_cannot_be_deleted_or_deleted_and_set_again(tmp_path: 
         del a.channel
     assert a.channel is channel, "a refused delete still changed the object"
     with pytest.raises(AttributeError):
-        a._channel = _RealChannel("sig" + "-b6-del")  # type: ignore[assignment]
+        a._channel = _RealChannel("sig" + "-b6-del")
     assert a.channel is channel
 
 
 def _serve_public(
-    app: object, monkeypatch: pytest.MonkeyPatch
+    app: Any, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[http.server.HTTPServer, Approvals]:
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     _stand_in_bind_lands_on_loopback(monkeypatch)
-    return serve(a, config=app.config, host=ALL_ZEROS, port=0), a  # type: ignore[attr-defined]
+    return serve(a, config=app.config, host=ALL_ZEROS, port=0), a
 
 
 def test_a_patched_approvals_class_is_answered_503(
@@ -2748,7 +2777,9 @@ def test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped(
     try:
         try:
             status = _post(server, close=False)
-        except Exception as exc:  # noqa: BLE001 - a dropped connection shows as an http.client error
+        except (
+            standins.SURPRISE_ERRORS
+        ) as exc:  # a dropped connection shows as an http.client error
             raise AssertionError(
                 f"a missing slot dropped the connection instead of a 503: {exc!r}"
             ) from None
@@ -2764,8 +2795,6 @@ def test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_q
     itself as its own module is loaded, tested next). The three are LATE; every other key (20 of the 23: the five
     stand-ins, the detector list, ``Approvals``, the 11 model rows, ``Route``, ``Card`` and ``RunState``) is taken
     at import. The counts are read from the code, so a key added or removed changes them here and in the CHANGELOG."""
-    import subprocess
-    import sys
 
     from hadavin_sdk import standins as _s
 
@@ -2781,13 +2810,7 @@ def test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_q
     )
 
     proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
-    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", proof + code],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    done = _run_python(["-c", proof + code], 120)
     assert done.returncode == 0 and f"pinned {keys - 3} {keys}" in done.stdout, (
         f"the pins were not all taken at import: {done.stderr[-300:]}"
     )
@@ -2802,9 +2825,9 @@ class _BoomStr(str):
 
 
 def test_a_hostile_text_key_gets_a_fixed_label_and_nothing_is_called_on_it_again() -> None:
-    found = held_services_found({_BoomStr("ch"): _Opaque()})  # type: ignore[dict-item]
+    found = held_services_found({_BoomStr("ch"): _Opaque()})
     assert found == ("held (unreadable)",), found
-    found = held_services_found({_BoomStr("tools"): {"a": 1}})  # type: ignore[dict-item]
+    found = held_services_found({_BoomStr("tools"): {"a": 1}})
     assert found == ("held (unreadable)",), found
 
 
@@ -2825,7 +2848,7 @@ def test_one_hundred_threads_logging_one_hundred_sets_each_raise_nothing(
         try:
             for i in range(100):
                 receiver._refused((f"held channel: T{n}-{i}",))
-        except BaseException as exc:  # noqa: BLE001 - the test records anything
+        except _ANYTHING as exc:  # the test records anything
             errors.append(exc)
 
     threads = [threading.Thread(target=work, args=(n,)) for n in range(100)]
@@ -2881,8 +2904,6 @@ def test_the_refusal_log_never_lets_an_error_out(monkeypatch: pytest.MonkeyPatch
 def test_the_classes_still_read_as_stand_ins_after_their_annotations_are_read() -> None:
     """A fresh interpreter: reading ``__annotations__`` of a pinned class (it adds an entry to the class
     dictionary on some Python versions) must not make the class read as real."""
-    import subprocess
-    import sys
 
     code = (
         "from hadavin_sdk.actions.secrets import FakeSecretProvider\n"
@@ -2903,13 +2924,7 @@ def test_the_classes_still_read_as_stand_ins_after_their_annotations_are_read() 
     )
 
     proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
-    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", proof + code],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    done = _run_python(["-c", proof + code], 120)
     assert done.returncode == 0 and "ok" in done.stdout, (
         f"a read of __annotations__ changed the verdict: {done.stderr[-300:]}"
     )
@@ -2946,7 +2961,7 @@ def test_a_class_dictionary_key_that_is_a_text_subclass_is_not_the_pinned_key(
         pass
 
     forged = list(pin)
-    forged[2] = tuple((Key(k), v) for k, v in pin[2])  # type: ignore[union-attr]
+    forged[2] = tuple((Key(k), v) for k, v in pin[2])
     monkeypatch.setattr(standins, "_shape", lambda c: tuple(forged))
     assert not standins._same_shape(cls, pin), "a key of another type was read as the pinned key"
 
@@ -2955,11 +2970,11 @@ def test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     llm = FakeLLM(tmp_path, {})
-    llm.child = FakeChannel("sig" + "-b6-nest")  # type: ignore[attr-defined]
+    llm.child = FakeChannel("sig" + "-b6-nest")
     assert is_stand_in_object(llm), "control: a stand-in inside a stand-in is plain data"
-    llm.child.hook = lambda: None  # type: ignore[attr-defined]
+    llm.child.hook = lambda: None
     assert not is_stand_in_object(llm), "a function held by a nested stand-in was not seen"
-    llm.child = FakeChannel("sig" + "-b6-nest2")  # type: ignore[attr-defined]
+    llm.child = FakeChannel("sig" + "-b6-nest2")
     monkeypatch.setattr(FakeChannel, "send", lambda self, *a: None)
     assert not is_stand_in_object(llm), "a changed class of a nested stand-in was trusted"
 
@@ -2979,7 +2994,7 @@ def test_the_guard_reads_the_approvals_through_the_accessors_the_runtime_uses(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     real = _RealChannel("sig" + "-b6-acc")
     monkeypatch.setattr(Approvals, "channel", property(lambda self: real))
     held = Approvals.held_services(a)
@@ -3075,21 +3090,21 @@ def _spoof_empty(
     slots a model row is asked for; with ``base`` it derives from ``target`` (a container the builtin methods read)."""
     cls = _spoof_class(target, base=base)
     if model:
-        cls.__pydantic_extra__ = None  # type: ignore[attr-defined]
-        cls.__pydantic_private__ = None  # type: ignore[attr-defined]
-        cls.__pydantic_fields_set__ = set()  # type: ignore[attr-defined]
+        cast(Any, cls).__pydantic_extra__ = None
+        cast(Any, cls).__pydantic_private__ = None
+        cast(Any, cls).__pydantic_fields_set__ = set()
     value = cls()
     if member:
-        cls.__members__ = {"x": value}  # type: ignore[attr-defined]
-        value._value_ = "x"  # type: ignore[attr-defined]
-        value.__objclass__ = cls  # type: ignore[attr-defined]
+        cast(Any, cls).__members__ = {"x": value}
+        value._value_ = "x"
+        value.__objclass__ = cls
     return value
 
 
 def _spoof(target: type) -> object:
     """An instance of such a class that holds a real client."""
     value = _spoof_class(target)()
-    value.client = _Opaque()  # type: ignore[attr-defined]
+    value.client = _Opaque()
     return value
 
 
@@ -3105,7 +3120,7 @@ def _spoof_hosts(tmp_path: Path) -> list[object]:
 def _assert_every_host_refuses(tmp_path: Path, value: object, what: str) -> None:
     for host in _spoof_hosts(tmp_path):
         assert is_stand_in_object(host), "control"
-        host.extra = value  # type: ignore[attr-defined]
+        cast(Any, host).extra = value
         assert not is_stand_in_object(host), f"{what} was trusted by {type(host).__name__}"
 
 
@@ -3186,7 +3201,7 @@ def test_a_held_class_that_fakes_equality_is_refused_as_a_key_and_in_a_nested_de
         members = AnyOf([member, RegexDetector(0.7)])
         outer = AnyOf([members])
         assert is_stand_in_object(outer), "control"
-        member.extra = _spoof(target)  # type: ignore[attr-defined]
+        member.extra = _spoof(target)
         assert not is_stand_in_object(outer), (
             "a spoofed class inside a nested detector list was trusted"
         )
@@ -3288,7 +3303,7 @@ def test_a_store_holding_one_of_each_model_row_it_keeps_reads_as_a_stand_in(tmp_
         Card(text="t", blocks=[{"type": "section", "text": {"a": ["b"]}}], display_hash="h")
     )
     assert is_stand_in_object(channel), "a channel holding a card was refused"
-    store._approvals[next(iter(store._approvals))].steps[0].approver_ids.append(_Opaque())  # type: ignore[arg-type]
+    store._approvals[next(iter(store._approvals))].steps[0].approver_ids.append(_Opaque())
     assert not is_stand_in_object(store), "a foreign object inside a chain step was trusted"
 
 
@@ -3299,11 +3314,11 @@ def test_the_depth_limit_for_held_values_is_eight_and_one_level_more_reads_as_re
 
     assert standins.SCAN_DEPTH_VALUES == 8 and standins.SCAN_DEPTH == 4
     store = MemoryStore()
-    store.extra = _nested(standins.SCAN_DEPTH_VALUES, 1)  # type: ignore[attr-defined]
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES, 1)
     assert is_stand_in_object(store), "plain atoms at the last level were refused"
-    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, 1)  # type: ignore[attr-defined]
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, 1)
     assert not is_stand_in_object(store), "a list one level past the limit was trusted"
-    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, _Opaque())  # type: ignore[attr-defined]
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, _Opaque())
     assert not is_stand_in_object(store), "a real object past the limit was trusted"
 
 
@@ -3319,7 +3334,7 @@ def test_a_huge_container_is_not_copied_and_a_shared_one_is_charged_every_time(
     big = list(range(10**6))
     for name, value in (("shared list", [big] * 30), ("big dict", dict.fromkeys(range(10**6)))):
         store = MemoryStore()
-        store.extra = value  # type: ignore[attr-defined]
+        store.extra = value
         tracemalloc.start()
         before = tracemalloc.get_traced_memory()[0]
         started = time.monotonic()
@@ -3337,9 +3352,9 @@ def test_a_container_referenced_many_times_is_charged_each_time_it_is_entered() 
     shared = list(range(100_000))
     store = MemoryStore()
     assert is_stand_in_object(store), "control"
-    store.once = [shared]  # type: ignore[attr-defined]
+    store.once = [shared]
     assert is_stand_in_object(store), "one copy of 100,000 plain values is within the budget"
-    store.thrice = [shared, shared, shared]  # type: ignore[attr-defined]
+    store.thrice = [shared, shared, shared]
     assert not is_stand_in_object(store), "a container entered three times was charged once"
 
 
@@ -3364,35 +3379,35 @@ def test_a_run_state_that_is_not_a_real_member_or_has_an_attribute_hung_on_it_re
     from hadavin_sdk.models import RunState
 
     store = MemoryStore()
-    store.extra = RunState.WORKING  # type: ignore[attr-defined]
+    store.extra = RunState.WORKING
     assert is_stand_in_object(store), "control: a real member is plain data"
     fake = str.__new__(RunState, "WORKING")
     fake._value_ = "WORKING"
-    store.extra = fake  # type: ignore[attr-defined]
+    store.extra = fake
     assert not is_stand_in_object(store), (
         "an object made as a run state but not a member was trusted"
     )
     member = RunState.EXECUTING
-    member.client = _Opaque()  # type: ignore[attr-defined]
+    member.client = _Opaque()
     try:
-        store.extra = member  # type: ignore[attr-defined]
+        store.extra = member
         assert not is_stand_in_object(store), (
             "a run state member with an attribute hung on it was trusted"
         )
     finally:
-        del member.client  # type: ignore[attr-defined]
+        del member.client
 
 
-def _approvals_with(app: object, on_decided: object) -> Approvals:
-    built = app.approvals  # type: ignore[attr-defined]
+def _approvals_with(app: Any, on_decided: object) -> Approvals:
+    built = app.approvals
     return Approvals(
         built.store,
         built.audit,
         built.registry,
         built.channel,
-        on_decided,  # type: ignore[arg-type]
+        on_decided,
         detector=built.detector,
-        config=app.config,  # type: ignore[attr-defined]
+        config=app.config,
         overrides=built.overrides,
         _built_by=_BUILD_TOKEN,
     )
@@ -3409,7 +3424,7 @@ def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_publi
     _stand_in_bind_lands_on_loopback(monkeypatch)
     serve(
         _approvals_with(app, make_on_decided({})), config=app.config, host=ALL_ZEROS, port=0
-    ).server_close()  # type: ignore[attr-defined]
+    ).server_close()
     real = {
         "rt": _Opaque()
     }  # a fake real service that a callable run after a valid signature can reach
@@ -3443,7 +3458,7 @@ def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_publi
         )
         assert "held on_decided: function" in real_services(
             app.config,
-            approvals.held_services(),  # type: ignore[attr-defined]
+            approvals.held_services(),
         ), f"{what} was not named as held on_decided"
 
 
@@ -3451,12 +3466,12 @@ def test_serve_with_an_unreadable_approvals_object_raises_bind_refused_not_anoth
     tmp_path: Path,
 ) -> None:
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     saved = a.channel
     object.__delattr__(a, "_channel")
     try:
         with pytest.raises(BindRefused, match="could not read what the approvals hold"):
-            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+            serve(a, config=app.config, port=0)
     finally:
         object.__setattr__(a, "_channel", saved)
 
@@ -3494,19 +3509,11 @@ def test_every_slot_deleted_with_the_object_level_call_is_answered_503(
 
 
 def _fresh(code: str) -> str:
-    import subprocess
-    import sys
 
     import hadavin_sdk
 
     proof = "import hadavin_sdk, sys; print('PKG', hadavin_sdk.__file__)\n"
-    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
-        [sys.executable, "-c", proof + code],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    done = _run_python(["-c", proof + code], 120)
     last = (done.stderr.strip().splitlines() or [""])[-1]
     assert done.returncode == 0 and "ok" in done.stdout, f"{last} | {done.stdout[-100:]}"
     package = done.stdout.split("PKG ", 1)[1].splitlines()[0]
@@ -3589,13 +3596,13 @@ def test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal
 
 
 def _refused_on_public_bind(
-    app: object, approvals: Approvals, monkeypatch: pytest.MonkeyPatch, shown: str
+    app: Any, approvals: Approvals, monkeypatch: pytest.MonkeyPatch, shown: str
 ) -> bool:
     """True when ``serve`` on a public bind is refused with ``shown`` in the text; False when it is served."""
     with monkeypatch.context() as m:
         _no_server(m)
         try:
-            serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+            serve(approvals, config=app.config, host=ALL_ZEROS, port=0)
         except BindRefused as exc:
             assert shown in str(exc), f"refused for another reason: {exc}"
             return True
@@ -3606,9 +3613,9 @@ def _refused_on_public_bind(
     return False
 
 
-def _core_runtime(app: object) -> object:
+def _core_runtime(app: Any) -> Any:
     """The runtime ``build()`` made for this app: the exact core class, holding the stand-ins of the fixture."""
-    return app.app.runtime  # type: ignore[attr-defined]
+    return app.app.runtime
 
 
 def test_a_make_on_decided_holder_that_holds_anything_but_the_core_runtime_is_counted(
@@ -3645,7 +3652,7 @@ def test_a_core_on_decided_whose_closure_cell_is_replaced_is_judged_by_what_it_n
     app = _built(tmp_path)
     func = make_on_decided({})
     approvals = _approvals_with(app, func)
-    cell = func.__closure__[0]  # type: ignore[index]
+    cell = func.__closure__[0]
     assert not _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), "control"
     for what, content in {
         "a dict holding a lambda": {"rt": lambda: None},
@@ -3666,8 +3673,8 @@ def test_approvals_made_by_hand_with_empty_overrides_count_as_hand_built() -> No
     cfg = None
     hand = Approvals(
         MemoryStore(),
-        _Opaque(),  # type: ignore[arg-type]
-        _Opaque(),  # type: ignore[arg-type]
+        _Opaque(),
+        _Opaque(),
         FakeChannel("sig" + "-b8-hand"),
         make_on_decided({}),
         config=cfg,
@@ -3706,7 +3713,7 @@ def test_a_clock_that_is_not_the_core_clock_is_counted_and_is_judged_at_every_qu
         ),
     }
     for what, clock in shapes.items():
-        approvals.clock = clock  # type: ignore[assignment]
+        approvals.clock = clock
         assert "clock" in approvals.held_services(), f"{what} was not counted as held"
         assert _refused_on_public_bind(app, approvals, monkeypatch, "held clock"), (
             f"{what} was served on a public bind"
@@ -3718,14 +3725,14 @@ def test_a_clock_that_is_not_the_core_clock_is_counted_and_is_judged_at_every_qu
 def test_a_counter_with_an_attribute_hung_on_it_reads_as_real(tmp_path: Path) -> None:
     from collections import Counter
 
-    plain = Counter()
+    plain: Counter[str] = Counter()
     for host in _spoof_hosts(tmp_path):
         assert is_stand_in_object(host), "control"
-        host.stats = plain  # type: ignore[attr-defined]
+        cast(Any, host).stats = plain
         assert is_stand_in_object(host), "a plain empty Counter was refused"
-        hidden = Counter()
-        hidden.client = _Opaque()  # type: ignore[attr-defined]
-        host.stats = hidden  # type: ignore[attr-defined]
+        hidden: Counter[str] = Counter()
+        cast(Any, hidden).client = _Opaque()
+        cast(Any, host).stats = hidden
         assert not is_stand_in_object(host), (
             f"a Counter with an attribute holding a real object was trusted by {type(host).__name__}"
         )
@@ -3736,9 +3743,9 @@ def test_the_instance_state_helper_refuses_a_counter_with_an_attribute() -> None
 
     from hadavin_sdk import standins
 
-    clean = Counter()
+    clean: Counter[str] = Counter()
     assert standins._no_instance_state(clean, Counter), "the helper refused a clean Counter"
-    clean.client = _Opaque()  # type: ignore[attr-defined]
+    cast(Any, clean).client = _Opaque()
     assert not standins._no_instance_state(clean, Counter), (
         "the helper passed a Counter with an attribute"
     )
@@ -3747,7 +3754,7 @@ def test_the_instance_state_helper_refuses_a_counter_with_an_attribute() -> None
 
 def test_the_fake_model_with_its_own_counter_still_reads_as_a_stand_in(tmp_path: Path) -> None:
     llm = FakeLLM(tmp_path, {})
-    llm._attempts["x"] += 1  # type: ignore[attr-defined]
+    llm._attempts["x"] += 1
     assert is_stand_in_object(llm), "the fake model holding a used Counter was refused"
 
 
@@ -3767,9 +3774,7 @@ def test_only_the_counter_among_the_allowlisted_types_can_carry_instance_state()
 
 
 def _load_data_modules() -> None:
-    import hadavin_sdk.approvals.cards
-    import hadavin_sdk.config
-    import hadavin_sdk.models  # noqa: F401
+    importlib.import_module("hadavin_sdk.models")
 
 
 def _pydantic_rows() -> list[tuple[tuple[str, str], type]]:
@@ -3778,15 +3783,15 @@ def _pydantic_rows() -> list[tuple[tuple[str, str], type]]:
     _load_data_modules()
     found = [(key, standins.live_class(key)) for key in standins._DATA_CLASSES]
     assert all(c is not None for _, c in found)
-    return [(key, c) for key, c in found if key not in standins._DATACLASS_KEYS]  # type: ignore[misc]
+    return [(key, c) for key, c in found if key not in standins._DATACLASS_KEYS]
 
 
 @pytest.mark.parametrize("slot", ["__pydantic_extra__", "__pydantic_private__"])
 def test_a_model_row_with_state_in_a_pydantic_slot_reads_as_real(slot: str) -> None:
     for key, cls in _pydantic_rows():
-        row = cls.model_construct()
+        row = cast(Any, cls).model_construct()
         store = MemoryStore()
-        store.extra = row  # type: ignore[attr-defined]
+        store.extra = row
         assert is_stand_in_object(store), f"control: a plain {key[1]} row was refused"
         object.__setattr__(row, slot, {"c": _Opaque()})
         assert not is_stand_in_object(store), (
@@ -3801,10 +3806,10 @@ def test_a_model_row_with_a_foreign_fields_set_reads_as_real() -> None:
             "a subclass of set": type("S", (set,), {})(),
             "a list": [],
         }.items():
-            row = cls.model_construct()
+            row = cast(Any, cls).model_construct()
             object.__setattr__(row, "__pydantic_fields_set__", value)
             store = MemoryStore()
-            store.extra = row  # type: ignore[attr-defined]
+            store.extra = row
             assert not is_stand_in_object(store), (
                 f"a {key[1]} row whose fields-set is {what} was trusted"
             )
@@ -3830,9 +3835,9 @@ def _data_class_problem(key: tuple[str, str], cls: type) -> str | None:
         return None if "__slots__" not in vars(cls) else "a dataclass with slots"
     if not (isinstance(cls, type) and issubclass(cls, BaseModel)):
         return f"{key[1]} is neither a pydantic model nor a plain dataclass"
-    if cls.model_config.get("extra") != "forbid":
+    if cast(Any, cls).model_config.get("extra") != "forbid":
         return f"{key[1]} does not forbid extra fields"
-    if cls.__private_attributes__:
+    if cast(Any, cls).__private_attributes__:
         return f"{key[1]} declares private attributes"
     return None
 
@@ -3923,7 +3928,7 @@ def test_fifteen_hundred_references_to_one_stand_in_cost_one_shape_comparison_pe
 ) -> None:
     channel = FakeChannel("sig" + "-b8-shared")
     store = MemoryStore()
-    store.extra = [channel] * 1_500  # type: ignore[attr-defined]  # inside the budget: each reference is visited
+    store.extra = [channel] * 1_500  # inside the budget: each reference is visited
     calls = _counting(monkeypatch, "_same_shape", 20)
     assert is_stand_in_object(store), "1,500 references to one stand-in were refused"
     assert 1 <= calls[0] <= 20
@@ -3932,22 +3937,22 @@ def test_fifteen_hundred_references_to_one_stand_in_cost_one_shape_comparison_pe
 def test_a_stand_in_is_charged_twenty_values_and_a_few_thousand_references_are_fine() -> None:
     channel = FakeChannel("sig" + "-b8-weight")
     store = MemoryStore()
-    store.extra = [channel] * 5_000  # type: ignore[attr-defined]
+    store.extra = [channel] * 5_000
     assert is_stand_in_object(store), (
         "5,000 references to one stand-in (about 165,000 values) were refused"
     )
-    store.extra = [channel] * 12_000  # type: ignore[attr-defined]
+    store.extra = [channel] * 12_000
     assert not is_stand_in_object(store), (
         "12,000 references to one stand-in (about 400,000 values) passed"
     )
-    store.extra = [1] * 20_000  # type: ignore[attr-defined]
+    store.extra = [1] * 20_000
     assert is_stand_in_object(store), "20,000 plain numbers were charged like stand-ins"
     from hadavin_sdk.models import Run
 
     row = Run(agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="r")
-    store.extra = [row] * 2_000  # type: ignore[attr-defined]
+    store.extra = [row] * 2_000
     assert is_stand_in_object(store), "2,000 references to one model row were refused"
-    store.extra = [row] * 8_000  # type: ignore[attr-defined]
+    store.extra = [row] * 8_000
     assert not is_stand_in_object(store), (
         "8,000 references to one model row were not charged for the rows"
     )
@@ -3957,10 +3962,10 @@ def test_an_over_budget_structure_is_named_apart_from_a_real_service() -> None:
     from hadavin_sdk import standins
 
     big = MemoryStore()
-    big.extra = list(range(standins.SCAN_NODES + 1))  # type: ignore[attr-defined]
+    big.extra = list(range(standins.SCAN_NODES + 1))
     assert standins.verdict(big) == standins.VERDICT_OVER_BUDGET
     foreign = MemoryStore()
-    foreign.extra = _Opaque()  # type: ignore[attr-defined]
+    foreign.extra = _Opaque()
     assert standins.verdict(foreign) == standins.VERDICT_REAL, (
         "a real object was reported as over budget"
     )
@@ -3987,12 +3992,12 @@ def test_serve_refuses_with_bind_refused_when_an_object_raises_while_the_approva
             raise RuntimeError("hostile overrides")
 
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     saved = object.__getattribute__(a, "_overrides")
     object.__setattr__(a, "_overrides", Hostile())
     try:
         with pytest.raises(BindRefused, match="could not read what the approvals hold"):
-            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+            serve(a, config=app.config, port=0)
     finally:
         object.__setattr__(a, "_overrides", saved)
 
@@ -4004,12 +4009,12 @@ def test_serve_refuses_with_bind_refused_when_any_slot_is_deleted(
     """A deleted slot (``object.__delattr__``) means the object cannot be trusted: the start check reads every slot
     and answers ``BindRefused`` for each one, also for the slots (the audit sink and the registry among them) that a built object's held map does not name."""
     app = _built(tmp_path)
-    a = app.approvals  # type: ignore[attr-defined]
+    a = app.approvals
     saved = object.__getattribute__(a, slot)
     object.__delattr__(a, slot)
     try:
         with pytest.raises(BindRefused, match="could not read what the approvals hold"):
-            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+            serve(a, config=app.config, port=0)
     finally:
         object.__setattr__(a, slot, saved)
 
@@ -4088,12 +4093,12 @@ def test_the_class_level_attributes_of_the_pinned_classes_are_functions_or_built
     assert not isinstance(functools.lru_cache(lambda: 1), allowed), (
         "control: a cache wrapper is refused"
     )
-    import hadavin_sdk.runtime.agent_loop  # noqa: F401 - its last line pins ``Runtime``
+    importlib.import_module("hadavin_sdk.runtime.agent_loop")  # its last line pins ``Runtime``
 
     plain = (*standins._ALLOWED, standins._DETECTOR_LIST, standins.APPROVALS, standins.RUNTIME)
     for key in plain:  # the model rows are pydantic classes: judged by their own test
         cls = standins.live_class(key)
-        for base in cls.__mro__:  # type: ignore[union-attr]
+        for base in cls.__mro__:
             if base is object:
                 continue
             for name, value in vars(base).items():
@@ -4180,7 +4185,7 @@ def test_the_changelog_check_notices_a_changed_number_a_changed_list_and_a_hando
 # ---------------------------------------------------------------------------------------------------------------
 
 
-def _hostile_tz(seen: list[str]) -> object:
+def _hostile_tz(seen: list[str]) -> Any:
     """A ``tzinfo`` whose ``utcoffset`` records a call: foreign code that an aware ``datetime.timestamp()`` runs."""
     from datetime import timedelta, tzinfo
 
@@ -4224,7 +4229,7 @@ def test_a_fixed_clock_with_a_foreign_tzinfo_is_counted_and_never_runs_it(
         "a tzinfo subclass": _hostile_tz(seen),
         "an exact timezone": timezone(timedelta(hours=1)),
     }.items():
-        approvals.clock = fixed_clock(datetime(2026, 1, 1, tzinfo=tz))  # type: ignore[arg-type]
+        approvals.clock = fixed_clock(datetime(2026, 1, 1, tzinfo=tz))
         assert "clock" in approvals.held_services(), f"a fixed_clock with {what} was not counted"
         assert _refused_on_public_bind(app, approvals, monkeypatch, "held clock"), (
             f"a fixed_clock with {what} was served on a public bind"
@@ -4244,7 +4249,7 @@ def test_a_clock_swapped_in_after_the_start_is_answered_503_and_never_runs(
     try:
         assert _post(server, close=False) != 503, "control: the untouched server refused"
         seen: list[str] = []
-        approvals.clock = fixed_clock(datetime(2026, 1, 1, tzinfo=_hostile_tz(seen)))  # type: ignore[arg-type]
+        approvals.clock = fixed_clock(datetime(2026, 1, 1, tzinfo=_hostile_tz(seen)))
         assert _post(server, close=False) == 503, (
             "a hostile-tzinfo clock was served after the start"
         )
@@ -4259,8 +4264,8 @@ def test_the_clock_of_build_is_judged_like_the_clock_set_later(tmp_path: Path) -
     from hadavin_sdk.approvals.requests import fixed_clock
 
     seen: list[str] = []
-    app = _built(tmp_path, clock=fixed_clock(datetime(2026, 1, 1, tzinfo=_hostile_tz(seen))))  # type: ignore[arg-type]
-    assert "clock" in app.app.approvals.held_services(), (  # type: ignore[attr-defined]  # the real build result
+    app = _built(tmp_path, clock=fixed_clock(datetime(2026, 1, 1, tzinfo=_hostile_tz(seen))))
+    assert "clock" in app.app.approvals.held_services(), (  # the real build result
         "a build(clock=...) with a foreign tzinfo was not counted"
     )
     assert seen == []
@@ -4295,11 +4300,11 @@ def test_a_stand_in_holding_a_datetime_with_a_foreign_tzinfo_reads_as_real(tmp_p
     seen: list[str] = []
     for host in _spoof_hosts(tmp_path):
         assert is_stand_in_object(host), "control"
-        host.when = datetime.fromisoformat("2026-01-01T00:00:00")  # type: ignore[attr-defined]
+        cast(Any, host).when = datetime.fromisoformat("2026-01-01T00:00:00")
         assert is_stand_in_object(host), "a naive datetime was refused"
-        host.when = datetime(2026, 1, 1, tzinfo=UTC)  # type: ignore[attr-defined]
+        cast(Any, host).when = datetime(2026, 1, 1, tzinfo=UTC)
         assert is_stand_in_object(host), "a datetime in UTC was refused"
-        host.when = datetime(2026, 1, 1, tzinfo=_hostile_tz(seen))  # type: ignore[attr-defined]
+        cast(Any, host).when = datetime(2026, 1, 1, tzinfo=_hostile_tz(seen))
         assert not is_stand_in_object(host), (
             f"a datetime with a foreign tzinfo was trusted by {type(host).__name__}"
         )
@@ -4310,11 +4315,11 @@ def test_a_path_with_a_real_object_in_a_slot_reads_as_real(tmp_path: Path) -> No
     """Class: slots of an allowlisted atom. ``PosixPath`` keeps its parts in slots that ``__dict__`` does not show."""
     for host in _spoof_hosts(tmp_path):
         assert is_stand_in_object(host), "control"
-        host.where = tmp_path  # type: ignore[attr-defined]
+        cast(Any, host).where = tmp_path
         assert is_stand_in_object(host), "a plain Path was refused"
         evil = Path(str(tmp_path))
-        evil._str = _Opaque()  # type: ignore[attr-defined]
-        host.where = evil  # type: ignore[attr-defined]
+        cast(Any, evil)._str = _Opaque()
+        cast(Any, host).where = evil
         assert not is_stand_in_object(host), (
             f"a Path with a real object in a slot was trusted by {type(host).__name__}"
         )
@@ -4368,7 +4373,7 @@ def test_a_hand_built_runtime_in_a_holder_is_counted_and_a_hand_built_approvals_
     app = _built(tmp_path)
     real = _Opaque()
     hand = object.__new__(Runtime)
-    hand.store, hand.llm, hand.detector = real, real, real  # type: ignore[attr-defined]
+    hand.store, hand.llm, hand.detector = real, real, real
     approvals = _approvals_with(app, make_on_decided({"rt": hand}))
     assert _refused_on_public_bind(app, approvals, monkeypatch, "held on_decided"), (
         "a Runtime holding real objects was believed"
@@ -4483,7 +4488,7 @@ def test_a_thousand_row_store_is_a_stand_in_and_answers_401_not_503(
     from hadavin_sdk import standins
 
     app = _built(tmp_path)
-    store = _fill_mixed(app.approvals.store, MIXED_ROWS)  # type: ignore[attr-defined]
+    store = _fill_mixed(app.approvals.store, MIXED_ROWS)
     assert standins.verdict(store) == "stand-in", "1,000 rows were not a stand-in"
     server, _ = _serve_public(app, monkeypatch)
     try:
@@ -4496,16 +4501,16 @@ def test_a_store_over_the_budget_is_named_over_budget_and_a_real_object_is_named
     from hadavin_sdk import standins
 
     huge = _mixed_store(1)
-    huge.extra = [list(range(1_000))] * 500  # type: ignore[attr-defined]  # 500,000 values, shared
+    huge.extra = [list(range(1_000))] * 500  # 500,000 values, shared
     assert standins.verdict(huge) == "over budget", "a store of 500,000 values was not over budget"
     big = list(range(1_000))
     real = _Opaque()
     for real_last in (True, False):
         # one level holds 500 references to a 1,000-value list (the budget runs out inside it) and a real object
-        level = [big] * 500
+        level: list[Any] = [big] * 500
         level = [*level, real] if real_last else [real, *level]
         store = _mixed_store(1)
-        store.extra = [level]  # type: ignore[attr-defined]
+        store.extra = [level]
         assert standins.verdict(store) == "real", (
             f"a real object met after the budget ran out was labelled otherwise (real_last={real_last})"
         )
@@ -4612,11 +4617,11 @@ def test_the_depth_is_eight_levels_below_the_own_dictionary_and_the_texts_say_so
         return value
 
     host = MemoryStore()
-    host.extra = nested(standins.SCAN_DEPTH_VALUES, 1)  # type: ignore[attr-defined]
+    host.extra = nested(standins.SCAN_DEPTH_VALUES, 1)
     assert standins.verdict(host) == "stand-in", "eight nested containers of numbers were refused"
-    host.extra = nested(standins.SCAN_DEPTH_VALUES, _Opaque())  # type: ignore[attr-defined]
+    host.extra = nested(standins.SCAN_DEPTH_VALUES, _Opaque())
     assert standins.verdict(host) == "real", "a real object eight containers deep was not seen"
-    host.extra = nested(standins.SCAN_DEPTH_VALUES + 1, _Opaque())  # type: ignore[attr-defined]
+    host.extra = nested(standins.SCAN_DEPTH_VALUES + 1, _Opaque())
     assert standins.verdict(host) == "real", "a real object nine containers deep was trusted"
     doc = standins.__doc__ or ""
     assert (
@@ -4664,7 +4669,7 @@ def test_a_card_with_a_slot_reads_as_real() -> None:
         __slots__ = ("x",)
 
     held = Slotted()
-    held.x = _Opaque()
+    cast(Any, held).x = _Opaque()
     assert not standins._data_state_ok(held, key), "a row with a slot was trusted"
 
 
@@ -4717,7 +4722,7 @@ def test_the_last_level_judges_an_atom_like_every_other_level(tmp_path: Path) ->
 
     seen: list[str] = []
     evil_path = Path(str(tmp_path))
-    evil_path._str = _Opaque()
+    cast(Any, evil_path)._str = _Opaque()
     assert _last_level_verdict(datetime(2026, 1, 1, tzinfo=UTC)) == "stand-in", (
         "control: UTC datetime"
     )
@@ -4741,7 +4746,7 @@ def test_the_last_level_judges_an_atom_like_every_other_level(tmp_path: Path) ->
     assert seen == []
 
 
-def _runtime_counted(app: object, runtime: object) -> bool:
+def _runtime_counted(app: Any, runtime: Any) -> bool:
     return "on_decided" in _approvals_with(app, make_on_decided({"rt": runtime})).held_services()
 
 
@@ -4956,14 +4961,14 @@ def test_pin_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class() -> 
 
     from hadavin_sdk import standins
 
-    class Liar:
-        @property
-        def __class__(self) -> type:
-            return type
+    def _claims_type(self: object) -> type:
+        return type
+
+    Liar = type("Liar", (), {"__class__": property(_claims_type)})
 
     module = types.ModuleType("b10_live_class_probe")
-    module.Thing = Liar()
-    module.Real = Liar
+    module.__dict__["Thing"] = Liar()
+    module.__dict__["Real"] = Liar
     sys.modules["b10_live_class_probe"] = module
     try:
         assert standins.live_class(("b10_live_class_probe", "Thing")) is None, (
@@ -5132,7 +5137,7 @@ def test_pin_copying_an_object_of_a_pinned_class_does_not_change_the_answer(tmp_
 # ---------------------------------------------------------------------------------------------------------------
 
 
-def _seal(runtime: object) -> None:
+def _seal(runtime: Any) -> None:
     """Seal a runtime again (a test that puts a toolbox into the hooks first)."""
     from hadavin_sdk.approvals import requests as R
 
@@ -5210,7 +5215,7 @@ def test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unse
             else:
                 del target[key]
         assert not _runtime_counted(app, rt), f"control: {label} was undone and still counted"
-    on_object = (
+    on_object: tuple[tuple[str, Any, str, Any], ...] = (
         ("the argument checker of the toolbox replaced", box, "_arg_errors", _real_function),
         ("the secrets the executor holds replaced", executor, "_secrets", _Opaque()),
     )
@@ -5436,13 +5441,11 @@ def test_a_name_added_to_limits_audit_registry_or_evidence_is_counted(tmp_path: 
 
 
 def _recording_dict_class(calls: list[str]) -> type:
-    class Hostile:
-        @property
-        def __dict__(self) -> dict:  # type: ignore[override]
-            calls.append("dict")
-            return {}
+    def recording(self: object) -> dict:
+        calls.append("dict")
+        return {}
 
-    return Hostile
+    return type("Hostile", (), {"__dict__": property(recording)})
 
 
 def test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared(
@@ -5484,11 +5487,11 @@ def test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own(tmp_pa
     executor = rt.hooks.execute.__self__
     calls: list[str] = []
 
-    class Swapped(type(executor)):  # type: ignore[misc]
-        @property
-        def __dict__(self) -> dict:  # type: ignore[override]
-            calls.append("dict")
-            return {}
+    def recording(self: object) -> dict:
+        calls.append("dict")
+        return {}
+
+    Swapped = type("Swapped", (type(executor),), {"__dict__": property(recording)})
 
     original = type(executor)
     executor.__class__ = Swapped
@@ -5653,7 +5656,7 @@ def test_a_hook_function_with_an_empty_closure_cell_filled_later_is_counted(tmp_
         return inner
 
     cell = types.CellType()  # a cell with nothing in it
-    empty = types.FunctionType(outer().__code__, {}, "late", None, (cell,))
+    empty = types.FunctionType(cast(Any, outer()).__code__, {}, "late", None, (cell,))
     _fields(rt.hooks)["tools"]["late"] = empty
     _seal(rt)
     assert not _runtime_counted(app, rt), "control: sealed with an empty cell"

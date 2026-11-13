@@ -32,6 +32,7 @@ import socket
 import socketserver
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import cast
 from urllib.parse import urlsplit
 
 from hadavin_sdk import defaults
@@ -227,7 +228,7 @@ def _is_plain_word(text: object) -> bool:
 
 
 def _word_or_unreadable(text: object) -> str:
-    return text if _is_plain_word(text) else "(unreadable)"  # type: ignore[return-value]
+    return cast(str, text) if _is_plain_word(text) else "(unreadable)"
 
 
 def _is_plain_name(text: object) -> bool:
@@ -242,7 +243,7 @@ def _is_plain_name(text: object) -> bool:
 
 
 def _name_or_unreadable(text: object) -> str:
-    return text if _is_plain_name(text) else "(unreadable)"  # type: ignore[return-value]
+    return cast(str, text) if _is_plain_name(text) else "(unreadable)"
 
 
 def reason_problem(reason: object) -> str | None:

@@ -3,7 +3,7 @@ an independent reading, and the exact-literal list the request code uses. Made-u
 
 from __future__ import annotations
 
-import random
+import hashlib
 import socket
 
 import pytest
@@ -134,8 +134,30 @@ def _oracle(host: str) -> bool:
     return parts[0] == "127"
 
 
+class _Stream:
+    """A repeatable stream of numbers: the hash of a counter (no random module, so the same cases run every time)."""
+
+    def __init__(self, seed: int) -> None:
+        self._seed, self._n = seed, 0
+
+    def _next(self) -> int:
+        self._n += 1
+        digest = hashlib.sha256(f"{self._seed}:{self._n}".encode()).digest()
+        return int.from_bytes(digest[:8], "big")
+
+    def randrange(self, start: int, stop: int | None = None) -> int:
+        low, high = (0, start) if stop is None else (start, stop)
+        return low + self._next() % (high - low)
+
+    def choice(self, items: list) -> object:
+        return items[self.randrange(len(items))]
+
+    def random(self) -> float:
+        return (self._next() % 10**9) / 10**9
+
+
 def test_seeded_fuzz_against_an_independent_reading() -> None:
-    rng = random.Random(20261112)  # noqa: S311 - a seeded test generator, not a secret
+    rng = _Stream(20261112)
     alphabet = list("0123456789.:[]%xabcdefghijklmnopqrstuvwxyz ")
     seen_true = seen_false = 0
     for _ in range(20000):

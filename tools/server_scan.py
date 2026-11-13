@@ -31,6 +31,7 @@ import ast
 import re
 import tomllib
 from collections import Counter
+from typing import cast
 
 from hadavin_sdk.netguard import is_localhost_name, parse_ip_literal
 
@@ -87,14 +88,14 @@ def _outer_parts(node: ast.AST) -> list[ast.AST]:
     """The parts of a function, class or lambda that run in the scope AROUND it (bases, decorators, defaults)."""
     if isinstance(node, ast.ClassDef):
         return [*node.bases, *node.keywords, *node.decorator_list]
-    args = node.args  # type: ignore[attr-defined]
+    args = cast(ast.FunctionDef | ast.Lambda, node).args
     parts: list[ast.AST] = [*args.defaults, *(d for d in args.kw_defaults if d is not None)]
     parts += getattr(node, "decorator_list", [])
     return parts
 
 
 def _body_of(node: ast.AST) -> list[ast.AST]:
-    return [node.body] if isinstance(node, ast.Lambda) else list(node.body)  # type: ignore[attr-defined]
+    return [node.body] if isinstance(node, ast.Lambda) else list(cast(ast.FunctionDef, node).body)
 
 
 def _scope_nodes(roots: list[ast.AST]) -> list[ast.AST]:
