@@ -1,0 +1,12 @@
+E       AssertionError: raw direction control characters in: ['tests/test_followup_edge_cases.py:439', 'tests/test_followup_edge_cases.py:445']
+E       assert not ['tests/test_followup_edge_cases.py:439', 'tests/test_followup_edge_cases.py:445']
+
+tests/test_raw_bidi_chars.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_shell_single_bracket.py::test_no_tracked_script_or_workflow_run_block_holds_a_single_bracket_test
+FAILED tests/test_raw_bidi_chars.py::test_no_tracked_file_holds_a_raw_direction_control_character
+2 failed, 107 passed in 3.99s
+
+failure text:
+E       AssertionError: single-bracket test (use [[ ]]) in: scripts/reset.sh:15, scripts/reset.sh:20, scripts/reset.sh:25, scripts/reset.sh:28, scripts/reset.sh:33, scripts/start_all.sh:12, scripts/start_all.sh:16, lint.yml#block-8:5, lint.yml#block-8:7
+tests/test_shell_single_bracket.py:300: AssertionError

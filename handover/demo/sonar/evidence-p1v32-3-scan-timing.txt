@@ -1,0 +1,49 @@
+single_bracket_lines timing, one thread, this shell; ~1 MB each (lines of 3000 chars) unless stated
+'<<x'          999332 bytes  0.072 s
+'<<x<<x'       999332 bytes  0.087 s
+"<<'"          999332 bytes  0.062 s
+'<<"'          999332 bytes  0.054 s
+'<<EOF '       999332 bytes  0.066 s
+'[ '           999332 bytes  0.035 s
+';[ '          999332 bytes  0.034 s
+'[[ '          999332 bytes  0.061 s
+'(('           999332 bytes  0.074 s
+'$('           999332 bytes  0.076 s
+'`'            999332 bytes  0.079 s
+"'"            999332 bytes  0.102 s
+'"'            999332 bytes  0.071 s
+'\'"'          999332 bytes  0.050 s
+' '            999332 bytes  0.075 s
+'\t'           999332 bytes  0.084 s
+';'            999332 bytes  0.094 s
+'! '           999332 bytes  0.090 s
+'{ '           999332 bytes  0.070 s
+'if '          999332 bytes  0.079 s
+'then '        999332 bytes  0.072 s
+'# '           999332 bytes  0.006 s
+'\\'           999332 bytes  0.059 s
+'a|[ ]'        999332 bytes  0.035 s
+'[ [ '         999332 bytes  0.037 s
+'$# '          999332 bytes  0.062 s
+'&&[ '         999332 bytes  0.033 s
+130k lines of '[[ x ]]'             1040000 bytes  0.129 s  flagged=0
+100k lines of 'if [ x ]; then'      1500000 bytes  0.114 s  flagged=100000
+1M newlines                         1000000 bytes  0.232 s  flagged=0
+300k lines of '[ '                   900000 bytes  0.184 s  flagged=300000
+one line, '<<x'    x 333333 -> refused in 0.0004 s: line 1 has 999999 characters (more than 4000): the tripwire 
+one line, "<<'"    x 333333 -> refused in 0.0004 s: line 1 has 999999 characters (more than 4000): the tripwire 
+one line, '[ '     x 500000 -> refused in 0.0004 s: line 1 has 1000000 characters (more than 4000): the tripwire
+one line, ' '      x 1000000 -> refused in 0.0004 s: line 1 has 1000000 characters (more than 4000): the tripwire
+one line, '<<x<<x' x 166666 -> refused in 0.0004 s: line 1 has 999996 characters (more than 4000): the tripwire 
+250 lines of exactly 4000 chars of '<<x':  0.071 s
+250 lines of exactly 4000 chars of "<<'":  0.054 s
+250 lines of exactly 4000 chars of '[ ':  0.035 s
+250 lines of exactly 4000 chars of '<<x<<x':  0.072 s
+250 lines of exactly 4000 chars of ' ':  0.066 s
+worst of the capped shapes: 0.232 s (bound in the test: 2 s)
+v3.1 quadratic shape '<<x'*5000 (15000 chars, one line): 0.0000 s (refused by the cap)
+   same text cut into 5 lines of 3000 chars: 0.0010 s
+v3.1 quadratic shape "<<'"*20000 (60000 chars, one line): 0.0000 s (refused by the cap)
+   same text cut into 20 lines of 3000 chars: 0.0032 s
+v3.1 quadratic shape '<<"'*20000 (60000 chars, one line): 0.0000 s (refused by the cap)
+   same text cut into 20 lines of 3000 chars: 0.0032 s

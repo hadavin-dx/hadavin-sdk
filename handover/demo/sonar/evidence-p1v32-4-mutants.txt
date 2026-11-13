@@ -1,0 +1,40 @@
+# P1 v3.2 scanner mutants (each: one edit to tests/test_shell_single_bracket.py, then that file is run with -x)
+KILLED   drop | | 1 failed, 13 passed in 0.07s
+KILLED   drop { | 1 failed, 18 passed in 0.08s
+KILLED   drop ; | 1 failed, 16 passed in 0.07s
+KILLED   drop & | 1 failed, 12 passed in 0.08s
+KILLED   drop ( | 1 failed, 19 passed in 0.07s
+KILLED   drop ) | 1 failed, 22 passed in 0.08s
+KILLED   drop backtick | 1 failed, 21 passed in 0.07s
+KILLED   drop ! | 1 failed, 4 passed in 0.07s
+KILLED   drop then | 1 failed, 6 passed in 0.07s
+KILLED   drop do | 1 failed, 7 passed in 0.09s
+KILLED   drop else | 1 failed, 8 passed in 0.11s
+KILLED   drop elif | 1 failed, 9 passed in 0.07s
+KILLED   drop if | 1 failed, 3 passed in 0.08s
+KILLED   drop while | 1 failed, 10 passed in 0.08s
+KILLED   drop until | 1 failed, 11 passed in 0.11s
+KILLED   drop ^ alt | 1 failed in 0.06s
+KILLED   drop line cap | 1 failed, 70 passed in 0.33s
+KILLED   cap off by one (>=) | 1 failed, 70 passed in 0.28s
+KILLED   cap 40000 | 1 failed, 70 passed in 0.17s
+KILLED   no CR check | 1 failed, 69 passed in 0.13s
+KILLED   comments not stripped | 1 failed, 52 passed in 0.25s
+KILLED   comment without blank before | 1 failed, 26 passed in 0.17s
+KILLED   quotes not blanked | 1 failed, 41 passed in 0.13s
+KILLED   end of line [ not seen | 1 failed, 24 passed in 0.07s
+KILLED   run blocks not extracted | 1 failed, 74 passed in 0.22s
+KILLED   run blocks not added to sources | 1 failed, 74 passed in 0.23s
+KILLED   allowlist ignored | 1 failed, 75 passed in 0.12s
+KILLED   shell key check ignores default | 1 failed, 80 passed in 0.16s
+KILLED   shell key check ignores step | 1 failed, 78 passed in 0.29s
+KILLED   ls-files only scripts none | 1 failed, 81 passed in 0.27s
+KILLED   line numbers off | 1 failed, 66 passed in 0.14s
+
+# real-file mutants: a single-bracket test appended to / put into a tracked file
+scripts/reset.sh: 1 failed, 81 passed in 0.18s
+scripts/start_all.sh: 1 failed, 81 passed in 0.15s
+.github/workflows/lint.yml: 1 failed, 81 passed in 0.12s
+.github/workflows/sonar.yml: 1 failed, 81 passed in 0.31s
+clean tree: 107 passed in 2.76s
+note: codeql.yml has no run: step, so no real-file mutant for it

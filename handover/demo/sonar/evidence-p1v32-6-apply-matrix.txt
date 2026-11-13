@@ -1,0 +1,61 @@
+single patches on db54e13:
+  P1: ok
+  P2: ok
+  P3: ok
+  ND: ok
+  NH: ok
+  NR: ok
+  Y: ok
+  C4: ok
+  C4f: ok
+  C5: ok
+pairs, both orders (P1 with each other patch):
+  P1>P2: ok
+  P2>P1: ok
+  P1>P3: ok
+  P3>P1: ok
+  P1>ND: ok
+  ND>P1: ok
+  P1>NH: ok
+  NH>P1: ok
+  P1>NR: ok
+  NR>P1: ok
+  P1>Y: ok
+  Y>P1: ok
+  P1>C4: ok
+  C4>P1: ok
+  P1>C4f: ok
+  C4f>P1: ok
+  P1>C5: ok
+  C5>P1: ok
+specific: P1 before/after crlf and nodemo-optional in either order:
+  P1>C4>NH: ok
+  P1>NH>C4: ok
+  C4>P1>NH: ok
+  NH>P1>C4: ok
+  C4>NH>P1: ok
+  NH>C4>P1: ok
+  P1>C4f>NH: ok
+  P1>NH>C4f: ok
+  C4f>P1>NH: ok
+  NH>P1>C4f: ok
+  C4f>NH>P1: ok
+  NH>C4f>P1: ok
+  P1>C5>NH: ok
+  P1>NH>C5: ok
+  C5>P1>NH: ok
+  NH>P1>C5: ok
+  C5>NH>P1: ok
+  NH>C5>P1: ok
+lead order + each crlf at the end / start:
+  P1>ND>P2>P3>NH>NR>Y>C4: ok
+  C4>P1>ND>P2>P3>NH>NR>Y: ok
+  P1>ND>P2>P3>NH>NR>Y>C5: ok
+  C5>P1>ND>P2>P3>NH>NR>Y: ok
+150 random orders of P1 ND NH NR Y P2 P3 (no crlf): 150 ok, 0 failed of 150
+100 random orders of P1 ND NH NR Y P2 P3 + C5 (v5): 100 ok, 0 failed of 100
+60 random orders of P1 ND NH NR Y P2 P3 + C4: 60 ok, 0 failed of 60
+crlf v4 and v4-autocrlf-fix are alternatives (each creates .editorconfig): C4 then C4f without P1: ('C4f', 'error: .editorconfig: already exists in working directory')
+all 24 orders of P1 NH ND C4 (+Y): 24 ok, 0 failed of 24
+all 24 orders of P1 NH ND C4f (+Y): 24 ok, 0 failed of 24
+60 random orders of P1 ND NH NR Y P2 P3 C4f: 60 ok, 0 failed of 60

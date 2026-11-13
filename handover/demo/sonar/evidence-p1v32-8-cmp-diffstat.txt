@@ -1,0 +1,35 @@
+# v3.2 vs v3.1 (both applied on db54e13): byte comparison
+cmp identical: scripts/reset.sh
+cmp identical: scripts/start_all.sh
+cmp identical: .github/workflows/lint.yml
+cmp identical: README.md
+cmp identical: tests/test_followup_edge_cases.py
+cmp identical: tests/test_lead_step_route.py
+cmp identical: tests/test_reset_scripts.py
+cmp identical: tests/test_smtp_provider.py
+cmp identical: tests/test_workflow_run_flags.py
+tests/test_hygiene.py changed by v3.2: 0 files
+ .github/workflows/lint.yml         |   9 +-
+ README.md                          |   2 +
+ scripts/reset.sh                   |  14 +-
+ scripts/start_all.sh               |   9 +-
+ tests/test_followup_edge_cases.py  |   4 +-
+ tests/test_lead_step_route.py      |   2 +-
+ tests/test_raw_bidi_chars.py       |  39 ++++
+ tests/test_reset_scripts.py        | 168 +++++++++++++++++-
+ tests/test_shell_single_bracket.py | 352 +++++++++++++++++++++++++++++++++++++
+ tests/test_smtp_provider.py        |   9 +-
+ tests/test_workflow_run_flags.py   |  48 +++++
+ 11 files changed, 636 insertions(+), 20 deletions(-)
+files v3.2 touches:
+.github/workflows/lint.yml
+README.md
+scripts/reset.sh
+scripts/start_all.sh
+tests/test_followup_edge_cases.py
+tests/test_lead_step_route.py
+tests/test_raw_bidi_chars.py
+tests/test_reset_scripts.py
+tests/test_shell_single_bracket.py
+tests/test_smtp_provider.py
+tests/test_workflow_run_flags.py

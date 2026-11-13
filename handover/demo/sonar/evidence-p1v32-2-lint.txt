@@ -1,0 +1,26 @@
+# gates for P1 v3.2 tree (db54e13 + v3.2), after git add -A
+Fri Nov 13 04:47:43 UTC 2026
+## ruff check
+All checks passed!
+## ruff format --check
+149 files already formatted
+## mypy linux
+Success: no issues found in 26 source files
+## mypy win32
+Success: no issues found in 26 source files
+## bandit -ll (issues at medium or higher; the 9 'Low' counted in the metrics are below the -ll cut)
+Test results:
+	No issues identified.
+
+--
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
+bandit exit: 0
