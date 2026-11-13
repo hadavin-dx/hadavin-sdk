@@ -1551,7 +1551,10 @@ def test_plant_an_unchecked_claim_with_no_pending_entry_is_caught():
     )
 
 
-R17_CLAIM = ("the + matches exactly one whole path part, nothing deeper",)
+R17_CLAIM = (
+    "the + matches exactly one whole path part, nothing deeper",
+    "a `read` on a secret's path also serves a request for an older version of that secret",
+)
 CLAIMED_GRANTS = {"R17", "R18", "R20", "R21", "R22"}
 
 
@@ -1576,7 +1579,7 @@ def test_the_builder_only_claims_are_not_shown_as_checked_and_no_kind_has_copy_r
     text = pp.page()
     section = text[text.index("## vault (secrets)") : text.index("## vault_transit (signer)")]
     assert "No copy-ready text" in section and "```" not in section
-    assert "| the + matches exactly one whole path part, nothing deeper |" in section
+    assert "nothing deeper (builder read the passage); a `read`" in section
     for kind, name in (
         ("secrets/vault", "{mount}/undelete/*"),
         ("secrets/vault", "{mount}/subkeys/*"),
@@ -1597,7 +1600,7 @@ def test_a_builder_only_source_is_marked_wherever_the_page_lists_it():
         assert unmarked == [], f"the page lists {sid} without the mark (builder only)"
     cell = pp._checked_cell(("2026-11-11", "V-KV", "V-ACL", "B-ACL"))
     assert cell == "2026-11-11, sources V-KV, V-ACL (builder only), B-ACL (builder only)", (
-        "a builder-only source id is not marked in the checked cell"
+        f"a builder-only source id is not marked in the checked cell: {cell}"
     )
     assert pp._checked_cell(("2026-11-11", "V-KV")) == "2026-11-11, sources V-KV"
 
@@ -1654,7 +1657,10 @@ def test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim()
     assert not pp.copy_ready(_policies()["signer/vault_transit"]), (
         "copy-ready text is offered for a kind with an unchecked grant"
     )
-    for changes in ({"verified": None}, {"claims_unverified": ("the bound",)}):
+    for changes in (
+        {"verified": None},
+        {"claims_unverified": ("the exact path R18 does not also allow (planted)",)},
+    ):
         changed = _with_grant("signer/vault_transit", **changes)["signer/vault_transit"]
         assert not pp.copy_ready(changed), (
             "copy-ready text is offered for a kind with an unchecked grant"
@@ -1699,11 +1705,11 @@ TRANSIT_VALUES = {"transit_mount": "transit", "key_name": "audit-key"}
 def test_vault_text_in_page_mode_and_with_values():
     policies = _policies()
     assert pp.render_vault(policies["secrets/vault"]) == (
-        "# R17: reads one named secret\n"
+        "# R17: reads one named secret; the right also covers every secret directly under the prefix, each with every older version\n"
         'path "{mount}/data/{path_prefix}+" {\n  capabilities = ["read"]\n}\n'
     )
     assert pp.render_vault(policies["secrets/vault"], VAULT_VALUES) == (
-        "# R17: reads one named secret\n"
+        "# R17: reads one named secret; the right also covers every secret directly under the prefix, each with every older version\n"
         'path "secret/data/hadavin/acme/+" {\n  capabilities = ["read"]\n}\n'
     )
     text = pp.render_vault(policies["signer/vault_transit"], TRANSIT_VALUES)
@@ -2944,51 +2950,8 @@ def test_plant_the_check_across_kinds_calls_the_cover_rule():
 NOTE_CLASSES = pp.NOTE_CLASSES
 
 
-def _note_texts(kind: str, policy: pp.Policy) -> list[str]:
-    return list(policy.notes) + [f"free:{f.note}" for f in policy.free if f.note]
-
-
-def note_problems(
-    policies: dict[str, pp.Policy], classes: dict[tuple[str, str], tuple], known: set[str]
-) -> list[str]:
-    out, used = [], set()
-    for kind, policy in policies.items():
-        claims = " ".join(
-            c for e in (*policy.grants, *policy.free, *policy.never) for c in e.claims_unverified
-        )
-        for text in _note_texts(kind, policy):
-            keys = [k for k in classes if k[0] == kind and text.startswith(k[1])]
-            if len(keys) != 1:
-                out.append(
-                    f"{kind}: note {text[:50]!r} has {len(keys)} classes in NOTE_CLASSES, needs one"
-                )
-                continue
-            used.add(keys[0])
-            how, *rest = classes[keys[0]]
-            if how == "claim" and rest[0] not in claims:
-                out.append(
-                    f"{kind}: note {text[:50]!r} is a claim, but no claims_unverified holds {rest[0]!r}"
-                )
-            elif how == "sources":
-                out += [
-                    f"{kind}: note {text[:50]!r} names source {s}, which is not in the sources file"
-                    for s in rest[0]
-                    if s not in known
-                ]
-                if not rest[0]:
-                    out.append(f"{kind}: note {text[:50]!r} is class sources with no source id")
-                entry = next((f for f in policy.free if f"free:{f.note}" == text), None)
-                if entry is not None:
-                    out += [
-                        f"{kind}: note {text[:50]!r} names source {s}, which is not in `verified` of the same entry"
-                        for s in rest[0]
-                        if s not in (entry.verified or ())[1:]
-                    ]
-            elif how not in ("code", "claim", "sources"):
-                out.append(f"{kind}: note {text[:50]!r} has an unknown class {how!r}")
-    return out + [
-        f"NOTE_CLASSES entry {k} matches no note: delete it" for k in sorted(set(classes) - used)
-    ]
+# The rule itself is in the tool, so that the check command (`pp.data_problems`) runs it too.
+note_problems = pp.note_problems
 
 
 def test_every_note_of_a_kind_is_classed_and_every_claim_has_a_source_or_an_unchecked_entry():
@@ -3130,7 +3093,7 @@ def test_the_path_overlap_automaton_agrees_with_a_brute_force_search_on_every_sm
 
     # Every path over {a, b, /} of up to 7 characters. A pattern is up to 3 parts of `a`, `b` or `+` (at least one
     # character each), with or without a last `*`. Two patterns that overlap share a path of at most 5
-    # characters, so the search is complete, and every pair of the 78 patterns is compared (no random choice).
+    # characters, so the search is complete, and every pair of the generated patterns is compared (no random choice).
     candidates = ["".join(c) for n in range(8) for c in itertools.product("ab/", repeat=n)]
     patterns = [
         "/".join(parts) + star
@@ -3139,6 +3102,7 @@ def test_the_path_overlap_automaton_agrees_with_a_brute_force_search_on_every_sm
         for star in ("", "*")
         if not (star and parts[-1] == "+")  # Vault refuses `+*`
     ]
+    assert len(patterns) == sum(2 * 3**n - 3 ** (n - 1) for n in (1, 2, 3)), len(patterns)
     allowed = {p: _matches(p, candidates) for p in patterns}
     seen = set()
     for first, second in itertools.product(patterns, repeat=2):
@@ -3156,6 +3120,10 @@ def test_the_path_prefix_setting_is_read_as_one_or_more_parts_each_ending_in_a_s
     same(pp.vault_paths_overlap("m/{path_prefix}x", "m/x"), False)
     same(pp.vault_paths_overlap("m/{path_prefix}x", "m/a/y"), False)
     same(pp.vault_paths_overlap("m/{path_prefix}+", "m/+/+/+"), True)
+    same(
+        pp.vault_paths_overlap("m/+", "m/abc"), True
+    )  # a `+` is one part of any length, not one character
+    same(pp.vault_paths_overlap("m/{path_prefix}x", "m/abc/de/x"), True)
 
 
 def test_a_never_type_that_does_not_fit_the_platform_is_refused():
@@ -3187,8 +3155,8 @@ def test_every_note_with_a_sources_class_shows_its_source_ids_after_the_note_and
     text = pp.page(ROOT)
     listed = text.split("## Sources named on this page", 1)[1]
     for (kind, start), cls in pp.NOTE_CLASSES.items():
-        if cls[0] != "sources":
-            continue
+        if cls[0] != "sources" or start.startswith("reason:"):
+            continue  # a reason names the source ids of its own entry, printed in the checked cell
         note = next(
             n
             for n in (*_policies()[kind].notes, *(f"free:{f.note}" for f in _policies()[kind].free))
@@ -3198,12 +3166,15 @@ def test_every_note_with_a_sources_class_shows_its_source_ids_after_the_note_and
         suffix = ", ".join(
             s + (" (builder only)" if s in pp.BUILDER_ONLY_SOURCES else "") for s in cls[1]
         )
-        assert f"{shown[:40]}" in text and f" (sources: {suffix})" in text, (
+        assert f"{shown} (sources: {suffix})" in text, (
             f"the note {shown[:40]!r} does not show its source ids"
         )
         for sid in cls[1]:
-            assert f"- {sid}" in listed, f"{sid} (named by a note) is not in the source list"
-    assert "- V-TOK: " in listed, "V-TOK, named by two notes, is printed nowhere"
+            mark = " (builder only)" if sid in pp.BUILDER_ONLY_SOURCES else ""
+            assert f"\n- {sid}{mark}: " in listed, (
+                f"{sid} (named by a note) is not in the source list"
+            )
+    assert "\n- V-TOK: " in listed, "V-TOK, named by two notes, is printed nowhere"
 
 
 def test_a_sources_note_whose_free_entry_does_not_list_the_id_is_caught():
@@ -3250,22 +3221,26 @@ def test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line
         _ = name
 
 
+_PASSAGE_MARK = "(the passage behind the claim: see claims)"
+
+
 def test_a_source_of_which_only_a_passage_was_read_is_marked_on_a_row_with_a_claim_only():
     claimed = pp._checked_cell(("2026-11-11", "V-POL", "V-KV"), True)
-    assert claimed == (
-        "2026-11-11, sources V-POL (partly builder only: see claims), V-KV (partly builder only: see claims)"
-    ), f"a row with a claim does not mark a partly read source: {claimed}"
+    assert claimed == f"2026-11-11, sources V-POL {_PASSAGE_MARK}, V-KV {_PASSAGE_MARK}", (
+        f"a row with a claim does not mark a partly read source: {claimed}"
+    )
     plain = pp._checked_cell(("2026-11-11", "V-POL", "V-KV"), False)
     assert plain == "2026-11-11, sources V-POL, V-KV", (
         f"a row with no claim marks a source as partly builder only: {plain}"
     )
     text = pp.page(ROOT)
     row = next(ln for ln in text.splitlines() if ln.startswith("| R17 "))
-    assert (
-        "V-POL (partly builder only: see claims)" in row and "B-KV (partly builder only" in row
-    ), row
+    assert f"V-POL {_PASSAGE_MARK}" in row and f"B-KV {_PASSAGE_MARK}" in row, row
 
 
+# A hand list, not a derived one: a person decides which grants allow more than their reason says. Two tests pin
+# it to the data and to the page: every id named here has the sentence in its `bound` and in its page row, and no
+# other grant has it, so a grant added to or dropped from the list alone fails.
 BROADER_THAN_REASON = {"R17", "R20", "R21", "R22"}
 BROADER_START = "Allows more than the reason says"
 
@@ -3460,3 +3435,317 @@ def test_plant_another_module_importing_the_vault_client_is_caught():
             )
         ],
     )
+
+
+# ------------------------------------------------ fix batch 5: the review of round 5 and the evidence run (items a to d)
+
+
+def _planted_policies(kind: str, change) -> dict[str, pp.Policy]:
+    """The real policies with the raw literal of `kind` changed by `change(raw)`."""
+    policies = _policies()
+    raw = _raw(kind)
+    change(raw)
+    policies[kind] = pp.parse(f"POLICY = {raw!r}")
+    return policies
+
+
+def _free_reason(kind: str, reason: str, claims: tuple[str, ...] | None = None):
+    def change(raw):
+        entry = {**raw["free"][0], "reason": reason}
+        if claims is not None:
+            entry["claims_unverified"] = claims
+        raw["free"] = (entry, *raw["free"][1:])
+
+    return _planted_policies(kind, change)
+
+
+def _problems_of(policies: dict[str, pp.Policy]) -> list[str]:
+    return note_problems(policies, NOTE_CLASSES, set(source_ids()))
+
+
+# ---- C1: two marks, read from the head of the sources file
+
+
+def _claim_rows(text: str) -> list[str]:
+    return [ln for ln in text.splitlines() if ln.startswith("| R")]
+
+
+def test_every_claim_has_one_of_two_marks_taken_from_the_head_of_the_sources_file():
+    same(pp.claim_mark_problems(_policies()), [])
+    claims = [
+        (g.id, c) for p in _policies().values() for g in p.grants for c in g.claims_unverified
+    ]
+    builder = [(gid, c) for gid, c in claims if pp.claim_mark(c) == pp.MARK_BUILDER_READ]
+    assert [gid for gid, _ in builder] == ["R17"] and builder[0][1].startswith("the + matches"), (
+        f"the claims with the builder mark are not exactly the + claim of R17: {builder}"
+    )
+    for gid, c in claims:
+        if (gid, c) not in builder:
+            assert pp.claim_mark(c) == pp.MARK_NOBODY_READ, (gid, c)
+    assert pp.MARK_BUILDER_READ != pp.MARK_NOBODY_READ
+
+
+def test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody_mark_on_every_other_claim():
+    text = pp.page(ROOT)
+    rows = {ln.split(" | ")[0].removeprefix("| "): ln for ln in _claim_rows(text)}
+    r17 = rows["R17"]
+    assert f"nothing deeper ({pp.MARK_BUILDER_READ})" in r17, r17
+    assert f"older version of that secret ({pp.MARK_NOBODY_READ})" in r17, r17
+    for gid in ("R18", "R20", "R21", "R22"):
+        assert pp.MARK_NOBODY_READ in rows[gid] and pp.MARK_BUILDER_READ not in rows[gid], rows[gid]
+    free = next(ln for ln in text.splitlines() if ln.startswith("- `k8s.rules_review`"))
+    assert "Claims not checked: a `create` on `selfsubjectrulesreviews` changes nothing" in free
+    assert free.endswith(f"{pp.MARK_NOBODY_READ}).") and pp.MARK_BUILDER_READ not in free, free
+    never = next(ln for ln in text.splitlines() if ln.startswith("| action | `create` |"))
+    assert never.endswith(f"({pp.MARK_NOBODY_READ}) |") and pp.MARK_BUILDER_READ not in never, never
+    # the only claim on the page that says "builder read" is the `+` claim of R17
+    marked = [
+        ln
+        for ln in text.splitlines()
+        if ln.startswith(("| ", "- `")) and pp.MARK_BUILDER_READ in ln
+    ]
+    assert marked == [r17], marked
+
+
+def test_a_claim_with_no_mark_two_marks_or_a_stale_start_is_a_problem_and_a_missing_line_is_refused(
+    tmp_path,
+):
+    policies = _policies()
+    readers = dict(pp.CLAIM_READERS)
+    only_builder = {
+        pp.MARK_BUILDER_READ: readers[pp.MARK_BUILDER_READ],
+        pp.MARK_NOBODY_READ: ("zzz",),
+    }
+    found = pp.claim_mark_problems(policies, only_builder)
+    assert any("has 0 marks" in p for p in found), found
+    assert any("'zzz' matches no claim" in p for p in found), (
+        f"a stale start is not reported: {found}"
+    )
+    both = {
+        pp.MARK_BUILDER_READ: ("the + matches", "the exact path R18"),
+        pp.MARK_NOBODY_READ: (*readers[pp.MARK_NOBODY_READ],),
+    }
+    assert any("has 2 marks" in p for p in pp.claim_mark_problems(policies, both)), "two marks pass"
+    body = _text(pp.SOURCES)
+    for name, text in {
+        "missing": body.replace("# CLAIM-READ-BY-NOBODY:", "# X:"),
+        "second": body + "\n# CLAIM-READ-BY-BUILDER: x\n",
+        "empty start": body.replace(
+            "# CLAIM-READ-BY-BUILDER: the +", "# CLAIM-READ-BY-BUILDER: ;; the +"
+        ),
+    }.items():
+        (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / pp.SOURCES).write_text(text, encoding="utf-8")
+        with pytest.raises(pp.PolicyError):
+            pp.claim_readers(tmp_path)
+        _ = name
+
+
+# ---- C3: free and never rows carry the mark too
+
+
+def test_a_free_or_never_row_with_a_claim_marks_its_partly_read_sources():
+    text = pp.page(ROOT)
+    free = next(ln for ln in text.splitlines() if ln.startswith("- `k8s.rules_review`"))
+    assert f"K-SSRR {_PASSAGE_MARK}" in free and f"K-RBAC {_PASSAGE_MARK}" in free, free
+    assert f"K-SRC {_PASSAGE_MARK}" not in free, free
+    never = next(ln for ln in text.splitlines() if ln.startswith("| action | `create` |"))
+    assert f"K-AUTHZ {_PASSAGE_MARK}" in never, never
+    update = next(ln for ln in text.splitlines() if ln.startswith("| action | `update` |"))
+    assert _PASSAGE_MARK not in update, update  # no claim: no mark
+
+
+# ---- C2 and the evidence probes P1a to P1c: every reason has a class
+
+
+def test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_class_and_is_refused():
+    kube = "source/kubernetes"
+    real = _policies()[kube].free[0].reason
+    same(_problems_of(_policies()), [])
+    for said in (
+        "asks the cluster what this identity may do and creates nothing in the cluster",
+        "it is read-only and changes nothing",
+        "it only reads",
+    ):
+        for claims in (None, ()):
+            found = _problems_of(_free_reason(kube, said, claims))
+            assert any("has 0 classes in NOTE_CLASSES" in p and "reason:" in p for p in found), (
+                f"the free reason {said!r} (claims {claims}) is not refused: {found}"
+            )
+    # a reason that starts like the real one and goes on: refused as well (a reason matches its exact text)
+    found = _problems_of(_free_reason(kube, real + " It creates nothing in the cluster."))
+    assert any("has 0 classes in NOTE_CLASSES" in p for p in found), found
+
+
+def test_a_grant_or_never_reason_with_no_class_is_refused_and_a_wrong_class_is_caught():
+    vault, kube = "secrets/vault", "source/kubernetes"
+
+    def grant(raw):
+        raw["grants"] = ({**raw["grants"][0], "reason": "reads one named secret and nothing else"},)
+
+    def never(raw):
+        raw["never"] = (
+            *raw["never"],
+            {"type": "role", "name": "x", "reason": "it only reads", "verified": None},
+        )
+
+    for kind, change in ((vault, grant), (kube, never)):
+        found = _problems_of(_planted_policies(kind, change))
+        assert any("has 0 classes" in p for p in found), found
+    wrong = {
+        # `sources` on a reason whose entry names no source
+        (vault, "reason:brings deleted versions of a secret back"): ("sources",),
+        # `pending` on a reason whose entry has `verified` set
+        (vault, "reason:marks versions of a secret as deleted"): ("pending",),
+    }
+    classes = {**NOTE_CLASSES, **wrong}
+    found = note_problems(_policies(), classes, set(source_ids()))
+    assert any("is class sources, but its entry names no source" in p for p in found), (
+        f"a sources class on an entry with no source is not reported: {found}"
+    )
+    assert any("is class pending, but its entry has `verified` set" in p for p in found), (
+        f"a pending class on an entry with a source is not reported: {found}"
+    )
+    claimless = {
+        **NOTE_CLASSES,
+        (kube, "reason:reads deployments, their rollout revision and images"): (
+            "claim",
+            "no such text",
+        ),
+    }
+    assert any(
+        "is a claim, but no claims_unverified holds" in p
+        for p in note_problems(_policies(), claimless, set(source_ids()))
+    ), "a claim class whose text is in no claim of its entry is accepted"
+
+
+# ---- (b) the check command reports a bad class table, never a KeyError
+
+
+def test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_the_page_raises_policy_error(
+    monkeypatch,
+):
+    key = ("source/kubernetes", "free:a default cluster gives every")
+    monkeypatch.setitem(pp.NOTE_CLASSES, key, ("sources", ("K-NOPE",)))
+    found = pp.data_problems(ROOT)
+    assert any("K-NOPE, which is not in the sources file" in p for p in found), (
+        f"the check command does not report an unknown source id of a note class: {found}"
+    )
+    try:
+        pp.page(ROOT)
+    except pp.PolicyError as exc:
+        assert "K-NOPE" in str(exc)
+    except KeyError as exc:  # the old code raised a KeyError here
+        raise AssertionError(
+            f"the page raises {type(exc).__name__}, not PolicyError: {exc}"
+        ) from None
+    else:
+        raise AssertionError("the page accepts a note class with an unknown source id")
+
+
+def test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check(
+    monkeypatch, tmp_path
+):
+    key = ("source/kubernetes", "free:a default cluster gives every")
+    monkeypatch.setitem(pp.NOTE_CLASSES, key, ("sources", ("K-RBAC", "K-SRC", "V-TOK")))
+    found = pp.data_problems(ROOT)
+    assert any("V-TOK, which is not in `verified` of the same entry" in p for p in found), (
+        f"the check command does not report a class source that is not in `verified`: {found}"
+    )
+    monkeypatch.setitem(pp.NOTE_CLASSES, key, ("sources", ("K-RBAC", "K-SRC", "K-SSRR")))
+    root = _tree(tmp_path)
+    kube = root / pp.KIND_MODULES["source/kubernetes"]
+    old = '"verified": ("2026-11-11", "K-RBAC", "K-SRC", "K-SSRR"),'
+    assert old in kube.read_text(encoding="utf-8")
+    kube.write_text(
+        kube.read_text(encoding="utf-8").replace(
+            old, '"verified": ("2026-11-11", "K-RBAC", "K-SRC"),'
+        ),
+        encoding="utf-8",
+    )
+    found = pp.data_problems(root)
+    assert any("K-SSRR, which is not in `verified` of the same entry" in p for p in found), (
+        f"the check command does not report a source dropped from `verified`: {found}"
+    )
+
+
+def test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file(tmp_path):
+    root = _tree(tmp_path)
+    head = root / pp.SOURCES
+    head.write_text(
+        _text(pp.SOURCES).replace("the exact path R18 does not also allow", "no such claim"),
+        encoding="utf-8",
+    )
+    found = pp.data_problems(root)
+    assert any("has 0 marks" in p for p in found) and any("matches no claim" in p for p in found), (
+        f"the check command does not report a claim with no mark: {found}"
+    )
+
+
+# ---- C4: the head sentence and the R17 cell say the same
+
+
+def test_the_page_head_and_the_r17_cell_and_reason_state_the_same_scope():
+    scope = ("every secret directly under the prefix", "every older version")
+    text = pp.page(ROOT)
+    head = text.split("## vault (secrets)", 1)[0].replace("\n  ", " ")
+    r17_row = next(ln for ln in text.splitlines() if ln.startswith("| R17 "))
+    r17 = _policies()["secrets/vault"].grants[0]
+    for part in scope:
+        assert part in head, f"the page head does not say {part!r}"
+        assert part in r17_row, f"the R17 cell does not say {part!r}"
+        assert part in r17.reason or part in r17.bound
+    assert "reads one named secret" not in head.replace("not only the one secret it names", "")
+    assert "the one secret it names" not in head.replace("not only the one secret it names", "")
+    assert "every secret directly under the prefix" in r17.reason, r17.reason
+
+
+# ---- (a) a never path that is deeper than the grant does not cover it
+
+
+def test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_it():
+    # R17 is `{mount}/data/{path_prefix}+`; the setting has ONE value in a deployment, so a never line that
+    # writes `{path_prefix}` once and then two more parts is two parts longer than R17 for every value.
+    vault = "secrets/vault"
+    for name in (
+        "{mount}/data/{path_prefix}+/deeper/+",  # the evidence probe P3e
+        "{mount}/data/{path_prefix}+/+",  # the evidence probe P3b
+        "{mount}/data/{path_prefix}deeper/+/+",
+    ):
+        same(_never_over(vault, name, ("read",)), [])
+    for name in ("{mount}/data/{path_prefix}+", "{mount}/data/{path_prefix}*"):
+        found = _never_over(vault, name, ("read",))
+        assert len(found) == 1 and "grant R17 " in found[0], (name, found)
+
+
+def test_the_path_overlap_with_a_prefix_setting_agrees_with_a_brute_force_search_over_its_values():
+    import itertools
+
+    # Patterns start with `{path_prefix}` (so the one value sits at the same place in both) and go on with up to
+    # two parts of `a`, `b` or `+`, with or without a last `*`. The reference answer: for every value of the
+    # setting (1 or 2 parts, each `a/` or `b/`) put the value in both patterns, then ask whether ONE path fits both.
+    candidates = ["".join(c) for n in range(8) for c in itertools.product("ab/", repeat=n)]
+    values = ["".join(parts) for k in (1, 2) for parts in itertools.product(("a/", "b/"), repeat=k)]
+    tails = [
+        "",
+        *("/".join(t) for n in (1, 2) for t in itertools.product(("a", "b", "+"), repeat=n)),
+    ]
+    patterns = [
+        "{path_prefix}" + tail + star
+        for tail in tails
+        for star in ("", "*")
+        if not (star and tail.endswith("+"))
+    ]
+    allowed = {
+        (p, v): _matches(p.replace("{path_prefix}", v), candidates)
+        for p in patterns
+        for v in values
+    }
+    seen = set()
+    for first, second in itertools.product(patterns, repeat=2):
+        answer = any(allowed[first, v] & allowed[second, v] for v in values)
+        seen.add(answer)
+        assert pp.vault_paths_overlap(first, second) == answer, (
+            f"overlap of {first!r} and {second!r} differs from the brute-force answer {answer}"
+        )
+    assert seen == {True, False}
