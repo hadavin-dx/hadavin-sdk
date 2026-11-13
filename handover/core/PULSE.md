@@ -179,3 +179,4 @@ core: V6 done, 3 findings -> F7 builder; VC running
 14:25Z core: VC, F7, DOCS (frozen a019c448 rebuilt) running
 14:35Z core: F7 done, core-fix-v2.patch, reviewer started
 14:50Z core: review r1 4 Majors -> F8 builder
+15:05Z core: VC done: 1 failed 4252 passed (known regression, fixed in v2); F8+DOCS running
