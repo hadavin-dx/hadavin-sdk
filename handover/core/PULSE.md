@@ -23,3 +23,4 @@
 00:44Z Part 6 r6 not clean, batch 7 builder started; Part 2 batch 7 pushed 7d2e6f3e, r7 runner and 2 reviewers started
 00:48Z Part 2 r7 not clean (2B 3M), batch 8 builder started; PR 98 merged noted
 00:59Z Part 2 r7 runner done (Blocker confirmed by running), batch 8 and Part 6 batch 7 building
+01:07Z batch 8 and Part 6 batch 7 near gates; plants near end
