@@ -4,6 +4,20 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| C10 | docs-only fix proposal | C3 + C1 findings | 12:36Z | done | 1 | DONE standing/C10/docs-fix-v1.patch (107 lines, 4 files, NOT applied to any repo; git apply --check clean on the patched tree; fixes C3 M1-M7, W1 and the C1 doc items). Agent's own test run printed no failure but its tail cut the count: no number claimed | D1 |
+| D1 | full suite on the patched tree + docs-fix-v1.patch (tree-D1) | proves the docs patch breaks no test (docs are read by tests) | 12:38Z / +5:30 | about 13:05Z container | run 1 of 1 | RUNNING (heavy slot 1 of 3) | compare with 3978 passed / 0 failed / 4 skipped |
+| C2 C6 C7 C8 | hostile 1, flakiness 20x, hostile 2, demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
+| C9 | K6+K10 together, -OO patch | self-assigned | 12:35Z | 45 min | 1 | RUNNING | read results |
+
+**NEEDS CODE** (orders forbid code fixes; for the demo session, from C10): scripts/feed.py raw tracebacks (ValueError index 0 or 9999; URLError when desk not running; I reproduced both); run_real_check.py --dry-port-base 99999 shows "(OverflowError)"; run_live_check.py does not validate --price-date, --effort, duplicate --model; --dry-smtp-script bogus not refused before the question; BOM and unknown or duplicate config names. Details: standing/C10/RESULTS.md. Failures table: no new failures; totals unchanged (2 environment, 0 real, 0 flakes, 1 unexplained).
+
+ASK: none.
+
+
+## REPORT (container clock 12:38Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | C5 | cold reader on the other docs | queue | 12:33Z | done | 1 | DONE standing/C5: 85 doc-named tests ran together 144 passed, 3 skipped, rc 0; README Linux quickstart and reset/contract rows matched. Findings (agent's words): docs/tests.md:26 says PYTHONPATH=src for scripts/crash_desk.py but it needs src:. (agent saw RuntimeError "the folder demo_only is missing"); I tried it twice (src and src:.) and both stopped at "cannot reach the demo servers" with no RuntimeError, so that finding is NOT reproduced by me (my runs did not start a desk first, so they do not test the claim either way); docs/tests.md says 2516 tests and README "about 20 minutes", collect-only gives 3982 (= 3978 passed + 4 skipped, matches my after-run); load_tools/README has no start-to-finish recipe; n8n steps not run | add to C10 list |
 | C2 C6 C7 C8 | hostile 1, flakiness 20x, hostile 2, demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
 | C9 C10 | K6+K10 and -OO patch; docs-only fix patch | self-assigned | 12:35 / 12:41Z | 45 / 40 min | 1 | RUNNING | read results |
