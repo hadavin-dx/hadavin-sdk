@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests._guard_allowances import NEW_ALLOWED, REASONS
+from tests._guard_allowances import NEW_ALLOWED, REASONS, SCOPED_ALLOWED
 
 SRC = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
 
@@ -40,7 +40,10 @@ def _fn(rel: str, name: str) -> ast.AST:
 
 
 def _rows(reason: str) -> list[tuple[str, str]]:
-    return sorted(k for k, r in NEW_ALLOWED.items() if r == reason)
+    return sorted(
+        {k for k, r in NEW_ALLOWED.items() if r == reason}
+        | {k[:2] for k, r in SCOPED_ALLOWED.items() if r == reason}
+    )
 
 
 def _names(text: str) -> set[str]:
@@ -966,6 +969,29 @@ def check_classnames() -> list[str]:
     return bad
 
 
+def check_httpcode() -> list[str]:
+    """By the tree: every row of this reason is a `return (exc.code, ...)` inside `except urllib.error.HTTPError as exc`
+    (the status code of the library's HTTP error is an `int` by its own definition; the library's text is not used)."""
+    bad = []
+    for m, k in _rows("HTTPCODE"):
+        found = _sites(m, k)
+        if not found:
+            bad.append(f"{m}: {k[:60]} is not found in the module")
+        for node in found:
+            handler = next((a for a in _up(m, node) if isinstance(a, ast.ExceptHandler)), None)
+            ok = (
+                handler is not None
+                and handler.name is not None
+                and ast.unparse(handler.type or ast.Constant(None)).endswith("HTTPError")
+                and isinstance(node, ast.Return)
+                and isinstance(node.value, ast.Tuple)
+                and ast.unparse(node.value.elts[0]) == f"{handler.name}.code"
+            )
+            if not ok:
+                bad.append(f"{m}:{node.lineno}: not a status code of an HTTPError handler")
+    return bad
+
+
 def check_seq() -> list[str]:
     """By the tree: in the function that holds the message `holds seq`, an `if type(seq) is not int` that raises comes
     on an earlier line than the message."""
@@ -1230,7 +1256,7 @@ def _declared_numbers() -> set[str]:
     return names
 
 
-_CTX: dict[str, ast.ClassDef | None] = {"cls": None}
+_CTX: dict[str, typing.Any] = {"cls": None, "rel": ""}
 
 
 @functools.cache
@@ -1351,6 +1377,9 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             (isinstance(e.func, ast.Name) and name in _NUMBER_BUILTINS)
             or (isinstance(e.func, ast.Name) and name == "Decimal")
             or (
+                isinstance(e.func, ast.Attribute) and name in {"index", "count"}
+            )  # a position or a tally: an `int`
+            or (
                 isinstance(e.func, ast.Attribute)
                 and isinstance(e.func.value, ast.Name)
                 and e.func.value.id == "math"
@@ -1372,6 +1401,8 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
             own = _own_declaration(cls, e.attr)
             if own is not None:
                 return own
+        if e.attr.isupper() and isinstance(e.value, ast.Name) and e.value.id == "defaults":
+            return True  # a constant of `defaults.py` written in capitals (every one is a number or a word written in code)
         return e.attr in declared and e.attr not in _non_numeric_names()
     if isinstance(e, ast.Name):
         if fn is not None:
@@ -1422,6 +1453,12 @@ def _numeric(e: ast.AST, fn: ast.AST | None, declared: set[str], depth: int = 0)
                     _numeric(getattr(n, "value", None) or ast.Constant(0), fn, declared, depth + 1)
                     for n in bound
                 )
+            # a name of the enclosing function that a nested function reads (a closure): the enclosing function decides
+            outer = next(
+                (a for a in _up(_CTX["rel"], fn) if isinstance(a, FUNCS) and a is not fn), None
+            )
+            if outer is not None and depth < 8:
+                return _numeric(e, outer, declared, depth + 1)
         return e.id.isupper()  # a module constant written in capitals (`RESOLVE_TIMEOUT_S`)
     return False
 
@@ -1445,6 +1482,7 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
     """None when every value the site mentions is a number by form, else the first value that is not."""
     fn = _enclosing(rel, node)
     _CTX["cls"] = next((a for a in _up(rel, node) if isinstance(a, ast.ClassDef)), None)
+    _CTX["rel"] = rel
     parts: list[ast.AST] = []
     if isinstance(node, ast.Expr):
         node = node.value
@@ -1464,6 +1502,13 @@ def _numeric_site(rel: str, node: ast.AST, declared: set[str]) -> str | None:
         parts = [node.args[0]]  # `str(number)`
     elif isinstance(node, ast.AugAssign):
         parts = [node.value]
+    elif isinstance(node, ast.IfExp) and isinstance(node.body, ast.Dict):
+        # `{"key": str(number)} if number < 1.0 else {}`: every value is `str(number)` of a number
+        for v in node.body.values:
+            inner = v.args[0] if isinstance(v, ast.Call) and getattr(v.func, "id", "") == "str" and len(v.args) == 1 else v
+            parts.append(inner)
+        if isinstance(node.test, ast.Compare):
+            parts.append(node.test.left)  # the number that is compared
     elif isinstance(node, ast.JoinedStr):
         for v in node.values:
             if isinstance(v, ast.FormattedValue):
@@ -1639,6 +1684,38 @@ def check_pkgerr() -> list[str]:
     return bad
 
 
+_FILTERS = {"shown_name", "shown_id", "status_text", "error_where", "shown_name_or_position"}
+
+
+def _names_outside_filters(node: ast.AST) -> set[str]:
+    """The names inside `node`, leaving out what is handed to a filter of `errors.py` (it decides what is shown)."""
+    out: set[str] = set()
+
+    def walk(n: ast.AST) -> None:
+        if isinstance(n, ast.Call) and getattr(n.func, "id", getattr(n.func, "attr", "")) in _FILTERS:
+            return
+        if isinstance(n, ast.Name):
+            out.add(n.id)
+        for c in ast.iter_child_nodes(n):
+            walk(c)
+
+    walk(node)
+    return out
+
+
+def _proc_carriers(node: ast.AST, fn: ast.AST) -> set[str]:
+    """The names that a PROC site puts data in: a name the function stores, or a PARAMETER of the function (a value that
+    comes in as an argument is data being worked on just as a stored one is: round 17, Issue 4)."""
+    held = _stored(fn) | {
+        a.arg
+        for a in [*fn.args.posonlyargs, *fn.args.args, *fn.args.kwonlyargs]  # type: ignore[attr-defined]
+    }
+    carriers = _names_in(node) & held
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        carriers |= _names_in(node.func.value) & held
+    return carriers
+
+
 def check_proc() -> list[str]:
     """A PROC site is data being worked on, never a message: the site is not inside a raise, a print or a log call, and
     no name that the function assigns and the site uses is used inside a raise, a print or a log call of that function."""
@@ -1654,13 +1731,11 @@ def check_proc() -> list[str]:
             fn = _enclosing(m, node)
             if fn is None:
                 continue
-            carriers = _names_in(node) & _stored(fn)
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-                carriers |= _names_in(node.func.value) & _stored(fn)
+            carriers = _proc_carriers(node, fn)
             for s in ast.walk(fn):
-                if _is_shown(s) and (carriers & _names_in(s)):
+                if _is_shown(s) and (carriers & _names_outside_filters(s)):
                     bad.append(
-                        f"{m}:{getattr(s, 'lineno', 0)}: {sorted(carriers & _names_in(s))} is shown while {k[:40]} puts data in it"
+                        f"{m}:{getattr(s, 'lineno', 0)}: {sorted(carriers & _names_outside_filters(s))} is shown while {k[:40]} puts data in it"
                     )
     return bad
 
@@ -2285,15 +2360,23 @@ def _filter_behaviour(name: str) -> list[str]:
                 bad.append(f"status_text shows {type(v).__name__}: {out[:20]!r}")
         if errors.status_text(LoudInt(404)) != "404" or errors.status_text(200) != "200":
             bad.append("status_text does not show a plain status number as its digits")
+    elif name == "shown_name":
+        # a `str` subclass may define its own `__str__`, `__eq__` or `__hash__`: only a plain `str` is shown (batch 17)
+        for v in (Loud("plain"), Loud("zz-9"), None, 7, b"plain"):
+            out = errors.shown_name(v)
+            if out != errors.NOT_SHOWN:
+                bad.append(f"shown_name shows {type(v).__name__}: {out[:20]!r}")
+        if errors.shown_name("plain") != "plain" or type(errors.shown_name("plain")) is not str:
+            bad.append("shown_name does not show a plain word-like name as a plain str")
     else:
         good = "run-" + "a" * 32
         if errors.shown_id(good) != good:
             bad.append("shown_id does not show an id of the shape the code makes")
         got = errors.shown_id(
             Loud(good)
-        )  # the shape is the content; a subclass's own text methods are not used
-        if got != good or type(got) is not str:
-            bad.append(f"shown_id uses the text methods of a str subclass: {got[:20]!r}")
+        )  # a subclass may answer differently from its content: only a plain `str` is shown (batch 17)
+        if got != "?":
+            bad.append(f"shown_id shows a str subclass: {got[:20]!r}")
         for v in ("secret text", good + " x", "RUN-" + "a" * 32, good + "\n", None, 7):
             out = errors.shown_id(v)
             if out != "?":
@@ -2313,6 +2396,8 @@ def check_filter() -> list[str]:
             if fn.name in {"status_text", "shown_id"}:
                 bad += _filter_behaviour(fn.name)
                 continue
+            if fn.name == "shown_name":
+                bad += _filter_behaviour(fn.name)
             body = [
                 s
                 for s in fn.body
@@ -2519,6 +2604,7 @@ CHECKS = {
     "SIGN": check_sign,
     "CLASSNAMES": check_classnames,
     "SEQ": check_seq,
+    "HTTPCODE": check_httpcode,
     "KEYVER": check_keyver,
     "MIGNAMES": check_mignames,
     "FIELDS": check_fields,
@@ -2538,13 +2624,18 @@ CHECKS = {
 
 
 def test_every_reason_has_a_check_or_is_in_the_pinned_unchecked_list():
-    used = set(NEW_ALLOWED.values())
+    used = set(NEW_ALLOWED.values()) | set(SCOPED_ALLOWED.values())
     assert used <= set(REASONS), used - set(REASONS)
     unchecked = {r for r in REASONS if r not in CHECKS}
     assert unchecked == UNCHECKED, unchecked ^ UNCHECKED
     assert (
         len(UNCHECKED) <= 1
     )  # may only go down (round 16: 1, round 15: 2, round 14: 4, round 13: 12)
+    # Round 17 (Issue 4): the rows of the one reason that is not checked by code (`REDACTED`, the open owner question
+    # q-q8a1-hide-ids) may not grow without a decision: five sites, each one a place where `error_reason` is the filter
+    assert len(_rows("REDACTED")) == 5, (
+        "the number of REDACTED rows changed: a new site of an unchecked reason needs the owner's answer first"
+    )
 
 
 @pytest.mark.parametrize("reason", sorted(CHECKS))

@@ -18,20 +18,26 @@ def _marker(tag: str) -> str:
 # ---- Issue 1: a failing detector is logged by class only (a Bedrock-shaped error with a bare guardrail id) --------------
 
 
-def test_a_failing_detector_is_logged_by_class_only(caplog):
+@pytest.mark.parametrize("shape", ["plain-error", "bedrock-bare-id"])
+def test_a_failing_detector_is_logged_by_class_only(caplog, shape):
+    """A detector that raises is logged by its class and the error's class, never by the error's text. `bedrock-bare-id` is
+    the shape of a cloud client error that quotes a bare guardrail id (no `arn:` prefix, so no redaction pattern would hide
+    it) and a role (batch 17: the case the review of batch 13 asked for, kept here as well as in the Bedrock test below)."""
     from hadavin_sdk.guard.injection import injection_check
 
     text = _marker("detector")
+    guardrail_id = "wk3j" + "9f0x" + "q2lm"
+    message = text if shape == "plain-error" else f"AccessDenied: role {text} cannot call guardrail {guardrail_id}"
 
     class Broken:
         def check(self, text_checked, source):
-            raise ValueError(text)
+            raise ValueError(message)
 
     with caplog.at_level(logging.WARNING):
         verdict = injection_check(Broken(), "hello", "tool")
     assert verdict.flagged and verdict.reason_code == "guard_unavailable"
     shown = " ".join(r.getMessage() for r in caplog.records)
-    assert "Broken" in shown and "ValueError" in shown and text not in shown, (
+    assert "Broken" in shown and "ValueError" in shown and text not in shown and guardrail_id not in shown, (
         "the failing detector is logged with its text or without its class"
     )
 

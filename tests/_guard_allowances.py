@@ -22,6 +22,7 @@ REASONS = {
     "CLASSNAMES": "the class names of exceptions (`type(x).__name__`); the library's text is not included",
     "BUNDLE": "a message about a file or folder of an incident case bundle (the client's incident data handed to the investigation tool by the operator, whose names the bundle check refuses unless they fit a fixed layout): not text of the configuration file",
     "KIND": "a backend kind word that the configuration loader already checked against the registered kinds (a word written in code)",
+    "HTTPCODE": "the status code of a library HTTP error (`HTTPError.code`, an `int`), returned with no body; checked by the tree: each row is `return (exc.code, ...)` inside `except urllib.error.HTTPError as exc`, so the library text is not used",
     "SEQ": "a position number counted by the code and `seq`, which the lines above check with `type(seq) is int` (the scan cannot follow that check)",
     "PKGERR": "the text of an error of this package (`ConfigError`, `StoreUnavailable`): a sentence written in code where the error is raised; each of those raise sites is a site of its own and is read there",
     "MODELTEXT": "text made from the model's own reply (the parse error of what the model wrote), sent back to the model and kept in the run record; it is not configuration, and the schema names in it are written in code",
@@ -56,7 +57,7 @@ REASONS = {
     "TAGS": "the allowed kind words that pydantic lists for a union (its `expected_tags`, written in code), never the typed one",
     "OWNERROR": "the class name of an error, and its text only if THIS package wrote the error (`_own_error`: the class is defined under `hadavin_sdk`, is no `OSError` and has only built-in or package base classes); every other error shows `(details withheld)`; the package's own sentences are each a site of their own, read where they are raised",
     "FRAMES": "the file name, the line number, the function name and the line of code of a stack frame, printed by the debug traceback (`cli._print_frames`); frames describe code, never an error's text (the error text and its cause and context are not printed, only their class names)",
-    "HANDOFF": "an error object kept in a local dict by a worker thread so that the caller thread raises it again (`raise box[...]`): it is raised as the same object, so what a person reads is the message of its raise site, never a new text; the name that holds the dict is used for nothing else (checked)",
+    "HANDOFF": "an error object kept in a local dict by a worker thread so that the caller thread raises it again (`raise box[...]`): it is raised as the same object, so what a person reads is the message of its raise site, never a new text; the name that holds the dict is used for nothing else (checked). What a person reads is the message of the raise site, and the safety of that message rests on `error_reason` (the open owner question q-q8a1-hide-ids), not on this reason",
     "FILTER": "the return of one of the package's own text filters (`shown_name`, `status_text`, `shown_id`): `shown_name` after the filter's own first test refused every name that is not word-like; this is the one place where a name is let through, so it is read once here (checked)",
     "PYDANTICTYPE": "the error type word of pydantic (`missing`, `int_parsing`, ...): a library constant, not text from the file",
 }
@@ -327,7 +328,6 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
     ): "PROC",
     ("guard/runmap.py", "''.join(chars)"): "PROC",
     ("guard/runmap.py", "''.join(out)"): "PROC",
-    ("guard/runmap.py", "_chars(k) + _chars(v)"): "PROC",
     ("guard/runmap.py", "chars.append(d)"): "PROC",
     ("guard/runmap.py", "f'{kind}\\x00{original}'"): "PROC",
     ("guard/runmap.py", "f'‹{m.group(1)}_{m.group(2)}›'"): "PROC",
@@ -611,17 +611,9 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "_LOG.info('tick ok=%s failed=%s', not failed, ','.join(failed) or '-')",
     ): "WORDS",
     ("runtime/tick.py", "_LOG.warning('%s: %s', what, type(exc).__name__)"): "LABEL",
-    (
-        "runtime/tick.py",
-        "calls += store.purge_tool_calls(_now(ctx) - timedelta(days=keep.tool_calls_days), keep_run_ids=held)",
-    ): "NUM",
     ("runtime/tick.py", "f\"a tick step name is used twice: {', '.join(repeated)}\""): "WORDS",
     ("runtime/tick.py", "f'{type(exc).__name__}: {_message(exc)}'"): "OWNERROR",
     ("runtime/tick.py", "found += problems"): "LISTED",
-    (
-        "runtime/tick.py",
-        "maps += store.purge_redaction_maps(_now(ctx) - timedelta(days=keep.redaction_maps_days), keep_run_ids=held)",
-    ): "NUM",
     ("runtime/tick.py", "repeated.append(step.name)"): "WORDS",
     (
         "sources/kubernetes.py",
@@ -846,18 +838,15 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "actions/secrets_vault.py",
         "ssl.create_default_context(cafile=str(settings.ca_cert) if settings.ca_cert else None)",
     ): "PROC",
-    ("errors.py", "return str(name)"): "FILTER",
+    ("errors.py", "str.__str__(name)"): "FILTER",
     (
         "errors.py",
         "int.__repr__(status) if isinstance(status, int) and (not isinstance(status, bool)) else '?'",
     ): "FILTER",
     (
         "errors.py",
-        "str.__str__(value) if isinstance(value, str) and _ID_SHAPE.fullmatch(value) else '?'",
+        "str.__str__(value) if type(value) is str and _ID_SHAPE.fullmatch(value) else '?'",
     ): "FILTER",
-    ("guard/http.py", "box['error'] = exc"): "HANDOFF",
-    ("k1b/loop.py", "box['exc'] = exc"): "HANDOFF",
-    ("tools.py", "box['error'] = exc"): "HANDOFF",
     ("tools.py", "box['value'] = str(self._fns[name](restored, ctx))"): "PROC",
     ("k1b/replay.py", "format(run_usd, 'f')"): "NUMFIELD",
     ("k1b/report.py", "return format(value, 'f')"): "NUMFIELD",
@@ -865,13 +854,11 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "llm/bedrock.py",
         "return str(response.get('Error', {}).get('Code', '')) if isinstance(response, dict) else ''",
     ): "DESCRIBE",
-    ("tools.py", "return message[:200]"): "REDACTED",
     ("actions/executor.py", "str(v)"): "URL",
     ("app.py", "str(sc.ca_file)"): "PROC",
     ("app.py", "str(spec.options.get('source', ''))"): "PROC",
     ("app.py", "str(t.options.get('source', ''))"): "PROC",
     ("audit/signer_vault.py", "str(self.key_version)"): "NUMFIELD",
-    ("k1b/bundle.py", "str(key)"): "PROC",
     ("llm/common.py", "str(m['content'])"): "LLMREQ",
     ("registry.py", "str(ca_file)"): "PROC",
     (
@@ -883,9 +870,56 @@ NEW_ALLOWED: dict[tuple[str, str], str] = {
         "store/postgres.py",
         "str(parts.get('host') or parts.get('hostaddr') or os.environ.get('PGHOST') or '')",
     ): "PROC",
-    ("tools.py", "str(exc)"): "REDACTED",
-    ("tools.py", "str(path)"): "PROC",
     ("tools.py", "str(path.parent)"): "PROC",
-    ("tools.py", "str(raw)"): "PROC",
     ("runtime/tick.py", "str(exc)"): "OWNERROR",
+    # batch 17 (Issue 1a): an attribute is trusted only through `self`, a name bound to a call of its class, or a parameter
+    # declared as that class; these reads go through a local or a loop variable, so each is a row checked by its reason
+    ("approvals/requests.py", "f'step{new.current_step}'"): "NUMFIELD",
+    (
+        "audit/anchor_gcs.py",
+        "f'audit anchor gcs_retention_lock: the bucket needs a retention policy of at least {settings.retain_days} day(s)'",
+    ): "NUMFIELD",
+    ("cli.py", "f'{run.passed}/{run.n}'"): "NUMFIELD",
+    ("cli.py", "f'{round(run.pass_rate * pairs)}/{pairs}'"): "NUMFIELD",
+    (
+        "deferred.py",
+        "f'agent {a_name}: data_class {a.data_class} is not available until Phase 3'",
+    ): "LITERAL",
+    (
+        "llm/anthropic.py",
+        "f\"backend llm 'anthropic' ({settings.platform}): the client refused the settings ({type(exc).__name__}); {_ENV_HINT[settings.platform]} set beside the explicit base URL is the usual cause\"",
+    ): "LITERAL",
+    ("registry.py", "str(d.threshold)"): "NUMFIELD",
+    ("registry.py", "str(self.config.eval_threshold)"): "NUMFIELD",
+    ("sources/kubernetes.py", "self._cfg.log_bytes + defaults.K8S_LOG_SLACK_BYTES"): "NUMFIELD",
+    (
+        "sources/kubernetes.py",
+        "f'the log was cut at {self._cfg.log_bytes} bytes; later lines are missing'",
+    ): "NUMFIELD",
+    (
+        "tools.py",
+        'f"secret {spec.secret_names.index(name) + 1} of this tool\'s secret_names is shorter than {min_secret} characters and could not be scrubbed"',
+    ): "NUMFIELD",
+    ("actions/executor.py", "return (exc.code, None)"): "HTTPCODE",
+    ("actions/secrets_vault.py", "return (exc.code, {})"): "HTTPCODE",
+    ("audit/chain.py", "_LOG.error('audit checkpoint %d not anchored (%s); retried next time', seq, type(exc).__name__)"): "ROWID",
+    ("llm/common.py", "out.append((m['role'], texts))"): "LLMREQ",
+    (
+        "registry.py",
+        "{'eval_threshold': str(self.config.eval_threshold)} if self.config.eval_threshold < 1.0 else {}",
+    ): "NUMFIELD",
+}
+
+
+# Rows scoped to one function and a number of sites (module, site text, enclosing function, number of sites): a new site
+# with the same text elsewhere is a finding. Round 17 (Issue 4).
+SCOPED_ALLOWED: dict[tuple[str, str, str, int], str] = {
+    ("guard/http.py", "box['error'] = exc", "lookup", 1): "HANDOFF",
+    ("k1b/bundle.py", "str(key)", "_scan", 1): "PROC",
+    ("k1b/loop.py", "box['exc'] = exc", "work", 1): "HANDOFF",
+    ("tools.py", "box['error'] = exc", "work", 1): "HANDOFF",
+    ("tools.py", "return message[:200]", "error_reason", 1): "REDACTED",
+    ("tools.py", "str(exc)", "error_reason", 1): "REDACTED",
+    ("tools.py", "str(path)", "load_tool_module", 2): "PROC",
+    ("tools.py", "str(raw)", "invoke", 1): "PROC",
 }

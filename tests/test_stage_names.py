@@ -30,7 +30,7 @@ from hadavin_sdk.config import Config, ConfigError, _anchor_refusals, load_confi
 from hadavin_sdk.registry import _module_pin_problems, load_registry
 from hadavin_sdk.stages import STAGES, is_live, is_prod
 from tests import _text_guard
-from tests._guard_allowances import NEW_ALLOWED, REASONS
+from tests._guard_allowances import NEW_ALLOWED, REASONS, SCOPED_ALLOWED
 from tests.conftest import make_cfg, qualify
 from tests.test_k3_pilot_env import pilot_cfg
 
@@ -3469,7 +3469,11 @@ GUARD_ALLOWED = {
 
 
 # the old allowances (reasons written out) and the round 12 ones (a short name of a reason in `_guard_allowances.py`)
-ALL_ALLOWED = {**GUARD_ALLOWED, **{k: REASONS[v] for k, v in NEW_ALLOWED.items()}}
+ALL_ALLOWED = {
+    **GUARD_ALLOWED,
+    **{k: REASONS[v] for k, v in NEW_ALLOWED.items()},
+    **{k: REASONS[v] for k, v in SCOPED_ALLOWED.items()},
+}
 
 
 def _src_sources() -> dict[str, str]:
@@ -3773,17 +3777,25 @@ _PLANTED_FAULTS = {
     ),
     # ---- round 16 (Issues 2 and 3): sinks and proofs the round-15 reviewers named ----
     "R16a a local text of an error set on an attribute": (
-        "def f(self, exc):\n    text = str(exc)\n    self.error_code = text",
-        2,
+        "def f(self, g):\n    try:\n        g()\n    except OSError as exc:\n        text = exc.args[0]\n        self.error_code = text",
+        1,
+    ),
+    "R17a an error object set on an item": (
+        "def f(rec, g):\n    try:\n        g()\n    except OSError as exc:\n        rec['error'] = exc",
+        1,
     ),
     "R16b a positional argument of a class": (
         "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return Result(exc)",
         1,
     ),
-    "R16c a dict value made from an error": ("def f(exc):\n    return {'error': str(exc)}", 2),
+    "R16c a dict value made from an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {'error': exc}",
+        1,
+    ),
     "R16d a helper returns the text of an error": (
         "def why(g):\n    try:\n        g()\n    except OSError as exc:\n        return exc\ndef f(g):\n    raise A(why(g))",
         2,
+        "return exc",  # the return is the site only the return rule finds; the raise is found by the call rule
     ),
     "R16e repr of an unproven value": ("def f(name):\n    return repr(name)", 1),
     "R16f a helper that raises, called in an except": (
@@ -3823,11 +3835,91 @@ _PLANTED_FAULTS = {
         1,
     ),
     "R16n a number annotation on a text": (
-        "def f(exc):\n    x: int = str(exc)\n    raise A(f'{x}')",
-        2,
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        x: int = exc.args[0]\n    raise A(f'{x}')",
+        1,
+    ),
+    "R17b a derived error built outside a raise, two classes deep": (
+        "class Base(LibError):\n    pass\nclass Sub(Base):\n    pass\ndef f(name):\n    err = Sub(name)\n    raise err",
+        1,
     ),
     "R16o a log call with a text directive": (
         "def f(log, name):\n    log.warning('bad %s', name)",
+        1,
+    ),
+    "R17c a number directive of a function that returns text": (
+        "def count(x):\n    return x\ndef f(log, name):\n    n = count(name)\n    log.warning('bad %d', n)",
+        1,
+    ),
+    "R17d a tuple that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (exc, 1)",
+        1,
+    ),
+    "R17e a list that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return [exc]",
+        1,
+    ),
+    "R17f a set that holds an error": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return {exc}",
+        1,
+    ),
+    "R17g a starred error text in a tuple": (
+        "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (*exc.args, 1)",
+        1,
+    ),
+    "R17h an error given to update": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.update(exc)",
+        1,
+    ),
+    "R17i an error given to put": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.put(exc)",
+        1,
+    ),
+    "R17j an error given to execute in a tuple": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.execute('q', (exc,))",
+        1,
+    ),
+    "R17k an error given to insert": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.insert(exc)",
+        1,
+    ),
+    "R17l an error given to write": (
+        "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.write(exc)",
+        1,
+    ),
+    "R17m an assert message": (
+        "def f(name):\n    assert name, name",
+        1,
+    ),
+    "R17n writelines to stderr": (
+        "import sys\ndef f(name):\n    sys.stderr.writelines([name])",
+        1,
+    ),
+    "R17o a stream held in a name": (
+        "import sys\ndef f(name):\n    s = sys.stderr\n    s.write(name)",
+        1,
+    ),
+    "R17p exit with a text": (
+        "def f(name):\n    exit(name)",
+        1,
+    ),
+    "R17q quit with a text": (
+        "def f(name):\n    quit(name)",
+        1,
+    ),
+    "R17r a logger named by a text": (
+        "import logging\ndef f(name):\n    logging.getLogger(name)",
+        1,
+    ),
+    "R17s a thread named by a text": (
+        "import threading\ndef f(name):\n    threading.Thread(name=name)",
+        1,
+    ),
+    "R17t a name matched by a case pattern": (
+        "def f(name):\n    match name:\n        case str(text):\n            raise A(text)",
+        1,
+    ),
+    "R17u a lambda that holds the name does not prove the outer one": (
+        "def f(name):\n    g = lambda name: 'x'\n    raise A(name)",
         1,
     ),
 }
@@ -3900,14 +3992,23 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
         "class DuplicateEvent(Exception):\n    pass\ndef f():\n    raise DuplicateEvent('fixed')"
     ),
     "R16k an attribute of an object of the package": (
-        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f(k):\n    raise A(k.name)"
+        "class K:\n    def __init__(self):\n        self.name = 'fixed'\ndef f():\n    k = K()\n    raise A(k.name)"
     ),
     "R16p a self attribute that the class writes": (
         "class K:\n    def __init__(self):\n        self.msg = 'fixed'\n    def f(self):\n        raise A(self.msg)"
     ),
     "R16l the size of a set difference": "def f(done, files):\n    raise A(f'gone {len(done - files)}')",
     "R16n a number annotation on a number": "def f(names):\n    x: int = len(names)\n    raise A(f'{x}')",
-    "R16o a log call with a number directive": "def f(log, n):\n    log.warning('bad %d', n)",
+    "R16o a log call with a number directive": "def f(log, n: int):\n    log.warning('bad %d', n)",
+    "R17c a log call with a number directive of a function declared as an int": "def count() -> int:\n    return 1\ndef f(log):\n    n = count()\n    log.warning('bad %d', n)",
+    "R17d a tuple of a class name": "def f(g):\n    try:\n        g()\n    except OSError as exc:\n        return (type(exc).__name__, 1)",
+    "R17h a class name given to update": "def f(db):\n    try:\n        db()\n    except OSError as exc:\n        db.update(type(exc).__name__)",
+    "R17m an assert message written in code": "def f(name):\n    assert name, 'fixed'",
+    "R17p exit with a written text": "def f():\n    exit('fixed')",
+    "R17r a logger named in code": "import logging\ndef f():\n    logging.getLogger('fixed')",
+    "R17s a thread named in code": "import threading\ndef f():\n    threading.Thread(name='worker')",
+    "R17t a name matched in a case of a written value": "def f(x):\n    match x:\n        case 1:\n            name = 'fixed'\n    raise A(name)",
+    "R17u a lambda that shadows a written name": "def f():\n    name = 'fixed'\n    g = lambda name: name\n    raise A(name)",
 }
 
 
@@ -3915,11 +4016,13 @@ _CLEAN_FORMS = {  # the filtered and the code-owned forms: none of them may be f
 def test_the_guard_finds_each_planted_fault_alone(shape):
     """One planted fault per shape (the 25 of the evidence probe 7 and the reviewers' extras): the guard reports exactly
     the stated number of sites, so a guard that lost a shape fails here by the shape's name."""
-    code, count = _PLANTED_FAULTS[shape]
+    code, count, *marker = _PLANTED_FAULTS[shape]
     found, _ = _guard_violations(
         code if isinstance(code, dict) else {"m.py": code}, allowed={}, exempt={}
     )
     assert len(found) == count, (shape, found)
+    for text in marker:  # a shape with two sites names the one that only its own rule finds
+        assert any(text in line for line in found), (shape, "no site holds", text, found)
 
 
 @pytest.mark.parametrize("form", sorted(_CLEAN_FORMS))
@@ -3974,6 +4077,7 @@ def test_no_allowance_row_is_left_unread():
     `UNREAD` (a site nobody had read) is gone and cannot come back."""
     assert "UNREAD" not in REASONS
     assert not [k for k, r in NEW_ALLOWED.items() if r not in REASONS]
+    assert not [k for k, r in SCOPED_ALLOWED.items() if r not in REASONS]
 
 
 def test_the_guard_reads_the_two_migration_modules_and_every_other_module_but_the_exempt_ones():

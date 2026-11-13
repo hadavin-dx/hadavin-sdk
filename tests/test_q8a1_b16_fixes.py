@@ -175,9 +175,11 @@ def test_the_local_audit_folder_never_makes_a_file_from_an_event_that_skipped_th
 
     audit = LocalDirSink(tmp_path / "audit")
     evil = AuditEvent.model_construct(event_id="../../escaped", ts=None, **_EVENT)
+    from hadavin_sdk.audit.protocol import AuditUnavailable
+
     try:
         audit.write_intent(evil)
-    except ValueError as refused:
+    except AuditUnavailable as refused:  # batch 17: the intent write refuses with the audit's own error, not a bare ValueError
         assert "plain file name" in str(refused), (
             "the folder refused the hostile event id with another sentence"
         )
