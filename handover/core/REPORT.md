@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Fresh whole-patch reviewer a31190d2 DONE: r5 NOT CLEAN, 0 Blockers, 7 Majors, 4 Minors, 2 Nits (saved handover/core/review/core-fix-on-frozen-r5-review.md). I checked 4 claims in the code myself and all hold: REPLY_MAX_BYTES defined twice (1 MiB then 4 MiB), class names printed in n8n_api.py and demo_only/burst.py + portal_demo.py, two exit-code pairs share a number. The reviewer did not run pytest or the closed-stdin probe. Still running: EV5 runner a6d8392f (suite showed F marks, causes unknown), mail pass aee26a5b. Plan: wait for those two, then ONE R6 builder batch for all Majors (round 6 of the same family; honest: each round's fresh reviewer finds new siblings). ASK: none.
+
+## STATUS (core lead)
 18:42Z: no agent has reported a result yet. EV5 evidence runner a6d8392f: full suite still running; the live progress logs already show F marks (group A about 53 percent, 2 F; group B about 19 percent, 1 F). Which tests failed and why is UNKNOWN until the runner finishes; I will not call them flakes until it re-runs them alone. Hostile-input runs in progress. Fresh whole-patch reviewer a31190d2: running, has created scratch files (tmp-REV5), no report. Third mail/secrets/TLS pass aee26a5b: running, no report. Only these 3 agents running. ASK: none.
 
 ## STATUS (core lead)
