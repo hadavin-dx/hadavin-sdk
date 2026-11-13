@@ -1,0 +1,20 @@
+# evidence-m3-3: gates on f5fe824 + v3 (git add -N); v3 sha256 84bcffdd63b10c051eb081b281d5acd390497c285f3d6eed3fdf46b400eb3a68
+All checks passed!
+136 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+	No issues identified.
+literal scan CI form, whole repo / new test file:
+0
+0
+## with gitleaks + DPLD_REQUIRE_SCAN=1
+...........................................................              [100%]
+59 passed in 26.68s
+## without gitleaks, no env
+...s......ss...ss...................ssssssssssssssssssssss.              [100%]
+32 passed, 27 skipped in 6.42s
+## no git, GITLEAKS_BIN set: skip without DPLD_REQUIRE_SCAN, fail with it
+ss                                                                       [100%]
+2 skipped, 42 deselected in 0.14s
+FAILED tests/test_gitleaks_exceptions.py::test_a_blank_in_front_of_the_exact_line_is_allowed[leading blank]
+2 failed, 42 deselected in 0.15s

@@ -1,0 +1,14 @@
+# evidence-m3-4: v3 sha256 84bcffdd63b10c051eb081b281d5acd390497c285f3d6eed3fdf46b400eb3a68, base f5fe824
+A v3 alone: OK
+B stack(8) then v3: OK (9 patches)
+C v3 then stack(8): OK (9 patches)
+D stack(8), semgrep, v3: OK (10 patches)
+E stack(8), v3, semgrep: OK (10 patches)
+F semgrep then v3: OK (2 patches)
+G v3 then semgrep: OK (2 patches)
+[90m12:36AM[0m [32mINF[0m [1mno leaks found[0m
+dir exit=0
+[90m12:36AM[0m [32mINF[0m [1mno leaks found[0m
+git exit=0
+literal scan lines:
+0
