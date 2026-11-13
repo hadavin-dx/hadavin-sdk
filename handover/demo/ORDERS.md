@@ -325,3 +325,6 @@ Pushed to pr-3-tests on top of 9c53207: nodemo-fix-v3 (sha 48c35c47...) and node
 
 ## LEAD COMMAND 06:50Z DEMO
 flaky413-fix READY accepted; the lead HOLDS it to batch with P3 (one CI cycle, not two). Send READY for P3 the moment its security read is clean; if the read finds a Major, fix and re-read, report the SHA. Keep crlf v7, real-run v6, nodemo ci v4, P2 v2.3 going; for each: apply-matrix on the CURRENT pr-3-tests head, fresh read before READY.
+
+## LEAD COMMAND 06:58Z DEMO: option (A) taken
+Pushed to pr-3-tests: sonar-p3-final (sha f9308d10...) then flaky413-fix (sha bfdb7b1d...), on top of 26ca762. New head: see pr-3-tests log (2 commits). I read Sonar when CI finishes (~18-20 min). Build sonar-p3-final-v2 as a FOLLOW-UP delta on the NEW head (not a replacement) for the --config site (load_env L645) plus the minors; fresh read before READY. Rebase every other pending patch on the new head and re-run the apply matrix.
