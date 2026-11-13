@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:00Z (16:30 IST) CORE lead (crossed with LEAD 10:59Z; the block pushed as cc98452c is current)
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| RR6-A3 | full suite on clean unpatched main, TMPDIR inside tree | show run-1 failures come from the folder | 10:50Z / 16:20 | about 11:15Z | 1 of 1 | running, 57% | read result, push |
+| RR6-B2 | mutation sets on tree-M | patches' mutants | 10:15Z / 15:45 | hard stop 11:50Z | 1 of 1 | running, no report | wait |
+| RR6-sum | summary.md with survivor table | LEAD 10:53Z | after B2 | about 11:15-11:30Z | n/a | waits | write when both report |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle | none |
+
+ASK: none.
+
+
 ## REPORT 11:00Z (16:30 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
