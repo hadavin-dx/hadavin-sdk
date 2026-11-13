@@ -1,3 +1,26 @@
+## HEARTBEAT 61 (14:26Z / 19:56 IST)
+
+FAILURES AND RETRIES (first):
+- A1 plan item of the lead's Opus resolve for fix-6 was WRONG (said server/fakes_server need src: with -m; measured: they work from the repo folder; scripts/crash_desk.py is what fails). Docs now state the measured facts. Round-1 builder claim also false.
+- B6 first full run on final tree failed (hygiene `src:\.`); E8 green (3689 passed, 200 skipped) was r1 only. No full run yet for r2 (E9 launched 14:26Z).
+- E7: "our" noqa line comes from the patch (not base); sent to B5d.
+- plain fix-6 r2 and fix-2 r2 do not apply on the claims stack / after fix-1 (variants exist).
+- Still unexplained: E3b three cut runs; xdist port-43217 flake (B5d chasing); 2 `E` marks of PR #12 run.
+- Totals: 0 new test failures since 14:00Z beyond the above; real defects open: fix-8 (Q-19, B8 building).
+
+| Item | State |
+|---|---|
+| B1e fix-1 r5 | running (stop 14:45Z) |
+| B2c fix-2 r3 | running (14:35Z) |
+| B5d fix-5 r4 | running (14:35Z) |
+| B8 fix-8 dotted domain | running (14:50Z) |
+| B4c fix-4 r3 | running (14:55Z) |
+| REV-6c, REV-6d | running, fix-6 r2 reviews |
+| E9 | running, fix-6 r2 full suite |
+
+ASK list: ss/ı rule (docs only, default kept); xdist in CI (report only); PR #12 E marks; run the 4 remaining skips?; Q-19 ANSWERED (fix-8). 
+Load: idle CPU 71 percent, free RAM 14 GB (vmstat/free, 14:25Z). 8 agents running.
+
 ## HEARTBEAT 60 (14:00Z / 19:30 IST)
 
 FAILURES AND RETRIES (first):

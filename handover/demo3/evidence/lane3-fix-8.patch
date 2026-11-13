@@ -1,0 +1,309 @@
+diff --git a/contract.md b/contract.md
+index d24f76c..f5cd418 100644
+--- a/contract.md
++++ b/contract.md
+@@ -25,6 +25,7 @@ Input rules (the tests are in `tests/test_input_edge_cases.py`, `tests/test_desk
+ * (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`.
+ * (2) The stored copy of the payload escapes every non-ASCII character (`ensure_ascii`), so a JSON escape for half a character (a lone surrogate) is stored as text; a name, email, phone, company or message that contains one cannot be stored and gives verdict `review` with reason `bad_field:<field>`.
+ * (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives verdict `review`, reason `invalid_email`, not a 500.
++* (3b) An email whose domain (the part after the @) is badly shaped gives verdict `review`, reason `invalid_email`: no lead of its own, no follow-up mail. Badly shaped means: no dot in the domain, a label (a part between dots) with no characters (a domain that starts with a dot, ends with a dot or has two dots in a row), or a label that starts or ends with a hyphen. The dot, U+3002, U+FF0E and U+FF61 all count as a dot. The same rule refuses the sender, recipient and reminder addresses (`DESK_SMTP_FROM`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_NUDGE_TO`). Not checked: a label longer than 63 characters, dots or hyphens in the part before the @, and an IP address in square brackets after the @. The tests are in `tests/test_domain_labels.py`.
+ * (4) Only the thread that won the claim asks the AI step, the CRM or the sender, so two requests that drive the same new lead at the same moment, or a request and the reaper, ask the AI step once (the claim comes first; the reaper only drives `pending` rows, and a claimed row is `sending`); a CRM row can be put again only after a leftover intent mark, and then only on a keyed CRM, see the CRM row above.
+   * A failed AI step after the claim is one automatic try (`internal:<class>`; the row goes back to `pending` with a backoff through `_abort_unsent`, and to `failed` only when the cap is already reached; after a person's Retry the count starts at 1, so the row is `pending`).
+   * A lock on any write after the claim, the first stage stamp included, gives the try back instead (see the line on locks below), with one exception: a lock that stops the write of a model answer leaves the try used up (`ModelAnswerLost`, below).
+diff --git a/docs/limits.md b/docs/limits.md
+index b249bba..edc963f 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -37,6 +37,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+   while its old call is still running. Tests: `test_reaper_survives_hung_model`, `test_hung_model_spends_the_try`,
+   `test_late_answer_writes_nothing`, `test_blind_send_timeout_is_unknown`, `test_keyed_send_timeout_same_key`,
+   `test_blind_crm_timeout_is_unknown`, `test_late_send_writes_nothing`, `test_late_crm_put_writes_nothing`.
++* An email address whose domain (the part after the @) starts or ends with a dot, has two dots in a row, or has a part between dots that starts or ends with a hyphen is not accepted as an address: the request goes to "Request to check" and makes no lead and no email. The desk does not check that the domain exists, how long each part is, or the part before the @ for dots in odd places.
+ * **At most 4 AI calls, 8 CRM puts, 8 sends and 4 capability reads run at once** (`ADAPTER_WORKER_CAPS`; abandoned calls count until they
+   end, the place is reserved before the helper thread starts). When a kind is full, or a blind call for the same lead is still running, the
+   row is not claimed: it keeps its age and shows up as `stalled` in the review list after `stall_seconds` (`test_busy_give_back_keeps_the_age`,
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9812f8e..3fbde1d 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -54,7 +54,7 @@ from lead_desk.constants import (
+     WILDCARD_BINDS,
+ )
+ from lead_desk.envnum import SettingRefused, env_number, split_url
+-from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
++from lead_desk.identity import encodable, has_control_char, plain_address_ok
+ from lead_desk.urls import desk_origin
+ 
+ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+@@ -506,7 +506,7 @@ class Config:
+         _check_approvers(self.approvers, self.approvers_label)
+         if self.nudge_to and self.leadflow_path is None:
+             raise SettingRefused("DESK_NUDGE_TO is set but DESK_LEADFLOW_FILE is not")
+-        if self.nudge_to and not (PLAIN_ADDRESS.fullmatch(self.nudge_to) and self.nudge_to.isascii()):
++        if self.nudge_to and not (plain_address_ok(self.nudge_to) and self.nudge_to.isascii()):
+             raise SettingRefused("DESK_NUDGE_TO must be one plain address")
+         if self.leadflow is not None and self.leadflow_path is None:
+             raise SettingRefused("a leadflow is given but DESK_LEADFLOW_FILE is not set")
+diff --git a/src/lead_desk/identity.py b/src/lead_desk/identity.py
+index 035c8e7..c2b931d 100644
+--- a/src/lead_desk/identity.py
++++ b/src/lead_desk/identity.py
+@@ -18,6 +18,9 @@ PLAIN_ADDRESS = re.compile(r'^[^\s<>\r\n\x00,;"()][^\s<>\r\n\x00,;"()@]*@[^\s<>\
+ # local part, "@", then a domain that has a dot with a character before it and one after it: one character, characters
+ # that are not dots, the first dot, one or more characters (the dot is found once, not by backtracking)
+ _EMAIL_RE = re.compile(r"^[^@\s<>\",;]+@[^@\s<>\"',;][^@\s<>\"',;.]*\.[^@\s<>\"',;]+$")
++# the characters that end a label of a domain name: the dot and the three dots that internationalised domain names
++# also read as a dot (U+3002 ideographic full stop, U+FF0E fullwidth full stop, U+FF61 halfwidth ideographic full stop)
++_LABEL_DOTS = re.compile("[.\u3002\uff0e\uff61]")
+ _CONTROL_OK_IN_MESSAGE = frozenset("\t\n\r")
+ _FIELD_LIMITS: tuple[tuple[str, int | None], ...] = (  # fixed order; email has no length rule here (its rule is below)
+     ("name", NAME_MAX),
+@@ -87,13 +90,27 @@ def _lower_keeps_ascii_apart(e: str) -> bool:
+     return not any(not c.isascii() and any(x.isascii() for x in c.lower()) for c in e)
+ 
+ 
++def domain_labels_ok(domain: str) -> bool:
++    """True when every label of the domain (the parts between dots) has at least one character and neither starts nor
++    ends with a hyphen. So a domain that starts with a dot, ends with a dot or has two dots in a row, and a label such
++    as "-a" or "a-", is not a mailbox domain (RFC 1035 section 2.3.1, RFC 5321 section 4.1.2). This is the one place
++    that rule lives: the lead email check and the plain-address check of the sender, the recipient and the reminder
++    address all call it."""
++    return all(label and not label.startswith("-") and not label.endswith("-") for label in _LABEL_DOTS.split(domain))
++
++
++def plain_address_ok(s: str) -> bool:
++    """One plain address (PLAIN_ADDRESS) whose domain has well-formed labels."""
++    return PLAIN_ADDRESS.fullmatch(s) is not None and domain_labels_ok(s.rpartition("@")[2])
++
++
+ def _valid_email(e: str) -> bool:
+     return (
+         _lower_keeps_ascii_apart(e)
+         and len(e) <= EMAIL_MAX
+         and len(normalise_email(e)) <= EMAIL_MAX  # lower case can be longer (some letters become two characters)
+         and _EMAIL_RE.fullmatch(e) is not None
+-        and not e.endswith(".")
++        and domain_labels_ok(e.rpartition("@")[2])  # also refuses a trailing dot (an empty last label)
+         and not any(unicodedata.category(c).startswith("C") for c in e)
+     )
+ 
+diff --git a/src/lead_desk/smtp_outbox.py b/src/lead_desk/smtp_outbox.py
+index 54a4da2..ac89737 100644
+--- a/src/lead_desk/smtp_outbox.py
++++ b/src/lead_desk/smtp_outbox.py
+@@ -51,7 +51,7 @@ from lead_desk.contract import (
+     is_fd_exhaustion,
+ )
+ from lead_desk.envnum import SettingRefused, env_number
+-from lead_desk.identity import PLAIN_ADDRESS
++from lead_desk.identity import plain_address_ok
+ 
+ # SMTP reply classes (RFC 5321 section 4.2)
+ _POSITIVE_DONE: Final = 2
+@@ -61,7 +61,6 @@ _WIRE_POLICY: Final = policy.SMTP.clone(cte_type="7bit")  # text goes out as quo
+ _CRLF: Final = b"\r\n"
+ _BODY_END: Final = b"\r\n.\r\n"
+ _HOST_NAME = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$")
+-_ADDRESS = PLAIN_ADDRESS  # no list, comment or quote characters (the pattern lives in identity.py)
+ _PERMANENT_NEGATIVE: Final = 5  # a 5xx reply class (RFC 5321 section 4.2.1)
+ _BARE_CODE_LEN: Final = 3  # a reply line may be the bare code (RFC 5321 section 4.2)
+ 
+@@ -90,7 +89,7 @@ class SmtpSettings:
+             )
+         if not 1 <= self.port <= PORT_MAX:
+             raise SettingRefused(f"DESK_SMTP_PORT must be between 1 and {PORT_MAX}")
+-        if not _ADDRESS.fullmatch(self.mail_from) or not self.mail_from.isascii():
++        if not plain_address_ok(self.mail_from) or not self.mail_from.isascii():
+             raise SettingRefused("DESK_SMTP_FROM is not a plain ASCII address")
+         if not _HOST_NAME.fullmatch(self.message_id_domain):
+             raise SettingRefused("DESK_SMTP_MESSAGE_ID_DOMAIN must be a lower-case host name")
+@@ -215,7 +214,7 @@ class SmtpOutbox:
+         for value in (send_key, to, subject):
+             if _breaks_a_header(value):
+                 raise SendRefused("line break or control character in a header value")  # before any network use
+-        if not _ADDRESS.fullmatch(to) or not to.isascii():
++        if not plain_address_ok(to) or not to.isascii():
+             raise SendRefused("recipient is not a plain address")
+         if not send_key:
+             raise SendRefused("empty send key")
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index a60f7f5..312a5e0 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -51,9 +51,9 @@ from lead_desk.contract import (
+     is_fd_exhaustion,
+ )
+ from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.identity import plain_address_ok
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+-    _ADDRESS,
+     _CRLF,
+     _HOST_NAME,
+     _PERMANENT_NEGATIVE,
+@@ -99,7 +99,7 @@ class ProviderSettings:
+         if not self.user or _breaks_a_header(self.user) or not self.user.isascii():
+             raise SettingRefused("DESK_SMTPP_USER must be plain ASCII text")
+         for a in (self.mail_from, *self.recipients):
+-            if not _ADDRESS.fullmatch(a) or not a.isascii():
++            if not plain_address_ok(a) or not a.isascii():
+                 raise SettingRefused("DESK_SMTPP_FROM and DESK_SMTPP_RECIPIENTS must be plain ASCII addresses")
+         if not self.recipients:
+             raise SettingRefused("DESK_SMTPP_RECIPIENTS needs at least one test recipient")
+@@ -226,7 +226,7 @@ class SmtpProviderOutbox:
+                 raise SendRefused("line break or control character in a header value")
+         if not re.fullmatch(_SEND_KEY, send_key):
+             raise SendRefused("send key has characters outside the allowed set")
+-        if not _ADDRESS.fullmatch(to) or not to.isascii():
++        if not plain_address_ok(to) or not to.isascii():
+             raise SendRefused("recipient is not a plain address")
+         password = read_secret_file(self._s.password_file)  # before any network use
+         try:
+diff --git a/tests/test_domain_labels.py b/tests/test_domain_labels.py
+new file mode 100644
+index 0000000..6a491c2
+--- /dev/null
++++ b/tests/test_domain_labels.py
+@@ -0,0 +1,142 @@
++"""A domain whose labels are not well formed is not a mailbox: it starts with a dot, ends with a dot, has two dots in
++a row, or has a label that starts or ends with a hyphen. Such a lead email goes to review (never a lead of its own,
++never a follow-up mail); the same rule guards the sender, recipient and reminder addresses. Made-up data only."""
++
++from __future__ import annotations
++
++import random
++from pathlib import Path
++
++import pytest
++from support import lead
++
++from lead_desk import identity
++from lead_desk.config import Config, SettingRefused
++from lead_desk.contract import SendRefused
++from lead_desk.smtp_outbox import SmtpOutbox, SmtpSettings
++
++AT = "@"  # a fake address is built from parts (the hygiene scan reads every address-shaped text)
++DOTS = ("。", "．", "｡")  # the dots that internationalised domain names also read as a dot
++
++BAD_DOMAINS = [
++    ".dom.test",  # starts with a dot
++    "a..b.test",  # two dots in a row (an empty label)
++    "a.b..test",
++    "example.test.",  # ends with a dot (the earlier rule)
++    "example.test..",
++    "..test",
++    "-a.test",  # label starts with a hyphen
++    "a-.test",  # label ends with a hyphen
++    "a.-b.test",
++    "a.b-.test",
++    "a.test-",
++    "a.-",
++    "example" + DOTS[0] + DOTS[0] + "test",
++    "a" + DOTS[1] + DOTS[1] + "test.test",
++    DOTS[2] + "example.test",
++    "example.test" + DOTS[0],
++]
++GOOD_DOMAINS = [
++    "example.test",
++    "a.b",
++    "sub-domain.example.test",
++    "a-b-c.d-e.test",
++    "1-2.test",
++    "xn--bcher-kva.example",
++    "bücher.example",
++    "a" + "." + "b" + "." + "c",
++]
++
++
++def verdict(domain: str, local: str = "loc") -> identity.Checked:
++    return identity.check_payload({"name": "N", "email": f"{local}@{domain}"})
++
++
++@pytest.mark.parametrize("domain", BAD_DOMAINS)
++def test_badly_shaped_domain_goes_to_review(domain: str) -> None:
++    chk = verdict(domain)
++    assert (chk.kind, chk.reason, chk.email_key) == ("review", "invalid_email", None), domain
++
++
++@pytest.mark.parametrize("domain", GOOD_DOMAINS)
++def test_well_shaped_domain_stays_valid(domain: str) -> None:
++    assert verdict(domain).kind == "ok", domain
++
++
++def _labels(domain: str) -> list[str]:
++    out = [domain]
++    for dot in (".", *DOTS):  # an independent way to split: replace every dot by one marker, then split on it
++        out = [part for piece in out for part in piece.split(dot)]
++    return out
++
++
++def test_no_accepted_address_has_an_empty_label_or_a_hyphen_at_a_label_end() -> None:
++    """Fixed-seed fuzz over generated domains: whatever the check accepts has only well-formed labels."""
++    rng = random.Random(8)
++    pieces = ["a", "b", "x1", "-", ".", ".", "..", "-.", ".-", "a-b", "。", "．", "xn--k", "test"]
++    accepted = rejected = 0
++    for _ in range(20000):
++        domain = "".join(rng.choice(pieces) for _ in range(rng.randint(1, 7)))
++        chk = verdict(domain)
++        labels = _labels(domain)
++        well_formed = all(lb and not lb.startswith("-") and not lb.endswith("-") for lb in labels)
++        if chk.kind == "ok":
++            accepted += 1
++            assert well_formed, f"accepted {domain!r}"
++            assert "." in domain  # the earlier rule stays: a dot in the domain
++        else:
++            rejected += 1
++            assert chk.reason == "invalid_email"
++    assert accepted > 100 and rejected > 5000, (accepted, rejected)  # the fuzz exercises both sides
++
++
++def test_domain_labels_ok_edges() -> None:
++    assert identity.domain_labels_ok("localhost")  # a one-label host name (a sender may be desk@localhost)
++    assert identity.domain_labels_ok("[::1]") and identity.domain_labels_ok("[127.0.0.1]")
++    assert not identity.domain_labels_ok("") and not identity.domain_labels_ok(".")
++    assert not identity.domain_labels_ok("localhost.") and not identity.domain_labels_ok("-localhost")
++
++
++@pytest.mark.parametrize("domain", [".dom.test", "a..b.test", "example.test.", "-a.test", "a-.test"])
++def test_dotted_domain_lead_is_reviewed_and_makes_nothing(env, domain: str) -> None:
++    """Real desk: 202 review, no lead row, no follow-up row, no mail, no qualifier call."""
++    rig = env.rig()
++    r = rig.desk.handle("form", "dom-1", lead(email=f"loc@{domain}"))
++    assert (r.status, r.body["verdict"], r.body["reason"]) == (202, "review", "invalid_email"), r.body
++    assert "lead_id" not in r.body
++    assert rig.leads() == 0
++    assert rig.query("SELECT count(*) FROM followups")[0][0] == 0
++    assert rig.outbox.count == 0
++    assert rig.qualifier.calls == 0
++    ok = rig.desk.handle("form", "dom-2", lead(email="loc@example.test"))  # the desk still takes a good one
++    assert ok.status == 201 and rig.leads() == 1
++
++
++@pytest.mark.parametrize("bad", [f"desk{AT}{d}" for d in (".example.test", "a..test", "example.test.", "-a.test")])
++def test_sender_recipient_and_reminder_addresses_use_the_same_rule(bad: str) -> None:
++    assert not identity.plain_address_ok(bad)
++    with pytest.raises(SettingRefused):
++        SmtpSettings(mail_from=bad)
++    with pytest.raises(SendRefused, match="plain address"):  # refused before any network use
++        SmtpOutbox(SmtpSettings()).send("k" * 8, bad, "subject", "body", 1.0)
++    with pytest.raises(SettingRefused, match="plain address"):
++        Config(leadflow_path=Path("x.json"), nudge_to=bad)
++
++
++def test_plain_address_ok_keeps_good_addresses() -> None:
++    for good in ("desk@example.test", "reminder@localhost", "o'brien@a-b.example.test"):
++        assert identity.plain_address_ok(good), good
++
++
++@pytest.mark.parametrize("bad", [f"desk{AT}{d}" for d in (".example.test", "a..test", "example.test.", "-a.test")])
++def test_provider_sender_and_recipients_use_the_same_rule(bad: str) -> None:
++    from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
++
++    good = "a@example.test"
++    with pytest.raises(SettingRefused, match="plain ASCII addresses"):
++        ProviderSettings("h", 587, "u", Path("p"), bad, (good,), 1)
++    with pytest.raises(SettingRefused, match="plain ASCII addresses"):
++        ProviderSettings("h", 587, "u", Path("p"), good, (good, bad), 1)
++    ob = SmtpProviderOutbox(ProviderSettings("h", 587, "u", Path("p"), good, (good,), 1))
++    with pytest.raises(SendRefused, match="plain address"):  # refused before the password file is read
++        ob.send("k" * 8, bad, "subject", "body", 1.0)
