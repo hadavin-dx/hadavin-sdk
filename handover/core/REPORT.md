@@ -1,5 +1,17 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 12:40Z (container clock 12:15Z; my clock about 15 min behind the lead's) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run: full suite on the patched tree (tree-AF, d3b2b7b) | before/after counts (before: 3781 passed, 0 failed, 198 skipped) | 12:05Z / 17:35 | about 12:35Z container clock | run 1 of 1 | RUNNING, about 10% | read last line, push gates/AF |
+| MD-1 | mutation-driver inventory (12:14Z order step 1) | close "mutants outside the JSON files" | 12:10Z / 15:40 | done | n/a | DONE: handover/core/evidence/realrun-v6/drivers-inventory/INVENTORY.md; nothing found outside the sets B2 ran (M23 R20 S12 K15 CN29 P10; test-side mutation files run inside the full suite) | step 2 only for what is left |
+| MD-2 | run what is left | order step 2 | - | - | - | WAITING for AF (heavy mutation runs would skew its timing) | run test-side mutation files alone on tree-AF after AF ends; no new builders needed (nothing to triage) |
+
+ASK:
+1. Inventory says nothing is left outside B2's sets; I will not start 3 builders for an empty list. Default if no answer in 10 min: after AF ends I re-run the three test-side mutation files plus the K6+K10 pair on the final patched tree as the closing proof, then report. Tell me if you know a driver I missed.
+
+
 ## REPORT 12:24Z (17:54 IST; container clock 12:09Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
