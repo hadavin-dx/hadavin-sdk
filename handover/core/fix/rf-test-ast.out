@@ -1,0 +1,44 @@
+new-test ids given: 2458; checked as new/changed: 969; failed or errored on old code (named FAILED/ERROR in the input): 0; PASS on old code: 24; no result line on old code: 945 (this input lists passing ids only, so these are failed, errored OR never run: check the run log)
+unchanged tests skipped: 1489; helper-changed files (module-level code differs, tests not flagged for it): 9
+    helper-changed: tests/test_except_clause_hierarchy.py
+    helper-changed: tests/test_live_claude.py
+    helper-changed: tests/test_n8n_api_url.py
+    helper-changed: tests/test_path_confinement.py
+    helper-changed: tests/test_real_check_dry.py
+    helper-changed: tests/test_reset_scripts.py
+    helper-changed: tests/test_scrub_n8n_export.py
+    helper-changed: tests/test_smtp_outbox.py
+    helper-changed: tests/test_sonar_p2_feed_optional.py
+
+PASS ON OLD CODE (pins nothing until justified) per file:
+     1  tests/test_crm_hubspot.py
+     8  tests/test_file_call_guard.py
+     2  tests/test_live_claude.py
+     2  tests/test_portal_demo.py
+     3  tests/test_special_files_and_plain_text.py
+     8  tests/test_special_output_files.py
+
+REQUIRED   tests/test_crm_hubspot.py::test_read_back_list_search_lag_and_archive
+REQUIRED   tests/test_file_call_guard.py::test_at_least_forty_round_six_shapes_are_planted_and_all_are_found
+REQUIRED   tests/test_file_call_guard.py::test_the_guard_finds_each_planted_shape_on_its_own
+REQUIRED   tests/test_file_call_guard.py::test_the_guard_leaves_alone_what_is_not_a_file_call
+REQUIRED   tests/test_file_call_guard.py::test_an_import_of_a_denied_module_needs_a_reason_per_file
+REQUIRED   tests/test_file_call_guard.py::test_a_listed_reason_that_matches_nothing_is_a_failure
+REQUIRED   tests/test_file_call_guard.py::test_a_planted_call_in_every_guarded_folder_is_found
+REQUIRED   tests/test_file_call_guard.py::test_a_tls_loader_is_refused_outside_the_two_demo_fakes
+REQUIRED   tests/test_file_call_guard.py::test_the_listed_exceptions_are_each_used_once_and_have_a_reason
+REQUIRED   tests/test_live_claude.py::test_a_bad_key_file_is_refused_before_the_ledger_and_the_call[UTF-16]
+REQUIRED   tests/test_live_claude.py::test_a_bad_key_file_is_refused_before_the_ledger_and_the_call[empty]
+REQUIRED   tests/test_portal_demo.py::test_burst_keeps_every_answer[cut_body-201]
+REQUIRED   tests/test_portal_demo.py::test_burst_keeps_every_answer[cut_error_body-409]
+REQUIRED   tests/test_special_files_and_plain_text.py::test_bind_still_accepts_every_plain_spelling
+REQUIRED   tests/test_special_files_and_plain_text.py::test_hubspot_base_url_plain_text_still_works
+REQUIRED   tests/test_special_files_and_plain_text.py::test_a_number_with_a_trailing_line_end_stays_accepted_on_purpose
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-append-pipe]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-append-link-to-pipe]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-append-folder]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-lock-pipe]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-lock-link-to-pipe]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[ledger-lock-folder]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[stats-folder]
+REQUIRED   tests/test_special_output_files.py::test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once[trace-folder]

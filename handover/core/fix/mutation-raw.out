@@ -1,0 +1,478 @@
+################ M1-ps1-hunks-swapped broken: both
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M1-ps1-hunks-swapped-crlf.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M1-ps1-hunks-swapped-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+c   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:iws
+type b: cell b-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:plain
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  git apply --check --ignore-whitespace M1-ps1-hunks-swapped-lf.patch && git apply --ignore-whitespace M1-ps1-hunks-swapped-lf.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check M1-ps1-hunks-swapped-crlf.patch && git apply M1-ps1-hunks-swapped-crlf.patch
+  [c] archive with every text file converted to LF:  git apply --check M1-ps1-hunks-swapped-crlf.patch && git apply M1-ps1-hunks-swapped-crlf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M1-ps1-hunks-swapped both: 1 | failing recommended cells: 3 | type a: cell a-crlf-plain;type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
+################ M1-ps1-hunks-swapped broken: crlf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M1-ps1-hunks-swapped-crlf.patch  patch-lf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+c   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+c   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+c   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   0     0    OK     84/84     SAME    -       PASS   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:iwsfix
+type b: cell b-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type c: cell c-lf-plain PASS   pytest: not run   (best cell by the matrix: lf:plain)
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  git apply --check --ignore-whitespace M1-ps1-hunks-swapped-crlf.patch && git apply --ignore-whitespace M1-ps1-hunks-swapped-crlf.patch && sed -i 's/*$//' scripts/reset.ps1 scripts/start_all.ps1
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check M1-ps1-hunks-swapped-crlf.patch && git apply M1-ps1-hunks-swapped-crlf.patch
+  [c] archive with every text file converted to LF:  git apply --check core-fix-on-frozen-r6-lf.patch && git apply core-fix-on-frozen-r6-lf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M1-ps1-hunks-swapped crlf-only: 1 | failing recommended cells: 2 | type a: cell a-crlf-plain;APPLY MATRIX: FAIL (see;
+################ M1-ps1-hunks-swapped broken: lf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M1-ps1-hunks-swapped-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type b: cell b-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:iwsfix
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  git apply --check core-fix-on-frozen-r6.patch && git apply core-fix-on-frozen-r6.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r6.patch && git apply core-fix-on-frozen-r6.patch
+  [c] archive with every text file converted to LF:  git apply --check --ignore-whitespace M1-ps1-hunks-swapped-lf.patch && git apply --ignore-whitespace M1-ps1-hunks-swapped-lf.patch && sed -i 's/$//' scripts/reset.ps1 scripts/start_all.ps1
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M1-ps1-hunks-swapped lf-only: 1 | failing recommended cells: 2 | type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
+################ M2-one-context-line-cr broken: both
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M2-one-context-line-cr-crlf.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M2-one-context-line-cr-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   1     1    OK     85/84!    n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:pbin
+type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:pbin
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:iws
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  patch -p1 --binary < M2-one-context-line-cr-crlf.patch
+  [b] git clone on Windows (core.autocrlf=true):  patch -p1 --binary < M2-one-context-line-cr-crlf.patch
+  [c] archive with every text file converted to LF:  git apply --check --ignore-whitespace M2-one-context-line-cr-lf.patch && git apply --ignore-whitespace M2-one-context-line-cr-lf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M2-one-context-line-cr both: 1 | failing recommended cells: 4 | type a: cell a-crlf-plain;type b: cell b-crlf-plain;type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
+################ M2-one-context-line-cr broken: crlf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M2-one-context-line-cr-crlf.patch  patch-lf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+b   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+c   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   0     0    OK     84/84     SAME    -       PASS   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:pbin
+type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:plain
+type c: cell c-lf-plain PASS   pytest: not run   (best cell by the matrix: lf:plain)
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  patch -p1 --binary < M2-one-context-line-cr-crlf.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r6-lf.patch && git apply core-fix-on-frozen-r6-lf.patch
+  [c] archive with every text file converted to LF:  git apply --check core-fix-on-frozen-r6-lf.patch && git apply core-fix-on-frozen-r6-lf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M2-one-context-line-cr crlf-only: 1 | failing recommended cells: 3 | type a: cell a-crlf-plain;type b: cell b-crlf-plain;APPLY MATRIX: FAIL (see;
+################ M2-one-context-line-cr broken: lf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M2-one-context-line-cr-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+a   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iws    0     0    OK     84/84     SAME    -       PASS   
+b   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   1     1    OK     85/84!    n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type b: cell b-crlf-plain PASS   pytest: not run   (best cell by the matrix: crlf:plain)
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:iws
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  git apply --check core-fix-on-frozen-r6.patch && git apply core-fix-on-frozen-r6.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r6.patch && git apply core-fix-on-frozen-r6.patch
+  [c] archive with every text file converted to LF:  git apply --check --ignore-whitespace M2-one-context-line-cr-lf.patch && git apply --ignore-whitespace M2-one-context-line-cr-lf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=PASS lf-patch=PASS
+  b: crlf-patch=PASS lf-patch=PASS
+  c: crlf-patch=PASS lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M2-one-context-line-cr lf-only: 1 | failing recommended cells: 2 | type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
+################ M3-last-newline-stripped broken: both
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M3-last-newline-stripped-crlf.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M3-last-newline-stripped-lf.patch
+FATAL: crlf patch is not readable by git apply --numstat
+error: corrupt patch at line 10747
+FATAL: lf patch is not readable by git apply --numstat
+error: corrupt patch at line 10747
+APPLY MATRIX: FAIL - a patch file is not a readable patch (git apply --numstat failed); cells not run
+EXIT CODE M3-last-newline-stripped both: 1 | failing recommended cells: 0 | 
+################ M3-last-newline-stripped broken: crlf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M3-last-newline-stripped-crlf.patch  patch-lf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6-lf.patch
+FATAL: crlf patch is not readable by git apply --numstat
+error: corrupt patch at line 10747
+APPLY MATRIX: FAIL - a patch file is not a readable patch (git apply --numstat failed); cells not run
+EXIT CODE M3-last-newline-stripped crlf-only: 1 | failing recommended cells: 0 | 
+################ M3-last-newline-stripped broken: lf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M3-last-newline-stripped-lf.patch
+FATAL: lf patch is not readable by git apply --numstat
+error: corrupt patch at line 10747
+APPLY MATRIX: FAIL - a patch file is not a readable patch (git apply --numstat failed); cells not run
+EXIT CODE M3-last-newline-stripped lf-only: 1 | failing recommended cells: 0 | 
+################ M4-hunk-newline-removed broken: both
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M4-hunk-newline-removed-crlf.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M4-hunk-newline-removed-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+REFERENCE FAILED (lf patch + --ignore-whitespace on the all-LF tree, rc=1): content comparison impossible
+error: patch failed: scripts/run_real_check.py:1106
+error: scripts/run_real_check.py: patch does not apply
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  pbin   0     0    OK     84/84     n/a     -       FAIL   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  pbin   0     0    OK     84/84     n/a     -       FAIL   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    pbin   0     0    OK     84/84     n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+REFERENCE could not be built: content check not possible
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder): NO WORKING COMBINATION IN THE MATRIX
+  [b] git clone on Windows (core.autocrlf=true): NO WORKING COMBINATION IN THE MATRIX
+  [c] archive with every text file converted to LF: NO WORKING COMBINATION IN THE MATRIX
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=FAIL lf-patch=FAIL
+  b: crlf-patch=FAIL lf-patch=FAIL
+  c: crlf-patch=FAIL lf-patch=FAIL
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M4-hunk-newline-removed both: 1 | failing recommended cells: 4 | type a: cell a-crlf-plain;type b: cell b-crlf-plain;type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
+################ M4-hunk-newline-removed broken: crlf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/build/rr6/out/AM/mut/M4-hunk-newline-removed-crlf.patch  patch-lf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+a   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    0     0    BAD    84/84     SAME    -       FAIL    scripts/reset.ps1=MIXED(want CRLF); scripts/start_all.ps1=MIXED(want CRLF);
+a   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+b   crlf  pbin   0     0    OK     84/84     SAME    -       PASS   
+b   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+b   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+b   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  0     0    OK     84/84     SAME    -       PASS   
+c   lf    iws    0     0    OK     84/84     SAME    -       PASS   
+c   lf    iwsfix 0     0    OK     84/84     SAME    -       PASS   
+c   lf    pbin   0     0    OK     84/84     SAME    -       PASS   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: crlf:pbin
+type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: lf:plain
+type c: cell c-lf-plain PASS   pytest: not run   (best cell by the matrix: lf:plain)
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder):  patch -p1 --binary < M4-hunk-newline-removed-crlf.patch
+  [b] git clone on Windows (core.autocrlf=true):  git apply --check core-fix-on-frozen-r6-lf.patch && git apply core-fix-on-frozen-r6-lf.patch
+  [c] archive with every text file converted to LF:  git apply --check core-fix-on-frozen-r6-lf.patch && git apply core-fix-on-frozen-r6-lf.patch
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=FAIL lf-patch=PASS
+  b: crlf-patch=FAIL lf-patch=PASS
+  c: crlf-patch=FAIL lf-patch=PASS
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M4-hunk-newline-removed crlf-only: 1 | failing recommended cells: 3 | type a: cell a-crlf-plain;type b: cell b-crlf-plain;APPLY MATRIX: FAIL (see;
+################ M4-hunk-newline-removed broken: lf-only
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca  patch-crlf=/home/user/hadavin-sdk/handover/core/fix/core-fix-on-frozen-r6.patch  patch-lf=/home/user/build/rr6/out/AM/mut/M4-hunk-newline-removed-lf.patch
+files touched: crlf patch 84, lf patch 84; .ps1 files: scripts/reset.ps1 scripts/start_all.ps1 
+checkout a: .ps1 line endings before patching: CRLF CRLF
+checkout b: .ps1 line endings before patching: CRLF CRLF
+checkout c: .ps1 line endings before patching: LF LF
+REFERENCE FAILED (lf patch + --ignore-whitespace on the all-LF tree, rc=1): content comparison impossible
+error: patch failed: scripts/run_real_check.py:1106
+error: scripts/run_real_check.py: patch does not apply
+TYP PATCH MODE   CHK   APPLY PS1END FILES     CONTENT PYTEST  RESULT NOTE
+--- ----- ----   ---   ----- ------ -----     ------- ------  ------ ----
+a   crlf  plain  0     0    OK     84/84     n/a     -       FAIL   
+a   crlf  iws    0     0    OK     84/84     n/a     -       FAIL   
+a   crlf  iwsfix 0     0    OK     84/84     n/a     -       FAIL   
+a   crlf  pbin   0     0    OK     84/84     n/a     -       FAIL   
+a   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+a   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+b   crlf  plain  0     0    OK     84/84     n/a     -       FAIL   
+b   crlf  iws    0     0    OK     84/84     n/a     -       FAIL   
+b   crlf  iwsfix 0     0    OK     84/84     n/a     -       FAIL   
+b   crlf  pbin   0     0    OK     84/84     n/a     -       FAIL   
+b   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+b   lf    pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   crlf  plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   crlf  iws    0     0    BAD    84/84     n/a     -       FAIL    scripts/reset.ps1=MIXED(want LF); scripts/start_all.ps1=MIXED(want LF);
+c   crlf  iwsfix 0     0    OK     84/84     n/a     -       FAIL   
+c   crlf  pbin   1     1    OK     84/84     n/a     -       FAIL   
+c   lf    plain  1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iws    1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    iwsfix 1     1    OK     0/84!     n/a     -       FAIL   
+c   lf    pbin   0     0    OK     84/84     n/a     -       FAIL   
+
+RECOMMENDED CELLS (from the README table: a=crlf:plain b=crlf:plain c=lf:plain)
+type a: cell a-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+type b: cell b-crlf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+type c: cell c-lf-plain FAIL  <<< the README recommendation does not work; pytest: not run; best working cell by the matrix: none
+REFERENCE could not be built: content check not possible
+
+COMMANDS (derived from the matrix; run from the top folder of the checkout):
+  [a] plain archive / zip download (no .git folder): NO WORKING COMBINATION IN THE MATRIX
+  [b] git clone on Windows (core.autocrlf=true): NO WORKING COMBINATION IN THE MATRIX
+  [c] archive with every text file converted to LF: NO WORKING COMBINATION IN THE MATRIX
+
+FIX COMMAND check: cells *-iwsfix prove the line-ending fix (CRLF: sed -i 's/\r*$/\r/' ; LF: sed -i 's/\r$//'); status per type:
+  a: crlf-patch=FAIL lf-patch=FAIL
+  b: crlf-patch=FAIL lf-patch=FAIL
+  c: crlf-patch=FAIL lf-patch=FAIL
+
+APPLY MATRIX: FAIL (see lines marked FAIL / <<<)
+EXIT CODE M4-hunk-newline-removed lf-only: 1 | failing recommended cells: 4 | type a: cell a-crlf-plain;type b: cell b-crlf-plain;type c: cell c-lf-plain;APPLY MATRIX: FAIL (see;
