@@ -1,0 +1,12 @@
+tests/test_clock_steps.py
+tests/test_docs_claims_lane3.py
+tests/test_gitleaks_exceptions.py
+tests/test_gitleaks_semgrep_lock.py
+tests/test_hygiene.py
+tests/test_load_tools.py
+tests/test_n8n_proof_result.py
+tests/test_path_confinement.py
+tests/test_portal_api.py
+tests/test_portal_mode.py
+tests/test_portal_wording_and_masking.py
+tests/test_vendor_hosts.py

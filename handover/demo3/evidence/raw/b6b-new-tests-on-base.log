@@ -1,0 +1,14 @@
+>       assert "8 invented people plus one of them again under a second address" in doc
+E       assert '8 invented people plus one of them again under a second address' in '`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail ac..."y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.'
+
+tests/test_docs_tests_md_lane3.py:152: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs_tests_md_lane3.py::test_old_desk_commands_are_gone_from_every_doc
+FAILED tests/test_docs_tests_md_lane3.py::test_by_hand_steps_name_one_window_per_command
+FAILED tests/test_docs_tests_md_lane3.py::test_start_up_outcomes_match_the_code
+FAILED tests/test_docs_tests_md_lane3.py::test_windows_powershell_form_is_given_once
+FAILED tests/test_docs_tests_md_lane3.py::test_documented_assume_yes_flag_exists_in_the_script
+FAILED tests/test_docs_tests_md_lane3.py::test_documented_soak_flag_exists_in_the_checker
+FAILED tests/test_docs_tests_md_lane3.py::test_documented_counts_are_the_measured_ones_not_the_stale_ones
+FAILED tests/test_docs_tests_md_lane3.py::test_dry_run_people_count_is_the_real_one
+8 failed in 0.11s

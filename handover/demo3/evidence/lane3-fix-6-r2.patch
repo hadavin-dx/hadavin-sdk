@@ -1,0 +1,286 @@
+diff --git a/README.md b/README.md
+index b907165..913359c 100644
+--- a/README.md
++++ b/README.md
+@@ -129,7 +129,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The full run takes about 20 minutes, and it needs a git clone (some tests read the list of tracked files with git).
+ 
+-The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
++The desk alone needs two terminal windows, each started from the repository folder (the folder that holds this file). Window 1, the demo server (it plays the made-up CRM and mail outbox): `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --port 8766`. Window 2, the desk: `PYTHONPATH=src:. python -m lead_desk.server`. Without the demo server running, the desk prints "cannot reach the demo servers" and ends with exit code 1 (the exit codes are in `docs/limits.md`). Writing `blind` instead of `keyed` in the window 1 command starts a mail system that cannot recognise a repeated send. These lines are Linux and macOS syntax; in PowerShell run `$env:PYTHONPATH = 'src;.'` on its own line first and then the command without the `PYTHONPATH=...` prefix (not tried here). The steps in "Try it" differ: there you set `PYTHONPATH=src` and `scripts/start_all.sh` sets `src:.` itself. The longer version, with the crash demo, is in `docs/tests.md`, "How to run the tests".
+ 
+ ## Where to read more
+ 
+diff --git a/contract.md b/contract.md
+index d24f76c..c883f9a 100644
+--- a/contract.md
++++ b/contract.md
+@@ -65,7 +65,7 @@ Exact `hint` text for 409 `not_actionable` (same text for retry and resolve), by
+ `GET /counts?expected=` with an empty value (`expected=`), a non-integer or a negative number: 400 `{"error":"bad_expected"}`. No `expected` parameter at all: 200 with `expected_match` and `ok` as `null` where the table says so.
+ 
+ ## Run commands
+-There is no build-system. Scripts set `PYTHONPATH=src` (and run from the repo root): `PYTHONPATH=src python -m lead_desk.server`, `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --port 8766`, `PYTHONPATH=src:. python -m demo_only.burst ...`. (On Windows `;` separates the paths; the run scripts set it.) pytest sets the same paths itself (`pythonpath = ["src", "."]`) for its own process, but NOT for child processes: any test that starts a subprocess (`tests/crash_launcher.py`, the fakes server, `lead_desk.server`) passes `env["PYTHONPATH"]` (src and repo root joined with `os.pathsep`) to it. `schema.sql` is read with `importlib.resources` from the `lead_desk` package, so it is found relative to the package wherever `src` is on the path.
++There is no build-system. Scripts set `PYTHONPATH=src:.` (and run from the repo root): `PYTHONPATH=src:. python -m lead_desk.server`, `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --port 8766`, `PYTHONPATH=src:. python -m demo_only.burst ...`. The `:.` adds the repository folder, where the `demo_only` folder is. With `python -m` started from the repo root, `src` alone also finds it (the current folder is on the module path then), but `python scripts/crash_desk.py` does not have the current folder on its path and needs `src:.`. (On Windows `;` separates the paths; the run scripts set it.) pytest sets the same paths itself (`pythonpath = ["src", "."]`) for its own process, but NOT for child processes: any test that starts a subprocess (`tests/crash_launcher.py`, the fakes server, `lead_desk.server`) passes `env["PYTHONPATH"]` (src and repo root joined with `os.pathsep`) to it. `schema.sql` is read with `importlib.resources` from the `lead_desk` package, so it is found relative to the package wherever `src` is on the path.
+ 
+ ### Dev tools: which lock file for which OS
+ `requirements-dev.txt` is the authority: Linux x86_64, Python 3.12 (CI and containers). `requirements-dev-win.txt` is the Windows lock (Python 3.13, made with `uv pip compile requirements-dev.in --generate-hashes --python-version 3.13 --python-platform windows --no-strip-extras`); it has the same pins plus `colorama`. Install with `pip install --require-hashes -r <that file>`. Both files are regenerated together when `requirements-dev.in` changes. The browser tests have their own optional lock files, `requirements-browser.txt` and `requirements-browser-win.txt` (made from `requirements-browser.in`, see `versions.md`), installed after the development lock. Quality commands (all must pass): `ruff check .`, `ruff format --check .`, `mypy --platform linux`, `mypy --platform win32`, `bandit -ll -r src tools scripts -c pyproject.toml`, `python scripts/check_schema.py`.
+diff --git a/docs/real-services.md b/docs/real-services.md
+index f324dfe..77cc777 100644
+--- a/docs/real-services.md
++++ b/docs/real-services.md
+@@ -6,14 +6,14 @@ This script is an untested reference: it was exercised only against the demo sta
+ 
+ This script has not been run against a real HubSpot account or a real Gmail mailbox. The only real-service try so far is the separate, small script `scripts/hubspot_probe.py` (`docs/hubspot-probe.md`): tried by the author on a free HubSpot account, logs not shipped. Everything else in this repository ran against demo stand-ins. The script described here is the way to try the rest; until a run is recorded in this file, treat the real-service behaviour as untested, including what the code assumes about HubSpot (for example that it refuses a second create of the same email with a message naming the existing contact).
+ 
+-`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people at the address ending `example.com` (the reserved example domain; a real CRM may refuse `.test` addresses); nobody outside your own inboxes receives anything. You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.
++`scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people (the default of the setting `REAL_PERSONS` in your settings file for a real run; at least 8, at most 1000, see `docs/settings.md`). The self-test `--dry-fakes` uses 8 invented people plus one of them again under a second address (the "twin", explained below), which makes 9 leads at the address ending `example.com` (the reserved example domain; a real CRM may refuse `.test` addresses); nobody outside your own inboxes receives anything. You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls, mails and dollars, and it refuses to start without explicit caps.
+ 
+ 1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in. Each name is explained inside the file. Secrets are never in that file, only the paths of one-line key files (a CRM service key with contacts read and write only; a mail app password).
+ 1a. **Before turning lead stages on in any real HubSpot account (required):** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off; test on one made-up contact first. The desk writes the lead status field and cannot see those automations (`docs/limits.md`, section "Which CRM stage things the desk touches").
+ 2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program never creates properties.
+-3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids).
++3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. It asks "Start? [y/N]"; with no terminal to answer on (a script, a CI job) it stops with exit code 1 and calls nothing. Add `--assume-yes` to skip the question (allowed only together with `--dry-fakes`; a real run always asks): `python scripts/run_real_check.py --dry-fakes --assume-yes`. Using `--assume-yes` without `--dry-fakes` prints "refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks" and ends with exit code 2. In two runs by the author on commit f3c39cf8 (2026-11-13, stand-ins only, no real service), the self-test ended with exit code 0 and printed "ALL CHECKS HOLD": one run left 8 follow-ups sent and 1 UNKNOWN, the other 6 sent and 3 UNKNOWN (which ones are caught in the crash window varies from run to run; a UNKNOWN follow-up is allowed by the self-test and listed for a person). The first run is quoted from the author's notes, the second is in `raw/b6b-dry-fakes-assume-yes.log` of those notes; neither log is in this repository. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model, its own dollar cap in the `DESK_LIVE_*` names), `--cleanup` (archives only the contacts this run made, found by their lead ids).
+ 
+-It sends new people, repeats through the same door and the other door, one person with two different addresses (a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the result says so), stops the desk hard once after the load started, restarts it, and re-sends. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (for example one Gmail and one Google Workspace mailbox; one block per mailbox in the config) by the header `X-Send-Key` (no body or address is read) and prints only counts and a pass/fail table of the checks, plus a per-lead table. The same goes into a JSON file.
++It sends new people, repeats through the same door and the other door, one person with two different addresses (the "twin"; a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the result says so), stops the desk hard once after the load started, restarts it, and re-sends. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (for example one Gmail and one Google Workspace mailbox; one block per mailbox in the config) by the header `X-Send-Key` (no body or address is read) and prints only counts and a pass/fail table of the checks, plus a per-lead table. The same goes into a JSON file.
+ 
+ What it would show: the number of CRM contacts per lead id, the desk's own count of calls and creates, and the number of mails that reached your mailboxes per lead, after a crash and with repeats through both doors. What it would NOT show: that mail would reach a stranger's inbox (no spam-folder, SPF or DKIM claim: it counts what arrived in your two mailboxes and their spam folders; one message per lead is allowed across both mailboxes together), that the CRM's own e-mail de-duplication did not hide something (the evidence would be the desk's own counts plus the different-address case), or anything about volumes beyond the free plan's limits. After a hard crash a mail that was in flight is recorded `unknown` on purpose: the table shows how many of those arrived.
+ 
+diff --git a/docs/tests.md b/docs/tests.md
+index 16bac04..27591f9 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -23,7 +23,17 @@ The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the
+ 
+ The settings are in `pyproject.toml` (`[tool.coverage.run]`); the report `coverage.xml` is read by the SonarQube scan through `sonar.python.coverage.reportPaths`. The browser tests skip without Playwright, so the figure counts code that only they reach as not run.
+ 
+-The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene: `PYTHONPATH=src python scripts/crash_desk.py`, then write a point name (for example `D2`) into the flag file it prints, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`). The tests set the path for their own processes. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats.
++Running the desk by hand (Linux or macOS shell syntax; each command in its own terminal window, started from the repository folder, the folder that holds `README.md`). The demo server program (`demo_only.fakes_server`) plays the made-up CRM and the made-up mail outbox at once, and the desk needs it running first:
++
++1. Window 1, the demo server: `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --port 8766`. Writing `blind` instead of `keyed` starts a mail system that cannot recognise a repeated send (see "Words used here" in the README).
++2. Window 2, the desk: `PYTHONPATH=src:. python -m lead_desk.server`. For the crash demo, run `PYTHONPATH=src:. python scripts/crash_desk.py` instead. It prints the path of a flag file (a small file in the folder that holds the desk's database file) in this window. Writing a point name, for example `D2`, into that file arms the stop.
++3. Window 3, one made-up lead: `PYTHONPATH=src python scripts/feed.py --source form --index 1` sends the first made-up lead to the desk (`feed.py` works with `src` alone). When the desk reaches the armed point, it prints "simulate crash", ends at once with exit code 137 (a code the desk gives itself, like a power cut) and removes the flag file.
++
++`bash scripts/start_all.sh` (Linux, macOS) or `scripts\start_all.ps1` (PowerShell) start the demo server and the desk together and set `PYTHONPATH` themselves. The desk's message names `scripts/start_all` without an ending: the files are `start_all.sh` and `start_all.ps1`.
++
++What happens when something is missing (seen on Linux with Python 3.12.3, on private ports, written in `raw/b6b-facts.txt` of the author's notes, which is not in this repository): with the demo server not running, the desk prints `cannot reach the demo servers (are they running? see scripts/start_all)` and ends with exit code 1. With `PYTHONPATH=src` alone, the two `python -m` commands still work when started from the repository folder, because Python puts the current folder on the module path for `-m`; but `python scripts/crash_desk.py` does not have the current folder on its path, and with the demo server running it ends with exit code 1 and a RuntimeError that says the folder `demo_only` is missing (with the demo server not running it prints the "cannot reach" message instead). That is why `src:.` (the `:.` adds the repository folder, where `demo_only` is) is written in every command above except `feed.py`.
++
++On Windows PowerShell, run `$env:PYTHONPATH = 'src;.'` on its own line in each window first, then the command without the `PYTHONPATH=...` prefix (the same setting `scripts\start_all.ps1` uses; the author did not try these commands on Windows in this check). The tests set the path for their own processes.
+ 
+ The desk's settings (the `DESK_*` names, plus the extra names of the real-services script and `N8N_URL`, `N8N_API_KEY_FILE` and the `DPLD_*` names; n8n's own `N8N_PORT` and similar are in `docs/n8n-recipe.md`) are in `docs/settings.md`; the exit codes of the desk are in `docs/limits.md`.
+ 
+@@ -39,7 +49,7 @@ The automatic checks in `.github/workflows/lint.yml` are: ruff (style), mypy (ty
+ 
+ **What is scanned, and what is not:** `tests/` is left out on purpose: it holds planted fake secrets, hostile inputs and deliberately insecure code that exist to be caught by other checks, and Semgrep would report them. `demo_only/` (fake services and a demo page) is left out because it is not code the desk runs for real. This is a decision made without a scan result; add either folder to the command in the workflow and in the line below if you want them read. `n8n` holds 3 JSON files (the workflows) and is only nominal: no rule pack runs on JSON, and JavaScript inside an n8n Code node is not parsed, so Semgrep does not review the n8n workflows. A comment cannot be put in JSON either, so there is nothing to suppress there.
+ 
+-**Exit codes of the scan** (seen with the pinned Semgrep 1.185.0): 0 = no finding; 1 = at least one finding (the job prints "findings above" and fails; findings are never retried); 2 = the registry could not be reached or a scan path does not exist (the job retries up to three times, 20 seconds apart, then fails); 7 = a rule file or address that cannot be read; any other non-zero code is a tool error (the job prints that it is not a finding). 3 = some files that cannot be parsed, when `--strict` is on (as the job has it). Measured with Semgrep 1.185.0, a made-up rule and no network: a Python or a JavaScript file with an unclosed call bracket (`print("hit"` or `eval("hit"`, alone or after a broken `def` or `function` line) made Semgrep exit 3 with `--strict` and exit 0 without it, and the job would then fail with the message "not findings" (it is not retried). The share of lines read does not predict this: it was about 0 to 100 percent in those files. Not every syntax error does it: `def f(:` followed by `  pass`, and `function f( {` followed by `}`, were read in full (about 100 percent) and gave exit 0 even with `--strict`. When another file has a real finding, the exit code is 1. So some files that Semgrep cannot read make the job fail: this is how `--strict` behaves, not a finding. A run of the same kind on the five folders above (a made-up rule for Python and JavaScript, not the registry packs, 47 files on 61ded9e plus this change) gave exit 0 with and without `--strict` and about 100 percent of lines read; that can change when the files change. The rules are fetched live and cannot be pinned, so the registry can change what this check reports without any change here: keep it out of the required checks, and if the job fails with exit 2 after three tries, re-run it later.
++**Exit codes of the scan** (seen with the pinned Semgrep 1.185.0): 0 = no finding; 1 = at least one finding (the job prints "findings above" and fails; findings are never retried); 2 = the registry could not be reached or a scan path does not exist (the job retries up to three times, 20 seconds apart, then fails); 7 = a rule file or address that cannot be read; any other non-zero code is a tool error (the job prints that it is not a finding). 3 = some files that cannot be parsed, when `--strict` is on (as the job has it). Measured with Semgrep 1.185.0, a made-up rule and no network: a Python or a JavaScript file with an unclosed call bracket (`print("hit"` or `eval("hit"`, alone or after a broken `def` or `function` line) made Semgrep exit 3 with `--strict` and exit 0 without it, and the job would then fail with the message "not findings" (it is not retried). The share of lines read does not predict this: it was about 0 to 100 percent in those files. Not every syntax error does it: `def f(:` followed by `  pass`, and `function f( {` followed by `}`, were read in full (about 100 percent) and gave exit 0 even with `--strict`. When another file has a real finding, the exit code is 1. So some files that Semgrep cannot read make the job fail: this is how `--strict` behaves, not a finding. A run of the same kind on the five folders above (a made-up rule for Python and JavaScript, not the registry packs, 47 files on 61ded9e plus the commit that added this Semgrep check, c30c373) gave exit 0 with and without `--strict` and about 100 percent of lines read; that can change when the files change. The rules are fetched live and cannot be pinned, so the registry can change what this check reports without any change here: keep it out of the required checks, and if the job fails with exit 2 after three tries, re-run it later.
+ 
+ **Run it on your own computer** from the repository root, in a Python 3.12 virtual environment, with network access (the rules are downloaded): on Linux x86_64 `pip install --require-hashes --only-binary=:all: --no-deps -r requirements-semgrep.txt`, anywhere else `pip install semgrep==1.185.0` (the version pinned in `requirements-semgrep.in`), then `semgrep scan --metrics=off --strict --error --severity ERROR --config p/python --config p/javascript src scripts load_tools tools n8n`. The job adds `--disable-version-check` (no check for a newer Semgrep); on your computer you may leave it out.
+ 
+@@ -75,11 +85,14 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
+ 
+ * **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
+ * **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
+-* **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and this change's lock files, with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
+-* **A full run on this lock:** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12, before the coverage commit 0841f36) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. The two sidebar tests pass in it: the browser reads the screenshot's pixels itself and no image library is installed. **Why 2462 became 2513:** commit 2ce1f98 holds 51 more tests than 558d37f (2516 against 2465, both counted with `python -m pytest --collect-only -q`): 49 in the new file `tests/test_except_clause_hierarchy.py`, 1 more in `tests/test_lead_crm_copy.py` and 1 more in `tests/test_portal_mode.py` (2465 + 51 = 2516; 2462 + 51 = 2513). Commit 0841f36 (the coverage settings) collects the same 2516 tests. That commit was not run in full. It adds a `[tool.coverage.run]` section in `pyproject.toml`, which only the `coverage` program reads, and it edits `exceptions.txt` and `.gitleaks.toml`, which `tests/test_hygiene.py` reads; it changes no other test or test setting. The hygiene tests were run with a real `gitleaks` program on the final tree and passed (10 tests passed with gitleaks 8.30.1 and DPLD_REQUIRE_SCAN=1).
+-* **Skips reported without Playwright (eight test files, 0841f36 plus this change):** the eight files are `test_mode_safety.py`, `test_portal_browser.py`, `test_portal_lead_pages.py`, `test_portal_mode.py`, `test_portal_wording_and_masking.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`. Two runs, 2026-11-12, one process each, Python 3.12, no Playwright installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set of tests that need Node: 1 in `test_mode_safety.py` (line 174), 2 in `test_portal_lead_pages.py` (line 488, "no node") and 19 in `test_portal_mode.py`. The 113 browser skips are counted by the line where the skip is reported, not by test file (22 at line 109 of `test_mode_safety.py`, 28 at line 27 of `test_portal_browser.py`, 60 at line 113 of `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py` at lines 171, 204 and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
+-* **No full run without Node was done on this commit.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
+-* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of this commit (2516 tests; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
++* **Current counts (commit f3c39cf8, the main branch before the changes in this patch; Linux, Python 3.12.3, one serial process, run as the user root, the administrator user on Linux, which matters for one test; Node was on the path, because none of the 200 skip reasons names Node):** `python -m pytest -q` gave **3683 passed and 200 skipped** (3883 tests in all, exit code 0) in 21 minutes 24 seconds; with coverage (`--cov`) the same counts in 23 minutes 14 seconds and a line rate of 0.9352 in `coverage.xml` (93.52 percent of the code lines were run by the tests). Reported by the author from earlier run notes, not re-measured for this text; the raw logs are not in this repository.
++* **Why 200 tests are skipped, in plain words:** 166 are the browser tests, skipped because the Playwright package is not installed (22 in `test_mode_safety.py`, 28 in `test_portal_browser.py`, 113 in `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py`; see the Playwright steps above); 30 need the `gitleaks` secret-scanning program, which is not installed (24 in `test_gitleaks_exceptions.py`, 2 in `test_gitleaks_semgrep_lock.py`, 4 in `test_hygiene.py`; set `GITLEAKS_BIN` or put `gitleaks` on the path, and `DPLD_REQUIRE_SCAN=1` turns that skip into a failure); and four single tests: 1 is the load measurement, which runs only when `LEAD_DESK_LOAD_N` is set (`test_server_hardening.py`); 1 runs only on Windows (`test_stall_eviction.py`); 1 needs a user who is not root, because root can read a file with no permissions (`test_n8n_api_url.py`); and 1 needs Python 3.13, where `ntpath.isreserved` exists (`test_path_confinement.py`). 166 + 30 + 1 + 1 + 1 + 1 = 200.
++* **The 196 browser and gitleaks tests were run separately, on the same commit, and passed (reported by the author, not re-measured here):** 166 + 30 = 196. With Playwright 1.63.0 and Chromium installed, the ten test files that use the browser (`test_mode_safety.py`, `test_portal_browser.py`, `test_portal_drawer_long_name.py`, `test_portal_layout.py`, `test_portal_lead_pages.py`, `test_portal_long_values.py`, `test_portal_look.py`, `test_portal_phone_layout.py`, `test_portal_wording_and_masking.py`, `test_stage_confirm_browser.py`) gave 241 passed, none skipped; with `gitleaks` 8.30.1 installed, the three gitleaks files (`test_hygiene.py` 24, `test_gitleaks_exceptions.py` 44, `test_gitleaks_semgrep_lock.py` 4) gave 72 passed, none skipped. The numbers 241 and 72 are whole-file totals: they also count tests that already ran in the full run, so they do not add up to 196. A full run on Python 3.13.18 (same commit, still without Playwright and gitleaks) gave 3684 passed and 199 skipped: the test that needs Python 3.13 passed there.
++* **Older counts (history only, NOT the current count): counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and the browser lock files (`requirements-browser.txt` and `requirements-browser-win.txt`), with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
++* **An older full run on this lock (history only, NOT the current count):** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12, before the coverage commit 0841f36) plus the change that added the two browser lock files, changed the sidebar test and added the allowance lines, Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. The two sidebar tests pass in it: the browser reads the screenshot's pixels itself and no image library is installed. **Why 2462 became 2513:** commit 2ce1f98 holds 51 more tests than 558d37f (2516 against 2465, both counted with `python -m pytest --collect-only -q`): 49 in the new file `tests/test_except_clause_hierarchy.py`, 1 more in `tests/test_lead_crm_copy.py` and 1 more in `tests/test_portal_mode.py` (2465 + 51 = 2516; 2462 + 51 = 2513). Commit 0841f36 (the coverage settings) collects the same 2516 tests. That commit was not run in full. It adds a `[tool.coverage.run]` section in `pyproject.toml`, which only the `coverage` program reads, and it edits `exceptions.txt` and `.gitleaks.toml`, which `tests/test_hygiene.py` reads; it changes no other test or test setting. The hygiene tests were run with a real `gitleaks` program on the final tree and passed (10 tests passed with gitleaks 8.30.1 and DPLD_REQUIRE_SCAN=1).
++* **Older record, history only: skips reported without Playwright (eight test files, commit 0841f36 plus the browser lock-file change, when the whole suite had 2516 tests; the current suite has 3883, and the eight files are only part of the ten browser files named above):** the eight files are `test_mode_safety.py`, `test_portal_browser.py`, `test_portal_lead_pages.py`, `test_portal_mode.py`, `test_portal_wording_and_masking.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`. Two runs, 2026-11-12, one process each, Python 3.12, no Playwright installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set of tests that need Node: 1 in `test_mode_safety.py` (line 174), 2 in `test_portal_lead_pages.py` (line 488, "no node") and 19 in `test_portal_mode.py`. In this older record the 113 browser skips are counted by the line where the skip is reported, not by test file (22 at line 109 of `test_mode_safety.py`, 28 at line 27 of `test_portal_browser.py`, 60 at line 113 of `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py` at lines 171, 204 and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
++* **No full run without Node was done on f3c39cf8 or on the older commits above.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
++* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of the older commit 0841f36 (2516 tests; 2329 + 135 = 2464) or of f3c39cf8 (3883 tests), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
+ 
+ ## Quality checks and what to do when a check fails
+ 
+@@ -93,7 +106,7 @@ The repository scan (`patterns.txt`, pattern 9, `[A-Za-z0-9+/=_-]{40,}`) reports
+ 
+ ## What each promise rests on
+ 
+-The desk was stopped on purpose at each of ten crash points and restarted; nine of them are simulated by an exception raised inside the program, and only D2 is a real process kill (`docs/limits.md`). The table says what had happened at each point and what the result was. "Keyed" and "blind" are explained in the README under "Words used here". The two columns are the kind of MAIL system. The outcome at C0 and C1 depends on the kind of CRM instead (both mail kinds gave the same result in the tests, `tests/test_flow.py`, `EXPECT_MORE`), so those two rows say so in words.
++The desk was stopped on purpose at each of ten crash points and restarted; nine of them are simulated by an exception raised inside the program, and only D2 is a real process kill (`docs/limits.md`). The table says what had happened at each point and what the result was. "Keyed" and "blind" are explained in the README under "Words used here". The two columns are the kind of MAIL system. The outcome at C0 and C1 depends on the kind of CRM instead (both mail kinds gave the same result in the tests, `tests/test_flow.py`, `EXPECT_MORE`), so those two rows say so in words. The table is about one follow-up; with many follow-ups at once and a blind mail system, see the paragraph "Blind mail system, many follow-ups at once" after the table.
+ 
+ | Point | What had happened | Keyed mail system | Blind mail system |
+ |---|---|---|---|
+@@ -110,7 +123,9 @@ The desk was stopped on purpose at each of ten crash points and restarted; nine
+ 
+ The portal tests that run in Node (`tests/test_portal_mode.py`, the proof-panel probe in `tests/test_portal_lead_pages.py`) skip when `node` is not installed; GitHub's Ubuntu runners ship Node, so they should run in CI, but no CI run has been seen. The browser tests need Playwright, which `lint.yml` does not install, so they skip in CI and run only on a computer where you install it.
+ 
+-(Exact places: `src/lead_desk/hooks.py` and `contract.md`.) "D1b" is the moment just after the send is marked and just before the mail system is called. The stops are simulated inside the program for all ten points; an eleventh point, N1 (a reminder email was sent, its result not yet recorded), is simulated too and tested in `tests/test_reminder_email.py`. A real process kill (the desk process ends at once) was done only at D2, twice with the demo mail system over HTTP (keyed and blind) and once with a real mail catcher over SMTP (blind sender). The headline "one lead, one CRM row" is NOT claimed for a blind CRM at C0.
++(Exact places: `src/lead_desk/hooks.py` and `contract.md`.) "D1b" is the moment just after the send is marked and just before the mail system is called. The stops are simulated inside the program for all ten points; an eleventh point, N1 (a reminder email was sent, its result not yet recorded), is simulated too and tested in `tests/test_reminder_email.py`. In the tests, a real process kill (the desk process ends at once) was done only at D2, twice with the demo mail system over HTTP (keyed and blind) and once with a real mail catcher over SMTP (blind sender). The headline "one lead, one CRM row" is NOT claimed for a blind CRM at C0. The hand-run soak described in the next paragraph ended the whole desk process at many points, not only at D2.
++
++**Blind mail system, many follow-ups at once.** The table above describes ONE follow-up, which is why most rows say "one email". When the desk is stopped while several follow-ups are being sent, and the mail system is blind (it cannot recognise a repeated send; see "Words used here" in the README), any follow-up that was being sent at that moment can end as UNKNOWN with the stored reason `crash_while_sending`, even at points where the table says "one email". (That reason differs from `crm_unconfirmed`, which the rows C0 and C1 give for a blind CRM.) The desk does not resend an UNKNOWN follow-up, and it is listed in the review list for a person. Measured once, by the author, on commit f3c39cf8 (a soak test run by hand on 2026-11-13, blind mail system, keyed CRM): 300 rounds. In each round the script sent 5 to 40 made-up leads (plus 3 to 8 new ones around each stop), stopped the desk once or twice, restarted it and counted. There were 385 stops in all: 229 at a named crash point (the desk ended at once with exit code 137) and 156 by SIGKILL (the operating system ends the process) at a random time. The 300 rounds held 9154 leads. 197 follow-ups ended UNKNOWN, all in 70 of the 300 rounds; 143 of them had 1 email (it had left) and 54 had none; no lead had 2 emails, and 9100 leads had exactly 1. The soak checker (`load_tools/check_invariants.py`) has a check 2 that allows at most N follow-ups to end UNKNOWN (the setting `--max-unknown N`, default 0): with the default it failed in those 70 rounds and passed in the other 230; with `--max-unknown 100000`, which allows any number, it passed in all 300 rounds, and the checks on messages and on CRM rows (checks 3 and 4) held in every round. The raw log of this run is not in this repository, so you cannot reproduce these numbers from here; the figures are as reported by the author, not re-measured.
+ 
+ 
+ The table below says which tests show each promise. "Tests named" means the tests exist and are named here; it is not a run result.
+diff --git a/tests/test_docs_tests_md_lane3.py b/tests/test_docs_tests_md_lane3.py
+new file mode 100644
+index 0000000..f09b399
+--- /dev/null
++++ b/tests/test_docs_tests_md_lane3.py
+@@ -0,0 +1,160 @@
++"""Pin facts that docs/tests.md, docs/real-services.md, contract.md and the README state about the scripts.
++
++Each test reads text files only; nothing slow is run. These statements were wrong in an earlier version of the docs;
++the tests keep them true. Every check looks inside one named paragraph, not anywhere in the file.
++"""
++
++from __future__ import annotations
++
++import re
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def _read(rel: str) -> str:
++    return (ROOT / rel).read_text(encoding="utf-8")
++
++
++def _line(rel: str, start: str) -> str:
++    """The one line of a file that begins with `start` (zero or two such lines fail the test)."""
++    found = [ln for ln in _read(rel).splitlines() if ln.startswith(start)]
++    assert len(found) == 1, (rel, start, len(found))
++    return found[0]
++
++
++def _index(rel: str, start: str) -> int:
++    lines = _read(rel).splitlines()
++    return next(i for i, ln in enumerate(lines) if ln.startswith(start))
++
++
++def test_old_desk_commands_are_gone_from_every_doc() -> None:
++    old = re.compile(r"PYTHONPATH=src python (-m lead_desk\.server|scripts/crash_desk\.py)")
++    for rel in ("contract.md", "README.md", "docs/tests.md", "docs/real-services.md"):
++        assert not old.search(_read(rel)), rel
++    assert "PYTHONPATH=src:. python -m lead_desk.server" in _read("contract.md")
++    assert "PYTHONPATH=src:. python -m lead_desk.server" in _read("README.md")
++    assert "crash scene" not in _read("docs/tests.md")
++
++
++def test_by_hand_steps_name_one_window_per_command() -> None:
++    # `src:[.]` with a bracket, not a backslash: the characters c:\. would be read by the hygiene test as a path
++    step1 = _line("docs/tests.md", "1. Window 1, the demo server:")
++    assert re.search(r"PYTHONPATH=src:[.] python -m demo_only\.fakes_server --outbox keyed --port 8766", step1)
++    step2 = _line("docs/tests.md", "2. Window 2, the desk:")
++    assert re.search(r"PYTHONPATH=src:[.] python -m lead_desk\.server", step2)
++    assert re.search(r"PYTHONPATH=src:[.] python scripts/crash_desk\.py", step2)
++    step3 = _line("docs/tests.md", "3. Window 3, one made-up lead:")
++    assert "PYTHONPATH=src python scripts/feed.py --source form --index 1" in step3
++    assert "exit code 137" in step3 and "removes the flag file" in step3
++    assert "scripts/start_all.sh" in _line("docs/tests.md", "`bash scripts/start_all.sh`")
++
++
++def test_start_up_outcomes_match_the_code() -> None:
++    para = _line("docs/tests.md", "What happens when something is missing")
++    shown = r"not running, the desk prints `cannot reach the demo servers[^`]*`"
++    assert re.search(shown + r" and ends with exit code 1", para)
++    assert "`python scripts/crash_desk.py` does not have the current folder" in para
++    assert re.search(r"exit code 1 and a RuntimeError that says the folder `demo_only` is missing", para)
++    assert "ModuleNotFoundError" not in _read("docs/tests.md")
++    assert re.search(r'folder demo_only is "\s*"missing', _read("src/lead_desk/loader.py"))
++    assert "cannot reach the demo servers" in _read("src/lead_desk/server.py")
++    assert 'PYTHONPATH="src:."' in _read("scripts/start_all.sh")
++    assert "EXIT_SIMULATED_KILL: Final = 137" in _read("src/lead_desk/constants.py")
++    assert "simulate crash" in _read("src/lead_desk/hooks.py")
++
++
++def test_windows_powershell_form_is_given_once() -> None:
++    para = _line("docs/tests.md", "On Windows PowerShell, run")
++    assert "$env:PYTHONPATH = 'src;.'" in para
++    assert "'src;.'" in _read("scripts/start_all.ps1")
++    readme = _line("README.md", "The desk alone needs two terminal windows")
++    assert "$env:PYTHONPATH = 'src;.'" in readme
++    assert "cannot reach the demo servers" in readme and "exit code 1" in readme
++
++
++def test_documented_assume_yes_flag_exists_in_the_script() -> None:
++    script = _read("scripts/run_real_check.py")
++    assert re.search(r'add_argument\(\s*"--assume-yes"', script)
++    assert "EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = 2, 1, 3" in script
++    assert "refused: --assume-yes is only for the self-test (--dry-fakes); a real run always asks" in script
++    step = _line("docs/real-services.md", "3. Self-test first")
++    assert re.search(r'It asks "Start\? \[y/N\]"; with no terminal to answer on[^.]*exit code 1', step)
++    assert "python scripts/run_real_check.py --dry-fakes --assume-yes" in step
++    assert re.search(r"without `--dry-fakes` prints \"refused: --assume-yes[^\"]*\" and ends with exit code 2", step)
++    assert "ALL CHECKS HOLD" in step and "in two runs by the author" in step.lower()
++
++
++def test_documented_soak_flag_exists_in_the_checker() -> None:
++    checker = _read("load_tools/check_invariants.py")
++    assert re.search(r'add_argument\(\s*"--max-unknown"', checker)
++    assert re.search(r"DEFAULT_MAX_UNKNOWN = \(?\s*0\b", checker)
++    assert "crash_while_sending" in _read("src/lead_desk/desk.py")
++    para = _line("docs/tests.md", "**Blind mail system, many follow-ups at once.**")
++    for must in (
++        "cannot recognise a repeated send",
++        "`crash_while_sending`",
++        "`--max-unknown N`, default 0",
++        "`--max-unknown 100000`, which allows any number",
++        "keyed CRM): 300 rounds",
++        "385 stops in all: 229 at a named crash point",
++        "156 by SIGKILL",
++        "9154 leads",
++        "197 follow-ups ended UNKNOWN, all in 70 of the 300 rounds",
++        "143 of them had 1 email",
++        "54 had none",
++        "no lead had 2 emails",
++        "failed in those 70 rounds and passed in the other 230",
++        "not in this repository",
++    ):
++        assert must in para, must
++    assert "never 2 for one lead" not in para
++    assert 229 + 156 == 385 and 143 + 54 == 197 and 70 + 230 == 300 and 9100 + 54 == 9154
++    # the paragraph comes after the "(Exact places" paragraph, as the table notes belong together
++    assert _index("docs/tests.md", "**Blind mail system") > _index("docs/tests.md", "(Exact places:")
++    assert "see the paragraph" in _line("docs/tests.md", "The desk was stopped on purpose at each of ten crash points")
++
++
++def test_documented_counts_are_the_measured_ones_not_the_stale_ones() -> None:
++    cur = _line("docs/tests.md", "* **Current counts (commit f3c39cf8")
++    assert "**3683 passed and 200 skipped**" in cur and "3883 tests in all" in cur
++    assert "the administrator user on Linux" in cur and "none of the 200 skip reasons names Node" in cur
++    assert "93.52 percent of the code lines" in cur and "not re-measured" in cur
++    why = _line("docs/tests.md", "* **Why 200 tests are skipped")
++    assert "166 + 30 + 1 + 1 + 1 + 1 = 200" in why
++    for reason in (
++        "166 are the browser tests",
++        "30 need the `gitleaks` secret-scanning program",
++        "1 is the load measurement, which runs only when `LEAD_DESK_LOAD_N` is set",
++        "1 runs only on Windows",
++        "1 needs a user who is not root",
++        "1 needs Python 3.13",
++    ):
++        assert reason in why, reason
++    parts = [int(n) for n in re.findall(r"\b(\d+) in `test_", why)]
++    assert len(parts) == 7 and sum(parts[:4]) == 166 and sum(parts[4:]) == 30 and 166 + 30 + 4 == 200
++    run = _line("docs/tests.md", "* **The 196 browser and gitleaks tests were run separately")
++    assert "166 + 30 = 196" in run and "241 passed, none skipped" in run and "72 passed, none skipped" in run
++    assert "whole-file totals" in run and "do not add up to 196" in run
++    assert "3684 passed and 199 skipped" in run
++    browser_files = sorted(
++        p.name for p in (ROOT / "tests").glob("test_*.py") if "play" + "wright" in p.read_text(encoding="utf-8").lower()
++    )
++    assert len(browser_files) == 10 and all(name in run for name in browser_files)
++    found = [ln for ln in _read("docs/tests.md").splitlines() if re.search(r"2513 passed|2349 passed", ln)]
++    assert found and all("NOT the current count" in ln or "Older record" in ln for ln in found), found
++    old_eight = _line("docs/tests.md", "* **Older record, history only")
++    assert "2516 tests" in old_eight and "3883" in old_eight
++    assert "this change" not in _read("docs/tests.md")
++
++
++def test_dry_run_people_count_is_the_real_one() -> None:
++    doc = _line("docs/real-services.md", "`scripts/run_real_check.py` runs the same desk")
++    assert "8 invented people plus one of them again under a second address" in doc
++    assert "which makes 9 leads" in doc and "at least 8, at most 1000" in doc and "`REAL_PERSONS`" in doc
++    script = _read("scripts/run_real_check.py")
++    assert re.search(r'"REAL_PERSONS": "8"', script)
++    assert "DEFAULT_PERSONS = 12" in script and "MIN_PERSONS = 8" in script
++    assert "REAL_PERSONS_MAX: Final = 1_000" in _read("src/lead_desk/constants.py")
++    assert "(default 12, at least 8, at most 1000)" in _read("docs/settings.md")
++    assert "the \"twin\"" in _line("docs/real-services.md", "It sends new people")

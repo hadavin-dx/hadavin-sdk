@@ -1,0 +1,65 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index e704f90..557c30a 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -13,7 +13,7 @@ testpaths = ["tests"]
+ # shows up as BaseServer.shutdown in the dump). No new dependency: this is built into pytest.
+ faulthandler_timeout = 300
+ # test command: python -m pytest -q
+-# Run commands set PYTHONPATH=src (there is no build-system); see contract.md, Run commands.
++# Run commands set PYTHONPATH=src:. (there is no build-system); see contract.md, Run commands.
+ 
+ [tool.ruff]
+ line-length = 120
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index c74595d..b7bdeca 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -1,6 +1,8 @@
+ """Run the desk so that it can be stopped on purpose at one named moment (used to try the crash recovery by hand).
+ 
+-Run from the repository root:  PYTHONPATH=src python scripts/crash_desk.py   (on Windows: set PYTHONPATH=src first)
++Run from the repository root:  PYTHONPATH=src:. python scripts/crash_desk.py
++(in PowerShell: run $env:PYTHONPATH = 'src;.' on its own line first). The `:.` is needed because a script file does
++not have the current folder on its module path, and the desk loads the demo_only folder from there.
+ It starts the normal desk with the shared crash hook. Nothing happens until you create the flag file; its content is
+ one point name from lead_desk.hooks.ALL_HOOK_POINTS. The next time the desk reaches that point it prints
+ "simulate crash" and ends the process at once with exit code 137 (like a power cut), and the flag file is removed.
+diff --git a/tests/test_run_commands_lane3.py b/tests/test_run_commands_lane3.py
+new file mode 100644
+index 0000000..ae84d13
+--- /dev/null
++++ b/tests/test_run_commands_lane3.py
+@@ -0,0 +1,32 @@
++"""Keep the run command in the crash_desk.py docstring and the pyproject.toml comment the same as in contract.md.
++
++Text only: the files are read, nothing is started.
++"""
++
++from __future__ import annotations
++
++import re
++from pathlib import Path
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++def _read(rel: str) -> str:
++    return (ROOT / rel).read_text(encoding="utf-8")
++
++
++def test_crash_desk_docstring_names_the_path_with_the_repository_folder() -> None:
++    doc = _read("scripts/crash_desk.py").split('"""')[1]
++    assert "PYTHONPATH=src python scripts/crash_desk.py" not in doc
++    assert "set PYTHONPATH=src first" not in doc
++    assert re.search(r"PYTHONPATH=src:[.] python scripts/crash_desk\.py", doc)
++    assert "$env:PYTHONPATH = 'src;.'" in doc
++    assert max(len(line) for line in doc.splitlines()) <= 120
++
++
++def test_pyproject_comment_names_the_path_with_the_repository_folder() -> None:
++    comments = [ln for ln in _read("pyproject.toml").splitlines() if ln.startswith("# Run commands set PYTHONPATH")]
++    assert len(comments) == 1
++    assert "PYTHONPATH=src:. (there is no build-system)" in comments[0]
++    assert "PYTHONPATH=src (" not in comments[0]
++

@@ -1,0 +1,60 @@
+FAILS (good) | docs/tests.md | 'PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed --por' | count=1
+FAILS (good) | docs/tests.md | 'PYTHONPATH=src:. python -m lead_desk.server' | count=1
+FAILS (good) | docs/tests.md | 'PYTHONPATH=src:. python scripts/crash_desk.py' | count=1
+FAILS (good) | docs/tests.md | 'PYTHONPATH=src python scripts/feed.py --source form --index 1' | count=1
+FAILS (good) | docs/tests.md | 'exit code 137' | count=2
+FAILS (good) | docs/tests.md | 'removes the flag file' | count=1
+FAILS (good) | docs/tests.md | '`bash scripts/start_all.sh`' | count=1
+FAILS (good) | docs/tests.md | '`python scripts/crash_desk.py` does not have the current folder' | count=1
+FAILS (good) | docs/tests.md | 'a RuntimeError that says the folder `demo_only` is missing' | count=1
+FAILS (good) | docs/tests.md | 'ends with exit code 1. With `PYTHONPATH=src` alone' | count=1
+FAILS (good) | docs/tests.md | "$env:PYTHONPATH = 'src;.'" | count=1
+FAILS (good) | README.md | "$env:PYTHONPATH = 'src;.'" | count=1
+FAILS (good) | README.md | 'The desk alone needs two terminal windows' | count=1
+FAILS (good) | README.md | 'exit code 1' | count=1
+FAILS (good) | docs/real-services.md | 'with no terminal to answer on' | count=1
+FAILS (good) | docs/real-services.md | 'ends with exit code 2' | count=1
+FAILS (good) | docs/real-services.md | 'In two runs by the author' | count=1
+FAILS (good) | docs/real-services.md | '8 invented people plus one of them again under a second address' | count=1
+FAILS (good) | docs/real-services.md | 'which makes 9 leads' | count=1
+FAILS (good) | docs/real-services.md | 'at least 8, at most 1000' | count=1
+FAILS (good) | docs/real-services.md | '(the "twin"; a CRM' | count=1
+FAILS (good) | contract.md | '`PYTHONPATH=src:. python -m lead_desk.server`' | count=1
+FAILS (good) | docs/tests.md | 'is blind (it cannot recognise a repeated send; see' | count=1
+FAILS (good) | docs/tests.md | '`crash_while_sending`' | count=1
+FAILS (good) | docs/tests.md | '`--max-unknown N`, default 0' | count=1
+FAILS (good) | docs/tests.md | '`--max-unknown 100000`, which allows any number' | count=1
+FAILS (good) | docs/tests.md | 'keyed CRM): 300 rounds' | count=1
+FAILS (good) | docs/tests.md | '385 stops in all: 229 at a named crash point' | count=1
+FAILS (good) | docs/tests.md | '156 by SIGKILL' | count=1
+FAILS (good) | docs/tests.md | '9154 leads' | count=1
+FAILS (good) | docs/tests.md | '197 follow-ups ended UNKNOWN, all in 70 of the 300 rounds' | count=1
+FAILS (good) | docs/tests.md | '143 of them had 1 email' | count=1
+FAILS (good) | docs/tests.md | '54 had none' | count=1
+FAILS (good) | docs/tests.md | 'no lead had 2 emails' | count=1
+FAILS (good) | docs/tests.md | 'failed in those 70 rounds and passed in the other 230' | count=1
+FAILS (good) | docs/tests.md | 'The raw log of this run is not in this repository' | count=1
+FAILS (good) | docs/tests.md | 'see the paragraph' | count=1
+FAILS (good) | docs/tests.md | '**3683 passed and 200 skipped**' | count=1
+FAILS (good) | docs/tests.md | '3883 tests in all' | count=1
+FAILS (good) | docs/tests.md | 'the administrator user on Linux' | count=1
+FAILS (good) | docs/tests.md | 'none of the 200 skip reasons names Node' | count=1
+FAILS (good) | docs/tests.md | '93.52 percent of the code lines' | count=1
+FAILS (good) | docs/tests.md | '166 + 30 + 1 + 1 + 1 + 1 = 200' | count=1
+FAILS (good) | docs/tests.md | '166 are the browser tests' | count=1
+FAILS (good) | docs/tests.md | '30 need the `gitleaks` secret-scanning program' | count=1
+FAILS (good) | docs/tests.md | '1 is the load measurement, which runs only when `LEAD_DESK_LOAD_N` is ' | count=1
+FAILS (good) | docs/tests.md | '1 runs only on Windows' | count=1
+FAILS (good) | docs/tests.md | '1 needs a user who is not root' | count=1
+FAILS (good) | docs/tests.md | '1 needs Python 3.13' | count=1
+FAILS (good) | docs/tests.md | '166 + 30 = 196' | count=1
+FAILS (good) | docs/tests.md | '241 passed, none skipped' | count=1
+FAILS (good) | docs/tests.md | '72 passed, none skipped' | count=1
+FAILS (good) | docs/tests.md | 'whole-file totals' | count=1
+FAILS (good) | docs/tests.md | 'do not add up to 196' | count=1
+FAILS (good) | docs/tests.md | '3684 passed and 199 skipped' | count=1
+FAILS (good) | docs/tests.md | '`test_stage_confirm_browser.py`' | count=2
+FAILS (good) | docs/tests.md | '2516 tests; the current suite has 3883' | count=1
+FAILS (good) | docs/tests.md | 'NOT the current count' | count=2
+pins 58 problems 0
+[]

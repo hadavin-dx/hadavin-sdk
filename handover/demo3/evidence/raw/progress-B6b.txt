@@ -1,2 +1,4 @@
 start 14:09Z
 14:2xZ dry run started (own pid)
+14:3xZ affected-tests run started (own bg job)
+14:4xZ patches + mutation proof done; waiting affected run; notes next

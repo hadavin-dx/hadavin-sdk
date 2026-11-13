@@ -1,0 +1,311 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/e3c-orig
+configfile: pyproject.toml
+collected 15 items
+
+tests/test_docs_claims_lane3.py FFFFFFF.FF.FFFF                          [100%]
+
+=================================== FAILURES ===================================
+_______________ test_exit_code_1_uses_the_words_the_desk_prints ________________
+
+tmp_path = PosixPath('/home/user/work/priv/e3c-tmp/bt-d/test_exit_code_1_uses_the_word0')
+
+    def test_exit_code_1_uses_the_words_the_desk_prints(tmp_path: Path) -> None:
+        env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}  # nothing of the tester's own settings
+        env["PYTHONPATH"] = os.pathsep.join([str(REPO / "src"), str(REPO)])
+        env.update(
+            DESK_PORT=str(free_port()),
+            DESK_FAKES_PORT=str(free_port()),  # nothing listens here: the demo servers are "not running"
+            DESK_DB_PATH=str(tmp_path / "data" / "desk.db"),
+        )
+        done = subprocess.run(  # noqa: S603 - our own interpreter and module, fixed arguments
+            [sys.executable, "-m", "lead_desk.server"],
+            cwd=tmp_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        if done.returncode == 3:  # the desk checks the open-file limit first (containers often allow only 4096)
+            pytest.skip(f"this computer's open-file limit is too low for the desk (exit 3): {done.stdout.strip()[-200:]}")
+        lines = done.stdout.strip().splitlines()
+        assert lines, f"premise: the desk printed nothing (exit {done.returncode}, error output: {done.stderr[-200:]!r})"
+        printed = lines[-1]
+        assert done.returncode == 1, f"premise: exit code 1 means the demo servers cannot be reached: {done.returncode}"
+        phrase = printed.split(" (")[0]  # "cannot reach the demo servers"
+        assert phrase.startswith("cannot reach the demo servers"), f"premise: the desk prints this phrase: {printed}"
+        bullet = _flat(_line_with(_read("docs/limits.md"), "* Exit codes:"))
+>       assert phrase in bullet, _p("limits.md quotes the words the desk prints for exit code 1")
+E       AssertionError: this sentence protects: limits.md quotes the words the desk prints for exit code 1 (if you reword the sentence, keep this fact)
+E       assert 'cannot reach the demo servers' in '* Exit codes: 1 the sender cannot be reached, or a Python traceback (a constant that is out of range); 2 another desk...at is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).'
+
+tests/test_docs_claims_lane3.py:87: AssertionError
+_____________ test_the_fresh_desk_counts_are_what_the_readme_says ______________
+
+env = <conftest.Env object at 0x7fa08e05ca10>
+tmp_path = PosixPath('/home/user/work/priv/e3c-tmp/bt-d/test_the_fresh_desk_counts_are0')
+
+    def test_the_fresh_desk_counts_are_what_the_readme_says(env, tmp_path: Path) -> None:
+        base = _start_real_desk(env, tmp_path)
+        status, reply = call(base, "GET", "/counts")
+        assert status == 200, "premise: the counts check answers HTTP 200"
+        for name in FIVE:
+            assert reply[name] == 0, f"premise: the five counts are 0 on a fresh desk: {name}"
+        time_field = "last_reaper_pass_at"
+        others = [
+            key
+            for key, value in reply.items()
+            if isinstance(value, int) and not isinstance(value, bool) and key not in FIVE and key != time_field
+        ]
+        assert others, "premise: there are other counts besides the five counts"
+        for name in others:
+            assert reply[name] == 0, f"premise: every other count is 0 on a fresh desk: {name}"
+        assert all(v == 0 for v in reply["hung_workers"].values()), "premise: the numbers inside hung_workers are 0"
+        assert len(reply["hung_workers"]) == 4, "premise: hung_workers holds four numbers"
+        server_text = _read("src/lead_desk/server.py")
+        assert server_text.index("desk.start_background()") < server_text.index("server.serve_forever()"), (
+            "premise: the Reaper is started before the desk serves its first request"
+        )
+        wait_until(lambda: call(base, "GET", "/counts")[1]["reaper_running"] is True, what="reaper running")
+        reply = call(base, "GET", "/counts")[1]
+        assert reply[time_field] is None or isinstance(reply[time_field], int), "premise: a time in seconds, or null"
+        assert reply["expected_match"] is None and reply["ok"] is None, "premise: expected_match and ok are null"
+    
+        readme = _read("README.md")
+        linux = _between(readme, "**Linux**", "**Windows PowerShell**")
+>       assert FIVE_NAMED in linux and re.search(r"are 0\. So are the other counts", linux), _p(
+            "the five counts are named and the other counts are 0 too"
+        )
+E       AssertionError: this sentence protects: the five counts are named and the other counts are 0 too (if you reword the sentence, keep this fact)
+E       assert ('`received`, `new`, `duplicate`, `review` and `open`' in '**Linux** python3 -m venv .venv && . .venv/bin/activate export PYTHONPATH=src # tells Python where the code is bash s...oes not run, for example where `sh` is dash (Debian and Ubuntu). A shell that does run `[[` (busybox sh, zsh) goes on.')
+
+tests/test_docs_claims_lane3.py:150: AssertionError
+_______ test_the_second_feed_and_the_receipt_number_match_the_real_desk ________
+
+env = <conftest.Env object at 0x7fa08e48eae0>
+tmp_path = PosixPath('/home/user/work/priv/e3c-tmp/bt-d/test_the_second_feed_and_the_r0')
+
+    def test_the_second_feed_and_the_receipt_number_match_the_real_desk(env, tmp_path: Path) -> None:
+        base = _start_real_desk(env, tmp_path)
+        one = {"name": "Ada Example", "email": "ada@example.test", "phone": "555 0100", "company": "Example Ltd"}
+        first = post_lead(base, "form", "f-1", one)
+        again = post_lead(base, "form", "f-1", one)  # the same request id: a replay
+        other_door = post_lead(base, "webhook", "w-1", one)  # same person, new request id
+        assert first[0] == 201 and first[1]["verdict"] == "new", "premise: a new lead answers 201 new"
+        assert again[0] == 201 and again[1].get("replayed") is True, "premise: a replay of a `new` answers 201 replayed"
+        assert again[1]["receipt_id"] == first[1]["receipt_id"] == 1, "premise: the replay shows the FIRST receipt's number"
+        assert other_door[0] == 200 and other_door[1]["verdict"] == "duplicate", "premise: a duplicate answers 200"
+        counts = call(base, "GET", "/counts")[1]
+        assert (counts["received"], counts["new"], counts["duplicate"]) == (2, 1, 1), _p(
+            "README: received 2, new 1, duplicate 1 (a replay is not counted again)"
+        )
+        receipt = other_door[1]["receipt_id"]
+        assert receipt == 3, _p("README: the other door's receipt_id is 3, not 2 (the repeat used up the number 2)")
+        with sqlite3.connect(tmp_path / "desk.sqlite3") as db:
+            rows = db.execute("SELECT receipt_id, attempts FROM receipts ORDER BY receipt_id").fetchall()
+        assert rows == [(1, 2), (3, 1)], (
+            f"premise: the repeat updated receipt 1 (attempts 2), number 2 was never stored, the webhook lead is 3: {rows}"
+        )
+        assert "ON CONFLICT(source, source_ref) DO UPDATE SET attempts = attempts + 1" in _read("src/lead_desk/desk.py"), (
+            "premise: a repeat updates the first row instead of inserting (reads desk.py, not the text)"
+        )
+        assert "(SELECT count(*) FROM receipts)," in _read("src/lead_desk/desk.py"), (
+            "premise: `received` is the number of stored receipts"
+        )
+        assert "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT" in _read("src/lead_desk/schema.sql"), (
+            "premise: receipt numbers only go up (reads the schema file, not the text)"
+        )
+    
+        readme = _read("README.md")
+        webhook_lines = (
+            ("Linux", "python scripts/feed.py --source webhook"),
+            ("Windows", r"python scripts\feed.py --source webhook"),
+        )
+        for label, start in webhook_lines:
+            line = _flat(_line_with(readme, start))
+>           assert "HTTP 200 (not 201)" in line, _p(f"{label} webhook line: the duplicate answers HTTP 200, not 201")
+E           AssertionError: this sentence protects: Linux webhook line: the duplicate answers HTTP 200, not 201 (if you reword the sentence, keep this fact)
+E           assert 'HTTP 200 (not 201)' in 'python scripts/feed.py --source webhook --index 1 # same person through the other door: "verdict": "duplicate"'
+
+tests/test_docs_claims_lane3.py:225: AssertionError
+_________ test_the_receipt_explanation_is_true_and_the_word_is_defined _________
+
+    def test_the_receipt_explanation_is_true_and_the_word_is_defined() -> None:
+        flat = _flat(_read("README.md"))
+        word = re.search(r"\* \*\*receipt_id\*\*: ([^*]*?)(?= \* \*\*)", flat)
+>       assert word and "counting up from 1" in word.group(1) and "not the request id" in word.group(1), _p(
+            "the word list defines receipt_id as the desk's own number counting up from 1, not the request id"
+        )
+E       AssertionError: this sentence protects: the word list defines receipt_id as the desk's own number counting up from 1, not the request id (if you reword the sentence, keep this fact)
+E       assert (None)
+
+tests/test_docs_claims_lane3.py:234: AssertionError
+_______ test_the_words_repeat_duplicate_and_request_id_keep_one_meaning ________
+
+    def test_the_words_repeat_duplicate_and_request_id_keep_one_meaning() -> None:
+        flat = _flat(_read("README.md"))
+>       assert re.search(
+            r"\*\*Repeat\*\* \(the reply says `\"replayed\": true`\): the "
+            r"same request id came again on the same door",
+            flat,
+        ), _p(
+            "a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref)"
+        )
+E       AssertionError: this sentence protects: a repeat is the same request id on the same door (the unique key of the receipts is source plus source_ref) (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fa08f5dd300>('\\*\\*Repeat\\*\\* \\(the reply says `\\"replayed\\": true`\\): the same request id came again on the same door', '# duplicate-proof-lead-desk **In plain words** 1. A sales lead can arrive twice: the same person fills in the web for...n reviewed by a lawyer. Outside contributions (pull requests) are not accepted. See `SECURITY.md` to report a problem.')
+E        +    where <function search at 0x7fa08f5dd300> = re.search
+
+tests/test_docs_claims_lane3.py:258: AssertionError
+________ test_the_burst_numbers_in_limits_are_what_a_real_desk_answers _________
+
+env = <conftest.Env object at 0x7fa08e48d8e0>
+tmp_path = PosixPath('/home/user/work/priv/e3c-tmp/bt-d/test_the_burst_numbers_in_limi0')
+
+    def test_the_burst_numbers_in_limits_are_what_a_real_desk_answers(env, tmp_path: Path) -> None:
+        base = _start_real_desk(env, tmp_path)
+        url = base + "/leads"
+        email = "ada@example.test"
+        n = 10
+        first = burst.fire(url, n, email, "p1", "form")
+        same = burst.fire(url, n, email, "p1", "form")
+        other = burst.fire(url, n, email, "p2", "form")
+    
+        def shown(result: dict[str, object]) -> dict[object, int]:
+            out: dict[object, int] = {}
+            for status in result["final"]:  # type: ignore[attr-defined]
+                out[status] = out.get(status, 0) + 1
+            return out
+    
+        assert shown(first) == {201: 1, 200: n - 1}, "premise: a fresh desk answers 201 once and 200 for the other n - 1"
+        assert shown(same) == {201: 1, 200: n - 1}, "premise: the same prefix again gives the stored answers"
+        assert shown(other) == {200: n}, "premise: another prefix on a desk that holds the address answers 200 n times"
+        wait_until(lambda: call(base, "GET", "/counts")[1]["pending_followups"] == 0, what="follow-ups finished")
+        assert call(base, "GET", "/counts")[1]["new"] == 1, "premise: new stays 1 through all three runs"
+    
+        steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
+        sends = int(re.search(r"--n (\d+)", steps).group(1))  # type: ignore[union-attr]
+>       assert re.search(rf"STATUS 201=1 200={sends - 1}\b", steps), _p(
+            "a fresh desk: 201=1 and 200 for the other n - 1 sends"
+        )
+E       AssertionError: this sentence protects: a fresh desk: 201=1 and 200 for the other n - 1 sends (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fa08f5dd300>('STATUS 201=1 200=99\\b', '* Burst test: many connections open at the same moment, all for the same lead (the same email under different request...checks this for 10). Right after a burst one follow-up can show as pending for about 3 seconds before it settles to 0.')
+E        +    where <function search at 0x7fa08f5dd300> = re.search
+
+tests/test_docs_claims_lane3.py:310: AssertionError
+___________ test_the_burst_steps_explain_each_term_and_both_systems ____________
+
+    def test_the_burst_steps_explain_each_term_and_both_systems() -> None:
+        steps = _between(_read("docs/limits.md"), "* Burst test:", "* Larger bursts:")
+        sends = int(re.search(r"--n (\d+)", steps).group(1))  # type: ignore[union-attr]
+        numbering = rf"`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-{sends}"
+>       assert re.search(numbering, steps), _p(
+            "burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them"
+        )
+E       AssertionError: this sentence protects: burst request numbers run from run1-1 (not 0) to run1-n, as demo_only/burst.py builds them (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fa08f5dd300>('`--ref-prefix run1` makes the request ids run1-1, run1-2 and so on up to run1-100', '* Burst test: many connections open at the same moment, all for the same lead (the same email under different request...checks this for 10). Right after a burst one follow-up can show as pending for about 3 seconds before it settles to 0.')
+E        +    where <function search at 0x7fa08f5dd300> = re.search
+
+tests/test_docs_claims_lane3.py:331: AssertionError
+___________ test_the_recipe_names_the_ports_each_workflow_file_needs ___________
+
+    def test_the_recipe_names_the_ports_each_workflow_file_needs() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+>       assert re.search(r"`desk-form\.json` and `desk-webhook\.json` need only the desk on 127\.0\.0\.1:8765", flat), _p(
+            "the form and webhook files need only the desk port"
+        )
+E       AssertionError: this sentence protects: the form and webhook files need only the desk port (if you reword the sentence, keep this fact)
+E       assert None
+E        +  where None = <function search at 0x7fa08f5dd300>('`desk-form\\.json` and `desk-webhook\\.json` need only the desk on 127\\.0\\.0\\.1:8765', '# The n8n workflows of the demo, what each one does Who this is for: someone who has used n8n a little and wants to r...cate`) in a real n8n, including how n8n finds the output of the step "Wait for the desk to finish" from the last step.')
+E        +    where <function search at 0x7fa08f5dd300> = re.search
+
+tests/test_docs_claims_lane3.py:425: AssertionError
+______________ test_the_recipe_tells_one_true_story_about_docker _______________
+
+    def test_the_recipe_tells_one_true_story_about_docker() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+>       docker = flat.split("**n8n in Docker.**")[1].split("* **n8n's port.**")[0]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:454: IndexError
+___________ test_the_recipe_says_to_reset_and_start_everything_again ___________
+
+    def test_the_recipe_says_to_reset_and_start_everything_again() -> None:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+>       intro = flat.split("Before you try the example inputs")[1].split("Example inputs (made-up):")[0]
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:497: IndexError
+________________ test_the_recipe_import_steps_match_the_script _________________
+
+    def test_the_recipe_import_steps_match_the_script() -> None:
+        recipe = _read("docs/n8n-recipe.md")
+        script = _read("scripts/n8n_api.py")
+>       steps = _recipe_steps()
+                ^^^^^^^^^^^^^^^
+
+tests/test_docs_claims_lane3.py:529: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _recipe_steps() -> str:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+>       return flat.split("To import a workflow with the script")[1].split("The script has no command")[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:523: IndexError
+___________ test_the_recipe_activates_each_workflow_by_its_real_name ___________
+
+    def test_the_recipe_activates_each_workflow_by_its_real_name() -> None:
+>       steps = _recipe_steps()
+                ^^^^^^^^^^^^^^^
+
+tests/test_docs_claims_lane3.py:603: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _recipe_steps() -> str:
+        flat = _flat(_read("docs/n8n-recipe.md"))
+>       return flat.split("To import a workflow with the script")[1].split("The script has no command")[0]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: list index out of range
+
+tests/test_docs_claims_lane3.py:523: IndexError
+_________________ test_readme_port_check_explains_000_and_404 __________________
+
+    def test_readme_port_check_explains_000_and_404() -> None:
+        readme = _read("README.md")
+        linux = readme.split("**Linux**")[1].split("**Windows PowerShell**")[0]
+        assert "curl " in linux, "premise: the Linux block uses curl (reads the block, not the 'You need' sentence)"
+        lines = readme.splitlines()
+        first = next(i for i, ln in enumerate(lines) if ln.startswith("You need Linux or Windows"))
+        last = next(i for i, ln in enumerate(lines) if i > first and ln.startswith("1. On this repository"))
+        chunk = lines[first:last]
+        need = _flat("\n".join(chunk))
+        bullets = [ln for ln in chunk if ln.startswith("* ")]
+>       assert len(bullets) >= 4, _p("the port check is a bullet list (Linux, 000, other number, Windows)")
+E       AssertionError: this sentence protects: the port check is a bullet list (Linux, 000, other number, Windows) (if you reword the sentence, keep this fact)
+E       assert 0 >= 4
+E        +  where 0 = len([])
+
+tests/test_docs_claims_lane3.py:625: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_docs_claims_lane3.py::test_exit_code_1_uses_the_words_the_desk_prints
+FAILED tests/test_docs_claims_lane3.py::test_the_fresh_desk_counts_are_what_the_readme_says
+FAILED tests/test_docs_claims_lane3.py::test_the_second_feed_and_the_receipt_number_match_the_real_desk
+FAILED tests/test_docs_claims_lane3.py::test_the_receipt_explanation_is_true_and_the_word_is_defined
+FAILED tests/test_docs_claims_lane3.py::test_the_words_repeat_duplicate_and_request_id_keep_one_meaning
+FAILED tests/test_docs_claims_lane3.py::test_the_burst_numbers_in_limits_are_what_a_real_desk_answers
+FAILED tests/test_docs_claims_lane3.py::test_the_burst_steps_explain_each_term_and_both_systems
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_names_the_ports_each_workflow_file_needs
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_tells_one_true_story_about_docker
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_says_to_reset_and_start_everything_again
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_import_steps_match_the_script
+FAILED tests/test_docs_claims_lane3.py::test_the_recipe_activates_each_workflow_by_its_real_name
+FAILED tests/test_docs_claims_lane3.py::test_readme_port_check_explains_000_and_404
+========================= 13 failed, 2 passed in 3.36s =========================

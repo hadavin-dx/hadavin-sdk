@@ -1,0 +1,5 @@
+tests/test_run_commands_lane3.py:30: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_run_commands_lane3.py::test_crash_desk_docstring_names_the_path_with_the_repository_folder
+FAILED tests/test_run_commands_lane3.py::test_pyproject_comment_names_the_path_with_the_repository_folder
+2 failed in 0.05s
