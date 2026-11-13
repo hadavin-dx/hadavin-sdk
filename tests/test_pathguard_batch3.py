@@ -137,7 +137,9 @@ def _wide(tmp_path) -> str:
     return text
 
 
-LONG = "/" + "a" * (pathguard.MAX_PATH_BYTES + 5)  # text only: no file system call can come first
+LONG = "/" + "/".join(
+    ["a" * 200] * 21
+)  # over the limit as text, no name over 255 bytes; text only: no file system call can come first
 
 
 def test_pin_r5_join_refuses_a_long_base_text():
@@ -173,7 +175,11 @@ def test_pin_r5_operator_file_refuses_a_long_text():
 
 
 def test_pin_r5_a_path_at_the_limit_is_not_refused_for_length(tmp_path):
-    text = str(tmp_path) + "/" + "a" * (pathguard.MAX_PATH_BYTES - len(str(tmp_path)) - 1)
+    room = (
+        pathguard.MAX_PATH_BYTES - len(str(tmp_path)) - 1
+    )  # names of 200 bytes: one name may not pass 255
+    text = str(tmp_path) + "/" + "/".join("a" * 200 for _ in range(room // 201))
+    text += "/" + "a" * (room - (room // 201) * 201 - 1)
     pathguard._check_text(text, "n")  # exactly the limit: allowed
 
 
@@ -213,7 +219,9 @@ def test_pin_mapped_turns_only_the_listed_rules_into_one_plain_message(tmp_path)
 
 
 def test_pin_r5_the_whole_path_limit_counts_bytes_not_characters():
-    text = "/" + "\u20ac" * 1400  # 1,401 characters, 4,201 bytes in UTF-8
+    text = "/" + "/".join(
+        ["\u20ac" * 80] * 30
+    )  # 2,430 characters, 7,230 bytes in UTF-8, no name over 255 bytes
     assert len(text) < pathguard.MAX_PATH_BYTES < len(text.encode())
     with pytest.raises(PathRefused) as refused:
         pathguard._check_text(text, "n")

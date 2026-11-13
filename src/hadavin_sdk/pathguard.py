@@ -2,25 +2,22 @@
 
 Class of bug this closes: a containment check copied per caller (``config.confined``, ``causelist._inside``,
 ``signer.key_path``), so a rule added to one was missing from the others, and most file operations had no check at all.
-Rung (tool ladder): the older checks' ideas are reused here; no library gives one refusal type with the Windows device
-rules and containment after resolving links, so this small standard-library module is the one place.
+Rung (tool ladder): the older checks' ideas are reused; no library gives one refusal type with the Windows device rules
+and containment after resolving links, so this small standard-library module is the one place.
 
-Who controls a path: operator-typed (typed on the command line or in config: ``operator_dir`` and ``operator_file`` check
-its SHAPE only, the operator owns that folder), data-derived (a case id, a file name found in a folder or manifest: the
-real traversal risk, every one goes through ``component`` or ``join``), fixed (a constant in our code: no check).
-
-Threat model: the attacker is operator-typed or data-derived TEXT, not a second local process that changes the folder
-while we run (a swap between check and use is NOT claimed closed). Callers use ONLY the returned path.
+Who controls a path: operator-typed (``operator_dir`` and ``operator_file`` check its SHAPE only), data-derived (a case
+id, a file name found in a folder or manifest: every one goes through ``component`` or ``join``), fixed (a constant in
+our code: no check). Threat model: the attacker is operator-typed or data-derived TEXT, not a second local process that
+changes the folder while we run (a swap between check and use is NOT claimed closed). Callers use ONLY the returned path.
 
 Rules (each has one test and one mutant): R1 empty or dot, R2 separator, R3 colon, R4 control or invisible character
-(CONTROL_RANGES), R5 length, R6 trailing dot or space, R7 Windows device name, R8 escape, R9 absolute or drive-relative
-names (refused by R2 and R3), R10 cannot be resolved (any error from the operating system), R11 wrong type, R12 a
-character Windows does not allow in a name, R13 a write target or temp name that cannot be used. R6, R7 and R12 apply to
-names (``component``, ``join``) only. The text of a refusal names the argument and the problem, never the value or the
-rule number (that is ``PathRefused.rule``). Refuse, never repair. Case-insensitive disks, Unicode normal forms and
-Windows 8.3 names are not repaired. Hard links and mount points are out of scope. The name rules apply on every system.
-
-Standard library only (no vendor import).
+(CONTROL_RANGES), R5 length (the whole path, and every name in it), R6 trailing dot or space, R7 Windows device name,
+R8 escape, R9 absolute or drive-relative names (refused by R2 and R3), R10 cannot be resolved (any error from the
+operating system), R11 wrong type, R12 a character Windows does not allow in a name, R13 a write target or temp name that
+cannot be used. R6, R7 and R12 apply to names (``component``, ``join``) only. The text of a refusal names the argument
+and the problem, never the value or the rule number (that is ``PathRefused.rule``). Refuse, never repair. Case-insensitive
+disks, Unicode normal forms and Windows 8.3 names are not repaired. Hard links and mount points are out of scope.
+The name rules apply on every system. Standard library only.
 """
 
 from __future__ import annotations
@@ -32,7 +29,7 @@ from pathlib import Path
 from hadavin_sdk.errors import ConfigError
 
 MAX_COMPONENT_BYTES = 255  # one name, in UTF-8 bytes (the usual file system limit)
-# ``atomic_write`` names its temp file ".<name>.<16 hex>.tmp" (22 bytes more than the name): the longest name it can write.
+# ``atomic_write`` adds 22 bytes (".<name>.<16 hex>.tmp"): the longest name it can write
 MAX_WRITE_NAME_BYTES = MAX_COMPONENT_BYTES - 22
 MAX_PATH_BYTES = 4096  # a whole path, in UTF-8 bytes (the usual Linux limit; Windows allows less)
 
@@ -89,6 +86,10 @@ def _refuse(rule: str, what: str, text: str) -> PathRefused:
     return PathRefused(rule, f"{what}: {text}")
 
 
+def _size(text: str) -> int:
+    return len(text.encode("utf-8", errors="surrogatepass"))
+
+
 def _check_name(name: str, what: str) -> None:
     """Rules R1 to R7 for one name (a single path component)."""
     if not isinstance(name, str):
@@ -103,7 +104,7 @@ def _check_name(name: str, what: str) -> None:
         raise _refuse("R3", what, "contains a colon")
     if _WINDOWS_INVALID.search(name):
         raise _refuse("R12", what, "contains a character Windows does not allow")
-    if len(name.encode("utf-8", errors="surrogatepass")) > MAX_COMPONENT_BYTES:
+    if _size(name) > MAX_COMPONENT_BYTES:
         raise _refuse("R5", what, "too long")
     if name[-1] in ". ":
         raise _refuse("R6", what, "ends with a dot or space")
@@ -117,24 +118,28 @@ def component(name: str, *, what: str) -> str:
     return name
 
 
-# The one place that asks the operating system about a typed path: any OSError (every errno), a symlink loop
-# (RuntimeError on 3.12) and a NUL (ValueError) become one refusal with a fixed text (the system's own text holds the path).
+# The one place that asks the operating system about a typed path: any OSError (every errno), a symlink loop (RuntimeError
+# on 3.12), a NUL (ValueError) and a value that is not a path (TypeError) become one refusal with a fixed text (the system's
+# own text holds the path). The refusal is raised outside the ``except`` block, so it has no cause and no context.
 def _os[T](call: Callable[[], T], what: str) -> T:
     try:
         return call()
-    except (OSError, RuntimeError, ValueError):
-        raise _refuse("R10", what, "cannot be resolved") from None
+    except (OSError, RuntimeError, ValueError, TypeError):
+        refusal = _refuse("R10", what, "cannot be resolved")
+    raise refusal
 
 
-def _resolve(path: Path, what: str, *, strict: bool) -> Path:
-    return _os(lambda: path.resolve(strict=strict), what)
+def _resolve(path: Path | str, what: str, *, strict: bool) -> Path:
+    return _os(lambda: Path(path).resolve(strict=strict), what)
 
 
 def _check_text(text: str, what: str) -> None:
-    """R4 for a whole path text, then R5 in bytes. Explicit: a NUL must not depend on ``Path.resolve`` raising."""
+    """R4 for a whole path text, then R5 in bytes: the whole text and each name in it (the system stops at 255 bytes per
+    name, so a longer name in any position would make a later ``is_file`` raise). A NUL must not depend on ``resolve``."""
     if _CONTROL.search(text):
         raise _refuse("R4", what, "contains a control character")
-    if len(text.encode("utf-8", errors="surrogatepass")) > MAX_PATH_BYTES:
+    parts = _os(lambda: Path(text).parts, what)
+    if _size(text) > MAX_PATH_BYTES or any(_size(p) > MAX_COMPONENT_BYTES for p in parts):
         raise _refuse("R5", what, "too long")
 
 
@@ -160,7 +165,9 @@ def inside(
     """The real location of ``path`` (already joined), refused unless it lies inside the real location of ``base`` (a link
     that leaves the base is refused: resolving follows it). No name rule applies (R6, R7, R12 are for ``join``)."""
     _check_text(str(base), what)
-    return _within(_resolve(Path(base), what, strict=False), Path(path), what, must_exist, kind)
+    return _within(
+        _resolve(base, what, strict=False), _os(lambda: Path(path), what), what, must_exist, kind
+    )
 
 
 def join(
@@ -175,22 +182,29 @@ def join(
     for name in names:
         _check_name(name, what)
     _check_text(str(base), what)
-    root = _resolve(Path(base), what, strict=False)
+    root = _resolve(base, what, strict=False)
     return _within(root, root.joinpath(*names), what, must_exist, kind)
 
 
 def _operator(path: Path | str, what: str, kind: str, must_exist: bool) -> Path:
     _check_text(str(path), what)
-    real = _resolve(Path(path), what, strict=must_exist)
+    real = _resolve(path, what, strict=must_exist)
     if must_exist or _os(real.exists, what):
         _within(real, real, what, True, kind)
     return real
 
 
-def operator_dir(path: Path | str, *, what: str, must_exist: bool = True) -> Path:
+def operator_dir(
+    path: Path | str, *, what: str, must_exist: bool = True, create_mode: int | None = None
+) -> Path:
     """A folder the operator typed: shape checked (no control characters, not too long, resolves, is a folder; no outer
-    base). ``must_exist=False`` accepts a folder the command will create; one that exists must still be a folder."""
-    return _operator(path, what, "dir", must_exist)
+    base). ``must_exist=False`` accepts a folder the command will create; one that exists must still be a folder.
+    ``create_mode`` makes it (with its parents) after the check and returns its real location; an error is a refusal."""
+    real = _operator(path, what, "dir", must_exist)
+    if create_mode is None:
+        return real
+    _os(lambda: real.mkdir(mode=create_mode, parents=True, exist_ok=True), what)
+    return _resolve(real, what, strict=True)
 
 
 def operator_file(path: Path | str, *, what: str, must_exist: bool = True) -> Path:

@@ -1,7 +1,7 @@
 """The Unreleased pathguard entry in CHANGELOG.md makes claims about the code. Each claim is checked against the code in its
 own test, so the text cannot drift from what runs. The entry is the heading bullet and the indented bullets under it.
 
-Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 23 control, 11 pin, 30 other. Nothing here says a test "fails on old main".
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 23 control, 12 pin, 32 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations
@@ -456,12 +456,55 @@ def test_pin_an_error_from_the_operating_system_is_a_fixed_refusal(tmp_path):
         "a NUL",
         "`signer.key_path`",
         "`registry`",
-        "longer than 255 bytes",
+        "at most 252 bytes",
+        "13 sites",
     ):
         assert claim in text, claim
     assert pathguard.MAX_COMPONENT_BYTES == 255
-    with pytest.raises(pathguard.PathRefused, match="^folder: cannot be resolved$"):
+    with pytest.raises(
+        pathguard.PathRefused, match="^folder: too long$"
+    ):  # over 255 bytes: R5, before the system
         pathguard.operator_dir(tmp_path / ("a" * 256), what="folder", must_exist=False)
+
+
+def test_the_entry_names_the_link_to_another_folder_case_and_the_vault_risk():
+    """The break for operator-typed files is named in plain words, and so is the weaker Vault form (read from the code)."""
+    text = bullet("R3, R6, R7 and R12 apply to")
+    for claim in (
+        "a link pointing into a different folder is refused",
+        "a link whose target stays in the same folder is read",
+        "/run/secrets.d/1/key",
+        "without `must_exist` or `kind`",
+        "nothing here says that any SonarCloud finding is cleared",
+    ):
+        assert claim in text, claim
+    vault = (Path(pathguard.__file__).parent / "actions" / "secrets_vault.py").read_text(
+        encoding="utf-8"
+    )
+    call = vault[vault.index("pathguard.join(", vault.index("vault sign-in token file") - 200) :][
+        :200
+    ]
+    assert "must_exist" not in call and "kind=" not in call, (
+        "the entry says the vault read is the weaker form"
+    )
+
+
+def test_the_sweep_sites_the_entry_counts_are_the_ones_in_the_source():
+    """Each of the 13 sites named in the sweep sentence is a place where a derived name is built (text search)."""
+    src = Path(pathguard.__file__).parent
+    names = {
+        "k1b/replay.py": 'f"{b.case_id}.json"',
+        "k1b/score.py": 'f"{case_id}.json"',
+        "k1b/bundle.py": 'f"{case}.json".encode()',
+        "audit/local_dir.py": 'f".tmp-{event.event_id}"',
+        "evals.py": 'f"{agent_id}.jsonl"',
+        "registry.py": 'f"{agent_id}.yaml"',
+        "tools.py": 'with_suffix(".py")',
+        "llm/fake.py": 'f"{digest}-{attempt}.json"',
+        "audit/anchors.py": 'f"{PREFIX}{seq:012d}.json"',
+    }
+    missing = [f for f, text in names.items() if text not in (src / f).read_text(encoding="utf-8")]
+    assert not missing, missing
 
 
 def test_what_is_accepted_facts_in_the_entry_are_true(tmp_path):
@@ -731,7 +774,7 @@ def test_control_every_bullet_of_the_entry_is_named_by_a_claim_test():
     assert missing == []
 
 
-def test_every_range_count_in_the_entry_is_the_length_of_the_code_table():
+def test_pin_every_range_count_in_the_entry_is_the_length_of_the_code_table():
     """The count is derived, not typed: every ``<number> ranges`` in the entry must equal ``len(CONTROL_RANGES)``, and the
     entry must give it at least twice (the rule list and the accepted list)."""
     counts = [int(n) for n in re.findall(r"\b(\d+) ranges\b", ENTRY)]

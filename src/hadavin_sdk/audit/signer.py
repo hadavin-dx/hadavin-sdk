@@ -143,18 +143,24 @@ def key_dir() -> Path:
 def key_path(path: Path, base: Path | None = None) -> Path:
     """The real location of `path` when it lies inside `base` (default: the key folder, created 0700 if
     missing); else ValueError. The file itself must not be a symlink, and its folder must already exist."""
-    try:  # ``~name`` for a user that does not exist raises RuntimeError; a NUL raises ValueError: one refusal, no text
+    try:  # ``~name`` for a user that does not exist raises RuntimeError; a NUL raises ValueError: fixed text, no value
         folder = (base or key_dir()).expanduser()
         target = Path(path).expanduser()
-    except (RuntimeError, ValueError, OSError):
+    except RuntimeError:
         raise ValueError(
             "the key file or folder path cannot be read (home folder not found)"
         ) from None
-    # the shape of the key folder is checked before any folder is made: a NUL or control character in it (or one of
-    # its parents) is refused here, not after mkdir; the key file's own text is checked by ``inside`` below
-    pathguard.operator_dir(folder, what="key folder", must_exist=False)
-    folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-    folder = folder.resolve(strict=True)
+    except (ValueError, OSError, TypeError):
+        raise ValueError("the key file or folder path cannot be read (not a valid path)") from None
+    # the shape of the key FILE and of the key folder is checked before any folder is made (a NUL, a control character
+    # or a name too long is refused here, not after mkdir); the folder is then made and resolved with every error of the
+    # system turned into a fixed refusal with no path (``create_mode``)
+    try:  # shape only; a link that leaves its folder is refused below, with its own words
+        pathguard.inside(target.parent, target, what="key file")
+    except pathguard.PathRefused as exc:
+        if exc.rule != "R8":
+            raise
+    folder = pathguard.operator_dir(folder, what="key folder", must_exist=False, create_mode=0o700)
     try:  # a name too long for the system makes this check itself raise; it is a refusal, with no path in the text
         linked = target.is_symlink()
     except (OSError, ValueError):

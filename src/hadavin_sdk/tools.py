@@ -47,9 +47,8 @@ from hadavin_sdk.guard.egress import EgressRefused, egress_check
 from hadavin_sdk.scrub_settings import ScrubSettings
 
 DEFAULT_MAX_OUTPUT_BYTES = defaults.MAX_OUTPUT_BYTES  # the manifest field's default
-MAX_PART_BYTES = (
-    pathguard.MAX_COMPONENT_BYTES
-)  # a module part is a file name: the file system's limit
+# a module part becomes a file name plus ".py": the file system's limit applies to that final name
+MAX_PART_BYTES = pathguard.MAX_COMPONENT_BYTES - len(".py")
 Binding = tuple[str, str]  # (METHOD, regex the URL path must fully match)
 END_MARKER = "<<END TOOL RESULT>>"
 START_MARKER = "<<TOOL RESULT"

@@ -1,7 +1,7 @@
 """pathguard batch 5: an error from the operating system must never escape a typed path check, and the audit sink drops an
 outcome only for a bad event id.
 
-Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 1 control, 9 pin, 12 other. Nothing here says a test "fails on old main".
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 1 control, 6 pin, 20 other. Nothing here says a test "fails on old main".
 
 A third run, (c) = origin/main source plus the ``pathguard.py`` of the commit before this change (abb3e90a), is the real
 fail-before for the long-name and audit tests: a raw ``OSError`` escaped there and a bad outcome was dropped for any
@@ -100,11 +100,10 @@ def test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_poi
             assert rule, f"{label} L={length}: a name over 255 bytes was accepted"
 
 
-def test_pin_the_error_of_the_operating_system_is_never_chained_or_quoted(tmp_path):
+def test_pin_a_name_over_255_bytes_is_refused_by_length_before_the_system_is_asked(tmp_path):
     with pytest.raises(PathRefused) as caught:
         pathguard.operator_dir(tmp_path / ("a" * 300), what="n", must_exist=False)
-    assert str(caught.value) == "n: cannot be resolved" and caught.value.rule == "R10"
-    assert caught.value.__cause__ is None and caught.value.__suppress_context__
+    assert str(caught.value) == "n: too long" and caught.value.rule == "R5"
     assert str(tmp_path) not in str(caught.value)
 
 
@@ -161,8 +160,8 @@ def test_an_outcome_with_a_bad_event_id_is_dropped_and_counted(tmp_path):
 
 
 def test_an_outcome_refused_for_another_reason_takes_the_outbox_path_not_the_drop(tmp_path):
-    """Fail-before: on abb3e90a any ``PathRefused`` (here: the objects folder is a file, so the join cannot be used) dropped
-    the record and counted it as a bad id; main sent it to the outbox."""
+    """The objects folder is a file, so the write fails and the record takes the outbox path. This passes on abb3e90a too (the
+    failure there is the ``mkdir`` error, not a refusal); the real refusals that abb3e90a dropped are in batch 6."""
     sink = LocalDirSink(tmp_path / "aud")
     sink.root.mkdir(parents=True, exist_ok=True)
     sink.objects.write_text("not a folder", encoding="utf-8")
@@ -172,6 +171,8 @@ def test_an_outcome_refused_for_another_reason_takes_the_outbox_path_not_the_dro
 
 
 def test_a_loop_in_the_objects_folder_takes_the_outbox_path_too(tmp_path):
+    """On 3.12 the loop is a ``PathRefused`` (a real trigger that abb3e90a dropped); on 3.13 ``resolve`` does not raise, so
+    there the test only shows the outbox path."""
     sink = LocalDirSink(tmp_path / "aud")
     sink.root.mkdir(parents=True, exist_ok=True)
     _link(sink.objects, sink.objects)
@@ -223,7 +224,7 @@ def test_pin_an_error_while_asking_if_a_path_is_a_file_is_a_refusal(tmp_path, mo
     assert str(caught.value) == "n: cannot be resolved" and caught.value.rule == "R10"
 
 
-def test_a_mounted_secret_folder_with_a_nul_in_its_name_is_a_config_error_not_a_valueerror(
+def test_a_mounted_secret_folder_with_a_nul_in_its_name_is_a_config_error(
     tmp_path,
 ):
     """The folder name is typed by the operator; a read must refuse it in words, not leak the error of the system."""
@@ -241,7 +242,7 @@ def test_a_tool_module_part_longer_than_a_file_name_is_a_config_error(monkeypatc
     from hadavin_sdk import tools
     from hadavin_sdk.errors import ConfigError
 
-    with pytest.raises(ConfigError, match="each part at most 255 bytes"):
+    with pytest.raises(ConfigError, match="each part at most 252 bytes"):
         tools._module_files("a" * 300 + ".b")
 
 

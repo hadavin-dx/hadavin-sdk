@@ -37,7 +37,7 @@ read goes through a name assigned from a validator. Calls the tables do not list
 only by the row in ``tests/pathguard_mutants.py`` for the site that matters (for example the ``_check_layout`` row, which
 removes the one remaining guard in that function).
 
-Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 19 control, 0 pin, 2 other. Nothing here says a test "fails on old main".
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 78 control, 0 pin, 2 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations

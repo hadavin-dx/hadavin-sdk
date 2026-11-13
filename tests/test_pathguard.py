@@ -109,8 +109,12 @@ def test_pin_r5_a_name_over_255_utf8_bytes_is_refused():
 def test_pin_r5_a_path_over_4096_characters_is_refused(tmp_path):
     long_tail = ["d" * 200] * 21  # 4200 characters once joined
     _must_refuse("R5", "join", pathguard.join, tmp_path, *long_tail, what="x")
-    _must_refuse("R5", "inside", pathguard.inside, tmp_path, tmp_path / ("e" * 4100), what="x")
-    _must_refuse("R5", "operator_dir", pathguard.operator_dir, tmp_path / ("e" * 4100), what="x")
+    _must_refuse(
+        "R5", "inside", pathguard.inside, tmp_path, tmp_path.joinpath(*["e" * 200] * 21), what="x"
+    )
+    _must_refuse(
+        "R5", "operator_dir", pathguard.operator_dir, tmp_path.joinpath(*["e" * 200] * 21), what="x"
+    )
 
 
 def test_pin_r6_a_trailing_dot_or_space_is_refused():

@@ -4,7 +4,7 @@ must be refused with ``PathRefused`` (a ``ConfigError``), never reach the file s
 
 Fake paths are built from parts.
 
-Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 3 control, 11 pin, 19 other. Nothing here says a test "fails on old main".
+Labels, measured by real runs on (a) origin/main source plus this change's ``pathguard.py`` and (b) origin/main as it is (``pathguard`` does not exist on main, so for a file that imports it an empty stand-in module let the file load; a test that calls the module fails there): ``test_control_*`` passes on (a) and (b); ``test_pin_*`` passes on (a) and fails on (b); every other name fails on (a). This file: 2 control, 11 pin, 20 other. Nothing here says a test "fails on old main".
 """
 
 from __future__ import annotations
@@ -384,8 +384,8 @@ def test_vault_kubernetes_token_path_with_a_nul_is_a_config_error():
         make("secrets", settings).get("db")
 
 
-def test_control_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
-    """``.tmp-con`` is a fine name and ``con.json`` is a device name: only the guard on the final name stops the write."""
+def test_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp_path):
+    """``con.json`` is a device name: the id check drops the outcome (counted, nothing written, nothing kept)."""
     from hadavin_sdk.audit import LocalDirSink
     from hadavin_sdk.models import AuditEvent
 
@@ -395,4 +395,5 @@ def test_control_site_local_dir_outbox_refuses_a_device_name_as_the_event_id(tmp
     )
     event.event_id = "con"
     sink.write_outcome(event)  # never raises by contract
+    assert sink.refused_events == 1 and sink._pending == [], "the device name was not refused"
     assert not (sink.outbox / "con.json").exists(), "a device name reached the outbox"

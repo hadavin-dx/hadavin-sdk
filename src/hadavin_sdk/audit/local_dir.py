@@ -117,15 +117,22 @@ class LocalDirSink:
             return self._write(event)
         except DuplicateEvent:
             raise
-        except pathguard.PathRefused as exc:  # an event id that is not one plain file name
-            raise AuditUnavailable(f"intent: event id refused ({exc.rule})") from None
+        except (
+            pathguard.PathRefused
+        ) as exc:  # the id is the usual cause; any other refusal says "path refused"
+            why = "event id refused" if self._id_refused(event) else "path refused"
+            raise AuditUnavailable(f"intent: {why} ({exc.rule})") from None
         except OSError as exc:
             raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
 
     @staticmethod
     def _id_refused(event: AuditEvent) -> bool:
         try:
-            pathguard.component(f"{event.event_id}.json", what="audit event id")
+            for name in (
+                f"{event.event_id}.json",
+                f".tmp-{event.event_id}",
+            ):  # the outbox names both
+                pathguard.component(name, what="audit event id")
         except pathguard.PathRefused:
             return True
         return False

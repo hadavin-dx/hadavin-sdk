@@ -216,7 +216,7 @@ def outputs_dir(out: Path | str) -> Path:
 
 def _check_layout(out: Path, case_ids: list[str]) -> list[int]:
     """Refuse a folder that is not exactly ``run1..runK`` with every case file and ``run.json``."""
-    # re-checked here because this function lists the folder itself (the caller's check is not trusted across functions)
+    # checked here because this function lists the folder itself: ``outputs_dir`` is the check, not the caller's
     out = outputs_dir(out)
     names = {p.name for p in out.iterdir()}
     if "FAILED.txt" in names:
