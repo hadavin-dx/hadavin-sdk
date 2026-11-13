@@ -1,0 +1,18 @@
+/home/user/build/wt/ER-pdbanner13/src/hadavin_sdk/__init__.py
+313 tests/test_mode_banner.py rc=0 188 passed in 16.16s (16s)
+313 tests/test_demo_only_guard.py rc=0 152 passed in 15.06s (16s)
+313 tests/test_banner_mutant_table.py rc=0 21 passed in 6.39s (6s)
+313 tests/test_changelog_numbers.py rc=0 7 passed in 0.25s (1s)
+313 tests/test_stage_names.py rc=0 97 passed in 4.26s (5s)
+313 tests/test_demo_only_guard_ci.py rc=0 8 passed in 0.07s (0s)
+313 tests/test_repo_rules.py rc=0 40 passed in 0.67s (1s)
+313 tests/test_scan_repo.py rc=0 31 passed in 3.66s (4s)
+/home/user/build/wt/ER-pdbanner13/src/hadavin_sdk/__init__.py
+312 tests/test_mode_banner.py rc=0 188 passed in 16.43s (17s)
+312 tests/test_demo_only_guard.py rc=0 152 passed in 15.40s (16s)
+312 tests/test_banner_mutant_table.py rc=0 21 passed in 6.39s (7s)
+312 tests/test_changelog_numbers.py rc=0 7 passed in 0.36s (1s)
+312 tests/test_stage_names.py rc=0 97 passed in 4.55s (5s)
+312 tests/test_demo_only_guard_ci.py rc=0 8 passed in 0.08s (0s)
+312 tests/test_repo_rules.py rc=0 40 passed in 0.73s (1s)
+312 tests/test_scan_repo.py rc=0 31 passed in 3.00s (4s)

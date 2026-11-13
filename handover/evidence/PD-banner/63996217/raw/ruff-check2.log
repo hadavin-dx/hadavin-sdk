@@ -1,0 +1,9 @@
+S603 `subprocess` call: check for execution of untrusted input
+  --> tools/fixed_run.py:30:12
+   |
+28 |     if exe is None:
+29 |         raise SystemExit(f"{first} was not found on the PATH; nothing here guesses")
+30 |     return subprocess.run([exe, *argv[1:]], check=check, **kwargs)
+   |            ^^^^^^^^^^^^^^
+
+Found 1 error.
