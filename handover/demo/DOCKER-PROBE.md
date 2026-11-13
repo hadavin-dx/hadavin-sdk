@@ -15,12 +15,12 @@ ready after 1s
 time="2026-11-13T15:54:18.086702175Z" level=info msg="fetch failed after status: 429 Too Many Requests" host=<registry host> method=HEAD url="<link>"
 time="2026-11-13T15:54:18.088821005Z" level=error msg="Handler for POST /images/create returned error" error-response="unknown: failed to resolve reference \"docker.io/library/postgres@sha256: 63e83b5a3dc36a917dccb76fe1bd2ac5 1f1e
 time="2026-11-13T15:54:57.378764216Z" level=info msg="image pulled" digest="sha256: 63e83b5a3dc36a917dccb76fe1bd2ac5 1f1ec9c1deb47ff20d4f04233bf6eae9" remote="docker.io/library/postgres@sha256: 63e83b5a3dc36a917dccb76fe1bd2ac5 1f1
-time="2026-11-13T15:55:05.241748139Z" level=info msg="connecting to shim 6071439e7aabc2eca6a8381084e03034cf41ba6d0046b8b740b8cb54a411b81c" address="unix:///run/containerd/s/1433fe74dd4050333b1b26e0beff4426a92158f89e20feccb3c8036d0
+time="2026-11-13T15:55:05.241748139Z" level=info msg="connecting to shim <container id>" address="unix:<socket> id>
 time="2026-11-13T15:55:05.322103110Z" level=info msg="sbJoin: gwep4 ''->'ae065a0d2727', gwep6 ''->''" eid=ae065a0d2727 ep=pgprobe net=bridge nid=269667f3d385
-time="2026-11-13T15:55:06.930988813Z" level=info msg="shim disconnected" id=6071439e7aabc2eca6a8381084e03034cf41ba6d0046b8b740b8cb54a411b81c namespace=moby
-time="2026-11-13T15:55:06.931016434Z" level=info msg="cleaning up after shim disconnected" id=6071439e7aabc2eca6a8381084e03034cf41ba6d0046b8b740b8cb54a411b81c namespace=moby
-time="2026-11-13T15:55:06.931021672Z" level=info msg="cleaning up dead shim" id=6071439e7aabc2eca6a8381084e03034cf41ba6d0046b8b740b8cb54a411b81c namespace=moby
-time="2026-11-13T15:55:06.931221215Z" level=info msg="received task-delete event from containerd" container=6071439e7aabc2eca6a8381084e03034cf41ba6d0046b8b740b8cb54a411b81c module=libcontainerd namespace=moby topic=/tasks/delete t
+time="2026-11-13T15:55:06.930988813Z" level=info msg="shim disconnected" id=<container id> namespace=moby
+time="2026-11-13T15:55:06.931016434Z" level=info msg="cleaning up after shim disconnected" id=<container id> namespace=moby
+time="2026-11-13T15:55:06.931021672Z" level=info msg="cleaning up dead shim" id=<container id> namespace=moby
+time="2026-11-13T15:55:06.931221215Z" level=info msg="received task-delete event from containerd" container=<container id> module=libcontainerd namespace=moby topic=/tasks/delete t
 time="2026-11-13T15:55:55.044723869Z" level=info msg="Processing signal 'terminated'"
 time="2026-11-13T15:55:55.045906717Z" level=info msg="stopping event stream following graceful shutdown" error="grpc: the client connection is closing: context canceled" module=libcontainerd namespace=moby
 time="2026-11-13T15:55:55.062533305Z" level=info msg="stopping event stream following graceful shutdown" error="context canceled" module=libcontainerd namespace=plugins.moby
@@ -36,7 +36,7 @@ time="2026-11-13T15:55:56.068721183Z" level=info msg="Daemon shutdown complete"
  Cgroup Driver: cgroupfs
  Cgroup Version: 1
  Runtimes: io.containerd.runc.v2 runc
- containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ containerd version: <container id>
  Kernel Version: 6.18.44-fc-v445
  Operating System: Ubuntu 24.04.5 LTS
  Total Memory: 15.71GiB
