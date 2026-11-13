@@ -54,6 +54,10 @@ def _recheck(approvals: object) -> tuple[str, ...]:
             return ("the approvals object is no longer an exact Approvals",)
         if not standins.is_pinned_instance(approvals):
             return ("the Approvals class was changed after it was pinned",)
+        for slot in (
+            Approvals.__slots__
+        ):  # every slot is read: an empty one raises AttributeError, answered 503
+            object.__getattribute__(approvals, slot)
         return Approvals.real_now(approvals)
     except Exception:  # noqa: BLE001 - a deleted slot or any unreadable state is refused, never dropped
         return ("the approvals object could not be read (a slot is missing)",)
@@ -128,6 +132,17 @@ def serve(
             "the config given is not that one"
         )
 
+    # what the approvals hold is read here, inside the one refusal type: an unreadable object (a slot deleted with
+    # ``object.__delattr__``, a mapping that raises) is a ``BindRefused``, not some other error
+    try:
+        held = Approvals.held_services(approvals)
+        frozen = approvals.config_facts
+    except Exception:  # noqa: BLE001 - any error while reading is a refusal of the one type
+        raise BindRefused(
+            "serve could not read what the approvals hold (a slot is missing or an object raised): "
+            "nothing is served"
+        ) from None
+
     # on a bind other computers can reach with no reason given, every request asks again what the approvals
     # hold, because a channel, store or detector can be replaced after the server started
     recheck = allow_public_bind_reason is None and not is_loopback_host(host)
@@ -166,8 +181,8 @@ def serve(
         port,
         Handler,
         allow_public_bind_reason=allow_public_bind_reason,
-        held=Approvals.held_services(approvals),
-        frozen=approvals.config_facts,
+        held=held,
+        frozen=frozen,
     )
 
 

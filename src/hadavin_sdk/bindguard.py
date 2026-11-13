@@ -138,10 +138,12 @@ def held_services_found(held: Mapping[str, object] | None) -> tuple[str, ...]:
             continue
         try:
             counted_if_not_empty = name in _COUNTED_WHEN_NOT_EMPTY
+            if not _is_plain_word(name):
+                raise ValueError("a key that is not a short plain word")  # fixed label below
             label = (
-                f"held {_shown(name)}"
+                f"held {name}"
                 if counted_if_not_empty
-                else f"held {_shown(name)}: {_shown(type(obj).__name__)}"
+                else f"held {name}: {_word_or_unreadable(type(obj).__name__)}"
             )
             counts = (
                 not _is_empty_mapping(obj) if counted_if_not_empty else not is_stand_in_object(obj)
@@ -176,6 +178,19 @@ def _shown(bind: object) -> str:
         return "(unreadable)"
     limit = defaults.BIND_SHOWN_MAX_CHARS
     return bind if len(bind) <= limit else bind[:limit] + "..."
+
+
+_WORD_MAX_CHARS = 40  # a name of a held object or of its class, as written in a refusal line
+
+
+def _is_plain_word(text: object) -> bool:
+    """True for exact text that is printable and at most ``_WORD_MAX_CHARS`` characters: the only text of a held
+    object's key that is written to a refusal line (anything else gets a fixed label, so no hostile text is logged)."""
+    return type(text) is str and text.isprintable() and len(text) <= _WORD_MAX_CHARS
+
+
+def _word_or_unreadable(text: object) -> str:
+    return text if _is_plain_word(text) else "(unreadable)"  # type: ignore[return-value]
 
 
 def reason_problem(reason: object) -> str | None:

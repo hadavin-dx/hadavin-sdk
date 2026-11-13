@@ -25,6 +25,7 @@ from hadavin_sdk import bindguard, netguard
 from hadavin_sdk.actions.secrets import FakeSecretProvider
 from hadavin_sdk.approvals import Approvals, FakeChannel
 from hadavin_sdk.approvals.receiver import PATH, serve
+from hadavin_sdk.approvals.requests import make_on_decided
 from hadavin_sdk.backends.table import DEMO_ONLY, IN_PROCESS, NOT_PROD, TABLE, KindSettings
 from hadavin_sdk.bindguard import (
     BindRefused,
@@ -580,7 +581,7 @@ def _Approvals(config: Config | None, held: dict[str, object] | None = None) -> 
         _Opaque(),  # type: ignore[arg-type]
         _Opaque(),  # type: ignore[arg-type]
         FakeChannel("sig" + "-b4-test"),
-        lambda run_id, status, d: None,
+        make_on_decided({}),
         config=config,
         overrides=held if held is not None or config is None else {},
     )
@@ -689,7 +690,7 @@ class _Built:
             built.audit,
             built.registry,
             built.channel,
-            lambda run_id, status, d: None,
+            make_on_decided({}),
             detector=built.detector,
             config=self.config,
             overrides=built.overrides,
@@ -770,7 +771,7 @@ def _by_hand(app: object, channel: object, **extra: object) -> Approvals:
         app.audit,  # type: ignore[attr-defined]
         app.registry,  # type: ignore[attr-defined]
         channel,  # type: ignore[arg-type]
-        lambda run_id, status, d: None,
+        make_on_decided({}),
         **extra,  # type: ignore[arg-type]
     )
 
@@ -1008,6 +1009,7 @@ def test_the_listener_reaches_the_approvals_only_through_the_signature_check() -
             "Approvals.held_services",
             "Approvals.real_now",
             "_recheck",
+            "object.__getattribute__",  # the recheck reads every slot of Approvals.__slots__
             "standins.is_pinned_instance",  # reads only the class of the object (the pin), never the object
             "type",
         }
@@ -1421,7 +1423,7 @@ def test_serve_refuses_a_subclass_and_a_look_alike_of_the_approvals(
         base.audit,
         base.registry,
         base.channel,
-        lambda *a: None,
+        make_on_decided({}),
         config=stand_in_config,
         overrides={},
     )
@@ -1480,7 +1482,7 @@ def test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_an
         _Opaque(),
         _Opaque(),
         base.channel,
-        lambda *a: None,
+        make_on_decided({}),
         config=stand_in_config,  # type: ignore[arg-type]
     )
     assert set(by_hand.held_services()) >= {"audit", "registry"}, (
@@ -2296,7 +2298,7 @@ def test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises() -> No
 
     boom = {_BoomKey(): _Opaque(), "ok": FakeChannel("sig" + "-b5-k")}
     found = held_services_found(boom)
-    assert found == ("held (unreadable): _Opaque",), found
+    assert found == ("held (unreadable)",), found
     unhashable = _Hostile([([1, 2], _Opaque()), (_BoomKey(), _Opaque())])
     found = held_services_found(unhashable)  # type: ignore[arg-type]
     assert len(found) == 2 and all(f.startswith("held (unreadable)") for f in found), found
@@ -2508,9 +2510,11 @@ def test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_buil
     llm.routes[_Plain()] = 1  # type: ignore[index]
     assert not is_stand_in_object(llm), "a foreign object used as a dict key was trusted"
     # ``_values`` never runs a subclass's own iteration or lookup
-    assert standins._values(_ListWithCode([1, 2])) == (1, 2), "a subclass's own iteration was run"
-    assert standins._values(_DictWithCode(k="v")) == ("k", "v")
-    assert standins._values(42) == ()
+    assert standins._values(_ListWithCode([1, 2]), 10) == (1, 2), (
+        "a subclass's own iteration was run"
+    )
+    assert standins._values(_DictWithCode(k="v"), 10) == ("k", "v")
+    assert standins._values(42, 10) == ()
 
 
 def test_a_populated_store_and_the_real_models_still_read_as_stand_ins(tmp_path: Path) -> None:
@@ -2523,14 +2527,14 @@ def test_a_populated_store_and_the_real_models_still_read_as_stand_ins(tmp_path:
     assert not is_stand_in_object(store), "a foreign object among the rows was trusted"
 
 
-def test_the_five_stand_in_classes_hold_no_class_level_container() -> None:
-    """The pin compares class attributes by identity, so a list or dict that lives on the class could be changed
-    in place without the pin noticing; none of the five classes (nor ``Approvals``) has one."""
-    from collections import Counter, defaultdict, deque
+def test_the_seven_pinned_classes_hold_no_class_level_mutable_value() -> None:
+    """The pin compares class attributes by identity, so a value that lives on the class and can be changed in
+    place (a list, a dict, a set, a mutable instance) would change without the pin noticing. The five stand-ins, the
+    detector list and ``Approvals`` hold only functions, descriptors, classes and plain atoms there."""
+    import inspect
 
     from hadavin_sdk import standins
 
-    mutable = (dict, list, set, bytearray, deque, defaultdict, Counter)
     classes = [standins._live_class(key) for key in standins._PINNED_KEYS]
     assert all(classes) and len(classes) == 7
     for cls in classes:
@@ -2542,30 +2546,53 @@ def test_the_five_stand_in_classes_hold_no_class_level_container() -> None:
                     name == "__annotations__"
                 ):  # the empty one the pin itself adds; nothing runs from it
                     continue
-                assert not isinstance(value, mutable), (
-                    f"{base.__name__}.{name} is a mutable container"
+                allowed = (
+                    inspect.isfunction(value)
+                    or isinstance(value, classmethod | staticmethod | property | type)
+                    or inspect.ismethoddescriptor(value)
+                    or inspect.isdatadescriptor(value)
+                    or standins._is_one_of(type(value), standins._ATOM_TYPES)
+                    or (type(value) is tuple and all(type(v) is str for v in value))
+                    or type(value) in (frozenset, type(None), type(Ellipsis))
+                    or name in ("__module__", "__qualname__", "__doc__", "__slots__", "__dict__")
                 )
+                assert allowed, f"{base.__name__}.{name} is a {type(value).__name__}: mutable?"
 
 
 # class B: the depth limit fails closed, and the answer is not cached
 
 
+def _nested(levels: int, leaf: object) -> object:
+    """``leaf`` inside ``levels`` lists: put as an attribute (level 1), the leaf sits at level ``levels + 1``."""
+    value = leaf
+    for _ in range(levels):
+        value = [value]
+    return value
+
+
 def test_a_container_left_unexplored_at_the_depth_limit_reads_as_real(tmp_path: Path) -> None:
     from hadavin_sdk import standins
 
+    limit = standins.SCAN_DEPTH_VALUES
     llm = FakeLLM(tmp_path, {})
     assert is_stand_in_object(llm), "control"
-    llm.routes = [[[[lambda: None]]]]  # type: ignore[assignment]
-    assert not is_stand_in_object(llm), "a function four lists down was trusted"
-    llm.routes = [[[[1, "plain"]]]]  # type: ignore[assignment]
-    assert is_stand_in_object(llm), "a depth-four list of plain data was refused"
-    llm.routes = [[[[_Plain()]]]]  # type: ignore[assignment]
+    llm.routes = _nested(limit, lambda: None)  # type: ignore[assignment]
+    assert not is_stand_in_object(llm), f"a function {limit} lists down was trusted"
+    llm.routes = _nested(limit, [1, "plain"])  # type: ignore[assignment]
+    assert not is_stand_in_object(llm), (
+        "a list one level past the limit was trusted (a container left unexplored must fail closed)"
+    )
+    llm.routes = _nested(limit - 1, [1, "plain"])  # type: ignore[assignment]
+    assert is_stand_in_object(llm), "a plain list at the last level entered was refused"
+    llm.routes = _nested(limit, 1)  # type: ignore[assignment]
+    assert is_stand_in_object(llm), "plain atoms at the depth limit were refused"
+    llm.routes = _nested(limit, _Plain())  # type: ignore[assignment]
     assert not standins.is_stand_in(llm), "a foreign object at the depth limit was trusted"
-    # what is left unexplored counts against the node budget too
-    llm.routes = [[[[1] * 50]]]  # type: ignore[assignment]
+    # what is entered counts against the node budget (the size is charged when the container is entered)
+    llm.routes = _nested(3, [1] * 50)  # type: ignore[assignment]
     with pytest.MonkeyPatch.context() as m:
         m.setattr(standins, "SCAN_NODES", 20)
-        assert not standins.is_stand_in(llm), "an unexplored container past the node budget passed"
+        assert not standins.is_stand_in(llm), "a container past the node budget passed"
 
 
 def test_a_function_put_in_after_an_earlier_question_is_seen_at_the_next_one(
@@ -2801,7 +2828,14 @@ def test_a_class_attribute_equal_to_the_pinned_one_but_not_the_same_object_reads
 ) -> None:
     """A pin (not a new rule): attributes are compared by identity, not by equality."""
     assert is_stand_in_object(FakeChannel("sig" + "-b6-id")), "control"
-    monkeypatch.setattr(FakeChannel, "max_card_chars", int(str(FakeChannel.max_card_chars)))
+    pinned = FakeChannel.max_card_chars
+    assert pinned > 256, "a small int is cached: an equal int would be the same object"
+    equal = int(str(pinned))
+    assert equal == pinned and equal is not pinned, (
+        "the test must put an equal but different object"
+    )
+    monkeypatch.setattr(FakeChannel, "max_card_chars", equal)
+    assert FakeChannel.max_card_chars is equal, "the patch did not take effect"
     assert not is_stand_in_object(FakeChannel("sig" + "-b6-id2")), (
         "an equal but different class attribute was read as the pinned one"
     )
@@ -2909,3 +2943,486 @@ def test_the_lists_of_trusted_classes_are_exactly_these_literals() -> None:
     ), "the list of plain-data types changed"
     assert standins._LEAF_CLASSES == ((models, "RunState"),)
     assert len(standins._PINNED_KEYS) == 7
+
+
+# --- round 6, batch 7 ----------------------------------------------------------------------------------------------
+# class A: a held value's class is judged by identity, never by hash or equality (a metaclass the value controls)
+
+
+def _spoof_class(target: type) -> type:
+    """A class whose metaclass hashes like ``target`` and is equal to everything."""
+
+    class Meta(type):
+        def __hash__(cls) -> int:
+            return hash(target)
+
+        def __eq__(cls, other: object) -> bool:
+            return True
+
+    return Meta("Spoof", (), {})
+
+
+def _spoof(target: type) -> object:
+    """An instance of such a class that holds a real client."""
+    value = _spoof_class(target)()
+    value.client = _Opaque()  # type: ignore[attr-defined]
+    return value
+
+
+def _spoof_hosts(tmp_path: Path) -> list[object]:
+    """Fresh stand-ins to hold a value: each reads as a stand-in before the value is put in."""
+    from hadavin_sdk.models import Run
+
+    store = MemoryStore()
+    store.create_run(Run(agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="r"))
+    return [FakeLLM(tmp_path, {}), FakeChannel("sig" + "-b7-a"), store]
+
+
+def _assert_every_host_refuses(tmp_path: Path, value: object, what: str) -> None:
+    for host in _spoof_hosts(tmp_path):
+        assert is_stand_in_object(host), "control"
+        host.extra = value  # type: ignore[attr-defined]
+        assert not is_stand_in_object(host), f"{what} was trusted by {type(host).__name__}"
+
+
+def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_an_atom(tmp_path: Path) -> None:
+    _assert_every_host_refuses(
+        tmp_path, _spoof(str), "a held class that fakes equality passed as an atom"
+    )
+
+
+def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_container(
+    tmp_path: Path,
+) -> None:
+    for target in (dict, list, tuple, set, frozenset):
+        _assert_every_host_refuses(
+            tmp_path, _spoof(target), "a held class that fakes equality passed as a container"
+        )
+
+
+def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_model_row(
+    tmp_path: Path,
+) -> None:
+    from hadavin_sdk.models import ChainStep, Run
+
+    for target in (Run, ChainStep):
+        _assert_every_host_refuses(
+            tmp_path, _spoof(target), "a held class that fakes equality passed as a model row"
+        )
+
+
+def test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_the_run_state(
+    tmp_path: Path,
+) -> None:
+    from hadavin_sdk.models import RunState
+
+    _assert_every_host_refuses(
+        tmp_path, _spoof(RunState), "a held class that fakes equality passed as the run state"
+    )
+
+
+def test_a_held_class_that_fakes_equality_is_not_an_atom_at_the_depth_tail(tmp_path: Path) -> None:
+    """At every depth from 1 to 10 (the old limit was 4, the new one is 8): the last level is judged by identity."""
+    for depth in range(1, 11):
+        _assert_every_host_refuses(
+            tmp_path,
+            _nested(depth - 1, _spoof(str)),
+            f"a held class that faked equality at depth {depth} passed at the depth tail",
+        )
+
+
+def test_a_held_class_that_fakes_equality_is_refused_as_a_key_and_in_a_nested_detector_list(
+    tmp_path: Path,
+) -> None:
+    _assert_every_host_refuses(tmp_path, {_spoof(str): 1}, "a spoofed class used as a dict key")
+    for target in (str, dict):
+        member = RegexDetector(0.5)
+        members = AnyOf([member, RegexDetector(0.7)])
+        outer = AnyOf([members])
+        assert is_stand_in_object(outer), "control"
+        member.extra = _spoof(target)  # type: ignore[attr-defined]
+        assert not is_stand_in_object(outer), (
+            "a spoofed class inside a nested detector list was trusted"
+        )
+
+
+# class B: depth 8, a populated store, and the pin that makes "the model rows are all in __dict__" stay true
+
+
+def _full_store() -> MemoryStore:
+    """One of each model row the stand-in store keeps, with an approval request that has two chain steps."""
+    from datetime import UTC, date, datetime
+    from decimal import Decimal
+
+    from hadavin_sdk.models import (
+        ApprovalDecision,
+        ApprovalRequest,
+        ChainStep,
+        DeadLetter,
+        GateDecision,
+        KillSwitch,
+        Plan,
+        Run,
+        Target,
+        TickState,
+        ToolCallRecord,
+    )
+
+    store = MemoryStore()
+    run = Run(agent_id="a", principal_id="p", trigger_kind="user", trigger_ref="r")
+    store.create_run(run)
+    plan = Plan(
+        run_id=run.run_id,
+        agent_id="a",
+        action_id="act",
+        action_version=1,
+        risk_class="reversible",
+        inputs={"amount": "10", "lines": [{"sku": "x", "qty": 1}]},
+        target=Target(system="crm", ref="r1"),
+        idempotency_key="k",
+        expected_outcome="done",
+    )
+    store.save_plan(plan)
+    store.save_gate_decision(
+        GateDecision(
+            run_id=run.run_id, plan_hash=plan.hash(), outcome="needs_approval", rule_id="r"
+        )
+    )
+    req = ApprovalRequest(
+        run_id=run.run_id,
+        plan_hash=plan.hash(),
+        risk_class="reversible",
+        chain_id="c",
+        steps=[
+            ChainStep(approver_ids=["u1", "u2"], timeout_s=60),
+            ChainStep(approver_ids=["u3"], timeout_s=60),
+        ],
+        step_expires_at=datetime.now(UTC),
+        requested_by="p",
+        summary="s",
+    )
+    store.save_approval_request(req)
+    store.save_approval_decision(
+        ApprovalDecision(
+            approval_id=req.approval_id,
+            plan_hash=plan.hash(),
+            step=0,
+            decision="approve",
+            approver_id="fake:u1",
+            channel="fake",
+        )
+    )
+    store.add_dead_letter(DeadLetter(run_id=run.run_id, reason="r", errors=["e1", "e2"]))
+    store.save_tick_state(TickState(step="s", last_run_at=datetime.now(UTC)))
+    store.add_tool_call(
+        ToolCallRecord(
+            call_id=f"{run.run_id}:1",
+            run_id=run.run_id,
+            tool="t",
+            inputs={"a": [1, 2]},
+            output="o",
+            output_sha256="0" * 64,
+        )
+    )
+    store.set_kill_switch(KillSwitch(on=True, by="x"))
+    store.add_spend("a", date(2026, 1, 1), Decimal("1.5"))
+    store.put_redaction_map(run.run_id, {"<A>": "b"})
+    return store
+
+
+def test_a_store_holding_one_of_each_model_row_it_keeps_reads_as_a_stand_in(tmp_path: Path) -> None:
+    from hadavin_sdk.approvals.cards import Card
+
+    store = _full_store()
+    assert is_stand_in_object(store), (
+        "a plain store holding every kind of row was refused (503 on a public bind)"
+    )
+    channel = FakeChannel("sig" + "-b7-cards")
+    channel.cards.append(
+        Card(text="t", blocks=[{"type": "section", "text": {"a": ["b"]}}], display_hash="h")
+    )
+    assert is_stand_in_object(channel), "a channel holding a card was refused"
+    store._approvals[next(iter(store._approvals))].steps[0].approver_ids.append(_Opaque())  # type: ignore[arg-type]
+    assert not is_stand_in_object(store), "a foreign object inside a chain step was trusted"
+
+
+def test_the_depth_limit_for_held_values_is_eight_and_one_level_more_reads_as_real(
+    tmp_path: Path,
+) -> None:
+    from hadavin_sdk import standins
+
+    assert standins.SCAN_DEPTH_VALUES == 8 and standins.SCAN_DEPTH == 4
+    store = MemoryStore()
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES, 1)  # type: ignore[attr-defined]
+    assert is_stand_in_object(store), "plain atoms at the last level were refused"
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, 1)  # type: ignore[attr-defined]
+    assert not is_stand_in_object(store), "a list one level past the limit was trusted"
+    store.extra = _nested(standins.SCAN_DEPTH_VALUES + 1, _Opaque())  # type: ignore[attr-defined]
+    assert not is_stand_in_object(store), "a real object past the limit was trusted"
+
+
+def test_every_plain_data_class_keeps_all_its_state_in_the_instance_dictionary() -> None:
+    """The scan reads ``__dict__`` of a model row: a pydantic private attribute, an extra field or a slot would hold
+    state the scan cannot see. The models forbid extras and declare none of those; a change shows here."""
+    from hadavin_sdk import standins
+
+    for key in standins._DATA_CLASSES:
+        cls = standins._live_class(key)
+        assert cls is not None, key
+        assert all(
+            "__slots__" not in vars(base)
+            for base in cls.__mro__
+            if base.__module__.startswith("hadavin_sdk")
+        ), f"{key[1]} has __slots__: its state is not all in __dict__"
+        if hasattr(cls, "model_fields"):
+            assert cls.model_config.get("extra") == "forbid", f"{key[1]} allows extra fields"  # type: ignore[attr-defined]
+            assert not cls.__private_attributes__, f"{key[1]} has private attributes"  # type: ignore[attr-defined]
+
+
+# class C: the cost of reading a held structure is charged before it is made
+
+
+def test_a_huge_container_is_not_copied_and_a_shared_one_is_charged_every_time(
+    tmp_path: Path,
+) -> None:
+    import time
+    import tracemalloc
+
+    big = list(range(10**6))
+    for name, value in (("shared list", [big] * 30), ("big dict", dict.fromkeys(range(10**6)))):
+        store = MemoryStore()
+        store.extra = value  # type: ignore[attr-defined]
+        tracemalloc.start()
+        before = tracemalloc.get_traced_memory()[0]
+        started = time.monotonic()
+        answer = is_stand_in_object(store)
+        took = time.monotonic() - started
+        peak = tracemalloc.get_traced_memory()[1] - before
+        tracemalloc.stop()
+        assert not answer, f"a {name} past the budget was trusted"
+        assert peak < 4_000_000, f"the {name} was copied before it was counted: peak {peak} bytes"
+        assert took < 5, f"the {name} took {took:.1f} s"
+
+
+def test_a_container_referenced_many_times_is_charged_each_time_it_is_entered() -> None:
+    """60,000 plain values referenced three times: each is under the budget of 100,000, the sum is not."""
+    shared = list(range(60_000))
+    store = MemoryStore()
+    assert is_stand_in_object(store), "control"
+    store.once = [shared]  # type: ignore[attr-defined]
+    assert is_stand_in_object(store), "one copy of 60,000 plain values is within the budget"
+    store.thrice = [shared, shared, shared]  # type: ignore[attr-defined]
+    assert not is_stand_in_object(store), "a container entered three times was charged once"
+
+
+def test_the_size_check_reads_the_builtin_length_not_the_one_of_a_subclass() -> None:
+    from hadavin_sdk import standins
+
+    class Liar(list):
+        def __len__(self) -> int:
+            return 0
+
+    assert standins._values(Liar(range(50)), 10) is None, "a subclass's own length was believed"
+    assert standins._values(list(range(5)), 10) == (0, 1, 2, 3, 4)
+    assert standins._values({1: 2, 3: 4}, 3) is None, "a dict counts its keys and its values"
+
+
+# class D: the run state, on_decided, serve(), every slot, the secret provider pin, the refusal log
+
+
+def test_a_run_state_that_is_not_a_real_member_or_has_an_attribute_hung_on_it_reads_as_real() -> (
+    None
+):
+    from hadavin_sdk.models import RunState
+
+    store = MemoryStore()
+    store.extra = RunState.WORKING  # type: ignore[attr-defined]
+    assert is_stand_in_object(store), "control: a real member is plain data"
+    fake = str.__new__(RunState, "WORKING")
+    fake._value_ = "WORKING"
+    store.extra = fake  # type: ignore[attr-defined]
+    assert not is_stand_in_object(store), (
+        "an object made as a run state but not a member was trusted"
+    )
+    member = RunState.EXECUTING
+    member.client = _Opaque()  # type: ignore[attr-defined]
+    try:
+        store.extra = member  # type: ignore[attr-defined]
+        assert not is_stand_in_object(store), (
+            "a run state member with an attribute hung on it was trusted"
+        )
+    finally:
+        del member.client  # type: ignore[attr-defined]
+
+
+def _approvals_with(app: object, on_decided: object) -> Approvals:
+    built = app.approvals  # type: ignore[attr-defined]
+    return Approvals(
+        built.store,
+        built.audit,
+        built.registry,
+        built.channel,
+        on_decided,  # type: ignore[arg-type]
+        detector=built.detector,
+        config=app.config,  # type: ignore[attr-defined]
+        overrides=built.overrides,
+    )
+
+
+def test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import types
+
+    from hadavin_sdk.approvals.requests import _ON_DECIDED_CODE
+
+    app = _built(tmp_path)
+    _stand_in_bind_lands_on_loopback(monkeypatch)
+    serve(
+        _approvals_with(app, make_on_decided({})), config=app.config, host=ALL_ZEROS, port=0
+    ).server_close()  # type: ignore[attr-defined]
+    real = {
+        "rt": _Opaque()
+    }  # a fake real service that a callable run after a valid signature can reach
+
+    def closing_over_a_dict(run_id: str, status: str, d: object) -> object:
+        return real["rt"]
+
+    text = "not a dict"
+
+    def reads_text() -> str:
+        return text
+
+    cell_of_text = reads_text.__closure__
+    shapes = {
+        "a function that closes over a dict holding a service": closing_over_a_dict,
+        "a lambda": lambda run_id, status, d: None,
+        "the core's code with a cell that is not a dict": types.FunctionType(
+            _ON_DECIDED_CODE, {}, None, None, cell_of_text
+        ),
+    }
+    for what, func in shapes.items():
+        approvals = _approvals_with(app, func)
+        with monkeypatch.context() as m:
+            _no_server(m)
+            with pytest.raises(BindRefused, match="held on_decided"):
+                serve(approvals, config=app.config, host=ALL_ZEROS, port=0)  # type: ignore[attr-defined]
+        assert "held on_decided: function" in real_services(
+            app.config,
+            approvals.held_services(),  # type: ignore[attr-defined]
+        ), f"{what} was not counted"
+
+
+def test_serve_with_an_unreadable_approvals_object_raises_bind_refused_not_another_error(
+    tmp_path: Path,
+) -> None:
+    app = _built(tmp_path)
+    a = app.approvals  # type: ignore[attr-defined]
+    saved = a.channel
+    object.__delattr__(a, "_channel")
+    try:
+        with pytest.raises(BindRefused, match="could not read what the approvals hold"):
+            serve(a, config=app.config, port=0)  # type: ignore[attr-defined]
+    finally:
+        object.__setattr__(a, "_channel", saved)
+
+
+def test_the_slot_list_of_the_approvals_is_pinned() -> None:
+    assert Approvals.__slots__ == (
+        "_audit_sink",
+        "_channel",
+        "_clock",
+        "_config",
+        "_config_facts",
+        "_detector",
+        "_hand_built",
+        "_on_decided",
+        "_overrides",
+        "_registry",
+        "_store",
+    ), "a slot was added or removed: the recheck reads every slot of Approvals.__slots__; review it"
+
+
+@pytest.mark.parametrize("slot", Approvals.__slots__)
+def test_every_slot_deleted_with_the_object_level_call_is_answered_503(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, slot: str
+) -> None:
+    app = _built(tmp_path)
+    server, a = _serve_public(app, monkeypatch)
+    saved = object.__getattribute__(a, slot)
+    object.__delattr__(a, slot)
+    try:
+        status = _post(server, close=False)
+        assert status == 503, f"a deleted {slot} was still served (status {status})"
+    finally:
+        object.__setattr__(a, slot, saved)
+        server.server_close()
+
+
+def _fresh(code: str) -> str:
+    import subprocess
+    import sys
+
+    done = subprocess.run(  # noqa: S603 - our own interpreter, a fixed program
+        [sys.executable, "-c", code], capture_output=True, text=True, timeout=120, check=False
+    )
+    assert done.returncode == 0 and "ok" in done.stdout, (
+        f"{done.stdout[-200:]} {done.stderr[-400:]}"
+    )
+    return done.stdout
+
+
+def test_the_fake_secret_provider_is_pinned_when_its_module_is_loaded_whichever_comes_first() -> (
+    None
+):
+    """The receiver does not import the secrets module (repo rule); the secrets module pins its own class as it is
+    created. So a change made after the module is loaded is seen even if the first question comes much later."""
+    first = (
+        "import sys\n"
+        "import hadavin_sdk.approvals.receiver\n"
+        "assert 'hadavin_sdk.actions.secrets' not in sys.modules, 'the receiver imported the secrets module'\n"
+        "from hadavin_sdk import standins\n"
+        "import hadavin_sdk.actions.secrets as m\n"
+        "key = ('hadavin_sdk.actions.secrets', 'FakeSecretProvider')\n"
+        "assert key in standins._PINNED, 'not pinned when its module was loaded'\n"
+        "cls = m.FakeSecretProvider\n"
+        "assert standins.is_stand_in(cls({}))\n"
+        "cls.get = lambda self, name: 'x'\n"
+        "assert not standins.is_stand_in(cls({})), 'a method patched before the first question was not seen'\n"
+        "print('ok')\n"
+    )
+    _fresh(first)
+    swapped = (
+        "import hadavin_sdk.approvals.receiver\n"
+        "from hadavin_sdk import standins\n"
+        "import hadavin_sdk.actions.secrets as m\n"
+        "original = m.FakeSecretProvider({})\n"
+        "Sub = type('FakeSecretProvider', (m.FakeSecretProvider,), {})\n"
+        "m.__dict__['FakeSecretProvider'] = Sub\n"
+        "assert not standins.is_stand_in(Sub({})), 'a same-name subclass was trusted'\n"
+        "assert not standins.is_stand_in(original), 'the original read as a stand-in after a swap'\n"
+        "print('ok')\n"
+    )
+    _fresh(swapped)
+    loaded_first = (
+        "import hadavin_sdk.actions.secrets as m\n"
+        "import hadavin_sdk.approvals.receiver\n"
+        "from hadavin_sdk import standins\n"
+        "m.FakeSecretProvider.get = lambda self, name: 'x'\n"
+        "assert not standins.is_stand_in(m.FakeSecretProvider({}))\n"
+        "print('ok')\n"
+    )
+    _fresh(loaded_first)
+
+
+def test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line() -> None:
+    long_key = "k" * 10_000
+    assert held_services_found({long_key: _Opaque()}) == ("held (unreadable)",)
+    assert held_services_found({"a" * 41: _Opaque()}) == ("held (unreadable)",)
+    assert held_services_found({"a\x1bb": _Opaque()}) == ("held (unreadable)",)
+    assert held_services_found({"x" * 40: _Opaque()}) == (f"held {'x' * 40}: _Opaque",)
+    Long = type("N" * 500, (), {})
+    assert held_services_found({"channel": Long()}) == ("held channel: (unreadable)",)
+    Odd = type("a\x1bb", (), {})
+    assert held_services_found({"channel": Odd()}) == ("held channel: (unreadable)",)
+    assert held_services_found({"channel": _Opaque()}) == ("held channel: _Opaque",)

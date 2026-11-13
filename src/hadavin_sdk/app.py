@@ -21,7 +21,7 @@ from hadavin_sdk.actions.executor import Executor
 from hadavin_sdk.actions.secrets import SecretProvider
 from hadavin_sdk.approvals import Approvals, Channel
 from hadavin_sdk.approvals.cards import Card, Delivery
-from hadavin_sdk.approvals.requests import summary
+from hadavin_sdk.approvals.requests import make_on_decided, summary
 from hadavin_sdk.audit import AuditSink
 from hadavin_sdk.backends import platform_secrets
 from hadavin_sdk.backends.factory import make
@@ -192,7 +192,7 @@ def build(
         audit,
         reg,
         channel,
-        lambda run_id, status, d: holder["rt"].on_decided(run_id, status, d),
+        make_on_decided(holder),
         clock,
         summary_detector,
         config=cfg,

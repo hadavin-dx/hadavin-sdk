@@ -5,7 +5,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Mapping
 from datetime import datetime, timedelta
-from types import MappingProxyType
+from types import FunctionType, MappingProxyType
+from typing import Any
 
 from hadavin_sdk.approvals.channel import Channel, clean
 from hadavin_sdk.audit.protocol import AuditSink
@@ -28,6 +29,28 @@ from hadavin_sdk.store.protocol import StaleState, Store
 OnDecided = Callable[[str, str, ApprovalDecision | None], object]
 _LOG = logging.getLogger("hadavin_sdk.approvals")
 RESEND_AFTER = timedelta(seconds=60)  # more than 2x a channel call's timeout
+
+
+def make_on_decided(holder: dict[str, Any]) -> OnDecided:
+    """The one ``on_decided`` function the core builds (``build()`` uses it): it hands a recorded decision to the
+    runtime kept in ``holder["rt"]``. The bind guard recognises it by its code and its closure (one cell, a plain
+    dict); any other callable given as ``on_decided`` can close over anything, so it is counted as held."""
+
+    def on_decided(run_id: str, status: str, decision: ApprovalDecision | None) -> object:
+        return holder["rt"].on_decided(run_id, status, decision)
+
+    return on_decided
+
+
+_ON_DECIDED_CODE = make_on_decided({}).__code__
+
+
+def _is_core_on_decided(func: object) -> bool:
+    """True only for a function made by ``make_on_decided`` (identity of its code; its closure is one plain dict)."""
+    if type(func) is not FunctionType or func.__code__ is not _ON_DECIDED_CODE:
+        return False
+    cells = func.__closure__
+    return cells is not None and len(cells) == 1 and type(cells[0].cell_contents) is dict
 
 
 WARNING = "WARNING: the inputs read like instructions to an AI. Check them before approving. "
@@ -187,7 +210,8 @@ class Approvals:
         """What these approvals really hold that can reach a service, read when asked: the build overrides, and the
         channel, the detector and the store as they are now. The bind guard (``bindguard.held_services_found``)
         counts each one that is not one of the core's own stand-ins. Approvals made by hand (not by ``build()``)
-        also name their audit sink and registry: nothing says those are stand-ins."""
+        also name their audit sink and registry: nothing says those are stand-ins. ``on_decided`` is named unless it
+        is the function ``make_on_decided`` builds (``clock`` is still not read: see the CHANGELOG)."""
         # read through the same accessors the runtime uses (``self.channel`` and so on), never through the private
         # slots: a replaced accessor and the slot behind it cannot give two answers
         held: dict[str, object] = dict(self.overrides)
@@ -199,6 +223,10 @@ class Approvals:
             held[name] = obj
         if self._hand_built:
             held["audit"], held["registry"] = self.audit, self.registry
+        if not _is_core_on_decided(
+            self.on_decided
+        ):  # a callable run after a valid signature can hold anything
+            held["on_decided"] = self.on_decided
         return held
 
     def real_now(self) -> tuple[str, ...]:

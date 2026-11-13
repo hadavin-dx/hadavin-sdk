@@ -15,3 +15,10 @@ class FakeSecretProvider:
 
     def get(self, name: str) -> str:
         return self._values[name]
+
+
+# The bind guard (``hadavin_sdk.standins``, a leaf module) pins ``FakeSecretProvider`` now, as the class is
+# created: the approvals side must not import this module, so this module tells the guard instead.
+from hadavin_sdk import standins as _standins
+
+_standins.pin_module(__name__)
