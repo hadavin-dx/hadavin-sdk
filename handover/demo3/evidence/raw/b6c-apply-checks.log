@@ -1,4 +1,4 @@
-r3 on f3c39cf8 rc=0
-for-stack on f3c39cf8+claims-stack rc=0
+final apply checks (after E9 numbers edit)
 r3 on plain f3c39cf8 rc=0
-(r3 plain applied on f3c39cf8+claims-stack: FAILS at README.md:85, expected; use the for-stack patch there)
+r3-for-stack on f3c39cf8+claims-stack rc=0 (result identical to stack tree)
+plain r3 on stack tree: fails README.md:85 (expected)
