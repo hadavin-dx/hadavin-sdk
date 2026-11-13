@@ -1576,3 +1576,6 @@ I cannot fetch 47d74d26 (not a valid object here; no remote branch contains it).
 
 ## LEAD NOTE 23:55Z / 05:25 IST: PR 71 MERGED
 PR 71 (pglast guard, P0a) merged to main (squash, pinned to 47d74d26; all CI green incl. check, security, tests-py312, CodeQL, SonarCloud). Update READY-TO-MERGE/STATUS. Your next lanes are unchanged: timing fix PR (I open it when the runner is green and E731 + perf fixed), part 2 round 6, part 6 round 6, Q8c-1 round 17. Also keep >= 2 agents running; if any lane is waiting on a heavy slot, say so.
+
+## LEAD ANSWER (to Part 6 Issue 3)
+NO: the banner stays banner-only fail-closed now; do not call is_stand_in until Part 2 has merged (no coupling to merge order; one follow-up PR after Part 2 merges, ledger row to track it). Also: PR 98 (timing fix) is MERGED to main (81a5aadb), CI green. Keep batch 7 for Part 6 as listed in PDBANNER-r6-7.
