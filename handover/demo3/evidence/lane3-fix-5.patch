@@ -1,15 +1,16 @@
 diff --git a/scripts/reset.sh b/scripts/reset.sh
-index c8e07bd..774d554 100644
+index c8e07bd..60342f1 100644
 --- a/scripts/reset.sh
 +++ b/scripts/reset.sh
-@@ -25,13 +25,19 @@ if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "
+@@ -25,13 +25,20 @@ if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "
  fi
  # a process that has ended but is not yet collected by its parent (state Z) is stopped
  alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
 +# the whole command line of a process, never cut at a terminal width: ps cuts it at $COLUMNS (even into a pipe) and
 +# the marker is the last word. Linux: /proc (NUL separators become spaces); else ps -ww (unlimited width), else plain ps
 +proc_args() {
-+  if [[ -r "/proc/$1/cmdline" ]] && tr '\0' ' ' 2>/dev/null < "/proc/$1/cmdline"; then return 0; fi
++  # only a plain number names a process (an empty pid would read /proc/cmdline, the kernel's own line)
++  if [[ "$1" =~ ^[0-9]+$ && -r "/proc/$1/cmdline" ]] && tr '\0' ' ' 2>/dev/null < "/proc/$1/cmdline"; then return 0; fi
 +  ps -ww -p "$1" -o args= 2>/dev/null || ps -p "$1" -o args= 2>/dev/null
 +}
  for name in desk fakes; do

@@ -104,3 +104,7 @@ E3b | agent a16b68..: lane3-fix-1 r2 suites | 13:22Z | ~14:15Z | running
 REV-1c | agent a90a66..: fresh codebase-details on fix-1-r2 | 13:21Z | ~13:40Z | running
 REV-1d | agent a7c172..: fresh comprehension on fix-1-r2 | 13:21Z | ~13:40Z | running
 Q10 | reported 13:17Z closed: 72 runs on main 0 errors; PR12 tree never started
+resolve round 2 fix-1 | done 13:40Z: evidence/resolve-round2-lane3-fix-1.md (17 items)
+B5 | reported 13:27Z closed: lane3-fix-5.patch (reset.sh ps width; 3 tests; xdist 0 failed)
+B1c | agent ade8ef..: lane3-fix-1 round 3 builder | 13:27Z | ~14:05Z stop 14:25Z | running
+REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:45Z | running
