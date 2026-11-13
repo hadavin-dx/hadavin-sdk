@@ -1,0 +1,4 @@
+# REV-6c technical review, fix-6 round 2 (saved by lead from the hand-back text; 0 blockers, 0 majors)
+Start-up claims, run_real_check claims, soak numbers (300 rounds, 385 stops = 229 + 156, 9154 leads, 197 UNKNOWN in 70 rounds, 143/54), skip arithmetic 166+30+4=200, new tests (8 + 2), 6b patch (docstring + comment only): all TRUE.
+Minors: M1 public text cites private note files (tests.md:66 raw/b6b-facts.txt; real-services.md:42 raw/b6b-dry-fakes-assume-yes.log) -> say "the author's notes are not in this repository"; M2 tests.md:118 "the script" = a soak script not in the repo; M3 real-services.md:42 self-test allows UNKNOWN only for sends in flight at the kill, up to the number of send workers (script 427, 1034), "an UNKNOWN"; M4 start_all.sh:16 also sets DESK_LEADFLOW_FILE (lead owner, stage, reminder) - by-hand commands do not.
+Nits: N1 playwright-mention count is a deliberate pin; N2 Python 3.13.18 matches py313-base.md.

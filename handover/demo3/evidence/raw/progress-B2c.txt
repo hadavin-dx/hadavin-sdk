@@ -7,3 +7,4 @@ B2c 14:05Z/19:35 IST: extra item 16 done (server.py docstring + test)
 B2c 14:10 (approx) items 3 done; now 11, 2, 12
 B2c ~14:15: items 2,3,11 done; now item 12 variants then hygiene+full suite
 B2c 13:59Z: full suite started pid 13370, log /home/user/work/priv/b2c-tmp/full.log
+B2c 14:27Z/19:57 IST: patches written, writing notes
