@@ -48,3 +48,8 @@ Start ALL of these NOW in parallel (6 agents), each with its own status row, no 
 - Q5 COLD READER (fresh agent, knows nothing): follow README.md quick start on a CLEAN clone of main f3c39cf8 literally, step by step, on Linux; list every step that fails, is unclear, or needs knowledge not in the README.
 - Q6 COLD READER 2: same for docs/n8n-recipe.md and every claim in docs/limits.md that can be run in 10 minutes.
 Cap 14:30Z. A status block every 5 minutes with ALL rows (agent id, what, since, time left, result so far). Never let the queue empty: if all six end before 14:30Z, repeat Q2 and Q3 with new seeds.
+
+
+## 2026-11-13 12:45Z LEAD ORDER: LOAD REPORT NOW, then fill every free slot (owner is angry about idle time; speed means the whole project finishes sooner)
+Write at the TOP of your REPORT, within 3 minutes, a LOAD TABLE: (1) every running agent: id | task | since | expected end | real progress; (2) every shell / background job / container: command | since | what it waits for | CPU use now; (3) heavy slots in use of 3; (4) free capacity in words (cores idle, RAM free). Use `ps`, `uptime`, `free -m`, ListAgents, not guesses.
+Then: if fewer than 5 agents are running or CPU is under 60 percent, START MORE NOW from your own standing queue or invent useful independent evidence work (more fuzz seeds, more hostile inputs, more cold readers on other docs, more mutation rows on the files your own reports touch, rerun of any flaky result 20 times, cross-checks of a sibling session's report). Do not wait for me. Idle time is the only thing the owner counts as waste. Every agent has a written purpose and expected output in the status block. Push the block, then keep a block every 5 minutes.
