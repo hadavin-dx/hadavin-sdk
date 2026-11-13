@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+19:42Z. R6 builder a92ad324 batch2 (builder-run, my read of the raw tail): 7 failed, 1258 passed, 5 skipped in 470 s. Failed: test_burst_retry (cut-off reply, 2 cases), test_except_clause_hierarchy (catcher handler order), test_file_reader_refusals (n8n pipe refusal; n8n deep nesting), test_hygiene (demo_only outside loader), test_live_claude (counts failures by class). These are the stale-test or fix-side effects of the R6 edits; the builder has moved on to batch3 and a fail-before run (logs batch3.log, failbefore1.log exist), so it is working on them; no new checkpoint note since 19:18 builder clock (I will ask for one if still silent at 19:50). Running agents: 1 (builder). Nothing is claimed fixed. Next: builder hand-back with RESULTS.md, then EV6 alone. ASK: none.
+
+## STATUS (core lead)
 19:36Z. R6 builder a92ad324: newest written checkpoint is still no. 2 (code A-I, M written), but its logs in out/R6 show it is testing (builder-claimed, I read the raw tails): batch1 386 passed in 107 s (includes the 100,000-row log test and the one-byte-over refusal); crm_hubspot alone 56 passed; scrub_n8n alone 254 passed (slowest 3.0 s); batch2 is running and ALREADY SHOWS 3 F marks (about 28-31 percent), so not all green; which tests and why is unknown until it finishes. I will not count anything as fixed until the independent EV6 run. Running agents: 1 (the builder). Next: builder hand-back, then EV6 alone. ASK: none.
 
 ## STATUS (core lead)
