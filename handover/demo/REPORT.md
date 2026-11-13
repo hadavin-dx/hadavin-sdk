@@ -1,6 +1,38 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 04:00Z / 09:30 IST - P1 v3: the bash guard HELD in 11 shells; its hygiene SCANNER has a Major (test-only: v3.1 building): P1 v3 is SAFE TO APPLY NOW for the scripts; crlf-guard-v4 FAILS ON WINDOWS autocrlf=true; 8 agents
+FAILED / UNCERTAIN first:
+1. **crlf-guard-v4 would have gone RED on your Windows full run** (fresh review sonar skips/REVIEW-crlf-v4-yaml-delta-fresh.md): `test_every_cure_in_the_message_works[crlf]` fails under core.autocrlf=true (Git for Windows default): the planted repo has no .gitattributes so git sees the CRLF file as clean and `git checkout -- file` does nothing; measured 1 failed / 30 passed; with `* text eol=lf` in the planted tree it passes under autocrlf true and false. The guard itself does NOT misfire in a real autocrlf clone (only *.ps1 and icon.png hold CR). Also 17 of 26 reviewer mutants survive (hint wording, lone CR as last byte, first-bad-file-only message, scan args --redact/--ignore-gitleaks-allow, editorconfig, marker registration). DO NOT APPLY crlf v4. v5 building (aa25bbd93a8dd5a23).
+2. **sonar-yaml-test-delta-v2 does NOT apply with P1** (P1 appends curl/pip tests to the same tests/test_workflow_files_parse.py, both orders) and is a partial YAML linter whose allowlists already lack a legal key (`snapshot`). The reviewer's TRIMMED test (81 lines vs 163, parse + top-level mapping + `on` + non-empty `jobs`, no allowlists, 19 mutants killed incl. the original `:all: -r` bug, works with P1: 17 passed) is being rebuilt as trimmed-v2 that applies in all orders. Cost: no more `timeout-minute`/`usess` typo catching: actionlint in CI is the control (your 02:36 decision stands).
+3. **P1 v3 fresh review (third reader), sonar/REVIEW-p1v3-fresh.md: no Blocker, 1 Major, 3 Minor, 4 Nit.** THE GUARD HELD: passes in bash, bash --posix, busybox sh/ash, zsh (plain/--emulate sh/ksh), mksh, ksh93, yash; refuses in dash and posh; 22 reset.sh bypass runs with a made-up outside database, BASH_VERSION unset and exported: database kept, rc 2 every time; hostile exported BASH_FUNC_eval%% gives a false refusal (safe); behaviour under bash identical to base (8 shells x 4 pid-file states; 15 start_all cases). Honest limit: where a `[[` PROGRAM is on PATH (busybox has a `[[` applet) dash passes the guard and then behaves like bash: low risk, needs a hostile PATH; NOTES wording fixed in v3.1. MAJOR is in the TEST scanner only: it misreads `<<< "abc"` as a heredoc and silently hides the rest of a file (the 'ends open' net does not fire; no repo file triggers it today). Minor: some false positives (`m=(["a"]=1)`), quadratic on a 1 MB single line (86 s: only a committed adversarial file). v3.1 (scanner fixes only, the guard untouched) building (a0b62ed1f6ca160f5). Sonar acceptance of any spelling: unverifiable here.
+   => For you: P1 v3 can be applied now if you prefer not to wait (the script changes and the tests are right; the scanner flaw cannot hurt the repo's current files); v3.1 replaces it when ready (~10-15 min).
+4. Still building: probe-ab v2 (hold the draft PR), P3 v3, real-run v5, P2 v2.1, nodemo v2.
+5. Not run: full suite WITH demo present, Windows, Sonar.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a7d18e4fa0b28d940 | probe-ab v2 builder | 03:52 | running | probe-ab-v2.patch |
+| aaafa804a801b78ad | P3 v3 builder | 03:52 | running | v3 patch |
+| a71eeae97124ff4bb | real-run fixes v5 builder | 03:57 | running | v5 patch |
+| aa25bbd93a8dd5a23 | crlf-guard v5 + trimmed yaml test builder | 03:58 | running | 2 patches |
+| a0b62ed1f6ca160f5 | P1 v3.1 scanner builder | 04:00 | running | patch |
+| a598e93b5e583706a | P2 v2.1 builder | 03:51 | running | patch |
+| a82407284069d4fa2 | nodemo v2 + optional + isort + CI job builder | 03:46 | running | 4 patches |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7 (all builders: reviews of each new version start as they land).
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P1 | review 3 | 1 Major (test scanner) | fix | no | v3.1 read |
+| crlf | review 3 | 2 Major | autocrlf + survivors | no | v5 read |
+| yaml test | review 3 | 2 Major | conflict + linter | no | trimmed-v2 read |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| crlf v4 + yaml delta v2 review | done, fails |
+| P1 v3 review | done, guard holds |
+
 ## 2026-11-13 03:57Z / 09:27 IST - **A REVIEWER BREACHED THE NO-LIVE-CALL RULE (logged, no harm found)**; probe-ab needs a better design (2 design Majors: v2 building) - hold the draft PR if you can; real-run v4 has 1 Major (v5 building); 8 agents
 FAILED / UNCERTAIN first:
 1. **BREACH (the reviewer of real-run fixes v4, report sonar... real-run/REVIEW-v4-fresh.md, slip 1):** in its first matrix it answered `y` on five VALID synthetic configs; the desk started and each run made 52 CRM create attempts toward the vendor's DEFAULT address through the sandbox proxy, with a MADE-UP key. Result: `created 0`, no real account, no real mail, no model call; but it was NOT loopback-only. My brief said loopback only but did not forbid `y` on a config whose base URLs were not pointed at fakes: my miss. After that every valid-config case used `n`; no process left. I have written the hard rule (never answer y unless every base URL is a loopback fake / --dry-fakes / network disabled) into the v5 builder's brief and will put it in every real-run brief from now on. If you want the vendor-side effect checked (a made-up key cannot authenticate: expected 401s), that is your call.
