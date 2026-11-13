@@ -1,4 +1,13 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 14:06Z (core lead; container clock 14:05Z)
+| row | what | state |
+|---|---|---|
+| V6 | evidence for F6 (ac5e8e218b86693bc) | RUNNING 19 min; checkpoint shows fails-before, hostile and mutation logs written; no report yet. Ends by ~14:35Z |
+| VC | combined evidence (a4270a0af8d45b82f) | RUNNING 8 min; checkpoint: big-key proof, 25 hostile inputs, ruff/bandit/column counts, mutations done; FULL SUITE running (started 13:56Z, ~28 min). No numbers published until its report: I have not read them |
+| review | independent reviewer on combined diff + VC evidence | starts when VC reports |
+| docs rebase | waits for the demo frozen hash | WAITING (3 settings.md surviving mutants carried in) |
+FAILURES: nothing new since 14:02Z. Totals: unexplained 2 (B2-first rc=1, T2-earlier). Crashed agents 0. LOAD: 2 agents, load avg 1.0, heavy slots 1 of 3 (VC full suite). ASK: none new.
+
 ## STATUS 14:12Z (core lead)
 COMBINE DONE (builder): core-fix-v1.patch 3569 lines, 48 files, sha256 e0458dda..., I re-checked: git apply --check passes on a fresh tree-EV copy. Builder ran 13 test files: 522 passed/5 skipped; ruff clean; bandit 0 high/medium. Not run by builder: full suite, mutation, Windows. Two real problems found while merging and fixed: F2 test expected JSONDecodeError but F1b's reader gives FileRefused (test changed, behaviour same); my F2b marker comment broke line length (shortened). Also fixed the F3 hygiene defect (+1 more hit in F1b test). Files: fix/core-fix-v1.patch, fix/COMBINE-RESULTS.md, fix/COMBINE-CONFLICTS.md.
 Running: V6 (F6 evidence), VC (combined evidence: full suite, 100 MB NUL key-file proof, 20 hostile inputs, 10 mutants; ac... started 14:12Z, ends by 15:10Z lead-clock-safe cap 14:30Z for lead; will report partial at cap). Then independent reviewer on the combined diff + VC evidence.
