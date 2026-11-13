@@ -1,0 +1,106 @@
+rrc-help	rrc	0	0	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --help
+rrc-noargs	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py
+rrc-assume-noconf	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --assume-yes
+rrc-assume-with-config	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --assume-yes --config TMP/ok/real-run.env
+rrc-unknown-flag	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --nope
+rrc-cfg-missing-file	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/none.env
+rrc-cfg-dir	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/adir
+rrc-cfg-empty	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config /dev/null
+rrc-cfg-binary	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/binary.env
+rrc-cfg-lowercase	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/lower.env
+rrc-cfg-line-is-a-key	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/noeq.env
+rrc-missing-DESK_DB_PATH	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_DB_PATH/real-run.env
+rrc-missing-DESK_HUBSPOT_KEY_FILE	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_KEY_FILE/real-run.env
+rrc-missing-DESK_HUBSPOT_MAX_CALLS	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_HUBSPOT_MAX_CALLS/real-run.env
+rrc-missing-REAL_HUBSPOT_READBACK_MAX_CALLS	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-REAL_HUBSPOT_READBACK_MAX_CALLS/real-run.env
+rrc-missing-DESK_SMTPP_HOST	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_HOST/real-run.env
+rrc-missing-DESK_SMTPP_USER	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_USER/real-run.env
+rrc-missing-DESK_SMTPP_PASSWORD_FILE	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_PASSWORD_FILE/real-run.env
+rrc-missing-DESK_SMTPP_FROM	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_FROM/real-run.env
+rrc-missing-DESK_SMTPP_RECIPIENTS	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_RECIPIENTS/real-run.env
+rrc-missing-DESK_SMTPP_MAX_SENDS	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-DESK_SMTPP_MAX_SENDS/real-run.env
+rrc-missing-REAL_IMAP_1_USER	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_USER/real-run.env
+rrc-missing-REAL_IMAP_1_PASSWORD_FILE	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-REAL_IMAP_1_PASSWORD_FILE/real-run.env
+rrc-missing-REAL_IMAP_2_USER	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_USER/real-run.env
+rrc-missing-REAL_IMAP_2_PASSWORD_FILE	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/m-REAL_IMAP_2_PASSWORD_FILE/real-run.env
+rrc-refuse-persons7	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-persons7/real-run.env
+rrc-refuse-persons1001	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-persons1001/real-run.env
+rrc-refuse-persons-key	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-persons-key/real-run.env
+rrc-refuse-readback4	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-readback4/real-run.env
+rrc-refuse-readback10001	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-readback10001/real-run.env
+rrc-refuse-maxcalls0	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-maxcalls0/real-run.env
+rrc-refuse-maxcalls10001	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-maxcalls10001/real-run.env
+rrc-refuse-maxsends0	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-maxsends0/real-run.env
+rrc-refuse-timeout10	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-timeout10/real-run.env
+rrc-refuse-port99999	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-port99999/real-run.env
+rrc-refuse-security-bad	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-security-bad/real-run.env
+rrc-refuse-rcpt-mismatch	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-rcpt-mismatch/real-run.env
+rrc-refuse-drain0	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-drain0/real-run.env
+rrc-refuse-drain-nan	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-drain-nan/real-run.env
+rrc-refuse-wait-big	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-wait-big/real-run.env
+rrc-refuse-folder-bad	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-folder-bad/real-run.env
+rrc-refuse-url-public	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-url-public/real-run.env
+rrc-refuse-url-http-public	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-url-http-public/real-run.env
+rrc-refuse-url-https-loopback	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-url-https-loopback/real-run.env
+rrc-refuse-url-has-key	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-url-has-key/real-run.env
+rrc-refuse-db-exists	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/r-db-exists/real-run.env
+rrc-valid-eof	rrc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/ok/real-run.env
+rrc-valid-answer-n	rrc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/ok/real-run.env
+rrc-valid-cleanup-n	rrc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/ok/real-run.env --cleanup
+rrc-qualifier-forced-recorded	rrc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/qual/real-run.env
+rrc-live-settings-missing	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/ok/real-run.env --live-model
+rrc-live-public-url	rrc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/livepub/real-run.env --live-model
+rrc-live-loopback-answer-n	rrc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_real_check.py --config TMP/liveloop/real-run.env --live-model
+rlc-help	rlc	0	0	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --help
+rlc-noargs	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py
+rlc-public-url	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url https://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-http-public	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://192.0.2.1 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-cap-run-over-total	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/l --cap-run 5 --cap-total 3 --price-date 2026-01-01 --model m=1,5
+rlc-bad-model	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --ledger TMP/lv/l --cap-run 1 --cap-total 3 --price-date 2026-01-01 --model m=abc
+rlc-leads0	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --leads 0 --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-answer-n	rlc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-eof-prompt	rlc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-n-keyfile-missing	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/none.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-y-keyfile-short	rlc	2	2	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/ks.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-y-all-calls-failed	rlc	3	3	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k.txt --base-url http://127.0.0.1:9 --leads 1 --runs 1 --ledger TMP/lv/ledger2.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+rlc-n-keyfile-2line	rlc	1	1	PASS		/tmp/work/int2-venv/bin/python /tmp/work/b4-31776/scripts/run_live_check.py --key-file TMP/lv/k2.txt --base-url http://127.0.0.1:9 --ledger TMP/lv/ledger.jsonl --cap-run 0.50 --cap-total 3 --price-date 2026-01-01 --model made-up-model-1=1,5
+hsp-help	hsp	0	0	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --help
+hsp-plan	hsp	0	0	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --plan
+hsp-confirm-missing	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py
+hsp-confirm-6	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 6
+hsp-confirm-abc	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls abc
+hsp-token-unset	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env NOT_SET_VAR_XYZ
+hsp-token-name-is-token	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env made-up-key-0001
+hsp-token-with-space	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN
+hsp-dryrun-nonloopback	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://192.0.2.1:9
+hsp-dryrun-https	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run https://127.0.0.1:9
+hsp-dryrun-userinfo	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1@192.0.2.1:9
+hsp-dryrun-dead-port	hsp	1	1	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:9
+hsp-token-as-argument	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --token made-up-key-0001
+hsp-abbreviation	hsp	2	2	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --pla
+hsp-stub-happy	hsp	0	0	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:37775
+hsp-stub-happy-callorder	hsp	7 calls in plan order	ok	PASS		(stub log)
+hsp-stub-owners403	hsp	1	1	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:39703
+hsp-stub-echo	hsp	1	1	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:41199
+hsp-stub-createlost	hsp	1	1	PASS		/tmp/work/int2-venv/bin/python -I /tmp/work/b4-31776/scripts/hubspot_probe.py --yes-spend-calls 7 --token-env MADEUP_TOKEN --dry-run http://127.0.0.1:44079
+dsk-memory-refused2	dsk	4	4	PASS		timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+dsk-port-refused	dsk	4	4	PASS		timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+dsk-bind-with-real-service	dsk	4	4	PASS		timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+dsk-fakes-host-nonloopback	dsk	4	4	PASS		timeout 10 /tmp/work/int2-venv/bin/python -m lead_desk.server
+rck-clean	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+rck-memory-no-stray	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH=':memory:' /tmp/work/int2-venv/bin/python scripts/reset_check.py; test ! -e ':memory:.lock' && test ! -e ':memory:'
+rck-port-answers	rst	4	4	PASS		bash -c cd 'TMP/repocopy' || exit 9; python3 -c "import socket,time;s=socket.socket();s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1);s.bind(('127.0.0.1',52037));s.listen(1);time.sleep(5)" & sleep 1; /tmp/work/int2-venv/bin/python scripts/reset_check.py; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; exit $rc
+start-bad-mode	rst	1	1	PASS		bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh bogus
+start-ok	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; PATH='/tmp/work/int2-venv/bin:/usr/bin:/bin' bash scripts/start_all.sh keyed
+start-desk-answers	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; curl -s --noproxy '*' -m 3 http://127.0.0.1:45117/counts
+start-again-refused	rst	1	1	PASS		bash -c cd 'TMP/repocopy' || exit 9; bash scripts/start_all.sh keyed
+rck-lock-held	rst	3	3	PASS		bash -c cd 'TMP/repocopy' || exit 9; /tmp/work/int2-venv/bin/python scripts/reset_check.py
+reset-stops-and-deletes	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh; test -z "$(ls -A data)"
+reset-twice	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; bash scripts/reset.sh
+reset-wait-empty-means-10	rst	0	0	PASS		bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS= bash scripts/reset.sh
+reset-wait-08	rst	2	2	PASS		bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=08 bash scripts/reset.sh
+reset-wait-1000	rst	2	2	PASS		bash -c cd 'TMP/repocopy' || exit 9; RESET_STOP_WAIT_SECONDS=1000 bash scripts/reset.sh
+reset-db-outside-data	rst	2	2	PASS		bash -c cd 'TMP/repocopy' || exit 9; DESK_DB_PATH='TMP/elsewhere/d.sqlite3' bash scripts/reset.sh
+reset-foreign-pid	rst	6	6	PASS		bash -c cd 'TMP/repocopy' || exit 9; mkdir -p data; sleep 30 & echo $! > data/desk.pid; bash scripts/reset.sh; rc=$?; kill %1 2>/dev/null; wait 2>/dev/null; rm -f data/desk.pid; exit $rc
+ports-freed	rst	all closed	all closed	PASS		(connect to the ports used)
+reset.ps1/start_all.ps1	rst	-	-	SKIPPED	no pwsh on this machine; only read (tests/test_reset_ps1_links.py covers the text)	-

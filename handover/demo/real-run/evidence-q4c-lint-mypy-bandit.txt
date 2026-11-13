@@ -1,0 +1,15 @@
+# v3 gates on the patched tree (base 2db3926 + real-run-fixes-v3.patch)
+$ ruff check
+All checks passed!
+$ ruff format --check
+146 files already formatted
+$ mypy --platform linux
+Success: no issues found in 26 source files
+$ mypy --platform win32
+Success: no issues found in 26 source files
+$ git diff --check
+clean
+$ uvx bandit -ll -r src scripts (patched)
+		Low: 4
+		Medium: 0
+		High: 0

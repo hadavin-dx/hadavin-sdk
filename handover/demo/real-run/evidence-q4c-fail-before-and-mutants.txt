@@ -1,0 +1,66 @@
+# new tests (test_take_script_refusals.py of v3) run against the v2-patched tree (v2 code, new tests copied in): the new checks must FAIL
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+FAILED test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+FAILED test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+FAILED test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+FAILED test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+FAILED test_a_three_character_key_is_called_too_short
+16 failed, 18 passed, 1 deselected in 2.91s
+
+# mutants of the v3 tree (one change each), tests/test_take_script_refusals.py (smtp = SMTP password check removed; imap = both mailbox checks removed; live = live key check removed; afterq = all secret checks switched off; wording = HubSpot too-short text removed; tempdir = own_tempdir fixture made a no-op)
+=== smtp
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+5 failed, 29 passed, 1 deselected in 2.94s
+=== imap
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+9 failed, 25 passed, 1 deselected in 3.06s
+=== live
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+4 failed, 30 passed, 1 deselected in 2.92s
+=== afterq
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+FAILED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+21 failed, 13 passed, 1 deselected in 3.60s
+=== wording
+FAILED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[short]
+FAILED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+2 failed, 32 passed, 1 deselected in 2.88s
+=== tempdir
+FAILED tests/test_take_script_refusals.py::test_own_tempdir_puts_temporary_folders_under_the_test_folder
+1 failed, 33 passed, 1 deselected in 2.49s
+=== cleanfail (D6 cleanup only when the run did not succeed; the two D6 tests)
+FAILED test_a_clean_self_test_deletes_its_folder_too ; test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails PASSED; 1 failed, 1 passed (35.7 s)

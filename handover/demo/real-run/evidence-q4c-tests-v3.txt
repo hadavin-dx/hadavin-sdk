@@ -1,0 +1,10 @@
+# pytest on the patched tree: test_real_check_dry test_clock_steps test_live_claude test_ledger_amounts test_take_script_refusals test_hygiene test_gitleaks_exceptions (no gitleaks on PATH: 27 skipped)
+..s......ss...ss...................ssssssssssssssssssssss.               [100%]
+319 passed, 27 skipped in 387.92s (0:06:27)
+done
+
+# hygiene + gitleaks exceptions with /tmp/work/gl/gitleaks on PATH and DPLD_REQUIRE_SCAN=1
+59 passed in 26.52s
+
+# new file alone
+35 passed (34 in 2.35 s plus the 35 s success-path self-test)

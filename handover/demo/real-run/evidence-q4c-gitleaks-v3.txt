@@ -1,0 +1,8 @@
+== gitleaks dir
+[90m2:38AM[0m [32mINF[0m [1mscanned ~2991020 bytes (2.99 MB) in 358ms[0m
+[90m2:38AM[0m [32mINF[0m [1mno leaks found[0m
+== gitleaks git
+[90m2:38AM[0m [32mINF[0m [1mUnknown SCM platform. Use --platform to include links in findings.[0m [36mhost=[0m
+[90m2:38AM[0m [32mINF[0m [1m16 commits scanned.[0m
+[90m2:38AM[0m [32mINF[0m [1mscanned ~3034751 bytes (3.03 MB) in 595ms[0m
+[90m2:38AM[0m [32mINF[0m [1mno leaks found[0m
