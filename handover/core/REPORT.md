@@ -1,5 +1,22 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 13:27Z) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| R5 | round-2 review of the whole docs fix (fallback reviewer; handover/core/review/F4-review-r2.md) | independent read | 13:33Z | done 13:27Z | round 2 of 2 | DONE: 0 Blocker, 3 Major, 5 Minor/Nit. Majors: (1) evidence did not cover the final tree (V4c is running, but F4d will change the head again, so a final V4d run is needed); (2) docs/settings.md says the count tests skip when a test file cannot be imported: wrong, the test asserts returncode 0 (test_docs_match_tools.py:379), so an import error FAILS; and "no browser tools changes the last line" is unsupported (every importorskip("playwright") is inside a test function); (3) the repeated-request sentence "no automatic try yet" is not exact: desk.py:1426-1427 also waits 5 s for a follow-up that was just given back for lack of resources. Minors: capital after a semicolon contract.md:178; the total-line pattern fails on "in 61.00s (0:01:01)" or ", N deselected"; the repeat test pins source text only; probe page needs "the correct count"; precheck prints-nothing claim unpinned. Reviewer checked 8 other claims against code with lines. CI switch: plain "1", no secret, no permission change | F4d |
+| F4d | builder FINAL docs round: Majors 2, 3 and Minors 4-8 + "CI sets it; no CI run has been seen" | resolve (round cap: after round 2 only blockers and majors get another review; minors fixed without one) | 13:27Z | 14:15Z | round 3 | RUNNING | V4d on the final head; short check of the 3 Majors only |
+| V4c | evidence for the round-3 head | proof | 13:33Z | 14:05Z | 1 | RUNNING (will be superseded by V4d for the final head; its mutant table still counts) | read |
+| V2 | evidence for F2 incl. full suite | proof | 13:11Z | about 13:55Z | 1 | RUNNING | read |
+| F1b, F6 | builders | | 13:19Z, 13:18Z | 14:20Z | | RUNNING | combine |
+| COMBINE | one tree for F1+F1b+F2+F3+F6 | output | | | | WAITING for F1b, F6 | |
+| done | F1 F2 F3 F4 F4b F4c D1 E1 E2 C6 R4 R5 V1 V3 V4 V4b | | | | | DONE | |
+
+FAILURES AND RETRIES: R5 findings against my builders' docs output: 3 Majors, round 2 of 2, fixed in F4d (round 3 builder; the cap says only blockers/majors get another review). No new test failures. Totals unchanged.
+LOAD: 5 agents.
+ASK: none new.
+
+
 ## REPORT (container clock 13:26Z) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
