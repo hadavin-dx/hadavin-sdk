@@ -1,5 +1,32 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 13:18Z / 18:48 IST  HEARTBEAT 52 (Q1 xdist proof reported: 2 xdist-only failures; root-cause agent Q11 started)
+**Idle (`vmstat`, 13:11Z): user 94, system 5, idle 0, IO-wait 0** (Q10's CPU hog is part of this by design). No new test-load agents; Q11 is one core.
+| id | what it does | since | expected end | real progress now | state |
+|---|---|---|---|---|---|
+| Q2b | fuzz new seeds | 12:49Z | ~14:00Z | seed 7004 campaign a | running |
+| Q6b | cold reader tests/real-services docs | 12:37Z | ~13:25Z | coverage variant | running |
+| Q8b | mutation check identity + claim logic | 12:49Z | ~13:50Z | 10 of 40 mutants, all KILLED | running |
+| Q3c | blind-mail crash soak | 13:03Z | ~14:00Z | 300-round soak running since 13:10:13Z (seed 20261115) | running |
+| Q10 | flake chase PR #12 `E` marks (CPU hog + 3 parallel runs) | 13:04Z | ~13:40Z | runs since 13:04:58Z | running |
+| B1b | BUILDER lane3-fix-1 round 2 | 12:58Z | ~13:35Z | final report pending | running |
+| E3 | EVIDENCE RUNNER lane3-fix-1 round-1 suites | 12:52Z | ~13:25Z | running | running |
+| E4b | EVIDENCE RUNNER proof lane3-fix-3 r2 then r3 | 13:01Z | ~13:35Z | r3 prep 13:07:28Z | running |
+| REV-2a | `egm:egm-codebase-details` on lane3-fix-2 | 13:10Z | ~13:30Z | reading | running |
+| B4 | BUILDER lane3-fix-4 (identity case: docs + pinning test + casefold analysis) | 13:09Z | ~13:45Z | started 13:09:15Z | running |
+| **Q11** (new) | EVIDENCE RUNNER: ROOT CAUSE of the two xdist-only failures by experiment (ps output under serial vs xdist, COLUMNS, `ps -ww`, /proc cmdline), minimal fix as text only | 13:11Z | ~13:40Z; stop 14:10Z | started 13:11:34Z | running |
+| Q1, REV-2b, B2, Q2, B3c, ... | reported, closed | - | - | see below | closed |
+**Q1 RESULT (xdist proof; evidence/xdist-proof.md; pytest-xdist 3.8.0 + pytest 9.2.0 + execnet 2.1.2 in a THROWAWAY venv only, nothing entered the repo):** serial 3683 passed, 200 skipped, 0 failed, 21:35, exit 0 (log outside git); **xdist -n 3 run 1: 3681 passed, 2 failed, 200 skipped, 7:08; run 2: 3681 passed, 2 failed, 200 skipped, 7:58 (both exit 1)**; node-id sets identical (3883 in each run); the only outcome differences are 2 tests, identical in both runs: **`tests/test_reset_scripts.py::test_reset_sh_refuses_when_the_desk_does_not_stop` (got exit 6, expected 5) and `tests/test_reset_scripts.py::test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop` (got exit 6, expected 0)**; the same two also fail with `-n 1` on that file alone. **Q1's cause is a GUESS, unconfirmed:** scripts/reset.sh reads the process command line with `ps -p PID -o args=` and matches `lead_desk.server` (the last argument); if `ps` cuts the line at 80 columns the marker is lost and the script exits 6; what differs under xdist is unproven. A few ids were not parsed because stderr text was mixed into their line (checked by hand). Timings are noisy (machine loaded by other agents).
+### FAILURES AND RETRIES: new rows
+| id | test or step | result | first line | cause | root cause proven? (experiment) | retries | what I did |
+|---|---|---|---|---|---|---|---|
+| Q1 xdist runs 1 and 2 | `-p xdist -n 3`, full suite on f3c39cf8 | 2 failed / 3681 passed / 200 skipped (both runs identical) | exit 6 where 5 and 0 were expected (test_reset_scripts.py) | guess: `ps` truncation without a terminal (Q1) | **no (Q11 running)** | 2 runs, same result; also fails with -n 1 on the file alone | Q11 started (20-minute rule: results go to questions-for-lead.md at 13:35Z if still unexplained) |
+**Totals today (updated):** 59 failures counted since session start = the 57 (+2 unexplained errors) of the invalid A runs (harness error, proven) + 10 (C's invalid first try, harness, proven) are history; **new this block: 2 real xdist-only failures (cause not yet proven)**; valid serial runs: 0 failed in every one (Q1 serial 3683/200 included).
+
+ASK:
+1. If Q11 proves that scripts/reset.sh really fails whenever `ps` cannot see the full command line (no terminal), that is a SCRIPT portability defect (it can refuse to stop a real desk) and gets a builder patch the same hour (fails-before test). Default: yes.
+2. xdist is 3 times faster (about 7-8 minutes against 21): if you want it in CI, it needs pytest-xdist in a lock file and the two tests fixed first. Default: report only; not my decision.
+
 ## 2026-11-13 13:15Z / 18:45 IST  HEARTBEAT 51 (Q2 and B2 reported; reviewers for lane3-fix-2 and builder B4 started)
 **Idle (`vmstat`, 13:09Z): user 51, system 13, IDLE 24, IO-wait 11, free RAM about 9 GB.** Below 30: the three agents I started now are read-only reviewers (2) and one one-core builder (B4); no further test-load agents.
 | id | what it does | since | expected end | real progress now | state |

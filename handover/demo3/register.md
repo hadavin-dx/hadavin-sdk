@@ -90,3 +90,5 @@ B2 | reported 13:09Z closed: lane3-fix-2.patch (code + docs + tests; changed one
 REV-2a | agent a31bac..: egm:egm-codebase-details on lane3-fix-2 | 13:10Z | ~13:30Z | running
 REV-2b | agent aebdf3..: egm:egm-design on lane3-fix-2 | 13:10Z | ~13:30Z | running
 B4 | agent a52889..: lane3-fix-4 identity case docs + casefold analysis | 13:11Z | ~13:45Z stop 14:10Z | running
+Q1 | reported 13:11Z closed: xdist -n 3 same node ids, 2 xdist-only failures (reset.sh exit 6)
+Q11 | agent ae29d7..: root cause of the 2 xdist-only failures | 13:11Z | ~13:40Z stop 14:10Z | running
