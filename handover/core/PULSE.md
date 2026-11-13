@@ -140,3 +140,4 @@ C1-C4 started, AF running
 LOAD TABLE, C5-C7 started
 C8 self-assigned
 C4 done, C9 started
+AF done 3978 passed; MD-2 done 101 passed; C1 C3 pushed; C10 started

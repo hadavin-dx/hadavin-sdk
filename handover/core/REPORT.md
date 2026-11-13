@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT (container clock 12:36Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
+| AF | after-run full suite, patched tree (tree-AF d3b2b7b) | before/after counts | 12:05Z | done | run 1 | DONE: **3978 passed, 0 failed, 4 skipped, rc 0, 1596.56 s** (before: 3781 passed, 0 failed, 198 skipped; 194 tests unskipped + 3 survivor tests = +197 passed). Log: gates/AF/after-full.log. The 4 skips are load/Windows-only tests | none |
+| MD-2 | the 3 test-side mutation files on the final tree | order step 2 | 12:40Z | done | 1 | DONE: tests/test_mutants.py, test_mutants_more.py, test_mutation_guards.py: **101 passed in 32.01 s, rc 0** (gates/AF/md2-mutfiles.log). K6+K10 together: in C9 | none |
+| C1 | cold reader (agent report, my spot check of 2 items) | queue | 12:28Z | done | 1 | DONE standing/C1: 37 rows, 2 tracebacks (scripts/feed.py index 0 or 9999 -> ValueError; desk not running -> URLError): I reproduced both myself; 1 refusal shows OverflowError name (--dry-port-base 99999); about 12 unclear doc/message items. The dry self-test was NOT run to the end (needs a person to type the host; nobody answered y) | C10 |
+| C3 | doc vs code | queue | 12:28Z | done | 1 | DONE standing/C3: 7 mismatches (SMTP timeout default 5.0 not "same as send timeout" x2, rota crm_owner_id required, checks F1-F6 not in --help, key files re-read each call, DPLD_REQUIRE_SCAN also read by test_gitleaks_exceptions, "steps above" dangling); 95 documented env names vs 112 in code, none undocumented. Agent's numbers; I re-checked only that SMTP_TIMEOUT sits in code | C10 |
+| C10 | docs-only fix proposal patch (not applied) for C3 + C1 doc items; code items listed as NEEDS CODE | self-assigned (b): findings nobody owns | 12:36Z | 40 min | 1 | STARTED (a24e56de) | read docs-fix-v1.patch |
+| C9 | K6+K10 together, -OO check, survivor-tests-v2.patch | self-assigned | 12:35Z | 45 min | 1 | RUNNING | read RESULTS.md |
+| C2 C5 C6 C7 C8 | hostile 1 / other docs / flakiness 20x / hostile 2 / demo-claims cross-check | queue | 12:28-12:35Z | 60 min | 1 | RUNNING (5 agents) | read RESULTS.md |
+
+ASK: 1. C1 and C3 found code defects (2 tracebacks in scripts/feed.py, OverflowError text, unvalidated --price-date, SMTP timeout default). Orders say no code fixes: I list them as NEEDS CODE for the demo session. Default if no answer in 10 min: send the list to the demo session via the lead's file (handover/core/evidence/realrun-v6/standing/NEEDS-CODE.md after C10).
+
+
 ## REPORT (container clock 12:34Z; lead clock about 15 min ahead) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
