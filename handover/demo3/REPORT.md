@@ -1,5 +1,18 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 10:55Z / 16:25 IST  HEARTBEAT 11
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| E | Evidence runner: PR #14 edadd00 full suite once -v (basetemp inside TMPDIR, log outside git) + F7/C1/whitespace/bytes cases | evidence for the current PR #14 head | 10:44Z / 16:14 | suite about 2058 passed, 0 FAILED, 40 skipped at 10:53Z (about 56 percent); ends about 11:03Z / 16:33 (cap 11:07Z) | run 1 of 1 | running; F7 rerun file hostile-f7-rerun-edadd00.md already written | read its report; fill summary.md row |
+| C2 | Evidence runner: hang hunt, full suite on main 61ded9e | clean main run, hang names | 10:25Z / 15:55 | run 1 ended 10:44:53Z exit 0 (log truncated by my git slip); run 2 of the same full suite started 10:44:53Z with -u and junitxml, ends about 11:04Z | retry 1 (why: run 1 gave no summary line) | running | write hang-hunt.md |
+| D | Evidence runner: PR #14 d5b4451 (stale head) | stale head evidence | 10:25Z / 15:55 | run 1 done: exit 0, 1127 s; run 2 cancelled; report pending | 1 of 1 | finishing report (F7 rerun on d5b4451 file exists) | read D report |
+| R1 | my copy loops for orphaned logs | keep raw logs | 10:35Z | both ended (the last ~3 percent of each log was lost between copies) | n/a | stopped | none |
+
+ASK:
+1. C2's second full run on main runs at the same time as E (2 heavy runs, fine). Default: keep; it ends about 11:04Z, inside the cap.
+2. At the 11:07Z cap I stop starting anything, write the final block and a final summary.md. If E or C2 has not ended by then I report their partial counts as partial. Default: keep.
+FACTS: summary.md now has the valid rows first and the four A rows marked INVALID with the reason (your 10:38Z request). Main run 1 by C2: exit code 0, 0 FAILED lines in the recovered 97 percent; D run 1 on d5b4451: exit code 0.
+
 ## 2026-11-13 10:47Z / 16:17 IST  HEARTBEAT 10 (ORDER 5: agent E started on edadd00)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
 |---|---|---|---|---|---|---|---|

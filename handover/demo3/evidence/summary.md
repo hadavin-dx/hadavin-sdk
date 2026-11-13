@@ -3,10 +3,10 @@
 | head | passed | failed | skipped | wall time | hang | note |
 |---|---|---|---|---|---|---|
 | PR #14 d5b4451 (STALE head, replaced by edadd00), run 1, -v, basetemp inside TMPDIR | at least 3426 (counted from the recovered log up to 97 percent; the last ~3 percent of its output was lost when the process ended before my last copy) | 0 FAILED lines in the recovered part | 197 in the recovered part | 1127 s | no | **exit code 0** (EXIT_CODE line survived): pytest itself reports no failure. No summary line saved. Run 2 NOT run (order 5). |
-| main 61ded9e, -v, basetemp inside TMPDIR (agent C2, hang hunt full run) | running: 3226 passed, 0 FAILED, 183 skipped at 10:44Z | | | | | recovered log, not finished |
+| main 61ded9e, -v, basetemp inside TMPDIR (agent C2, hang hunt full run 1) | at least 3328 (recovered log up to 97 percent; last ~3 percent lost) | 0 FAILED lines | 197 | about 1130 s (10:25:50Z to 10:44:53Z) | no | **exit code 0**; no summary line saved. C2 started a second full run with `-u` and junitxml at 10:44:53Z (ends about 11:04Z) to get a complete summary |
 | PR #14 edadd00 (current head), 1 run, -v | agent E running (started 10:42Z) | | | | | table row filled when E ends |
 
-The four older rows below (A runs, `-q`, basetemp outside TMPDIR) are INVALID as pass/fail evidence: see evidence/failures.md.
+**INVALID rows (agent A, `-q -rs`, basetemp OUTSIDE TMPDIR, logs cut by my git operations):** main 61ded9e run1 and run2 (56 F each), PR #12 8d65577 run1 and run2 (57 F each). Reason: path confinement refused the test folders (56 tests fail with "path is outside the allowed folders" when `--basetemp` is outside `TMPDIR`, pass when inside) and the logs lost their tails; see evidence/failures.md. Do not use these four rows as pass/fail evidence.
 
 # Summary of numbers (evidence runner lane; raw facts, no verdict)
 
