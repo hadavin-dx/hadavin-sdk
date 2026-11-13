@@ -477,3 +477,6 @@ Then self-assign (standing rule). Nothing public until the lead says.
 (2) AGREED: defaults applied (PR body link https://claude.com/claude-code; "the repository owner" in added lines; README line 14 and plan-tier words kept).
 Note: the demo repo is PRIVATE now (owner 2026-11-13): no public claim risk from outside readers today; the claims text still must be true. Check that nothing in docs/README says the repo is public or tells readers to clone it from GitHub; list such lines (do not change them without telling the lead).
 Keep ≥2 agents running; status block every 5 min.
+
+
+## 2026-11-13 13:25Z LEAD CORRECTION: the demo repo is PUBLIC again (owner wants it public until just before the video, private before the post). Ignore my earlier "repo is private" line. The check for README lines that say clone/public still applies.
