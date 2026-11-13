@@ -1,0 +1,7 @@
+## No-demo CI job and one test skip
+
+Adds an optional job `no-demo` (.github/workflows/nodemo.yml): it deletes demo_only/ the way a client copy is cut, then runs ruff and the tests in 9 chunks, one pytest at a time. The job fails if a test fails, if a chunk dies or leaves no result file, if the number of tests run differs from what pytest collects, if more than 3 skips are unexpected (skips that name demo_only and a short list of machine-dependent skips are expected), or if fewer than 85 percent of the tests collected passed. It reads only pytest's junit result files, never its printed text.
+
+Also one skip: tests/test_sonar_p2_feed_optional.py::test_feed_calls_the_configured_desk_address reads demo_only/canned_leads.json, so it now skips (reason names demo_only) when the folder is absent, using DEMO_PRESENT from conftest. Without it the job is red on main (measured); with it: 888 passed, 86 skipped, 974 collected.
+
+What it does not prove: a real test file that turns into a placeholder (for example `import support` added to the biggest real file) stays green, about 58 tests could do so silently; up to 3 files with a module-level importorskip stay green; a test that forges the result file and calls os._exit(0) on purpose stays green; the job was not run on a GitHub runner (the run steps were executed locally with bash -e). Merge after PR #12's tests/test_followup_b.py uses `from support import`, otherwise the job is red there.
