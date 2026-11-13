@@ -1,3 +1,19 @@
+## HEARTBEAT 67 (15:24Z / 20:54 IST) - NOT YET FROZEN: 1 agent running
+
+STILL RUNNING: B5e (fix-5 r5, patch lane3-fix-5-r5.patch exists). Its full serial suite ALONE started 15:19Z (log raw/b5e-full.log); a full run takes about 20 minutes here, so ETA about 15:40Z (21:10 IST). Then its 20 xdist runs, then its notes. I write FROZEN after that report and the one freeze report to the lead.
+
+FAILURES AND RETRIES (first):
+- B5e full run 1 FAILED (57 failed, 3710 passed, 206 skipped, 13 errors, rc 1). B5e's finding, from its own experiment (raw/b5e-smtp-experiment.log, said to give the same on the r4 tree): the run was INVALID because its basetemp was outside TMPDIR ('path outside allowed folders' about 70 times). Log kept as raw/b5e-full-invalid-run1-basetemp-outside-TMPDIR.log. I have NOT re-checked that experiment myself; the valid rerun is the proof. B5e had also restarted its runs 4 times as the tree changed.
+- All other open items unchanged: fix-2 r4 and fix-8 have no independent review (freeze); fix-2 r4 applies only after fix-1 r6; E3b three cut runs and 2 `E` marks of the PR #12 run unexplained; old xdist port flake not reproduced.
+
+| Agent | State |
+|---|---|
+| B5e fix-5 r5 | running; valid full serial run alone since 15:19Z, ETA 15:40Z |
+| B8, E9, B1f, B2d, B4d, B6c, E10 | closed (results in the register) |
+
+ASK list: unchanged (xdist in CI; PR #12 E marks; 4 remaining skips; Q8 vs B3 M11; D10 sender word; address label over 63 chars / IP literal / dots before @).
+Load: idle CPU 98 percent, free RAM 14.7 GB (15:24Z). 1 agent running.
+
 ## HEARTBEAT 66 (15:17Z / IST = UTC+5:30) - FREEZE, 1 agent left
 
 FAILURES AND RETRIES (first):

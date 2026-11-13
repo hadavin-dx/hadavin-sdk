@@ -1,0 +1,12 @@
+## final tree, basetemp OUTSIDE TMPDIR (what the invalid run did)
+ERROR tests/test_smtp_outbox.py::test_no_file_handle_is_no_descriptors_not_unreachable[connect]
+54 passed, 13 errors in 3.95s
+## final tree, basetemp INSIDE TMPDIR
+...................................................................      [100%]
+67 passed in 4.44s
+## r4 tree, basetemp OUTSIDE TMPDIR
+ERROR tests/test_smtp_outbox.py::test_no_file_handle_is_no_descriptors_not_unreachable[connect]
+54 passed, 13 errors in 4.08s
+## r4 tree, basetemp INSIDE TMPDIR
+...................................................................      [100%]
+67 passed in 4.60s
