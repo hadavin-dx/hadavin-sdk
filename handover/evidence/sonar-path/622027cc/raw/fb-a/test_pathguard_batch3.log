@@ -1,0 +1,181 @@
+.......................................FFFFFFF.FFFFFFF..FF..F.FF.FFFFF.F [ 73%]
+F.FFFFFFF..FF.FF.FFFFF..FF                                               [100%]
+=================================== FAILURES ===================================
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:34: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AttributeError: module 'hadavin_sdk.k1b.atomic' has no attribute 'secrets'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:238: AttributeError: module 'hadavin_sdk.k1b.atomic' has no attribute 'secrets'
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:34: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:259: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:272: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:283: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:292: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: _read_json() got multiple values for argument 'what'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:312: TypeError: _read_json() got multiple values for argument 'what'
+E   AssertionError: assert None == ''
+     +  where None = <function _recorded_digest at 0x7f0908b4f7e0>(PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_site_score_recorded_diges0/out'))
+     +    where <function _recorded_digest at 0x7f0908b4f7e0> = <module 'hadavin_sdk.k1b.score' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/score.py'>._recorded_digest
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:323: AssertionError: assert None == ''
+E   AssertionError: assert None == 'ab'
+     +  where None = <function _recorded_digest at 0x7f0908b4f7e0>(PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_site_score_recorded_diges1'))
+     +    where <function _recorded_digest at 0x7f0908b4f7e0> = <module 'hadavin_sdk.k1b.score' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/score.py'>._recorded_digest
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:331: AssertionError: assert None == 'ab'
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:342: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:361: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:370: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE BundleError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:384: Failed: DID NOT RAISE BundleError
+E   AttributeError: <module 'hadavin_sdk.k1b.score' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/score.py'> has no attribute 'outputs_dir'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:436: AttributeError: <module 'hadavin_sdk.k1b.score' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/score.py'> has no attribute 'outputs_dir'
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:443: Failed: DID NOT RAISE ConfigError
+E   hadavin_sdk.errors.ConfigError: secrets mounted_file: /tmp/pytest-of-unknown/pytest-1087/test_secrets_folder_is_checked0‮ is not a folder
+/home/user/build/E-work/a-tree/src/hadavin_sdk/actions/secrets_file.py:71: hadavin_sdk.errors.ConfigError: secrets mounted_file: /tmp/pytest-of-unknown/pytest-1087/test_secrets_folder_is_checked0‮ is not a folder
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-unknown/pytest-1087/test_judge_qualify_checks_the_0/g.jsonl/\u202e'
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-unknown/pytest-1087/test_judge_qualify_checks_the_0/g.jsonl/\u202e'
+E   Failed: DID NOT RAISE AuditUnavailable
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:545: Failed: DID NOT RAISE AuditUnavailable
+E   Failed: DID NOT RAISE AuditUnavailable
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:545: Failed: DID NOT RAISE AuditUnavailable
+E   AssertionError: assert 'a:b.json' is None
+     +  where 'a:b.json' = write_outcome(AuditEvent(schema_version=1, event_id='a:b', ts=datetime.datetime(2026, 11, 13, 5, 42, 2, 104302, tzinfo=datetime.time...sion=None, rule_id=None, result=None, error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None))
+     +    where write_outcome = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f0908a72e90>.write_outcome
+     +    and   AuditEvent(schema_version=1, event_id='a:b', ts=datetime.datetime(2026, 11, 13, 5, 42, 2, 104302, tzinfo=datetime.time...sion=None, rule_id=None, result=None, error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None) = _event('a:b')
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:557: AssertionError: assert 'a:b.json' is None
+E   AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:571: AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+E   AssertionError: assert False
+     +  where False = is_file()
+     +    where is_file = (PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_local_dir_reconcile_leave0/aud/outbox') / 'bad.json').is_file
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:585: AssertionError: assert False
+E   ValueError: mkdir: embedded null character in path
+/usr/local/lib/python3.13/pathlib/_local.py:722: ValueError: mkdir: embedded null character in path
+E   AssertionError: assert ('CANARY' not in '/tmp/pytest... through one'
+      
+      'CANARY' is contained here:
+        l_t0/keys-CANARYDIR/lnk is a symlink: a key file is never used through one
+      ?           ++++++)
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:627: AssertionError: assert ('CANARY' not in '/tmp/pytest... through one'
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   AssertionError: 
+    - unsupported operand type(s) for /: 'PosixPath' and 'int'
+    + golden_dir must be a folder name written as text
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:660: AssertionError:
+E   AssertionError: 
+    - unsupported operand type(s) for /: 'PosixPath' and 'int'
+    + inputs_dir must be a folder name written as text
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:660: AssertionError:
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   AssertionError: the error was chained to another one
+    assert (JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') is None)
+     +  where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') = ConfigError('cause list: services.json is missing or not valid JSON').__cause__
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:672: AssertionError: the error was chained to another one
+E   AssertionError: the error was chained to another one
+    assert (JSONDecodeError('Expecting value: line 1 column 1 (char 0)') is None)
+     +  where JSONDecodeError('Expecting value: line 1 column 1 (char 0)') = BundleError('bundle case-001: logs/001.jsonl has a line that is not valid JSON').__cause__
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:672: AssertionError: the error was chained to another one
+E   AssertionError: assert ['cli.py: nos....py: nosonar'] == []
+      
+      Left contains 2 more items, first extra item: 'cli.py: nosonar'
+      Use -v to get more diff
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:787: AssertionError: assert ['cli.py: nos....py: nosonar'] == []
+E   AssertionError: assert ['src/hadavin....py: nosonar'] == []
+      
+      Left contains one more item: 'src/hadavin_sdk/k1b/score.py: nosonar'
+      Use -v to get more diff
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:794: AssertionError: assert ['src/hadavin....py: nosonar'] == []
+E   AssertionError: the score command went through the link
+    assert 0 == 2
+     +  where 0 = <function main at 0x7f09086a0a40>(['--config', '/tmp/pytest-of-unknown/pytest-1087/test_score_refuses_a_report_fo0/config', 'score', '--outputs', '/tmp/pytest-of-unknown/pytest-1087/test_score_refuses_a_report_fo0/out', '--answers', ...])
+     +    where <function main at 0x7f09086a0a40> = <module 'hadavin_sdk.cli' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/cli.py'>.main
+----------------------------- Captured stdout call -----------------------------
+replay complete: outputs in /tmp/pytest-of-unknown/pytest-1087/test_score_refuses_a_report_fo0/out (see replay-report.md)
+score report written: /tmp/pytest-of-unknown/pytest-1087/test_score_refuses_a_report_fo0/out/score/score-report.md
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:844: AssertionError: the score command went through the link
+E   IndexError: pop from empty list
+/home/user/build/E-work/a-tree/tests/k1b_support.py:34: IndexError: pop from empty list
+E   AssertionError: assert False
+     +  where False = is_file()
+     +    where is_file = (PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_a_failed_replay_writes_th0/out') / 'FAILED.txt').is_file
+     +      where PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_a_failed_replay_writes_th0/out') = <tests.test_k1b_replay.Env object at 0x7f09085dfb10>.out
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:891: AssertionError: assert False
+E   AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:902: AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+E   hadavin_sdk.errors.ConfigError: path escapes its folder: run1/case-001.json
+/home/user/build/E-work/a-tree/src/hadavin_sdk/config.py:501: hadavin_sdk.errors.ConfigError: path escapes its folder: run1/case-001.json
+E   AssertionError: a device name reached the outbox
+    assert not True
+     +  where True = exists()
+     +    where exists = (PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_local_dir_outbox_fallback0/aud/outbox') / 'con.json').exists
+     +      where PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_local_dir_outbox_fallback0/aud/outbox') = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f09077529e0>.outbox
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:954: AssertionError: a device name reached the outbox
+E   AssertionError: k1b/bundle.py: the text is gone
+    assert 'target = pathguard.join(\n            path, *rel.split("/"), what="bundle file", must_exist=True, kind="file"\n        )\n        if not isinstance(digest, str)' in '"""Incident bundle: one frozen directory per incident, loaded under an allowlist and refused on any doubt.\n\nLayout ...id_grammar_ok(eid) and eid in bundle.ids and eid in returned):\n                bad.add(eid)\n    return sorted(bad)\n'
+     +  where '"""Incident bundle: one frozen directory per incident, loaded under an allowlist and refused on any doubt.\n\nLayout ...id_grammar_ok(eid) and eid in bundle.ids and eid in returned):\n                bad.add(eid)\n    return sorted(bad)\n' = read_text(encoding='utf-8')
+     +    where read_text = (PosixPath('/home/user/build/E-work/a-tree/src/hadavin_sdk') / 'k1b/bundle.py').read_text
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:969: AssertionError: k1b/bundle.py: the text is gone
+E   IsADirectoryError: [Errno 21] Is a directory: 11
+<frozen os>:1069: IsADirectoryError: [Errno 21] Is a directory: 11
+E   AssertionError: assert None == 'abc'
+     +  where None = <function _recorded_digest at 0x7f0908b4f7e0>(PosixPath('/tmp/pytest-of-unknown/pytest-1087/test_score_digest_and_answers_0'))
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch3.py:1014: AssertionError: assert None == 'abc'
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_onto_a_folder_is_a_refusal_with_no_path_in_the_text
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_with_a_taken_temp_name_leaves_the_existing_file_untouched
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_checks_the_temp_path_length_not_only_the_final_one
+FAILED tests/test_pathguard_batch3.py::test_the_longest_writable_name_can_really_be_written
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_removes_its_temp_file_when_fdopen_is_interrupted
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted
+FAILED tests/test_pathguard_batch3.py::test_atomic_write_flushes_the_file_to_disk_before_the_rename
+FAILED tests/test_pathguard_batch3.py::test_site_score_read_json_refuses_a_file_name_with_a_control_character
+FAILED tests/test_pathguard_batch3.py::test_site_score_recorded_digest_does_not_read_a_file_behind_a_link
+FAILED tests/test_pathguard_batch3.py::test_site_score_recorded_digest_reads_a_plain_file_and_none_when_absent
+FAILED tests/test_pathguard_batch3.py::test_site_score_answers_file_with_a_control_character_in_its_name_is_refused
+FAILED tests/test_pathguard_batch3.py::test_site_score_run_folder_join_refuses_a_link_out_when_the_layout_check_is_skipped
+FAILED tests/test_pathguard_batch3.py::test_site_outputs_files_refuses_a_missing_folder_a_control_character_and_a_link
+FAILED tests/test_pathguard_batch3.py::test_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_character
+FAILED tests/test_pathguard_batch3.py::test_score_uses_only_the_folder_that_the_check_returned
+FAILED tests/test_pathguard_batch3.py::test_the_hash_folder_is_checked_and_a_missing_one_has_one_plain_message
+FAILED tests/test_pathguard_batch3.py::test_secrets_folder_is_checked_when_the_provider_is_built
+FAILED tests/test_pathguard_batch3.py::test_fake_llm_recording_folder_and_names_go_through_pathguard
+FAILED tests/test_pathguard_batch3.py::test_judge_qualify_checks_the_golden_file_path
+FAILED tests/test_pathguard_batch3.py::test_local_dir_refuses_an_event_id_that_is_not_one_plain_file_name[a:b]
+FAILED tests/test_pathguard_batch3.py::test_local_dir_refuses_an_event_id_that_is_not_one_plain_file_name[a?b]
+FAILED tests/test_pathguard_batch3.py::test_local_dir_counts_a_refused_outcome_warns_once_and_keeps_nothing
+FAILED tests/test_pathguard_batch3.py::test_local_dir_a_good_outcome_is_still_written
+FAILED tests/test_pathguard_batch3.py::test_local_dir_reconcile_leaves_a_corrupt_file_when_the_corrupt_folder_is_a_link_out
+FAILED tests/test_pathguard_batch3.py::test_signer_key_path_checks_the_shape_before_it_makes_any_folder
+FAILED tests/test_pathguard_batch3.py::test_signer_key_path_refusal_text_holds_no_path
+FAILED tests/test_pathguard_batch3.py::test_site_config_folder_setting_with_a_control_character_is_refused[golden_dir]
+FAILED tests/test_pathguard_batch3.py::test_site_config_folder_setting_with_a_control_character_is_refused[inputs_dir]
+FAILED tests/test_pathguard_batch3.py::test_site_config_folder_setting_that_is_not_text_says_so_plainly[golden_dir]
+FAILED tests/test_pathguard_batch3.py::test_site_config_folder_setting_that_is_not_text_says_so_plainly[inputs_dir]
+FAILED tests/test_pathguard_batch3.py::test_site_config_confined_delegates_to_pathguard_and_keeps_its_wording
+FAILED tests/test_pathguard_batch3.py::test_causelist_errors_carry_no_chain_for_bad_json_and_bad_characters
+FAILED tests/test_pathguard_batch3.py::test_bundle_errors_carry_no_chain_for_a_bad_log_line_and_a_bad_character
+FAILED tests/test_pathguard_batch3.py::test_there_is_no_sonar_exemption_comment_in_the_package_or_the_tests_in_any_letter_case
+FAILED tests/test_pathguard_batch3.py::test_the_files_of_this_change_hold_no_suppression_comment_of_any_kind
+FAILED tests/test_pathguard_batch3.py::test_score_refuses_a_report_folder_that_is_a_link_out_of_the_outputs_folder
+FAILED tests/test_pathguard_batch3.py::test_replay_with_a_control_character_in_the_output_folder_is_refused_and_writes_nothing
+FAILED tests/test_pathguard_batch3.py::test_a_failed_replay_writes_the_marker_even_into_an_empty_folder
+FAILED tests/test_pathguard_batch3.py::test_a_marker_that_cannot_be_written_never_replaces_the_original_error
+FAILED tests/test_pathguard_batch3.py::test_a_run_folder_swapped_for_a_link_mid_run_stops_the_next_write
+FAILED tests/test_pathguard_batch3.py::test_local_dir_outbox_fallback_refuses_a_device_name_as_the_event_id
+FAILED tests/test_pathguard_batch3.py::test_every_equivalent_mutant_still_names_text_that_exists_and_gives_its_argument
+FAILED tests/test_pathguard_batch3.py::test_secrets_file_keeps_its_not_found_and_not_a_regular_file_wording
+FAILED tests/test_pathguard_batch3.py::test_score_digest_and_answers_reads_keep_their_results
+44 failed, 54 passed in 1.00s

@@ -1,0 +1,3 @@
+tests/test_k5_producers.py
+tests/test_k5_round11.py
+tests/test_s2_audit.py

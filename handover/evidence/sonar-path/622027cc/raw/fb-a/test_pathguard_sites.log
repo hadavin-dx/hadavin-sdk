@@ -1,0 +1,69 @@
+........F.FFFFFFF.FFFFFFFF..F.FF.                                        [100%]
+=================================== FAILURES ===================================
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:124: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:34: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:34: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:179: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:188: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   hadavin_sdk.errors.ConfigError: bundles folder does not exist
+/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/bundle.py:343: hadavin_sdk.errors.ConfigError: bundles folder does not exist
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'too long'
+      Actual message: 'bundle case-1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111: manifest.json is missing'
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:212: AssertionError: Regex pattern did not match.
+E   AttributeError: module 'hadavin_sdk.k1b.score' has no attribute 'outputs_dir'. Did you mean: 'outputs_files'?
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:219: AttributeError: module 'hadavin_sdk.k1b.score' has no attribute 'outputs_dir'. Did you mean: 'outputs_files'?
+E   hadavin_sdk.errors.ConfigError: outputs folder does not exist
+/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/score.py:194: hadavin_sdk.errors.ConfigError: outputs folder does not exist
+E   ValueError: lstat: embedded null character in path
+<frozen posixpath>:451: ValueError: lstat: embedded null character in path
+E   ValueError: scandir: embedded null character in path
+/usr/local/lib/python3.13/glob.py:455: ValueError: scandir: embedded null character in path
+E   ValueError: embedded null byte
+/usr/local/lib/python3.13/pathlib/_local.py:537: ValueError: embedded null byte
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:31: Failed: DID NOT RAISE PathRefused
+E   hadavin_sdk.errors.ConfigError: backends: audit, llm must be set
+/home/user/build/E-work/a-tree/src/hadavin_sdk/config.py:156: hadavin_sdk.errors.ConfigError: backends: audit, llm must be set
+E   AssertionError: assert 3 == 2
+     +  where 3 = <function main at 0x7f9e1a8a2660>(['--config', '/tmp/pytest-of-unknown/pytest-1095/test_site_cli_config_flag_nul_0\x00', 'tick'])
+----------------------------- Captured stderr call -----------------------------
+failed: ValueError (set HADAVIN_DEBUG=1 for the traceback)
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:293: AssertionError: assert 3 == 2
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:333: Failed: DID NOT RAISE PathRefused
+E   AssertionError: assert 'outputs folder: contains a control character' in 'refused: cause list: services.json is missing or not readable\n'
+     +  where 'refused: cause list: services.json is missing or not readable\n' = CaptureResult(out='', err='refused: cause list: services.json is missing or not readable\n').err
+     +    where CaptureResult(out='', err='refused: cause list: services.json is missing or not readable\n') = readouterr()
+     +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7f9e1a82fc50>.readouterr
+/home/user/build/E-work/a-tree/tests/test_pathguard_sites.py:372: AssertionError: assert 'outputs folder: contains a control character' in 'refused: cause list: services.json is missing or not readable\n'
+E   ValueError: embedded null byte
+/usr/local/lib/python3.13/pathlib/_local.py:537: ValueError: embedded null byte
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_sites.py::test_the_temp_name_is_the_write_name_plus_the_shared_extra
+FAILED tests/test_pathguard_sites.py::test_atomic_write_refuses_an_existing_symlink_as_the_final_name
+FAILED tests/test_pathguard_sites.py::test_atomic_write_refuses_a_symlink_name_even_when_its_target_is_inside_the_folder
+FAILED tests/test_pathguard_sites.py::test_atomic_write_replaces_a_hard_link_and_leaves_the_other_name_alone
+FAILED tests/test_pathguard_sites.py::test_atomic_write_refuses_the_longest_name_plus_one
+FAILED tests/test_pathguard_sites.py::test_site_bundle_load_bundles_refuses_a_nul_folder_and_maps_missing
+FAILED tests/test_pathguard_sites.py::test_site_bundle_load_bundle_refuses_a_long_case_id_at_load
+FAILED tests/test_pathguard_sites.py::test_site_score_outputs_folder_nul_and_missing
+FAILED tests/test_pathguard_sites.py::test_site_score_check_layout_rechecks_its_own_folder
+FAILED tests/test_pathguard_sites.py::test_site_causelist_folder_nul_gives_the_one_wording
+FAILED tests/test_pathguard_sites.py::test_site_replay_output_folder_nul_is_refused
+FAILED tests/test_pathguard_sites.py::test_site_signer_key_file_nul_and_missing
+FAILED tests/test_pathguard_sites.py::test_site_signer_key_path_nul_is_refused_before_resolve
+FAILED tests/test_pathguard_sites.py::test_site_local_dir_root_nul_and_event_id
+FAILED tests/test_pathguard_sites.py::test_site_config_root_nul - hadavin_sdk...
+FAILED tests/test_pathguard_sites.py::test_site_cli_config_flag_nul_is_refused
+FAILED tests/test_pathguard_sites.py::test_a_path_refusal_after_output_exists_still_leaves_failed_txt
+FAILED tests/test_pathguard_sites.py::test_score_with_a_nul_in_the_outputs_path_is_refused_with_exit_2
+FAILED tests/test_pathguard_sites.py::test_vault_kubernetes_token_path_with_a_nul_is_a_config_error
+19 failed, 14 passed in 0.77s

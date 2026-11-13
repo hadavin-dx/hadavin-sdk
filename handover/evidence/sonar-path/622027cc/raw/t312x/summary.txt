@@ -1,0 +1,4 @@
+tests/test_k5_producers.py rc=0 25 passed in 1.12s
+tests/test_k5_round11.py rc=0 44 passed in 1.97s
+tests/test_s2_audit.py rc=0 5 passed in 0.07s
+DONE

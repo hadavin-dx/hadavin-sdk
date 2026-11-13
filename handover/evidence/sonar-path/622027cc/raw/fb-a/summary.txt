@@ -1,1 +1,13 @@
 tests/test_changelog_claims.py rc=2 1 error in 0.16s
+tests/test_k1b_cli.py rc=1 ..............F....
+tests/test_k1b_replay.py rc=0 49 passed in 2.48s
+tests/test_p3b_neutral_audit.py rc=0 53 passed in 1.72s
+tests/test_pathguard.py rc=1 15 failed, 34 passed in 0.36s
+tests/test_pathguard_batch3.py rc=1 44 failed, 54 passed in 1.00s
+tests/test_pathguard_batch4.py rc=1 26 failed, 6 passed in 0.54s
+tests/test_pathguard_batch5.py rc=1 17 failed, 10 passed in 0.51s
+tests/test_pathguard_callers.py rc=1 2 failed, 3 passed in 0.24s
+tests/test_pathguard_sites.py rc=1 19 failed, 14 passed in 0.77s
+tests/test_pathguard_tripwire.py rc=1 2 failed, 78 passed in 1.30s
+tests/test_s2_audit.py rc=0 5 passed in 0.06s
+DONE
