@@ -1,0 +1,29 @@
+alone on db54e13 (D alone must FAIL: it needs P1 first):
+  P1: ok
+  D: FAIL ('D', 'error: tests/test_raw_bidi_chars.py: No such file or directory')
+  P2: ok
+  P3: ok
+  ND: ok
+  NH: ok
+  NR: ok
+  Y: ok
+  C4: ok
+  C4f: ok
+  C5: ok
+P1>D: ok
+D>P1 (expected FAIL): ('D', 'error: tests/test_raw_bidi_chars.py: No such file or directory')
+lead order (D right after P1): ok
+lead order, D last: ok
+lead order + C4 / C4f in place of C5: ok ok
+crlf first: ok
+200 random orders of 8 (P1 before D): 200 ok, 0 failed of 200
+150 random orders of 8 + C5: 150 ok, 0 failed of 150
+150 random orders of 8 + C4: 150 ok, 0 failed of 150
+150 random orders of 8 + C4f: 150 ok, 0 failed of 150
+exhaustive orders of P1 D NH ND Y C5 (P1 before D): 360 ok, 0 failed of 360
+exhaustive orders of P1 D NH ND Y C4 (P1 before D): 360 ok, 0 failed of 360
+exhaustive orders of P1 D NH ND Y C4f (P1 before D): 360 ok, 0 failed of 360
+
+real	1m24.976s
+user	0m35.283s
+sys	0m9.455s

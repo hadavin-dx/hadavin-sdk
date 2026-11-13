@@ -1,0 +1,63 @@
+KILLED   B drop | | 1 failed, 13 passed in 0.15s
+KILLED   B drop { | 1 failed, 18 passed in 0.16s
+KILLED   B drop ; | 1 failed, 16 passed in 0.24s
+KILLED   B drop & | 1 failed, 12 passed in 0.10s
+KILLED   B drop ( | 1 failed, 19 passed in 0.19s
+KILLED   B drop ) | 1 failed, 22 passed in 0.12s
+KILLED   B drop backtick | 1 failed, 21 passed in 0.11s
+KILLED   B drop ! (the optional word) | 1 failed, 4 passed in 0.22s
+KILLED   B drop then | 1 failed, 6 passed in 0.09s
+KILLED   B drop do | 1 failed, 7 passed in 0.11s
+KILLED   B drop else | 1 failed, 8 passed in 0.10s
+KILLED   B drop elif | 1 failed, 9 passed in 0.13s
+KILLED   B drop if | 1 failed, 3 passed in 0.09s
+KILLED   B drop while | 1 failed, 10 passed in 0.10s
+KILLED   B drop until | 1 failed, 11 passed in 0.11s
+KILLED   B drop ^ alt | 1 failed in 0.08s
+KILLED   B drop line cap | 1 failed, 89 passed in 0.36s
+KILLED   B cap off by one (>=) | 1 failed, 89 passed in 0.39s
+KILLED   B cap 400000 | 1 failed, 89 passed in 0.49s
+KILLED   B no CR check | 1 failed, 88 passed in 0.37s
+KILLED   B comments not stripped | 1 failed, 71 passed in 0.24s
+KILLED   B comment without blank before | 1 failed, 26 passed in 0.22s
+KILLED   B quotes not blanked | 1 failed, 53 passed in 0.43s
+KILLED   B end of line [ not seen | 1 failed, 24 passed in 0.15s
+KILLED   B run blocks not extracted | 1 failed, 93 passed in 0.25s
+KILLED   B run blocks not added to sources | 1 failed, 93 passed in 0.40s
+KILLED   B allowlist ignored | 1 failed, 94 passed in 0.42s
+KILLED   B job default shell ignored | 1 failed, 99 passed in 0.48s
+KILLED   B step shell ignored | 1 failed, 97 passed in 0.46s
+KILLED   B scripts list cut to one | 1 failed, 105 passed in 0.25s
+KILLED   B line numbers from 0 | 1 failed, 85 passed in 0.30s
+KILLED   R while|until together | 1 failed, 10 passed in 0.10s
+KILLED   R require blank after [ | 1 failed, 24 passed in 0.12s
+KILLED   R workflows not scanned | 1 failed, 93 passed in 0.31s
+KILLED   N shebang check dropped | 1 failed, 107 passed in 0.45s
+KILLED   N yaml glob dropped | 1 failed, 106 passed in 0.62s
+KILLED   N action.yml glob dropped | 1 failed, 106 passed in 0.55s
+KILLED   N action.yaml glob dropped | 1 failed, 106 passed in 0.43s
+KILLED   N actions dir not read | 1 failed, 106 passed in 0.92s
+KILLED   N workflow default shell ignored | 1 failed, 100 passed in 0.39s
+KILLED   N ls-files without -z | 1 failed, 105 passed in 0.68s
+KILLED   N jobs null crashes | 1 failed, 108 passed in 0.52s
+KILLED   N steps null crashes | 1 failed, 108 passed in 0.71s
+KILLED   N defaults null crashes | 1 failed, 95 passed in 0.40s
+KILLED   N unnamed step shows None | 1 failed, 104 passed in 0.41s
+KILLED   N step number from 0 | 1 failed, 104 passed in 0.28s
+KILLED   N assignment prefix dropped | 1 failed, 27 passed in 0.23s
+KILLED   N assignment prefix unbounded (backtracking) | 1 failed, 136 passed in 14.79s
+KILLED   N += not accepted | 1 failed, 30 passed in 0.24s
+KILLED   N assignment value may hold (  | 1 failed, 64 passed in 0.26s
+KILLED   N escape not blanked | 1 failed, 65 passed in 0.36s
+KILLED   N dq escape not handled | 1 failed, 66 passed in 0.53s
+KILLED   N ! anywhere again | 1 failed, 62 passed in 0.25s
+KILLED   N actions steps not read | 1 failed, 102 passed in 0.48s
+KILLED   N bidi: ls-files without -z | 1 failed in 0.13s
+KILLED   N bidi: split on -z kept but \0 -> \n | 1 failed, 1 passed in 0.39s
+KILLED   N bidi: binary file crashes | 1 failed in 0.13s
+KILLED   N bidi: is_file dropped | 1 failed, 1 passed in 0.73s
+KILLED   N bidi: splitlines | 1 failed, 1 passed in 0.98s
+KILLED   N bidi: 202E missing | 1 failed, 1 passed in 0.32s
+KILLED   N bidi: 2069 missing | 1 failed, 2 passed in 0.35s
+KILLED   N bidi: 200e missing | 1 failed, 2 passed in 0.27s
+KILLED   N bidi: 061c missing | 1 failed, 2 passed in 0.32s

@@ -1,0 +1,12 @@
+OLD v3.2 scanner, probes the delta fixes (flag expected = 1):
+   'FOO=1 [ x ]' expected 1 old gives 0 WRONG
+   'a=1 b=2 [ x ]' expected 1 old gives 0 WRONG
+   'echo \\" ; [ x ]; echo \\"' expected 1 old gives 0 WRONG
+   'echo a ! [ x ]' expected 0 old gives 1 WRONG
+   'echo a\\; [ x ]' expected 0 old gives 1 WRONG
+OLD v3.2 helpers:
+   jobs: (null) -> raises AttributeError 'NoneType' object has no attribute 'values'
+   workflow-level defaults shell sh -> []
+   unnamed step shell sh -> ['w.yml: step None']
+  old _tracked on a non-ASCII name -> None
+  git ls-files (no -z) prints: ['"caf\\303\\251_run.sh"'] ; (repo/name).read_text -> FileNotFoundError

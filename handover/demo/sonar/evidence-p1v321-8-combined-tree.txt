@@ -1,0 +1,10 @@
+## combined tree P1 D ND P2 P3 NH NR Y C5
+All checks passed!
+153 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+	No issues identified.
+........................................................................ [ 51%]
+........................................................................ [ 77%]
+................................................................         [100%]
+280 passed in 77.76s (0:01:17)

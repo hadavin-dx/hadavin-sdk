@@ -1,0 +1,16 @@
+real-file mutant scripts/reset.sh: 1 failed, 109 passed in 1.46s
+real-file mutant scripts/start_all.sh: 1 failed, 109 passed in 0.32s
+real-file mutant .github/workflows/lint.yml: 1 failed, 109 passed in 0.41s
+real-file mutant .github/workflows/sonar.yml: 1 failed, 109 passed in 0.72s
+bidi U+202A in tracked file: 1 failed in 0.10s
+bidi U+202B in tracked file: 1 failed in 0.10s
+bidi U+202C in tracked file: 1 failed in 0.07s
+bidi U+202D in tracked file: 1 failed in 0.12s
+bidi U+202E in tracked file: 1 failed in 0.06s
+bidi U+2066 in tracked file: 1 failed in 0.06s
+bidi U+2067 in tracked file: 1 failed in 0.06s
+bidi U+2068 in tracked file: 1 failed in 0.08s
+bidi U+2069 in tracked file: 1 failed in 0.05s
+bidi U+200E in tracked file: 1 failed in 0.07s
+bidi U+200F in tracked file: 1 failed in 0.07s
+bidi U+061C in tracked file: 1 failed in 0.08s
