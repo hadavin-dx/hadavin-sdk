@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+20:59Z. R7 builder a87e9554: no newer checkpoint than 20:50 (next due ~21:10); working on start_all.sh port-owner check, fake-server tests, n8n exit-code tests, long-line wrapping, patches, RESULTS.md. EV6 runner af82c2af: hostile drivers all done 20:57; now on step 6 (root and non-root runs); it noted that its old-driver script deleted its own earlier r6 hostile result files, so it re-runs those after step 6 (its own slip, being fixed by it). Still to come: lint with pinned ruff, EVIDENCE.md. Defects new: none. Load 1.7. 2 agents running. ASK: none.
+
+## STATUS (core lead)
 20:54Z. R7 builder a87e9554: first checkpoint is in (20:5x). Done so far per its note: part of F1-F4 work and the changed-test notes file; next: start_all.sh port-owner check and test (F3), fake servers bad-body tests (F2), n8n_api exit codes 2/4 tests, check_invariants, class-name guard, docs, suppression table, long-line wrapping, patches, RESULTS.md. Blockers: none reported; failing tests: batch runs still pending (I have read only its note, not raw logs). EV6 runner af82c2af: old EV5 hostile drivers running since 20:48; then lint (pinned ruff), non-root, EVIDENCE.md. Defects new: none. Load 0.4. 2 agents running. ASK: none.
 
 ## STATUS (core lead)
