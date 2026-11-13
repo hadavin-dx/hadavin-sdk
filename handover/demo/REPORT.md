@@ -1,6 +1,35 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 02:26Z / 07:56 IST - fresh review of the sonar.yml fix + CRLF guard v2 back: sonar fix CONFIRMED (apply, fail-before, ruff/mypy, actionlint clean); CRLF guard v2 has 5 of 9 mutants surviving; real-run fixes v2 built; builders running
+FAILED / UNCERTAIN first:
+1. **CRLF guard v2: 5 of 9 mutants SURVIVE** (fresh reviewer, merge-ready/REVIEW-sonar-crlf-fresh.md): hint removed, guard test body `pass`, hint recommending renormalize, flagged-file list always empty, lone CR missed: the message content is untested. NOT ready to apply. A builder is making crlf-guard-v3 with an end-to-end message test (started 02:20).
+2. **The new workflow test is weaker than its name**: it catches `uses`->`use` but misses `runs-on`->`run-on`, a bad `if:` expression and a `runner.os` typo (actionlint catches all 3). Builder is adding runs-on / known-step-key / `on` checks as sonar-yaml-fix-v2; the other two stay actionlint-only and the docstring will say so. Suggestion for you: add actionlint to CI (your decision).
+3. Their full pytest on the combined tree did not finish (stopped after 12 min); only 133 related tests ran (all passed). My own full runs are on 2db3926 only, not on the combined tree with sonar fix + semgrep v4 + versions patch: NOT RUN.
+4. Real-run fixes v2: built (real-run/real-run-fixes-v2.patch, sha256 2ce5432b549b7876..., applies on 2db3926); the builder fixed the Major (the 5 --keep tests: system temp 288 real-dry folders before and after) and 4 nits; I have not re-run it; a fresh reviewer is running (started 02:14). Handover only.
+CONFIRMED: sonar-yaml-fix.patch applies alone and in 6 orders with the others; before: sonar.yml fails YAML (line 45 col 71); after: all workflows parse; the new test 4 passed, 1 failed with only sonar.yml reverted; ruff, format, mypy linux+win32 clean; actionlint 1.7.12 clean on the patched tree (the original: only the YAML error). Still safe to apply now (the v2 will be an add-on).
+READY TO APPLY NOW (order): 1) versions-md-allowance.patch, 2) sonar-yaml-fix.patch, 3) semgrep-on-2db3926-v4.patch. Not ready: crlf-guard (v3 coming), real-run fixes.
+NEEDS FROM LEAD: push the sonar.yml fix; A or B; actionlint in CI yes/no.
+TABLE 1 - LIVE ITEMS
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| builder aed8494c | crlf-guard v3 + sonar-yaml-fix v2 | 02:20 | running | 2 patches + mutant proofs |
+| reviewer aeb102e9 | real-run fixes v2 | 02:14 | running | review |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 2, shells 1.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| crlf guard | v2 reviewed | 5 surviving mutants | tests miss the message | no | v3 fresh read |
+| sonar fix | reviewed | test weaker than claimed | harden | no | v2 confirmed |
+| real-run fixes | v2 review | pending | safety path | no | clean pass |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| sonar fix fresh review | confirmed + gaps listed |
+| crlf guard v2 fresh review | 5 mutants survive |
+| real-run fixes v2 | built, pushed (handover only) |
+
 ## 2026-11-13 02:25Z / 07:55 IST - AUTOMATIC HEARTBEAT (no hand-written block in the last 5 minutes): the agents are still running; see the last hand-written block below for what each does
 FAILED / UNCERTAIN first: nothing new is known to this heartbeat; failures are in the last hand-written block below (this heartbeat only reads files).
 Machine facts (read now): Q1 chunked run on pr-3-tests 2db3926 (80 files, 10 chunks): chunk 0: 112 passed, 0 failed, exit=0; chunk 1: 624 passed, 0 failed, exit=0; chunk 2: 276 passed, 0 failed, exit=0; chunk 3: 156 passed, 0 failed, exit=0; chunk 4: 306 passed, 0 failed, exit=0; chunk 5: 329 passed, 0 failed, exit=0; chunk 6: 466 passed, 0 failed, exit=0; chunk 7: 197 passed, 0 failed, exit=0; chunk 8: 387 passed, 0 failed, exit=0; chunk 9: 284 passed, 0 failed, exit=0
