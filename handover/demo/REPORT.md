@@ -1,6 +1,36 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 03:51Z / 09:21 IST - P2 v2 review CLEAN (0 Blocker/Major, 4 Nits: v2.1 building); nodemo-fix has 2 Majors (v2 building); 6 agents
+FAILED / UNCERTAIN first:
+1. **nodemo-fix.patch must not go in as it is** (sonar/REVIEW-nodemo-fresh.md): MAJOR 1 its skip is too broad: it also skips PRODUCT rows whose file is missing: a typo in a product row path (smtp_outbox.py -> smtp_outbx.py) gave '46 passed, 3 skipped' with demo_only present (plain db54e13: 2 failed); a renamed product file would go green in CI. Narrow fix (skip only `demo_only/` rows and only when the folder is absent) measured by the reviewer: demo present 49 passed; demo deleted 43 passed 6 skipped; typo in either case: 2 failed; row ids identical. MAJOR 2 the optional hygiene patch fails in a client copy with NO .git (5 failed; with git init: 59 passed): needs a skip. MINOR: `ruff check .` with demo_only deleted reports 27 I001 on plain db54e13 (a client cut is not lint-green): `[tool.ruff.lint.isort] known-first-party=["demo_only"]` fixes both ways; no CI job runs a no-demo copy. Builder a82407284069d4fa2 is making nodemo-fix-v2 + optional-v2 + ruff-isort + an OPTIONAL CI job patch (your decision) and a chunked no-demo run on the final stack.
+2. **P2 v2 (3 patches): fresh review: no Blocker/Major**, 4 Nits (sonar/REVIEW-p2v2-fresh.md): a refactor mutant survives (flag True when rc==1 and 'sent' ignoring what _mark_contacted returned: the copy wait would be freed although the stage did not move): the reviewer's test kills it; a lambda changed the qualname the fault selector of tests/support.py would see; duplicate DESK_SCHEME constant; residual S5332 risk at server.py:492. The send-path behaviour change was judged CORRECT and SAFE (10 flow tests, 15 mutants, no send lost or duplicated, the wait is time-bounded). Regex equivalence on 3.1M texts: 0 differences; old _ADDRESS 2143 ms on 20k chars vs 0.6 ms new; hygiene + gitleaks 45 passed on all five patches. v2.1 (nits fixed) building: a598e93b5e583706a. Reviewer's odds (judgement): main alone clears ~6.5-7 of its 8 issues; with both optionals ~8.5-9 of 11.
+3. **Reviews still running**: P1 v3 (a third reader, adversarial on the guard), probe-ab + P3 v2 (security), crlf v4 + yaml delta v2, real-run fixes v4.
+4. Not run: full suite WITH demo present on any series (laptop), Windows, any Sonar result.
+READY TO APPLY: P2 v2 main (after v2.1 within ~10 min: take v2.1 if you can wait; v2 is review-clean as it is). nodemo-fix: wait for v2.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| a598e93b5e583706a | P2 v2.1 builder (nits) | 03:51 | running | patch |
+| a82407284069d4fa2 | nodemo v2 + optional v2 + isort + CI job builder | 03:46 | running | 4 patches |
+| acf3543755ae6a393 | fresh reviewer P1 v3 | 03:42 | running | report |
+| a772c50e2730958f1 | fresh security reviewer probe-ab + P3 v2 | 03:37 | running | report |
+| a5174404d55a3357a | fresh reviewer crlf v4 + yaml delta v2 | 03:31 | running | report |
+| a425d1049580d6b03 | fresh reviewer real-run fixes v4 | 03:28 | running | report |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 6.
+TABLE 2 - ROUNDS
+| package | round | findings | WHY another round | stop rule | ends |
+|---|---|---|---|---|---|
+| P2 | review 2 | 0 Major, 4 Nit | nits (rule: fix) | no | v2.1 |
+| nodemo | review 1 | 2 Major | skip too broad | no | v2 read |
+| P1 | review 3 | pending | v3 fresh | no | clean |
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| P2 v2 fresh review | clean of Major |
+| nodemo fresh review | 2 Major, pushed |
+
 ## 2026-11-13 03:41Z / 09:11 IST - NEW this block: P1 v3 (dash bypass closed, measured), P2 v2 (3 patches), nodemo-fix (6 failures -> 0, first chunked no-demo run 867/80/0), all pushed; 6 fresh reviews running
 FAILED / UNCERTAIN first:
 1. **P2 v1 failed the gitleaks hygiene scan** (test_hygiene_scan_public flags tests/test_sonar_p2_choke_points.py: `desk.corp.` and `169.254.169.254`): the v1 builder never ran the gitleaks tests. P2 v2 fixes it (hygiene + gitleaks run on all five patches: 45 passed). Lesson recorded: every builder brief now needs a gitleaks run (DPLD_REQUIRE_SCAN=1) in its gates.
