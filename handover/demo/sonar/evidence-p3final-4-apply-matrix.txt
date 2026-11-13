@@ -1,0 +1,16 @@
+sonar-p2-regex-http-bug-v2.2-delta.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+sonar-p1-quickwins-v3.2.1-delta.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+nodemo-fix-v3.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+nodemo-ruff-isort.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+nodemo-ci-job-v3.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+nodemo-optional-hygiene-repo-v4.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+crlf-guard-v5.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+sonar-yaml-test-trimmed-v2.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+semgrep-on-db54e13-v5.1.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+desk-address-required-after-v2.patch | alone on 9c53207: OK | P3final then it: OK | it then P3final: OK
+real-run-fixes-v4.patch | alone on 9c53207: OK | P3final then it: FAIL | it then P3final: FAIL
+real-run-fixes-v5.patch | alone on 9c53207: OK | P3final then it: FAIL | it then P3final: FAIL
+real-run-fixes-v4-after-sonar-p3.patch | alone on 9c53207: FAIL | P3final then it: FAIL | it then P3final: (patch alone fails)
+real-run-fixes-v5-after-sonar-p3.patch | alone on 9c53207: FAIL | P3final then it: FAIL | it then P3final: (patch alone fails)
+start-prompt-hardening-v2.patch | alone on 9c53207: OK | P3final then it: FAIL | it then P3final: FAIL
+start-prompt-hardening-v2-on-top-of-v4.patch | alone on 9c53207: FAIL | P3final then it: FAIL | it then P3final: (patch alone fails)

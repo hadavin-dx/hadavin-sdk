@@ -1,0 +1,24 @@
+# cumulative stack tree (9c53207 + P3final + the 9 series patches + desk-address-required-after-v2)
+# cumulative stack on 9c53207: P3final then each patch in order (git apply, no 3way)
+P3final OK
+sonar-p2-regex-http-bug-v2.2-delta.patch OK
+sonar-p1-quickwins-v3.2.1-delta.patch OK
+nodemo-fix-v3.patch OK
+nodemo-ruff-isort.patch OK
+nodemo-ci-job-v3.patch OK
+nodemo-optional-hygiene-repo-v4.patch OK
+crlf-guard-v5.patch OK
+sonar-yaml-test-trimmed-v2.patch OK
+semgrep-on-db54e13-v5.1.patch OK
+desk-address-required-after-v2.patch OK
+--- ruff
+All checks passed!
+--- format
+158 files already formatted
+--- mypy linux
+Success: no issues found in 28 source files
+--- mypy win32
+Success: no issues found in 28 source files
+FAILED tests/test_path_confinement.py::test_a_real_run_with_config_and_book_outside_reaches_the_y_n_question_and_the_book
+1 failed, 227 passed in 9.29s
+# NOTE: the line above (1 failed) was the test's own config lacking DESK_HUBSPOT_BASE_URL, which desk-address-required makes mandatory; the test config now names loopback addresses (and passes on 9c53207+P3 alone too). Re-run on this stack tree: 228 passed

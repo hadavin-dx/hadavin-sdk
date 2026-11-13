@@ -1,0 +1,11 @@
+# final state: git add -A done, DPLD_REQUIRE_SCAN=1, gitleaks 8.30.1 at /tmp/work/gl/gitleaks
+8.30.1
+# tests: path_confinement hygiene gitleaks_exceptions codeant_hygiene load_tools scrub_n8n_export n8n_api_url real_check_dry env_numbers no_placeholders
+.........................................                                [100%]
+1192 passed, 1 skipped in 184.34s (0:03:04)
+exit 0
+
+# earlier run, same set plus before the last 3 test edits:
+.........................................                                [100%]
+1192 passed, 1 skipped in 141.08s (0:02:21)
+exit 0

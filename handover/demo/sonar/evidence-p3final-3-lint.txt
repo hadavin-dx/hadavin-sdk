@@ -1,0 +1,32 @@
+# gates on 9c53207 + sonar-p3-final.patch (git add -A done)
+--- ruff check
+All checks passed!
+--- ruff format --check
+153 files already formatted
+--- mypy linux
+Success: no issues found in 28 source files
+--- mypy win32
+Success: no issues found in 28 source files
+--- bandit -ll
+Run started:2026-11-13 06:05:24.753080+00:00
+
+Test results:
+	No issues identified.
+
+Code scanned:
+	Total lines of code: 10708
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 1
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 9
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 0
+		High: 9
+Files skipped (0):
