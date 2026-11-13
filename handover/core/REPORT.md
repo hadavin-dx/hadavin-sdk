@@ -1,5 +1,19 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 2026-11-13 10:35Z CORE: realrun-v6 runners A and B2 running after the restart
+| id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac0e1771 (runner A) | full suite serial, run 2 in tree-A2 (TMPDIR outside the tree), then the 2-file rerun in tree-A1 | patched chain passes on Linux, repeatable | run 2 attempt 2 started 10:24Z / 15:54 IST | suite about 22 min: ends about 10:47Z; hard stop 11:50Z / 17:20 IST | run 2 attempt 2 (attempt 1 killed by the container restart) | running: log at about 56% | wait for its report |
+| a7df64b5 (runner B2) | v6 mutant sets on tree-M with the demo's driver | mutants killed by the new tests | 10:14Z / 15:44 IST, chain restarted 10:25Z | hard stop 11:50Z | chain 1, restarted | running; per-set result files so far (raw tsv, NOT yet checked by me or reported by the runner) | wait for its report |
+
+Interim raw counts from B2's result files at 10:35Z, unjudged and not final: set CN 29 rows (27 KILLED, 2 SURVIVED); set M 23 rows (22 KILLED, 1 flagged "wrong reason suspected"); set P 10 rows (7 KILLED, 3 SURVIVED); set S 11 rows (11 KILLED). Other sets (R, K, SP) not yet written. Survivors are listed in the first-pass evidence file as expected for some mutants (C9, N12, N14, N20, K6, K10, S2); I have not compared yet. The runner will compare in its report.
+Finished and pushed earlier: runner B (fails-before) and runner C (core-touches-3 alone). Runner A run 1: 3779 passed, 2 failed (in-tree TMPDIR), 198 skipped. No core jobs.
+
+ASK:
+1. Mutant driver question (mut_portable.py instead of mut.py) still unanswered; default: B2 keeps mut_portable.py.
+2. Cap: I moved hard stop of A and B2 to 11:50Z because of the restart; default unless you say otherwise.
+
+
 ## REPORT 2026-11-13 10:24Z CORE: container restarted at about 10:22Z; runners A and B2 stopped and resumed
 | id | what it does | why | started UTC+IST | expected end / left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|
