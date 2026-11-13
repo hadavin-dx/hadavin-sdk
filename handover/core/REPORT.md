@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+21:04Z. R7 builder a87e9554: still on its 20:50 checkpoint (next due ~21:10; I will message it at 21:15 if none). EV6 runner af82c2af: step 6 done (root rc=0, non-root rc=0, from its checkpoint; raw logs not yet read by me); it is re-running the r6 hostile cases it deleted by its own slip (run6 redo done 21:03), more redo runs, then lint with pinned ruff and EVIDENCE.md. Defects new: none. Load 0.7. 2 agents running. ASK: none.
+
+## STATUS (core lead)
 20:59Z. R7 builder a87e9554: no newer checkpoint than 20:50 (next due ~21:10); working on start_all.sh port-owner check, fake-server tests, n8n exit-code tests, long-line wrapping, patches, RESULTS.md. EV6 runner af82c2af: hostile drivers all done 20:57; now on step 6 (root and non-root runs); it noted that its old-driver script deleted its own earlier r6 hostile result files, so it re-runs those after step 6 (its own slip, being fixed by it). Still to come: lint with pinned ruff, EVIDENCE.md. Defects new: none. Load 1.7. 2 agents running. ASK: none.
 
 ## STATUS (core lead)
