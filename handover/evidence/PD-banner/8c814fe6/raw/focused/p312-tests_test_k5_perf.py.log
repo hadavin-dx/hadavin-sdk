@@ -1,1 +1,20 @@
-.F.....
+.F......                                                                 [100%]
+=================================== FAILURES ===================================
+____ test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated ____
+
+    @pytest.mark.perf
+    def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
+        slow = [
+            (name, unit)
+            for name, pat in _redact_module().PATTERNS
+            for unit in _units(pat)
+            if is_superlinear(pat, unit)
+        ]
+>       assert not slow, slow
+E       AssertionError: [('SECRET', 'password ')]
+E       assert not [('SECRET', 'password ')]
+
+tests/test_k5_perf.py:77: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+1 failed, 7 passed in 76.81s (0:01:16)
