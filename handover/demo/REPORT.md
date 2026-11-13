@@ -1,6 +1,30 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 2026-11-13 05:18Z / 10:48 IST - semgrep v5 had ONE FALSE SENTENCE in docs/tests.md (found by the PR-text drafter): fixed as v5.1 (the series sha changes); PR body v6 + claims v6 (71 rows, 0 [UNVERIFIED]) pushed; READY TO PUSH: P1 v3.2 + semgrep v5.1 (separate PR); 7 agents
+FAILED / UNCERTAIN first:
+1. **A false sentence was inside the Semgrep patch itself (v4 and v5, docs/tests.md 'To bump the Semgrep version'): 'Three tools made the lock files: pip-compile (the dev locks), uv 0.11.32 (coverage lock and the two browser locks) and uv 0.13.8 (semgrep lock)'.** The headers show: requirements-dev.txt = pip-compile; requirements-dev-win.txt, requirements-coverage.txt, both browser locks and requirements-semgrep.txt = uv; the uv version is recorded only for the coverage lock (0.11.32, requirements-coverage.in) and the Semgrep lock (0.13.8, requirements-semgrep.in); the browser locks' uv version is written NOWHERE. My own earlier drafts carried that sentence into PR text and through two fresh reads without anyone checking the lock headers: a measured-claims miss. **semgrep/semgrep-on-db54e13-v5.1.patch sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 = v5 + that one sentence rewritten to say exactly what the headers show (nothing else changed): applies on db54e13; with it, 130 tests passed with gitleaks 8.30.1 + DPLD_REQUIRE_SCAN=1 (nosemgrep_form, gitleaks_semgrep_lock, gitleaks_exceptions, workflow_files_parse, hygiene); ruff clean. Apply v5.1, NOT v5.** Not independently re-read (a one-sentence doc change; the fresh read covered the rest).
+2. **PR text: pr-text/semgrep-pr-body-v6.md (sha256 23e1aa5af9a8... before my sha swap; now with the v5.1 sha on line 9) + semgrep-pr-claims-v6.md (71 rows, none [UNVERIFIED]):** all 11 stale sentences fixed; 'what this PR does NOT prove' (no GitHub run seen, no registry rules fetched, every Semgrep run used a made-up rule on an earlier tree) and a 20-row 'Measured vs not' table; the drafter re-measured on db54e13: apply, lock (1130 lines, 67 packages, 919 hash lines), ancestry, 13 files/405/60, empty diff 2db3926..db54e13 in the scanned folders, 3 JSON files in n8n, 45 py/js files tracked in the five folders, workflow content, dependabot covers GitHub Actions only; NOT re-run on db54e13 and marked so: concurrency-block mutants, gitleaks-exception mutants, the 24 comment shapes, real Semgrep exit codes 0/1/2/7, exit-3 tests, the 45-file run, lock rebuild, install time, full suite. Four rows rest on a record, not a measurement: the owner's yes (ORDERS.md line 93: p/python and p/javascript only, this repository only), 'no GitHub run seen', 'no registry rules fetched', 'no repo test checks the scan step's retry/exit logic'. Licence: engine LGPL-2.1; Semgrep Rules License v1.0 text NOT read. The first line of the body says the lead's run uses 'the options in a different order' (v5 said '--config options': imprecise).
+3. **READY TO PUSH NOW:** (1) sonar/sonar-p1-quickwins-v3.2.patch sha256 c35da718d085b32cb6f67c1ff3d83feae38fc155d81be0f7a88ebe9b384e6b2c ; (separate PR, after the stack) semgrep/semgrep-on-db54e13-v5.1.patch sha256 fac20b0311503b8724adc1ae20bb4fa6d33a3b5c75bc98ef5783388bc03aac37 with pr-text/semgrep-pr-body-v6.md. Still open (reads/builds running): P2 v2.1, crlf v5 + yaml trimmed-v2, nodemo v3, probe-ab v3 (SAFE?), real-run v5 (safety read), start-prompt v2 + desk-address-required (core), P1 v3.2.1 delta.
+4. Not run anywhere: full suite WITH demo present, Windows autocrlf run, Semgrep with real rules, Sonar results.
+TABLE 1 - LIVE ITEMS (agents by id)
+| id | purpose | started UTC | state | must produce |
+|---|---|---|---|---|
+| afd3a7d7745c30316 | fresh safety reader real-run v5 | 05:15 | running | CLEAN / NOT |
+| a99100116aa473145 | P1 v3.2.1 delta builder | 04:58 | running | delta |
+| ab2ff104856bc1ffa | fresh reader crlf v5 + trimmed yaml v2 | 04:55 | running | CLEAN / NOT x2 |
+| a00a7504872aa22f0 | fresh safety reader probe-ab v3 + writes2 | 04:52 | running | SAFE / READING |
+| ab6c25f7e78008d2e | fresh third reader P2 v2.1 | 04:37 | running | CLEAN / NOT |
+| a2f6af4dc21cb8a4c | start-prompt v2 + desk-address-required builder | 04:49 | running | 2 patches |
+| ac09125403a1f310b | nodemo v3 builder | 04:27 | running | 4 patches |
+| heartbeat loop | 5-min guarantee | 01:33 | running | blocks |
+Totals: agents 7.
+TABLE 3 - FINISHED SINCE LAST BLOCK
+| item | result |
+|---|---|
+| semgrep PR body v6 + claims v6 | drafted, pushed; found the false sentence |
+| semgrep v5.1 | built by me, 130 tests passed |
+
 ## 2026-11-13 05:15Z / 10:45 IST - semgrep v5 CLEAN (fresh read); real-run fixes v5 built (ONE core touch left); semgrep PR text v6 drafting; READY TO PUSH still P1 v3.2 (+ semgrep v5 as its own PR); 8 agents
 FAILED / UNCERTAIN first:
 1. **semgrep-on-db54e13-v5 = CLEAN (sonar... semgrep/REVIEW-6-v5-fresh.md): 0 Blocker/Major, 3 Nits; READY TO PUSH as the separate Semgrep PR (after the stack): sha256 99c185b0298fa8a9e4798bf571ab72c3c27cfd0a7a1094efbd7c3fc62622b7c5.** v4 vs v5 differ only in the four `[ ]`->`[[ ]]` and two status paragraphs; the 18 stub-run pairs (exits 0,1,2,3,7,'2 then 0','2 2 0','2 2 2','2 then 1') under `bash -e` and `bash -eo pipefail` gave identical status/tries/output; lock unchanged (1130 lines, sha256 a791abb7e447...); P1 v3.2's tripwire fails with v4 and PASSES with v5 (reproduced); all 56 apply orders OK; 130 tests passed; gitleaks 24 commits clean; 8 of 8 non-equivalent mutants of the scan step killed. NOT run: Semgrep with the p/python and p/javascript rules (registry offline), any GitHub run. PR text v6 (measured-only; 11 stale sentences from the read: 2db3926 -> db54e13, sha, 125 -> 130 tests, 'stack head' wording, the new [[ ]] sentence): Opus drafter a8445923d8d707e02 running.

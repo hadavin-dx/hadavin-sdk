@@ -20,7 +20,7 @@ Key to sources:
 | 7 | `db54e13` is the commit this PR is cut from: head of branch `pr-3-tests` | D: `git rev-parse origin/pr-3-tests` = `db54e13584d4...` in the reviewer's clone; R6.2 | re-measured |
 | 8 | `pr-3-tests` is the head of PR #4, last of #2 to #4 | PS: #2 pr-1-code -> main, #3 pr-2-demo-folder -> pr-1-code, #4 pr-3-tests -> pr-2-demo-folder (snapshot showed head 2db3926 then) | measured (snapshot) |
 | 9 | db54e13 already holds the sonar.yml fix and `tests/test_workflow_files_parse.py` | D: `git diff --stat 2db3926 db54e13` = sonar.yml, tests/test_workflow_files_parse.py, versions.md; R6.5 | re-measured |
-| 10 | Patch sha256 `99c185b0...22b7c5` | D: `sha256sum semgrep-on-db54e13-v5.patch` | re-measured |
+| 10 | Patch sha256 `fac20b03...03aac37` | `sha256sum semgrep-on-db54e13-v5.1.patch` (v5 was 99c185b0...22b7c5; v5.1 rewrites one docs sentence about which tool made the locks) | re-measured |
 | 11 | No GitHub run seen; no registry rules fetched for this PR | NOTES-semgrep-v5.md "NOT run"; R6 header "Not run: Semgrep with the registry packs (offline) ... a real GitHub run" | stated by builder and reviewer; nothing found that contradicts |
 | 12 | Full suite not run on db54e13 | NOTES-semgrep-v5.md; R6 "Not checked: ... full suite" | as stated |
 | 13 | Lock: 67 packages in 1130 lines | D: `wc -l` = 1130; `grep -cE '^[A-Za-z0-9_.-]+=='` = 67; E6; R6.2 | re-measured on db54e13 |
