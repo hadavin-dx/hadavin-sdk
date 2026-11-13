@@ -4,6 +4,19 @@
 
 | id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
 |---|---|---|---|---|---|---|---|
+| C7 | hostile inputs seed 2, 158 cases | queue | 12:33Z | done | seed 2 | DONE standing/C7: 0 Python tracebacks in 158; **2 leaks I reproduced**: run_real_check.py echoes a fake key typed as `--dry-port-base` value and a fake address typed as a stray argument (stock argparse; run_live_check.py does not echo); 1 hang: read_approvers on a FIFO (30 s timeout, scripts refuse FIFOs); live script accepts odd values then refuses on loopback; no leak from config, key file or env | NEEDS-CODE.md written (standing/NEEDS-CODE.md, 8 items) |
+| C11 | hostile seed 3, focused on the class "command-line text echoed back": every script, every option | self-assigned (b): C7 leak class, search for siblings | 12:40Z | 40 min | seed 3 | STARTING | read RESULTS.md |
+| D1 | full suite + docs-fix-v1.patch | docs patch breaks no test | 12:38Z | about 13:05Z | 1 | RUNNING | compare with 3978 / 0 / 4 |
+| C2 C6 C9 | hostile 1, flakiness 20x, K6+K10 and -OO | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read results |
+
+FAILURES AND RETRIES: no test failures. New real defects found by agents (not test failures): 2 echo leaks, 1 FIFO hang, 2 tracebacks (all in NEEDS-CODE.md). C7 re-ran its library group once (first run had no try/except; kept in run1-superseded). Totals: 2 environment failures, 0 real test failures, 0 flakes, 1 unexplained (B2 baseline rc=1).
+ASK: none (NEEDS-CODE default stands: file written).
+
+
+## REPORT (container clock 12:40Z; lead clock about 15 min ahead) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round / retry | state | next action |
+|---|---|---|---|---|---|---|---|
 | C8 | independent cross-check of the demo session's "1046 items, 0 real mismatches" (main f3c39cf + 13 claims commits) | self-assigned (c) | 12:33Z | done | 1 | DONE standing/C8: 70 claim groups, about 330 values: **1 MISMATCH, which I reproduced**: versions.md:9 says `python -m pytest --collect-only -q` prints one line per test file (92 lines, last `tests/test_workflow_run_flags.py: 10`); in the tree it prints one line per test (3885 lines, ends "3883 tests collected in 4.91s"); only `-qq` gives per-file lines. Same `-q` form at docs/tests.md:79. The numbers 3883 / 92 / 52 are right. NOT a full confirmation of 0 real mismatches: table-cell tails past the printout cut were not read (list in RESULTS.md) | send to the lead / demo session as a finding |
 | D1 | full suite + docs-fix-v1.patch | docs patch breaks no test | 12:38Z | about 13:05Z | 1 | RUNNING (heavy slot 1 of 3) | compare with 3978 / 0 / 4 |
 | C2 C6 C7 | hostile 1, flakiness 20x, hostile 2 | queue | 12:28-12:35Z | 60 min | 1 | RUNNING | read RESULTS.md |
