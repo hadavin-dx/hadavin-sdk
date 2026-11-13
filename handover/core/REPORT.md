@@ -1,5 +1,8 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+19:05Z. EV5 runner a6d8392f (checkpoint 18:58Z): group B done rc=1: 1 failed, 1845 passed (runner-measured). Failed: tests/test_desk_edge_cases.py::test_burst_same_email (AssertionError, cause UNKNOWN). With group A that is 5 failed in the full suite (4 in A: 3 scrub_n8n 1 MB timing tests + test_sonar_p2_feed_optional; 1 in B). Fail-before finished (fb-done); the runner has now started the re-run ALONE of the failures (run-alone scripts exist). I call none of the 5 a flake until the alone results are in; if any fails alone it is a defect for R6. Mail pass aee26a5b: still running, no report (about 40 min). R6 builder: not started; starts when EV5 and the mail pass are in. ASK: none.
+
+## STATUS (core lead)
 18:56Z. EV5 runner a6d8392f: group B still running (no final line in full-B.log yet; its checkpoint file last updated 18:49Z, nothing newer, so about 7 min silent; I will ask for a checkpoint if still silent at 19:05Z). The re-run alone of the 4 group A failures has NOT started (the runner re-runs after both groups end, per my brief), so their cause is still UNKNOWN. Mail pass aee26a5b: running, no report. R6 builder: not started, waiting for EV5 and the mail pass so that one brief holds every finding. Nothing new has failed beyond what the 18:50Z block states. ASK: none.
 
 ## STATUS (core lead)
