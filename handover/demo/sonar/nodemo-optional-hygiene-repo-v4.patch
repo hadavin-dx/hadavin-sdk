@@ -1,0 +1,124 @@
+diff --git a/tests/_repo_root.py b/tests/_repo_root.py
+new file mode 100644
+index 0000000..c21c3ef
+--- /dev/null
++++ b/tests/_repo_root.py
+@@ -0,0 +1,35 @@
++"""The repository folder, found from this file, and the git work-tree check the hygiene tests share.
++
++`support.py` needs the demo_only folder, which a client copy does not have, so the two hygiene test files take the
++repository folder from here instead. A copy made from an archive (or with .git removed) has no repository: the tests
++that list this repository's files with git are skipped by name there, not failed."""
++
++from __future__ import annotations
++
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++REPO = Path(__file__).resolve().parent.parent
++
++
++def need_git_work_tree() -> None:
++    """Skip the running test when REPO has no `.git` (a folder in a clone, a file in a worktree or a submodule)."""
++    if not (REPO / ".git").exists():
++        pytest.skip("not a git work tree (a source archive): git cannot list the files")
++
++
++def need_git_work_tree_for(cwd: Path) -> None:
++    """The same skip, only when the git call is about REPO itself: the temp repositories the tests build are not."""
++    if cwd == REPO:
++        need_git_work_tree()
++
++
++def skipped(call: Any, *args: Any) -> bool:
++    """True when calling it ends the test as skipped (the skip exception is caught here, for the tests of the skip)."""
++    try:
++        call(*args)
++    except pytest.skip.Exception:
++        return True
++    return False
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index e072229..01b5051 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -15,7 +15,7 @@ import warnings
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from _repo_root import REPO, need_git_work_tree, need_git_work_tree_for, skipped
+ 
+ from tools import hygiene
+ 
+@@ -42,6 +42,7 @@ def _gitleaks_exe() -> str | None:
+ 
+ 
+ def _git(cwd: Path, *args: str) -> str:
++    need_git_work_tree_for(cwd)
+     p = subprocess.run(  # noqa: S603
+         ["git", *args],  # noqa: S607
+         cwd=cwd,
+@@ -136,6 +137,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+         assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+     # 2. the real tree
++    need_git_work_tree()  # the canaries above need no repository; the scan of this tree does
+     left = hygiene.pipeline(REPO, patterns, exceptions)
+     assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+     # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+@@ -478,3 +480,40 @@ def test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_var
+         with pytest.raises(ValueError, match=GITLEAKS_ENV) as e:
+             _gitleaks_exe()
+         assert "does not exist" in str(e.value)
++
++
++def test_git_work_tree_skip_is_for_this_repository_only_and_accepts_a_git_file(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The skip fires only when REPO has no `.git` at all and only for calls about REPO. `.git` may be a folder (a
++    clone) or a FILE (a git worktree or a submodule): both are work trees. The temp repositories the other tests build
++    are never skipped. Pinned with REPO pointed at folders made here, so it holds in a copy with or without .git."""
++    import _repo_root  # the module itself, to point its REPO at the folders made here
++
++    bare = tmp_path / "archive"
++    bare.mkdir()
++    folder = tmp_path / "clone"
++    (folder / ".git").mkdir(parents=True)
++    other = tmp_path / "other"  # a repository a test builds: not REPO
++    other.mkdir()
++    # the set-up below runs with a REPO that has a .git, so no skip can get in its way
++    monkeypatch.setattr(_repo_root, "REPO", folder)
++    # a real linked worktree: its .git is a file that points at the main repository
++    main = tmp_path / "main"
++    main.mkdir()
++    ident = ["-c", "user.name=t", "-c", "user.email=t@example.test"]
++    _git(main, "init", "-q")
++    _git(main, *ident, "commit", "-q", "--allow-empty", "-m", "m")
++    linked = tmp_path / "linked"
++    _git(main, "worktree", "add", "-q", str(linked))
++    assert (linked / ".git").is_file()
++
++    monkeypatch.setattr(_repo_root, "REPO", bare)
++    assert skipped(need_git_work_tree)
++    assert skipped(_git, bare, "--version")  # about REPO and REPO has no repository: skipped by name
++    assert not skipped(_git, other, "--version")  # not about REPO: runs even though REPO has no .git
++    monkeypatch.setattr(_repo_root, "REPO", folder)
++    assert not skipped(need_git_work_tree)
++    monkeypatch.setattr(_repo_root, "REPO", linked)
++    assert not skipped(need_git_work_tree)  # .git as a file is a work tree
++    assert not skipped(_git, linked, "ls-files")  # and git really works there
+diff --git a/tests/test_no_placeholders.py b/tests/test_no_placeholders.py
+index 459c521..9008914 100644
+--- a/tests/test_no_placeholders.py
++++ b/tests/test_no_placeholders.py
+@@ -8,7 +8,7 @@ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from _repo_root import REPO
+ 
+ MARKERS = ("DATE-TO-" + "FILL", "TO" + "DO", "FIX" + "ME", "X" * 3)
+ FOUND = re.compile(r"\b(" + "|".join(MARKERS) + r")\b")

@@ -1,0 +1,16 @@
+alone sonar-p1-quickwins-v3.2.patch True
+alone sonar-p1-quickwins-v3.2.1-delta.patch False
+alone crlf-guard-v5.patch True
+alone sonar-yaml-test-trimmed-v2.patch True
+alone semgrep-on-db54e13-v5.1.patch True
+alone sonar-p2-regex-http-bug-v2.1.patch True
+alone sonar-p3-path-helper-v3.patch True
+alone nodemo-fix-v3.patch True
+alone nodemo-ruff-isort.patch True
+alone nodemo-ci-job-v3.patch True
+alone nodemo-optional-hygiene-repo-v4.patch True
+pairs involving v4 failing: 2
+('sonar-p1-quickwins-v3.2.1-delta.patch', 'nodemo-optional-hygiene-repo-v4.patch', [False, True])
+('nodemo-optional-hygiene-repo-v4.patch', 'sonar-p1-quickwins-v3.2.1-delta.patch', [True, False])
+random orders 300 with v4 problem 0
+valid orders (v3.2 before delta) 300 all applied 300 failed 0
