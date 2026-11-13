@@ -2,3 +2,6 @@ B6c progress
 14:30Z start; worktree b6c-base made, r2+6b applied
 14:31Z docs edited (README, tests.md, real-services, contract, 5 one-demo-server fixes); tests next
 14:35Z 22 doc tests + hygiene pass; next: fails-before, patches, full suite
+14:40Z full suite started on final doc tree (b6c-base), log raw/b6c-full.log
+14:42Z r3 + r3-for-stack patches made and apply-checked (rc 0 both); stack tree tests (new files+hygiene) 42 passed; waiting full suite
+14:43Z waiting for full suite (monitor armed)

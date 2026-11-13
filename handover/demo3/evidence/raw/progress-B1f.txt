@@ -1,1 +1,3 @@
 14:38Z B1f: worktree b1f-base = f3c39cf8 + r5; M1 M2 m1 m2 m7 m8 m9 m10 text done; tests updated (32 pass); next: m5 rename, m6 leak fix, fails-before, apply checks, full suite (IST +5:30)
+14:39Z B1f full suite started (log raw/b1f-full.log); patch sha before in raw/b1f-patch-sha-before.txt
+14:40Z B1f apply checks done (all rc 0 except fix-2 conflicts, noted); waiting for full suite; writing notes (IST +5:30)

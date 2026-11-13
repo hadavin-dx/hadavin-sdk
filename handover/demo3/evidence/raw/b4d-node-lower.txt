@@ -1,0 +1,7 @@
+node v22.23.4
+"STRASSE" -> "strasse"
+"ISTANBUL" -> "istanbul"
+"SAM" -> "sam"
+"straße" -> "straße"
+"ıstanbul" -> "ıstanbul"
+"ſam" -> "ſam"

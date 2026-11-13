@@ -1,1 +1,3 @@
 B5e start 14:38Z
+B5e 14:45 base applied, designing
+B5e 14:41Z reset.sh/ps1/support/conftest edited; rewriting tests

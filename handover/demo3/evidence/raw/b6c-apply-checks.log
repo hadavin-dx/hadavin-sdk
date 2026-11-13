@@ -1,0 +1,4 @@
+r3 on f3c39cf8 rc=0
+for-stack on f3c39cf8+claims-stack rc=0
+r3 on plain f3c39cf8 rc=0
+(r3 plain applied on f3c39cf8+claims-stack: FAILS at README.md:85, expected; use the for-stack patch there)
