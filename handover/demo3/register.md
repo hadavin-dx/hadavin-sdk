@@ -165,3 +165,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B6 | (duplicate hand-back relayed 14:12Z; adds: first full run on final tree was 1 failed 3689 passed 199 skipped; already closed) | | | closed |
 | B6b | BUILDER lane3-fix-6 round 2 (A1-A13 of RES-6a4c) + lane3-fix-6b | 14:12Z | stop 14:55Z | running |
 | B4c | BUILDER lane3-fix-4 round 3 (B1-B9 of RES-6a4c) | 14:12Z | stop 14:55Z | running |
+| E5 | closed 14:13Z: fix-2 r2 evidence. Full serial 3784 passed 201 skipped 0 failed (18m15s; exit code not captured). Fails-before: test_live_claude 1 of 48 fails on old code; test_settings_lane3.py import error (env_yes_no); test_env_numbers.py 355/355 pass on OLD code (no fails-before). Long lines: config.py 5 (base 2), test_settings_lane3.py 4. r2 after lane3-fix-1-r2 conflicts at docs/limits.md:117. for-stack patch only apply --check'd. Logs raw/E5-*.log | | | closed; findings sent to B2c |
