@@ -1,7 +1,7 @@
-From af1864a71d8a88af6e38ed47f5eb97e02316f48c Mon Sep 17 00:00:00 2001
+From 5f22cd73f61695138122772182b7cb3c57e27b49 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 05/13] Review fixes: README timing sentence, versions.md notes
+Subject: [PATCH 05/16] Review fixes: README timing sentence, versions.md notes
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
 

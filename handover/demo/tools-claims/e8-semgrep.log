@@ -1,0 +1,99 @@
+HTTPSConnectionPool(host='semgrep.dev', port=443): Max retries exceeded with url: /c/p/python (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
+Traceback (most recent call last):
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 779, in urlopen
+    self._prepare_proxy(conn)
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 1074, in _prepare_proxy
+    conn.connect()
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connection.py", line 844, in connect
+    self._tunnel()
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connection.py", line 390, in _tunnel
+    raise OSError(
+OSError: Tunnel connection failed: 403 Forbidden
+
+The above exception was the direct cause of the following exception:
+
+urllib3.exceptions.ProxyError: ('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden'))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/adapters.py", line 696, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 886, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 886, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 886, in urlopen
+    return self.urlopen(
+           ^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/connectionpool.py", line 847, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/urllib3/util/retry.py", line 555, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='semgrep.dev', port=443): Max retries exceeded with url: /c/p/python (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/commands/wrapper.py", line 69, in wrapper
+    func(*args, **kwargs)
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/commands/scan.py", line 1158, in scan
+    ) = semgrep.run_scan.run_scan(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/telemetry.py", line 482, in inner
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/simple_profiling.py", line 100, in wrapper
+    result = func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/run_scan.py", line 1450, in run_scan
+    configs_obj, config_errors = Config.from_config_list(
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/telemetry.py", line 482, in inner
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/config_resolver.py", line 674, in from_config_list
+    resolved_config, config_errors, missed = resolve_config(
+                                             ^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/telemetry.py", line 482, in inner
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/config_resolver.py", line 555, in resolve_config
+    config_loader.load_config(),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/config_resolver.py", line 196, in load_config
+    return [self._download_config()]
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/config_resolver.py", line 207, in _download_config
+    return self._download_config_from_url(self._config_path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/config_resolver.py", line 227, in _download_config_from_url
+    resp = app_session.get(url, headers={"Accept": "application/json"})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/sessions.py", line 671, in get
+    return self.request("GET", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/telemetry.py", line 482, in inner
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/semgrep/app/session.py", line 228, in request
+    response = super().request(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/work/sg2-venv-sg/lib/python3.12/site-packages/requests/adapters.py", line 723, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='semgrep.dev', port=443): Max retries exceeded with url: /c/p/python (Caused by ProxyError('Unable to connect to proxy', OSError('Tunnel connection failed: 403 Forbidden')))
+rc=2

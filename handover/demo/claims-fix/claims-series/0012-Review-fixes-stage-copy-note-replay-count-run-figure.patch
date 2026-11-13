@@ -1,7 +1,7 @@
-From e9176f03ff5864490bac8f92f5f8fea6a5f5d526 Mon Sep 17 00:00:00 2001
+From 22e1a4492a5965c88de4e06297745bcca2e0fcfc Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 12/13] Review fixes: stage-copy note, replay count, run
+Subject: [PATCH 12/16] Review fixes: stage-copy note, replay count, run
  figures, collect flags
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.

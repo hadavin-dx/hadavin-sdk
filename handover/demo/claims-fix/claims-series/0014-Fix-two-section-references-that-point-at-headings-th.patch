@@ -1,0 +1,43 @@
+From 1db544a6b949ebfab0ad1a3caefea81447916cc3 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Fri, 13 Nov 2026 13:20:37 +0000
+Subject: [PATCH 14/16] Fix two section references that point at headings that
+ do not exist
+
+Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+---
+ contract.md   | 2 +-
+ docs/tests.md | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/contract.md b/contract.md
+index 22017a2..3d85e76 100644
+--- a/contract.md
++++ b/contract.md
+@@ -221,7 +221,7 @@ All desk replies carry `Content-Length` and `Connection: close`. They are JSON,
+ | | 400 | `{"error":"bad_query","field":"limit\|before\|<name>"}` (a limit outside 1..200, a `before` that is not two whole numbers joined by a colon, an unknown or repeated parameter) |
+ | `GET /api/ui/data-map` | 200 | `{mail_sender,ai_step{receives[],never_receives[],mode,note},stored[{field,where,purpose,sent_to[]}],access{bind,portal_pages_read_only,portal_actions[],host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `mail_sender` is the From address the mail step is configured with right now (a string), or null when the mail step has none (the HTTP stand-in); it is read from the adapter's `sender_address` at request time, never stored and never logged, and the lead panel shows it masked by default with an eye button; it is the current setting, not a record of who sent an earlier email. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `note` is a fixed sentence: the list is the inputs the AI is given, derived from its signature, and does not prove what a live AI looks up by id. `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the desk's records (one local database file); `sent_to` lists where else the desk sends that field (the mail step, the CRM, and the AI when the AI step receives it). The CRM entry follows the loaded CRM kind: `CRM (stand-in)` for the stand-in, which gets the whole record; `CRM` for HubSpot, which gets only the lead number, name, email and company (what `crm_hubspot.py` sends), plus the lead status and the owner id when a lead flow file is set. `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_pages_read_only` is `true` and means the pages and `/api/ui/*` read through a read-only connection (the buttons are the writers and go through the desk); `portal_actions` lists what the portal can change: `retry`, `resolve`, and `demo_controls` only when the demo extension is loaded; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three (the "Hide email addresses" switch of the Leads page is a display setting of the viewer's browser, not a desk setting; it is on by default, and the JSON replies carry the values either way, so it is not in this reply; the Data page row about it follows that switch). If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess (`tests/test_portal_log.py` checks the refusals and the 500). `stored` also lists the row `later_decision` (who approved or denied a later message, through which channel and when; approval mode only). |
+ | any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) or `{"error":"unavailable"}` (the read-only open failed or a table is missing: a request before start-up finished, a database path that is not a file, a deleted file) |
+-| any request, when the connection limit is reached | 503 | `{"error":"busy","reason":"busy"}`, header `Retry-After: 1` (see "Further rules", connection limit) |
++| any request, when the connection limit is reached | 503 | `{"error":"busy","reason":"busy"}`, header `Retry-After: 1` (see "Other rules", connection limit) |
+ | any request | 403 | `{"error":"forbidden_host"}` (Host missing, repeated or not allowed) or `{"error":"forbidden_origin"}` (Origin or Sec-Fetch-Site not from this server); see "Host and Origin gate" |
+ 
+ Fakes server (separate process; default `127.0.0.1:8766`; started with `--outbox keyed|blind --port 8766`). The replies to `POST /fake/outbox`, `GET /fake/outbox` and `GET /fake/info` (and the 422 `refused` reply of `POST /fake/outbox`, `POST /fake/crm` and `POST /fake/crm/fields`, and the 200 reply of `POST /fake/crm`) carry `"mode":"keyed|blind"` (the outbox mode, or the CRM mode for the CRM routes); `GET /fake/crm`, `POST /fake/control`, `POST /fake/reset` and the `bad_body`, `bad_control` and `not_found` errors do not.
+diff --git a/docs/tests.md b/docs/tests.md
+index 752b3b9..4118782 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -83,7 +83,7 @@ Measured on Linux with Python 3.12, one run, 2026-11-12 (from the author's own r
+ 
+ ## Quality checks and what to do when a check fails
+ 
+-The commands for ruff, mypy, bandit and the schema check are listed under "Quality commands" in `contract.md`, and the same commands, in order, are in `.github/workflows/lint.yml` (that file also has the secret scan and the scan for hardcoded literals). Run them from the repository folder with the `.venv` folder switched on.
++The commands for ruff, mypy, bandit and the schema check are listed under "Dev tools: which lock file for which OS" in `contract.md`, and the same commands, in order, are in `.github/workflows/lint.yml` (that file also has the secret scan and the scan for hardcoded literals). Run them from the repository folder with the `.venv` folder switched on.
+ 
+ When a check fails: read the last lines of its output first; they name the file and line. For a test, run it alone (`python -m pytest -q tests/test_name.py::test_name`). A test that did not run is not a pass: to see why tests were skipped, run `python -m pytest -q -rs`, which prints one line per skip reason (for example "could not import 'playwright.sync_api'", "node is not installed", "no gitleaks program on PATH"). To make a missing secret scan a failure instead of a skip, set `DPLD_REQUIRE_SCAN=1` and `GITLEAKS_BIN` to the program's path.
+ 
+-- 
+2.43.0
+

@@ -1,6 +1,36 @@
-commit 760e4142849a86c17dcf1fbc943b369072b455f9
+commit 46d3093346d0ad48f5ecc92201f544c527de36b2
 Author: claims-series <noreply@anthropic.com>
 Commit: claims-series <noreply@anthropic.com>
+
+    Cold-reader review: facts, contradictions, wording; command output, numbers, test citations
+    
+    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+    
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+commit dbf3f4dc2d498b031a47ab062cbfaf0614b1f337
+Author: claims-series <noreply@anthropic.com>
+Commit: claims-series <noreply@anthropic.com>
+
+    Say that the n8n numbers are one published run and that runs can differ
+    
+    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+    
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+commit 1db544a6b949ebfab0ad1a3caefea81447916cc3
+Author: claims-series <noreply@anthropic.com>
+Commit: claims-series <noreply@anthropic.com>
+
+    Fix two section references that point at headings that do not exist
+    
+    Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
+    
+    Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+
+commit f1ba4ad972b115c4c279928d4483233be35fd92a
+Author: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Cross-check numbers and names against the code: fix four sentences, the 55 s overrun and the body-cap sentence
     
@@ -8,9 +38,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit e9176f03ff5864490bac8f92f5f8fea6a5f5d526
+commit 22e1a4492a5965c88de4e06297745bcca2e0fcfc
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Review fixes: stage-copy note, replay count, run figures, collect flags
     
@@ -18,9 +48,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit ab16792fcfc901c0a131e9bc2b664a095cdb1963
+commit 18e494a59bcc7d6b70953476963e87bd5356782a
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Recount the collected test total in versions.md
     
@@ -28,9 +58,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit 81b4f40a0094e1785b261cf54f68000c85d3744c
+commit ce0b97543b8100944471ac2e2973bbcac69c3496
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Correct sentences about tests found wrong by a search of tests/
     
@@ -38,9 +68,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit b9e035abb6a9178e8f83a37f8c794fd2823e7451
+commit dff91661a464c7825315d2c58fedc4a0d2adb0d5
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Review fixes of the contract and probe sentences
     
@@ -48,9 +78,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit ad9c93eac8ddbecc716ebb31d170ee1e8e1e4c71
+commit 55dfc71e6fd2c019ba64550e20e47190607c297b
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Soften or source unbacked sentences in contract, n8n recipe, real services and code docstrings
     
@@ -58,9 +88,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit d4a9b620a0414014495dc068137c15f56e193514
+commit 19043f73a98650a58fcc4503247d71553fa08257
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Review fixes: licence sentence, reminders, slow-sender, masking, n8n file count
     
@@ -68,9 +98,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit a76510c17413df7b69ce6773f4d2f939c8a55c07
+commit 2880c80f4ff842dcfccffe4282e4991d446e7102
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Soften or source unbacked sentences in docs/tests, limits, settings and portal
     
@@ -78,9 +108,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit af1864a71d8a88af6e38ed47f5eb97e02316f48c
+commit 5f22cd73f61695138122772182b7cb3c57e27b49
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Review fixes: README timing sentence, versions.md notes
     
@@ -88,9 +118,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit f1915220aef9fb6e0f837d8bc79e773dc30dd780
+commit 616f8c42d44e6c5089d51d06d06fc24bd4288cac
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Soften or source unbacked sentences in README, SECURITY and versions.md
     
@@ -98,9 +128,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit f88309ce197454ae43312b222ad6674b3ce3c49f
+commit b4375bd69b47351bacc78277efd0b7ada033601e
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Review fixes of the first docs change
     
@@ -108,9 +138,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit 7cb48cbf8c49f47dff4f0efb0d1c326bd11a3a51
+commit 567198183dbdfd6d69e495ff3b1796726539a06e
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Fix start_all.ps1 empty-value check, tighten one assertion, unify two comments
     
@@ -118,9 +148,9 @@ Commit: claims-series <noreply@anthropic.com>
     
     Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 
-commit b94123ce1fe0776cd3346efcb9ff56a6a78c4557
+commit 04ad414f06b203f06417c71ac9221cb142bb7bf9
 Author: claims-series <noreply@anthropic.com>
-Commit: claims-series <noreply@anthropic.com>
+Commit: x <x@example.test>
 
     Fix false and stale sentences in the docs and workflow comments
     

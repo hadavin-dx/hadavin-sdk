@@ -2,40 +2,38 @@
 
 ## What this changes
 
-Text only, apart from three small code changes listed below. A read-through of the public text (README, SECURITY, versions.md, contract.md, docs/*.md, workflow comments, and the docstrings that make a promise) listed each sentence that states a number, a guarantee or a result, with the file or test that backs it. This change fixes the sentences that did not match.
+Text only, apart from three small code changes listed below. Every sentence of the public text (README, SECURITY, versions.md, contract.md, docs/*.md, workflow comments, and the docstrings that make a promise) that states a number, a guarantee, a command output or a test result was looked up in the code and the tests. Sentences that did not match were rewritten to what the code does. Sentences that could not be proved from this repository (results of earlier runs, outside facts) were deleted.
 
-| Kind of change | Rows (the authors' own counts, by the builders of each part) |
+This is a series of 16 commits, 31 files, 490 insertions and 432 deletions. Each commit says what it changes. Of the 31 files, 12 are documentation, 4 are workflow files (comments only), 14 are code files (comments and docstrings only, plus the three changes below).
+
+| Kind of change | What was done |
 |---|---|
-| Sentences that were false or out of date, rewritten to what the code does | about 16 in the first pass, plus the stale test counts |
-| README, SECURITY and versions.md sentences with no backing: softened or given a source | 24 |
-| docs/tests, limits, settings and portal sentences with no backing: softened or given a source | about 48 |
-| contract.md, n8n-recipe, hubspot-probe, real-services, why-this-code, workflow comments and code docstrings: sourced, softened or labelled | about 94 |
-| Sentences about tests ("no test ...", "not tested", "tests/x.py checks ..."): every one searched against tests/; 25 were wrong or too strong and are corrected (for example a denial of a test that exists) | 103 sentences searched, 25 corrected |
-| Numbers and names cross-checked against the code by a script and by reading (1046 backticked names, paths and constants; 166 number-and-unit statements; exit codes, HTTP codes, defaults) | 9 sentences and one code comment corrected (for example a test count labelled as this commit, a "retries three times" that is three tries in all, the 55-second overrun of a reaper pass, the body-size cap, the open-file reserve list) |
-| Final recount of the test count in versions.md | 1 sentence: 92 files, 3883 tests. `python -m pytest --collect-only -q` prints one line per test file and no total; the same command without `-q` ends with the line `3883 tests collected` |
-
-"Softened or labelled" means: where a number comes from a run the author did and no log is in the repository, the text now says "the author's own run; no log is shipped" instead of reading like a result of this commit. Counts of earlier runs stay as dated history.
+| False or out-of-date sentences | rewritten to what the code does (for example a reaper pass can overrun by more than 55 s because the CRM copy and reminder parts add their own time; a send timeout above 9 s is accepted but has no effect; the exit codes of the desk) |
+| Sentences about tests | every "no test checks ...", "not tested" and "tests/x.py checks ..." was searched against `tests/`: wrong denials were corrected (a test for a restart on one port exists; a test that a refused Host does not count exists) and citations that said more than the test asserts were narrowed |
+| Numbers and names | a script and readers compared every backticked name, path, route, constant, default, exit code and number with the code; a handful were wrong and are fixed |
+| What a command prints | the commands named in the docs were run as written; for example `python -m pytest --collect-only -qq` prints one line per test file |
+| Results of earlier runs and outside facts | deleted where this repository cannot prove them (test counts of earlier runs, timings, the author's runs of the HubSpot probe, an independent rerun, the Semgrep run log) |
+| Plain wording | the longest and most confusing paragraphs were split and the first-use terms defined |
 
 ## The three code changes (nothing else changes behaviour)
 
-1. `scripts/start_all.ps1`: an empty `DESK_LEADFLOW_FILE` is now treated like the shell script does (same condition as `start_all.sh`).
-2. `tests/test_input_edge_cases.py`: one assertion tightened from `in (1, 2)` to `== 1` model calls, with its docstring; `tests/test_ai_after_claim.py` also checks it.
-3. `.github/workflows/lint.yml` and `sonar.yml`: the time-limit comment now says the same thing in the same words in both.
+1. `scripts/start_all.ps1`: an empty `DESK_LEADFLOW_FILE` is now treated like the shell script treats it (same condition as `start_all.sh`).
+2. `tests/test_input_edge_cases.py`: one assertion is tightened from `in (1, 2)` to `== 1` model call, with its docstring.
+3. `.github/workflows/lint.yml` and `sonar.yml`: the time-limit comment now says the same in both.
 
-(`src/lead_desk/loader.py` also has one docstring wrapped to fit the line limit.)
+The other code files differ from main only in docstrings and comments (checked: the syntax tree of each is identical to main once docstrings and comments are ignored, except the one assertion above). The workflow files are equal to main when parsed as YAML.
 
 ## What was NOT done
 
-* No code behaviour changed apart from item 1 and one test assertion (item 2). The `.py` files in this change differ from main only in docstrings and comments, except that one assertion (proof below).
-* Sentences that rest on the author's own runs are still labelled as such; no logs were added.
-* The owner questions (security contact, private reporting, rule-pack permission) were answered by the repository owner and are written as such; the licence terms of the Semgrep rule packs were not read.
-* Not re-run on the combined tree: the full test suite (see Checks).
+* No code behaviour changed apart from item 1 and one test assertion (item 2).
+* Numbers that only a run can give (a full-suite time, an earlier pass count) are no longer in the text; they are not replaced by new ones.
+* Two tests were found that do not catch the behaviour the docs used to cite them for (the mirror-retry wait values; the deep-nesting guard). The sentences now say what the tests assert. The tests are not changed here.
+* One behaviour difference was found and is not changed: a start-up without the background reaper drives pending follow-ups without waiting for their backoff (the server always starts the reaper first, so the server is not affected).
 
 ## Checks
 
-* **Text-only proof.** For each `.py` file touched, the parsed syntax tree was compared before and after with docstrings and comments ignored: identical for 12 of 13; the 13th (`tests/test_input_edge_cases.py`) differs only by the one assertion in item 2. For each of the four workflow files, `yaml.safe_load` before and after is equal.
-* On the combined tree (main f3c39cf8 plus thirteen commits): `ruff check` and `ruff format --check` pass; `gitleaks dir` with the repository config: no leaks; `gitleaks git` over the thirteen new commits: no leaks; `tests/test_hygiene.py` with `DPLD_REQUIRE_SCAN=1`: passed.
-* Full suite: run on main f3c39cf8 and on main plus the FIRST FIVE patches of this series (v1, code-fix-v1, v1b, v2, v2b): 3683 passed, 200 skipped, 0 failed on both (so no test changed outcome). It was NOT run on the full thirteen-commit tree: the later eight commits are text-only apart from the proof above, but that is a reading, not a run. The 200 skips are the same on both (no Playwright, no gitleaks on that machine, Windows-only and similar).
-* Test count: `python -m pytest --collect-only -q` lists 92 test files and 3883 tests on this tree.
+Results are filled in from the final tree (main f3c39cf8 plus the 16 commits, applied with `git am`):
 
-🤖 Generated with [Claude Code](https://claude.ai/code)
+* RESULTS-PLACEHOLDER
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

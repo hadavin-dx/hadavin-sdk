@@ -1,7 +1,7 @@
-From d4a9b620a0414014495dc068137c15f56e193514 Mon Sep 17 00:00:00 2001
+From 19043f73a98650a58fcc4503247d71553fa08257 Mon Sep 17 00:00:00 2001
 From: claims-series <noreply@anthropic.com>
 Date: Fri, 13 Nov 2026 12:26:31 +0000
-Subject: [PATCH 07/13] Review fixes: licence sentence, reminders, slow-sender,
+Subject: [PATCH 07/16] Review fixes: licence sentence, reminders, slow-sender,
  masking, n8n file count
 
 Text and comment changes only, except where the subject says otherwise. Each sentence changed was checked against the code or the tests.
