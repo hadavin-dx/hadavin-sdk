@@ -1,0 +1,6 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R4-17 the range ends one early: musical symbol format characters  [test_pin_r4_range_17] t=15s
+ok  KILLED         R4-17 the range starts one late: musical symbol format characters  [test_pin_r4_range_17] t=16s
+ok  KILLED         R4-18 the range is dropped: tag characters  [test_pin_r4_range_18] t=18s
+ok  KILLED         R4-18 the range ends one early: tag characters  [test_pin_r4_range_18] t=19s
+ok  KILLED         R4-18 the range starts one late: tag characters  [test_pin_r4_range_18] t=21s
