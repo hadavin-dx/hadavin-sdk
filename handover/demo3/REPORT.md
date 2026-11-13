@@ -1,3 +1,25 @@
+## HEARTBEAT 63 (14:45Z / 20:15 IST) - FREEZE STARTED per the lead's order (the order is dated 15:05Z in ORDERS.md; I follow it now)
+
+FAILURES AND RETRIES (first):
+- fix-8 (B8): run 1 of the full suite FAILED: 1 failed, 3723 passed, 199 skipped, 1210 s (tests/test_hygiene.py flagged the builder's own address-shaped test strings and an IP in contract.md). Fixed by the builder. Run 2 started 14:24Z; B8's last note is 14:24Z and I can see NO run-2 log in evidence/raw, so I do NOT know if run 2 is green. Stop time 14:50Z. Not verified.
+- fix-8 correction to the lead's order: `loc@.dom` (one leading dot, no other dot) was already refused on base; the accepted forms were `loc@.dom.test` and `a..b`. Also fixed: hyphen at a label end, Unicode dots, sender/recipient/reminder addresses. NOT fixed: labels over 63 characters, dots before the @, IP literal `a@[127.0.0.1]` (still accepted). fix-8 has had NO independent review (the freeze order forbids new reviewers); it is a product-code change, so it is NOT merged-ready by our own rule.
+- B2d (fix-2 r4): full serial run started 14:40Z, at about 19 percent at 14:44Z, no result yet. Its fails-before on r3 and 4 apply checks (rc 0) are recorded; the full suite on the final head is not green yet.
+- Heavy-slot rule broken by me: 6 full suites ran at once (B1f, B2d, B4d, B6c, E9, E10; max is 3). CPU stayed 59 percent idle, but timings of those runs are not clean.
+- Earlier, still open: B2c final suite failed once; E3b three cut runs unexplained; xdist port-43217 flake not reproduced; 2 `E` marks of PR #12 run unexplained; REV-1f resolve done inline.
+- Totals: failures today include the above; real defects open: fix-8 unreviewed/unverified, fix-5 reset.ps1 sibling (B5e).
+
+| Item | State |
+|---|---|
+| B8 fix-8 | running; run 2 result unknown |
+| B2d fix-2 r4 | running; full suite at ~19 percent |
+| E9 fix-6 r2 full suite | running |
+| B6c fix-6 r3, B1f fix-1 r6, B4d fix-4 r4, B5e fix-5 r5, E10 | running (started before the freeze order; no new agents and no new review rounds from now) |
+| REV-4d, REV-5c | closed |
+
+FREEZE PLAN: launch nothing new. Let the running builders and E9 finish. Then ONE report to the lead: a one-page list merged-ready vs not, with the unverified parts named. B7b and the Q4 doc fix are dropped (not launched). The ss / dotless-i rule stays docs only.
+ASK list: xdist in CI (report only); PR #12 E marks; run the 4 remaining skips?; Q8 vs B3 M11; D10 "sender" word.
+Load: idle CPU 59 percent, free RAM 13.7 GB (/proc/stat 4 s sample, 14:45Z). 8 agents running (B8, E9, B6c, B2d, B1f, E10, B4d, B5e).
+
 ## HEARTBEAT 62 (14:38Z / IST = UTC+5:30)
 
 FAILURES AND RETRIES (first):
