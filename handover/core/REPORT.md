@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 05:08Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package is clean; no laptop run; no PR READY. Remote heads unchanged since 04:59Z (P6 c7eb5c79, P2 82dd69c1, SONAR-PATH abb3e90a). The three builders (P6 batch 13, P2 batch 12, SONAR-PATH batch 5) have not reported; nothing they say is verified.
+- Open: P6 test_stage_names failure (CI-breaking), P6 masker weaker than main in 3 rows, SONAR-PATH raw OSError bug, broad-except sites in P6 and P2, and I have not yet checked whether Part 2 has a masker that needs the 04:55Z bypass rule.
+
+**LEAD ACTIONS:** 05:00Z command read and relayed to the P6 batch 13 builder: stage text demo/pilot/prod only, restore the 3 masker rows as pins that fail on c7eb5c79, run the FULL stage-name and redaction test files plus all text scanners on 3.12 and 3.13, list every skipped file. SONAR-PATH batch 5 already carries the OSError fail-before test. ONE runner per final head: yes.
+**LIVE ITEMS (3):** a7978edf P6 batch 13; a805b93d P2 batch 12; ac09a2ce SONAR-PATH batch 5.
+**ROUNDS (WHY):** P6 round 13; P2 round 12; SONAR-PATH round 5.
+**FINISHED SINCE LAST BLOCK:** nothing new.
+**EGM STEP PER PACKAGE:** all three at step 3 (build).
+**LANE SONAR-PATH:** abb3e90a; batch 5 building.
+**RUN ON LAPTOP:** none.
+
+
 ## 05:03Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
