@@ -1,5 +1,15 @@
 # REPORT cloud session 3 (newest block on top)
 
+## 2026-11-13 09:51Z / 15:21 IST  HEARTBEAT 2
+| id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap (and why) | state | next action |
+|---|---|---|---|---|---|---|---|
+| A | Evidence runner agent (Sonnet): full product suite on Linux, Python 3.12, no browser tests; main 61ded9e and PR #12 8d65577 | pass/fail evidence for PR #12 vs main | 09:39Z / 15:09 | run1 of both heads about 64% done at 09:49Z; run1 ends ~10:00Z, run2 ends ~10:25Z / 15:55 IST (about 35 min left) | run 1 of 2 per head (each head runs twice by order); no retry, no hang seen so far | running | read progress-A.txt at 10:00Z; write evidence/summary.md numbers table when A finishes |
+| B | Evidence runner agent (Sonnet): hostile-input pass on PR #12 changes | raw input/output for path-confinement changes | 09:39Z / 15:09 | finished writing evidence/hostile.md at 09:49Z; waiting for its final report message | case groups 5 of 5 done; no retry | done writing, final report not yet received | read its report; push evidence; check hostile.md has no real-looking secrets |
+| lead-me | this session: register, supervision, pushes to demo/lane3 | keeps A and B watched | 09:37Z / 15:07 | 90 min cap ends 11:07Z / 16:37 IST | n/a | running | heartbeat by 10:01Z |
+
+ASK: none (lead answers of 09:48Z applied: python3.12, browser tests skipped with skip count recorded, container clock, two runs at once; summary.md numbers table will be written when A finishes).
+Early note, raw, not a verdict: hostile.md lists unexpected items first (F1: a foreign `tools` package with the same function names is used by load_tools/catcher.py on both main and PR12; F2: `python -m demo_only.fake_model_server --help` ends in a traceback on PR12 when another project's `tools` is first on the path, main prints help). Details in evidence/hostile.md.
+
 ## 2026-11-13 09:39Z / 15:09 IST  HEARTBEAT 1 (ORDER 1 started on GO)
 | id | what it does | why (what it unblocks) | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
 |---|---|---|---|---|---|---|---|

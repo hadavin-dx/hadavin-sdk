@@ -1,0 +1,119 @@
+=== mainb ===
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/mainb/load_tools/catcher.py --out /home/user/hadavin-sdk/handover/demo3/scratch/x-mainb.jsonl --port 0 --host 127.0.0.1 --control /nonexistent_dir/zz
+FOREIGN confine used
+FOREIGN confine used
+LISTENING 127.0.0.1 32809
+exit 124
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/mainb/tools/scrub_n8n_export.py in.json out.json
+Traceback (most recent call last):
+  File "/home/user/work/mainb/tools/scrub_n8n_export.py", line 53, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/work/mainb/tools/scrub_n8n_export.py", line 56, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 -m tools.scrub_n8n_export in.json out.json
+/usr/bin/python3.12: No module named tools.scrub_n8n_export
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --help
+usage: fake_model_server.py [-h]
+                            [--mode {ok,mixed,slow,timeout,r429,malformed,refusal,r5xx,badlabel,drip,rate_limit,malformed_json,malformed_label,server_error}]
+                            [--port PORT] [--key-file KEY_FILE]
+                            [--call-log CALL_LOG]
+                            [--control-file CONTROL_FILE]
+
+options:
+  -h, --help            show this help message and exit
+  --mode {ok,mixed,slow,timeout,r429,malformed,refusal,r5xx,badlabel,drip,rate_limit,malformed_json,malformed_label,server_error}
+  --port PORT
+  --key-file KEY_FILE   file holding the fake key to require (fake keys only)
+  --call-log CALL_LOG   one JSON line per call, for the invariant checker
+  --control-file CONTROL_FILE
+                        file with one mode word, read on every call
+exit 0
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file x --port 0
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 262, in <module>
+    main()
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 249, in main
+    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'x'
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file x --port 0
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 262, in <module>
+    main()
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 249, in main
+    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'x'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file /etc/hostname --port 0
+fake model listening on port 35387
+exit 124
+=== pr12b ===
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/load_tools/catcher.py --out /home/user/hadavin-sdk/handover/demo3/scratch/x-pr12b.jsonl --port 0 --host 127.0.0.1 --control /nonexistent_dir/zz
+FOREIGN confine used
+FOREIGN confine used
+LISTENING 127.0.0.1 46579
+exit 124
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/tools/scrub_n8n_export.py in.json out.json
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/tools/scrub_n8n_export.py", line 53, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/tools/scrub_n8n_export.py", line 56, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 -m tools.scrub_n8n_export in.json out.json
+/usr/bin/python3.12: No module named tools.scrub_n8n_export
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --help
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/pr12b/demo_only/fake_model_server.py", line 37, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file x --port 0
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/pr12b/demo_only/fake_model_server.py", line 37, in <module>
+    from tools.pathconfine import PathRefused, confine, confine_existing
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file x --port 0
+refused: --key-file: no such file
+exit 2
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 -m demo_only.fake_model_server --key-file /etc/hostname --port 0
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2

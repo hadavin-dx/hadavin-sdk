@@ -1,0 +1,468 @@
+=== mainb ===
+--- cwd=/tmp PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb:/home/user/work/mainb/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/mainb/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/work/mainb/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/mainb/scripts/n8n_api.py", line 49, in <module>
+    from tools.pathconfine import confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/mainb/src:/home/user/work/mainb timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb preimport_foreign_tools /home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+pre-imported tools: /home/user/hadavin-sdk/handover/demo3/scratch/foreignA/tools/__init__.py
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/mainb preimport_foreign_tools /home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+pre-imported tools: /home/user/hadavin-sdk/handover/demo3/scratch/foreignD/tools/__init__.py
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+=== pr12b ===
+--- cwd=/tmp PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignD timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC SystemExit N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b:/home/user/work/pr12b/src timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/tmp PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+--- cwd=/home/user/work/pr12b/scripts PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/work/pr12b/scripts/n8n_api.py
+Traceback (most recent call last):
+  File "/home/user/work/pr12b/scripts/n8n_api.py", line 51, in <module>
+    from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'tools.pathconfine'
+exit 1
+##### env PYTHONPATH=/home/user/hadavin-sdk/handover/demo3/scratch/foreignA:/home/user/work/pr12b/src:/home/user/work/pr12b timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b import
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b preimport_foreign_tools /home/user/hadavin-sdk/handover/demo3/scratch/foreignA
+pre-imported tools: /home/user/hadavin-sdk/handover/demo3/scratch/foreignA/tools/__init__.py
+EXC ModuleNotFoundError No module named 'tools.pathconfine'
+exit 0
+##### env PYTHONPATH= timeout 20 /usr/bin/python3.12 /home/user/hadavin-sdk/handover/demo3/scratch/n8n_probe.py /home/user/work/pr12b preimport_foreign_tools /home/user/hadavin-sdk/handover/demo3/scratch/foreignD
+pre-imported tools: /home/user/hadavin-sdk/handover/demo3/scratch/foreignD/tools/__init__.py
+EXC ImportError cannot import name 'ROOTS_ENV' from 'tools.pathconfine' (/home/user/hadavin-sdk/handover/demo3/scratch/foreignD/tools/pathconfine.py)
+exit 0

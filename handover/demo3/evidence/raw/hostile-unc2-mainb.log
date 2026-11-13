@@ -1,0 +1,22 @@
+'\\\\?\\unc\\host\\share\\x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'\\\\?\\\\UNC\\host\\share' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'//?/UNC/host/share/x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'//./C:/x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'\\??\\UNC\\host\\share\\x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'\\\\host/share/x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'/\\/host/x' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'//' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'\\\\' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'\x00' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+'a\x00b' -> EXC TypeError readonly_sqlite_uri() takes 1 positional argument but 2 were given
+== read_book (check_invariants) on Linux
+'\\\\host\\share\\x.db' -> EXC AttributeError 'str' object has no attribute 'name'
+'//host/share/x.db' -> EXC AttributeError 'str' object has no attribute 'name'
+'\\\\?\\UNC\\host\\share\\x.db' -> EXC AttributeError 'str' object has no attribute 'name'
+'\\/host/share/x.db' -> EXC AttributeError 'str' object has no attribute 'name'
+123 -> EXC AttributeError 'int' object has no attribute 'name'
+None -> EXC AttributeError 'NoneType' object has no attribute 'name'
+b'x' -> EXC AttributeError 'bytes' object has no attribute 'name'
+'\x00' -> EXC AttributeError 'str' object has no attribute 'name'
+exit 0

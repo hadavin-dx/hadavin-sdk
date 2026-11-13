@@ -1,0 +1,153 @@
+##### [mainb] key abs outside :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outside.key
+fake model listening on port 44717
+exit 124
+##### [mainb] key ../ outside :: args: --key-file ../outside/outside.key
+fake model listening on port 43719
+exit 124
+##### [mainb] key sub/../../ outside :: args: --key-file sub/../../outside/outside.key
+fake model listening on port 40215
+exit 124
+##### [mainb] key symlink->outside (cwd) :: args: --key-file sym_key
+fake model listening on port 38119
+exit 124
+##### [mainb] key symlink->outside (tmp) :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/sym_key_tmp
+fake model listening on port 36425
+exit 124
+##### [mainb] key via dir symlink :: args: --key-file dirlink/k.key
+fake model listening on port 46789
+exit 124
+##### [mainb] key via outlink/outside.key :: args: --key-file outlink/outside/outside.key
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 262, in <module>
+    main()
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 249, in main
+    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'outlink/outside/outside.key'
+exit 1
+##### [mainb] key inside cwd (ok) :: args: --key-file in.key
+fake model listening on port 36321
+exit 124
+##### [mainb] key inside tmp (ok) :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/tmp.key
+fake model listening on port 35547
+exit 124
+##### [mainb] key sub/../in.key (ok) :: args: --key-file sub/../in.key
+fake model listening on port 35809
+exit 124
+##### [mainb] key empty file :: args: --key-file empty.key
+fake model listening on port 33681
+exit 124
+##### [mainb] key a directory :: args: --key-file sub
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 262, in <module>
+    main()
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 249, in main
+    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+IsADirectoryError: [Errno 21] Is a directory: 'sub'
+exit 1
+##### [mainb] key nonexistent :: args: --key-file nope.key
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 262, in <module>
+    main()
+  File "/home/user/work/mainb/demo_only/fake_model_server.py", line 249, in main
+    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'nope.key'
+exit 1
+##### [mainb] key /etc/hostname :: args: --key-file /etc/hostname
+fake model listening on port 39443
+exit 124
+##### [mainb] key /proc/self/environ :: args: --key-file /proc/self/environ
+fake model listening on port 40117
+exit 124
+##### [mainb] call-log abs outside new :: args: --call-log /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/new.jsonl
+fake model listening on port 42363
+exit 124
+##### [mainb] call-log ../ outside new :: args: --call-log ../outside/new.jsonl
+fake model listening on port 35145
+exit 124
+##### [mainb] call-log symlink->outside existing :: args: --call-log sym_log
+fake model listening on port 41361
+exit 124
+##### [mainb] call-log dangling symlink->outside :: args: --call-log dangling_log
+fake model listening on port 33275
+exit 124
+##### [mainb] call-log via dir symlink new :: args: --call-log outlink/new2.jsonl
+fake model listening on port 46069
+exit 124
+##### [mainb] call-log inside new (ok) :: args: --call-log log1.jsonl
+fake model listening on port 40019
+exit 124
+##### [mainb] call-log tmp new (ok) :: args: --call-log /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/log2.jsonl
+fake model listening on port 43549
+exit 124
+##### [mainb] call-log bad name (space) :: args: --call-log my log.jsonl
+fake model listening on port 41081
+exit 124
+##### [mainb] call-log device name nul.txt :: args: --call-log nul.txt
+fake model listening on port 35025
+exit 124
+##### [mainb] call-log trailing dot :: args: --call-log log.
+fake model listening on port 43905
+exit 124
+##### [mainb] call-log control char :: args: --call-log ab.jsonl
+fake model listening on port 36705
+exit 124
+##### [mainb] call-log /etc/passwd :: args: --call-log /etc/passwd
+fake model listening on port 39489
+exit 124
+##### [mainb] call-log missing parent :: args: --call-log nodir/x.jsonl
+fake model listening on port 44173
+exit 124
+##### [mainb] control abs outside :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outmode.txt
+fake model listening on port 36347
+exit 124
+##### [mainb] control ../ outside new :: args: --control-file ../outside/ctl.txt
+fake model listening on port 44401
+exit 124
+##### [mainb] control symlink->outside :: args: --control-file sym_ctl
+fake model listening on port 32883
+exit 124
+##### [mainb] control via dir symlink :: args: --control-file outlink/ctl3.txt
+fake model listening on port 34767
+exit 124
+##### [mainb] control inside (ok) :: args: --control-file ctl1.txt
+fake model listening on port 40777
+exit 124
+##### [mainb] control tmp (ok) :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/ctl2.txt
+fake model listening on port 43677
+exit 124
+##### [mainb] control UNC-like \\h\s\x :: args: --control-file \\h\s\x
+fake model listening on port 42211
+exit 124
+##### [mainb] control //host/share/x :: args: --control-file //host/share/x
+fake model listening on port 41647
+exit 124
+##### [mainb] control LEAD_DESK_PATH_ROOTS=outside abs :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outmode.txt
+fake model listening on port 36817
+exit 124

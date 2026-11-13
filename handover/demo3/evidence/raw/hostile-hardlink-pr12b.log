@@ -1,0 +1,17 @@
+module: /home/user/work/pr12b/tools/pathconfine.py cwd: /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b tmp: /tmp
+nlink secret: 2 inode eq: True
+confine_existing hl_out.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_out.txt
+confine hl_out.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_out.txt
+confine_anywhere hl_out.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_out.txt
+confine_existing hl_in.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_in.txt
+confine hl_in.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_in.txt
+confine_anywhere hl_in.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/root/hl_in.txt
+confine_existing sym_out.txt -> EXC PathRefused --f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine sym_out.txt -> EXC PathRefused --f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere sym_out.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/outside/secret.txt
+confine_existing /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/outside/secret.txt -> EXC PathRefused --f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/outside/secret.txt -> EXC PathRefused --f: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+confine_anywhere /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/outside/secret.txt -> /home/user/hadavin-sdk/handover/demo3/scratch/hl-pr12b/outside/secret.txt
+write via confine(hl_out.txt) done; outside now: 'FAKE-OVERWRITTEN-VIA-HARDLINK\n'
+read via hardlink: 'FAKE-OUTSIDE\n'
+exit 0

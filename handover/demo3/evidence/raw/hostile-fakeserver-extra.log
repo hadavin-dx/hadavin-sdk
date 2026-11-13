@@ -1,0 +1,29 @@
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS=/home/user/hadavin-sdk/handover/demo3/scratch/fs/outside :: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outside.key
+fake model listening on port 33167
+exit 124
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS=/home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/../outside :: --call-log /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/newx.jsonl
+fake model listening on port 41861
+exit 124
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS=/home/user/hadavin-sdk/handover/demo3/scratch/fs/cwd/outlink :: --key-file outlink/outside.key
+fake model listening on port 36637
+exit 124
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS=/ :: --key-file /etc/hostname
+fake model listening on port 33831
+exit 124
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS=relative/outside :: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outside.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] env: LEAD_DESK_PATH_ROOTS= :: --key-file /etc/hostname
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [mainb] e2e: call-log=sym_log (symlink to outside/outlog.jsonl), one POST
+fake model listening on port 48999
+curl http=401
+outside/outlog.jsonl now:
+x
+{"ts": 1794563321.5235178, "lead_id": "", "mode": "ok", "status": 401}
+##### [pr12b] e2e: call-log=sym_log (symlink to outside/outlog.jsonl), one POST
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+curl http=000
+outside/outlog.jsonl now:
+x

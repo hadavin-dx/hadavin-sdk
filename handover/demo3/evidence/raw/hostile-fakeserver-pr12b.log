@@ -1,0 +1,111 @@
+##### [pr12b] key abs outside :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outside.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key ../ outside :: args: --key-file ../outside/outside.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key sub/../../ outside :: args: --key-file sub/../../outside/outside.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key symlink->outside (cwd) :: args: --key-file sym_key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key symlink->outside (tmp) :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/sym_key_tmp
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key via dir symlink :: args: --key-file dirlink/k.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key via outlink/outside.key :: args: --key-file outlink/outside/outside.key
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key inside cwd (ok) :: args: --key-file in.key
+fake model listening on port 39479
+exit 124
+##### [pr12b] key inside tmp (ok) :: args: --key-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/tmp.key
+fake model listening on port 41177
+exit 124
+##### [pr12b] key sub/../in.key (ok) :: args: --key-file sub/../in.key
+fake model listening on port 41247
+exit 124
+##### [pr12b] key empty file :: args: --key-file empty.key
+fake model listening on port 33749
+exit 124
+##### [pr12b] key a directory :: args: --key-file sub
+refused: --key-file: names a folder, not a file
+exit 2
+##### [pr12b] key nonexistent :: args: --key-file nope.key
+refused: --key-file: no such file
+exit 2
+##### [pr12b] key /etc/hostname :: args: --key-file /etc/hostname
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] key /proc/self/environ :: args: --key-file /proc/self/environ
+refused: --key-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log abs outside new :: args: --call-log /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/new.jsonl
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log ../ outside new :: args: --call-log ../outside/new.jsonl
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log symlink->outside existing :: args: --call-log sym_log
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log dangling symlink->outside :: args: --call-log dangling_log
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log via dir symlink new :: args: --call-log outlink/new2.jsonl
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log inside new (ok) :: args: --call-log log1.jsonl
+fake model listening on port 36495
+exit 124
+##### [pr12b] call-log tmp new (ok) :: args: --call-log /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/log2.jsonl
+fake model listening on port 45673
+exit 124
+##### [pr12b] call-log bad name (space) :: args: --call-log my log.jsonl
+refused: --call-log: the name of a new file may only use letters, digits, '.', '_' and '-'
+exit 2
+##### [pr12b] call-log device name nul.txt :: args: --call-log nul.txt
+refused: --call-log: a Windows device name cannot be the name of a new file
+exit 2
+##### [pr12b] call-log trailing dot :: args: --call-log log.
+refused: --call-log: not usable as the name of a new file (empty, too long, or ends with a dot)
+exit 2
+##### [pr12b] call-log control char :: args: --call-log ab.jsonl
+refused: --call-log: contains a control character
+exit 2
+##### [pr12b] call-log /etc/passwd :: args: --call-log /etc/passwd
+refused: --call-log: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] call-log missing parent :: args: --call-log nodir/x.jsonl
+refused: --call-log: a folder on the path does not exist
+exit 2
+##### [pr12b] control abs outside :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outmode.txt
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] control ../ outside new :: args: --control-file ../outside/ctl.txt
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] control symlink->outside :: args: --control-file sym_ctl
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] control via dir symlink :: args: --control-file outlink/ctl3.txt
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] control inside (ok) :: args: --control-file ctl1.txt
+fake model listening on port 34987
+exit 124
+##### [pr12b] control tmp (ok) :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/tmp/ctl2.txt
+fake model listening on port 40385
+exit 124
+##### [pr12b] control UNC-like \\h\s\x :: args: --control-file \\h\s\x
+refused: --control-file: the name of a new file may only use letters, digits, '.', '_' and '-'
+exit 2
+##### [pr12b] control //host/share/x :: args: --control-file //host/share/x
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
+##### [pr12b] control LEAD_DESK_PATH_ROOTS=outside abs :: args: --control-file /home/user/hadavin-sdk/handover/demo3/scratch/fs/outside/outmode.txt
+refused: --control-file: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+exit 2
