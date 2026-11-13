@@ -80,9 +80,11 @@ from pathlib import Path
 
 
 def _load_fixed_run():
-    """The program starter next to this file, read by its file path: never an installed or foreign
-    `tools` package, and
-    it works when the file is run alone with `-I` (the script folder is not on the path then)."""
+    """The program starter next to this file, read by its file path: never an installed or foreign `tools`
+    package, and it works when the file is run alone with `-I` (the script folder is not on the path then).
+    The same body is in `tools/demo_only_guard.py` and `tools/scan_repo.py`: each must load the starter before it
+    can import anything, so the two copies stay and `test_the_two_loaders_of_the_program_starter_are_the_same`
+    compares them."""
     from importlib import util
 
     spec = util.spec_from_file_location(
@@ -409,6 +411,8 @@ def _hide_pairs(line: str) -> str:
                 while tail < n and line[tail].isspace() and line[tail] != "\n":
                     tail += 1
                 stop = _value_end(line, tail)
+                if value.lower() == "digest":
+                    stop = n  # Digest holds several name=value parts: all of them to the end of the line
                 if stop > tail and line[tail:stop] != _HIDDEN:
                     end = stop  # `authorization=Bearer <token>`: the scheme word and the token, whatever the length
             out.append(line[pos : at + 1] + _HIDDEN)
@@ -466,11 +470,8 @@ def _git_failure(what: str, stderr: bytes, repo: Path) -> str:
     return f"demo_only_guard: {what}; refusing to scan with an unknown file list. git said: {shown}"
 
 
-def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
-    """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
-    unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
-    Directories are not listed by git, and a symlink is one entry that is never followed. Not a git checkout, or git
-    failing, stops the guard: it does not guess. The copy run asks for the tracked files only (`include_new=False`)."""
+def _git_listing(repo: Path, *, include_new: bool) -> list[str]:
+    """What `git ls-files` says (see `tracked_paths`), with no refusal of an empty answer."""
     if not (repo / ".git").exists():
         raise SystemExit(
             f"demo_only_guard: {repo} is not a git checkout; the scan lists files with git and will not guess"
@@ -485,10 +486,20 @@ def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
     if done.returncode != 0:
         raise SystemExit(_git_failure("git ls-files failed", done.stderr, repo))
     text = done.stdout.decode("utf-8", errors="surrogateescape")
-    paths = sorted({p for p in text.split("\0") if p})
+    return sorted({p for p in text.split("\0") if p})
+
+
+def tracked_paths(repo: Path, *, include_new: bool = True) -> list[str]:
+    """The ONE list of paths the scan looks at: what `git ls-files` says the repository holds (tracked files, plus,
+    unless `include_new` is False, files not yet added and not ignored), as repository-relative paths with "/".
+    Directories are not listed by git, and a symlink is one entry that is never followed. Not a git checkout, or git
+    failing, stops the guard: it does not guess. An empty list stops the guard too, with a message that says which
+    list was empty. The copy run asks for the tracked files only (`include_new=False`)."""
+    paths = _git_listing(repo, include_new=include_new)
     if not paths:
+        what = "files" if include_new else "tracked files (git add the files you want in the copy)"
         raise SystemExit(
-            f"demo_only_guard: git listed no files in {repo}; refusing to scan an empty list"
+            f"demo_only_guard: git listed no {what} in {repo}; refusing to scan an empty list"
         )
     return paths
 
@@ -1127,11 +1138,16 @@ def run_without_folder(repo: Path, cfg: GuardConfig, pytest_args: list[str]) -> 
         print("\n".join(printable(h) for h in hits))
         print("demo_only_guard: the scan found the hits above; the copy run is not started")
         return 1
-    if new := sorted(set(tracked_paths(repo)) - set(tracked_paths(repo, include_new=False))):
+    tracked = _git_listing(repo, include_new=False)
+    if new := sorted(set(_git_listing(repo, include_new=True)) - set(tracked)):
         print(
             f"demo_only_guard: {len(new)} file(s) are not added to git and are not in the copy (git add them to test them): "
             + ", ".join(printable(n) for n in new[:5])
             + (" ..." if len(new) > 5 else "")
+        )
+    if not tracked:
+        raise SystemExit(
+            f"demo_only_guard: git tracks no files in {repo}, so the copy would be empty; git add the files first"
         )
     with tempfile.TemporaryDirectory(prefix="demo-only-guard-") as tmp:
         dest = Path(tmp) / "copy"

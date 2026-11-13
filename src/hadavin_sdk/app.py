@@ -68,8 +68,11 @@ _PLAIN_DATA = (
     frozenset,
     tuple,
     deque,
+    date,
+    timedelta,
+    uuid.UUID,
+    enum.Enum,
 )
-_PLAIN_DATA += (date, timedelta, uuid.UUID, enum.Enum)
 _PLAIN = object()  # stands for "plain data" in the list of references
 # What `_sealed` holds when `build` could not read the app (a config the banner cannot read, a named container missing): the
 # banner of that app is the unconfirmed one, and `build` itself goes on (the banner never decides whether the app starts).

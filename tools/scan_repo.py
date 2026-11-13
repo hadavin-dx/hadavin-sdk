@@ -16,9 +16,11 @@ from pathlib import Path
 
 
 def _load_fixed_run():
-    """The program starter next to this file, read by its file path: never an installed or foreign
-    `tools` package, and
-    it works when the file is run alone with `-I` (the script folder is not on the path then)."""
+    """The program starter next to this file, read by its file path: never an installed or foreign `tools`
+    package, and it works when the file is run alone with `-I` (the script folder is not on the path then).
+    The same body is in the folder guard next to this file: each must load the starter before it
+    can import anything, so the two copies stay and `test_the_two_loaders_of_the_program_starter_are_the_same`
+    compares them."""
     from importlib import util
 
     spec = util.spec_from_file_location(

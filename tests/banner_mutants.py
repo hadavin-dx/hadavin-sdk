@@ -1466,7 +1466,7 @@ M = [
     ),
     gd(
         "G89 the copy run does not say which files it leaves out",
-        "    if new := sorted(set(tracked_paths(repo)) - set(tracked_paths(repo, include_new=False))):",
+        "    if new := sorted(set(_git_listing(repo, include_new=True)) - set(tracked)):",
         "    if False:",
         "test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_them",
         "are not added to git",

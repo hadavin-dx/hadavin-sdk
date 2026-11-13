@@ -1,11 +1,13 @@
-"""The ONE place the project starts a program: the folder guard, `tools/scan_repo.py` and the tests all call `run_fixed`.
+"""The ONE place the project starts a program: the folder guard, `tools/scan_repo.py` and the tests all call
+`run_fixed`.
 
-The validated-argv contract: the arguments are a list or tuple of texts or paths (never one string),
-the program is an absolute path or is found on the PATH, only the keyword arguments in
-`ALLOWED_KEYWORDS` may be given (so `shell`, `executable`, `preexec_fn`, `stdin` and the like are
-refused), and a program that is not found stops the caller with its name. Because every
-caller goes through this one start point, the project's subprocess rule needs one marker, on the
-line that starts the program."""
+The contract checks the SHAPE of the command, not which program runs: the arguments are a list or tuple of
+texts or paths (never one string, never empty, no NUL character), the program is an absolute path or is found on
+the PATH, only the keyword arguments in `ALLOWED_KEYWORDS` may be given (so `shell`, `executable`, `preexec_fn`
+and `stdin` are refused), and a program that is not found stops the caller with its name. A caller must never
+pass untrusted data as the arguments of an interpreter (`sh`, `python`): `["sh", "-c", text]` passes the
+shape check. Because every caller goes through this one start point, the project's subprocess rule needs one
+marker, on the line that starts the program; that marker is the only waiver."""
 
 from __future__ import annotations
 
@@ -35,4 +37,4 @@ def run_fixed(
     exe = words[0] if os.path.isabs(words[0]) else shutil.which(words[0])
     if exe is None:
         raise SystemExit(f"{words[0]} was not found on the PATH; nothing here guesses")
-    return subprocess.run([exe, *words[1:]], check=check, **kwargs)  # noqa: S603 argv validated above
+    return subprocess.run([exe, *words[1:]], check=check, **kwargs)  # noqa: S603 - argv is validated above: list of text, no NUL, only allowed keywords
