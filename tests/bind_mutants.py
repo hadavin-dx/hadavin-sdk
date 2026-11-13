@@ -1,6 +1,6 @@
 """The mutants of the public-bind refusal and the shared loopback check (named B1 and up; the runner prints the count; the
-numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147, B224 and B253 do not exist (removed with a reason in the
-change that removed them: B85 had the same killer and the same effect as B84; B224 was merged away in batch 9, no row of that name was kept; B253 was never made, its number was skipped in batch 10 and no row of that name is in the git history), and the rows are not in number order), run by the mutation runner
+numbers are names, not an order or a count: B42, B68, B69, B78, B85, B115, B147, B224, B253 and B279 do not exist (removed with a reason in the
+change that removed them: B85 had the same killer and the same effect as B84; B224 was merged away in batch 9, no row of that name was kept; B253 was never made, its number was skipped in batch 10; checked 2026-11-13 with `git log --all -S'"B253 ' -- tests/bind_mutants.py`, which lists no commit; B279 was tried in batch 12 and dropped: removing the class comparison of the hooks is an equivalent change, because the class pin already refuses a copied class, see test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted, which passes with the comparison removed), and the rows are not in number order), run by the mutation runner
 (``tools/mutation_runner.py``), in the same way as ``tests/stage_mutants.py``. Each mutant reverts ONE guard in a temp
 copy of the package; the test in ``killer`` must fail first, and its first failing line must hold ``expect`` (a fragment
 of the assertion MESSAGE). Not collected by pytest. Run from the repo root:
@@ -2290,13 +2290,14 @@ M = [
         "a copy of the hooks made the runtime read as real",
     ),
     mutant(
-        "B258 the evidence of a runtime is not compared",
+        "B258 the evidence settings of a runtime are not walked",
         RQ,
-        '    "_evidence",\n    "_kinds",\n',
-        '    "_kinds",\n',
+        '_MEMBERS_WALKED = ("limits", "audit", "registry", "_evidence")',
+        '_MEMBERS_WALKED = ("limits", "audit", "registry")',
         T_BG,
-        "test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted",
-        "a replaced _evidence",
+        "test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted",
+        "was not counted",
+        pinned="tests/test_bindguard::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[_evidence-scrub]",
     ),
     mutant(
         "B259 the stored kinds of a runtime are not compared",
@@ -2553,15 +2554,6 @@ M = [
         "made the runtime counted",
     ),
     mutant(
-        "B279 the class of the hooks is not compared with the sealed class",
-        RQ,
-        "if type(hooks) is not sealed[5] or not standins.is_pinned_instance",
-        "if not standins.is_pinned_instance",
-        T_BG,
-        "test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted",
-        "was not counted",
-    ),
-    mutant(
         "B280 the walk has no node cap inside its loops",
         RQ,
         "        if self.pos >= _WALK_NODES:\n            raise _Over\n        if self.marks is None:\n            self.out.append(_mark(obj))",
@@ -2577,7 +2569,7 @@ M = [
         "the on_decided is ",
         T_BG,
         "test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build",
-        "over budget",
+        "Regex pattern",
     ),
     mutant(
         "B282 the class name of the object that used the budget is read",
@@ -2586,7 +2578,7 @@ M = [
         'else f"held {name}: not read in full, another object ({_word_or_unreadable(type(crossed).__name__)}) used most of the budget"',
         T_BG,
         "test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it",
-        "another held object used most of the budget",
+        "another object",
     ),
     mutant(
         "B283 text and bytes are stored whole in the seal",
@@ -2613,7 +2605,16 @@ M = [
         "READ_ERRORS: tuple[type[Exception], ...] = (\n    Exception,\n    AttributeError,",
         T_BG,
         "test_the_read_errors_are_exactly_these_named_types",
-        "READ_ERRORS",
+        "the read errors are not the named list",
+    ),
+    mutant(
+        "B286 the runtime writes a lazy name while it takes a decision",
+        AL,
+        '        run = self.store.get_run(run_id)\n        if status == "APPROVED":',
+        '        self.lazy_name = run_id\n        run = self.store.get_run(run_id)\n        if status == "APPROVED":',
+        T_BG,
+        "test_a_decision_through_on_decided_adds_no_name_to_the_runtime",
+        "a decision added or removed a name of the runtime",
     ),
 ]
 

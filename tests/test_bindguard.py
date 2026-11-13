@@ -5713,7 +5713,7 @@ def test_the_read_errors_are_exactly_these_named_types() -> None:
         ArithmeticError,
         RuntimeError,
         OSError,
-    )
+    ), "the read errors are not the named list"
     assert Exception not in standins.READ_ERRORS and BaseException not in standins.READ_ERRORS
 
 
@@ -5933,16 +5933,15 @@ def test_the_code_of_the_function_of_a_bound_method_replaced_after_the_seal_is_c
 
 def test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal(tmp_path: Path) -> None:
     """Class: KEPT-LIMIT (CHANGELOG, WALK-DEPTH): the walk enters four levels below a hook field. A default that is a
-    list of a list of a list is held by identity at the fourth level; a change INSIDE the innermost list is not seen.
+    list is held by identity at the fourth level; an item INSIDE that list (the fifth level) that is replaced is not seen.
     This is a pin of the limit, not a wish: raising the depth would make the cost of a request grow."""
-    innermost: list[object] = [1]
-    deep = [[innermost]]
+    deep: list[object] = [object()]
 
     def tool(arg: object = deep) -> object:
         return arg
 
     app, rt = _sealed_tool(tmp_path, tool)
-    innermost.append(2)
+    deep[0] = object()  # the item at the fifth level is replaced
     assert not _runtime_counted(app, rt), (
         "a change below the walk depth was seen: the CHANGELOG limit is out of date"
     )
@@ -6058,7 +6057,11 @@ def test_a_dead_weak_mark_is_not_matched_by_none(tmp_path: Path) -> None:
     app = _built(tmp_path)
     rt = _core_runtime(app)
     tools = _fields(rt.hooks)["tools"]
-    tools["extra"] = lambda: None
+
+    class Plain:
+        pass
+
+    tools["extra"] = Plain()  # no children, so only the weak mark can tell it from None
     _seal(rt)
     assert not _runtime_counted(app, rt), "control: sealed"
     tools["extra"] = None
@@ -6083,3 +6086,36 @@ def test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted(
     monkeypatch.setitem(vars(module), "Hooks", copy_class)
     object.__setattr__(rt.hooks, "__class__", copy_class)
     assert _runtime_counted(app, rt), "hooks of a copied class were believed"
+
+
+def test_a_container_held_by_a_runtime_member_is_not_seen_to_change_inside(tmp_path: Path) -> None:
+    """Class: KEPT-LIMIT (CHANGELOG item 8): a field of ``limits``, ``audit``, ``registry`` or ``_evidence`` is compared
+    by identity; what a list or dict in it holds is not read."""
+    app = _built(tmp_path)
+    rt = _core_runtime(app)
+    box: list[object] = [1]
+    _fields(rt.limits)["note"] = box
+    _seal(rt)
+    assert not _runtime_counted(app, rt), "control: sealed"
+    box.append(object())
+    assert not _runtime_counted(app, rt), (
+        "a change inside a member's container was seen: the CHANGELOG limit is stale"
+    )
+
+
+def test_the_contents_of_a_set_a_hook_object_holds_are_not_compared(tmp_path: Path) -> None:
+    """Class: KEPT-LIMIT (CHANGELOG item 9): a set, frozenset or deque in a field moves in use; only its class counts."""
+
+    class Tool:
+        def __init__(self) -> None:
+            self.names: set[object] = {1}
+
+        def run(self) -> None:
+            return None
+
+    tool = Tool()
+    app, rt = _sealed_tool(tmp_path, tool.run)
+    tool.names.add(object())
+    assert not _runtime_counted(app, rt), (
+        "the content of a set was compared: the CHANGELOG limit is stale"
+    )
