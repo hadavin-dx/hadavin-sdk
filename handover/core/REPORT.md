@@ -1,4 +1,7 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
+## STATUS 18:20Z (core lead)
+R2 builder (a49ac1ee79754b838) still running, about 20 min in (container 16:00Z), last checkpoint 15:51Z (selected tests passed, batch 3 and the real fail-before next); no failure reported, no patch yet. Nothing independent yet. LOAD: builder tests running. Open: F1, F2, F5, F6.
+
 ## STATUS 18:12Z (core lead)
 R2 builder (a49ac1ee79754b838) running 19 min of 90, no failure reported: checkpoint 15:51Z container: selected test runs 1 and 2 passed (452 and 84, builder numbers, unverified); next its batch 3, real fail-before on the baseline, then patch and CRLF test. ETA report about 17:30Z container. LOAD low. Open: F1, F2, F5, F6 until verified.
 
