@@ -81,3 +81,4 @@
 04:44Z P6 b12 landed c7eb5c79, r12 running; P2 b12 building; SONAR-PATH r4 pending; decision relayed
 04:49Z P6 r12 resolved, b13 started; SONAR-PATH r4 codebase in, runner pending; P2 b12 building
 04:53Z SONAR-PATH r4 resolved (real OSError bug), b5 started; P6 b13, P2 b12 building
+04:58Z P6 c7eb5c79 runner: stage-names test fails, masker weaker in 3 rows; masker rule relayed; 3 builders live

@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:58Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- No package is clean; no laptop run, no PR READY. Part 6 c7eb5c79 runner (RESULTS.md committed): the head FAILS tests/test_stage_names.py::test_the_old_stage_word_is_gone on 3.12 and 3.13 (new stage test text at test_mode_banner.py:3597-3598; passes on 06ed4b4c; CI-breaking; the builder's focused list missed it); the guard masker is WEAKER than main in 3 rows (authorization=Bearer with 8, 10 or 11 characters stays visible). Also: 5 broad-except sites behind per-file ignores (now being replaced), bandit in CI does not scan tests/. Positive: 0 suppression markers on added lines, 49/49 round rows and a 60/60 sample good, all hostile probes read unconfirmed, all 61 pins pass on both old heads. Not run: full suite, Postgres, the other 207 rows.
+- Part 2 batch 12 (a805b93d) has not pushed. SONAR-PATH batch 5 (ac09a2ce) building; real OSError bug open.
+
+**LEAD ACTIONS:** your 04:55Z command read: (1) bypass and bare-scheme-word masker rule relayed to the Part 6 batch 13 builder (visible only for plain boolean literals; hide token with 16+ chars or letters+digits mixed); it can change rows against main and the stated 11-char Bearer / 7-char Basic limit: I will list the changed rows and ask you to confirm the limit text; the same rule applies to Part 2 if its masker differs (checking). (2) batch 5 and batch 13 are exactly as ordered. (3) RESULTS.md written for c7eb5c79 and abb3e90a.
+**LIVE ITEMS (3):** a7978edf P6 batch 13; a805b93d P2 batch 12; ac09a2ce SONAR-PATH batch 5. Closed: ab0c9e9a, a861acad. I need to keep at least 2 live: OK.
+**ROUNDS (WHY):** P6 round 13; P2 round 12 (mode-safety); SONAR-PATH round 5 (security).
+**FINISHED SINCE LAST BLOCK:** P6 c7eb5c79 evidence and ledger rows PDBANNER-r12-5, -6.
+**EGM STEP PER PACKAGE:** P6 step 3 (batch 13); P2 step 3; SONAR-PATH step 3.
+**LANE SONAR-PATH:** abb3e90a, batch 5 building.
+**RUN ON LAPTOP:** none.
+
+
 ## 04:53Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**
