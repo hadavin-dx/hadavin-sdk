@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 11:52Z (17:22 IST) CORE lead
+
+| id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
+|---|---|---|---|---|---|---|---|
+| TRI-EV (agent a6acf359) | evidence runner for survivor-tests-v1.patch | LEAD order: proofs | 11:48Z / 17:18 | hard stop 12:20Z (about 28 min); report about 12:05Z | 1 of 1 | YES, started 11:48Z and running: steps 2-5 logs exist (unmutated, collection, R20, K6, K10, K6+K10), step 6 (full existing files) in progress (test_take_script_refusals, test_real_check_dry). Results not read by me yet; I judge nothing before its report | wait for report |
+| survivor-tests-v1.patch | the 3 new tests (R20, K6, K10) | order (b) | | built, pushed at realrun-v6/survivor-tests-v1.patch, not applied anywhere | | | proofs from runner |
+| CORE modules | 4 packages | paused | n/a | n/a | n/a | PAUSED, idle; 2 pytest processes = the runner's | none |
+
+Verdicts: unchanged from the 11:50Z block (P2, P4, P10, C9 equivalent; R20, K6, K10 real gaps with tests; N20 covered; pair K6+K10 killed). Builder claims until the runner reports.
+
+ASK: 1. Who applies survivor-tests-v1.patch to the demo repo? Default: it stays unapplied; the lead hands it to the demo session.
+
+
 ## REPORT 11:50Z (17:20 IST) CORE lead
 
 | id | what it does | why | started UTC+IST | expected end / time left | round or retry n of cap | state | next action |
