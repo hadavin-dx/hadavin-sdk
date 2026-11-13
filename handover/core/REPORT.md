@@ -1,5 +1,21 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 01:44Z (07:14 IST) / Part 2 batch 8 landed (3db352f5); round 8 runner and 2 reviewers started; Part 6 batch 8 and Q8c-1 running
+
+**FAILED / UNCERTAIN FIRST**
+- Part 2 batch 8 builder says (its own words, NOT verified by me): pushed 3db352f5 to wip/cloud-pd-bind; full pytest 10866 passed 2 skipped; bind rows 198 of 198; stage 37 of 37; gates rc=0. It admits: 14 of 37 new cases PASS on old code (controls and guards), four of those have no mutant row at all (fake-model Counter, only-Counter types, class-level attributes, CHANGELOG negative test); CHANGELOG-versus-code tests skip in the mutation copy (no mutant rows for them); B137 expects a control message; rows B161-B163 re-pointed so the `in` swap alone is hidden by a second layer; _BUILD_TOKEN can be imported by in-process code (stated limit, not fixed); a class-name-that-raises test was added after the fail-before run and not re-run on old code; 31 older rows had to be re-pointed.
+- Round 8 is not run yet: no independent evidence, no review. A clean round is still needed (security, no cap).
+- Part 6 batch 8 builder (a509d177) working since 01:40Z; Q8c-1 builder (a35e15e9) silent, suite waited for a slot over 22 min at 01:44Z; Part 6 runner evidence on 41c84695 never completed.
+- Heads: pd-bind 3db352f5, pd-banner 41c84695, q8c1-b16 37cd5157.
+
+**LEAD ACTIONS**: slot question from 01:39Z still open (Q8c-1 suite priority). I read LEAD COMMAND 01:34Z and 01:40Z at the bottom of LEAD-ORDERS.md earlier in the loop; no new item beyond the standing queue.
+
+**LIVE ITEMS** (6 agents): a509d177 Part 6 batch 8 builder; a35e15e9 Q8c-1 builder; a572d86b Part 2 round 8 runner (UTF8 Postgres, 4 heavy jobs, 120 min box); a6518b19 design reviewer; a5053e2b codebase reviewer. Snapshot: /home/user/build/snap/pdbind-3db352f5 (handover-files check rc=0).
+
+**ROUNDS (WHY)**: Part 2 round 8 now (security, no cap; 2 Blocker and 4 Major in round 7). Part 6 round 8 after its batch 8. Q8c-1 round 17 after the push.
+
+**FINISHED SINCE LAST BLOCK (01:44Z)**: Part 2 batch 8 builder abb52410 closed; snapshot made.
+
 ## 01:44Z (07:14 IST) / no change since 01:39Z: Part 6 batch 8 builder started; Part 2 batch 8 and Q8c-1 not reported
 
 **FAILED / UNCERTAIN FIRST**

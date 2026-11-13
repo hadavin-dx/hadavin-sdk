@@ -31,3 +31,4 @@
 01:37Z part 6 r7 not clean (6 Major); resolve next
 01:39Z part 6 r7 resolved (5 Major); runner incomplete (slots); batch 8 builder next
 01:44Z no change; part 6 batch 8 builder working; part 2 batch 8 and Q8c-1 pending
+01:44Z part 2 batch 8 landed 3db352f5; round 8 runner and reviewers started
