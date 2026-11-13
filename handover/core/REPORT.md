@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## 04:13Z (2026-11-13) CORE lead block
+
+**FAILED / UNCERTAIN FIRST**
+- Part 6 batch 11 landed as 06ed4b4c (fast forward of cdbe1445, pushed by the builder). NOT final: round 11 has not run yet. Builder's own report, unverified until the runner finishes: not done = N7 (a public services_in name; a pin test forbids it); the FULL mutant table was NOT re-run (only new, re-pointed and renamed rows plus R10*, R9D*, R7B2, R7F1, J1b; table now 317 rows); _seal is still callable from Python but accepts only a private tuple type (stated in the CHANGELOG, not a hard guarantee); no full suite, browser or Windows run; the page script was tested only in node. Builder fail-before (its claim): of 86 tests new or changed since dd827d79, 48 fail on dd827d79 and 38 pass; 15 of 27 new tests fail on cdbe1445, 12 pass and are named test_pin_*; 4 tests wrongly named pin were renamed. Focused: 341 passed on 3.12 and 3.13.
+- Part 2 batch 11 (aa049db0) and SONAR-PATH batch 4 (a982868e) are still building; nothing pushed.
+
+**LEAD ACTIONS:** for the 03:55Z order item 2: the NEW Part 6 head is 06ed4b4c. Do NOT retarget the laptop runner to it yet: round 11 (two fresh reviewers and one runner, started 04:19Z) must find 0 Blocker and 0 Major first; I will then write RUN ON LAPTOP with the final sha (round 11 may produce a batch 12 and a different head).
+**LIVE ITEMS (5):** P6 round 11: design reviewer acd7de67, codebase reviewer ab018ace, evidence runner a2432ae7; P2 batch 11 builder aa049db0; SONAR-PATH batch 4 builder a982868e. Closed: ab741cc2.
+**ROUNDS (WHY):** P6 round 11 (mode safety, no cap); P2 round 11 next; SONAR-PATH round 4 next.
+**FINISHED SINCE LAST BLOCK:** P6 batch 11 build; snapshot /home/user/build/snap/pdbanner-06ed4b4c/ (DIFF vs main, DELTA vs cdbe1445, 21 changed files, none under handover/).
+**EGM STEP PER PACKAGE:** P6 4 to 5 (runner and reviewers running); P2 3; SONAR-PATH 3.
+**LANE SONAR-PATH:** a982868e (builder); EGM step 3; A done, B in batch 4, C and D not started.
+**RUN ON LAPTOP:** none yet (no final head).
+
+
 ## 04:12Z (2026-11-13) CORE lead block
 
 **FAILED / UNCERTAIN FIRST**

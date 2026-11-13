@@ -69,3 +69,4 @@
 04:02Z P2 r10 resolved: 6 Major incl fail-open + B98 survives; SONARPATH r3 resolved: 1B/9M; builders aa049db0 (P2) and a982868e (SONAR) started; P6 b11 pending
 04:07Z 04:02Z order applied (size/guards, no-y rule to 3 builders); 3 builders live; no heads final; no laptop request
 04:12Z quiet: 3 builders working, no pushes, no new orders
+04:13Z P6 batch 11 = 06ed4b4c (not final): round 11 reviewers+runner started; no laptop retarget yet; P2/SONAR builders working
