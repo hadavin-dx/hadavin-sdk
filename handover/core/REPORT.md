@@ -1,5 +1,18 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## REPORT 06:49Z (core lead)
+**FAILED/UNCERTAIN FIRST**
+- No new SHA pushed by any builder since 06:42Z. Heads: Part 6 20c369f0, Part 2 4dd7ce1e, SONAR-PATH 4398e3bd, Q8c-1 7712c26e. Nothing is runner-verified yet.
+- Part 2 round 13 (4dd7ce1e) is NOT clean: design 0B/3M/5n, codebase 1B/6M (the Blocker is false "never raises" docstrings on the guard path; M-level: stateful bound-method tool could 503 a public bind, scrub "by contents" claim false, stale CHANGELOG item 9, bind_mutants header, no real-ToolBox test, long lines). Batch 14 will be sent after the evidence runner ab1740f5 reports (no RESULTS file yet).
+- Part 6 round 15: codebase 0B/5M, design 0B/4M; runner af6574fd (27 min) has not reported; resolve and batch 16 wait for it. Round 16 required.
+**LEAD ACTIONS**: none new. Still open from before: bypass=0/1 wording, pathguard.py 234 vs 220 (batch 7 handles), Q-R5-1 (recommend keep refusing operator links that leave their own folder).
+**LIVE ITEMS**: af6574fd (Part 6 runner), ab1740f5 (Part 2 runner), a592bb13 (Q8c-1 fix push), ac09a2ce (SONAR batch 7).
+**ROUNDS (WHY)**: Part 2 (mode-safety) and Part 6 (mode-safety) and SONAR (security) uncapped; Q8c-1 one fix push.
+**FINISHED SINCE LAST BLOCK**: Part 2 r13 design and codebase reviews saved and pushed.
+**EGM STEP PER PACKAGE**: Part 2 evidence then resolve; Part 6 evidence then resolve; SONAR batch 7 build; Q8c-1 fix push.
+**LANE SONAR-PATH**: no new push; no `PR READY`.
+**RUN ON LAPTOP**: nothing new.
+
 ## REPORT 06:42Z (core lead)
 **FAILED/UNCERTAIN FIRST**
 - Nothing here is verified by a runner yet. Every count below is builder-claimed until a RESULTS file exists.
