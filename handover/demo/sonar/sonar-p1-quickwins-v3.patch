@@ -1,0 +1,666 @@
+diff --git a/.github/workflows/lint.yml b/.github/workflows/lint.yml
+index 49a057f..e42a55f 100644
+--- a/.github/workflows/lint.yml
++++ b/.github/workflows/lint.yml
+@@ -35,7 +35,7 @@ jobs:
+       # the scan runs first: ruff, mypy and bandit write cache folders into the tree and gitleaks dir would read them
+       - name: Install gitleaks (release binary, checksum checked)
+         run: |
+-          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
++          curl --proto '=https' --proto-redir '=https' --tlsv1.2 -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+           echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum --check -
+           mkdir "${RUNNER_TEMP}/gitleaks"
+           tar -xzf gitleaks.tar.gz -C "${RUNNER_TEMP}/gitleaks" gitleaks
+@@ -48,7 +48,8 @@ jobs:
+           "${RUNNER_TEMP}/gitleaks/gitleaks" git . --config .gitleaks.toml --redact --no-banner --ignore-gitleaks-allow
+ 
+       - name: Install the pinned dev tools (hashes are checked)
+-        run: python -m pip install --require-hashes -r requirements-dev.txt
++        run: |
++          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
+ 
+       - name: Ruff (lint and format)
+         run: |
+@@ -73,9 +74,9 @@ jobs:
+           git grep -n -o -I -E -f patterns.txt -- . > "${RUNNER_TEMP}/literals.txt"
+           status=$?
+           set -e
+-          if [ "$status" -gt 1 ]; then echo "git grep failed (status $status)"; exit 1; fi
++          if [[ "$status" -gt 1 ]]; then echo "git grep failed (status $status)"; exit 1; fi
+           grep -v -E -f exceptions.txt "${RUNNER_TEMP}/literals.txt" > "${RUNNER_TEMP}/literals-left.txt" || true
+-          if [ -s "${RUNNER_TEMP}/literals-left.txt" ]; then
++          if [[ -s "${RUNNER_TEMP}/literals-left.txt" ]]; then
+             echo "Hardcoded literals found (path:line:match):"
+             cat "${RUNNER_TEMP}/literals-left.txt"
+             exit 1
+diff --git a/README.md b/README.md
+index f06d233..9553067 100644
+--- a/README.md
++++ b/README.md
+@@ -65,6 +65,8 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer and git, a
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+ 
++Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh scripts/start_all.sh` and `sh scripts/reset.sh` stop at once with "run this script with bash" (exit 2) when the shell is not bash, for example where `sh` is dash (Debian and Ubuntu).
++
+ **Windows PowerShell**
+ 
+     py -3 -m venv .venv                        # or python -m venv .venv; `py -3` avoids the Microsoft Store stub
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index 39a8890..c8e07bd 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -1,8 +1,10 @@
+ #!/usr/bin/env bash
+ # Stop what start_all.sh started (only those process ids) and delete the lead book, so the next run starts empty.
+-# Run from the repository root. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
++# Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data/ folder.
+ set -eu
++# a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
++case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/reset.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+ # a plain whole number of seconds: 0, or one to three digits with no leading zero (a shell reads 08 as a bad octal)
+ case "${RESET_STOP_WAIT_SECONDS:-10}" in
+   0|[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) ;;
+@@ -12,25 +14,25 @@ export PYTHONPATH="src:."
+ db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)')"
+ data_dir="$(dirname "$db")"
+ inside="$(python -c 'import os, sys; d = os.path.realpath(sys.argv[1]); r = os.path.realpath("data"); print(d == r or d.startswith(r + os.sep))' "$data_dir")"
+-if [ "$inside" != "True" ]; then
++if [[ "$inside" != "True" ]]; then
+   echo "refused: the database path is not inside this repository's data/ folder, so nothing was stopped or deleted" >&2
+   exit 2
+ fi
+ # without ps the program behind a process id cannot be told, so nothing is stopped and nothing is deleted
+-if ! command -v ps >/dev/null 2>&1 && { [ -e "$data_dir/desk.pid" ] || [ -e "$data_dir/fakes.pid" ]; }; then
++if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "$data_dir/fakes.pid" ]]; }; then
+   echo "refused: the ps command is not installed, so the desk and the demo server cannot be told from other programs; nothing was stopped or deleted (install procps, or stop them yourself and delete the pid files)" >&2
+   exit 3
+ fi
+ # a process that has ended but is not yet collected by its parent (state Z) is stopped
+-alive() { kill -0 "$1" 2>/dev/null && [ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]; }
++alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
+ for name in desk fakes; do
+   pidfile="$data_dir/$name.pid"
+-  if [ -e "$pidfile" ]; then
++  if [[ -e "$pidfile" ]]; then
+     pid="$(cat "$pidfile")"
+     # only stop a process that still is the desk or the demo server (a pid can be reused by another program);
+     # a process that has ended but is not yet collected (state Z) shows no program name, so it counts as gone
+     what="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+-    if [ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" = "Z" ]; then what=""; fi
++    if [[ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" == "Z" ]]; then what=""; fi
+     case "$what" in
+       *lead_desk.server*|*demo_only.fakes_server*)
+         kill "$pid" 2>/dev/null || true
+diff --git a/scripts/start_all.sh b/scripts/start_all.sh
+index ab61bea..a609768 100644
+--- a/scripts/start_all.sh
++++ b/scripts/start_all.sh
+@@ -1,19 +1,22 @@
+ #!/usr/bin/env bash
+ # Start the demo mail/CRM server and the desk in the background (Linux).
+-# Usage: scripts/start_all.sh [keyed|blind]     (default keyed). Run from the repository root.
++# Usage: bash scripts/start_all.sh [keyed|blind]     (default keyed). Run from the repository root.
++# Needs bash (it uses [[ ]]): `sh scripts/start_all.sh` fails where sh is dash.
+ # Ports and paths come from the desk configuration (DESK_* environment variables), not from this file.
+ # Lead owner, lead stage and reminder are on with the demo file demo_only/leadflow.json and reminders to reminder@example.test unless you set DESK_LEADFLOW_FILE yourself; set DESK_LEADFLOW_FILE=off to turn them off.
+ # Logs and process ids go under the folder that holds the database file (git-ignored).
+ set -eu
++# a feature test, not the name BASH_VERSION (dash takes any variable from the environment): only a shell that runs [[ ]] passes
++case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash scripts/start_all.sh); this shell is not bash, so its [[ ]] tests would not work and a safety check could be skipped" >&2; exit 2 ;; esac
+ mode="${1:-keyed}"
+ case "$mode" in keyed|blind) ;; *) echo "mode must be keyed or blind" >&2; exit 1 ;; esac
+ export PYTHONPATH="src:."
+ export DESK_LEADFLOW_FILE="${DESK_LEADFLOW_FILE-demo_only/leadflow.json}"
+-if [ "$DESK_LEADFLOW_FILE" != off ] && [ -n "$DESK_LEADFLOW_FILE" ]; then export DESK_NUDGE_TO="${DESK_NUDGE_TO-reminder@example.test}"; fi
++if [[ "$DESK_LEADFLOW_FILE" != off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]; then export DESK_NUDGE_TO="${DESK_NUDGE_TO-reminder@example.test}"; fi
+ data_dir="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path.parent)')"
+ fakes_port="$(python -c 'from lead_desk.config import Config; print(Config.from_env().fakes_port)')"
+ mkdir -p "$data_dir"
+-if [ -e "$data_dir/fakes.pid" ] || [ -e "$data_dir/desk.pid" ]; then
++if [[ -e "$data_dir/fakes.pid" ]] || [[ -e "$data_dir/desk.pid" ]]; then
+   echo "pid files exist: run scripts/reset.sh first" >&2
+   exit 1
+ fi
+diff --git a/tests/test_followup_edge_cases.py b/tests/test_followup_edge_cases.py
+index 0e50aa9..8e6aa23 100644
+--- a/tests/test_followup_edge_cases.py
++++ b/tests/test_followup_edge_cases.py
+@@ -436,13 +436,13 @@ def test_reads_do_not_raise(env) -> None:
+ # invisible and direction-changing characters
+ # =====
+ @pytest.mark.parametrize("field", ["name", "company", "phone"])
+-@pytest.mark.parametrize("ch", ["​", "‮", " ", " ", "﻿"])
++@pytest.mark.parametrize("ch", ["​", "\u202e", " ", " ", "﻿"])
+ def test_invisible_characters_in_short_fields_are_refused(field, ch) -> None:
+     payload = {"name": "Ada", "email": "ada@example.test", field: f"x{ch}y"}
+     assert identity.check_payload(payload).reason == f"bad_field:{field}"
+ 
+ 
+-@pytest.mark.parametrize("ch", ["‮", " ", " "])
++@pytest.mark.parametrize("ch", ["\u202e", " ", " "])
+ def test_message_refuses_separators_and_direction_marks(ch) -> None:
+     base = {"name": "Ada", "email": "ada@example.test"}
+     assert identity.check_payload({**base, "message": f"hi{ch}there"}).reason == "bad_field:message"
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index e072229..1028da6 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -15,6 +15,7 @@ import warnings
+ from pathlib import Path
+ 
+ import pytest
++import yaml
+ from support import REPO
+ 
+ from tools import hygiene
+@@ -478,3 +479,253 @@ def test_a_gitleaks_bin_path_that_does_not_exist_is_a_clear_error_naming_the_var
+         with pytest.raises(ValueError, match=GITLEAKS_ENV) as e:
+             _gitleaks_exe()
+         assert "does not exist" in str(e.value)
++
++
++# the Unicode direction controls that can make source code read differently from how it runs ("Trojan Source"):
++# U+202A..U+202E (embeddings, overrides), U+2066..U+2069 (isolates), U+200E, U+200F and U+061C (direction marks)
++_BIDI = re.compile("[\u202a-\u202e\u2066-\u2069\u200e\u200f\u061c]")
++
++
++def test_no_tracked_file_holds_a_raw_direction_control_character() -> None:
++    """A test that needs such a character builds it from an escape (\\u202e) so the file itself holds none
++    (SonarCloud rule text:S6389; the same attack as CVE-2021-42574)."""
++    offenders = []
++    for rel in _git(REPO, "ls-files").splitlines():
++        path = REPO / rel
++        if not rel or not path.is_file():
++            continue
++        try:
++            text = path.read_text(encoding="utf-8")
++        except UnicodeDecodeError:
++            continue  # a binary file (image, font): not text
++        offenders += [
++            f"{rel}:{n}" for n, line in enumerate(text.split("\n"), 1) if _BIDI.search(line)
++        ]  # split on \n only: splitlines() also cuts at U+2028
++    assert not offenders, f"raw direction control characters in: {offenders}"
++
++
++def test_the_direction_control_pattern_sees_each_character() -> None:
++    for code in (0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069, 0x200E, 0x200F, 0x061C):
++        assert _BIDI.search("a" + chr(code) + "b"), hex(code)
++    assert not _BIDI.search("plain text \u200d joiner and \u200b space are not direction controls")
++
++
++_HEREDOC = re.compile(r"<<(-?)[ \t]*(?:\\|['\"])?([A-Za-z_][A-Za-z_0-9]*)")
++
++
++def _scan(text: str) -> tuple[str, bool]:
++    """Shell text with quoted strings, # comments and heredoc bodies blanked (newlines kept), and whether the text
++    ends inside an open quote or command substitution. Code inside "$( ... )" and `...` stays visible. A character
++    scanner, not a shell parser: it knows ' " \\ $'..' $( ) ` # and << WORD; arithmetic shifts such as $(( 1 << n ))
++    are not read as heredocs."""
++    out: list[str] = []
++    stack: list[list[object]] = [["code", 0]]  # [mode, parenthesis depth inside a $( )]
++    pending: list[str] = []  # heredoc delimiters waiting for the end of the line
++    i, n = 0, len(text)
++    line_start = 0
++    while i < n:
++        ch = text[i]
++        mode, depth = stack[-1]
++        if ch == "\n":
++            out.append("\n")
++            i += 1
++            line_start = i
++            if pending and mode == "code":  # blank the heredoc body, up to and including its end line
++                while pending:
++                    word = pending.pop(0)
++                    while i < n:
++                        end = text.find("\n", i)
++                        end = n if end < 0 else end
++                        line = text[i:end]
++                        out.append(" " * len(line) + ("\n" if end < n else ""))
++                        i = min(end + 1, n)
++                        line_start = i
++                        if line.strip() == word:
++                            break
++            continue
++        if mode == "sq":
++            if ch == "'":
++                stack.pop()
++            out.append(" ")
++        elif mode == "ansic":  # $'...' honours backslash escapes
++            if ch == "\\" and i + 1 < n and text[i + 1] != "\n":
++                out.append("  ")
++                i += 2
++                continue
++            if ch == "'":
++                stack.pop()
++            out.append(" ")
++        elif mode == "dq":
++            if ch == "\\" and i + 1 < n and text[i + 1] != "\n":
++                out.append("  ")
++                i += 2
++                continue
++            if ch == '"':
++                stack.pop()
++                out.append(" ")
++            elif text.startswith("$(", i) and not text.startswith("$((", i):
++                stack.append(["code", 1])
++                out.append(" (")
++                i += 2
++                continue
++            elif ch == "`":
++                stack.append(["bt", 0])
++                out.append("`")
++            else:
++                out.append(" ")
++        else:  # code, command substitution ("code" with a depth) or backticks ("bt")
++            if ch == "\\" and i + 1 < n and text[i + 1] != "\n":
++                out.append("  ")
++                i += 2
++                continue
++            if ch == "'":
++                stack.append(["sq", 0])
++                out.append(" ")
++            elif text.startswith("$'", i):
++                stack.append(["ansic", 0])
++                out.append("  ")
++                i += 2
++                continue
++            elif ch == '"':
++                stack.append(["dq", 0])
++                out.append(" ")
++            elif ch == "#" and (i == line_start or text[i - 1] in " \t;"):
++                end = text.find("\n", i)
++                end = n if end < 0 else end
++                out.append(" " * (end - i))
++                i = end
++                continue
++            elif ch == "`" and mode == "bt":
++                stack.pop()
++                out.append("`")
++            elif text.startswith("$(", i) and not text.startswith("$((", i):
++                stack.append(["code", 1])
++                out.append("$(")
++                i += 2
++                continue
++            elif ch == "(" and depth:
++                stack[-1][1] = int(depth) + 1  # type: ignore[call-overload]
++                out.append(ch)
++            elif ch == ")" and depth:
++                if depth == 1:
++                    stack.pop()
++                else:
++                    stack[-1][1] = int(depth) - 1  # type: ignore[call-overload]
++                out.append(ch)
++            elif ch == "<" and text.startswith("<<", i) and not text.startswith("<<<", i):
++                found = _HEREDOC.match(text, i)
++                if found and "((" not in text[line_start:i]:
++                    pending.append(found.group(2))
++                out.append(ch)
++            else:
++                out.append(ch)
++        i += 1
++    return "".join(out), len(stack) > 1
++
++
++def _code_only(text: str) -> str:
++    return _scan(text)[0]
++
++
++# a single `[` followed by a blank, where a command can start: line start, after ; & | { ( ` or a `)` that is not
++# the end of `))`, after the words if, then, elif, else, while, until, do, command, time, exec, optionally after `!`.
++# `[[`, `]]`, arrays and `[1]` do not match. `test ...` is not looked for (see NOTES: the rule is about `[`).
++_SINGLE_BRACKET = re.compile(
++    r"(?:^|[;&|{(`]|(?<!\))\)|\b(?:if|then|elif|else|while|until|do|command|time|exec))[ \t]*(?:![ \t]*)?\[[ \t]"
++)
++
++
++def _single_bracket_lines(shell_text: str) -> list[int]:
++    return [n for n, line in enumerate(_code_only(shell_text).split("\n"), 1) if _SINGLE_BRACKET.search(line)]
++
++
++@pytest.mark.parametrize(
++    ("snippet", "caught"),
++    [
++        ("if [ -e x ]; then echo y; fi", True),
++        ("[ -e x ] && echo y", True),
++        ("echo a; [ -e x ]", True),
++        ('while [ "$i" -lt 3 ]; do :; done', True),
++        ('for f in a b; do [ -e "$f" ] || echo "$f"; done', True),
++        ("case x in a) [ -e y ];; esac", True),
++        ("if [\t-e x ]; then :; fi", True),
++        ("! [ -e x ]", True),
++        ("x=$( [ -e y ] && echo 1 )", True),
++        ('x="$( [ -e y ] && echo 1 )"', True),  # inside double quotes
++        ('echo "$(if [ -e x ]; then echo 1; fi)"', True),
++        ('echo "a $(echo "b $( [ -e x ] )" )"', True),  # nested
++        ("x=`[ -e y ]`", True),
++        ('x="`[ -e y ]`"', True),
++        ("command [ -e x ]", True),
++        ("time [ -e x ]", True),
++        ("echo it\\'s ; [ -e x ]", True),  # an escaped quote does not open a string
++        ('echo "a \\" b" ; [ -e x ]', True),
++        ("echo $'it\\'s' ; [ -e x ]", True),
++        ("x=$(( 1 + 2 )); [ -e x ]", True),
++        ("then [ -e x ]", True),
++        ("else [ -e x ]", True),
++        ("if [[ -e x ]]; then :; fi", False),
++        ('[[ -e x ]] && [[ -n "$y" ]]', False),
++        ('for f in a b; do [[ -e "$f" ]] || echo "$f"; done', False),
++        ('arr=(a [1]=b); echo "${arr[1]}" "${a[ 2 ]}"', False),
++        ("grep -E 'a|[ ]b' file", False),
++        ('sed -e "s/[ \t]*$//" file', False),
++        ("awk '/^[ ]*#/ {print}' file", False),
++        ("echo hi  # if [ -e x ] is the old way", False),
++        ('echo "write [ -e x ] as [[ -e x ]]"', False),
++        ("cat <<EOF\n[ -e x ]\nEOF\n[[ -e x ]]", False),  # heredoc body
++        ("cat <<-'EOF'\n\t[ -e x ]\n\tEOF", False),
++        ("cat <<EOF\n[ -e x ]\nEOF\n[ -e y ]", True),  # code after the heredoc is scanned again
++        ('echo "a\n[ -e x ]\nb"', False),  # a multi-line string
++        ("x=$(( 1 + 2 )) [ ", False),  # `)` of `))` is not a command start
++        ("echo $(( 1 << 2 )); [ -e x ]", True),  # a shift is not a heredoc
++        ("echo 'a' 'b [ -e x ] c'", False),
++    ],
++)
++def test_the_single_bracket_pattern_catches_real_tests_and_nothing_else(snippet: str, caught: bool) -> None:
++    assert bool(_single_bracket_lines(snippet)) is caught, snippet
++
++
++@pytest.mark.parametrize("snippet", ["echo 'open", 'echo "open', "echo $(open", "cat <<EOF\nnever ends"])
++def test_the_scan_reports_text_that_ends_inside_a_quote_or_substitution(snippet: str) -> None:
++    ends_open = _scan(snippet)[1]
++    assert ends_open is (not snippet.startswith("cat <<")), snippet  # an unended heredoc just blanks the rest
++
++
++def _run_blocks(workflow: Path) -> list[str]:
++    doc = yaml.safe_load(workflow.read_text(encoding="utf-8"))
++    return [
++        step["run"]
++        for job in doc.get("jobs", {}).values()
++        for step in job.get("steps", [])
++        if isinstance(step.get("run"), str)
++    ]
++
++
++def test_sh_scripts_and_workflow_run_blocks_use_double_brackets_for_tests() -> None:
++    """bash's [[ ]] does not split words or expand patterns inside the test (SonarCloud rule shell:S7688). Every
++    tracked .sh file starts with a bash shebang, and a workflow `run:` block runs under bash (the runner default on
++    Linux; a `shell:` key other than bash would fail this test)."""
++    names = [n for n in _git(REPO, "ls-files", "*.sh").splitlines() if n]
++    assert names, "no shell scripts found: the test would prove nothing"
++    bad: list[str] = []
++    for n in names:
++        text = (REPO / n).read_text(encoding="utf-8")
++        assert text.startswith("#!/usr/bin/env bash\n"), f"{n}: not a bash script"
++        assert not _scan(text)[1], f"{n}: the scan ends inside a quote: its result cannot be trusted"
++        bad += [f"{n}:{i}" for i in _single_bracket_lines(text)]
++    flows = sorted((REPO / ".github" / "workflows").glob("*.yml"))
++    assert flows, "no workflow files found: the test would prove nothing"
++    blocks = 0
++    for flow in flows:
++        doc = yaml.safe_load(flow.read_text(encoding="utf-8"))
++        for job in doc.get("jobs", {}).values():
++            assert job.get("defaults", {}).get("run", {}).get("shell", "bash") == "bash", flow.name
++            for step in job.get("steps", []):
++                assert step.get("shell", "bash") == "bash", f"{flow.name}: {step.get('name')}"
++        for block in _run_blocks(flow):
++            blocks += 1
++            assert not _scan(block)[1], f"{flow.name}: a run block ends inside a quote: the scan cannot be trusted"
++            bad += [f"{flow.name} run-block line {i}" for i in _single_bracket_lines(block)]
++    assert blocks, "no run blocks found: the test would prove nothing"
++    assert not bad, f"single-bracket test in: {bad}"
+diff --git a/tests/test_lead_step_route.py b/tests/test_lead_step_route.py
+index 9ece0e5..dfd1002 100644
+--- a/tests/test_lead_step_route.py
++++ b/tests/test_lead_step_route.py
+@@ -429,7 +429,7 @@ def test_demo_launchers_name_the_demo_file_and_the_off_switch() -> None:
+     assert ps.index("DESK_LEADFLOW_FILE") < ps.index("python -c")  # before the first helper call
+     assert sh.index("DESK_LEADFLOW_FILE") < sh.index("python -c")
+     assert "-cne 'off'" in ps and "demo_only/leadflow.json" in ps and "reminder@example.test" in ps
+-    assert '!= off ] && [ -n "$DESK_LEADFLOW_FILE" ]' in sh and "export DESK_NUDGE_TO" in sh
++    assert '!= off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]' in sh and "export DESK_NUDGE_TO" in sh
+     assert (REPO / "demo_only" / "leadflow.json").is_file()
+     for text in (ps, sh):
+         assert "set DESK_LEADFLOW_FILE=off" in text
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 7cb7749..0112038 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -18,16 +18,25 @@ from support import REPO, wait_until
+ WINDOWS = sys.platform == "win32"
+ 
+ 
+-def _run(script: str, db: Path, **extra: str) -> subprocess.CompletedProcess[str]:
++def _run(
++    script: str, db: Path, *args: str, first_on_path: Path | None = None, shell: str = "bash", **extra: str
++) -> subprocess.CompletedProcess[str]:
++    """first_on_path: a folder (holding a stand-in `python`) searched before this interpreter's folder; the
++    desk's own DESK_LEADFLOW_FILE and DESK_NUDGE_TO of the calling shell are then left out of the environment."""
+     env = {**os.environ, "DESK_DB_PATH": str(db), **extra}
+     env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
++    if first_on_path is not None:
++        env["PATH"] = str(first_on_path) + os.pathsep + env["PATH"]
++        for name in ("DESK_LEADFLOW_FILE", "DESK_NUDGE_TO"):
++            if name not in extra:
++                env.pop(name, None)
+     if WINDOWS:
+         powershell = shutil.which("powershell")
+         if powershell is None:
+             pytest.skip("Windows PowerShell is not installed")
+         cmd = [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(REPO / "scripts" / script)]
+     else:
+-        cmd = ["bash", str(REPO / "scripts" / script)]
++        cmd = [shell, str(REPO / "scripts" / script), *args]
+     return subprocess.run(  # noqa: S603 (our own script and a path made by the test)
+         cmd, cwd=REPO, env=env, capture_output=True, text=True, timeout=120, check=False
+     )
+@@ -162,6 +171,17 @@ def test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop(book: Path)
+     assert not alive_after and not book.exists() and not (book.parent / "desk.pid").exists()
+ 
+ 
++@pytest.mark.skipif(WINDOWS, reason="reset.sh is the non-Windows script")
++@pytest.mark.parametrize("name", ["desk.pid", "fakes.pid"])
++def test_reset_sh_deletes_an_empty_pid_file(book: Path, name: str) -> None:
++    """An empty pid file names no process: it is removed and the reset goes on (the check is -e, not -s)."""
++    pidfile = book.parent / name
++    pidfile.write_text("", encoding="utf-8")
++    done = _run(SCRIPT, book, DESK_PORT=str(_free_port()), DESK_FAKES_PORT=str(_free_port()))
++    assert done.returncode == 0, (done.stdout, done.stderr)
++    assert not pidfile.exists() and not book.exists()
++
++
+ @pytest.mark.skipif(WINDOWS, reason="a process that ended but is not collected yet is a POSIX state")
+ def test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone(book: Path) -> None:
+     ended = subprocess.Popen([sys.executable, "-c", "pass"])  # noqa: S603 (our own interpreter)
+@@ -253,3 +273,123 @@ def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a
+         listener.listen(1)
+         again = _run(SCRIPT, book, DESK_PORT=str(listener.getsockname()[1]), DESK_FAKES_PORT=str(_free_port()))
+     assert again.returncode == 4 and not lock.exists(), (again.stdout, again.stderr)
++
++
++# A stand-in `python` for scripts/start_all.sh: it answers the three `python -c` helper calls (data folder, demo-server
++# port, desk port) with fixed values, writes one line per `python -m <module>` launch with the DESK_LEADFLOW_FILE and
++# DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests decided without
++# starting a server.
++_STUB_PYTHON = """#!/usr/bin/env bash
++echo "$*" >> "${STUB_DATA}/calls.log"
++if [[ "$1" == "-c" ]]; then
++  case "$2" in
++    *parent*) echo "${STUB_DATA}";;
++    *fakes_port*) echo 1234;;
++    *.port*) echo 4321;;
++  esac
++elif [[ "$1" == "-m" ]]; then
++  echo "LEADFLOW=[${DESK_LEADFLOW_FILE-<unset>}] NUDGE=[${DESK_NUDGE_TO-<unset>}]" > "${STUB_DATA}/launch-$2.rec"
++fi
++"""
++
++
++def _start_all(
++    tmp_path: Path, *args: str, pid_file: str = "", **env: str
++) -> tuple[subprocess.CompletedProcess[str], Path]:
++    """Run scripts/start_all.sh with the stub python first on PATH; returns the result and the stub's data folder."""
++    data = tmp_path / "data"
++    data.mkdir()
++    if pid_file:
++        (data / pid_file).write_text("1\n", encoding="utf-8")
++    bin_dir = tmp_path / "bin"
++    bin_dir.mkdir()
++    stub = bin_dir / "python"
++    stub.write_text(_STUB_PYTHON, encoding="utf-8")
++    stub.chmod(0o755)
++    done = _run("start_all.sh", tmp_path / "unused.sqlite3", *args, first_on_path=bin_dir, STUB_DATA=str(data), **env)
++    return done, data
++
++
++def _launch(data: Path) -> str:
++    """The env line the stub saw for the desk launch (a background process: wait, bounded, until it has written)."""
++    rec = data / "launch-lead_desk.server.rec"
++    wait_until(rec.exists, timeout=10, what="the stub python launched as the desk")
++    return rec.read_text(encoding="utf-8").strip()
++
++
++@pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
++@pytest.mark.parametrize(
++    ("env", "expected"),
++    [
++        ({}, "LEADFLOW=[demo_only/leadflow.json] NUDGE=[reminder@example.test]"),  # default: on
++        ({"DESK_LEADFLOW_FILE": "off"}, "LEADFLOW=[off] NUDGE=[<unset>]"),  # script line 12: != off
++        ({"DESK_LEADFLOW_FILE": ""}, "LEADFLOW=[] NUDGE=[<unset>]"),  # script line 12: -n
++        ({"DESK_LEADFLOW_FILE": "x.json"}, "LEADFLOW=[x.json] NUDGE=[reminder@example.test]"),
++        ({"DESK_LEADFLOW_FILE": "of"}, "LEADFLOW=[of] NUDGE=[reminder@example.test]"),  # a near miss of "off" is a file
++        ({"DESK_LEADFLOW_FILE": "*"}, "LEADFLOW=[*] NUDGE=[reminder@example.test]"),  # no pattern matching in [[ ]] rhs
++        (
++            {"DESK_LEADFLOW_FILE": "x.json", "DESK_NUDGE_TO": "me@example.test"},
++            "LEADFLOW=[x.json] NUDGE=[me@example.test]",
++        ),
++        (
++            {"DESK_LEADFLOW_FILE": "x.json", "DESK_NUDGE_TO": ""},
++            "LEADFLOW=[x.json] NUDGE=[]",
++        ),  # a set empty value is kept
++    ],
++)
++def test_start_all_sh_turns_the_reminder_on_only_for_a_real_leadflow_file(
++    tmp_path: Path, env: dict[str, str], expected: str
++) -> None:
++    """Runs the real scripts/start_all.sh (the [[ ]] test of its leadflow line, which SonarCloud shell:S7688 made
++    us rewrite) with a stub `python`, and reads the environment the launched desk process would get."""
++    done, data = _start_all(tmp_path, **env)
++    assert done.returncode == 0, (done.stdout, done.stderr)
++    assert _launch(data) == expected
++
++
++@pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
++@pytest.mark.parametrize("pid_file", ["fakes.pid", "desk.pid"])
++def test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing(tmp_path: Path, pid_file: str) -> None:
++    """The pid-file check is the other rewritten [[ ]] test (two tests joined by ||): either file alone refuses."""
++    done, data = _start_all(tmp_path, pid_file=pid_file)
++    assert done.returncode == 1, (done.stdout, done.stderr)
++    assert "pid files exist" in done.stderr
++    assert not list(data.glob("launch-*.rec")), "a server was launched although a pid file existed"
++    assert sorted(p.name for p in data.glob("*.pid")) == [pid_file]  # and the script wrote no pid file of its own
++
++
++@pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
++def test_start_all_sh_refuses_an_unknown_mode_before_it_calls_python(tmp_path: Path) -> None:
++    """The mode check is a `case`, not a changed [[ ]] line; this test only guards that the early exit stays first."""
++    done, data = _start_all(tmp_path, "sideways")
++    assert done.returncode == 1, (done.stdout, done.stderr)
++    assert "mode must be keyed or blind" in done.stderr
++    assert not (data / "calls.log").exists(), "python was called before the mode was checked"
++
++
++@pytest.mark.skipif(WINDOWS or shutil.which("dash") is None, reason="needs dash (the sh of Debian and Ubuntu)")
++@pytest.mark.parametrize("bash_version", [None, "5.2.0"], ids=["BASH_VERSION-unset", "BASH_VERSION-exported"])
++@pytest.mark.parametrize("script", ["reset.sh", "start_all.sh"])
++def test_the_shell_scripts_refuse_to_run_under_dash_and_delete_or_start_nothing(
++    tmp_path: Path, script: str, bash_version: str | None
++) -> None:
++    """[[ ]] is not in dash: its `[[: not found` counts as a false test, which would skip reset.sh's refusal of a
++    database outside ./data. The scripts therefore stop at once when the shell cannot run [[ ]]. The test is of the
++    feature, not of the variable BASH_VERSION: dash takes that from the environment, so a name test is bypassed
++    (the second case exports it with a made-up value)."""
++    db = tmp_path / "desk.sqlite3"
++    db.write_text("made-up lead book", encoding="utf-8")
++    bin_dir = (
++        tmp_path / "bin"
++    )  # a stand-in python first on PATH, so that without the guard start_all.sh starts nothing real
++    bin_dir.mkdir()
++    (bin_dir / "python").write_text(_STUB_PYTHON, encoding="utf-8")
++    (bin_dir / "python").chmod(0o755)
++    stub = bin_dir if script == "start_all.sh" else None
++    extra = {} if bash_version is None else {"BASH_VERSION": bash_version}
++    done = _run(script, db, shell=shutil.which("dash") or "dash", first_on_path=stub, STUB_DATA=str(tmp_path), **extra)
++    assert done.returncode == 2, (done.stdout, done.stderr)
++    assert "run this script with bash" in done.stderr and "not bash" in done.stderr
++    assert "not found" not in done.stderr, "a [[ line ran under dash"
++    assert db.read_text(encoding="utf-8") == "made-up lead book"
++    assert not (tmp_path / "calls.log").exists(), "the stand-in python was called"
+diff --git a/tests/test_smtp_provider.py b/tests/test_smtp_provider.py
+index 38fa20b..5cded3d 100644
+--- a/tests/test_smtp_provider.py
++++ b/tests/test_smtp_provider.py
+@@ -104,10 +104,15 @@ def test_implicit_tls_port(certs: Certs, pwfile: Path, servers: list[Any]) -> No
+ 
+ 
+ def test_recipients_are_spread_and_stable(certs: Certs, pwfile: Path, servers: list[Any]) -> None:
+-    ob = outbox(start(certs, servers), certs, pwfile)
++    srv = start(certs, servers)
++    ob = outbox(srv, certs, pwfile)
+     picks = {ob.recipient_for(f"RUN1-L{i}") for i in range(40)}
+     assert picks == set(INBOXES)
+-    assert ob.recipient_for("RUN1-L7") == ob.recipient_for("RUN1-L7")
++    keys = [f"RUN1-L{i}" for i in range(40)]
++    again = outbox(
++        srv, certs, pwfile
++    )  # a second outbox object (same process): its pick must not depend on the object; a restart is NOT proven here
++    assert [again.recipient_for(k) for k in keys] == [ob.recipient_for(k) for k in keys]
+ 
+ 
+ def test_certificate_not_trusted_is_unreachable_and_nothing_is_sent(
+diff --git a/tests/test_workflow_files_parse.py b/tests/test_workflow_files_parse.py
+index 50513ea..630d3a5 100644
+--- a/tests/test_workflow_files_parse.py
++++ b/tests/test_workflow_files_parse.py
+@@ -5,6 +5,7 @@ valid YAML. GitHub then shows the run as failed with no jobs, and a check can st
+ parsed the files. PyYAML is in the development lock (requirements-dev.txt), so the check needs no new dependency.
+ """
+ 
++import re
+ from pathlib import Path
+ 
+ import pytest
+@@ -36,3 +37,33 @@ def test_a_workflow_file_is_valid_yaml_with_jobs_and_steps(path: Path) -> None:
+             assert isinstance(step, dict) and ("run" in step or "uses" in step), (
+                 f"{path.name}: job {name}, step {i + 1} has neither run nor uses"
+             )
++
++
++def _run_commands(path: Path) -> list[str]:
++    """Every shell command line of every `run:` step in one workflow file (a line that ends in a backslash is joined
++    with the next one, so a command that is split over lines is one command)."""
++    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
++    lines: list[str] = []
++    for job in doc["jobs"].values():
++        for step in job["steps"]:
++            if "run" in step:
++                lines += str(step["run"]).replace("\\\n", " ").splitlines()
++    return lines
++
++
++@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
++def test_a_download_in_a_workflow_is_https_only_and_modern_tls(path: Path) -> None:
++    """curl follows redirects and would speak plain http if told to; --proto (first request) and --proto-redir (every
++    redirect) pin https, and --tlsv1.2 sets the lowest TLS version (SonarCloud rule githubactions:S6506)."""
++    for cmd in (c for c in _run_commands(path) if re.search(r"\bcurl\b", c)):
++        for flag in ("--proto '=https'", "--proto-redir '=https'", "--tlsv1.2"):
++            assert flag in cmd, f"{path.name}: curl without {flag}: {cmd}"
++
++
++@pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)
++def test_a_pip_install_in_a_workflow_takes_wheels_only_with_hashes(path: Path) -> None:
++    """A source distribution runs the package's build script at install time; wheels do not (SonarCloud rule
++    githubactions:S8541). The `=` spelling is the one sonar.yml uses (no finding there); --require-hashes stays."""
++    for cmd in (c for c in _run_commands(path) if re.search(r"\bpip3?\s+install\b", c)):
++        assert "--only-binary=:all:" in cmd, f"{path.name}: pip install without --only-binary=:all: -> {cmd}"
++        assert "--require-hashes" in cmd, f"{path.name}: pip install without --require-hashes -> {cmd}"

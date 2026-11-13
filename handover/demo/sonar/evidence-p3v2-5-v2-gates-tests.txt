@@ -1,0 +1,26 @@
+# gates on db54e13 + P3v2 (this clone: c788b6d)
+All checks passed!
+148 files already formatted
+mypy linux: Success: no issues found in 27 source files
+mypy win32: Success: no issues found in 27 source files
+bandit -ll (tools load_tools scripts):
+(only 'Test in comment' parser warnings were printed and filtered; no finding)
+
+# affected tests on db54e13 + P3v2
+......................................................................s. [ 83%]
+........................................................................ [ 95%]
+.............s......ss...                                                [100%]
+597 passed, 4 skipped in 82.89s (0:01:22)
+
+real	1m23.650s
+user	0m47.147s
+sys	0m3.052s
+
+# stack: db54e13 + P1v2 + P2 + P3v2
+All checks passed!
+150 files already formatted
+Success: no issues found in 28 source files
+Success: no issues found in 28 source files
+........................................................................ [ 91%]
+............................s............                                [100%]
+469 passed, 4 skipped in 54.12s

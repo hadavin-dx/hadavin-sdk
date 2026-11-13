@@ -1,0 +1,25 @@
+== v2 tests with the six tool files restored to db54e13 (helper module present). The catcher refusal test is left out: on the old catcher it starts a server that never returns.
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--requests]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--book]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--crm]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--model-log]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--drain]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--facts]
+FAILED tests/test_path_confinement.py::test_check_invariants_refuses_each_path_outside_before_reading_anything[--json]
+FAILED tests/test_path_confinement.py::test_the_book_reader_uses_the_helper_for_a_name_with_a_question_mark
+FAILED tests/test_path_confinement.py::test_load_driver_run_refuses_log_and_facts_outside
+FAILED tests/test_path_confinement.py::test_load_driver_main_writes_nothing_outside_and_prints_a_refusal
+FAILED tests/test_path_confinement.py::test_scrub_refuses_outside_in_and_out
+FAILED tests/test_path_confinement.py::test_n8n_api_import_refuses_a_file_outside
+FAILED tests/test_path_confinement.py::test_run_real_check_reads_a_config_outside_the_allowed_folders
+FAILED tests/test_path_confinement.py::test_a_link_loop_is_refused_and_not_a_traceback
+FAILED tests/test_path_confinement.py::test_no_flagged_site_opens_a_raw_argument
+15 failed, 25 passed, 3 deselected in 69.52s (0:01:09)
+== v2 tests against the OLD P3 files (sonar-p3-path-helper.patch): review MAJOR-1 / MINOR-5 cases
+FAILED tests/test_path_confinement.py::test_load_driver_main_writes_nothing_outside_and_prints_a_refusal
+FAILED tests/test_path_confinement.py::test_run_real_check_reads_a_config_outside_the_allowed_folders
+FAILED tests/test_path_confinement.py::test_a_real_run_with_config_and_book_outside_reaches_the_y_n_question_and_the_book
+FAILED tests/test_path_confinement.py::test_a_real_run_with_every_path_outside_the_allowed_folders_runs_to_the_end
+FAILED tests/test_path_confinement.py::test_a_load_tool_started_as_a_script_shows_its_help_without_pythonpath[load_tools/load_driver.py]
+FAILED tests/test_path_confinement.py::test_a_load_tool_started_as_a_script_shows_its_help_without_pythonpath[load_tools/check_invariants.py]
+6 failed, 1 passed, 36 deselected in 1.14s

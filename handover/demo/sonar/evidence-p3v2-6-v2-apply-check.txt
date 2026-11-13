@@ -1,0 +1,10 @@
+base + P3v2: APPLIES
+base + P1 + P3v2: APPLIES
+base + P1v2 + P3v2: APPLIES
+base + P1 + P2 + P3v2: APPLIES
+base + P1v2 + P2 + P3v2: APPLIES
+base + P2 + P3v2: APPLIES
+base + real-run-v3 + P3v2: APPLIES
+base + P3v2 + real-run-v3: APPLIES
+base + P1v2 + P2 + real-run-v3 + P3v2: APPLIES
+base + P1v2 + P2 + P3v2 + real-run-v3: APPLIES

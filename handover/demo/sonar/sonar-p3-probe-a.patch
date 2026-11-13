@@ -1,0 +1,155 @@
+diff --git a/load_tools/check_invariants.py b/load_tools/check_invariants.py
+index 211c406..370da2d 100644
+--- a/load_tools/check_invariants.py
++++ b/load_tools/check_invariants.py
+@@ -12,11 +12,16 @@ import json
+ import os
+ import sqlite3
+ import sys
++import tempfile
+ from collections import Counter
+ from collections.abc import Iterable, Mapping
+ from pathlib import Path
+ from typing import Any
+ 
++REPO_ROOT = Path(__file__).resolve().parents[1]
++ROOTS_ENV = "LEAD_DESK_PATH_ROOTS"  # extra allowed folders, separated by os.pathsep
++MAX_PATH_CHARS = 4096
++
+ # ---- config block (the only place for numbers and words) ----
+ FIRST_N = 10  # offending ids listed per check
+ DEFAULT_MODEL_CALL_BOUND = 3  # check 5: most model calls allowed for one lead
+@@ -58,11 +63,33 @@ class InputError(Exception):
+ 
+ 
+ def read_jsonl(path: Path) -> list[dict[str, Any]]:
++    """Rows of a JSONL file. PROBE A: the path is resolved and must lie inside an allowed folder (the current folder,
++    the repository, the temporary folder, the folders in LEAD_DESK_PATH_ROOTS) before the file is opened."""
++    extra = [r for r in os.environ.get(ROOTS_ENV, "").split(os.pathsep) if r]
++    roots = [os.path.realpath(r) for r in (os.getcwd(), str(REPO_ROOT), tempfile.gettempdir(), *extra)]
++    text_path = os.fspath(path)
++    if not text_path.strip() or len(text_path) > MAX_PATH_CHARS:
++        raise InputError("log file: empty or too long path")
++    try:
++        real = os.path.realpath(text_path)  # follows links, removes "..", makes it absolute
++    except (OSError, ValueError, RuntimeError) as e:  # a NUL character, a link loop
++        raise InputError("log file: cannot be resolved") from e
++    inside = False
++    for root in roots:
++        try:
++            inside = os.path.commonpath([os.path.normcase(real), os.path.normcase(root)]) == os.path.normcase(root)
++        except ValueError:  # another drive
++            inside = False
++        if inside:
++            break
++    if not inside:
++        raise InputError("log file: path is outside the allowed folders")
+     rows: list[dict[str, Any]] = []
+     try:
+-        text = path.read_text(encoding="utf-8")
++        with open(real, encoding="utf-8") as fh:  # only the resolved, checked path is opened
++            text = fh.read()
+     except OSError as e:
+-        raise InputError(f"cannot read {path.name}: {type(e).__name__}") from e
++        raise InputError(f"cannot read {os.path.basename(real)}: {type(e).__name__}") from e
+     for n, line in enumerate(text.splitlines(), 1):
+         if not line.strip():
+             continue
+diff --git a/tests/test_probe_p3a.py b/tests/test_probe_p3a.py
+new file mode 100644
+index 0000000..de600bc
+--- /dev/null
++++ b/tests/test_probe_p3a.py
+@@ -0,0 +1,92 @@
++"""PROBE A: the path guard in check_invariants.read_jsonl (the first S8707 site). Made-up data only.
++Each test below fails on the code before the probe (the reader opened whatever it was given)."""
++
++from __future__ import annotations
++
++import sys
++import tempfile
++from pathlib import Path
++
++import pytest
++
++from load_tools import check_invariants as ci
++
++ROOTS_ENV = "LEAD_DESK_PATH_ROOTS"
++SECRET = '{"made_up": "outside text"}\n'
++
++
++@pytest.fixture
++def jail(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
++    """(inside, outside): the only allowed folder is ``inside``; ``outside`` is next to it and is not allowed."""
++    inside, outside = tmp_path / "inside", tmp_path / "outside"
++    inside.mkdir()
++    outside.mkdir()
++    monkeypatch.chdir(inside)
++    monkeypatch.setattr(tempfile, "tempdir", str(inside))
++    monkeypatch.setattr(ci, "REPO_ROOT", inside, raising=False)  # the repository folder is not allowed here
++    monkeypatch.delenv(ROOTS_ENV, raising=False)
++    return inside, outside
++
++
++def test_reads_an_inside_file_relative_nested_and_odd_names(jail: tuple[Path, Path]) -> None:
++    inside, _ = jail
++    (inside / "sub").mkdir()
++    (inside / "a.jsonl").write_text('{"a": 1}\n', encoding="utf-8")
++    (inside / "sub" / "b?x#y.jsonl").write_text('{"b": 2}\n', encoding="utf-8")
++    assert ci.read_jsonl(Path("a.jsonl")) == [{"a": 1}]
++    assert ci.read_jsonl(inside / "sub" / "b?x#y.jsonl") == [{"b": 2}]
++    assert ci.read_jsonl(Path("sub/../a.jsonl")) == [{"a": 1}]
++
++
++def test_dot_dot_and_absolute_escape_are_refused(jail: tuple[Path, Path]) -> None:
++    _, outside = jail
++    (outside / "secret.jsonl").write_text(SECRET, encoding="utf-8")
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_jsonl(Path("../outside/secret.jsonl"))
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_jsonl(outside / "secret.jsonl")
++
++
++@pytest.mark.skipif(sys.platform == "win32", reason="creating a symbolic link needs a privilege on Windows")
++def test_a_link_that_leaves_the_folder_is_refused(jail: tuple[Path, Path]) -> None:
++    inside, outside = jail
++    (outside / "secret.jsonl").write_text(SECRET, encoding="utf-8")
++    (inside / "link.jsonl").symlink_to(outside / "secret.jsonl")
++    (inside / "dirlink").symlink_to(outside, target_is_directory=True)
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_jsonl(inside / "link.jsonl")
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_jsonl(inside / "dirlink" / "secret.jsonl")
++
++
++def test_a_prefix_sibling_folder_is_not_inside(jail: tuple[Path, Path]) -> None:
++    inside, _ = jail
++    evil = inside.parent / (inside.name + "-evil")
++    evil.mkdir()
++    (evil / "f.jsonl").write_text(SECRET, encoding="utf-8")
++    with pytest.raises(ci.InputError, match="outside"):
++        ci.read_jsonl(evil / "f.jsonl")
++
++
++@pytest.mark.parametrize("bad", ["", "   ", "a\x00b.jsonl", "a\nb.jsonl", "a" * 5000])
++def test_odd_input_is_an_input_error_not_a_crash(jail: tuple[Path, Path], bad: str) -> None:
++    with pytest.raises(ci.InputError):
++        ci.read_jsonl(Path(bad))
++
++
++def test_missing_file_and_folder_are_input_errors(jail: tuple[Path, Path]) -> None:
++    inside, _ = jail
++    (inside / "d").mkdir()
++    with pytest.raises(ci.InputError, match="cannot read"):
++        ci.read_jsonl(inside / "nope.jsonl")
++    with pytest.raises(ci.InputError, match="cannot read"):
++        ci.read_jsonl(inside / "d")
++    with pytest.raises(ci.InputError, match="cannot read"):
++        ci.read_jsonl(inside / "nope" / "x.jsonl")
++
++
++def test_extra_folder_from_the_environment(jail: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch) -> None:
++    _, outside = jail
++    (outside / "ok.jsonl").write_text('{"ok": 1}\n', encoding="utf-8")
++    monkeypatch.setenv(ROOTS_ENV, str(outside))
++    assert ci.read_jsonl(outside / "ok.jsonl") == [{"ok": 1}]

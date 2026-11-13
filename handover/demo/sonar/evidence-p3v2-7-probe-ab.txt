@@ -1,0 +1,30 @@
+== probe-ab tests on the OLD tool files (expect refusal tests to fail)
+FAILED tests/test_probe_ab.py::test_jsonl_and_intended_helper_shape - Failed:...
+FAILED tests/test_probe_ab.py::test_crm_facts_live_and_drain_inline_shape - F...
+FAILED tests/test_probe_ab.py::test_inline_shape_refuses_a_link_out_and_a_prefix_sibling
+FAILED tests/test_probe_ab.py::test_load_driver_run_helper_shape - Failed: DI...
+FAILED tests/test_probe_ab.py::test_scrub_helper_shape - AssertionError: asse...
+FAILED tests/test_probe_ab.py::test_n8n_api_import_inline_shape - Failed: DID...
+6 failed in 31.71s
+== gates
+All checks passed!
+148 files already formatted
+Success: no issues found in 27 source files
+Success: no issues found in 27 source files
+== affected tests (probe + load_tools + scrub + n8n_api_url + hygiene; real_check_dry too)
+.................................s...................................... [ 89%]
+................................................s......ss...             [100%]
+560 passed, 4 skipped in 65.12s (0:01:05)
+
+probe-ab after []: APPLIES
+probe-ab after [sonar-p1-quickwins.patch]: APPLIES
+probe-ab after [sonar-p1-quickwins.patch sonar-p2-regex-http-bug.patch]: APPLIES
+probe-ab after [sonar-p1-quickwins-v2.patch sonar-p2-regex-http-bug.patch]: APPLIES
+probe-a after []: APPLIES
+probe-a after [sonar-p1-quickwins.patch]: APPLIES
+probe-a after [sonar-p1-quickwins.patch sonar-p2-regex-http-bug.patch]: APPLIES
+probe-a after [sonar-p1-quickwins-v2.patch sonar-p2-regex-http-bug.patch]: APPLIES
+probe-b after []: APPLIES
+probe-b after [sonar-p1-quickwins.patch]: APPLIES
+probe-b after [sonar-p1-quickwins.patch sonar-p2-regex-http-bug.patch]: APPLIES
+probe-b after [sonar-p1-quickwins-v2.patch sonar-p2-regex-http-bug.patch]: APPLIES

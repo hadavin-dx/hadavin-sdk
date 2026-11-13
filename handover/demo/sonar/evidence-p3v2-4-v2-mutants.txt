@@ -1,0 +1,12 @@
+MUTANT [load_tools/check_invariants.py] readonly_sqlite_uri(path), uri=True=>>f"file:{path}?mode=ro", uri=True => 1 failed, 42 deselected in 1.39s
+MUTANT [load_tools/check_invariants.py] book = _confined(a.book, "--book")=>>book = a.book => 1 failed, 7 passed, 35 deselected in 0.25s
+MUTANT [load_tools/check_invariants.py] model_log = _confined(a.model_log, "--model-log")=>>model_log = a.model_log => 1 failed, 7 passed, 35 deselected in 0.48s
+MUTANT [load_tools/check_invariants.py] json_out = _confined(a.json, "--json") if a.json else None=>>json_out = a.json => 1 failed, 8 passed, 34 deselected in 0.17s
+MUTANT [scripts/run_real_check.py] confine(a.config, what="--config", anywhere=True)=>>a.config => 1 failed, 42 deselected in 0.13s
+MUTANT [tools/pathconfine.py] if entry.is_symlink():=>>if False: => 1 failed, 42 deselected in 0.11s
+MUTANT [tools/pathconfine.py] return "".join(_NAME_CHARS[c] for c in name)=>>return name => 1 failed, 42 deselected in 0.06s
+MUTANT [tools/pathconfine.py]     if _CONTROL.search(text):=>>    if False: => 1 failed, 6 passed, 36 deselected in 0.09s
+MUTANT [load_tools/load_driver.py]     except PathRefused as e:  # the same wording=>>    except ZeroDivisionError as e:  # the same wording => 1 failed, 42 deselected in 0.10s
+MUTANT [load_tools/catcher.py] out = confine(args.out, what="--out")=>>out = args.out => 1 failed, 2 passed, 40 deselected in 0.20s
+MUTANT [load_tools/load_driver.py]     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))=>>    pass => 1 failed, 2 passed, 40 deselected in 0.53s
+MUTANT [tools/pathconfine.py] return Path(_locate(root=>>return Path(real); _x=(_locate(root => 6 passed, 37 deselected in 0.29s

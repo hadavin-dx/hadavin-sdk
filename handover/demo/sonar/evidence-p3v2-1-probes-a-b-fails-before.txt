@@ -1,0 +1,30 @@
+== PROBE a tests on OLD check_invariants (expect failures)
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: embedded null byte
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_probe_p3a.py::test_dot_dot_and_absolute_escape_are_refused
+FAILED tests/test_probe_p3a.py::test_a_link_that_leaves_the_folder_is_refused
+FAILED tests/test_probe_p3a.py::test_a_prefix_sibling_folder_is_not_inside - ...
+FAILED tests/test_probe_p3a.py::test_odd_input_is_an_input_error_not_a_crash[a\x00b.jsonl]
+4 failed, 7 passed in 0.10s
+== PROBE b tests on OLD check_invariants (expect failures)
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: embedded null byte
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_probe_p3b.py::test_dot_dot_and_absolute_escape_are_refused
+FAILED tests/test_probe_p3b.py::test_a_link_that_leaves_the_folder_is_refused
+FAILED tests/test_probe_p3b.py::test_a_prefix_sibling_folder_is_not_inside - ...
+FAILED tests/test_probe_p3b.py::test_odd_input_is_an_input_error_not_a_crash[a\x00b.jsonl]
+4 failed, 7 passed in 0.27s

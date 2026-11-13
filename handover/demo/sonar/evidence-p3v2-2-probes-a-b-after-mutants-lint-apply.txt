@@ -1,0 +1,43 @@
+== PROBE a tests + load tools + hygiene on the probe
+........................................................................ [ 67%]
+......................s......ss...                                       [100%]
+103 passed, 3 skipped in 18.67s
+== PROBE b tests + load tools + hygiene on the probe
+........................................................................ [ 67%]
+......................s......ss...                                       [100%]
+103 passed, 3 skipped in 21.58s
+
+== mutant a (guard removed / open the argument text): expect failures
+/tmp/work/sn-p3v2/repo/tests/test_probe_p3a.py:67: Failed
+=========================== short test summary info ============================
+FAILED tests/test_probe_p3a.py::test_dot_dot_and_absolute_escape_are_refused
+FAILED tests/test_probe_p3a.py::test_a_link_that_leaves_the_folder_is_refused
+FAILED tests/test_probe_p3a.py::test_a_prefix_sibling_folder_is_not_inside - ...
+3 failed, 8 passed in 0.08s
+== lint probe a
+All checks passed!
+147 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+probe a applies after []
+probe a applies after [p1]
+probe a applies after [p1 p2]
+== mutant b (guard removed / open the argument text): expect failures
+...........                                                              [100%]
+11 passed in 0.05s
+== lint probe b
+All checks passed!
+147 files already formatted
+Success: no issues found in 26 source files
+Success: no issues found in 26 source files
+probe b applies after []
+probe b applies after [p1]
+probe b applies after [p1 p2]
+== mutant b2 (commonpath guard removed; the listing walk alone must still refuse)
+FAILED tests/test_probe_p3b.py::test_a_link_that_leaves_the_folder_is_refused
+FAILED tests/test_probe_p3b.py::test_a_prefix_sibling_folder_is_not_inside - ...
+FAILED tests/test_probe_p3b.py::test_extra_folder_from_the_environment - load...
+4 failed, 7 passed in 0.08s
+== mutant b3 (walk joins the argument's own part text instead of entry.path; same behaviour, so it is expected to SURVIVE: only the Sonar flow differs)
+...........                                                              [100%]
+11 passed in 0.05s
