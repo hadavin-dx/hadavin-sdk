@@ -1,0 +1,12 @@
+pass=1 run=2 N=300 retry=1 load_before=0.97 0.39 0.53 2/133 16104  start=12:32:44
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/work/q4-base
+configfile: pyproject.toml
+collected 25 items / 24 deselected / 1 selected
+
+tests/test_server_hardening.py MEASURED n=300 first_try_refused=30 status_counts={201: 300}
+.
+
+======================= 1 passed, 24 deselected in 3.83s =======================
+rc=0 load_after=1.13 0.43 0.55 2/133 17700 end=12:32:48

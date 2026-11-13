@@ -1,0 +1,8 @@
+scenario=burst:300 pass=1 run=3 workers=4 threads=100 load_before=23.15 9.44 4.73 3/180 10583 NOISY
+{"final_status": {"201": 300}, "intended": 300, "last_intended_ts": 1794573841.850453, "logged": 300, "max_lag_s": 3.458}
+driver rc=0
+driver_seconds=6.759339722 drain_after_driver_end_seconds=3.213859508 loops=4
+COUNTS {"received": 300, "new": 300, "duplicate": 0, "review": 0, "open": 0, "rejected_envelopes": 0, "pending_followups": 0, "failed_followups": 0, "unknown_followups": 0, "sending_followups": 0, "hung_workers": {"model": 0, "crm": 0, "send": 0, "refresh": 0}, "decide_integrity_errors": 0, "decide_transient_errors": 0, "reaper_running": true, "last_reaper_pass_at": 1794573849, "expected_match": null, "ok": null}
+OUTBOX_COUNT 300
+REQS 300 TRIES 300 CODES {'201': 300} saw503 0 end503 0 accepted 300 maxlag 3.46
+end load_after=23.69 10.03 4.97 3/180 15100

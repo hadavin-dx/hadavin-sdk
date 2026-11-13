@@ -1,0 +1,18 @@
+{"test": "first_try_classify", "N": 150, "pass": "1", "rep": 1, "load1": "5.66", "seconds": 0.61, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 150, "pass": "1", "rep": 2, "load1": "5.69", "seconds": 1.15, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 150, "pass": "1", "rep": 3, "load1": "5.64", "seconds": 0.5, "outcomes": {"201": 150}}
+{"test": "first_try_classify", "N": 255, "pass": "1", "rep": 1, "load1": "5.42", "seconds": 0.85, "outcomes": {"201": 255}}
+{"test": "first_try_classify", "N": 255, "pass": "1", "rep": 2, "load1": "5.23", "seconds": 0.97, "outcomes": {"201": 255}}
+{"test": "first_try_classify", "N": 255, "pass": "1", "rep": 3, "load1": "5.05", "seconds": 1.22, "outcomes": {"201": 255}}
+{"test": "first_try_classify", "N": 256, "pass": "1", "rep": 1, "load1": "5.05", "seconds": 1.19, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 256, "pass": "1", "rep": 2, "load1": "5.20", "seconds": 1.33, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 256, "pass": "1", "rep": 3, "load1": "5.11", "seconds": 1.26, "outcomes": {"201": 256}}
+{"test": "first_try_classify", "N": 257, "pass": "1", "rep": 1, "load1": "5.34", "seconds": 1.56, "outcomes": {"201": 257}}
+{"test": "first_try_classify", "N": 257, "pass": "1", "rep": 2, "load1": "5.23", "seconds": 0.97, "outcomes": {"201": 257}}
+{"test": "first_try_classify", "N": 257, "pass": "1", "rep": 3, "load1": "5.13", "seconds": 1.03, "outcomes": {"201": 257}}
+{"test": "first_try_classify", "N": 300, "pass": "1", "rep": 1, "load1": "5.20", "seconds": 1.37, "outcomes": {"201": 285, "503": 15}}
+{"test": "first_try_classify", "N": 300, "pass": "1", "rep": 2, "load1": "5.03", "seconds": 1.06, "outcomes": {"201": 270, "503": 30}}
+{"test": "first_try_classify", "N": 300, "pass": "1", "rep": 3, "load1": "5.10", "seconds": 1.56, "outcomes": {"201": 300}}
+{"test": "first_try_classify", "N": 400, "pass": "1", "rep": 1, "load1": "5.02", "seconds": 1.49, "outcomes": {"201": 295, "503": 105}}
+{"test": "first_try_classify", "N": 400, "pass": "1", "rep": 2, "load1": "4.85", "seconds": 1.27, "outcomes": {"201": 296, "503": 104}}
+{"test": "first_try_classify", "N": 400, "pass": "1", "rep": 3, "load1": "4.70", "seconds": 1.27, "outcomes": {"201": 287, "503": 113}}

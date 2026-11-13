@@ -1,0 +1,12 @@
+{"test": "startup_until_counts_200", "pass": "1", "rep": 0, "load1": "12.18", "seconds": 0.23}
+{"test": "idle_conn_408", "pass": "1", "rep": 1, "load1": "10.76", "claim": "408 after 10 s", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "short_body_open_408", "pass": "1", "rep": 1, "load1": "9.42", "claim": "408 10 s after headers", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "drip_1.9s_held", "pass": "1", "rep": 1, "load1": "8.42", "claim": "held up to ~10 s then 408", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.0, "bytes_sent": 6}
+{"test": "size_cap_post", "pass": "1", "rep": 1, "load1": "8.42", "claim": "<=65536 accepted, larger 413", "body_bytes": 65525, "status": "HTTP/1.0 201 Created", "seconds": 0.01}
+{"test": "size_cap_post", "pass": "1", "rep": 1, "load1": "8.42", "claim": "<=65536 accepted, larger 413", "body_bytes": 65526, "status": "HTTP/1.0 201 Created", "seconds": 0.01}
+{"test": "huge_content_length_413_fast", "pass": "1", "rep": 1, "load1": "8.42", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "5000_digit_content_length", "pass": "1", "rep": 1, "load1": "8.42", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "two_content_lengths_400", "pass": "1", "rep": 1, "load1": "8.42", "claim": "400", "status": "HTTP/1.0 400 Bad Request", "seconds": 0.0}
+{"test": "conn_limit_256_immediate", "pass": "1", "rep": 1, "load1": "8.42", "claim": "503 busy, Retry-After 1, no store", "status": 503, "retry_after": "1", "body": "{\"error\": \"busy\", \"reason\": \"busy\"}", "seconds": 0.0}
+{"test": "conn_limit_256_after_2s_evicts", "pass": "1", "rep": 1, "load1": "8.42", "claim": "oldest idle >=2 s closed with no reply; new served", "status": 200, "idle_closed_by_desk": 1, "seconds": 0.0}
+{"test": "end", "pass": "1", "rep": 0, "load1": "8.42", "load_after": "8.42"}

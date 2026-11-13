@@ -1,0 +1,47 @@
+{"test": "startup_until_counts_200", "pass": "1", "rep": 0, "load1": "7.16", "seconds": 0.16}
+{"test": "idle_conn_408", "pass": "1", "rep": 1, "load1": "6.60", "claim": "408 after 10 s", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "short_body_open_408", "pass": "1", "rep": 1, "load1": "5.89", "claim": "408 10 s after headers", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "drip_1.9s_held", "pass": "1", "rep": 1, "load1": "5.37", "claim": "held up to ~10 s then 408", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.0, "bytes_sent": 6}
+{"test": "size_cap_post", "pass": "1", "rep": 1, "load1": "5.37", "claim": "<=65536 accepted, larger 413", "body_bytes": 65536, "status": "HTTP/1.0 201 Created", "seconds": 0.0}
+{"test": "size_cap_post", "pass": "1", "rep": 1, "load1": "5.37", "claim": "<=65536 accepted, larger 413", "body_bytes": 65537, "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "huge_content_length_413_fast", "pass": "1", "rep": 1, "load1": "5.37", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "5000_digit_content_length", "pass": "1", "rep": 1, "load1": "5.37", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "two_content_lengths_400", "pass": "1", "rep": 1, "load1": "5.37", "claim": "400", "status": "HTTP/1.0 400 Bad Request", "seconds": 0.0}
+{"test": "conn_limit_256_immediate", "pass": "1", "rep": 1, "load1": "5.37", "claim": "503 busy, Retry-After 1, no store", "status": 503, "retry_after": "1", "body": "{\"error\": \"busy\", \"reason\": \"busy\"}", "seconds": 0.0}
+{"test": "conn_limit_256_after_2s_evicts", "pass": "1", "rep": 1, "load1": "5.02", "claim": "oldest idle >=2 s closed with no reply; new served", "status": 200, "idle_closed_by_desk": 1, "seconds": 0.0}
+{"test": "listen_backlog_ss", "pass": "1", "rep": 1, "load1": "5.02", "claim": "LISTEN_QUEUE 1024 (OS may cap lower)", "ss": "ss not installed"}
+{"test": "portal_api_40_parallel", "pass": "1", "rep": 1, "load1": "5.02", "claim": "at most 8 at once, more 503 busy", "codes": {"200": 347, "503": 53}}
+{"test": "retry_rule_closed_port", "pass": "1", "rep": 1, "load1": "3.91", "claim": "waits 0.1 doubling to 1 s; no new try after 30 s", "tries": 34, "first_gaps": [0.1, 0.2, 0.4, 0.8, 1.0, 1.0, 1.0], "last_try_at": 30.0, "total": 30.0}
+{"test": "burst100_same_lead", "pass": "1", "rep": 1, "load1": "7.53", "claim": "201=1 200=99; 1 lead,1 followup; pending settles ~3 s", "stdout": "SENT n=100 | STATUS 201=1 200=99 | RETRIES busy503=0 refused=0 | RESULT sent=100 expected=100 | ", "settle_after_burst_end": 0.0, "counts": {"leads": null, "followups": null, "received": 101, "new": 2, "duplicate": 99, "pending_followups": 0, "sent_followups": null}}
+{"test": "burst100_outbox", "pass": "1", "rep": 1, "load1": "7.53", "claim": "1 email per lead", "outbox_count": 2, "expected_total": 1}
+{"test": "idle_conn_408", "pass": "1", "rep": 2, "load1": "6.76", "claim": "408 after 10 s", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "short_body_open_408", "pass": "1", "rep": 2, "load1": "6.02", "claim": "408 10 s after headers", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "drip_1.9s_held", "pass": "1", "rep": 2, "load1": "5.73", "claim": "held up to ~10 s then 408", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.0, "bytes_sent": 6}
+{"test": "size_cap_post", "pass": "1", "rep": 2, "load1": "5.73", "claim": "<=65536 accepted, larger 413", "body_bytes": 65536, "status": "HTTP/1.0 201 Created", "seconds": 0.01}
+{"test": "size_cap_post", "pass": "1", "rep": 2, "load1": "5.73", "claim": "<=65536 accepted, larger 413", "body_bytes": 65537, "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "huge_content_length_413_fast", "pass": "1", "rep": 2, "load1": "5.73", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "5000_digit_content_length", "pass": "1", "rep": 2, "load1": "5.73", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "two_content_lengths_400", "pass": "1", "rep": 2, "load1": "5.73", "claim": "400", "status": "HTTP/1.0 400 Bad Request", "seconds": 0.0}
+{"test": "conn_limit_256_immediate", "pass": "1", "rep": 2, "load1": "5.73", "claim": "503 busy, Retry-After 1, no store", "status": 503, "retry_after": "1", "body": "{\"error\": \"busy\", \"reason\": \"busy\"}", "seconds": 0.0}
+{"test": "conn_limit_256_after_2s_evicts", "pass": "1", "rep": 2, "load1": "5.73", "claim": "oldest idle >=2 s closed with no reply; new served", "status": 200, "idle_closed_by_desk": 1, "seconds": 0.0}
+{"test": "listen_backlog_ss", "pass": "1", "rep": 2, "load1": "5.73", "claim": "LISTEN_QUEUE 1024 (OS may cap lower)", "ss": "ss not installed"}
+{"test": "portal_api_40_parallel", "pass": "1", "rep": 2, "load1": "5.73", "claim": "at most 8 at once, more 503 busy", "codes": {"200": 348, "503": 52}}
+{"test": "retry_rule_closed_port", "pass": "1", "rep": 2, "load1": "5.31", "claim": "waits 0.1 doubling to 1 s; no new try after 30 s", "tries": 34, "first_gaps": [0.1, 0.2, 0.4, 0.8, 1.0, 1.0, 1.0], "last_try_at": 30.0, "total": 30.0}
+{"test": "burst100_same_lead", "pass": "1", "rep": 2, "load1": "5.61", "claim": "201=1 200=99; 1 lead,1 followup; pending settles ~3 s", "stdout": "SENT n=100 | STATUS 201=1 200=99 | RETRIES busy503=0 refused=0 | RESULT sent=100 expected=100 | ", "settle_after_burst_end": 0.0, "counts": {"leads": null, "followups": null, "received": 202, "new": 4, "duplicate": 198, "pending_followups": 0, "sent_followups": null}}
+{"test": "burst100_outbox", "pass": "1", "rep": 2, "load1": "5.61", "claim": "1 email per lead", "outbox_count": 4, "expected_total": 2}
+{"test": "idle_conn_408", "pass": "1", "rep": 3, "load1": "5.36", "claim": "408 after 10 s", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "short_body_open_408", "pass": "1", "rep": 3, "load1": "5.23", "claim": "408 10 s after headers", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.01}
+{"test": "drip_1.9s_held", "pass": "1", "rep": 3, "load1": "5.78", "claim": "held up to ~10 s then 408", "status": "HTTP/1.0 408 Request Timeout", "seconds": 10.0, "bytes_sent": 6}
+{"test": "size_cap_post", "pass": "1", "rep": 3, "load1": "5.78", "claim": "<=65536 accepted, larger 413", "body_bytes": 65536, "status": "HTTP/1.0 201 Created", "seconds": 0.0}
+{"test": "size_cap_post", "pass": "1", "rep": 3, "load1": "5.78", "claim": "<=65536 accepted, larger 413", "body_bytes": 65537, "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "huge_content_length_413_fast", "pass": "1", "rep": 3, "load1": "5.78", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "5000_digit_content_length", "pass": "1", "rep": 3, "load1": "5.78", "claim": "413 straight away", "status": "HTTP/1.0 413 Request Entity Too Large", "seconds": 0.0}
+{"test": "two_content_lengths_400", "pass": "1", "rep": 3, "load1": "5.78", "claim": "400", "status": "HTTP/1.0 400 Bad Request", "seconds": 0.0}
+{"test": "conn_limit_256_immediate", "pass": "1", "rep": 3, "load1": "5.78", "claim": "503 busy, Retry-After 1, no store", "status": 503, "retry_after": "1", "body": "{\"error\": \"busy\", \"reason\": \"busy\"}", "seconds": 0.0}
+{"test": "conn_limit_256_after_2s_evicts", "pass": "1", "rep": 3, "load1": "5.56", "claim": "oldest idle >=2 s closed with no reply; new served", "status": 200, "idle_closed_by_desk": 1, "seconds": 0.0}
+{"test": "listen_backlog_ss", "pass": "1", "rep": 3, "load1": "5.56", "claim": "LISTEN_QUEUE 1024 (OS may cap lower)", "ss": "ss not installed"}
+{"test": "portal_api_40_parallel", "pass": "1", "rep": 3, "load1": "5.56", "claim": "at most 8 at once, more 503 busy", "codes": {"200": 386, "503": 14}}
+{"test": "retry_rule_closed_port", "pass": "1", "rep": 3, "load1": "5.50", "claim": "waits 0.1 doubling to 1 s; no new try after 30 s", "tries": 34, "first_gaps": [0.1, 0.2, 0.4, 0.8, 1.0, 1.0, 1.0], "last_try_at": 30.0, "total": 30.0}
+{"test": "burst100_same_lead", "pass": "1", "rep": 3, "load1": "9.78", "claim": "201=1 200=99; 1 lead,1 followup; pending settles ~3 s", "stdout": "SENT n=100 | STATUS 201=1 200=99 | RETRIES busy503=0 refused=0 | RESULT sent=100 expected=100 | ", "settle_after_burst_end": 0.0, "counts": {"leads": null, "followups": null, "received": 303, "new": 6, "duplicate": 297, "pending_followups": 0, "sent_followups": null}}
+{"test": "burst100_outbox", "pass": "1", "rep": 3, "load1": "9.78", "claim": "1 email per lead", "outbox_count": 6, "expected_total": 3}
+{"test": "end", "pass": "1", "rep": 0, "load1": "9.78", "load_after": "9.78"}
