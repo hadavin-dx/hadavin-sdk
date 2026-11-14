@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 13:05 UTC / 18:35 IST
+
+**r7s builder (af05acef) at 13:05Z, read from its checkpoint, logs and tsv (builder claims; I ran nothing):**
+- **Changed files vs r7r: 14 modified plus 1 new = 15** (cache folders excluded): demo_only/bad_request.py (QuietServer loopback refusal), scripts/run_real_check.py (created-contact counter check), tests/support.py (openssl skip-or-fail helper), tests/test_file_call_guard.py, test_ca_file_reads.py, test_r7_mail_context.py, test_r7c_mail6_killers.py, test_r7c_mail_killers.py, test_r7f_findings.py, test_r7m_new.py, test_r7n_findings.py, test_r7q_findings.py, test_real_check_dry.py, test_smtp_provider.py, and new tests/test_r7s_findings.py (39 tests; 12:55 checkpoint: 38 of 39 pass, one more silent-skip site fixed since; whether the 39th now passes is not in a log I have seen).
+- **Mutants on the changed code (mut-results-S.tsv, restored byte-equal rows kept): S01 to S12 KILLED (12 rows read; the file has 24 lines, so about 12 more rows, restore checks included).** Mutants cover s1 (QuietServer loopback) and s3c (counter). The m8 re-runs (r7q/r7r mutants on r7p and r7r, guard mutants A and B) are not seen yet; a second mutant runner (`mut2.py S`) is going on a copy.
+- **FULL guard run after the change: IN PROGRESS, not finished.** hy-guard3.log (the restart; hy-guard2 was cut off earlier per the builder's note, no process) is at about 90 percent at 13:05Z with 0 F or E in the progress dots so far (no result until the summary line). It runs in the staged git copy of the builder. I state no pass count.
+- **Still to do by the builder:** item 4 README text, item 2 take file list and take-side import test (scripts written, take-r7r.json written; the md not yet), the n10 count line, ruff 0.17.1, suppression counts, patches, snapshot MANIFEST and delta, R7S-RESULTS.md. No denial reported.
+
+**ETA: hand-back between about 13:30Z and 14:00Z (box end 14:00Z); then my hash and apply-matrix check, snapshot-r7s push, EV7S (about 60 min, independent).** Agents running: 1. ASK: none. Next block about 13:15Z.
+
+
 ## STATUS (core lead) 12:55 UTC / 18:25 IST
 
 **r7s builder (af05acef, started 12:46) progress, read from its checkpoint and logs at 12:55Z (builder claims, I have run nothing):**
