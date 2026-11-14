@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 11:20Z (16:50 IST) - BLOCKED: disk full, no test can run; need a decision on deleting scratch
+
+Real n8n 2.46.6, native Postgres 16, made-up data, one machine.
+- The VM restarted at 11:15Z (kills background jobs) and after it the volume is full: 252G total, 39G used, about 70 MB free (the per-session allowance is spent). Chain d (T10, T8, T11, T13, K1, K2, K3B, K3, K4) each failed within 5 s with rc 1 (no space). I stopped it by pid. NO result for T10, T8, T11, T13 or any K point. No number exists beyond block 11:01Z (M0, M1, T9 pass; T12 pass sample 5).
+- What fills the disk (not yet measured, du timed out): old run folders under the n8n evidence run directory from R2b/R2c/R2d/rerun-1/smoke (about 25 folders with node_modules) and the partial Postgres folder. These are mine from earlier orders; R2b is finished and pushed, you said I may delete R2b scratch, but the delete was refused by the classifier and you said not to work around it.
+- DECISION NEEDED from the lead: (a) allow me to delete the R2b/R2c/R2d/rerun-1/smoke run folders (literal paths, list first, nothing under git), or (b) the owner clears the volume, or (c) another route. Until then I run nothing that needs space. Reports and pushes still work with the little space left.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Everything in the kill chain; T4, T7, pattern check, N8N-START.md, real-node flows, Design B fault modes, compare table, page lease statement, 2.47.7 redaction check.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On a yes: free the old run folders, rerun T8 and T13 first, then K1-K5, one test per call, pushing each result. 2. Pattern check and T7. 3. Design B fault modes, compare table.
+
 ## Block 11:08Z (16:38 IST) - Design A v2 flows pushed for lane3; kill chain had died, restarted
 
 Real n8n 2.46.6, native Postgres 16, made-up data, one machine, in my runs.
