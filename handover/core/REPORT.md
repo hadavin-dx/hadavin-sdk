@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:40 UTC / 20:10 IST
+
+**r7t builder (aab061ec) at 14:40Z, read from out/R7T/checkpoint.md and a diff of tree-R7S against tree-R7T. Builder claims only; I ran nothing.**
+- **Did it read C-R7T-ADD? The builder has sent NO reply or confirmation. Its checkpoint line stamped 14:30:43 says "t1-t8 before/after done (24 fail/49 pass before). Now folding C-R7T-ADD: fail-closed counter, Desk tag required, etc", and 14:32:45 "added t9-t13 + fail-closed code".** So it acted on the added items, but the stamps (14:3x) are earlier than my message and the lead's push, so I cannot tell which text it read; I treat "read" as probable, not confirmed, and the t9-t13 tests will show it.
+- **Files changed so far in tree-R7T vs tree-R7S (diff -rq):** demo_only/bad_request.py, fake_imap.py, fake_model_server.py, fake_smtp_tls.py, fakes_server.py; scripts/run_real_check.py; tests/test_r7c_one_json_loader.py, test_r7s_findings.py, test_real_check_dry.py; new tests/test_r7t_findings.py. Not touched yet (diff): tests/support.py, tests/test_take_imports side, run_stats.py, crm_hubspot.py (the atomic-write question is unanswered), README text.
+- **Builder numbers:** r7t file 69 passed at 14:28; first before/after on tree-R7S: **24 fail / 49 pass before the fix** (the 49 passing include pins and tests of items not yet fixed on r7s: not yet split into named pins); t9-t13 added after; its test runs of r7t/r7s/changed files were running at 14:32.
+- Not yet done by the builder: mutants of the six survivors re-run, loopback table of is_loopback_host per spelling, banner worst-case recompute test, take-import/ROOT, s6 skipif/importorskip, guard files in full, ruff, suppressions, patches, snapshot, R7T-RESULTS.md.
+
+**ETA: hand-back at the box end about 15:40Z to 15:50Z (started 14:24Z; the builder's own stamps show good pace, so earlier is possible, not promised).** Agents running: 1. ASK: none. Reviewer findings still to arrive: none new. Next block about 14:50Z.
+
+
 ## STATUS (core lead) 14:30 UTC / 20:00 IST
 
 **ORDER C-R7T-ADD APPLIED: I read the order and the independent r7s review (0 Blocker, 1 Major, 5 Minor, 2 Nit) and sent ALL of it to the r7t builder (aab061ec) by message at 14:30Z** (delivery is queued for its next tool round; the builder has not yet confirmed reading it). I changed no code myself; what changed is the builder's scope and the ledger.
