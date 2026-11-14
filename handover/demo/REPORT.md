@@ -1,5 +1,11 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:20Z - lease-45 numbers filled (provisional); agents running 0
+- Statement 20 and scene 4 caption filled from the lead relay (lane3, as of 17:19Z): K1 n5 60.8/61.9 s done; K2 n5 60.9/61.2 s done; K3 n4 61.0/61.6 unknown + 1 alert; K6 n2 60.8/61.5 unknown + 1 intake + 1 alert; from n8n up 52.9 to 54.9 s; lease 120 144.2 to 144.4 s. Caption: 'about a minute after the crash (measured at lease 45 s, K1 n=5 median 60.8 max 61.9; K2 n=5 median 60.9 max 61.2)'. No pooled median (I have none). K3 and K6 small, off screen. Never 'within 60 s'.
+- PROVISIONAL: final numbers from lane3 kill/RESULTS.md Part 3 when the last 2 runs are relayed. Raw file not in my checkout.
+- QUESTION for the lead: lane3's K3 and K6 meanings in this table (I wrote K3 as 'killed after mail send' as a guess, flagged 'ask lead'); two K3 meanings are already an open naming issue.
+NOT DONE / NOT CHECKED: raw file; T17/T18 result.
+WHAT I WOULD DO NEXT: 1. final numbers when relayed. 2. T17/T18. 3. WP6 list.
 ## Block 17:16Z - lane3 HB191 templates in place, numbers pending; table v2 flaw fixed; agents running 0
 - Could NOT read handover/demo3/REPORT.md (not in my checkout); used the relayed numbers: lease 45, film-v4, 11 of 15 runs, all correct, 52.9 s from n8n up, 60.1 to 61.9 s from the kill (about 8 s restart included). Marked RELAYED-INDEPENDENT.
 - PAGE-STATEMENTS-V4: pending section with statement 20 template (n, median, max left blank) and the rule 'never within 60 s'. VIDEO-RUNSHEET: scene 4 caption template 'recovered about a minute after the crash (measured at lease 45 s, n=..., median .., max ..)'. Final numbers go in when the 15 runs land (about 17:20Z); I will not guess them.

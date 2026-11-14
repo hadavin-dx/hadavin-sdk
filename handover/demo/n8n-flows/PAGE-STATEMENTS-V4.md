@@ -145,5 +145,12 @@ NOT RUN statements: 3, 14 (demo harness on v4). Part NOT RUN: 6 (normal-path ale
 - One machine, made-up data, stand-in services, n small (n=3 for each lane3 hold, n=1 for the laptop V4-par run, n=1 for the 272.1 s alert, n=1 for the 144.3 s figure).
 - Stale source note: the V7 numbers file still says v4 B90 n=2; the settled value is n=3 on lane3 plus 1 on the laptop. Fix it at its source (not done here).
 
-## PENDING 17:17Z (lead order, lane3 HB191, lease 45 s, film-v4): numbers to be filled when the final 15 runs land (about 17:20Z)
-Statement 20 (template, NOT FINAL): "At the film lease of 45 s a lead interrupted by an n8n crash was recovered about a minute after the crash (measured at lease 45 s, n=<final n>, median <x> s, max <y> s from the kill, restart of about 8 s included)." Tag RELAYED-INDEPENDENT (lane3 HB191). Relayed so far, 11 of 15 runs, all correct (no lead lost or doubled): 52.9 s from n8n up; 60.1 s to 61.9 s from the kill. Raw file: not named to me; the lane3 report HB191 is not in my checkout. Statement 17 and 12 must then drop any "within 60 s" for lease 45: 60.1 to 61.9 s is above 60 s. NEVER write "within 60 s".
+## Statement 20 (filled 17:25Z from the lead relay of lane3 lease-45 film-v4 numbers, as of 17:19Z; PROVISIONAL until lane3 kill/RESULTS.md Part 3 with the last 2 runs)
+20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Numbers, seconds from the kill to a final state (lane3, independent harness, n8n 2.46.6, one machine, made-up data, film-v4 flows; tag RELAYED-INDEPENDENT; raw file: lane3 kill/RESULTS.md Part 3, not in my checkout):
+- K1 (killed after the claim, before the CRM write): n=5, median 60.8, max 61.9, all done.
+- K2 (killed after the CRM write, before the mail step): n=5, median 60.9, max 61.2, all done.
+- K3 (lane3 meaning, see statement 12 naming; read as killed after mail send in this table, ask lead): n=4, median 61.0, max 61.6, unknown with 1 alert. n is SMALL.
+- K6: n=2, median 60.8, max 61.5, unknown with 1 intake mail and 1 alert. n is SMALL.
+- From n8n coming back up: 52.9 to 54.9 s (the restart of about 8 s is inside the kill-to-final numbers).
+- For contrast, lease 120 s (lane3): 144.2 to 144.4 s.
+Caption wording: "about a minute after the crash (measured at lease 45 s, K1 n=5 median 60.8 s max 61.9 s; K2 n=5 median 60.9 s max 61.2 s)". The caption clock starts at the kill. NEVER "within 60 s": the medians and maxima are above 60 s. Do not pool K1 and K2 into one median (I have only per-test medians). K3 and K6 are small samples: do not put them in a caption. Final n, median and max replace these when the last 2 runs are relayed.
