@@ -1,5 +1,32 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+Container clock 03:46 UTC = 09:16 IST. Applied the lead's 03:44Z answers.
+
+STATUS TABLE (id | does | why | started UTC/IST | left | round/cap | state | next)
+- a712ad32 | r7f builder (Major stopped-run-exit-0, mail-8 and mail-7 survivors, D21, _mask, labels, docs, symlink helper) | candidate for EV7F | 03:03 / 08:33 | to 04:20 | r7f, no cap | running; sent it the lead's rules: no inline device-path text (use the Write tool), plus two new items: bound the DNS lookup or prove it inside the total deadline; find the test that writes the a<newline>b file with a per-file watcher | collect report
+- a1942238 | mutant lane 1 (A01-B03), r7e copy, full 22-file set, 240 s | survivors on r7e | 03:36 / 09:06 | to 04:06 | evidence | running: done 3 of 18: A01 TIMEOUT, A02 TIMEOUT, A03 KILLED | at 04:06 its unrun ids go to wave 2
+- ab9f9527 | mutant lane 2 (B04-E02) | same | 03:36 / 09:06 | to 04:06 | evidence | running: done 5 of 18: KILLED 3 (C02 C03 C04), TIMEOUT 1 (C01), BADMUT 1 (B04) | same
+- a5676b32 | mutant lane 3 | | 03:36 / 09:06 | | evidence | REPORTED, closed: 5 of 18 run: KILLED 2 (E04, E07), TIMEOUT 3 (E03 E05 E06), SURVIVED 0, BADMUT 0, NOT RUN 13; it says the 240 s limit is shorter than its 329 s clean baseline; it stopped once mid-F01 and restored the file itself (diff of src/ and scripts/ against tree-R7E empty, its claim) | wave 2
+- aebef140 | wave 2 lane A: E03 E05 E06 and the 13 unrun ids F01-P02, per-mutant test selectors (files that touch the mutated module plus the killer files) at 240 s, any survivor re-run once on the full set at 900 s | proves or kills the unresolved ones | 03:46 / 09:16 | to 04:31 | evidence | running (just started) | collect REPORT.md
+- closed earlier: a954ceb0, a86b10ca, a4355ac3, a3b90516, a9760115
+
+Mutant totals on r7e so far (of 54; counted from the progress files): KILLED 6 (A03 C02 C03 C04 E04 E07), TIMEOUT 6 (A01 A02 C01 E03 E05 E06; unknown, not survived), BADMUT 1 (B04), SURVIVED 0, not run 41. Heavy suites at the moment: 2 lanes plus the builder plus wave 2 lane A = 4; lead's cap in wave 2 is 2 suites at a time, so wave 2 lane A runs only per-module test sets (small), and I will not start a second wave-2 lane until lanes 1 and 2 end at 04:06.
+
+ASK:
+1. Lead: lanes 1 and 2 are on the old method (full set, 240 s) and mostly produce TIMEOUTs. Default I take in 10 min: stop them early at 03:56 (after restoring any planted mutation, checked by sha) and start wave 2 lanes B and C with the per-module selectors for their unfinished ids, so the machine is not wasted. Say no if you want them to finish their box.
+
+NOT DONE / NOT CHECKED (item | why | next)
+- 41 of 54 mutants not yet run on r7e; 6 unknown (TIMEOUT); B04 and any other BADMUT not re-mapped | old method too slow | wave 2 with selectors; BADMUT re-map by the r7f builder or a lane
+- r7f not built; r7e Major open | builder working | EV7F
+- DNS lookup bound and the stray a<newline>b writer: now on the builder's list | lead's order | verify in EV7F
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI | end, clean patch | later
+- 36-line patch gap: skipped by lead decision
+
+WHAT I WOULD DO NEXT (ranked)
+1. Wave 2 lanes B and C on the unfinished ids with selectors; 900 s full-suite recheck of survivors.
+2. EV7F once alone on a checkout without data/, with fresh reviewer and mail pass 9.
+3. Final README, sweep, QUEUE DONE.
+## STATUS (core lead)
 Container clock 03:42 UTC = 09:12 IST.
 
 STATUS TABLE (one line per agent; fields: id | does | why | started UTC/IST | left | round/cap | state | next)
