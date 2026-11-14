@@ -1,3 +1,32 @@
+## HEARTBEAT 80 (03:24Z) - B9 PATCH AND NOTES EXIST (NOT FULLY PROVEN); M3 AND M4 FULL RUNS CONTINUE
+
+| Agent | Job | State |
+|---|---|---|
+| M3 | 3.13 shuffled seed 987654 | running, 77 percent |
+| M4 | gitleaks 8.30.1: 3 files passed 72/72 in both orders (its note); full suite with the program | running since 03:19 |
+| B9 | fix-9: core helper `book_folder_in_repo` in the three test sites | patch (12560 bytes, sha256 b56dfdde...) and notes written; proof runs still running (full suite 7 percent, three-file reruns on 3.13 then 3.12) |
+
+FAILURES AND RETRIES: environment failures unchanged (30 gitleaks-binary failures in M1 and M2). B9: one of its own tests failed once (a wrong check in its own symlink test, reported as XPASS under strict); B9 fixed it and a re-run of just that test gave '1 passed, 1 xfailed'; the three-file set was NOT re-run after that fix yet. 1 retry (B9 replaced its own helper with core's because of the lead's order). Totals: closed M1, M2, M5; running M3, M4, B9; 0 flaky, 0 order-dependent found.
+B9 patch facts (from its report, not yet read by me): core helper copied byte for byte (core patch sha256 89ca3a2d...cee8, lines 6838-6855), plus an added `import shutil` and `import tempfile` because the base file lacked them; symlink test is marked as an expected failure until core r7f lands. Guard test failing on the old code: B9's raw logs b9-fails-before.log and b9-fails-before2.log; I did not read them.
+STRAY FILE: /helper.txt (865 bytes, root, helper text) made by B9; removal blocked by the safety check (only a person can approve); not worked around. A person must delete it.
+ASK list: (1) delete /helper.txt by hand. (2) When core r7f lands, who re-copies the helper into this lane's patch? (I suggest B9 resumes.)
+Load (measured): idle CPU 77 percent, free RAM 15.1 GB; 3 full suites running at once (M3, M4, B9) plus B9's three-file reruns, which is the 3-slot limit, not above it.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Full-suite counts and the data/ check after the run for B9's fix: still running; B9 estimated an end near 04:30Z, which I think is too late (the other full runs took about 15 minutes alone); I will read the log when it ends. Next: read b9-full-313.log tail and check data/.
+- Three-file reruns of B9's fix on 3.13 and 3.12: running; B9's 3.12 run of the core-helper version never happened before. Next: read b9-three-313.log and b9-three-312.log.
+- Independent review of the fix-9 patch: not started; it is a test-only change that copies core's already reviewed helper, so I propose one short fresh `egm:*` reviewer after the proof runs; the lead decides.
+- Core r7f (symlink fix) not applied: it is not in the patch I copied. Next: re-copy when it lands and remove the xfail.
+- Reversed-order gitleaks result and M4's full run: only M4's notes, not read in raw; next: read raw logs.
+- Playwright (166 browser tests) never ran on 3.13; Python 3.11 not run; time per group not measured; ruff, mypy, bandit, gitleaks CI-only, Windows not run (reset.ps1).
+- MATRIX-1.md not written yet.
+- From the freeze, unchanged: fix-8, fix-2 r4, fix-5 r5 unreviewed; no stack test; E3b, PR #12 E marks and old xdist flake unexplained.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read B9's three-file and full-suite logs, then one fresh independent reviewer on the fix-9 patch, then drift report.
+2. Write MATRIX-1.md from M1 to M5 and the B9 evidence.
+3. One 3.12 run with the same shuffle seed 20261114 to compare with 3.13 on equal order (also gives time per group with --durations).
+
 ## HEARTBEAT 79 (03:20Z) - ONE SOURCE OF TRUTH ORDER SENT TO B9; MATRIX CONTINUES
 
 | Agent | Job | State |
