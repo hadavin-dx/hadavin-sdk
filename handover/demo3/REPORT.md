@@ -7,13 +7,13 @@
 | WINDOWS-RUN-1.md | WRITTEN (handover/demo3/WINDOWS-RUN-1.md). Commands, folders, expected exit codes incl. 7, refusal table, clean-up. The expected lines come from READING reset.ps1 / start_all.ps1; nothing was run on Windows. Lead: please run it and send the output back. |
 | Lead decision 04:34Z A1 (one book fixture) | B12 had already handed back, so I could not tell it in time. Handled in the stack re-cut instead: fix-9's `book` fixture wins, fix-5's copy is removed (stack builder brief). B1-B4, B11, D5 go into stack-docs-final. |
 
-SHARED-CLONE FINDING (my own slip, now checked): the hygiene test runs `gitleaks git` over the whole history of the clone. In /home/user/work/src, my `git fetch -q origin` at 04:21Z added ONE ref, remotes/origin/n8n-evidence-rerun (reflog: "storing head" 04:21:19Z). Every other remote ref was already there since 11-13. Measured with the repo's own config and flags: 972 findings with my ref, 933 without it, and origin/main alone gives 927. So (a) my ref added about 39 findings, (b) the test fails on any full-history clone even without it: the history holds old literals (the test itself says "a history scan can report literals that are no longer in the tree"). I did NOT find why CI passes; likely a shallow checkout (fetch-depth 1), NOT verified. I removed my ref (`git update-ref -d`). Consequence: clean-tree and stack full runs must use a shallow or single-commit clone, otherwise the hygiene test fails for a reason that is not the code. Earlier green full runs (EV10, B10, B11) are not affected: they were green with the same shared clone before 04:21Z or on trees whose result I read; B12's one hygiene failure is this cause.
+SHARED-CLONE FINDING (my own slip; I first got it wrong, now corrected 04:38Z): the hygiene test runs `gitleaks git` over the history of the clone. My `git fetch -q origin` in /home/user/work/src at 04:21Z added ONE ref, remotes/origin/n8n-evidence-rerun (commit ad612e2; reflog "storing head" 04:21:19Z); all other remote refs were there since 11-13. MEASURED with the config of origin/main (not the clone's old checkout config, which I wrongly used first and which gave a false "933 findings even without my ref"): all refs with my ref = 39 findings, rc 1; without it = "no leaks found", rc 0. The 39 are all rule long-hex-token in that branch: demo_only/n8n_evidence/SHA256SUMS (36), gate-rule.sha256.txt, harness/run_all.py, tests/test_n8n_evidence.py. So B12's attribution was right. I removed my ref (`git update-ref -d`); the clone has 15 remote refs again. LEAD: branch n8n-evidence-rerun is not mine; if it is merged as it is, CI's lint (gitleaks git, full history) and the hygiene test will find these 39 hashes unless .gitleaks.toml allows them. Earlier full runs (EV10, B10, B11) ran before 04:21Z or on trees I read, unaffected; B12's final run started 04:35Z, after my ref was already there? It runs in b12-chk-final, a worktree of the same clone: it saw my ref until 04:36Z, so its hygiene test may fail for this reason; I will say so when I read the tail. For the stack and clean-tree runs: use a clone without that ref.
 
 FAILURES AND RETRIES: no test failure this block. My slips: fetch in the shared clone (above); WINDOWS-RUN-1 first written with a time 4 minutes ahead (fixed).
 Load: about 1-2 (B12 full run, B13, B14).
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
-- Why CI's hygiene test passes with history: not verified (guess: shallow checkout). Next: read .github/workflows and the test's skip logic, then run the test on a depth-1 clone.
+- Hygiene cause: verified (see above). Next: make sure no run uses a clone holding n8n-evidence-rerun.
 - Stack not built; stack-docs-final not cut; stack review, full run, browser tests, clean-tree check not done (wait for B12 final run, B13).
 - fix-5 r6, fix-2 r5, fix-10: no fresh review yet.
 - Browser skip reasons: M6 -rs not read yet (M9 shows only 'playwright not importable').
@@ -21,7 +21,7 @@ NOT DONE / NOT CHECKED (my list, for the lead to decide)
 - Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
 
 WHAT I WOULD DO NEXT (ranked)
-1. Read CI's hygiene setup and prove the depth-1 clone passes; give the stack builder that recipe.
+1. Read M6 -rs skip reasons; check B12 final tail at about 04:54Z (hygiene may fail for the ref reason, now removed: re-run that one test).
 2. Read M6 -rs skip reasons; read B12's final tail at about 04:54Z; start fresh reviewers for fix-5 r6 and fix-2 r5 as they land.
 3. Start the single stack re-cut builder after B13 reports.
 
