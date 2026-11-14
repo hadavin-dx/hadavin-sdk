@@ -1,0 +1,3 @@
+# round 10: name | KILLED/SURVIVED/NOT APPLIED | pytest last line | killing tests (first FAILED line (-x))
+sh folder check dropped | KILLED | 1 failed, 90 passed, 1 skipped in 29.49s | tests/test_reset_scripts.py::test_reset_sh_refuses_with_exit_7_when_the_pid_file_is_an_empty_folder_and_keeps_the_book[desk.pid]
+sh pid files not deleted (pass 3) | KILLED | 1 failed, 8 passed in 2.34s | tests/test_reset_order_and_words.py::test_reset_sh_removes_a_pid_file_that_is_a_link_to_a_missing_file

@@ -1,0 +1,21 @@
+##### sh folder check dropped (scripts/reset.sh)
+--- good
++++ mutant
+@@ -103 +103 @@
+-    if [[ -d "$pidfile" ]]; then
++    if [[ -d "$pidfile.none" ]]; then
+
+##### sh pid files not deleted (pass 3) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -174 +174 @@
+-  if ! rm -f -- "$pidfile" 2>/dev/null; then
++  if ! true; then
+
+##### ps1 process lookup errors silenced (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -91 +91 @@
+-                $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction Stop
++                $proc = Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction SilentlyContinue
+

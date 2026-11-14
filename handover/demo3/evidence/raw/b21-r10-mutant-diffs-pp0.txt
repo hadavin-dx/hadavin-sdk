@@ -1,0 +1,21 @@
+##### sh pass 1 also stops (kill added in pass 1) (scripts/reset.sh)
+--- good
++++ mutant
+@@ -128 +128 @@
+-      number[$name]="$pid"
++      number[$name]="$pid"; kill "$pid" 2>/dev/null || true
+
+##### sh read loop reads nothing (scripts/reset.sh)
+--- good
++++ mutant
+@@ -85 +85 @@
+-  { for ((tries = 0; tries < 67 && ${#pid} < 67; tries++)); do
++  { for ((tries = 0; tries < 0 && ${#pid} < 67; tries++)); do
+
+##### sh ours judged stale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -127 +127 @@
+-      kind[$name]=ours
++      kind[$name]=stale
+

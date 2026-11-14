@@ -1,0 +1,32 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_reset_sh_says_python_was_not_found_when_the_check_program_cannot_start __
+
+book = PosixPath('/home/user/work/b21-old/data/reset-guard-gewvbr_2/desk.sqlite3')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-474/test_reset_sh_says_python_was_0')
+
+    @_posix
+    def test_reset_sh_says_python_was_not_found_when_the_check_program_cannot_start(book: Path, tmp_path: Path) -> None:
+        """exit 127 from the check (what a shell gives for a missing program): its own words, exit 5, every file kept."""
+        folder = tmp_path / "bin127"
+        folder.mkdir()
+        stand_in = folder / "python"
+        stand_in.write_text(
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == scripts/reset_check.py ]]; then exit 127; fi\n'
+            f'exec "{sys.executable}" "$@"\n',
+            encoding="utf-8",
+        )
+        stand_in.chmod(0o755)
+        done = reset_run(SH, book, first_on_path=folder, **reset_ports())
+        assert done.returncode == 5, (done.returncode, done.stdout, done.stderr)
+>       assert "python was not found" in done.stderr and "nothing was deleted" in done.stderr, done.stderr
+E       AssertionError: refused: the check program failed (exit 127); nothing was deleted, not even the pid files
+E         
+E       assert ('python was not found' in 'refused: the check program failed (exit 127); nothing was deleted, not even the pid files\n')
+E        +  where 'refused: the check program failed (exit 127); nothing was deleted, not even the pid files\n' = CompletedProcess(args=['bash', '/home/user/work/b21-old/scripts/reset.sh'], returncode=5, stdout='', stderr='refused: the check program failed (exit 127); nothing was deleted, not even the pid files\n').stderr
+
+tests/test_reset_order_and_words.py:429: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_reset_order_and_words.py::test_reset_sh_says_python_was_not_found_when_the_check_program_cannot_start
+1 failed, 45 deselected in 0.20s

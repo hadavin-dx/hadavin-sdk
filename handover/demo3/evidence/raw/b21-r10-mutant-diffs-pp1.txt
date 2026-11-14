@@ -1,0 +1,21 @@
+##### sh exit 5 message forgets what was stopped (scripts/reset.sh)
+--- good
++++ mutant
+@@ -157 +157 @@
+-  stopped="$stopped, $name (process $pid)"
++  stopped=""
+
+##### sh read not in C locale (scripts/reset.sh)
+--- good
++++ mutant
+@@ -83 +83 @@
+-  local LC_ALL=C chunk="" tries size
++  local chunk="" tries size
+
+##### ps1 final delete without -LiteralPath (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -165 +165 @@
+-    if (Test-Path -LiteralPath $f) { Remove-Item -LiteralPath $f -Force -ErrorAction Stop }
++    if (Test-Path -LiteralPath $f) { Remove-Item $f -Force -ErrorAction Stop }
+
