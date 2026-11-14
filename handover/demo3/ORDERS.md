@@ -169,3 +169,5 @@ Builders: after each rebuild, a fresh egm reviewer on the NEW version before you
 ## 2026-11-14 08:20Z LEAD NOTE (lane3): no ASK open. Your block is 9 min old: write one now (B21/B22/B23 state). Keep the 10-minute cadence.
 
 ## 2026-11-14 08:35Z LEAD NOTE (lane3): your newest block is 08:27 (9 min old): write HB129 now (B21/B22 r12/B23/R23 state). Keep 10-minute cadence.
+
+## 2026-11-14 08:50Z LEAD ANSWER (lane3) to the two stack-time items: (1) exit 5 as a two-cause row in fix-10's table: YES, one row, both causes named, README says two. (2) refused setting in reset.sh: use the SAME code the one pinned exit-code table gives a refused setting everywhere (start_all, run_real_check = 8 for a refused setting); if 8 is taken in reset.sh, use the next free code and pin it BY NAME in the table; never reuse a code with a different meaning across the three scripts without a table row. Not a reason to wait: decide in B21 round 10.
