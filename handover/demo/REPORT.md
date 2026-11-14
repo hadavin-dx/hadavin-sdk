@@ -1,6 +1,24 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:23Z (14:53 IST) - desk kill series: my two "blind" series were NOT blind (harness fault, mine); rerun queued
+
+- Desk series done at A (keyed), C0 (keyed), D2 (keyed), D2 and D1b labelled "blind". Raw per-kill table pushed: n8n-rerun/desk-kill/summary-per-kill.txt (plus the five raw result files and my scratch scripts as .txt).
+- Real process end (exit code 137) 5 of 5 at each series. In every kill: 1 desk lead, 1 receipt, and after the restart plus the same request again the CRM and the mail counters each rose by exactly 1 per lead (checked per run as the change in the total, because the stand-in servers were cumulative). No lead lost and no work done twice in these 25 runs. Point A: the first call lost its connection in 5 of 5, the second call got 201 with "replayed true". C0, D2, D1b: the first call already got 201.
+- MY FAULT, found while verifying the follow-up states: the stand-in mail server reported mode "keyed" in all 25 records, and its counters ran on across series (1..20), so one keyed server stayed up across D2 keyed, D2 "blind", D1b "blind" and the C0 rerun. My driver's stop step did not end it (cause not yet found). So the D2 "blind" and D1b "blind" rows are keyed rows and say NOTHING about a blind mail system. Their "sent" end state (attempts 2, ambiguous flag 1) is the keyed behaviour. Do not read them as agreeing or disagreeing with the published UNKNOWN. I added a check (mode must equal the series, fake must be empty) and will rerun both blind series after the n8n point-1 run, which holds the machine now.
+- The older page line "blind: one e-mail and UNKNOWN" comes from my earlier D2 run and is not touched by this; it stays as it is.
+- n8n point-1 run (two flows, 5 kills each) started 09:20Z, still running; result not read yet.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Blind D2 and D1b reruns; n8n point-1 result; compare file; page fold of the kill-between-steps sentence; reviewer; hygiene scan.
+- Why my stop step left the mail server up.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read n8n point-1, then rerun D2 and D1b blind with the mode check (kill the stale server by pid first).
+2. Write n8n-vs-desk-kill-compare.md, fold the kill-between-steps sentence, reviewer, hygiene.
+3. Find why stop_all left the server (so keyed C0/D2 numbers can be trusted as fresh per kill).
+
+
 ## Block 09:15Z - desk kill test at three points: progress (desk side running, n8n side built)
 
 - Plan, from the order: point 1 = n8n killed after its insert and before the desk has the request (n8n side, two flows: with an n8n insert first, and desk first with no n8n insert); point 2 = desk ended right after its receipt, before any work (desk crash point A) and with the CRM write about to start (C0); point 3 = desk ended after the e-mail was sent, result not yet noted (D2, keyed and blind) plus D1b blind (send marked, mail system not called). The desk is ended for real (os exit 137 through the repo's crash script flag file) on the clean export of the public main; each point 5 kills, a fresh desk record book per kill; then the SAME request is sent again and counts are read (desk leads, CRM rows, e-mails, follow-up state).

@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /tmp/rr/dk; P=/tmp/rr/repo/data/venv/bin/python
+for pk in "A keyed" "C0 keyed" "D2 keyed" "D2 blind" "D1b blind"; do set -- $pk; $P desk_kill.py $1 $2 5 > out-$1-$2.txt 2>&1; echo "$1 $2 rc $? $(date -u +%H:%M:%SZ)" >> done.log; done
+echo ALLDONE >> done.log

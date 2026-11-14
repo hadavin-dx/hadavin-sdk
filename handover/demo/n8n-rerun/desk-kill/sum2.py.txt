@@ -1,0 +1,7 @@
+import json,glob,re
+print("point kind i | first call | second call | desk leads | receipts | follow-up state (attempts, ambiguous flag) | CRM total after | mail total after")
+for f in sorted(glob.glob("/tmp/rr/dk/result-*.json")):
+    for r in json.load(open(f)):
+        a=r["after"];db=a["db"]
+        c=int(re.search(r'"count": (\d+)',a["crm"]).group(1)); o=int(re.search(r'"count": (\d+)',a["outbox"]).group(1))
+        print(r["point"],r["kind"],r["i"],"|",r["first_call"][0],"|",r["second_call"][0],"|",db["leads"],"|",db["receipts"],"|",[(x[1],x[3],x[9]) for x in db["followup_rows"]],"|",c,"|",o)

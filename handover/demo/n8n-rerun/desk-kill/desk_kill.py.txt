@@ -1,0 +1,73 @@
+"""SCRATCH (09:10Z order, desk side). Real process end of the DESK at one named point (crash_desk.py flag file, os._exit 137), restart, same request sent again.
+usage: desk_kill.py <point> <keyed|blind> <n>   run from nowhere special; uses the clean export /tmp/rr/t3exp. Made-up data, loopback."""
+import json, os, shutil, sqlite3, subprocess, sys, time, urllib.request, urllib.error, glob, signal
+ROOT = "/tmp/rr/t3exp"; PY = "/tmp/rr/repo/data/venv/bin/python"
+ENV = dict(os.environ, PYTHONPATH="src:.", DESK_LEADFLOW_FILE="off")
+point, kind, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
+D = "LOOPBACK-ADDR"; F = "LOOPBACK-ADDR"
+def get(u, t=3):
+    try:
+        with urllib.request.urlopen(u, timeout=t) as r: return r.status, r.read().decode()
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()
+    except Exception as e: return type(e).__name__, ""
+def post(env, t=15):
+    r = urllib.request.Request(D + "/leads", json.dumps(env).encode(), {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(r, timeout=t) as x: return x.status, x.read().decode()[:300]
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()[:300]
+    except Exception as e: return type(e).__name__, str(getattr(e, "reason", ""))[:80]
+def up(url, tries=40):
+    for _ in range(tries):
+        if get(url)[0] == 200: return True
+        time.sleep(0.5)
+    return False
+procs = []
+def start(args, log):
+    p = subprocess.Popen([PY] + args, cwd=ROOT, env=ENV, stdout=open(log, "ab"), stderr=subprocess.STDOUT, start_new_session=True); procs.append(p); return p
+def stop_all():
+    for p in procs:
+        try: os.killpg(p.pid, signal.SIGTERM)
+        except Exception: pass
+    time.sleep(1.5)
+    for p in procs:
+        try: os.killpg(p.pid, signal.SIGKILL)
+        except Exception: pass
+    procs.clear()
+def clean():
+    for f in glob.glob(ROOT + "/data/*"):
+        (shutil.rmtree if os.path.isdir(f) else os.remove)(f)
+def db_counts():
+    out = {}
+    for f in [x for x in glob.glob(ROOT + "/data/*") if os.path.isfile(x) and open(x, "rb").read(15) == b"SQLite format 3"]:
+        c = sqlite3.connect("file:%s?mode=ro" % f, uri=True)
+        for t in ("receipts", "leads", "followups"):
+            try: out[t] = c.execute("select count(*) from %s" % t).fetchone()[0]
+            except Exception as e: out[t] = "err"
+        try: out["followup_rows"] = [tuple(r) for r in c.execute("select * from followups").fetchall()][:3]
+        except Exception: pass
+        try: out["followup_cols"] = [d[0] for d in c.execute("select * from followups limit 1").description]
+        except Exception: pass
+        c.close()
+    return out
+res = []
+for i in range(1, n + 1):
+    clean(); stop_all()
+    start(["-m", "demo_only.fakes_server", "--outbox", kind, "--port", "8766"], "/tmp/rr/dk/fakes.log")
+    desk = start(["scripts/crash_desk.py"], "/tmp/rr/dk/desk.log")
+    assert up(D + "/counts") and up(F + "/fake/info"), "stack did not start"
+    email = "kill-%s-%d@example.test" % (point.lower(), i)
+    env = {"source": "form", "source_ref": "kill-%s-%d" % (point, i), "payload": {"name": "Test Person", "email": email, "company": "Example Ltd", "message": "made-up"}}
+    open(ROOT + "/data/crash.flag", "w").write(point)
+    first = post(env)
+    try: rc = desk.wait(timeout=10)
+    except Exception: rc = "still-running"
+    before = {"crm": get(F + "/fake/crm")[1][:200], "outbox": get(F + "/fake/outbox")[1][:200], "db": db_counts()}
+    desk2 = start(["scripts/crash_desk.py"], "/tmp/rr/dk/desk.log"); ok = up(D + "/counts")
+    time.sleep(3)
+    second = post(env)
+    time.sleep(12)  # the desk's background job (reaper) settles open receipts and stuck follow-ups
+    after = {"crm": get(F + "/fake/crm")[1][:300], "outbox": get(F + "/fake/outbox")[1][:300], "counts": get(D + "/counts")[1][:300], "db": db_counts()}
+    rec = {"point": point, "kind": kind, "i": i, "email": email, "first_call": first, "desk_exit_code": rc, "before_restart": before, "restarted": ok, "second_call": second, "after": after}
+    res.append(rec); print(json.dumps(rec), flush=True)
+stop_all(); clean()
+json.dump(res, open("/tmp/rr/dk/result-%s-%s.json" % (point, kind), "w"), indent=1)

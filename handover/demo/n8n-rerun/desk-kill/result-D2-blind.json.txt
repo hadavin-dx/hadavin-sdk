@@ -1,0 +1,457 @@
+[
+ {
+  "point": "D2",
+  "kind": "blind",
+  "i": 1,
+  "email": "kill-d2-1@example.test",
+  "first_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"L31b9d603af44\", \"replayed\": false}"
+  ],
+  "desk_exit_code": 137,
+  "before_restart": {
+   "crm": "{\"count\": 6, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_labe",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 6, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "L31b9d603af44",
+      "sending",
+      "warm",
+      1,
+      null,
+      1794647742,
+      null,
+      1,
+      1,
+      0,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  },
+  "restarted": true,
+  "second_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"L31b9d603af44\", \"replayed\": true, \"payload_matches\": true}"
+  ],
+  "after": {
+   "crm": "{\"count\": 6, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_label\": \"warm\"}}, {\"lead_id\": \"L3c08b1f0b8ed\", \"record\": {\"lead_id\": \"L3c08b1f0b8ed\", \"name\": \"Test Pers",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 6, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to\": \"kill-d2-2@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L8625f",
+   "counts": "{\"received\": 1, \"new\": 1, \"duplicate\": 0, \"review\": 0, \"open\": 0, \"rejected_envelopes\": 0, \"pending_followups\": 0, \"failed_followups\": 0, \"unknown_followups\": 0, \"sending_followups\": 0, \"hung_workers\": {\"model\": 0, \"crm\": 0, \"send\": 0, \"refresh\": 0}, \"decide_integrity_errors\": 0, \"decide_transient_e",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "L31b9d603af44",
+      "sent",
+      "warm",
+      2,
+      null,
+      1794647743,
+      1794647743,
+      1,
+      2,
+      1,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  }
+ },
+ {
+  "point": "D2",
+  "kind": "blind",
+  "i": 2,
+  "email": "kill-d2-2@example.test",
+  "first_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Ld9275d46adc9\", \"replayed\": false}"
+  ],
+  "desk_exit_code": 137,
+  "before_restart": {
+   "crm": "{\"count\": 7, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_labe",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 7, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Ld9275d46adc9",
+      "sending",
+      "warm",
+      1,
+      null,
+      1794647760,
+      null,
+      1,
+      1,
+      0,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  },
+  "restarted": true,
+  "second_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Ld9275d46adc9\", \"replayed\": true, \"payload_matches\": true}"
+  ],
+  "after": {
+   "crm": "{\"count\": 7, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_label\": \"warm\"}}, {\"lead_id\": \"L3c08b1f0b8ed\", \"record\": {\"lead_id\": \"L3c08b1f0b8ed\", \"name\": \"Test Pers",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 7, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to\": \"kill-d2-2@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L8625f",
+   "counts": "{\"received\": 1, \"new\": 1, \"duplicate\": 0, \"review\": 0, \"open\": 0, \"rejected_envelopes\": 0, \"pending_followups\": 0, \"failed_followups\": 0, \"unknown_followups\": 0, \"sending_followups\": 0, \"hung_workers\": {\"model\": 0, \"crm\": 0, \"send\": 0, \"refresh\": 0}, \"decide_integrity_errors\": 0, \"decide_transient_e",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Ld9275d46adc9",
+      "sent",
+      "warm",
+      2,
+      null,
+      1794647761,
+      1794647761,
+      1,
+      2,
+      1,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  }
+ },
+ {
+  "point": "D2",
+  "kind": "blind",
+  "i": 3,
+  "email": "kill-d2-3@example.test",
+  "first_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Lc628732e3582\", \"replayed\": false}"
+  ],
+  "desk_exit_code": 137,
+  "before_restart": {
+   "crm": "{\"count\": 8, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_labe",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 8, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Lc628732e3582",
+      "sending",
+      "warm",
+      1,
+      null,
+      1794647777,
+      null,
+      1,
+      1,
+      0,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  },
+  "restarted": true,
+  "second_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Lc628732e3582\", \"replayed\": true, \"payload_matches\": true}"
+  ],
+  "after": {
+   "crm": "{\"count\": 8, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_label\": \"warm\"}}, {\"lead_id\": \"L3c08b1f0b8ed\", \"record\": {\"lead_id\": \"L3c08b1f0b8ed\", \"name\": \"Test Pers",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 8, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to\": \"kill-d2-2@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L8625f",
+   "counts": "{\"received\": 1, \"new\": 1, \"duplicate\": 0, \"review\": 0, \"open\": 0, \"rejected_envelopes\": 0, \"pending_followups\": 0, \"failed_followups\": 0, \"unknown_followups\": 0, \"sending_followups\": 0, \"hung_workers\": {\"model\": 0, \"crm\": 0, \"send\": 0, \"refresh\": 0}, \"decide_integrity_errors\": 0, \"decide_transient_e",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Lc628732e3582",
+      "sent",
+      "warm",
+      2,
+      null,
+      1794647778,
+      1794647778,
+      1,
+      2,
+      1,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  }
+ },
+ {
+  "point": "D2",
+  "kind": "blind",
+  "i": 4,
+  "email": "kill-d2-4@example.test",
+  "first_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Ledc9331c8049\", \"replayed\": false}"
+  ],
+  "desk_exit_code": 137,
+  "before_restart": {
+   "crm": "{\"count\": 9, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_labe",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 9, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Ledc9331c8049",
+      "sending",
+      "warm",
+      1,
+      null,
+      1794647795,
+      null,
+      1,
+      1,
+      0,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  },
+  "restarted": true,
+  "second_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"Ledc9331c8049\", \"replayed\": true, \"payload_matches\": true}"
+  ],
+  "after": {
+   "crm": "{\"count\": 9, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_label\": \"warm\"}}, {\"lead_id\": \"L3c08b1f0b8ed\", \"record\": {\"lead_id\": \"L3c08b1f0b8ed\", \"name\": \"Test Pers",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 9, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to\": \"kill-d2-2@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L8625f",
+   "counts": "{\"received\": 1, \"new\": 1, \"duplicate\": 0, \"review\": 0, \"open\": 0, \"rejected_envelopes\": 0, \"pending_followups\": 0, \"failed_followups\": 0, \"unknown_followups\": 0, \"sending_followups\": 0, \"hung_workers\": {\"model\": 0, \"crm\": 0, \"send\": 0, \"refresh\": 0}, \"decide_integrity_errors\": 0, \"decide_transient_e",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "Ledc9331c8049",
+      "sent",
+      "warm",
+      2,
+      null,
+      1794647796,
+      1794647796,
+      1,
+      2,
+      1,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  }
+ },
+ {
+  "point": "D2",
+  "kind": "blind",
+  "i": 5,
+  "email": "kill-d2-5@example.test",
+  "first_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"L6f7851fa8694\", \"replayed\": false}"
+  ],
+  "desk_exit_code": 137,
+  "before_restart": {
+   "crm": "{\"count\": 10, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_lab",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 10, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"t",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "L6f7851fa8694",
+      "sending",
+      "warm",
+      1,
+      null,
+      1794647812,
+      null,
+      1,
+      1,
+      0,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  },
+  "restarted": true,
+  "second_call": [
+   201,
+   "{\"receipt_id\": 1, \"verdict\": \"new\", \"lead_id\": \"L6f7851fa8694\", \"replayed\": true, \"payload_matches\": true}"
+  ],
+  "after": {
+   "crm": "{\"count\": 10, \"rows\": [{\"lead_id\": \"Le8325e20aee2\", \"record\": {\"lead_id\": \"Le8325e20aee2\", \"name\": \"Test Person\", \"email\": \"kill-d2-1@example.test\", \"company\": \"Example Ltd\", \"source\": \"form\", \"ai_label\": \"warm\"}}, {\"lead_id\": \"L3c08b1f0b8ed\", \"record\": {\"lead_id\": \"L3c08b1f0b8ed\", \"name\": \"Test Per",
+   "outbox": "{\"mode\": \"keyed\", \"count\": 10, \"reminders\": 0, \"messages\": [{\"key\": \"Le8325e20aee2\", \"to\": \"kill-d2-1@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L3c08b1f0b8ed\", \"to\": \"kill-d2-2@example.test\", \"subject\": \"Thanks for getting in touch, Test Person\"}, {\"key\": \"L8625",
+   "counts": "{\"received\": 1, \"new\": 1, \"duplicate\": 0, \"review\": 0, \"open\": 0, \"rejected_envelopes\": 0, \"pending_followups\": 0, \"failed_followups\": 0, \"unknown_followups\": 0, \"sending_followups\": 0, \"hung_workers\": {\"model\": 0, \"crm\": 0, \"send\": 0, \"refresh\": 0}, \"decide_integrity_errors\": 0, \"decide_transient_e",
+   "db": {
+    "receipts": 1,
+    "leads": 1,
+    "followups": 1,
+    "followup_rows": [
+     [
+      "L6f7851fa8694",
+      "sent",
+      "warm",
+      2,
+      null,
+      1794647813,
+      1794647813,
+      1,
+      2,
+      1,
+      1
+     ]
+    ],
+    "followup_cols": [
+     "lead_id",
+     "state",
+     "ai_label",
+     "attempts",
+     "last_error",
+     "updated_at",
+     "sent_at",
+     "crm_done",
+     "auto_attempts",
+     "ambiguous_prior",
+     "send_started"
+    ]
+   }
+  }
+ }
+]
