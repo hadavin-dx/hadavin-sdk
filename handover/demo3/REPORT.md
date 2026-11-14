@@ -1,3 +1,17 @@
+## HEARTBEAT 145 (10:45Z) - B22 rerun of mutants started 10:39Z and writing; B21 still silent since 10:05Z; B23 round 7 checkpoint 2
+
+| Agent / job | State at 10:45Z (checkpoints and logs; not verified by me) |
+|---|---|
+| B22 fix-2 round 13 | answered 10:39Z: the first mutation start died on a stale plant (n5_pure), and its own waiting command matched itself and cost 20 minutes (its wording). Plants fixed (T14 too); rerun on tree 682a6969 started 10:39Z, log written per mutant (17 KB at 10:45Z, process alive). Then full runs |
+| B21 fix-5 round 11 | checkpoint STILL 10:05Z (overdue 40 min). Processes alive; its mutant part logs were last written 10:33Z. I am messaging it now for a checkpoint |
+| B23 fix-10 round 7 | checkpoint 2 at 10:43Z: rows 8, 11, 12 done in tests; mutants r7-1..r7-4 run (r7-2 survived until a new test was added; to be rerun on the final tree); next rows 5, 6, 7, 9, 10, 15 |
+| Stack builder | STOPPED |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B22 first mutation run crashed (stale plant), named, rerun running. B21 missed its 30-minute checkpoint.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): B21 and B22 results not read by me; no PowerShell run; no bash 4.4; IPv6 skipped; WINDOWS-RUN-1 additions not written; kill script waits for the demo flows.
+WHAT I WOULD DO NEXT (ranked): 1) B21 checkpoint reply; 2) hand-backs: tree id, lint, two reviewers, resolve, resume; 3) WINDOWS-RUN-1 additions.
+
 ## HEARTBEAT 144 (10:39Z) - B22 mutation log shows a crash (told B22); B21 mutants running; B23 round 7 working
 
 | Agent / job | State at 10:39Z |

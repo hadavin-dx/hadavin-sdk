@@ -26,3 +26,4 @@ Tree 8a5c446e3b59a87b7568497b5ace90631d9b303a staged, not committed. Final full 
 
 ## Round 7 checkpoint 1 (about 10:45 UTC)
 Start tree 8a5c446e. Row 1 done (named groups MEANING_GROUPS for codes 1-5, test that plants new meanings). Next: M4 ps1, M3 reset test, row 11/12/13/14, row 5 producing tests, rows 6-10/15, mutants, final run.
+round7 checkpoint 2 10:43: rows 8,11,12 done in tests; r7-1..r7-4 mutants run (r7-2 survived until new test added; rerun on final tree). Next row 5,6,7,9,10,15.
