@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:00Z): R2b CONTROL + R3-PARTIAL DONE AND PUSHED; n8n runs finished; two readers/runners started
+- Fresh-stack control (2 variant-a bursts, one stack each, P1+P2, idle 97.8-99.8%): both ended (1 CRM, 1 email), no duplicates. Too few to say whether stack reuse matters (stated in the file; a fair control would be 5).
+- R3-partial (ran 05:58:17-05:59:20Z, rc 0): b K2 1 row valid (10 crashed, 10 retries, final 1/1), b K3 1 row valid (10 crashed, final 1/0), no stale row. b K2/K3 now 5 valid rows each (R2's 4 + this 1, different stack, stated).
+- Now running (read/run only, no n8n): (1) egm comprehension reviewer on the updated N8N-RERUN-1.md (publish rule needs it); (2) CI-equivalent run on the frozen tree + doc patch v3 and on origin main (agent H, one heavy command at a time). dockerd still up, 0 containers, no n8n.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Reviewer verdict and CI-equivalent result not in yet. Doc v3 hygiene/test re-run on the quiet machine and the non-root skip chunk: not started (after H, one heavy job at a time). One fresh doc reviewer on patch v3: not started.
+- Variant a on 5 fresh stacks; e ten-at-once on fresh stack: not run. Cause of a's 12/20 and 3-of-5: not investigated.
+- Cleanup (dockerd, scratch node_modules, run folders): kept until you say R2b is finished.
+## WHAT I WOULD DO NEXT (ranked)
+1. Fold the reviewer's findings into N8N-RERUN-1.md; push.
+2. Doc v3 tests + hygiene + non-root skip chunk on the quiet machine; fresh doc-patch reviewer.
+3. Cleanup of dockerd/scratch when you say so.
 ## REPORT (clock 05:56Z): R2b e DONE (5 valid units), N8N-RERUN-1.md R2b + MAPPING + READ + P2 PUSHED; fresh-stack variant-a control running
 - Variant e kill runs, 5 valid units x 10 rows (units 2,3,4,5,1b): second CRM row 1 of 50 (per unit 0,0,1,0,0 of 10); 2+ emails 50 of 50; all `sent`. R2 1 of 10, published 4 of 10. Unit 1 never started (setup password, see file).
 - Variant a, 5 bursts one stack, five raw rows in the file: (1,1) (2,2) (10,10) (1,1) (2,2) = duplicates 0, 1, 9, 0, 1 extra pairs; 3 of 5 bursts with duplicates.
