@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 17:54Z - FINAL CLOSEOUT; agents running 0
+Checks run in /tmp/demo-push at commit f04d9f6e (raw):
+- git status --porcelain: (empty)
+- git status --ignored -s: !! harness-patched/__pycache__/, !! n8n-mainframe/__pycache__/, !! n8n-tests/__pycache__/ (python caches, not needed)
+- git fetch origin; git log origin/demo/handover..HEAD: (empty); git diff origin/demo/handover --stat: (empty)
+- git stash list: (empty)
+- git worktree list: /home/user/hadavin-sdk 2a8c2aac [claude/happy-cori-rlqhg1]; /tmp/demo-hb 10c9fdb6 (detached); /tmp/demo-lead 56edc59c (detached); /tmp/demo-push f04d9f6e (detached); /tmp/demo-wt 9c50c17c [demo/handover]
+- Unsaved results: /tmp/rr (253 entries) = sandbox scratch of runs that failed (no disk, no docker). Small logs copied to sandbox-scratch-logs/; 7 with links or long ids left out (skipped.txt); stack and database copies not saved, they hold no results. Disk 129 MB free.
+- Nothing secret found in the copied logs (grep for password, token, key, links, long strings; hits removed).
+- NOT DONE / NOT CHECKED: everything listed as open in the FILE-INDEX block above. Report block itself keeps ids and loopback lines that fail the hygiene poison rule.
+- WHAT I WOULD DO NEXT: (1) fold v5 laptop results; (2) WP6 id/vid list; (3) refresh DECISION-INPUTS.
 ## Block 17:54Z - CLOSEOUT FILE-INDEX; agents running 0 (none will write anything more)
 FILE-INDEX (all under handover/demo/):
 - REPORT.md: this file, newest block on top. Read first.
