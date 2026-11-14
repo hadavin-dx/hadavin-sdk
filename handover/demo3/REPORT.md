@@ -1,3 +1,31 @@
+## HEARTBEAT 94 (04:58Z) - FIX-5 R6 FINAL RUN GREEN; FIX-2 R5 REVIEWED + RESOLVED -> B15 (R6) STARTED; FIX-5 R6 REVIEW HALF IN
+
+| Agent | Job | State |
+|---|---|---|
+| B12 | fix-5 r6 | CLOSED. I read the tail of its final run myself: `3833 passed, 176 skipped in 1267.36s`, rc 0 (evidence/raw/b12-final-full.log; skips grouped by -rs: playwright 6 groups, reset.ps1 not runnable here 5, root-readable 2, ntpath 3.13 1, load measurement 1, Windows-only 1). No data/ in the tree. Patch 0117c654. |
+| R2a, R2b | fresh reviews of fix-2 r5 | CLOSED: codebase-details 0 blocker 0 major 2 minor 5 nit; design 0 blocker **2 major** 7 minor 3 nit. The lead's earlier blocker ("demo CRM claim false") and the "strip" Major from r4 are confirmed fixed (adapters.py:81-87, 178; envnum.py:136). New Majors: M1 the strip still trims every blank at the ends of the file (envnum.py:131); M2 a second secret-file reader in scripts/n8n_api.py (blocks on a named pipe) and in demo_only/fake_model_server.py. Saved evidence/review-lane3-fix-2-r5-codedetails.md and -design.md. |
+| Resolve | egm:egm-resolve (Opus, Skill tool) | DONE: evidence/resolve-lane3-fix-2-r5.md: 15 items, 14 fix, 1 fix with a partial contest (a NaN cap is already refused at config.py:197-199), 0 escalated, 0 declined. Includes class-level fixes: one retry_after_seconds in envnum (two copies returned inf), one "lead-book" word, AST guards. |
+| B15 | fix-2 r6 builder | RUNNING from 04:57Z (full run on the final head is required; stop about 06:00Z). |
+| R5a | codebase-details review of fix-5 r6 | RUNNING (expected 05:03Z). |
+| R5b | design review of fix-5 r6 | CLOSED: 0 blocker, **2 major**, 5 minor, 5 nit (evidence/review-lane3-fix-5-r6-design.md). M1: the reset refusal text "nothing was stopped or deleted" can be false (desk stopped and its pid file removed, then fakes.pid refuses); M2: README states Windows behaviour as fact though the .ps1 scripts were never run. Resolve for fix-5 waits for R5a. |
+| B13, B14 | B13 closed; B14 (fix-10) RUNNING | B14 box ends about 05:33Z. |
+
+FAILURES AND RETRIES: no test failure this block. My slips: register time written 2 minutes ahead (fixed); my rm of the scratch clone was refused earlier (not retried).
+Load: about 1-2.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- fix-5 r6: not yet closed: 2 Majors from R5b (atomic refusal or wording; README honesty) and R5a result open; needs resolve, a builder (r7), a full run, a fresh review.
+- fix-2 r5: not closed: B15 (r6) building; then full run and fresh review.
+- fix-10: no hand-back; no review.
+- Stack: not started (waits for fix-2 r6 and fix-5 r7).
+- WINDOWS-RUN-1.md: will be updated with the new fix-5 patch name after r7 (lead runs it only on the final stack).
+- reset.ps1 / start_all.ps1 never run; Python 3.11, ruff, mypy, bandit, CodeQL, Sonar: CI only.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect R5a (about 05:03Z), save, run egm:egm-resolve for fix-5 (both reviews together), start builder B16 (fix-5 r7).
+2. Supervise B15 and B14 (checkpoint notes, hand-backs).
+3. Prepare the stack builder brief (re-cut order, fix-9 fixture wins, NC1 items) so it starts the moment fix-2 r6 and fix-5 r7 are reviewed clean.
+
 ## HEARTBEAT 93 (04:51Z) - B13 (FIX-2 R5) REPORTED; TWO FRESH REVIEWERS RUNNING; B12 FINAL RUN 73%
 
 | Agent | Job | State |

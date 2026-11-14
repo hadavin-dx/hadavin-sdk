@@ -294,4 +294,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R5a (a66e5337) | RUNNING from 04:54Z | fresh egm codebase-details review of fix-5 r6 (tree rv-fix5r6), expected 05:03Z |
 | R5b (a51e2cd7) | CLOSED 04:58Z | fix-5 r6 design review: 0 blocker, 2 major, 5 minor, 5 nit, saved evidence/review-lane3-fix-5-r6-design.md |
 | R2a, R2b | CLOSED 04:54Z | fix-2 r5 reviews: 0/0/2 minor/5 nit and 0/2 major/7 minor/3 nit, saved; Skill egm:egm-resolve (Opus) run 04:57Z: 15 items, 14 fix, 1 fix+partial contest, 0 escalate; plan evidence/resolve-lane3-fix-2-r5.md |
-| B15 (a4a90b6e) | RUNNING from 04:59Z | fix-2 r6 builder from the resolve plan; stop about 06:00Z; full run required |
+| B15 (a4a90b6e) | RUNNING from 04:57Z | fix-2 r6 builder from the resolve plan; stop about 06:00Z; full run required |
