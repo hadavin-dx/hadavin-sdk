@@ -1,6 +1,22 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 09:55Z (15:25 IST) - reviewer folded, hygiene clean; kill-compare box done, queue empty
+
+- Fresh comprehension reviewer on n8n-vs-desk-kill-compare.md and page items 9-11: counts all matched the raw files; 10 Majors on conditions and wording, all folded: which series were fresh per kill (desk) and which ran in a row on one stack (n8n-only 5, point 1 10); the kill methods are different (desk self-exit at a named point, n8n outside kill on a timer) so the table is "where the story stops", not like for like; point 3 re-slotted (desk follow-up work runs after the first answer; D1b is just before the e-mail); "Lost" defined, and D1b blind stated as 0 e-mails until a person acts; keyed rows say the single e-mail is the stand-in dropping a repeat key; headline now says "the one n8n flow I tested", default settings, no status column; P1b labelled as the caller's resend, not a desk recovery; variant e defined; a terms list added to the compare file, point A added to the page glossary.
+- Hygiene grep (40+ character runs, links, host names) on the compare file, the page and the raw folders: clean.
+- Result in one line, in my runs, 5 kills per point, not independently rerun: n8n flow lost 5 of 5 (kill after insert before work) and 5 of 5 (n8n first, desk never contacted); desk kept the lead and did the work at most once in 25 of 25 real kills, with blind D1b/D2 ending UNKNOWN for a person and keyed rows relying on the stand-in dropping a repeat key.
+- Queue: empty. Held: atlas pass 2, cleanup of dockerd/scratch (waiting for your word).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- n8n-only kill after the work and before the reply; the status-plus-re-send flow at the insert kill point; any independent rerun; queue mode; n8n's crash-recovery settings.
+
+WHAT I WOULD DO NEXT (ranked)
+1. n8n flow with status "done" written after the work plus a re-send job, same kill in the Wait (does the lost lead come back, how many times processed), 5 kills.
+2. n8n-only kill after the work, before the reply, 5 kills.
+3. Atlas pass 2 re-check of the n8n variants on your order.
+
+
 ## Block 09:54Z (15:24 IST) - desk series ALL clean on fresh servers; compare file written; reviewer next
 
 - Keyed C0 and D2 reran on fresh servers (mode keyed, counters empty at start, 5 kills each, in my runs: real end exit 137, one machine, stand-ins, made-up data): C0: 1 lead, 1 receipt, 1 CRM row, 1 e-mail per kill (0 e-mails before the restart, 1 after), follow-up sent; D2: same, e-mail already out before the kill; lost 0 of 10, work twice 0 of 10. With A keyed (5), D2 blind (5), D1b blind (5): 25 of 25 desk kills, lost 0, doubled 0; blind D2 and D1b end UNKNOWN for a person.
