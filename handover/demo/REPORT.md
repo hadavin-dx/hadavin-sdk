@@ -1,5 +1,20 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block FC-ALERT - page text updated (webhook body stays in n8n data); F-c lost-alert: reading of the unknown path, one hole found; not run
+
+N8N-START.md updated: credentials and stage key file never in n8n data (as relayed); lead fields do reach n8n data via the webhook body even with the four settings, until pruning; prune setting names/defaults from source, NO age claimed until lane3's EXECUTIONS_DATA_PRUNE=false test names it; do not put a key in a form field.
+
+F-c (SMTP delay past node timeout -> state unknown, 0 alerts). Where the alert comes from, in mf-sub-crm-mail: two places only. (A) SendMail error output -> MarkUnknownA (sets unknown, only if claim_token still matches) -> UnknownNewA -> AlertUnknown. (B) a recovery re-run: MailClaim finds mail_sent already true -> empty -> MarkUnknownB (mail_sent and token match) -> UnknownNew -> AlertUnknown. SendMail has retry off and no timeout setting (n8n SMTP node), so "past node timeout" means the transport's own timeout (not set by me).
+Hole by reading (not reproduced): AlertUnknown is itself an SMTP send with onError continueRegularOutput, and the state is already unknown, which recovery never touches again (ClaimStuck excludes unknown). If that alert send fails or hangs (same SMTP server, same delay), the error is swallowed and NOTHING retries: state unknown, 0 alerts = exactly lane3's F-c. The same hole exists for AlertFailed in mf-recovery (state failed is set first, then the send, continueRegularOutput, no retry). It would hit when the delay is a before-greeting hold (.pre style: the alert connection is held too) or any persistent SMTP fault; a delay that comes AFTER the catcher stores the mail would still count as an alert in alerts(), so lane3's mode matters. Please send me: which SMTP fault mode lane3 used (.pre or .delay or drop), whether it was still on when the alert was sent, and the node error text in the log if any.
+Second, smaller point: if mail_sent is true and attempts reach 3, MarkFailed sets failed (not unknown) and AlertFailed's text says failed; the lead gets an alert but the wording is wrong. Not lost.
+Proposed fix (NOT pushed, needs your go because it changes the "exactly 1 alert" test count to "at least 1, duplicates possible only if the send succeeded but the mark failed"): add column alerted boolean default false; after each alert node set alerted=true where lead_key and state in (unknown, failed); recovery gets a third branch every 30 s: SELECT leads in unknown/failed with alerted=false, send alert (text by state), then set alerted=true; alert nodes with retry 3 times. Effect: an alert lost to an SMTP fault is retried until SMTP works; cost: one more recovery branch and SQL column. Tests to add: T16 = SMTP held (.pre 60 s) during the unknown case: expect state unknown, alert arrives after the hold is removed, at least 1 and at most 2 alerts.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- T8 rerun, V5 T7b raw, lane3 HB171 and F-c raw files unread; the F-c cause above is a reading; flows not changed; T16 not written; real-node flows not run.
+
+WHAT I WOULD DO NEXT (ranked)
+1. On your go: build the alerted-column fix into builder + flows + T16, push, name tests to rerun (T12, T15, T8, T16). 2. Read lane3 F-c raw to confirm or reject the cause. 3. Fill DECISION-INPUTS from named raw files.
+
 ## Block SIBLING-CHECK - no other test has the early-reset defect (code reading of mf.py, crm_stub.py, smtp_catcher.py at fb2720e6); not run
 
 SHA: the fix commit is fb2720e6 (full id printed in chat); origin/demo/handover had no newer commit from me when I looked.
