@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:30 UTC / 20:00 IST
+
+**ORDER C-R7T-ADD APPLIED: I read the order and the independent r7s review (0 Blocker, 1 Major, 5 Minor, 2 Nit) and sent ALL of it to the r7t builder (aab061ec) by message at 14:30Z** (delivery is queued for its next tool round; the builder has not yet confirmed reading it). I changed no code myself; what changed is the builder's scope and the ledger.
+- **Scope now in r7t (test-first; each new test must fail on tree-R7S; pins named):** MAJOR 1 counter fail-open (contacts_not_accounted_for fails closed on None, read_counter_files fails on unreadable file or empty glob, replace the (None,5)==0 test, scenario test with a missing counter and one hidden contact, correct the false comment and README claim, read run_stats.py and crm_hubspot.py for atomic write and the simulated-kill path and say what is found); minor 2 Desk tag required; 3 R27 main()-level test, R19/R20 same-tag .smtp/.log files, R39 consumer grep plus a "true" test; 4+5 `host is not None`, ten more hostile spellings, read is_loopback_host and report it per spelling, FakeImap and FakeSmtp loopback refusal with tests; 6 take-import test and TAKE-USED-FILES title and ROOT no cwd fallback; 7 s6 guard for skipif/importorskip; plus the earlier EV1 (R10, R19, R20, R27, R39, R07), EV2, sibling search, EV3 recorded (frozen head 58aa4031); plus a NEW test recomputing the banner worst-case figures 0.0814/0.0832 from worst_case_usd (the reviewer did not check them).
+- **What the builder cannot do:** (a) run the take-side banner test q1: the take tree is on the laptop (Downloads\Hadavin\_local\scratch\wt\dpld-fix19), so **the lead runs it**; (b) edit handover/ files: README line 31 and the r6 snippet are superseded and the builder gives the replacement text in R7T-RESULTS.md; **I or the lead edit them after the hand-back.**
+- Ledger rows DPLD-R7S-RV-M1, RV-m2..m7, RV-n8..n9 added (all OPEN). The earlier EV1, EV2, EV3 rows stay OPEN. Nothing is FIXED-VERIFIED for r7t.
+- Same box and deadline as r7t: started about 14:25Z, box ends about 15:40Z to 15:50Z; **with the added scope I expect the hand-back at the box end, not earlier (unverified; the scope grew by roughly half).** Then my hash and apply check, EV7T (about 60 min, includes a fresh full run), the lead's fresh reviewer.
+
+Agents running: 1 (aab061ec). ASK: none. Next block about 14:50Z.
+
+
 ## STATUS (core lead) 14:24 UTC / 19:54 IST
 
 **EV7S DONE (runner a42ce038, closed; raw evidence pushed: handover/core/fix/EV7S-EVIDENCE.md and handover/core/fix/ev7s/). Its numbers, not verdicts. I have read the runner's report, not every raw log.**
