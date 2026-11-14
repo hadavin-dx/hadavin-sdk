@@ -1,5 +1,21 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:46Z): CAUSE FOUND, IN THE ORDER OF EVENTS OF THE HARNESS (details n8n-diag-1.md)
+- n8n 2.46.6 publishes a workflow through an outbox table with a 2-minute lease. The harness kills the first n8n within a second after deploy_b: record 4 (workflow b) is in_progress at that moment (read from the database after the failed smoke2 run); a, d, c are completed. After the restart the harness waits 60 s, n8n takes the record again only after 120 s: the webhook g2-b2 appears at 03:35:42 when n8n is left running (outbox record 4 completed), never inside the harness's 60 s. Same failure reproduced twice (smoke and smoke2). Workflow, path and credential are fine (diagnostic A: g2-b2 registered 3 s after boot when the record was free).
+- NO harness change made. Proposed text fix P1 (wait for the webhooks in the first process before the kill) in n8n-diag-1.md; R1 (exit 1, no counts) stays on record.
+- NEXT (default per ASK 2): R2-patched in a scratch copy: smoke first, then the full run on a quiet machine.
+- LOAD: nothing running now; ports free.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Whether b2 registers in the FIRST process by itself before the kill: not checked directly; the R2-patched smoke would show it (P1 waits for exactly that). Next: run P1 smoke, 2 minutes.
+- The exact second g2-b2 answered in diagnostic C: not recorded (my poll cut text); the outbox time is used instead.
+- Why record 4 is the slow one: not investigated (no n8n debug log of the first process; the harness runs it at info level).
+- n8n version of the published run: unknown to me; the lead can say.
+- Different n8n version: not tried (lead's rule: no version change).
+## WHAT I WOULD DO NEXT (ranked)
+1. Make the scratch copy with P1, run its smoke (R2-patched smoke), then if registered in the first process, the full R2-patched run on a quiet machine.
+2. Write N8N-RERUN-1.md update (R1 stays; R2 added) and the numbers next to the published ones.
+3. Egm reviewer on N8N-RERUN-1.md + branch README; cleanup.
+
 ## REPORT (clock 03:35Z): N8N FULL RUN STOPPED EARLY, NOT A NUMBER: details in N8N-RERUN-1.md
 - LOAD: no job running (the full run ended itself at 03:24:06Z, exit 1; smoke run ended exit 1). No agent running. Ports free, 0 containers.
 - RESULT: variant b webhook g2-b2 never registers on this Linux machine with n8n 2.46.6 (workflow active=1 in n8n's database, no webhook_entity row; the other three webhooks answer). Harness stops at its first restart with "n8n did not come up (default)". Same in the README smoke run (234 probes, all 404). No counts at all.

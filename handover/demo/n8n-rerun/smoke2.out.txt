@@ -1,0 +1,8 @@
+n8n up (limit 1): True
+>> setup.py 03:33:28Z
+>> deploy2.py a 03:33:29Z
+>> deploy2.py d 03:33:30Z
+>> deploy2.py c ={{ new Date($json.createdAt).getTime() === new Date($json.updatedAt).getTime() }} 03:33:30Z
+>> deploy_b.py 03:33:30Z
+smoke readiness: {"readiness_answered": true, "webhook_path": "g2-b2", "webhook_registered": false, "probes": [{"after_readiness_s": 0.02, "status": 404, "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate the workflow using the tog"}, {"after_readiness_s"
+smoke: n8n readiness or the webhook never answered (see smoke_readiness.json)

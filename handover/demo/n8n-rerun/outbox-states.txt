@@ -1,0 +1,13 @@
+Outbox of the smoke2 folder.
+(1) DIRECTLY AFTER THE FAILED SMOKE2 RUN (read before any restart; copied from the command output, ids shortened):
+(1, completed, 03:33:30.003 / 03:33:30)
+(2, completed, 03:33:30.346 / 03:33:30)
+(3, completed, 03:33:30.723 / 03:33:30)
+(4, in_progress, 03:33:31.210 / 03:33:31)
+webhook_entity: g2-a, g2-c2, g2-d (three rows)
+(2) AFTER DIAGNOSTIC C (n8n started by hand at 03:34:50, left running):
+(1, 'completed', '2026-11-14 03:33:30.003', '2026-11-14 03:33:30')
+(2, 'completed', '2026-11-14 03:33:30.346', '2026-11-14 03:33:30')
+(3, 'completed', '2026-11-14 03:33:30.723', '2026-11-14 03:33:30')
+(4, 'completed', '2026-11-14 03:33:31.210', '2026-11-14 03:35:42')
+webhook_entity: [('g2-a', 'POST'), ('g2-b2', 'POST'), ('g2-c2', 'POST'), ('g2-d', 'POST')]

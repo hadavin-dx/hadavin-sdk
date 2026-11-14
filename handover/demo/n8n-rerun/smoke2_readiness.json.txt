@@ -1,0 +1,30 @@
+{
+ "readiness_answered": true,
+ "webhook_path": "g2-b2",
+ "webhook_registered": false,
+ "probes": [
+  {
+   "after_readiness_s": 0.02,
+   "status": 404,
+   "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate t
+  },
+  {
+   "after_readiness_s": 0.27,
+   "status": 404,
+   "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate t
+  },
+  {
+   "after_readiness_s": 0.53,
+   "status": 404,
+   "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate t
+  },
+  {
+   "after_readiness_s": 0.79,
+   "status": 404,
+   "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate t
+  },
+  {
+   "after_readiness_s": 1.04,
+   "status": 404,
+   "body": "{\"code\":404,\"message\":\"The requested webhook \\\"GET g2-b2\\\" is not registered.\",\"hint\":\"The workflow must be active for a production URL to run successfully. You can activate t
+  },
