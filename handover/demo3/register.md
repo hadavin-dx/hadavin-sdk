@@ -321,3 +321,4 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R15a/R15b | 05:33Z | both fix-2 r6 reviews saved (review-lane3-fix-2-r6-design.md, ...-codedetails.md): 0 blocker, 3 major (guard bypass, Retry-After sites text-only, probe set too narrow), minors | closed | egm-resolve next |
 | RES15 | 05:38Z | egm-resolve fix-2 r6 saved (resolve-lane3-fix-2-r6.md): 17 fix, 1 decline | closed | builder B18 (fix-2 r7) next |
 | SLIP1 | 05:40Z | MY SLIP: I committed live logs b15-full-final2.log / b16-full-final.log; a rebase replaced the file, so B15b's second run wrote into a deleted file. Run killed (pids 19272/19273) and restarted 05:40Z, output in scratchpad b15-full-final3.log, logs removed from git index | restarted | read tail 05:55Z |
+| B18 | 05:43Z | Builder B18 fix-2 r7 from resolve-lane3-fix-2-r6.md | agent ab52e2b8db4a3f12a | expected 06:45Z | running | read hand-back, fresh reviewers |

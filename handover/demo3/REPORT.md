@@ -1904,4 +1904,4 @@ WHAT I WOULD DO NEXT (ranked): 1. read the full-run tail at 05:42Z; 2. save the 
 * B17 (fix-10 r2): still building (behaviour-before log 05:32Z, mutation log 05:39Z); got the lead's two-numbers answer. No hand-back.
 * FAILURES AND RETRIES: B15 run 1 red (2 own-file guard hits, fixed); run 2 lost to my slip, run 3 started. Rule now: running logs stay out of git.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): green full run of fix-2 r6 tree; B18 build; B16 and B17 results and reviews; the 05:29Z order to run the wall-clock and hygiene guards alone on the final head (not yet, final head does not exist); stack not built; PowerShell scripts never run (lead's Windows run).
-WHAT I WOULD DO NEXT (ranked): 1. start B18 (fix-2 r7) from the resolve now, in parallel with the run; 2. read B16/B17 hand-backs and start fresh reviewers; 3. read run 3 tail at ~05:55Z.
+WHAT I WOULD DO NEXT (ranked): 1. (B18 fix-2 r7 started 05:43Z, agent ab52e2b8db4a3f12a, so rank 1 is now) read B16/B17 hand-backs; 2. read B16/B17 hand-backs and start fresh reviewers; 3. read run 3 tail at ~05:55Z.
