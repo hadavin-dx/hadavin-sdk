@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 05:38Z): R2b e unit 4 FINAL, unit 5 at K2 (started 05:37:10Z), container up 2h47, nothing killed
+- Unit 4 final (rc 0, 10 rows): second CRM row 1 of 10 (one row (2 CRM, 3 emails, sent)); 2+ emails 10 of 10.
+- Unit 5: K3 5 rows in (all (1,2,sent), 0 second CRM rows), K2 running.
+- e kill-run units so far (rows in): unit 2 0/10, unit 3 0/10, unit 4 1/10, unit 5 0/5 so far = second CRM row 1 of 35 rows. R2 1 of 10, published 4 of 10. 2+ emails 35 of 35. Unit 1 failed at setup (1b redo after unit 5).
+- Variant a (5 bursts, one stack): exactly (1,1) in 2 of 5.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Unit 5 K2 rows, unit 1b; combined e count; variant a on fresh stacks (not run).
+- N8N-RERUN-1.md R2b rows + mapping + READ (summary in the 05:04 block; file not yet updated).
+- R3-partial, doc tests, hygiene, CI-equivalent, fresh doc reviewer, egm reviewer on the updated file.
+## WHAT I WOULD DO NEXT (ranked)
+1. Unit 5 ends about 05:46Z; then 1b about 05:57Z; machine stays quiet until then.
+2. Write N8N-RERUN-1.md R2b + mapping + READ; push; then R3-partial b K2/K3.
+3. Ask you if variant a is to be repeated (fresh stacks).
 ## REPORT (clock 05:28Z): R2b e unit 3 FINAL, unit 4 at K2 (2 of 5 rows in K2), container up 2h37, nothing killed
 - Unit 3 final (rc 0, 10 rows): second CRM row 0 of 10; 2+ emails 10 of 10; every row (1 CRM, 2 emails, sent).
 - Unit 4 (started about 05:17Z): K3 5 rows in, K2 running since 05:24:25Z; 7 rows so far: 1 row ended with 2 CRM posts / 3 emails / sent, 6 rows (1,2,sent); 2+ emails 7 of 7.
