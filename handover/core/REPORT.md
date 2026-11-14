@@ -1,5 +1,20 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 ## STATUS (core lead)
+08:25Z (lead clock; container 03:37). Applied the lead decision on the mutant runner: a3b90516 had already finished (it handed back before I read the order); final numbers on the r7c tree: all 54 run, KILLED 32, SURVIVED 12 (A01 A02 A04 A06 A07 A08 A10 A12 A14 B02 B04 C01), CRASH/TIMEOUT 10 at 300 s (B03 C05 E05 E06 F02 G03 T01 T02 T03 T05; result unknown, not survived); runner closed. As ordered I started 3 fresh EVIDENCE RUNNERS x 18 mutants on a copy of the r7e tree: lane 1 a1942238 (A01-B03), lane 2 ab9f9527 (B04-E02), lane 3 a5676b32 (E03-P02); each 30-minute box, one checkpoint line per mutant in /home/user/build/rr6/out/M7E/<lane>/progress.txt and a results file written after each mutant, limit 240 s, survivors re-run once at 480 s. They are in addition to the r7f builder a712ad32, who re-runs the r7c survivors on r7f in his own lane. Patch size gap measured by me (cheap check): the r7d CRLF patch has 12300 added non-blank lines plus 2260 added blank lines = 14560 added lines (150 files), same as EV7D; the builder's 14524 is 36 lower and I have NOT found why (builder probably counted a different state or tool); the patch itself, not the claim, is the number. My slip: while checking this I typed a /dev path (null device) inside a throw-away `git diff --no-index` in one command; the harness refused it, nothing was read or written; I re-ran without it. 4 agents running (r7f builder + 3 lanes).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Mutant results on r7e: not in yet; lanes just started 03:36. Next: collect the three reports at about 04:10 container; survivors go to the r7g builder or are proved equivalent.
+- r7f patches not built; r7e Major (stopped run exits 0) open until r7f exists and EV7F ran. Next: wait for r7f.
+- The 36-line patch size gap is unexplained. Next: re-count with git diff --numstat on both patch states if the lead wants it; low value.
+- Machine load: 4 heavy jobs at once; timing tests may flake. Next: I will re-run any lone timing failure alone, never count it as a pass or a defect.
+- PowerShell, Windows, Python 3.13/3.14, CodeQL, Sonar, CodeRabbit, semgrep, CI: for the end on the clean patch (lead decision); not run yet.
+- DNS lookup not inside the IMAP total deadline; the stray a<newline>b writer not found; both open (owner).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Collect the 3 mutant lanes and the r7f builder; fix or prove equivalent every survivor.
+2. Run EV7F once on a checkout with no data/ folder on a quiet machine, with a fresh reviewer and mail pass 9 in parallel.
+3. Write the final README and sweep agents and processes.
+## STATUS (core lead)
 08:10Z (lead clock; container 03:25). Mutant runner a3b90516 wrote a PARTIAL note handover/core/fix/MAIL7-MUTANTS-r7c.md after my nudge: on the r7c tree 52 of 54 run; KILLED 31, SURVIVED 12, CRASH/TIMEOUT 9 (unknown, not survived); T05 and P02 still running; the baseline there had the 3 known [socket] failures deselected; its killer tests: 8 fail, 0 pass on the clean tree. Examples that survived (r7c): imap_count deadline check in _fill removed, plain step timeout, no limit stop on a line, send deadline check removed, total deadline doubled, literal cap boundary. These ran on r7c, so some may be killed by r7d/r7e tests; I sent the whole SURVIVED and CRASH list to the r7f builder a712ad32 to re-run on r7f and either kill, prove equivalent, or list as not run. 2 agents running; no hand-back since 08:00Z.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)

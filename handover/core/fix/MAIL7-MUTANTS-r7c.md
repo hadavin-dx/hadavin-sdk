@@ -1,16 +1,15 @@
 # Mail pass 7 mutants on r7c (EVIDENCE RUNNER, no judging)
 
-**STATUS: PARTIAL.** 52 of 54 mutants run; T05 and P02 are still running at the time of this note (lane B, scratch copy tree-M7R2). Nothing is judged here; this records what happened.
+**Not run / unresolved first:** 10 of 54 mutants hit the 300 s per-mutant limit without being killed and without finishing (CRASH/TIMEOUT: result unknown, NOT survived); they were not re-run with a longer limit. The whole run took about 105 minutes, not 40, because every surviving mutant needs the full test set (about 250 s).
 
-What was not run / what went wrong:
-- The whole run did NOT fit 40 minutes (about 100 minutes so far): a mutant that survives needs the full test set (about 250 s each).
-- The first detached start was stopped by the harness 30-minute background limit while mutants C08 (lane A) and B03 (lane B) were planted; the two planted files were found, restored from tree-EV7C and verified identical (git diff empty); those mutants were re-run from the start.
-- Per-mutant limit 300 s: the mutants marked CRASH/TIMEOUT were not killed and did not finish within 300 s (result unknown, not SURVIVED). They need a longer re-run.
-- Baseline on the restarted container: 3 failed, 1104 passed, 1 skipped in 249 s; the same 3 [socket] cases of test_r7_no_replace_of_special.py fail. They were deselected in every mutant run (raw: /home/user/build/rr6/out/M7R/baseline.txt).
-- Test set: the 22 files of setC.txt (it already contains test_r7c_mail_killers, test_r7c_mail6_killers, test_r7c_smtp_reply_total_cap, test_r7c_head_deadline_errors); CHANGELOG.md in that list is not a test and was dropped. -x, 300 s limit, no network, loopback only.
+What went wrong: the first detached start was stopped by the harness 30-minute background limit while mutants C08 (lane A) and B03 (lane B) were planted; both planted files were found, restored from tree-EV7C and verified identical (git diff empty); those mutants were re-run from the start. Final check below.
 
-Counts so far: KILLED 31, SURVIVED 12, CRASH/TIMEOUT 9, BADMUT 0, restore mismatch 0.
-Killers (killers/test_m7_new.py, path-adjusted to tree-M7R): 8 failed, 0 passed on the clean tree (raw: /home/user/build/rr6/out/M7R/killers.txt).
+- Baseline on the restarted container (tree-M7R): 3 failed, 1104 passed, 1 skipped in 249 s. The same 3 [socket] cases of test_r7_no_replace_of_special.py fail; they were deselected in every mutant run (raw: /home/user/build/rr6/out/M7R/baseline.txt).
+- Test set: the 22 files of setC.txt (it already contains test_r7c_mail_killers, test_r7c_mail6_killers, test_r7c_smtp_reply_total_cap, test_r7c_head_deadline_errors); CHANGELOG.md in that list is not a test and was dropped. pytest -x, 300 s limit, no network, 2 lanes (scratch copies tree-M7R, tree-M7R2).
+- Killers (killers/test_m7_new.py, path-adjusted to tree-M7R): 8 failed, 0 passed on the clean tree (raw: /home/user/build/rr6/out/M7R/killers.txt).
+
+Counts: 54 run; KILLED 32, SURVIVED 12, CRASH/TIMEOUT 10, BADMUT 0; restore mismatches 0.
+Raw per-mutant logs: /home/user/build/rr6/out/M7R/raw-<id>.txt; table source results-A.tsv / results-B.tsv in the same folder.
 
 | id | file | planted line | result | desc | seconds |
 |---|---|---|---|---|---|
@@ -61,8 +60,10 @@ Killers (killers/test_m7_new.py, path-adjusted to tree-M7R): 8 failed, 0 passed 
 | G01 | src/lead_desk/crm_hubspot.py | 258 | KILLED tests/test_crm_hubspot.py::test_key_file_missing_or_empty_is_a_classed_config_error_without_the_path[None] | hubspot key: error not fixed text | 167s |
 | G02 | src/lead_desk/crm_hubspot.py | 170 | KILLED tests/test_crm_hubspot.py::test_the_key_goes_only_to_hubspot_hosts_unless_overridden[https://example.test] | hubspot vendor-domain check: any https | 180s |
 | G03 | src/lead_desk/crm_hubspot.py | 324 | CRASH/TIMEOUT(300s) | hubspot read: per-read arm removed | 303s |
-| P01 | src/lead_desk/imap_count.py | 235 | KILLED tests/test_r7c_mail6_killers.py::test_m6_d05_a_mailbox_connection_refused_for_its_tls_version_gets_no_logout_either | (pass6 D05) refused TLS version: deadline not cut, LOGOUT sent | 9s |
 | T01 | src/lead_desk/tls_trust.py | 41 | CRASH/TIMEOUT(300s) | BOM strip removed | 303s |
 | T02 | src/lead_desk/tls_trust.py | 48 | CRASH/TIMEOUT(300s) | END line detection narrowed | 303s |
 | T03 | src/lead_desk/tls_trust.py | 30 | CRASH/TIMEOUT(300s) | weak cipher word anon dropped | 303s |
 | T04 | src/lead_desk/tls_trust.py | 66 | KILLED tests/test_ca_file_reads.py::test_an_unusable_ca_file_is_refused_at_once_with_fixed_text[over_cap-trust] | CA read errors: only OSError caught (too-big file escapes as FileRefused) | 65s |
+| T05 | src/lead_desk/tls_trust.py | 68 | CRASH/TIMEOUT(300s) | empty-after-clean PEM not refused: 'raw.strip()' on cadata skipped | 303s |
+| P01 | src/lead_desk/imap_count.py | 235 | KILLED tests/test_r7c_mail6_killers.py::test_m6_d05_a_mailbox_connection_refused_for_its_tls_version_gets_no_logout_either | (pass6 D05) refused TLS version: deadline not cut, LOGOUT sent | 9s |
+| P02 | scripts/run_real_check.py | 695 | KILLED tests/test_r7c_mail6_killers.py::test_m6_d20_a_config_name_with_a_no_break_space_is_refused | (pass6 D20) load_env name check uses str.strip | 12s |
