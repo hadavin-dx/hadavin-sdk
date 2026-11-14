@@ -1,0 +1,130 @@
+{
+  "name": "mf-table-screen-v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "demo-table-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Receive",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "demo-table-v2-wh"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT lead_key, state, attempts, mail_sent, alert_sent, updated_at FROM mf_leads ORDER BY updated_at DESC LIMIT 50;",
+        "options": {}
+      },
+      "name": "ReadLeads",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        220,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "PG_CREDENTIAL_ID",
+          "name": "n8n-publish-pg"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "html",
+              "name": "html",
+              "value": "={{ ((rows, esc, cls, mail, alert, tm) => '<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"refresh\" content=\"5\"><title>Lead table</title><style>'+ ':root{color-scheme:light dark;--bg:#f4f6f9;--card:#ffffff;--text:#1b2430;--muted:#5b6778;--line:#dfe4ea;--head:#eef1f5;--hover:#f3f6fa;--done-bg:#dcf5e4;--done-fg:#0f6b32;--unk-bg:#fdefc7;--unk-fg:#8a5a00;--fail-bg:#fde0df;--fail-fg:#b3211c;--proc-bg:#e6e9ee;--proc-fg:#3f4958}'+ '@media (prefers-color-scheme: dark){:root{--bg:#0e1218;--card:#171c24;--text:#e8edf3;--muted:#9aa6b6;--line:#2a323d;--head:#1d242e;--hover:#1f2631;--done-bg:#12351f;--done-fg:#6fe39a;--unk-bg:#3d2f08;--unk-fg:#f5c75a;--fail-bg:#43181a;--fail-fg:#ff8a85;--proc-bg:#2a313b;--proc-fg:#c1cad6} }'+ '*{box-sizing:border-box}body{margin:0;padding:32px 16px;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:18px;line-height:1.4}'+ '.card{max-width:1100px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}'+ 'h1{margin:0;padding:20px 24px 4px;font-size:28px;font-weight:650;letter-spacing:-0.01em}'+ '.strip{display:flex;flex-wrap:wrap;gap:12px;padding:12px 24px 18px;border-bottom:1px solid var(--line)}'+ '.box{display:flex;align-items:center;gap:10px;padding:6px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;color:var(--muted)}'+ '.box b{font-size:24px;font-variant-numeric:tabular-nums;color:var(--text)}'+ '.wrap{max-height:70vh;overflow:auto}table{width:100%;border-collapse:collapse}'+ 'th{position:sticky;top:0;background:var(--head);text-align:left;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:12px 24px;border-bottom:1px solid var(--line)}'+ 'td{padding:14px 24px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}tbody tr:hover td{background:var(--hover)}tbody tr:last-child td{border-bottom:0}'+ '.key{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:17px}.dim{color:var(--muted)}'+ '.badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:15px;font-weight:600}'+ '.done{background:var(--done-bg);color:var(--done-fg)}.unknown{background:var(--unk-bg);color:var(--unk-fg)}.failed{background:var(--fail-bg);color:var(--fail-fg)}.proc{background:var(--proc-bg);color:var(--proc-fg)}'+ '.empty{padding:32px 24px;text-align:center;color:var(--muted)}.foot{padding:12px 24px;font-size:14px;color:var(--muted);border-top:1px solid var(--line)}'+ '</style></head><body><div class=\"card\"><h1>Lead table</h1><div class=\"strip\">'+ [['done','done'],['unknown','unknown'],['failed','failed'],['proc','processing']].map(p => '<div class=\"box\"><span class=\"badge ' + p[0] + '\">' + p[1] + '</span><b>' + rows.filter(r => (cls(r.state) === p[0]) || (p[0] === 'proc' && cls(r.state) === 'other')).length + '</b></div>').join('')+ '</div><div class=\"wrap\"><table><thead><tr><th>lead_key</th><th>state</th><th>mail</th><th>alert</th><th>tries</th><th>updated (UTC)</th></tr></thead><tbody>'+ rows.map(r => '<tr><td class=\"key\">' + esc(r.lead_key) + '</td><td><span class=\"badge ' + cls(r.state) + '\">' + esc(r.state) + '</span></td><td>' + mail(r) + '</td><td>' + alert(r) + '</td><td>tries ' + esc(r.attempts) + '</td><td class=\"dim\">' + tm(r.updated_at) + '</td></tr>').join('')+ '</tbody></table>' + (rows.length ? '' : '<div class=\"empty\">No leads yet</div>')+ '</div><div class=\"foot\">refreshes every 5 s; made-up data</div></div></body></html>')($input.all().map(i => i.json).filter(j => j.lead_key),v => String(v === undefined || v === null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'),s => s === 'done' ? 'done' : s === 'unknown' ? 'unknown' : s === 'failed' ? 'failed' : ['new','processing','review'].indexOf(s) >= 0 ? 'proc' : 'other',r => (r.mail_sent === true || r.mail_sent === 'true') ? (r.state === 'unknown' ? 'mail: sent, confirmation missing' : 'mail: sent') : 'mail: not sent',r => (r.alert_sent === true || r.alert_sent === 'true') ? 'alert sent' : (r.state === 'unknown' || r.state === 'failed') ? 'alert waiting' : '-',v => new Date(v).getTime() > 0 ? new Date(v).toISOString().slice(11,19) : '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "BuildHtml",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "name": "ReplyHtml",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive": {
+      "main": [
+        [
+          {
+            "node": "ReadLeads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReadLeads": {
+      "main": [
+        [
+          {
+            "node": "BuildHtml",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BuildHtml": {
+      "main": [
+        [
+          {
+            "node": "ReplyHtml",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}
