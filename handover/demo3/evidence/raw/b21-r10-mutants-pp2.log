@@ -6,3 +6,4 @@ ps1 byte order mark byte changed | KILLED | 1 failed, 138 passed, 6 skipped in 3
 ps1 Stop-Process in pass 1 | KILLED | 1 failed, 141 passed, 6 skipped in 33.62s | tests/test_reset_ps1_pid_rules.py::test_text_only_pass_1_looks_at_both_pid_files_and_changes_nothing
 ps1 cap -ge 64 -> -gt 64 | KILLED | 1 failed, 138 passed, 6 skipped in 34.02s | tests/test_reset_ps1_pid_rules.py::test_text_only_reset_ps1_reads_a_byte_order_mark_and_64_bytes_after_it_like_reset_sh
 support restart no modulo | KILLED | 1 failed, 318 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_worker_number_beyond_the_worker_count_still_gets_its_own_range
+support last = first+width | KILLED | 1 failed, 244 passed, 15 skipped in 82.78s (0:01:22) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap

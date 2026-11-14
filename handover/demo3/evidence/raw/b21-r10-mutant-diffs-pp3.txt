@@ -46,3 +46,10 @@
 -    found = re.fullmatch(r"gw(\d+)", worker or "")
 +    found = re.match(r"gw(\d+)", worker or "")
 
+##### support given-free not cleared (tests/support.py)
+--- good
++++ mutant
+@@ -175 +175 @@
+-        _GIVEN_FREE.clear()  # the numbers free_port() gave away in this test are forgotten with the held ones
++        pass  # the numbers free_port() gave away in this test are forgotten with the held ones
+

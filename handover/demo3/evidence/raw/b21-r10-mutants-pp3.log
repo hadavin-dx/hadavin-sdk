@@ -5,3 +5,4 @@ ps1 process lookup errors silenced | KILLED | 1 failed, 144 passed, 6 skipped in
 ps1 folder exit 7 -> 1 | KILLED | 1 failed, 139 passed, 6 skipped in 33.72s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
 ps1 Remove-Item catch drops exit 7 | KILLED | 1 failed, 139 passed, 6 skipped in 33.58s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_two_scripts_say_the_same_about_a_folder_and_a_pid_file_that_cannot_be_removed
 support width 5000 -> 6000 | KILLED | 1 failed, 245 passed, 15 skipped in 82.95s (0:01:22) | tests/test_port_helpers.py::test_a_single_worker_gets_a_block_of_at_most_5000_numbers_in_each_half
+support worker regex too loose | KILLED | 1 failed, 317 passed, 15 skipped in 83.18s (0:01:23) | tests/test_port_helpers.py::test_a_run_without_xdist_keeps_the_numbers_the_operating_system_chooses

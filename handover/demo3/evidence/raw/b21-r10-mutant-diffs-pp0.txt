@@ -53,3 +53,31 @@
 -        first = _RANGE_START + number * width
 +        first = _RANGE_START
 
+##### support serial uses range always (tests/port_blocks.py)
+--- good
++++ mutant
+@@ -77 +77 @@
+-    if block is None:
++    if False:
+
+##### sh recheck exit 6 -> 1 (scripts/reset.sh)
+--- good
++++ mutant
+@@ -149 +149 @@
+-      exit 6
++      exit 1
+
+##### sh old-bash message names a version again (scripts/reset.sh)
+--- good
++++ mutant
+@@ -11 +11 @@
+-if (( BASH_VERSINFO[0] < bash_minimum[0] || (BASH_VERSINFO[0] == bash_minimum[0] && BASH_VERSINFO[1] < bash_minimum[1]) )); then echo "refused: this bash (${BASH_VERSION}) is too old for this script: it cannot read the full command line of a process, so it could not tell the desk from another program; nothing was stopped or deleted (the README names the oldest bash that works)" >&2; exit 2; fi
++if (( BASH_VERSINFO[0] < bash_minimum[0] || (BASH_VERSINFO[0] == bash_minimum[0] && BASH_VERSINFO[1] < bash_minimum[1]) )); then echo "refused: this bash (${BASH_VERSION}) is old: it cannot read the full command line of a process, so it could not tell the desk from another program; nothing was stopped or deleted (the README names the oldest bash that works)" >&2; exit 2; fi
+
+##### ps1 recheck exit 6 -> 1 (scripts/reset.ps1)
+--- good
++++ mutant
+@@ -125 +125 @@
+-        exit 6
++        exit 1
+

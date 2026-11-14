@@ -6,3 +6,8 @@ ps1 lookup failure no exit 6 | KILLED | 1 failed, 144 passed, 6 skipped in 33.52
 ps1 refusal back to Write-Host | KILLED | 1 failed, 146 passed, 6 skipped in 33.81s | tests/test_reset_ps1_pid_rules.py::test_text_only_every_refusal_goes_to_standard_error_like_reset_sh
 ps1 [Pp]ython -> python (interp 1) | KILLED | 1 failed, 114 passed, 1 skipped in 33.48s | tests/test_reset_ps1_pid_rules.py::test_text_only_the_command_line_pattern_in_reset_ps1_accepts_only_the_real_shapes["\\Python312\\Python.exe" -m lead_desk.server-True]
 support width ignores count | KILLED | 1 failed, 244 passed, 15 skipped in 83.49s (0:01:23) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support every worker gets range 0 | KILLED | 1 failed, 244 passed, 15 skipped in 83.25s (0:01:23) | tests/test_port_helpers.py::test_the_port_ranges_of_two_xdist_workers_never_overlap
+support serial uses range always | KILLED | 1 failed in 0.14s | tests/test_reset_order_and_words.py::test_reset_check_prints_its_exit_4_refusal_on_standard_error_only
+sh recheck exit 6 -> 1 | KILLED | 1 failed, 7 passed in 1.30s | tests/test_reset_order_and_words.py::test_reset_sh_does_not_stop_a_process_that_became_another_program_after_the_first_look
+sh 64 -> 65 after the mark | NOT APPLIED (text not found)
+sh old-bash message names a version again | KILLED | 1 failed, 93 passed, 1 skipped in 29.70s | tests/test_reset_scripts.py::test_reset_sh_refuses_a_bash_older_than_the_readme_minimum_with_exit_2[major-1]

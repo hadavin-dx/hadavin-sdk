@@ -54,3 +54,10 @@
 -    return first, first + width - 1
 +    return first, first + width
 
+##### tests: a direct bind to port 0 added (tests/test_http_guard.py)
+--- good
++++ mutant
+@@ -28,0 +29,2 @@
++    with __import__('socket').socket() as s:
++        s.bind(("127.0.0.1", 0))
+
