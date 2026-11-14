@@ -19,3 +19,8 @@ state unchanged (unknown), intake mails = 1, alert mails = 1 after restoration, 
 
 ## Not covered (named)
 Alert node on a hung connection longer than the mail library's own timeout; `failed` state (CRM refuses everything) with a faulted alert; two recovery copies; film and real folders; the lease 45 s film values.
+
+## Added 2026-11-14 (written before running): two extra cases on the v4 flows (demo commit 7709d058)
+- B780: the fake SMTP holds the alert answer 780 s (longer than the 12 min claim, and longer than the 10 min socket silence limit read from the mail library). My reading before the run: the library gives up at 600 s, the send fails, AlertBackoff sets a short retry, the retry is not held, so 1 alert. Pass = exactly 1 alert, state unknown, 1 intake mail, alert_sent true, 0 lost. If 2 alerts come, I record it; not a pass.
+- KS: the hold is 90 s; 10 s after the hold starts I kill n8n (SIGKILL) and start it again. My reading before the run: the killed send never stored a mail, the claim runs out at 12 min, the sweep re-claims, 1 alert late (about 12 to 13 min). Pass = exactly 1 alert, never 0, state unknown, 1 intake mail. Time of the alert recorded.
+Not covered: a failed mark after a sent alert (needs a database fault; not built).

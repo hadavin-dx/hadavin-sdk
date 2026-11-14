@@ -11,7 +11,7 @@ import harness as h  # noqa: E402
 ADD = ("ALTER TABLE mf_leads ADD COLUMN IF NOT EXISTS alert_sent boolean NOT NULL DEFAULT false, "
        "ADD COLUMN IF NOT EXISTS alert_token text, ADD COLUMN IF NOT EXISTS alert_until timestamptz, "
        "ADD COLUMN IF NOT EXISTS alert_attempts int NOT NULL DEFAULT 0")
-MAX_S = {"A": 900, "B20": 600, "B90": 700, "C": 1100}
+MAX_S = {"A": 900, "B20": 600, "B90": 700, "C": 1100, "B780": 1500, "KS": 1500}
 AFTER_S = 150  # watch this long after alert_sent turned true, for a second alert
 
 
@@ -40,6 +40,10 @@ def main():
             r.ctl("smtp2.ctl", {"alert_hold_s": 20})
         elif case == "B90":
             r.ctl("smtp2.ctl", {"alert_hold_s": 90})
+        elif case == "B780":
+            r.ctl("smtp2.ctl", {"alert_hold_s": 780})  # longer than the 12 min claim and than the 10 min socket silence limit
+        elif case == "KS":
+            r.ctl("smtp2.ctl", {"alert_hold_s": 90})  # n8n is killed and restarted while the alert send waits
         t0 = time.time()
         out["send"] = r.send(lead)
         if case == "C":
@@ -48,6 +52,14 @@ def main():
             r.ctl("smtp2.ctl", {"dead_until": time.time() + 600})
             out["dead_from_s"] = round(time.time() - t0)
         sent_true_at = None
+        if case == "KS":
+            hs = r.wait_event("smtp", "alert_hold_start", timeout=120)
+            out["hold_started"] = bool(hs)
+            time.sleep(10)
+            r.kill_n8n()
+            out["n8n_killed_at_s"] = round(time.time() - t0)
+            r.start_n8n()
+            out["n8n_restarted_at_s"] = round(time.time() - t0)
         while time.time() - t0 < MAX_S[case]:
             rw = row(lead)
             mails = [json.loads(x) for x in r.lines("mails.jsonl")]
