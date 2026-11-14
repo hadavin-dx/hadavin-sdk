@@ -1,3 +1,39 @@
+## HEARTBEAT 84 (03:49Z) - 4 REVIEWS AND 3 READERS IN; 2 RESOLVE PLANS DONE; 4 BUILDERS AND 3 EVIDENCE RUNS STARTED
+
+| Agent | Job | State |
+|---|---|---|
+| R9, R8, R5, R2 | read-only egm reviews | CLOSED, reports saved (evidence/review-lane3-fix-9-r1.md, -fix-8-r1.md, -fix-5-r5.md, -fix-2-r4.md). Findings: fix-9 0 blocker 0 major 7 minor; fix-8 0 blocker 1 major 5 minor; fix-5 r5 0 blocker 2 major (reset.ps1: no exit 7 although README says so; reset.ps1 never run) 5 minor; fix-2 r4 1 blocker (doc claim "demo CRM" false) 1 major (SMTP password strip too wide) 9 minor |
+| Resolve (Opus via Skill) x2 | fix-8/fix-9 plan; fix-5/fix-2 plan | DONE, saved evidence/resolve-lane3-fix-8-9-r1.md and resolve-lane3-fix-5-2-r1.md: 31 findings: 26 fix, 0 contest, 2 escalate/impossible (fix-9 helper race -> core r7f; fix-5 reset.ps1 needs a Windows run: no PowerShell in this container), 3 decline |
+| RD1, RD2, RD3 | readers E3b, PR #12 E marks, xdist flake | CLOSED, reports evidence/reader-e3b.md, reader-pr12-e-marks.md, reader-xdist-flake.md (see facts below) |
+| B10, B11 | builders fix-8 r2, fix-9 r2 | STARTED 03:47Z; stop at 60 min |
+| B12, B13 | builders fix-5 r6, fix-2 r5 (on the fix-1 r6 re-cut tree) | STARTED 03:48Z; stop at 75 min; each waits for a free slot before its full run |
+| M8 | portal flake check (11 files, default then shuffled) | running |
+| M9 | ONE full run on 3.13 of the base with a scratch plugin that records which test makes data/ appear, plus -rs and durations | STARTED 03:47Z (lead order 03:44Z) |
+| M10 | check every MATRIX-1 number against raw logs | STARTED 03:47Z |
+
+READER FACTS (read-only, from their reports; I have not re-read the raw logs):
+- E3b: the three logs do NOT end at the same mark (86 percent, 5 percent, 67 percent; exits 2, 143, 2; 0 FAILED and 0 ERROR in all three). All three stopped by a signal reaching pytest (the desk's own SIGTERM handler raised KeyboardInterrupt at server.py:1086 in runs 1 and 3; run 2 died by default SIGTERM). Who sent it is not in the files. "Git replaced the log" is refuted for these (logs were outside git). No complete run exists on that exact tree; later complete runs exist on other heads.
+- PR #12 "2 E marks": no pytest error marks. The two E are the capital E in two stderr lines "Exception occurred during processing of request from" (log lines 13-14 of evidence/raw/suite-pr12-run2.log); a naive character count reproduces the published 2488/57/188/2. That run was one of the 4 invalid runs (basetemp outside TMPDIR). So the earlier "2 E marks, unexplained" was a counting artifact (by arithmetic on the file; the original method is not recorded).
+- xdist port 43217 flake: one failure in 6 runs before the fix (E7 run b n=2 run1, test_reset_ps_width.py::test_a_pid_file_with_text_that_is_not_a_number_runs_nothing[], exit 4 "something still answers on port 43217"). Claimed cause (free_port closes the port at once) is a reading, not an observation; about 50 clean runs after the fix cannot prove it gone. Other free_port users have the same gap; the fix-5 r6 builder now adds per-worker port ranges at the choke point (support.py).
+CORRECTION of my own heartbeat 83: the register times I wrote for the new rows (03:57Z to 04:00Z) were guessed; real clock was about 03:46Z (register has a CORRECTION row).
+FAILURES AND RETRIES: unchanged (30 environment failures M1/M2/M3, gone with gitleaks). New: 0 test failures. Totals today in this lane since 02:49Z: 90 failed marks in M1+M2+M3 (30 each, same 30 tests), all environment; 0 real defect, 0 flaky, 0 unexplained.
+ASK list: none. (Windows run of reset.ps1: is there a Windows machine or CI job for it? impossible here, no PowerShell.)
+Load (measured): load average 1.3, free RAM about 9 GB; M8 and M9 heavy, 4 builders mostly reading and writing tests.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- reset.ps1 and start_all.ps1 never run (no PowerShell here): would run on a Windows machine or CI.
+- fix-2 r4: author's full run (3809 passed) was on another tree; re-cut tree gets its own full run from B13.
+- All four patches are being re-built after the reviews; none has a fresh review of the new version yet.
+- MATRIX-1 numbers: M10 is checking; not corrected yet.
+- 199 skips: M9 prints the skip reasons.
+- Core r7f not reviewed so not copied; symlink case stays an expected failure.
+- Python 3.11, ruff, mypy, bandit, gitleaks on CI, Windows: not run (decisions).
+
+WHAT I WOULD DO NEXT (ranked)
+1. Read M9 (data/ creators, skip reasons, durations), M8 (portal flake) and M10 (number check) as they land; fix MATRIX-1.
+2. When each builder reports: evidence runner (full run read by me), then a fresh egm reviewer per patch; resolve again for any Major.
+3. Write the one-page report for the lead with merged-ready versus not.
+
 ## HEARTBEAT 83 (03:43Z) - B9 FULL RUN CLOSED (rc 0, no data/); 4 REVIEWERS, 3 READERS AND THE PORTAL FLAKE RUN STARTED; MATRIX-1.md WRITTEN
 
 | Agent | Job | State |

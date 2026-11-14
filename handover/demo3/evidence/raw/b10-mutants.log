@@ -1,0 +1,20 @@
+split only on ASCII dot KILLED
+drop unicode-only-dot rule KILLED
+drop dot lookalike refusal KILLED
+hyphen set = ASCII only KILLED
+hyphen set drops U+2212 KILLED
+only start edge checked KILLED
+only end edge checked KILLED
+empty label allowed SURVIVED
+count@ == 1 dropped KILLED
+count@ >= 1 KILLED
+plain skips domain check KILLED
+lead skips domain_labels_ok KILLED
+lead skips _EMAIL_RE KILLED
+rpartition->partition lead SURVIVED
+unicode dots set loses FF61 KILLED
+unicode dots set loses 3002 KILLED
+non-ascii dot set loses FF0E KILLED
+dot lookalike set loses FE52 KILLED
+empty label allowed KILLED
+empty-label check on first only KILLED

@@ -255,3 +255,9 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R2 | CLOSED 04:00Z | report saved evidence/review-lane3-fix-2-r4.md: 1 blocker (doc claim), 1 major (strip), 9 minor; resolve pending |
 | B10 (aaf6651a2f49660eb) | STARTED 03:58Z | builder fix-8 r2 (F8-1..F8-6), tree b10-tree; checkpoints every 30 min, stop at 60 min (~04:58Z); then evidence runner + fresh reviewer |
 | B11 (ad525a7a963c03ea3) | STARTED 03:58Z | builder fix-9 r2 (F9-1,2,3,5), tree b11-tree; stop at 60 min (~04:58Z) |
+| CORRECTION | 03:48Z | the register times 03:57Z/03:58Z/04:00Z written above for R5, R2, RD1-3, B10, B11 and the 03:58Z+60min stop times were guessed too late by about 10-12 minutes; the real clock at those writes was about 03:46-03:47Z (date -u). Stop times for B10/B11 are about 04:46Z. |
+| B12 (a5db5c17657313450) | STARTED 03:48Z | builder fix-5 r6 (A-M1, A-m3..m7, pin tests), tree b12-tree; stop at 75 min (~05:03Z) |
+| B13 (adb611edefcf4f8f9) | STARTED 03:48Z | builder fix-2 r5 (B-B1, B-M1, B-m1..m8), tree b13-tree; stop at 75 min (~05:03Z) |
+| M9 (a595440dba9a243a1) | STARTED 03:47Z | EVIDENCE RUNNER: full run with data/ watcher plugin + -rs + durations on base m9-tree; expected end ~04:10Z |
+| M10 (a2ca151fe3fcfbea1) | STARTED 03:47Z | checker of MATRIX-1 numbers against raw logs; expected end ~04:00Z |
+| resolve fix-8/9 and fix-5/2 | DONE | saved evidence/resolve-lane3-fix-8-9-r1.md, resolve-lane3-fix-5-2-r1.md (via Skill, Opus) |
