@@ -1,4 +1,4 @@
-# Review fix-5 r7, code details (agent a77ee82f6a52ce8d5, read-only, saved by lane3 06:14Z). Read the whole patch (1-1153), notes, reset.ps1/.sh, support.py by grep. Ran nothing.
+# Review fix-5 r7, code details (agent a77ee82f6a52ce8d5, read-only, saved by lane3 06:09Z). Read the whole patch (1-1153), notes, reset.ps1/.sh, support.py by grep. Ran nothing.
 0 blocker, 3 major, 7 minor, 4 nit.
 M1 tests/support.py:9 `import re` now unused (worker_port_range removed): ruff F401; the noqa at :128 covers only the port_blocks import.
 M2 E501: tests/test_reset_ps1_pid_rules.py:47,196,263; tests/port_blocks.py:17 (prose comment); tests/support.py:167 (~121), :128 (~125, noqa plus prose).

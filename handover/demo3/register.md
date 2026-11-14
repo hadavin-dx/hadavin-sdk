@@ -325,8 +325,8 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | B15b | 05:46Z | B15b final hand-back received (agent closed). Its pids 13798/13800 not seen; run I killed was 19272/19273 in b15b-clone. Only run 3 (scratchpad b15-full-final3.log, started 05:40Z) counts; no green run on tree 3633781d yet | open | tail at ~05:57Z |
 | DUP1 | 05:45Z | MY SLIP 2: I stopped pids 13798/13800 believing they were a duplicate run; they were my own run 3 (B15b had reported them as its own at 05:41Z, which fits: same clone). Run 4 (DPLD_REQUIRE_SCAN=1, gitleaks on PATH) started 05:45Z, log scratchpad b15-full-final4.log, ends ~06:02Z. Rule: check cwd and log path of a pid before stopping it | restarted |
 | LAYOUT | 05:57Z | lead layout order applied: REPORT.md newest first (HB102 on top, HB99 below), old blocks in evidence/REPORT-archive-2026-11-14.md, 24 lines | closed |
-| R17a | 05:59Z | egm-codebase-details reviewer on fix-2 r7 snapshot rv-fix2r7 (tree 8db4b0ba, shas 0d46426a / d6d67651), whole patch | agent a85f06547acec41d3 | expected 06:15Z | running |
-| R17b | 05:59Z | egm-design reviewer, same snapshot | agent ad779f690f4a202a4 | expected 06:15Z | running |
+| R17a | 05:59Z | egm-codebase-details reviewer on fix-2 r7 snapshot rv-fix2r7 (tree 8db4b0ba, shas 0d46426a / d6d67651), whole patch | agent a85f06547acec41d3 | expected 06:09Z | running |
+| R17b | 05:59Z | egm-design reviewer, same snapshot | agent ad779f690f4a202a4 | expected 06:09Z | running |
 | B18 | 05:59Z | B18 interim stop; its full run (started 05:54Z, /home/user/work/b18-logs) still going; copy to raw/b18-full-final.log when done | running |
 | R17b | 06:00Z | fix-2 r7 design review saved (0 blocker, 3 major: probe guard skips src, key mode not checked, Windows symlink docs vs code; reviewer read only part of the patch) | closed | resolve together with R17a |
 | RUN4 | 05:59Z | my fix-2 r6 run 4 ended `3379 passed, 153 skipped` then KeyboardInterrupt at server.py:1093 in b15b-clone: NOT a result. Probable cause: B15b killed its hung run 2 / started run 3 in the SAME clone and the signal hit my run (not proven). No failure in the 3379 tests. B15b run 3 (raw/b15-full-final3.log, started 05:58Z, pids 5475/5476) is now the only run on that tree; do not touch it. B15b run 2 hung at ~18% (last test tests/test_fakes_body_before_answer.py) at the minute my rebase replaced its log (05:30Z): cause unproven; my runs 3 and 4 passed that region | open | tail ~06:12Z |
@@ -335,9 +335,9 @@ REV-5 | agent addec0..: egm:egm-codebase-details on lane3-fix-5 | 13:27Z | ~13:4
 | R10c | 06:03Z | egm-codebase-details reviewer on fix-10 r2 snapshot rv-fix10r2 | agent a358ab293fa2e6d51 | expected 06:20Z | running |
 | R10d | 06:03Z | egm-design reviewer on fix-10 r2 snapshot rv-fix10r2 | agent a35225a5164f382fb | expected 06:20Z | running |
 | B19 | a7931e335857343bf | fix-2 r8 builder (plan resolve-lane3-fix-2-r7.md) | 06:10Z | stop by 07:40Z | not yet checked | running | check 06:25Z |
-| R16a | a2fad12140511aa9f | fix-5 r7 design review (egm-design) | 06:10Z | 06:25Z | - | running | save report |
+| R16a | a2fad12140511aa9f | fix-5 r7 design review | closed 06:09Z | - | - | report saved (0/0/6/4) | resolve fix-5 r7 |
 | R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review (egm-codebase-details) | 06:10Z | 06:25Z | - | running | save report |
 | B16 | a9b26c2d3c33dd99a | fix-5 r7 builder | closed 06:03Z | - | - | handed back (3926 passed, 0 failed on final head) | reviews R16a/b |
 | R10c/R10d | a358ab293fa2e6d51 / a35225a5164f382fb | fix-10 r2 reviews | closed 06:04Z | - | - | reports saved (4+5 major) | resolve then B20 |
-| B20 | (starting 06:15Z) | fix-10 r3 builder (plan resolve-lane3-fix-10-r2.md) | 06:15Z | stop by 07:45Z | - | starting | check 06:30Z |
-| R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review | closed 06:13Z | - | - | report saved (0/3/7/4) | wait R16a, resolve |
+| B20 | see agent list (launched 06:09Z) | fix-10 r3 builder (plan resolve-lane3-fix-10-r2.md) | 06:09Z | stop by 07:45Z | - | starting | check 06:30Z |
+| R16b | a77ee82f6a52ce8d5 | fix-5 r7 code review | closed 06:09Z | - | - | report saved (0/3/7/4) | wait R16a, resolve |

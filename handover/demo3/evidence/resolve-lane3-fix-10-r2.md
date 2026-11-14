@@ -1,4 +1,4 @@
-# egm-resolve fix-10 round 2 (saved by lane3 06:14Z / 11:44 IST). Status: resolved. Value scrub = redaction path, uncapped.
+# egm-resolve fix-10 round 2 (saved by lane3 06:09Z / 11:39 IST). Status: resolved. Value scrub = redaction path, uncapped.
 Inputs: review-lane3-fix-10-r2-design.md (5 major, 10 minor), review-lane3-fix-10-r2-codedetails.md (4 major, 7 minor, 3 nit). Tree rv-fix10r2 (3e4cfad3).
 Checks read: constants.py:25-71 table keyed by family, codes 2-5 twice; SETTING_REFUSED_EXIT_BY_PROGRAM 11 keys, no run_real_check, no crash_desk late row; EXIT_SETTING_REFUSED (3) next to 4 and 8; EXIT_ADAPTERS_UNREACHABLE=1 after the table (:296); crm_hubspot.py:195,197 and smtp_provider.py:134,142 bare Path(env[..]); ALSO run_real_check.py:561,635,858,1099 bare Path(env..) (new sibling); start_all.ps1:52 $desk.ExitCode with no handle cache; test_bad_setting_entry_points.py:352 class name "SettingRefused:"; awk >120 in changed .py: test_bad_setting_entry_points 14, test_setting_reader_guard 6, test_exit_code_table 5, test_reset_scripts 3, constants 1 (NEW finding, neither review); constants.py:26 comment "lead book".
 Decisions (PROPOSE FIX unless noted):
