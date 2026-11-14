@@ -1,0 +1,30 @@
+From 8d237070a783ee7d7a92fa1c699853a5e6fb3aa5 Mon Sep 17 00:00:00 2001
+From: claims-series <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 07:33:52 +0000
+Subject: [PATCH] Docs v4b: three wording nits from the v4 review
+
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8
+---
+ docs/tests.md | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/docs/tests.md b/docs/tests.md
+index 0972bea..8bdb082 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -33,9 +33,9 @@ The crash script ends the desk at a crash point you choose, so that you can watc
+ 2. The demo server must be running (it stays in the foreground, so a hand-started one needs its own terminal). If you started with `scripts/start_all.sh` it is already running; start it with `PYTHONPATH=src:. python -m demo_only.fakes_server --outbox keyed` only if it is not (a second one fails because port 8766 is taken). Writing `blind` instead of `keyed` starts a mail system that cannot recognise a repeated send.
+ 3. Export the two settings: `export DESK_LEADFLOW_FILE=demo_only/leadflow.json` (the settings file for lead owner, lead stage and reminder) and `export DESK_NUDGE_TO=<one plain address>` (the address that gets reminder emails; use the example address named at the top of `scripts/start_all.sh`; it must be one plain address without spaces or angle brackets, and set it together with `DESK_LEADFLOW_FILE`: if the settings file asks for reminders and `DESK_NUDGE_TO` is missing, the desk refuses to start with a clear message ("reminders are on in the leadflow file but DESK_NUDGE_TO is not set", exit code 4); `DESK_NUDGE_TO` set without `DESK_LEADFLOW_FILE`, or an address that is not one plain address, makes the crash script stop with a Python error text instead). Without them the desk starts without the lead owner, lead stage and reminder.
+ 4. Run `PYTHONPATH=src:. python scripts/crash_desk.py`. It stays in the foreground and prints the path of a flag file (`data/crash.flag` with the default data folder). Open a second terminal in the repository root for the next steps. (The `.` lets Python find the `demo_only` folder; with `PYTHONPATH=src` alone the desk stops with "the folder demo_only is missing".)
+-5. Write a crash point name into that file, for example `echo D2 > data/crash.flag` (`D2` is one of the points in the table under "What each promise rests on"). Then send a lead from the second terminal (with `.venv` switched on and `PYTHONPATH=src`: `python scripts/feed.py --source form --index 2`): a crash point is reached only while the desk handles a request for a lead whose follow-up has not been sent yet. Use a lead the README demo did not send (index 1 of the README demo already exists; the desk drives a follow-up only while it is waiting to be sent, so a repeat of that request does not reach the crash point and nothing crashes). The desk prints "simulate crash" and ends at once with exit code 137, and `feed.py` ends with a Python error text that names a refused or dropped connection (it handles HTTP answers only). What should have happened for D2: one email, and the follow-up recorded as UNKNOWN (see the table under "What each promise rests on").
++5. Write a crash point name into that file, for example `echo D2 > data/crash.flag` (`D2` is one of the points in the table under "What each promise rests on"). Then send a lead from the second terminal (with `.venv` switched on and `PYTHONPATH=src`: `python scripts/feed.py --source form --index 2`): a crash point is reached when the desk sends a follow-up, normally while it handles a request for a lead whose follow-up has not been sent yet (the background reaper also sends due follow-ups without a request). Use a lead the README demo did not send (index 1 already exists if you ran the README demo on this data folder; after `reset.sh` it would be new too; the desk drives a follow-up only while it is waiting to be sent, so a repeat of that request does not reach the crash point and nothing crashes). The desk prints "simulate crash" and ends at once with exit code 137, and `feed.py` ends with a Python error text that names a refused or dropped connection (it handles HTTP answers only). What should have happened for D2: one email, and the follow-up recorded as UNKNOWN (see the table under "What each promise rests on").
+ 6. Restart the desk by hand with the same two settings exported: `PYTHONPATH=src:. python -m lead_desk.server`. It stays in the foreground and uses this terminal; `data/desk.pid` does not list it.
+-7. To get back to a clean state: stop this desk with Ctrl+C in its terminal, stop a hand-started demo server the same way, then run `bash scripts/reset.sh`. `reset.sh` ends with an error while a desk or the demo server is still running, and it deletes the records.
++7. To get back to a clean state: stop this desk with Ctrl+C in its terminal, stop a hand-started demo server the same way, then run `bash scripts/reset.sh`. Stop the desk first: if it still runs, `reset.sh` has by then already stopped the demo server started by `start_all.sh` and removed its pid files before it refuses; it ends with an error while a desk or the demo server is still running, and it deletes the records.
+ 
+ On Windows set `PYTHONPATH` with `;` between entries when two are needed (`src;.`). The tests set the path for their own processes.
+ 
+-- 
+2.43.0
+

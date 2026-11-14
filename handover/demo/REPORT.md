@@ -1,6 +1,19 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## 07:34Z STATUS (demo cloud): doc v4 reviewer in, v4b nits applied
+- Fresh reviewer on v4: NO Major; every claim checked against the code matches (exit 4 text, traceback cases, replay does not reach D2, index 2 is a lead the README demo does not send, feed.py handles HTTP errors only, reset.sh refusal order, README edits, only the archive name is in lint.yml). 3 Nits, all applied as patch 0005 (v4b): "only while a request" is too strong (the reaper also sends due follow-ups); "index 1 already exists" depends on the README demo having been run on this data; step 7 order (stopping the desk first, because reset.sh stops the demo server before it refuses). Doc hygiene tests on v4b: 46 passed. Patches 0001 to 0005 are in `clean-machine/`.
+- Still not run: the live crash scene on the v4 recipe; the history scan on single-branch f3c39cf (newer public main).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Live run of the recipe; f3c39cf; whether the repo's gitleaks exceptions cover the 927 hits at c30c373.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Run the crash scene live once on the v4b recipe (index 2, D2, restart, reset).
+2. Single-branch clone of f3c39cf: gitleaks dir on a clean export first, then the history scan, then the three hygiene files.
+3. Wait for your order on the n8n numbers for the post.
+
+
 ## 07:32Z STATUS (demo cloud): doc v4 written and tested, single-branch clone result
 - **Doc patch v4** (`clean-machine/0004-Docs-v4-...patch`, applied on top of v3 in my scratch tree): step 3 now says what the code does (missing DESK_NUDGE_TO with reminders on: clean refusal, exit 4; the Python-error cases are DESK_NUDGE_TO without the settings file or a bad address); step 5 uses `--index 2` and says a repeat of an existing lead's request does not reach the crash point (traced: `_run_followup` in desk.py returns unless the follow-up row is `pending`; I did not run it); step 6 notes the desk takes the terminal and is not in `data/desk.pid`; new step 7 is the way back to clean (Ctrl+C the desk and demo server, then `bash scripts/reset.sh`); nits: `<number>` named, feed.py error text, empty-screen hint after `curl -s`, how to get Python 3.12, checksums file name marked as not checked in the repo. Not done: the nit "expected D2 outcome" is done as a sentence; the nit "only archive name in lint.yml" is stated in the text. Doc hygiene tests on v4: 46 passed (hygiene, codeant hygiene, reset_ps1 links; 40 s). Fresh reviewer on v4 started (two Majors changed meaning).
 - **CI-equivalent for main, single-branch clone** (`git clone --single-branch --branch main`, reset to 61ded9e): the three files (test_hygiene, test_raw_bidi_chars, test_shell_single_bracket): first run 172 passed, 1 failed (`test_hygiene_scan_public`); cause: the clone still held `origin/main`, which has moved on. FINDING FOR THE LEAD: public main is now f3c39cf, not 61ded9e; its history has a commit (starts c30c373) that adds `requirements-semgrep.txt/.in`, `tests/test_gitleaks_semgrep_lock.py`, `docs/tests.md` text; the gitleaks history scan over that commit gives 927 hits (919 `long-hex-token` in `requirements-semgrep.txt` [hash pins], 8 `hardcoded-hostname`). With that ref removed (only 61ded9e and its history): 173 passed, 0 failed, rc 0. So at 61ded9e the six files pass; at the newer main the history scan fails unless the repo's own gitleaks exceptions cover those lines (not checked).
