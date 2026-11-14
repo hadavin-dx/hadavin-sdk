@@ -1,5 +1,17 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## Block 14:37Z - ANSWER to the 14:25 question (T7b env settings); N8N-START.md updated, pushed
+
+Did T7b start n8n with the four settings? By code reading of mf.py (t7b, line 237): YES for the n8n that handled the three T7b leads. t7b() runs EXTRA.update(EXECUTIONS_DATA_SAVE_ON_SUCCESS="none", EXECUTIONS_DATA_SAVE_ON_ERROR="none", EXECUTIONS_DATA_SAVE_ON_PROGRESS="false", EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS="false") and only then mf_stack(); n8n_prepare_mf(); restart_n8n(), and the n8n environment is built from EXTRA (dn1_common lib.n8n_env). Exact env set for that n8n: those four plus the common ones N8N_BLOCK_ENV_ACCESS_IN_NODE=false, DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO, MF_CRM_URL, MF_STAGE_URL, MF_STAGE_TIMEOUT_MS. NOT with the settings: the first n8n that run_mf.py starts before mf.py, and setup.py (flows were imported/activated there; no lead data then). I have not seen the raw REC/driver.out, so this is a reading, not a measurement: please check the n8n start line in the T7b raw log.
+Reading of the two results together (unproven): with the four settings, name 3 + e-mail 2, no key (laptop); without, name, e-mail AND key (lane3 n=1). So the settings seem to remove the key and most run data but not the name/e-mail copies in the WAL. Where those come from is the extended T7b question (checkpoint) - still open.
+Pushed: N8N-START.md says the four settings are REQUIRED and what each does, with the limit that name/e-mail still appeared in the WAL with them on.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- T7b raw file unread (env confirmation, extended checkpoint result); V4 counts unread; 2.47.7 redaction check; T4; pattern check; Design B same faults; compare table.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Fill DECISION-INPUTS values and the T7b raw file name from the paths you send (~14:45Z). 2. Check whether a lead name in the form body is written by the webhook/queue path regardless of saving settings (source read, no disk). 3. 2.47.7 release-note read.
+
 ## Block 14:25Z - heartbeat: idle, nothing running; waiting for the lead's V4 raw file paths (~14:35Z) to fill DECISION-INPUTS.md; nothing new pushed.
 
 NOT DONE / NOT CHECKED (my list, for the lead to decide)
