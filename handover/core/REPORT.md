@@ -1,5 +1,16 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 14:00 UTC / 19:30 IST
+
+**EV7S state at 14:00Z (read from out/EV7S files; the runner has not reported; I judge nothing):**
+- **pytest-full.log (staged git copy htree, started 13:42Z): progress marker 50%; 0 `F` characters and no FAILED/ERROR lines so far** (about 18 minutes in; at this rate it ends about 14:35Z, unverified guess). 5 pytest/mutant processes are running.
+- **S mutants on r7s (mut-results-S.tsv): S01-S24 and X1ctx all KILLED, each with a restore row (EV7S's own run).** RS and A2 result files also exist (rows not yet read by me).
+- **Random 40 mutants (rand40): 19 of 40 done at 14:00Z: 16 KILLED, 3 SURVIVED (R07, R10, R19).** Survivors are listed raw only; what each one is, and whether it is equivalent, is NOT judged yet. They go to the fresh reviewer / a test-first fix if real (mail/money path, uncapped).
+- Not done by EV7S yet: remaining 21 random mutants, hostile table read, ruff, suppressions, final report.
+
+Agents running: 1. ASK: none. Next block about 14:10Z.
+
+
 ## STATUS (core lead) 13:50 UTC / 19:20 IST
 
 **EV7S (a42ce038e00e82958, started 13:42Z, box 75 min, ends about 14:57Z; I expect EV7S-EVIDENCE.md about 14:30Z to 15:00Z; the full run is the long step, no result yet).** From its checkpoint and out/EV7S file names (I have read no result): full run started 13:42 (pytest-full.log growing, 4 pytest processes seen), hostile a/b done 13:47 (output not read by me), S mutant runner and a 40-mutant random runner running. No failure reported; none judged.
