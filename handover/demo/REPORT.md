@@ -1,6 +1,23 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
 
+## Block 08:54Z - Skip-on-Conflict DONE (checkpoint at 25 min): report n8n-skip-on-conflict.md pushed
+
+- Plain answer, in my runs (n8n 2.46.6): yes, a flow can branch on "was this new?". Postgres Insert with Skip on Conflict gives exactly one output item both times: a new row gives the inserted row (id, lead_id, note); a skipped duplicate gives only success true. An IF on "lead_id not empty" separates them. I read the shapes in the replies; I did not build the IF itself.
+- Bursts (10 at once, same id): Postgres Insert skip 1 row in 20 of 20 bursts (10 fresh-stack, 10 reused-stack counting the Always-Output-Data variant); Data Table Upsert 1 row in 10 of 10; Data Table "If Row Does Not Exist" then Insert: more than 1 row in 9 of 10 bursts (1 to 10 rows). All 400 executions were status success; the check-then-insert callers got HTTP 500 "No item to return was found" when the check stopped the flow.
+- Side facts: a skipped insert still burns a serial id number; Data Table has no single insert-if-not-exists operation in 2.46.6.
+- Disk: ran out once (link copy of node_modules costs about 280 MB per work folder); only my own sk folders were deleted; the launcher now deletes its folder after saving results. R2b scratch untouched, but dockerd had died earlier (R2b containers gone).
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- No real IF node built on the branch signal; no repeat beyond 10 bursts per workflow; other n8n versions, other key types, more than 10 parallel calls, queue mode not tested.
+- Why the check-then-insert spread is 1 to 10 rows is not established.
+
+WHAT I WOULD DO NEXT (ranked)
+1. Hold as ordered; if wanted: build the IF branch and burst it once on a fresh stack (about 10 minutes).
+2. Atlas pass 2 re-check of the variants when ordered (about 09:15Z).
+3. Cleanup of scratch only when you say R2b is finished.
+
+
 ## Block 08:50Z - Skip-on-Conflict: fresh-stack bursts 3 of 5 done
 
 - Why the 08:43 block is old: my first burst launches failed on my own script (executions list asked with limit 200, n8n answers HTTP 400 above 100). Fixed, rerun from 08:47Z. The failed attempts left no results.

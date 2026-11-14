@@ -1,0 +1,10 @@
+#!/bin/bash
+# usage: run-skip.sh <name> "<skipc args>"   (saves results, then deletes the work folder: its node_modules link copy costs ~280 MB of disk metadata)
+export PATH=/tmp/rr/repo/data/venv/bin:/tmp/rr/repo/data/node/node-v24.22.2-linux-x64/bin:$PATH
+cd /tmp/rr/r2; B=/tmp/rr/repo/data/n8n_evidence_run; N=/tmp/rr/repo/data/node/node-v24.22.2-linux-x64/bin
+mkdir $B/$1 && (cd $B/$1 && cp -al ../smoke/node_modules ../smoke/package.json ../smoke/package-lock.json .)
+echo "$1 start $(date -u +%H:%M:%SZ)" >> /tmp/rr/skip.log
+python demo_only/n8n_evidence/harness/run_skip.py --work-dir $B/$1 --node-dir $N --skip-args "$2" > /tmp/rr/$1.out 2>&1; echo $? > /tmp/rr/$1.rc
+mkdir -p /tmp/rr/skip-out/$1; cd $B/$1; cp master_skipc.out skip_result_*.json skip_ids.json run_manifest.json n8n2.log /tmp/rr/skip-out/$1/ 2>/dev/null; cp /tmp/rr/$1.out /tmp/rr/skip-out/$1/driver.out
+cd /tmp; rm -rf $B/$1
+echo "$1 end $(date -u +%H:%M:%SZ) rc $(cat /tmp/rr/$1.rc)" >> /tmp/rr/skip.log

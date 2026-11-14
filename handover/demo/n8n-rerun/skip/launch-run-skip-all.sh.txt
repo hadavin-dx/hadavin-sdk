@@ -1,0 +1,4 @@
+#!/bin/bash
+W="sk-a,sk-c,dt-up,dt-ne-ins"
+for i in 1 2 3 4 5; do /tmp/rr/run-skip.sh sk-f$i "burst 1 $W"; done
+/tmp/rr/run-skip.sh sk-reuse "burst 5 $W"

@@ -1,0 +1,123 @@
+"""SCRATCH (Skip-on-Conflict test, 08:30Z order). Runs inside the work folder of a stack that setup.py has prepared.
+  python skipc.py probe            single NEW and single DUPLICATE calls on each workflow, raw outputs
+  python skipc.py burst N          N bursts (10 at once, same lead id inside a burst, new id per burst) per workflow
+Synthetic data only."""
+import json, sys, time, uuid, threading, urllib.request, urllib.error, collections, subprocess
+import api, lib, mkwf2, deploy2
+
+api.login()
+INST = json.load(open(".run/instance.json")); PID = INST["project_id"]; CRED = (INST["pg_credential_id"], "n8n-publish-pg")
+def psql(sql):
+    p = subprocess.run(["docker", "exec", lib.PG, "psql", "-U", "postgres", "-At", "-c", sql], capture_output=True, text=True); return p.stdout.strip() + p.stderr.strip()
+
+LID = "={{ $json.body.lead_id }}"
+def pg_insert(name="PgInsert", always=False):
+    n = {"parameters": {"operation": "insert", "schema": {"__rl": True, "mode": "list", "value": "public"}, "table": {"__rl": True, "mode": "name", "value": "leads_skip"},
+         "columns": {"mappingMode": "defineBelow", "value": {"lead_id": LID, "note": "synthetic"}, "matchingColumns": [], "schema": []}, "options": {"skipOnConflict": True}},
+         "name": name, "type": "n8n-nodes-base.postgres", "typeVersion": 2.5, "position": [220, 0], "credentials": {"postgres": {"id": CRED[0], "name": CRED[1]}}}
+    if always: n["alwaysOutputData"] = True
+    return n
+REPORT = {"parameters": {"mode": "runOnceForAllItems", "jsCode": "const items = $input.all(); return [{json: {seen_items: items.length, items: items.map(i => i.json)}}];"},
+          "name": "Report", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [440, 0]}
+def wf(path, nodes, order):
+    w = {"id": "sk" + path.replace("-", ""), "name": "sk-" + path, "nodes": [mkwf2.hook(path, "sk" + path.replace("-", ""))] + nodes, "active": False, "settings": {}}
+    w["connections"] = mkwf2.chain(w["nodes"], ["Webhook"] + order); return w
+def dt_ins(name="DtInsert"):
+    return {"parameters": {"resource": "row", "operation": "insert", "dataTableId": {"__rl": True, "mode": "id", "value": TID}, "columns": {"mappingMode": "defineBelow", "value": {"lead_id": LID}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": False, "convertFieldsToString": False}},
+            "name": name, "type": "n8n-nodes-base.dataTable", "typeVersion": 1.1, "position": [440, 0]}
+def dt_upsert():
+    return {"parameters": {"resource": "row", "operation": "upsert", "dataTableId": {"__rl": True, "mode": "id", "value": TID}, "matchType": "allConditions",
+            "filters": {"conditions": [{"keyName": "lead_id", "condition": "eq", "keyValue": LID}]},
+            "columns": {"mappingMode": "defineBelow", "value": {"lead_id": LID}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": False, "convertFieldsToString": False}},
+            "name": "DtUpsert", "type": "n8n-nodes-base.dataTable", "typeVersion": 1.1, "position": [220, 0]}
+def dt_notexists():
+    return {"parameters": {"resource": "row", "operation": "rowNotExists", "dataTableId": {"__rl": True, "mode": "id", "value": TID}, "matchType": "allConditions",
+            "filters": {"conditions": [{"keyName": "lead_id", "condition": "eq", "keyValue": LID}]}}, "name": "DtNotExists", "type": "n8n-nodes-base.dataTable", "typeVersion": 1.1, "position": [220, 0]}
+
+psql("CREATE TABLE IF NOT EXISTS leads_skip (id serial PRIMARY KEY, lead_id text, note text); CREATE UNIQUE INDEX IF NOT EXISTS leads_skip_lead_id_uq ON leads_skip (lead_id);")
+TID = api.call("POST", f"/projects/{lib.P}/data-tables", {"name": "skip_dt_" + str(int(time.time())), "columns": [{"name": "lead_id", "type": "string"}]})["data"]["id"]
+WFS = {  # path: (workflow, what it is)
+    "sk-a": (lambda: wf("sk-a", [pg_insert()], ["PgInsert"]), "webhook -> Postgres Insert (Skip on Conflict); reply = last node"),
+    "sk-b": (lambda: wf("sk-b", [pg_insert(), dict(REPORT)], ["PgInsert", "Report"]), "webhook -> Insert -> Code(report item count and fields)"),
+    "sk-c": (lambda: wf("sk-c", [pg_insert(always=True), dict(REPORT)], ["PgInsert", "Report"]), "same as sk-b, Insert node has Always Output Data on"),
+    "dt-up": (lambda: wf("dt-up", [dt_upsert(), dict(REPORT)], ["DtUpsert", "Report"]), "webhook -> Data Table Upsert -> Code(report)"),
+    "dt-ne": (lambda: wf("dt-ne", [dt_notexists(), dict(REPORT, position=[440, 0])], ["DtNotExists", "Report"]) , "webhook -> Data Table If Row Does Not Exist -> Code(report) (no insert: check only)"),
+    "dt-ne-ins": (lambda: wf("dt-ne-ins", [dt_notexists(), dt_ins(), dict(REPORT, position=[660, 0])], ["DtNotExists", "DtInsert", "Report"]), "webhook -> If Row Does Not Exist -> Data Table Insert -> Code(report): check, then insert (two steps)"),
+}
+ids = {}
+for p, (mk, _) in WFS.items():
+    w = mk(); fn = "skwf_%s.json" % p; json.dump(w, open(fn, "w")); r = api.deploy(fn, w["name"]); ids[p] = r[0]
+    print("deployed", p, r if not isinstance(r[0], str) else "ok", flush=True)
+json.dump(ids, open("skip_ids.json", "w"))
+print("webhooks live:", lib.webhooks_live(tuple(WFS), 60), flush=True)
+
+def unflat(s):
+    arr = json.loads(s); cache = {}
+    def res(i):
+        if i in cache: return cache[i]
+        v = arr[i]
+        if isinstance(v, list):
+            out = cache[i] = []; out.extend(res(int(x)) if isinstance(x, str) else x for x in v); return out
+        if isinstance(v, dict):
+            out = cache[i] = {}; out.update({k: (res(int(x)) if isinstance(x, str) else x) for k, x in v.items()}); return out
+        return v
+    return res(0)
+def post(path, lid, timeout=60):
+    r = urllib.request.Request(f"<loopback>/webhook/{path}", json.dumps({"lead_id": lid}).encode(), {"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(r, timeout=timeout) as x: return x.status, x.read().decode()[:400]
+    except urllib.error.HTTPError as e: return e.code, e.read().decode()[:400]
+    except Exception as e: return type(e).__name__, ""
+def burst(path, lid, n=10):
+    bar = threading.Barrier(n); out = []
+    def go():
+        bar.wait(); out.append(post(path, lid))
+    ts = [threading.Thread(target=go) for _ in range(n)]; [t.start() for t in ts]; [t.join() for t in ts]; return out
+def exec_view(e_id):
+    d = api.call("GET", f"/executions/{e_id}")
+    d = d.get("data", d)
+    if "HTTPError" in d: return {"id": e_id, "err": d}
+    runs = (unflat(d["data"]).get("resultData", {}).get("runData", {})) if isinstance(d.get("data"), str) else {}
+    nodes = {}
+    for nm, rl in runs.items():
+        r0 = rl[0]; main = (r0.get("data") or {}).get("main") or []
+        nodes[nm] = {"status": r0.get("executionStatus"), "outputs": [None if o is None else len(o) for o in main], "first": (main[0][0]["json"] if main and main[0] else None)}
+    return {"id": d.get("id", e_id), "status": d.get("status"), "nodes": nodes}
+def max_id(wid): return max([int(x["id"]) for x in lib.execs(wid, None, 100)] or [0])
+def execs_since(wid, base):
+    time.sleep(1.5)
+    for _ in range(20):
+        rows = [x for x in lib.execs(wid, None, 100) if int(x["id"]) > base]
+        if rows and not any(x.get("status") in ("running", "new", "waiting") for x in rows): break
+        time.sleep(1)
+    return [exec_view(x["id"]) for x in sorted(rows, key=lambda x: x.get("startedAt") or "")]
+def iso(): return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 2))
+def count(path, lid):
+    if path.startswith("dt"):
+        r = api.call("GET", f"/projects/{lib.P}/data-tables/{TID}/rows?take=200")
+        d = r.get("data", r); rows = d.get("data", d) if isinstance(d, dict) else d
+        return sum(1 for x in rows if isinstance(x, dict) and x.get("lead_id") == lid) if isinstance(rows, list) else ("rows-read-failed: " + str(r)[:200])
+    return psql("SELECT count(*) FROM leads_skip WHERE lead_id='%s'" % lid)
+
+mode = sys.argv[1]
+out = {"n8n": subprocess.run(["node", "-e", "console.log(require('n8n/package.json').version)"], capture_output=True, text=True, cwd="node_modules").stdout.strip(), "mode": mode, "results": []}
+if mode == "probe":
+    for p in WFS:
+        for kind in ("NEW", "DUPLICATE"):
+            lid = "probe-%s-%s" % (p, uuid.uuid4().hex[:6]) if kind == "NEW" else lid
+            since = max_id(ids[p]); st, body = post(p, lid); ev = execs_since(ids[p], since)
+            rec = {"path": p, "call": kind, "lead_id": lid, "http": st, "reply": body, "executions": ev, "rows_for_id": count(p, lid)}
+            out["results"].append(rec); print(json.dumps(rec), flush=True)
+else:
+    nb = int(sys.argv[2]); which = sys.argv[3].split(",") if len(sys.argv) > 3 else list(WFS)
+    for p in which:
+        for i in range(nb):
+            lid = "burst-%s-%d-%s" % (p, i + 1, uuid.uuid4().hex[:6]); since = max_id(ids[p])
+            rs = burst(p, lid); ev = execs_since(ids[p], since)
+            rec = {"path": p, "burst": i + 1, "lead_id": lid, "http": dict(collections.Counter(str(s) for s, _ in rs)), "bodies": dict(collections.Counter(b for _, b in rs)),
+                   "n_executions": len(ev), "exec_status": dict(collections.Counter(e.get("status") for e in ev)),
+                   "insert_node_outputs": dict(collections.Counter(json.dumps({k: v["outputs"] for k, v in e["nodes"].items() if k in ("PgInsert", "DtUpsert", "DtNotExists", "DtInsert")}, sort_keys=True) for e in ev)),
+                   "rows_for_id": count(p, lid)}
+            out["results"].append(rec); print(json.dumps(rec), flush=True)
+json.dump(out, open("skip_result_%s.json" % mode, "w"), indent=1)
+print("skipc done", mode)

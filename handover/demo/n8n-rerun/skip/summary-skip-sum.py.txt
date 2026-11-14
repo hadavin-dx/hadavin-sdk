@@ -1,0 +1,25 @@
+import json,glob,sys,collections
+def newcount(path,bodies):
+    n=0;tot=0
+    for b,c in bodies.items():
+        tot+=c
+        if path in("sk-a",):
+            if '"lead_id"' in b: n+=c
+        elif path=="sk-c":
+            if '"lead_id"' in b: n+=c
+        elif path=="dt-up":
+            try:
+                it=json.loads(b)["items"][0]; 
+                if it["createdAt"]==it["updatedAt"]: n+=c
+            except Exception: pass
+        elif path=="dt-ne-ins":
+            if '"lead_id"' in b: n+=c   # insert happened
+    return n,tot
+for d in sorted(glob.glob('/tmp/rr/skip-out/sk-[fr]*')):
+    for l in open(d+'/master_skipc.out'):
+        if l.startswith('{'):
+            r=json.loads(l)
+            try: n,t=newcount(r['path'],r['bodies'])
+            except Exception as e: n,t='?','?'
+            ins=r['insert_node_outputs']
+            print(d.split('/')[-1],r['path'],'b%d'%r['burst'],'http',r['http'],'execs',r['n_executions'],r['exec_status'],'replies_that_look_new',n,'of',t,'rows',r['rows_for_id'],'node_out',ins)
