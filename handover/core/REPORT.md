@@ -1,5 +1,39 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 08:25 UTC / 13:55 IST
+
+**All lines below are agent checkpoint lines or claims, none judged by me yet.**
+
+- **r7n builder (ac7638bd, started 08:17):** 08:21 "N1 impl done (a scrub choke point), r7n test file green"; 08:22 regression groups running; 08:25 own mutant runner started on its own tree (tree-R7N-mut). Not yet seen: fail-before proof on r7m, sweep list, M9-70/71 tests, the r7l Majors I sent (EHLO after STARTTLS, server.py guards, A9, G4 alias bypass). Patches not built.
+- **Pass 11 (a6bba99e): NEW REAL GAP M9-43 (money): live_claude reserve counts only the question text length, not the whole request body; survived the big set (494 s).** Plus M9-70 (banner mail count) from before. M9-58 argued equivalent (not yet run on the big set). 3 results so far; lanes reordered to secret/money rows first. I am sending M9-43 to r7n now.
+- **EV7K (a6dafd10):** full run on r7m still running since 08:02:33 (23 min of about 35-40 expected); no result.
+- **r7k reviewer (a092c900):** still no written verdict; checkpoint 08:21 "finding F1 imap context" (the password leak), its O-mutants mostly still running; slip at 08:27: two of its runners shared a temp dir, one result possibly tainted, it re-ran and killed its first runner (restored by sha).
+
+| id | what it does | why | started UTC/IST | expected end / left | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ac7638bd (r7n builder) | leak sweep, M9-70/71/43, r7l Majors | 08:15 order | 08:17 / 13:47 | about 09:20 | r7n | RUNNING (above) | hand-back, EV7N |
+| a6dafd10 (EV7K) | full run on r7m | final bytes | 08:02 / 13:32 | about 09:15 | EV7K | RUNNING | EV7K-EVIDENCE.md |
+| a092c900 (r7k reviewer) | review of r7k | independent | 08:03 / 13:33 | about 09:05 | review 1 | RUNNING | written report |
+| a6bba99e (pass 11) | 14 survivors, M9-73..82 | 08:01 order | 08:02 / 13:32 | about 09:02 | pass 11 | RUNNING | mail-pass11-r7m.md |
+
+Agents running: 4. Load 2.3.
+
+ASK: none.
+
+NOT DONE / NOT CHECKED (my list, for the lead to decide)
+| item | why | next |
+|---|---|---|
+| r7n patches, fail-before, EV7N, fresh reviewer, pass 11 on r7n | in progress | as ordered |
+| EV7K, r7k verdict, rest of pass 11 | running | resolve |
+| README (R7J count 41), older hashes, first clean-set CRASH, orphan-worker test | later | README |
+| PowerShell scripts, Windows, Python 3.14, CodeQL, Sonar, CodeRabbit, CI | end of queue | as before |
+
+WHAT I WOULD DO NEXT (ranked)
+1. Forward M9-43 and further confirmed gaps to r7n; read the r7k report when it lands.
+2. At r7n hand-back verify hashes and apply matrix, start EV7N, fresh reviewer, pass 11 on changed code.
+3. README, sweep, counts.
+
+
 ## STATUS (core lead) 08:17 UTC / 13:47 IST
 
 **LEAD ORDER 08:15 APPLIED: r7n builder STARTED (ac7638bd, fresh, test-first, tree-R7N copy of r7m, one builder).** Scope: imap_count password-in-error leak plus a sweep of every other site that keeps an exception context with an echoed login/auth line (choke-point helper if two or more sites share it, plus a guard test), M9-70 and M9-71 (banner worst-case mail and HubSpot counts times desk processes), further pass 11 real gaps, and the r7k reviewer's Blocker/Major items when its report lands. Tests must fail on r7m. EV7K on r7m keeps running (8 git ids and the r7f id); ONE full run on r7n afterwards.
