@@ -1899,10 +1899,17 @@ index 48eb438..64e9dee 100644
    id (the send key for the outbox) is the id. Other attributes (`capability`, `mode`, `calls`) are passed through.
  * TraceHooks is a Hooks subclass: each crash_point name becomes a zero-length event (stage "hook:<name>").
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 81b0e27..9944492 100644
+index 81b0e27..3ec4023 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
-@@ -11,6 +11,7 @@ from typing import Any
+@@ -5,12 +5,14 @@ from __future__ import annotations
+ import importlib.util
+ import os
+ import re
++import weakref
+ from collections.abc import Callable, Iterator
+ from pathlib import Path
+ from typing import Any
  
  import pytest
  
@@ -1910,7 +1917,7 @@ index 81b0e27..9944492 100644
  from lead_desk.constants import REQUEST_TIMEOUT_SECONDS
  from lead_desk.server import serve_in_thread
  
-@@ -73,6 +74,22 @@ if not DEMO_PRESENT:
+@@ -73,6 +75,22 @@ if not DEMO_PRESENT:
              rep.longrepr = (str(item.path), 0, "Skipped: needs the demo_only folder, which is not here")
  
  
@@ -1933,7 +1940,7 @@ index 81b0e27..9944492 100644
  # serve_in_thread's stop ends with thread.join(timeout=REQUEST_TIMEOUT_SECONDS), so a legitimate stop can last that long
  # (measured, a scratch test with stalled clients: the handler threads are daemons and are not joined, the stop took
  # 0.00 s; the product bound is still the worst case). The guard must catch a wait with no end, not a slow stop:
-@@ -152,6 +169,47 @@ def _no_desk_settings_from_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+@@ -152,6 +170,47 @@ def _no_desk_settings_from_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
          monkeypatch.delenv(name)
  
  
@@ -1943,17 +1950,17 @@ index 81b0e27..9944492 100644
 +    handle keeps the lock file locked for the rest of the test run). A test that runs `server.main()` past the lock
 +    step asks for `main_lock_handles_closed`, which closes them first; any other test that leaves one open fails
 +    here, naming no path. This is the outer wrapper: it is set up first and checked last."""
-+    handles: list[Any] = []
++    seen: list[Any] = []  # weak references: this guard must not keep a handle (and its lock) alive itself
 +    real_acquire = lockfile.acquire
 +
 +    def acquire(db_path: Path | str) -> Any:
 +        handle = real_acquire(db_path)
-+        handles.append(handle)
++        seen.append(weakref.ref(handle))
 +        return handle
 +
 +    monkeypatch.setattr(lockfile, "acquire", acquire)
 +    yield
-+    left = [h for h in handles if not h.closed]
++    left = [h for h in (ref() for ref in seen) if h is not None and not h.closed]
 +    for handle in left:
 +        handle.close()  # give the lock back whatever the verdict
 +    assert not left, f"{len(left)} lock handle(s) taken by this test were still open at its end"
@@ -2601,6 +2608,30 @@ index a2f57e3..fa1685d 100644
      held = lockfile.acquire(tmp_path / "lock-test.sqlite3")
      try:
          with pytest.raises(OSError):
+diff --git a/tests/test_later_approval.py b/tests/test_later_approval.py
+index d800cb2..959cfc6 100644
+--- a/tests/test_later_approval.py
++++ b/tests/test_later_approval.py
+@@ -481,6 +481,7 @@ def test_loader_supplies_demo_approvers(tmp_path: Path, monkeypatch: pytest.Monk
+         loader.load_approvers(Config(later_mode="approval"))
+ 
+ 
++@pytest.mark.usefixtures("main_lock_handles_closed")
+ def test_main_loads_approvers_and_refuses_bad_ones(env, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+     seen: dict[str, Any] = {}
+ 
+diff --git a/tests/test_lead_step_route.py b/tests/test_lead_step_route.py
+index dfd1002..1135e5d 100644
+--- a/tests/test_lead_step_route.py
++++ b/tests/test_lead_step_route.py
+@@ -383,6 +383,7 @@ def _main_env(env: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Any:
+     return other
+ 
+ 
++@pytest.mark.usefixtures("main_lock_handles_closed")
+ def test_main_leadflow_exits(_main_env: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+     on, off = _flow(), _flow()
+     off["nudge_after_seconds"] = None
 diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
 index 7b9d857..99dcb85 100644
 --- a/tests/test_live_claude.py
@@ -2659,6 +2690,18 @@ index 03d6e88..67e89f5 100644
  opened. The receipts CHECK is the one thing that is not: SQLite cannot add a CHECK to an existing table."""
  
  from __future__ import annotations
+diff --git a/tests/test_model_stamp_and_reaper.py b/tests/test_model_stamp_and_reaper.py
+index dae5fd0..8f5dd57 100644
+--- a/tests/test_model_stamp_and_reaper.py
++++ b/tests/test_model_stamp_and_reaper.py
+@@ -314,6 +314,7 @@ class LongQualifier(RecordedQualifier):
+     timeout_seconds = float(PLENTY)
+ 
+ 
++@pytest.mark.usefixtures("main_lock_handles_closed")
+ def test_main_exits_4_when_the_desk_refuses(env, monkeypatch, tmp_path, capsys) -> None:
+     rig = env.rig()
+     monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "refused.sqlite3"))
 diff --git a/tests/test_mutants_more.py b/tests/test_mutants_more.py
 index 31e6255..6221aff 100644
 --- a/tests/test_mutants_more.py

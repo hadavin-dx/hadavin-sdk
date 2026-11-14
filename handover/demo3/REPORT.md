@@ -1,3 +1,17 @@
+## HEARTBEAT 137 (09:51Z) - B22 hang withdrawn (it was my git stash); B23 20/20 reruns pass; B21 on round 11
+
+| Agent / job | State at 09:51Z (builders' checkpoints, not yet verified by me) |
+|---|---|
+| B22 fix-2 round 12 | checkpoint 09:51Z says DONE: all rows fixed; the "hang" claim is WITHDRAWN (its logs sat in the git tree and my `git pull --autostash` cut them; named, my fault); 4-group full run 4425 passed, 171 skipped, rc 0; non-root 951 passed; tree 5d1442599b17. Hand-back message not yet received. On receipt: git add -A, reconcile the tree id, lint a clean copy myself, two fresh reviewers |
+| B23 fix-10 round 6 | row 2 closed: 20 of 20 reruns of the three timing files rc 0 with full junit xml (112 passed, 2 skipped each); runs 03 and 10 had a log cut by my git stash, xml complete ("log truncated by git, xml complete"); I did the same naming for the original r5 run 3. Mutants, pristine red-first, 3 narrow runs and the one final full run still to do |
+| B21 fix-5 round 11 | resumed 09:46Z with the 20-row plan and the lead's ruling on row 5 (no exception: literals built from parts, existing 0.0.0.0 exception untouched). No checkpoint yet |
+| Stack builder | waits for B21 and B22 clean |
+
+ASK for the lead: none (row 5 answered, applied).
+FAILURES AND RETRIES: my git stash cut live logs three times (B23 r5 run 3, r6 runs 03 and 10) and made B22 believe in a hang; now fetch + merge only, builders log outside the tree. B22's withdrawn hang is not yet proven by me beyond its own words: I will check its logs at hand-back.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): no PowerShell run; no bash 4.4; final fix-5 tree has no full run yet; WINDOWS-RUN-1 lines not yet written; B22's four-group full run not yet read by me.
+WHAT I WOULD DO NEXT (ranked): 1) B22 hand-back: lint, two fresh reviewers; 2) B23 and B21 round hand-backs; 3) the stack builder when B21 and B22 are clean.
+
 ## HEARTBEAT 136 (09:43Z) - cut-off logs NAMED: my own git stash; B21 r10 reviewed (3 Major); B22 hang may be the same cause; B23 reruns 12/20 all pass
 
 | Agent / job | State at 09:43Z |

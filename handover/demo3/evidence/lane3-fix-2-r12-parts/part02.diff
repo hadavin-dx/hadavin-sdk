@@ -1,0 +1,798 @@
+diff --git a/docs/settings.md b/docs/settings.md
+index 7388fb3..03fa6af 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -1,11 +1,11 @@
+ # Settings
+ 
+-Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error.
++Every setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad value stops the start with an error (exit code 4 and a message that names the setting, never a path or a key; see "Exit codes" in `docs/limits.md`). Key and password files are checked by one rule, written in the section "Key and password files" below; a missing, unreadable or too short file of a real service stops the start (exit code 4).
+ 
+ | Setting | Environment variable | Default | Meaning |
+ |---|---|---|---|
+-| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (`:memory:` is refused at start, exit code 4, before any file is made) |
+-| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
++| `db_path` | `DESK_DB_PATH` | `./data/desk.sqlite3` | the desk's records: a file path (refused at start with exit code 4, before any file is made: `:memory:`, an empty value, a folder, a path inside something that is a file, a link that leads nowhere (its target is missing or the links go round in a circle; at the path or in a folder above it), and a path whose folder cannot be made) |
++| `bind` | `DESK_BIND` | `127.0.0.1` | address the desk listens on: an IP address (IPv6 may be written in brackets, with a zone such as `[fe80::1%eth0]`) or a host name made of letters, digits, `.`, `-` and `_` (an underscore and one dot at the end are allowed). It must also resolve on this computer: the start refuses what can never be an address (a name with spaces or other characters, an empty part, a number-and-dots name with a part above 255, an IPv4 address in brackets), exit code 4; a name that is well written but that this computer cannot find stops the desk later, after `BIND_RETRY_SECONDS`, with exit code 5. The default is this computer only. Any other address (the all-zeros address above all) lets other computers read every lead: there is no login, and the desk prints a warning at start-up. With any real service set (`DESK_CRM` not `fake`, `DESK_OUTBOX=smtp_provider` or `DESK_QUALIFIER=live_claude`) the desk refuses to start on any address that is not this computer's own, because anyone who could reach the port could write to that service |
+ | `port` | `DESK_PORT` | `8765` | desk port (0 = pick a free one, used by tests) |
+ | `adapters` | `DESK_ADAPTERS` | `demo` | the adapter set; only `demo` exists (the demo CRM, the mail stand-ins and the portal) |
+ | `qualifier` | `DESK_QUALIFIER` | `recorded` | the AI step: `recorded` (pre-written replies from a list; the value is still called `recorded`) or `live_claude` (a live model; needs the `DESK_LIVE_*` settings below) |
+@@ -17,7 +17,7 @@ Every setting has a default in `Config` (`src/lead_desk/config.py`) and an envir
+ | `nudge_to` | `DESK_NUDGE_TO` | none | the one address that gets reminder emails; never logged. Refused unless `DESK_LEADFLOW_FILE` names a file, and refused when the file turns reminders on but this is not set. The demo start scripts set `reminder@example.test` unless you set it yourself (only when the feature is on) |
+ | `fakes_host`, `fakes_port` | `DESK_FAKES_HOST`, `DESK_FAKES_PORT` | `127.0.0.1`, `8766` | where the demo CRM and outbox listen; this computer only: `localhost` or a loopback address, anything else is refused |
+ | (both above) | `DESK_FAKES_URL` | built from the two above | one `http` address with host and port; wins over the two above |
+-| `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies |
++| `replies_path` | `DESK_REPLIES_PATH` | none (the loader uses the `replies.json` inside `demo_only/`) | the pre-written AI replies: one JSON file holding one object; a missing, unreadable or broken file is refused at start (exit code 4) |
+ | `send_timeout_seconds` | `DESK_SEND_TIMEOUT_SECONDS` | `5.0` | wait per network step, also for the CRM call |
+ | `size_cap_bytes` | `DESK_SIZE_CAP_BYTES` | `65536` | largest request body accepted (larger gets 413) |
+ | `stall_seconds` | `DESK_STALL_SECONDS` | `120` | after this long an unfinished item shows as `stalled` on the review list |
+@@ -72,19 +72,19 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ `DESK_OUTBOX=smtp_provider`:
+ 
+ * Required: `DESK_SMTPP_HOST` (lower-cased by the desk), `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`. Optional: `DESK_SMTPP_SECURITY` (`starttls`, the default, or `ssl`) and `DESK_SMTPP_PORT` (default 587 for `starttls`, 465 for `ssl`).
+-* `DESK_SMTPP_PASSWORD_FILE`: the path of a one-line file of at most 4096 bytes; never the password itself.
++* `DESK_SMTPP_PASSWORD_FILE`: the path of the file that holds the password, never the password itself (the rule for this file is written once, in "Key and password files" below).
+ * `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS` (your own inboxes, comma separated), `DESK_SMTPP_MESSAGE_ID_DOMAIN` (default `example.invalid`), `DESK_SMTPP_TIMEOUT_SECONDS` (default: the same as `DESK_SEND_TIMEOUT_SECONDS`).
+ * `DESK_SMTPP_MAX_SENDS`: required hard cap, counted per process in memory, so a restarted desk starts again at 0.
+ * `DESK_SMTPP_STATS_FILE`, `DESK_SMTPP_CA_FILE`.
+ 
+ ### CRM settings (`DESK_CRM=hubspot`)
+ 
+-* `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters.
++* `DESK_HUBSPOT_KEY_FILE` (required): the path of the file that holds the key (the rule for this file is written once, in "Key and password files" below).
+ * `DESK_HUBSPOT_MAX_CALLS`: required hard cap, counted per process in memory: a restarted desk starts again at 0, so a restart loop is not limited by it. Only the live-model spend ledger is a file that survives restarts.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+ 
+-Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4).
++Every number setting that is not a number, or is out of range, stops the start with a message that names the setting (exit code 4). The same holds for a `DESK_HUBSPOT_STATS_FILE`, `DESK_SMTPP_STATS_FILE` or `DESK_LIVE_LEDGER_PATH` that names a folder instead of a file, sits inside a file or is a link that leads nowhere, and for a `DESK_SMTPP_CA_FILE` that is missing or is not a certificate file. `DESK_HUBSPOT_ALLOW_ANY_BASE_URL` and `DESK_LIVE_ALLOW_ANY_BASE_URL` take `yes`, `no` or nothing (nothing means `no`); any other word is refused at start (exit code 4), it is never read as `no`.
+ 
+ ### Live model step (`DESK_QUALIFIER=live_claude`)
+ 
+@@ -93,10 +93,10 @@ The step asks the model for one word (hot, warm or cold) and keeps no secret in
+ | Environment variable | Meaning |
+ |---|---|
+ | `DESK_LIVE_MODEL` | model id (required) |
+-| `DESK_LIVE_KEY_FILE` | path of the file that holds the key (required; unlike the other key and password files it has NO 4096-byte size limit: the whole file is read; keep it outside the repository; never put a key in a variable or on a command line) |
++| `DESK_LIVE_KEY_FILE` | path of the file that holds the key (required; a one-line key file; the rule, and when the file is read, are in "Key and password files" below; keep it outside the repository; never put a key in a variable or on a command line) |
+ | `DESK_LIVE_PRICE_IN_PER_MTOK`, `DESK_LIVE_PRICE_OUT_PER_MTOK`, `DESK_LIVE_PRICE_DATE` | US$ per million input and output tokens and the date you read them from the provider's price page (required; each price from 0.000001 to 1,000,000). The desk uses these prices as you give them for the whole run, never checks how old the date is and writes dollars (not prices) in the ledger: keeping the prices right is your job |
+ | `DESK_LIVE_CAP_RUN_USD`, `DESK_LIVE_CAP_TOTAL_USD` | the most one run and the whole ledger may spend (required; above 0 and at most US$1,000,000; the run cap may not exceed the total) |
+-| `DESK_LIVE_LEDGER_PATH`, `DESK_LIVE_RUN_ID` | the spend ledger file (a file that records the money spent; kept across restarts) and the name of this run (required) |
++| `DESK_LIVE_LEDGER_PATH`, `DESK_LIVE_RUN_ID` | the spend ledger file (a file that records the money spent; kept across restarts) and the name of this run (required; any text) |
+ | `DESK_LIVE_BASE_URL` | service address; default is the provider's public address (`LIVE_DEFAULT_BASE_URL` in `constants.py`); plain `http` only for the local computer. The key is sent to this address, so the settings refuse any other address than the provider's own or this computer, wherever they are made (the desk, `scripts/run_real_check.py`, `scripts/run_live_check.py`) |
+ | `DESK_LIVE_ALLOW_ANY_BASE_URL` | the word `yes` lifts that refusal (the same idea as `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`); `scripts/run_real_check.py` reads it from its config file only |
+ | `DESK_LIVE_API_VERSION`, `DESK_LIVE_EFFORT`, `DESK_LIVE_TIMEOUT_SECONDS`, `DESK_LIVE_MAX_TOKENS` | request version header (default 2026-10-21), `output_config` effort (default low), total time limit of one call in seconds (default 8, at most 9: the desk cuts every model call there), output cap in tokens (default 64; thinking tokens are billed as output and the worst-case reserve uses this number) |
+@@ -104,11 +104,21 @@ The step asks the model for one word (hot, warm or cold) and keeps no secret in
+ Each call reserves its worst-case cost in the ledger BEFORE it is sent and is refused when a cap would be passed; the reserve is replaced by the cost the service reports. A call that fails keeps its worst-case reserve (the provider may have charged it); this includes a 429 (too many requests) and a 5xx answer, because the service does not say whether it charged. If a paid answer arrives but its cost cannot be written down (the ledger is locked, or the token counts make no sense), the answer is still used and the worst-case reserve stays as its cost. A last ledger line cut off by a crash is ignored; any other unreadable line stops all spending. The step never retries inside one call: a failure becomes a retry by the desk or an item for a person. The time limit of one call is counted from the start of the call: waiting for the spend ledger counts, and no request is sent once the limit is used up. A request that was already sent is not stopped when the desk gives up waiting for it: its helper thread ends on its own, a late answer is thrown away, and the provider may still charge it (the worst-case reserve stays; the caps and the 5 automatic tries bound the total). The request format is the vendor's Messages interface; a second provider would be another `Qualifier` class. `scripts/run_live_check.py` is the check for a person with a real key: it prints counts, cost, valid-label rate, flip rate and latency only, and never prints the key. `src/lead_desk/trace.py` holds optional timing wrappers and extra crash windows for checks.
+ 
+ 
+-Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait, the listen queue length, the lock retries, the connection limit `MAX_CONNECTIONS` (256), the handler thread limit `MAX_HANDLER_THREADS` (1024), the header and body deadlines (10 s each) and the busy reply's `Retry-After` (1 s).
++Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait, the listen queue length, the lock retries, the connection limit `MAX_CONNECTIONS` (256), the handler thread limit `MAX_HANDLER_THREADS` (1024), the header and body deadlines (10 s each) the busy reply's `Retry-After` (1 s) and the longest wait the desk's tools accept from a server's `Retry-After` header, `RETRY_AFTER_MAX_SECONDS` (3600 seconds).
++
++## Key and password files
++
++One rule reads every key or password file: the HubSpot key (`DESK_HUBSPOT_KEY_FILE`), the live-model key (`DESK_LIVE_KEY_FILE`), the SMTP password (`DESK_SMTPP_PASSWORD_FILE`), the mailbox password (`REAL_IMAP_n_PASSWORD_FILE`), the n8n API key of `scripts/n8n_api.py` (`N8N_API_KEY_FILE`) and the key of the demo model server. It lives in one function (`read_secret_file` in `src/lead_desk/envnum.py`); nothing else in the code opens such a file. Every refusal text names the setting and never shows the path or the key.
++
++* What the file holds: one line of at least 8 printable ASCII characters. The file may be at most 4096 bytes, counting the line break, and is kept as text (UTF-8). Only the line break at the very end of the file is removed; a blank at the start, in the middle or at the end (a plain space, a tab, a no-break space) is refused. The one exception is the SMTP password, whose plain spaces the desk drops wherever they stand (a tab, a no-break space or any other blank is still refused). The mailbox password file follows the SMTP password rule: spaces inside are dropped. A hidden first character that some editors add (a byte-order mark) is accepted and removed. Three faults are told apart, each with its own fixed text: empty or too short, a character that is not printable ASCII, and a space inside a key. A file of several lines, or one that is not UTF-8 text, is refused too.
++* What kind of file: a regular file. A folder, a named pipe (a file that other programs write into), a device (a name for a piece of hardware) or a symbolic link (a name that points to another file) is refused. A folder or a link is refused at once; the pipe and the device are opened only to be refused (no bytes are read from them). A link in a folder above the file is followed; the file itself must be the real file, because a link can be pointed at another file after you checked it. The desk opens the file without following a link and then looks again at the name: a link, or a name that now points at another file, is refused ("the file changed while it was being opened: try again").
++* Who may use it (Linux, macOS and other POSIX systems, which keep permission bits): a file that other users can read, write or run is refused with "the file can be used by other users: copy it to a normal file, run chmod 600 on it, and name the copy where you named this file". The message never prints the key or the path. `chmod 600` (the command that makes a file readable and writable by its owner only) makes the file private; so does starting the shell with `umask 077` (a setting that makes every new file private) before you create the file. There is no way to switch the refusal off, and only the permission bits of the file are checked: who owns the file is not checked, and neither are access lists (extra permissions that some systems attach to a file apart from its mode), so a file that passes can still be open to someone through an access list or because the person who reads it is the system administrator. Windows has no matching mode bits, so the permission bits are not checked there; the checks on the kind of file and on a link still apply (not tried on Windows by the author: the link tests run only on POSIX systems); keep the file in a folder only you can open. Between the check of the name and the open of the file on Windows, a name could be pointed at another file; the POSIX systems refuse a link in the open call itself. Mounts this rule refuses, as far as is known: Docker file secrets and Kubernetes secret volumes often show the mode 0444 or 0644, and Kubernetes secret volumes also give each key as a link, so such a file is refused. Filesystems that report the mode 0777 for every file (a Windows drive seen from WSL, FAT, some bind mounts) are refused too. For all of these, copy the file to a regular file on a normal disk and run chmod 600 on it. Docker and Kubernetes were not tried by the author: this is what is reported about them, not something tested here.
++* When the file is read: the HubSpot key file and the SMTP password file: each is read at start and again before every call (a bad file at start stops the start, exit code 4). The live-model key file is read at start and again at its first call, and the key is kept in memory after that (a file replaced before the first call is the one used). The mailbox password file is not read at start; it is read each time the mailbox is counted. Nothing is kept from the start-up read of the HubSpot and SMTP files, so each of these files must stay in place and readable for as long as the desk runs.
++* Whether the key is valid at the vendor cannot be checked without a network call.
+ 
+ ## Live-model limits that are fixed in code
+ 
+-* A live-model key (the line in `DESK_LIVE_KEY_FILE`) shorter than 8 characters is refused (`LIVE_KEY_MIN_CHARS`).
++* A live-model key (the line in `DESK_LIVE_KEY_FILE`) shorter than 8 characters (`LIVE_KEY_MIN_CHARS`) is refused, like every other fault of a key file: see "Key and password files" above.
+ * A spend ledger file larger than 8,000,000 bytes stops all spending: every call is refused (`LIVE_LEDGER_FILE_MAX_BYTES`). Start a new ledger file when it gets that large.
+ 
+ ## Settings of the helper scripts (not read by the desk)
+@@ -118,7 +128,7 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * The script forces `DESK_ADAPTERS=demo`, `DESK_CRM=hubspot`, `DESK_OUTBOX=smtp_provider` and, unless you pass `--live-model`, `DESK_QUALIFIER=recorded`, whatever the file says; it also reads the other `DESK_*` names (for example `DESK_PORT`, the `DESK_HUBSPOT_*`, `DESK_SMTPP_*` and `DESK_LIVE_*` names) from the same file and gives them to the desk processes. Defaults it sets when absent: `DESK_SEND_TIMEOUT_SECONDS=8`, `DESK_HUBSPOT_ALLOW_ANY_BASE_URL=no`, `DESK_LIVE_ALLOW_ANY_BASE_URL=no`.
+ * Mailboxes: blocks `REAL_IMAP_1_*`, `REAL_IMAP_2_*` and so on are read in order and stop at the first n that has no `REAL_IMAP_n_USER`; the user of block n must be the n-th address of `DESK_SMTPP_RECIPIENTS`. Per block: `USER` and `PASSWORD_FILE` (required), `HOST` (default: the mail provider's address, `MAIL_IMAP_DEFAULT_HOST` in `constants.py`), `PORT` (default 993), `CA_FILE`, `FOLDERS` (comma list; default `INBOX` and the provider's English spam folder, `MAIL_SPAM_FOLDER` in `constants.py`).
+ * Exit codes of `scripts/run_real_check.py`: 0 every check in its table passed (with `--cleanup`: and every contact it made was archived; without `--cleanup` the contacts stay where the run put them, in HubSpot for a real run and in the local stand-in CRM that `--dry-fakes` starts for the run and stops at its end, and the exit code does not count them); 1 stopped before calling anything (you did not answer `y`, or there was no terminal to answer on); an unexpected error after that question also ends the program with code 1 (a Python traceback); 2 refused at the start (a missing or bad setting, or `--assume-yes` without `--dry-fakes`); 3 the run could not finish, a check failed, the book could not be read, or (only with `--cleanup`) some contacts could not be archived and were left behind.
+-* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
++* `scripts/n8n_api.py` reads `N8N_URL` (default `http://127.0.0.1:5679`) and `N8N_API_KEY_FILE` (the path of a one-line file with the n8n API key; required). `N8N_URL` must be an `https` address, or `http` to this computer (any IPv4 address that starts with `127`, `::1`, an IPv4 loopback address written in the `::ffff:` form, or `localhost`, which is exactly what the desk's own `is_loopback_host` accepts): the key is sent in a header, so the script refuses any other address, and one it cannot read, at start (before the key file is opened) with a message that says to use https or an SSH tunnel to `127.0.0.1`. The script also does not follow a redirect from n8n (the key header would go to the new address); it reports the redirect as an error. For `http` to this computer the script ignores the proxy settings of the environment (`HTTP_PROXY`, `no_proxy`): the key header goes straight to this computer and never to a proxy; for `https` those settings are used as usual. Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a short message and exit code 1 or 2 (never a Python traceback, the key or the body of an answer): n8n not reachable, an answer that is not JSON or is nested too deeply to read, a workflow list with an odd entry, a missing argument, a workflow file that cannot be read (missing, not JSON, nested too deeply, no name), a missing, unreadable or directory key file. A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode. Not covered, so a traceback is possible: Ctrl-C, running out of memory and a closed output pipe. The key file follows the key-file rule written in "Key and password files" above; a file that rule refuses ends the script at start with a fixed message (the key text is never printed). Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header. The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`. `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout` (see the text at the top of the file).
+ * `tools/scrub_n8n_export.py` (cleans an n8n export before it is published; no settings) replaces every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`. One kept exception: a web address (`http`, `https`, `ws`, `wss`) to `localhost` or `127.0.0.1` stays, up to the end of its path; its query string and fragment (`?...`, `#...`) are dropped, because an API key can sit in a query. An address with any other scheme to `localhost` (`file://localhost/...`, `postgres://localhost/...`) is replaced whole. A tab, a carriage return or a line feed right after a `localhost` host (a browser ignores it) turns the address into a look-alike: the address, the break and the next run of non-blank characters are replaced whole. Any other blank right after a `localhost` host (a space, a vertical tab, a form feed, a no-break space or another Unicode space; a browser keeps it in the user name) does the same, but only when the next run of non-blank characters holds an at-sign before any `/`, `?` or `#` (`http://localhost @host`); `http://localhost:5678/x y` and `http://localhost y` (words after a space) are not touched. Webhook ids (the id field) are never kept, but the webhook path is kept as written, so a secret inside a path stays. **Not cleaned** (read the output by eye before you publish it): an address without a scheme (`//host/path`, `host:5432`), a bare host name, a path that is not a URL, the scheme written with percent signs (`http%3A%2F%2F`) or with backslashes (`http:\\host`); a secret inside the path of a kept `localhost` address (`/webhook/<token>`), also as a `%3F`-encoded query inside the path (only a real `?` or `#` ends the path); a data: link without a media type (`data:,text`, `data:;base64,...`); an e-mail address written with the small at-sign U+FE6B or with an ideographic full stop in the domain; the keys of a dictionary inside node parameters (only the values are cleaned); and, in a node name, an expression that refers to another node by an old name when two names became the same (the second gets ` (2)`). Over-cleaning by design: an address that an expression completes, such as `"http://localhost:5678/x?" + $json.q`, is read as a plain address and loses its `?` and what follows on the same run of characters. Likewise a bare local address, a space and then an e-mail address (`http://localhost jane@example.test`) loses the e-mail address too.
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by `tests/test_hygiene.py`. `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+diff --git a/load_tools/README.md b/load_tools/README.md
+index 4b3ee09..3d7606c 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -110,7 +110,7 @@ Use a new `--id-prefix` for every run against the same desk book.
+ ## Fake model server (`demo_only/fake_model_server.py`)
+ 
+ The model stand-in for load runs is the one fake model server of the repository (same request and reply shape
+-the desk's live qualifier uses). Start it with `python -m demo_only.fake_model_server --port 48767 --call-log model.jsonl
++the desk's live qualifier uses). Start it from the repository folder with `PYTHONPATH=src python -m demo_only.fake_model_server --port 48767 --call-log model.jsonl
+ [--control-file mode.txt]`. Switch the mode with `POST /control {"mode": "..."}`, or through the control file (one mode
+ word or `{"mode": ...}`, read on every call, wins over `POST /control`). Load-run names and server names are the same
+ modes: `rate_limit` = `r429`, `malformed_json` = `malformed`, `malformed_label` = `badlabel`, `server_error` = `r5xx`;
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index de1c405..0265fd6 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -16,6 +16,7 @@ import os
+ import platform
+ import queue
+ import random
++import re
+ import sys
+ import threading
+ import time
+@@ -51,7 +52,9 @@ try:  # one source of truth for the retry policy of the burst script (contract.m
+     _backoff = _constants.BURST_BACKOFF_SECONDS
+     _backoff_max = _constants.BURST_BACKOFF_MAX_SECONDS
+     _deadline = _constants.BURST_RETRY_DEADLINE_SECONDS
+-except ImportError:  # run without src on the path: same values (a test pins them to lead_desk.constants)
++except ModuleNotFoundError as _absent:  # run without src on the path: same values (a test pins them to the desk's)
++    if _absent.name != "lead_desk":  # `lead_desk` is there but something inside it is missing: a broken desk
++        raise
+     _backoff, _backoff_max, _deadline = FALLBACK_RETRY_VALUES
+ 
+ # ---- config block ----
+@@ -76,13 +79,35 @@ MIN_TCP_LINE_FIELDS = 4
+ DUPMIX_RATE_INDEX = 2
+ 
+ 
+-def _retry_after(value: str | None) -> float | None:
+-    """The Retry-After header as seconds; an HTTP date, a negative number or junk gives None."""
++# The Retry-After rule below is a stand-alone copy of `lead_desk.envnum.retry_after_seconds` (this driver must run
++# without the desk's code); a test pins the two together. The most seconds a header may ask for is the same value as
++# `lead_desk.constants.RETRY_AFTER_MAX_SECONDS`, also pinned by that test.
++RETRY_AFTER_MAX_SECONDS = 3600.0
++
++
++def _retry_after_fallback(value: str | None) -> float | None:
++    """The same rule as `lead_desk.envnum.retry_after_seconds`: digits, optionally a point and more digits (no sign,
++    no exponent, no point at either end), spaces and tabs around it ignored; more than RETRY_AFTER_MAX_SECONDS is read
++    as that; a text with so many digits that a float cannot hold it is read as that too; a date, junk, a negative
++    number, inf or nan gives None."""
++    if value is None:
++        return None
++    text = value.strip(" \t")
++    if not (text.isascii() and re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", text)):
++        return None
+     try:
+-        seconds = float(value) if value is not None else None
++        seconds = float(text)
+     except ValueError:
+         return None
+-    return seconds if seconds is not None and seconds >= 0 else None
++    return min(seconds, RETRY_AFTER_MAX_SECONDS)  # a text too long for a float is infinity: also the maximum
++
++
++try:  # the desk's reader when `lead_desk` can be imported; its copy above only when `lead_desk` is not there at all
++    from lead_desk.envnum import retry_after_seconds as _retry_after
++except ModuleNotFoundError as _missing:
++    if _missing.name != "lead_desk":  # the desk is there but something inside it is missing: a broken desk
++        raise
++    _retry_after = _retry_after_fallback
+ 
+ 
+ def next_wait(wait: float, retry_after: float | None, left: float) -> float:
+diff --git a/scripts/hubspot_probe.py b/scripts/hubspot_probe.py
+index 72576e6..2179f47 100644
+--- a/scripts/hubspot_probe.py
++++ b/scripts/hubspot_probe.py
+@@ -18,7 +18,6 @@ from __future__ import annotations
+ 
+ import argparse
+ import json
+-import math
+ import os
+ import re
+ import secrets
+@@ -51,6 +50,11 @@ TOKEN_ENV_RE: Final = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,31}")
+ MAX_429_WAITS: Final = 2
+ MAX_WAIT_SECONDS: Final = 5.0
+ FIRST_WAIT_SECONDS: Final = 0.5
++# This script imports nothing from the desk, so it keeps its own copy of the Retry-After rule of
++# `lead_desk.envnum.retry_after_seconds` (and of `lead_desk.constants.RETRY_AFTER_MAX_SECONDS`); one test pins the copy
++# to the desk's reader on a wide set of texts.
++RETRY_AFTER_MAX_SECONDS: Final = 3600.0
++_RETRY_AFTER_TEXT: Final = re.compile(r"[0-9]+(?:\.[0-9]+)?")
+ TIMEOUT_SECONDS: Final = 15.0
+ MAX_REPLY_BYTES: Final = 1_000_000
+ LOOPBACK_HOSTS: Final = ("127.0.0.1", "localhost")
+@@ -137,12 +141,7 @@ class Probe:
+                 raw = e.read(MAX_REPLY_BYTES)
+             except Exception:  # noqa: BLE001
+                 raw = b""
+-            try:
+-                wait = float(e.headers.get("Retry-After", ""))
+-            except ValueError:
+-                wait = None
+-            if wait is not None and not (math.isfinite(wait) and wait >= 0):
+-                wait = None  # negative, NaN or infinite: use the built-in back-off instead
++            wait = _retry_after(e.headers.get("Retry-After"))  # None: use the built-in back-off instead
+             e.close()
+         except Exception:  # noqa: BLE001  (timeout, refused, reset: only "no answer" is kept, never the text)
+             return 0, None, None
+@@ -153,6 +152,23 @@ class Probe:
+         return status, body, wait
+ 
+ 
++def _retry_after(raw: str | None) -> float | None:
++    """Seconds named by a Retry-After header: digits, optionally a point and more digits (no sign, no exponent, no
++    point at either end; ASCII only; spaces and tabs around it ignored), at most RETRY_AFTER_MAX_SECONDS (a text with
++    so many digits that a float cannot hold it is also read as that). Anything else gives None. The same rule as
++    `lead_desk.envnum.retry_after_seconds`."""
++    if raw is None:
++        return None
++    text = raw.strip(" \t")
++    if not (text.isascii() and _RETRY_AFTER_TEXT.fullmatch(text)):
++        return None
++    try:
++        seconds = float(text)
++    except ValueError:
++        return None
++    return min(seconds, RETRY_AFTER_MAX_SECONDS)  # a text too long for a float is infinity: also the maximum
++
++
+ def _why(status: int, body: Any, token: str) -> str:
+     """For a 4xx answer only: HubSpot's error category (a fixed upper-case word) and the first 100 characters of its
+     message, never anything else from the reply. The message of a rejected call names the field that was refused.
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index 349fa55..7d0af26 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -11,17 +11,17 @@ at start, before the key file is opened. To reach an n8n on another computer use
+ A redirect answer is never followed (the header with the key would go to the new address); it is reported as an error.
+ For http to this computer the proxy settings of the environment (HTTP_PROXY, no_proxy) are ignored: the key header goes
+ straight to this computer, never to a proxy. For https they are used as usual.
+-The key file must hold one printable ASCII word of at most 4096 characters (no space, no second line, no control
+-character); anything else is refused at start with a fixed message that does not show the file text.
++The key file follows the one rule of the desk's key files (docs/settings.md, "Key and password files"); a file that
++breaks it is refused at start with a fixed message that does not show the file text.
+ Every failure that can come from the address, the key file, the workflow file, the network or n8n's answer ends with a
+ short message and exit code 1 or 2, never a Python traceback, and never prints the key, the address, a header or an
+ answer body: a network or protocol fault prints only the name of its error type. That list is: an address that cannot
+-be read or is not allowed (also a port outside 1..65535), a key file that is missing, unreadable, a directory or not
+-one printable ASCII word, a workflow file that is missing, not JSON, nested too deeply (RecursionError) or without a
+-name, a workflow that cannot be encoded, every network, TLS and protocol fault, an answer that is not JSON or is nested
+-too deeply, a list with an odd entry. A workflow name that the terminal cannot show is printed with "?" in place of
+-the characters it cannot encode. NOT covered (a traceback is possible): Ctrl-C (KeyboardInterrupt), running out of
+-memory (MemoryError), and a closed output pipe (BrokenPipeError).
++be read or is not allowed (also a port outside 1..65535), a key file that the one rule refuses, a workflow file that
++is missing, not JSON, nested too deeply (RecursionError) or without a name, a workflow that cannot be encoded, every
++network, TLS and protocol fault, an answer that is not JSON or is nested too deeply, a list with an odd entry. A
++workflow name that the terminal cannot show is printed with "?" in place of the characters it cannot encode. NOT
++covered (a traceback is possible): Ctrl-C (KeyboardInterrupt), running out of memory (MemoryError), and a closed
++output pipe (BrokenPipeError).
+ """
+ 
+ from __future__ import annotations
+@@ -50,7 +50,7 @@ for _p in (str(REPO), str(REPO / "src")):
+ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.config import is_loopback_host  # noqa: E402
+-from lead_desk.envnum import SettingRefused, split_url  # noqa: E402
++from lead_desk.envnum import SettingRefused, read_secret_file, split_url  # noqa: E402
+ from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+ 
+ REFUSED = (
+@@ -90,27 +90,14 @@ BASE = checked_base(os.environ.get("N8N_URL", "http://127.0.0.1:5679"))
+ PROXY_ALLOWED = urlsplit(BASE).scheme.lower() == "https"  # http is only ever to this computer: no proxy for the key
+ 
+ 
+-MAX_KEY = 4096  # an n8n API key is a token of a few hundred characters; anything longer is not one
+-
+-
+ def _read_key() -> str:
+     name = os.environ.get("N8N_API_KEY_FILE")
+     if not name:
+         raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
+-    try:
+-        with Path(name).open("rb") as f:  # a directory, a missing or an unreadable file: OSError
+-            raw = f.read(MAX_KEY + 1)  # never the whole of a huge file: a key is short
+-        key = raw.decode("utf-8").strip()  # bytes that are not text: UnicodeDecodeError (a ValueError)
+-    except (OSError, ValueError) as e:
+-        raise SystemExit(f"cannot read the n8n API key file ({type(e).__name__})") from None
+-    # Printable ASCII without a blank: a second line, a tab or NUL inside, or a non-latin-1 letter would make the header
+-    # call fail with a message that holds the key. The text of the file is never part of the message.
+-    if not key or len(key) > MAX_KEY or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key):
+-        raise SystemExit(
+-            "the n8n API key file must hold one word of printable ASCII (no space, second line or control character) "
+-            f"of at most {MAX_KEY} characters"
+-        )
+-    return key
++    try:  # the one rule for every key file (lead_desk.envnum): its refusal text holds neither the path nor the key
++        return read_secret_file(Path(name), "n8n API key", "key")
++    except SettingRefused as e:
++        raise SystemExit(str(e)) from None
+ 
+ 
+ KEY = _read_key()
+diff --git a/scripts/real-run.env.example b/scripts/real-run.env.example
+index 0e84309..befbba4 100644
+--- a/scripts/real-run.env.example
++++ b/scripts/real-run.env.example
+@@ -1,6 +1,6 @@
+ # Settings for scripts/run_real_check.py. Copy this file OUTSIDE the repository, for example to
+ # <PRIVATE_FOLDER>\real-run.env, and replace every <...> value.
+-# Secrets are never written here: only the PATHS of one-line key files.
++# Secrets are never written here: only the PATHS of one-line key files. Run chmod 600 on each key file.
+ # Run: python scripts/run_real_check.py --config <PRIVATE_FOLDER>\real-run.env
+ # Self-test with no real service: python scripts/run_real_check.py --dry-fakes
+ 
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index 42bdfc0..2cd03db 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -1,4 +1,4 @@
+-# Stop what start_all.ps1 started (only those process ids) and delete the lead book, so the next run starts empty.
++# Stop what start_all.ps1 started (only those process ids) and delete the lead-book, so the next run starts empty.
+ # Run from the repository root. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data folder.
+ $ErrorActionPreference = 'Stop'
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index c8e07bd..3d89548 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env bash
+-# Stop what start_all.sh started (only those process ids) and delete the lead book, so the next run starts empty.
++# Stop what start_all.sh started (only those process ids) and delete the lead-book, so the next run starts empty.
+ # Run from the repository root with bash (it uses [[ ]]): `sh scripts/reset.sh` fails where sh is dash. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+ # and refuses to run when the database path is not inside the repository's data/ folder.
+ set -eu
+diff --git a/scripts/reset_check.py b/scripts/reset_check.py
+index ebc1b45..3b4107b 100644
+--- a/scripts/reset_check.py
++++ b/scripts/reset_check.py
+@@ -1,5 +1,5 @@
+ """Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything. Exit 0 = nothing uses the
+-lead book: no process holds its lock file and nothing answers on the desk's or the demo server's port. Exit 3 = a
++lead-book: no process holds its lock file and nothing answers on the desk's or the demo server's port. Exit 3 = a
+ process still holds the database or the lock file cannot be tested, 4 = something still answers on a port.
+ Prints one line, no values."""
+ 
+@@ -10,6 +10,7 @@ import sys
+ 
+ from lead_desk import lockfile
+ from lead_desk.config import Config
++from lead_desk.envnum import path_kind
+ 
+ LOOPBACK = "127.0.0.1"
+ CONNECT_SECONDS = 1.0
+@@ -28,9 +29,10 @@ def main() -> int:
+     # only "there is no lock file" means that nothing holds the book; a lock file that cannot be tested is a refusal,
+     # and a refused run must not create the file (acquire would)
+     try:
+-        has_lock_file: bool | None = lockfile.lock_path(config.db_path).exists()
+-    except OSError:  # an unreadable folder: exists() raises instead of answering
+-        has_lock_file = None
++        lock_kind = path_kind(lockfile.lock_path(config.db_path))  # not the stdlib probe: it raises on some faults
++    except lockfile.LockUnavailableError:  # a loop of links or a name the system cannot hold
++        lock_kind = "unreadable"
++    has_lock_file: bool | None = None if lock_kind == "unreadable" else lock_kind != "absent"
+     if has_lock_file is None:
+         print("refused: the data folder cannot be looked at, so it is not known whether the desk runs; nothing deleted")
+         return 3
+diff --git a/scripts/run_live_check.py b/scripts/run_live_check.py
+index 16523b3..181db80 100644
+--- a/scripts/run_live_check.py
++++ b/scripts/run_live_check.py
+@@ -53,9 +53,12 @@ def _model_arg(text: str) -> tuple[str, Decimal, Decimal]:
+ 
+ def _usd_arg(text: str) -> Decimal:
+     try:
+-        return Decimal(text)
++        value = Decimal(text)
+     except InvalidOperation as e:
+         raise argparse.ArgumentTypeError(f"not a number: {text!r}") from e
++    if not value.is_finite() or value <= 0:  # NaN and Infinity are Decimal values too: a cap must be a real amount
++        raise argparse.ArgumentTypeError(f"a spending cap must be a finite amount above zero, not {text!r}")
++    return value
+ 
+ 
+ def _emails(n: int) -> list[tuple[str, str]]:
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index 9d754c3..a7f0456 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -77,7 +77,7 @@ from lead_desk.constants import (  # noqa: E402
+     REAL_SECONDS_MAX,
+ )
+ from lead_desk.crm_hubspot import HubspotCrm, HubspotSettings  # noqa: E402
+-from lead_desk.envnum import env_number  # noqa: E402
++from lead_desk.envnum import env_file_problem, env_number, file_problem_text, path_kind  # noqa: E402
+ from lead_desk.gate import SEND_WORKERS_MAX  # noqa: E402
+ from lead_desk.imap_count import (  # noqa: E402
+     ImapConnectionError,
+@@ -179,8 +179,10 @@ class DryFakes:
+         recipients = ("inbox-a@example.test", "inbox-b@example.test")
+         for im, rcpt in zip(self.imaps, recipients, strict=True):
+             im.user = rcpt  # the mailbox login is the recipient's address, as for a real mailbox
+-        (self._private / "hs.key").write_text(self.state.key, encoding="utf-8")
+-        (self._private / "pw.txt").write_text(self.smtp.password, encoding="utf-8")
++        for name, secret in (("hs.key", self.state.key), ("pw.txt", self.smtp.password)):
++            made = self._private / name
++            made.touch(mode=0o600)  # the desk refuses a key file that other users can read
++            made.write_text(secret, encoding="utf-8")
+         pw = str(self._private / "pw.txt")
+         self.env = {
+             "DESK_DB_PATH": str(folder / "run" / "desk.db"),
+@@ -856,8 +858,11 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+             print(f"refused: REAL_PERSONS must be at least {MIN_PERSONS}")
+             return EXIT_REFUSED
+         db = Path(env["DESK_DB_PATH"])
+-        if db.exists():  # an old book would hold old leads: the clean-up could not tell this run's contacts apart
+-            raise ValueError("DESK_DB_PATH names a file that already exists: give a new database file for each run")
++        book_problem = env_file_problem(db)  # the one parent walk (folder, inside a file, cannot be looked at)
++        if book_problem is not None:
++            raise ValueError(file_problem_text("DESK_DB_PATH", book_problem))
++        if path_kind(db) != "absent":  # an old book would hold old leads: the clean-up could not tell this run's apart
++            raise ValueError("DESK_DB_PATH names something that already exists: give a new database file for each run")
+         run_dir = db.parent
+         env = {**env, "DESK_ADAPTERS": "demo", "DESK_CRM": "hubspot", "DESK_OUTBOX": "smtp_provider"}
+         env.setdefault("DESK_SEND_TIMEOUT_SECONDS", "8")
+@@ -959,8 +964,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         crash_exit = d1.wait_exit(CRASH_WAIT_SECONDS)
+         d1.stop()
+         sending_at_kill = sending_rows(db)  # before the second desk's reaper turns them into `unknown`
+-        if flag.exists():
+-            flag.unlink()
++        flag.unlink(missing_ok=True)
+         d2.start()
+         lost = [
+             it
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9812f8e..2728f35 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -53,7 +53,7 @@ from lead_desk.constants import (
+     STALL_SECONDS_MAX,
+     WILDCARD_BINDS,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import SettingRefused, env_number, env_yes_no, refuse_unusable_file, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+ from lead_desk.urls import desk_origin
+ 
+@@ -61,6 +61,56 @@ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+ 
+ 
++_BIND_CHARS = re.compile(r"[A-Za-z0-9._:%\[\]-]+")  # ASCII letters, digits and . _ - : % [ ] only
++_ALL_DIGITS_AND_DOTS = re.compile(r"[0-9.]+")
++
++
++def _is_bind_name(name: str) -> bool:
++    """False only for what can never be the address the desk listens on; True for everything the operating system
++    might resolve (whether a name resolves on this computer is for the system to say: the desk then stops later with
++    exit code 5). Refused: empty, anything outside ASCII letters, digits and . - _ : % [ ] (so no space and no control
++    character), more than HOST_NAME_MAX characters, an empty part in a dotted name (`a..b`; one dot at the end is
++    fine), a number-and-dots name the system cannot read as IPv4 (a part above 255), brackets around anything but an
++    IPv6 address (an IPv4 address in brackets), and a name with a colon or % that is not an IPv6 address (a zone id is
++    fine: `[fe80::1%eth0]`). Allowed: an underscore (container and machine names), a trailing dot, the
++    all-interfaces spellings."""
++    if not name or len(name) > HOST_NAME_MAX or not _BIND_CHARS.fullmatch(name):
++        return False
++    if "[" in name or "]" in name:  # brackets go with an IPv6 address (zone allowed); IPv4 in brackets is refused
++        inner = name.strip("[]")  # an unpaired bracket (`[::1`) stays readable: public_bind_problem calls it public
++        return ":" in inner and "[" not in inner and "]" not in inner and _is_ipv6(inner)
++    if ":" in name or "%" in name:
++        return _is_ipv6(name)
++    if _ALL_DIGITS_AND_DOTS.fullmatch(name):  # the system reads short forms and 0 as IPv4; a part above 255 it cannot
++        try:
++            socket.inet_aton(name)
++        except OSError:
++            return False
++        return True
++    return all(name.rstrip(".").split("."))  # no empty part (`a..b`, `.a`)
++
++
++def _is_settable_bind_name(name: str) -> bool:
++    """The stricter check for a bind that came from the DESK_BIND setting (`Config.from_env`): everything
++    `_is_bind_name` accepts, and also exactly one pair of brackets around the whole IPv6 address (`[::1` and `::1]` can
++    never bind), and a letter or digit in every part of a name (`-`, `_` and `a.-.b` can never be a name). `Config`
++    itself keeps the looser check, so that `public_bind_problem` still calls a half-bracketed text public."""
++    if not _is_bind_name(name):
++        return False
++    if name.startswith("[") or name.endswith("]") or "[" in name or "]" in name:
++        return name.startswith("[") and name.endswith("]") and name.count("[") == 1 and name.count("]") == 1
++    if ":" in name or "%" in name or _ALL_DIGITS_AND_DOTS.fullmatch(name):
++        return True  # an IPv6 or IPv4 address that `_is_bind_name` already read
++    return all(any(c.isalnum() for c in part) for part in name.rstrip(".").split("."))
++
++
++def _is_ipv6(text: str) -> bool:
++    try:
++        return isinstance(ipaddress.ip_address(text), ipaddress.IPv6Address)
++    except ValueError:
++        return False
++
++
+ def is_loopback_host(name: str) -> bool:
+     """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+     reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+@@ -212,8 +262,9 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+         kw["effort"] = e["DESK_LIVE_EFFORT"]
+     if "DESK_LIVE_MAX_TOKENS" in e:
+         kw["max_tokens"] = env_number(e, "DESK_LIVE_MAX_TOKENS", int, low=1, high=LIVE_MAX_TOKENS_MAX)
+-    if e.get("DESK_LIVE_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++    if env_yes_no(e, "DESK_LIVE_ALLOW_ANY_BASE_URL"):
+         kw["allow_any_base_url"] = True
++    refuse_unusable_file("DESK_LIVE_LEDGER_PATH", Path(e["DESK_LIVE_LEDGER_PATH"]))  # a folder is never the ledger
+     return LiveSettings(
+         model=e["DESK_LIVE_MODEL"],
+         key_file=Path(e["DESK_LIVE_KEY_FILE"]),
+@@ -251,15 +302,16 @@ def _check_approvers(approvers: tuple[tuple[str, str], ...], label: str) -> None
+         names.add(entry[1])
+ 
+ 
+-def read_approvers(path: Path) -> tuple[tuple[tuple[str, str], ...], str]:
++def read_approvers(path: Path, setting: str | None = "DESK_APPROVERS_FILE") -> tuple[tuple[tuple[str, str], ...], str]:
+     """Read an approvers file: JSON `{"label": "...", "approvers": [{"id": "...", "name": "..."}, ...]}` (label is
+     optional). Returns ((id, name), ...) and the label. Only the file shape is checked here; Config checks the
+-    values. Raises SettingRefused (naming DESK_APPROVERS_FILE and the entry number, never the text)."""
++    values. Raises SettingRefused (naming DESK_APPROVERS_FILE and the entry number, never the text). `setting=None`
++    is for the shipped default file, which no setting names: its refusal does not blame a setting."""
+     try:
+         with path.open("rb") as f:
+             raw = f.read(APPROVERS_FILE_MAX_BYTES + 1)
+     except OSError:
+-        raise SettingRefused("the approvers file cannot be read") from None
++        raise SettingRefused(f"{setting} cannot be read" if setting else "the approvers file cannot be read") from None
+     if len(raw) > APPROVERS_FILE_MAX_BYTES:
+         raise SettingRefused("the approvers file is too big")
+     try:
+@@ -514,6 +566,8 @@ class Config:
+             raise SettingRefused("qualifier live_claude needs the live model settings (DESK_LIVE_*)")
+         if not self.bind or not self.fakes_host:
+             raise SettingRefused("DESK_BIND and DESK_FAKES_HOST must not be empty")
++        if not _is_bind_name(self.bind):
++            raise SettingRefused("DESK_BIND must be an IP address or a host name")
+         if not is_loopback_host(self.fakes_host):  # the stand-ins are local by construction: the banner relies on it
+             raise SettingRefused(
+                 "DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address"
+@@ -547,8 +601,12 @@ class Config:
+         e = os.environ if env is None else env
+         kw: dict[str, Any] = {}
+         if "DESK_DB_PATH" in e:
++            if not e["DESK_DB_PATH"].strip():  # Path("") is "." (a folder), never a lead-book
++                raise SettingRefused("DESK_DB_PATH must not be empty")
+             kw["db_path"] = Path(e["DESK_DB_PATH"])
+         if "DESK_BIND" in e:
++            if e["DESK_BIND"] and not _is_settable_bind_name(e["DESK_BIND"]):  # empty: Config gives its own text
++                raise SettingRefused("DESK_BIND must be an IP address or a host name")
+             kw["bind"] = e["DESK_BIND"]
+         if "DESK_PORT" in e:
+             kw["port"] = env_number(e, "DESK_PORT", int, low=0, high=PORT_MAX)
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index ad79be1..85de473 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -23,7 +23,7 @@ HTTP_BUSY: Final = 503
+ 
+ # Process exit codes
+ EXIT_OK: Final = 0
+-EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the lead book is in use)
++EXIT_ANOTHER_DESK: Final = 2  # another desk holds the lock file (the lead-book is in use)
+ EXIT_SETTING_REFUSED: Final = (
+     3  # a limit in constants.py does not fit this computer (too many handler threads for the open-file limit)
+ )
+@@ -180,6 +180,11 @@ LIVE_PER_MILLION: Final = 1_000_000
+ LIVE_LEDGER_LOCK_TRIES: Final = 50  # blocking ledger lock: tries x LIVE_LEDGER_LOCK_WAIT seconds
+ LIVE_LEDGER_LOCK_WAIT: Final = 0.1
+ LIVE_KEY_MIN_CHARS: Final = 8
++SECRET_FILE_MAX_BYTES: Final = 4096  # the most bytes read from a key or password file (one line)
++# The most seconds a Retry-After header may ask for: a larger number is read as this one. The desk's reader
++# (lead_desk.envnum.retry_after_seconds) and the two stand-alone copies (scripts/hubspot_probe.py, load_tools/
++# load_driver.py) hold the same value; a test pins them together.
++RETRY_AFTER_MAX_SECONDS: Final = 3600.0
+ LIVE_LEDGER_FILE_MAX_BYTES: Final = 8_000_000  # a bigger ledger file is refused (it is read whole on every reserve)
+ LIVE_PRICE_MIN: Final = "0.000001"  # US$ per million tokens: below this the worst-case cost could round to zero
+ LIVE_PRICE_MAX: Final = "1000000"
+@@ -253,7 +258,7 @@ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one conn
+ DRAIN_MAX_BYTES: Final = (
+     1_048_576  # unread request bytes read and dropped after an early reply, so the reply is not lost to a reset
+ )
+-EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the sender (/fake/info)
++EXIT_ADAPTERS_UNREACHABLE: Final = 1  # start-up cannot reach the demo servers
+ MAX_DIGITS: Final = 18  # longest Content-Length or item number taken as a number; longer is over every limit
+ REPLY_MAX_BYTES: Final = (
+     1_048_576  # an adapter reply longer than this is refused unread (the fakes answer a few hundred bytes)
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 89e6f8a..54ef78e 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -78,11 +78,18 @@ from lead_desk.constants import (
+     HTTP_TOO_MANY_REQUESTS,
+     HUBSPOT_BASE_URL,
+     HUBSPOT_HOST_SUFFIXES,
+-    LIVE_KEY_MIN_CHARS,
+     MIRROR_CALL_SHARE,
+     REPLY_MAX_BYTES,
+ )
+-from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.envnum import (
++    SettingRefused,
++    env_number,
++    env_yes_no,
++    read_secret_file,
++    refuse_unusable_file,
++    retry_after_seconds,
++    split_url,
++)
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -94,7 +101,6 @@ BACKOFF_FIRST_SECONDS: Final = 0.5  # used when a 429 names no Retry-After
+ LIST_PAGE: Final = 100
+ LIST_PAGES_MAX: Final = 50
+ LIST_TOTAL_SECONDS: Final = 120.0  # the whole read-back listing, however many pages
+-SECRET_FILE_MAX_BYTES: Final = 4096
+ SEARCH_SPACING_SECONDS: Final = (
+     0.25  # HubSpot's documentation (read 2026-11-10) gives the search API 5 requests a second
+ )
+@@ -189,10 +195,11 @@ class HubspotSettings:
+             kw["max_429_retries"] = env_number(
+                 env, "DESK_HUBSPOT_MAX_429_RETRIES", int, low=0, high=DEFAULT_429_RETRIES + 3
+             )
+-        if env.get("DESK_HUBSPOT_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
++        if env_yes_no(env, "DESK_HUBSPOT_ALLOW_ANY_BASE_URL"):
+             kw["allow_any_base_url"] = True
+         if env.get("DESK_HUBSPOT_STATS_FILE"):
+             kw["stats_file"] = Path(env["DESK_HUBSPOT_STATS_FILE"])
++            refuse_unusable_file("DESK_HUBSPOT_STATS_FILE", kw["stats_file"])  # a folder is never a stats file
+         return cls(
+             Path(env["DESK_HUBSPOT_KEY_FILE"]),
+             env_number(env, "DESK_HUBSPOT_MAX_CALLS", int, low=1, high=CAP_COUNT_MAX),
+@@ -207,14 +214,6 @@ class _Reply:
+         self.status, self.body, self.retry_after = status, body, retry_after
+ 
+ 
+-def _retry_after(raw: str | None) -> float | None:
+-    try:
+-        v = float(raw) if raw is not None else None
+-    except ValueError:
+-        return None
+-    return v if v is not None and 0 <= v < float("inf") else None
+-
+-
+ def _split_name(name: str) -> tuple[str, str]:
+     first, _, last = name.strip().partition(" ")
+     return first.strip(), last.strip()
+@@ -249,25 +248,21 @@ class HubspotCrm:
+ 
+     # -- the wire -----------------------------------------------------------------------------------------------
+ 
+-    def _key(self) -> str:
++    def check_start(self) -> None:
++        """Start-up check (the optional `check_start` hook of a kind that holds a secret): read the key file once, as
++        the first call would, so a missing or empty key file stops the start (SettingRefused, exit code 4) instead of
++        failing every later call. The message names the setting and holds neither the path nor the key. The key is
++        not kept; each call still reads the file (a new key works)."""
+         try:
+-            with self.s.key_file.open("rb") as f:
+-                raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+-        except OSError:
+-            raise CrmConfigError("the hubspot key file cannot be read") from None  # the OS error holds the path
+-        if len(raw) > SECRET_FILE_MAX_BYTES:
+-            raise CrmConfigError("the hubspot key file is too large: it must hold only the key")
+-        if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+-            raise CrmConfigError("the hubspot key file is UTF-16 text: save it as plain UTF-8 text")
++            self._key()
++        except CrmConfigError as e:
++            raise SettingRefused(f"DESK_HUBSPOT_KEY_FILE: {e}") from None
++
++    def _key(self) -> str:
+         try:
+-            key = raw.decode("utf-8-sig").strip()
+-        except UnicodeError:
+-            raise CrmConfigError("the hubspot key file is not UTF-8 text: save it as plain UTF-8 text") from None
+-        if "\n" in key or "\r" in key:
+-            raise CrmConfigError("the hubspot key file has more than one line: it must hold only the key")
+-        if len(key) < LIVE_KEY_MIN_CHARS or any(c.isspace() or not c.isprintable() for c in key):
+-            raise CrmConfigError("the hubspot key file holds no key")
+-        return key
++            return read_secret_file(self.s.key_file, "hubspot key", "key")
++        except SettingRefused as e:
++            raise CrmConfigError(str(e)) from None  # a fixed text: no path, no content
+ 
+     def _count(self, *names: str) -> None:
+         with self._lock:
+@@ -311,7 +306,7 @@ class HubspotCrm:
+             with _OPENER.open(req, timeout=left) as r:  # noqa: S310  # nosec B310
+                 return _Reply(r.status, self._read(r, deadline), None)
+         except urllib.error.HTTPError as e:
+-            ra = _retry_after(e.headers.get("Retry-After"))
++            ra = retry_after_seconds(e.headers.get("Retry-After"))
+             try:
+                 body = self._read(e, deadline)
+             except (CrmError, OSError, http.client.HTTPException):
+diff --git a/src/lead_desk/db.py b/src/lead_desk/db.py
+index 7b0962b..14f3951 100644
+--- a/src/lead_desk/db.py
++++ b/src/lead_desk/db.py
+@@ -10,7 +10,7 @@ from lead_desk.constants import BUSY_WAIT_SECONDS, SCHEMA_VERSION, SQLITE_BUSY,
+ 
+ LOW_BYTE = 0xFF  # sqlite_errorcode & 0xFF is the primary result code (extended codes such as 261 or 517 count)
+ 
+-# A lead book kept from a previous run is brought up to this schema at start-up: it gets any of these columns it lacks.
++# A lead-book kept from a previous run is brought up to this schema at start-up: it gets any of these columns it lacks.
+ _ADDED_COLUMNS: tuple[tuple[str, str, str], ...] = (
+     ("receipts", "payload_conflict", "ALTER TABLE receipts ADD COLUMN payload_conflict INTEGER NOT NULL DEFAULT 0"),
+     ("followups", "crm_done", "ALTER TABLE followups ADD COLUMN crm_done INTEGER NOT NULL DEFAULT 0"),
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index 4045b96..47b58b2 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -17,7 +17,7 @@ from collections.abc import Callable, Iterator
+ from contextlib import contextmanager
+ from dataclasses import dataclass, field
+ from pathlib import Path
+-from typing import Any, Literal, TypeVar, cast
++from typing import Any, Literal, TypeVar, cast, get_args
+ 
+ from lead_desk import db, identity
+ from lead_desk.config import Config
+@@ -75,6 +75,7 @@ from lead_desk.contract import (
+     SendUnreachable,
+     is_fd_exhaustion,
+ )
++from lead_desk.envnum import FileProblem, env_file_problem, file_problem_text
+ from lead_desk.gate import (
+     BUSY_ERRORS,
+     CRM_WORKERS_MAX,
+@@ -306,19 +307,28 @@ class Reply:
+     drive_lead_id: str | None = None  # set when the caller must now run the follow-up
+ 
+ 
+-MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
++MEMORY_BOOK_PROBLEM = "the lead-book must be a file: ':memory:' is empty for every thread but the first"
++
++
++BOOK_UNREADABLE_PROBLEM = file_problem_text("DESK_DB_PATH", "unreadable")
++# the same fixed texts as the other settings that name a file (envnum.file_problem_text), one for every kind of problem
++BOOK_PROBLEMS = {kind: file_problem_text("DESK_DB_PATH", kind) for kind in get_args(FileProblem)}
+ 
+ 
+ def book_problem(db_path: Path | str) -> str | None:
+     """Why this lead-book path is refused (None: it is fine). A module-level function (not a `Desk` member) so that
+     `main` can call it by its own name: a test or caller that replaces `server.Desk` cannot take the check away.
+     `main` runs it BEFORE the lock step (the lock file is named after the book, so a refusal after it would leave
+-    `<name>.lock` behind) and the desk repeats it when it is built. `Path("")` is "." so only this spelling can name
+-    a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
+-    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.)"""
++    `<name>.lock` behind) and the desk repeats it when it is built. It is the one place for the lead-book path rules:
++    a private memory book, a folder instead of a file, and a part of the path that is a file where a folder must be
++    (the text names DESK_DB_PATH and never holds the path). A folder that cannot be made (no permission) is
++    refused by `main`'s `mkdir` step. `Path("")` is "." (a folder), so it is refused here too.
++    (A `file:` name is NOT refused: the desk resolves every other name to an absolute path before SQLite sees it, so
++    `file::memory:` is a plain file called that, never a memory book.)"""
+     if str(db_path) == ":memory:":
+         return MEMORY_BOOK_PROBLEM
+-    return None
++    problem = env_file_problem(Path(db_path))  # the one parent walk (the stdlib probes raise PermissionError)
++    return None if problem is None else BOOK_PROBLEMS[problem]
+ 
+ 
+ class Desk:
+@@ -376,12 +386,12 @@ class Desk:
+         self._rejected_lock = threading.Lock()
+         self._inflight = FairSemaphore(INFLIGHT_MAX)
+         self._drives = FairSemaphore(DRIVE_MAX)
+-        db_text = str(config.db_path)  # (str(Path("")) is ".", so only ":memory:" can name a private book)
++        db_text = str(config.db_path)  # (the path rules, `Path("")` included, are in book_problem)
+         if (problem := book_problem(db_text)) is not None:  # a private memory book is empty per thread
+             raise DeskSettingRefused(problem)
+         # resolved ONCE here: a later chdir cannot send a new thread's connection to another file
+         self._db_path: Path | str = Path(db_text).resolve()
+-        self._gate = gate_for(self._db_path)  # one write line per lead book (not re-entrant, see gate.py)
++        self._gate = gate_for(self._db_path)  # one write line per lead-book (not re-entrant, see gate.py)
+         self._decide_failures: dict[int, int] = {}  # receipt id -> consecutive non-busy decide failures (in memory)
+         self._decide_lock = threading.Lock()
+         self._integrity_errors = 0  # IntegrityErrors met while deciding (a constraint bug, not a bad payload); /counts
+@@ -590,7 +600,7 @@ class Desk:
+             known = {(s[0], i) for i, s in enumerate(flow.steps)}
+             stored = {(str(a), int(b)) for a, b in conn.execute("SELECT DISTINCT step, step_rank FROM lead_state")}
+             if not stored <= known:
+-                raise DeskSettingRefused("the steps file does not match the steps stored in the lead book")
++                raise DeskSettingRefused("the steps file does not match the steps stored in the lead-book")
+         refreshed = self._refresh_outbox()
+         # (1) finish every OPEN receipt from its stored payload
+         open_ids = conn.execute("SELECT receipt_id FROM receipts WHERE outcome IS NULL ORDER BY receipt_id").fetchall()

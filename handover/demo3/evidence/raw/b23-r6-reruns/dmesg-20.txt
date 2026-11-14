@@ -1,0 +1,3 @@
+[16888.782989] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:33433. Sending cookies.
+[17388.367104] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:43423. Sending cookies.
+[17420.883042] TCP: request_sock_TCP: Possible SYN flooding on port 127.0.0.1:35659. Sending cookies.
