@@ -1,0 +1,32 @@
+QuietServer host='0.0.0.0'               sockets_made=0 -> ValueError
+FakeHubspot host='0.0.0.0'               sockets_made=0 -> ValueError
+FakesServer host='0.0.0.0'               sockets_made=0 -> ValueError
+serve(hubspot) host='0.0.0.0'            sockets_made=0 -> ValueError
+make_fakes_server host='0.0.0.0'         sockets_made=0 -> ValueError
+fake_model_server make host='0.0.0.0'    sockets_made=0 -> ValueError
+QuietServer host='192.0.2.1'             sockets_made=0 -> ValueError
+FakeHubspot host='192.0.2.1'             sockets_made=0 -> ValueError
+FakesServer host='192.0.2.1'             sockets_made=0 -> ValueError
+serve(hubspot) host='192.0.2.1'          sockets_made=0 -> ValueError
+make_fakes_server host='192.0.2.1'       sockets_made=0 -> ValueError
+fake_model_server make host='192.0.2.1'  sockets_made=0 -> ValueError
+QuietServer host=''                      sockets_made=0 -> ValueError
+FakeHubspot host=''                      sockets_made=0 -> ValueError
+FakesServer host=''                      sockets_made=0 -> ValueError
+serve(hubspot) host=''                   sockets_made=0 -> ValueError
+make_fakes_server host=''                sockets_made=1 -> NO-REFUSAL
+fake_model_server make host=''           sockets_made=0 -> ValueError
+QuietServer host='::'                    sockets_made=0 -> ValueError
+FakeHubspot host='::'                    sockets_made=0 -> ValueError
+FakesServer host='::'                    sockets_made=0 -> ValueError
+serve(hubspot) host='::'                 sockets_made=0 -> ValueError
+make_fakes_server host='::'              sockets_made=0 -> ValueError
+fake_model_server make host='::'         sockets_made=0 -> ValueError
+QuietServer host='example.com'           sockets_made=0 -> ValueError
+FakeHubspot host='example.com'           sockets_made=0 -> ValueError
+FakesServer host='example.com'           sockets_made=0 -> ValueError
+serve(hubspot) host='example.com'        sockets_made=0 -> ValueError
+make_fakes_server host='example.com'     sockets_made=0 -> ValueError
+fake_model_server make host='example.com' sockets_made=0 -> ValueError
+['make_model_server']
+bound 127.0.0.1

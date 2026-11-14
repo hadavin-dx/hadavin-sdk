@@ -1,0 +1,13 @@
+Q13	tests/test_r7q_findings.py	q1	KILLED	['1 failed, 53 deselected in 0.39s']
+Q13	restored-byte-equal=True
+Q14	tests/test_r7q_findings.py	q2	KILLED	['1 failed, 63 deselected in 0.62s']
+Q14	restored-byte-equal=True
+Q19	tests/test_r7q_findings.py	q2	KILLED	['1 failed, 63 deselected in 0.45s']
+Q19	restored-byte-equal=True
+mutA	NOT-APPLIED count=0
+mutB	tests/test_file_call_guard.py	None	KILLED	['1 failed in 1.44s']
+mutB	restored-byte-equal=True
+X1	tests/test_r7q_findings.py	q9	KILLED	['1 failed, 62 deselected in 0.40s']
+X1	restored-byte-equal=True
+X1ctx	tests/test_r7q_findings.py	q9	KILLED	['1 failed, 62 deselected in 0.42s']
+X1ctx	restored-byte-equal=True
