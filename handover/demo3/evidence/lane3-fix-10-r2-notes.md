@@ -1,7 +1,7 @@
 # lane3 fix-10 round 2 (builder B17): a bad DESK_* setting gives one clean line and a non-zero exit, never a traceback
 
 Base f3c39cf89ec989f032ea48a23cfd824b88da9c68. Tree /home/user/work/b17-tree (not committed, `git add -A`). Patch: evidence/lane3-fix-10-r2.patch
-(sha256 starts 25b8fe2e; it is the WHOLE fix-10 against the base and REPLACES lane3-fix-10.patch, r1). Python 3.13. Started 05:24Z, tree done 05:42Z.
+(sha256 starts 0d762d13; it is the WHOLE fix-10 against the base and REPLACES lane3-fix-10.patch, r1). Python 3.13. Started 05:24Z, tree done 05:42Z.
 
 ## What failed or is open (first)
 1. Full run on the final head: 2 failed, 4125 passed, 171 skipped, 908.87 s (raw/b17-full-final.log). BOTH failures were in my own new test files:

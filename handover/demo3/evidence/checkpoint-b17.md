@@ -3,3 +3,6 @@
 - Next: mutation run (raw/b17-mutation.log), ONE full run on final head, patch + notes.
 - Commit SHA: none (not committed, git add -A only).
 - 05:41Z full run started on final head (3.13), log raw/b17-full-final.log; no edits to the tree while it runs
+
+## 05:59Z final
+Patch re-cut from the final tree (sha256 0d762d13), notes written, no processes of mine running. Full run: 2 failed (own test hygiene, fixed), 4125 passed, 171 skipped; targeted re-run 456 passed. Row 15 (ps1 never run) escalated. Handing back.
