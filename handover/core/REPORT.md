@@ -1,5 +1,29 @@
 # CORE session report (the ONE file this session reports to the lead in; newest block on top)
 
+## STATUS (core lead) 11:13 UTC / 16:43 IST
+
+**FAILED: the fresh r7q reviewer is NOT running.** The studio gate hook refused my general-purpose reviewer brief ("reviews must be run by the egm:* reviewer agents ... a general-purpose agent may only be an EVIDENCE RUNNER"), and the agent type egm:egm-codebase-details is not registered here ("not found"). I did not reword the brief to pass the hook and did not label a reviewer as an evidence runner. This is the same fallback that was accepted earlier in this session, so the hook rule or its matching has changed: I do not know which.
+
+**r7q HANDED BACK (builder aab1bf4c, finished) and committed.** I verified the three patch hashes against sha256-r7q.txt (crlf 4f271992..., lf 03dc17bd..., delta b468bcc7...) and read the apply matrix (a-crlf, b-crlf, c-lf: git apply --check rc 0). CRLF patch and delta stored as .gz, unpack hash checked. Builder claims, NOT verified by me: nine-file run 378 passed, 1 failed (builder appended a test mid-run; the repo's tree guard reported it; re-run 224 passed); ruff 0.17.1 check and format clean; suppressions noqa 188 to 193 (4 E402 in the new test file, 1 PLR2004 in the guard), others unchanged; ALL mutants killed (X1, X1a, X2, R05, I01, G01-G03, R08, K01, Q01-Q25), none claimed equivalent; X1 on the "not repeated" branch survived the r7n tests until a new test q9 (the "SURVIVED" rows in the table are the wrong test file). Not done by the builder: hygiene scan, full suite, M9-74 probe (argued from source only: a desk-created contact missing from the HubSpot list, for a lead not yet CRM-done, is not archived and does not fail the exit; reachability unknown), M9-79 reachable maximum not measured, q9 not re-run on plain r7p (44 of 61 failed there before q9).
+
+| id | what | why | started UTC/IST | expected end | round | state | next action |
+|---|---|---|---|---|---|---|---|
+| ae0c8973 (EV7P) | ONE full EVIDENCE run on r7q bytes incl. hygiene in a staged git copy, ruff 0.17.1, suppression counts, hostile table | order C-CORRECT step 3 | 11:13 / 16:43 | about 60 min | EV7P | RUNNING | EV7P-EVIDENCE.md |
+| reviewer | fresh uncapped review of r7q | order C-CORRECT step 4 | not started | | | BLOCKED by the hook | see ASK |
+
+Agents running: 1.
+
+ASK (needed to continue step 4): how do you want the independent r7q review started? Options: (a) you register the egm:* agent types or fix the hook match, (b) you tell me the exact accepted brief form, (c) I run the egm:egm-review-loop skill (it asks for a decision gate, so a person must answer). Default: wait, EV7P keeps running.
+ASK (unchanged): may the evidence runner probe M9-74 with a real dry-fakes run? Default pytest fake only (the reviewer would write it).
+
+NOT DONE / NOT CHECKED: independent review of r7q; hygiene scan and full suite (EV7P running); M9-74 test and M9-79 measurement; off-path items (paused by order).
+
+WHAT I WOULD DO NEXT (ranked)
+1. When EV7P lands: read it, compare with the builder numbers.
+2. Start the reviewer as soon as the ASK is answered; fix any Blocker or Major test-first and repeat.
+3. Update ON-PATH-LIST.md with results. Next block about 11:35Z.
+
+
 ## STATUS (core lead) 11:11 UTC / 16:41 IST
 
 **r7q builder (aab1bf4c, resumed 11:01, box ends about 11:57): re-run and mutants are under way; no patch set yet.** Read from its checkpoint and its mutant table (builder claims, I have not re-run them):
