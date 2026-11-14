@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:45Z): control row 5 done; e ten-at-once units 1-2 done, unit 3 running; 3b queued after unit 5
+- Control row 5 (06:36:52-06:37:26Z): (1,1), 200 x1 / 500 x9, replay 0, idle 99.7 / 99.8. Variant a, one burst per fresh stack, 5 rows (3 load-affected): all (1 CRM, 1 email), 0 duplicates in 5 of 5. In the one-stack series 11 of 24 later bursts were clean. First burst after a fresh start: clean 7 of 7 (n8n-a-cause-1.md item 8; a pattern, cause NOT ESTABLISHED).
+- Variant e ten-at-once on fresh stacks (g12e.py = 5 bursts per stack): unit 1 (06:37:56-06:41:25Z) 5 of 5 bursts (1 CRM, 1 email, sent, 200 x10); unit 2 (06:41:51-06:45:19Z) 5 of 5 the same. Second CRM row 0 of 10 bursts so far; no duplicate. Unit 3 running (started about 06:45:20Z); units 4, 5 follow (ends about 06:57Z); then row 3b (a clean redo of load-affected row 3).
+- Running now: only the n8n queue script (one stack at a time). No H, no pytest.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- E units 3-5, row 3b; folding rows into N8N-RERUN-1.md; tree-2 lint + pytest; doc v3 tests, hygiene, skip chunk, fresh doc-patch reviewer.
+- Not tested: a series of 3 bursts on a fresh stack (2nd and 3rd checked) for the first-burst pattern of variant a.
+## WHAT I WOULD DO NEXT (ranked)
+1. Finish the queue; then the 3-burst series on fresh stacks (a, 5 stacks x 3 bursts, about 10 min) to test the first-burst pattern, if you agree (it is a new run: not started without your word).
+2. Fold rows into N8N-RERUN-1.md and n8n-a-cause-1.md.
+3. Doc v3 tests, tree-2 lint, skip chunk, then tree-2 pytest.
 ## REPORT (clock 06:36Z): gitleaks rule applied; origin main re-scanned clean; agent H STOPPED; queue running
 - Your 06:35Z rule applied: gitleaks dir only on a clean git-archive export before anything else touches it. Origin main (public repo checkout, commit 61ded9e, tracked files only, 3.14 MB), CI command with config: rc=0, no leaks found. Frozen tree + doc patch v3, same way: rc=0 (06:31Z). H's earlier rc=1 was caches in its own working copy.
 - Agent H: H restarted its tree-2 pytest at 06:30:50Z (it had not read my message); I stopped agent H for good at 06:36Z and ended its pytest (pid, one process). H's tree-1 results stay on file (all lint steps rc 0, pytest 3713 passed 170 skipped, rc 0); its tree-2 steps and pytest are NOT done and its gitleaks step was never valid as a CI-equivalent (see above). A fixed H (clean export first) can be started later; tree-2 pytest stays last.
