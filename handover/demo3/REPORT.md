@@ -1,3 +1,17 @@
+## HEARTBEAT 113 (07:02Z) - B20 first full run RED (13 failed), fixed, full run 2 going; B21 on its one full run; B22 building; key-file option (a) applied
+
+| Agent / job | State at 07:02Z |
+|---|---|
+| B20 fix-10 r3 | full run 1 ended `13 failed, 4147 passed, 211 skipped` (904s): 12 in tests/test_real_check_dry.py (its tests not run before) and 1 hygiene literal in its own test. Fixed at the class (every refused setting of run_real_check exits 8); full run 2 started in a fresh clone (/home/user/work/b20-final3). No hand-back yet |
+| B21 fix-5 r8 | head frozen, ruff check/format clean repo-wide by its own run (not mine); ONE full run since 06:48Z, deadline 07:41Z. No hand-back yet |
+| B22 fix-2 r9 | building (key-file option (a), your 06:55Z answer); no checkpoint yet |
+| fix-2 r8 | reviewed, resolved, in B22 |
+
+ASK for the lead: none.
+FAILURES AND RETRIES: B20 full run 1 red (above). B20's message about lint reached it at 06:5xZ; its lint logs are not yet seen.
+NOT DONE / NOT CHECKED (my list, for the lead to decide): I have not yet linted fix-5 r8 and fix-10 r3 myself; I will on their final trees.
+WHAT I WOULD DO NEXT (ranked): 1. lint B20/B21 trees myself on hand-back; 2. fresh reviewers on fix-10 r3 and fix-5 r8; 3. B22 hand-back, review of r9.
+
 ## HEARTBEAT 112 (06:55Z) - fix-2 r8 reviewed (4 major incl. lint), lint now runs here; builder B22 (fix-2 r9) started; B20, B21 told to lint before hand-back
 
 | Agent / job | State at 06:55Z |
@@ -53,17 +67,4 @@ ASK for the lead: none.
 FAILURES AND RETRIES: none new.
 NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105.
 WHAT I WOULD DO NEXT (ranked): 1. read B19/B20 hand-backs and the run tails; 2. whole-patch reviewers; 3. stack builder.
-
-## HEARTBEAT 108 (06:34Z) - B19 AND B20 PAST TESTS AND MUTATION, GOING TO THEIR ONE FULL RUN; B21 BUILDING
-
-| Agent / job | State at 06:34Z |
-|---|---|
-| B19 fix-2 r8 | tests first: 75 failed / 21 passed on the unchanged tree, all behavioural (raw/b19-fails-before.log); mutation log and line-length log written; next its one full run (gitleaks on PATH required) |
-| B20 fix-10 r3 | fails-before, mutation log and patch sha file exist (so the patch is cut); no hand-back, full run status unknown to me |
-| B21 fix-5 r8 | building, no fails-before log yet |
-
-ASK for the lead: none.
-FAILURES AND RETRIES: none new.
-NOT DONE / NOT CHECKED (my list, for the lead to decide): same as HB105; I have not yet read any of the B19/B20 numbers beyond B19's own checkpoint line.
-WHAT I WOULD DO NEXT (ranked): 1. read the hand-backs; 2. whole-patch fresh reviewers (design plus code-details) for each; 3. stack builder.
 
