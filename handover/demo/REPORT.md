@@ -1,5 +1,18 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 03:50:35): DOC PATCH v2 WRITTEN (text only); R2 FULL RUN STILL RUNNING
+- RUN: full R2-patched run at variant b default (03:50:14Z); variant a default finished in about 2.5 min. n8n up, no stop. Light reads only.
+- v2: clean-machine/0002-...patch + DOC-FIXES-v2.md: all 4 Major and the real Nits applied, declines listed there. Only a gitleaks scan of the folder ran (no leaks).
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- v2: doc tests + hygiene run, one fresh reviewer: after the n8n run (ordered).
+- Reviewer's unchecked points (200 vs 201 against code, reset with stale pid, browser skip texts): not re-verified; next: one light reader agent now if told (reading only).
+- N8N-RERUN-1.md R2 section: waits for counts.
+- CI-equivalent run, non-root skip chunk, crash points: after the run.
+## WHAT I WOULD DO NEXT (ranked)
+1. Keep reading the run log every 5 min; push the block.
+2. At run end: N8N-RERUN-1.md with counts next to the published ones, then the egm reviewer on it.
+3. Then v2 doc tests, fresh reviewer on v2, CI-equivalent run.
+
 ## REPORT (clock 03:47:52): R2-PATCHED FULL RUN RUNNING since 03:47Z (expected end about 05:00 to 05:20Z)
 - R2-patched SMOKE (smoke4): rc 0, "RUN ALL DONE 03:45:17Z"; g2-b2 registered at once in the first process; K1 to K3 ran; client reply names seen: RemoteDisconnected 90 (smoke counts are not results).
 - Quiet check before the full run: vmstat 5 s x 22, mean idle 91 percent, load 0.11 (harness gate default 80 stays).
