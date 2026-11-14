@@ -1,5 +1,16 @@
 # DEMO session report (the ONE file this session reports to the lead in; newest block on top)
 Session: https://claude.ai/code/session_014pRo36uYfYwuEDby9epxu8. Write a status block at least every 10 minutes (UTC and IST, what runs, what is pushed, what is stuck, what you need from the lead).
+## REPORT (clock 06:04Z): HB. New orders read (06:03Z). (3) cause analysis written; (1)+(2) queued behind agent H; (4) reviewer result already in the file
+- (4) The comprehension reviewer's result was folded into N8N-RERUN-1.md at 06:02Z (commit ed341ad6): 6 Majors fixed (loaded-laptop attribution, P2 timing = 7 setups unfixed, README has no visibility count, mapping scope = branch files only, retry is pressed by the harness, branch-not-published harness), evidence files added, cold-reader definitions added.
+- (3) handover/demo/n8n-a-cause-1.md (read of 25 own + 20 published bursts, no run): duplicates = number of 200 replies in ALL 45 bursts; load 95-99.8% idle in all of mine (does not separate); first-execution time overlaps between groups (does not separate); R2b burst 3 (10 rows) was slow (668 ms start spread, first stop 1965 ms) for a reason NOT ESTABLISHED. CAUSE OF 12/20 vs 18/20: NOT ESTABLISHED.
+- (1) 3 more variant-a bursts on 3 more fresh stacks, then (2) variant e ten-at-once on 5 fresh stacks (5 bursts each, g12e is fixed at 5): queued in one script, each starts only after no pytest/ruff/mypy/bandit/gitleaks process of agent H has been seen for 15 s. Agent H's pytest runs now, so nothing started yet. The harness idle gate (80%) and load rows prove quietness per row.
+## NOT DONE / NOT CHECKED (my list, for the lead to decide)
+- Fresh-stack control rows 3-5 and e ten-at-once units: queued, not run. Agent H result not in. Doc v3 tests/hygiene, non-root skip chunk, fresh doc-patch reviewer: not started.
+- Stand-in per-request timing for variant a: not in the files; a run with it was not done.
+## WHAT I WOULD DO NEXT (ranked)
+1. Run the queue as soon as H's heavy commands end; write rows with load.
+2. Update n8n-a-cause-1.md and N8N-RERUN-1.md with the 5-stack control and e rows.
+3. After H: doc v3 tests, hygiene, skip chunk, one fresh doc-patch reviewer.
 ## REPORT (clock 06:00Z): R2b CONTROL + R3-PARTIAL DONE AND PUSHED; n8n runs finished; two readers/runners started
 - Fresh-stack control (2 variant-a bursts, one stack each, P1+P2, idle 97.8-99.8%): both ended (1 CRM, 1 email), no duplicates. Too few to say whether stack reuse matters (stated in the file; a fair control would be 5).
 - R3-partial (ran 05:58:17-05:59:20Z, rc 0): b K2 1 row valid (10 crashed, 10 retries, final 1/1), b K3 1 row valid (10 crashed, final 1/0), no stale row. b K2/K3 now 5 valid rows each (R2's 4 + this 1, different stack, stated).
